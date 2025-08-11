@@ -25,7 +25,7 @@ export interface ICRC112Request extends JsonObject {
     nonce: string;
 }
 
-export type ParallelRequests = Array<ICRC112Request>;
+type ParallelRequests = Array<ICRC112Request>;
 
 /**
  * Each sub array will execute in parallel and the next sub array will execute after the previous one is completed.
@@ -33,19 +33,6 @@ export type ParallelRequests = Array<ICRC112Request>;
 export type SequenceRequest = Array<ParallelRequests>;
 
 export type Icrc112Requests = SequenceRequest;
-
-export interface CallCanisterRequest {
-    jsonrpc: string;
-    method: string;
-    params: {
-        sender: string;
-        requests: SequenceRequest;
-        validation?: {
-            canisterId: string;
-            method: string;
-        };
-    };
-}
 
 export interface SuccessResponse {
     result: CallCanisterResponse;
@@ -59,26 +46,14 @@ export interface ErrorResponse {
     };
 }
 
-export interface CanisterValidation {
-    canisterId: string;
-    method: string;
-}
-
-export const SUPPORTED_PARSED_METHODS = [
+const SUPPORTED_PARSED_METHODS = [
     "icrc1_transfer",
     "icrc2_approve",
     "icrc2_transfer",
     "icrc7_transfer",
 ];
 
-const STANDARDS_USING_BLOCK_ID = [
-    "icrc1_transfer",
-    "icrc2_approve",
-    "icrc2_transfer",
-    "icrc7_transfer",
-];
-
-export type Icrc112ResponseItem = SuccessResponse | ErrorResponse;
+type Icrc112ResponseItem = SuccessResponse | ErrorResponse;
 
 export interface Icrc112Response {
     responses: Icrc112ResponseItem[][];
@@ -119,6 +94,7 @@ export class ICRC112Service {
                 requests: input,
                 validation: undefined as { canisterId: string; method: string } | undefined,
             },
+            validation: undefined as { canisterId: string; method: string } | undefined,
         };
 
         let rowIndex = 0;
@@ -303,7 +279,7 @@ export class ICRC112Service {
             typeof responseFromParse === "object" &&
             "Ok" in responseFromParse
         ) {
-            const okValue = responseFromParse.Ok;
+            const okValue = responseFromParse["Ok"];
             if (typeof okValue === "bigint") {
                 return BigInt(okValue);
             }

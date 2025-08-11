@@ -7,10 +7,16 @@ license.workspace = true
 
 [dev-dependencies]
 candid = { workspace = true }
-cashier_backend_client = { workspace = true }
+cashier_backend_client = { workspace = true, features = ["pocket_ic"] }
 ic-cdk = { workspace = true }
 ic_mple_client = { workspace = true, features = ["pocket-ic"]}
 ic_mple_pocket_ic = { workspace = true }
 serde = { workspace = true }
 token_storage_client = { workspace = true }
 tokio = { workspace = true }
+cashier-types = { workspace = true }
+serde_bytes = { workspace = true }
+icrc-ledger-types = { workspace = true }
+ic-ledger-types = { workspace = true }
+base64 = { workspace = true }
+uuid = { workspace = true }

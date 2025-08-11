@@ -90,11 +90,4 @@ impl TokenRepository {
             Ok(())
         })
     }
-
-    pub fn delete_all_tokens(&self, user_id: &str) -> Result<(), String> {
-        USER_TOKEN_STORE.with_borrow_mut(|store| {
-            store.remove(&user_id.to_string());
-            Ok(())
-        })
-    }
 }

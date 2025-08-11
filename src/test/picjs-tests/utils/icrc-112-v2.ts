@@ -8,7 +8,7 @@
 import {
     _SERVICE,
     Icrc112Request,
-} from "../../../declarations/cashier_backend/cashier_backend.did";
+} from "../../../../src/cashier_frontend/src/generated/cashier_backend/cashier_backend.did";
 import { Actor } from "@dfinity/pic";
 import { Principal } from "@dfinity/principal";
 import { linkIdToSubaccount } from ".";
@@ -16,7 +16,7 @@ import { Account } from "@dfinity/ledger-icp";
 import {
     ApproveArgs,
     TransferArg,
-} from "../../../declarations/icp_ledger_canister/icp_ledger_canister.did";
+} from "../../../../src/cashier_frontend/src/generated/icp_ledger_canister/icp_ledger_canister.did";
 import { Identity } from "@dfinity/agent";
 import { MultipleTokenHelper } from "./multiple-token-helper";
 

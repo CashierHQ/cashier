@@ -4,7 +4,7 @@
 import { clamp } from "@/utils/helpers/number/clamp";
 import { createContext, ReactNode, useCallback, useContext, useState } from "react";
 
-export type TransitionDirection = "forward" | "backward";
+type TransitionDirection = "forward" | "backward";
 
 export interface MultiStepFormContext {
     step: number;
@@ -20,7 +20,7 @@ export interface MultiStepFormContext {
 
 const MultiStepFormContext = createContext<MultiStepFormContext | null>(null);
 
-export interface MultiStepFormContextProviderProps {
+interface MultiStepFormContextProviderProps {
     initialStep?: number;
     children?: ReactNode;
 }

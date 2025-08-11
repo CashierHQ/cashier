@@ -35,34 +35,35 @@ export const walletDialogConfigOptions = [
         id: "nfid",
         name: "NFID Wallet",
         icon: NFIDW.icon!,
-        onClick: () => { }, // This will be set by the component
+        onClick: () => {}, // This will be set by the component
     },
     {
         id: "stoic",
         name: "Stoic",
         icon: Stoic.icon!,
-        onClick: () => { }, // This will be set by the component
+        onClick: () => {}, // This will be set by the component
     },
     // Uncomment when Plug wallet support is added
 ];
 
 // Internet Identity wallet option for the header
-export const headerWalletOptions = FEATURE_FLAGS
-    .ENABLE_LOCAL_IDENTITY_PROVIDER ? [
-    {
-        id: "LocalInternetIdentity",
-        name: "Internet Identity",
-        icon: "/icpLogo.png",
-        onClick: () => { },
-    },
-] : [
-    {
-        id: "InternetIdentity",
-        name: "Internet Identity",
-        icon: "/icpLogo.png",
-        onClick: () => { }, // This will be set by the component
-    },
-]
+export const headerWalletOptions = FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER
+    ? [
+          {
+              id: "LocalInternetIdentity",
+              name: "Internet Identity",
+              icon: "/icpLogo.png",
+              onClick: () => {},
+          },
+      ]
+    : [
+          {
+              id: "InternetIdentity",
+              name: "Internet Identity",
+              icon: "/icpLogo.png",
+              onClick: () => {}, // This will be set by the component
+          },
+      ];
 
 // Function to get wallet icon (string or React component)
 export const getWalletIcon = (walletOption: WALLET_OPTIONS): string | React.ReactNode => {
@@ -79,8 +80,9 @@ export const getWalletIcon = (walletOption: WALLET_OPTIONS): string | React.Reac
 };
 
 // Default wallet signers
-export const defaultSigners = FEATURE_FLAGS
-    .ENABLE_LOCAL_IDENTITY_PROVIDER ? [LocalInternetIdentity] : [InternetIdentity];
+export const defaultSigners = FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER
+    ? [LocalInternetIdentity]
+    : [InternetIdentity];
 
 // All available wallet signers
 export const allWalletSigners = [NFIDW, Stoic, GoogleSigner, InternetIdentity].concat(

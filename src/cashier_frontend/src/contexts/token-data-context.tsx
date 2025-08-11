@@ -24,10 +24,7 @@ import {
 import { ICExplorerService, IcExplorerTokenDetail } from "@/services/icExplorer.service";
 import { FungibleToken, TokenBalanceMap } from "@/types/fungible-token.speculative";
 import TokenStorageService from "@/services/backend/tokenStorage.service";
-import {
-    AddTokenInput,
-    AddTokensInput,
-} from "../../../declarations/token_storage/token_storage.did";
+import { AddTokenInput, AddTokensInput } from "../generated/token_storage/token_storage.did";
 import {
     BALANCE_CACHE_LAST_CACHE_TIME_KEY,
     BALANCE_CACHE_LAST_CACHED_BALANCES_KEY,

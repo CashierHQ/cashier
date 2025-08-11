@@ -6,7 +6,7 @@ import { Actor, PocketIc } from "@dfinity/pic";
 import {
     type _SERVICE,
     idlFactory,
-} from "../../../declarations/icp_ledger_canister/icp_ledger_canister.did";
+} from "../../../../src/cashier_frontend/src/generated/icp_ledger_canister/icp_ledger_canister.did";
 import { linkIdToSubaccount } from ".";
 
 type Subaccount = Uint8Array;

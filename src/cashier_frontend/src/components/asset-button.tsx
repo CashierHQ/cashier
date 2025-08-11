@@ -45,8 +45,6 @@ const AssetButton: React.FC<AssetButtonProps> = ({
     showPresetButtons = false,
     presetButtons = [],
     isDisabled = false,
-    showMaxButton = false,
-    onMaxClick,
     isTip,
     showInput = true,
 }) => {

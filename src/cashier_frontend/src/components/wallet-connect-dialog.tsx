@@ -6,14 +6,14 @@ import { X } from "lucide-react";
 import { HoverBorderGradient } from "./ui/hover-border-gradient";
 
 // Wallet option interface
-export interface WalletOption {
+interface WalletOption {
     id: string;
     name: string;
     icon: string | JSX.Element;
     onClick: () => void;
 }
 
-export interface WalletConnectDialogProps {
+interface WalletConnectDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     walletOptions: WalletOption[];
