@@ -10,8 +10,9 @@ import {
 import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@dfinity/pic";
 import { parseResultResponse } from "../utils/parser";
+import { ARTIFACTS_DIR } from "../constant";
 
-export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
+export const WASM_PATH = resolve(ARTIFACTS_DIR, "cashier_backend.wasm.gz");
 
 describe("User", () => {
     let pic: PocketIc;

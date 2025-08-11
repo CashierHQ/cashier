@@ -42,11 +42,8 @@ impl<C: CanisterClient> IcpLedgerClient<C> {
         let res: Result<Icrc1TransferResult, ic_mple_client::CanisterClientError> =
             self.client.update("icrc1_transfer", (transfer_args,)).await;
 
-        let res = res
-            .map_err(|e| format!("ICRC transfer failed: {e:?}"))
-            .unwrap();
-
-        res
+        res.map_err(|e| format!("ICRC transfer failed: {e:?}"))
+            .unwrap()
     }
 
     pub async fn balance_of(
@@ -90,7 +87,7 @@ pub async fn deploy_icp_ledger_canister(
 
     let icp_canister_id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
 
-    let icp_ledger_principal = deploy_canister_with_id(
+    deploy_canister_with_id(
         client,
         Some(token_deployer_pid),
         None,
@@ -98,9 +95,7 @@ pub async fn deploy_icp_ledger_canister(
         get_icp_ledger_canister_bytecode(),
         &(IcpLedgerCanisterPayload::Init(icp_init_args)),
     )
-    .await;
-
-    icp_ledger_principal
+    .await
 }
 
 /// Retrieves the bytecode for the ICP ledger canister.

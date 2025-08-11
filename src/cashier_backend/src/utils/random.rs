@@ -4,7 +4,7 @@
 use std::{cell::RefCell, time::Duration};
 
 use getrandom::register_custom_getrandom;
-use rand::{rngs::StdRng, RngCore, SeedableRng};
+use rand::{RngCore, SeedableRng, rngs::StdRng};
 
 thread_local! {
     pub static RNG: RefCell<Option<StdRng>> = const { RefCell::new(None) };
