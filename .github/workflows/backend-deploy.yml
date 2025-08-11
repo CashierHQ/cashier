@@ -14,7 +14,7 @@ on:
   # Trigger on push for testing
   push:
       branches:
-          - *
+          - sync-staging
 # Permissions needed for the GITHUB_TOKEN
 permissions:
     actions: write # This allows the workflow to delete workflow runs
