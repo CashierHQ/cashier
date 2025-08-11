@@ -39,6 +39,7 @@ jobs:
                     echo "environment=staging" >> $GITHUB_OUTPUT
                   else
                     echo "environment=dev" >> $GITHUB_OUTPUT
+                  fi
 
     build_and_deploy:
         runs-on: ubuntu-latest
