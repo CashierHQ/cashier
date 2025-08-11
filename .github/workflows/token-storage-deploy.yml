@@ -1,17 +1,27 @@
 name: Token Storage Deployment
 
 on:
-    push:
-        paths:
-            - "token_storage/**"
-        branches:
-            - main
-            - staging
-            - dev
+  # For main and staging branches, only trigger on closed PRs
+  pull_request:
+    paths:
+        - "src/token_storage/**"
+    branches:
+        - main
+        - staging
+        - dev
+    types:
+        - closed
+  push:
+    paths:
+        - "src/token_storage/**"
+    branches-ignore:
+        - main
+        - staging
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
-    contents: read
+    actions: write # This allows the workflow to delete workflow runs
+    contents: read # Default permission to read the repository contents
 
 jobs:
     setup_environment:
@@ -40,7 +50,7 @@ jobs:
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
-              
+
             - name: Install dfx
               uses: dfinity/setup-dfx@main
 
