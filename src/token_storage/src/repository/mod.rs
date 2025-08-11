@@ -10,8 +10,8 @@ pub mod user_token;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use ic_mple_log::service::LoggerServiceStorage;
 use ic_mple_log::LogSettings;
+use ic_mple_log::service::LoggerServiceStorage;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 

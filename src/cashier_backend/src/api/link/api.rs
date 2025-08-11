@@ -15,7 +15,7 @@ use cashier_types::dto::link::{
 use cashier_types::error::CanisterError;
 use cashier_types::service::link::{PaginateInput, PaginateResult};
 use ic_cdk::{query, update};
-use log::{debug, info, error};
+use log::{debug, error, info};
 
 use crate::services::link::traits::LinkUserStateMachine;
 use crate::{
