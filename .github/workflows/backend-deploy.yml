@@ -131,6 +131,7 @@ jobs:
                     NETWORK="dev"
                   fi
 
+                  rustup target add wasm32-unknown-unknown
                   just build_canister "token_storage" "" "token_storage"
                   dfx deploy token_storage --network ${NETWORK}
 
@@ -148,5 +149,6 @@ jobs:
                     NETWORK="dev"
                   fi
 
+                  rustup target add wasm32-unknown-unknown
                   just build_canister "cashier_backend" "" "cashier_backend"
                   dfx deploy cashier_backend --network ${NETWORK}
