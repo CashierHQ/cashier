@@ -1031,9 +1031,9 @@ checksum = "8877193e1921b5fd16accb0305eb46016868cd1935b05c05eca0ec007b943272"
 
 [[package]]
 name = "ic_mple_client"
-version = "0.9.0"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9a74d64b88cf9f19fc9f5616eac6cdaf9a878e82a293681db9bb0a560b4cffd"
+checksum = "a256d10f175e410148a8a3ed56b0847eea22f1aaf2abd686f2aa60a6d84e5df2"
 dependencies = [
  "candid",
  "ic-cdk",
@@ -1044,9 +1044,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_log"
-version = "0.9.1"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34ba9ad341caa074ef1d4368b4b2958381610a8c61633b04c121223f498b410d"
+checksum = "0eaf3fec1e084438ebef3c0c060fdb62f98e5a8d4c8e2006945ca9ce794422a3"
 dependencies = [
  "arc-swap",
  "candid",
@@ -1062,9 +1062,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_pocket_ic"
-version = "0.9.0"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cbd25554259d8c44d0e52ed658a3a2e4f256252bea30d5c74dbe5e10b8e4c605"
+checksum = "f17d336f4d2cdaeab0c41fa4639bcbb1ab094b2c98403f9f45d3dd836d094478"
 dependencies = [
  "flate2",
  "log",
@@ -1075,9 +1075,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_utils"
-version = "0.9.1"
+version = "0.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a9cb8ce05e89bbb2ab6b13a9a4a2eb55d0cf4e25ab229f206baca7d50470dac"
+checksum = "762f0e0b31720531ee82802204d56bf542ae4ac5bbb2ad6daa43c8e63d75f21c"
 
 [[package]]
 name = "ic_principal"
@@ -1355,9 +1355,9 @@ checksum = "884e2677b40cc8c339eaefcb701c32ef1fd2493d71118dc0ca4b6a736c93bd67"
 
 [[package]]
 name = "libc"
-version = "0.2.174"
+version = "0.2.175"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1171693293099992e19cddea4e8b849964e9846f4acee11b3948bcc337be8776"
+checksum = "6a82ae493e598baaea5209805c49bbf2ea7de956d50d7da0da1164f9c6d28543"
 
 [[package]]
 name = "libm"

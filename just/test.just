@@ -36,7 +36,6 @@ test_frontend:
   cd {{FRONTEND_DIR}} && npm run test
 
 
-
 # Execute the coverage report for the tests using the llvm-cov tool. This takes a long time to run.
 [group('test')]
 test_coverage:
