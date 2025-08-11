@@ -51,7 +51,7 @@ impl TransactionRepository {
 mod tests {
     use super::*;
     use std::str::FromStr;
-    use cashier_types::repository::{transaction::v2::{Transaction, TransactionState, FromCallType, Protocol, IcTransaction, Icrc1Transfer}, common::{Asset, Chain, Wallet}};
+    use cashier_types::repository::{transaction::v2::{Transaction, TransactionState, FromCallType, Protocol, IcTransaction, Icrc1Transfer}, common::{Asset, Wallet}};
     use candid::types::number::Nat;
 
     #[test]
