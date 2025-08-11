@@ -37,3 +37,96 @@ impl ActionRepository {
         });
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cashier_types::repository::action::v1::{ActionType, ActionState};
+
+    #[test]
+    fn create() {
+        let repo = ActionRepository::new();
+        let action = Action {
+            id: "action1".to_string(),
+            r#type: ActionType::CreateLink,
+            state: ActionState::Processing,
+            creator: "creator1".to_string(),
+            link_id: "link1".to_string(),
+        };
+        repo.create(action);
+
+        let retrieved_action = repo.get("action1");
+        assert!(retrieved_action.is_some());
+        assert_eq!(retrieved_action.unwrap().id, "action1");
+    }
+
+    #[test]
+    fn update() {
+        let repo = ActionRepository::new();
+        let action = Action {
+            id: "action1".to_string(),
+            r#type: ActionType::CreateLink,
+            state: ActionState::Processing,
+            creator: "creator1".to_string(),
+            link_id: "link1".to_string(),
+        };
+        repo.create(action);
+
+        let updated_action = Action {
+            id: "action1".to_string(),
+            r#type: ActionType::CreateLink,
+            state: ActionState::Success,
+            creator: "creator2".to_string(),
+            link_id: "link2".to_string(),
+        };
+        repo.update(updated_action);
+
+        let retrieved_action = repo.get("action1");
+        assert!(retrieved_action.is_some());
+        let action = retrieved_action.unwrap();
+        assert_eq!(action.state, ActionState::Success);
+        assert_eq!(action.creator, "creator2");
+        assert_eq!(action.link_id, "link2");
+    }
+
+    #[test]
+    fn get_non_existent() {
+        let repo = ActionRepository::new();
+        let retrieved_action = repo.get("non_existent_action");
+        assert!(retrieved_action.is_none());
+    }
+
+    #[test]
+    fn get_existent() {
+        let repo = ActionRepository::new();
+        let action = Action {
+            id: "action1".to_string(),
+            r#type: ActionType::CreateLink,
+            state: ActionState::Created,
+            creator: "creator1".to_string(),
+            link_id: "link1".to_string(),
+        };
+        repo.create(action);
+
+        let retrieved_action = repo.get("action1");
+        assert!(retrieved_action.is_some());
+        assert_eq!(retrieved_action.unwrap().id, "action1");
+    }
+
+    #[test]
+    fn default() {
+        let repo = ActionRepository::default();
+        let action = Action {
+            id: "default_action".to_string(),
+            r#type: ActionType::CreateLink,
+            state: ActionState::Created,
+            creator: "default_creator".to_string(),
+            link_id: "default_link".to_string(),
+        };
+        repo.create(action);
+
+        let retrieved_action = repo.get("default_action");
+        assert!(retrieved_action.is_some());
+        assert_eq!(retrieved_action.unwrap().id, "default_action");
+    }
+}

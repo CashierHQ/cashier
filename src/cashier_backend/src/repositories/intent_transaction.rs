@@ -70,3 +70,68 @@ impl IntentTransactionRepository {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn batch_create() {
+        let repo = IntentTransactionRepository::new();
+        let intent_transactions = vec![
+            IntentTransaction {
+                intent_id: "intent1".to_string(),
+                transaction_id: "transaction1".to_string(),
+            },
+            IntentTransaction {
+                intent_id: "intent2".to_string(),
+                transaction_id: "transaction2".to_string(),
+            },
+        ];
+        repo.batch_create(intent_transactions);
+
+        let transactions = repo.get_by_intent_id("intent1");
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(transactions[0].transaction_id, "transaction1");
+
+        let transactions = repo.get_by_transaction_id("transaction2");
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(transactions[0].intent_id, "intent2");
+    }
+
+    #[test]
+    fn get_by_intent_id() {
+        let repo = IntentTransactionRepository::new();
+        let intent_transaction = IntentTransaction {
+            intent_id: "intent1".to_string(),
+            transaction_id: "transaction1".to_string(),
+        };
+        repo.batch_create(vec![intent_transaction.clone()]);
+
+        let transactions = repo.get_by_intent_id("intent1");
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(transactions[0].transaction_id, "transaction1");
+    }
+
+    #[test]
+    fn get_by_transaction_id() {
+        let repo = IntentTransactionRepository::new();
+        let intent_transaction = IntentTransaction {
+            intent_id: "intent1".to_string(),
+            transaction_id: "transaction1".to_string(),
+        };
+        repo.batch_create(vec![intent_transaction.clone()]);
+
+        let transactions = repo.get_by_transaction_id("transaction1");
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(transactions[0].intent_id, "intent1");
+    }
+
+    #[test]
+    fn default(){
+        let repo = IntentTransactionRepository::default();
+        assert!(repo.get_by_intent_id("nonexistent").is_empty());
+        assert!(repo.get_by_transaction_id("nonexistent").is_empty());
+    }
+
+}

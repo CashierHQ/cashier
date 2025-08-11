@@ -29,3 +29,47 @@ impl UserActionRepository {
         });
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn create() {
+        let repo = UserActionRepository::new();
+        let user_action = UserAction {
+            user_id: "user1".to_string(),
+            action_id: "action1".to_string(),
+        };
+        repo.create(user_action);
+
+        let retrieved_action = USER_ACTION_STORE.with_borrow(|store| {
+            store.get(&UserActionKey {
+                user_id: "user1".to_string(),
+                action_id: "action1".to_string(),
+            }.to_str())
+        });
+        assert!(retrieved_action.is_some());
+        assert_eq!(retrieved_action.unwrap().user_id, "user1");
+    }
+
+    #[test]
+    fn default() {
+        let repo = UserActionRepository::default();
+        let user_action = UserAction {
+            user_id: "user1".to_string(),
+            action_id: "action1".to_string(),
+        };
+        repo.create(user_action);
+
+        let retrieved_action = USER_ACTION_STORE.with_borrow(|store| {
+            store.get(&UserActionKey {
+                user_id: "user1".to_string(),
+                action_id: "action1".to_string(),
+            }.to_str())
+        });
+        assert!(retrieved_action.is_some());
+        assert_eq!(retrieved_action.unwrap().user_id, "user1");
+    }
+
+}

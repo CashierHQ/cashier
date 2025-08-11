@@ -161,5 +161,12 @@ mod tests {
         assert_eq!(actions[0].link_user_state, Some(LinkUserState::CompletedLink));
     }
 
+    #[test]
+    fn default() {
+        let repo = LinkActionRepository::default();
+        let actions = repo.get_by_prefix("nonexistent", "type", "user");
+        assert!(actions.is_empty());
+    }
+
 }
     
