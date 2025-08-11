@@ -59,6 +59,13 @@ jobs:
             - name: Install Just command runner
               uses: extractions/setup-just@v1
 
+            - name: Setup Rust environment
+              run: |
+                  cargo install ic-wasm
+                  cargo install candid-extractor
+                  rustup target add wasm32-unknown-unknown
+                  
+
             - name: Create private key file
               run: |
                   echo "${{ secrets.DEPLOYER }}" > private_key.pem
@@ -149,6 +156,5 @@ jobs:
                     NETWORK="dev"
                   fi
 
-                  rustup target add wasm32-unknown-unknown
                   just build_canister "cashier_backend" "" "cashier_backend"
                   dfx deploy cashier_backend --network ${NETWORK}
