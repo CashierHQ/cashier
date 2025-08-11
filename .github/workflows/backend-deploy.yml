@@ -12,9 +12,6 @@ on:
           - dev
       types:
           - closed
-  push:
-      branches:
-          - sync-staging
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
@@ -23,6 +20,7 @@ permissions:
 
 jobs:
     setup_environment:
+        if: ${{ github.event.pull_request.merged == true }}
         runs-on: ubuntu-latest
         outputs:
             environment: ${{ steps.set-env.outputs.environment }}
