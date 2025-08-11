@@ -47,3 +47,165 @@ impl LinkRepository {
         });
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cashier_types::repository::link::v1::{LinkState, LinkType};
+
+    #[test]
+    fn create() {
+        let repo = LinkRepository::new();
+        let link = Link {
+            id: "link1".to_string(),
+            state: LinkState::ChooseLinkType,
+            title: Some("Test Link".to_string()),
+            description: Some("This is a test link".to_string()),
+            link_type: Some(LinkType::SendTip),
+            asset_info: None,
+            template: None,
+            creator: "creator1".to_string(),
+            create_at: 1622547800,
+            metadata: None,
+            link_use_action_counter: 0,
+            link_use_action_max_count: 10,
+        };
+        repo.create(link.clone());
+
+        let fetched_link = repo.get(&link.id);
+        assert!(fetched_link.is_some());
+        let link_creator = fetched_link.unwrap().creator;
+        assert_eq!(link_creator, "creator1");
+    }
+
+    #[test]
+    fn update() {
+        let repo = LinkRepository::new();
+        let link = Link {
+            id: "link1".to_string(),
+            state: LinkState::ChooseLinkType,
+            title: Some("Test Link".to_string()),
+            description: Some("This is a test link".to_string()),
+            link_type: Some(LinkType::SendTip),
+            asset_info: None,
+            template: None,
+            creator: "creator1".to_string(),
+            create_at: 1622547800,
+            metadata: None,
+            link_use_action_counter: 0,
+            link_use_action_max_count: 10,
+        };
+        repo.create(link.clone());
+
+        let updated_link = Link {
+            id: "link1".to_string(),
+            state: LinkState::Active,
+            title: Some("Updated Test Link".to_string()),
+            description: Some("This is an updated test link".to_string()),
+            link_type: Some(LinkType::ReceivePayment),
+            asset_info: None,
+            template: None,
+            creator: "creator2".to_string(),
+            create_at: 1622547800,
+            metadata: None,
+            link_use_action_counter: 1,
+            link_use_action_max_count: 20,
+        };
+        repo.update(updated_link.clone());
+
+        let fetched_link = repo.get(&updated_link.id);
+        assert!(fetched_link.is_some());
+        let fetched_link = fetched_link.unwrap();
+        assert_eq!(fetched_link.state, LinkState::Active);
+        assert_eq!(fetched_link.creator, "creator2");
+    }
+
+    #[test]
+    fn delete() {
+        let repo = LinkRepository::new();
+        let link = Link {
+            id: "link1".to_string(),
+            state: LinkState::ChooseLinkType,
+            title: Some("Test Link".to_string()),
+            description: Some("This is a test link".to_string()),
+            link_type: Some(LinkType::SendTip),
+            asset_info: None,
+            template: None,
+            creator: "creator1".to_string(),
+            create_at: 1622547800,
+            metadata: None,
+            link_use_action_counter: 0,
+            link_use_action_max_count: 10,
+        };
+        repo.create(link.clone());
+
+        repo.delete(&link.id);
+        let fetched_link = repo.get(&link.id);
+        assert!(fetched_link.is_none());
+    }
+
+    #[test]
+    fn get_batch() {
+        let repo = LinkRepository::new();
+        let link1 = Link {
+            id: "link1".to_string(),
+            state: LinkState::ChooseLinkType,
+            title: Some("Test Link 1".to_string()),
+            description: Some("This is a test link 1".to_string()),
+            link_type: Some(LinkType::SendTip),
+            asset_info: None,
+            template: None,
+            creator: "creator1".to_string(),
+            create_at: 1622547800,
+            metadata: None,
+            link_use_action_counter: 0,
+            link_use_action_max_count: 10,
+        };
+        let link2 = Link {
+            id: "link2".to_string(),
+            state: LinkState::Active,
+            title: Some("Test Link 2".to_string()),
+            description: Some("This is a test link 2".to_string()),
+            link_type: Some(LinkType::ReceivePayment),
+            asset_info: None,
+            template: None,
+            creator: "creator2".to_string(),
+            create_at: 1622547800,
+            metadata: None,
+            link_use_action_counter: 1,
+            link_use_action_max_count: 20,
+        };
+        repo.create(link1);
+        repo.create(link2);
+
+        let ids = vec!["link1".to_string(), "link2".to_string()];
+        let fetched_links = repo.get_batch(ids);
+        assert_eq!(fetched_links.len(), 2);
+        assert_eq!(fetched_links[0].id, "link1");
+        assert_eq!(fetched_links[1].id, "link2");
+    }
+
+    #[test]
+    fn get() {
+        let repo = LinkRepository::new();
+        let link = Link {
+            id: "link1".to_string(),
+            state: LinkState::ChooseLinkType,
+            title: Some("Test Link".to_string()),
+            description: Some("This is a test link".to_string()),
+            link_type: Some(LinkType::SendTip),
+            asset_info: None,
+            template: None,
+            creator: "creator1".to_string(),
+            create_at: 1622547800,
+            metadata: None,
+            link_use_action_counter: 0,
+            link_use_action_max_count: 10,
+        };
+        repo.create(link.clone());
+
+        let fetched_link = repo.get(&link.id);
+        assert!(fetched_link.is_some());
+        assert_eq!(fetched_link.unwrap().id, "link1");
+    }
+}
