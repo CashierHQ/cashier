@@ -44,10 +44,13 @@ mod tests {
         repo.create(user_action);
 
         let retrieved_action = USER_ACTION_STORE.with_borrow(|store| {
-            store.get(&UserActionKey {
-                user_id: "user1".to_string(),
-                action_id: "action1".to_string(),
-            }.to_str())
+            store.get(
+                &UserActionKey {
+                    user_id: "user1".to_string(),
+                    action_id: "action1".to_string(),
+                }
+                .to_str(),
+            )
         });
         assert!(retrieved_action.is_some());
         assert_eq!(retrieved_action.unwrap().user_id, "user1");
@@ -63,13 +66,15 @@ mod tests {
         repo.create(user_action);
 
         let retrieved_action = USER_ACTION_STORE.with_borrow(|store| {
-            store.get(&UserActionKey {
-                user_id: "user1".to_string(),
-                action_id: "action1".to_string(),
-            }.to_str())
+            store.get(
+                &UserActionKey {
+                    user_id: "user1".to_string(),
+                    action_id: "action1".to_string(),
+                }
+                .to_str(),
+            )
         });
         assert!(retrieved_action.is_some());
         assert_eq!(retrieved_action.unwrap().user_id, "user1");
     }
-
 }

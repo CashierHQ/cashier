@@ -87,7 +87,7 @@ mod tests {
             user_id: "user1".to_string(),
             link_user_state: None,
         };
-        repo.create(link_action.clone());
+        repo.create(link_action);
 
         let actions = repo.get_by_prefix("link1", "type1", "user1");
         assert_eq!(actions.len(), 1);
@@ -104,8 +104,7 @@ mod tests {
             user_id: "user1".to_string(),
             link_user_state: None,
         };
-        repo.create(link_action.clone());
-
+        repo.create(link_action);
 
         let updated_action = LinkAction {
             link_id: "link1".to_string(),
@@ -114,13 +113,15 @@ mod tests {
             user_id: "user1".to_string(),
             link_user_state: Some(LinkUserState::ChooseWallet),
         };
-        repo.update(updated_action.clone());
+        repo.update(updated_action);
 
         let actions = repo.get_by_prefix("link1", "type1", "user1");
         assert_eq!(actions.len(), 1);
-        assert_eq!(actions[0].link_user_state, Some(LinkUserState::ChooseWallet));
+        assert_eq!(
+            actions[0].link_user_state,
+            Some(LinkUserState::ChooseWallet)
+        );
     }
-
 
     #[test]
     fn get_by_prefix() {
@@ -158,7 +159,10 @@ mod tests {
         assert_eq!(actions[0].action_type, "type2");
         assert_eq!(actions[0].action_id, "action2");
         assert_eq!(actions[0].user_id, "user2");
-        assert_eq!(actions[0].link_user_state, Some(LinkUserState::CompletedLink));
+        assert_eq!(
+            actions[0].link_user_state,
+            Some(LinkUserState::CompletedLink)
+        );
     }
 
     #[test]
@@ -167,6 +171,4 @@ mod tests {
         let actions = repo.get_by_prefix("nonexistent", "type", "user");
         assert!(actions.is_empty());
     }
-
 }
-    

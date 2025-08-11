@@ -86,7 +86,7 @@ mod tests {
             },
         ];
 
-        repo.batch_create(action_intents.clone());
+        repo.batch_create(action_intents);
 
         let retrieved = repo.get_by_action_id("action1");
         assert_eq!(retrieved.len(), 1);
@@ -104,7 +104,7 @@ mod tests {
             action_id: "action1".to_string(),
             intent_id: "intent1".to_string(),
         };
-        repo.batch_create(vec![action_intent.clone()]);
+        repo.batch_create(vec![action_intent]);
 
         let retrieved = repo.get_by_action_id("action1");
         assert_eq!(retrieved.len(), 1);
@@ -119,7 +119,7 @@ mod tests {
             action_id: "action1".to_string(),
             intent_id: "intent1".to_string(),
         };
-        repo.batch_create(vec![action_intent.clone()]); 
+        repo.batch_create(vec![action_intent]);
 
         let retrieved = repo.get_by_intent_id("intent1");
         assert_eq!(retrieved.len(), 1);
