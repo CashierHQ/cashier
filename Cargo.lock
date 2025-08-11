@@ -1031,9 +1031,9 @@ checksum = "8877193e1921b5fd16accb0305eb46016868cd1935b05c05eca0ec007b943272"
 
 [[package]]
 name = "ic_mple_client"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "338bc4d6b9d2bd4fcba78343f10c355209a832ab5c12906b10c8a6dc4e9e8f6e"
+checksum = "b9a74d64b88cf9f19fc9f5616eac6cdaf9a878e82a293681db9bb0a560b4cffd"
 dependencies = [
  "candid",
  "ic-cdk",
@@ -1044,22 +1044,27 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_log"
-version = "0.8.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1cc4adaefaddd4424612e112bee142e212115731fb310ffb9be66247e876521f"
+checksum = "34ba9ad341caa074ef1d4368b4b2958381610a8c61633b04c121223f498b410d"
 dependencies = [
  "arc-swap",
+ "candid",
  "env_filter",
  "humantime",
  "ic-cdk",
+ "ic-stable-structures 0.7.0",
+ "ic_mple_utils",
  "log",
+ "ringbuffer",
+ "serde",
 ]
 
 [[package]]
 name = "ic_mple_pocket_ic"
-version = "0.8.0"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea62421ee71bcf89561f25d3b7f7435890631287517f3e16391724607cc7399e"
+checksum = "cbd25554259d8c44d0e52ed658a3a2e4f256252bea30d5c74dbe5e10b8e4c605"
 dependencies = [
  "flate2",
  "log",
@@ -1067,6 +1072,12 @@ dependencies = [
  "reqwest",
  "tokio",
 ]
+
+[[package]]
+name = "ic_mple_utils"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a9cb8ce05e89bbb2ab6b13a9a4a2eb55d0cf4e25ab229f206baca7d50470dac"
 
 [[package]]
 name = "ic_principal"
@@ -1915,6 +1926,12 @@ dependencies = [
  "untrusted",
  "windows-sys 0.52.0",
 ]
+
+[[package]]
+name = "ringbuffer"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57b0b88a509053cbfd535726dcaaceee631313cef981266119527a1d110f6d2b"
 
 [[package]]
 name = "rm"

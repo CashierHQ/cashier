@@ -10,6 +10,8 @@ pub mod user_token;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
+use ic_mple_log::service::LoggerServiceStorage;
+use ic_mple_log::LogSettings;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 
@@ -28,11 +30,22 @@ const USER_PREFERENCE_MEMORY_ID: MemoryId = MemoryId::new(2);
 const TOKEN_REGISTRY_MEMORY_ID: MemoryId = MemoryId::new(3);
 const BALANCE_CACHE_MEMORY_ID: MemoryId = MemoryId::new(4);
 const TOKEN_REGISTRY_METADATA_ID: MemoryId = MemoryId::new(5);
+const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(6);
 
 thread_local! {
     pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(
         MemoryManager::init(DefaultMemoryImpl::default())
     );
+
+    // Store user's token references (not full token data)
+    // user enable list
+    pub static LOGGER_SERVICE_STORE: RefCell<LoggerServiceStorage> =
+        RefCell::new(
+            StableCell::init(
+                MEMORY_MANAGER.with_borrow(|m| m.get(LOG_SETTINGS_MEMORY_ID)),
+                LogSettings::default(),
+            )
+        );
 
     // Store user's token references (not full token data)
     // user enable list

@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::core::guard::is_not_anonymous;
+use crate::api::guard::is_not_anonymous;
 use crate::services::link::traits::LinkValidation;
 use candid::Principal;
 use cashier_types::dto::action::{
