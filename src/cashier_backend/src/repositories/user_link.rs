@@ -80,3 +80,10 @@ impl UserLinkRepository {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+
+}

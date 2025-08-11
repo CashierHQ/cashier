@@ -34,3 +34,68 @@ impl RequestLockRepository {
         REQUEST_LOCK_STORE.with_borrow(|store| store.contains_key(key))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cashier_types::repository::request_lock::RequestLock;
+
+    #[test]
+    fn create() {
+        let repo = RequestLockRepository::new();
+        let request_lock = RequestLock {
+            key: RequestLockKey::UserLinkAction { user_principal: "abc-xya".to_string(), link_id: "link1".to_string(), action_id: "action1".to_string() },
+            timestamp: 1622547800,
+        };
+        repo.create(request_lock.clone());
+
+        let exists = repo.exists(&request_lock.key);
+        assert!(exists);
+
+        let retrieved = REQUEST_LOCK_STORE.with_borrow(|store| store.get(&request_lock.key));
+        let retrieved = retrieved.expect("Request lock should exist");
+        assert_eq!(retrieved.key, request_lock.key);
+        assert_eq!(retrieved.timestamp, 1622547800);
+    }
+
+    #[test]
+    fn delete() {
+        let repo = RequestLockRepository::new();
+        let request_lock = RequestLock {
+            key: RequestLockKey::UserLinkAction { user_principal: "abc-xya".to_string(), link_id: "link1".to_string(), action_id: "action1".to_string() },
+            timestamp: 1622547800,
+        };
+        repo.create(request_lock.clone());
+
+        repo.delete(&request_lock.key);
+        let exists = repo.exists(&request_lock.key);
+        assert!(!exists);
+    }
+
+    #[test]
+    fn exists() {
+        let repo = RequestLockRepository::new();
+        let request_lock = RequestLock {
+            key: RequestLockKey::UserLinkAction { user_principal: "abc-xya".to_string(), link_id: "link1".to_string(), action_id: "action1".to_string() },
+            timestamp: 1622547800,
+        };
+        repo.create(request_lock.clone());
+
+        let exists = repo.exists(&request_lock.key);
+        assert!(exists);
+
+        repo.delete(&request_lock.key);
+        let exists_after_delete = repo.exists(&request_lock.key);
+        assert!(!exists_after_delete);
+    }
+
+    #[test]
+    fn default() {
+        let repo = RequestLockRepository::default();
+        assert!(!repo.exists(&RequestLockKey::UserLinkAction {
+            user_principal: "default".to_string(),
+            link_id: "default".to_string(),
+            action_id: "default".to_string()
+        }));
+    }
+}

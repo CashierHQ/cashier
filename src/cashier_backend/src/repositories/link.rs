@@ -208,4 +208,10 @@ mod tests {
         assert!(fetched_link.is_some());
         assert_eq!(fetched_link.unwrap().id, "link1");
     }
+
+    #[test]
+    fn default() {
+        let repo = LinkRepository::default();
+        assert!(repo.get(&"default_link".to_string()).is_none());
+    }
 }

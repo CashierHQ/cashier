@@ -129,4 +129,10 @@ mod tests {
         assert_eq!(retrieved[0].intent_id, "intent1");
     }
 
+    #[test]
+    fn default() {
+        let repo = ActionIntentRepository::default();
+        assert!(repo.get_by_action_id("nonexistent").is_empty());
+        assert!(repo.get_by_intent_id("nonexistent").is_empty());
+    }
 }
