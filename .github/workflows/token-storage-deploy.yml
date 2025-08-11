@@ -56,12 +56,17 @@ jobs:
             - name: Confirm successful installation
               run: dfx --version
 
+            - name: Install Just command runner
+              uses: extractions/setup-just@v1
+
             - name: Create private key file
               run: |
                   echo "${{ secrets.DEPLOYER }}" > private_key.pem
 
+            # DANGEROUS: This is a plaintext identity import
             - name: Import identity
               run: dfx identity import deployer private_key.pem --storage-mode=plaintext
+            # DANGEROUS: Do not echo the private key to the console
 
             - name: Get token storage dev address
               run: |
