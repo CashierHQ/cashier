@@ -37,8 +37,7 @@ thread_local! {
         MemoryManager::init(DefaultMemoryImpl::default())
     );
 
-    // Store user's token references (not full token data)
-    // user enable list
+    // Store the logger settings
     pub static LOGGER_SERVICE_STORE: RefCell<LoggerServiceStorage> =
         RefCell::new(
             StableCell::init(
