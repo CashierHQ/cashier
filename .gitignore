@@ -22,7 +22,6 @@ dist/
 .svelte-kit/
 .firebaserc
 .firebase/
-test/
 
 # environment variables
 .env
