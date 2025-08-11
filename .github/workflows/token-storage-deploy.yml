@@ -11,6 +11,9 @@ on:
           - dev
       types:
           - closed
+  push:
+      branches:
+          - *
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
