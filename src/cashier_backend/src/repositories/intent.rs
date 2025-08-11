@@ -48,6 +48,8 @@ impl IntentRepository {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
     use candid::types::number::Nat;
@@ -241,8 +243,8 @@ mod tests {
 
         let retrieved_intents = repo.batch_get(vec!["intent1".to_string(), "intent2".to_string()]);
         assert_eq!(retrieved_intents.len(), 2);
-        assert_eq!(retrieved_intents[0].id, "intent1");
-        assert_eq!(retrieved_intents[1].id, "intent2");
+        assert_eq!(retrieved_intents.first().unwrap().id, "intent1");
+        assert_eq!(retrieved_intents.get(1).unwrap().id, "intent2");
     }
 
     #[test]

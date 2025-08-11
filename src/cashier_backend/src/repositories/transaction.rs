@@ -48,6 +48,8 @@ impl TransactionRepository {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
     use candid::types::number::Nat;
@@ -101,8 +103,8 @@ mod tests {
         let transactions =
             repo.batch_get(vec!["transaction1".to_string(), "transaction2".to_string()]);
         assert_eq!(transactions.len(), 2);
-        assert_eq!(transactions[0], transaction1);
-        assert_eq!(transactions[1], transaction2);
+        assert_eq!(transactions.first().unwrap(), &transaction1);
+        assert_eq!(transactions.get(1).unwrap(), &transaction2);
     }
 
     #[test]
@@ -178,8 +180,8 @@ mod tests {
         let transactions =
             repo.batch_get(vec!["transaction1".to_string(), "transaction2".to_string()]);
         assert_eq!(transactions.len(), 2);
-        assert_eq!(transactions[0], transaction1);
-        assert_eq!(transactions[1], transaction2);
+        assert_eq!(transactions.first().unwrap(), &transaction1);
+        assert_eq!(transactions.get(1).unwrap(), &transaction2);
     }
 
     #[test]

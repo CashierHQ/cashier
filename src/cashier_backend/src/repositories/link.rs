@@ -49,6 +49,8 @@ impl LinkRepository {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
     use cashier_types::repository::link::v1::{LinkState, LinkType};
@@ -181,8 +183,8 @@ mod tests {
         let ids = vec!["link1".to_string(), "link2".to_string()];
         let fetched_links = repo.get_batch(ids);
         assert_eq!(fetched_links.len(), 2);
-        assert_eq!(fetched_links[0].id, "link1");
-        assert_eq!(fetched_links[1].id, "link2");
+        assert_eq!(fetched_links.first().unwrap().id, "link1");
+        assert_eq!(fetched_links.get(1).unwrap().id, "link2");
     }
 
     #[test]

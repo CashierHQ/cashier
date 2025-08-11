@@ -72,6 +72,8 @@ impl IntentTransactionRepository {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -92,11 +94,11 @@ mod tests {
 
         let transactions = repo.get_by_intent_id("intent1");
         assert_eq!(transactions.len(), 1);
-        assert_eq!(transactions[0].transaction_id, "transaction1");
+        assert_eq!(transactions.first().unwrap().transaction_id, "transaction1");
 
         let transactions = repo.get_by_transaction_id("transaction2");
         assert_eq!(transactions.len(), 1);
-        assert_eq!(transactions[0].intent_id, "intent2");
+        assert_eq!(transactions.first().unwrap().intent_id, "intent2");
     }
 
     #[test]
@@ -110,7 +112,7 @@ mod tests {
 
         let transactions = repo.get_by_intent_id("intent1");
         assert_eq!(transactions.len(), 1);
-        assert_eq!(transactions[0].transaction_id, "transaction1");
+        assert_eq!(transactions.first().unwrap().transaction_id, "transaction1");
     }
 
     #[test]
@@ -124,7 +126,7 @@ mod tests {
 
         let transactions = repo.get_by_transaction_id("transaction1");
         assert_eq!(transactions.len(), 1);
-        assert_eq!(transactions[0].intent_id, "intent1");
+        assert_eq!(transactions.first().unwrap().intent_id, "intent1");
     }
 
     #[test]
