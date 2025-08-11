@@ -69,9 +69,9 @@ jobs:
                   dfx identity get-principal
 
             - name: Build backend canister
-              run: dfx build cashier_backend
+              run: dfx build cashier_backend --network ${NETWORK}
 
-            - name: Deploy backend canister
+            - name: Deploy backend canister 
               env:
                   DFX_WARNING: -mainnet_plaintext_identity
                   ENVIRONMENT: ${{ needs.setup_environment.outputs.environment }}

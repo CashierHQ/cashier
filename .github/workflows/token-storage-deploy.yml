@@ -69,7 +69,7 @@ jobs:
                   dfx identity get-principal
 
             - name: Build token storage canister
-              run: dfx build token_storage
+              run: dfx build token_storage --network ${NETWORK}
 
             - name: Deploy token storage canister
               env:
