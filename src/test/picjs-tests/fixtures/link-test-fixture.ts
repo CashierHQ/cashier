@@ -19,7 +19,7 @@ import {
     LinkDto,
     UserDto,
     CreateLinkInput,
-} from "../../../declarations/cashier_backend/cashier_backend.did";
+} from "../../../../src/cashier_frontend/src/generated/cashier_backend/cashier_backend.did";
 import { ICP_LABEL, MultipleTokenHelper } from "../utils/multiple-token-helper";
 import { parseResultResponse, safeParseJSON } from "../utils/parser";
 import { flattenAndFindByMethod } from "../utils/icrc-112";
@@ -27,9 +27,9 @@ import LinkHelper from "../utils/link-helper";
 import { fromNullable, toNullable } from "@dfinity/utils";
 import { Identity } from "@dfinity/agent";
 import { Icrc112ExecutorV2 } from "../utils/icrc-112-v2";
-import { FEE_CANISTER_ID } from "../constant";
+import { ARTIFACTS_DIR, FEE_CANISTER_ID } from "../constant";
 
-export const WASM_PATH = resolve("artifacts", "cashier_backend.wasm.gz");
+export const WASM_PATH = resolve(ARTIFACTS_DIR, "cashier_backend.wasm.gz");
 
 export interface LinkConfig {
     title: string;

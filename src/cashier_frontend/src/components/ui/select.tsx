@@ -3,8 +3,6 @@
 
 import * as React from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "@radix-ui/react-icons";
-import { FaChevronUp, FaChevronDown } from "react-icons/fa";
-import { FaCheck } from "react-icons/fa";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { IoMdCheckmark } from "react-icons/io";
 
@@ -14,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 const Select = SelectPrimitive.Root;
 
-const SelectGroup = SelectPrimitive.Group;
+// const SelectGroup = SelectPrimitive.Group;
 
 const SelectValue = SelectPrimitive.Value;
 
@@ -103,17 +101,17 @@ const SelectContent = React.forwardRef<
 ));
 SelectContent.displayName = SelectPrimitive.Content.displayName;
 
-const SelectLabel = React.forwardRef<
-    React.ElementRef<typeof SelectPrimitive.Label>,
-    React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
->(({ className, ...props }, ref) => (
-    <SelectPrimitive.Label
-        ref={ref}
-        className={cn("px-2 py-1.5 text-sm font-semibold", className)}
-        {...props}
-    />
-));
-SelectLabel.displayName = SelectPrimitive.Label.displayName;
+// const SelectLabel = React.forwardRef<
+//     React.ElementRef<typeof SelectPrimitive.Label>,
+//     React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
+// >(({ className, ...props }, ref) => (
+//     <SelectPrimitive.Label
+//         ref={ref}
+//         className={cn("px-2 py-1.5 text-sm font-semibold", className)}
+//         {...props}
+//     />
+// ));
+// SelectLabel.displayName = SelectPrimitive.Label.displayName;
 
 const SelectItem = React.forwardRef<
     React.ElementRef<typeof SelectPrimitive.Item>,
@@ -149,15 +147,4 @@ const SelectSeparator = React.forwardRef<
 ));
 SelectSeparator.displayName = SelectPrimitive.Separator.displayName;
 
-export {
-    Select,
-    SelectGroup,
-    SelectValue,
-    SelectTrigger,
-    SelectContent,
-    SelectLabel,
-    SelectItem,
-    SelectSeparator,
-    SelectScrollUpButton,
-    SelectScrollDownButton,
-};
+export { Select, SelectValue, SelectTrigger, SelectContent, SelectItem };

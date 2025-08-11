@@ -2,8 +2,6 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 export enum TEMPLATE {
-    LEFT = "Left",
-    RIGHT = "Right",
     CENTRAL = "Central",
 }
 
@@ -19,13 +17,13 @@ export enum LINK_STATE {
     INACTIVE_ENDED = "Link_state_inactive_ended",
 }
 
-export enum TRANSACTION_STATE {
-    CREATED = "Transaction_state_created",
-    PROCESSING = "Transaction_state_processing",
-    SUCCESS = "Transaction_state_success",
-    FAIL = "Transaction_state_fail",
-    TIMEOUT = "Transaction_state_timeout",
-}
+// export enum TRANSACTION_STATE {
+//     CREATED = "Transaction_state_created",
+//     PROCESSING = "Transaction_state_processing",
+//     SUCCESS = "Transaction_state_success",
+//     FAIL = "Transaction_state_fail",
+//     TIMEOUT = "Transaction_state_timeout",
+// }
 
 export enum INTENT_STATE {
     CREATED = "Intent_state_created",
@@ -45,11 +43,6 @@ export enum ACTION_STATE {
 export enum INTENT_TYPE {
     TRANSFER_FROM = "TransferFrom",
     TRANSFER = "Transfer",
-}
-
-export enum LINK_ASSET_TYPE {
-    CASHIER_FEE = "CashierFee",
-    ASSET_ADDED = "Asset",
 }
 
 export enum FEE_TYPE {
@@ -189,16 +182,16 @@ export enum ACTION_TYPE {
     USE_LINK = "Use",
 }
 
-export enum IC_TRANSACTION_PROTOCAL {
-    ICRC1_TRANSFER = "ICRC1Transfer",
-    ICRC2_TRANSFER = "ICRC2Transfer",
-    ICRC2_APPROVE = "ICRC2Approve",
-}
+// export enum IC_TRANSACTION_PROTOCAL {
+//     ICRC1_TRANSFER = "ICRC1Transfer",
+//     ICRC2_TRANSFER = "ICRC2Transfer",
+//     ICRC2_APPROVE = "ICRC2Approve",
+// }
 
-export enum WALLET {
-    WALLET = "Wallet",
-    CANISTER = "Canister",
-}
+// export enum WALLET {
+//     WALLET = "Wallet",
+//     CANISTER = "Canister",
+// }
 
 export enum LINK_INTENT_ASSET_LABEL {
     INTENT_LABEL_LINK_CREATION_FEE = "LINK_CREATION_FEE", // fee transfer
@@ -223,7 +216,6 @@ export const mapStringToLabel = (label: string) => {
     }
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const getAssetLabelForLinkType = (linkType: string, address: string) => {
     switch (linkType) {
         case LINK_TYPE.SEND_TIP:
@@ -240,7 +232,5 @@ export const getAssetLabelForLinkType = (linkType: string, address: string) => {
 };
 
 export enum LINK_USER_STATE {
-    NO_STATE = "No_state",
-    CHOOSE_WALLET = "User_state_choose_wallet",
     COMPLETE = "User_state_completed_link",
 }

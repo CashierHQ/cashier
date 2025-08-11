@@ -9,11 +9,7 @@ pub mod guard;
 pub mod icrc;
 pub mod init_and_upgrade;
 pub mod link;
-pub mod migration;
 pub mod user;
-
-// #[cfg(test)]
-// pub mod __tests__;
 
 use cashier_common::icrc::*;
 use cashier_types::dto::action::*;

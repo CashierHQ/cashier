@@ -5,7 +5,7 @@ import { useMediaQuery } from "@uidotdev/usehooks";
 import { useCallback } from "react";
 
 // Interface for device size detection
-export interface DeviceSizeQuery {
+interface DeviceSizeQuery {
     isLargeDevice: boolean;
     isMediumDevice: boolean;
     isExtraLargeDevice: boolean;
@@ -13,7 +13,7 @@ export interface DeviceSizeQuery {
 }
 
 // Interface for header functionality
-export interface HeaderQuery {
+interface HeaderQuery {
     showCompactHeader: (pathname: string) => boolean;
     hideHeader: (pathname: string) => boolean;
     showHeaderWithBackButtonAndWalletButton: (
@@ -22,9 +22,6 @@ export interface HeaderQuery {
         isSignedOut?: boolean,
     ) => boolean;
 }
-
-// Combined interface for backward compatibility
-export interface MediaQuery extends DeviceSizeQuery, HeaderQuery {}
 
 /**
  * Hook for detecting device size based on media queries
@@ -87,18 +84,5 @@ export function useHeader(): HeaderQuery {
         showCompactHeader,
         hideHeader,
         showHeaderWithBackButtonAndWalletButton,
-    };
-}
-
-/**
- * Combined hook for backward compatibility
- */
-export function useResponsive(): MediaQuery {
-    const deviceSize = useDeviceSize();
-    const header = useHeader();
-
-    return {
-        ...deviceSize,
-        ...header,
     };
 }

@@ -7,7 +7,7 @@ use crate::{
         token_registry_metadata::TokenRegistryMetadataRepository,
         user_preference::UserPreferenceRepository, user_token::TokenRepository,
     },
-    types::{TokenDto, TokenId, UserPreference, UserTokenList},
+    types::{TokenId, UserPreference, UserTokenList},
 };
 
 pub struct UserTokenService {
@@ -33,46 +33,6 @@ impl UserTokenService {
             user_preference_repository: UserPreferenceRepository::new(),
             balance_cache_repository: BalanceCacheRepository::new(),
         }
-    }
-
-    pub fn list_tokens(&self, user_id: &str) -> Vec<TokenDto> {
-        // Try to get the user's token list
-        let user_token_list = self
-            .token_repository
-            .list_tokens(user_id)
-            .unwrap_or_default();
-
-        let registry_tokens = self.registry_repository.list_tokens();
-
-        if registry_tokens.is_empty() {
-            return Vec::new();
-        }
-
-        let balances: std::collections::HashMap<TokenId, u128> =
-            if !user_token_list.enable_list.is_empty() {
-                let balances_vec = self.balance_cache_repository.get_all_balances(user_id);
-                balances_vec.into_iter().collect()
-            } else {
-                std::collections::HashMap::new()
-            };
-
-        // Convert each registry token to TokenDto
-        registry_tokens
-            .into_iter()
-            .map(|registry_token| {
-                // User's enable list takes priority over enabled_by_default
-                let is_enabled = user_token_list.enable_list.contains(&registry_token.id);
-
-                // Only include balance for enabled tokens
-                let balance = if is_enabled {
-                    balances.get(&registry_token.id).copied()
-                } else {
-                    None // Disabled tokens have no balance
-                };
-
-                TokenDto::from(registry_token).with_user_data(is_enabled, balance)
-            })
-            .collect()
     }
 
     /// Ensures the user has a token list initialized
@@ -214,40 +174,6 @@ impl UserTokenService {
             self.balance_cache_repository
                 .update_bulk_balances(user_id, updates);
         }
-    }
-
-    pub fn get_bulk_balances(
-        &self,
-        user_id: &str,
-        token_ids: Vec<TokenId>,
-    ) -> std::collections::HashMap<TokenId, u128> {
-        self.balance_cache_repository
-            .get_balances_batch(user_id, token_ids)
-    }
-
-    pub fn get_all_cached_balances(
-        &self,
-        user_id: &str,
-    ) -> std::collections::HashMap<std::string::String, u128> {
-        let balances_vec = self.balance_cache_repository.get_all_balances(user_id);
-        balances_vec.into_iter().collect()
-    }
-
-    pub fn reset_cached_balances(&self, user_id: &str) {
-        self.balance_cache_repository.reset_balances(user_id);
-    }
-
-    pub fn delete_all_tokens(&self, user_id: &str) -> Result<(), String> {
-        // Ensure user has a token list initialized
-        self.ensure_token_list_initialized(user_id)?;
-
-        // Clear the user's token list
-        self.token_repository.delete_all_tokens(user_id)?;
-
-        // Reset cached balances
-        self.balance_cache_repository.reset_balances(user_id);
-
-        Ok(())
     }
 
     /// Get all balances for a user

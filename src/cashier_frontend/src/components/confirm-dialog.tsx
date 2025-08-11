@@ -12,7 +12,7 @@ import {
 import { FC } from "react";
 import { X } from "lucide-react";
 
-export interface ConfirmDialogProps {
+interface ConfirmDialogProps {
     open: boolean;
     title?: string;
     description?: string | React.ReactNode;

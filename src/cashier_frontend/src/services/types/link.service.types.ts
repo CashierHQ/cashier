@@ -5,21 +5,6 @@ import { IntentCreateModel } from "./intent.service.types";
 import { ActionModel } from "./action.service.types";
 import { ACTION_TYPE, CHAIN, LINK_INTENT_ASSET_LABEL } from "./enum";
 
-export enum State {
-    New = "New",
-    Inactive = "Inactive",
-    Active = "Active",
-    PendingPreview = "PendingPreview",
-    PendingDetail = "PendingDetail",
-    InactiveEnded = "InactiveEnded",
-}
-
-export enum Template {
-    Left = "Left",
-    Right = "Right",
-    Central = "Central",
-}
-
 export enum Chain {
     IC = "IC",
 }
@@ -50,13 +35,6 @@ export type LinkModel = {
     link: LinkDetailModel;
     action?: ActionModel;
     intent_create?: IntentCreateModel;
-};
-
-export type TipLinkModel = {
-    id: string;
-    title: string;
-    asset: string;
-    amount: number;
 };
 
 export type LinkGetUserStateInputModel = {

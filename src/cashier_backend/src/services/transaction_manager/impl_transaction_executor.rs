@@ -73,17 +73,17 @@ impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerServ
                                     })?;
                                 } else {
                                     error!(
-                                            "[execute_canister_tx] Error: Could not find other transaction"
-                                        );
+                                        "[execute_canister_tx] Error: Could not find other transaction"
+                                    );
                                     return Err(CanisterError::HandleLogicError(
                                         "Could not find other transaction".to_string(),
                                     ));
                                 }
                             } else {
                                 error!(
-                                        "[execute_canister_tx] Error: Expected 2 transactions, found {}",
-                                        txs.len()
-                                    );
+                                    "[execute_canister_tx] Error: Expected 2 transactions, found {}",
+                                    txs.len()
+                                );
                                 return Err(CanisterError::HandleLogicError(
                                     "Invalid approve tx".to_string(),
                                 ));

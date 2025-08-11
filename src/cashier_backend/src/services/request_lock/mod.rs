@@ -95,11 +95,4 @@ impl RequestLockService {
         self.request_lock_repository.delete(key);
         Ok(())
     }
-
-    /// Get a request lock by key
-    /// Returns Some(RequestLock) if found, None if not found
-    pub fn get(&self, key: &RequestLockKey) -> Result<Option<RequestLock>, CanisterError> {
-        let lock = self.request_lock_repository.get(key);
-        Ok(lock)
-    }
 }

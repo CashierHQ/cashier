@@ -7,7 +7,7 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/u
 import { X, Link, Wifi } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-export type FeeInfoDrawerProps = {
+type FeeInfoDrawerProps = {
     open?: boolean;
     onClose?: () => void;
 };

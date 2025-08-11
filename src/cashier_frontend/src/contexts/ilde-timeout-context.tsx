@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import React, { createContext, useContext, useEffect, useRef } from "react";
+import React, { createContext, useEffect, useRef } from "react";
 import { useAuth } from "@nfid/identitykit/react";
 import { IDLE_TIMEOUT_MILLI_SEC } from "@/App";
 
@@ -73,7 +73,7 @@ export function IdleTimeoutProvider({ children }: IdleTimeoutProviderProps) {
             checkAndUpdate();
 
             // Check every 30 seconds
-            intervalRef.current = setInterval(checkAndUpdate, ACTIVITY_UPDATE_INTERVAL);
+            intervalRef.current = window.setInterval(checkAndUpdate, ACTIVITY_UPDATE_INTERVAL);
 
             return () => {
                 if (intervalRef.current) {
@@ -95,12 +95,4 @@ export function IdleTimeoutProvider({ children }: IdleTimeoutProviderProps) {
     return (
         <IdleTimeoutContext.Provider value={contextValue}>{children}</IdleTimeoutContext.Provider>
     );
-}
-
-export function useIdleTimeout() {
-    const context = useContext(IdleTimeoutContext);
-    if (!context) {
-        throw new Error("useIdleTimeout must be used within an IdleTimeoutProvider");
-    }
-    return context;
 }

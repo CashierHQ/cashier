@@ -3,5 +3,4 @@
 
 // Generated versioned enum for Transaction
 
-// pub mod v1;
 pub mod v2;

@@ -5,7 +5,7 @@ import { parseResultResponse } from "@/utils";
 import { Actor, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { BACKEND_CANISTER_ID } from "@/const";
-import { _SERVICE, idlFactory } from "../../../declarations/cashier_backend/cashier_backend.did";
+import { _SERVICE, idlFactory } from "../generated/cashier_backend/cashier_backend.did";
 import { getAgent } from "@/utils/agent";
 
 class UserService {
@@ -17,8 +17,6 @@ class UserService {
             agent,
             canisterId: BACKEND_CANISTER_ID,
         });
-
-
     }
 
     async createUser() {

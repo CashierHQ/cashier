@@ -11,7 +11,7 @@ export const safeParseJSON = (arg: Record<string, unknown | undefined>): string 
     );
 };
 
-export type Response<T, E> =
+type Response<T, E> =
     | {
           ok: T;
       }
@@ -45,48 +45,6 @@ export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
     }
 
     throw new Error("Invalid response");
-};
-
-export const resizeImage = (file: Blob): Promise<Blob> => {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (event) => {
-            const img = new Image();
-            img.src = event.target?.result as string;
-            img.onload = () => {
-                if (img.width <= 500 && img.height <= 500) return resolve(file);
-                const elem = document.createElement("canvas");
-                if (img.width > img.height) {
-                    elem.width = 500;
-                    elem.height = (500 * img.height) / img.width;
-                } else {
-                    elem.width = (500 * img.width) / img.height;
-                    elem.height = 500;
-                }
-                const ctx = elem.getContext("2d");
-                ctx?.drawImage(img, 0, 0, elem.width, elem.height);
-                ctx?.canvas.toBlob((blob) => {
-                    if (blob) {
-                        resolve(blob);
-                    }
-                });
-            };
-        };
-    });
-};
-
-export const fileToBase64 = (file: Blob) => {
-    return new Promise<string>((resolve, reject) => {
-        const fileReader = new FileReader();
-        fileReader.readAsDataURL(file);
-        fileReader.onload = () => {
-            resolve(fileReader?.result as string);
-        };
-        fileReader.onerror = (error) => {
-            reject(error);
-        };
-    });
 };
 
 export const convertNanoSecondsToDate = (nanoSeconds: bigint): Date => {
@@ -186,6 +144,3 @@ export const getLinkDefaultAvatar = (linkType: LINK_TYPE) => {
             return `/smallLogo.svg`;
     }
 };
-
-// Export link default utilities
-export { getDefaultMaxActionNumber } from "./linkDefaults";

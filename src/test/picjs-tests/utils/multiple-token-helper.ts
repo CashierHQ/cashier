@@ -14,9 +14,10 @@ import {
     init as ledgerInit,
     TransferArg,
     idlFactory,
-} from "../../../declarations/icp_ledger_canister/icp_ledger_canister.did";
+} from "../../../../src/cashier_frontend/src/generated/icp_ledger_canister/icp_ledger_canister.did";
 import { Account, principalToAccountIdentifier } from "@dfinity/ledger-icp";
 import { IDL } from "@dfinity/candid";
+import { ARTIFACTS_DIR } from "../constant";
 
 export const ICP_LABEL = "ICP";
 
@@ -32,7 +33,7 @@ export class MultipleTokenHelper {
     constructor(pic: PocketIc) {
         this.pic = pic;
         this.deployer = createIdentity("tokenDeployer");
-        this.wasm_path = resolve("artifacts", "token_canister.wasm.gz");
+        this.wasm_path = resolve(ARTIFACTS_DIR, "ledger-suite-icp.wasm.gz");
         this.actors = new Map();
         this.canisterIds = new Map();
         this.canisterIdToName = new Map();

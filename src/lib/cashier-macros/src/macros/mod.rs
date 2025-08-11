@@ -5,7 +5,6 @@ use proc_macro::TokenStream;
 use syn::Error;
 
 pub mod storable;
-pub mod with_middleware;
 
 pub trait MacroDefinition {
     const MACRO_NAME: &'static str;
