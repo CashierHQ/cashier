@@ -85,5 +85,60 @@ impl UserLinkRepository {
 mod tests {
     use super::*;
 
+    #[test]
+    fn create() {
+        let repo = UserLinkRepository::new();
+        let user_link = UserLink {
+            user_id: "user1".to_string(),
+            link_id: "link1".to_string(),
+        };
 
+        repo.create(user_link.clone());
+        let links = repo.get_links_by_user_id("user1", &PaginateInput::default());
+        assert_eq!(links.data.len(), 1);
+        assert_eq!(links.data[0].link_id, "link1");
+        assert_eq!(links.data[0].user_id, "user1");
+    }
+
+    #[test]
+    fn delete() {
+        let repo = UserLinkRepository::new();
+        let user_link = UserLink {
+            user_id: "user1".to_string(),
+            link_id: "link1".to_string(),
+        };
+
+        repo.create(user_link.clone());
+        repo.delete(user_link);
+
+        let links = repo.get_links_by_user_id("user1", &PaginateInput::default());
+        assert!(links.data.is_empty());
+    }
+
+    #[test]
+    fn get_links_by_user_id() {
+        let repo = UserLinkRepository::new();
+        let user_link1 = UserLink {
+            user_id: "user1".to_string(),
+            link_id: "link1".to_string(),
+        };
+        let user_link2 = UserLink {
+            user_id: "user1".to_string(),
+            link_id: "link2".to_string(),
+        };
+
+        repo.create(user_link1.clone());
+        repo.create(user_link2.clone());
+
+        let links = repo.get_links_by_user_id("user1", &PaginateInput::default());
+        assert_eq!(links.data.len(), 2);
+        assert!(links.data.iter().any(|l| l.link_id == "link1"));
+        assert!(links.data.iter().any(|l| l.link_id == "link2"));
+    }
+
+    #[test]
+    fn default() {
+        let repo = UserLinkRepository::default();
+        assert!(repo.get_links_by_user_id("user1", &PaginateInput::default()).data.is_empty());
+    }
 }

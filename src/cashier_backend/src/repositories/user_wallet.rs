@@ -29,3 +29,50 @@ impl UserWalletRepository {
         USER_WALLET_STORE.with_borrow(|store| store.get(&wallet.to_string()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn create() {
+        let repo = UserWalletRepository::new();
+        let wallet_key = UserWalletKey::from("key1");
+        let user_wallet = UserWallet {
+            user_id: "user1".to_string(),
+        };
+        repo.create(wallet_key.clone(), user_wallet);
+
+        let retrieved_wallet = repo.get(&wallet_key);
+        assert!(retrieved_wallet.is_some());
+        assert_eq!(retrieved_wallet.unwrap().user_id, "user1");
+    }
+
+    #[test]
+    fn get() {
+        let repo = UserWalletRepository::new();
+        let wallet_key = UserWalletKey::from("key1");
+        let user_wallet = UserWallet {
+            user_id: "user1".to_string(),
+        };
+        repo.create(wallet_key.clone(), user_wallet);
+
+        let retrieved_wallet = repo.get(&wallet_key);
+        assert!(retrieved_wallet.is_some());
+        assert_eq!(retrieved_wallet.unwrap().user_id, "user1");
+    }
+
+    #[test]
+    fn default() {
+        let repo = UserWalletRepository::default();
+        let wallet_key = UserWalletKey::from("key1");
+        let user_wallet = UserWallet {
+            user_id: "user1".to_string(),
+        };
+        repo.create(wallet_key.clone(), user_wallet);
+
+        let retrieved_wallet = repo.get(&wallet_key);
+        assert!(retrieved_wallet.is_some());
+        assert_eq!(retrieved_wallet.unwrap().user_id, "user1");
+    }
+}
