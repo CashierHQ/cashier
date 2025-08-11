@@ -69,3 +69,64 @@ impl ActionIntentRepository {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn batch_create() {
+        let repo = ActionIntentRepository::new();
+        let action_intents = vec![
+            ActionIntent {
+                action_id: "action1".to_string(),
+                intent_id: "intent1".to_string(),
+            },
+            ActionIntent {
+                action_id: "action2".to_string(),
+                intent_id: "intent2".to_string(),
+            },
+        ];
+
+        repo.batch_create(action_intents.clone());
+
+        let retrieved = repo.get_by_action_id("action1");
+        assert_eq!(retrieved.len(), 1);
+        assert_eq!(retrieved[0].intent_id, "intent1");
+
+        let retrieved = repo.get_by_intent_id("intent2");
+        assert_eq!(retrieved.len(), 1);
+        assert_eq!(retrieved[0].action_id, "action2");
+    }
+
+    #[test]
+    fn get_by_action_id() {
+        let repo = ActionIntentRepository::new();
+        let action_intent = ActionIntent {
+            action_id: "action1".to_string(),
+            intent_id: "intent1".to_string(),
+        };
+        repo.batch_create(vec![action_intent.clone()]);
+
+        let retrieved = repo.get_by_action_id("action1");
+        assert_eq!(retrieved.len(), 1);
+        assert_eq!(retrieved[0].intent_id, "intent1");
+        assert_eq!(retrieved[0].action_id, "action1");
+    }
+
+    #[test]
+    fn get_by_intent_id() {
+        let repo = ActionIntentRepository::new();
+        let action_intent = ActionIntent {
+            action_id: "action1".to_string(),
+            intent_id: "intent1".to_string(),
+        };
+        repo.batch_create(vec![action_intent.clone()]); 
+
+        let retrieved = repo.get_by_intent_id("intent1");
+        assert_eq!(retrieved.len(), 1);
+        assert_eq!(retrieved[0].action_id, "action1");
+        assert_eq!(retrieved[0].intent_id, "intent1");
+    }
+
+}
