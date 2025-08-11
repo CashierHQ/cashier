@@ -2,4 +2,6 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 pub mod admin;
-pub mod token_v2;
+mod init_and_upgrade;
+pub mod token;
+mod state;

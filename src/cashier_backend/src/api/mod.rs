@@ -9,6 +9,7 @@ pub mod guard;
 pub mod icrc;
 pub mod init_and_upgrade;
 pub mod link;
+mod state;
 pub mod user;
 
 use cashier_common::icrc::*;

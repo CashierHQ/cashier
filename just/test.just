@@ -34,3 +34,13 @@ test_ts_integration: download_artifacts build_canisters
 test_frontend:
   cd {{FRONTEND_DIR}} && npm install
   cd {{FRONTEND_DIR}} && npm run test
+
+
+
+# Execute the coverage report for the tests using the llvm-cov tool. This takes a long time to run.
+[group('test')]
+test_coverage:
+  # WARN: using tarpaulin for the coverage report is faster but not recommended because it is not reliable.
+  # To output the coverage report in the lcov format replace `--html` with `--lcov --output-path ./target/lcov.file`.
+  cargo llvm-cov --release --all-features --ignore-run-fail --workspace --html
+  
