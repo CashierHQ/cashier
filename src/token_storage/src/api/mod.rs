@@ -3,5 +3,5 @@
 
 pub mod admin;
 mod init_and_upgrade;
-pub mod token;
 mod state;
+pub mod token;

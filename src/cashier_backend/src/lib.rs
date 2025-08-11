@@ -23,9 +23,9 @@
 #![warn(clippy::redundant_allocation)]
 #![warn(clippy::rc_buffer)]
 
+mod api;
 mod build_data;
 mod constant;
-mod api;
 mod domains;
 mod repositories;
 mod services;
