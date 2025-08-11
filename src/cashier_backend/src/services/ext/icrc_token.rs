@@ -93,7 +93,7 @@ pub struct AllowancesItem {
     pub allowance: Tokens,
     pub expires_at: Option<u64>,
 }
-pub type Allowances = Vec<AllowancesItem>;
+
 #[derive(CandidType, Deserialize, Debug)]
 pub struct Icrc10SupportedStandardsRetItem {
     pub url: String,
@@ -202,7 +202,7 @@ pub enum Icrc21Error {
     UnsupportedCanisterCall(Icrc21ErrorInfo),
     ConsentMessageUnavailable(Icrc21ErrorInfo),
 }
-pub type Icrc21ConsentMessageResponse = std::result::Result<Icrc21ConsentInfo, Icrc21Error>;
+
 #[derive(CandidType, Deserialize, Debug)]
 pub struct AllowanceArgs {
     pub account: Account,
@@ -251,7 +251,7 @@ pub enum ApproveError {
         balance: Icrc1Tokens,
     },
 }
-pub type ApproveResult = std::result::Result<Icrc1BlockIndex, ApproveError>;
+
 #[derive(CandidType, Deserialize, Debug)]
 pub struct TransferFromArgs {
     pub to: Account,
@@ -448,15 +448,7 @@ impl Service {
 
         parsed_res.map_err(CanisterError::from)
     }
-    pub async fn icrc_2_approve(&self, arg0: &ApproveArgs) -> Result<ApproveResult, CanisterError> {
-        let res = Call::unbounded_wait(self.0, "icrc2_approve")
-            .with_arg(arg0)
-            .await
-            .map_err(CanisterError::from)?;
-        let parsed_res: Result<ApproveResult, CandidDecodeFailed> = res.candid();
 
-        parsed_res.map_err(CanisterError::from)
-    }
     pub async fn icrc_2_transfer_from(
         &self,
         arg0: &TransferFromArgs,

@@ -8,7 +8,7 @@ import Tabs from "@/components/ui/tabs2";
 import { useState } from "react";
 import { Info } from "lucide-react";
 
-export enum WalletTab {
+enum WalletTab {
     Tokens = "Tokens",
     Nfts = "NFTs",
 }

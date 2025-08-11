@@ -14,7 +14,8 @@ import { useConnectToWallet } from "@/hooks/user-hook";
 import { useWalletContext } from "@/contexts/wallet-context";
 import WalletConnectDialog from "./wallet-connect-dialog";
 import { InternetIdentity } from "@nfid/identitykit";
-import { headerWalletOptions } from "@/constants/wallet-options";
+import { headerWalletOptions, LocalInternetIdentity } from "@/constants/wallet-options";
+import { FEATURE_FLAGS } from "@/const";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface HeaderProps {}
@@ -43,6 +44,11 @@ const Header: React.FC<HeaderProps> = () => {
         setIsWalletDialogOpen(false);
         if (walletId === "InternetIdentity") {
             connectToWallet(InternetIdentity.id);
+        } else if (
+            FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER &&
+            walletId === "LocalInternetIdentity"
+        ) {
+            connectToWallet(LocalInternetIdentity.id);
         }
     };
 

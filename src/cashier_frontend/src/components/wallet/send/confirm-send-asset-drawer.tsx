@@ -16,7 +16,7 @@ import { X } from "lucide-react";
 import { toast } from "sonner";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
-export interface SendAssetConfirmationDrawerProps {
+interface SendAssetConfirmationDrawerProps {
     onSuccessfulTransaction?: () => void;
 }
 

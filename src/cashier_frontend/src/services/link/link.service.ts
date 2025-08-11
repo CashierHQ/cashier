@@ -14,9 +14,9 @@ import {
     ProcessActionAnonymousInput,
     ProcessActionInput,
     UpdateActionInput,
-} from "../../../../declarations/cashier_backend/cashier_backend.did";
-import { Actor, HttpAgent, Identity } from "@dfinity/agent";
-import { BACKEND_CANISTER_ID, IC_HOST } from "@/const";
+} from "../../generated/cashier_backend/cashier_backend.did";
+import { Actor, Identity } from "@dfinity/agent";
+import { BACKEND_CANISTER_ID } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
 import {
     LinkGetUserStateInputModel,
@@ -34,30 +34,31 @@ import { mapActionModel } from "../types/mapper/action.service.mapper";
 import { FeeModel } from "../types/intent.service.types";
 import { FEE_TYPE } from "../types/enum";
 import { UserInputItem } from "@/stores/linkCreationFormStore";
+import { getAgent } from "@/utils/agent";
 
 export interface ResponseLinksModel {
     data: LinkModel[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata: any;
 }
-export interface ProcessActionInputModel {
+interface ProcessActionInputModel {
     linkId: string;
     actionType: string;
     actionId: string;
 }
 
-export interface CreateLinkInputModel {
+interface CreateLinkInputModel {
     linkId: string;
     actionType: string;
 }
 
-export interface CreateActionAnonymousInputModel {
+interface CreateActionAnonymousInputModel {
     linkId: string;
     actionType: string;
     walletAddress: string;
 }
 
-export interface UpdateActionAnonymousInputModel {
+interface UpdateActionAnonymousInputModel {
     linkId: string;
     actionType: string;
     actionId: string;
@@ -86,7 +87,7 @@ class LinkService {
     private actor: _SERVICE;
 
     constructor(identity?: Identity | PartialIdentity | undefined) {
-        const agent = HttpAgent.createSync({ identity, host: IC_HOST });
+        const agent = getAgent(identity);
         this.actor = Actor.createActor(idlFactory, {
             agent,
             canisterId: BACKEND_CANISTER_ID,

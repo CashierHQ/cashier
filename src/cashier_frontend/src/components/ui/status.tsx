@@ -11,7 +11,7 @@ export enum STATUS {
     IN_PROGRESS,
 }
 
-export type StatusProps = {
+type StatusProps = {
     status: STATUS | undefined;
     key?: string;
 };

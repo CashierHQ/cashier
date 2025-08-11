@@ -32,22 +32,6 @@ impl UserLinkRepository {
         });
     }
 
-    pub fn batch_create(&self, user_links: Vec<UserLink>) {
-        USER_LINK_STORE.with_borrow_mut(|store| {
-            for user_link in user_links {
-                let id = UserLinkKey {
-                    user_id: user_link.user_id.clone(),
-                    link_id: user_link.link_id.clone(),
-                };
-                store.insert(id.to_str(), user_link);
-            }
-        });
-    }
-
-    pub fn get(&self, id: &UserLinkKey) -> Option<UserLink> {
-        USER_LINK_STORE.with_borrow(|store| store.get(&id.to_str()))
-    }
-
     pub fn delete(&self, id: UserLink) {
         let id = UserLinkKey {
             user_id: id.user_id.clone(),
@@ -70,8 +54,8 @@ impl UserLinkRepository {
             let prefix = user_link_key.to_str();
             let all_links: Vec<UserLink> = store
                 .range(prefix.to_string()..)
-                .take_while(|(key, _)| key.starts_with(&prefix))
-                .map(|(_, user_link)| user_link)
+                .take_while(|entry| entry.key().starts_with(&prefix))
+                .map(|entry| entry.value())
                 .collect();
 
             let total = all_links.len();

@@ -58,11 +58,6 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v4
 
-            - name: Install Rust toolchain
-              uses: dtolnay/rust-toolchain@stable
-              with:
-                targets: wasm32-unknown-unknown
-
             - name: Set up Node.js
               uses: actions/setup-node@v4
               with:
@@ -124,5 +119,5 @@ jobs:
                   echo "Created ${ENV_FILE} with values:"
                   cat src/cashier_frontend/${ENV_FILE}
 
-                  just build
+                  just build_frontend "$ENVIRONMENT"
                   dfx deploy cashier_frontend --network ${NETWORK}

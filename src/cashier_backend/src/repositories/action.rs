@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_types::repository::{action::v1::Action, keys::ActionKey};
+use cashier_types::repository::action::v1::Action;
 
 use crate::repositories::ACTION_STORE;
 
@@ -28,10 +28,6 @@ impl ActionRepository {
 
     pub fn get(&self, action_id: &str) -> Option<Action> {
         ACTION_STORE.with_borrow(|store| store.get(&action_id.to_string()))
-    }
-
-    pub fn batch_get(&self, ids: Vec<ActionKey>) -> Vec<Action> {
-        ACTION_STORE.with_borrow(|store| ids.into_iter().filter_map(|id| store.get(&id)).collect())
     }
 
     pub fn update(&self, action: Action) {

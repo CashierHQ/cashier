@@ -1,89 +1,76 @@
 use std::sync::OnceLock;
 
-use super::PocketIcTestContext;
-use crate::utils::{
-    deploy_canister_with_id, load_canister_bytecode, principal::get_user_principal,
+use crate::{
+    types::{IcpFeatureFlags, IcpInitArgs, IcpLedgerCanisterPayload, Icrc1TransferResult, Tokens},
+    utils::{deploy_canister_with_id, load_canister_bytecode, principal::TestUser},
 };
-use candid::{CandidType, Deserialize, Principal};
+use candid::{Nat, Principal};
 use ic_ledger_types::{AccountIdentifier, DEFAULT_SUBACCOUNT};
-use ic_mple_client::PocketIcClient;
-use icrc_ledger_types::icrc1::account::Account;
-use std::vec;
+use ic_mple_client::CanisterClient;
+use icrc_ledger_types::icrc1::transfer::TransferArg;
+use icrc_ledger_types::icrc1::{account::Account as IcrcAccount, transfer::TransferError};
 
-#[derive(CandidType, Deserialize, Debug)]
-pub struct FeatureFlags {
-    pub icrc2: bool,
-}
-#[derive(CandidType, Deserialize, Debug)]
-pub struct UpgradeArgs {
-    #[serde(rename = "icrc1_minting_account")]
-    pub icrc_1_minting_account: Option<Account>,
-    pub feature_flags: Option<FeatureFlags>,
+#[derive(Debug, Clone)]
+pub struct IcpLedgerClient<C>
+where
+    C: CanisterClient,
+{
+    /// The canister client.
+    client: C,
 }
 
-#[derive(CandidType, Deserialize, Debug)]
-pub struct Tokens {
-    #[serde(rename = "e8s")]
-    pub e_8_s: u64,
-}
+impl<C: CanisterClient> IcpLedgerClient<C> {
+    pub fn new(client: C) -> Self {
+        Self { client }
+    }
 
-#[derive(CandidType, Deserialize, Debug)]
-pub struct Duration {
-    pub secs: u64,
-    pub nanos: u32,
-}
+    // Ledger ICP transfer
+    pub async fn transfer(
+        &self,
+        to_account: IcrcAccount,
+        amount: u64,
+    ) -> Result<Nat, TransferError> {
+        let transfer_args = TransferArg {
+            memo: None,
+            amount: candid::Nat::from(amount),
+            fee: None,
+            from_subaccount: None,
+            to: to_account,
+            created_at_time: None,
+        };
 
-#[derive(CandidType, Deserialize, Debug)]
-pub struct ArchiveOptions {
-    pub num_blocks_to_archive: u64,
-    pub max_transactions_per_response: Option<u64>,
-    pub trigger_threshold: u64,
-    pub more_controller_ids: Option<Vec<Principal>>,
-    pub max_message_size_bytes: Option<u64>,
-    pub cycles_for_archive_creation: Option<u64>,
-    pub node_max_memory_size_bytes: Option<u64>,
-    pub controller_id: Principal,
-}
-pub type TextAccountIdentifier = String;
-#[derive(CandidType, Deserialize, Debug)]
-pub struct InitArgs {
-    pub send_whitelist: Vec<Principal>,
-    pub token_symbol: Option<String>,
-    pub transfer_fee: Option<Tokens>,
-    pub minting_account: TextAccountIdentifier,
-    pub transaction_window: Option<Duration>,
-    pub max_message_size_bytes: Option<u64>,
-    #[serde(rename = "icrc1_minting_account")]
-    pub icrc_1_minting_account: Option<Account>,
-    pub archive_options: Option<ArchiveOptions>,
-    pub initial_values: Vec<(TextAccountIdentifier, Tokens)>,
-    pub token_name: Option<String>,
-    pub feature_flags: Option<FeatureFlags>,
-}
-#[derive(CandidType, Deserialize, Debug)]
-// ignore because this is enum defined by icp ledger
-#[allow(clippy::large_enum_variant)]
-pub enum LedgerCanisterPayload {
-    Init(InitArgs),
-    Upgrade(Option<UpgradeArgs>),
-}
+        let res: Result<Icrc1TransferResult, ic_mple_client::CanisterClientError> =
+            self.client.update("icrc1_transfer", (transfer_args,)).await;
 
-/// Creates a new ICP ledger client for the given caller
-pub fn new_icp_ledger_client(
-    context: &PocketIcTestContext,
-    icp_ledger_principal: Principal,
-    caller: Principal,
-) -> PocketIcClient {
-    context.new_client(icp_ledger_principal, caller)
+        res.map_err(|e| format!("ICRC transfer failed: {e:?}"))
+            .unwrap()
+    }
+
+    pub async fn balance_of(
+        &self,
+        account: &IcrcAccount,
+    ) -> Result<Nat, ic_mple_client::CanisterClientError> {
+        let balance: Result<Nat, ic_mple_client::CanisterClientError> =
+            self.client.query("icrc1_balance_of", (account,)).await;
+
+        balance
+    }
+
+    pub async fn fee(&self) -> Result<Nat, ic_mple_client::CanisterClientError> {
+        let fee: Result<Nat, ic_mple_client::CanisterClientError> =
+            self.client.query("icrc1_fee", ()).await;
+
+        fee
+    }
 }
 
 /// Deploys ICP ledger canister and returns the ICP ledger principal
 pub async fn deploy_icp_ledger_canister(
     client: &ic_mple_pocket_ic::pocket_ic::nonblocking::PocketIc,
 ) -> Principal {
-    let token_deployer_pid = get_user_principal("token_deployer");
+    let token_deployer_pid = TestUser::TokenDeployer.get_principal();
 
-    let icp_init_args = InitArgs {
+    let icp_init_args = IcpInitArgs {
         minting_account: AccountIdentifier::new(&token_deployer_pid, &DEFAULT_SUBACCOUNT)
             .to_string(),
         initial_values: vec![],
@@ -91,7 +78,7 @@ pub async fn deploy_icp_ledger_canister(
         transfer_fee: Some(Tokens { e_8_s: 10000 }),
         token_symbol: Some("ICP".to_string()),
         token_name: Some("ICP".to_string()),
-        feature_flags: Some(FeatureFlags { icrc2: true }),
+        feature_flags: Some(IcpFeatureFlags { icrc2: true }),
         icrc_1_minting_account: None,
         transaction_window: None,
         archive_options: None,
@@ -100,17 +87,15 @@ pub async fn deploy_icp_ledger_canister(
 
     let icp_canister_id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
 
-    let icp_ledger_principal = deploy_canister_with_id(
+    deploy_canister_with_id(
         client,
         Some(token_deployer_pid),
         None,
         icp_canister_id,
         get_icp_ledger_canister_bytecode(),
-        &(LedgerCanisterPayload::Init(icp_init_args)),
+        &(IcpLedgerCanisterPayload::Init(icp_init_args)),
     )
-    .await;
-
-    icp_ledger_principal
+    .await
 }
 
 /// Retrieves the bytecode for the ICP ledger canister.

@@ -10,7 +10,6 @@ pub trait IcEnvironment {
     fn caller(&self) -> Principal;
     fn id(&self) -> Principal;
     fn time(&self) -> u64;
-    fn println(&self, message: &str);
     fn spawn<F>(&self, future: F)
     where
         F: Future<Output = ()> + 'static;
@@ -41,9 +40,7 @@ impl IcEnvironment for RealIcEnvironment {
     fn time(&self) -> u64 {
         api::time()
     }
-    fn println(&self, message: &str) {
-        ic_cdk::println!("{}", message);
-    }
+
     fn spawn<F>(&self, future: F)
     where
         F: Future<Output = ()> + 'static,

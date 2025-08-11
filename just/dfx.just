@@ -56,6 +56,11 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
   })
   "
 
+  just dfx_local_deploy_icrc1_ledger "ckBTC" "Chain Key Bitcoin" "ckBTC" "mxzaz-hqaaa-aaaar-qaada-cai" 8 10
+  just dfx_local_deploy_icrc1_ledger "ckETH" "Chain Key Ethereum" "ckETH" "ss2fx-dyaaa-aaaar-qacoq-cai" 18 2000000000000000000
+  just dfx_local_deploy_icrc1_ledger "ckUSDC" "Chain Key USD Coin" "ckUSDC" "xevnm-gaaaa-aaaar-qafnq-cai" 8 10000
+  just dfx_local_deploy_icrc1_ledger "DOGE" "Test Token" "DOGE" "x5qut-viaaa-aaaar-qajda-cai" 8 10000
+
 
 # Prints dfx info of the local deployment
 [group('dfx')]
@@ -77,6 +82,33 @@ dfx_local_info:
   echo "token_storage url: http://$token_storage_id.raw.localhost:$dfx_webserver_port"
   echo "internet_identity url: http://$internet_identity_id.raw.localhost:$dfx_webserver_port"
 
+# Airdrop tokens to the target principal
+[group('dfx')]
+dfx_local_airdrop target_principal:
+  #!/usr/bin/env bash
+  set -e
+  dfx canister call icp_ledger_canister icrc1_transfer "(record { 
+        to = record { 
+            owner = principal \"{{target_principal}}\";
+            subaccount = null;
+        };
+        memo = null; 
+        created_at_time = null;
+        from_subaccount = null;
+        amount = 10000000000;
+        fee = null
+  })" 
+  just dfx_local_airdrop_token {{target_principal}} mxzaz-hqaaa-aaaar-qaada-cai 1000000
+  just dfx_local_airdrop_token {{target_principal}} ss2fx-dyaaa-aaaar-qacoq-cai 1000000000000000
+  just dfx_local_airdrop_token {{target_principal}} xevnm-gaaaa-aaaar-qafnq-cai 10000000000
+  just dfx_local_airdrop_token {{target_principal}} x5qut-viaaa-aaaar-qajda-cai 10000000000
+
+
+# Tails the local dfx logs
+[group('dfx')]
+dfx_local_logs_tail args="":
+  tail -f "{{DFX_LOGFILE}}" {{args}}
+
 
 [private]
 dfx_prepare_env: 
@@ -88,3 +120,42 @@ dfx_prepare_env:
 create_canisters network cycles:
   dfx canister --network={{network}} create --with-cycles={{cycles}} --all
 
+[private]
+dfx_local_deploy_icrc1_ledger canister_name name symbol canister_id decimals transfer_fee:
+  #!/usr/bin/env bash
+  export MINTER=$(dfx identity get-principal)
+
+  dfx deploy {{canister_name}} --argument "
+  (variant { 
+    Init = record { 
+      token_symbol = \"{{symbol}}\";
+      token_name = \"{{name}}\";
+      decimals = opt {{decimals}} : opt nat8;
+      transfer_fee = {{transfer_fee}} : nat;
+      minting_account = record { owner = principal \"$MINTER\"; }; 
+      metadata = vec {};
+      feature_flags = opt record { icrc2 = true };
+      initial_balances = vec {};
+      archive_options = record { 
+        num_blocks_to_archive = 1000 : nat64;
+        trigger_threshold = 500 : nat64;
+        controller_id = principal \"$MINTER\"; 
+        cycles_for_archive_creation = opt 10000000000000 : opt nat64; 
+      } 
+    }
+  })" --specified-id {{canister_id}}
+
+[private]
+dfx_local_airdrop_token target_principal canister_id amount:
+  #!/usr/bin/env bash
+  dfx canister call {{canister_id}} icrc1_transfer "(record { 
+        to = record { 
+            owner = principal \"{{target_principal}}\";
+            subaccount = null;
+        };
+        memo = null; 
+        created_at_time = null;
+        from_subaccount = null;
+        amount = {{amount}};
+        fee = null
+  })" 

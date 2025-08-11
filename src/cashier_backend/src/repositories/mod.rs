@@ -20,14 +20,13 @@ use cashier_types::repository::{
 
 pub mod action;
 pub mod action_intent;
-pub mod base_repository;
 pub mod intent;
 pub mod intent_transaction;
-// pub mod intent_v2;
 pub mod link;
 pub mod link_action;
+pub mod processing_transaction;
+pub mod request_lock;
 pub mod transaction;
-// pub mod transaction_v2;
 pub mod user;
 pub mod user_action;
 pub mod user_link;
@@ -58,6 +57,7 @@ const REQUEST_LOCK_MEMORY_ID: MemoryId = MemoryId::new(25);
 const RATE_LIMIT_MEMORY_ID: MemoryId = MemoryId::new(26);
 
 // Unused Memory IDs but it used before, due to canister doesn't support shrink allocated memory
+const _UNUSED_MEMORY_ID_00: MemoryId = MemoryId::new(0);
 const _UNUSED_MEMORY_ID_12: MemoryId = MemoryId::new(12);
 const _UNUSED_MEMORY_ID_13: MemoryId = MemoryId::new(13);
 const _UNUSED_MEMORY_ID_14: MemoryId = MemoryId::new(14);
@@ -218,10 +218,6 @@ thread_local! {
     //     HashMap::new()
     // );
 
-}
-
-pub fn get_upgrade_memory() -> Memory {
-    MEMORY_MANAGER.with(|m| m.borrow().get(UPGRADES))
 }
 
 pub fn load() {

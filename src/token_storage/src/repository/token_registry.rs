@@ -3,7 +3,7 @@
 
 use crate::types::{RegistryToken, TokenId};
 
-use super::{token_registry_metadata::TokenRegistryMetadataRepository, TOKEN_REGISTRY_STORE};
+use super::{TOKEN_REGISTRY_STORE, token_registry_metadata::TokenRegistryMetadataRepository};
 
 pub struct TokenRegistryRepository {}
 
@@ -69,50 +69,14 @@ impl TokenRegistryRepository {
         TOKEN_REGISTRY_STORE.with_borrow(|store| store.get(token_id))
     }
 
-    /// Get multiple tokens by their IDs in a batch
-    /// Returns a HashMap with token_id as key and RegistryToken as value
-    /// Only includes tokens that were found in the registry
-    pub fn get_tokens_batch(
-        &self,
-        token_ids: &[TokenId],
-    ) -> std::collections::HashMap<TokenId, RegistryToken> {
-        TOKEN_REGISTRY_STORE.with_borrow(|store| {
-            token_ids
-                .iter()
-                .filter_map(|id| store.get(id).map(|token| (id.clone(), token)))
-                .collect()
-        })
-    }
-
     pub fn list_tokens(&self) -> Vec<RegistryToken> {
-        TOKEN_REGISTRY_STORE.with_borrow(|store| store.iter().map(|(_, token)| token).collect())
+        TOKEN_REGISTRY_STORE.with_borrow(|store| store.iter().map(|entry| entry.value()).collect())
     }
 
     pub fn delete_all(&self) -> Result<(), String> {
         TOKEN_REGISTRY_STORE.with_borrow_mut(|store| {
             store.clear_new();
             Ok(())
-        })
-    }
-
-    pub fn update_token(&self, token: &RegistryToken) -> Result<(), String> {
-        TOKEN_REGISTRY_STORE.with_borrow_mut(|store| {
-            if store.contains_key(&token.id) {
-                store.insert(token.id.clone(), token.clone());
-                Ok(())
-            } else {
-                Err(format!("Token with ID {} not found", token.id))
-            }
-        })
-    }
-
-    pub fn remove_token(&self, token_id: &TokenId) -> Result<(), String> {
-        TOKEN_REGISTRY_STORE.with_borrow_mut(|store| {
-            if store.remove(token_id).is_some() {
-                Ok(())
-            } else {
-                Err(format!("Token with ID {token_id} not found"))
-            }
         })
     }
 }

@@ -4,7 +4,7 @@
 import { LinkTestFixture, LinkConfig, AssetInfo } from "../fixtures/link-test-fixture";
 import { CREATE_LINK_FEE, TREASURY_WALLET } from "../constant";
 import { fromNullable, toNullable } from "@dfinity/utils";
-import { IntentDto } from "../../../declarations/cashier_backend/cashier_backend.did";
+import { IntentDto } from "../../../../src/cashier_frontend/src/generated/cashier_backend/cashier_backend.did";
 import { Icrc112ExecutorV2 } from "../utils/icrc-112-v2";
 
 describe("Test create and claim token1 airdrop link", () => {

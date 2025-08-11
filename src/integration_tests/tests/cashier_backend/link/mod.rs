@@ -1,24 +1,40 @@
-use crate::{
-    cashier_backend::link::fixtures::CreateLinkTestFixture,
-    utils::{principal::get_user_principal, with_pocket_ic_context},
-};
-pub mod fixtures;
+use candid::Nat;
+use icrc_ledger_types::icrc1::account::Account;
 
-pub mod create_action;
-pub mod create_link;
-pub mod process_action;
+use crate::{
+    cashier_backend::link::fixture::LinkTestFixture,
+    utils::{principal::TestUser, with_pocket_ic_context},
+};
+pub mod fixture;
+pub mod send_tip;
+pub mod send_token_basket;
 
 #[tokio::test]
 async fn should_setup_environment_success() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
-        let caller = get_user_principal("user1");
-        let cashier_backend_client = ctx.new_cashier_backend_client(caller);
-        let mut fixture = CreateLinkTestFixture::new(cashier_backend_client);
+        let caller: candid::Principal = TestUser::User1.get_principal();
+        let mut fixture = LinkTestFixture::new(ctx, &caller).await;
 
-        fixture.setup_environment(ctx).await;
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+        let icrc_ledger_client = ctx.new_icrc_ledger_client("ckBTC", caller);
 
-        assert!(!fixture.user.id.is_empty());
-        assert!(!fixture.user.wallet.is_empty());
+        fixture.airdrop_icp(ctx, 10000000000, &caller).await; // 0.01 ICP
+        fixture.airdrop_icrc(ctx, "ckBTC", 1000000, &caller).await; // 0.01 ckBTC
+
+        let account = Account {
+            owner: caller,
+            subaccount: None,
+        };
+
+        let user = fixture.setup_user().await;
+        let icp_balance = icp_ledger_client.balance_of(&account).await.unwrap();
+        let icrc_balance = icrc_ledger_client.balance_of(&account).await.unwrap();
+
+        assert_eq!(icp_balance, Nat::from(10000000000u64));
+        assert_eq!(icrc_balance, Nat::from(1000000u64));
+        assert!(!user.id.is_empty());
+        assert!(!user.wallet.is_empty());
+
         Ok(())
     })
     .await

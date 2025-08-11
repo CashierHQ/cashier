@@ -21,7 +21,7 @@ import { HttpAgent } from "@dfinity/agent";
 import { callCanisterService } from "./callCanister.service";
 import { Icrc112Response, ICRC112Service, JsonICRC112Request } from "./icrc112.service";
 
-export interface ClientChannelOptions {
+interface ClientChannelOptions {
     /**
      * AuthClient instance from "@dfinity/auth-client"
      */

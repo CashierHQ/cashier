@@ -60,149 +60,16 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
                 }
 
                 // For send-type links, check usage counter against max allowed
-                if let Some(_link_type) = &link.link_type {
-                    if link.link_use_action_counter >= link.link_use_action_max_count {
-                        return Err(CanisterError::ValidationErrors(format!(
-                            "Link maximum usage count reached: {}",
-                            link.link_use_action_max_count
-                        )));
-                    }
+                if let Some(_link_type) = &link.link_type
+                    && link.link_use_action_counter >= link.link_use_action_max_count
+                {
+                    return Err(CanisterError::ValidationErrors(format!(
+                        "Link maximum usage count reached: {}",
+                        link.link_use_action_max_count
+                    )));
                 }
 
                 // Synchronous validation passes
-                Ok(())
-            }
-            _ => Err(CanisterError::ValidationErrors(
-                "Unsupported action type".to_string(),
-            )),
-        }
-    }
-
-    // this method validate for each action type
-    // create link:
-    //      - only creator can create link
-    // withdraw:
-    //      - only creator can withdraw
-    //      - validate link balance left
-    // claim:
-    //      - any one can use
-    //      - validate link state is active
-    //      - validate link balance left
-    async fn link_validate_user_create_action_async(
-        &self,
-        link_id: &str,
-        action_type: &ActionType,
-        user_id: &str,
-        caller: &Principal,
-    ) -> Result<(), CanisterError> {
-        // get link
-        let link = self.get_link_by_id(link_id)?;
-
-        match action_type {
-            ActionType::CreateLink => {
-                // validate user id == link creator
-                if link.creator == user_id {
-                    // validate user's balance
-                    self.link_validate_balance_with_asset_info(action_type, link_id, caller)
-                        .await?;
-                    Ok(())
-                } else {
-                    Err(CanisterError::ValidationErrors(
-                        "User is not the creator of the link".to_string(),
-                    ))
-                }
-            }
-            ActionType::Withdraw => {
-                // validate user id == link creator
-                if link.creator == user_id {
-                    let asset = link.asset_info.clone().ok_or_else(|| {
-                        CanisterError::HandleLogicError("Asset info not found".to_string())
-                    })?;
-
-                    let Some(asset) = asset.first() else {
-                        return Err(CanisterError::HandleLogicError(
-                            "Asset info is empty".to_string(),
-                        ));
-                    };
-
-                    let asset_address_text = asset.address.clone();
-                    let asset_address =
-                        Principal::from_text(asset_address_text.as_str()).map_err(|e| {
-                            CanisterError::HandleLogicError(format!(
-                                "Error converting token address to principal: {e:?}"
-                            ))
-                        })?;
-
-                    let link_balance = self
-                        .icrc_service
-                        .balance_of(
-                            asset_address,
-                            Account {
-                                owner: self.ic_env.id(),
-                                subaccount: Some(to_subaccount(&link.id)?),
-                            },
-                        )
-                        .await?;
-
-                    if link_balance == 0u64 {
-                        return Err(CanisterError::ValidationErrors(
-                            "Not enough asset".to_string(),
-                        ));
-                    }
-
-                    Ok(())
-                } else {
-                    Err(CanisterError::ValidationErrors(
-                        "User is not the creator of the link".to_string(),
-                    ))
-                }
-            }
-            ActionType::Use => {
-                // validate link state
-                if link.state != LinkState::Active {
-                    return Err(CanisterError::ValidationErrors(
-                        "Link is not active".to_string(),
-                    ));
-                }
-
-                if link.link_type != Some(LinkType::ReceivePayment) {
-                    // validate link balance
-                    let asset = link.asset_info.clone().ok_or_else(|| {
-                        CanisterError::HandleLogicError("Asset info not found".to_string())
-                    })?;
-
-                    let Some(asset) = asset.first() else {
-                        return Err(CanisterError::HandleLogicError(
-                            "Asset info is empty".to_string(),
-                        ));
-                    };
-
-                    let asset_address_text = asset.address.clone();
-                    let asset_address =
-                        Principal::from_text(asset_address_text.as_str()).map_err(|e| {
-                            CanisterError::HandleLogicError(format!(
-                                "Error converting token address to principal: {e:?}"
-                            ))
-                        })?;
-
-                    let link_balance = self
-                        .icrc_service
-                        .balance_of(
-                            asset_address,
-                            Account {
-                                owner: self.ic_env.id(),
-                                subaccount: Some(to_subaccount(&link.id)?),
-                            },
-                        )
-                        .await?;
-
-                    if link_balance == 0u64 {
-                        return Err(CanisterError::ValidationErrors(
-                            "Not enough asset".to_string(),
-                        ));
-                    }
-                }
-
                 Ok(())
             }
             _ => Err(CanisterError::ValidationErrors(
@@ -253,101 +120,6 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
                 return Err(CanisterError::ValidationErrors(
                     "Unsupported action type".to_string(),
                 ));
-            }
-        }
-
-        Ok(())
-    }
-
-    async fn link_validate_user_update_action_async(
-        &self,
-        action: &Action,
-        user_id: &str,
-        caller: &Principal,
-    ) -> Result<(), CanisterError> {
-        //validate user_id
-        match action.r#type.clone() {
-            ActionType::CreateLink => {
-                let link = self.get_link_by_id(&action.link_id)?;
-                if !(action.creator == user_id && link.creator == user_id) {
-                    return Err(CanisterError::ValidationErrors(
-                        "User is not the creator of the action".to_string(),
-                    ));
-                }
-
-                self.link_validate_balance_with_asset_info(&action.r#type, &link.id, caller)
-                    .await?;
-            }
-            ActionType::Withdraw => {
-                let link = self.get_link_by_id(&action.link_id)?;
-                if !(action.creator == user_id && link.creator == user_id) {
-                    return Err(CanisterError::ValidationErrors(
-                        "User is not the creator of the action".to_string(),
-                    ));
-                }
-            }
-            ActionType::Use => {
-                if action.creator != user_id {
-                    return Err(CanisterError::ValidationErrors(
-                        "User is not the creator of the action".to_string(),
-                    ));
-                }
-            }
-            _ => {
-                return Err(CanisterError::ValidationErrors(
-                    "Unsupported action type".to_string(),
-                ));
-            }
-        }
-
-        Ok(())
-    }
-
-    // This method mostly use for "Send" link type
-    async fn link_validate_balance_with_asset_info(
-        &self,
-        action_type: &ActionType,
-        link_id: &str,
-        user_wallet: &Principal,
-    ) -> Result<(), CanisterError> {
-        if action_type != &ActionType::CreateLink {
-            return Ok(());
-        }
-
-        let link = self
-            .get_link_by_id(link_id)
-            .map_err(|e| CanisterError::NotFound(e.to_string()))?;
-
-        if link.link_type == Some(LinkType::ReceivePayment) {
-            return Ok(());
-        }
-
-        let asset_info = link
-            .asset_info
-            .clone()
-            .ok_or_else(|| CanisterError::NotFound("Asset info not found".to_string()))?;
-
-        for asset in asset_info {
-            let token_pid = Principal::from_text(asset.address.as_str()).map_err(|e| {
-                CanisterError::HandleLogicError(format!(
-                    "Error converting token address to principal: {e:?}"
-                ))
-            })?;
-
-            let account = Account {
-                owner: *user_wallet,
-                subaccount: None,
-            };
-
-            let balance = self.icrc_service.balance_of(token_pid, account).await?;
-
-            let expected_amount = asset.amount_per_link_use_action * link.link_use_action_max_count;
-
-            if balance <= expected_amount {
-                return Err(CanisterError::ValidationErrors(format!(
-                    "Insufficient balance for asset: {}, balance: {}, required: {} and fee try smaller amount",
-                    asset.address, balance, expected_amount
-                )));
             }
         }
 
@@ -421,7 +193,7 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
                 return false;
             }
 
-            return true;
+            true
         } else if link.link_type == Some(LinkType::SendTokenBasket) {
             // Send token basket use one time with multiple asset
             // check amount_per_link_use_action for asset > 0
@@ -437,7 +209,7 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
                     return false;
                 }
             }
-            return true;
+            true
         } else if link.link_type == Some(LinkType::ReceivePayment) {
             // Receive payment use one time with one asset
             // check amount_per_link_use_action for asset > 0
@@ -461,10 +233,10 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
                 return false;
             }
 
-            return true;
+            true
         } else {
             // link type is not supported
-            return false;
+            false
         }
     }
 
@@ -503,10 +275,5 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
         }
 
         Ok(false)
-    }
-
-    /// Check if link exists
-    fn is_link_exist(&self, link_id: &str) -> bool {
-        self.link_repository.get(&link_id.to_string()).is_some()
     }
 }

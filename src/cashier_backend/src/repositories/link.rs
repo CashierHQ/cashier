@@ -26,15 +26,6 @@ impl LinkRepository {
         });
     }
 
-    pub fn batch_create(&self, links: Vec<Link>) {
-        LINK_STORE.with_borrow_mut(|store| {
-            for link in links {
-                let id: LinkKey = link.id.clone();
-                store.insert(id, link);
-            }
-        });
-    }
-
     pub fn get(&self, id: &LinkKey) -> Option<Link> {
         LINK_STORE.with_borrow(|store| store.get(id))
     }
