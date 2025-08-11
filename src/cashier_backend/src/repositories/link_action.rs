@@ -70,3 +70,26 @@ impl LinkActionRepository {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn create() {
+        let repo = LinkActionRepository::new();
+        let link_action = LinkAction {
+            link_id: "link1".to_string(),
+            action_type: "type1".to_string(),
+            action_id: "action1".to_string(),
+            user_id: "user1".to_string(),
+            link_user_state: None,
+        };
+        repo.create(link_action.clone());
+
+        let actions = repo.get_by_prefix("link1", "type1", "user1");
+        assert_eq!(actions.len(), 1);
+    }
+
+}
+    
