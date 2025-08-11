@@ -69,6 +69,8 @@ impl ActionIntentRepository {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -90,11 +92,11 @@ mod tests {
 
         let retrieved = repo.get_by_action_id("action1");
         assert_eq!(retrieved.len(), 1);
-        assert_eq!(retrieved[0].intent_id, "intent1");
+        assert_eq!(retrieved.first().unwrap().intent_id, "intent1");
 
         let retrieved = repo.get_by_intent_id("intent2");
         assert_eq!(retrieved.len(), 1);
-        assert_eq!(retrieved[0].action_id, "action2");
+        assert_eq!(retrieved.first().unwrap().action_id, "action2");
     }
 
     #[test]
@@ -108,8 +110,8 @@ mod tests {
 
         let retrieved = repo.get_by_action_id("action1");
         assert_eq!(retrieved.len(), 1);
-        assert_eq!(retrieved[0].intent_id, "intent1");
-        assert_eq!(retrieved[0].action_id, "action1");
+        assert_eq!(retrieved.first().unwrap().intent_id, "intent1");
+        assert_eq!(retrieved.first().unwrap().action_id, "action1");
     }
 
     #[test]
@@ -123,8 +125,8 @@ mod tests {
 
         let retrieved = repo.get_by_intent_id("intent1");
         assert_eq!(retrieved.len(), 1);
-        assert_eq!(retrieved[0].action_id, "action1");
-        assert_eq!(retrieved[0].intent_id, "intent1");
+        assert_eq!(retrieved.first().unwrap().action_id, "action1");
+        assert_eq!(retrieved.first().unwrap().intent_id, "intent1");
     }
 
     #[test]

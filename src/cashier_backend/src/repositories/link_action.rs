@@ -72,6 +72,8 @@ impl LinkActionRepository {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::expect_used)]
 mod tests {
     use cashier_types::repository::link_action::v1::LinkUserState;
 
@@ -91,7 +93,7 @@ mod tests {
 
         let actions = repo.get_by_prefix("link1", "type1", "user1");
         assert_eq!(actions.len(), 1);
-        assert!(actions[0].link_user_state.is_none());
+        assert!(actions.first().unwrap().link_user_state.is_none());
     }
 
     #[test]
@@ -118,7 +120,7 @@ mod tests {
         let actions = repo.get_by_prefix("link1", "type1", "user1");
         assert_eq!(actions.len(), 1);
         assert_eq!(
-            actions[0].link_user_state,
+            actions.first().unwrap().link_user_state,
             Some(LinkUserState::ChooseWallet)
         );
     }
@@ -147,20 +149,20 @@ mod tests {
 
         let actions = repo.get_by_prefix("link1", "type1", "user1");
         assert_eq!(actions.len(), 1);
-        assert_eq!(actions[0].link_id, "link1");
-        assert_eq!(actions[0].action_type, "type1");
-        assert_eq!(actions[0].action_id, "action1");
-        assert_eq!(actions[0].user_id, "user1");
-        assert!(actions[0].link_user_state.is_none());
+        assert_eq!(actions.first().unwrap().link_id, "link1");
+        assert_eq!(actions.first().unwrap().action_type, "type1");
+        assert_eq!(actions.first().unwrap().action_id, "action1");
+        assert_eq!(actions.first().unwrap().user_id, "user1");
+        assert!(actions.first().unwrap().link_user_state.is_none());
 
         let actions = repo.get_by_prefix("link2", "type2", "user2");
         assert_eq!(actions.len(), 1);
-        assert_eq!(actions[0].link_id, "link2");
-        assert_eq!(actions[0].action_type, "type2");
-        assert_eq!(actions[0].action_id, "action2");
-        assert_eq!(actions[0].user_id, "user2");
+        assert_eq!(actions.first().unwrap().link_id, "link2");
+        assert_eq!(actions.first().unwrap().action_type, "type2");
+        assert_eq!(actions.first().unwrap().action_id, "action2");
+        assert_eq!(actions.first().unwrap().user_id, "user2");
         assert_eq!(
-            actions[0].link_user_state,
+            actions.first().unwrap().link_user_state,
             Some(LinkUserState::CompletedLink)
         );
     }

@@ -82,6 +82,8 @@ impl UserLinkRepository {
 }
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used)]
+#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 
@@ -96,8 +98,8 @@ mod tests {
         repo.create(user_link);
         let links = repo.get_links_by_user_id("user1", &PaginateInput::default());
         assert_eq!(links.data.len(), 1);
-        assert_eq!(links.data[0].link_id, "link1");
-        assert_eq!(links.data[0].user_id, "user1");
+        assert_eq!(links.data.first().unwrap().link_id, "link1");
+        assert_eq!(links.data.first().unwrap().user_id, "user1");
     }
 
     #[test]
