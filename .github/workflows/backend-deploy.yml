@@ -69,7 +69,7 @@ jobs:
                   dfx identity get-principal
 
             - name: Build backend canister
-              run: dfx build cashier_backend --network ${NETWORK}
+              run: just build_canister "cashier_backend" "" "cashier_backend"
 
             - name: Deploy backend canister 
               env:
