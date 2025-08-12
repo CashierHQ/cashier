@@ -38,7 +38,7 @@ impl RequestLockRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cashier_types::repository::request_lock::RequestLock;
+    use cashier_backend_types::repository::request_lock::RequestLock;
 
     #[test]
     fn it_should_create_a_request_lock() {

@@ -51,7 +51,7 @@ impl IntentRepository {
 mod tests {
     use super::*;
     use candid::types::number::Nat;
-    use cashier_types::repository::{
+    use cashier_backend_types::repository::{
         common::{Asset, Chain, Wallet},
         intent::v2::{IntentState, IntentTask, IntentType, TransferData},
     };
