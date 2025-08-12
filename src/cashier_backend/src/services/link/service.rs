@@ -312,18 +312,23 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 mod tests {
     use super::*;
     use crate::utils::test_utils::runtime::MockIcEnvironment;
-    use cashier_backend_types::{repository::link::v1::{LinkState, LinkType}};
+    use cashier_backend_types::repository::{link::v1::{LinkState, LinkType}, user_wallet::v1::UserWallet};
+    use crate::utils::test_utils::random_id_string;
 
-    fn create_link_feature(service: &LinkService<MockIcEnvironment>) -> Link {
+    const PRINCIPAL_ID1: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+    const PRINCIPAL_ID2: &str = "x5qut-viaaa-aaaar-qajda-cai";
+
+    fn create_link_feature(service: &LinkService<MockIcEnvironment>, creator_id: &str) -> Link {
+        let link_id = random_id_string(10);
         let link = Link {
-            id: "link1".to_string(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Test Link".to_string()),
             description: Some("This is a test link".to_string()),
             link_type: Some(LinkType::SendTip),
             asset_info: None,
             template: None,
-            creator: "creator1".to_string(),
+            creator: creator_id.to_string(),
             create_at: 1622547800,
             metadata: None,
             link_use_action_counter: 0,
@@ -333,8 +338,40 @@ mod tests {
         link
     }
 
-    fn create_principal_feature() -> Principal {
-        Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap()
+    fn create_principal_feature(service: &LinkService<MockIcEnvironment>, principal_id: &str) -> Principal {
+        let principal = Principal::from_text(principal_id).unwrap();
+
+        service.user_wallet_repository.create(principal_id.to_string(), UserWallet {
+            user_id: principal_id.to_string(),
+        });
+        principal
+    }
+
+    fn create_link_action_feature(
+        service: &LinkService<MockIcEnvironment>,
+        link_id: &str,
+        action_type: &str,
+        user_id: &str,
+    ) -> LinkAction {
+        let action_id = random_id_string(10);
+        let link_action = LinkAction {
+            link_id: link_id.to_string(),
+            action_id,
+            action_type: action_type.to_string(),
+            user_id: user_id.to_string(),
+            link_user_state: None,
+        };
+        service.link_action_repository.create(link_action.clone());
+
+        let action = Action {
+            id: link_action.action_id.clone(),
+            r#type: ActionType::from_str(action_type).unwrap(),
+            state: ActionState::Created,
+            creator: user_id.to_string(),
+            link_id: link_id.to_string(),
+        };
+        service.action_repository.create(action);
+        link_action
     }
 
     #[test]
@@ -352,12 +389,21 @@ mod tests {
     }
 
     #[test]
+    fn it_should_fail_on_get_link_by_nonexistent_id() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let result = service.get_link_by_id("nonexistent_link");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("link not found"));
+    }
+
+    #[test]
     fn it_should_get_link_by_id() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link = service.link_repository.get(&"default_link".to_string());
         assert!(link.is_none());
 
-        let created_link = create_link_feature(&service);
+        let creator = create_principal_feature(&service, PRINCIPAL_ID1);
+        let created_link = create_link_feature(&service, &creator.to_text());
         let fetched_link = service.get_link_by_id(&created_link.id).unwrap();
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
@@ -366,19 +412,11 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_on_get_link_by_id() {
+    fn it_should_get_link_with_empty_options() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let result = service.get_link_by_id("nonexistent_link");
-        assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("link not found"));
-    }
-
-    #[test]
-    fn it_should_get_link_with_no_options() {
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let created_link = create_link_feature(&service);
-        let caller = create_principal_feature();
-        let (fetched_link, _action) = service.get_link(&created_link.id, None, &caller).unwrap();
+        let creator = create_principal_feature(&service, PRINCIPAL_ID1);
+        let created_link = create_link_feature(&service, &creator.to_text());
+        let (fetched_link, _action) = service.get_link(&created_link.id, None, &creator).unwrap();
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
         assert_eq!(fetched_link.description, created_link.description);
@@ -387,15 +425,66 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "Only creator can access this action type")]
-    fn it_should_panic_on_get_link_with_action_type_create_with_unauthorized_caller() {
+    fn it_should_panic_on_get_link_with_action_type_create_by_unauthorized_caller() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let created_link = create_link_feature(&service);
-        let caller = create_principal_feature();
+        let created_link = create_link_feature(&service, PRINCIPAL_ID1);
+        let caller = create_principal_feature(&service, PRINCIPAL_ID2);
         let (fetched_link, _action) = service.get_link(&created_link.id, Some(GetLinkOptions { action_type: "CreateLink".to_string() }), &caller).unwrap();
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
         assert_eq!(fetched_link.description, created_link.description);
         assert_eq!(fetched_link.link_type, created_link.link_type);
+    }
+
+    #[test]
+    fn it_should_get_link_with_action_type_create_by_creator() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator = create_principal_feature(&service, PRINCIPAL_ID1);
+        let created_link = create_link_feature(&service, &creator.to_text());
+        let _link_action = create_link_action_feature(&service, &created_link.id, "CreateLink", &creator.to_text());
+        let (fetched_link, action) = service.get_link(&created_link.id, Some(GetLinkOptions { action_type: "CreateLink".to_string() }), &creator).unwrap();
+        assert_eq!(fetched_link.id, created_link.id);
+        assert_eq!(fetched_link.title, created_link.title);
+        assert_eq!(fetched_link.description, created_link.description);
+        assert_eq!(fetched_link.link_type, created_link.link_type);
+        assert!(action.is_some()); // Action should be returned for CreateLink type
+        let action = action.unwrap();
+        assert_eq!(action.r#type, ActionType::CreateLink);
+    }
+
+    #[test]
+    #[should_panic(expected = "Only creator can access this action type")]
+    fn it_should_panic_on_get_link_with_action_type_withdraw_by_unauthorized_caller() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let created_link = create_link_feature(&service, PRINCIPAL_ID1);
+        let caller = create_principal_feature(&service, PRINCIPAL_ID2);
+        let (fetched_link, _action) = service.get_link(&created_link.id, Some(GetLinkOptions { action_type: "Withdraw".to_string() }), &caller).unwrap();
+        assert_eq!(fetched_link.id, created_link.id);
+        assert_eq!(fetched_link.title, created_link.title);
+        assert_eq!(fetched_link.description, created_link.description);
+        assert_eq!(fetched_link.link_type, created_link.link_type);
+    }
+
+    #[test]
+    fn it_should_fail_on_get_link_with_action_type_use_and_nonexistent_id() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator = create_principal_feature(&service, PRINCIPAL_ID1);
+        let result = service.get_link("nonexistent_link", Some(GetLinkOptions { action_type: "Use".to_string() }), &creator);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("link not found"));
+    }
+
+    #[test]
+    fn it_should_get_link_with_action_type_use_by_creator() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator = create_principal_feature(&service, PRINCIPAL_ID1);
+        let created_link = create_link_feature(&service, &creator.to_text());
+        let (fetched_link, action) = service.get_link(&created_link.id, Some(GetLinkOptions { action_type: "Use".to_string() }), &creator).unwrap();
+        assert_eq!(fetched_link.id, created_link.id);
+        assert_eq!(fetched_link.title, created_link.title);
+        assert_eq!(fetched_link.description, created_link.description);
+        assert_eq!(fetched_link.link_type, created_link.link_type);
+        assert!(action.is_none()); // No action returned for Use type
     }
 
 }
