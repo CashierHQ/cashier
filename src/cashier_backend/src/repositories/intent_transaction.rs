@@ -97,7 +97,10 @@ mod tests {
 
         let transactions = repo.get_by_intent_id(&intent_id1);
         assert_eq!(transactions.len(), 1);
-        assert_eq!(transactions.first().unwrap().transaction_id, transaction_id1);
+        assert_eq!(
+            transactions.first().unwrap().transaction_id,
+            transaction_id1
+        );
 
         let transactions = repo.get_by_transaction_id(&transaction_id2);
         assert_eq!(transactions.len(), 1);
@@ -116,14 +119,17 @@ mod tests {
             transaction_id: transaction_id1.clone(),
         };
         let intent_transaction2 = IntentTransaction {
-            intent_id: intent_id2.clone(),
-            transaction_id: transaction_id2.clone(),
+            intent_id: intent_id2,
+            transaction_id: transaction_id2,
         };
         repo.batch_create(vec![intent_transaction1, intent_transaction2]);
 
         let transactions = repo.get_by_intent_id(&intent_id1);
         assert_eq!(transactions.len(), 1);
-        assert_eq!(transactions.first().unwrap().transaction_id, transaction_id1);
+        assert_eq!(
+            transactions.first().unwrap().transaction_id,
+            transaction_id1
+        );
     }
 
     #[test]
@@ -138,8 +144,8 @@ mod tests {
             transaction_id: transaction_id1.clone(),
         };
         let intent_transaction2 = IntentTransaction {
-            intent_id: intent_id2.clone(),
-            transaction_id: transaction_id2.clone(),
+            intent_id: intent_id2,
+            transaction_id: transaction_id2,
         };
         repo.batch_create(vec![intent_transaction1, intent_transaction2]);
 

@@ -41,8 +41,8 @@ impl ActionRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cashier_backend_types::{repository::action::v1::{ActionState, ActionType}};
     use crate::utils::test_utils::random_id_string;
+    use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
 
     #[test]
     fn it_should_create_an_action() {
