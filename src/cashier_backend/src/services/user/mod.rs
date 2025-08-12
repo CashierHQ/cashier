@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_types::{
+use cashier_backend_types::{
     dto::user::UserDto,
     repository::{user::v1::User, user_wallet::v1::UserWallet},
 };

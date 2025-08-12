@@ -10,7 +10,7 @@ use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 
 // Import v2 types directly
 
-use cashier_types::repository::{
+use cashier_backend_types::repository::{
     action::v1::Action, action_intent::v1::ActionIntent, intent::v2::Intent as IntentV2,
     intent_transaction::v1::IntentTransaction, keys::*, link::v1::Link,
     link_action::v1::LinkAction, processing_transaction::ProcessingTransaction,

@@ -4,16 +4,16 @@
 use crate::api::guard::is_not_anonymous;
 use crate::services::link::traits::LinkValidation;
 use candid::Principal;
-use cashier_types::dto::action::{
+use cashier_backend_types::dto::action::{
     ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
     ProcessActionInput, UpdateActionInput,
 };
-use cashier_types::dto::link::{
+use cashier_backend_types::dto::link::{
     CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDto, LinkGetUserStateInput,
     LinkGetUserStateOutput, LinkUpdateUserStateInput, UpdateLinkInput,
 };
-use cashier_types::error::CanisterError;
-use cashier_types::service::link::{PaginateInput, PaginateResult};
+use cashier_backend_types::error::CanisterError;
+use cashier_backend_types::service::link::{PaginateInput, PaginateResult};
 use ic_cdk::{query, update};
 use log::{debug, error, info};
 

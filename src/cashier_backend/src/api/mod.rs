@@ -12,11 +12,11 @@ pub mod link;
 mod state;
 pub mod user;
 
+use cashier_backend_types::dto::action::*;
+use cashier_backend_types::dto::link::*;
+use cashier_backend_types::dto::user::*;
+use cashier_backend_types::error::CanisterError;
+use cashier_backend_types::service::link::*;
 use cashier_common::icrc::*;
-use cashier_types::dto::action::*;
-use cashier_types::dto::link::*;
-use cashier_types::dto::user::*;
-use cashier_types::error::CanisterError;
-use cashier_types::service::link::*;
 
 ic_cdk::export_candid!();
