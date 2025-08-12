@@ -3,7 +3,7 @@
 
 use crate::repositories::TRANSACTION_STORE;
 
-use cashier_types::repository::{keys::TransactionKey, transaction::v2::Transaction};
+use cashier_backend_types::repository::{keys::TransactionKey, transaction::v2::Transaction};
 
 #[derive(Clone)]
 pub struct TransactionRepository {}

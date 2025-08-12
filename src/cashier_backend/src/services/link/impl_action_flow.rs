@@ -12,7 +12,7 @@ use crate::services::{
     transaction_manager::traits::{ActionCreator, ActionUpdater, TransactionValidator},
 };
 use crate::utils::runtime::IcEnvironment;
-use cashier_types::{
+use cashier_backend_types::{
     dto::action::{
         ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
         ProcessActionInput, UpdateActionInput,

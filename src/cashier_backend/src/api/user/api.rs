@@ -1,10 +1,10 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_types::dto::user::UserDto;
+use cashier_backend_types::dto::user::UserDto;
 use ic_cdk::{query, update};
 
-use crate::{core::guard::is_not_anonymous, services};
+use crate::{api::guard::is_not_anonymous, services};
 
 #[update(guard = "is_not_anonymous")]
 fn create_user() -> Result<UserDto, String> {

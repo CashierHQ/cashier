@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_types::repository::action::v1::Action;
+use cashier_backend_types::repository::action::v1::Action;
 
 use crate::repositories::ACTION_STORE;
 

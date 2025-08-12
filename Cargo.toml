@@ -2,10 +2,10 @@
 members = [
     "src/cashier_backend",
     "src/cashier_backend_client",
+    "src/cashier_backend_types",
     "src/integration_tests",
-    "src/lib/cashier-common",
-    "src/lib/cashier-macros",
-    "src/lib/cashier-types",
+    "src/lib/cashier_common",
+    "src/lib/cashier_macros",
     "src/token_storage",
     "src/token_storage_client",
 ]
@@ -22,20 +22,22 @@ async-trait = "0.1"
 base64 = "0.22"
 candid = "0.10"
 cashier_backend_client = { path = "src/cashier_backend_client" }
-cashier-common = { path = "src/lib/cashier-common" }
-cashier-macros = { path = "src/lib/cashier-macros" }
-cashier-types = { path = "src/lib/cashier-types" }
+cashier_backend_types = { path = "src/cashier_backend_types" }
+cashier_common = { path = "src/lib/cashier_common" }
+cashier_macros = { path = "src/lib/cashier_macros" }
 futures = { version = "0.3", default-features = false }
 getrandom = { version = "0.2", features = ["custom"] }
 ic-cdk = "0.18"
 ic-cdk-timers = "0.12"
 ic-icrc-tx = "0.1"
 ic-stable-structures = "0.7"
-ic_mple_client = "0.8.0"
-ic_mple_pocket_ic = "0.8.0"
+ic_mple_client = "0.9"
+ic_mple_log = { version = "0.9", features = ["service"] }
+ic_mple_pocket_ic = "0.9"
 ic-ledger-types = "0.15.0"
 icrc-ledger-types = "0.1.10"
 itertools = "0.14"
+log = "0.4"
 proc-macro2 = "1.0"
 quote = "1.0"
 rand = { version = "0.8", features = ["getrandom"] }

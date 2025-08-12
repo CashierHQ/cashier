@@ -8,7 +8,7 @@ use ic_cdk::{api::msg_caller, query, update};
 use crate::{
     api::{
         admin::types::{RegistryStats, UserTokens},
-        token_v2::types::TokenListResponse,
+        token::types::TokenListResponse,
     },
     build_data::canister_build_data,
     constant::default_tokens::get_default_tokens,

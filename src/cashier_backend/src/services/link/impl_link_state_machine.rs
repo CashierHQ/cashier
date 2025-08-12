@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use async_trait::async_trait;
 
-use cashier_types::{
+use cashier_backend_types::{
     dto::link::{
         CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDetailUpdateInput,
         LinkStateMachineGoto,
@@ -16,10 +16,10 @@ use cashier_types::{
         user_link::v1::UserLink,
     },
 };
+use log::error;
 use uuid::Uuid;
 
 use crate::{
-    error,
     services::link::{
         service::LinkService,
         traits::{LinkStateMachine, LinkValidation},

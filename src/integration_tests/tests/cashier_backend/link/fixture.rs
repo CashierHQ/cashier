@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use candid::Principal;
 use cashier_backend_client::client::CashierBackendClient;
-use cashier_types::{
+use cashier_backend_types::{
     constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
@@ -176,7 +176,7 @@ impl LinkTestFixture {
             .unwrap()
             .get_link(
                 link_id.to_string(),
-                Some(cashier_types::dto::link::GetLinkOptions {
+                Some(cashier_backend_types::dto::link::GetLinkOptions {
                     action_type: "CreateLink".to_string(),
                 }),
             )

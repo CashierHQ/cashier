@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_types::repository::user::v1::User;
+use cashier_backend_types::repository::user::v1::User;
 
 use super::USER_STORE;
 

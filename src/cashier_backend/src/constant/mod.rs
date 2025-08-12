@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::error;
+use log::error;
 
 // If you change this, make sure to update the fee in the frontend as well
 // src/cashier_frontend/src/services/fee.constants.ts
@@ -20,12 +20,7 @@ pub fn get_tx_timeout_seconds() -> u64 {
     TX_TIMEOUT_IN_SECONDS.parse::<u64>().unwrap_or_else(|_| {
         // Log the error
         error!(
-            "{}",
-            format!(
-                "Warning: Could not parse TX_TIMEOUT '{}'. Using default value of 300 seconds.",
-                TX_TIMEOUT_IN_SECONDS
-            )
-        );
+                "Warning: Could not parse TX_TIMEOUT '{TX_TIMEOUT_IN_SECONDS}'. Using default value of 300 seconds."        );
         300
     })
 }
