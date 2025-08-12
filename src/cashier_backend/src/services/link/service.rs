@@ -312,6 +312,30 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 mod tests {
     use super::*;
     use crate::utils::test_utils::runtime::MockIcEnvironment;
+    use cashier_types::{repository::link::v1::{LinkState, LinkType}};
+
+    fn create_link_feature(service: &LinkService<MockIcEnvironment>) -> Link {
+        let link = Link {
+            id: "link1".to_string(),
+            state: LinkState::ChooseLinkType,
+            title: Some("Test Link".to_string()),
+            description: Some("This is a test link".to_string()),
+            link_type: Some(LinkType::SendTip),
+            asset_info: None,
+            template: None,
+            creator: "creator1".to_string(),
+            create_at: 1622547800,
+            metadata: None,
+            link_use_action_counter: 0,
+            link_use_action_max_count: 10,
+        };
+        service.link_repository.create(link.clone());
+        link
+    }
+
+    fn create_principal_feature() -> Principal {
+        Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap()
+    }
 
     #[test]
     fn it_should_create_link_service_instance() {
@@ -326,4 +350,52 @@ mod tests {
         let user_links = service.user_link_repository.get_links_by_user_id("nonexistent_user", &PaginateInput::default());
         assert!(user_links.data.is_empty());
     }
+
+    #[test]
+    fn it_should_get_link_by_id() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let link = service.link_repository.get(&"default_link".to_string());
+        assert!(link.is_none());
+
+        let created_link = create_link_feature(&service);
+        let fetched_link = service.get_link_by_id(&created_link.id).unwrap();
+        assert_eq!(fetched_link.id, created_link.id);
+        assert_eq!(fetched_link.title, created_link.title);
+        assert_eq!(fetched_link.description, created_link.description);
+        assert_eq!(fetched_link.link_type, created_link.link_type);
+    }
+
+    #[test]
+    fn it_should_error_on_get_link_by_id() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let result = service.get_link_by_id("nonexistent_link");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("link not found"));
+    }
+
+    #[test]
+    fn it_should_get_link_with_no_options() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let created_link = create_link_feature(&service);
+        let caller = create_principal_feature();
+        let (fetched_link, _action) = service.get_link(&created_link.id, None, &caller).unwrap();
+        assert_eq!(fetched_link.id, created_link.id);
+        assert_eq!(fetched_link.title, created_link.title);
+        assert_eq!(fetched_link.description, created_link.description);
+        assert_eq!(fetched_link.link_type, created_link.link_type);
+    }
+
+    #[test]
+    #[should_panic(expected = "Only creator can access this action type")]
+    fn it_should_panic_on_get_link_with_action_type_create_with_unauthorized_caller() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let created_link = create_link_feature(&service);
+        let caller = create_principal_feature();
+        let (fetched_link, _action) = service.get_link(&created_link.id, Some(GetLinkOptions { action_type: "CreateLink".to_string() }), &caller).unwrap();
+        assert_eq!(fetched_link.id, created_link.id);
+        assert_eq!(fetched_link.title, created_link.title);
+        assert_eq!(fetched_link.description, created_link.description);
+        assert_eq!(fetched_link.link_type, created_link.link_type);
+    }
+
 }
