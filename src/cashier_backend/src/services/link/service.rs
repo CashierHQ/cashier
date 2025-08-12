@@ -472,6 +472,18 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "Only creator can access this action type")]
+    fn it_should_panic_on_get_link_with_action_type_use_by_anonymous_caller() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let created_link = create_link_feature(&service, PRINCIPAL_ID1);
+        let (fetched_link, _action) = service.get_link(&created_link.id, Some(GetLinkOptions { action_type: "CreateLink".to_string() }), &Principal::anonymous()).unwrap();
+        assert_eq!(fetched_link.id, created_link.id);
+        assert_eq!(fetched_link.title, created_link.title);
+        assert_eq!(fetched_link.description, created_link.description);
+        assert_eq!(fetched_link.link_type, created_link.link_type);
+    }
+
+    #[test]
     fn it_should_fail_on_get_link_with_action_type_use_and_nonexistent_id() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator = create_principal_feature(&service, PRINCIPAL_ID1);
