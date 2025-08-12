@@ -9,10 +9,10 @@ use crate::{
 };
 use base64::Engine;
 use candid::{Encode, Principal};
-use cashier_types::repository::transaction::v2::{
+use cashier_backend_types::repository::transaction::v2::{
     IcTransaction, Protocol, Transaction, TransactionState,
 };
-use cashier_types::{
+use cashier_backend_types::{
     dto::action::{Icrc112Request, Icrc112Requests, TriggerTransactionInput},
     error::CanisterError,
 };

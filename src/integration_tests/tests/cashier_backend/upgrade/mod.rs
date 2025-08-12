@@ -1,4 +1,4 @@
-use cashier_types::repository::{action::v1::ActionState, intent::v2::IntentState};
+use cashier_backend_types::repository::{action::v1::ActionState, intent::v2::IntentState};
 use icrc_ledger_types::icrc1::account::Account;
 use std::time::Duration;
 
@@ -9,7 +9,7 @@ mod test_canister_upgrade {
     use crate::{cashier_backend::link::fixture::LinkTestFixture, utils::PocketIcTestContext};
 
     use super::*;
-    use cashier_types::dto::{action::ActionDto, link::LinkDto};
+    use cashier_backend_types::dto::{action::ActionDto, link::LinkDto};
 
     struct UpgradeTestData {
         link: LinkDto,

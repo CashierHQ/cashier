@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Principal;
-use cashier_types::{
+use cashier_backend_types::{
     error::CanisterError,
     repository::{keys::RequestLockKey, request_lock::RequestLock},
 };

@@ -1,8 +1,8 @@
-use crate::api::token_v2::types::UpdateTokenBalanceInput;
+use crate::api::token::types::UpdateTokenBalanceInput;
 use crate::services::token_registry::TokenRegistryService;
 use crate::services::user_preference::UserPreferenceService;
 use crate::types::{TokenDto, TokenId};
-use crate::{api::token_v2::types::TokenListResponse, services::user_token::UserTokenService};
+use crate::{api::token::types::TokenListResponse, services::user_token::UserTokenService};
 use candid::Principal;
 use ic_cdk::api::msg_caller;
 use ic_cdk::{query, update};

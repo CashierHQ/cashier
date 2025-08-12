@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use super::LINK_ACTION_STORE;
-use cashier_types::repository::{keys::LinkActionKey, link_action::v1::LinkAction};
+use cashier_backend_types::repository::{keys::LinkActionKey, link_action::v1::LinkAction};
 
 #[derive(Clone)]
 
@@ -73,15 +73,17 @@ impl LinkActionRepository {
 
 #[cfg(test)]
 mod tests {
-    use cashier_types::repository::link_action::v1::LinkUserState;
-
     use super::*;
+    use crate::utils::test_utils::random_id_string;
+    use cashier_backend_types::repository::link_action::v1::LinkUserState;
 
     #[test]
     fn it_should_create_link_action() {
         let repo = LinkActionRepository::new();
+        let link_id = random_id_string(10);
+
         let link_action = LinkAction {
-            link_id: "link1".to_string(),
+            link_id: link_id.clone(),
             action_type: "type1".to_string(),
             action_id: "action1".to_string(),
             user_id: "user1".to_string(),
@@ -89,7 +91,7 @@ mod tests {
         };
         repo.create(link_action);
 
-        let actions = repo.get_by_prefix("link1", "type1", "user1");
+        let actions = repo.get_by_prefix(&link_id, "type1", "user1");
         assert_eq!(actions.len(), 1);
         assert!(actions.first().unwrap().link_user_state.is_none());
     }
@@ -97,8 +99,9 @@ mod tests {
     #[test]
     fn it_should_update_link_action() {
         let repo = LinkActionRepository::new();
+        let link_id = random_id_string(10);
         let link_action = LinkAction {
-            link_id: "link1".to_string(),
+            link_id: link_id.clone(),
             action_type: "type1".to_string(),
             action_id: "action1".to_string(),
             user_id: "user1".to_string(),
@@ -107,7 +110,7 @@ mod tests {
         repo.create(link_action);
 
         let updated_action = LinkAction {
-            link_id: "link1".to_string(),
+            link_id: link_id.clone(),
             action_type: "type1".to_string(),
             action_id: "action1".to_string(),
             user_id: "user1".to_string(),
@@ -115,7 +118,7 @@ mod tests {
         };
         repo.update(updated_action);
 
-        let actions = repo.get_by_prefix("link1", "type1", "user1");
+        let actions = repo.get_by_prefix(&link_id, "type1", "user1");
         assert_eq!(actions.len(), 1);
         assert_eq!(
             actions.first().unwrap().link_user_state,
@@ -126,8 +129,10 @@ mod tests {
     #[test]
     fn it_should_get_link_action_by_prefix() {
         let repo = LinkActionRepository::new();
+        let link_id1 = random_id_string(10);
+        let link_id2 = random_id_string(10);
         let link_action1 = LinkAction {
-            link_id: "link1".to_string(),
+            link_id: link_id1.clone(),
             action_type: "type1".to_string(),
             action_id: "action1".to_string(),
             user_id: "user1".to_string(),
@@ -135,7 +140,7 @@ mod tests {
         };
 
         let link_action2 = LinkAction {
-            link_id: "link2".to_string(),
+            link_id: link_id2.clone(),
             action_type: "type2".to_string(),
             action_id: "action2".to_string(),
             user_id: "user2".to_string(),
@@ -145,17 +150,17 @@ mod tests {
         repo.create(link_action1);
         repo.create(link_action2);
 
-        let actions = repo.get_by_prefix("link1", "type1", "user1");
+        let actions = repo.get_by_prefix(&link_id1, "type1", "user1");
         assert_eq!(actions.len(), 1);
-        assert_eq!(actions.first().unwrap().link_id, "link1");
+        assert_eq!(actions.first().unwrap().link_id, link_id1);
         assert_eq!(actions.first().unwrap().action_type, "type1");
         assert_eq!(actions.first().unwrap().action_id, "action1");
         assert_eq!(actions.first().unwrap().user_id, "user1");
         assert!(actions.first().unwrap().link_user_state.is_none());
 
-        let actions = repo.get_by_prefix("link2", "type2", "user2");
+        let actions = repo.get_by_prefix(&link_id2, "type2", "user2");
         assert_eq!(actions.len(), 1);
-        assert_eq!(actions.first().unwrap().link_id, "link2");
+        assert_eq!(actions.first().unwrap().link_id, link_id2);
         assert_eq!(actions.first().unwrap().action_type, "type2");
         assert_eq!(actions.first().unwrap().action_id, "action2");
         assert_eq!(actions.first().unwrap().user_id, "user2");
