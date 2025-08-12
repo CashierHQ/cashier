@@ -102,11 +102,15 @@ mod tests {
     #[test]
     fn it_should_get_intent_action_by_intent_id() {
         let repo = IntentTransactionRepository::new();
-        let intent_transaction = IntentTransaction {
+        let intent_transaction1 = IntentTransaction {
             intent_id: "intent1".to_string(),
             transaction_id: "transaction1".to_string(),
         };
-        repo.batch_create(vec![intent_transaction]);
+        let intent_transaction2 = IntentTransaction {
+            intent_id: "intent2".to_string(),
+            transaction_id: "transaction2".to_string(),
+        };
+        repo.batch_create(vec![intent_transaction1, intent_transaction2]);
 
         let transactions = repo.get_by_intent_id("intent1");
         assert_eq!(transactions.len(), 1);
@@ -116,11 +120,15 @@ mod tests {
     #[test]
     fn it_should_get_intent_action_by_transaction_id() {
         let repo = IntentTransactionRepository::new();
-        let intent_transaction = IntentTransaction {
+        let intent_transaction1 = IntentTransaction {
             intent_id: "intent1".to_string(),
             transaction_id: "transaction1".to_string(),
         };
-        repo.batch_create(vec![intent_transaction]);
+        let intent_transaction2 = IntentTransaction {
+            intent_id: "intent2".to_string(),
+            transaction_id: "transaction2".to_string(),
+        };
+        repo.batch_create(vec![intent_transaction1, intent_transaction2]);
 
         let transactions = repo.get_by_transaction_id("transaction1");
         assert_eq!(transactions.len(), 1);

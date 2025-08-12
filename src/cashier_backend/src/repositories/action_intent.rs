@@ -100,14 +100,18 @@ mod tests {
     #[test]
     fn it_should_get_by_action_id() {
         let repo = ActionIntentRepository::new();
-        let action_intent = ActionIntent {
+        let action_intent1 = ActionIntent {
             action_id: "action1".to_string(),
             intent_id: "intent1".to_string(),
         };
-        repo.batch_create(vec![action_intent]);
+        let action_intent2 = ActionIntent {
+            action_id: "action1".to_string(),
+            intent_id: "intent2".to_string(),
+        };
+        repo.batch_create(vec![action_intent1, action_intent2]);
 
         let retrieved = repo.get_by_action_id("action1");
-        assert_eq!(retrieved.len(), 1);
+        assert_eq!(retrieved.len(), 2);
         assert_eq!(retrieved.first().unwrap().intent_id, "intent1");
         assert_eq!(retrieved.first().unwrap().action_id, "action1");
     }
@@ -115,14 +119,18 @@ mod tests {
     #[test]
     fn it_should_get_by_intent_id() {
         let repo = ActionIntentRepository::new();
-        let action_intent = ActionIntent {
+        let action_intent1 = ActionIntent {
             action_id: "action1".to_string(),
             intent_id: "intent1".to_string(),
         };
-        repo.batch_create(vec![action_intent]);
+        let action_intent2 = ActionIntent {
+            action_id: "action2".to_string(),
+            intent_id: "intent1".to_string(),
+        };
+        repo.batch_create(vec![action_intent1, action_intent2]);
 
         let retrieved = repo.get_by_intent_id("intent1");
-        assert_eq!(retrieved.len(), 1);
+        assert_eq!(retrieved.len(), 2);
         assert_eq!(retrieved.first().unwrap().action_id, "action1");
         assert_eq!(retrieved.first().unwrap().intent_id, "intent1");
     }
