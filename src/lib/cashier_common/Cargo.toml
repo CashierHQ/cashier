@@ -1,5 +1,5 @@
 [package]
-name = "cashier-common"
+name = "cashier_common"
 edition.workspace = true
 license.workspace = true
 version.workspace = true

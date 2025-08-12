@@ -14,8 +14,8 @@ crate-type = ["cdylib"]
 async-trait = { workspace = true }
 base64 = { workspace = true }
 candid = { workspace = true }
-cashier-common = { workspace = true }
-cashier-types = { workspace = true }
+cashier_backend_types = { workspace = true }
+cashier_common = { workspace = true }
 futures = { workspace = true }
 getrandom = { workspace = true, features = ["custom"] }
 ic-cdk = { workspace = true }

@@ -1,5 +1,5 @@
 use candid::Nat;
-use cashier_types::repository::{
+use cashier_backend_types::repository::{
     action::v1::{ActionState, ActionType},
     intent::v2::IntentState,
 };
@@ -17,13 +17,13 @@ use crate::{
 #[cfg(test)]
 mod test_token_basket_3_tokens {
     use super::*;
-    use cashier_types::dto::{action::ActionDto, link::LinkDto};
+    use cashier_backend_types::dto::{action::ActionDto, link::LinkDto};
 
     struct TokenBasketTestData {
         link: LinkDto,
         action: ActionDto,
         caller: candid::Principal,
-        user: cashier_types::dto::user::UserDto,
+        user: cashier_backend_types::dto::user::UserDto,
         user_balance_before_create_link: Nat,
         ckbtc_balance_before: Nat,
         ckusdc_balance_before: Nat,

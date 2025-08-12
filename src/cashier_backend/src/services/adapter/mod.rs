@@ -3,7 +3,7 @@
 
 use std::marker::PhantomData;
 
-use cashier_types::{
+use cashier_backend_types::{
     error::CanisterError,
     repository::{common::Chain, intent::v2::Intent, transaction::v2::Transaction},
 };

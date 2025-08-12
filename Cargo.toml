@@ -2,10 +2,10 @@
 members = [
     "src/cashier_backend",
     "src/cashier_backend_client",
+    "src/cashier_backend_types",
     "src/integration_tests",
-    "src/lib/cashier-common",
-    "src/lib/cashier-macros",
-    "src/lib/cashier-types",
+    "src/lib/cashier_common",
+    "src/lib/cashier_macros",
     "src/token_storage",
     "src/token_storage_client",
 ]
@@ -22,9 +22,9 @@ async-trait = "0.1"
 base64 = "0.22"
 candid = "0.10"
 cashier_backend_client = { path = "src/cashier_backend_client" }
-cashier-common = { path = "src/lib/cashier-common" }
-cashier-macros = { path = "src/lib/cashier-macros" }
-cashier-types = { path = "src/lib/cashier-types" }
+cashier_backend_types = { path = "src/cashier_backend_types" }
+cashier_common = { path = "src/lib/cashier_common" }
+cashier_macros = { path = "src/lib/cashier_macros" }
 futures = { version = "0.3", default-features = false }
 getrandom = { version = "0.2", features = ["custom"] }
 ic-cdk = "0.18"

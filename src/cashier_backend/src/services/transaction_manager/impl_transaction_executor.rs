@@ -3,7 +3,7 @@
 
 use crate::services::transaction_manager::traits::ActionUpdater;
 use async_trait::async_trait;
-use cashier_types::{
+use cashier_backend_types::{
     error::CanisterError,
     repository::{
         intent::v2::IntentTask,

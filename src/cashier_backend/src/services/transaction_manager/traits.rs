@@ -8,7 +8,7 @@
 
 use async_trait::async_trait;
 use candid::Principal;
-use cashier_types::{
+use cashier_backend_types::{
     dto::action::{ActionDto, Icrc112Requests},
     error::CanisterError,
     repository::transaction::v2::{
