@@ -7,13 +7,13 @@ use cashier_types::constant::{
 };
 use cashier_types::error::CanisterError;
 use icrc_ledger_types::icrc1::account::Account;
+use log::error;
 use std::collections::HashMap;
 use std::str::FromStr;
 use uuid::Uuid;
 
 use crate::constant::{FEE_TREASURY_ADDRESS, ICP_CANISTER_ID};
 use crate::domains::fee::Fee;
-use crate::error;
 use crate::services::link::service::LinkService;
 use crate::services::link::traits::IntentAssembler;
 use crate::utils::helper::{convert_nat_to_u64, to_subaccount};

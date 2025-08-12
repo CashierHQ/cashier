@@ -13,7 +13,9 @@ cashier-common = { workspace = true }
 cashier-macros = { workspace = true }
 futures = { workspace = true, features = ["async-await"] }
 ic-cdk = { workspace = true }
+ic_mple_log = { workspace = true }
 ic-stable-structures = { workspace = true }
+log = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_cbor = { workspace = true }

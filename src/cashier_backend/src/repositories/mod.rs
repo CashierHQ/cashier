@@ -3,8 +3,10 @@
 
 use std::cell::RefCell;
 
+use ic_mple_log::LogSettings;
+use ic_mple_log::service::LoggerServiceStorage;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 
 // Import v2 types directly
 
@@ -46,6 +48,7 @@ const TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(11);
 const PROCESSING_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(12);
 
 const REQUEST_LOCK_MEMORY_ID: MemoryId = MemoryId::new(25);
+const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(26);
 
 // Unused Memory IDs but it used before, due to canister doesn't support shrink allocated memory
 const _UNUSED_MEMORY_ID_00: MemoryId = MemoryId::new(0);
@@ -67,6 +70,15 @@ pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
 thread_local! {
     pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
+
+    // Store the logger settings
+    pub static LOGGER_SERVICE_STORE: RefCell<LoggerServiceStorage> =
+        RefCell::new(
+            StableCell::init(
+                MEMORY_MANAGER.with_borrow(|m| m.get(LOG_SETTINGS_MEMORY_ID)),
+                LogSettings::default(),
+            )
+        );
 
     pub static USER_STORE: RefCell<StableBTreeMap<
         UserKey,

@@ -1,0 +1,50 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
+use ic_cdk::{init, post_upgrade, pre_upgrade};
+use ic_mple_log::service::LogServiceSettings;
+use log::info;
+
+use crate::api::state::get_state;
+use crate::services::transaction_manager::traits::TimeoutHandler;
+use crate::{
+    repositories,
+    services::transaction_manager::service::TransactionManagerService,
+    utils::{random::init_ic_rand, runtime::RealIcEnvironment},
+};
+#[init]
+fn init() {
+    // ToDo: add logger config init args
+    let log_config = LogServiceSettings {
+        enable_console: Some(true),
+        in_memory_records: 0.into(),
+        max_record_length: 0.into(),
+        log_filter: "debug".to_string().into(),
+    };
+
+    if let Err(err) = get_state().log_service.init(Some(log_config)) {
+        ic_cdk::println!("error configuring the logger. Err: {err:?}")
+    }
+
+    info!("[init] Starting Cashier Backend");
+
+    init_ic_rand();
+}
+
+#[pre_upgrade]
+fn pre_upgrade() {}
+
+#[post_upgrade]
+fn post_upgrade() {
+    if let Err(err) = get_state().log_service.init(None) {
+        ic_cdk::println!("error configuring the logger. Err: {err:?}")
+    }
+
+    info!("[post_upgrade] Starting Cashier Backend");
+
+    init_ic_rand();
+    // add log
+    repositories::load();
+    let tx_manager_service = TransactionManagerService::<RealIcEnvironment>::get_instance();
+    tx_manager_service.restart_processing_transactions();
+}
