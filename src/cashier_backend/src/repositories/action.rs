@@ -115,7 +115,7 @@ mod tests {
     }
 
     #[test]
-    fn it_should_create_an_action_by_default() {
+    fn it_should_create_action_repository_by_default() {
         let repo = ActionRepository::default();
         let action = Action {
             id: "default_action".to_string(),
