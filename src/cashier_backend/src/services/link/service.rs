@@ -312,7 +312,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 mod tests {
     use super::*;
     use crate::utils::test_utils::runtime::MockIcEnvironment;
-    use cashier_backend_types::repository::{link::v1::{LinkState, LinkType}, user_wallet::v1::UserWallet};
+    use cashier_backend_types::repository::{link::v1::{LinkState, LinkType}, user_link::v1::UserLink, user_wallet::v1::UserWallet};
     use crate::utils::test_utils::random_id_string;
 
     const PRINCIPAL_ID1: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
@@ -335,6 +335,12 @@ mod tests {
             link_use_action_max_count: 10,
         };
         service.link_repository.create(link.clone());
+
+        let user_link = UserLink {
+            user_id: creator_id.to_string(),
+            link_id: link.id.clone(),
+        };
+        service.user_link_repository.create(user_link);
         link
     }
 
@@ -485,6 +491,343 @@ mod tests {
         assert_eq!(fetched_link.description, created_link.description);
         assert_eq!(fetched_link.link_type, created_link.link_type);
         assert!(action.is_none()); // No action returned for Use type
+    }
+
+    #[test]
+    fn it_should_get_action_of_link_empty() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let action = service.get_action_of_link("nonexistent_link", "Use", "user_id");
+        assert!(action.is_none());
+    }
+
+    #[test]
+    fn it_should_get_action_of_link() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator = create_principal_feature(&service, PRINCIPAL_ID1);
+        let created_link = create_link_feature(&service, &creator.to_text());
+        let link_action = create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+        let action = service.get_action_of_link(&created_link.id, "Use", &creator.to_text());
+        assert!(action.is_some());
+        let action = action.unwrap();
+        assert_eq!(action.id, link_action.action_id);
+        assert_eq!(action.r#type, ActionType::Use);
+    }
+
+    #[test]
+    fn it_should_get_link_action_user_empty() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let result = service.get_link_action_user("nonexistent_link", "Use", "user_id");
+        assert!(result.is_ok());
+        assert!(result.unwrap().is_none());
+    }
+
+    #[test]
+    fn it_should_get_link_action_user() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator = create_principal_feature(&service, PRINCIPAL_ID1);
+        let created_link = create_link_feature(&service, &creator.to_text());
+        let link_action = create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+        let result = service.get_link_action_user(&created_link.id, "Use", &creator.to_text());
+        assert!(result.is_ok());
+        let action = result.unwrap();
+        assert!(action.is_some());
+        let action = action.unwrap();
+        assert_eq!(action.action_id, link_action.action_id);
+    }
+
+    #[test]
+    fn it_should_get_link_action_empty() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let action = service.get_link_action("nonexistent_link", "Use", "user_id");
+        assert!(action.is_none());
+    }
+
+    #[test]
+    fn it_should_get_link_action() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator = create_principal_feature(&service, PRINCIPAL_ID1);
+        let created_link = create_link_feature(&service, &creator.to_text());
+        let link_action = create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+        let action = service.get_link_action(&created_link.id, "Use", &creator.to_text());
+        assert!(action.is_some());
+        let action = action.unwrap();
+        assert_eq!(action.id, link_action.action_id);
+        assert_eq!(action.r#type, ActionType::Use);
+    }
+
+    #[test]
+    fn it_should_fail_to_update_link_use_counter_if_exceed_max() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator = create_principal_feature(&service, PRINCIPAL_ID1);
+        let created_link = create_link_feature(&service, &creator.to_text());
+        let link_action = create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+        
+        let updated_action = Action {
+            id: link_action.action_id.clone(),
+            r#type: ActionType::Use,
+            state: ActionState::Success, // Simulate a successful action
+            creator: creator.to_text(),
+            link_id: created_link.id.clone(),
+        };
+        service.action_repository.update(updated_action);
+
+        let updated_link = Link {
+            id: created_link.id.clone(),
+            state: created_link.state,
+            title: created_link.title.clone(),
+            description: created_link.description.clone(),
+            link_type: created_link.link_type,
+            asset_info: created_link.asset_info.clone(),
+            template: created_link.template.clone(),
+            creator: created_link.creator.clone(),
+            create_at: created_link.create_at,
+            metadata: created_link.metadata.clone(),
+            link_use_action_counter: 10, // Set to max count
+            link_use_action_max_count: 10,
+        };
+        service.link_repository.update(updated_link);
+
+        // Attempt to update link use counter with a non-successful action state
+        let result = service.update_link_use_counter(&created_link.id, &link_action.action_id);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("Link use action counter exceeded max count"));
+    }
+
+    #[test]
+    fn it_should_fail_update_link_use_counter_if_action_state_nonsuccess() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator = create_principal_feature(&service, PRINCIPAL_ID1);
+        let created_link = create_link_feature(&service, &creator.to_text());
+        let link_action = create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+        
+        let updated_action = Action {
+            id: link_action.action_id.clone(),
+            r#type: ActionType::Use,
+            state: ActionState::Created, // Simulate a non-successful action
+            creator: creator.to_text(),
+            link_id: created_link.id.clone(),
+        };
+        service.action_repository.update(updated_action);
+
+        // Attempt to update link use counter with a non-successful action state
+        let result = service.update_link_use_counter(&created_link.id, &link_action.action_id);
+        assert!(result.is_ok());
+        assert!(!result.unwrap()); // Should return false since no update was made
+    }
+
+    #[test]
+    fn it_should_update_link_use_counter_on_successful_action() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator = create_principal_feature(&service, PRINCIPAL_ID1);
+        let created_link = create_link_feature(&service, &creator.to_text());
+        let link_action = create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+        
+        let updated_action = Action {
+            id: link_action.action_id.clone(),
+            r#type: ActionType::Use,
+            state: ActionState::Success, // Simulate a successful action
+            creator: creator.to_text(),
+            link_id: created_link.id.clone(),
+        };
+        service.action_repository.update(updated_action);
+
+        // Update link use counter
+        let result = service.update_link_use_counter(&created_link.id, &link_action.action_id);
+        assert!(result.is_ok());
+        assert!(result.unwrap()); // Should return true since update was made
+
+        // Verify the link was updated
+        let updated_link = service.get_link_by_id(&created_link.id).unwrap();
+        assert_eq!(updated_link.link_use_action_counter, 1);
+    }
+
+    #[test]
+    fn it_should_get_links_by_principal() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let principal = create_principal_feature(&service, PRINCIPAL_ID1);
+        let user_id = principal.to_text();
+        
+        // Create a link for the principal
+        let created_link = create_link_feature(&service, &user_id);
+        
+        // Get links by principal
+        let pagination = PaginateInput::default();
+        let result = service.get_links_by_principal(&user_id, &pagination);
+        assert!(result.is_ok());
+        let links = result.unwrap();
+        assert_eq!(links.data.len(), 1);
+        assert_eq!(links.data[0].id, created_link.id);
+    }
+
+    #[test]
+    fn it_should_get_links_by_user_id() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let principal = create_principal_feature(&service, PRINCIPAL_ID1);
+        let user_id = principal.to_text();
+        
+        // Create a link for the user
+        let created_link = create_link_feature(&service, &user_id);
+        
+        // Get links by user ID
+        let pagination = PaginateInput::default();
+        let result = service.get_links_by_user_id(&user_id, &pagination);
+        assert!(result.is_ok());
+        let links = result.unwrap();
+        assert_eq!(links.data.len(), 1);
+        assert_eq!(links.data[0].id, created_link.id);
+    }
+
+    #[test]
+    fn it_should_handle_link_handle_tx_update_if_previous_and_current_state_are_the_same() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator = create_principal_feature(&service, PRINCIPAL_ID1);
+        let created_link = create_link_feature(&service, &creator.to_text());
+        let action_type = ActionType::Use;
+        let action_id = random_id_string(10);
+
+        // Simulate a previous state that is the same as the current state
+        let previous_state = ActionState::Created;
+        let current_state = ActionState::Created;
+
+        // Call the method and expect it to return Ok without any updates
+        let result = service.link_handle_tx_update(
+            &previous_state,
+            &current_state,
+            &created_link.id,
+            &action_type,
+            &action_id,
+        );
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn it_should_handle_link_handle_tx_update_if_current_state_nonsuccess() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator = create_principal_feature(&service, PRINCIPAL_ID1);
+        let created_link = create_link_feature(&service, &creator.to_text());
+        let action_type = ActionType::Use;
+        let action_id = random_id_string(10);
+
+        // Simulate a previous state that is different from the current state
+        let previous_state = ActionState::Created;
+        let current_state = ActionState::Fail; // Non-successful state
+
+        // Call the method and expect it to return Ok without any updates
+        let result = service.link_handle_tx_update(
+            &previous_state,
+            &current_state,
+            &created_link.id,
+            &action_type,
+            &action_id,
+        );
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn it_should_handle_link_handle_tx_update_if_action_type_is_not_use() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator = create_principal_feature(&service, PRINCIPAL_ID1);
+        let created_link = create_link_feature(&service, &creator.to_text());
+        let action_type = ActionType::CreateLink; // Not Use action type
+        let action_id = random_id_string(10);
+
+        // Simulate a previous state that is different from the current state
+        let previous_state = ActionState::Created;
+        let current_state = ActionState::Success; // Successful state
+
+        // Call the method and expect it to return Ok without any updates
+        let result = service.link_handle_tx_update(
+            &previous_state,
+            &current_state,
+            &created_link.id,
+            &action_type,
+            &action_id,
+        );
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn it_should_fail_to_handle_link_handle_tx_update_due_to_counter_exceed_max() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator = create_principal_feature(&service, PRINCIPAL_ID1);
+        let created_link = create_link_feature(&service, &creator.to_text());
+        let action_type = ActionType::Use;
+        let action_id = random_id_string(10);
+
+        let updated_action = Action {
+            id: action_id.clone(),
+            r#type: action_type.clone(),
+            state: ActionState::Success, // Simulate a successful action
+            creator: creator.to_text(),
+            link_id: created_link.id.clone(),
+        };
+        service.action_repository.create(updated_action);
+
+        let updated_link = Link {
+            id: created_link.id.clone(),
+            state: created_link.state,
+            title: created_link.title.clone(),
+            description: created_link.description.clone(),
+            link_type: created_link.link_type,
+            asset_info: created_link.asset_info.clone(),
+            template: created_link.template.clone(),
+            creator: created_link.creator.clone(),
+            create_at: created_link.create_at,
+            metadata: created_link.metadata.clone(),
+            link_use_action_counter: 10, // Set to max count
+            link_use_action_max_count: 10,
+        };
+        service.link_repository.update(updated_link);
+
+        // Simulate a previous state that is different from the current state
+        let previous_state = ActionState::Created;
+        let current_state = ActionState::Success; // Successful state
+
+        // Call the method and expect it to return Ok without any updates
+        let result = service.link_handle_tx_update(
+            &previous_state,
+            &current_state,
+            &created_link.id,
+            &action_type,
+            &action_id,
+        );
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn it_should_handle_link_handle_tx_update_successful_action() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator = create_principal_feature(&service, PRINCIPAL_ID1);
+        let created_link = create_link_feature(&service, &creator.to_text());
+        let action_type = ActionType::Use;
+        let action_id = random_id_string(10);
+
+        let updated_action = Action {
+            id: action_id.clone(),
+            r#type: action_type.clone(),
+            state: ActionState::Success, // Simulate a successful action
+            creator: creator.to_text(),
+            link_id: created_link.id.clone(),
+        };
+        service.action_repository.create(updated_action);
+
+        // Simulate a previous state that is different from the current state
+        let previous_state = ActionState::Created;
+        let current_state = ActionState::Success; // Successful state
+
+        // Call the method and expect it to return Ok with link properties updated
+        let result = service.link_handle_tx_update(
+            &previous_state,
+            &current_state,
+            &created_link.id,
+            &action_type,
+            &action_id,
+        );
+        assert!(result.is_ok());
+
+        // Verify the link was updated
+        let updated_link = service.get_link_by_id(&created_link.id).unwrap();
+        assert_eq!(updated_link.link_use_action_counter, 1);
     }
 
 }
