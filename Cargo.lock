@@ -248,40 +248,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cashier-common"
-version = "0.1.0"
-dependencies = [
- "candid",
- "serde",
- "serde_bytes",
-]
-
-[[package]]
-name = "cashier-macros"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.104",
-]
-
-[[package]]
-name = "cashier-types"
-version = "0.1.0"
-dependencies = [
- "candid",
- "cashier-macros",
- "ic-cdk",
- "ic-cdk-timers",
- "ic-stable-structures 0.7.0",
- "icrc-ledger-types",
- "serde",
- "serde_cbor",
- "serde_json",
- "thiserror 2.0.12",
-]
-
-[[package]]
 name = "cashier_backend"
 version = "0.1.0"
 dependencies = [
@@ -289,8 +255,8 @@ dependencies = [
  "async-trait",
  "base64 0.22.1",
  "candid",
- "cashier-common",
- "cashier-types",
+ "cashier_backend_types",
+ "cashier_common",
  "futures",
  "getrandom 0.2.16",
  "ic-cdk",
@@ -318,11 +284,45 @@ name = "cashier_backend_client"
 version = "0.1.0"
 dependencies = [
  "candid",
- "cashier-common",
- "cashier-types",
+ "cashier_backend_types",
+ "cashier_common",
  "ic_mple_client",
  "ic_mple_pocket_ic",
  "serde",
+]
+
+[[package]]
+name = "cashier_backend_types"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "cashier_macros",
+ "ic-cdk",
+ "ic-cdk-timers",
+ "ic-stable-structures 0.7.0",
+ "icrc-ledger-types",
+ "serde",
+ "serde_cbor",
+ "serde_json",
+ "thiserror 2.0.12",
+]
+
+[[package]]
+name = "cashier_common"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "serde",
+ "serde_bytes",
+]
+
+[[package]]
+name = "cashier_macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.104",
 ]
 
 [[package]]
@@ -1266,8 +1266,8 @@ version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
  "candid",
- "cashier-types",
  "cashier_backend_client",
+ "cashier_backend_types",
  "ic-cdk",
  "ic-ledger-types",
  "ic_mple_client",
@@ -2494,8 +2494,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "candid",
- "cashier-common",
- "cashier-macros",
+ "cashier_common",
+ "cashier_macros",
  "futures",
  "ic-cdk",
  "ic-stable-structures 0.7.0",
@@ -2515,7 +2515,7 @@ dependencies = [
 name = "token_storage_client"
 version = "0.1.0"
 dependencies = [
- "cashier-common",
+ "cashier_common",
  "ic_mple_client",
 ]
 

@@ -1,4 +1,4 @@
-use cashier_types::{
+use cashier_backend_types::{
     dto::action::{ActionDto, CreateActionInput},
     error::CanisterError,
 };

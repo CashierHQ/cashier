@@ -1,5 +1,5 @@
 [package]
-name = "cashier-macros"
+name = "cashier_macros"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

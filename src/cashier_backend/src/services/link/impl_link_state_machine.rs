@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use async_trait::async_trait;
 
-use cashier_types::{
+use cashier_backend_types::{
     dto::link::{
         CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDetailUpdateInput,
         LinkStateMachineGoto,

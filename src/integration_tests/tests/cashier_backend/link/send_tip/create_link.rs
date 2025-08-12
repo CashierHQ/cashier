@@ -1,6 +1,6 @@
-use cashier_types::constant::INTENT_LABEL_SEND_TIP_ASSET;
-use cashier_types::repository::common::Chain;
-use cashier_types::repository::link::v1::{LinkType, Template};
+use cashier_backend_types::constant::INTENT_LABEL_SEND_TIP_ASSET;
+use cashier_backend_types::repository::common::Chain;
+use cashier_backend_types::repository::link::v1::{LinkType, Template};
 
 use super::super::fixture::LinkTestFixture;
 use crate::constant::ICP_PRINCIPAL;

@@ -6,8 +6,8 @@ use crate::services::transaction_manager::traits::{
     BatchExecutor, DependencyAnalyzer, TimeoutHandler,
 };
 use async_trait::async_trait;
-use cashier_types::error::CanisterError;
-use cashier_types::{
+use cashier_backend_types::error::CanisterError;
+use cashier_backend_types::{
     dto::action::{ActionDto, Icrc112Requests},
     repository::{
         processing_transaction::ProcessingTransaction,

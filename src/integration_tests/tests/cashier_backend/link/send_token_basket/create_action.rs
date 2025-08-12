@@ -1,4 +1,4 @@
-use cashier_types::repository::{
+use cashier_backend_types::repository::{
     action::v1::{ActionState, ActionType},
     intent::v2::IntentState,
 };

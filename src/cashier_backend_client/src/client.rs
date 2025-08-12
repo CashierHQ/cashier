@@ -1,5 +1,5 @@
 use cashier_common::build_data::BuildData;
-use cashier_types::{
+use cashier_backend_types::{
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
         link::{CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDto, UpdateLinkInput},

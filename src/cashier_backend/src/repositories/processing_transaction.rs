@@ -1,4 +1,4 @@
-use cashier_types::repository::processing_transaction::ProcessingTransaction;
+use cashier_backend_types::repository::processing_transaction::ProcessingTransaction;
 
 use crate::repositories::PROCESSING_TRANSACTION_STORE;
 

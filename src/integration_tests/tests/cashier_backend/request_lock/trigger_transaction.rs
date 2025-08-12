@@ -1,6 +1,6 @@
 use base64::prelude::BASE64_STANDARD;
 use candid::{CandidType, Decode, Principal};
-use cashier_types::error::CanisterError;
+use cashier_backend_types::error::CanisterError;
 use ic_mple_pocket_ic::pocket_ic::common::rest::RawMessageId;
 use serde::de::DeserializeOwned;
 
