@@ -2,9 +2,9 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 #![allow(clippy::missing_errors_doc)]
-#![deny(clippy::panic)]
-#![deny(clippy::unwrap_used)]
-#![deny(clippy::expect_used)]
+#![cfg_attr(not(test), deny(clippy::panic))]
+#![cfg_attr(not(test), deny(clippy::unwrap_used))]
+#![cfg_attr(not(test), deny(clippy::expect_used))]
 #![warn(clippy::indexing_slicing)]
 // Clone-related lints
 #![warn(clippy::clone_on_ref_ptr)]

@@ -49,14 +49,12 @@ impl LinkRepository {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
     use cashier_types::repository::link::v1::{LinkState, LinkType};
 
     #[test]
-    fn create() {
+    fn it_should_create_a_link() {
         let repo = LinkRepository::new();
         let link = Link {
             id: "link1".to_string(),
@@ -81,7 +79,7 @@ mod tests {
     }
 
     #[test]
-    fn update() {
+    fn it_should_update_a_link() {
         let repo = LinkRepository::new();
         let link = Link {
             id: "link1".to_string(),
@@ -123,7 +121,7 @@ mod tests {
     }
 
     #[test]
-    fn delete() {
+    fn it_should_delete_a_link() {
         let repo = LinkRepository::new();
         let link = Link {
             id: "link1".to_string(),
@@ -147,7 +145,7 @@ mod tests {
     }
 
     #[test]
-    fn get_batch() {
+    fn it_should_get_batch_of_links() {
         let repo = LinkRepository::new();
         let link1 = Link {
             id: "link1".to_string(),
@@ -188,7 +186,7 @@ mod tests {
     }
 
     #[test]
-    fn get() {
+    fn it_should_get_a_link() {
         let repo = LinkRepository::new();
         let link = Link {
             id: "link1".to_string(),
@@ -212,7 +210,7 @@ mod tests {
     }
 
     #[test]
-    fn default() {
+    fn it_should_create_a_link_repository_by_default() {
         let repo = LinkRepository::default();
         assert!(repo.get(&"default_link".to_string()).is_none());
     }

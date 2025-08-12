@@ -36,8 +36,6 @@ impl RequestLockRepository {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
     use cashier_types::repository::request_lock::RequestLock;

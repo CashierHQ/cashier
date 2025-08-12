@@ -48,8 +48,6 @@ impl TransactionRepository {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
     use candid::types::number::Nat;
@@ -62,7 +60,7 @@ mod tests {
     use std::str::FromStr;
 
     #[test]
-    fn batch_create() {
+    fn it_should_batch_create_transactions() {
         let repo = TransactionRepository::new();
         let transaction1 = Transaction {
             id: "transaction1".to_string(),
@@ -108,7 +106,7 @@ mod tests {
     }
 
     #[test]
-    fn update() {
+    fn it_should_update_a_transaction() {
         let repo = TransactionRepository::new();
         let transaction1 = Transaction {
             id: "transaction1".to_string(),
@@ -139,7 +137,7 @@ mod tests {
     }
 
     #[test]
-    fn batch_get() {
+    fn it_should_batch_get_transactions() {
         let repo = TransactionRepository::new();
         let transaction1 = Transaction {
             id: "transaction1".to_string(),
@@ -185,7 +183,7 @@ mod tests {
     }
 
     #[test]
-    fn get() {
+    fn it_should_get_a_transaction() {
         let repo = TransactionRepository::new();
         let transaction = Transaction {
             id: "transaction1".to_string(),
@@ -212,7 +210,7 @@ mod tests {
     }
 
     #[test]
-    fn default() {
+    fn it_should_create_a_transaction_repository_by_default() {
         let repo = TransactionRepository::default();
         assert!(repo.batch_get(vec!["nonexistent".to_string()]).is_empty());
     }

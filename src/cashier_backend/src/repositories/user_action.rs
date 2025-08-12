@@ -31,13 +31,11 @@ impl UserActionRepository {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 
     #[test]
-    fn create() {
+    fn it_should_create_an_user_action() {
         let repo = UserActionRepository::new();
         let user_action = UserAction {
             user_id: "user1".to_string(),
@@ -59,7 +57,7 @@ mod tests {
     }
 
     #[test]
-    fn default() {
+    fn it_should_create_a_user_action_repository_by_default() {
         let repo = UserActionRepository::default();
         let user_action = UserAction {
             user_id: "user1".to_string(),

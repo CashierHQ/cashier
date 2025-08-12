@@ -33,13 +33,11 @@ impl UserRepository {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 
     #[test]
-    fn create() {
+    fn it_should_create_an_user() {
         let repo = UserRepository::new();
         let user = User {
             id: "user1".to_string(),
@@ -53,7 +51,7 @@ mod tests {
     }
 
     #[test]
-    fn get() {
+    fn it_should_get_a_user() {
         let repo = UserRepository::new();
         let user = User {
             id: "user1".to_string(),
@@ -67,7 +65,7 @@ mod tests {
     }
 
     #[test]
-    fn default() {
+    fn it_should_create_a_user_repository_by_default() {
         let repo = UserRepository::default();
         let user = User {
             id: "user1".to_string(),

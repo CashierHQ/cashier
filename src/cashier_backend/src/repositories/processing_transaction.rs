@@ -38,13 +38,11 @@ impl ProcessingTransactionRepository {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 
     #[test]
-    fn create() {
+    fn it_should_create_a_processing_transaction() {
         let repo = ProcessingTransactionRepository::new();
         let transaction_id = "tx1".to_string();
         let processing_tx = ProcessingTransaction {
@@ -58,7 +56,7 @@ mod tests {
     }
 
     #[test]
-    fn delete() {
+    fn it_should_delete_a_processing_transaction() {
         let repo = ProcessingTransactionRepository::new();
         let transaction_id = "tx1".to_string();
         let processing_tx = ProcessingTransaction {
@@ -75,7 +73,7 @@ mod tests {
     }
 
     #[test]
-    fn exists() {
+    fn it_should_check_if_a_processing_transaction_exists() {
         let repo = ProcessingTransactionRepository::new();
         let transaction_id = "tx1".to_string();
         let processing_tx = ProcessingTransaction {
@@ -92,7 +90,7 @@ mod tests {
     }
 
     #[test]
-    fn test_get_all() {
+    fn it_should_get_all_processing_transactions() {
         let repo = ProcessingTransactionRepository::new();
         let processing_tx1 = ProcessingTransaction {
             transaction_id: "tx1".to_string(),
@@ -113,7 +111,7 @@ mod tests {
     }
 
     #[test]
-    fn default() {
+    fn it_should_create_a_processing_transaction_repository_by_default() {
         let repo = ProcessingTransactionRepository::default();
         assert!(repo.get_all().is_empty());
     }

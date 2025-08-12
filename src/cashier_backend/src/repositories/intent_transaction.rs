@@ -72,13 +72,11 @@ impl IntentTransactionRepository {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 
     #[test]
-    fn batch_create() {
+    fn it_should_batch_create_intent_actions() {
         let repo = IntentTransactionRepository::new();
         let intent_transactions = vec![
             IntentTransaction {
@@ -102,7 +100,7 @@ mod tests {
     }
 
     #[test]
-    fn get_by_intent_id() {
+    fn it_should_get_intent_action_by_intent_id() {
         let repo = IntentTransactionRepository::new();
         let intent_transaction = IntentTransaction {
             intent_id: "intent1".to_string(),
@@ -116,7 +114,7 @@ mod tests {
     }
 
     #[test]
-    fn get_by_transaction_id() {
+    fn it_should_get_intent_action_by_transaction_id() {
         let repo = IntentTransactionRepository::new();
         let intent_transaction = IntentTransaction {
             intent_id: "intent1".to_string(),
@@ -130,7 +128,7 @@ mod tests {
     }
 
     #[test]
-    fn default() {
+    fn it_should_create_intent_action_by_default() {
         let repo = IntentTransactionRepository::default();
         assert!(repo.get_by_intent_id("nonexistent").is_empty());
         assert!(repo.get_by_transaction_id("nonexistent").is_empty());
