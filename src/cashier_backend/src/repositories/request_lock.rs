@@ -39,15 +39,19 @@ impl RequestLockRepository {
 mod tests {
     use super::*;
     use cashier_backend_types::repository::request_lock::RequestLock;
+    use crate::utils::test_utils::random_id_string;
 
     #[test]
     fn it_should_create_a_request_lock() {
         let repo = RequestLockRepository::new();
+        let user_principal_id = random_id_string(10);
+        let link_id = random_id_string(10);
+        let action_id = random_id_string(10);
         let request_lock = RequestLock {
             key: RequestLockKey::UserLinkAction {
-                user_principal: "abc-xya".to_string(),
-                link_id: "link1".to_string(),
-                action_id: "action1".to_string(),
+                user_principal: user_principal_id.clone(),
+                link_id: link_id.clone(),
+                action_id: action_id.clone(),
             },
             timestamp: 1622547800,
         };
@@ -65,11 +69,14 @@ mod tests {
     #[test]
     fn it_should_delete_a_request_lock() {
         let repo = RequestLockRepository::new();
+        let user_principal_id = random_id_string(10);
+        let link_id = random_id_string(10);
+        let action_id = random_id_string(10);
         let request_lock = RequestLock {
             key: RequestLockKey::UserLinkAction {
-                user_principal: "abc-xya".to_string(),
-                link_id: "link1".to_string(),
-                action_id: "action1".to_string(),
+                user_principal: user_principal_id.clone(),
+                link_id: link_id.clone(),
+                action_id: action_id.clone(),
             },
             timestamp: 1622547800,
         };
@@ -83,11 +90,14 @@ mod tests {
     #[test]
     fn it_should_check_if_a_request_lock_exists() {
         let repo = RequestLockRepository::new();
+        let user_principal_id = random_id_string(10);
+        let link_id = random_id_string(10);
+        let action_id = random_id_string(10);
         let request_lock = RequestLock {
             key: RequestLockKey::UserLinkAction {
-                user_principal: "abc-xya".to_string(),
-                link_id: "link1".to_string(),
-                action_id: "action1".to_string(),
+                user_principal: user_principal_id.clone(),
+                link_id: link_id.clone(),
+                action_id: action_id.clone(),
             },
             timestamp: 1622547800,
         };

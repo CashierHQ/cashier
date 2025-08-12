@@ -56,12 +56,15 @@ mod tests {
         intent::v2::{IntentState, IntentTask, IntentType, TransferData},
     };
     use std::str::FromStr;
+    use crate::utils::test_utils::random_id_string;
 
     #[test]
     fn it_should_batch_create_intents() {
         let repo = IntentRepository::new();
+        let intent_id1= random_id_string(10);
+        let intent_id2 = random_id_string(10);
         let intent1 = Intent {
-            id: "intent1".to_string(),
+            id: intent_id1.clone(),
             state: IntentState::Processing,
             created_at: 1622547800,
             dependency: vec![],
@@ -76,7 +79,7 @@ mod tests {
             label: "Test Intent".to_string(),
         };
         let intent2 = Intent {
-            id: "intent2".to_string(),
+            id: intent_id2.clone(),
             state: IntentState::Success,
             created_at: 1622547801,
             dependency: vec![],
@@ -93,20 +96,22 @@ mod tests {
 
         repo.batch_create(vec![intent1, intent2]);
 
-        let retrieved_intent = repo.get("intent1");
+        let retrieved_intent = repo.get(&intent_id1);
         assert!(retrieved_intent.is_some());
-        assert_eq!(retrieved_intent.unwrap().id, "intent1");
+        assert_eq!(retrieved_intent.unwrap().id, intent_id1);
 
-        let retrieved_intent = repo.get("intent2");
+        let retrieved_intent = repo.get(&intent_id2);
         assert!(retrieved_intent.is_some());
-        assert_eq!(retrieved_intent.unwrap().id, "intent2");
+        assert_eq!(retrieved_intent.unwrap().id, intent_id2);
     }
 
     #[test]
     fn it_should_batch_update_intents() {
         let repo = IntentRepository::new();
+        let intent_id1 = random_id_string(10);
+        let intent_id2 = random_id_string(10);
         let intent1 = Intent {
-            id: "intent1".to_string(),
+            id: intent_id1.clone(),
             state: IntentState::Processing,
             created_at: 1622547800,
             dependency: vec![],
@@ -122,7 +127,7 @@ mod tests {
         };
 
         let intent2 = Intent {
-            id: "intent2".to_string(),
+            id: intent_id2.clone(),
             state: IntentState::Success,
             created_at: 1622547801,
             dependency: vec![],
@@ -139,7 +144,7 @@ mod tests {
         repo.batch_create(vec![intent1, intent2]);
 
         let updated_intent1 = Intent {
-            id: "intent1".to_string(),
+            id: intent_id1.clone(),
             state: IntentState::Success,
             created_at: 1622547800,
             dependency: vec![],
@@ -154,7 +159,7 @@ mod tests {
             label: "Updated Intent".to_string(),
         };
         let update_intent2 = Intent {
-            id: "intent2".to_string(),
+            id: intent_id2.clone(),
             state: IntentState::Success,
             created_at: 1622547801,
             dependency: vec![],
@@ -170,11 +175,11 @@ mod tests {
         };
         repo.batch_update(vec![updated_intent1, update_intent2]);
 
-        let retrieved_intent = repo.get("intent1");
+        let retrieved_intent = repo.get(&intent_id1);
         assert!(retrieved_intent.is_some());
         assert_eq!(retrieved_intent.unwrap().state, IntentState::Success);
 
-        let retrieved_intent = repo.get("intent2");
+        let retrieved_intent = repo.get(&intent_id2);
         assert!(retrieved_intent.is_some());
         assert_eq!(retrieved_intent.unwrap().state, IntentState::Success);
     }
@@ -182,8 +187,9 @@ mod tests {
     #[test]
     fn it_should_get_an_intent() {
         let repo = IntentRepository::new();
+        let intent_id = random_id_string(10);
         let intent = Intent {
-            id: "intent1".to_string(),
+            id: intent_id.clone(),
             state: IntentState::Processing,
             created_at: 1622547800,
             dependency: vec![],
@@ -199,16 +205,18 @@ mod tests {
         };
         repo.batch_create(vec![intent]);
 
-        let retrieved_intent = repo.get("intent1");
+        let retrieved_intent = repo.get(&intent_id);
         assert!(retrieved_intent.is_some());
-        assert_eq!(retrieved_intent.unwrap().id, "intent1");
+        assert_eq!(retrieved_intent.unwrap().id, intent_id);
     }
 
     #[test]
     fn it_should_batch_get_intents() {
         let repo = IntentRepository::new();
+        let intent_id1 = random_id_string(10);
+        let intent_id2 = random_id_string(10);
         let intent1 = Intent {
-            id: "intent1".to_string(),
+            id: intent_id1.clone(),
             state: IntentState::Processing,
             created_at: 1622547800,
             dependency: vec![],
@@ -223,7 +231,7 @@ mod tests {
             label: "Test Intent".to_string(),
         };
         let intent2 = Intent {
-            id: "intent2".to_string(),
+            id: intent_id2.clone(),
             state: IntentState::Success,
             created_at: 1622547801,
             dependency: vec![],
@@ -239,10 +247,10 @@ mod tests {
         };
         repo.batch_create(vec![intent1, intent2]);
 
-        let retrieved_intents = repo.batch_get(vec!["intent1".to_string(), "intent2".to_string()]);
+        let retrieved_intents = repo.batch_get(vec![intent_id1.clone(), intent_id2.clone()]);
         assert_eq!(retrieved_intents.len(), 2);
-        assert_eq!(retrieved_intents.first().unwrap().id, "intent1");
-        assert_eq!(retrieved_intents.get(1).unwrap().id, "intent2");
+        assert_eq!(retrieved_intents.first().unwrap().id, intent_id1);
+        assert_eq!(retrieved_intents.get(1).unwrap().id, intent_id2);
     }
 
     #[test]

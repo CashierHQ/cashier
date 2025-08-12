@@ -33,46 +33,55 @@ impl UserWalletRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::utils::test_utils::random_id_string;
 
     #[test]
     fn it_should_create_an_user_wallet() {
         let repo = UserWalletRepository::new();
-        let wallet_key = UserWalletKey::from("key1");
+        let key_id = random_id_string(10);
+        let user_id = random_id_string(10);
+
+        let wallet_key = UserWalletKey::from(key_id.clone());
         let user_wallet = UserWallet {
-            user_id: "user1".to_string(),
+            user_id: user_id.clone(),
         };
         repo.create(wallet_key.clone(), user_wallet);
 
         let retrieved_wallet = repo.get(&wallet_key);
         assert!(retrieved_wallet.is_some());
-        assert_eq!(retrieved_wallet.unwrap().user_id, "user1");
+        assert_eq!(retrieved_wallet.unwrap().user_id, user_id);
     }
 
     #[test]
     fn it_should_get_a_user_wallet() {
         let repo = UserWalletRepository::new();
-        let wallet_key = UserWalletKey::from("key1");
+        let key_id = random_id_string(10);
+        let user_id = random_id_string(10);
+
+        let wallet_key = UserWalletKey::from(key_id.clone());
         let user_wallet = UserWallet {
-            user_id: "user1".to_string(),
+            user_id: user_id.clone(),
         };
         repo.create(wallet_key.clone(), user_wallet);
 
         let retrieved_wallet = repo.get(&wallet_key);
         assert!(retrieved_wallet.is_some());
-        assert_eq!(retrieved_wallet.unwrap().user_id, "user1");
+        assert_eq!(retrieved_wallet.unwrap().user_id, user_id);
     }
 
     #[test]
     fn it_should_create_a_user_wallet_repository_by_default() {
         let repo = UserWalletRepository::default();
-        let wallet_key = UserWalletKey::from("key1");
+        let key_id = random_id_string(10);
+        let user_id = random_id_string(10);
+        let wallet_key = UserWalletKey::from(key_id.clone());
         let user_wallet = UserWallet {
-            user_id: "user1".to_string(),
+            user_id: user_id.clone(),
         };
         repo.create(wallet_key.clone(), user_wallet);
 
         let retrieved_wallet = repo.get(&wallet_key);
         assert!(retrieved_wallet.is_some());
-        assert_eq!(retrieved_wallet.unwrap().user_id, "user1");
+        assert_eq!(retrieved_wallet.unwrap().user_id, user_id);
     }
 }
