@@ -107,8 +107,8 @@ mod tests {
             timeout_at: 1622547901,
         };
 
-        repo.create(transaction_id1.clone(), processing_tx1);
-        repo.create(transaction_id2.clone(), processing_tx2);
+        repo.create(transaction_id1, processing_tx1);
+        repo.create(transaction_id2, processing_tx2);
 
         let all_transactions = repo.get_all();
         assert_eq!(all_transactions.len(), 2);

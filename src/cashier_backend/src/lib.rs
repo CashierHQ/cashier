@@ -5,7 +5,7 @@
 #![cfg_attr(not(test), deny(clippy::panic))]
 #![cfg_attr(not(test), deny(clippy::unwrap_used))]
 #![cfg_attr(not(test), deny(clippy::expect_used))]
-#![warn(clippy::indexing_slicing)]
+#![cfg_attr(not(test), warn(clippy::indexing_slicing))]
 // Clone-related lints
 #![warn(clippy::clone_on_ref_ptr)]
 #![warn(clippy::clone_on_copy)]

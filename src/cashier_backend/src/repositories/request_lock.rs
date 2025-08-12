@@ -38,8 +38,8 @@ impl RequestLockRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cashier_backend_types::repository::request_lock::RequestLock;
     use crate::utils::test_utils::random_id_string;
+    use cashier_backend_types::repository::request_lock::RequestLock;
 
     #[test]
     fn it_should_create_a_request_lock() {
@@ -49,9 +49,9 @@ mod tests {
         let action_id = random_id_string(10);
         let request_lock = RequestLock {
             key: RequestLockKey::UserLinkAction {
-                user_principal: user_principal_id.clone(),
-                link_id: link_id.clone(),
-                action_id: action_id.clone(),
+                user_principal: user_principal_id,
+                link_id,
+                action_id,
             },
             timestamp: 1622547800,
         };
@@ -74,9 +74,9 @@ mod tests {
         let action_id = random_id_string(10);
         let request_lock = RequestLock {
             key: RequestLockKey::UserLinkAction {
-                user_principal: user_principal_id.clone(),
-                link_id: link_id.clone(),
-                action_id: action_id.clone(),
+                user_principal: user_principal_id,
+                link_id,
+                action_id,
             },
             timestamp: 1622547800,
         };
@@ -95,9 +95,9 @@ mod tests {
         let action_id = random_id_string(10);
         let request_lock = RequestLock {
             key: RequestLockKey::UserLinkAction {
-                user_principal: user_principal_id.clone(),
-                link_id: link_id.clone(),
-                action_id: action_id.clone(),
+                user_principal: user_principal_id,
+                link_id,
+                action_id,
             },
             timestamp: 1622547800,
         };

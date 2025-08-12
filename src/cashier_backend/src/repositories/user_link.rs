@@ -111,7 +111,7 @@ mod tests {
 
         let user_link = UserLink {
             user_id: user_id.clone(),
-            link_id: link_id.clone(),
+            link_id,
         };
 
         repo.create(user_link.clone());

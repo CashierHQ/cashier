@@ -41,7 +41,7 @@ mod tests {
         let key_id = random_id_string(10);
         let user_id = random_id_string(10);
 
-        let wallet_key = UserWalletKey::from(key_id.clone());
+        let wallet_key = UserWalletKey::from(key_id);
         let user_wallet = UserWallet {
             user_id: user_id.clone(),
         };
@@ -58,7 +58,7 @@ mod tests {
         let key_id = random_id_string(10);
         let user_id = random_id_string(10);
 
-        let wallet_key = UserWalletKey::from(key_id.clone());
+        let wallet_key = UserWalletKey::from(key_id);
         let user_wallet = UserWallet {
             user_id: user_id.clone(),
         };
@@ -74,7 +74,7 @@ mod tests {
         let repo = UserWalletRepository::default();
         let key_id = random_id_string(10);
         let user_id = random_id_string(10);
-        let wallet_key = UserWalletKey::from(key_id.clone());
+        let wallet_key = UserWalletKey::from(key_id);
         let user_wallet = UserWallet {
             user_id: user_id.clone(),
         };

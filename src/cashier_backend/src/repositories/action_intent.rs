@@ -114,8 +114,8 @@ mod tests {
             intent_id: intent_id1.clone(),
         };
         let action_intent2 = ActionIntent {
-            action_id: action_id2.clone(),
-            intent_id: intent_id2.clone(),
+            action_id: action_id2,
+            intent_id: intent_id2,
         };
         repo.batch_create(vec![action_intent1, action_intent2]);
 
@@ -137,8 +137,8 @@ mod tests {
             intent_id: intent_id1.clone(),
         };
         let action_intent2 = ActionIntent {
-            action_id: action_id2.clone(),
-            intent_id: intent_id2.clone(),
+            action_id: action_id2,
+            intent_id: intent_id2,
         };
         repo.batch_create(vec![action_intent1, action_intent2]);
 

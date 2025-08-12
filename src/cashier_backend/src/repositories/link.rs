@@ -51,15 +51,15 @@ impl LinkRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cashier_backend_types::{repository::link::v1::{LinkState, LinkType}};
     use crate::utils::test_utils::random_id_string;
+    use cashier_backend_types::repository::link::v1::{LinkState, LinkType};
 
     #[test]
     fn it_should_create_a_link() {
         let repo = LinkRepository::new();
         let link_id = random_id_string(10);
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Test Link".to_string()),
             description: Some("This is a test link".to_string()),
@@ -101,7 +101,7 @@ mod tests {
         repo.create(link);
 
         let updated_link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::Active,
             title: Some("Updated Test Link".to_string()),
             description: Some("This is an updated test link".to_string()),
@@ -128,7 +128,7 @@ mod tests {
         let repo = LinkRepository::new();
         let link_id = random_id_string(10);
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Test Link".to_string()),
             description: Some("This is a test link".to_string()),
@@ -209,7 +209,7 @@ mod tests {
             link_use_action_counter: 0,
             link_use_action_max_count: 10,
         };
-        repo.create(link.clone());
+        repo.create(link);
 
         let fetched_link = repo.get(&link_id);
         assert!(fetched_link.is_some());

@@ -50,18 +50,18 @@ impl IntentRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::utils::test_utils::random_id_string;
     use candid::types::number::Nat;
     use cashier_backend_types::repository::{
         common::{Asset, Chain, Wallet},
         intent::v2::{IntentState, IntentTask, IntentType, TransferData},
     };
     use std::str::FromStr;
-    use crate::utils::test_utils::random_id_string;
 
     #[test]
     fn it_should_batch_create_intents() {
         let repo = IntentRepository::new();
-        let intent_id1= random_id_string(10);
+        let intent_id1 = random_id_string(10);
         let intent_id2 = random_id_string(10);
         let intent1 = Intent {
             id: intent_id1.clone(),

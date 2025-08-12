@@ -74,14 +74,14 @@ impl LinkActionRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cashier_backend_types::{repository::link_action::v1::LinkUserState};
     use crate::utils::test_utils::random_id_string;
+    use cashier_backend_types::repository::link_action::v1::LinkUserState;
 
     #[test]
     fn it_should_create_link_action() {
         let repo = LinkActionRepository::new();
         let link_id = random_id_string(10);
-        
+
         let link_action = LinkAction {
             link_id: link_id.clone(),
             action_type: "type1".to_string(),
