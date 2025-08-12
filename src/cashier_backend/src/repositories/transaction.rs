@@ -3,7 +3,7 @@
 
 use crate::repositories::TRANSACTION_STORE;
 
-use cashier_types::repository::{keys::TransactionKey, transaction::v2::Transaction};
+use cashier_backend_types::repository::{keys::TransactionKey, transaction::v2::Transaction};
 
 #[derive(Clone)]
 pub struct TransactionRepository {}
@@ -50,8 +50,9 @@ impl TransactionRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::utils::test_utils::random_id_string;
     use candid::types::number::Nat;
-    use cashier_types::repository::{
+    use cashier_backend_types::repository::{
         common::{Asset, Wallet},
         transaction::v2::{
             FromCallType, IcTransaction, Icrc1Transfer, Protocol, Transaction, TransactionState,
@@ -62,8 +63,10 @@ mod tests {
     #[test]
     fn it_should_batch_create_transactions() {
         let repo = TransactionRepository::new();
+        let transaction_id1 = random_id_string(10);
+        let transaction_id2 = random_id_string(10);
         let transaction1 = Transaction {
-            id: "transaction1".to_string(),
+            id: transaction_id1.clone(),
             created_at: 1622547800,
             state: TransactionState::Created,
             dependency: None,
@@ -80,7 +83,7 @@ mod tests {
             start_ts: None,
         };
         let transaction2 = Transaction {
-            id: "transaction2".to_string(),
+            id: transaction_id2.clone(),
             created_at: 1622547900,
             state: TransactionState::Processing,
             dependency: None,
@@ -98,8 +101,7 @@ mod tests {
         };
         repo.batch_create(vec![transaction1.clone(), transaction2.clone()]);
 
-        let transactions =
-            repo.batch_get(vec!["transaction1".to_string(), "transaction2".to_string()]);
+        let transactions = repo.batch_get(vec![transaction_id1, transaction_id2]);
         assert_eq!(transactions.len(), 2);
         assert_eq!(transactions.first().unwrap(), &transaction1);
         assert_eq!(transactions.get(1).unwrap(), &transaction2);
@@ -108,8 +110,9 @@ mod tests {
     #[test]
     fn it_should_update_a_transaction() {
         let repo = TransactionRepository::new();
+        let transaction_id1 = random_id_string(10);
         let transaction1 = Transaction {
-            id: "transaction1".to_string(),
+            id: transaction_id1,
             created_at: 1622547800,
             state: TransactionState::Created,
             dependency: None,
@@ -139,8 +142,10 @@ mod tests {
     #[test]
     fn it_should_batch_get_transactions() {
         let repo = TransactionRepository::new();
+        let transaction_id1 = random_id_string(10);
+        let transaction_id2 = random_id_string(10);
         let transaction1 = Transaction {
-            id: "transaction1".to_string(),
+            id: transaction_id1.clone(),
             created_at: 1622547800,
             state: TransactionState::Created,
             dependency: None,
@@ -157,7 +162,7 @@ mod tests {
             start_ts: None,
         };
         let transaction2 = Transaction {
-            id: "transaction2".to_string(),
+            id: transaction_id2.clone(),
             created_at: 1622547900,
             state: TransactionState::Processing,
             dependency: None,
@@ -175,8 +180,7 @@ mod tests {
         };
         repo.batch_create(vec![transaction1.clone(), transaction2.clone()]);
 
-        let transactions =
-            repo.batch_get(vec!["transaction1".to_string(), "transaction2".to_string()]);
+        let transactions = repo.batch_get(vec![transaction_id1, transaction_id2]);
         assert_eq!(transactions.len(), 2);
         assert_eq!(transactions.first().unwrap(), &transaction1);
         assert_eq!(transactions.get(1).unwrap(), &transaction2);
@@ -185,8 +189,9 @@ mod tests {
     #[test]
     fn it_should_get_a_transaction() {
         let repo = TransactionRepository::new();
+        let transaction_id = random_id_string(10);
         let transaction = Transaction {
-            id: "transaction1".to_string(),
+            id: transaction_id.clone(),
             created_at: 1622547800,
             state: TransactionState::Created,
             dependency: None,
@@ -206,7 +211,7 @@ mod tests {
 
         let retrieved_transaction = repo.get(&transaction.id);
         assert!(retrieved_transaction.is_some());
-        assert_eq!(retrieved_transaction.unwrap().id, "transaction1");
+        assert_eq!(retrieved_transaction.unwrap().id, transaction_id);
     }
 
     #[test]

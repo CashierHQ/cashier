@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use super::LINK_STORE;
-use cashier_types::repository::{keys::LinkKey, link::v1::Link};
+use cashier_backend_types::repository::{keys::LinkKey, link::v1::Link};
 
 #[derive(Clone)]
 
@@ -51,13 +51,15 @@ impl LinkRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cashier_types::repository::link::v1::{LinkState, LinkType};
+    use crate::utils::test_utils::random_id_string;
+    use cashier_backend_types::repository::link::v1::{LinkState, LinkType};
 
     #[test]
     fn it_should_create_a_link() {
         let repo = LinkRepository::new();
+        let link_id = random_id_string(10);
         let link = Link {
-            id: "link1".to_string(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Test Link".to_string()),
             description: Some("This is a test link".to_string()),
@@ -81,8 +83,9 @@ mod tests {
     #[test]
     fn it_should_update_a_link() {
         let repo = LinkRepository::new();
+        let link_id = random_id_string(10);
         let link = Link {
-            id: "link1".to_string(),
+            id: link_id.clone(),
             state: LinkState::ChooseLinkType,
             title: Some("Test Link".to_string()),
             description: Some("This is a test link".to_string()),
@@ -98,7 +101,7 @@ mod tests {
         repo.create(link);
 
         let updated_link = Link {
-            id: "link1".to_string(),
+            id: link_id,
             state: LinkState::Active,
             title: Some("Updated Test Link".to_string()),
             description: Some("This is an updated test link".to_string()),
@@ -123,8 +126,9 @@ mod tests {
     #[test]
     fn it_should_delete_a_link() {
         let repo = LinkRepository::new();
+        let link_id = random_id_string(10);
         let link = Link {
-            id: "link1".to_string(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Test Link".to_string()),
             description: Some("This is a test link".to_string()),
@@ -147,8 +151,10 @@ mod tests {
     #[test]
     fn it_should_get_batch_of_links() {
         let repo = LinkRepository::new();
+        let link_id1 = random_id_string(10);
+        let link_id2 = random_id_string(10);
         let link1 = Link {
-            id: "link1".to_string(),
+            id: link_id1.clone(),
             state: LinkState::ChooseLinkType,
             title: Some("Test Link 1".to_string()),
             description: Some("This is a test link 1".to_string()),
@@ -162,7 +168,7 @@ mod tests {
             link_use_action_max_count: 10,
         };
         let link2 = Link {
-            id: "link2".to_string(),
+            id: link_id2.clone(),
             state: LinkState::Active,
             title: Some("Test Link 2".to_string()),
             description: Some("This is a test link 2".to_string()),
@@ -178,18 +184,19 @@ mod tests {
         repo.create(link1);
         repo.create(link2);
 
-        let ids = vec!["link1".to_string(), "link2".to_string()];
+        let ids = vec![link_id1.clone(), link_id2.clone()];
         let fetched_links = repo.get_batch(ids);
         assert_eq!(fetched_links.len(), 2);
-        assert_eq!(fetched_links.first().unwrap().id, "link1");
-        assert_eq!(fetched_links.get(1).unwrap().id, "link2");
+        assert_eq!(fetched_links.first().unwrap().id, link_id1);
+        assert_eq!(fetched_links.get(1).unwrap().id, link_id2);
     }
 
     #[test]
     fn it_should_get_a_link() {
         let repo = LinkRepository::new();
+        let link_id = random_id_string(10);
         let link = Link {
-            id: "link1".to_string(),
+            id: link_id.clone(),
             state: LinkState::ChooseLinkType,
             title: Some("Test Link".to_string()),
             description: Some("This is a test link".to_string()),
@@ -202,11 +209,11 @@ mod tests {
             link_use_action_counter: 0,
             link_use_action_max_count: 10,
         };
-        repo.create(link.clone());
+        repo.create(link);
 
-        let fetched_link = repo.get(&link.id);
+        let fetched_link = repo.get(&link_id);
         assert!(fetched_link.is_some());
-        assert_eq!(fetched_link.unwrap().id, "link1");
+        assert_eq!(fetched_link.unwrap().id, link_id);
     }
 
     #[test]

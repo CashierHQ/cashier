@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_types::repository::{action_intent::v1::ActionIntent, keys::ActionIntentKey};
+use cashier_backend_types::repository::{action_intent::v1::ActionIntent, keys::ActionIntentKey};
 
 use super::ACTION_INTENT_STORE;
 
@@ -71,60 +71,81 @@ impl ActionIntentRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::utils::test_utils::random_id_string;
 
     #[test]
     fn it_should_batch_create_action_intents() {
         let repo = ActionIntentRepository::new();
+        let action_id1 = random_id_string(10);
+        let intent_id1 = random_id_string(10);
+        let action_id2 = random_id_string(10);
+        let intent_id2 = random_id_string(10);
         let action_intents = vec![
             ActionIntent {
-                action_id: "action1".to_string(),
-                intent_id: "intent1".to_string(),
+                action_id: action_id1.clone(),
+                intent_id: intent_id1.clone(),
             },
             ActionIntent {
-                action_id: "action2".to_string(),
-                intent_id: "intent2".to_string(),
+                action_id: action_id2.clone(),
+                intent_id: intent_id2.clone(),
             },
         ];
 
         repo.batch_create(action_intents);
 
-        let retrieved = repo.get_by_action_id("action1");
+        let retrieved = repo.get_by_action_id(&action_id1);
         assert_eq!(retrieved.len(), 1);
-        assert_eq!(retrieved.first().unwrap().intent_id, "intent1");
+        assert_eq!(retrieved.first().unwrap().intent_id, intent_id1);
 
-        let retrieved = repo.get_by_intent_id("intent2");
+        let retrieved = repo.get_by_intent_id(&intent_id2);
         assert_eq!(retrieved.len(), 1);
-        assert_eq!(retrieved.first().unwrap().action_id, "action2");
+        assert_eq!(retrieved.first().unwrap().action_id, action_id2);
     }
 
     #[test]
     fn it_should_get_by_action_id() {
         let repo = ActionIntentRepository::new();
-        let action_intent = ActionIntent {
-            action_id: "action1".to_string(),
-            intent_id: "intent1".to_string(),
+        let action_id1 = random_id_string(10);
+        let action_id2 = random_id_string(10);
+        let intent_id1 = random_id_string(10);
+        let intent_id2 = random_id_string(10);
+        let action_intent1 = ActionIntent {
+            action_id: action_id1.clone(),
+            intent_id: intent_id1.clone(),
         };
-        repo.batch_create(vec![action_intent]);
+        let action_intent2 = ActionIntent {
+            action_id: action_id2,
+            intent_id: intent_id2,
+        };
+        repo.batch_create(vec![action_intent1, action_intent2]);
 
-        let retrieved = repo.get_by_action_id("action1");
+        let retrieved = repo.get_by_action_id(&action_id1);
         assert_eq!(retrieved.len(), 1);
-        assert_eq!(retrieved.first().unwrap().intent_id, "intent1");
-        assert_eq!(retrieved.first().unwrap().action_id, "action1");
+        assert_eq!(retrieved.first().unwrap().intent_id, intent_id1);
+        assert_eq!(retrieved.first().unwrap().action_id, action_id1);
     }
 
     #[test]
     fn it_should_get_by_intent_id() {
         let repo = ActionIntentRepository::new();
-        let action_intent = ActionIntent {
-            action_id: "action1".to_string(),
-            intent_id: "intent1".to_string(),
+        let action_id1 = random_id_string(10);
+        let intent_id1 = random_id_string(10);
+        let action_id2 = random_id_string(10);
+        let intent_id2 = random_id_string(10);
+        let action_intent1 = ActionIntent {
+            action_id: action_id1.clone(),
+            intent_id: intent_id1.clone(),
         };
-        repo.batch_create(vec![action_intent]);
+        let action_intent2 = ActionIntent {
+            action_id: action_id2,
+            intent_id: intent_id2,
+        };
+        repo.batch_create(vec![action_intent1, action_intent2]);
 
-        let retrieved = repo.get_by_intent_id("intent1");
+        let retrieved = repo.get_by_intent_id(&intent_id1);
         assert_eq!(retrieved.len(), 1);
-        assert_eq!(retrieved.first().unwrap().action_id, "action1");
-        assert_eq!(retrieved.first().unwrap().intent_id, "intent1");
+        assert_eq!(retrieved.first().unwrap().action_id, action_id1);
+        assert_eq!(retrieved.first().unwrap().intent_id, intent_id1);
     }
 
     #[test]

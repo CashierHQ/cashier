@@ -1,25 +1,25 @@
 use async_trait::async_trait;
 use candid::{Nat, Principal};
-use cashier_types::constant::{
+use cashier_backend_types::constant::{
     INTENT_LABEL_LINK_CREATION_FEE, INTENT_LABEL_RECEIVE_PAYMENT_ASSET,
     INTENT_LABEL_SEND_AIRDROP_ASSET, INTENT_LABEL_SEND_TIP_ASSET,
     INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
 };
-use cashier_types::error::CanisterError;
+use cashier_backend_types::error::CanisterError;
 use icrc_ledger_types::icrc1::account::Account;
+use log::error;
 use std::collections::HashMap;
 use std::str::FromStr;
 use uuid::Uuid;
 
 use crate::constant::{FEE_TREASURY_ADDRESS, ICP_CANISTER_ID};
 use crate::domains::fee::Fee;
-use crate::error;
 use crate::services::link::service::LinkService;
 use crate::services::link::traits::IntentAssembler;
 use crate::utils::helper::{convert_nat_to_u64, to_subaccount};
 use crate::utils::runtime::IcEnvironment;
 
-use cashier_types::repository::{
+use cashier_backend_types::repository::{
     action::v1::ActionType,
     common::{Asset, Chain, Wallet},
     intent::v2::{Intent, IntentState, IntentTask, IntentType},
