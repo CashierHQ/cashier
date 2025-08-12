@@ -7,7 +7,7 @@ use crate::services::link::traits::LinkValidation;
 use crate::utils::helper::to_subaccount;
 use crate::utils::runtime::IcEnvironment;
 
-use cashier_types::{
+use cashier_backend_types::{
     error::CanisterError,
     repository::{
         action::v1::{Action, ActionState, ActionType},

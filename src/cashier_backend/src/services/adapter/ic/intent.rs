@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_types::{
+use cashier_backend_types::{
     error::CanisterError,
     repository::{
         intent::v2::{Intent, IntentTask, IntentType, TransferData, TransferFromData},

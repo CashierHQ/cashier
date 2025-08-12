@@ -3,7 +3,7 @@
 
 use crate::services::transaction_manager::traits::TransactionValidator;
 use async_trait::async_trait;
-use cashier_types::{error::CanisterError, repository::transaction::v2::TransactionState};
+use cashier_backend_types::{error::CanisterError, repository::transaction::v2::TransactionState};
 use log::{error, info};
 use std::time::Duration;
 

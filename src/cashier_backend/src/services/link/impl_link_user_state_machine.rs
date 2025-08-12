@@ -5,7 +5,7 @@ use crate::{
 use std::str::FromStr;
 
 use candid::Principal;
-use cashier_types::{
+use cashier_backend_types::{
     dto::{
         action::ActionDto,
         link::{

@@ -3,7 +3,7 @@
 
 use async_trait::async_trait;
 use candid::Principal;
-use cashier_types::{
+use cashier_backend_types::{
     error::CanisterError,
     repository::transaction::v2::{
         IcTransaction, Icrc1Transfer, Icrc2Approve, Protocol, Transaction, TransactionState,
