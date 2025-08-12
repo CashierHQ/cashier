@@ -4,15 +4,15 @@
 use cashier_types::dto::action::TriggerTransactionInput;
 use ic_cdk::api::msg_caller;
 use ic_cdk::update;
+use log::info;
 
-use crate::core::guard::is_not_anonymous;
-use crate::info;
+use crate::api::guard::is_not_anonymous;
 use crate::services::request_lock::RequestLockService;
 use crate::services::transaction_manager::service::TransactionManagerService;
 use crate::services::transaction_manager::traits::TransactionExecutor;
 use crate::utils::runtime::{IcEnvironment, RealIcEnvironment};
 use crate::{
-    core::CanisterError,
+    api::CanisterError,
     services::{self},
 };
 

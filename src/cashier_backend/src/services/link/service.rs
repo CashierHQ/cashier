@@ -12,11 +12,11 @@ use cashier_types::{
     },
     service::link::{PaginateInput, PaginateResult},
 };
+use log::error;
 use std::str::FromStr;
 
 use crate::services::link::traits::LinkValidation;
 use crate::{
-    error,
     repositories::{
         self, action::ActionRepository, link_action::LinkActionRepository,
         user_wallet::UserWalletRepository,

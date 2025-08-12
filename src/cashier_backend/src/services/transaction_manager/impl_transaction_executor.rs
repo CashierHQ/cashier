@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::{info, services::transaction_manager::traits::ActionUpdater};
+use crate::services::transaction_manager::traits::ActionUpdater;
 use async_trait::async_trait;
 use cashier_types::{
     error::CanisterError,
@@ -14,9 +14,9 @@ use cashier_types::{
     },
 };
 use icrc_ledger_types::{icrc1::transfer::TransferArg, icrc2::transfer_from::TransferFromArgs};
+use log::{error, info};
 
 use crate::{
-    error,
     services::transaction_manager::{
         service::TransactionManagerService, traits::TransactionExecutor,
     },
@@ -91,10 +91,7 @@ impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerServ
                         }
                     }
                     Err(e) => {
-                        error!(
-                            "[execute_canister_tx] Error executing tx: {}",
-                            e.to_string()
-                        );
+                        error!("[execute_canister_tx] Error executing tx: {}", e);
                         self.update_tx_state(tx, &TransactionState::Fail)
                             .map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
