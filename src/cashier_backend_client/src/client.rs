@@ -1,4 +1,3 @@
-use cashier_common::build_data::BuildData;
 use cashier_backend_types::{
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
@@ -7,6 +6,7 @@ use cashier_backend_types::{
     },
     error::CanisterError,
 };
+use cashier_common::build_data::BuildData;
 use ic_mple_client::{CanisterClient, CanisterClientResult};
 
 /// An CashierBackend canister client.
