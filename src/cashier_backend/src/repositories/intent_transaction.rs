@@ -128,7 +128,7 @@ mod tests {
     }
 
     #[test]
-    fn it_should_create_intent_action_by_default() {
+    fn it_should_create_intent_action_repository_by_default() {
         let repo = IntentTransactionRepository::default();
         assert!(repo.get_by_intent_id("nonexistent").is_empty());
         assert!(repo.get_by_transaction_id("nonexistent").is_empty());
