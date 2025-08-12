@@ -307,3 +307,23 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utils::test_utils::runtime::MockIcEnvironment;
+
+    #[test]
+    fn it_should_create_link_service_instance() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        assert!(service.link_repository.get(&"default_link".to_string()).is_none());
+        let link_actions = service.link_action_repository.get_by_prefix("nonexistent", "type", "user");
+        assert!(link_actions.is_empty());
+        let actions = service.action_repository.get("nonexistent_action");
+        assert!(actions.is_none());
+        let user_wallet = service.user_wallet_repository.get("nonexistent_user");
+        assert!(user_wallet.is_none());
+        let user_links = service.user_link_repository.get_links_by_user_id("nonexistent_user", &PaginateInput::default());
+        assert!(user_links.data.is_empty());
+    }
+}
