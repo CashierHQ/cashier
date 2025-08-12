@@ -51,7 +51,7 @@ impl TransactionRepository {
 mod tests {
     use super::*;
     use candid::types::number::Nat;
-    use cashier_types::repository::{
+    use cashier_backend_types::repository::{
         common::{Asset, Wallet},
         transaction::v2::{
             FromCallType, IcTransaction, Icrc1Transfer, Protocol, Transaction, TransactionState,

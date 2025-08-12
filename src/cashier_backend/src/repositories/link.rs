@@ -51,7 +51,7 @@ impl LinkRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cashier_types::repository::link::v1::{LinkState, LinkType};
+    use cashier_backend_types::repository::link::v1::{LinkState, LinkType};
 
     #[test]
     fn it_should_create_a_link() {

@@ -73,7 +73,7 @@ impl LinkActionRepository {
 
 #[cfg(test)]
 mod tests {
-    use cashier_types::repository::link_action::v1::LinkUserState;
+    use cashier_backend_types::repository::link_action::v1::LinkUserState;
 
     use super::*;
 
