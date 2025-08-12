@@ -72,15 +72,13 @@ impl LinkActionRepository {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-#[allow(clippy::expect_used)]
 mod tests {
     use cashier_types::repository::link_action::v1::LinkUserState;
 
     use super::*;
 
     #[test]
-    fn create() {
+    fn it_should_create_link_action() {
         let repo = LinkActionRepository::new();
         let link_action = LinkAction {
             link_id: "link1".to_string(),
@@ -97,7 +95,7 @@ mod tests {
     }
 
     #[test]
-    fn update() {
+    fn it_should_update_link_action() {
         let repo = LinkActionRepository::new();
         let link_action = LinkAction {
             link_id: "link1".to_string(),
@@ -126,7 +124,7 @@ mod tests {
     }
 
     #[test]
-    fn get_by_prefix() {
+    fn it_should_get_link_action_by_prefix() {
         let repo = LinkActionRepository::new();
         let link_action1 = LinkAction {
             link_id: "link1".to_string(),
@@ -168,7 +166,7 @@ mod tests {
     }
 
     #[test]
-    fn default() {
+    fn it_should_create_link_action_repository_by_default() {
         let repo = LinkActionRepository::default();
         let actions = repo.get_by_prefix("nonexistent", "type", "user");
         assert!(actions.is_empty());

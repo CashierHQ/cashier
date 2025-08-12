@@ -69,13 +69,11 @@ impl ActionIntentRepository {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 
     #[test]
-    fn batch_create() {
+    fn it_should_batch_create_action_intents() {
         let repo = ActionIntentRepository::new();
         let action_intents = vec![
             ActionIntent {
@@ -100,7 +98,7 @@ mod tests {
     }
 
     #[test]
-    fn get_by_action_id() {
+    fn it_should_get_by_action_id() {
         let repo = ActionIntentRepository::new();
         let action_intent = ActionIntent {
             action_id: "action1".to_string(),
@@ -115,7 +113,7 @@ mod tests {
     }
 
     #[test]
-    fn get_by_intent_id() {
+    fn it_should_get_by_intent_id() {
         let repo = ActionIntentRepository::new();
         let action_intent = ActionIntent {
             action_id: "action1".to_string(),
@@ -130,7 +128,7 @@ mod tests {
     }
 
     #[test]
-    fn default() {
+    fn it_should_create_action_intent_repository_by_default() {
         let repo = ActionIntentRepository::default();
         assert!(repo.get_by_action_id("nonexistent").is_empty());
         assert!(repo.get_by_intent_id("nonexistent").is_empty());

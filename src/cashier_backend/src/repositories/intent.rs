@@ -48,8 +48,6 @@ impl IntentRepository {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
     use candid::types::number::Nat;
@@ -60,7 +58,7 @@ mod tests {
     use std::str::FromStr;
 
     #[test]
-    fn batch_create() {
+    fn it_should_batch_create_intents() {
         let repo = IntentRepository::new();
         let intent1 = Intent {
             id: "intent1".to_string(),
@@ -105,7 +103,7 @@ mod tests {
     }
 
     #[test]
-    fn batch_update() {
+    fn it_should_batch_update_intents() {
         let repo = IntentRepository::new();
         let intent1 = Intent {
             id: "intent1".to_string(),
@@ -182,7 +180,7 @@ mod tests {
     }
 
     #[test]
-    fn get() {
+    fn it_should_get_an_intent() {
         let repo = IntentRepository::new();
         let intent = Intent {
             id: "intent1".to_string(),
@@ -207,7 +205,7 @@ mod tests {
     }
 
     #[test]
-    fn batch_get() {
+    fn it_should_batch_get_intents() {
         let repo = IntentRepository::new();
         let intent1 = Intent {
             id: "intent1".to_string(),
@@ -248,7 +246,7 @@ mod tests {
     }
 
     #[test]
-    fn default() {
+    fn it_should_create_intent_repository_by_default() {
         let repo = IntentRepository::default();
         let intent = repo.get("nonexistent");
         assert!(intent.is_none());

@@ -31,13 +31,11 @@ impl UserWalletRepository {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 
     #[test]
-    fn create() {
+    fn it_should_create_an_user_wallet() {
         let repo = UserWalletRepository::new();
         let wallet_key = UserWalletKey::from("key1");
         let user_wallet = UserWallet {
@@ -51,7 +49,7 @@ mod tests {
     }
 
     #[test]
-    fn get() {
+    fn it_should_get_a_user_wallet() {
         let repo = UserWalletRepository::new();
         let wallet_key = UserWalletKey::from("key1");
         let user_wallet = UserWallet {
@@ -65,7 +63,7 @@ mod tests {
     }
 
     #[test]
-    fn default() {
+    fn it_should_create_a_user_wallet_repository_by_default() {
         let repo = UserWalletRepository::default();
         let wallet_key = UserWalletKey::from("key1");
         let user_wallet = UserWallet {

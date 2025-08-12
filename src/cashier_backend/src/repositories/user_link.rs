@@ -82,13 +82,11 @@ impl UserLinkRepository {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
 
     #[test]
-    fn create() {
+    fn it_should_create_an_user_link() {
         let repo = UserLinkRepository::new();
         let user_link = UserLink {
             user_id: "user1".to_string(),
@@ -103,7 +101,7 @@ mod tests {
     }
 
     #[test]
-    fn delete() {
+    fn it_should_delete_a_user_link() {
         let repo = UserLinkRepository::new();
         let user_link = UserLink {
             user_id: "user1".to_string(),
@@ -118,7 +116,7 @@ mod tests {
     }
 
     #[test]
-    fn get_links_by_user_id() {
+    fn it_should_get_links_by_user_id() {
         let repo = UserLinkRepository::new();
         let user_link1 = UserLink {
             user_id: "user1".to_string(),
@@ -139,7 +137,7 @@ mod tests {
     }
 
     #[test]
-    fn default() {
+    fn it_should_create_a_user_link_repository_by_default() {
         let repo = UserLinkRepository::default();
         assert!(
             repo.get_links_by_user_id("user1", &PaginateInput::default())

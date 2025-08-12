@@ -39,14 +39,12 @@ impl ActionRepository {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
-#[allow(clippy::expect_used)]
 mod tests {
     use super::*;
     use cashier_types::repository::action::v1::{ActionState, ActionType};
 
     #[test]
-    fn create() {
+    fn it_should_create_an_action() {
         let repo = ActionRepository::new();
         let action = Action {
             id: "action1".to_string(),
@@ -63,7 +61,7 @@ mod tests {
     }
 
     #[test]
-    fn update() {
+    fn it_should_update_an_action() {
         let repo = ActionRepository::new();
         let action = Action {
             id: "action1".to_string(),
@@ -92,14 +90,14 @@ mod tests {
     }
 
     #[test]
-    fn get_non_existent() {
+    fn it_should_get_non_existent() {
         let repo = ActionRepository::new();
         let retrieved_action = repo.get("non_existent_action");
         assert!(retrieved_action.is_none());
     }
 
     #[test]
-    fn get_existent() {
+    fn it_should_get_existent() {
         let repo = ActionRepository::new();
         let action = Action {
             id: "action1".to_string(),
@@ -117,7 +115,7 @@ mod tests {
     }
 
     #[test]
-    fn default() {
+    fn it_should_create_an_action_by_default() {
         let repo = ActionRepository::default();
         let action = Action {
             id: "default_action".to_string(),
