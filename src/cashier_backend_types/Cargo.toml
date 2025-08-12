@@ -1,5 +1,5 @@
 [package]
-name = "cashier-types"
+name = "cashier_backend_types"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -7,7 +7,7 @@ license.workspace = true
 
 [dependencies]
 candid = { workspace = true }
-cashier-macros = { workspace = true }
+cashier_macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc-ledger-types = { workspace = true }

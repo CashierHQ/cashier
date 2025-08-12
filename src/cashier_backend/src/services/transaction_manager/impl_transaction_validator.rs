@@ -3,22 +3,21 @@
 
 use async_trait::async_trait;
 use candid::Principal;
-use cashier_types::{
+use cashier_backend_types::{
     error::CanisterError,
     repository::transaction::v2::{
         IcTransaction, Icrc1Transfer, Icrc2Approve, Protocol, Transaction, TransactionState,
     },
 };
 use icrc_ledger_types::icrc1::account::Account;
+use log::{error, warn};
 use std::str::FromStr;
 
 use crate::{
-    error,
     services::transaction_manager::{
         service::TransactionManagerService, traits::TransactionValidator,
     },
     utils::runtime::IcEnvironment,
-    warn,
 };
 
 #[async_trait(?Send)]

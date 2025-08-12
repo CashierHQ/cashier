@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use super::LINK_STORE;
-use cashier_types::repository::{keys::LinkKey, link::v1::Link};
+use cashier_backend_types::repository::{keys::LinkKey, link::v1::Link};
 
 #[derive(Clone)]
 

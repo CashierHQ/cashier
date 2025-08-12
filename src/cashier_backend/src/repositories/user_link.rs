@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use super::USER_LINK_STORE;
-use cashier_types::{
+use cashier_backend_types::{
     repository::{keys::UserLinkKey, user_link::v1::UserLink},
     service::link::{PaginateInput, PaginateResult, PaginateResultMetadata},
 };

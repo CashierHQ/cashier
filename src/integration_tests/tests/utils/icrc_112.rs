@@ -1,7 +1,7 @@
 use base64::prelude::*;
 use candid::Principal;
 
-use cashier_types::dto::action::Icrc112Request;
+use cashier_backend_types::dto::action::Icrc112Request;
 
 /// Executes ICRC112 requests with error handling that stops iteration on first error
 pub async fn execute_icrc112_request(
