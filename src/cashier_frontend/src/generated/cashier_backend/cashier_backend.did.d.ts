@@ -56,6 +56,9 @@ export type CanisterError = { 'InvalidDataError' : string } |
   } |
   { 'UnboundedError' : string } |
   { 'CallCanisterFailed' : string };
+export interface CashierBackendCanisterInitData {
+  'log_settings' : [] | [LogServiceSettings],
+}
 export interface CreateActionAnonymousInput {
   'link_id' : string,
   'action_type' : string,
@@ -177,6 +180,12 @@ export interface LinkUpdateUserStateInput {
   'action_type' : string,
   'goto' : string,
   'anonymous_wallet_address' : [] | [string],
+}
+export interface LogServiceSettings {
+  'log_filter' : [] | [string],
+  'in_memory_records' : [] | [bigint],
+  'enable_console' : [] | [boolean],
+  'max_record_length' : [] | [bigint],
 }
 export type MetadataValue = { 'Nat' : bigint } |
   { 'U64' : bigint } |

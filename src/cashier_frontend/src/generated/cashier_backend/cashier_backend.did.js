@@ -1,5 +1,14 @@
 export const idlFactory = ({ IDL }) => {
   const CanisterError = IDL.Rec();
+  const LogServiceSettings = IDL.Record({
+    'log_filter' : IDL.Opt(IDL.Text),
+    'in_memory_records' : IDL.Opt(IDL.Nat64),
+    'enable_console' : IDL.Opt(IDL.Bool),
+    'max_record_length' : IDL.Opt(IDL.Nat64),
+  });
+  const CashierBackendCanisterInitData = IDL.Record({
+    'log_settings' : IDL.Opt(LogServiceSettings),
+  });
   const CreateActionInput = IDL.Record({
     'link_id' : IDL.Text,
     'action_type' : IDL.Text,
@@ -319,4 +328,15 @@ export const idlFactory = ({ IDL }) => {
     'update_link' : IDL.Func([UpdateLinkInput], [Result_1], []),
   });
 };
-export const init = ({ IDL }) => { return []; };
+export const init = ({ IDL }) => {
+  const LogServiceSettings = IDL.Record({
+    'log_filter' : IDL.Opt(IDL.Text),
+    'in_memory_records' : IDL.Opt(IDL.Nat64),
+    'enable_console' : IDL.Opt(IDL.Bool),
+    'max_record_length' : IDL.Opt(IDL.Nat64),
+  });
+  const CashierBackendCanisterInitData = IDL.Record({
+    'log_settings' : IDL.Opt(LogServiceSettings),
+  });
+  return [CashierBackendCanisterInitData];
+};
