@@ -5,3 +5,10 @@ pub mod admin;
 mod init_and_upgrade;
 mod state;
 pub mod token;
+
+use crate::types::*;
+use cashier_common::build_data::BuildData;
+use token_storage_types::init::*;
+use token_storage_types::token::*;
+
+ic_cdk::export_candid!();

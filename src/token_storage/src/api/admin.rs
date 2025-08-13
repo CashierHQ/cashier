@@ -5,12 +5,9 @@ use candid::Principal;
 use cashier_common::build_data::BuildData;
 use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, error, info};
-use token_storage_types::token::{TokenDto, TokenListResponse};
+use token_storage_types::token::{RegistryStats, TokenDto, TokenListResponse, UserTokens};
 
 use crate::{
-    api::{
-        admin::types::{RegistryStats, UserTokens},
-    },
     build_data::canister_build_data,
     constant::default_tokens::get_default_tokens,
     repository::token_registry::TokenRegistryRepository,
@@ -20,8 +17,6 @@ use crate::{
     },
     types::{TokenRegistryMetadata},
 };
-
-pub mod types;
 
 fn ensure_is_admin() -> Result<(), String> {
     let caller = msg_caller();

@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use token_storage_types::common::TokenId;
+use token_storage_types::TokenId;
 
 // File: src/token_storage/src/repository/token.rs
 use super::USER_TOKEN_STORE;
