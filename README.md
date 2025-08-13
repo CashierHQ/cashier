@@ -105,6 +105,20 @@ For backend unit tests, go to `src/cashier_backend` and run:
 just test
 ```
 
+## Code coverage report
+
+- Install `cargo-llvm-cov` package
+
+```bash
+$ cargo install cargo-llvm-cov
+```
+
+- Generate the code-coverage report
+
+```bash
+$ cargo llvm-cov
+```
+
 ## Code Quality (Clippy)
 
 The project uses Clippy for Rust code linting across all crates. Run Clippy checks with:
