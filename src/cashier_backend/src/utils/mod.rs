@@ -6,3 +6,6 @@ pub mod helper;
 pub mod icrc;
 pub mod random;
 pub mod runtime;
+
+#[cfg(test)]
+pub mod test_utils;
