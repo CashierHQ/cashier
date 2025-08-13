@@ -7,13 +7,13 @@ import {
     type _SERVICE,
     idlFactory,
     init,
-    CashierBackendInitData
+    CashierBackendInitData,
 } from "../../../../src/cashier_frontend/src/generated/cashier_backend/cashier_backend.did";
 import { resolve } from "path";
 import { Actor, createIdentity, PocketIc } from "@dfinity/pic";
 import { parseResultResponse } from "../utils/parser";
 import { ARTIFACTS_DIR } from "../constant";
-import { IDL } from '@dfinity/candid';
+import { IDL } from "@dfinity/candid";
 
 export const WASM_PATH = resolve(ARTIFACTS_DIR, "cashier_backend.wasm.gz");
 
@@ -31,12 +31,14 @@ describe("User", () => {
         await pic.tick(1);
 
         let init_data: CashierBackendInitData = {
-            log_settings: [{
-                log_filter: ["debug"],
-                in_memory_records: [],
-                enable_console: [],
-                max_record_length: []
-            }]
+            log_settings: [
+                {
+                    log_filter: ["debug"],
+                    in_memory_records: [],
+                    enable_console: [],
+                    max_record_length: [],
+                },
+            ],
         };
 
         // Setup the canister and actor
