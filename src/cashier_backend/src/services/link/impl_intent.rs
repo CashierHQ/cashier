@@ -609,7 +609,7 @@ mod tests {
     #[test]
     fn it_should_error_not_found_look_up_intent() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(10);
+        let link_id = random_id_string();
         let action_type = ActionType::Use;
 
         let result = service.look_up_intent(&Link {
@@ -990,7 +990,7 @@ mod tests {
     #[test]
     fn it_should_error_on_get_assets_for_action_with_invalid_link_id() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(10);
+        let link_id = random_id_string();
         let action_type = ActionType::Use;
 
         let result = service.get_assets_for_action(&link_id, &action_type);
@@ -1058,7 +1058,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link = create_link_feature(&service, PRINCIPAL_ID1);
 
-        let asset_address = random_id_string(24);
+        let asset_address = random_id_string();
         let updated_link = Link {
             asset_info: Some(vec![AssetInfo {
                 address: asset_address.clone(),
@@ -1081,7 +1081,7 @@ mod tests {
     fn it_should_get_assets_for_action_with_intent_task_transfer_wallet_to_treasury() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link = create_link_feature(&service, PRINCIPAL_ID1);
-        let asset_address = random_id_string(24);
+        let asset_address = random_id_string();
         let updated_link = Link {
             asset_info: Some(vec![AssetInfo {
                 address: asset_address.clone(),
@@ -1120,7 +1120,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link = create_link_feature(&service, PRINCIPAL_ID1);
 
-        let asset_address = random_id_string(24);
+        let asset_address = random_id_string();
         let updated_link = Link {
             asset_info: Some(vec![AssetInfo {
                 address: asset_address.clone(),

@@ -629,7 +629,7 @@ mod tests {
         let creator = create_principal_feature(&service, PRINCIPAL_ID1);
         let created_link = create_link_feature(&service, &creator.to_text());
         let action_type = ActionType::Use;
-        let action_id = random_id_string(10);
+        let action_id = random_id_string();
 
         // Simulate a previous state that is the same as the current state
         let previous_state = ActionState::Created;
@@ -652,7 +652,7 @@ mod tests {
         let creator = create_principal_feature(&service, PRINCIPAL_ID1);
         let created_link = create_link_feature(&service, &creator.to_text());
         let action_type = ActionType::Use;
-        let action_id = random_id_string(10);
+        let action_id = random_id_string();
 
         // Simulate a previous state that is different from the current state
         let previous_state = ActionState::Created;
@@ -675,7 +675,7 @@ mod tests {
         let creator = create_principal_feature(&service, PRINCIPAL_ID1);
         let created_link = create_link_feature(&service, &creator.to_text());
         let action_type = ActionType::CreateLink; // Not Use action type
-        let action_id = random_id_string(10);
+        let action_id = random_id_string();
 
         // Simulate a previous state that is different from the current state
         let previous_state = ActionState::Created;
@@ -698,7 +698,7 @@ mod tests {
         let creator = create_principal_feature(&service, PRINCIPAL_ID1);
         let created_link = create_link_feature(&service, &creator.to_text());
         let action_type = ActionType::Use;
-        let action_id = random_id_string(10);
+        let action_id = random_id_string();
 
         let updated_action = Action {
             id: action_id.clone(),
@@ -746,7 +746,7 @@ mod tests {
         let creator = create_principal_feature(&service, PRINCIPAL_ID1);
         let created_link = create_link_feature(&service, &creator.to_text());
         let action_type = ActionType::Use;
-        let action_id = random_id_string(10);
+        let action_id = random_id_string();
 
         let updated_action = Action {
             id: action_id.clone(),
