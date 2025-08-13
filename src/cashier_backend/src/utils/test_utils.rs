@@ -1,8 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use rand::prelude::*;
 use candid::Principal;
+use rand::prelude::*;
 use uuid::Uuid;
 
 pub fn random_id_string() -> String {
