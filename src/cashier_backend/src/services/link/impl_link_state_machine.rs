@@ -487,7 +487,7 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
                             self.link_repository.update(link.clone());
                             return Ok(link.clone());
                         } else {
-                            error!("withdraw_action not success {:#?}", action);
+                            error!("withdraw_action not success {:?}", action);
                             return Err(CanisterError::ValidationErrors(
                                 "Withdraw action not success".to_string(),
                             ));

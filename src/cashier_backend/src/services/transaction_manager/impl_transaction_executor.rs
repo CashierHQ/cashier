@@ -91,15 +91,15 @@ impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerServ
                         }
                     }
                     Err(e) => {
-                        error!("[execute_canister_tx] Error executing tx: {}", e);
+                        error!("[execute_canister_tx] Error executing tx: {:?}", e);
                         self.update_tx_state(tx, &TransactionState::Fail)
                             .map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
-                                    "Error updating tx state: {e}"
+                                    "Error updating tx state: {e:?}"
                                 ))
                             })?;
                         return Err(CanisterError::HandleLogicError(format!(
-                            "Error executing tx: {e}"
+                            "Error executing tx: {e:?}"
                         )));
                     }
                 };

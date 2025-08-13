@@ -9,6 +9,7 @@ use ic_cdk::{query, update};
 
 pub mod types;
 
+use log::{info, warn};
 use types::{AddTokenInput, AddTokensInput, UpdateTokenInput};
 
 fn ensure_not_anonymous() -> Result<String, String> {
@@ -81,7 +82,7 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
     }
 
     let service = UserTokenService::new();
-    ic_cdk::println!("Adding token {} for user {}", input.token_id, user_id);
+    info!("Adding token {} for user {}", input.token_id, user_id);
     service.add_token(&user_id, &input.token_id)
 }
 
@@ -108,7 +109,7 @@ pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
             {
                 // Log the error but continue processing
                 // In the future, we might want to collect these errors and return them
-                ic_cdk::println!(
+                warn!(
                     "Failed to register token {} in registry, continuing...",
                     token_id
                 );
@@ -117,7 +118,7 @@ pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
     }
 
     let user_token_service = UserTokenService::new();
-    ic_cdk::println!("Adding tokens {:?} for user {}", input.token_ids, user_id);
+    info!("Adding tokens {:?} for user {}", input.token_ids, user_id);
     user_token_service.add_tokens(&user_id, &input.token_ids)
 }
 
