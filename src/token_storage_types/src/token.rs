@@ -1,8 +1,10 @@
+use std::fmt::Display;
+
 use candid::CandidType;
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 
-use crate::{chain::Chain, user::UserPreference, IndexId, LedgerId};
+use crate::{IndexId, LedgerId, chain::Chain, user::UserPreference};
 
 /// A token identifier
 #[derive(CandidType, Clone, Eq, PartialEq, Debug, Hash, Ord, PartialOrd)]
@@ -16,20 +18,18 @@ pub enum TokenId {
 }
 
 impl TokenId {
-
     /// Returns the chain id
     pub fn chain(&self) -> Chain {
         match self {
             TokenId::IC { .. } => Chain::IC,
         }
     }
-
 }
 
-impl ToString for TokenId {
-    fn to_string(&self) -> String {
+impl Display for TokenId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TokenId::IC { ledger_id } => format!("IC:{}", ledger_id),
+            TokenId::IC { ledger_id } => write!(f, "IC:{}", ledger_id),
         }
     }
 }
@@ -62,7 +62,9 @@ impl ChainTokenDetails {
     /// Returns the token_id
     pub fn token_id(&self) -> TokenId {
         match self {
-            ChainTokenDetails::IC { ledger_id, .. } => TokenId::IC { ledger_id: *ledger_id },
+            ChainTokenDetails::IC { ledger_id, .. } => TokenId::IC {
+                ledger_id: *ledger_id,
+            },
         }
     }
 }
@@ -209,7 +211,12 @@ mod tests {
             index_id: None,
             fee: 0u64.into(),
         };
-        assert_eq!(details.token_id(), TokenId::IC { ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap() });
+        assert_eq!(
+            details.token_id(),
+            TokenId::IC {
+                ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap()
+            }
+        );
     }
 
     #[test]

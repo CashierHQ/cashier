@@ -1,6 +1,5 @@
-
 use futures::try_join;
-use token_storage_types::{chain::Chain, IndexId, TokenId, token::ChainTokenDetails};
+use token_storage_types::{IndexId, TokenId, chain::Chain, token::ChainTokenDetails};
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
@@ -52,11 +51,8 @@ impl TokenRegistryService {
         input: TokenId,
         index_id: Option<IndexId>,
     ) -> Result<TokenId, String> {
-
-
         match input {
             TokenId::IC { ledger_id } => {
-
                 let chain = Chain::IC;
                 // Call ICRC service to get token info
                 use crate::ext::icrc::Service as IcrcService;
@@ -93,7 +89,6 @@ impl TokenRegistryService {
 
     /// Register a new token in the registry
     pub async fn update_token_metadata(&self, input: TokenId) -> Result<TokenId, String> {
-
         let current_record = self.get_token(&input);
 
         let Some(mut current_record) = current_record else {
@@ -102,7 +97,6 @@ impl TokenRegistryService {
 
         match input {
             TokenId::IC { ledger_id } => {
-
                 // Call ICRC service to get token info
                 use crate::ext::icrc::Service as IcrcService;
                 let icrc_service = IcrcService::new(ledger_id);

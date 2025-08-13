@@ -5,7 +5,10 @@ use candid::Principal;
 use cashier_common::build_data::BuildData;
 use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, info};
-use token_storage_types::{token::{RegistryStats, TokenDto, TokenListResponse, UserTokens}, TokenId};
+use token_storage_types::{
+    TokenId,
+    token::{RegistryStats, TokenDto, TokenListResponse, UserTokens},
+};
 
 use crate::{
     build_data::canister_build_data,
@@ -15,7 +18,7 @@ use crate::{
         token_registry::TokenRegistryService, user_preference::UserPreferenceService,
         user_token::UserTokenService,
     },
-    types::{TokenRegistryMetadata},
+    types::TokenRegistryMetadata,
 };
 
 fn ensure_is_admin() -> Result<(), String> {
@@ -180,7 +183,9 @@ pub fn admin_list_tokens_by_wallet(wallet: Principal) -> Result<TokenListRespons
                 let mut seen_token_ids = std::collections::HashSet::new();
 
                 for token_id in list.enable_list {
-                    if let Some(registry_token) = registry_tokens.iter().find(|t| t.details.token_id() == token_id)
+                    if let Some(registry_token) = registry_tokens
+                        .iter()
+                        .find(|t| t.details.token_id() == token_id)
                         && seen_token_ids.insert(registry_token.details.token_id())
                     {
                         let mut token_dto = TokenDto::from(registry_token.clone());
@@ -209,7 +214,9 @@ pub fn admin_list_tokens_by_wallet(wallet: Principal) -> Result<TokenListRespons
 }
 
 #[query]
-pub fn admin_get_user_balance(wallet: Principal) -> Result<std::collections::HashMap<TokenId, u128>, String> {
+pub fn admin_get_user_balance(
+    wallet: Principal,
+) -> Result<std::collections::HashMap<TokenId, u128>, String> {
     debug!("[admin_get_user_balance] wallet: {wallet}");
 
     ensure_is_admin().unwrap_or_else(|err| {

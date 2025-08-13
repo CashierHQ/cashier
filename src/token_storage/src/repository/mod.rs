@@ -18,9 +18,7 @@ use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 use token_storage_types::TokenId;
 use token_storage_types::user::UserPreference;
 
-use crate::types::{
-    Candid, RegistryToken, TokenBalance, TokenRegistryMetadata, UserTokenList
-};
+use crate::types::{Candid, RegistryToken, TokenBalance, TokenRegistryMetadata, UserTokenList};
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 

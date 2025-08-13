@@ -10,7 +10,7 @@ use crate::{
         token_registry_metadata::TokenRegistryMetadataRepository,
         user_preference::UserPreferenceRepository, user_token::TokenRepository,
     },
-    types::{UserTokenList},
+    types::UserTokenList,
 };
 
 pub struct UserTokenService {
@@ -145,7 +145,10 @@ impl UserTokenService {
         // Loop through registry tokens and add new ones that are enabled_by_default
         for token in registry_tokens {
             // Skip tokens that are already in the user's enable list
-            if user_token_list.enable_list.contains(&token.details.token_id()) {
+            if user_token_list
+                .enable_list
+                .contains(&token.details.token_id())
+            {
                 continue;
             }
 
@@ -179,7 +182,10 @@ impl UserTokenService {
     }
 
     /// Get all balances for a user
-    pub fn get_all_user_balances(&self, user_id: &Principal) -> std::collections::HashMap<TokenId, u128> {
+    pub fn get_all_user_balances(
+        &self,
+        user_id: &Principal,
+    ) -> std::collections::HashMap<TokenId, u128> {
         self.balance_cache_repository
             .get_all_balances(user_id)
             .into_iter()
