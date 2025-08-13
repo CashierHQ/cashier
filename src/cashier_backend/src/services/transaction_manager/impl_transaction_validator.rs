@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use async_trait::async_trait;
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
@@ -20,7 +19,6 @@ use crate::{
     utils::runtime::IcEnvironment,
 };
 
-#[async_trait(?Send)]
 impl<E: IcEnvironment + Clone> TransactionValidator<E> for TransactionManagerService<E> {
     async fn validate_balance_transfer(
         &self,

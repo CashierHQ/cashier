@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use candid::{Nat, Principal};
 use cashier_backend_types::constant::{
     INTENT_LABEL_LINK_CREATION_FEE, INTENT_LABEL_RECEIVE_PAYMENT_ASSET,
@@ -26,7 +25,6 @@ use cashier_backend_types::repository::{
     link::v1::{Link, LinkType},
 };
 
-#[async_trait(?Send)]
 impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
     async fn assemble_intents(
         &self,
