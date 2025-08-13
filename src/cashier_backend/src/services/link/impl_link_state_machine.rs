@@ -600,6 +600,7 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::utils::test_utils::random_principal_id;
     use crate::utils::test_utils::{runtime::MockIcEnvironment, random_id_string};
     use crate::services::link::test_fixtures::*;
     use cashier_backend_types::repository::{link::v1::{Link, LinkState, LinkType}, asset_info::AssetInfo, common::Chain};
@@ -1322,5 +1323,149 @@ mod tests {
         let (template, link_type) = result.unwrap();
         assert_eq!(template.to_string(), Template::Central.to_string());
         assert_eq!(link_type.to_string(), LinkType::SendTip.to_string());
+    }
+
+    #[test]
+    fn it_should_error_prefetch_params_add_asset_if_empty_link_use_action_max_count() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let params = LinkDetailUpdateInput {
+            title: Some("Title".to_string()),
+            description: Some("Description".to_string()),
+            link_image_url: None,
+            nft_image: None,
+            asset_info: None,
+            template: Some(Template::Central.to_string()),
+            link_type: Some(LinkType::SendTip.to_string()),
+            link_use_action_max_count: None,
+        };
+
+        let result = service.prefetch_params_add_asset(&params);
+        assert!(result.is_err());
+
+        if let Err(CanisterError::ValidationErrors(msg)) = result {
+            assert_eq!(msg, "Link use action max count is required");
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    #[test]
+    fn it_should_error_prefetch_params_add_asset_if_empty_asset_info() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let params = LinkDetailUpdateInput {
+            title: Some("Title".to_string()),
+            description: Some("Description".to_string()),
+            link_image_url: None,
+            nft_image: None,
+            asset_info: None,
+            template: Some(Template::Central.to_string()),
+            link_type: Some(LinkType::SendTip.to_string()),
+            link_use_action_max_count: Some(10),
+        };
+
+        let result = service.prefetch_params_add_asset(&params);
+        assert!(result.is_err());
+
+        if let Err(CanisterError::ValidationErrors(msg)) = result {
+            assert_eq!(msg, "Asset info is required");
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    #[test]
+    fn it_should_prefetch_params_add_asset() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let address1 = random_principal_id();
+        let address2 = random_principal_id();
+        let params = LinkDetailUpdateInput {
+            title: Some("Title".to_string()),
+            description: Some("Description".to_string()),
+            link_image_url: None,
+            nft_image: None,
+            asset_info: Some(vec![LinkDetailUpdateAssetInfoInput{
+                address: address1.clone(),
+                chain: Chain::IC.to_string(),
+                amount_per_link_use_action: 100,
+                label: "some_label".to_string(),
+            }, LinkDetailUpdateAssetInfoInput{
+                address: address2.clone(),
+                chain: Chain::IC.to_string(),
+                amount_per_link_use_action: 200,
+                label: "another_label".to_string(),   
+            }]),
+            template: Some(Template::Central.to_string()),
+            link_type: Some(LinkType::SendTip.to_string()),
+            link_use_action_max_count: Some(10),
+        };
+
+        let result = service.prefetch_params_add_asset(&params);
+        assert!(result.is_ok());
+
+        let (link_use_action_max_count, asset_info_input) = result.unwrap();
+        assert_eq!(link_use_action_max_count, 10);
+        assert_eq!(asset_info_input.len(), 2);
+        assert_eq!(asset_info_input[0].address, address1);
+        assert_eq!(asset_info_input[1].address, address2);
+    }
+
+    #[test]
+    fn it_should_return_empty_prefetch_create_action_if_link_not_found() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator_id = random_principal_id();
+        let link = create_link_feature(&service, &creator_id);
+        let result = service.prefetch_create_action(&link);
+        assert!(result.is_ok());
+
+        let action = result.unwrap();
+        assert!(action.is_none());
+    }
+
+    #[test]
+    fn it_should_prefetch_create_action() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator_id = random_principal_id();
+        let link = create_link_feature(&service, &creator_id);
+        let _link_action = create_link_action_feature(&service, &link.id, ActionType::CreateLink.to_str(), &creator_id);
+
+        let result = service.prefetch_create_action(&link);
+        assert!(result.is_ok());
+
+        let action = result.unwrap();
+        assert!(action.is_some());
+        let action = action.unwrap();
+        assert_eq!(action.link_id, link.id);
+        assert_eq!(action.r#type, ActionType::CreateLink);
+        assert_eq!(action.creator, creator_id);
+    }
+
+    #[test]
+    fn it_should_return_empty_prefetch_withdraw_action_if_link_not_found() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator_id = random_principal_id();
+        let link = create_link_feature(&service, &creator_id);
+        let result = service.prefetch_withdraw_action(&link);
+        assert!(result.is_ok());
+
+        let action = result.unwrap();
+        assert!(action.is_none());
+    }
+
+    #[test]
+    fn it_should_prefetch_withdraw_action() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator_id = random_principal_id();
+        let link = create_link_feature(&service, &creator_id);
+        let _link_action = create_link_action_feature(&service, &link.id, ActionType::Withdraw.to_str(), &creator_id);
+
+        let result = service.prefetch_withdraw_action(&link);
+        assert!(result.is_ok());
+
+        let action = result.unwrap();
+        assert!(action.is_some());
+        let action = action.unwrap();
+        assert_eq!(action.link_id, link.id);
+        assert_eq!(action.r#type, ActionType::Withdraw);
+        assert_eq!(action.creator, creator_id);
     }
 }
