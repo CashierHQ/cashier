@@ -1205,4 +1205,122 @@ mod tests {
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
         assert!(changed);
     }
+
+    #[test]
+    fn it_should_error_prefetch_template_if_empty_template_in_params() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let params = LinkDetailUpdateInput {
+            title: Some("Title".to_string()),
+            description: Some("Description".to_string()),
+            link_image_url: None,
+            nft_image: None,
+            asset_info: None,
+            template: None,
+            link_type: None,
+            link_use_action_max_count: None,
+        };
+
+        let result = service.prefetch_template(&params);
+        assert!(result.is_err());
+        
+        if let Err(CanisterError::ValidationErrors(msg)) = result {
+            assert_eq!(msg, "Template is required");
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    #[test]
+    fn it_should_error_prefetch_template_if_empty_link_type_in_params() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let params = LinkDetailUpdateInput {
+            title: Some("Title".to_string()),
+            description: Some("Description".to_string()),
+            link_image_url: None,
+            nft_image: None,
+            asset_info: None,
+            template: Some(Template::Central.to_string()),
+            link_type: None,
+            link_use_action_max_count: None,
+        };
+
+        let result = service.prefetch_template(&params);
+        assert!(result.is_err());
+        
+        if let Err(CanisterError::ValidationErrors(msg)) = result {
+            assert_eq!(msg, "Link type is required");
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    #[test]
+    fn it_should_error_prefetch_template_if_invalid_template_in_params() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let params = LinkDetailUpdateInput {
+            title: Some("Title".to_string()),
+            description: Some("Description".to_string()),
+            link_image_url: None,
+            nft_image: None,
+            asset_info: None,
+            template: Some("InvalidTemplate".to_string()),
+            link_type: Some(LinkType::SendTip.to_string()),
+            link_use_action_max_count: None,
+        };
+
+        let result = service.prefetch_template(&params);
+        assert!(result.is_err());
+        
+        if let Err(CanisterError::ValidationErrors(msg)) = result {
+            assert_eq!(msg, "Invalid template");
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    #[test]
+    fn it_should_error_prefetch_template_if_invalid_link_type_in_params() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let params = LinkDetailUpdateInput {
+            title: Some("Title".to_string()),
+            description: Some("Description".to_string()),
+            link_image_url: None,
+            nft_image: None,
+            asset_info: None,
+            template: Some(Template::Central.to_string()),
+            link_type: Some("InvalidLinkType".to_string()),
+            link_use_action_max_count: None,
+        };
+
+        let result = service.prefetch_template(&params);
+        assert!(result.is_err());
+        
+        if let Err(CanisterError::ValidationErrors(msg)) = result {
+            assert_eq!(msg, "Invalid link type");
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    #[test]
+    fn it_should_prefetch_template() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let params = LinkDetailUpdateInput {
+            title: Some("Title".to_string()),
+            description: Some("Description".to_string()),
+            link_image_url: None,
+            nft_image: None,
+            asset_info: None,
+            template: Some(Template::Central.to_string()),
+            link_type: Some(LinkType::SendTip.to_string()),
+            link_use_action_max_count: None,
+        };
+
+        let result = service.prefetch_template(&params);
+        assert!(result.is_ok());
+        
+        let (template, link_type) = result.unwrap();
+        assert_eq!(template.to_string(), Template::Central.to_string());
+        assert_eq!(link_type.to_string(), LinkType::SendTip.to_string());
+    }
 }
