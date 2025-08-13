@@ -3,7 +3,7 @@
 
 use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::info;
-use token_storage_types::init::TokenStorageCanisterInitData;
+use token_storage_types::init::TokenStorageInitData;
 
 use crate::{
     api::state::get_state,
@@ -12,7 +12,7 @@ use crate::{
 };
 
 #[init]
-fn init(init_data: TokenStorageCanisterInitData) {
+fn init(init_data: TokenStorageInitData) {
 
     let log_config = init_data.log_settings.unwrap_or_default();
     if let Err(err) = get_state().log_service.init(Some(log_config)) {
