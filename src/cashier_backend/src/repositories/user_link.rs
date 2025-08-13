@@ -80,3 +80,78 @@ impl UserLinkRepository {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utils::test_utils::*;
+
+    #[test]
+    fn it_should_create_an_user_link() {
+        let repo = UserLinkRepository::new();
+        let user_id = random_principal_id();
+        let link_id = random_id_string();
+        let user_link = UserLink {
+            user_id: user_id.clone(),
+            link_id: link_id.clone(),
+        };
+
+        repo.create(user_link);
+        let links = repo.get_links_by_user_id(&user_id, &PaginateInput::default());
+        assert_eq!(links.data.len(), 1);
+        assert_eq!(links.data.first().unwrap().link_id, link_id);
+        assert_eq!(links.data.first().unwrap().user_id, user_id);
+    }
+
+    #[test]
+    fn it_should_delete_a_user_link() {
+        let repo = UserLinkRepository::new();
+        let user_id = random_principal_id();
+        let link_id = random_id_string();
+
+        let user_link = UserLink {
+            user_id: user_id.clone(),
+            link_id,
+        };
+
+        repo.create(user_link.clone());
+        repo.delete(user_link);
+
+        let links = repo.get_links_by_user_id(&user_id, &PaginateInput::default());
+        assert!(links.data.is_empty());
+    }
+
+    #[test]
+    fn it_should_get_links_by_user_id() {
+        let repo = UserLinkRepository::new();
+        let user_id = random_principal_id();
+        let link_id1 = random_id_string();
+        let link_id2 = random_id_string();
+        let user_link1 = UserLink {
+            user_id: user_id.clone(),
+            link_id: link_id1.clone(),
+        };
+        let user_link2 = UserLink {
+            user_id: user_id.clone(),
+            link_id: link_id2.clone(),
+        };
+
+        repo.create(user_link1);
+        repo.create(user_link2);
+
+        let links = repo.get_links_by_user_id(&user_id, &PaginateInput::default());
+        assert_eq!(links.data.len(), 2);
+        assert!(links.data.iter().any(|l| l.link_id == link_id1));
+        assert!(links.data.iter().any(|l| l.link_id == link_id2));
+    }
+
+    #[test]
+    fn it_should_create_a_user_link_repository_by_default() {
+        let repo = UserLinkRepository::default();
+        assert!(
+            repo.get_links_by_user_id("user1", &PaginateInput::default())
+                .data
+                .is_empty()
+        );
+    }
+}

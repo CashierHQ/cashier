@@ -70,3 +70,94 @@ impl IntentTransactionRepository {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utils::test_utils::random_id_string;
+
+    #[test]
+    fn it_should_batch_create_intent_actions() {
+        let repo = IntentTransactionRepository::new();
+        let intent_id1 = random_id_string();
+        let transaction_id1 = random_id_string();
+        let intent_id2 = random_id_string();
+        let transaction_id2 = random_id_string();
+        let intent_transactions = vec![
+            IntentTransaction {
+                intent_id: intent_id1.clone(),
+                transaction_id: transaction_id1.clone(),
+            },
+            IntentTransaction {
+                intent_id: intent_id2.clone(),
+                transaction_id: transaction_id2.clone(),
+            },
+        ];
+        repo.batch_create(intent_transactions);
+
+        let transactions = repo.get_by_intent_id(&intent_id1);
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(
+            transactions.first().unwrap().transaction_id,
+            transaction_id1
+        );
+
+        let transactions = repo.get_by_transaction_id(&transaction_id2);
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(transactions.first().unwrap().intent_id, intent_id2);
+    }
+
+    #[test]
+    fn it_should_get_intent_action_by_intent_id() {
+        let repo = IntentTransactionRepository::new();
+        let intent_id1 = random_id_string();
+        let transaction_id1 = random_id_string();
+        let intent_id2 = random_id_string();
+        let transaction_id2 = random_id_string();
+        let intent_transaction1 = IntentTransaction {
+            intent_id: intent_id1.clone(),
+            transaction_id: transaction_id1.clone(),
+        };
+        let intent_transaction2 = IntentTransaction {
+            intent_id: intent_id2,
+            transaction_id: transaction_id2,
+        };
+        repo.batch_create(vec![intent_transaction1, intent_transaction2]);
+
+        let transactions = repo.get_by_intent_id(&intent_id1);
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(
+            transactions.first().unwrap().transaction_id,
+            transaction_id1
+        );
+    }
+
+    #[test]
+    fn it_should_get_intent_action_by_transaction_id() {
+        let repo = IntentTransactionRepository::new();
+        let intent_id1 = random_id_string();
+        let transaction_id1 = random_id_string();
+        let intent_id2 = random_id_string();
+        let transaction_id2 = random_id_string();
+        let intent_transaction1 = IntentTransaction {
+            intent_id: intent_id1.clone(),
+            transaction_id: transaction_id1.clone(),
+        };
+        let intent_transaction2 = IntentTransaction {
+            intent_id: intent_id2,
+            transaction_id: transaction_id2,
+        };
+        repo.batch_create(vec![intent_transaction1, intent_transaction2]);
+
+        let transactions = repo.get_by_transaction_id(&transaction_id1);
+        assert_eq!(transactions.len(), 1);
+        assert_eq!(transactions.first().unwrap().intent_id, intent_id1);
+    }
+
+    #[test]
+    fn it_should_create_intent_action_repository_by_default() {
+        let repo = IntentTransactionRepository::default();
+        assert!(repo.get_by_intent_id("nonexistent").is_empty());
+        assert!(repo.get_by_transaction_id("nonexistent").is_empty());
+    }
+}
