@@ -3,8 +3,8 @@
 
 use candid::CandidType;
 use cashier_macros::storable;
-use token_storage_types::TokenId;
 use std::collections::HashSet;
+use token_storage_types::TokenId;
 
 use super::token::RegistryToken;
 

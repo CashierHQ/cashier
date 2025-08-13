@@ -3,7 +3,7 @@
 
 use token_storage_types::TokenId;
 
-use crate::types::{RegistryToken};
+use crate::types::RegistryToken;
 
 use super::{TOKEN_REGISTRY_STORE, token_registry_metadata::TokenRegistryMetadataRepository};
 
@@ -45,7 +45,8 @@ impl TokenRegistryRepository {
 
         // First pass: check if any tokens are new
         for input in &tokens {
-            let is_new = !TOKEN_REGISTRY_STORE.with_borrow(|store| store.contains_key(&input.details.token_id()));
+            let is_new = !TOKEN_REGISTRY_STORE
+                .with_borrow(|store| store.contains_key(&input.details.token_id()));
             if is_new {
                 any_new_tokens = true;
                 break;

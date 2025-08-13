@@ -6,7 +6,7 @@ use token_storage_types::TokenId;
 
 // File: src/token_storage/src/repository/token.rs
 use super::USER_TOKEN_STORE;
-use crate::types::{UserTokenList};
+use crate::types::UserTokenList;
 
 pub struct TokenRepository {}
 
