@@ -9,11 +9,14 @@ use std::{
 
 use candid::{CandidType, Decode, Encode, Principal, utils::ArgumentEncoder};
 use cashier_backend_client::client::CashierBackendClient;
+use cashier_backend_types::init::CashierBackendInitData;
 use ic_cdk::management_canister::{CanisterId, CanisterSettings};
 use ic_mple_client::PocketIcClient;
+use ic_mple_log::service::LogServiceSettings;
 use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
 use serde::Deserialize;
 use token_storage_client::client::TokenStorageClient;
+use token_storage_types::init::TokenStorageInitData;
 
 use crate::{
     constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL},
@@ -35,12 +38,24 @@ pub async fn with_pocket_ic_context<F, E>(f: F) -> Result<(), E>
 where
     F: AsyncFnOnce(&PocketIcTestContext) -> Result<(), E>,
 {
+
+    let log = LogServiceSettings {
+        enable_console: Some(true),
+        in_memory_records: None,
+        max_record_length: None,
+        log_filter: Some("debug".to_string()),
+    };
+
     let client = Arc::new(get_pocket_ic_client().await.build_async().await);
     let token_storage_principal =
-        deploy_canister(&client, None, get_token_storage_canister_bytecode(), &()).await;
+        deploy_canister(&client, None, get_token_storage_canister_bytecode(), &(TokenStorageInitData {
+            log_settings: Some(log.clone()),
+        })).await;
 
     let cashier_backend_principal =
-        deploy_canister(&client, None, get_cashier_backend_canister_bytecode(), &()).await;
+        deploy_canister(&client, None, get_cashier_backend_canister_bytecode(), &(CashierBackendInitData {
+            log_settings: Some(log),
+        })).await;
 
     // Deploy ICP and ICRC ledger canisters
     let icp_ledger_principal = token_icp::deploy_icp_ledger_canister(&client).await;

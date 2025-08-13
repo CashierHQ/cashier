@@ -1272,11 +1272,13 @@ dependencies = [
  "ic-cdk",
  "ic-ledger-types",
  "ic_mple_client",
+ "ic_mple_log",
  "ic_mple_pocket_ic",
  "icrc-ledger-types",
  "serde",
  "serde_bytes",
  "token_storage_client",
+ "token_storage_types",
  "tokio",
  "uuid",
 ]

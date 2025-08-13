@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::init::CashierBackendCanisterInitData;
+use cashier_backend_types::init::CashierBackendInitData;
 use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::info;
 
@@ -13,7 +13,7 @@ use crate::{
     utils::{random::init_ic_rand, runtime::RealIcEnvironment},
 };
 #[init]
-fn init(init_data: CashierBackendCanisterInitData) {
+fn init(init_data: CashierBackendInitData) {
 
     let log_config = init_data.log_settings.unwrap_or_default();
     if let Err(err) = get_state().log_service.init(Some(log_config)) {
