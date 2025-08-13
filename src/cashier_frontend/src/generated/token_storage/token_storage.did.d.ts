@@ -55,6 +55,7 @@ export interface TokenDto {
   'name' : string,
   'enabled' : boolean,
   'details' : ChainTokenDetails,
+  'string_id' : string,
   'symbol' : string,
 }
 export type TokenId = { 'IC' : { 'ledger_id' : Principal } };

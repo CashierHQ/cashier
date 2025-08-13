@@ -37,6 +37,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'enabled' : IDL.Bool,
     'details' : ChainTokenDetails,
+    'string_id' : IDL.Text,
     'symbol' : IDL.Text,
   });
   const RegistryStats = IDL.Record({

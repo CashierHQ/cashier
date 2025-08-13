@@ -19,8 +19,10 @@ pub struct RegistryToken {
 
 impl From<RegistryToken> for TokenDto {
     fn from(token: RegistryToken) -> Self {
+        let token_id = token.details.token_id();
         Self {
-            id: token.details.token_id(),
+            string_id: token_id.to_string(),
+            id: token_id,
             symbol: token.symbol,
             name: token.name,
             decimals: token.decimals,

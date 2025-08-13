@@ -23,7 +23,15 @@ impl TokenId {
             TokenId::IC { .. } => Chain::IC,
         }
     }
-    
+
+}
+
+impl ToString for TokenId {
+    fn to_string(&self) -> String {
+        match self {
+            TokenId::IC { ledger_id } => format!("IC:{}", ledger_id),
+        }
+    }
 }
 
 #[derive(CandidType, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
@@ -63,6 +71,9 @@ impl ChainTokenDetails {
 #[derive(CandidType, Deserialize, Serialize, Clone, Eq, PartialEq, Debug)]
 pub struct TokenDto {
     pub id: TokenId,
+    /// This is a string representation of the token id.
+    /// It is always generated from the token_id.
+    pub string_id: String,
     pub symbol: String,
     pub name: String,
     pub decimals: u8,
@@ -207,5 +218,13 @@ mod tests {
             ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
         };
         assert_eq!(token_id.chain(), Chain::IC);
+    }
+
+    #[test]
+    fn it_should_return_ic_token_id_string_representation_from_token_id() {
+        let token_id = TokenId::IC {
+            ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+        };
+        assert_eq!(token_id.to_string(), "IC:ryjl3-tyaaa-aaaaa-aaaba-cai");
     }
 }
