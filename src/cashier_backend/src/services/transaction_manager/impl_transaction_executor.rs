@@ -2,7 +2,6 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::services::transaction_manager::traits::ActionUpdater;
-use async_trait::async_trait;
 use cashier_backend_types::{
     error::CanisterError,
     repository::{
@@ -23,7 +22,6 @@ use crate::{
     utils::runtime::IcEnvironment,
 };
 
-#[async_trait(?Send)]
 impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerService<E> {
     /// Execute a transaction by ID
     ///

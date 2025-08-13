@@ -5,7 +5,6 @@ use crate::constant::get_tx_timeout_nano_seconds;
 use crate::services::transaction_manager::traits::{
     BatchExecutor, DependencyAnalyzer, TimeoutHandler,
 };
-use async_trait::async_trait;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::{
     dto::action::{ActionDto, Icrc112Requests},
@@ -26,7 +25,6 @@ use crate::{
     utils::{self, helper::to_subaccount, runtime::IcEnvironment},
 };
 
-#[async_trait(?Send)]
 impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E> {
     /// Updates an action with new state information and executes eligible transactions
     ///
