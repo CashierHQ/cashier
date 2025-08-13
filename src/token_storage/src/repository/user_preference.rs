@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use candid::Principal;
 use token_storage_types::user::UserPreference;
 
 // File: src/token_storage/src/repository/user_preference.rs
@@ -19,15 +20,15 @@ impl UserPreferenceRepository {
         Self {}
     }
 
-    pub fn get(&self, id: &str) -> UserPreference {
+    pub fn get(&self, id: &Principal) -> UserPreference {
         USER_PREFERENCE_STORE
-            .with_borrow(|store| store.get(&id.to_string()))
+            .with_borrow(|store| store.get(id))
             .unwrap_or_default()
     }
 
-    pub fn update(&self, id: &str, user_preference: UserPreference) {
+    pub fn update(&self, id: Principal, user_preference: UserPreference) {
         USER_PREFERENCE_STORE.with_borrow_mut(|store| {
-            store.insert(id.to_string(), user_preference);
+            store.insert(id, user_preference);
         });
     }
 }

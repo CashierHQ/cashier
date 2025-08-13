@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use candid::Principal;
 use token_storage_types::TokenId;
 
 // File: src/token_storage/src/repository/token.rs
@@ -22,51 +23,51 @@ impl TokenRepository {
 
     // Add token to enable list
     // return error if list token is not init
-    pub fn add_token(&self, user_id: &str, token_id: &TokenId) -> Result<(), String> {
+    pub fn add_token(&self, user_id: Principal, token_id: &TokenId) -> Result<(), String> {
         USER_TOKEN_STORE.with_borrow_mut(|store| {
             let mut user_token_list = store
-                .get(&user_id.to_string())
+                .get(&user_id)
                 .ok_or_else(|| "user token list is not init".to_string())?;
 
             user_token_list.enable_list.insert(token_id.to_string());
-            store.insert(user_id.to_string(), user_token_list.clone());
+            store.insert(user_id, user_token_list.clone());
             Ok(())
         })
     }
 
-    pub fn add_bulk_tokens(&self, user_id: &str, token_ids: &[TokenId]) -> Result<(), String> {
+    pub fn add_bulk_tokens(&self, user_id: Principal, token_ids: &[TokenId]) -> Result<(), String> {
         USER_TOKEN_STORE.with_borrow_mut(|store| {
             let mut user_token_list = store
-                .get(&user_id.to_string())
+                .get(&user_id)
                 .ok_or_else(|| "user token list is not init".to_string())?;
 
             token_ids
                 .iter()
                 .all(|token_id| user_token_list.enable_list.insert(token_id.clone()));
 
-            store.insert(user_id.to_string(), user_token_list.clone());
+            store.insert(user_id, user_token_list.clone());
 
             Ok(())
         })
     }
 
-    pub fn list_tokens(&self, user_id: &str) -> Result<UserTokenList, std::string::String> {
+    pub fn list_tokens(&self, user_id: &Principal) -> Result<UserTokenList, std::string::String> {
         USER_TOKEN_STORE.with_borrow(|store| {
             store
-                .get(&user_id.to_string())
+                .get(user_id)
                 .ok_or_else(|| "user token list is not init 1".to_string())
         })
     }
 
     pub fn update_token(
         &self,
-        user_id: &str,
+        user_id: Principal,
         token_id: &TokenId,
         is_enable: &bool,
     ) -> Result<(), String> {
         USER_TOKEN_STORE.with_borrow_mut(|store| {
             let mut user_token_list = store
-                .get(&user_id.to_string())
+                .get(&user_id)
                 .ok_or_else(|| "user token list is not init".to_string())?;
 
             if *is_enable {
@@ -75,7 +76,7 @@ impl TokenRepository {
                 user_token_list.enable_list.remove(&token_id.to_string());
             }
 
-            store.insert(user_id.to_string(), user_token_list.clone());
+            store.insert(user_id, user_token_list.clone());
 
             Ok(())
         })
@@ -83,12 +84,12 @@ impl TokenRepository {
 
     pub fn update_token_list(
         &self,
-        user_id: &str,
+        user_id: Principal,
         token_list: &UserTokenList,
     ) -> Result<(), String> {
         USER_TOKEN_STORE.with_borrow_mut(|store| {
             // Insert the updated token list
-            store.insert(user_id.to_string(), token_list.clone());
+            store.insert(user_id, token_list.clone());
             Ok(())
         })
     }

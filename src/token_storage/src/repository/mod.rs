@@ -10,6 +10,7 @@ pub mod user_token;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
+use candid::Principal;
 use ic_mple_log::LogSettings;
 use ic_mple_log::service::LoggerServiceStorage;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
@@ -49,7 +50,7 @@ thread_local! {
 
     // Store user's token references (not full token data)
     // user enable list
-    pub static USER_TOKEN_STORE: RefCell<StableBTreeMap<String, UserTokenList, Memory>> =
+    pub static USER_TOKEN_STORE: RefCell<StableBTreeMap<Principal, UserTokenList, Memory>> =
         RefCell::new(
             StableBTreeMap::init(
                 MEMORY_MANAGER.with_borrow(|m| m.get(TOKEN_MEMORY_ID)),
@@ -57,7 +58,7 @@ thread_local! {
         );
 
     // Store user preferences
-    pub static USER_PREFERENCE_STORE: RefCell<StableBTreeMap<String, UserPreference, Memory>> =
+    pub static USER_PREFERENCE_STORE: RefCell<StableBTreeMap<Principal, UserPreference, Memory>> =
         RefCell::new(
             StableBTreeMap::init(
                 MEMORY_MANAGER.with_borrow(|m| m.get(USER_PREFERENCE_MEMORY_ID)),
@@ -82,7 +83,7 @@ thread_local! {
        );
 
     // Balance cache for users
-    pub static BALANCE_CACHE_STORE: RefCell<StableBTreeMap<String, BalanceCache, Memory>> =
+    pub static BALANCE_CACHE_STORE: RefCell<StableBTreeMap<Principal, BalanceCache, Memory>> =
         RefCell::new(
             StableBTreeMap::init(
                 MEMORY_MANAGER.with_borrow(|m| m.get(BALANCE_CACHE_MEMORY_ID)),

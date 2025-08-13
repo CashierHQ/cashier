@@ -4,7 +4,7 @@
 use candid::Principal;
 use cashier_common::build_data::BuildData;
 use ic_cdk::{api::msg_caller, query, update};
-use log::{debug, error, info};
+use log::{debug, info};
 use token_storage_types::token::{RegistryStats, TokenDto, TokenListResponse, UserTokens};
 
 use crate::{
@@ -43,8 +43,8 @@ fn get_canister_build_data() -> BuildData {
 /// Gets the current version of the token registry
 /// This can be used by clients to check if they need to refresh their token lists
 #[query]
-pub fn get_registry_version() -> u64 {
-    debug!("[get_registry_version]");
+pub fn admin_get_registry_version() -> u64 {
+    debug!("[admin_get_registry_version]");
     ensure_is_admin().unwrap_or_else(|err| {
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
@@ -55,8 +55,8 @@ pub fn get_registry_version() -> u64 {
 /// Gets the full metadata of the token registry
 /// Includes version number and last updated timestamp
 #[query]
-pub fn get_registry_metadata() -> TokenRegistryMetadata {
-    debug!("[get_registry_metadata]");
+pub fn admin_get_registry_metadata() -> TokenRegistryMetadata {
+    debug!("[admin_get_registry_metadata]");
     ensure_is_admin().unwrap_or_else(|err| {
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
@@ -65,8 +65,8 @@ pub fn get_registry_metadata() -> TokenRegistryMetadata {
 }
 
 #[query]
-pub fn get_registry_tokens(only_enable: bool) -> Vec<TokenDto> {
-    debug!("[get_registry_tokens] only_enable: {only_enable}");
+pub fn admin_get_registry_tokens(only_enable: bool) -> Vec<TokenDto> {
+    debug!("[admin_get_registry_tokens] only_enable: {only_enable}");
 
     ensure_is_admin().unwrap_or_else(|err| {
         ic_cdk::trap(format!("Admin check failed: {err}"));
@@ -87,15 +87,12 @@ pub fn get_registry_tokens(only_enable: bool) -> Vec<TokenDto> {
 }
 
 #[update]
-pub fn initialize_registry() -> Result<(), String> {
-    info!("[initialize_registry]");
+pub fn admin_initialize_registry() -> Result<(), String> {
+    info!("[admin_initialize_registry]");
 
     ensure_is_admin().unwrap_or_else(|err| {
-        error!("Admin check failed: {err}"); // Log the error
-        // Return unit type `()` to satisfy `unwrap_or_else`
+        ic_cdk::trap(format!("Admin check failed: {err}"));
     });
-
-    // Admin check should be implemented here
 
     let registry = TokenRegistryRepository::new();
     registry.delete_all()?;
@@ -105,8 +102,8 @@ pub fn initialize_registry() -> Result<(), String> {
 }
 
 #[query]
-pub fn get_stats() -> Result<RegistryStats, String> {
-    debug!("[get_stats]");
+pub fn admin_get_stats() -> Result<RegistryStats, String> {
+    debug!("[admin_get_stats]");
 
     ensure_is_admin().unwrap_or_else(|err| {
         ic_cdk::trap(format!("Admin check failed: {err}"));
@@ -124,16 +121,19 @@ pub fn get_stats() -> Result<RegistryStats, String> {
 }
 
 #[query]
-pub fn get_user_tokens(wallet: String) -> Result<UserTokens, String> {
-    debug!("[get_user_tokens] wallet: {wallet}");
+pub fn admin_get_user_tokens(wallet: Principal) -> Result<UserTokens, String> {
+    debug!("[admin_get_user_tokens] wallet: {wallet}");
 
-    let caller = Principal::from_text(&wallet).map_err(|_| "Invalid wallet address".to_string())?;
+    ensure_is_admin().unwrap_or_else(|err| {
+        ic_cdk::trap(format!("Admin check failed: {err}"));
+    });
+
     let token_registry_service = TokenRegistryService::new();
     let user_token_service = UserTokenService::new();
 
     // Check if user's token list exists
     let user_token_list = user_token_service
-        .get_token_list(&caller.to_string())
+        .get_token_list(&wallet)
         .unwrap_or_default();
 
     let registry_tokens = token_registry_service.list_tokens();
@@ -146,18 +146,21 @@ pub fn get_user_tokens(wallet: String) -> Result<UserTokens, String> {
 }
 
 #[query]
-pub fn list_tokens_by_wallet(wallet: String) -> Result<TokenListResponse, String> {
-    debug!("[list_tokens_by_wallet] wallet: {wallet}");
+pub fn admin_list_tokens_by_wallet(wallet: Principal) -> Result<TokenListResponse, String> {
+    debug!("[admin_list_tokens_by_wallet] wallet: {wallet}");
 
-    let caller = Principal::from_text(&wallet).map_err(|_| "Invalid wallet address".to_string())?;
+    ensure_is_admin().unwrap_or_else(|err| {
+        ic_cdk::trap(format!("Admin check failed: {err}"));
+    });
+
     let token_registry_service = TokenRegistryService::new();
     let user_preference_service = UserPreferenceService::new();
     let user_token_service = UserTokenService::new();
     let registry_metadata = token_registry_service.get_metadata();
 
-    let user_preferences = user_preference_service.get_preferences(&caller.to_string());
+    let user_preferences = user_preference_service.get_preferences(&wallet);
 
-    match user_token_service.get_token_list(&caller.to_string()) {
+    match user_token_service.get_token_list(&wallet) {
         Ok(list) => {
             let need_update_version = list.version < registry_metadata.version;
 
@@ -206,18 +209,17 @@ pub fn list_tokens_by_wallet(wallet: String) -> Result<TokenListResponse, String
 }
 
 #[query]
-pub fn get_user_balance(wallet: String) -> Result<std::collections::HashMap<String, u128>, String> {
-    debug!("[get_user_balance] wallet: {wallet}");
+pub fn admin_get_user_balance(wallet: Principal) -> Result<std::collections::HashMap<String, u128>, String> {
+    debug!("[admin_get_user_balance] wallet: {wallet}");
 
     ensure_is_admin().unwrap_or_else(|err| {
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
 
-    let caller = Principal::from_text(&wallet).map_err(|_| "Invalid wallet address".to_string())?;
     let user_token_service = UserTokenService::new();
 
     // Retrieve all balances for the user
-    let balances = user_token_service.get_all_user_balances(&caller.to_string());
+    let balances = user_token_service.get_all_user_balances(&wallet);
 
     Ok(balances)
 }

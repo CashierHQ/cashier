@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use candid::Principal;
 use token_storage_types::{TokenId, user::UserPreference};
 
 use crate::{
@@ -39,8 +40,8 @@ impl UserTokenService {
 
     /// Ensures the user has a token list initialized
     /// If the user doesn't have a token list, creates one with default settings
-    fn ensure_token_list_initialized(&self, user_id: &str) -> Result<(), String> {
-        match self.token_repository.list_tokens(user_id) {
+    fn ensure_token_list_initialized(&self, user_id: Principal) -> Result<(), String> {
+        match self.token_repository.list_tokens(&user_id) {
             Ok(_) => Ok(()), // Token list already exists
             Err(_) => {
                 // Initialize with registry tokens
@@ -66,7 +67,7 @@ impl UserTokenService {
     /// Add a single token to the user's list
     /// If the token is not in either list, it will be added to the enable list
     /// If the token is in the disable list, it will be moved to the enable list
-    pub fn add_token(&self, user_id: &str, token_id: &TokenId) -> Result<(), String> {
+    pub fn add_token(&self, user_id: Principal, token_id: &TokenId) -> Result<(), String> {
         // Ensure user has a token list initialized
         self.ensure_token_list_initialized(user_id)?;
 
@@ -76,7 +77,7 @@ impl UserTokenService {
 
     /// Add multiple tokens to the user's list
     /// Tokens that don't exist in the registry will be filtered out
-    pub fn add_tokens(&self, user_id: &str, token_ids: &[TokenId]) -> Result<(), String> {
+    pub fn add_tokens(&self, user_id: Principal, token_ids: &[TokenId]) -> Result<(), String> {
         if token_ids.is_empty() {
             return Ok(());
         }
@@ -107,7 +108,7 @@ impl UserTokenService {
     /// Returns an error if the token doesn't exist in the registry
     pub fn update_token_enable(
         &self,
-        user_id: &str,
+        user_id: Principal,
         token_id: &TokenId,
         is_enabled: &bool,
     ) -> Result<(), String> {
@@ -122,13 +123,13 @@ impl UserTokenService {
     /// Synchronize the user token list with the registry
     /// This will add any new tokens from the registry that are enabled_by_default
     /// to the user's enable list if they don't already exist there
-    pub fn sync_token_version(&self, user_id: &str) -> Result<(), String> {
+    pub fn sync_token_version(&self, user_id: Principal) -> Result<(), String> {
         let _ = self.ensure_token_list_initialized(user_id);
 
         // Get the user's token list
         let mut user_token_list = self
             .token_repository
-            .list_tokens(user_id)
+            .list_tokens(&user_id)
             .unwrap_or_default();
 
         // Get the registry metadata to check version
@@ -166,12 +167,12 @@ impl UserTokenService {
 
     /// Get the user token list directly
     /// This gives access to the raw UserTokenList structure with version info
-    pub fn get_token_list(&self, user_id: &str) -> Result<UserTokenList, String> {
+    pub fn get_token_list(&self, user_id: &Principal) -> Result<UserTokenList, String> {
         self.token_repository.list_tokens(user_id)
     }
 
     /// Update balances for multiple tokens at once
-    pub fn update_bulk_balances(&self, user_id: &str, updates: Vec<(TokenId, u128)>) {
+    pub fn update_bulk_balances(&self, user_id: Principal, updates: Vec<(TokenId, u128)>) {
         if !updates.is_empty() {
             self.balance_cache_repository
                 .update_bulk_balances(user_id, updates);
@@ -179,7 +180,7 @@ impl UserTokenService {
     }
 
     /// Get all balances for a user
-    pub fn get_all_user_balances(&self, user_id: &str) -> std::collections::HashMap<TokenId, u128> {
+    pub fn get_all_user_balances(&self, user_id: &Principal) -> std::collections::HashMap<TokenId, u128> {
         self.balance_cache_repository
             .get_all_balances(user_id)
             .into_iter()
