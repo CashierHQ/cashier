@@ -1,0 +1,10 @@
+[package]
+name = "token_storage_types"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+candid = { workspace = true }
+ic_mple_log = { workspace = true }
+serde = { workspace = true }

@@ -1,8 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use cashier_backend_types::init::CashierBackendCanisterInitData;
 use ic_cdk::{init, post_upgrade, pre_upgrade};
-use ic_mple_log::service::LogServiceSettings;
 use log::info;
 
 use crate::api::state::get_state;
@@ -13,18 +13,13 @@ use crate::{
     utils::{random::init_ic_rand, runtime::RealIcEnvironment},
 };
 #[init]
-fn init() {
-    // ToDo: add logger config init args
-    let log_config = LogServiceSettings {
-        enable_console: Some(true),
-        in_memory_records: 0.into(),
-        max_record_length: 0.into(),
-        log_filter: "debug".to_string().into(),
-    };
+fn init(init_data: CashierBackendCanisterInitData) {
 
+    let log_config = init_data.log_settings.unwrap_or_default();
     if let Err(err) = get_state().log_service.init(Some(log_config)) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
     }
+
 
     info!("[init] Starting Cashier Backend");
 
