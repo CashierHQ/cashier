@@ -4,7 +4,7 @@
 use candid::Principal;
 use cashier_common::build_data::BuildData;
 use ic_cdk::{api::msg_caller, query, update};
-use log::error;
+use log::{debug, error, info};
 
 use crate::{
     api::{
@@ -41,6 +41,7 @@ fn ensure_is_admin() -> Result<(), String> {
 /// Returns the build data of the canister.
 #[query]
 fn get_canister_build_data() -> BuildData {
+    debug!("[get_canister_build_data]");
     canister_build_data()
 }
 
@@ -48,6 +49,7 @@ fn get_canister_build_data() -> BuildData {
 /// This can be used by clients to check if they need to refresh their token lists
 #[query]
 pub fn get_registry_version() -> u64 {
+    debug!("[get_registry_version]");
     ensure_is_admin().unwrap_or_else(|err| {
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
@@ -59,6 +61,7 @@ pub fn get_registry_version() -> u64 {
 /// Includes version number and last updated timestamp
 #[query]
 pub fn get_registry_metadata() -> TokenRegistryMetadata {
+    debug!("[get_registry_metadata]");
     ensure_is_admin().unwrap_or_else(|err| {
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
@@ -68,9 +71,12 @@ pub fn get_registry_metadata() -> TokenRegistryMetadata {
 
 #[query]
 pub fn get_registry_tokens(only_enable: bool) -> Vec<TokenDto> {
+    debug!("[get_registry_tokens] only_enable: {only_enable}");
+
     ensure_is_admin().unwrap_or_else(|err| {
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
+
     let service = TokenRegistryService::new();
     let list: Vec<TokenDto> = service
         .list_tokens()
@@ -87,6 +93,8 @@ pub fn get_registry_tokens(only_enable: bool) -> Vec<TokenDto> {
 
 #[update]
 pub fn initialize_registry() -> Result<(), String> {
+    info!("[initialize_registry]");
+
     ensure_is_admin().unwrap_or_else(|err| {
         error!("Admin check failed: {err}"); // Log the error
         // Return unit type `()` to satisfy `unwrap_or_else`
@@ -103,6 +111,8 @@ pub fn initialize_registry() -> Result<(), String> {
 
 #[query]
 pub fn get_stats() -> Result<RegistryStats, String> {
+    debug!("[get_stats]");
+
     ensure_is_admin().unwrap_or_else(|err| {
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
@@ -120,6 +130,8 @@ pub fn get_stats() -> Result<RegistryStats, String> {
 
 #[query]
 pub fn get_user_tokens(wallet: String) -> Result<UserTokens, String> {
+    debug!("[get_user_tokens] wallet: {wallet}");
+
     let caller = Principal::from_text(&wallet).map_err(|_| "Invalid wallet address".to_string())?;
     let token_registry_service = TokenRegistryService::new();
     let user_token_service = UserTokenService::new();
@@ -140,6 +152,8 @@ pub fn get_user_tokens(wallet: String) -> Result<UserTokens, String> {
 
 #[query]
 pub fn list_tokens_by_wallet(wallet: String) -> Result<TokenListResponse, String> {
+    debug!("[list_tokens_by_wallet] wallet: {wallet}");
+
     let caller = Principal::from_text(&wallet).map_err(|_| "Invalid wallet address".to_string())?;
     let token_registry_service = TokenRegistryService::new();
     let user_preference_service = UserPreferenceService::new();
@@ -198,6 +212,8 @@ pub fn list_tokens_by_wallet(wallet: String) -> Result<TokenListResponse, String
 
 #[query]
 pub fn get_user_balance(wallet: String) -> Result<std::collections::HashMap<String, u128>, String> {
+    debug!("[get_user_balance] wallet: {wallet}");
+
     ensure_is_admin().unwrap_or_else(|err| {
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
