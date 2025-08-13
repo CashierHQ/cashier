@@ -8,12 +8,63 @@ export const idlFactory = ({ IDL }) => {
   const TokenStorageInitData = IDL.Record({
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
+  const TokenId = IDL.Variant({
+    'IC' : IDL.Record({ 'ledger_id' : IDL.Principal }),
+  });
   const AddTokenInput = IDL.Record({
-    'token_id' : IDL.Text,
+    'token_id' : TokenId,
     'index_id' : IDL.Opt(IDL.Text),
   });
   const Result = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text });
-  const AddTokensInput = IDL.Record({ 'token_ids' : IDL.Vec(IDL.Text) });
+  const AddTokensInput = IDL.Record({ 'token_ids' : IDL.Vec(TokenId) });
+  const TokenRegistryMetadata = IDL.Record({
+    'last_updated' : IDL.Nat64,
+    'version' : IDL.Nat64,
+  });
+  const Chain = IDL.Variant({ 'IC' : IDL.Null });
+  const ChainTokenDetails = IDL.Variant({
+    'IC' : IDL.Record({
+      'fee' : IDL.Nat,
+      'ledger_id' : IDL.Principal,
+      'index_id' : IDL.Opt(IDL.Principal),
+    }),
+  });
+  const TokenDto = IDL.Record({
+    'id' : TokenId,
+    'decimals' : IDL.Nat8,
+    'balance' : IDL.Opt(IDL.Nat),
+    'chain' : Chain,
+    'name' : IDL.Text,
+    'enabled' : IDL.Bool,
+    'details' : ChainTokenDetails,
+    'symbol' : IDL.Text,
+  });
+  const RegistryStats = IDL.Record({
+    'total_enabled_default' : IDL.Nat64,
+    'total_tokens' : IDL.Nat64,
+  });
+  const Result_1 = IDL.Variant({ 'Ok' : RegistryStats, 'Err' : IDL.Text });
+  const Result_2 = IDL.Variant({
+    'Ok' : IDL.Vec(IDL.Tuple(TokenId, IDL.Nat)),
+    'Err' : IDL.Text,
+  });
+  const UserTokens = IDL.Record({
+    'registry_tokens' : IDL.Nat64,
+    'version' : IDL.Nat64,
+    'enabled' : IDL.Nat64,
+  });
+  const Result_3 = IDL.Variant({ 'Ok' : UserTokens, 'Err' : IDL.Text });
+  const UserPreference = IDL.Record({
+    'hide_zero_balance' : IDL.Bool,
+    'selected_chain' : IDL.Vec(Chain),
+    'hide_unknown_token' : IDL.Bool,
+  });
+  const TokenListResponse = IDL.Record({
+    'need_update_version' : IDL.Bool,
+    'tokens' : IDL.Vec(TokenDto),
+    'perference' : IDL.Opt(UserPreference),
+  });
+  const Result_4 = IDL.Variant({ 'Ok' : TokenListResponse, 'Err' : IDL.Text });
   const BuildData = IDL.Record({
     'rustc_semver' : IDL.Text,
     'git_branch' : IDL.Text,
@@ -26,79 +77,39 @@ export const idlFactory = ({ IDL }) => {
     'git_sha' : IDL.Text,
     'git_commit_timestamp' : IDL.Text,
   });
-  const TokenRegistryMetadata = IDL.Record({
-    'last_updated' : IDL.Nat64,
-    'version' : IDL.Nat64,
-  });
-  const ChainTokenDetails = IDL.Variant({
-    'IC' : IDL.Record({
-      'fee' : IDL.Nat,
-      'ledger_id' : IDL.Principal,
-      'index_id' : IDL.Opt(IDL.Principal),
-    }),
-  });
-  const TokenDto = IDL.Record({
-    'id' : IDL.Text,
-    'decimals' : IDL.Nat8,
-    'balance' : IDL.Opt(IDL.Nat),
-    'chain' : IDL.Text,
-    'name' : IDL.Text,
-    'enabled' : IDL.Bool,
-    'details' : ChainTokenDetails,
-    'symbol' : IDL.Text,
-  });
-  const RegistryStats = IDL.Record({
-    'total_enabled_default' : IDL.Nat64,
-    'total_tokens' : IDL.Nat64,
-  });
-  const Result_1 = IDL.Variant({ 'Ok' : RegistryStats, 'Err' : IDL.Text });
-  const Result_2 = IDL.Variant({
-    'Ok' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Nat)),
-    'Err' : IDL.Text,
-  });
-  const UserTokens = IDL.Record({
-    'registry_tokens' : IDL.Nat64,
-    'version' : IDL.Nat64,
-    'enabled' : IDL.Nat64,
-  });
-  const Result_3 = IDL.Variant({ 'Ok' : UserTokens, 'Err' : IDL.Text });
-  const Chain = IDL.Variant({ 'IC' : IDL.Null });
-  const UserPreference = IDL.Record({
-    'hide_zero_balance' : IDL.Bool,
-    'selected_chain' : IDL.Vec(Chain),
-    'hide_unknown_token' : IDL.Bool,
-  });
-  const TokenListResponse = IDL.Record({
-    'need_update_version' : IDL.Bool,
-    'tokens' : IDL.Vec(TokenDto),
-    'perference' : IDL.Opt(UserPreference),
-  });
-  const Result_4 = IDL.Variant({ 'Ok' : TokenListResponse, 'Err' : IDL.Text });
   const UpdateTokenBalanceInput = IDL.Record({
     'balance' : IDL.Nat,
-    'token_id' : IDL.Text,
+    'token_id' : TokenId,
   });
   const UpdateTokenInput = IDL.Record({
-    'token_id' : IDL.Text,
+    'token_id' : TokenId,
     'is_enabled' : IDL.Bool,
   });
   return IDL.Service({
     'add_token' : IDL.Func([AddTokenInput], [Result], []),
     'add_token_batch' : IDL.Func([AddTokensInput], [Result], []),
-    'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),
-    'get_registry_metadata' : IDL.Func([], [TokenRegistryMetadata], ['query']),
-    'get_registry_tokens' : IDL.Func(
+    'admin_get_registry_metadata' : IDL.Func(
+        [],
+        [TokenRegistryMetadata],
+        ['query'],
+      ),
+    'admin_get_registry_tokens' : IDL.Func(
         [IDL.Bool],
         [IDL.Vec(TokenDto)],
         ['query'],
       ),
-    'get_registry_version' : IDL.Func([], [IDL.Nat64], ['query']),
-    'get_stats' : IDL.Func([], [Result_1], ['query']),
-    'get_user_balance' : IDL.Func([IDL.Text], [Result_2], ['query']),
-    'get_user_tokens' : IDL.Func([IDL.Text], [Result_3], ['query']),
-    'initialize_registry' : IDL.Func([], [Result], []),
+    'admin_get_registry_version' : IDL.Func([], [IDL.Nat64], ['query']),
+    'admin_get_stats' : IDL.Func([], [Result_1], ['query']),
+    'admin_get_user_balance' : IDL.Func([IDL.Principal], [Result_2], ['query']),
+    'admin_get_user_tokens' : IDL.Func([IDL.Principal], [Result_3], ['query']),
+    'admin_initialize_registry' : IDL.Func([], [Result], []),
+    'admin_list_tokens_by_wallet' : IDL.Func(
+        [IDL.Principal],
+        [Result_4],
+        ['query'],
+      ),
+    'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),
     'list_tokens' : IDL.Func([], [Result_4], ['query']),
-    'list_tokens_by_wallet' : IDL.Func([IDL.Text], [Result_4], ['query']),
     'sync_token_list' : IDL.Func([], [Result], []),
     'update_token_balance' : IDL.Func(
         [IDL.Vec(UpdateTokenBalanceInput)],
