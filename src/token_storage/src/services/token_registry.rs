@@ -1,16 +1,16 @@
-use futures::try_join;
 use std::str::FromStr;
+
+use futures::try_join;
+use token_storage_types::{chain::Chain, common::{IndexId, TokenId}, token::ChainTokenDetails};
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::types::Chain;
-use crate::types::common::IndexId;
 use crate::{
     repository::{
         token_registry::TokenRegistryRepository,
         token_registry_metadata::TokenRegistryMetadataRepository,
     },
-    types::{ChainTokenDetails, RegistryToken, TokenId, TokenRegistryMetadata},
+    types::{RegistryToken, TokenRegistryMetadata},
 };
 
 pub struct TokenRegistryService {

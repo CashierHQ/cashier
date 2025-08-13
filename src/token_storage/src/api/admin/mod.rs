@@ -5,11 +5,11 @@ use candid::Principal;
 use cashier_common::build_data::BuildData;
 use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, error, info};
+use token_storage_types::token::{TokenDto, TokenListResponse};
 
 use crate::{
     api::{
         admin::types::{RegistryStats, UserTokens},
-        token::types::TokenListResponse,
     },
     build_data::canister_build_data,
     constant::default_tokens::get_default_tokens,
@@ -18,7 +18,7 @@ use crate::{
         token_registry::TokenRegistryService, user_preference::UserPreferenceService,
         user_token::UserTokenService,
     },
-    types::{TokenDto, TokenRegistryMetadata},
+    types::{TokenRegistryMetadata},
 };
 
 pub mod types;

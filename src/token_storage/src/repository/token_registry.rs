@@ -1,7 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::types::{RegistryToken, TokenId};
+use token_storage_types::common::TokenId;
+
+use crate::types::{RegistryToken};
 
 use super::{TOKEN_REGISTRY_STORE, token_registry_metadata::TokenRegistryMetadataRepository};
 
