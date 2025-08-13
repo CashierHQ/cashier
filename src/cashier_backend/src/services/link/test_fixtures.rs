@@ -70,3 +70,15 @@ pub fn create_link_action_feature(
     service.action_repository.create(action);
     link_action
 }
+
+pub fn create_user_wallet_feature(
+    service: &LinkService<MockIcEnvironment>,
+    wallet_key: &str,
+    user_id: &str,
+) -> UserWallet {
+    let user_wallet = UserWallet {
+        user_id: user_id.to_string(),
+    };
+    service.user_wallet_repository.create(wallet_key.to_string(), user_wallet.clone());
+    user_wallet
+}
