@@ -33,13 +33,13 @@ impl UserWalletRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::random_id_string;
+    use crate::utils::test_utils::*;
 
     #[test]
     fn it_should_create_an_user_wallet() {
         let repo = UserWalletRepository::new();
         let key_id = random_id_string(10);
-        let user_id = random_id_string(10);
+        let user_id = random_principal_id();
 
         let wallet_key = UserWalletKey::from(key_id);
         let user_wallet = UserWallet {
@@ -56,7 +56,7 @@ mod tests {
     fn it_should_get_a_user_wallet() {
         let repo = UserWalletRepository::new();
         let key_id = random_id_string(10);
-        let user_id = random_id_string(10);
+        let user_id = random_principal_id();
 
         let wallet_key = UserWalletKey::from(key_id);
         let user_wallet = UserWallet {
@@ -73,7 +73,7 @@ mod tests {
     fn it_should_create_a_user_wallet_repository_by_default() {
         let repo = UserWalletRepository::default();
         let key_id = random_id_string(10);
-        let user_id = random_id_string(10);
+        let user_id = random_principal_id();
         let wallet_key = UserWalletKey::from(key_id);
         let user_wallet = UserWallet {
             user_id: user_id.clone(),

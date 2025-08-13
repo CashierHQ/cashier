@@ -38,13 +38,13 @@ impl RequestLockRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::random_id_string;
+    use crate::utils::test_utils::*;
     use cashier_backend_types::repository::request_lock::RequestLock;
 
     #[test]
     fn it_should_create_a_request_lock() {
         let repo = RequestLockRepository::new();
-        let user_principal_id = random_id_string(10);
+        let user_principal_id = random_principal_id();
         let link_id = random_id_string(10);
         let action_id = random_id_string(10);
         let request_lock = RequestLock {
@@ -69,7 +69,7 @@ mod tests {
     #[test]
     fn it_should_delete_a_request_lock() {
         let repo = RequestLockRepository::new();
-        let user_principal_id = random_id_string(10);
+        let user_principal_id = random_principal_id();
         let link_id = random_id_string(10);
         let action_id = random_id_string(10);
         let request_lock = RequestLock {
@@ -90,7 +90,7 @@ mod tests {
     #[test]
     fn it_should_check_if_a_request_lock_exists() {
         let repo = RequestLockRepository::new();
-        let user_principal_id = random_id_string(10);
+        let user_principal_id = random_principal_id();
         let link_id = random_id_string(10);
         let action_id = random_id_string(10);
         let request_lock = RequestLock {
