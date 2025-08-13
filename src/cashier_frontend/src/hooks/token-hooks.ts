@@ -11,14 +11,14 @@ import {
 import { TokenUtilService } from "@/services/tokenUtils.service";
 
 import TokenStorageService from "@/services/backend/tokenStorage.service";
-import {
-    Chain,
-    TokenDto,
-    UpdateTokenInput,
-} from "../generated/token_storage/token_storage.did";
+import { Chain, TokenDto, UpdateTokenInput } from "../generated/token_storage/token_storage.did";
 import tokenPriceService from "@/services/price/icExplorer.service";
 import { useIdentity } from "@nfid/identitykit/react";
-import { mapStringToTokenId, mapTokenDtoToTokenModel, TokenFilters } from "@/types/token-store.type";
+import {
+    mapStringToTokenId,
+    mapTokenDtoToTokenModel,
+    TokenFilters,
+} from "@/types/token-store.type";
 import { fromNullable, toNullable } from "@dfinity/utils";
 import { useTokenMetadataWorker } from "./token/useTokenMetadataWorker";
 import { CHAIN } from "@/services/types/enum";
@@ -284,12 +284,11 @@ export function useAddTokenMutation() {
 
     return useMutation({
         mutationFn: async (input: {
-            tokenId: string,
-            indexId: string | undefined,
-            chain: string
+            tokenId: string;
+            indexId: string | undefined;
+            chain: string;
         }) => {
             if (!identity) throw new Error("Not authenticated");
-
 
             const tokenId = mapStringToTokenId(input.tokenId, input.chain);
 
@@ -317,13 +316,12 @@ export function useMultipleTokenMutation() {
     const identity = useIdentity();
 
     return useMutation({
-        mutationFn: async (input: {
-            tokenIds: string[],
-            chain: string
-        }) => {
+        mutationFn: async (input: { tokenIds: string[]; chain: string }) => {
             if (!identity) throw new Error("Not authenticated");
 
-            const tokenIds = input.tokenIds.map((tokenId) => mapStringToTokenId(tokenId, input.chain));
+            const tokenIds = input.tokenIds.map((tokenId) =>
+                mapStringToTokenId(tokenId, input.chain),
+            );
 
             const tokenService = new TokenStorageService(identity);
             try {
@@ -350,7 +348,15 @@ export function useUpdateTokenEnableMutation() {
     const identity = useIdentity();
 
     return useMutation({
-        mutationFn: async ({ tokenId, enable, chain }: { tokenId: string; enable: boolean; chain: string }) => {
+        mutationFn: async ({
+            tokenId,
+            enable,
+            chain,
+        }: {
+            tokenId: string;
+            enable: boolean;
+            chain: string;
+        }) => {
             if (!identity) throw new Error("Not authenticated");
 
             const tokenService = new TokenStorageService(identity);
