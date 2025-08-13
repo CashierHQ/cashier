@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 #[cfg(test)]
+#[allow(clippy::items_after_test_module)]
 pub mod runtime {
     use super::super::runtime::IcEnvironment;
     use candid::Principal;

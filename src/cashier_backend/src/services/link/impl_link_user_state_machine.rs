@@ -309,12 +309,10 @@ mod tests {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
             action_id: link_action.action_id.clone(),
-            user_id: link_action.user_id.clone(),
+            user_id: link_action.user_id,
             link_user_state: Some(LinkUserState::CompletedLink),
         };
-        service
-            .link_action_repository
-            .update(updated_link_action.clone());
+        service.link_action_repository.update(updated_link_action);
 
         let result = service.handle_user_link_state_machine(
             &link.id,
@@ -345,12 +343,10 @@ mod tests {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
             action_id: link_action.action_id.clone(),
-            user_id: link_action.user_id.clone(),
+            user_id: link_action.user_id,
             link_user_state: Some(LinkUserState::ChooseWallet),
         };
-        service
-            .link_action_repository
-            .update(updated_link_action.clone());
+        service.link_action_repository.update(updated_link_action);
 
         let result = service.handle_user_link_state_machine(
             &link.id,
@@ -383,18 +379,16 @@ mod tests {
             user_id: link_action.user_id.clone(),
             link_user_state: Some(LinkUserState::ChooseWallet),
         };
-        service
-            .link_action_repository
-            .update(updated_link_action.clone());
+        service.link_action_repository.update(updated_link_action);
 
         let updated_action = Action {
-            id: link_action.action_id.clone(),
+            id: link_action.action_id,
             r#type: ActionType::Use,
             state: ActionState::Success,
             creator: creator_id.clone(),
             link_id: link.id.clone(),
         };
-        service.action_repository.update(updated_action.clone());
+        service.action_repository.update(updated_action);
 
         let result = service.handle_user_link_state_machine(
             &link.id,
@@ -423,12 +417,10 @@ mod tests {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
             action_id: link_action.action_id.clone(),
-            user_id: link_action.user_id.clone(),
+            user_id: link_action.user_id,
             link_user_state: Some(LinkUserState::ChooseWallet),
         };
-        service
-            .link_action_repository
-            .update(updated_link_action.clone());
+        service.link_action_repository.update(updated_link_action);
 
         let result = service.handle_user_link_state_machine(
             &link.id,
@@ -463,7 +455,7 @@ mod tests {
         let result = service.link_get_user_state(
             &creator,
             &LinkGetUserStateInput {
-                link_id: link.id.clone(),
+                link_id: link.id,
                 action_type: "CreateLink".to_string(),
                 anonymous_wallet_address: None,
             },
@@ -488,7 +480,7 @@ mod tests {
         let result = service.link_get_user_state(
             &creator,
             &LinkGetUserStateInput {
-                link_id: link.id.clone(),
+                link_id: link.id,
                 action_type: "InvalidActionType".to_string(),
                 anonymous_wallet_address: None,
             },
@@ -513,7 +505,7 @@ mod tests {
         let result = service.link_get_user_state(
             &creator2,
             &LinkGetUserStateInput {
-                link_id: link.id.clone(),
+                link_id: link.id,
                 action_type: "Use".to_string(),
                 anonymous_wallet_address: None,
             },
@@ -539,7 +531,7 @@ mod tests {
         let result = service.link_get_user_state(
             &creator,
             &LinkGetUserStateInput {
-                link_id: link.id.clone(),
+                link_id: link.id,
                 action_type: "Use".to_string(),
                 anonymous_wallet_address: None,
             },
@@ -564,7 +556,7 @@ mod tests {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
             action_id: link_action.action_id.clone(),
-            user_id: link_action.user_id.clone(),
+            user_id: link_action.user_id,
             link_user_state: None,
         };
         service.link_action_repository.update(updated_link_action);
@@ -572,7 +564,7 @@ mod tests {
         let result = service.link_get_user_state(
             &creator,
             &LinkGetUserStateInput {
-                link_id: link.id.clone(),
+                link_id: link.id,
                 action_type: "Use".to_string(),
                 anonymous_wallet_address: None,
             },
@@ -599,7 +591,7 @@ mod tests {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
             action_id: link_action.action_id.clone(),
-            user_id: link_action.user_id.clone(),
+            user_id: link_action.user_id,
             link_user_state: Some(LinkUserState::ChooseWallet),
         };
         service.link_action_repository.update(updated_link_action);
@@ -607,7 +599,7 @@ mod tests {
         let result = service.link_get_user_state(
             &creator,
             &LinkGetUserStateInput {
-                link_id: link.id.clone(),
+                link_id: link.id,
                 action_type: "Use".to_string(),
                 anonymous_wallet_address: None,
             },
@@ -634,7 +626,7 @@ mod tests {
         let result = service.link_update_user_state(
             &creator,
             &LinkUpdateUserStateInput {
-                link_id: link.id.clone(),
+                link_id: link.id,
                 action_type: "CreateLink".to_string(),
                 goto: UserStateMachineGoto::Continue.to_string(),
                 anonymous_wallet_address: None,
@@ -660,7 +652,7 @@ mod tests {
         let result = service.link_update_user_state(
             &creator,
             &LinkUpdateUserStateInput {
-                link_id: link.id.clone(),
+                link_id: link.id,
                 action_type: "InvalidActionType".to_string(),
                 goto: UserStateMachineGoto::Continue.to_string(),
                 anonymous_wallet_address: None,
@@ -686,7 +678,7 @@ mod tests {
         let result = service.link_update_user_state(
             &creator2,
             &LinkUpdateUserStateInput {
-                link_id: link.id.clone(),
+                link_id: link.id,
                 action_type: "Use".to_string(),
                 goto: UserStateMachineGoto::Continue.to_string(),
                 anonymous_wallet_address: None,
@@ -713,7 +705,7 @@ mod tests {
         let result = service.link_update_user_state(
             &creator,
             &LinkUpdateUserStateInput {
-                link_id: link.id.clone(),
+                link_id: link.id,
                 action_type: "Use".to_string(),
                 goto: "InvalidGoto".to_string(),
                 anonymous_wallet_address: None,
@@ -749,18 +741,18 @@ mod tests {
         service.link_action_repository.update(updated_link_action);
 
         let updated_action = Action {
-            id: link_action.action_id.clone(),
+            id: link_action.action_id,
             r#type: ActionType::Use,
             state: ActionState::Success,
             creator: creator_id.clone(),
             link_id: link.id.clone(),
         };
-        service.action_repository.update(updated_action.clone());
+        service.action_repository.update(updated_action);
 
         let result = service.link_update_user_state(
             &creator,
             &LinkUpdateUserStateInput {
-                link_id: link.id.clone(),
+                link_id: link.id,
                 action_type: "Use".to_string(),
                 goto: UserStateMachineGoto::Continue.to_string(),
                 anonymous_wallet_address: None,

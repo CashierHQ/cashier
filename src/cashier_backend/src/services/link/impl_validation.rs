@@ -468,7 +468,7 @@ mod tests {
             r#type: ActionType::CreateLink,
             state: ActionState::Created,
             creator: random_principal_id(),
-            link_id: link.id.clone(),
+            link_id: link.id,
         };
         let user_id = random_principal_id();
 
@@ -492,7 +492,7 @@ mod tests {
             r#type: ActionType::CreateLink,
             state: ActionState::Created,
             creator: creator_id.clone(),
-            link_id: link.id.clone(),
+            link_id: link.id,
         };
 
         let result = service.link_validate_user_update_action(&action, &creator_id);
@@ -533,7 +533,7 @@ mod tests {
             r#type: ActionType::Withdraw,
             state: ActionState::Created,
             creator: random_principal_id(),
-            link_id: link.id.clone(),
+            link_id: link.id,
         };
         let user_id = random_principal_id();
 
@@ -557,7 +557,7 @@ mod tests {
             r#type: ActionType::Withdraw,
             state: ActionState::Created,
             creator: creator_id.clone(),
-            link_id: link.id.clone(),
+            link_id: link.id,
         };
 
         let result = service.link_validate_user_update_action(&action, &creator_id);
@@ -575,7 +575,7 @@ mod tests {
             r#type: ActionType::Use,
             state: ActionState::Created,
             creator: random_principal_id(),
-            link_id: link.id.clone(),
+            link_id: link.id,
         };
         let user_id = random_principal_id();
 
@@ -600,7 +600,7 @@ mod tests {
             r#type: ActionType::Use,
             state: ActionState::Success,
             creator: creator_id.clone(),
-            link_id: link.id.clone(),
+            link_id: link.id,
         };
 
         let result = service.link_validate_user_update_action(&action, &creator_id);
@@ -623,7 +623,7 @@ mod tests {
             r#type: ActionType::Use,
             state: ActionState::Created,
             creator: creator_id.clone(),
-            link_id: link.id.clone(),
+            link_id: link.id,
         };
 
         let result = service.link_validate_user_update_action(&action, &creator_id);
@@ -666,7 +666,7 @@ mod tests {
     fn it_should_false_is_link_creator_if_link_not_found() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let user_id = random_principal_id();
-        let _user_wallet = service.user_wallet_repository.create(
+        service.user_wallet_repository.create(
             user_id.clone(),
             UserWallet {
                 user_id: user_id.clone(),
@@ -683,15 +683,14 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_feature(&service, &creator_id);
-        let user_id = creator_id.clone();
-        let _user_wallet = service.user_wallet_repository.create(
-            user_id.clone(),
+        service.user_wallet_repository.create(
+            creator_id.clone(),
             UserWallet {
-                user_id: user_id.clone(),
+                user_id: creator_id.clone(),
             },
         );
 
-        let result = service.is_link_creator(&user_id, &link.id);
+        let result = service.is_link_creator(&creator_id, &link.id);
         assert!(result);
     }
 

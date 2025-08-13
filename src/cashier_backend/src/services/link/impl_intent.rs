@@ -607,7 +607,7 @@ mod tests {
         let intent = service.create_fee_intent();
         assert_eq!(intent.task, IntentTask::TransferWalletToTreasury);
         assert_eq!(intent.label, INTENT_LABEL_LINK_CREATION_FEE);
-        assert_eq!(intent.r#type.as_transfer_from().is_some(), true);
+        assert!(intent.r#type.as_transfer_from().is_some());
     }
 
     #[test]
@@ -704,7 +704,7 @@ mod tests {
 
         let updated_link = Link {
             link_type: Some(LinkType::SendAirdrop),
-            ..link.clone()
+            ..link
         };
         service.link_repository.update(updated_link.clone());
         let action_type = ActionType::CreateLink;
@@ -724,7 +724,7 @@ mod tests {
         let link = create_link_feature(&service, creator_id);
         let updated_link = Link {
             link_type: Some(LinkType::SendAirdrop),
-            ..link.clone()
+            ..link
         };
         service.link_repository.update(updated_link.clone());
 
@@ -744,7 +744,7 @@ mod tests {
         let link = create_link_feature(&service, creator_id);
         let updated_link = Link {
             link_type: Some(LinkType::SendAirdrop),
-            ..link.clone()
+            ..link
         };
         service.link_repository.update(updated_link.clone());
 
@@ -796,7 +796,7 @@ mod tests {
                 amount_per_link_use_action: 100,
                 label: "invalid_label".to_string(), // Invalid label
             }]),
-            ..link.clone()
+            ..link
         };
         service.link_repository.update(updated_link.clone());
         let action_type = ActionType::CreateLink;
@@ -828,7 +828,7 @@ mod tests {
                     INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"
                 ),
             }]),
-            ..link.clone()
+            ..link
         };
         service.link_repository.update(updated_link.clone());
         let action_type = ActionType::CreateLink;
@@ -882,7 +882,7 @@ mod tests {
                     INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"
                 ),
             }]),
-            ..link.clone()
+            ..link
         };
         service.link_repository.update(updated_link.clone());
         let action_type = ActionType::Use;
@@ -935,7 +935,7 @@ mod tests {
                     INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"
                 ),
             }]),
-            ..link.clone()
+            ..link
         };
         service.link_repository.update(updated_link.clone());
         let action_type = ActionType::Withdraw;
