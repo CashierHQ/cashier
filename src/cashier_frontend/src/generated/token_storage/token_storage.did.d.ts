@@ -66,7 +66,7 @@ export interface TokenRegistryMetadata {
   'last_updated' : bigint,
   'version' : bigint,
 }
-export interface TokenStorageCanisterInitData {
+export interface TokenStorageInitData {
   'log_settings' : [] | [LogServiceSettings],
 }
 export interface UpdateTokenBalanceInput {

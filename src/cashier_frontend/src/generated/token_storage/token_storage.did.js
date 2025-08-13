@@ -5,7 +5,7 @@ export const idlFactory = ({ IDL }) => {
     'enable_console' : IDL.Opt(IDL.Bool),
     'max_record_length' : IDL.Opt(IDL.Nat64),
   });
-  const TokenStorageCanisterInitData = IDL.Record({
+  const TokenStorageInitData = IDL.Record({
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
   const AddTokenInput = IDL.Record({
@@ -117,8 +117,8 @@ export const init = ({ IDL }) => {
     'enable_console' : IDL.Opt(IDL.Bool),
     'max_record_length' : IDL.Opt(IDL.Nat64),
   });
-  const TokenStorageCanisterInitData = IDL.Record({
+  const TokenStorageInitData = IDL.Record({
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
-  return [TokenStorageCanisterInitData];
+  return [TokenStorageInitData];
 };
