@@ -3,7 +3,7 @@
 
 use crate::api::guard::is_not_anonymous;
 use crate::services::link::traits::LinkValidation;
-use candid::{Principal, de};
+use candid::Principal;
 use cashier_backend_types::dto::action::{
     ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
     ProcessActionInput, UpdateActionInput,
