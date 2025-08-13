@@ -51,13 +51,14 @@ impl LinkRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::random_id_string;
+    use crate::utils::test_utils::*;
     use cashier_backend_types::repository::link::v1::{LinkState, LinkType};
 
     #[test]
     fn it_should_create_a_link() {
         let repo = LinkRepository::new();
         let link_id = random_id_string(10);
+        let creator_id = random_principal_id();
         let link = Link {
             id: link_id,
             state: LinkState::ChooseLinkType,
@@ -66,7 +67,7 @@ mod tests {
             link_type: Some(LinkType::SendTip),
             asset_info: None,
             template: None,
-            creator: "creator1".to_string(),
+            creator: creator_id.clone(),
             create_at: 1622547800,
             metadata: None,
             link_use_action_counter: 0,
@@ -77,13 +78,15 @@ mod tests {
         let fetched_link = repo.get(&link.id);
         assert!(fetched_link.is_some());
         let link_creator = fetched_link.unwrap().creator;
-        assert_eq!(link_creator, "creator1");
+        assert_eq!(link_creator, creator_id);
     }
 
     #[test]
     fn it_should_update_a_link() {
         let repo = LinkRepository::new();
         let link_id = random_id_string(10);
+        let creator_id1 = random_principal_id();
+        let creator_id2 = random_principal_id();
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,
@@ -92,7 +95,7 @@ mod tests {
             link_type: Some(LinkType::SendTip),
             asset_info: None,
             template: None,
-            creator: "creator1".to_string(),
+            creator: creator_id1,
             create_at: 1622547800,
             metadata: None,
             link_use_action_counter: 0,
@@ -108,7 +111,7 @@ mod tests {
             link_type: Some(LinkType::ReceivePayment),
             asset_info: None,
             template: None,
-            creator: "creator2".to_string(),
+            creator: creator_id2.clone(),
             create_at: 1622547800,
             metadata: None,
             link_use_action_counter: 1,
@@ -120,13 +123,14 @@ mod tests {
         assert!(fetched_link.is_some());
         let fetched_link = fetched_link.unwrap();
         assert_eq!(fetched_link.state, LinkState::Active);
-        assert_eq!(fetched_link.creator, "creator2");
+        assert_eq!(fetched_link.creator, creator_id2);
     }
 
     #[test]
     fn it_should_delete_a_link() {
         let repo = LinkRepository::new();
         let link_id = random_id_string(10);
+        let creator_id = random_principal_id();
         let link = Link {
             id: link_id,
             state: LinkState::ChooseLinkType,
@@ -135,7 +139,7 @@ mod tests {
             link_type: Some(LinkType::SendTip),
             asset_info: None,
             template: None,
-            creator: "creator1".to_string(),
+            creator: creator_id,
             create_at: 1622547800,
             metadata: None,
             link_use_action_counter: 0,
@@ -153,6 +157,8 @@ mod tests {
         let repo = LinkRepository::new();
         let link_id1 = random_id_string(10);
         let link_id2 = random_id_string(10);
+        let creator1 = random_principal_id();
+        let creator2 = random_principal_id();
         let link1 = Link {
             id: link_id1.clone(),
             state: LinkState::ChooseLinkType,
@@ -161,7 +167,7 @@ mod tests {
             link_type: Some(LinkType::SendTip),
             asset_info: None,
             template: None,
-            creator: "creator1".to_string(),
+            creator: creator1,
             create_at: 1622547800,
             metadata: None,
             link_use_action_counter: 0,
@@ -175,7 +181,7 @@ mod tests {
             link_type: Some(LinkType::ReceivePayment),
             asset_info: None,
             template: None,
-            creator: "creator2".to_string(),
+            creator: creator2,
             create_at: 1622547800,
             metadata: None,
             link_use_action_counter: 1,
@@ -195,6 +201,7 @@ mod tests {
     fn it_should_get_a_link() {
         let repo = LinkRepository::new();
         let link_id = random_id_string(10);
+        let creator_id = random_principal_id();
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,
@@ -203,7 +210,7 @@ mod tests {
             link_type: Some(LinkType::SendTip),
             asset_info: None,
             template: None,
-            creator: "creator1".to_string(),
+            creator: creator_id,
             create_at: 1622547800,
             metadata: None,
             link_use_action_counter: 0,
