@@ -12,16 +12,14 @@ import { TokenUtilService } from "@/services/tokenUtils.service";
 
 import TokenStorageService from "@/services/backend/tokenStorage.service";
 import {
-    AddTokenInput,
-    AddTokensInput,
     Chain,
     TokenDto,
     UpdateTokenInput,
 } from "../generated/token_storage/token_storage.did";
 import tokenPriceService from "@/services/price/icExplorer.service";
 import { useIdentity } from "@nfid/identitykit/react";
-import { mapTokenDtoToTokenModel, TokenFilters } from "@/types/token-store.type";
-import { fromNullable } from "@dfinity/utils";
+import { mapStringToTokenId, mapTokenDtoToTokenModel, TokenFilters } from "@/types/token-store.type";
+import { fromNullable, toNullable } from "@dfinity/utils";
 import { useTokenMetadataWorker } from "./token/useTokenMetadataWorker";
 import { CHAIN } from "@/services/types/enum";
 
@@ -285,13 +283,22 @@ export function useAddTokenMutation() {
     const identity = useIdentity();
 
     return useMutation({
-        mutationFn: async (input: AddTokenInput) => {
+        mutationFn: async (input: {
+            tokenId: string,
+            indexId: string | undefined,
+            chain: string
+        }) => {
             if (!identity) throw new Error("Not authenticated");
 
+
+            const tokenId = mapStringToTokenId(input.tokenId, input.chain);
+
             const tokenService = new TokenStorageService(identity);
-            console.log("[addToken] Adding token with input 2:", input);
-            const res = await tokenService.addToken(input);
-            console.log("Token added:", res);
+            const res = await tokenService.addToken({
+                token_id: tokenId,
+                index_id: toNullable(input.indexId),
+            });
+            console.log("Add token mutation result:", res);
             return true;
         },
         onSuccess: () => {
@@ -310,13 +317,17 @@ export function useMultipleTokenMutation() {
     const identity = useIdentity();
 
     return useMutation({
-        mutationFn: async (input: AddTokensInput) => {
+        mutationFn: async (input: {
+            tokenIds: string[],
+            chain: string
+        }) => {
             if (!identity) throw new Error("Not authenticated");
+
+            const tokenIds = input.tokenIds.map((tokenId) => mapStringToTokenId(tokenId, input.chain));
 
             const tokenService = new TokenStorageService(identity);
             try {
-                console.log("Adding tokens:", input.token_ids.length);
-                await tokenService.addTokens(input);
+                await tokenService.addTokens({ token_ids: tokenIds });
                 return true;
             } catch (error) {
                 console.error("Error adding tokens:", error);
@@ -339,12 +350,12 @@ export function useUpdateTokenEnableMutation() {
     const identity = useIdentity();
 
     return useMutation({
-        mutationFn: async ({ tokenId, enable }: { tokenId: string; enable: boolean }) => {
+        mutationFn: async ({ tokenId, enable, chain }: { tokenId: string; enable: boolean; chain: string }) => {
             if (!identity) throw new Error("Not authenticated");
 
             const tokenService = new TokenStorageService(identity);
             const input: UpdateTokenInput = {
-                token_id: tokenId,
+                token_id: mapStringToTokenId(tokenId, chain),
                 is_enabled: enable,
             };
             await tokenService.updateTokenEnable(input);

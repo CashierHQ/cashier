@@ -1,10 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { TokenDto } from "../generated/token_storage/token_storage.did";
+import { Chain as BackendChain, TokenDto, TokenId } from "../generated/token_storage/token_storage.did";
 import { TokenModel } from "@/types/fungible-token.speculative";
 import { Chain } from "@/services/types/link.service.types";
 import { IC_EXPLORER_IMAGES_PATH } from "@/const";
+import { Principal } from "@dfinity/principal";
 
 export interface TokenFilters {
     hideZeroBalance: boolean;
@@ -12,13 +13,35 @@ export interface TokenFilters {
     selectedChain: string[];
 }
 
-const mapStringToFrontendChain = (chain: string): Chain => {
-    switch (chain) {
-        case "IC":
-            return Chain.IC;
-        default:
-            throw new Error(`Unsupported chain: ${chain}`);
+const mapStringToFrontendChain = (chain: BackendChain): Chain => {
+    if ("IC" in chain) {
+        return Chain.IC;
     }
+
+    throw new Error(`Unsupported chain: ${chain}`);
+};
+
+
+const mapTokenIdToString = (tokenId: TokenId): string => {
+    if ("IC" in tokenId) {
+        return tokenId.IC.ledger_id.toString();
+    }
+
+    throw new Error(`Unsupported tokenId: ${tokenId}`);
+};
+
+export const mapStringToTokenId = (tokenId: string, chain: string): TokenId => {
+    if (chain === "IC") {
+        return { IC: { ledger_id: Principal.fromText(tokenId) } };
+    }
+    throw new Error(`Unsupported tokenId: ${tokenId}`);
+};
+
+export const mapStringToChain = (chain: string): Chain => {
+    if (chain === "IC") {
+        return Chain.IC;
+    }
+    throw new Error(`Unsupported chain: ${chain}`);
 };
 
 // Helper function to map UserToken to FungibleToken
@@ -31,7 +54,7 @@ export const mapTokenDtoToTokenModel = (token: TokenDto): TokenModel => {
     }
 
     return {
-        id: token.id,
+        id: mapTokenIdToString(token.id),
         address: tokenId,
         chain: mapStringToFrontendChain(token.chain),
         name: token.name?.toString() || "Unknown Token",
