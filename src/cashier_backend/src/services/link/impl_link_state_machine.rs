@@ -633,7 +633,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Title".to_string()),
             description: None,
@@ -668,7 +668,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Title".to_string()),
             description: None,
@@ -703,7 +703,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: None,
             description: Some("Description".to_string()),
@@ -738,7 +738,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -773,7 +773,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -812,7 +812,7 @@ mod tests {
             "http://example.com/image.png".to_string(),
         )]);
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -847,7 +847,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -886,7 +886,7 @@ mod tests {
             "http://example.com/nft.png".to_string(),
         )]);
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -921,7 +921,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -956,7 +956,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -991,7 +991,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -1036,7 +1036,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -1081,7 +1081,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -1116,7 +1116,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -1151,7 +1151,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -1186,7 +1186,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
-            id: link_id.clone(),
+            id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
