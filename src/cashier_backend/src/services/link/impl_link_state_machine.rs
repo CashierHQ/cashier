@@ -78,7 +78,6 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
 
                     println!("params.link_image_url: {:?}", params.link_image_url);
 
-
                     if params.link_image_url != link.get_metadata("link_image_url") {
                         return true;
                     }
@@ -600,10 +599,14 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::random_principal_id;
-    use crate::utils::test_utils::{runtime::MockIcEnvironment, random_id_string};
     use crate::services::link::test_fixtures::*;
-    use cashier_backend_types::repository::{link::v1::{Link, LinkState, LinkType}, asset_info::AssetInfo, common::Chain};
+    use crate::utils::test_utils::random_principal_id;
+    use crate::utils::test_utils::{random_id_string, runtime::MockIcEnvironment};
+    use cashier_backend_types::repository::{
+        asset_info::AssetInfo,
+        common::Chain,
+        link::v1::{Link, LinkState, LinkType},
+    };
     use std::collections::{HashMap, HashSet};
 
     fn create_whitelist_props(prop_name: &str) -> Vec<String> {
@@ -804,7 +807,10 @@ mod tests {
     fn it_should_true_is_props_changed_if_link_image_url_changed() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
-        let meta_data = HashMap::from([("link_image_url".to_string(), "http://example.com/image.png".to_string())]);
+        let meta_data = HashMap::from([(
+            "link_image_url".to_string(),
+            "http://example.com/image.png".to_string(),
+        )]);
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,
@@ -875,7 +881,10 @@ mod tests {
     fn it_should_true_is_props_changed_if_nft_image_changed() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
-        let meta_data = HashMap::from([("nft_image".to_string(), "http://example.com/nft.png".to_string())]);
+        let meta_data = HashMap::from([(
+            "nft_image".to_string(),
+            "http://example.com/nft.png".to_string(),
+        )]);
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,
@@ -1099,7 +1108,7 @@ mod tests {
 
         let whitelist_props = create_whitelist_props("link_use_action_max_count");
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
-        assert!(!changed);  
+        assert!(!changed);
     }
 
     #[test]
@@ -1223,7 +1232,7 @@ mod tests {
 
         let result = service.prefetch_template(&params);
         assert!(result.is_err());
-        
+
         if let Err(CanisterError::ValidationErrors(msg)) = result {
             assert_eq!(msg, "Template is required");
         } else {
@@ -1247,7 +1256,7 @@ mod tests {
 
         let result = service.prefetch_template(&params);
         assert!(result.is_err());
-        
+
         if let Err(CanisterError::ValidationErrors(msg)) = result {
             assert_eq!(msg, "Link type is required");
         } else {
@@ -1271,7 +1280,7 @@ mod tests {
 
         let result = service.prefetch_template(&params);
         assert!(result.is_err());
-        
+
         if let Err(CanisterError::ValidationErrors(msg)) = result {
             assert_eq!(msg, "Invalid template");
         } else {
@@ -1295,7 +1304,7 @@ mod tests {
 
         let result = service.prefetch_template(&params);
         assert!(result.is_err());
-        
+
         if let Err(CanisterError::ValidationErrors(msg)) = result {
             assert_eq!(msg, "Invalid link type");
         } else {
@@ -1319,7 +1328,7 @@ mod tests {
 
         let result = service.prefetch_template(&params);
         assert!(result.is_ok());
-        
+
         let (template, link_type) = result.unwrap();
         assert_eq!(template.to_string(), Template::Central.to_string());
         assert_eq!(link_type.to_string(), LinkType::SendTip.to_string());
@@ -1383,17 +1392,20 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: Some(vec![LinkDetailUpdateAssetInfoInput{
-                address: address1.clone(),
-                chain: Chain::IC.to_string(),
-                amount_per_link_use_action: 100,
-                label: "some_label".to_string(),
-            }, LinkDetailUpdateAssetInfoInput{
-                address: address2.clone(),
-                chain: Chain::IC.to_string(),
-                amount_per_link_use_action: 200,
-                label: "another_label".to_string(),   
-            }]),
+            asset_info: Some(vec![
+                LinkDetailUpdateAssetInfoInput {
+                    address: address1.clone(),
+                    chain: Chain::IC.to_string(),
+                    amount_per_link_use_action: 100,
+                    label: "some_label".to_string(),
+                },
+                LinkDetailUpdateAssetInfoInput {
+                    address: address2.clone(),
+                    chain: Chain::IC.to_string(),
+                    amount_per_link_use_action: 200,
+                    label: "another_label".to_string(),
+                },
+            ]),
             template: Some(Template::Central.to_string()),
             link_type: Some(LinkType::SendTip.to_string()),
             link_use_action_max_count: Some(10),
@@ -1426,7 +1438,12 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_feature(&service, &creator_id);
-        let _link_action = create_link_action_feature(&service, &link.id, ActionType::CreateLink.to_str(), &creator_id);
+        let _link_action = create_link_action_feature(
+            &service,
+            &link.id,
+            ActionType::CreateLink.to_str(),
+            &creator_id,
+        );
 
         let result = service.prefetch_create_action(&link);
         assert!(result.is_ok());
@@ -1456,7 +1473,12 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_feature(&service, &creator_id);
-        let _link_action = create_link_action_feature(&service, &link.id, ActionType::Withdraw.to_str(), &creator_id);
+        let _link_action = create_link_action_feature(
+            &service,
+            &link.id,
+            ActionType::Withdraw.to_str(),
+            &creator_id,
+        );
 
         let result = service.prefetch_withdraw_action(&link);
         assert!(result.is_ok());

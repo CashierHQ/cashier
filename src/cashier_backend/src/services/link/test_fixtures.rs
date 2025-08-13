@@ -1,9 +1,18 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::{services::link::service::LinkService, utils::test_utils::{runtime::MockIcEnvironment, random_id_string}};
-use cashier_backend_types::repository::{link::v1::{Link, LinkState, LinkType}, user_link::v1::UserLink, user_wallet::v1::UserWallet, link_action::v1::LinkAction, action::v1::{Action, ActionType, ActionState}};
+use crate::{
+    services::link::service::LinkService,
+    utils::test_utils::{random_id_string, runtime::MockIcEnvironment},
+};
 use candid::Principal;
+use cashier_backend_types::repository::{
+    action::v1::{Action, ActionState, ActionType},
+    link::v1::{Link, LinkState, LinkType},
+    link_action::v1::LinkAction,
+    user_link::v1::UserLink,
+    user_wallet::v1::UserWallet,
+};
 use std::str::FromStr;
 
 pub const PRINCIPAL_ID1: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
@@ -35,12 +44,18 @@ pub fn create_link_feature(service: &LinkService<MockIcEnvironment>, creator_id:
     link
 }
 
-pub fn create_principal_feature(service: &LinkService<MockIcEnvironment>, principal_id: &str) -> Principal {
+pub fn create_principal_feature(
+    service: &LinkService<MockIcEnvironment>,
+    principal_id: &str,
+) -> Principal {
     let principal = Principal::from_text(principal_id).unwrap();
 
-    service.user_wallet_repository.create(principal_id.to_string(), UserWallet {
-        user_id: principal_id.to_string(),
-    });
+    service.user_wallet_repository.create(
+        principal_id.to_string(),
+        UserWallet {
+            user_id: principal_id.to_string(),
+        },
+    );
     principal
 }
 
@@ -79,6 +94,8 @@ pub fn create_user_wallet_feature(
     let user_wallet = UserWallet {
         user_id: user_id.to_string(),
     };
-    service.user_wallet_repository.create(wallet_key.to_string(), user_wallet.clone());
+    service
+        .user_wallet_repository
+        .create(wallet_key.to_string(), user_wallet.clone());
     user_wallet
 }

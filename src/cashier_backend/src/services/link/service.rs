@@ -311,20 +311,30 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::{runtime::MockIcEnvironment, random_id_string};
     use crate::services::link::test_fixtures::*;
+    use crate::utils::test_utils::{random_id_string, runtime::MockIcEnvironment};
 
     #[test]
     fn it_should_create_link_service_instance() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        assert!(service.link_repository.get(&"default_link".to_string()).is_none());
-        let link_actions = service.link_action_repository.get_by_prefix("nonexistent", "type", "user");
+        assert!(
+            service
+                .link_repository
+                .get(&"default_link".to_string())
+                .is_none()
+        );
+        let link_actions =
+            service
+                .link_action_repository
+                .get_by_prefix("nonexistent", "type", "user");
         assert!(link_actions.is_empty());
         let actions = service.action_repository.get("nonexistent_action");
         assert!(actions.is_none());
         let user_wallet = service.user_wallet_repository.get("nonexistent_user");
         assert!(user_wallet.is_none());
-        let user_links = service.user_link_repository.get_links_by_user_id("nonexistent_user", &PaginateInput::default());
+        let user_links = service
+            .user_link_repository
+            .get_links_by_user_id("nonexistent_user", &PaginateInput::default());
         assert!(user_links.data.is_empty());
     }
 
@@ -369,7 +379,15 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let created_link = create_link_feature(&service, PRINCIPAL_ID1);
         let caller = create_principal_feature(&service, PRINCIPAL_ID2);
-        let (fetched_link, _action) = service.get_link(&created_link.id, Some(GetLinkOptions { action_type: "CreateLink".to_string() }), &caller).unwrap();
+        let (fetched_link, _action) = service
+            .get_link(
+                &created_link.id,
+                Some(GetLinkOptions {
+                    action_type: "CreateLink".to_string(),
+                }),
+                &caller,
+            )
+            .unwrap();
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
         assert_eq!(fetched_link.description, created_link.description);
@@ -381,8 +399,21 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator = create_principal_feature(&service, PRINCIPAL_ID1);
         let created_link = create_link_feature(&service, &creator.to_text());
-        let _link_action = create_link_action_feature(&service, &created_link.id, "CreateLink", &creator.to_text());
-        let (fetched_link, action) = service.get_link(&created_link.id, Some(GetLinkOptions { action_type: "CreateLink".to_string() }), &creator).unwrap();
+        let _link_action = create_link_action_feature(
+            &service,
+            &created_link.id,
+            "CreateLink",
+            &creator.to_text(),
+        );
+        let (fetched_link, action) = service
+            .get_link(
+                &created_link.id,
+                Some(GetLinkOptions {
+                    action_type: "CreateLink".to_string(),
+                }),
+                &creator,
+            )
+            .unwrap();
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
         assert_eq!(fetched_link.description, created_link.description);
@@ -398,7 +429,15 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let created_link = create_link_feature(&service, PRINCIPAL_ID1);
         let caller = create_principal_feature(&service, PRINCIPAL_ID2);
-        let (fetched_link, _action) = service.get_link(&created_link.id, Some(GetLinkOptions { action_type: "Withdraw".to_string() }), &caller).unwrap();
+        let (fetched_link, _action) = service
+            .get_link(
+                &created_link.id,
+                Some(GetLinkOptions {
+                    action_type: "Withdraw".to_string(),
+                }),
+                &caller,
+            )
+            .unwrap();
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
         assert_eq!(fetched_link.description, created_link.description);
@@ -410,7 +449,15 @@ mod tests {
     fn it_should_panic_on_get_link_with_action_type_use_by_anonymous_caller() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let created_link = create_link_feature(&service, PRINCIPAL_ID1);
-        let (fetched_link, _action) = service.get_link(&created_link.id, Some(GetLinkOptions { action_type: "CreateLink".to_string() }), &Principal::anonymous()).unwrap();
+        let (fetched_link, _action) = service
+            .get_link(
+                &created_link.id,
+                Some(GetLinkOptions {
+                    action_type: "CreateLink".to_string(),
+                }),
+                &Principal::anonymous(),
+            )
+            .unwrap();
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
         assert_eq!(fetched_link.description, created_link.description);
@@ -421,7 +468,13 @@ mod tests {
     fn it_should_fail_on_get_link_with_action_type_use_and_nonexistent_id() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator = create_principal_feature(&service, PRINCIPAL_ID1);
-        let result = service.get_link("nonexistent_link", Some(GetLinkOptions { action_type: "Use".to_string() }), &creator);
+        let result = service.get_link(
+            "nonexistent_link",
+            Some(GetLinkOptions {
+                action_type: "Use".to_string(),
+            }),
+            &creator,
+        );
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("link not found"));
     }
@@ -431,7 +484,15 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator = create_principal_feature(&service, PRINCIPAL_ID1);
         let created_link = create_link_feature(&service, &creator.to_text());
-        let (fetched_link, action) = service.get_link(&created_link.id, Some(GetLinkOptions { action_type: "Use".to_string() }), &creator).unwrap();
+        let (fetched_link, action) = service
+            .get_link(
+                &created_link.id,
+                Some(GetLinkOptions {
+                    action_type: "Use".to_string(),
+                }),
+                &creator,
+            )
+            .unwrap();
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
         assert_eq!(fetched_link.description, created_link.description);
@@ -451,7 +512,8 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator = create_principal_feature(&service, PRINCIPAL_ID1);
         let created_link = create_link_feature(&service, &creator.to_text());
-        let link_action = create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+        let link_action =
+            create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
         let action = service.get_action_of_link(&created_link.id, "Use", &creator.to_text());
         assert!(action.is_some());
         let action = action.unwrap();
@@ -472,7 +534,8 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator = create_principal_feature(&service, PRINCIPAL_ID1);
         let created_link = create_link_feature(&service, &creator.to_text());
-        let link_action = create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+        let link_action =
+            create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
         let result = service.get_link_action_user(&created_link.id, "Use", &creator.to_text());
         assert!(result.is_ok());
         let action = result.unwrap();
@@ -493,7 +556,8 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator = create_principal_feature(&service, PRINCIPAL_ID1);
         let created_link = create_link_feature(&service, &creator.to_text());
-        let link_action = create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+        let link_action =
+            create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
         let action = service.get_link_action(&created_link.id, "Use", &creator.to_text());
         assert!(action.is_some());
         let action = action.unwrap();
@@ -506,8 +570,9 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator = create_principal_feature(&service, PRINCIPAL_ID1);
         let created_link = create_link_feature(&service, &creator.to_text());
-        let link_action = create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
-        
+        let link_action =
+            create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+
         let updated_action = Action {
             id: link_action.action_id.clone(),
             r#type: ActionType::Use,
@@ -536,7 +601,12 @@ mod tests {
         // Attempt to update link use counter with a non-successful action state
         let result = service.update_link_use_counter(&created_link.id, &link_action.action_id);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Link use action counter exceeded max count"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Link use action counter exceeded max count")
+        );
     }
 
     #[test]
@@ -544,8 +614,9 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator = create_principal_feature(&service, PRINCIPAL_ID1);
         let created_link = create_link_feature(&service, &creator.to_text());
-        let link_action = create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
-        
+        let link_action =
+            create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+
         let updated_action = Action {
             id: link_action.action_id.clone(),
             r#type: ActionType::Use,
@@ -566,8 +637,9 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator = create_principal_feature(&service, PRINCIPAL_ID1);
         let created_link = create_link_feature(&service, &creator.to_text());
-        let link_action = create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
-        
+        let link_action =
+            create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+
         let updated_action = Action {
             id: link_action.action_id.clone(),
             r#type: ActionType::Use,
@@ -592,10 +664,10 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal = create_principal_feature(&service, PRINCIPAL_ID1);
         let user_id = principal.to_text();
-        
+
         // Create a link for the principal
         let created_link = create_link_feature(&service, &user_id);
-        
+
         // Get links by principal
         let pagination = PaginateInput::default();
         let result = service.get_links_by_principal(&user_id, &pagination);
@@ -610,10 +682,10 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal = create_principal_feature(&service, PRINCIPAL_ID1);
         let user_id = principal.to_text();
-        
+
         // Create a link for the user
         let created_link = create_link_feature(&service, &user_id);
-        
+
         // Get links by user ID
         let pagination = PaginateInput::default();
         let result = service.get_links_by_user_id(&user_id, &pagination);
@@ -775,5 +847,4 @@ mod tests {
         let updated_link = service.get_link_by_id(&created_link.id).unwrap();
         assert_eq!(updated_link.link_use_action_counter, 1);
     }
-
 }

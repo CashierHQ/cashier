@@ -245,8 +245,8 @@ impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::{random_principal_id, runtime::MockIcEnvironment};
     use crate::services::link::test_fixtures::*;
+    use crate::utils::test_utils::{random_principal_id, runtime::MockIcEnvironment};
     use cashier_backend_types::repository::action::v1::{Action, ActionState, ActionType};
 
     #[test]
@@ -304,12 +304,7 @@ mod tests {
         let link = create_link_feature(&service, &creator_id);
         let action_type = "Use";
 
-        let link_action = create_link_action_feature(
-            &service,
-            &link.id,
-            action_type,
-            &creator_id,
-        );
+        let link_action = create_link_action_feature(&service, &link.id, action_type, &creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -338,18 +333,14 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_handle_user_link_state_machine_if_current_state_choose_wallet_and_goto_continue_and_action_state_notsuccess() {
+    fn it_should_error_handle_user_link_state_machine_if_current_state_choose_wallet_and_goto_continue_and_action_state_notsuccess()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_feature(&service, &creator_id);
         let action_type = "Use";
 
-        let link_action = create_link_action_feature(
-            &service,
-            &link.id,
-            action_type,
-            &creator_id,
-        );
+        let link_action = create_link_action_feature(&service, &link.id, action_type, &creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -384,12 +375,7 @@ mod tests {
         let link = create_link_feature(&service, &creator_id);
         let action_type = "Use";
 
-        let link_action = create_link_action_feature(
-            &service,
-            &link.id,
-            action_type,
-            &creator_id,
-        );
+        let link_action = create_link_action_feature(&service, &link.id, action_type, &creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -408,9 +394,7 @@ mod tests {
             creator: creator_id.clone(),
             link_id: link.id.clone(),
         };
-        service
-            .action_repository
-            .update(updated_action.clone());
+        service.action_repository.update(updated_action.clone());
 
         let result = service.handle_user_link_state_machine(
             &link.id,
@@ -421,7 +405,10 @@ mod tests {
 
         assert!(result.is_ok());
         let link_action = result.unwrap();
-        assert_eq!(link_action.link_user_state, Some(LinkUserState::CompletedLink));
+        assert_eq!(
+            link_action.link_user_state,
+            Some(LinkUserState::CompletedLink)
+        );
     }
 
     #[test]
@@ -431,12 +418,7 @@ mod tests {
         let link = create_link_feature(&service, &creator_id);
         let action_type = "Use";
 
-        let link_action = create_link_action_feature(
-            &service,
-            &link.id,
-            action_type,
-            &creator_id,
-        );
+        let link_action = create_link_action_feature(&service, &link.id, action_type, &creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -635,7 +617,10 @@ mod tests {
         let output = result.unwrap();
         assert!(output.is_some());
         let output = output.unwrap();
-        assert_eq!(output.link_user_state, LinkUserState::ChooseWallet.to_string());
+        assert_eq!(
+            output.link_user_state,
+            LinkUserState::ChooseWallet.to_string()
+        );
         assert_eq!(output.action.creator, creator_id);
     }
 
@@ -770,9 +755,7 @@ mod tests {
             creator: creator_id.clone(),
             link_id: link.id.clone(),
         };
-        service
-            .action_repository
-            .update(updated_action.clone());
+        service.action_repository.update(updated_action.clone());
 
         let result = service.link_update_user_state(
             &creator,
@@ -788,7 +771,10 @@ mod tests {
         let output = result.unwrap();
         assert!(output.is_some());
         let output = output.unwrap();
-        assert_eq!(output.link_user_state, LinkUserState::CompletedLink.to_string());
+        assert_eq!(
+            output.link_user_state,
+            LinkUserState::CompletedLink.to_string()
+        );
         assert_eq!(output.action.creator, creator_id);
     }
 }
