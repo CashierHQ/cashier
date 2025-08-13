@@ -39,7 +39,7 @@ mod tests {
     fn it_should_create_an_user_action() {
         let repo = UserActionRepository::new();
         let user_id = random_principal_id();
-        let action_id = random_id_string(10);
+        let action_id = random_id_string();
         let user_action = UserAction {
             user_id: user_id.clone(),
             action_id: action_id.clone(),
@@ -63,7 +63,7 @@ mod tests {
     fn it_should_create_a_user_action_repository_by_default() {
         let repo = UserActionRepository::default();
         let user_id = random_principal_id();
-        let action_id = random_id_string(10);
+        let action_id = random_id_string();
         let user_action = UserAction {
             user_id: user_id.clone(),
             action_id: action_id.clone(),

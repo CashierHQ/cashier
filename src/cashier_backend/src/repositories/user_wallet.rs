@@ -38,7 +38,7 @@ mod tests {
     #[test]
     fn it_should_create_an_user_wallet() {
         let repo = UserWalletRepository::new();
-        let key_id = random_id_string(10);
+        let key_id = random_id_string();
         let user_id = random_principal_id();
 
         let wallet_key = UserWalletKey::from(key_id);
@@ -55,7 +55,7 @@ mod tests {
     #[test]
     fn it_should_get_a_user_wallet() {
         let repo = UserWalletRepository::new();
-        let key_id = random_id_string(10);
+        let key_id = random_id_string();
         let user_id = random_principal_id();
 
         let wallet_key = UserWalletKey::from(key_id);
@@ -72,7 +72,7 @@ mod tests {
     #[test]
     fn it_should_create_a_user_wallet_repository_by_default() {
         let repo = UserWalletRepository::default();
-        let key_id = random_id_string(10);
+        let key_id = random_id_string();
         let user_id = random_principal_id();
         let wallet_key = UserWalletKey::from(key_id);
         let user_wallet = UserWallet {
