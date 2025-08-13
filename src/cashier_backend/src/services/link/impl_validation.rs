@@ -279,7 +279,10 @@ impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{services::link::test_fixtures::create_link_feature, utils::test_utils::{random_id_string, random_principal_id, runtime::MockIcEnvironment}};
+    use crate::{
+        services::link::test_fixtures::create_link_feature,
+        utils::test_utils::{random_id_string, random_principal_id, runtime::MockIcEnvironment},
+    };
     use cashier_backend_types::repository::{common::Chain, user_wallet::v1::UserWallet};
 
     #[test]
@@ -291,7 +294,7 @@ mod tests {
 
         let result = service.link_validate_user_create_action(&link_id, &action_type, &user_id);
         assert!(result.is_err());
-        
+
         if let CanisterError::NotFound(msg) = result.err().unwrap() {
             assert_eq!(msg, "link not found".to_string());
         } else {
@@ -309,7 +312,7 @@ mod tests {
 
         let result = service.link_validate_user_create_action(&link.id, &action_type, &user_id);
         assert!(result.is_err());
-        
+
         if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
             assert_eq!(msg, "User is not the creator of the link".to_string());
         } else {
@@ -329,7 +332,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_link_validate_user_create_action_if_action_withdraw_and_user_is_not_creator() {
+    fn it_should_error_link_validate_user_create_action_if_action_withdraw_and_user_is_not_creator()
+    {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_feature(&service, &creator_id);
@@ -338,7 +342,7 @@ mod tests {
 
         let result = service.link_validate_user_create_action(&link.id, &action_type, &user_id);
         assert!(result.is_err());
-        
+
         if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
             assert_eq!(msg, "User is not the creator of the link".to_string());
         } else {
@@ -369,7 +373,7 @@ mod tests {
 
         let result = service.link_validate_user_create_action(&link.id, &action_type, &user_id);
         assert!(result.is_err());
-        
+
         if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
             assert_eq!(msg, "Link is not active".to_string());
         } else {
@@ -391,7 +395,7 @@ mod tests {
 
         let result = service.link_validate_user_create_action(&link.id, &action_type, &user_id);
         assert!(result.is_err());
-        
+
         if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
             assert_eq!(msg, "Link maximum usage count reached: 10".to_string());
         } else {
@@ -423,7 +427,7 @@ mod tests {
 
         let result = service.link_validate_user_create_action(&link.id, &action_type, &creator_id);
         assert!(result.is_err());
-        
+
         if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
             assert_eq!(msg, "Unsupported action type".to_string());
         } else {
@@ -445,7 +449,7 @@ mod tests {
 
         let result = service.link_validate_user_update_action(&action, &user_id);
         assert!(result.is_err());
-        
+
         if let CanisterError::NotFound(msg) = result.err().unwrap() {
             assert_eq!(msg, "link not found".to_string());
         } else {
@@ -454,7 +458,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_link_validate_user_update_action_if_action_type_create_and_user_is_not_creator() {
+    fn it_should_error_link_validate_user_update_action_if_action_type_create_and_user_is_not_creator()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_feature(&service, &creator_id);
@@ -469,7 +474,7 @@ mod tests {
 
         let result = service.link_validate_user_update_action(&action, &user_id);
         assert!(result.is_err());
-        
+
         if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
             assert_eq!(msg, "User is not the creator of the action".to_string());
         } else {
@@ -495,7 +500,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_link_validate_user_update_action_if_action_type_withdraw_and_link_not_found() {
+    fn it_should_error_link_validate_user_update_action_if_action_type_withdraw_and_link_not_found()
+    {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let action = Action {
             id: random_id_string(),
@@ -508,7 +514,7 @@ mod tests {
 
         let result = service.link_validate_user_update_action(&action, &user_id);
         assert!(result.is_err());
-        
+
         if let CanisterError::NotFound(msg) = result.err().unwrap() {
             assert_eq!(msg, "link not found".to_string());
         } else {
@@ -517,7 +523,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_link_validate_user_update_action_if_action_type_withdraw_and_user_is_not_creator() {
+    fn it_should_error_link_validate_user_update_action_if_action_type_withdraw_and_user_is_not_creator()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_feature(&service, &creator_id);
@@ -532,7 +539,7 @@ mod tests {
 
         let result = service.link_validate_user_update_action(&action, &user_id);
         assert!(result.is_err());
-        
+
         if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
             assert_eq!(msg, "User is not the creator of the action".to_string());
         } else {
@@ -558,7 +565,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_link_validate_user_update_action_if_action_type_use_and_user_is_not_creator() {
+    fn it_should_error_link_validate_user_update_action_if_action_type_use_and_user_is_not_creator()
+    {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_feature(&service, &creator_id);
@@ -573,7 +581,7 @@ mod tests {
 
         let result = service.link_validate_user_update_action(&action, &user_id);
         assert!(result.is_err());
-        
+
         if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
             assert_eq!(msg, "User is not the creator of the action".to_string());
         } else {
@@ -582,7 +590,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_link_validate_user_update_action_if_action_type_use_and_action_state_success() {
+    fn it_should_error_link_validate_user_update_action_if_action_type_use_and_action_state_success()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_feature(&service, &creator_id);
@@ -596,7 +605,7 @@ mod tests {
 
         let result = service.link_validate_user_update_action(&action, &creator_id);
         assert!(result.is_err());
-        
+
         if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
             assert_eq!(msg, "Action is already success".to_string());
         } else {
@@ -635,7 +644,7 @@ mod tests {
 
         let result = service.link_validate_user_update_action(&action, &user_id);
         assert!(result.is_err());
-        
+
         if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
             assert_eq!(msg, "Unsupported action type".to_string());
         } else {
@@ -657,9 +666,12 @@ mod tests {
     fn it_should_false_is_link_creator_if_link_not_found() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let user_id = random_principal_id();
-        let _user_wallet = service.user_wallet_repository.create(user_id.clone(), UserWallet {
-            user_id: user_id.clone(),
-        });
+        let _user_wallet = service.user_wallet_repository.create(
+            user_id.clone(),
+            UserWallet {
+                user_id: user_id.clone(),
+            },
+        );
 
         let link_id = random_id_string();
         let result = service.is_link_creator(&user_id, &link_id);
@@ -672,16 +684,20 @@ mod tests {
         let creator_id = random_principal_id();
         let link = create_link_feature(&service, &creator_id);
         let user_id = creator_id.clone();
-        let _user_wallet = service.user_wallet_repository.create(user_id.clone(), UserWallet {
-            user_id: user_id.clone(),
-        });
+        let _user_wallet = service.user_wallet_repository.create(
+            user_id.clone(),
+            UserWallet {
+                user_id: user_id.clone(),
+            },
+        );
 
         let result = service.is_link_creator(&user_id, &link.id);
         assert!(result);
     }
 
     #[test]
-    fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_tip_and_asset_info_empty() {
+    fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_tip_and_asset_info_empty()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link = create_link_feature(&service, &random_principal_id());
         let asset_infos: Vec<AssetInfo> = vec![];
@@ -691,27 +707,32 @@ mod tests {
     }
 
     #[test]
-    fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_tip_and_asset_info_length_greater_than_one() {
+    fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_tip_and_asset_info_length_greater_than_one()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link = create_link_feature(&service, &random_principal_id());
-        let asset_infos = vec![AssetInfo{
-            address: "some_address".to_string(),
-            chain: Chain::IC,
-            amount_per_link_use_action: 100,
-            label: "some_label".to_string(),
-        }, AssetInfo {
-            address: "another_address".to_string(),
-            chain: Chain::IC,
-            amount_per_link_use_action: 200,
-            label: "another_label".to_string(),
-        }];
+        let asset_infos = vec![
+            AssetInfo {
+                address: "some_address".to_string(),
+                chain: Chain::IC,
+                amount_per_link_use_action: 100,
+                label: "some_label".to_string(),
+            },
+            AssetInfo {
+                address: "another_address".to_string(),
+                chain: Chain::IC,
+                amount_per_link_use_action: 200,
+                label: "another_label".to_string(),
+            },
+        ];
 
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
         assert!(!result);
     }
 
     #[test]
-    fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_tip_and_asset_info_amount_per_link_use_action_zero() {
+    fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_tip_and_asset_info_amount_per_link_use_action_zero()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link = create_link_feature(&service, &random_principal_id());
         let asset_infos = vec![AssetInfo {
@@ -726,7 +747,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_true_validate_add_asset_with_link_type_if_link_type_send_tip_and_asset_info_amount_per_link_use_action_greater_than_zero() {
+    fn it_should_true_validate_add_asset_with_link_type_if_link_type_send_tip_and_asset_info_amount_per_link_use_action_greater_than_zero()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link = create_link_feature(&service, &random_principal_id());
         let asset_infos = vec![AssetInfo {
@@ -741,7 +763,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_airdrop_and_asset_info_empty() {
+    fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_airdrop_and_asset_info_empty()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let mut link = create_link_feature(&service, &random_principal_id());
         link.link_type = Some(LinkType::SendAirdrop);
@@ -754,30 +777,35 @@ mod tests {
     }
 
     #[test]
-    fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_airdrop_and_asset_info_length_greater_than_one() {
+    fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_airdrop_and_asset_info_length_greater_than_one()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let mut link = create_link_feature(&service, &random_principal_id());
         link.link_type = Some(LinkType::SendAirdrop);
         service.link_repository.update(link.clone());
 
-        let asset_infos = vec![AssetInfo {
-            address: "some_address".to_string(),
-            chain: Chain::IC,
-            amount_per_link_use_action: 100,
-            label: "some_label".to_string(),
-        }, AssetInfo {
-            address: "another_address".to_string(),
-            chain: Chain::IC,
-            amount_per_link_use_action: 200,
-            label: "another_label".to_string(),
-        }];
+        let asset_infos = vec![
+            AssetInfo {
+                address: "some_address".to_string(),
+                chain: Chain::IC,
+                amount_per_link_use_action: 100,
+                label: "some_label".to_string(),
+            },
+            AssetInfo {
+                address: "another_address".to_string(),
+                chain: Chain::IC,
+                amount_per_link_use_action: 200,
+                label: "another_label".to_string(),
+            },
+        ];
 
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
         assert!(!result);
     }
 
     #[test]
-    fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_airdrop_and_asset_info_amount_per_link_use_action_zero() {
+    fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_airdrop_and_asset_info_amount_per_link_use_action_zero()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let mut link = create_link_feature(&service, &random_principal_id());
         link.link_type = Some(LinkType::SendAirdrop);
@@ -795,7 +823,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_true_validate_add_asset_with_link_type_if_link_type_send_airdrop_and_asset_info_amount_per_link_use_action_greater_than_zero() {
+    fn it_should_true_validate_add_asset_with_link_type_if_link_type_send_airdrop_and_asset_info_amount_per_link_use_action_greater_than_zero()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let mut link = create_link_feature(&service, &random_principal_id());
         link.link_type = Some(LinkType::SendAirdrop);
@@ -813,7 +842,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_token_basket_and_asset_info_empty() {
+    fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_token_basket_and_asset_info_empty()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let mut link = create_link_feature(&service, &random_principal_id());
         link.link_type = Some(LinkType::SendTokenBasket);
@@ -823,14 +853,15 @@ mod tests {
 
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
         assert!(!result);
-    }    
+    }
 
     #[test]
-    fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_token_basket_and_amount_per_link_use_action_zero() {
+    fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_token_basket_and_amount_per_link_use_action_zero()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let mut link = create_link_feature(&service, &random_principal_id());
         link.link_type = Some(LinkType::SendTokenBasket);
-        service.link_repository.update(link.clone());       
+        service.link_repository.update(link.clone());
 
         let asset_infos = vec![AssetInfo {
             address: "some_address".to_string(),
@@ -840,10 +871,11 @@ mod tests {
         }];
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
         assert!(!result);
-    }   
+    }
 
     #[test]
-    fn it_should_true_validate_add_asset_with_link_type_if_link_type_send_token_basket_and_amount_per_link_use_action_greater_than_zero() {
+    fn it_should_true_validate_add_asset_with_link_type_if_link_type_send_token_basket_and_amount_per_link_use_action_greater_than_zero()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let mut link = create_link_feature(&service, &random_principal_id());
         link.link_type = Some(LinkType::SendTokenBasket);
@@ -858,10 +890,11 @@ mod tests {
 
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
         assert!(result);
-    } 
+    }
 
     #[test]
-    fn it_should_false_validate_add_asset_with_link_type_if_link_type_receive_payment_and_asset_info_empty() {
+    fn it_should_false_validate_add_asset_with_link_type_if_link_type_receive_payment_and_asset_info_empty()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let mut link = create_link_feature(&service, &random_principal_id());
         link.link_type = Some(LinkType::ReceivePayment);
@@ -874,30 +907,35 @@ mod tests {
     }
 
     #[test]
-    fn it_should_false_validate_add_asset_with_link_type_if_link_type_receive_payment_and_asset_info_length_greater_than_one() {
+    fn it_should_false_validate_add_asset_with_link_type_if_link_type_receive_payment_and_asset_info_length_greater_than_one()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let mut link = create_link_feature(&service, &random_principal_id());
         link.link_type = Some(LinkType::ReceivePayment);
         service.link_repository.update(link.clone());
 
-        let asset_infos = vec![AssetInfo {
-            address: "some_address".to_string(),
-            chain: Chain::IC,
-            amount_per_link_use_action: 100,
-            label: "some_label".to_string(),
-        }, AssetInfo {
-            address: "another_address".to_string(),
-            chain: Chain::IC,
-            amount_per_link_use_action: 200,
-            label: "another_label".to_string(),
-        }];
+        let asset_infos = vec![
+            AssetInfo {
+                address: "some_address".to_string(),
+                chain: Chain::IC,
+                amount_per_link_use_action: 100,
+                label: "some_label".to_string(),
+            },
+            AssetInfo {
+                address: "another_address".to_string(),
+                chain: Chain::IC,
+                amount_per_link_use_action: 200,
+                label: "another_label".to_string(),
+            },
+        ];
 
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
         assert!(!result);
     }
 
     #[test]
-    fn it_should_false_validate_add_asset_with_link_type_if_link_type_receive_payment_and_asset_info_amount_per_link_use_action_one() {
+    fn it_should_false_validate_add_asset_with_link_type_if_link_type_receive_payment_and_asset_info_amount_per_link_use_action_one()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let mut link = create_link_feature(&service, &random_principal_id());
         link.link_type = Some(LinkType::ReceivePayment);

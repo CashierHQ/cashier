@@ -585,14 +585,18 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::{runtime::MockIcEnvironment, random_id_string};
     use crate::services::link::test_fixtures::*;
-    use cashier_backend_types::repository::{link::v1::{Link, LinkState, LinkType}, asset_info::AssetInfo};
+    use crate::utils::test_utils::{random_id_string, runtime::MockIcEnvironment};
+    use cashier_backend_types::repository::{
+        asset_info::AssetInfo,
+        link::v1::{Link, LinkState, LinkType},
+    };
 
     #[test]
     fn it_should_create_basic_intent() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let intent = service.create_basic_intent(IntentTask::TransferWalletToLink, "Test Label".to_string());
+        let intent =
+            service.create_basic_intent(IntentTask::TransferWalletToLink, "Test Label".to_string());
         assert_eq!(intent.task, IntentTask::TransferWalletToLink);
         assert_eq!(intent.label, "Test Label");
     }
@@ -612,23 +616,26 @@ mod tests {
         let link_id = random_id_string();
         let action_type = ActionType::Use;
 
-        let result = service.look_up_intent(&Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: None,
-            description: None,
-            link_type: None,
-            asset_info: None,
-            template: None,
-            creator: "creator".to_string(),
-            create_at: 0,
-            metadata: None,
-            link_use_action_counter: 0,
-            link_use_action_max_count: 10,
-        }, &action_type);
+        let result = service.look_up_intent(
+            &Link {
+                id: link_id,
+                state: LinkState::ChooseLinkType,
+                title: None,
+                description: None,
+                link_type: None,
+                asset_info: None,
+                template: None,
+                creator: "creator".to_string(),
+                create_at: 0,
+                metadata: None,
+                link_use_action_counter: 0,
+                link_use_action_max_count: 10,
+            },
+            &action_type,
+        );
 
         assert!(result.is_err());
-        
+
         if let Err(CanisterError::HandleLogicError(msg)) = result {
             assert!(msg.contains("link type not found"));
         } else {
@@ -751,7 +758,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_on_look_up_intent_for_create_link_send_token_basket_with_empty_link_assets() {
+    fn it_should_error_on_look_up_intent_for_create_link_send_token_basket_with_empty_link_assets()
+    {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = PRINCIPAL_ID1;
         let link = create_link_feature(&service, creator_id);
@@ -774,7 +782,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_look_up_intent_for_create_link_send_token_basket_with_invalid_asset_info_label() {
+    fn it_should_error_look_up_intent_for_create_link_send_token_basket_with_invalid_asset_info_label()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = PRINCIPAL_ID1;
         let link = create_link_feature(&service, creator_id);
@@ -814,7 +823,10 @@ mod tests {
                 address: "some_address".to_string(),
                 chain: Chain::IC,
                 amount_per_link_use_action: 100,
-                label: format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"),
+                label: format!(
+                    "{}_{}",
+                    INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"
+                ),
             }]),
             ..link.clone()
         };
@@ -830,7 +842,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_on_look_up_intent_for_use_link_send_token_basket_with_empty_link_assets_info() {
+    fn it_should_error_on_look_up_intent_for_use_link_send_token_basket_with_empty_link_assets_info()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = PRINCIPAL_ID1;
         let link = create_link_feature(&service, creator_id);
@@ -864,7 +877,10 @@ mod tests {
                 address: "some_address".to_string(),
                 chain: Chain::IC,
                 amount_per_link_use_action: 100,
-                label: format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"),
+                label: format!(
+                    "{}_{}",
+                    INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"
+                ),
             }]),
             ..link.clone()
         };
@@ -879,7 +895,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_on_look_up_intent_for_withdraw_link_send_token_basket_with_empty_link_assets_info() {
+    fn it_should_error_on_look_up_intent_for_withdraw_link_send_token_basket_with_empty_link_assets_info()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = PRINCIPAL_ID1;
         let link = create_link_feature(&service, creator_id);
@@ -913,7 +930,10 @@ mod tests {
                 address: "some_address".to_string(),
                 chain: Chain::IC,
                 amount_per_link_use_action: 100,
-                label: format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"),
+                label: format!(
+                    "{}_{}",
+                    INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"
+                ),
             }]),
             ..link.clone()
         };
@@ -1039,7 +1059,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_get_assets_for_action_with_intent_task_transfer_wallet_to_link_and_unmatched_link_assets_info_label() {
+    fn it_should_error_get_assets_for_action_with_intent_task_transfer_wallet_to_link_and_unmatched_link_assets_info_label()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link = create_link_feature(&service, PRINCIPAL_ID1);
 
@@ -1070,7 +1091,9 @@ mod tests {
         };
         service.link_repository.update(updated_link.clone());
 
-        let assets = service.get_assets_for_action(&updated_link.id, &ActionType::CreateLink).unwrap();
+        let assets = service
+            .get_assets_for_action(&updated_link.id, &ActionType::CreateLink)
+            .unwrap();
         assert_eq!(assets.len(), 2);
         let asset_addresses = assets.iter().map(|a| a.address.clone()).collect::<Vec<_>>();
         assert!(asset_addresses.contains(&asset_address));
@@ -1093,7 +1116,9 @@ mod tests {
         };
         service.link_repository.update(updated_link.clone());
 
-        let assets = service.get_assets_for_action(&updated_link.id, &ActionType::CreateLink).unwrap();
+        let assets = service
+            .get_assets_for_action(&updated_link.id, &ActionType::CreateLink)
+            .unwrap();
         assert_eq!(assets.len(), 2);
         let asset_addresses = assets.iter().map(|a| a.address.clone()).collect::<Vec<_>>();
         assert!(asset_addresses.contains(&asset_address));
@@ -1101,7 +1126,8 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_get_assets_for_action_with_intent_task_transfer_link_to_wallet_and_link_assets_info_empty() {
+    fn it_should_error_get_assets_for_action_with_intent_task_transfer_link_to_wallet_and_link_assets_info_empty()
+     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link = create_link_feature(&service, PRINCIPAL_ID1);
 
@@ -1132,10 +1158,11 @@ mod tests {
         };
         service.link_repository.update(updated_link.clone());
 
-        let assets = service.get_assets_for_action(&updated_link.id, &ActionType::Use).unwrap();
+        let assets = service
+            .get_assets_for_action(&updated_link.id, &ActionType::Use)
+            .unwrap();
         assert_eq!(assets.len(), 1);
         assert_eq!(assets[0].address, asset_address);
         assert_eq!(assets[0].chain, Chain::IC);
     }
-
 }

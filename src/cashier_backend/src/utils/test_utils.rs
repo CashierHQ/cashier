@@ -5,13 +5,13 @@
 pub mod runtime {
     use super::super::runtime::IcEnvironment;
     use candid::Principal;
+    use ic_cdk_timers::{self, TimerId};
     use std::{cell::RefCell, future::Future, time::Duration};
-    use ic_cdk_timers::{self,TimerId};
 
     #[derive(Clone)]
     pub struct MockIcEnvironment {
         pub caller: Principal,
-        pub canister_id: Principal, 
+        pub canister_id: Principal,
         pub current_time: u64,
         pub spawned_futures: RefCell<Vec<String>>,
         pub timers: RefCell<Vec<(Duration, String)>>,
@@ -56,7 +56,9 @@ pub mod runtime {
         where
             F: Future<Output = ()> + 'static,
         {
-            self.spawned_futures.borrow_mut().push("spawned".to_string());
+            self.spawned_futures
+                .borrow_mut()
+                .push("spawned".to_string());
         }
 
         fn set_timer(&self, delay: Duration, _f: impl FnOnce() + 'static) -> TimerId {
@@ -66,7 +68,9 @@ pub mod runtime {
             let mut counter = self.timer_counter.borrow_mut();
             *counter += 1;
 
-            ic_cdk_timers::set_timer(Duration::from_secs(1), || ic_cdk::println!("This is a mock timer!"))
+            ic_cdk_timers::set_timer(Duration::from_secs(1), || {
+                ic_cdk::println!("This is a mock timer!")
+            })
         }
     }
 }
