@@ -29,3 +29,57 @@ impl UserActionRepository {
         });
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utils::test_utils::*;
+
+    #[test]
+    fn it_should_create_an_user_action() {
+        let repo = UserActionRepository::new();
+        let user_id = random_principal_id();
+        let action_id = random_id_string();
+        let user_action = UserAction {
+            user_id: user_id.clone(),
+            action_id: action_id.clone(),
+        };
+        repo.create(user_action);
+
+        let retrieved_action = USER_ACTION_STORE.with_borrow(|store| {
+            store.get(
+                &UserActionKey {
+                    user_id: user_id.clone(),
+                    action_id: action_id.clone(),
+                }
+                .to_str(),
+            )
+        });
+        assert!(retrieved_action.is_some());
+        assert_eq!(retrieved_action.unwrap().user_id, user_id);
+    }
+
+    #[test]
+    fn it_should_create_a_user_action_repository_by_default() {
+        let repo = UserActionRepository::default();
+        let user_id = random_principal_id();
+        let action_id = random_id_string();
+        let user_action = UserAction {
+            user_id: user_id.clone(),
+            action_id: action_id.clone(),
+        };
+        repo.create(user_action);
+
+        let retrieved_action = USER_ACTION_STORE.with_borrow(|store| {
+            store.get(
+                &UserActionKey {
+                    user_id: user_id.clone(),
+                    action_id: action_id.clone(),
+                }
+                .to_str(),
+            )
+        });
+        assert!(retrieved_action.is_some());
+        assert_eq!(retrieved_action.unwrap().user_id, user_id);
+    }
+}

@@ -31,3 +31,50 @@ impl UserRepository {
         USER_STORE.with_borrow(|store| store.get(id))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_should_create_an_user() {
+        let repo = UserRepository::new();
+        let user = User {
+            id: "user1".to_string(),
+            email: Some("foo@bar.com".to_string()),
+        };
+
+        repo.create(user.clone());
+        let retrieved_user = repo.get(&user.id);
+        assert!(retrieved_user.is_some());
+        assert_eq!(retrieved_user.unwrap().id, user.id);
+    }
+
+    #[test]
+    fn it_should_get_a_user() {
+        let repo = UserRepository::new();
+        let user = User {
+            id: "user1".to_string(),
+            email: Some("foo@bar.com".to_string()),
+        };
+
+        repo.create(user.clone());
+        let retrieved_user = repo.get(&user.id);
+        assert!(retrieved_user.is_some());
+        assert_eq!(retrieved_user.unwrap().id, user.id);
+    }
+
+    #[test]
+    fn it_should_create_a_user_repository_by_default() {
+        let repo = UserRepository::default();
+        let user = User {
+            id: "user1".to_string(),
+            email: Some("foo@bar.com".to_string()),
+        };
+
+        repo.create(user.clone());
+        let retrieved_user = repo.get(&user.id);
+        assert!(retrieved_user.is_some());
+        assert_eq!(retrieved_user.unwrap().id, user.id);
+    }
+}
