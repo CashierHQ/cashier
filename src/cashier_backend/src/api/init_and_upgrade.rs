@@ -14,12 +14,10 @@ use crate::{
 };
 #[init]
 fn init(init_data: CashierBackendInitData) {
-
     let log_config = init_data.log_settings.unwrap_or_default();
     if let Err(err) = get_state().log_service.init(Some(log_config)) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
     }
-
 
     info!("[init] Starting Cashier Backend");
 

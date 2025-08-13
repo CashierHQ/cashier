@@ -38,7 +38,6 @@ pub async fn with_pocket_ic_context<F, E>(f: F) -> Result<(), E>
 where
     F: AsyncFnOnce(&PocketIcTestContext) -> Result<(), E>,
 {
-
     let log = LogServiceSettings {
         enable_console: Some(true),
         in_memory_records: None,
@@ -47,15 +46,25 @@ where
     };
 
     let client = Arc::new(get_pocket_ic_client().await.build_async().await);
-    let token_storage_principal =
-        deploy_canister(&client, None, get_token_storage_canister_bytecode(), &(TokenStorageInitData {
+    let token_storage_principal = deploy_canister(
+        &client,
+        None,
+        get_token_storage_canister_bytecode(),
+        &(TokenStorageInitData {
             log_settings: Some(log.clone()),
-        })).await;
+        }),
+    )
+    .await;
 
-    let cashier_backend_principal =
-        deploy_canister(&client, None, get_cashier_backend_canister_bytecode(), &(CashierBackendInitData {
+    let cashier_backend_principal = deploy_canister(
+        &client,
+        None,
+        get_cashier_backend_canister_bytecode(),
+        &(CashierBackendInitData {
             log_settings: Some(log),
-        })).await;
+        }),
+    )
+    .await;
 
     // Deploy ICP and ICRC ledger canisters
     let icp_ledger_principal = token_icp::deploy_icp_ledger_canister(&client).await;
