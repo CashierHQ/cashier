@@ -9,12 +9,12 @@ use log::{debug, info, warn};
 use token_storage_types::TokenId;
 use token_storage_types::token::{AddTokenInput, AddTokensInput, TokenDto, TokenListResponse, UpdateTokenBalanceInput, UpdateTokenInput};
 
-fn ensure_not_anonymous() -> Result<String, String> {
+fn ensure_not_anonymous() -> Result<Principal, String> {
     let caller = msg_caller();
     if caller == Principal::anonymous() {
         return Err("Anonymous caller is not allowed".to_string());
     }
-    Ok(caller.to_text())
+    Ok(caller)
 }
 
 fn validate_token_id(token_id: &str) -> Result<(), String> {
@@ -83,7 +83,7 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
 
     let service = UserTokenService::new();
     info!("Adding token {} for user {}", input.token_id, user_id);
-    service.add_token(&user_id, &input.token_id)
+    service.add_token(user_id, &input.token_id)
 }
 
 #[update]
@@ -122,7 +122,7 @@ pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
 
     let user_token_service = UserTokenService::new();
     info!("Adding tokens {:?} for user {}", input.token_ids, user_id);
-    user_token_service.add_tokens(&user_id, &input.token_ids)
+    user_token_service.add_tokens(user_id, &input.token_ids)
 }
 
 #[update]
@@ -180,7 +180,7 @@ pub fn update_token_enable(input: UpdateTokenInput) -> Result<(), String> {
     validate_token_id(&input.token_id)?;
 
     let service = UserTokenService::new();
-    service.update_token_enable(&user_id, &input.token_id, &input.is_enabled)
+    service.update_token_enable(user_id, &input.token_id, &input.is_enabled)
 }
 
 #[query]
@@ -209,13 +209,13 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
         });
     }
 
-    let user_preferences = user_preference_service.get_preferences(&caller.to_string());
+    let user_preferences = user_preference_service.get_preferences(&caller);
 
     // Get user's cached balances for enriching token data
-    let user_balances = user_token_service.get_all_user_balances(&caller.to_string());
+    let user_balances = user_token_service.get_all_user_balances(&caller);
 
     // Check if user's token list exists
-    match user_token_service.get_token_list(&caller.to_string()) {
+    match user_token_service.get_token_list(&caller) {
         Ok(list) => {
             // Token list exists, check if version is outdated
             let need_update_version = list.version < registry_metadata.version;
@@ -305,7 +305,7 @@ pub fn sync_token_list() -> Result<(), String> {
     }
 
     let user_token_service = UserTokenService::new();
-    user_token_service.sync_token_version(&caller.to_string())
+    user_token_service.sync_token_version(caller)
 }
 
 #[update]
@@ -321,7 +321,7 @@ pub fn update_token_balance(input: Vec<UpdateTokenBalanceInput>) -> Result<(), S
         .map(|item| (item.token_id, item.balance))
         .collect();
 
-    service.update_bulk_balances(&user_id, token_balances);
+    service.update_bulk_balances(user_id, token_balances);
 
     Ok(())
 }
