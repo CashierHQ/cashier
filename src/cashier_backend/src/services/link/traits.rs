@@ -3,7 +3,6 @@
 //! This file only declares the traits – the existing methods in
 //! `link/v2.rs` will be migrated into `impl` blocks incrementally.
 
-use async_trait::async_trait;
 use candid::Principal;
 use cashier_backend_types::dto::action::ActionDto;
 use cashier_backend_types::dto::action::{
@@ -28,7 +27,6 @@ use std::collections::HashMap;
 use candid::Nat;
 
 // ---------- 1. Link lifecycle ----------
-#[async_trait(?Send)]
 pub trait LinkStateMachine {
     async fn create_link(
         &self,
@@ -88,7 +86,6 @@ pub trait LinkUserStateMachine {
 }
 
 // ---------- 2. Action flow ----------
-#[async_trait(?Send)]
 pub trait ActionFlow {
     async fn create_action(
         &self,
@@ -116,7 +113,6 @@ pub trait ActionFlow {
 }
 
 // ---------- 3. Intent assembler ----------
-#[async_trait(?Send)]
 pub trait IntentAssembler {
     async fn assemble_intents(
         &self,
@@ -133,7 +129,6 @@ pub trait IntentAssembler {
 }
 
 // ---------- 4. Validation helpers ----------
-#[async_trait(?Send)]
 pub trait LinkValidation {
     fn link_validate_user_create_action(
         &self,
