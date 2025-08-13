@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use candid::Principal;
 use icrc_ledger_types::icrc1::account::Account;
 
@@ -16,7 +15,6 @@ use cashier_backend_types::{
     },
 };
 
-#[async_trait(?Send)]
 impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
     // This method is a synchronous version that performs basic validation without async checks
     fn link_validate_user_create_action(
