@@ -47,7 +47,7 @@ mod tests {
     #[test]
     fn it_should_create_an_action() {
         let repo = ActionRepository::new();
-        let action_id = random_id_string(10);
+        let action_id = random_id_string();
         let action = Action {
             id: action_id.clone(),
             r#type: ActionType::CreateLink,
@@ -65,7 +65,7 @@ mod tests {
     #[test]
     fn it_should_update_an_action() {
         let repo = ActionRepository::new();
-        let action_id = random_id_string(10);
+        let action_id = random_id_string();
         let action = Action {
             id: action_id.clone(),
             r#type: ActionType::CreateLink,
@@ -102,7 +102,7 @@ mod tests {
     #[test]
     fn it_should_get_existent() {
         let repo = ActionRepository::new();
-        let action_id = random_id_string(10);
+        let action_id = random_id_string();
         let action = Action {
             id: action_id.clone(),
             r#type: ActionType::CreateLink,
@@ -121,7 +121,7 @@ mod tests {
     #[test]
     fn it_should_create_action_repository_by_default() {
         let repo = ActionRepository::default();
-        let action_id = random_id_string(10);
+        let action_id = random_id_string();
         let action = Action {
             id: action_id.clone(),
             r#type: ActionType::CreateLink,
