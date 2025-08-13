@@ -5,7 +5,7 @@
 use super::BALANCE_CACHE_STORE;
 use crate::types::{Candid, TokenBalance};
 use ic_cdk::api::time;
-use token_storage_types::common::TokenId;
+use token_storage_types::TokenId;
 
 pub struct BalanceCacheRepository {}
 

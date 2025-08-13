@@ -3,7 +3,7 @@
 
 use candid::CandidType;
 use cashier_macros::storable;
-use token_storage_types::{chain::Chain, common::TokenId, token::{ChainTokenDetails, TokenDto}};
+use token_storage_types::{chain::Chain, TokenId, token::{ChainTokenDetails, TokenDto}};
 
 // Central registry token definition
 #[storable]

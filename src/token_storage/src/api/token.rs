@@ -6,7 +6,7 @@ use ic_cdk::api::msg_caller;
 use ic_cdk::{query, update};
 
 use log::{debug, info, warn};
-use token_storage_types::common::TokenId;
+use token_storage_types::TokenId;
 use token_storage_types::token::{AddTokenInput, AddTokensInput, TokenDto, TokenListResponse, UpdateTokenBalanceInput, UpdateTokenInput};
 
 fn ensure_not_anonymous() -> Result<String, String> {
