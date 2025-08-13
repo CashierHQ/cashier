@@ -79,10 +79,10 @@ mod tests {
     #[test]
     fn it_should_batch_create_intent_actions() {
         let repo = IntentTransactionRepository::new();
-        let intent_id1 = random_id_string(10);
-        let transaction_id1 = random_id_string(10);
-        let intent_id2 = random_id_string(10);
-        let transaction_id2 = random_id_string(10);
+        let intent_id1 = random_id_string();
+        let transaction_id1 = random_id_string();
+        let intent_id2 = random_id_string();
+        let transaction_id2 = random_id_string();
         let intent_transactions = vec![
             IntentTransaction {
                 intent_id: intent_id1.clone(),
@@ -110,10 +110,10 @@ mod tests {
     #[test]
     fn it_should_get_intent_action_by_intent_id() {
         let repo = IntentTransactionRepository::new();
-        let intent_id1 = random_id_string(10);
-        let transaction_id1 = random_id_string(10);
-        let intent_id2 = random_id_string(10);
-        let transaction_id2 = random_id_string(10);
+        let intent_id1 = random_id_string();
+        let transaction_id1 = random_id_string();
+        let intent_id2 = random_id_string();
+        let transaction_id2 = random_id_string();
         let intent_transaction1 = IntentTransaction {
             intent_id: intent_id1.clone(),
             transaction_id: transaction_id1.clone(),
@@ -135,10 +135,10 @@ mod tests {
     #[test]
     fn it_should_get_intent_action_by_transaction_id() {
         let repo = IntentTransactionRepository::new();
-        let intent_id1 = random_id_string(10);
-        let transaction_id1 = random_id_string(10);
-        let intent_id2 = random_id_string(10);
-        let transaction_id2 = random_id_string(10);
+        let intent_id1 = random_id_string();
+        let transaction_id1 = random_id_string();
+        let intent_id2 = random_id_string();
+        let transaction_id2 = random_id_string();
         let intent_transaction1 = IntentTransaction {
             intent_id: intent_id1.clone(),
             transaction_id: transaction_id1.clone(),

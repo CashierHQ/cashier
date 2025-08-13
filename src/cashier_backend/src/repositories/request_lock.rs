@@ -45,8 +45,8 @@ mod tests {
     fn it_should_create_a_request_lock() {
         let repo = RequestLockRepository::new();
         let user_principal_id = random_principal_id();
-        let link_id = random_id_string(10);
-        let action_id = random_id_string(10);
+        let link_id = random_id_string();
+        let action_id = random_id_string();
         let request_lock = RequestLock {
             key: RequestLockKey::UserLinkAction {
                 user_principal: user_principal_id,
@@ -70,8 +70,8 @@ mod tests {
     fn it_should_delete_a_request_lock() {
         let repo = RequestLockRepository::new();
         let user_principal_id = random_principal_id();
-        let link_id = random_id_string(10);
-        let action_id = random_id_string(10);
+        let link_id = random_id_string();
+        let action_id = random_id_string();
         let request_lock = RequestLock {
             key: RequestLockKey::UserLinkAction {
                 user_principal: user_principal_id,
@@ -91,8 +91,8 @@ mod tests {
     fn it_should_check_if_a_request_lock_exists() {
         let repo = RequestLockRepository::new();
         let user_principal_id = random_principal_id();
-        let link_id = random_id_string(10);
-        let action_id = random_id_string(10);
+        let link_id = random_id_string();
+        let action_id = random_id_string();
         let request_lock = RequestLock {
             key: RequestLockKey::UserLinkAction {
                 user_principal: user_principal_id,

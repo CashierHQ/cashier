@@ -76,10 +76,10 @@ mod tests {
     #[test]
     fn it_should_batch_create_action_intents() {
         let repo = ActionIntentRepository::new();
-        let action_id1 = random_id_string(10);
-        let intent_id1 = random_id_string(10);
-        let action_id2 = random_id_string(10);
-        let intent_id2 = random_id_string(10);
+        let action_id1 = random_id_string();
+        let intent_id1 = random_id_string();
+        let action_id2 = random_id_string();
+        let intent_id2 = random_id_string();
         let action_intents = vec![
             ActionIntent {
                 action_id: action_id1.clone(),
@@ -105,10 +105,10 @@ mod tests {
     #[test]
     fn it_should_get_by_action_id() {
         let repo = ActionIntentRepository::new();
-        let action_id1 = random_id_string(10);
-        let action_id2 = random_id_string(10);
-        let intent_id1 = random_id_string(10);
-        let intent_id2 = random_id_string(10);
+        let action_id1 = random_id_string();
+        let action_id2 = random_id_string();
+        let intent_id1 = random_id_string();
+        let intent_id2 = random_id_string();
         let action_intent1 = ActionIntent {
             action_id: action_id1.clone(),
             intent_id: intent_id1.clone(),
@@ -128,10 +128,10 @@ mod tests {
     #[test]
     fn it_should_get_by_intent_id() {
         let repo = ActionIntentRepository::new();
-        let action_id1 = random_id_string(10);
-        let intent_id1 = random_id_string(10);
-        let action_id2 = random_id_string(10);
-        let intent_id2 = random_id_string(10);
+        let action_id1 = random_id_string();
+        let intent_id1 = random_id_string();
+        let action_id2 = random_id_string();
+        let intent_id2 = random_id_string();
         let action_intent1 = ActionIntent {
             action_id: action_id1.clone(),
             intent_id: intent_id1.clone(),

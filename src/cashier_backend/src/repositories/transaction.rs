@@ -63,8 +63,8 @@ mod tests {
     #[test]
     fn it_should_batch_create_transactions() {
         let repo = TransactionRepository::new();
-        let transaction_id1 = random_id_string(10);
-        let transaction_id2 = random_id_string(10);
+        let transaction_id1 = random_id_string();
+        let transaction_id2 = random_id_string();
         let transaction1 = Transaction {
             id: transaction_id1.clone(),
             created_at: 1622547800,
@@ -110,7 +110,7 @@ mod tests {
     #[test]
     fn it_should_update_a_transaction() {
         let repo = TransactionRepository::new();
-        let transaction_id1 = random_id_string(10);
+        let transaction_id1 = random_id_string();
         let transaction1 = Transaction {
             id: transaction_id1,
             created_at: 1622547800,
@@ -142,8 +142,8 @@ mod tests {
     #[test]
     fn it_should_batch_get_transactions() {
         let repo = TransactionRepository::new();
-        let transaction_id1 = random_id_string(10);
-        let transaction_id2 = random_id_string(10);
+        let transaction_id1 = random_id_string();
+        let transaction_id2 = random_id_string();
         let transaction1 = Transaction {
             id: transaction_id1.clone(),
             created_at: 1622547800,
@@ -189,7 +189,7 @@ mod tests {
     #[test]
     fn it_should_get_a_transaction() {
         let repo = TransactionRepository::new();
-        let transaction_id = random_id_string(10);
+        let transaction_id = random_id_string();
         let transaction = Transaction {
             id: transaction_id.clone(),
             created_at: 1622547800,

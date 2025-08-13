@@ -61,8 +61,8 @@ mod tests {
     #[test]
     fn it_should_batch_create_intents() {
         let repo = IntentRepository::new();
-        let intent_id1 = random_id_string(10);
-        let intent_id2 = random_id_string(10);
+        let intent_id1 = random_id_string();
+        let intent_id2 = random_id_string();
         let intent1 = Intent {
             id: intent_id1.clone(),
             state: IntentState::Processing,
@@ -108,8 +108,8 @@ mod tests {
     #[test]
     fn it_should_batch_update_intents() {
         let repo = IntentRepository::new();
-        let intent_id1 = random_id_string(10);
-        let intent_id2 = random_id_string(10);
+        let intent_id1 = random_id_string();
+        let intent_id2 = random_id_string();
         let intent1 = Intent {
             id: intent_id1.clone(),
             state: IntentState::Processing,
@@ -187,7 +187,7 @@ mod tests {
     #[test]
     fn it_should_get_an_intent() {
         let repo = IntentRepository::new();
-        let intent_id = random_id_string(10);
+        let intent_id = random_id_string();
         let intent = Intent {
             id: intent_id.clone(),
             state: IntentState::Processing,
@@ -213,8 +213,8 @@ mod tests {
     #[test]
     fn it_should_batch_get_intents() {
         let repo = IntentRepository::new();
-        let intent_id1 = random_id_string(10);
-        let intent_id2 = random_id_string(10);
+        let intent_id1 = random_id_string();
+        let intent_id2 = random_id_string();
         let intent1 = Intent {
             id: intent_id1.clone(),
             state: IntentState::Processing,
