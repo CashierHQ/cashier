@@ -46,3 +46,177 @@ impl TransactionRepository {
         TRANSACTION_STORE.with_borrow(|store| store.get(id))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utils::test_utils::random_id_string;
+    use candid::types::number::Nat;
+    use cashier_backend_types::repository::{
+        common::{Asset, Wallet},
+        transaction::v2::{
+            FromCallType, IcTransaction, Icrc1Transfer, Protocol, Transaction, TransactionState,
+        },
+    };
+    use std::str::FromStr;
+
+    #[test]
+    fn it_should_batch_create_transactions() {
+        let repo = TransactionRepository::new();
+        let transaction_id1 = random_id_string();
+        let transaction_id2 = random_id_string();
+        let transaction1 = Transaction {
+            id: transaction_id1.clone(),
+            created_at: 1622547800,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 1u16,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from_str("100").unwrap(),
+                memo: None,
+                ts: Some(1622547800),
+            })),
+            start_ts: None,
+        };
+        let transaction2 = Transaction {
+            id: transaction_id2.clone(),
+            created_at: 1622547900,
+            state: TransactionState::Processing,
+            dependency: None,
+            group: 1u16,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from_str("200").unwrap(),
+                memo: None,
+                ts: Some(1622547900),
+            })),
+            start_ts: None,
+        };
+        repo.batch_create(vec![transaction1.clone(), transaction2.clone()]);
+
+        let transactions = repo.batch_get(vec![transaction_id1, transaction_id2]);
+        assert_eq!(transactions.len(), 2);
+        assert_eq!(transactions.first().unwrap(), &transaction1);
+        assert_eq!(transactions.get(1).unwrap(), &transaction2);
+    }
+
+    #[test]
+    fn it_should_update_a_transaction() {
+        let repo = TransactionRepository::new();
+        let transaction_id1 = random_id_string();
+        let transaction1 = Transaction {
+            id: transaction_id1,
+            created_at: 1622547800,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 1u16,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from_str("100").unwrap(),
+                memo: None,
+                ts: Some(1622547800),
+            })),
+            start_ts: None,
+        };
+        repo.batch_create(vec![transaction1.clone()]);
+
+        let mut transaction1_updated = transaction1;
+        transaction1_updated.state = TransactionState::Processing;
+        repo.update(transaction1_updated.clone());
+        assert_eq!(
+            repo.get(&transaction1_updated.id),
+            Some(transaction1_updated)
+        );
+    }
+
+    #[test]
+    fn it_should_batch_get_transactions() {
+        let repo = TransactionRepository::new();
+        let transaction_id1 = random_id_string();
+        let transaction_id2 = random_id_string();
+        let transaction1 = Transaction {
+            id: transaction_id1.clone(),
+            created_at: 1622547800,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 1u16,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from_str("100").unwrap(),
+                memo: None,
+                ts: Some(1622547800),
+            })),
+            start_ts: None,
+        };
+        let transaction2 = Transaction {
+            id: transaction_id2.clone(),
+            created_at: 1622547900,
+            state: TransactionState::Processing,
+            dependency: None,
+            group: 1u16,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from_str("200").unwrap(),
+                memo: None,
+                ts: Some(1622547900),
+            })),
+            start_ts: None,
+        };
+        repo.batch_create(vec![transaction1.clone(), transaction2.clone()]);
+
+        let transactions = repo.batch_get(vec![transaction_id1, transaction_id2]);
+        assert_eq!(transactions.len(), 2);
+        assert_eq!(transactions.first().unwrap(), &transaction1);
+        assert_eq!(transactions.get(1).unwrap(), &transaction2);
+    }
+
+    #[test]
+    fn it_should_get_a_transaction() {
+        let repo = TransactionRepository::new();
+        let transaction_id = random_id_string();
+        let transaction = Transaction {
+            id: transaction_id.clone(),
+            created_at: 1622547800,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 1u16,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from_str("100").unwrap(),
+                memo: None,
+                ts: Some(1622547800),
+            })),
+            start_ts: None,
+        };
+        repo.batch_create(vec![transaction.clone()]);
+
+        let retrieved_transaction = repo.get(&transaction.id);
+        assert!(retrieved_transaction.is_some());
+        assert_eq!(retrieved_transaction.unwrap().id, transaction_id);
+    }
+
+    #[test]
+    fn it_should_create_a_transaction_repository_by_default() {
+        let repo = TransactionRepository::default();
+        assert!(repo.batch_get(vec!["nonexistent".to_string()]).is_empty());
+    }
+}
