@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use rand::prelude::*;
+use uuid::Uuid;
 
 pub fn random_id_string(len: usize) -> String {
     let mut rng = thread_rng();
@@ -11,4 +12,9 @@ pub fn random_id_string(len: usize) -> String {
     (0..len)
         .map(|_| chars[rng.gen_range(0..chars.len())])
         .collect()
+}
+
+pub fn random_principal_id() -> String {
+    let id = Uuid::new_v4();
+    id.to_string()
 }
