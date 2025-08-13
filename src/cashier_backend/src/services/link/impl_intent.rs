@@ -62,7 +62,7 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
                 (ActionType::CreateLink, IntentTask::TransferWalletToLink) => {
                     let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
                         error!(
-                    "[link_assemble_intents] find label for TransferWalletToLink not found {:#?}",
+                    "[link_assemble_intents] find label for TransferWalletToLink not found {:?}",
                     intent.label
                 );
                         CanisterError::HandleLogicError(

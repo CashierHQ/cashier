@@ -4,6 +4,7 @@
 use candid::Principal;
 use cashier_common::build_data::BuildData;
 use ic_cdk::{api::msg_caller, query, update};
+use log::error;
 
 use crate::{
     api::{
@@ -87,7 +88,7 @@ pub fn get_registry_tokens(only_enable: bool) -> Vec<TokenDto> {
 #[update]
 pub fn initialize_registry() -> Result<(), String> {
     ensure_is_admin().unwrap_or_else(|err| {
-        eprintln!("Admin check failed: {err}"); // Log the error
+        error!("Admin check failed: {err}"); // Log the error
         // Return unit type `()` to satisfy `unwrap_or_else`
     });
 

@@ -1,5 +1,4 @@
 DFX_LOGFILE:="./target/dfx_tests.log"
-DFX_LOCAL_LOG_SETTINGS:='opt record { enable_console=true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug,token_storage=debug\"; }'
 
 # Start the local dfx server
 [group('dfx')]

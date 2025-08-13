@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use ic_cdk::{init, post_upgrade, pre_upgrade};
-use log::info;
+use log::{error, info};
 use token_storage_types::init::TokenStorageInitData;
 
 use crate::{
@@ -24,7 +24,7 @@ fn init(init_data: TokenStorageInitData) {
     match registry.add_bulk_tokens(&get_default_tokens()) {
         Ok(_) => {}
         Err(e) => {
-            eprintln!("Error adding default tokens: {e}");
+            error!("Error adding default tokens: {e}");
         }
     }
 }

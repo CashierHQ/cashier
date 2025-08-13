@@ -318,7 +318,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         {
             Ok(links) => Ok(links.map(LinkDto::from)),
             Err(e) => {
-                error!("Failed to get links: {}", e);
+                error!("Failed to get links: {e:?}");
                 Err(e)
             }
         }
@@ -383,7 +383,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         {
             Ok(link) => Ok(LinkDto::from(link)),
             Err(e) => {
-                error!("Failed to create link: {}", e);
+                error!("Failed to create link: {e:?}");
                 Err(e)
             }
         }
@@ -566,7 +566,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         let link = match self.link_service.get_link_by_id(&input.id) {
             Ok(rsp) => rsp,
             Err(e) => {
-                error!("Failed to get link: {:#?}", e);
+                error!("Failed to get link: {e:?}");
                 return Err(e);
             }
         };
