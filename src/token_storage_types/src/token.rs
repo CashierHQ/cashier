@@ -1,8 +1,30 @@
 use candid::CandidType;
+use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 
-use crate::{IndexId, LedgerId, TokenId, user::UserPreference};
+use crate::{chain::Chain, user::UserPreference, IndexId, LedgerId};
 
+/// A token identifier
+#[derive(CandidType, Clone, Eq, PartialEq, Debug, Hash, Ord, PartialOrd)]
+#[storable]
+pub enum TokenId {
+    /// IC token
+    IC {
+        /// The ledger canister id for the token
+        ledger_id: LedgerId,
+    },
+}
+
+impl TokenId {
+
+    /// Returns the chain id
+    pub fn chain(&self) -> Chain {
+        match self {
+            TokenId::IC { .. } => Chain::IC,
+        }
+    }
+    
+}
 
 #[derive(CandidType, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
 pub enum ChainTokenDetails {
@@ -21,6 +43,20 @@ impl ChainTokenDetails {
             // Handle other chains if needed
         }
     }
+
+    /// Returns the chain type
+    pub fn chain(&self) -> Chain {
+        match self {
+            ChainTokenDetails::IC { .. } => Chain::IC,
+        }
+    }
+
+    /// Returns the token_id
+    pub fn token_id(&self) -> TokenId {
+        match self {
+            ChainTokenDetails::IC { ledger_id, .. } => TokenId::IC { ledger_id: *ledger_id },
+        }
+    }
 }
 
 /// DTO for all tokens, flexible for all chains
@@ -30,7 +66,7 @@ pub struct TokenDto {
     pub symbol: String,
     pub name: String,
     pub decimals: u8,
-    pub chain: String,
+    pub chain: Chain,
     pub enabled: bool,
     pub balance: Option<u128>,
     pub details: ChainTokenDetails, // Use the enum for chain-specific details
@@ -137,4 +173,39 @@ pub struct UserTokens {
     pub enabled: usize,
     pub registry_tokens: usize,
     pub version: u64,
+}
+
+#[cfg(test)]
+mod tests {
+    use candid::Principal;
+
+    use super::*;
+
+    #[test]
+    fn it_should_return_ic_chain_type_from_details() {
+        let details = ChainTokenDetails::IC {
+            ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+            index_id: None,
+            fee: 0u64.into(),
+        };
+        assert_eq!(details.chain(), Chain::IC);
+    }
+
+    #[test]
+    fn it_should_return_ic_token_id_from_details() {
+        let details = ChainTokenDetails::IC {
+            ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+            index_id: None,
+            fee: 0u64.into(),
+        };
+        assert_eq!(details.token_id(), TokenId::IC { ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap() });
+    }
+
+    #[test]
+    fn it_should_return_ic_chain_type_from_token_id() {
+        let token_id = TokenId::IC {
+            ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+        };
+        assert_eq!(token_id.chain(), Chain::IC);
+    }
 }

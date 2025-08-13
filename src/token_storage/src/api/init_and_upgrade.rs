@@ -8,7 +8,7 @@ use token_storage_types::init::TokenStorageInitData;
 use crate::{
     api::state::get_state,
     constant::default_tokens::get_default_tokens,
-    repository::{load, token_registry::TokenRegistryRepository},
+    repository::{token_registry::TokenRegistryRepository},
 };
 
 #[init]
@@ -21,7 +21,7 @@ fn init(init_data: TokenStorageInitData) {
     info!("[init] Starting Token Storage");
 
     let registry = TokenRegistryRepository::new();
-    match registry.add_bulk_tokens(&get_default_tokens()) {
+    match registry.add_bulk_tokens(get_default_tokens()) {
         Ok(_) => {}
         Err(e) => {
             error!("Error adding default tokens: {e}");
@@ -39,6 +39,4 @@ fn post_upgrade() {
     }
 
     info!("[post_upgrade] Starting Token Storage");
-
-    load();
 }

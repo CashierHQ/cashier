@@ -67,7 +67,7 @@ impl UserTokenService {
     /// Add a single token to the user's list
     /// If the token is not in either list, it will be added to the enable list
     /// If the token is in the disable list, it will be moved to the enable list
-    pub fn add_token(&self, user_id: Principal, token_id: &TokenId) -> Result<(), String> {
+    pub fn add_token(&self, user_id: Principal, token_id: TokenId) -> Result<(), String> {
         // Ensure user has a token list initialized
         self.ensure_token_list_initialized(user_id)?;
 
@@ -77,7 +77,7 @@ impl UserTokenService {
 
     /// Add multiple tokens to the user's list
     /// Tokens that don't exist in the registry will be filtered out
-    pub fn add_tokens(&self, user_id: Principal, token_ids: &[TokenId]) -> Result<(), String> {
+    pub fn add_tokens(&self, user_id: Principal, token_ids: Vec<TokenId>) -> Result<(), String> {
         if token_ids.is_empty() {
             return Ok(());
         }
@@ -87,9 +87,8 @@ impl UserTokenService {
 
         // Filter tokens to only include those that exist in the registry
         let valid_tokens: Vec<TokenId> = token_ids
-            .iter()
+            .into_iter()
             .filter(|id| self.registry_repository.get_token(id).is_some())
-            .cloned()
             .collect();
 
         if valid_tokens.is_empty() {
@@ -109,8 +108,8 @@ impl UserTokenService {
     pub fn update_token_enable(
         &self,
         user_id: Principal,
-        token_id: &TokenId,
-        is_enabled: &bool,
+        token_id: TokenId,
+        is_enabled: bool,
     ) -> Result<(), String> {
         // Ensure user has a token list initialized
         self.ensure_token_list_initialized(user_id)?;
@@ -146,13 +145,13 @@ impl UserTokenService {
         // Loop through registry tokens and add new ones that are enabled_by_default
         for token in registry_tokens {
             // Skip tokens that are already in the user's enable list
-            if user_token_list.enable_list.contains(&token.id) {
+            if user_token_list.enable_list.contains(&token.details.token_id()) {
                 continue;
             }
 
             // For new tokens, add to enable list only if enabled_by_default is true
             if token.enabled_by_default {
-                user_token_list.enable_list.insert(token.id);
+                user_token_list.enable_list.insert(token.details.token_id());
             }
             // If enabled_by_default is false, just ignore it (don't add to enable list)
         }

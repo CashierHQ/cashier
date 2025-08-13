@@ -21,7 +21,7 @@ impl BalanceCacheRepository {
         Self {}
     }
 
-    pub fn update_bulk_balances(&self, user_id: Principal, token_balances: Vec<(String, u128)>) {
+    pub fn update_bulk_balances(&self, user_id: Principal, token_balances: Vec<(TokenId, u128)>) {
         BALANCE_CACHE_STORE.with_borrow_mut(|store| {
             // Get existing balances or create new HashMap
             let mut balance_map = store
