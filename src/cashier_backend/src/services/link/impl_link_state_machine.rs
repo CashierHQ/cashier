@@ -627,7 +627,7 @@ mod tests {
     #[test]
     fn it_should_false_is_props_changed_if_title_unchanged() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(24);
+        let link_id = random_id_string();
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,
@@ -662,7 +662,7 @@ mod tests {
     #[test]
     fn it_should_true_is_props_changed_if_title_changed() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(24);
+        let link_id = random_id_string();
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,
@@ -697,7 +697,7 @@ mod tests {
     #[test]
     fn it_should_false_is_props_changed_if_description_unchanged() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(24);
+        let link_id = random_id_string();
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,
@@ -732,7 +732,7 @@ mod tests {
     #[test]
     fn it_should_true_is_props_changed_if_description_changed() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(24);
+        let link_id = random_id_string();
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,
@@ -767,7 +767,7 @@ mod tests {
     #[test]
     fn it_should_false_is_props_changed_if_link_image_url_unchanged() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(24);
+        let link_id = random_id_string();
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,
@@ -802,7 +802,7 @@ mod tests {
     #[test]
     fn it_should_true_is_props_changed_if_link_image_url_changed() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(24);
+        let link_id = random_id_string();
         let meta_data = HashMap::from([("link_image_url".to_string(), "http://example.com/image.png".to_string())]);
         let link = Link {
             id: link_id.clone(),
@@ -838,7 +838,7 @@ mod tests {
     #[test]
     fn it_should_false_is_props_changed_if_nft_image_unchanged() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(24);
+        let link_id = random_id_string();
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,
@@ -873,7 +873,7 @@ mod tests {
     #[test]
     fn it_should_true_is_props_changed_if_nft_image_changed() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(24);
+        let link_id = random_id_string();
         let meta_data = HashMap::from([("nft_image".to_string(), "http://example.com/nft.png".to_string())]);
         let link = Link {
             id: link_id.clone(),
@@ -909,7 +909,7 @@ mod tests {
     #[test]
     fn it_should_false_is_props_changed_if_link_type_unchanged() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(24);
+        let link_id = random_id_string();
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,
@@ -944,7 +944,7 @@ mod tests {
     #[test]
     fn it_should_true_is_props_changed_if_link_type_changed() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(24);
+        let link_id = random_id_string();
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,
@@ -979,7 +979,7 @@ mod tests {
     #[test]
     fn it_should_false_is_props_changed_if_asset_info_unchanged() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(24);
+        let link_id = random_id_string();
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,
@@ -1024,7 +1024,7 @@ mod tests {
     #[test]
     fn it_should_true_is_props_changed_if_asset_info_changed() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(24);
+        let link_id = random_id_string();
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,
@@ -1069,7 +1069,7 @@ mod tests {
     #[test]
     fn it_should_false_is_props_changed_if_link_use_action_max_count_unchanged() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(24);
+        let link_id = random_id_string();
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,
@@ -1104,7 +1104,7 @@ mod tests {
     #[test]
     fn it_should_true_is_props_changed_if_link_use_action_max_count_changed() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(24);
+        let link_id = random_id_string();
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,
@@ -1139,7 +1139,7 @@ mod tests {
     #[test]
     fn it_should_false_is_props_changed_if_template_unchanged() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(24);
+        let link_id = random_id_string();
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,
@@ -1174,7 +1174,7 @@ mod tests {
     #[test]
     fn it_should_true_is_props_changed_if_template_changed() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link_id = random_id_string(24);
+        let link_id = random_id_string();
         let link = Link {
             id: link_id.clone(),
             state: LinkState::ChooseLinkType,

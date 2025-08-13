@@ -10,7 +10,7 @@ pub const PRINCIPAL_ID1: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 pub const PRINCIPAL_ID2: &str = "x5qut-viaaa-aaaar-qajda-cai";
 
 pub fn create_link_feature(service: &LinkService<MockIcEnvironment>, creator_id: &str) -> Link {
-    let link_id = random_id_string(10);
+    let link_id = random_id_string();
     let link = Link {
         id: link_id,
         state: LinkState::ChooseLinkType,
@@ -50,7 +50,7 @@ pub fn create_link_action_feature(
     action_type: &str,
     user_id: &str,
 ) -> LinkAction {
-    let action_id = random_id_string(10);
+    let action_id = random_id_string();
     let link_action = LinkAction {
         link_id: link_id.to_string(),
         action_id,
