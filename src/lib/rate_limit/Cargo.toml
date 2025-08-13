@@ -1,0 +1,11 @@
+[package]
+name = "rate_limit"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+thiserror = {workspace = true}
+
+[dev-dependencies]
+candid = {workspace = true}

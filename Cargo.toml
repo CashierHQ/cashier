@@ -5,7 +5,8 @@ members = [
     "src/cashier_backend_types",
     "src/integration_tests",
     "src/lib/cashier_common",
-    "src/lib/cashier_macros",
+    "src/lib/cashier_macros", 
+    "src/lib/rate_limit",
     "src/token_storage",
     "src/token_storage_client",
 ]
