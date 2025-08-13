@@ -38,13 +38,13 @@ pub struct TokenDto {
 
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
 pub struct AddTokenInput {
-    pub token_id: String,
+    pub token_id: TokenId,
     pub index_id: Option<String>,
 }
 
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
 pub struct AddTokensInput {
-    pub token_ids: Vec<String>,
+    pub token_ids: Vec<TokenId>,
 }
 
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
