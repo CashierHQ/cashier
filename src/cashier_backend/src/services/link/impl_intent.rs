@@ -583,3 +583,72 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         Ok(Some(intents))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::utils::test_utils::{runtime::MockIcEnvironment, random_id_string};
+    use crate::services::link::test_fixtures::*;
+    use cashier_backend_types::repository::link::v1::{Link, LinkState, LinkType};
+
+    #[test]
+    fn it_should_create_basic_intent() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let intent = service.create_basic_intent(IntentTask::TransferWalletToLink, "Test Label".to_string());
+        assert_eq!(intent.task, IntentTask::TransferWalletToLink);
+        assert_eq!(intent.label, "Test Label");
+    }
+
+    #[test]
+    fn it_should_create_fee_intent() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let intent = service.create_fee_intent();
+        assert_eq!(intent.task, IntentTask::TransferWalletToTreasury);
+        assert_eq!(intent.label, INTENT_LABEL_LINK_CREATION_FEE);
+        assert_eq!(intent.r#type.as_transfer_from().is_some(), true);
+    }
+
+    #[test]
+    fn it_should_error_not_found_look_up_intent() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let link_id = random_id_string(10);
+        let action_type = ActionType::Use;
+
+        let result = service.look_up_intent(&Link {
+            id: link_id,
+            state: LinkState::ChooseLinkType,
+            title: None,
+            description: None,
+            link_type: None,
+            asset_info: None,
+            template: None,
+            creator: "creator".to_string(),
+            create_at: 0,
+            metadata: None,
+            link_use_action_counter: 0,
+            link_use_action_max_count: 10,
+        }, &action_type);
+
+        assert!(result.is_err());
+        
+        if let Err(CanisterError::HandleLogicError(msg)) = result {
+            assert!(msg.contains("link type not found"));
+        } else {
+            panic!("Expected HandleLogicError");
+        }
+    }
+
+    #[test]
+    fn it_should_look_up_intent() {
+        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let creator_id = PRINCIPAL_ID1;
+        let link = create_link_feature(&service, creator_id);
+        let action_type = ActionType::CreateLink;
+
+        let intents = service.look_up_intent(&link, &action_type).unwrap();
+        assert!(intents.is_some());
+        let intents = intents.unwrap();
+        assert_eq!(intents.len(), 2); // One for asset transfer, one for fee transfer
+    }
+
+}

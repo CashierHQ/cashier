@@ -311,74 +311,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::runtime::MockIcEnvironment;
-    use cashier_backend_types::repository::{link::v1::{LinkState, LinkType}, user_link::v1::UserLink, user_wallet::v1::UserWallet};
-    use crate::utils::test_utils::random_id_string;
-
-    const PRINCIPAL_ID1: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
-    const PRINCIPAL_ID2: &str = "x5qut-viaaa-aaaar-qajda-cai";
-
-    fn create_link_feature(service: &LinkService<MockIcEnvironment>, creator_id: &str) -> Link {
-        let link_id = random_id_string(10);
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Test Link".to_string()),
-            description: Some("This is a test link".to_string()),
-            link_type: Some(LinkType::SendTip),
-            asset_info: None,
-            template: None,
-            creator: creator_id.to_string(),
-            create_at: 1622547800,
-            metadata: None,
-            link_use_action_counter: 0,
-            link_use_action_max_count: 10,
-        };
-        service.link_repository.create(link.clone());
-
-        let user_link = UserLink {
-            user_id: creator_id.to_string(),
-            link_id: link.id.clone(),
-        };
-        service.user_link_repository.create(user_link);
-        link
-    }
-
-    fn create_principal_feature(service: &LinkService<MockIcEnvironment>, principal_id: &str) -> Principal {
-        let principal = Principal::from_text(principal_id).unwrap();
-
-        service.user_wallet_repository.create(principal_id.to_string(), UserWallet {
-            user_id: principal_id.to_string(),
-        });
-        principal
-    }
-
-    fn create_link_action_feature(
-        service: &LinkService<MockIcEnvironment>,
-        link_id: &str,
-        action_type: &str,
-        user_id: &str,
-    ) -> LinkAction {
-        let action_id = random_id_string(10);
-        let link_action = LinkAction {
-            link_id: link_id.to_string(),
-            action_id,
-            action_type: action_type.to_string(),
-            user_id: user_id.to_string(),
-            link_user_state: None,
-        };
-        service.link_action_repository.create(link_action.clone());
-
-        let action = Action {
-            id: link_action.action_id.clone(),
-            r#type: ActionType::from_str(action_type).unwrap(),
-            state: ActionState::Created,
-            creator: user_id.to_string(),
-            link_id: link_id.to_string(),
-        };
-        service.action_repository.create(action);
-        link_action
-    }
+    use crate::utils::test_utils::{runtime::MockIcEnvironment, random_id_string};
+    use crate::services::link::test_fixtures::*;
 
     #[test]
     fn it_should_create_link_service_instance() {
