@@ -3,7 +3,6 @@
 
 use crate::services::transaction_manager::traits::TransactionExecutor;
 use crate::services::transaction_manager::traits::TransactionValidator;
-use async_trait::async_trait;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::transaction::v2::Transaction;
 use cashier_backend_types::repository::transaction::v2::TransactionState;
@@ -13,7 +12,6 @@ use crate::{
     utils::runtime::IcEnvironment,
 };
 
-#[async_trait(?Send)]
 impl<E: IcEnvironment + Clone> BatchExecutor<E> for TransactionManagerService<E> {
     /// Execute multiple canister transactions in parallel (batch)
     ///

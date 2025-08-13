@@ -6,7 +6,6 @@
 //! trait groups a coherent set of responsibilities and can be
 //! implemented (or mocked) independently.
 
-use async_trait::async_trait;
 use candid::Principal;
 use cashier_backend_types::{
     dto::action::{ActionDto, Icrc112Requests},
@@ -27,7 +26,6 @@ pub trait ActionCreator<E: IcEnvironment + Clone> {
 }
 
 // ---------- 3. Transaction execution ----------
-#[async_trait(?Send)]
 pub trait TransactionExecutor<E: IcEnvironment + Clone> {
     async fn execute_tx_by_id(&self, tx_id: String) -> Result<(), CanisterError>;
     async fn execute_canister_tx(&self, tx: &mut Transaction) -> Result<(), CanisterError>;
@@ -39,7 +37,6 @@ pub trait TransactionExecutor<E: IcEnvironment + Clone> {
 }
 
 // ---------- 4. Transaction validation & manual status ----------
-#[async_trait(?Send)]
 pub trait TransactionValidator<E: IcEnvironment + Clone> {
     async fn validate_balance_transfer(&self, tx: &Icrc1Transfer) -> Result<bool, CanisterError>;
     async fn validate_allowance(&self, tx: &Icrc2Approve) -> Result<bool, CanisterError>;
@@ -58,7 +55,6 @@ pub trait DependencyAnalyzer {
 }
 
 // ---------- 6. Timeout handling ----------
-#[async_trait(?Send)]
 pub trait TimeoutHandler<E: IcEnvironment + Clone> {
     fn spawn_tx_timeout_task(&self, tx_id: String) -> Result<(), String>;
     async fn tx_timeout_task(&self, tx_id: String) -> Result<(), CanisterError>;
@@ -66,7 +62,6 @@ pub trait TimeoutHandler<E: IcEnvironment + Clone> {
 }
 
 // ---------- 7. High-level action updater ----------
-#[async_trait(?Send)]
 pub trait ActionUpdater<E: IcEnvironment + Clone> {
     async fn update_action(&self, args: UpdateActionArgs) -> Result<ActionDto, CanisterError>;
 
@@ -86,7 +81,6 @@ pub trait ActionUpdater<E: IcEnvironment + Clone> {
 }
 
 // ---------- 8. Batch helpers ----------
-#[async_trait(?Send)]
 pub trait BatchExecutor<E: IcEnvironment + Clone> {
     async fn execute_canister_txs_batch(
         &self,
