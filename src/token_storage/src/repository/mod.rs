@@ -24,7 +24,7 @@ use crate::types::{
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
-pub type BalanceCache = Candid<HashMap<String, TokenBalance>>;
+pub type BalanceCache = Candid<HashMap<TokenId, TokenBalance>>;
 
 const _UPGRADES: MemoryId = MemoryId::new(0);
 const TOKEN_MEMORY_ID: MemoryId = MemoryId::new(1);
@@ -89,32 +89,4 @@ thread_local! {
                 MEMORY_MANAGER.with_borrow(|m| m.get(BALANCE_CACHE_MEMORY_ID)),
             )
         );
-}
-
-pub fn load() {
-    USER_TOKEN_STORE.with_borrow_mut(|store| {
-        *store = StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(TOKEN_MEMORY_ID)));
-    });
-
-    USER_PREFERENCE_STORE.with_borrow_mut(|store| {
-        *store =
-            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(USER_PREFERENCE_MEMORY_ID)));
-    });
-
-    TOKEN_REGISTRY_STORE.with_borrow_mut(|store| {
-        *store =
-            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(TOKEN_REGISTRY_MEMORY_ID)));
-    });
-
-    BALANCE_CACHE_STORE.with_borrow_mut(|store| {
-        *store =
-            StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(BALANCE_CACHE_MEMORY_ID)));
-    });
-
-    TOKEN_REGISTRY_METADATA_STORE.with_borrow_mut(|store| {
-        *store = StableCell::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(TOKEN_REGISTRY_METADATA_ID)),
-            TokenRegistryMetadata::default(),
-        );
-    });
 }

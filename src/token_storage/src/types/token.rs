@@ -9,7 +9,6 @@ use token_storage_types::{chain::Chain, TokenId, token::{ChainTokenDetails, Toke
 #[storable]
 #[derive(CandidType, Clone, Eq, PartialEq, Debug)]
 pub struct RegistryToken {
-    pub id: TokenId,
     pub symbol: String,
     pub name: String,
     pub decimals: u8,
@@ -21,11 +20,11 @@ pub struct RegistryToken {
 impl From<RegistryToken> for TokenDto {
     fn from(token: RegistryToken) -> Self {
         Self {
-            id: token.id,
+            id: token.details.token_id(),
             symbol: token.symbol,
             name: token.name,
             decimals: token.decimals,
-            chain: token.chain.to_str(),
+            chain: token.chain,
             enabled: token.enabled_by_default,
             balance: None,
             details: token.details, // Directly use the enum

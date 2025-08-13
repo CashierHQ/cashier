@@ -23,13 +23,13 @@ impl TokenRepository {
 
     // Add token to enable list
     // return error if list token is not init
-    pub fn add_token(&self, user_id: Principal, token_id: &TokenId) -> Result<(), String> {
+    pub fn add_token(&self, user_id: Principal, token_id: TokenId) -> Result<(), String> {
         USER_TOKEN_STORE.with_borrow_mut(|store| {
             let mut user_token_list = store
                 .get(&user_id)
                 .ok_or_else(|| "user token list is not init".to_string())?;
 
-            user_token_list.enable_list.insert(token_id.to_string());
+            user_token_list.enable_list.insert(token_id);
             store.insert(user_id, user_token_list.clone());
             Ok(())
         })
@@ -62,18 +62,18 @@ impl TokenRepository {
     pub fn update_token(
         &self,
         user_id: Principal,
-        token_id: &TokenId,
-        is_enable: &bool,
+        token_id: TokenId,
+        is_enable: bool,
     ) -> Result<(), String> {
         USER_TOKEN_STORE.with_borrow_mut(|store| {
             let mut user_token_list = store
                 .get(&user_id)
                 .ok_or_else(|| "user token list is not init".to_string())?;
 
-            if *is_enable {
-                user_token_list.enable_list.insert(token_id.to_string());
+            if is_enable {
+                user_token_list.enable_list.insert(token_id);
             } else {
-                user_token_list.enable_list.remove(&token_id.to_string());
+                user_token_list.enable_list.remove(&token_id);
             }
 
             store.insert(user_id, user_token_list.clone());

@@ -17,41 +17,6 @@ fn ensure_not_anonymous() -> Result<Principal, String> {
     Ok(caller)
 }
 
-fn validate_token_id(token_id: &str) -> Result<(), String> {
-    // Check if token ID contains a colon separator
-    if !token_id.contains(':') {
-        return Err("Invalid token ID format. Expected format: 'CHAIN:token_address'".to_string());
-    }
-
-    // Split and validate the parts
-    let mut parts = token_id.splitn(2, ':');
-    let chain_part = parts.next();
-    let address_part = parts.next();
-
-    match (chain_part, address_part) {
-        (Some(chain), Some(address)) if !chain.is_empty() && !address.is_empty() => {
-            // Validate chain is supported
-            match chain {
-                "IC" => {
-                    // For IC chain, validate the address looks like a principal
-                    if address.len() < 5 || !address.contains('-') {
-                        return Err("Invalid IC principal format for token address".to_string());
-                    }
-                }
-                _ => {
-                    return Err(format!("Unsupported chain type: {chain}"));
-                }
-            }
-        }
-        _ => {
-            return Err(
-                "Invalid token ID format. Expected format: 'CHAIN:token_address'".to_string(),
-            );
-        }
-    }
-
-    Ok(())
-}
 
 #[update]
 pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
@@ -59,9 +24,6 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
     debug!("[add_token] input: {input:?}");
 
     let user_id = ensure_not_anonymous()?;
-
-    // Validate token ID format
-    validate_token_id(&input.token_id)?;
 
     // Handle optional index_id - only parse if provided and not empty
     let index_pid = match &input.index_id {
@@ -77,26 +39,21 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
     if token_registry_service.get_token(&input.token_id).is_none() {
         // Token doesn't exist in registry, register it first
         token_registry_service
-            .register_new_token(&input.token_id, &index_pid)
+            .register_new_token(input.token_id.clone(), index_pid)
             .await?;
     }
 
     let service = UserTokenService::new();
-    info!("Adding token {} for user {}", input.token_id, user_id);
-    service.add_token(user_id, &input.token_id)
+    info!("Adding token {:?} for user {}", input.token_id, user_id);
+    service.add_token(user_id, input.token_id)
 }
 
 #[update]
 pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
     info!("[add_token_batch]");
-    debug!("[add_token_batch] input: {input:?}");
-
     let user_id = ensure_not_anonymous()?;
 
-    // Validate all token IDs first
-    for token_id in &input.token_ids {
-        validate_token_id(token_id)?;
-    }
+    debug!("[add_token_batch] user: {user_id}, input: {input:?}");
 
     let token_registry_service = TokenRegistryService::new();
 
@@ -106,14 +63,14 @@ pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
             // Token doesn't exist in registry, register it first
             // Don't fail if registration fails - continue processing
             if token_registry_service
-                .register_new_token(token_id, &None)
+                .register_new_token(token_id.clone(), None)
                 .await
                 .is_err()
             {
                 // Log the error but continue processing
                 // In the future, we might want to collect these errors and return them
                 warn!(
-                    "Failed to register token {} in registry, continuing...",
+                    "Failed to register token {:?} in registry, continuing...",
                     token_id
                 );
             }
@@ -121,8 +78,7 @@ pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
     }
 
     let user_token_service = UserTokenService::new();
-    info!("Adding tokens {:?} for user {}", input.token_ids, user_id);
-    user_token_service.add_tokens(user_id, &input.token_ids)
+    user_token_service.add_tokens(user_id, input.token_ids)
 }
 
 #[update]
@@ -131,15 +87,11 @@ pub async fn update_token_registry(input: AddTokenInput) -> Result<(), String> {
     debug!("[update_token_registry] input: {input:?}");
 
     let _user_id = ensure_not_anonymous()?;
-
-    // Validate token ID format
-    validate_token_id(&input.token_id)?;
-
     let token_registry_service = TokenRegistryService::new();
 
     // Re-register the token to update its metadata from the ledger
     token_registry_service
-        .update_token_metadata(&input.token_id)
+        .update_token_metadata(input.token_id)
         .await?;
 
     Ok(())
@@ -152,15 +104,10 @@ pub async fn update_token_registry_batch(input: AddTokensInput) -> Result<(), St
 
     let _user_id = ensure_not_anonymous()?;
 
-    // Validate all token IDs first
-    for token_id in &input.token_ids {
-        validate_token_id(token_id)?;
-    }
-
     let token_registry_service = TokenRegistryService::new();
 
     // Re-register all tokens to update their metadata from the ledger
-    for token_id in &input.token_ids {
+    for token_id in input.token_ids {
         token_registry_service
             .update_token_metadata(token_id)
             .await?;
@@ -176,11 +123,8 @@ pub fn update_token_enable(input: UpdateTokenInput) -> Result<(), String> {
 
     let user_id = ensure_not_anonymous()?;
 
-    // Validate token ID format
-    validate_token_id(&input.token_id)?;
-
     let service = UserTokenService::new();
-    service.update_token_enable(user_id, &input.token_id, &input.is_enabled)
+    service.update_token_enable(user_id, input.token_id, input.is_enabled)
 }
 
 #[query]
@@ -229,7 +173,7 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
                         .map(|registry_token| {
                             let mut token_dto = TokenDto::from(registry_token.clone());
                             // Enrich with balance if available
-                            token_dto.balance = user_balances.get(&registry_token.id).cloned();
+                            token_dto.balance = user_balances.get(&registry_token.details.token_id()).cloned();
                             token_dto
                         })
                         .collect(),
@@ -243,26 +187,27 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
                 let mut seen_token_ids = std::collections::HashSet::new();
 
                 // First, add enabled tokens from enable_list
-                for token_id in &list.enable_list {
-                    if let Some(registry_token) = registry_tokens.iter().find(|t| &t.id == token_id)
-                        && seen_token_ids.insert(registry_token.id.clone())
+                for token_id in list.enable_list {
+                    if let Some(registry_token) = registry_tokens.iter().find(|t| t.details.token_id() == token_id)
+                        && seen_token_ids.insert(registry_token.details.token_id())
                     {
                         let mut token_dto = TokenDto::from(registry_token.clone());
                         token_dto.enabled = true; // Mark as enabled
                         // Enrich with balance if available
-                        token_dto.balance = user_balances.get(&registry_token.id).cloned();
+                        token_dto.balance = user_balances.get(&registry_token.details.token_id()).cloned();
                         filtered_tokens.push(token_dto);
                     }
                 }
 
                 // Then, add all remaining registry tokens with enabled = false
                 for registry_token in &registry_tokens {
-                    if !seen_token_ids.contains(&registry_token.id)
-                        && seen_token_ids.insert(registry_token.id.clone())
+                    let token_id = registry_token.details.token_id();
+                    if !seen_token_ids.contains(&token_id)
+                        && seen_token_ids.insert(token_id.clone())
                     {
                         let mut token_dto = TokenDto::from(registry_token.clone());
                         // Enrich with balance if available
-                        token_dto.balance = user_balances.get(&registry_token.id).cloned();
+                        token_dto.balance = user_balances.get(&token_id).cloned();
                         filtered_tokens.push(token_dto);
                     }
                 }
@@ -283,7 +228,7 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
                     .map(|registry_token| {
                         let mut token_dto = TokenDto::from(registry_token.clone());
                         // Enrich with balance if available
-                        token_dto.balance = user_balances.get(&registry_token.id).cloned();
+                        token_dto.balance = user_balances.get(&registry_token.details.token_id()).cloned();
                         token_dto
                     })
                     .collect(),
