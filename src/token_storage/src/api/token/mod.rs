@@ -1,16 +1,13 @@
-use crate::api::token::types::UpdateTokenBalanceInput;
 use crate::services::token_registry::TokenRegistryService;
 use crate::services::user_preference::UserPreferenceService;
-use crate::types::{TokenDto, TokenId};
-use crate::{api::token::types::TokenListResponse, services::user_token::UserTokenService};
+use crate::{services::user_token::UserTokenService};
 use candid::Principal;
 use ic_cdk::api::msg_caller;
 use ic_cdk::{query, update};
 
-pub mod types;
-
 use log::{debug, info, warn};
-use types::{AddTokenInput, AddTokensInput, UpdateTokenInput};
+use token_storage_types::common::TokenId;
+use token_storage_types::token::{AddTokenInput, AddTokensInput, TokenDto, TokenListResponse, UpdateTokenBalanceInput, UpdateTokenInput};
 
 fn ensure_not_anonymous() -> Result<String, String> {
     let caller = msg_caller();

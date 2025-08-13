@@ -14,10 +14,11 @@ use ic_mple_log::LogSettings;
 use ic_mple_log::service::LoggerServiceStorage;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
+use token_storage_types::common::TokenId;
+use token_storage_types::user::UserPreference;
 
 use crate::types::{
-    Candid, RegistryToken, TokenBalance, TokenId, TokenRegistryMetadata, UserPreference,
-    UserTokenList,
+    Candid, RegistryToken, TokenBalance, TokenRegistryMetadata, UserTokenList
 };
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;

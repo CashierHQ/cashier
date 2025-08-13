@@ -1,15 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use ic_stable_structures::Storable;
 use ic_stable_structures::storable::Bound;
 use serde::Deserialize;
 use std::borrow::Cow;
-
-pub type LedgerId = Principal;
-pub type IndexId = Principal;
-pub type TokenId = String; // A unique identifier for tokens, e.g. "IC:ryjl3-tyaaa-aaaaa-aaaba-cai"
 
 #[derive(Default)]
 pub struct Candid<T>(pub T)

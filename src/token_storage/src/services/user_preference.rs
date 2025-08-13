@@ -1,9 +1,10 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use token_storage_types::user::UserPreference;
+
 // File: src/token_storage/src/services/user_perference.rs
 use crate::repository::user_preference::UserPreferenceRepository;
-use crate::types::UserPreference;
 
 pub struct UserPreferenceService {
     repository: UserPreferenceRepository,

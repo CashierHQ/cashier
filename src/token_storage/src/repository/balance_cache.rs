@@ -3,8 +3,9 @@
 
 // File: src/token_storage/src/repository/balance_cache.rs
 use super::BALANCE_CACHE_STORE;
-use crate::types::{Candid, TokenBalance, TokenId};
+use crate::types::{Candid, TokenBalance};
 use ic_cdk::api::time;
+use token_storage_types::common::TokenId;
 
 pub struct BalanceCacheRepository {}
 

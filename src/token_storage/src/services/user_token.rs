@@ -1,13 +1,15 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use token_storage_types::{common::TokenId, user::UserPreference};
+
 use crate::{
     repository::{
         balance_cache::BalanceCacheRepository, token_registry::TokenRegistryRepository,
         token_registry_metadata::TokenRegistryMetadataRepository,
         user_preference::UserPreferenceRepository, user_token::TokenRepository,
     },
-    types::{TokenId, UserPreference, UserTokenList},
+    types::{UserTokenList},
 };
 
 pub struct UserTokenService {

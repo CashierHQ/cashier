@@ -1,7 +1,40 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-use crate::types::{IndexId, LedgerId, TokenDto, TokenId, UserPreference};
+use crate::{common::{IndexId, LedgerId, TokenId}, user::UserPreference};
+
+
+#[derive(CandidType, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+pub enum ChainTokenDetails {
+    IC {
+        ledger_id: LedgerId,
+        index_id: Option<IndexId>,
+        fee: candid::Nat,
+    },
+    // Add more variants for other chains as needed
+}
+
+impl ChainTokenDetails {
+    pub fn index_id(&self) -> Option<IndexId> {
+        match self {
+            ChainTokenDetails::IC { index_id, .. } => *index_id,
+            // Handle other chains if needed
+        }
+    }
+}
+
+/// DTO for all tokens, flexible for all chains
+#[derive(CandidType, Deserialize, Serialize, Clone, Eq, PartialEq, Debug)]
+pub struct TokenDto {
+    pub id: TokenId,
+    pub symbol: String,
+    pub name: String,
+    pub decimals: u8,
+    pub chain: String,
+    pub enabled: bool,
+    pub balance: Option<u128>,
+    pub details: ChainTokenDetails, // Use the enum for chain-specific details
+}
 
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
 pub struct AddTokenInput {
