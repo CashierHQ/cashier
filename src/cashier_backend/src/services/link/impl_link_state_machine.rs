@@ -1,7 +1,5 @@
 use std::str::FromStr;
 
-use async_trait::async_trait;
-
 use cashier_backend_types::{
     dto::link::{
         CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDetailUpdateInput,
@@ -27,7 +25,6 @@ use crate::{
     utils::runtime::IcEnvironment,
 };
 
-#[async_trait(?Send)]
 impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
     // this method checking non-whitelist props are changed or not
     // if changed, return true
@@ -350,13 +347,13 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
                 link.template = Some(template);
                 link.link_type = Some(link_type);
                 self.link_repository.update(link.clone());
-                return Ok(link.clone());
+                Ok(link.clone())
             }
             // ====== invalid state =====
             else {
-                return Err(CanisterError::ValidationErrors(
+                Err(CanisterError::ValidationErrors(
                     "State transition failed for ChooseLinkType".to_string(),
-                ));
+                ))
             }
         } else if link.state == LinkState::AddAssets {
             let (link_use_action_max_count, asset_info) =
@@ -387,7 +384,7 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
                 link.link_use_action_max_count = link_use_action_max_count;
                 link.state = LinkState::Preview;
                 self.link_repository.update(link.clone());
-                return Ok(link.clone());
+                Ok(link.clone())
             }
             // ===== Back Go to =====
             else if link_state_goto == LinkStateMachineGoto::Back {
@@ -395,13 +392,13 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
                 link.asset_info = Some(asset_info);
                 link.link_use_action_max_count = link_use_action_max_count;
                 self.link_repository.update(link.clone());
-                return Ok(link.clone());
+                Ok(link.clone())
             }
             // ===== invalid state =====
             else {
-                return Err(CanisterError::ValidationErrors(
+                Err(CanisterError::ValidationErrors(
                     "State transition failed for AddAssets".to_string(),
-                ));
+                ))
             }
         } else if link.state == LinkState::Preview {
             if self.is_props_changed(&[], &params, &link) {
@@ -414,19 +411,19 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
             if link_state_goto == LinkStateMachineGoto::Continue {
                 link.state = LinkState::CreateLink;
                 self.link_repository.update(link.clone());
-                return Ok(link.clone());
+                Ok(link.clone())
             }
             // ===== Back Go to =====
             else if link_state_goto == LinkStateMachineGoto::Back {
                 link.state = LinkState::AddAssets;
                 self.link_repository.update(link.clone());
-                return Ok(link.clone());
+                Ok(link.clone())
             }
             // ===== invalid state =====
             else {
-                return Err(CanisterError::ValidationErrors(
+                Err(CanisterError::ValidationErrors(
                     "State transition failed for Preview".to_string(),
-                ));
+                ))
             }
         } else if link.state == LinkState::CreateLink {
             let create_action = self.prefetch_create_action(&link)?;
@@ -438,21 +435,21 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
                 })?;
 
                 if create_action.state != ActionState::Success {
-                    return Err(CanisterError::ValidationErrors(format!(
+                    Err(CanisterError::ValidationErrors(format!(
                         "Create action not success, current state: {:?}",
                         create_action.state
-                    )));
+                    )))
                 } else {
                     link.state = LinkState::Active;
                     self.link_repository.update(link.clone());
-                    return Ok(link.clone());
+                    Ok(link.clone())
                 }
             }
             // ===== invalid state =====
             else {
-                return Err(CanisterError::ValidationErrors(
+                Err(CanisterError::ValidationErrors(
                     "State transition failed for CreateLink".to_string(),
-                ));
+                ))
             }
         } else if link.state == LinkState::Active {
             if self.is_props_changed(&[], &params, &link) {
@@ -468,11 +465,11 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
                     link.state = LinkState::InactiveEnded;
                 }
                 self.link_repository.update(link.clone());
-                return Ok(link.clone());
+                Ok(link.clone())
             } else {
-                return Err(CanisterError::ValidationErrors(
+                Err(CanisterError::ValidationErrors(
                     "State transition failed for Active".to_string(),
-                ));
+                ))
             }
         } else if link.state == LinkState::Inactive {
             if self.is_props_changed(&[], &params, &link) {
@@ -488,33 +485,33 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
                         if action.state == ActionState::Success {
                             link.state = LinkState::InactiveEnded;
                             self.link_repository.update(link.clone());
-                            return Ok(link.clone());
+                            Ok(link.clone())
                         } else {
                             error!("withdraw_action not success {:#?}", action);
-                            return Err(CanisterError::ValidationErrors(
+                            Err(CanisterError::ValidationErrors(
                                 "Withdraw action not success".to_string(),
-                            ));
+                            ))
                         }
                     } else {
                         error!("withdraw_action is None");
-                        return Err(CanisterError::ValidationErrors(
+                        Err(CanisterError::ValidationErrors(
                             "Withdraw action not found".to_string(),
-                        ));
+                        ))
                     }
                 } else {
-                    return Err(CanisterError::ValidationErrors(
+                    Err(CanisterError::ValidationErrors(
                         "Link still has assets left".to_string(),
-                    ));
+                    ))
                 }
             } else {
-                return Err(CanisterError::ValidationErrors(
+                Err(CanisterError::ValidationErrors(
                     "State transition failed for Inactive".to_string(),
-                ));
+                ))
             }
         } else if link.state == LinkState::InactiveEnded {
-            return Err(CanisterError::ValidationErrors("Link is ended".to_string()));
+            Err(CanisterError::ValidationErrors("Link is ended".to_string()))
         } else {
-            return Err(CanisterError::ValidationErrors("Invalid state".to_string()));
+            Err(CanisterError::ValidationErrors("Invalid state".to_string()))
         }
         // !End of link state machine
     }

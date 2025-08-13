@@ -71,20 +71,18 @@ pub mod runtime {
     }
 }
 
+use candid::Principal;
 use rand::prelude::*;
 use uuid::Uuid;
 
-pub fn random_id_string(len: usize) -> String {
-    let mut rng = thread_rng();
-    let chars: Vec<char> = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        .chars()
-        .collect();
-    (0..len)
-        .map(|_| chars[rng.gen_range(0..chars.len())])
-        .collect()
+pub fn random_id_string() -> String {
+    let id = Uuid::new_v4();
+    id.to_string()
 }
 
 pub fn random_principal_id() -> String {
-    let id = Uuid::new_v4();
-    id.to_string()
+    let mut rng = thread_rng();
+    let mut arr = [0u8; 29];
+    rng.fill_bytes(&mut arr);
+    Principal::from_slice(&arr).to_text()
 }

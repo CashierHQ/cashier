@@ -2,7 +2,6 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::services::transaction_manager::traits::TransactionValidator;
-use async_trait::async_trait;
 use cashier_backend_types::{error::CanisterError, repository::transaction::v2::TransactionState};
 use log::{error, info};
 use std::time::Duration;
@@ -13,7 +12,6 @@ use crate::{
     utils::runtime::{IcEnvironment, RealIcEnvironment},
 };
 
-#[async_trait(?Send)]
 impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E> {
     fn spawn_tx_timeout_task(&self, tx_id: String) -> Result<(), String> {
         let timeout = get_tx_timeout_seconds();

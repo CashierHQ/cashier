@@ -45,7 +45,7 @@ mod tests {
     #[test]
     fn it_should_create_a_processing_transaction() {
         let repo = ProcessingTransactionRepository::new();
-        let transaction_id = random_id_string(10);
+        let transaction_id = random_id_string();
         let processing_tx = ProcessingTransaction {
             transaction_id: transaction_id.clone(),
             start_time: 1622547800,
@@ -59,7 +59,7 @@ mod tests {
     #[test]
     fn it_should_delete_a_processing_transaction() {
         let repo = ProcessingTransactionRepository::new();
-        let transaction_id = random_id_string(10);
+        let transaction_id = random_id_string();
         let processing_tx = ProcessingTransaction {
             transaction_id: transaction_id.clone(),
             start_time: 1622547800,
@@ -76,7 +76,7 @@ mod tests {
     #[test]
     fn it_should_check_if_a_processing_transaction_exists() {
         let repo = ProcessingTransactionRepository::new();
-        let transaction_id = random_id_string(10);
+        let transaction_id = random_id_string();
         let processing_tx = ProcessingTransaction {
             transaction_id: transaction_id.clone(),
             start_time: 1622547800,
@@ -93,8 +93,8 @@ mod tests {
     #[test]
     fn it_should_get_all_processing_transactions() {
         let repo = ProcessingTransactionRepository::new();
-        let transaction_id1 = random_id_string(10);
-        let transaction_id2 = random_id_string(10);
+        let transaction_id1 = random_id_string();
+        let transaction_id2 = random_id_string();
 
         let processing_tx1 = ProcessingTransaction {
             transaction_id: transaction_id1.clone(),

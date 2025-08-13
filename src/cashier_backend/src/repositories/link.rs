@@ -57,7 +57,7 @@ mod tests {
     #[test]
     fn it_should_create_a_link() {
         let repo = LinkRepository::new();
-        let link_id = random_id_string(10);
+        let link_id = random_id_string();
         let creator_id = random_principal_id();
         let link = Link {
             id: link_id,
@@ -84,7 +84,7 @@ mod tests {
     #[test]
     fn it_should_update_a_link() {
         let repo = LinkRepository::new();
-        let link_id = random_id_string(10);
+        let link_id = random_id_string();
         let creator_id1 = random_principal_id();
         let creator_id2 = random_principal_id();
         let link = Link {
@@ -129,7 +129,7 @@ mod tests {
     #[test]
     fn it_should_delete_a_link() {
         let repo = LinkRepository::new();
-        let link_id = random_id_string(10);
+        let link_id = random_id_string();
         let creator_id = random_principal_id();
         let link = Link {
             id: link_id,
@@ -155,8 +155,8 @@ mod tests {
     #[test]
     fn it_should_get_batch_of_links() {
         let repo = LinkRepository::new();
-        let link_id1 = random_id_string(10);
-        let link_id2 = random_id_string(10);
+        let link_id1 = random_id_string();
+        let link_id2 = random_id_string();
         let creator1 = random_principal_id();
         let creator2 = random_principal_id();
         let link1 = Link {
@@ -200,7 +200,7 @@ mod tests {
     #[test]
     fn it_should_get_a_link() {
         let repo = LinkRepository::new();
-        let link_id = random_id_string(10);
+        let link_id = random_id_string();
         let creator_id = random_principal_id();
         let link = Link {
             id: link_id.clone(),

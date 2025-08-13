@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use async_trait::async_trait;
 use candid::Principal;
 use uuid::Uuid;
 
@@ -25,7 +24,6 @@ use cashier_backend_types::{
     service::{link::TemporaryAction, tx_manager::UpdateActionArgs},
 };
 
-#[async_trait(?Send)]
 impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
     async fn create_action(
         &self,
