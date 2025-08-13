@@ -56,7 +56,7 @@ export type CanisterError = { 'InvalidDataError' : string } |
   } |
   { 'UnboundedError' : string } |
   { 'CallCanisterFailed' : string };
-export interface CashierBackendCanisterInitData {
+export interface CashierBackendInitData {
   'log_settings' : [] | [LogServiceSettings],
 }
 export interface CreateActionAnonymousInput {

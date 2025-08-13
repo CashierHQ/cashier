@@ -6,7 +6,7 @@ export const idlFactory = ({ IDL }) => {
     'enable_console' : IDL.Opt(IDL.Bool),
     'max_record_length' : IDL.Opt(IDL.Nat64),
   });
-  const CashierBackendCanisterInitData = IDL.Record({
+  const CashierBackendInitData = IDL.Record({
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
   const CreateActionInput = IDL.Record({
@@ -335,8 +335,8 @@ export const init = ({ IDL }) => {
     'enable_console' : IDL.Opt(IDL.Bool),
     'max_record_length' : IDL.Opt(IDL.Nat64),
   });
-  const CashierBackendCanisterInitData = IDL.Record({
+  const CashierBackendInitData = IDL.Record({
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
-  return [CashierBackendCanisterInitData];
+  return [CashierBackendInitData];
 };
