@@ -9,6 +9,7 @@ use ic_cdk::{query, update};
 
 pub mod types;
 
+use log::{debug, info, warn};
 use types::{AddTokenInput, AddTokensInput, UpdateTokenInput};
 
 fn ensure_not_anonymous() -> Result<String, String> {
@@ -57,6 +58,9 @@ fn validate_token_id(token_id: &str) -> Result<(), String> {
 
 #[update]
 pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
+    info!("[add_token]");
+    debug!("[add_token] input: {input:?}");
+
     let user_id = ensure_not_anonymous()?;
 
     // Validate token ID format
@@ -81,12 +85,15 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
     }
 
     let service = UserTokenService::new();
-    ic_cdk::println!("Adding token {} for user {}", input.token_id, user_id);
+    info!("Adding token {} for user {}", input.token_id, user_id);
     service.add_token(&user_id, &input.token_id)
 }
 
 #[update]
 pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
+    info!("[add_token_batch]");
+    debug!("[add_token_batch] input: {input:?}");
+
     let user_id = ensure_not_anonymous()?;
 
     // Validate all token IDs first
@@ -108,7 +115,7 @@ pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
             {
                 // Log the error but continue processing
                 // In the future, we might want to collect these errors and return them
-                ic_cdk::println!(
+                warn!(
                     "Failed to register token {} in registry, continuing...",
                     token_id
                 );
@@ -117,12 +124,15 @@ pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
     }
 
     let user_token_service = UserTokenService::new();
-    ic_cdk::println!("Adding tokens {:?} for user {}", input.token_ids, user_id);
+    info!("Adding tokens {:?} for user {}", input.token_ids, user_id);
     user_token_service.add_tokens(&user_id, &input.token_ids)
 }
 
 #[update]
 pub async fn update_token_registry(input: AddTokenInput) -> Result<(), String> {
+    info!("[update_token_registry]");
+    debug!("[update_token_registry] input: {input:?}");
+
     let _user_id = ensure_not_anonymous()?;
 
     // Validate token ID format
@@ -140,6 +150,9 @@ pub async fn update_token_registry(input: AddTokenInput) -> Result<(), String> {
 
 #[update]
 pub async fn update_token_registry_batch(input: AddTokensInput) -> Result<(), String> {
+    info!("[update_token_registry_batch]");
+    debug!("[update_token_registry_batch] input: {input:?}");
+
     let _user_id = ensure_not_anonymous()?;
 
     // Validate all token IDs first
@@ -161,6 +174,9 @@ pub async fn update_token_registry_batch(input: AddTokensInput) -> Result<(), St
 
 #[update]
 pub fn update_token_enable(input: UpdateTokenInput) -> Result<(), String> {
+    info!("[update_token_enable]");
+    debug!("[update_token_enable] input: {input:?}");
+
     let user_id = ensure_not_anonymous()?;
 
     // Validate token ID format
@@ -172,6 +188,8 @@ pub fn update_token_enable(input: UpdateTokenInput) -> Result<(), String> {
 
 #[query]
 pub fn list_tokens() -> Result<TokenListResponse, String> {
+    debug!("[list_tokens]");
+
     // Get registry metadata to check version
     let caller = msg_caller();
     let token_registry_service = TokenRegistryService::new();
@@ -281,6 +299,8 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
 
 #[update]
 pub fn sync_token_list() -> Result<(), String> {
+    info!("[sync_token_list]");
+
     let caller = msg_caller();
 
     if caller == Principal::anonymous() {
@@ -293,6 +313,9 @@ pub fn sync_token_list() -> Result<(), String> {
 
 #[update]
 pub fn update_token_balance(input: Vec<UpdateTokenBalanceInput>) -> Result<(), String> {
+    info!("[update_token_balance]");
+    debug!("[update_token_balance] input: {input:?}");
+
     let user_id = ensure_not_anonymous()?;
     let service = UserTokenService::new();
 

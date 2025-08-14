@@ -9,9 +9,11 @@ use cashier_common::icrc::{
     Icrc21ConsentMessageRequest, Icrc21DeviceSpec, Icrc21Error, Icrc21LineDisplayPage,
     Icrc21SupportedStandard, Icrc28TrustedOriginsResponse,
 };
+use log::{debug, info};
 
 #[query]
 fn icrc10_supported_standards() -> Vec<Icrc21SupportedStandard> {
+    debug!("[icrc10_supported_standards]");
     vec![
         Icrc21SupportedStandard {
             url: "https://github.com/dfinity/ICRC/blob/main/ICRCs/ICRC-10/ICRC-10.md".to_string(),
@@ -30,6 +32,8 @@ fn icrc10_supported_standards() -> Vec<Icrc21SupportedStandard> {
 
 #[update]
 fn icrc28_trusted_origins() -> Icrc28TrustedOriginsResponse {
+    info!("[icrc28_trusted_origins]");
+
     let trusted_origins = vec![
         String::from("http://localhost:3001"),
         String::from("http://localhost:3002"),
@@ -55,6 +59,12 @@ fn icrc28_trusted_origins() -> Icrc28TrustedOriginsResponse {
 fn icrc21_canister_call_consent_message(
     consent_msg_request: Icrc21ConsentMessageRequest,
 ) -> Result<Icrc21ConsentInfo, Icrc21Error> {
+    info!("[icrc21_canister_call_consent_message]");
+    debug!(
+        "[icrc21_canister_call_consent_message] method: {}, user_preferences: {:?}",
+        consent_msg_request.method, consent_msg_request.user_preferences
+    );
+
     let method = consent_msg_request.method.as_str();
 
     let consent_message = format!("You are call this method {method}");

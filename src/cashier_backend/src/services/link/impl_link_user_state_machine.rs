@@ -78,7 +78,7 @@ impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
         // Any other transition is invalid
         else {
             return Err(CanisterError::HandleLogicError(format!(
-                "current state {current_user_state:#?} is not allowed to transition: {goto:#?}"
+                "current state {current_user_state:?} is not allowed to transition: {goto:?}"
             )));
         }
 

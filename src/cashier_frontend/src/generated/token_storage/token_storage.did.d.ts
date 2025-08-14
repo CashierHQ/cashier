@@ -27,6 +27,12 @@ export type ChainTokenDetails = {
       'index_id' : [] | [Principal],
     }
   };
+export interface LogServiceSettings {
+  'log_filter' : [] | [string],
+  'in_memory_records' : [] | [bigint],
+  'enable_console' : [] | [boolean],
+  'max_record_length' : [] | [bigint],
+}
 export interface RegistryStats {
   'total_enabled_default' : bigint,
   'total_tokens' : bigint,
@@ -59,6 +65,9 @@ export interface TokenListResponse {
 export interface TokenRegistryMetadata {
   'last_updated' : bigint,
   'version' : bigint,
+}
+export interface TokenStorageInitData {
+  'log_settings' : [] | [LogServiceSettings],
 }
 export interface UpdateTokenBalanceInput {
   'balance' : bigint,

@@ -288,6 +288,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-timers",
  "ic-stable-structures 0.7.0",
+ "ic_mple_log",
  "icrc-ledger-types",
  "serde",
  "serde_cbor",
@@ -1259,11 +1260,13 @@ dependencies = [
  "ic-cdk",
  "ic-ledger-types",
  "ic_mple_client",
+ "ic_mple_log",
  "ic_mple_pocket_ic",
  "icrc-ledger-types",
  "serde",
  "serde_bytes",
  "token_storage_client",
+ "token_storage_types",
  "tokio",
  "uuid",
 ]
@@ -2503,6 +2506,7 @@ dependencies = [
  "serde_cbor",
  "serde_json",
  "thiserror 2.0.12",
+ "token_storage_types",
  "tokio",
  "vergen-gitcl",
 ]
@@ -2513,6 +2517,16 @@ version = "0.1.0"
 dependencies = [
  "cashier_common",
  "ic_mple_client",
+ "token_storage_types",
+]
+
+[[package]]
+name = "token_storage_types"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "ic_mple_log",
+ "serde",
 ]
 
 [[package]]
