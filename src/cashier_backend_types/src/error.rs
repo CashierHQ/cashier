@@ -3,6 +3,7 @@
 
 use candid::{CandidType, Error as CandidError};
 use ic_cdk::call::{CallFailed, CandidDecodeFailed};
+use rate_limit::RateLimitError;
 use serde::Deserialize;
 use thiserror::Error;
 
@@ -82,6 +83,9 @@ pub enum CanisterError {
 
     #[error("Call failed: {0}")]
     UnboundedError(String),
+
+    #[error("Rate limit error: {0}")]
+    RateLimitError(String),
 }
 
 impl CanisterError {
@@ -130,5 +134,11 @@ impl From<CandidError> for CanisterError {
 impl From<CallFailed> for CanisterError {
     fn from(err: CallFailed) -> Self {
         CanisterError::UnboundedError(format!("Call failed: {err}"))
+    }
+}
+
+impl From<RateLimitError> for CanisterError {
+    fn from(err: RateLimitError) -> Self {
+        CanisterError::RateLimitError(format!("Rate limit error: {err}"))
     }
 }

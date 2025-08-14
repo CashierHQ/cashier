@@ -43,8 +43,8 @@ impl PrecisionType {
 pub struct RateLimitConfig {
     /// Maximum number of requests allowed per window
     pub capacity: u64,
-    /// Duration of the rate limit window in seconds
-    pub window_size_seconds: u64,
+    /// Duration of the rate limit window in ticks
+    pub window_size: u64,
 }
 
 /// Service-wide settings for the rate limiter
@@ -146,7 +146,7 @@ impl RateLimitConfig {
     pub fn new(capacity: u64, window_size_seconds: u64) -> Self {
         Self {
             capacity,
-            window_size_seconds,
+            window_size: window_size_seconds,
         }
     }
 }

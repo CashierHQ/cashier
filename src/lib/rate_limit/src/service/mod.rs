@@ -59,7 +59,7 @@ where
                 message: "Capacity must be greater than 0".to_string(),
             });
         }
-        if config.window_size_seconds == 0 {
+        if config.window_size == 0 {
             return Err(ServiceError::InvalidConfiguration {
                 message: "Window size must be greater than 0".to_string(),
             });
@@ -87,7 +87,7 @@ where
             })?;
 
             let counter_config =
-                FixedWindowCounterCoreConfig::new(config.capacity, config.window_size_seconds);
+                FixedWindowCounterCoreConfig::new(config.capacity, config.window_size);
             let counter = FixedWindowCounterCore::from(counter_config);
             let timestamped_counter = LimiterEntry::new(counter, timestamp_ticks);
             self.runtime_limiters
@@ -117,11 +117,6 @@ where
         tokens: u64,
     ) -> Result<(), crate::algorithm::types::RateLimitError> {
         let timestamp_ticks = self.settings.precision.to_ticks(duration);
-        let timestamp_seconds = self
-            .settings
-            .precision
-            .from_ticks(timestamp_ticks)
-            .as_secs();
 
         let limiter_entry = self
             .get_or_create_limiter(&identifier, method, timestamp_ticks)
@@ -138,7 +133,7 @@ where
         // Try to acquire tokens from the underlying counter
         limiter_entry
             .counter()
-            .try_acquire_at(timestamp_seconds, tokens)
+            .try_acquire_at(timestamp_ticks, tokens)
     }
 
     /// Try to acquire a single token for a specific identifier and method
@@ -274,7 +269,7 @@ mod tests {
                 "test",
                 RateLimitConfig {
                     capacity: 10,
-                    window_size_seconds: 60,
+                    window_size: 60,
                 },
             )
             .unwrap();
@@ -283,7 +278,7 @@ mod tests {
                 "create_action",
                 RateLimitConfig {
                     capacity: 10,
-                    window_size_seconds: 60,
+                    window_size: 60,
                 },
             )
             .unwrap();
@@ -292,7 +287,7 @@ mod tests {
                 "add_token",
                 RateLimitConfig {
                     capacity: 60,
-                    window_size_seconds: 60,
+                    window_size: 60,
                 },
             )
             .unwrap();
@@ -307,7 +302,7 @@ mod tests {
                 "test",
                 RateLimitConfig {
                     capacity: 10,
-                    window_size_seconds: 60,
+                    window_size: 60,
                 },
             )
             .unwrap();
@@ -341,7 +336,7 @@ mod tests {
                 "method1",
                 RateLimitConfig {
                     capacity: 10,
-                    window_size_seconds: 60,
+                    window_size: 60,
                 },
             )
             .unwrap();
@@ -350,7 +345,7 @@ mod tests {
                 "method2",
                 RateLimitConfig {
                     capacity: 20,
-                    window_size_seconds: 120,
+                    window_size: 120,
                 },
             )
             .unwrap();
@@ -578,7 +573,7 @@ mod tests {
             "test",
             RateLimitConfig {
                 capacity: 0,
-                window_size_seconds: 60,
+                window_size: 60,
             },
         );
 
@@ -599,7 +594,7 @@ mod tests {
             "test",
             RateLimitConfig {
                 capacity: 10,
-                window_size_seconds: 0,
+                window_size: 0,
             },
         );
 
@@ -625,7 +620,7 @@ mod tests {
                 "test",
                 RateLimitConfig {
                     capacity: 10,
-                    window_size_seconds: 60,
+                    window_size: 60,
                 },
             )
             .unwrap();
@@ -646,7 +641,7 @@ mod tests {
                 "test",
                 RateLimitConfig {
                     capacity: 10,
-                    window_size_seconds: 60,
+                    window_size: 60,
                 },
             )
             .unwrap();

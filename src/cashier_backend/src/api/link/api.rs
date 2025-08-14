@@ -16,6 +16,10 @@ use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::service::link::{PaginateInput, PaginateResult};
 use ic_cdk::{query, update};
 use log::{debug, error, info};
+use rate_limit::service::types::{PrecisionType, ServiceSettings};
+use rate_limit::{RateLimitConfig, RateLimitService};
+use std::cell::RefCell;
+use std::time::Duration;
 
 use crate::services::link::traits::LinkUserStateMachine;
 use crate::{
@@ -28,6 +32,26 @@ use crate::{
     },
     utils::runtime::{IcEnvironment, RealIcEnvironment},
 };
+
+// Thread local rate limit service for create_link endpoint
+thread_local! {
+    static RATE_LIMIT_SERVICE: RefCell<RateLimitService<String>> = RefCell::new({
+        let mut service = RateLimitService::new_with_settings(
+            ServiceSettings::with_delete_threshold_and_precision(
+                60 * 60 * 1_000_000_000, // 1 hour cleanup threshold in nanoseconds
+                PrecisionType::Nanos
+            )
+        );
+
+        // Configure rate limits for create_link method
+        let _ = service.add_config(
+            "create_link",
+            RateLimitConfig::new(10, PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 10))), // 10 requests per 10 minutes
+        );
+
+        service
+    });
+}
 
 /// Retrieves a paginated list of links created by the authenticated caller.
 ///
@@ -392,13 +416,23 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Ok(LinkDto)` - Complete data of the newly created link
     /// * `Err(CanisterError)` - Error if link creation fails or validation errors occur
     pub async fn create_link(&self, input: CreateLinkInput) -> Result<LinkDto, CanisterError> {
-        let creator = self.ic_env.caller();
+        let caller = self.ic_env.caller();
+        let caller_id = caller.to_text();
+        let current_time = Duration::from_nanos(self.ic_env.time());
 
-        match self
-            .link_service
-            .create_link(creator.to_text(), input)
-            .await
-        {
+        // Check rate limit before processing
+        println!("Checking rate limit for caller: {caller_id}");
+        RATE_LIMIT_SERVICE
+            .with(|service| {
+                service.borrow_mut().try_acquire_one_at(
+                    caller_id.clone(),
+                    "create_link",
+                    current_time,
+                )
+            })
+            .map_err(|e| CanisterError::RateLimitError(e.to_string()))?;
+
+        match self.link_service.create_link(caller_id, input).await {
             Ok(link) => Ok(LinkDto::from(link)),
             Err(e) => {
                 error!("Failed to create link: {e:?}");
@@ -614,5 +648,128 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             .await?;
 
         Ok(LinkDto::from(updated_link))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::utils::test_utils::random_principal_id;
+
+    use super::*;
+    use cashier_backend_types::dto::link::LinkDetailUpdateAssetInfoInput;
+    use std::time::Duration;
+
+    // Mock environment for testing
+    #[derive(Clone)]
+    struct MockIcEnvironment {
+        caller: Principal,
+        time: u64,
+    }
+
+    impl IcEnvironment for MockIcEnvironment {
+        fn new() -> Self {
+            Self {
+                caller: Principal::from_text("2vxsx-fae").unwrap(),
+                time: 1640995200000000000, // Fixed timestamp in nanoseconds
+            }
+        }
+
+        fn caller(&self) -> Principal {
+            Principal::from_text("hmesu-auimt-hh4dk-f3y2h-bbhyg-tzjwk-r4mji-35zqj-sqykf-zkg6n-lxw")
+                .unwrap()
+        }
+
+        fn id(&self) -> Principal {
+            Principal::from_text("rdmx6-jaaaa-aaaah-qcaiq-cai").unwrap()
+        }
+
+        fn time(&self) -> u64 {
+            self.time
+        }
+
+        fn spawn<F>(&self, _future: F)
+        where
+            F: std::future::Future<Output = ()> + 'static,
+        {
+            // Mock implementation - do nothing
+        }
+
+        fn set_timer(
+            &self,
+            _delay: Duration,
+            _f: impl FnOnce() + 'static,
+        ) -> ic_cdk_timers::TimerId {
+            // Mock implementation - we need to create a valid TimerId
+            // In a real test environment, this would be properly mocked
+            // For now, we'll use a placeholder that won't actually be used
+            ic_cdk_timers::set_timer(_delay, _f)
+        }
+    }
+
+    fn create_test_link_input() -> CreateLinkInput {
+        CreateLinkInput {
+            title: "Test Link".to_string(),
+            link_use_action_max_count: 100,
+            asset_info: vec![LinkDetailUpdateAssetInfoInput {
+                address: "rrkah-fqaaa-aaaaa-aaaaq-cai".to_string(), // Valid Principal
+                chain: "IC".to_string(),
+                label: "ICP".to_string(),
+                amount_per_link_use_action: 1000000, // 0.01 ICP in e8s
+            }],
+            template: "SendTip".to_string(),
+            link_type: "SendTip".to_string(),
+            nft_image: None,
+            link_image_url: None,
+            description: Some("Test link for rate limiting".to_string()),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_create_link_rate_limiting() {
+        // Create API instance with mock environment
+        let api = LinkApi::<MockIcEnvironment> {
+            link_service: LinkService::get_instance(),
+            action_service: ActionService::get_instance(),
+            ic_env: MockIcEnvironment::new(),
+        };
+
+        let test_input = create_test_link_input();
+
+        let _result1 = api.create_link(test_input.clone()).await;
+
+        let mut rate_limit_triggered = false;
+        for i in 0..15 {
+            let result = api.create_link(test_input.clone()).await;
+            if let Err(CanisterError::ValidationErrors(msg)) = result {
+                if msg.contains("Rate limit exceeded") {
+                    rate_limit_triggered = true;
+                    break;
+                }
+            }
+        }
+
+        assert!(
+            rate_limit_triggered,
+            "Rate limiting should have been triggered after multiple requests"
+        );
+
+        // Test 3: Verify rate limit state
+        RATE_LIMIT_SERVICE.with(|service| {
+            let service = service.borrow();
+            let (counter_count, _, _) = service.get_stats();
+            assert!(
+                counter_count > 0,
+                "Rate limit service should have active counters"
+            );
+
+            // Verify the method is configured
+            let configured_methods: Vec<&String> = service.configured_methods().collect();
+            assert!(
+                configured_methods.contains(&&"create_link".to_string()),
+                "create_link method should be configured in rate limiter"
+            );
+        });
+
+        println!("Rate limiting test completed successfully!");
     }
 }

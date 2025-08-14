@@ -17,3 +17,4 @@ serde_cbor = { workspace = true }
 serde_json = { workspace = true }
 ic-cdk = { workspace = true }
 thiserror = { workspace = true }
+rate_limit = { workspace = true }
