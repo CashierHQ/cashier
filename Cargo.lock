@@ -2492,6 +2492,7 @@ dependencies = [
  "ic-stable-structures 0.7.0",
  "ic_mple_log",
  "ic_mple_pocket_ic",
+ "ic_mple_utils",
  "log",
  "serde",
  "serde_bytes",

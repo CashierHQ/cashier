@@ -1,3 +1,4 @@
+
 use futures::try_join;
 use token_storage_types::{IndexId, TokenId, chain::Chain, token::ChainTokenDetails};
 // Copyright (c) 2025 Cashier Protocol Labs
@@ -5,15 +6,15 @@ use token_storage_types::{IndexId, TokenId, chain::Chain, token::ChainTokenDetai
 
 use crate::{
     repository::{
-        token_registry::TokenRegistryRepository,
-        token_registry_metadata::TokenRegistryMetadataRepository,
+        token_registry::{ThreadlocalTokenRegistryRepositoryStorage, TokenRegistryRepository},
+        token_registry_metadata::{ThreadlocalTokenRegistryMetadataRepositoryStorage, TokenRegistryMetadataRepository},
     },
     types::{RegistryToken, TokenRegistryMetadata},
 };
 
 pub struct TokenRegistryService {
-    registry_repository: TokenRegistryRepository,
-    metadata_repository: TokenRegistryMetadataRepository,
+    registry_repository: TokenRegistryRepository<ThreadlocalTokenRegistryRepositoryStorage>,
+    metadata_repository: TokenRegistryMetadataRepository<ThreadlocalTokenRegistryMetadataRepositoryStorage>,
 }
 
 impl Default for TokenRegistryService {
@@ -47,7 +48,7 @@ impl TokenRegistryService {
 
     /// Register a new token in the registry
     pub async fn register_new_token(
-        &self,
+        &mut self,
         input: TokenId,
         index_id: Option<IndexId>,
     ) -> Result<TokenId, String> {
@@ -79,7 +80,7 @@ impl TokenRegistryService {
                     },
                     enabled_by_default: false,
                 };
-                self.registry_repository.register_token(registry_token)
+                self.registry_repository.register_token(registry_token, &mut self.metadata_repository)
             } // _ => Err(format!(
               //     "Registering tokens for chain '{}' is not supported yet",
               //     chain_str
@@ -88,7 +89,7 @@ impl TokenRegistryService {
     }
 
     /// Register a new token in the registry
-    pub async fn update_token_metadata(&self, input: TokenId) -> Result<TokenId, String> {
+    pub async fn update_token_metadata(&mut self, input: TokenId) -> Result<TokenId, String> {
         let current_record = self.get_token(&input);
 
         let Some(mut current_record) = current_record else {
@@ -118,7 +119,7 @@ impl TokenRegistryService {
                     index_id: current_record.details.index_id(),
                     fee,
                 };
-                self.registry_repository.register_token(current_record)
+                self.registry_repository.register_token(current_record, &mut self.metadata_repository)
             } // _ => Err(format!(
               //     "Registering tokens for chain '{}' is not supported yet",
               //     chain_str

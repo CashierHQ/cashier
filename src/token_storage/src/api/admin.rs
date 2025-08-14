@@ -13,7 +13,7 @@ use token_storage_types::{
 use crate::{
     build_data::canister_build_data,
     constant::default_tokens::get_default_tokens,
-    repository::token_registry::TokenRegistryRepository,
+    repository::{token_registry::TokenRegistryRepository, token_registry_metadata::TokenRegistryMetadataRepository},
     services::{
         token_registry::TokenRegistryService, user_preference::UserPreferenceService,
         user_token::UserTokenService,
@@ -97,9 +97,10 @@ pub fn admin_initialize_registry() -> Result<(), String> {
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
 
-    let registry = TokenRegistryRepository::new();
+    let mut registry = TokenRegistryRepository::new();
+    let mut metadata_registry = TokenRegistryMetadataRepository::new();
     registry.delete_all()?;
-    registry.add_bulk_tokens(get_default_tokens())?;
+    registry.add_bulk_tokens(get_default_tokens(), &mut metadata_registry)?;
 
     Ok(())
 }
