@@ -1,6 +1,4 @@
-use crate::services::token_registry::TokenRegistryService;
-use crate::services::user_preference::UserPreferenceService;
-use crate::services::user_token::UserTokenService;
+use crate::api::state::{ get_state};
 use candid::Principal;
 use ic_cdk::api::msg_caller;
 use ic_cdk::{query, update};
@@ -12,12 +10,19 @@ use token_storage_types::token::{
     UpdateTokenInput,
 };
 
-fn ensure_not_anonymous() -> Result<Principal, String> {
+/// Returns the principal of the caller, ensuring it is not anonymous.
+///
+/// # Panics
+///
+/// Panics if the caller is anonymous, indicating that anonymous calls
+/// are not allowed.
+
+fn not_anonymous_caller() -> Principal {
     let caller = msg_caller();
     if caller == Principal::anonymous() {
-        return Err("Anonymous caller is not allowed".to_string());
+        panic!("Anonymous caller is not allowed");
     }
-    Ok(caller)
+    caller
 }
 
 #[update]
@@ -25,7 +30,7 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
     info!("[add_token]");
     debug!("[add_token] input: {input:?}");
 
-    let user_id = ensure_not_anonymous()?;
+    let user_id = not_anonymous_caller();
 
     // Handle optional index_id - only parse if provided and not empty
     let index_pid = match &input.index_id {
@@ -35,7 +40,8 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
         _ => None, // If not provided or empty, use None
     };
 
-    let mut token_registry_service = TokenRegistryService::new();
+    let state = get_state();
+    let mut token_registry_service = state.token_registry;
 
     // Check if token exists in registry, if not, add it
     if token_registry_service.get_token(&input.token_id).is_none() {
@@ -45,19 +51,20 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
             .await?;
     }
 
-    let mut service = UserTokenService::new();
+    let mut user_token_service = state.user_token;
     info!("Adding token {:?} for user {}", input.token_id, user_id);
-    service.add_token(user_id, input.token_id)
+    user_token_service.add_token(user_id, input.token_id)
 }
 
 #[update]
 pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
     info!("[add_token_batch]");
-    let user_id = ensure_not_anonymous()?;
+    let user_id = not_anonymous_caller();
 
     debug!("[add_token_batch] user: {user_id}, input: {input:?}");
 
-    let mut token_registry_service = TokenRegistryService::new();
+    let state = get_state();
+    let mut token_registry_service = state.token_registry;
 
     // Check each token and add to registry if it doesn't exist
     for token_id in &input.token_ids {
@@ -79,7 +86,7 @@ pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
         }
     }
 
-    let mut user_token_service = UserTokenService::new();
+    let mut user_token_service = state.user_token;
     user_token_service.add_tokens(user_id, input.token_ids)
 }
 
@@ -88,8 +95,9 @@ pub async fn update_token_registry(input: AddTokenInput) -> Result<(), String> {
     info!("[update_token_registry]");
     debug!("[update_token_registry] input: {input:?}");
 
-    let _user_id = ensure_not_anonymous()?;
-    let mut token_registry_service = TokenRegistryService::new();
+    let _user_id = not_anonymous_caller();
+    let state = get_state();
+    let mut token_registry_service = state.token_registry;
 
     // Re-register the token to update its metadata from the ledger
     token_registry_service
@@ -104,9 +112,10 @@ pub async fn update_token_registry_batch(input: AddTokensInput) -> Result<(), St
     info!("[update_token_registry_batch]");
     debug!("[update_token_registry_batch] input: {input:?}");
 
-    let _user_id = ensure_not_anonymous()?;
+    let _user_id = not_anonymous_caller();
 
-    let mut token_registry_service = TokenRegistryService::new();
+    let state = get_state();
+    let mut token_registry_service = state.token_registry;
 
     // Re-register all tokens to update their metadata from the ledger
     for token_id in input.token_ids {
@@ -123,10 +132,11 @@ pub fn update_token_enable(input: UpdateTokenInput) -> Result<(), String> {
     info!("[update_token_enable]");
     debug!("[update_token_enable] input: {input:?}");
 
-    let user_id = ensure_not_anonymous()?;
+    let user_id = not_anonymous_caller();
 
-    let mut service = UserTokenService::new();
-    service.update_token_enable(user_id, input.token_id, input.is_enabled)
+    let state = get_state();
+    let mut user_token = state.user_token;
+    user_token.update_token_enable(user_id, input.token_id, input.is_enabled)
 }
 
 #[query]
@@ -135,9 +145,10 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
 
     // Get registry metadata to check version
     let caller = msg_caller();
-    let token_registry_service = TokenRegistryService::new();
-    let user_preference_service = UserPreferenceService::new();
-    let user_token_service = UserTokenService::new();
+    let state = get_state();
+    let token_registry_service = state.token_registry;
+    let user_preference_service = state.user_preference;
+    let user_token_service = state.user_token;
     let registry_metadata = token_registry_service.get_metadata();
 
     // Check if user preferences exist
@@ -259,7 +270,8 @@ pub fn sync_token_list() -> Result<(), String> {
         return Err("Not allowed for anonymous calls".to_string());
     }
 
-    let mut user_token_service = UserTokenService::new();
+    let state = get_state();
+    let mut user_token_service = state.user_token;
     user_token_service.sync_token_version(caller)
 }
 
@@ -268,15 +280,17 @@ pub fn update_token_balance(input: Vec<UpdateTokenBalanceInput>) -> Result<(), S
     info!("[update_token_balance]");
     debug!("[update_token_balance] input: {input:?}");
 
-    let user_id = ensure_not_anonymous()?;
-    let mut service = UserTokenService::new();
+    let user_id = not_anonymous_caller();
+
+    let state = get_state();
+    let mut user_token = state.user_token;
 
     let token_balances: Vec<(TokenId, u128)> = input
         .into_iter()
         .map(|item| (item.token_id, item.balance))
         .collect();
 
-    service.update_bulk_balances(user_id, token_balances);
+    user_token.update_bulk_balances(user_id, token_balances);
 
     Ok(())
 }

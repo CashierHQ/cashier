@@ -5,7 +5,7 @@ use token_storage_types::{IndexId, TokenId, chain::Chain, token::ChainTokenDetai
 
 use crate::{
     repository::{
-        Repositories, ThreadlocalRepositories, token_registry::TokenRegistryRepository,
+        Repositories, token_registry::TokenRegistryRepository,
         token_registry_metadata::TokenRegistryMetadataRepository,
     },
     types::{RegistryToken, TokenRegistryMetadata},
@@ -16,14 +16,8 @@ pub struct TokenRegistryService<R: Repositories> {
     metadata_repository: TokenRegistryMetadataRepository<R::TokenRegistryMetadata>,
 }
 
-impl TokenRegistryService<ThreadlocalRepositories> {
-    pub fn new() -> Self {
-        Self::new_with_repo(&ThreadlocalRepositories)
-    }
-}
-
 impl<R: Repositories> TokenRegistryService<R> {
-    pub fn new_with_repo(repo: &R) -> Self {
+    pub fn new(repo: &R) -> Self {
         Self {
             registry_repository: repo.token_registry(),
             metadata_repository: repo.token_registry_metadata(),
@@ -126,5 +120,42 @@ impl<R: Repositories> TokenRegistryService<R> {
               //     chain_str
               // )),
         }
+    }
+
+        // this function will update the token registry version if a new token is added
+    pub fn add_bulk_tokens(
+        &mut self,
+        tokens: Vec<RegistryToken>,
+    ) -> Result<Vec<TokenId>, String> {
+        let mut token_ids = Vec::new();
+        let mut any_new_tokens = false;
+
+        // First pass: check if any tokens are new
+        for input in &tokens {
+            let is_new = !self.registry_repository.contains(&input.details.token_id());
+            if is_new {
+                any_new_tokens = true;
+                break;
+            }
+        }
+
+        // Second pass: register all tokens
+        for input in tokens {
+            let token_id = self.registry_repository.register_token(input, &mut self.metadata_repository)?;
+            token_ids.push(token_id);
+        }
+
+        // If any tokens were new, increment the version
+        // (this is a safeguard in case register_token didn't increment)
+        if any_new_tokens {
+            self.metadata_repository.increase_version();
+        }
+
+        Ok(token_ids)
+    }
+
+    /// Delete all tokens from the registry
+    pub fn delete_all(&mut self) -> Result<(), String> {
+        self.registry_repository.delete_all()
     }
 }

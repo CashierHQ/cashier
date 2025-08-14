@@ -6,7 +6,7 @@ use token_storage_types::{TokenId, user::UserPreference};
 
 use crate::{
     repository::{
-        Repositories, ThreadlocalRepositories, balance_cache::BalanceCacheRepository,
+        Repositories, balance_cache::BalanceCacheRepository,
         token_registry::TokenRegistryRepository,
         token_registry_metadata::TokenRegistryMetadataRepository,
         user_preference::UserPreferenceRepository, user_token::UserTokenRepository,
@@ -22,14 +22,9 @@ pub struct UserTokenService<R: Repositories> {
     balance_cache_repository: BalanceCacheRepository<R::BalanceCache>,
 }
 
-impl UserTokenService<ThreadlocalRepositories> {
-    pub fn new() -> Self {
-        Self::new_with_repo(&ThreadlocalRepositories)
-    }
-}
-
 impl<R: Repositories> UserTokenService<R> {
-    pub fn new_with_repo(repo: &R) -> Self {
+
+    pub fn new(repo: &R) -> Self {
         Self {
             token_repository: repo.user_token(),
             registry_repository: repo.token_registry(),
