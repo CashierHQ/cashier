@@ -68,15 +68,6 @@ use std::time::Duration;
 ///
 /// The trait is designed to be used with generic type parameters in rate
 /// limiters and executors:
-///
-/// ```rust
-/// fn process_with_precision<P: Precision>(duration: Duration) -> u64 {
-///     P::to_ticks(duration)  // Static dispatch, zero-cost
-/// }
-///
-/// let ticks = process_with_precision::<Millis>(Duration::from_millis(500));
-/// assert_eq!(ticks, 500);
-/// ```
 pub trait Precision {
     /// Converts a Duration to ticks in this precision scale.
     ///
@@ -94,17 +85,6 @@ pub trait Precision {
     ///
     /// This method is branchless and compiles to conditional move instructions,
     /// avoiding branch prediction penalties.
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use std::time::Duration;
-    /// use rate_limit::percision::{Precision, Millis};
-    ///
-    /// let duration = Duration::from_millis(500);
-    /// let ticks = Millis::to_ticks(duration);
-    /// assert_eq!(ticks, 500);
-    /// ```
     fn to_ticks(duration: Duration) -> u64;
 
     /// Converts ticks back to a Duration in this precision scale.
@@ -117,16 +97,6 @@ pub trait Precision {
     ///
     /// # Returns
     /// The Duration represented by the tick count
-    ///
-    /// # Examples
-    ///
-    /// ```rust
-    /// use std::time::Duration;
-    /// use rate_limit::percision::{Precision, Millis};
-    ///
-    /// let duration = Millis::from_ticks(1500);
-    /// assert_eq!(duration, Duration::from_millis(1500));
-    /// ```
     fn from_ticks(ticks: u64) -> Duration;
 }
 

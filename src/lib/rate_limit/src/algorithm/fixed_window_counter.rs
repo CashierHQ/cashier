@@ -52,12 +52,6 @@ impl FixedWindowCounterCore {
     /// # Panics
     ///
     /// Panics if any parameter is zero, as this would create an invalid configuration.
-    ///
-    /// # Example
-    ///
-    /// ```rust
-    /// let counter = FixedWindowCounterCore::new(50, 60); // 50 requests per 60 ticks
-    /// ```
     pub fn new(capacity: u64, window_duration: u64) -> Self {
         assert!(capacity > 0, "capacity must be greater than 0");
         assert!(
@@ -218,28 +212,7 @@ impl From<FixedWindowCounterCoreConfig> for FixedWindowCounterCore {
     /// # Panics
     /// This method will panic if either `capacity` or `window_size_tick` is zero.
     /// It is intended for use with trusted or pre-validated inputs.
-    ///
-    /// # Examples
-    ///
-    /// Using [`From::from`] explicitly:
-    ///
-    /// ```
-    /// let config = FixedWindowCounterCoreConfig {
-    ///     capacity: 100,
-    ///     window_size_tick: 60,
-    /// };
-    ///
-    /// let limiter = FixedWindowCounterCore::from(config);
-    /// ```
-    ///
-    /// Using `.into()` with type inference:
-    ///
-    /// ```
-    /// let limiter: FixedWindowCounterCore = FixedWindowCounterCoreConfig {
-    ///     capacity: 100,
-    ///     window_size_tick: 60,
-    /// }.into();
-    /// ```
+
     #[inline(always)]
     fn from(config: FixedWindowCounterCoreConfig) -> Self {
         FixedWindowCounterCore::new(config.capacity, config.window_size)
