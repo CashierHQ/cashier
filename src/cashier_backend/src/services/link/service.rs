@@ -377,26 +377,26 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only creator can access this action type")]
-    fn it_should_panic_on_get_link_with_action_type_create_by_unauthorized_caller() {
+    fn it_should_error_on_get_link_with_action_type_create_by_unauthorized_caller() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let principal_id2 = random_principal_id();
         let created_link = create_link_fixture(&service, &principal_id1);
-        let caller = create_principal_fixture(&service, & principal_id2);
-        let (fetched_link, _action) = service
-            .get_link(
-                &created_link.id,
-                Some(GetLinkOptions {
-                    action_type: "CreateLink".to_string(),
-                }),
-                &caller,
-            )
-            .unwrap();
-        assert_eq!(fetched_link.id, created_link.id);
-        assert_eq!(fetched_link.title, created_link.title);
-        assert_eq!(fetched_link.description, created_link.description);
-        assert_eq!(fetched_link.link_type, created_link.link_type);
+        let caller = create_principal_fixture(&service, &principal_id2);
+        let result = service.get_link(
+            &created_link.id,
+            Some(GetLinkOptions {
+                action_type: "CreateLink".to_string(),
+            }),
+            &caller,
+        );
+        assert!(result.is_err());
+
+        if let Err(err) = result {
+            assert!(err.contains("Only creator can access this action type"));
+        } else {
+            panic!("Expected an error but got Ok");
+        }
     }
 
     #[test]
@@ -430,47 +430,47 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Only creator can access this action type")]
-    fn it_should_panic_on_get_link_with_action_type_withdraw_by_unauthorized_caller() {
+    fn it_should_error_on_get_link_with_action_type_withdraw_by_unauthorized_caller() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let principal_id2 = random_principal_id();
         let created_link = create_link_fixture(&service, &principal_id1);
         let caller = create_principal_fixture(&service, &principal_id2);
-        let (fetched_link, _action) = service
-            .get_link(
-                &created_link.id,
-                Some(GetLinkOptions {
-                    action_type: "Withdraw".to_string(),
-                }),
-                &caller,
-            )
-            .unwrap();
-        assert_eq!(fetched_link.id, created_link.id);
-        assert_eq!(fetched_link.title, created_link.title);
-        assert_eq!(fetched_link.description, created_link.description);
-        assert_eq!(fetched_link.link_type, created_link.link_type);
+        let result = service.get_link(
+            &created_link.id,
+            Some(GetLinkOptions {
+                action_type: "Withdraw".to_string(),
+            }),
+            &caller,
+        );
+        assert!(result.is_err());
+
+        if let Err(err) = result {
+            assert!(err.contains("Only creator can access this action type"));
+        } else {
+            panic!("Expected an error but got Ok");
+        }
     }
 
     #[test]
-    #[should_panic(expected = "Only creator can access this action type")]
-    fn it_should_panic_on_get_link_with_action_type_use_by_anonymous_caller() {
+    fn it_should_error_on_get_link_with_action_type_use_by_anonymous_caller() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let created_link = create_link_fixture(&service, &principal_id1);
-        let (fetched_link, _action) = service
-            .get_link(
-                &created_link.id,
-                Some(GetLinkOptions {
-                    action_type: "CreateLink".to_string(),
-                }),
-                &Principal::anonymous(),
-            )
-            .unwrap();
-        assert_eq!(fetched_link.id, created_link.id);
-        assert_eq!(fetched_link.title, created_link.title);
-        assert_eq!(fetched_link.description, created_link.description);
-        assert_eq!(fetched_link.link_type, created_link.link_type);
+        let result = service.get_link(
+            &created_link.id,
+            Some(GetLinkOptions {
+                action_type: "CreateLink".to_string(),
+            }),
+            &Principal::anonymous(),
+        );
+        assert!(result.is_err());
+
+        if let Err(err) = result {
+            assert!(err.contains("Only creator can access this action type"));
+        } else {
+            panic!("Expected an error but got Ok");
+        }
     }
 
     #[test]

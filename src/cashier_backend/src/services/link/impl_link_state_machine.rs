@@ -76,8 +76,6 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
                         return false;
                     }
 
-                    println!("params.link_image_url: {:?}", params.link_image_url);
-
                     if params.link_image_url != link.get_metadata("link_image_url") {
                         return true;
                     }
