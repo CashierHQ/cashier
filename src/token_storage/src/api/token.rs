@@ -47,14 +47,21 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
         // Token doesn't exist in registry, register it first
         token_registry_service
             .register_new_token(input.token_id.clone(), index_pid)
-            .await?;
+            .await
+            .expect("Failed to register token in registry");
     }
 
     let mut user_token_service = state.user_token;
     info!("Adding token {:?} for user {}", input.token_id, user_id);
-    user_token_service.add_token(user_id, input.token_id)
+    user_token_service
+        .add_token(user_id, input.token_id)
+        .expect("Failed to add token");
+    Ok(())
 }
 
+/// Add multiple tokens to the user's list
+///
+/// ToDo: this function is not atomic can leave the state in an inconsistent state
 #[update]
 pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
     info!("[add_token_batch]");
@@ -101,11 +108,15 @@ pub async fn update_token_registry(input: AddTokenInput) -> Result<(), String> {
     // Re-register the token to update its metadata from the ledger
     token_registry_service
         .update_token_metadata(input.token_id)
-        .await?;
+        .await
+        .expect("Failed to update token metadata");
 
     Ok(())
 }
 
+/// Update the metadata for multiple tokens
+///
+/// ToDo: this function is not atomic can leave the state in an inconsistent state
 #[update]
 pub async fn update_token_registry_batch(input: AddTokensInput) -> Result<(), String> {
     info!("[update_token_registry_batch]");
@@ -120,7 +131,8 @@ pub async fn update_token_registry_batch(input: AddTokensInput) -> Result<(), St
     for token_id in input.token_ids {
         token_registry_service
             .update_token_metadata(token_id)
-            .await?;
+            .await
+            .expect("Failed to update token metadata");
     }
 
     Ok(())
@@ -135,7 +147,10 @@ pub fn update_token_enable(input: UpdateTokenInput) -> Result<(), String> {
 
     let state = get_state();
     let mut user_token = state.user_token;
-    user_token.update_token_enable(user_id, input.token_id, input.is_enabled)
+    user_token
+        .update_token_enable(user_id, input.token_id, input.is_enabled)
+        .expect("Failed to update token enable");
+    Ok(())
 }
 
 #[query]
@@ -271,7 +286,11 @@ pub fn sync_token_list() -> Result<(), String> {
 
     let state = get_state();
     let mut user_token_service = state.user_token;
-    user_token_service.sync_token_version(caller)
+    user_token_service
+        .sync_token_version(caller)
+        .expect("Failed to sync token list");
+
+    Ok(())
 }
 
 #[update]
