@@ -158,7 +158,7 @@ mod tests {
 
         // Act
         repo.delete(&link.id);
-        
+
         // Assert
         let fetched_link = repo.get(&link.id);
         assert!(fetched_link.is_none());
@@ -207,7 +207,7 @@ mod tests {
 
         // Act
         let fetched_links = repo.get_batch(ids);
-        
+
         // Assert
         assert_eq!(fetched_links.len(), 2);
         assert_eq!(fetched_links.first().unwrap().id, link_id1);
@@ -238,7 +238,7 @@ mod tests {
 
         // Act
         let fetched_link = repo.get(&link_id);
-        
+
         // Assert
         assert!(fetched_link.is_some());
         assert_eq!(fetched_link.unwrap().id, link_id);
@@ -248,7 +248,7 @@ mod tests {
     fn it_should_create_a_link_repository_by_default() {
         // Act
         let repo = LinkRepository::default();
-        
+
         // Assert
         assert!(repo.get(&"default_link".to_string()).is_none());
     }

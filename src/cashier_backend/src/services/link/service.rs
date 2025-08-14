@@ -312,7 +312,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 mod tests {
     use super::*;
     use crate::services::link::test_fixtures::*;
-    use crate::utils::test_utils::{random_id_string, random_principal_id, runtime::MockIcEnvironment};
+    use crate::utils::test_utils::{
+        random_id_string, random_principal_id, runtime::MockIcEnvironment,
+    };
 
     #[test]
     fn it_should_fail_on_get_link_by_nonexistent_id() {
@@ -321,7 +323,7 @@ mod tests {
 
         // Act
         let result = service.get_link_by_id("nonexistent_link");
-        
+
         // Assert
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("link not found"));
@@ -334,7 +336,7 @@ mod tests {
 
         // Act
         let link = service.link_repository.get(&"default_link".to_string());
-        
+
         // Assert
         assert!(link.is_none());
 
@@ -363,7 +365,7 @@ mod tests {
 
         // Act
         let (fetched_link, _action) = service.get_link(&created_link.id, None, &creator).unwrap();
-        
+
         // Assert
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
@@ -543,7 +545,7 @@ mod tests {
 
         // Act
         let action = service.get_action_of_link("nonexistent_link", "Use", "user_id");
-        
+
         // Assert
         assert!(action.is_none());
     }
@@ -558,7 +560,7 @@ mod tests {
         let link_action =
             create_link_action_fixture(&service, &created_link.id, "Use", &creator.to_text());
 
-        // Act 
+        // Act
         let action = service.get_action_of_link(&created_link.id, "Use", &creator.to_text());
 
         // Assert
@@ -575,7 +577,7 @@ mod tests {
 
         // Act
         let result = service.get_link_action_user("nonexistent_link", "Use", "user_id");
-        
+
         // Assert
         assert!(result.is_ok());
         assert!(result.unwrap().is_none());
@@ -593,7 +595,7 @@ mod tests {
 
         // Act
         let result = service.get_link_action_user(&created_link.id, "Use", &creator.to_text());
-        
+
         // Assert
         assert!(result.is_ok());
         let action = result.unwrap();
@@ -623,10 +625,10 @@ mod tests {
         let created_link = create_link_fixture(&service, &creator.to_text());
         let link_action =
             create_link_action_fixture(&service, &created_link.id, "Use", &creator.to_text());
-        
+
         // Act
         let action = service.get_link_action(&created_link.id, "Use", &creator.to_text());
-        
+
         // Assert
         assert!(action.is_some());
         let action = action.unwrap();
@@ -671,7 +673,7 @@ mod tests {
 
         // Act
         let result = service.update_link_use_counter(&created_link.id, &link_action.action_id);
-        
+
         // Assert
         assert!(result.is_err());
         assert!(
@@ -703,7 +705,7 @@ mod tests {
 
         // Act
         let result = service.update_link_use_counter(&created_link.id, &link_action.action_id);
-        
+
         // Assert
         assert!(result.is_ok());
         assert!(!result.unwrap()); // Should return false since no update was made
@@ -730,7 +732,7 @@ mod tests {
 
         // Act
         let result = service.update_link_use_counter(&created_link.id, &link_action.action_id);
-        
+
         // Assert
         assert!(result.is_ok());
         assert!(result.unwrap()); // Should return true since update was made
@@ -771,7 +773,7 @@ mod tests {
 
         // Act
         let result = service.get_links_by_user_id(&user_id, &pagination);
-        
+
         // Assert
         assert!(result.is_ok());
         let links = result.unwrap();

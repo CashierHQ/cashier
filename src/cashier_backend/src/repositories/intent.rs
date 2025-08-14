@@ -215,7 +215,7 @@ mod tests {
 
         // Act
         let retrieved_intent = repo.get(&intent_id);
-        
+
         // Assert
         assert!(retrieved_intent.is_some());
         assert_eq!(retrieved_intent.unwrap().id, intent_id);
@@ -261,7 +261,7 @@ mod tests {
 
         // Act
         let retrieved_intents = repo.batch_get(vec![intent_id1.clone(), intent_id2.clone()]);
-        
+
         // Assert
         assert_eq!(retrieved_intents.len(), 2);
         assert_eq!(retrieved_intents.first().unwrap().id, intent_id1);

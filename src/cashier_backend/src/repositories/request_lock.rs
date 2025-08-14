@@ -89,7 +89,7 @@ mod tests {
 
         // Act
         repo.delete(&request_lock.key);
-        
+
         // Assert
         let exists = repo.exists(&request_lock.key);
         assert!(!exists);
@@ -114,7 +114,7 @@ mod tests {
 
         // Act
         let exists = repo.exists(&request_lock.key);
-        
+
         // Assert
         assert!(exists);
     }
@@ -128,7 +128,7 @@ mod tests {
         let result = repo.exists(&RequestLockKey::UserLinkAction {
             user_principal: "default".to_string(),
             link_id: "default".to_string(),
-            action_id: "default".to_string()
+            action_id: "default".to_string(),
         });
 
         // Assert

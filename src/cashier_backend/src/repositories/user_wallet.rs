@@ -92,7 +92,7 @@ mod tests {
         repo.create(wallet_key.clone(), user_wallet);
 
         // Assert
-        let retrieved_wallet = repo.get(&wallet_key);        
+        let retrieved_wallet = repo.get(&wallet_key);
         assert!(retrieved_wallet.is_some());
         assert_eq!(retrieved_wallet.unwrap().user_id, user_id);
     }

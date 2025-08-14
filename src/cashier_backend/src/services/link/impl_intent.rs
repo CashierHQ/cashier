@@ -668,7 +668,7 @@ mod tests {
 
         // Act
         let intents = service.look_up_intent(&link, &action_type).unwrap();
-        
+
         // Assert
         assert!(intents.is_none());
     }
@@ -683,7 +683,7 @@ mod tests {
 
         // Act
         let intents = service.look_up_intent(&link, &action_type).unwrap();
-        
+
         // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
@@ -720,7 +720,7 @@ mod tests {
 
         // Act
         let intents = service.look_up_intent(&link, &action_type).unwrap();
-        
+
         // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
@@ -847,7 +847,7 @@ mod tests {
 
         // Act
         let result = service.look_up_intent(&updated_link, &action_type);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -883,7 +883,7 @@ mod tests {
 
         // Act
         let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
-        
+
         // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
@@ -1006,7 +1006,7 @@ mod tests {
 
         // Act
         let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
-        
+
         // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
@@ -1030,7 +1030,7 @@ mod tests {
 
         // Act
         let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
-        
+
         // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
@@ -1054,7 +1054,7 @@ mod tests {
 
         // Act
         let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
-        
+
         // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
@@ -1078,7 +1078,7 @@ mod tests {
 
         // Act
         let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
-        
+
         // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
@@ -1095,7 +1095,7 @@ mod tests {
 
         // Act
         let result = service.get_assets_for_action(&link_id, &action_type);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -1119,7 +1119,7 @@ mod tests {
 
         // Act
         let result = service.get_assets_for_action(&link.id, &ActionType::Use);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -1138,7 +1138,7 @@ mod tests {
 
         // Act
         let result = service.get_assets_for_action(&link.id, &ActionType::Claim);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -1158,7 +1158,7 @@ mod tests {
 
         // Act
         let result = service.get_assets_for_action(&link.id, &ActionType::CreateLink);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -1191,7 +1191,7 @@ mod tests {
         let assets = service
             .get_assets_for_action(&updated_link.id, &ActionType::CreateLink)
             .unwrap();
-        
+
         // Assert
         assert_eq!(assets.len(), 2);
         let asset_addresses = assets.iter().map(|a| a.address.clone()).collect::<Vec<_>>();
@@ -1220,7 +1220,7 @@ mod tests {
         let assets = service
             .get_assets_for_action(&updated_link.id, &ActionType::CreateLink)
             .unwrap();
-        
+
         // Assert
         assert_eq!(assets.len(), 2);
         let asset_addresses = assets.iter().map(|a| a.address.clone()).collect::<Vec<_>>();
@@ -1237,7 +1237,7 @@ mod tests {
 
         // Act
         let result = service.get_assets_for_action(&link.id, &ActionType::Use);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -1270,7 +1270,7 @@ mod tests {
         let assets = service
             .get_assets_for_action(&updated_link.id, &ActionType::Use)
             .unwrap();
-        
+
         // Assert
         assert_eq!(assets.len(), 1);
         assert_eq!(assets[0].address, asset_address);

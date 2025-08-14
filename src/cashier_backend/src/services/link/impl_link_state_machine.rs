@@ -598,13 +598,15 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
 mod tests {
     use super::*;
     use crate::services::link::test_fixtures::*;
-    use crate::utils::test_utils::{random_principal_id, random_id_string, runtime::MockIcEnvironment};
+    use crate::utils::test_utils::{
+        random_id_string, random_principal_id, runtime::MockIcEnvironment,
+    };
     use cashier_backend_types::repository::{
         asset_info::AssetInfo,
         common::Chain,
         link::v1::{Link, LinkState, LinkType},
     };
-    use std::collections::{HashMap};
+    use std::collections::HashMap;
 
     #[test]
     fn it_should_false_is_props_changed_if_title_unchanged() {
@@ -641,7 +643,7 @@ mod tests {
 
         // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
-        
+
         // Assert
         assert!(!changed);
     }
@@ -681,7 +683,7 @@ mod tests {
 
         // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
-        
+
         // Assert
         assert!(changed);
     }
@@ -721,7 +723,7 @@ mod tests {
 
         // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
-        
+
         // Assert
         assert!(!changed);
     }
@@ -761,7 +763,7 @@ mod tests {
 
         // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
-        
+
         // Assert
         assert!(changed);
     }
@@ -800,7 +802,7 @@ mod tests {
 
         // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
-        
+
         // Assert
         assert!(!changed);
     }
@@ -1290,7 +1292,7 @@ mod tests {
 
         // Act
         let result = service.prefetch_template(&params);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -1318,7 +1320,7 @@ mod tests {
 
         // Act
         let result = service.prefetch_template(&params);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -1346,7 +1348,7 @@ mod tests {
 
         // Act
         let result = service.prefetch_template(&params);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -1374,7 +1376,7 @@ mod tests {
 
         // Act
         let result = service.prefetch_template(&params);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -1402,7 +1404,7 @@ mod tests {
 
         // Act
         let result = service.prefetch_template(&params);
-        
+
         // Assert
         assert!(result.is_ok());
 
@@ -1428,7 +1430,7 @@ mod tests {
 
         // Act
         let result = service.prefetch_params_add_asset(&params);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -1456,7 +1458,7 @@ mod tests {
 
         // Act
         let result = service.prefetch_params_add_asset(&params);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -1499,7 +1501,7 @@ mod tests {
 
         // Act
         let result = service.prefetch_params_add_asset(&params);
-        
+
         // Assert
         assert!(result.is_ok());
 
@@ -1516,10 +1518,10 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
-        
+
         // Act
         let result = service.prefetch_create_action(&link);
-        
+
         // Assert
         assert!(result.is_ok());
 
@@ -1542,7 +1544,7 @@ mod tests {
 
         // Act
         let result = service.prefetch_create_action(&link);
-        
+
         // Assert
         assert!(result.is_ok());
 
@@ -1586,7 +1588,7 @@ mod tests {
 
         // Act
         let result = service.prefetch_withdraw_action(&link);
-        
+
         // Assert
         assert!(result.is_ok());
 
