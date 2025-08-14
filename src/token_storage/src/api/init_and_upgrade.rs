@@ -9,8 +9,7 @@ use crate::{
     api::state::get_state,
     constant::default_tokens::get_default_tokens,
     repository::{
-        token_registry::TokenRegistryRepository,
-        token_registry_metadata::TokenRegistryMetadataRepository,
+        Repositories, ThreadlocalRepositories
     },
 };
 
@@ -23,8 +22,8 @@ fn init(init_data: TokenStorageInitData) {
 
     info!("[init] Starting Token Storage");
 
-    let mut registry = TokenRegistryRepository::new();
-    let mut metadata_registry = TokenRegistryMetadataRepository::new();
+    let mut registry = ThreadlocalRepositories.token_registry();
+    let mut metadata_registry = ThreadlocalRepositories.token_registry_metadata();
     match registry.add_bulk_tokens(get_default_tokens(), &mut metadata_registry) {
         Ok(_) => {}
         Err(e) => {

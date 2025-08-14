@@ -18,16 +18,9 @@ pub struct UserPreferenceRepository<S: Storage<UserPreferenceRepositoryStorage>>
     user_pref_storage: S,
 }
 
-impl UserPreferenceRepository<ThreadlocalUserPreferenceRepositoryStorage> {
-    /// Create a new UserPreferenceRepository
-    pub fn new() -> Self {
-        Self::new_with_storage(&super::USER_PREFERENCE_STORE)
-    }
-}
-
 impl<S: Storage<UserPreferenceRepositoryStorage>> UserPreferenceRepository<S> {
     /// Create a new UserPreferenceRepository
-    pub fn new_with_storage(storage: S) -> Self {
+    pub fn new(storage: S) -> Self {
         Self {
             user_pref_storage: storage,
         }

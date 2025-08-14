@@ -5,24 +5,25 @@ use candid::Principal;
 use token_storage_types::user::UserPreference;
 
 // File: src/token_storage/src/services/user_perference.rs
-use crate::repository::user_preference::{
-    ThreadlocalUserPreferenceRepositoryStorage, UserPreferenceRepository,
-};
+use crate::repository::{user_preference::{
+   UserPreferenceRepository,
+}, Repositories, ThreadlocalRepositories};
 
-pub struct UserPreferenceService {
-    repository: UserPreferenceRepository<ThreadlocalUserPreferenceRepositoryStorage>,
+pub struct UserPreferenceService<R: Repositories> {
+    repository: UserPreferenceRepository<R::UserPreference>,
 }
 
-impl Default for UserPreferenceService {
-    fn default() -> Self {
-        Self::new()
+impl UserPreferenceService<ThreadlocalRepositories> {
+    pub fn new() -> Self {
+        Self::new_with_repo(&ThreadlocalRepositories)
     }
 }
 
-impl UserPreferenceService {
-    pub fn new() -> Self {
+impl <R: Repositories> UserPreferenceService<R> {
+
+    pub fn new_with_repo(repo: &R) -> Self {
         Self {
-            repository: UserPreferenceRepository::new(),
+            repository: repo.user_preference(),
         }
     }
 

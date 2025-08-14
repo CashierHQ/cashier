@@ -14,8 +14,7 @@ use crate::{
     build_data::canister_build_data,
     constant::default_tokens::get_default_tokens,
     repository::{
-        token_registry::TokenRegistryRepository,
-        token_registry_metadata::TokenRegistryMetadataRepository,
+        Repositories, ThreadlocalRepositories
     },
     services::{
         token_registry::TokenRegistryService, user_preference::UserPreferenceService,
@@ -100,8 +99,8 @@ pub fn admin_initialize_registry() -> Result<(), String> {
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
 
-    let mut registry = TokenRegistryRepository::new();
-    let mut metadata_registry = TokenRegistryMetadataRepository::new();
+    let mut registry = ThreadlocalRepositories.token_registry();
+    let mut metadata_registry = ThreadlocalRepositories.token_registry_metadata();
     registry.delete_all()?;
     registry.add_bulk_tokens(get_default_tokens(), &mut metadata_registry)?;
 

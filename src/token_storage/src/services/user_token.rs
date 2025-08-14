@@ -6,41 +6,40 @@ use token_storage_types::{TokenId, user::UserPreference};
 
 use crate::{
     repository::{
-        balance_cache::{BalanceCacheRepository, ThreadlocalBalanceCacheRepositoryStorage},
-        token_registry::{ThreadlocalTokenRegistryRepositoryStorage, TokenRegistryRepository},
-        token_registry_metadata::{
-            ThreadlocalTokenRegistryMetadataRepositoryStorage, TokenRegistryMetadataRepository,
-        },
-        user_preference::{ThreadlocalUserPreferenceRepositoryStorage, UserPreferenceRepository},
-        user_token::{ThreadlocalTokenRepositoryStorage, TokenRepository},
+        balance_cache::BalanceCacheRepository,
+        token_registry::TokenRegistryRepository,
+        token_registry_metadata::TokenRegistryMetadataRepository,
+        user_preference::UserPreferenceRepository,
+        user_token::UserTokenRepository, Repositories, ThreadlocalRepositories,
     },
     types::UserTokenList,
 };
 
-pub struct UserTokenService {
-    token_repository: TokenRepository<ThreadlocalTokenRepositoryStorage>,
-    registry_repository: TokenRegistryRepository<ThreadlocalTokenRegistryRepositoryStorage>,
+pub struct UserTokenService<R: Repositories> {
+    token_repository: UserTokenRepository<R::UserToken>,
+    registry_repository: TokenRegistryRepository<R::TokenRegistry>,
     metadata_repository:
-        TokenRegistryMetadataRepository<ThreadlocalTokenRegistryMetadataRepositoryStorage>,
+        TokenRegistryMetadataRepository<R::TokenRegistryMetadata>,
     user_preference_repository:
-        UserPreferenceRepository<ThreadlocalUserPreferenceRepositoryStorage>,
-    balance_cache_repository: BalanceCacheRepository<ThreadlocalBalanceCacheRepositoryStorage>,
+        UserPreferenceRepository<R::UserPreference>,
+    balance_cache_repository: BalanceCacheRepository<R::BalanceCache>,
 }
 
-impl Default for UserTokenService {
-    fn default() -> Self {
-        Self::new()
+impl UserTokenService<ThreadlocalRepositories> {
+    pub fn new() -> Self {
+        Self::new_with_repo(&ThreadlocalRepositories)
     }
 }
 
-impl UserTokenService {
-    pub fn new() -> Self {
+
+impl <R: Repositories> UserTokenService<R> {
+    pub fn new_with_repo(repo: &R) -> Self {
         Self {
-            token_repository: TokenRepository::new(),
-            registry_repository: TokenRegistryRepository::new(),
-            metadata_repository: TokenRegistryMetadataRepository::new(),
-            user_preference_repository: UserPreferenceRepository::new(),
-            balance_cache_repository: BalanceCacheRepository::new(),
+            token_repository: repo.user_token(),
+            registry_repository: repo.token_registry(),
+            metadata_repository: repo.token_registry_metadata(),
+            user_preference_repository: repo.user_preference(),
+            balance_cache_repository: repo.balance_cache(),
         }
     }
 
