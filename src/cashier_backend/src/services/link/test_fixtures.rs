@@ -19,7 +19,6 @@ use std::str::FromStr;
 /// This function initializes a link with a random ID, sets its state, and associates it with a creator ID.
 /// It also creates a user link for the creator.
 /// Returns the created link.
-/// 
 pub fn create_link_fixture(service: &LinkService<MockIcEnvironment>, creator_id: &str) -> Link {
     let link_id = random_id_string();
     let link = Link {
@@ -46,6 +45,9 @@ pub fn create_link_fixture(service: &LinkService<MockIcEnvironment>, creator_id:
     link
 }
 
+/// Creates a principal fixture for testing purposes.
+/// This function initializes a principal with a given ID and associates it with a user wallet.
+/// Returns the created principal.
 pub fn create_principal_fixture(
     service: &LinkService<MockIcEnvironment>,
     principal_id: &str,
@@ -61,6 +63,10 @@ pub fn create_principal_fixture(
     principal
 }
 
+/// Creates a link action fixture for testing purposes.
+/// This function initializes a link action with a random ID, associates it with a link ID and
+/// an action type, and associates it with a user ID.
+/// Returns the created link action.
 pub fn create_link_action_fixture(
     service: &LinkService<MockIcEnvironment>,
     link_id: &str,
@@ -88,6 +94,9 @@ pub fn create_link_action_fixture(
     link_action
 }
 
+/// Creates a user wallet fixture for testing purposes.
+/// This function initializes a user wallet with a given wallet key and associates it with a user ID
+/// Returns the created user wallet.
 pub fn create_user_wallet_fixture(
     service: &LinkService<MockIcEnvironment>,
     wallet_key: &str,
