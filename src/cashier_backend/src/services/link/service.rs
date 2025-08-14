@@ -312,51 +312,41 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 mod tests {
     use super::*;
     use crate::services::link::test_fixtures::*;
-    use crate::utils::test_utils::random_principal_id;
-    use crate::utils::test_utils::{random_id_string, runtime::MockIcEnvironment};
-
-    #[test]
-    fn it_should_create_link_service_instance() {
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        assert!(
-            service
-                .link_repository
-                .get(&"default_link".to_string())
-                .is_none()
-        );
-        let link_actions =
-            service
-                .link_action_repository
-                .get_by_prefix("nonexistent", "type", "user");
-        assert!(link_actions.is_empty());
-        let actions = service.action_repository.get("nonexistent_action");
-        assert!(actions.is_none());
-        let user_wallet = service.user_wallet_repository.get("nonexistent_user");
-        assert!(user_wallet.is_none());
-        let user_links = service
-            .user_link_repository
-            .get_links_by_user_id("nonexistent_user", &PaginateInput::default());
-        assert!(user_links.data.is_empty());
-    }
+    use crate::utils::test_utils::{random_id_string, random_principal_id, runtime::MockIcEnvironment};
 
     #[test]
     fn it_should_fail_on_get_link_by_nonexistent_id() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+
+        // Act
         let result = service.get_link_by_id("nonexistent_link");
+        
+        // Assert
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("link not found"));
     }
 
     #[test]
     fn it_should_get_link_by_id() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+
+        // Act
         let link = service.link_repository.get(&"default_link".to_string());
+        
+        // Assert
         assert!(link.is_none());
 
+        // Arrange
         let principal_id = random_principal_id();
         let creator = create_principal_fixture(&service, &principal_id);
         let created_link = create_link_fixture(&service, &creator.to_text());
+
+        // Act
         let fetched_link = service.get_link_by_id(&created_link.id).unwrap();
+
+        // Assert
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
         assert_eq!(fetched_link.description, created_link.description);
@@ -365,11 +355,16 @@ mod tests {
 
     #[test]
     fn it_should_get_link_with_empty_options() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id = random_principal_id();
         let creator = create_principal_fixture(&service, &principal_id);
         let created_link = create_link_fixture(&service, &creator.to_text());
+
+        // Act
         let (fetched_link, _action) = service.get_link(&created_link.id, None, &creator).unwrap();
+        
+        // Assert
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
         assert_eq!(fetched_link.description, created_link.description);
@@ -378,11 +373,14 @@ mod tests {
 
     #[test]
     fn it_should_error_on_get_link_with_action_type_create_by_unauthorized_caller() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let principal_id2 = random_principal_id();
         let created_link = create_link_fixture(&service, &principal_id1);
         let caller = create_principal_fixture(&service, &principal_id2);
+
+        // Act
         let result = service.get_link(
             &created_link.id,
             Some(GetLinkOptions {
@@ -390,6 +388,8 @@ mod tests {
             }),
             &caller,
         );
+
+        // Assert
         assert!(result.is_err());
 
         if let Err(err) = result {
@@ -401,6 +401,7 @@ mod tests {
 
     #[test]
     fn it_should_get_link_with_action_type_create_by_creator() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&service, &principal_id1);
@@ -411,6 +412,8 @@ mod tests {
             "CreateLink",
             &creator.to_text(),
         );
+
+        // Act
         let (fetched_link, action) = service
             .get_link(
                 &created_link.id,
@@ -420,6 +423,8 @@ mod tests {
                 &creator,
             )
             .unwrap();
+
+        // Assert
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
         assert_eq!(fetched_link.description, created_link.description);
@@ -431,11 +436,14 @@ mod tests {
 
     #[test]
     fn it_should_error_on_get_link_with_action_type_withdraw_by_unauthorized_caller() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let principal_id2 = random_principal_id();
         let created_link = create_link_fixture(&service, &principal_id1);
         let caller = create_principal_fixture(&service, &principal_id2);
+
+        // Act
         let result = service.get_link(
             &created_link.id,
             Some(GetLinkOptions {
@@ -443,6 +451,8 @@ mod tests {
             }),
             &caller,
         );
+
+        // Assert
         assert!(result.is_err());
 
         if let Err(err) = result {
@@ -454,9 +464,12 @@ mod tests {
 
     #[test]
     fn it_should_error_on_get_link_with_action_type_use_by_anonymous_caller() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let created_link = create_link_fixture(&service, &principal_id1);
+
+        // Act
         let result = service.get_link(
             &created_link.id,
             Some(GetLinkOptions {
@@ -464,6 +477,8 @@ mod tests {
             }),
             &Principal::anonymous(),
         );
+
+        // Assert
         assert!(result.is_err());
 
         if let Err(err) = result {
@@ -475,9 +490,12 @@ mod tests {
 
     #[test]
     fn it_should_fail_on_get_link_with_action_type_use_and_nonexistent_id() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&service, &principal_id1);
+
+        // Act
         let result = service.get_link(
             "nonexistent_link",
             Some(GetLinkOptions {
@@ -485,16 +503,21 @@ mod tests {
             }),
             &creator,
         );
+
+        // Assert
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("link not found"));
     }
 
     #[test]
     fn it_should_get_link_with_action_type_use_by_creator() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&service, &principal_id1);
         let created_link = create_link_fixture(&service, &creator.to_text());
+
+        // Act
         let (fetched_link, action) = service
             .get_link(
                 &created_link.id,
@@ -504,6 +527,8 @@ mod tests {
                 &creator,
             )
             .unwrap();
+
+        // Assert
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
         assert_eq!(fetched_link.description, created_link.description);
@@ -513,20 +538,30 @@ mod tests {
 
     #[test]
     fn it_should_get_action_of_link_empty() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+
+        // Act
         let action = service.get_action_of_link("nonexistent_link", "Use", "user_id");
+        
+        // Assert
         assert!(action.is_none());
     }
 
     #[test]
     fn it_should_get_action_of_link() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&service, &principal_id1);
         let created_link = create_link_fixture(&service, &creator.to_text());
         let link_action =
             create_link_action_fixture(&service, &created_link.id, "Use", &creator.to_text());
+
+        // Act 
         let action = service.get_action_of_link(&created_link.id, "Use", &creator.to_text());
+
+        // Assert
         assert!(action.is_some());
         let action = action.unwrap();
         assert_eq!(action.id, link_action.action_id);
@@ -535,21 +570,31 @@ mod tests {
 
     #[test]
     fn it_should_get_link_action_user_empty() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+
+        // Act
         let result = service.get_link_action_user("nonexistent_link", "Use", "user_id");
+        
+        // Assert
         assert!(result.is_ok());
         assert!(result.unwrap().is_none());
     }
 
     #[test]
     fn it_should_get_link_action_user() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&service, &principal_id1);
         let created_link = create_link_fixture(&service, &creator.to_text());
         let link_action =
             create_link_action_fixture(&service, &created_link.id, "Use", &creator.to_text());
+
+        // Act
         let result = service.get_link_action_user(&created_link.id, "Use", &creator.to_text());
+        
+        // Assert
         assert!(result.is_ok());
         let action = result.unwrap();
         assert!(action.is_some());
@@ -559,20 +604,30 @@ mod tests {
 
     #[test]
     fn it_should_get_link_action_empty() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+
+        // Act
         let action = service.get_link_action("nonexistent_link", "Use", "user_id");
+
+        // Assert
         assert!(action.is_none());
     }
 
     #[test]
     fn it_should_get_link_action() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&service, &principal_id1);
         let created_link = create_link_fixture(&service, &creator.to_text());
         let link_action =
             create_link_action_fixture(&service, &created_link.id, "Use", &creator.to_text());
+        
+        // Act
         let action = service.get_link_action(&created_link.id, "Use", &creator.to_text());
+        
+        // Assert
         assert!(action.is_some());
         let action = action.unwrap();
         assert_eq!(action.id, link_action.action_id);
@@ -581,6 +636,7 @@ mod tests {
 
     #[test]
     fn it_should_fail_to_update_link_use_counter_if_exceed_max() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&service, &principal_id1);
@@ -613,8 +669,10 @@ mod tests {
         };
         service.link_repository.update(updated_link);
 
-        // Attempt to update link use counter with a non-successful action state
+        // Act
         let result = service.update_link_use_counter(&created_link.id, &link_action.action_id);
+        
+        // Assert
         assert!(result.is_err());
         assert!(
             result
@@ -626,6 +684,7 @@ mod tests {
 
     #[test]
     fn it_should_fail_update_link_use_counter_if_action_state_nonsuccess() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&service, &principal_id1);
@@ -642,14 +701,17 @@ mod tests {
         };
         service.action_repository.update(updated_action);
 
-        // Attempt to update link use counter with a non-successful action state
+        // Act
         let result = service.update_link_use_counter(&created_link.id, &link_action.action_id);
+        
+        // Assert
         assert!(result.is_ok());
         assert!(!result.unwrap()); // Should return false since no update was made
     }
 
     #[test]
     fn it_should_update_link_use_counter_on_successful_action() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&service, &principal_id1);
@@ -666,29 +728,31 @@ mod tests {
         };
         service.action_repository.update(updated_action);
 
-        // Update link use counter
+        // Act
         let result = service.update_link_use_counter(&created_link.id, &link_action.action_id);
+        
+        // Assert
         assert!(result.is_ok());
         assert!(result.unwrap()); // Should return true since update was made
 
-        // Verify the link was updated
         let updated_link = service.get_link_by_id(&created_link.id).unwrap();
         assert_eq!(updated_link.link_use_action_counter, 1);
     }
 
     #[test]
     fn it_should_get_links_by_principal() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let principal = create_principal_fixture(&service, &principal_id1);
         let user_id = principal.to_text();
-
-        // Create a link for the principal
         let created_link = create_link_fixture(&service, &user_id);
-
-        // Get links by principal
         let pagination = PaginateInput::default();
+
+        // Act
         let result = service.get_links_by_principal(&user_id, &pagination);
+
+        // Assert
         assert!(result.is_ok());
         let links = result.unwrap();
         assert_eq!(links.data.len(), 1);
@@ -697,17 +761,18 @@ mod tests {
 
     #[test]
     fn it_should_get_links_by_user_id() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let principal = create_principal_fixture(&service, &principal_id1);
         let user_id = principal.to_text();
-
-        // Create a link for the user
         let created_link = create_link_fixture(&service, &user_id);
-
-        // Get links by user ID
         let pagination = PaginateInput::default();
+
+        // Act
         let result = service.get_links_by_user_id(&user_id, &pagination);
+        
+        // Assert
         assert!(result.is_ok());
         let links = result.unwrap();
         assert_eq!(links.data.len(), 1);
@@ -716,18 +781,17 @@ mod tests {
 
     #[test]
     fn it_should_handle_link_handle_tx_update_if_previous_and_current_state_are_the_same() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&service, &principal_id1);
         let created_link = create_link_fixture(&service, &creator.to_text());
         let action_type = ActionType::Use;
         let action_id = random_id_string();
-
-        // Simulate a previous state that is the same as the current state
         let previous_state = ActionState::Created;
         let current_state = ActionState::Created;
 
-        // Call the method and expect it to return Ok without any updates
+        // Act
         let result = service.link_handle_tx_update(
             &previous_state,
             &current_state,
@@ -735,23 +799,24 @@ mod tests {
             &action_type,
             &action_id,
         );
+
+        // Assert
         assert!(result.is_ok());
     }
 
     #[test]
     fn it_should_handle_link_handle_tx_update_if_current_state_nonsuccess() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&service, &principal_id1);
         let created_link = create_link_fixture(&service, &creator.to_text());
         let action_type = ActionType::Use;
         let action_id = random_id_string();
-
-        // Simulate a previous state that is different from the current state
         let previous_state = ActionState::Created;
-        let current_state = ActionState::Fail; // Non-successful state
+        let current_state = ActionState::Fail;
 
-        // Call the method and expect it to return Ok without any updates
+        // Act
         let result = service.link_handle_tx_update(
             &previous_state,
             &current_state,
@@ -759,23 +824,24 @@ mod tests {
             &action_type,
             &action_id,
         );
+
+        // Assert
         assert!(result.is_ok());
     }
 
     #[test]
     fn it_should_handle_link_handle_tx_update_if_action_type_is_not_use() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&service, &principal_id1);
         let created_link = create_link_fixture(&service, &creator.to_text());
         let action_type = ActionType::CreateLink; // Not Use action type
         let action_id = random_id_string();
-
-        // Simulate a previous state that is different from the current state
         let previous_state = ActionState::Created;
         let current_state = ActionState::Success; // Successful state
 
-        // Call the method and expect it to return Ok without any updates
+        // Act
         let result = service.link_handle_tx_update(
             &previous_state,
             &current_state,
@@ -783,11 +849,14 @@ mod tests {
             &action_type,
             &action_id,
         );
+
+        // Assert
         assert!(result.is_ok());
     }
 
     #[test]
     fn it_should_fail_to_handle_link_handle_tx_update_due_to_counter_exceed_max() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&service, &principal_id1);
@@ -820,11 +889,10 @@ mod tests {
         };
         service.link_repository.update(updated_link);
 
-        // Simulate a previous state that is different from the current state
         let previous_state = ActionState::Created;
         let current_state = ActionState::Success; // Successful state
 
-        // Call the method and expect it to return Ok without any updates
+        // Act
         let result = service.link_handle_tx_update(
             &previous_state,
             &current_state,
@@ -832,11 +900,14 @@ mod tests {
             &action_type,
             &action_id,
         );
+
+        // Assert
         assert!(result.is_err());
     }
 
     #[test]
     fn it_should_handle_link_handle_tx_update_successful_action() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&service, &principal_id1);
@@ -852,12 +923,10 @@ mod tests {
             link_id: created_link.id.clone(),
         };
         service.action_repository.create(updated_action);
-
-        // Simulate a previous state that is different from the current state
         let previous_state = ActionState::Created;
         let current_state = ActionState::Success; // Successful state
 
-        // Call the method and expect it to return Ok with link properties updated
+        // Act
         let result = service.link_handle_tx_update(
             &previous_state,
             &current_state,
@@ -865,9 +934,9 @@ mod tests {
             &action_type,
             &action_id,
         );
-        assert!(result.is_ok());
 
-        // Verify the link was updated
+        // Assert
+        assert!(result.is_ok());
         let updated_link = service.get_link_by_id(&created_link.id).unwrap();
         assert_eq!(updated_link.link_use_action_counter, 1);
     }

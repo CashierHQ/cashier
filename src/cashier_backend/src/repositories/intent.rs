@@ -51,7 +51,7 @@ impl IntentRepository {
 mod tests {
     use super::*;
     use crate::utils::test_utils::random_id_string;
-    use candid::types::number::Nat;
+    use candid::Nat;
     use cashier_backend_types::repository::{
         common::{Asset, Chain, Wallet},
         intent::v2::{IntentState, IntentTask, IntentType, TransferData},
@@ -60,6 +60,7 @@ mod tests {
 
     #[test]
     fn it_should_batch_create_intents() {
+        // Arrange
         let repo = IntentRepository::new();
         let intent_id1 = random_id_string();
         let intent_id2 = random_id_string();
@@ -94,8 +95,10 @@ mod tests {
             label: "Another Test Intent".to_string(),
         };
 
+        // Act
         repo.batch_create(vec![intent1, intent2]);
 
+        // Assert
         let retrieved_intent = repo.get(&intent_id1);
         assert!(retrieved_intent.is_some());
         assert_eq!(retrieved_intent.unwrap().id, intent_id1);
@@ -107,6 +110,7 @@ mod tests {
 
     #[test]
     fn it_should_batch_update_intents() {
+        // Arrange
         let repo = IntentRepository::new();
         let intent_id1 = random_id_string();
         let intent_id2 = random_id_string();
@@ -173,8 +177,11 @@ mod tests {
             }),
             label: "Updated Another Test Intent".to_string(),
         };
+
+        // Act
         repo.batch_update(vec![updated_intent1, update_intent2]);
 
+        // Assert
         let retrieved_intent = repo.get(&intent_id1);
         assert!(retrieved_intent.is_some());
         assert_eq!(retrieved_intent.unwrap().state, IntentState::Success);
@@ -186,6 +193,7 @@ mod tests {
 
     #[test]
     fn it_should_get_an_intent() {
+        // Arrange
         let repo = IntentRepository::new();
         let intent_id = random_id_string();
         let intent = Intent {
@@ -205,13 +213,17 @@ mod tests {
         };
         repo.batch_create(vec![intent]);
 
+        // Act
         let retrieved_intent = repo.get(&intent_id);
+        
+        // Assert
         assert!(retrieved_intent.is_some());
         assert_eq!(retrieved_intent.unwrap().id, intent_id);
     }
 
     #[test]
     fn it_should_batch_get_intents() {
+        // Arrange
         let repo = IntentRepository::new();
         let intent_id1 = random_id_string();
         let intent_id2 = random_id_string();
@@ -247,7 +259,10 @@ mod tests {
         };
         repo.batch_create(vec![intent1, intent2]);
 
+        // Act
         let retrieved_intents = repo.batch_get(vec![intent_id1.clone(), intent_id2.clone()]);
+        
+        // Assert
         assert_eq!(retrieved_intents.len(), 2);
         assert_eq!(retrieved_intents.first().unwrap().id, intent_id1);
         assert_eq!(retrieved_intents.get(1).unwrap().id, intent_id2);
@@ -255,7 +270,10 @@ mod tests {
 
     #[test]
     fn it_should_create_intent_repository_by_default() {
+        // Act
         let repo = IntentRepository::default();
+
+        // Assert
         let intent = repo.get("nonexistent");
         assert!(intent.is_none());
 

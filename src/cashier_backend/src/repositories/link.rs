@@ -56,6 +56,7 @@ mod tests {
 
     #[test]
     fn it_should_create_a_link() {
+        // Arrange
         let repo = LinkRepository::new();
         let link_id = random_id_string();
         let creator_id = random_principal_id();
@@ -73,8 +74,11 @@ mod tests {
             link_use_action_counter: 0,
             link_use_action_max_count: 10,
         };
+
+        // Act
         repo.create(link.clone());
 
+        // Assert
         let fetched_link = repo.get(&link.id);
         assert!(fetched_link.is_some());
         let link_creator = fetched_link.unwrap().creator;
@@ -83,6 +87,7 @@ mod tests {
 
     #[test]
     fn it_should_update_a_link() {
+        // Arrange
         let repo = LinkRepository::new();
         let link_id = random_id_string();
         let creator_id1 = random_principal_id();
@@ -117,8 +122,11 @@ mod tests {
             link_use_action_counter: 1,
             link_use_action_max_count: 20,
         };
+
+        // Act
         repo.update(updated_link.clone());
 
+        // Assert
         let fetched_link = repo.get(&updated_link.id);
         assert!(fetched_link.is_some());
         let fetched_link = fetched_link.unwrap();
@@ -128,6 +136,7 @@ mod tests {
 
     #[test]
     fn it_should_delete_a_link() {
+        // Arrange
         let repo = LinkRepository::new();
         let link_id = random_id_string();
         let creator_id = random_principal_id();
@@ -147,13 +156,17 @@ mod tests {
         };
         repo.create(link.clone());
 
+        // Act
         repo.delete(&link.id);
+        
+        // Assert
         let fetched_link = repo.get(&link.id);
         assert!(fetched_link.is_none());
     }
 
     #[test]
     fn it_should_get_batch_of_links() {
+        // Arrange
         let repo = LinkRepository::new();
         let link_id1 = random_id_string();
         let link_id2 = random_id_string();
@@ -191,7 +204,11 @@ mod tests {
         repo.create(link2);
 
         let ids = vec![link_id1.clone(), link_id2.clone()];
+
+        // Act
         let fetched_links = repo.get_batch(ids);
+        
+        // Assert
         assert_eq!(fetched_links.len(), 2);
         assert_eq!(fetched_links.first().unwrap().id, link_id1);
         assert_eq!(fetched_links.get(1).unwrap().id, link_id2);
@@ -199,6 +216,7 @@ mod tests {
 
     #[test]
     fn it_should_get_a_link() {
+        // Arrange
         let repo = LinkRepository::new();
         let link_id = random_id_string();
         let creator_id = random_principal_id();
@@ -218,14 +236,20 @@ mod tests {
         };
         repo.create(link);
 
+        // Act
         let fetched_link = repo.get(&link_id);
+        
+        // Assert
         assert!(fetched_link.is_some());
         assert_eq!(fetched_link.unwrap().id, link_id);
     }
 
     #[test]
     fn it_should_create_a_link_repository_by_default() {
+        // Act
         let repo = LinkRepository::default();
+        
+        // Assert
         assert!(repo.get(&"default_link".to_string()).is_none());
     }
 }

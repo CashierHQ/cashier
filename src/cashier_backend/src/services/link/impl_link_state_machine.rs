@@ -598,36 +598,17 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
 mod tests {
     use super::*;
     use crate::services::link::test_fixtures::*;
-    use crate::utils::test_utils::random_principal_id;
-    use crate::utils::test_utils::{random_id_string, runtime::MockIcEnvironment};
+    use crate::utils::test_utils::{random_principal_id, random_id_string, runtime::MockIcEnvironment};
     use cashier_backend_types::repository::{
         asset_info::AssetInfo,
         common::Chain,
         link::v1::{Link, LinkState, LinkType},
     };
-    use std::collections::{HashMap, HashSet};
-
-    fn create_whitelist_props(prop_name: &str) -> Vec<String> {
-        let props_list = vec![
-            "title".to_string(),
-            "description".to_string(),
-            "asset_info".to_string(),
-            "template".to_string(),
-            "link_type".to_string(),
-            "link_image_url".to_string(),
-            "nft_image".to_string(),
-            "link_use_action_max_count".to_string(),
-        ];
-        let excluded: HashSet<String> = HashSet::from([prop_name.to_string()]);
-        let whitelist_props: Vec<String> = props_list
-            .into_iter()
-            .filter(|prop| !excluded.contains(prop))
-            .collect();
-        whitelist_props
-    }
+    use std::collections::{HashMap};
 
     #[test]
     fn it_should_false_is_props_changed_if_title_unchanged() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
@@ -657,12 +638,17 @@ mod tests {
         };
 
         let whitelist_props = create_whitelist_props("title");
+
+        // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
+        
+        // Assert
         assert!(!changed);
     }
 
     #[test]
     fn it_should_true_is_props_changed_if_title_changed() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
@@ -692,12 +678,17 @@ mod tests {
         };
 
         let whitelist_props = create_whitelist_props("title");
+
+        // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
+        
+        // Assert
         assert!(changed);
     }
 
     #[test]
     fn it_should_false_is_props_changed_if_description_unchanged() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
@@ -727,12 +718,17 @@ mod tests {
         };
 
         let whitelist_props = create_whitelist_props("description");
+
+        // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
+        
+        // Assert
         assert!(!changed);
     }
 
     #[test]
     fn it_should_true_is_props_changed_if_description_changed() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
@@ -762,12 +758,17 @@ mod tests {
         };
 
         let whitelist_props = create_whitelist_props("description");
+
+        // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
+        
+        // Assert
         assert!(changed);
     }
 
     #[test]
     fn it_should_false_is_props_changed_if_link_image_url_unchanged() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
@@ -795,14 +796,18 @@ mod tests {
             link_type: None,
             link_use_action_max_count: None,
         };
-
         let whitelist_props = create_whitelist_props("link_image_url");
+
+        // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
+        
+        // Assert
         assert!(!changed);
     }
 
     #[test]
     fn it_should_true_is_props_changed_if_link_image_url_changed() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let meta_data = HashMap::from([(
@@ -836,12 +841,17 @@ mod tests {
         };
 
         let whitelist_props = create_whitelist_props("link_image_url");
+
+        // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
+
+        // Assert
         assert!(changed);
     }
 
     #[test]
     fn it_should_false_is_props_changed_if_nft_image_unchanged() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
@@ -871,12 +881,17 @@ mod tests {
         };
 
         let whitelist_props = create_whitelist_props("nft_image");
+
+        // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
+
+        // Assert
         assert!(!changed);
     }
 
     #[test]
     fn it_should_true_is_props_changed_if_nft_image_changed() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let meta_data = HashMap::from([(
@@ -910,12 +925,17 @@ mod tests {
         };
 
         let whitelist_props = create_whitelist_props("nft_image");
+
+        // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
+
+        // Assert
         assert!(changed);
     }
 
     #[test]
     fn it_should_false_is_props_changed_if_link_type_unchanged() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
@@ -945,12 +965,17 @@ mod tests {
         };
 
         let whitelist_props = create_whitelist_props("link_type");
+
+        // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
+
+        // Assert
         assert!(!changed);
     }
 
     #[test]
     fn it_should_true_is_props_changed_if_link_type_changed() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
@@ -980,12 +1005,17 @@ mod tests {
         };
 
         let whitelist_props = create_whitelist_props("link_type");
+
+        // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
+
+        // Assert
         assert!(changed);
     }
 
     #[test]
     fn it_should_false_is_props_changed_if_asset_info_unchanged() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
@@ -1025,12 +1055,17 @@ mod tests {
         };
 
         let whitelist_props = create_whitelist_props("asset_info");
+
+        // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
+
+        // Assert
         assert!(!changed);
     }
 
     #[test]
     fn it_should_true_is_props_changed_if_asset_info_changed() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
@@ -1070,12 +1105,17 @@ mod tests {
         };
 
         let whitelist_props = create_whitelist_props("asset_info");
+
+        // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
+
+        // Assert
         assert!(changed);
     }
 
     #[test]
     fn it_should_false_is_props_changed_if_link_use_action_max_count_unchanged() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
@@ -1105,12 +1145,17 @@ mod tests {
         };
 
         let whitelist_props = create_whitelist_props("link_use_action_max_count");
+
+        // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
+
+        // Assert
         assert!(!changed);
     }
 
     #[test]
     fn it_should_true_is_props_changed_if_link_use_action_max_count_changed() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
@@ -1140,12 +1185,17 @@ mod tests {
         };
 
         let whitelist_props = create_whitelist_props("link_use_action_max_count");
+
+        // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
+
+        // Assert
         assert!(changed);
     }
 
     #[test]
     fn it_should_false_is_props_changed_if_template_unchanged() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
@@ -1175,12 +1225,17 @@ mod tests {
         };
 
         let whitelist_props = create_whitelist_props("template");
+
+        // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
+
+        // Assert
         assert!(!changed);
     }
 
     #[test]
     fn it_should_true_is_props_changed_if_template_changed() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let link = Link {
@@ -1210,12 +1265,17 @@ mod tests {
         };
 
         let whitelist_props = create_whitelist_props("template");
+
+        // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
+
+        // Assert
         assert!(changed);
     }
 
     #[test]
     fn it_should_error_prefetch_template_if_empty_template_in_params() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let params = LinkDetailUpdateInput {
             title: Some("Title".to_string()),
@@ -1228,7 +1288,10 @@ mod tests {
             link_use_action_max_count: None,
         };
 
+        // Act
         let result = service.prefetch_template(&params);
+        
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
@@ -1240,6 +1303,7 @@ mod tests {
 
     #[test]
     fn it_should_error_prefetch_template_if_empty_link_type_in_params() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let params = LinkDetailUpdateInput {
             title: Some("Title".to_string()),
@@ -1252,7 +1316,10 @@ mod tests {
             link_use_action_max_count: None,
         };
 
+        // Act
         let result = service.prefetch_template(&params);
+        
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
@@ -1264,6 +1331,7 @@ mod tests {
 
     #[test]
     fn it_should_error_prefetch_template_if_invalid_template_in_params() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let params = LinkDetailUpdateInput {
             title: Some("Title".to_string()),
@@ -1276,7 +1344,10 @@ mod tests {
             link_use_action_max_count: None,
         };
 
+        // Act
         let result = service.prefetch_template(&params);
+        
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
@@ -1288,6 +1359,7 @@ mod tests {
 
     #[test]
     fn it_should_error_prefetch_template_if_invalid_link_type_in_params() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let params = LinkDetailUpdateInput {
             title: Some("Title".to_string()),
@@ -1300,7 +1372,10 @@ mod tests {
             link_use_action_max_count: None,
         };
 
+        // Act
         let result = service.prefetch_template(&params);
+        
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
@@ -1312,6 +1387,7 @@ mod tests {
 
     #[test]
     fn it_should_prefetch_template() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let params = LinkDetailUpdateInput {
             title: Some("Title".to_string()),
@@ -1324,7 +1400,10 @@ mod tests {
             link_use_action_max_count: None,
         };
 
+        // Act
         let result = service.prefetch_template(&params);
+        
+        // Assert
         assert!(result.is_ok());
 
         let (template, link_type) = result.unwrap();
@@ -1334,6 +1413,7 @@ mod tests {
 
     #[test]
     fn it_should_error_prefetch_params_add_asset_if_empty_link_use_action_max_count() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let params = LinkDetailUpdateInput {
             title: Some("Title".to_string()),
@@ -1346,7 +1426,10 @@ mod tests {
             link_use_action_max_count: None,
         };
 
+        // Act
         let result = service.prefetch_params_add_asset(&params);
+        
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
@@ -1358,6 +1441,7 @@ mod tests {
 
     #[test]
     fn it_should_error_prefetch_params_add_asset_if_empty_asset_info() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let params = LinkDetailUpdateInput {
             title: Some("Title".to_string()),
@@ -1370,7 +1454,10 @@ mod tests {
             link_use_action_max_count: Some(10),
         };
 
+        // Act
         let result = service.prefetch_params_add_asset(&params);
+        
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
@@ -1382,6 +1469,7 @@ mod tests {
 
     #[test]
     fn it_should_prefetch_params_add_asset() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let address1 = random_principal_id();
         let address2 = random_principal_id();
@@ -1409,7 +1497,10 @@ mod tests {
             link_use_action_max_count: Some(10),
         };
 
+        // Act
         let result = service.prefetch_params_add_asset(&params);
+        
+        // Assert
         assert!(result.is_ok());
 
         let (link_use_action_max_count, asset_info_input) = result.unwrap();
@@ -1421,10 +1512,15 @@ mod tests {
 
     #[test]
     fn it_should_return_empty_prefetch_create_action_if_link_not_found() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
+        
+        // Act
         let result = service.prefetch_create_action(&link);
+        
+        // Assert
         assert!(result.is_ok());
 
         let action = result.unwrap();
@@ -1433,6 +1529,7 @@ mod tests {
 
     #[test]
     fn it_should_prefetch_create_action() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
@@ -1443,7 +1540,10 @@ mod tests {
             &creator_id,
         );
 
+        // Act
         let result = service.prefetch_create_action(&link);
+        
+        // Assert
         assert!(result.is_ok());
 
         let action = result.unwrap();
@@ -1456,10 +1556,15 @@ mod tests {
 
     #[test]
     fn it_should_return_empty_prefetch_withdraw_action_if_link_not_found() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
+
+        // Act
         let result = service.prefetch_withdraw_action(&link);
+
+        // Assert
         assert!(result.is_ok());
 
         let action = result.unwrap();
@@ -1468,6 +1573,7 @@ mod tests {
 
     #[test]
     fn it_should_prefetch_withdraw_action() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
@@ -1478,7 +1584,10 @@ mod tests {
             &creator_id,
         );
 
+        // Act
         let result = service.prefetch_withdraw_action(&link);
+        
+        // Assert
         assert!(result.is_ok());
 
         let action = result.unwrap();

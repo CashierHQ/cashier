@@ -13,7 +13,7 @@ use cashier_backend_types::repository::{
     user_link::v1::UserLink,
     user_wallet::v1::UserWallet,
 };
-use std::str::FromStr;
+use std::{str::FromStr, collections::HashSet};
 
 /// Creates a link fixture for testing purposes.
 /// This function initializes a link with a random ID, sets its state, and associates it with a creator ID.
@@ -109,4 +109,26 @@ pub fn create_user_wallet_fixture(
         .user_wallet_repository
         .create(wallet_key.to_string(), user_wallet.clone());
     user_wallet
+}
+
+/// Creates a whitelist of properties for testing purposes.
+/// This function generates a list of properties excluding the specified property name.
+/// Returns a vector of whitelisted properties.
+pub fn create_whitelist_props(prop_name: &str) -> Vec<String> {
+    let props_list = vec![
+        "title".to_string(),
+        "description".to_string(),
+        "asset_info".to_string(),
+        "template".to_string(),
+        "link_type".to_string(),
+        "link_image_url".to_string(),
+        "nft_image".to_string(),
+        "link_use_action_max_count".to_string(),
+    ];
+    let excluded: HashSet<String> = HashSet::from([prop_name.to_string()]);
+    let whitelist_props: Vec<String> = props_list
+        .into_iter()
+        .filter(|prop| !excluded.contains(prop))
+        .collect();
+    whitelist_props
 }
