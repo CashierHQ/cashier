@@ -105,12 +105,9 @@ impl<E: IcEnvironment + Clone> TransactionValidator<E> for TransactionManagerSer
                         }
                     }
                     Err(e) => {
-                        error!("[manual_check_status] Icrc1Transfer error: {}", e);
                         error!(
-                            "[manual_check_status] Icrc1Transfer error tx: {:?}",
-                            transaction
+                            "[manual_check_status] Icrc1Transfer error tx: {transaction:?} - error: {e:?}"
                         );
-
                         TransactionState::Fail
                     }
                 }

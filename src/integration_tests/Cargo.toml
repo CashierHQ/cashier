@@ -13,10 +13,12 @@ cashier_backend_types = { workspace = true }
 ic-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic_mple_client = { workspace = true, features = ["pocket-ic"]}
+ic_mple_log = { workspace = true }
 ic_mple_pocket_ic = { workspace = true }
 icrc-ledger-types = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 token_storage_client = { workspace = true }
+token_storage_types = { workspace = true }
 tokio = { workspace = true }
 uuid = { workspace = true }
