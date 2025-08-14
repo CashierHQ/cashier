@@ -4,7 +4,7 @@
 use cashier_backend_types::init::CashierBackendInitData;
 use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::info;
-use rate_limit::{RateLimitConfig, service::types::PrecisionType};
+use rate_limit::RateLimitConfig;
 use std::time::Duration;
 
 use crate::api::state::get_state;
@@ -24,37 +24,25 @@ fn init(init_data: CashierBackendInitData) {
     }
     if let Err(err) = state.rate_limit_service.add_config(
         "create_link",
-        RateLimitConfig::new(
-            10,
-            PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 10)),
-        ), // 10 requests per 10 minutes
+        RateLimitConfig::new(10, Duration::from_secs(60 * 10)), // 10 requests per 10 minutes
     ) {
         ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
     }
     if let Err(err) = state.rate_limit_service.add_config(
         "create_action",
-        RateLimitConfig::new(
-            10,
-            PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 5)),
-        ), // 10 requests per 5 minutes
+        RateLimitConfig::new(10, Duration::from_secs(60 * 5)), // 10 requests per 5 minutes
     ) {
         ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
     }
     if let Err(err) = state.rate_limit_service.add_config(
         "process_action",
-        RateLimitConfig::new(
-            10,
-            PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 5)),
-        ), // 10 requests per 5 minutes
+        RateLimitConfig::new(10, Duration::from_secs(60 * 5)), // 10 requests per 5 minutes
     ) {
         ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
     }
     if let Err(err) = state.rate_limit_service.add_config(
         "update_action",
-        RateLimitConfig::new(
-            10,
-            PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 5)),
-        ), // 10 requests per 5 minutes
+        RateLimitConfig::new(10, Duration::from_secs(60 * 5)), // 10 requests per 5 minutes
     ) {
         ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
     }
@@ -75,37 +63,25 @@ fn post_upgrade() {
     }
     if let Err(err) = state.rate_limit_service.add_config(
         "create_link",
-        RateLimitConfig::new(
-            10,
-            PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 10)),
-        ), // 10 requests per 10 minutes
+        RateLimitConfig::new(10, Duration::from_secs(60 * 10)), // 10 requests per 10 minutes
     ) {
         ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
     }
     if let Err(err) = state.rate_limit_service.add_config(
         "create_action",
-        RateLimitConfig::new(
-            10,
-            PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 5)),
-        ), // 10 requests per 5 minutes
+        RateLimitConfig::new(10, Duration::from_secs(60 * 5)), // 10 requests per 5 minutes
     ) {
         ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
     }
     if let Err(err) = state.rate_limit_service.add_config(
         "process_action",
-        RateLimitConfig::new(
-            10,
-            PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 5)),
-        ), // 10 requests per 5 minutes
+        RateLimitConfig::new(10, Duration::from_secs(60 * 5)), // 10 requests per 5 minutes
     ) {
         ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
     }
     if let Err(err) = state.rate_limit_service.add_config(
         "update_action",
-        RateLimitConfig::new(
-            10,
-            PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 5)),
-        ), // 10 requests per 5 minutes
+        RateLimitConfig::new(10, Duration::from_secs(60 * 5)), // 10 requests per 5 minutes
     ) {
         ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
     }

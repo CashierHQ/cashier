@@ -3,8 +3,9 @@ use std::{cell::RefCell, thread::LocalKey, time::Duration};
 use candid::Principal;
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 use rate_limit::{
-    RateLimitConfigService,
-    service::{PrecisionType, RateLimitState, ServiceSettings},
+    RateLimitService,
+    percision::Nanos,
+    service::{RateLimitState, ServiceSettings},
 };
 
 use crate::repositories::LOGGER_SERVICE_STORE;
@@ -16,22 +17,18 @@ pub enum RateLimitIdentifier {
 
 thread_local! {
     // Thread-local storage for the rate limit state
-    pub static RATE_LIMIT_STATE: RefCell<RateLimitState<RateLimitIdentifier>> = RefCell::new({
-        RateLimitState::new_with_settings(
-            ServiceSettings::with_delete_threshold_and_precision(
-                60 * 60 * 1_000_000_000, // 1 hour cleanup threshold in nanoseconds
-                PrecisionType::Nanos
-            )
-        )
+    pub static RATE_LIMIT_STATE: RefCell<RateLimitState<RateLimitIdentifier, Nanos>> = RefCell::new({
+        RateLimitState::new(ServiceSettings::new(Duration::from_secs(60 * 60)))
     });
 }
 
 /// The state of the canister
 pub struct CanisterState {
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
-    pub rate_limit_service: RateLimitConfigService<
+    pub rate_limit_service: RateLimitService<
         RateLimitIdentifier,
-        &'static LocalKey<RefCell<RateLimitState<RateLimitIdentifier>>>,
+        &'static LocalKey<RefCell<RateLimitState<RateLimitIdentifier, Nanos>>>,
+        Nanos,
     >,
 }
 
@@ -40,7 +37,7 @@ impl CanisterState {
     pub fn new() -> Self {
         CanisterState {
             log_service: LoggerConfigService::new(&LOGGER_SERVICE_STORE),
-            rate_limit_service: RateLimitConfigService::new(&RATE_LIMIT_STATE),
+            rate_limit_service: RateLimitService::new(&RATE_LIMIT_STATE),
         }
     }
 }

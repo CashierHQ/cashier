@@ -672,38 +672,26 @@ mod tests {
 
     use super::*;
     use cashier_backend_types::dto::link::LinkDetailUpdateAssetInfoInput;
-    use rate_limit::{RateLimitConfig, service::PrecisionType};
+    use rate_limit::RateLimitConfig;
     use std::time::Duration;
 
     fn init_rate_limit() {
         let mut state = get_state();
         let _ = state.rate_limit_service.add_config(
             "create_link",
-            RateLimitConfig::new(
-                10,
-                PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 10)),
-            ),
+            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
         );
         let _ = state.rate_limit_service.add_config(
             "create_action",
-            RateLimitConfig::new(
-                10,
-                PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 10)),
-            ),
+            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
         );
         let _ = state.rate_limit_service.add_config(
             "process_action",
-            RateLimitConfig::new(
-                10,
-                PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 10)),
-            ),
+            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
         );
         let _ = state.rate_limit_service.add_config(
             "update_action",
-            RateLimitConfig::new(
-                10,
-                PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 10)),
-            ),
+            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
         );
     }
 

@@ -1,41 +1,47 @@
-use std::time::Duration;
-
-use crate::{
-    algorithm::fixed_window_counter::{FixedWindowCounterCore, FixedWindowCounterCoreConfig},
-    percision::Precision,
-};
-
-pub mod config;
 pub mod types;
 pub use types::{LimiterEntry, RateLimitConfig, RateLimitState, ServiceError, ServiceSettings};
 
-/// Service for managing multiple rate limiters with different identifiers and methods
-pub struct RateLimitService<E, P>
+use ic_mple_utils::store::Storage;
+
+use crate::{RateLimitError, percision::Precision};
+
+/// Configuration service that manages rate limiting using pluggable storage
+/// This follows the same pattern as LoggerConfigService for consistency
+pub struct RateLimitService<E, S, P>
 where
     E: std::cmp::Eq + std::hash::Hash + Clone,
+    S: Storage<RateLimitState<E, P>>,
     P: Precision,
 {
-    /// Grouped state containing all rate limiting data
-    state: RateLimitState<E, P>,
+    storage: S,
+    _phantom: std::marker::PhantomData<E>,
+    _phantom_precision: std::marker::PhantomData<P>,
 }
 
-impl<E, P> RateLimitService<E, P>
+impl<E, S, P> RateLimitService<E, S, P>
 where
     E: std::cmp::Eq + std::hash::Hash + Clone,
-    P: Precision,
+    S: Storage<RateLimitState<E, P>>,
+    P: Precision + Clone,
 {
-    /// Create a new empty rate limit service with default settings
-    pub fn new(settings: ServiceSettings<P>) -> Self {
+    /// Creates a new RateLimitConfigService with the given storage
+    pub fn new(storage: S) -> Self {
         Self {
-            state: RateLimitState::new(settings),
+            storage,
+            _phantom: std::marker::PhantomData,
+            _phantom_precision: std::marker::PhantomData,
         }
     }
 
-    /// Configure rate limits for a specific method (set once during initialization)
-    ///
-    /// # Arguments
-    /// * `method` - The method/action being rate limited (e.g., "login", "api_call", "send_message")
-    /// * `config` - Rate limit configuration for this method
+    /// Initialize the rate limit service with settings
+    pub fn init(&mut self, settings: ServiceSettings<P>) -> Result<(), ServiceError> {
+        self.storage.with_borrow_mut(|state| {
+            state.settings = settings;
+            Ok(())
+        })
+    }
+
+    /// Add a rate limit configuration for a method
     pub fn add_config(
         &mut self,
         method: &str,
@@ -53,159 +59,142 @@ where
             });
         }
 
-        self.state.method_configs.insert(method.to_string(), config);
-        Ok(())
+        self.storage.with_borrow_mut(|state| {
+            state.method_configs.insert(method.to_string(), config);
+            Ok(())
+        })
     }
 
-    /// Get or create a rate limiter for a specific (identifier, method) combination
-    fn get_or_create_limiter(
-        &mut self,
-        identifier: &E,
-        method: &str,
-        timestamp_ticks: u64,
-    ) -> Result<&mut LimiterEntry, ServiceError> {
-        let key = (identifier.clone(), method.to_string());
-
-        // If limiter doesn't exist, create it using the method's configuration
-        if !self.state.runtime_limiters.contains_key(&key) {
-            let config = self.state.method_configs.get(method).ok_or_else(|| {
-                ServiceError::MethodNotConfigured {
-                    method: method.to_string(),
-                }
-            })?;
-
-            let counter_config =
-                FixedWindowCounterCoreConfig::new(config.capacity, config.window_size);
-            let counter = FixedWindowCounterCore::from(counter_config);
-            let timestamped_counter = LimiterEntry::new(counter, timestamp_ticks);
-            self.state
-                .runtime_limiters
-                .insert(key.clone(), timestamped_counter);
-        }
-
-        Ok(self.state.runtime_limiters.get_mut(&key).unwrap())
-    }
-
-    /// Try to acquire tokens for a specific identifier and method at the current timestamp
-    ///
-    /// # Arguments
-    /// * `identifier` - The user/entity identifier
-    /// * `method` - The method/action being rate limited
-    /// * `duration` - Current duration
-    /// * `tokens` - Number of tokens to acquire
-    ///
-    /// # Returns
-    /// * `Ok(())` - If tokens were successfully acquired
-    /// * `Err(RateLimitError)` - Detailed error with retry information
-    /// * `Err(ServiceError)` - Service configuration error
-    pub fn try_acquire_at(
-        &mut self,
-        identifier: E,
-        method: &str,
-        duration: Duration,
-        tokens: u64,
-    ) -> Result<(), crate::algorithm::types::RateLimitError> {
-        let timestamp_ticks = P::to_ticks(duration);
-
-        let limiter_entry = self
-            .get_or_create_limiter(&identifier, method, timestamp_ticks)
-            .map_err(
-                |_| crate::algorithm::types::RateLimitError::BeyondCapacity {
-                    acquiring: tokens,
-                    capacity: 0,
-                },
-            )?;
-
-        // Update the access timestamp
-        limiter_entry.touch(timestamp_ticks);
-
-        // Try to acquire tokens from the underlying counter
-        limiter_entry
-            .counter()
-            .try_acquire_at(timestamp_ticks, tokens)
-    }
-
-    /// Try to acquire a single token for a specific identifier and method
-    ///
-    /// # Arguments
-    /// * `identifier` - The user/entity identifier
-    /// * `method` - The method/action being rate limited
-    /// * `duration` - Current duration
-    ///
-    /// # Returns
-    /// * `Ok(())` - If token was successfully acquired
-    /// * `Err(RateLimitError)` - Detailed error with retry information
-    /// * `Err(ServiceError)` - Service configuration error
+    /// Try to acquire a single token
     pub fn try_acquire_one_at(
         &mut self,
         identifier: E,
         method: &str,
-        duration: Duration,
-    ) -> Result<(), crate::algorithm::types::RateLimitError> {
-        self.try_acquire_at(identifier, method, duration, 1)
+        duration: std::time::Duration,
+    ) -> Result<(), RateLimitError> {
+        self.storage.with_borrow_mut(|state| {
+            let timestamp_ticks = P::to_ticks(duration);
+            let key = (identifier.clone(), method.to_string());
+
+            // If limiter doesn't exist, create it using the method's configuration
+            if !state.runtime_limiters.contains_key(&key) {
+                let config =
+                    state
+                        .method_configs
+                        .get(method)
+                        .ok_or(RateLimitError::BeyondCapacity {
+                            acquiring: 1,
+                            capacity: 0,
+                        })?;
+
+                let counter_config =
+                    crate::algorithm::fixed_window_counter::FixedWindowCounterCoreConfig::new(
+                        config.capacity,
+                        config.window_size,
+                    );
+                let counter = crate::algorithm::fixed_window_counter::FixedWindowCounterCore::from(
+                    counter_config,
+                );
+                let limiter = LimiterEntry::new(counter, timestamp_ticks);
+                state.runtime_limiters.insert(key.clone(), limiter);
+            }
+
+            let limiter_entry = state.runtime_limiters.get_mut(&key).unwrap();
+            limiter_entry.touch(timestamp_ticks);
+            limiter_entry
+                .counter_mut()
+                .try_acquire_at(timestamp_ticks, 1)
+        })
     }
 
-    /// Clean up old counters based on the delete threshold
-    fn cleanup_old_counters(&mut self, current_timestamp_ticks: u64, threshold_ticks: u64) {
-        let cutoff_time = current_timestamp_ticks.saturating_sub(threshold_ticks);
+    /// Try to acquire multiple tokens
+    pub fn try_acquire_at(
+        &mut self,
+        identifier: E,
+        method: &str,
+        duration: std::time::Duration,
+        tokens: u64,
+    ) -> Result<(), RateLimitError> {
+        self.storage.with_borrow_mut(|state| {
+            let timestamp_ticks = P::to_ticks(duration);
+            let key = (identifier.clone(), method.to_string());
 
-        self.state
-            .runtime_limiters
-            .retain(|_, limiter_entry| limiter_entry.updated_time() > cutoff_time);
+            // If limiter doesn't exist, create it using the method's configuration
+            if !state.runtime_limiters.contains_key(&key) {
+                let config = state.method_configs.get(method).ok_or(
+                    RateLimitError::MethodNotConfigured {
+                        method: method.to_string(),
+                    },
+                )?;
+
+                let counter_config =
+                    crate::algorithm::fixed_window_counter::FixedWindowCounterCoreConfig::new(
+                        config.capacity,
+                        config.window_size,
+                    );
+                let counter = crate::algorithm::fixed_window_counter::FixedWindowCounterCore::from(
+                    counter_config,
+                );
+                let timestamped_counter = LimiterEntry::new(counter, timestamp_ticks);
+                state
+                    .runtime_limiters
+                    .insert(key.clone(), timestamped_counter);
+            }
+
+            let limiter_entry = state.runtime_limiters.get_mut(&key).unwrap();
+            limiter_entry.touch(timestamp_ticks);
+            limiter_entry
+                .counter_mut()
+                .try_acquire_at(timestamp_ticks, tokens)
+        })
+    }
+
+    /// Get statistics about the current runtime limiters
+    pub fn get_stats(&self) -> (usize, Option<u64>, Option<u64>) {
+        self.storage.with_borrow(|state| {
+            let total_counters = state.runtime_limiters.len();
+            let oldest_created = state
+                .runtime_limiters
+                .values()
+                .map(|counter| counter.created_time())
+                .min();
+            let oldest_updated = state
+                .runtime_limiters
+                .values()
+                .map(|counter| counter.updated_time())
+                .min();
+
+            (total_counters, oldest_created, oldest_updated)
+        })
     }
 
     /// Get all configured methods
-    ///
-    /// # Returns
-    /// Iterator over all configured method names
-    pub fn configured_methods(&self) -> impl Iterator<Item = &String> {
-        self.state.method_configs.keys()
+    pub fn configured_methods(&self) -> Vec<String> {
+        self.storage
+            .with_borrow(|state| state.method_configs.keys().cloned().collect())
     }
 
-    /// Get the current service settings
-    pub fn settings(&self) -> &ServiceSettings<P> {
-        &self.state.settings
+    /// Force cleanup of old counters
+    pub fn force_cleanup(&mut self, current_timestamp_ticks: u64, threshold_ticks: u64) -> usize {
+        self.storage.with_borrow_mut(|state| {
+            let initial_count = state.runtime_limiters.len();
+            let cutoff_time = current_timestamp_ticks.saturating_sub(threshold_ticks);
+            state
+                .runtime_limiters
+                .retain(|_, limiter_entry| limiter_entry.updated_time() > cutoff_time);
+            initial_count.saturating_sub(state.runtime_limiters.len())
+        })
+    }
+
+    pub fn settings(&self) -> ServiceSettings<P> {
+        self.storage.with_borrow(|state| state.settings.clone())
     }
 
     /// Update service settings
     pub fn update_settings(&mut self, settings: ServiceSettings<P>) {
-        self.state.settings = settings;
-    }
-
-    /// Get statistics about the current runtime limiters
-    ///
-    /// # Returns
-    /// A tuple containing (total_counters, oldest_created_time, oldest_updated_time)
-    pub fn get_stats(&self) -> (usize, Option<u64>, Option<u64>) {
-        let total_counters = self.state.runtime_limiters.len();
-        let oldest_created = self
-            .state
-            .runtime_limiters
-            .values()
-            .map(|counter| counter.created_time())
-            .min();
-        let oldest_updated = self
-            .state
-            .runtime_limiters
-            .values()
-            .map(|counter| counter.updated_time())
-            .min();
-
-        (total_counters, oldest_created, oldest_updated)
-    }
-
-    /// Force cleanup of counters older than the specified threshold
-    ///
-    /// # Arguments
-    /// * `current_timestamp_ticks` - Current timestamp in ticks
-    /// * `threshold_ticks` - Age threshold in ticks
-    ///
-    /// # Returns
-    /// Number of counters that were removed
-    pub fn force_cleanup(&mut self, current_timestamp_ticks: u64, threshold_ticks: u64) -> usize {
-        let initial_count = self.state.runtime_limiters.len();
-        self.cleanup_old_counters(current_timestamp_ticks, threshold_ticks);
-        initial_count.saturating_sub(self.state.runtime_limiters.len())
+        self.storage.with_borrow_mut(|state| {
+            state.settings = settings;
+        });
     }
 }
 
@@ -218,6 +207,7 @@ mod tests {
         test_utils::Time,
     };
     use candid::Principal;
+    use std::{cell::RefCell, time::Duration};
 
     /// Test identifier enum demonstrating flexibility of the generic service
     #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -228,33 +218,86 @@ mod tests {
         AnyUser,
     }
 
+    /// Simple owned storage implementation for testing
+    struct OwnedStorage<T> {
+        data: RefCell<T>,
+    }
+
+    impl<T> OwnedStorage<T> {
+        fn new(data: T) -> Self {
+            Self {
+                data: RefCell::new(data),
+            }
+        }
+    }
+
+    impl<T> Storage<T> for OwnedStorage<T> {
+        fn with_borrow<F, R>(&self, f: F) -> R
+        where
+            F: FnOnce(&T) -> R,
+        {
+            f(&self.data.borrow())
+        }
+
+        fn with_borrow_mut<F, R>(&mut self, f: F) -> R
+        where
+            F: FnOnce(&mut T) -> R,
+        {
+            f(&mut self.data.borrow_mut())
+        }
+    }
+
+    /// Thread-local storage implementation for testing
+    struct ThreadLocalStorage<T> {
+        data: RefCell<T>,
+    }
+
+    impl<T> ThreadLocalStorage<T> {
+        fn new(data: T) -> Self {
+            Self {
+                data: RefCell::new(data),
+            }
+        }
+    }
+
+    impl<T> Storage<T> for ThreadLocalStorage<T> {
+        fn with_borrow<F, R>(&self, f: F) -> R
+        where
+            F: FnOnce(&T) -> R,
+        {
+            f(&self.data.borrow())
+        }
+
+        fn with_borrow_mut<F, R>(&mut self, f: F) -> R
+        where
+            F: FnOnce(&mut T) -> R,
+        {
+            f(&mut self.data.borrow_mut())
+        }
+    }
+
     fn get_settings() -> ServiceSettings<Nanos> {
-        // setting with 1 hour delete threshold
         ServiceSettings::new(Duration::from_secs(60 * 60))
     }
 
-    fn get_service() -> RateLimitService<TestIdentifier, Nanos> {
-        let mut service: RateLimitService<TestIdentifier, Nanos> =
-            RateLimitService::new(ServiceSettings::new(Duration::from_secs(60 * 60)));
-        service
-            .add_config(
-                "test",
-                RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
-            )
-            .unwrap();
-        service
-            .add_config(
-                "create_action",
-                RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
-            )
-            .unwrap();
-        service
-            .add_config(
-                "add_token",
-                RateLimitConfig::new(60, Duration::from_secs(60 * 10)),
-            )
-            .unwrap();
-        service
+    fn get_service()
+    -> RateLimitService<TestIdentifier, OwnedStorage<RateLimitState<TestIdentifier, Nanos>>, Nanos>
+    {
+        let mut state: RateLimitState<TestIdentifier, Nanos> = RateLimitState::new(get_settings());
+        state.method_configs.insert(
+            "test".to_string(),
+            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
+        );
+        state.method_configs.insert(
+            "create_action".to_string(),
+            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
+        );
+        state.method_configs.insert(
+            "add_token".to_string(),
+            RateLimitConfig::new(60, Duration::from_secs(60 * 10)),
+        );
+        let storage = OwnedStorage::new(state);
+        RateLimitService::new(storage)
     }
 
     // ===== Constructor Tests =====
@@ -264,23 +307,26 @@ mod tests {
         // Arrange
         let delete_threshold = Duration::from_secs(3600); // 1 hour
         let settings = ServiceSettings::new(delete_threshold);
+        let state: RateLimitState<TestIdentifier, Nanos> = RateLimitState::new(settings);
+        let storage = OwnedStorage::new(state);
 
         // Act
-        let service: RateLimitService<TestIdentifier, Nanos> = RateLimitService::new(settings);
+        let service = RateLimitService::new(storage);
 
         // Assert
+        let (count, _, _) = service.get_stats();
+        assert_eq!(count, 0, "New service should have no runtime limiters");
+
+        let methods = service.configured_methods();
         assert_eq!(
-            service.state.method_configs.len(),
+            methods.len(),
             0,
             "New service should have no method configurations"
         );
+
+        let service_settings = service.settings();
         assert_eq!(
-            service.state.runtime_limiters.len(),
-            0,
-            "New service should have no runtime limiters"
-        );
-        assert_eq!(
-            service.settings().delete_threshold_ticks,
+            service_settings.delete_threshold_ticks,
             Some(Nanos::to_ticks(delete_threshold)),
             "Service should have the correct delete threshold settings"
         );
@@ -291,23 +337,26 @@ mod tests {
         // Arrange
         let zero_threshold = Duration::from_secs(0);
         let settings = ServiceSettings::new(zero_threshold);
+        let state: RateLimitState<TestIdentifier, Nanos> = RateLimitState::new(settings);
+        let storage = OwnedStorage::new(state);
 
         // Act
-        let service: RateLimitService<TestIdentifier, Nanos> = RateLimitService::new(settings);
+        let service = RateLimitService::new(storage);
 
         // Assert
+        let (count, _, _) = service.get_stats();
+        assert_eq!(count, 0, "New service should have no runtime limiters");
+
+        let methods = service.configured_methods();
         assert_eq!(
-            service.state.method_configs.len(),
+            methods.len(),
             0,
             "New service should have no method configurations"
         );
+
+        let service_settings = service.settings();
         assert_eq!(
-            service.state.runtime_limiters.len(),
-            0,
-            "New service should have no runtime limiters"
-        );
-        assert_eq!(
-            service.settings().delete_threshold_ticks,
+            service_settings.delete_threshold_ticks,
             Some(0),
             "Service should have zero delete threshold when created with zero duration"
         );
@@ -319,14 +368,16 @@ mod tests {
     fn test_configured_methods() {
         // Arrange
         let settings = ServiceSettings::new(Duration::from_secs(3600));
-        let mut service: RateLimitService<TestIdentifier, Nanos> = RateLimitService::new(settings);
+        let state: RateLimitState<TestIdentifier, Nanos> = RateLimitState::new(settings);
+        let storage = OwnedStorage::new(state);
+        let mut service = RateLimitService::new(storage);
         let method1_config = RateLimitConfig::new(10, Duration::from_secs(60));
         let method2_config = RateLimitConfig::new(20, Duration::from_secs(120));
 
         // Act
         service.add_config("method1", method1_config).unwrap();
         service.add_config("method2", method2_config).unwrap();
-        let methods: Vec<&String> = service.configured_methods().collect();
+        let methods = service.configured_methods();
 
         // Assert
         assert_eq!(
@@ -335,11 +386,11 @@ mod tests {
             "Service should have exactly 2 configured methods"
         );
         assert!(
-            methods.contains(&&"method1".to_string()),
+            methods.contains(&"method1".to_string()),
             "Service should contain method1"
         );
         assert!(
-            methods.contains(&&"method2".to_string()),
+            methods.contains(&"method2".to_string()),
             "Service should contain method2"
         );
     }
@@ -484,6 +535,7 @@ mod tests {
             _ => panic!("Expected ExpiredTick error"),
         }
     }
+
     // ===== Multiple Identifiers Tests =====
 
     #[test]
@@ -494,29 +546,43 @@ mod tests {
         let duration = Duration::from_secs(time.now());
         let principal = Principal::from_text("2vxsx-fae").unwrap();
 
-        // Act
-        let result_1 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
-        let result_2 = service.try_acquire_at(
+        // Act - Acquire tokens for different identifiers
+        let any_user_result = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
+        let principal_result = service.try_acquire_at(
             TestIdentifier::UserPrincipal(principal),
             "test",
             duration,
             5,
         );
 
-        // Assert
-        assert!(result_1.is_ok());
-        assert!(result_2.is_ok());
+        // Assert - Both initial acquisitions should succeed
+        assert!(
+            any_user_result.is_ok(),
+            "AnyUser identifier should acquire tokens successfully"
+        );
+        assert!(
+            principal_result.is_ok(),
+            "UserPrincipal identifier should acquire tokens successfully"
+        );
 
-        // Each should have their own capacity
-        let result1 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
-        let result2 = service.try_acquire_at(
+        // Act - Acquire additional tokens for each identifier
+        let any_user_result2 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
+        let principal_result2 = service.try_acquire_at(
             TestIdentifier::UserPrincipal(principal),
             "test",
             duration,
             5,
         );
-        assert!(result1.is_ok());
-        assert!(result2.is_ok());
+
+        // Assert - Each identifier should have its own capacity
+        assert!(
+            any_user_result2.is_ok(),
+            "AnyUser identifier should have remaining capacity"
+        );
+        assert!(
+            principal_result2.is_ok(),
+            "UserPrincipal identifier should have remaining capacity"
+        );
     }
 
     // ===== Multiple Methods Tests =====
@@ -528,31 +594,47 @@ mod tests {
         let mut service = get_service();
         let duration = Duration::from_secs(time.now());
 
-        // Different methods should have separate limiters
+        // Act - Acquire tokens from different methods
+        let test_result = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
+        let create_action_result =
+            service.try_acquire_at(TestIdentifier::AnyUser, "create_action", duration, 5);
+        let add_token_result =
+            service.try_acquire_at(TestIdentifier::AnyUser, "add_token", duration, 30);
+
+        // Assert - All initial acquisitions should succeed
         assert!(
-            service
-                .try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5)
-                .is_ok()
+            test_result.is_ok(),
+            "Test method should acquire tokens successfully"
         );
         assert!(
-            service
-                .try_acquire_at(TestIdentifier::AnyUser, "create_action", duration, 5)
-                .is_ok()
+            create_action_result.is_ok(),
+            "Create action method should acquire tokens successfully"
         );
         assert!(
-            service
-                .try_acquire_at(TestIdentifier::AnyUser, "add_token", duration, 30)
-                .is_ok()
+            add_token_result.is_ok(),
+            "Add token method should acquire tokens successfully"
         );
 
-        // Each should have their own capacity
-        let result1 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
-        let result2 = service.try_acquire_at(TestIdentifier::AnyUser, "create_action", duration, 5);
-        let result3 = service.try_acquire_at(TestIdentifier::AnyUser, "add_token", duration, 30);
+        // Act - Acquire additional tokens from each method
+        let test_result2 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
+        let create_action_result2 =
+            service.try_acquire_at(TestIdentifier::AnyUser, "create_action", duration, 5);
+        let add_token_result2 =
+            service.try_acquire_at(TestIdentifier::AnyUser, "add_token", duration, 30);
 
-        assert!(result1.is_ok());
-        assert!(result2.is_ok());
-        assert!(result3.is_ok());
+        // Assert - Each method should have its own capacity and allow additional acquisitions
+        assert!(
+            test_result2.is_ok(),
+            "Test method should have remaining capacity"
+        );
+        assert!(
+            create_action_result2.is_ok(),
+            "Create action method should have remaining capacity"
+        );
+        assert!(
+            add_token_result2.is_ok(),
+            "Add token method should have remaining capacity"
+        );
     }
 
     // ===== Error Handling Tests =====
@@ -566,18 +648,23 @@ mod tests {
 
         // Act
         let result = service.try_acquire_at(TestIdentifier::AnyUser, "nonexistent", duration, 1);
-        assert!(result.is_err());
-        // Should return BeyondCapacity error when method is not configured
+
+        // Assert - Should return MethodNotConfigured error when method is not configured
+        assert!(result.is_err(), "Should fail when method is not configured");
         match result {
-            Err(RateLimitError::BeyondCapacity { .. }) => {}
-            _ => panic!("Expected BeyondCapacity error"),
+            Err(RateLimitError::MethodNotConfigured { method }) => {
+                assert_eq!(method, "nonexistent");
+            }
+            _ => panic!("Expected MethodNotConfigured error"),
         }
     }
 
     #[test]
     fn test_add_config_invalid_capacity() {
         // Arrange
-        let mut service = get_service();
+        let state: RateLimitState<TestIdentifier, Nanos> = RateLimitState::new(get_settings());
+        let storage = OwnedStorage::new(state);
+        let mut service = RateLimitService::new(storage);
 
         // Act
         let result = service.add_config("test", RateLimitConfig::new(0, Duration::from_secs(60)));
@@ -595,7 +682,9 @@ mod tests {
     #[test]
     fn test_add_config_invalid_window_size() {
         // Arrange
-        let mut service = get_service();
+        let state: RateLimitState<TestIdentifier, Nanos> = RateLimitState::new(get_settings());
+        let storage = OwnedStorage::new(state);
+        let mut service = RateLimitService::new(storage);
 
         // Act
         let result = service.add_config("test", RateLimitConfig::new(10, Duration::from_secs(0)));
@@ -651,28 +740,27 @@ mod tests {
 
     // ===== Millis Precision Tests =====
 
-    fn get_millis_service() -> RateLimitService<TestIdentifier, Millis> {
-        let mut service: RateLimitService<TestIdentifier, Millis> =
-            RateLimitService::new(ServiceSettings::new(Duration::from_secs(60 * 60)));
-        service
-            .add_config(
-                "test",
-                RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
-            )
-            .unwrap();
-        service
-            .add_config(
-                "create_action",
-                RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
-            )
-            .unwrap();
-        service
-            .add_config(
-                "add_token",
-                RateLimitConfig::new(60, Duration::from_secs(60 * 10)),
-            )
-            .unwrap();
-        service
+    fn get_millis_service() -> RateLimitService<
+        TestIdentifier,
+        OwnedStorage<RateLimitState<TestIdentifier, Millis>>,
+        Millis,
+    > {
+        let mut state: RateLimitState<TestIdentifier, Millis> =
+            RateLimitState::new(ServiceSettings::new(Duration::from_secs(60 * 60)));
+        state.method_configs.insert(
+            "test".to_string(),
+            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
+        );
+        state.method_configs.insert(
+            "create_action".to_string(),
+            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
+        );
+        state.method_configs.insert(
+            "add_token".to_string(),
+            RateLimitConfig::new(60, Duration::from_secs(60 * 10)),
+        );
+        let storage = OwnedStorage::new(state);
+        RateLimitService::new(storage)
     }
 
     #[test]
@@ -680,23 +768,29 @@ mod tests {
         // Arrange
         let delete_threshold = Duration::from_secs(3600); // 1 hour
         let settings = ServiceSettings::new(delete_threshold);
+        let state: RateLimitState<TestIdentifier, Millis> = RateLimitState::new(settings);
+        let storage = OwnedStorage::new(state);
 
         // Act
-        let service: RateLimitService<TestIdentifier, Millis> = RateLimitService::new(settings);
+        let service = RateLimitService::new(storage);
 
         // Assert
+        let (count, _, _) = service.get_stats();
         assert_eq!(
-            service.state.method_configs.len(),
+            count, 0,
+            "New millis service should have no runtime limiters"
+        );
+
+        let methods = service.configured_methods();
+        assert_eq!(
+            methods.len(),
             0,
             "New millis service should have no method configurations"
         );
+
+        let service_settings = service.settings();
         assert_eq!(
-            service.state.runtime_limiters.len(),
-            0,
-            "New millis service should have no runtime limiters"
-        );
-        assert_eq!(
-            service.settings().delete_threshold_ticks,
+            service_settings.delete_threshold_ticks,
             Some(Millis::to_ticks(delete_threshold)),
             "Millis service should have the correct delete threshold settings"
         );
@@ -775,40 +869,45 @@ mod tests {
         let mut service = get_millis_service();
         let duration = Duration::from_secs(time.now());
 
-        // Act - Test different methods with millis precision
-        let result1 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
-        let result2 = service.try_acquire_at(TestIdentifier::AnyUser, "create_action", duration, 5);
-        let result3 = service.try_acquire_at(TestIdentifier::AnyUser, "add_token", duration, 30);
+        // Act - Acquire tokens from different methods with millis precision
+        let test_result = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
+        let create_action_result =
+            service.try_acquire_at(TestIdentifier::AnyUser, "create_action", duration, 5);
+        let add_token_result =
+            service.try_acquire_at(TestIdentifier::AnyUser, "add_token", duration, 30);
 
-        // Assert - All should succeed with separate capacities
+        // Assert - All initial acquisitions should succeed
         assert!(
-            result1.is_ok(),
+            test_result.is_ok(),
             "Millis precision test method should succeed"
         );
         assert!(
-            result2.is_ok(),
+            create_action_result.is_ok(),
             "Millis precision create_action method should succeed"
         );
         assert!(
-            result3.is_ok(),
+            add_token_result.is_ok(),
             "Millis precision add_token method should succeed"
         );
 
-        // Test remaining capacity
-        let result4 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
-        let result5 = service.try_acquire_at(TestIdentifier::AnyUser, "create_action", duration, 5);
-        let result6 = service.try_acquire_at(TestIdentifier::AnyUser, "add_token", duration, 30);
+        // Act - Acquire additional tokens from each method
+        let test_result2 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
+        let create_action_result2 =
+            service.try_acquire_at(TestIdentifier::AnyUser, "create_action", duration, 5);
+        let add_token_result2 =
+            service.try_acquire_at(TestIdentifier::AnyUser, "add_token", duration, 30);
 
+        // Assert - Each method should have its own capacity
         assert!(
-            result4.is_ok(),
+            test_result2.is_ok(),
             "Millis precision test method should have remaining capacity"
         );
         assert!(
-            result5.is_ok(),
+            create_action_result2.is_ok(),
             "Millis precision create_action method should have remaining capacity"
         );
         assert!(
-            result6.is_ok(),
+            add_token_result2.is_ok(),
             "Millis precision add_token method should have remaining capacity"
         );
     }
@@ -821,36 +920,41 @@ mod tests {
         let duration = Duration::from_secs(time.now());
         let principal = Principal::from_text("2vxsx-fae").unwrap();
 
-        // Act - Test different identifiers with millis precision
-        let result_1 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
-        let result_2 = service.try_acquire_at(
+        // Act - Acquire tokens for different identifiers with millis precision
+        let any_user_result = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
+        let principal_result = service.try_acquire_at(
             TestIdentifier::UserPrincipal(principal),
             "test",
             duration,
             5,
         );
 
-        // Assert - Each should have their own capacity
-        assert!(result_1.is_ok(), "Millis precision AnyUser should succeed");
+        // Assert - Both initial acquisitions should succeed
         assert!(
-            result_2.is_ok(),
+            any_user_result.is_ok(),
+            "Millis precision AnyUser should succeed"
+        );
+        assert!(
+            principal_result.is_ok(),
             "Millis precision UserPrincipal should succeed"
         );
 
-        // Test remaining capacity for each
-        let result1 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
-        let result2 = service.try_acquire_at(
+        // Act - Acquire additional tokens for each identifier
+        let any_user_result2 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
+        let principal_result2 = service.try_acquire_at(
             TestIdentifier::UserPrincipal(principal),
             "test",
             duration,
             5,
         );
+
+        // Assert - Each identifier should have its own capacity
         assert!(
-            result1.is_ok(),
+            any_user_result2.is_ok(),
             "Millis precision AnyUser should have remaining capacity"
         );
         assert!(
-            result2.is_ok(),
+            principal_result2.is_ok(),
             "Millis precision UserPrincipal should have remaining capacity"
         );
     }
@@ -876,14 +980,16 @@ mod tests {
     fn test_millis_precision_configured_methods() {
         // Arrange
         let settings = ServiceSettings::new(Duration::from_secs(3600));
-        let mut service: RateLimitService<TestIdentifier, Millis> = RateLimitService::new(settings);
+        let state: RateLimitState<TestIdentifier, Millis> = RateLimitState::new(settings);
+        let storage = OwnedStorage::new(state);
+        let mut service = RateLimitService::new(storage);
         let method1_config = RateLimitConfig::new(10, Duration::from_secs(60));
         let method2_config = RateLimitConfig::new(20, Duration::from_secs(120));
 
         // Act
         service.add_config("method1", method1_config).unwrap();
         service.add_config("method2", method2_config).unwrap();
-        let methods: Vec<&String> = service.configured_methods().collect();
+        let methods = service.configured_methods();
 
         // Assert
         assert_eq!(
@@ -892,11 +998,11 @@ mod tests {
             "Millis precision service should have exactly 2 configured methods"
         );
         assert!(
-            methods.contains(&&"method1".to_string()),
+            methods.contains(&"method1".to_string()),
             "Millis precision service should contain method1"
         );
         assert!(
-            methods.contains(&&"method2".to_string()),
+            methods.contains(&"method2".to_string()),
             "Millis precision service should contain method2"
         );
     }
@@ -969,6 +1075,88 @@ mod tests {
             service.get_stats().0,
             0,
             "Millis precision service should have no limiters after cleanup"
+        );
+    }
+
+    // ===== Storage Abstraction Tests =====
+
+    #[test]
+    fn test_rate_limit_config_service_with_thread_local_storage() {
+        // Arrange
+        let mut state: RateLimitState<TestIdentifier, Nanos> = RateLimitState::new(get_settings());
+        state.method_configs.insert(
+            "test".to_string(),
+            RateLimitConfig::new(10, Duration::from_secs(60)),
+        );
+        let storage = ThreadLocalStorage::new(state);
+        let mut config_service = RateLimitService::new(storage);
+        let duration = Duration::from_secs(1755082293); // Stable base time
+
+        // Act - Add another config
+        let add_result = config_service.add_config(
+            "another_test",
+            RateLimitConfig::new(5, Duration::from_secs(30)),
+        );
+
+        // Assert - Config addition should succeed
+        assert!(add_result.is_ok());
+
+        // Act - Acquire tokens
+        let acquire_result =
+            config_service.try_acquire_one_at(TestIdentifier::AnyUser, "test", duration);
+
+        // Assert - Token acquisition should succeed
+        assert!(acquire_result.is_ok());
+
+        // Act - Get stats
+        let (count, _, _) = config_service.get_stats();
+
+        // Assert - Should have one active limiter
+        assert_eq!(count, 1);
+
+        // Act - Get configured methods
+        let methods = config_service.configured_methods();
+
+        // Assert - Should have both configured methods
+        assert_eq!(methods.len(), 2);
+        assert!(methods.contains(&"test".to_string()));
+        assert!(methods.contains(&"another_test".to_string()));
+    }
+
+    #[test]
+    fn test_settings_management() {
+        // Arrange
+        let state: RateLimitState<TestIdentifier, Nanos> = RateLimitState::new(get_settings());
+        let storage = OwnedStorage::new(state);
+        let mut config_service = RateLimitService::new(storage);
+        let initial_settings = ServiceSettings::new(Duration::from_secs(3600));
+        let updated_settings = ServiceSettings::new(Duration::from_secs(1800));
+
+        // Act - Initialize with settings
+        let init_result = config_service.init(initial_settings.clone());
+
+        // Assert - Initialization should succeed
+        assert!(init_result.is_ok());
+
+        // Act - Get current settings
+        let current_settings = config_service.settings();
+
+        // Assert - Settings should match initial settings
+        assert_eq!(
+            current_settings.delete_threshold_ticks,
+            initial_settings.delete_threshold_ticks
+        );
+
+        // Act - Update settings
+        config_service.update_settings(updated_settings.clone());
+
+        // Act - Get updated settings
+        let final_settings = config_service.settings();
+
+        // Assert - Settings should be updated
+        assert_eq!(
+            final_settings.delete_threshold_ticks,
+            updated_settings.delete_threshold_ticks
         );
     }
 }
