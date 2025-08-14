@@ -5,33 +5,32 @@ use std::{cell::RefCell, thread::LocalKey};
 
 use candid::Principal;
 use ic_mple_utils::store::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 use token_storage_types::TokenId;
 
 use crate::types::UserTokenList;
 
 /// Store for UserTokenRepository
-pub type TokenRepositoryStorage = StableBTreeMap<Principal, UserTokenList, VirtualMemory<DefaultMemoryImpl>>;
+pub type TokenRepositoryStorage =
+    StableBTreeMap<Principal, UserTokenList, VirtualMemory<DefaultMemoryImpl>>;
 pub type ThreadlocalTokenRepositoryStorage = &'static LocalKey<RefCell<TokenRepositoryStorage>>;
 
 pub struct TokenRepository<S: Storage<TokenRepositoryStorage>> {
-    token_store: S
+    token_store: S,
 }
 
 impl TokenRepository<ThreadlocalTokenRepositoryStorage> {
-
     /// Create a new TokenRepository
     pub fn new() -> Self {
-        Self::new_with_storage( &super::USER_TOKEN_STORE)
+        Self::new_with_storage(&super::USER_TOKEN_STORE)
     }
 }
 
-impl <S: Storage<TokenRepositoryStorage>> TokenRepository<S> {
-
+impl<S: Storage<TokenRepositoryStorage>> TokenRepository<S> {
     /// Create a new TokenRepository
     pub fn new_with_storage(storage: S) -> Self {
         Self {
-            token_store: storage
+            token_store: storage,
         }
     }
 
@@ -49,7 +48,11 @@ impl <S: Storage<TokenRepositoryStorage>> TokenRepository<S> {
         })
     }
 
-    pub fn add_bulk_tokens(&mut self, user_id: Principal, token_ids: &[TokenId]) -> Result<(), String> {
+    pub fn add_bulk_tokens(
+        &mut self,
+        user_id: Principal,
+        token_ids: &[TokenId],
+    ) -> Result<(), String> {
         self.token_store.with_borrow_mut(|store| {
             let mut user_token_list = store
                 .get(&user_id)

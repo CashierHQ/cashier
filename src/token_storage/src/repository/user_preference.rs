@@ -5,31 +5,31 @@ use std::{cell::RefCell, thread::LocalKey};
 
 use candid::Principal;
 use ic_mple_utils::store::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 use token_storage_types::user::UserPreference;
 
 /// Store for UserPreferenceRepository
-pub type UserPreferenceRepositoryStorage = StableBTreeMap<Principal, UserPreference, VirtualMemory<DefaultMemoryImpl>>;
-pub type ThreadlocalUserPreferenceRepositoryStorage = &'static LocalKey<RefCell<UserPreferenceRepositoryStorage>>;
+pub type UserPreferenceRepositoryStorage =
+    StableBTreeMap<Principal, UserPreference, VirtualMemory<DefaultMemoryImpl>>;
+pub type ThreadlocalUserPreferenceRepositoryStorage =
+    &'static LocalKey<RefCell<UserPreferenceRepositoryStorage>>;
 
 pub struct UserPreferenceRepository<S: Storage<UserPreferenceRepositoryStorage>> {
     user_pref_storage: S,
 }
 
 impl UserPreferenceRepository<ThreadlocalUserPreferenceRepositoryStorage> {
-    
     /// Create a new UserPreferenceRepository
     pub fn new() -> Self {
         Self::new_with_storage(&super::USER_PREFERENCE_STORE)
-            }
+    }
 }
 
-impl <S: Storage<UserPreferenceRepositoryStorage>> UserPreferenceRepository<S> {
-    
+impl<S: Storage<UserPreferenceRepositoryStorage>> UserPreferenceRepository<S> {
     /// Create a new UserPreferenceRepository
     pub fn new_with_storage(storage: S) -> Self {
         Self {
-            user_pref_storage: storage
+            user_pref_storage: storage,
         }
     }
 

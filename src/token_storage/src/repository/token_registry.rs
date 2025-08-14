@@ -4,43 +4,51 @@
 use std::{cell::RefCell, thread::LocalKey};
 
 use ic_mple_utils::store::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 use token_storage_types::TokenId;
 
-use crate::{repository::token_registry_metadata::TokenRegistryMetadataRepositoryStorage, types::RegistryToken};
+use crate::{
+    repository::token_registry_metadata::TokenRegistryMetadataRepositoryStorage,
+    types::RegistryToken,
+};
 
-use super::{token_registry_metadata::TokenRegistryMetadataRepository};
+use super::token_registry_metadata::TokenRegistryMetadataRepository;
 
 /// Store for TokenRegistryRepository
-pub type TokenRegistryRepositoryStorage = StableBTreeMap<TokenId, RegistryToken, VirtualMemory<DefaultMemoryImpl>>;
-pub type ThreadlocalTokenRegistryRepositoryStorage = &'static LocalKey<RefCell<TokenRegistryRepositoryStorage>>;
+pub type TokenRegistryRepositoryStorage =
+    StableBTreeMap<TokenId, RegistryToken, VirtualMemory<DefaultMemoryImpl>>;
+pub type ThreadlocalTokenRegistryRepositoryStorage =
+    &'static LocalKey<RefCell<TokenRegistryRepositoryStorage>>;
 
 pub struct TokenRegistryRepository<S: Storage<TokenRegistryRepositoryStorage>> {
     token_reg_meta_repo: S,
-
 }
 
 impl TokenRegistryRepository<ThreadlocalTokenRegistryRepositoryStorage> {
-
     /// Create a new TokenRegistryRepository
     pub fn new() -> Self {
         Self::new_with_storage(&super::TOKEN_REGISTRY_STORE)
     }
 }
 
-impl <S: Storage<TokenRegistryRepositoryStorage>> TokenRegistryRepository<S> {
-
+impl<S: Storage<TokenRegistryRepositoryStorage>> TokenRegistryRepository<S> {
     /// Create a new TokenRegistryRepository
     pub fn new_with_storage(storage: S) -> Self {
         Self {
-            token_reg_meta_repo: storage
+            token_reg_meta_repo: storage,
         }
     }
 
     // this function will update the token registry version if a new token is added
-    pub fn register_token<M: Storage<TokenRegistryMetadataRepositoryStorage>>(&mut self, input: RegistryToken, token_registry_repo: &mut TokenRegistryMetadataRepository<M>) -> Result<TokenId, String> {
+    pub fn register_token<M: Storage<TokenRegistryMetadataRepositoryStorage>>(
+        &mut self,
+        input: RegistryToken,
+        token_registry_repo: &mut TokenRegistryMetadataRepository<M>,
+    ) -> Result<TokenId, String> {
         let token_id = input.details.token_id();
-        let is_new_token = !self.token_reg_meta_repo.with_borrow(|store| store.contains_key(&token_id));
+        let is_new_token = !self
+            .token_reg_meta_repo
+            .with_borrow(|store| store.contains_key(&token_id));
 
         self.token_reg_meta_repo.with_borrow_mut(|store| {
             store.insert(token_id.clone(), input.clone());
@@ -55,13 +63,18 @@ impl <S: Storage<TokenRegistryRepositoryStorage>> TokenRegistryRepository<S> {
     }
 
     // this function will update the token registry version if a new token is added
-    pub fn add_bulk_tokens<M: Storage<TokenRegistryMetadataRepositoryStorage>>(&mut self, tokens: Vec<RegistryToken>, token_registry_repo: &mut TokenRegistryMetadataRepository<M>) -> Result<Vec<TokenId>, String> {
+    pub fn add_bulk_tokens<M: Storage<TokenRegistryMetadataRepositoryStorage>>(
+        &mut self,
+        tokens: Vec<RegistryToken>,
+        token_registry_repo: &mut TokenRegistryMetadataRepository<M>,
+    ) -> Result<Vec<TokenId>, String> {
         let mut token_ids = Vec::new();
         let mut any_new_tokens = false;
 
         // First pass: check if any tokens are new
         for input in &tokens {
-            let is_new = !self.token_reg_meta_repo
+            let is_new = !self
+                .token_reg_meta_repo
                 .with_borrow(|store| store.contains_key(&input.details.token_id()));
             if is_new {
                 any_new_tokens = true;
@@ -85,11 +98,13 @@ impl <S: Storage<TokenRegistryRepositoryStorage>> TokenRegistryRepository<S> {
     }
 
     pub fn get_token(&self, token_id: &TokenId) -> Option<RegistryToken> {
-        self.token_reg_meta_repo.with_borrow(|store| store.get(token_id))
+        self.token_reg_meta_repo
+            .with_borrow(|store| store.get(token_id))
     }
 
     pub fn list_tokens(&self) -> Vec<RegistryToken> {
-        self.token_reg_meta_repo.with_borrow(|store| store.iter().map(|entry| entry.value()).collect())
+        self.token_reg_meta_repo
+            .with_borrow(|store| store.iter().map(|entry| entry.value()).collect())
     }
 
     pub fn delete_all(&mut self) -> Result<(), String> {

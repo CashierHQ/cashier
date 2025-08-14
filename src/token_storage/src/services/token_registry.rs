@@ -1,4 +1,3 @@
-
 use futures::try_join;
 use token_storage_types::{IndexId, TokenId, chain::Chain, token::ChainTokenDetails};
 // Copyright (c) 2025 Cashier Protocol Labs
@@ -7,14 +6,17 @@ use token_storage_types::{IndexId, TokenId, chain::Chain, token::ChainTokenDetai
 use crate::{
     repository::{
         token_registry::{ThreadlocalTokenRegistryRepositoryStorage, TokenRegistryRepository},
-        token_registry_metadata::{ThreadlocalTokenRegistryMetadataRepositoryStorage, TokenRegistryMetadataRepository},
+        token_registry_metadata::{
+            ThreadlocalTokenRegistryMetadataRepositoryStorage, TokenRegistryMetadataRepository,
+        },
     },
     types::{RegistryToken, TokenRegistryMetadata},
 };
 
 pub struct TokenRegistryService {
     registry_repository: TokenRegistryRepository<ThreadlocalTokenRegistryRepositoryStorage>,
-    metadata_repository: TokenRegistryMetadataRepository<ThreadlocalTokenRegistryMetadataRepositoryStorage>,
+    metadata_repository:
+        TokenRegistryMetadataRepository<ThreadlocalTokenRegistryMetadataRepositoryStorage>,
 }
 
 impl Default for TokenRegistryService {
@@ -80,7 +82,8 @@ impl TokenRegistryService {
                     },
                     enabled_by_default: false,
                 };
-                self.registry_repository.register_token(registry_token, &mut self.metadata_repository)
+                self.registry_repository
+                    .register_token(registry_token, &mut self.metadata_repository)
             } // _ => Err(format!(
               //     "Registering tokens for chain '{}' is not supported yet",
               //     chain_str
@@ -119,7 +122,8 @@ impl TokenRegistryService {
                     index_id: current_record.details.index_id(),
                     fee,
                 };
-                self.registry_repository.register_token(current_record, &mut self.metadata_repository)
+                self.registry_repository
+                    .register_token(current_record, &mut self.metadata_repository)
             } // _ => Err(format!(
               //     "Registering tokens for chain '{}' is not supported yet",
               //     chain_str

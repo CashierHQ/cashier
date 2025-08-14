@@ -5,32 +5,32 @@ use std::{cell::RefCell, thread::LocalKey};
 
 use ic_cdk::api::time;
 use ic_mple_utils::store::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableCell};
+use ic_stable_structures::{DefaultMemoryImpl, StableCell, memory_manager::VirtualMemory};
 
 use crate::types::TokenRegistryMetadata;
 
 /// Store for TokenRegistryMetadataRepository
-pub type TokenRegistryMetadataRepositoryStorage = StableCell<TokenRegistryMetadata, VirtualMemory<DefaultMemoryImpl>>;
-pub type ThreadlocalTokenRegistryMetadataRepositoryStorage = &'static LocalKey<RefCell<TokenRegistryMetadataRepositoryStorage>>;
+pub type TokenRegistryMetadataRepositoryStorage =
+    StableCell<TokenRegistryMetadata, VirtualMemory<DefaultMemoryImpl>>;
+pub type ThreadlocalTokenRegistryMetadataRepositoryStorage =
+    &'static LocalKey<RefCell<TokenRegistryMetadataRepositoryStorage>>;
 
 pub struct TokenRegistryMetadataRepository<S: Storage<TokenRegistryMetadataRepositoryStorage>> {
     token_store: S,
 }
 
 impl TokenRegistryMetadataRepository<ThreadlocalTokenRegistryMetadataRepositoryStorage> {
-
     /// Create a new TokenRegistryMetadataRepository
     pub fn new() -> Self {
         Self::new_with_storage(&super::TOKEN_REGISTRY_METADATA_STORE)
     }
 }
 
-impl <S: Storage<TokenRegistryMetadataRepositoryStorage>> TokenRegistryMetadataRepository<S> {
-
+impl<S: Storage<TokenRegistryMetadataRepositoryStorage>> TokenRegistryMetadataRepository<S> {
     /// Create a new TokenRegistryMetadataRepository
     pub fn new_with_storage(storage: S) -> Self {
         Self {
-            token_store: storage
+            token_store: storage,
         }
     }
 
