@@ -13,7 +13,7 @@ pub struct Icrc21ConsentMessageMetadata {
     pub utc_offset_minutes: Option<i16>,
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub enum Icrc21DeviceSpec {
     GenericDisplay,
     LineDisplay {
@@ -22,7 +22,7 @@ pub enum Icrc21DeviceSpec {
     },
 }
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Debug)]
 pub struct Icrc21ConsentMessageSpec {
     pub metadata: Icrc21ConsentMessageMetadata,
     pub device_spec: Option<Icrc21DeviceSpec>,
