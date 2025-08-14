@@ -586,7 +586,9 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 mod tests {
     use super::*;
     use crate::services::link::test_fixtures::*;
-    use crate::utils::test_utils::{random_id_string, random_principal_id, runtime::MockIcEnvironment};
+    use crate::utils::test_utils::{
+        random_id_string, random_principal_id, runtime::MockIcEnvironment,
+    };
     use cashier_backend_types::repository::{
         asset_info::AssetInfo,
         link::v1::{Link, LinkState, LinkType},
@@ -700,7 +702,7 @@ mod tests {
     #[test]
     fn it_should_look_up_intent_for_create_link_send_airdrop() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let creator_id = &random_principal_id();
+        let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
 
         let updated_link = Link {
