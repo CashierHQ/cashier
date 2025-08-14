@@ -24,16 +24,9 @@ pub struct TokenRegistryRepository<S: Storage<TokenRegistryRepositoryStorage>> {
     token_reg_meta_repo: S,
 }
 
-impl TokenRegistryRepository<ThreadlocalTokenRegistryRepositoryStorage> {
-    /// Create a new TokenRegistryRepository
-    pub fn new() -> Self {
-        Self::new_with_storage(&super::TOKEN_REGISTRY_STORE)
-    }
-}
-
 impl<S: Storage<TokenRegistryRepositoryStorage>> TokenRegistryRepository<S> {
     /// Create a new TokenRegistryRepository
-    pub fn new_with_storage(storage: S) -> Self {
+    pub fn new(storage: S) -> Self {
         Self {
             token_reg_meta_repo: storage,
         }

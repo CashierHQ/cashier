@@ -23,16 +23,9 @@ pub struct BalanceCacheRepository<S: Storage<BalanceCacheRepositoryStorage>> {
     balance_store: S,
 }
 
-impl BalanceCacheRepository<ThreadlocalBalanceCacheRepositoryStorage> {
-    /// Create a new BalanceCacheRepository
-    pub fn new() -> Self {
-        Self::new_with_storage(&super::BALANCE_CACHE_STORE)
-    }
-}
-
 impl<S: Storage<BalanceCacheRepositoryStorage>> BalanceCacheRepository<S> {
     /// Create a new BalanceCacheRepository
-    pub fn new_with_storage(storage: S) -> Self {
+    pub fn new(storage: S) -> Self {
         Self {
             balance_store: storage,
         }

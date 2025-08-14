@@ -5,31 +5,31 @@ use token_storage_types::{IndexId, TokenId, chain::Chain, token::ChainTokenDetai
 
 use crate::{
     repository::{
-        token_registry::{ThreadlocalTokenRegistryRepositoryStorage, TokenRegistryRepository},
+        token_registry::{TokenRegistryRepository},
         token_registry_metadata::{
-            ThreadlocalTokenRegistryMetadataRepositoryStorage, TokenRegistryMetadataRepository,
-        },
+            TokenRegistryMetadataRepository,
+        }, Repositories, ThreadlocalRepositories,
     },
     types::{RegistryToken, TokenRegistryMetadata},
 };
 
-pub struct TokenRegistryService {
-    registry_repository: TokenRegistryRepository<ThreadlocalTokenRegistryRepositoryStorage>,
+pub struct TokenRegistryService<R: Repositories> {
+    registry_repository: TokenRegistryRepository<R::TokenRegistry>,
     metadata_repository:
-        TokenRegistryMetadataRepository<ThreadlocalTokenRegistryMetadataRepositoryStorage>,
+        TokenRegistryMetadataRepository<R::TokenRegistryMetadata>,
 }
 
-impl Default for TokenRegistryService {
-    fn default() -> Self {
-        Self::new()
+impl TokenRegistryService<ThreadlocalRepositories> {
+    pub fn new() -> Self {
+        Self::new_with_repo(&ThreadlocalRepositories)
     }
 }
 
-impl TokenRegistryService {
-    pub fn new() -> Self {
+impl <R: Repositories> TokenRegistryService<R> {
+    pub fn new_with_repo(repo: &R) -> Self {
         Self {
-            registry_repository: TokenRegistryRepository::new(),
-            metadata_repository: TokenRegistryMetadataRepository::new(),
+            registry_repository: repo.token_registry(),
+            metadata_repository: repo.token_registry_metadata(),
         }
     }
 

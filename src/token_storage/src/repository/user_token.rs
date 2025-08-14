@@ -11,24 +11,17 @@ use token_storage_types::TokenId;
 use crate::types::UserTokenList;
 
 /// Store for UserTokenRepository
-pub type TokenRepositoryStorage =
+pub type UserTokenRepositoryStorage =
     StableBTreeMap<Principal, UserTokenList, VirtualMemory<DefaultMemoryImpl>>;
-pub type ThreadlocalTokenRepositoryStorage = &'static LocalKey<RefCell<TokenRepositoryStorage>>;
+pub type ThreadlocalUserTokenRepositoryStorage = &'static LocalKey<RefCell<UserTokenRepositoryStorage>>;
 
-pub struct TokenRepository<S: Storage<TokenRepositoryStorage>> {
+pub struct UserTokenRepository<S: Storage<UserTokenRepositoryStorage>> {
     token_store: S,
 }
 
-impl TokenRepository<ThreadlocalTokenRepositoryStorage> {
+impl<S: Storage<UserTokenRepositoryStorage>> UserTokenRepository<S> {
     /// Create a new TokenRepository
-    pub fn new() -> Self {
-        Self::new_with_storage(&super::USER_TOKEN_STORE)
-    }
-}
-
-impl<S: Storage<TokenRepositoryStorage>> TokenRepository<S> {
-    /// Create a new TokenRepository
-    pub fn new_with_storage(storage: S) -> Self {
+    pub fn new(storage: S) -> Self {
         Self {
             token_store: storage,
         }
@@ -111,3 +104,29 @@ impl<S: Storage<TokenRepositoryStorage>> TokenRepository<S> {
         })
     }
 }
+
+// #[cfg(test)]
+// mod tests {
+//     use crate::repository::{tests::TestRepositories, Repositories};
+
+//     use super::*;
+
+//     #[test]
+//     fn it_should_add_a_token() {
+//         // Arrange
+//         let repo = TestRepositories::new();
+//         let mut user_token_repository = repo.user_token();
+//         let token_id = TokenId::IC {
+//             ledger_id: Principal::anonymous(),
+//         };
+
+//         // Act
+//         user_token_repository.add_token(Principal::anonymous(), token_id).unwrap();
+
+//         // Assert
+//         user_token_repository
+//             .list_tokens(&Principal::anonymous())   
+//             .unwrap();
+//     }
+
+// }
