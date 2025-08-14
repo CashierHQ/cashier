@@ -647,7 +647,7 @@ mod tests {
     fn it_should_return_empty_look_up_intent() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let link = create_link_feature(&service, &principal_id1);
+        let link = create_link_fixture(&service, &principal_id1);
         let action_type = ActionType::Claim;
 
         let intents = service.look_up_intent(&link, &action_type).unwrap();
@@ -658,7 +658,7 @@ mod tests {
     fn it_should_look_up_intent_for_create_link_send_tip() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let action_type = ActionType::CreateLink;
 
         let intents = service.look_up_intent(&link, &action_type).unwrap();
@@ -673,7 +673,7 @@ mod tests {
     fn it_should_look_up_intent_for_use_link_send_tip() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let action_type = ActionType::Use;
 
         let intents = service.look_up_intent(&link, &action_type).unwrap();
@@ -687,7 +687,7 @@ mod tests {
     fn it_should_look_up_intent_for_withdraw_link_send_tip() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let action_type = ActionType::Withdraw;
 
         let intents = service.look_up_intent(&link, &action_type).unwrap();
@@ -701,7 +701,7 @@ mod tests {
     fn it_should_look_up_intent_for_create_link_send_airdrop() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = &random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
         let updated_link = Link {
             link_type: Some(LinkType::SendAirdrop),
@@ -722,7 +722,7 @@ mod tests {
     fn it_should_look_up_intent_for_use_link_send_airdrop() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let updated_link = Link {
             link_type: Some(LinkType::SendAirdrop),
             ..link
@@ -742,7 +742,7 @@ mod tests {
     fn it_should_look_up_intent_for_withdraw_link_send_airdrop() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let updated_link = Link {
             link_type: Some(LinkType::SendAirdrop),
             ..link
@@ -763,7 +763,7 @@ mod tests {
     {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
         let updated_link = Link {
             link_type: Some(LinkType::SendTokenBasket),
@@ -787,7 +787,7 @@ mod tests {
      {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
         let updated_link = Link {
             link_type: Some(LinkType::SendTokenBasket),
@@ -816,7 +816,7 @@ mod tests {
     fn it_should_look_up_intent_for_create_link_send_token_basket() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
         let updated_link = Link {
             link_type: Some(LinkType::SendTokenBasket),
@@ -847,7 +847,7 @@ mod tests {
      {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
         let updated_link = Link {
             link_type: Some(LinkType::SendTokenBasket),
@@ -870,7 +870,7 @@ mod tests {
     fn it_should_look_up_intent_for_use_link_send_token_basket() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
         let updated_link = Link {
             link_type: Some(LinkType::SendTokenBasket),
@@ -900,7 +900,7 @@ mod tests {
      {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
         let updated_link = Link {
             link_type: Some(LinkType::SendTokenBasket),
@@ -923,7 +923,7 @@ mod tests {
     fn it_should_look_up_intent_for_withdraw_link_send_token_basket() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
         let updated_link = Link {
             link_type: Some(LinkType::SendTokenBasket),
@@ -952,7 +952,7 @@ mod tests {
     fn it_should_look_up_intent_for_create_link_receive_payment() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
         let updated_link = Link {
             link_type: Some(LinkType::ReceivePayment),
@@ -972,7 +972,7 @@ mod tests {
     fn it_should_look_up_intent_for_use_link_receive_payment() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
         let updated_link = Link {
             link_type: Some(LinkType::ReceivePayment),
@@ -992,7 +992,7 @@ mod tests {
     fn it_should_look_up_intent_for_withdraw_link_receive_payment() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
         let updated_link = Link {
             link_type: Some(LinkType::ReceivePayment),
@@ -1027,7 +1027,7 @@ mod tests {
     #[test]
     fn it_should_error_on_get_assets_for_action_with_empty_link_type() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link = create_link_feature(&service, &random_principal_id());
+        let link = create_link_fixture(&service, &random_principal_id());
         let link = Link {
             link_type: None,
             ..link
@@ -1047,7 +1047,7 @@ mod tests {
     #[test]
     fn it_should_error_on_get_assets_for_action_with_empty_intents() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link = create_link_feature(&service, &random_principal_id());
+        let link = create_link_fixture(&service, &random_principal_id());
 
         let result = service.get_assets_for_action(&link.id, &ActionType::Claim);
         assert!(result.is_err());
@@ -1063,7 +1063,7 @@ mod tests {
     fn it_should_error_get_assets_for_action_with_intent_task_transfer_wallet_to_link_and_unmatched_link_assets_info_label()
      {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link = create_link_feature(&service, &random_principal_id());
+        let link = create_link_fixture(&service, &random_principal_id());
 
         let result = service.get_assets_for_action(&link.id, &ActionType::CreateLink);
         assert!(result.is_err());
@@ -1078,7 +1078,7 @@ mod tests {
     #[test]
     fn it_should_get_assets_for_action_with_intent_task_transfer_wallet_to_link() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link = create_link_feature(&service, &random_principal_id());
+        let link = create_link_fixture(&service, &random_principal_id());
 
         let asset_address = random_id_string();
         let updated_link = Link {
@@ -1104,7 +1104,7 @@ mod tests {
     #[test]
     fn it_should_get_assets_for_action_with_intent_task_transfer_wallet_to_treasury() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link = create_link_feature(&service, &random_principal_id());
+        let link = create_link_fixture(&service, &random_principal_id());
         let asset_address = random_id_string();
         let updated_link = Link {
             asset_info: Some(vec![AssetInfo {
@@ -1130,7 +1130,7 @@ mod tests {
     fn it_should_error_get_assets_for_action_with_intent_task_transfer_link_to_wallet_and_link_assets_info_empty()
      {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link = create_link_feature(&service, &random_principal_id());
+        let link = create_link_fixture(&service, &random_principal_id());
 
         let result = service.get_assets_for_action(&link.id, &ActionType::Use);
         assert!(result.is_err());
@@ -1145,7 +1145,7 @@ mod tests {
     #[test]
     fn it_should_get_assets_for_action_with_intent_task_transfer_link_to_wallet() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
-        let link = create_link_feature(&service, &random_principal_id());
+        let link = create_link_fixture(&service, &random_principal_id());
 
         let asset_address = random_id_string();
         let updated_link = Link {

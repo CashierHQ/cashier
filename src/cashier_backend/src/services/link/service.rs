@@ -354,8 +354,8 @@ mod tests {
         assert!(link.is_none());
 
         let principal_id = random_principal_id();
-        let creator = create_principal_feature(&service, &principal_id);
-        let created_link = create_link_feature(&service, &creator.to_text());
+        let creator = create_principal_fixture(&service, &principal_id);
+        let created_link = create_link_fixture(&service, &creator.to_text());
         let fetched_link = service.get_link_by_id(&created_link.id).unwrap();
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
@@ -367,8 +367,8 @@ mod tests {
     fn it_should_get_link_with_empty_options() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id = random_principal_id();
-        let creator = create_principal_feature(&service, &principal_id);
-        let created_link = create_link_feature(&service, &creator.to_text());
+        let creator = create_principal_fixture(&service, &principal_id);
+        let created_link = create_link_fixture(&service, &creator.to_text());
         let (fetched_link, _action) = service.get_link(&created_link.id, None, &creator).unwrap();
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
@@ -382,8 +382,8 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let principal_id2 = random_principal_id();
-        let created_link = create_link_feature(&service, &principal_id1);
-        let caller = create_principal_feature(&service, & principal_id2);
+        let created_link = create_link_fixture(&service, &principal_id1);
+        let caller = create_principal_fixture(&service, & principal_id2);
         let (fetched_link, _action) = service
             .get_link(
                 &created_link.id,
@@ -403,9 +403,9 @@ mod tests {
     fn it_should_get_link_with_action_type_create_by_creator() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let creator = create_principal_feature(&service, &principal_id1);
-        let created_link = create_link_feature(&service, &creator.to_text());
-        let _link_action = create_link_action_feature(
+        let creator = create_principal_fixture(&service, &principal_id1);
+        let created_link = create_link_fixture(&service, &creator.to_text());
+        let _link_action = create_link_action_fixture(
             &service,
             &created_link.id,
             "CreateLink",
@@ -435,8 +435,8 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let principal_id2 = random_principal_id();
-        let created_link = create_link_feature(&service, &principal_id1);
-        let caller = create_principal_feature(&service, &principal_id2);
+        let created_link = create_link_fixture(&service, &principal_id1);
+        let caller = create_principal_fixture(&service, &principal_id2);
         let (fetched_link, _action) = service
             .get_link(
                 &created_link.id,
@@ -457,7 +457,7 @@ mod tests {
     fn it_should_panic_on_get_link_with_action_type_use_by_anonymous_caller() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let created_link = create_link_feature(&service, &principal_id1);
+        let created_link = create_link_fixture(&service, &principal_id1);
         let (fetched_link, _action) = service
             .get_link(
                 &created_link.id,
@@ -477,7 +477,7 @@ mod tests {
     fn it_should_fail_on_get_link_with_action_type_use_and_nonexistent_id() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let creator = create_principal_feature(&service, &principal_id1);
+        let creator = create_principal_fixture(&service, &principal_id1);
         let result = service.get_link(
             "nonexistent_link",
             Some(GetLinkOptions {
@@ -493,8 +493,8 @@ mod tests {
     fn it_should_get_link_with_action_type_use_by_creator() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let creator = create_principal_feature(&service, &principal_id1);
-        let created_link = create_link_feature(&service, &creator.to_text());
+        let creator = create_principal_fixture(&service, &principal_id1);
+        let created_link = create_link_fixture(&service, &creator.to_text());
         let (fetched_link, action) = service
             .get_link(
                 &created_link.id,
@@ -522,10 +522,10 @@ mod tests {
     fn it_should_get_action_of_link() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let creator = create_principal_feature(&service, &principal_id1);
-        let created_link = create_link_feature(&service, &creator.to_text());
+        let creator = create_principal_fixture(&service, &principal_id1);
+        let created_link = create_link_fixture(&service, &creator.to_text());
         let link_action =
-            create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+            create_link_action_fixture(&service, &created_link.id, "Use", &creator.to_text());
         let action = service.get_action_of_link(&created_link.id, "Use", &creator.to_text());
         assert!(action.is_some());
         let action = action.unwrap();
@@ -545,10 +545,10 @@ mod tests {
     fn it_should_get_link_action_user() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let creator = create_principal_feature(&service, &principal_id1);
-        let created_link = create_link_feature(&service, &creator.to_text());
+        let creator = create_principal_fixture(&service, &principal_id1);
+        let created_link = create_link_fixture(&service, &creator.to_text());
         let link_action =
-            create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+            create_link_action_fixture(&service, &created_link.id, "Use", &creator.to_text());
         let result = service.get_link_action_user(&created_link.id, "Use", &creator.to_text());
         assert!(result.is_ok());
         let action = result.unwrap();
@@ -568,10 +568,10 @@ mod tests {
     fn it_should_get_link_action() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let creator = create_principal_feature(&service, &principal_id1);
-        let created_link = create_link_feature(&service, &creator.to_text());
+        let creator = create_principal_fixture(&service, &principal_id1);
+        let created_link = create_link_fixture(&service, &creator.to_text());
         let link_action =
-            create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+            create_link_action_fixture(&service, &created_link.id, "Use", &creator.to_text());
         let action = service.get_link_action(&created_link.id, "Use", &creator.to_text());
         assert!(action.is_some());
         let action = action.unwrap();
@@ -583,10 +583,10 @@ mod tests {
     fn it_should_fail_to_update_link_use_counter_if_exceed_max() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let creator = create_principal_feature(&service, &principal_id1);
-        let created_link = create_link_feature(&service, &creator.to_text());
+        let creator = create_principal_fixture(&service, &principal_id1);
+        let created_link = create_link_fixture(&service, &creator.to_text());
         let link_action =
-            create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+            create_link_action_fixture(&service, &created_link.id, "Use", &creator.to_text());
 
         let updated_action = Action {
             id: link_action.action_id.clone(),
@@ -628,10 +628,10 @@ mod tests {
     fn it_should_fail_update_link_use_counter_if_action_state_nonsuccess() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let creator = create_principal_feature(&service, &principal_id1);
-        let created_link = create_link_feature(&service, &creator.to_text());
+        let creator = create_principal_fixture(&service, &principal_id1);
+        let created_link = create_link_fixture(&service, &creator.to_text());
         let link_action =
-            create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+            create_link_action_fixture(&service, &created_link.id, "Use", &creator.to_text());
 
         let updated_action = Action {
             id: link_action.action_id.clone(),
@@ -652,10 +652,10 @@ mod tests {
     fn it_should_update_link_use_counter_on_successful_action() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let creator = create_principal_feature(&service, &principal_id1);
-        let created_link = create_link_feature(&service, &creator.to_text());
+        let creator = create_principal_fixture(&service, &principal_id1);
+        let created_link = create_link_fixture(&service, &creator.to_text());
         let link_action =
-            create_link_action_feature(&service, &created_link.id, "Use", &creator.to_text());
+            create_link_action_fixture(&service, &created_link.id, "Use", &creator.to_text());
 
         let updated_action = Action {
             id: link_action.action_id.clone(),
@@ -680,11 +680,11 @@ mod tests {
     fn it_should_get_links_by_principal() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let principal = create_principal_feature(&service, &principal_id1);
+        let principal = create_principal_fixture(&service, &principal_id1);
         let user_id = principal.to_text();
 
         // Create a link for the principal
-        let created_link = create_link_feature(&service, &user_id);
+        let created_link = create_link_fixture(&service, &user_id);
 
         // Get links by principal
         let pagination = PaginateInput::default();
@@ -699,11 +699,11 @@ mod tests {
     fn it_should_get_links_by_user_id() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let principal = create_principal_feature(&service, &principal_id1);
+        let principal = create_principal_fixture(&service, &principal_id1);
         let user_id = principal.to_text();
 
         // Create a link for the user
-        let created_link = create_link_feature(&service, &user_id);
+        let created_link = create_link_fixture(&service, &user_id);
 
         // Get links by user ID
         let pagination = PaginateInput::default();
@@ -718,8 +718,8 @@ mod tests {
     fn it_should_handle_link_handle_tx_update_if_previous_and_current_state_are_the_same() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let creator = create_principal_feature(&service, &principal_id1);
-        let created_link = create_link_feature(&service, &creator.to_text());
+        let creator = create_principal_fixture(&service, &principal_id1);
+        let created_link = create_link_fixture(&service, &creator.to_text());
         let action_type = ActionType::Use;
         let action_id = random_id_string();
 
@@ -742,8 +742,8 @@ mod tests {
     fn it_should_handle_link_handle_tx_update_if_current_state_nonsuccess() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let creator = create_principal_feature(&service, &principal_id1);
-        let created_link = create_link_feature(&service, &creator.to_text());
+        let creator = create_principal_fixture(&service, &principal_id1);
+        let created_link = create_link_fixture(&service, &creator.to_text());
         let action_type = ActionType::Use;
         let action_id = random_id_string();
 
@@ -766,8 +766,8 @@ mod tests {
     fn it_should_handle_link_handle_tx_update_if_action_type_is_not_use() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let creator = create_principal_feature(&service, &principal_id1);
-        let created_link = create_link_feature(&service, &creator.to_text());
+        let creator = create_principal_fixture(&service, &principal_id1);
+        let created_link = create_link_fixture(&service, &creator.to_text());
         let action_type = ActionType::CreateLink; // Not Use action type
         let action_id = random_id_string();
 
@@ -790,8 +790,8 @@ mod tests {
     fn it_should_fail_to_handle_link_handle_tx_update_due_to_counter_exceed_max() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let creator = create_principal_feature(&service, &principal_id1);
-        let created_link = create_link_feature(&service, &creator.to_text());
+        let creator = create_principal_fixture(&service, &principal_id1);
+        let created_link = create_link_fixture(&service, &creator.to_text());
         let action_type = ActionType::Use;
         let action_id = random_id_string();
 
@@ -839,8 +839,8 @@ mod tests {
     fn it_should_handle_link_handle_tx_update_successful_action() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
-        let creator = create_principal_feature(&service, &principal_id1);
-        let created_link = create_link_feature(&service, &creator.to_text());
+        let creator = create_principal_fixture(&service, &principal_id1);
+        let created_link = create_link_fixture(&service, &creator.to_text());
         let action_type = ActionType::Use;
         let action_id = random_id_string();
 
