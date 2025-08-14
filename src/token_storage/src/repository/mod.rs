@@ -188,21 +188,19 @@ pub mod tests {
             let mm = MemoryManager::init(DefaultMemoryImpl::default());
             Self {
                 balance_cache: Rc::new(RefCell::new(StableBTreeMap::init(
-                mm.get(BALANCE_CACHE_MEMORY_ID),
-            ))),
+                    mm.get(BALANCE_CACHE_MEMORY_ID),
+                ))),
                 token_registry: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(TOKEN_REGISTRY_MEMORY_ID),
                 ))),
                 token_registry_metadata: Rc::new(RefCell::new(StableCell::init(
                     mm.get(TOKEN_REGISTRY_METADATA_ID),
-                    TokenRegistryMetadata::default()
+                    TokenRegistryMetadata::default(),
                 ))),
                 user_preference: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(USER_PREFERENCE_MEMORY_ID),
                 ))),
-                user_token: Rc::new(RefCell::new(StableBTreeMap::init(
-                    mm.get(TOKEN_MEMORY_ID),
-                ))),
+                user_token: Rc::new(RefCell::new(StableBTreeMap::init(mm.get(TOKEN_MEMORY_ID)))),
             }
         }
     }
@@ -236,5 +234,4 @@ pub mod tests {
             UserTokenRepository::new(self.user_token.clone())
         }
     }
-
 }

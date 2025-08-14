@@ -109,8 +109,8 @@ impl<S: Storage<UserTokenRepositoryStorage>> UserTokenRepository<S> {
 #[cfg(test)]
 mod tests {
 
-    use crate::repository::{tests::TestRepositories, Repositories};
     use super::*;
+    use crate::repository::{Repositories, tests::TestRepositories};
 
     #[test]
     fn it_should_update_the_token_list() {
@@ -128,7 +128,9 @@ mod tests {
         };
 
         // Act
-        user_token_repository.update_token_list(user_id, &token_list).unwrap();
+        user_token_repository
+            .update_token_list(user_id, &token_list)
+            .unwrap();
         let list = user_token_repository.list_tokens(&user_id).unwrap();
 
         // Assert
@@ -136,5 +138,4 @@ mod tests {
         assert_eq!(list.enable_list.len(), 1);
         assert_eq!(list.enable_list.contains(&token_id), true);
     }
-
 }
