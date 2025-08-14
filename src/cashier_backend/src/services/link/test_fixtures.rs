@@ -15,9 +15,6 @@ use cashier_backend_types::repository::{
 };
 use std::str::FromStr;
 
-pub const PRINCIPAL_ID1: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
-pub const PRINCIPAL_ID2: &str = "x5qut-viaaa-aaaar-qajda-cai";
-
 pub fn create_link_feature(service: &LinkService<MockIcEnvironment>, creator_id: &str) -> Link {
     let link_id = random_id_string();
     let link = Link {
