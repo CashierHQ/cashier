@@ -5,10 +5,7 @@ use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::{error, info};
 use token_storage_types::init::TokenStorageInitData;
 
-use crate::{
-    api::state::get_state,
-    constant::default_tokens::get_default_tokens,
-};
+use crate::{api::state::get_state, constant::default_tokens::get_default_tokens};
 
 #[init]
 fn init(init_data: TokenStorageInitData) {

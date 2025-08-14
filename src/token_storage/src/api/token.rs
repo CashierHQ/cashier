@@ -1,4 +1,4 @@
-use crate::api::state::{ get_state};
+use crate::api::state::get_state;
 use candid::Principal;
 use ic_cdk::api::msg_caller;
 use ic_cdk::{query, update};
@@ -16,7 +16,6 @@ use token_storage_types::token::{
 ///
 /// Panics if the caller is anonymous, indicating that anonymous calls
 /// are not allowed.
-
 fn not_anonymous_caller() -> Principal {
     let caller = msg_caller();
     if caller == Principal::anonymous() {

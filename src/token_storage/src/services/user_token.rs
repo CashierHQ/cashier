@@ -23,7 +23,6 @@ pub struct UserTokenService<R: Repositories> {
 }
 
 impl<R: Repositories> UserTokenService<R> {
-
     pub fn new(repo: &R) -> Self {
         Self {
             token_repository: repo.user_token(),

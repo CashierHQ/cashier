@@ -122,11 +122,8 @@ impl<R: Repositories> TokenRegistryService<R> {
         }
     }
 
-        // this function will update the token registry version if a new token is added
-    pub fn add_bulk_tokens(
-        &mut self,
-        tokens: Vec<RegistryToken>,
-    ) -> Result<Vec<TokenId>, String> {
+    // this function will update the token registry version if a new token is added
+    pub fn add_bulk_tokens(&mut self, tokens: Vec<RegistryToken>) -> Result<Vec<TokenId>, String> {
         let mut token_ids = Vec::new();
         let mut any_new_tokens = false;
 
@@ -141,7 +138,9 @@ impl<R: Repositories> TokenRegistryService<R> {
 
         // Second pass: register all tokens
         for input in tokens {
-            let token_id = self.registry_repository.register_token(input, &mut self.metadata_repository)?;
+            let token_id = self
+                .registry_repository
+                .register_token(input, &mut self.metadata_repository)?;
             token_ids.push(token_id);
         }
 
