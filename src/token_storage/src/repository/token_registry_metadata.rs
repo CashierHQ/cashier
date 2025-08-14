@@ -19,7 +19,6 @@ pub struct TokenRegistryMetadataRepository<S: Storage<TokenRegistryMetadataRepos
     token_store: S,
 }
 
-
 impl<S: Storage<TokenRegistryMetadataRepositoryStorage>> TokenRegistryMetadataRepository<S> {
     /// Create a new TokenRegistryMetadataRepository
     pub fn new(storage: S) -> Self {

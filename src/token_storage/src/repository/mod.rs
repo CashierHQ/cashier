@@ -19,11 +19,24 @@ use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 use token_storage_types::TokenId;
 use token_storage_types::user::UserPreference;
 
-use crate::repository::balance_cache::{BalanceCacheRepository, BalanceCacheRepositoryStorage, ThreadlocalBalanceCacheRepositoryStorage};
-use crate::repository::token_registry::{ThreadlocalTokenRegistryRepositoryStorage, TokenRegistryRepository, TokenRegistryRepositoryStorage};
-use crate::repository::token_registry_metadata::{ThreadlocalTokenRegistryMetadataRepositoryStorage, TokenRegistryMetadataRepository, TokenRegistryMetadataRepositoryStorage};
-use crate::repository::user_preference::{ThreadlocalUserPreferenceRepositoryStorage, UserPreferenceRepository, UserPreferenceRepositoryStorage};
-use crate::repository::user_token::{ThreadlocalUserTokenRepositoryStorage, UserTokenRepository, UserTokenRepositoryStorage};
+use crate::repository::balance_cache::{
+    BalanceCacheRepository, BalanceCacheRepositoryStorage, ThreadlocalBalanceCacheRepositoryStorage,
+};
+use crate::repository::token_registry::{
+    ThreadlocalTokenRegistryRepositoryStorage, TokenRegistryRepository,
+    TokenRegistryRepositoryStorage,
+};
+use crate::repository::token_registry_metadata::{
+    ThreadlocalTokenRegistryMetadataRepositoryStorage, TokenRegistryMetadataRepository,
+    TokenRegistryMetadataRepositoryStorage,
+};
+use crate::repository::user_preference::{
+    ThreadlocalUserPreferenceRepositoryStorage, UserPreferenceRepository,
+    UserPreferenceRepositoryStorage,
+};
+use crate::repository::user_token::{
+    ThreadlocalUserTokenRepositoryStorage, UserTokenRepository, UserTokenRepositoryStorage,
+};
 use crate::types::{Candid, RegistryToken, TokenBalance, TokenRegistryMetadata, UserTokenList};
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
@@ -51,14 +64,16 @@ pub trait Repositories {
     /// Get the token registry repository
     fn token_registry(&self) -> TokenRegistryRepository<Self::TokenRegistry>;
     /// Get the token registry metadata repository
-    fn token_registry_metadata(&self) -> TokenRegistryMetadataRepository<Self::TokenRegistryMetadata>;
+    fn token_registry_metadata(
+        &self,
+    ) -> TokenRegistryMetadataRepository<Self::TokenRegistryMetadata>;
     /// Get the user preference repository
     fn user_preference(&self) -> UserPreferenceRepository<Self::UserPreference>;
     /// Get the user token repository
     fn user_token(&self) -> UserTokenRepository<Self::UserToken>;
 }
 
-/// A factory for creating repositories backed by thread-local storage 
+/// A factory for creating repositories backed by thread-local storage
 pub struct ThreadlocalRepositories;
 
 impl Repositories for ThreadlocalRepositories {
@@ -73,10 +88,12 @@ impl Repositories for ThreadlocalRepositories {
     }
 
     fn token_registry(&self) -> TokenRegistryRepository<Self::TokenRegistry> {
-        TokenRegistryRepository::new(   &TOKEN_REGISTRY_STORE)
+        TokenRegistryRepository::new(&TOKEN_REGISTRY_STORE)
     }
 
-    fn token_registry_metadata(&self) -> TokenRegistryMetadataRepository<Self::TokenRegistryMetadata> {
+    fn token_registry_metadata(
+        &self,
+    ) -> TokenRegistryMetadataRepository<Self::TokenRegistryMetadata> {
         TokenRegistryMetadataRepository::new(&TOKEN_REGISTRY_METADATA_STORE)
     }
 
@@ -87,11 +104,7 @@ impl Repositories for ThreadlocalRepositories {
     fn user_token(&self) -> UserTokenRepository<Self::UserToken> {
         UserTokenRepository::new(&USER_TOKEN_STORE)
     }
-
 }
-
-
-
 
 thread_local! {
     pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(
@@ -150,78 +163,78 @@ thread_local! {
         );
 }
 
-// #[cfg(test)]
-// pub mod tests {
+#[cfg(test)]
+pub mod tests {
 
-//     use std::rc::Rc;
+    use std::rc::Rc;
 
-//     use super::*;
+    use super::*;
 
-//     /// A struct for testing Repositories and services
-//     pub struct TestRepositories {
-//         balance_cache: Rc<RefCell<BalanceCacheRepositoryStorage>>,
-//         token_registry: Rc<RefCell<TokenRegistryRepositoryStorage>>,
-//         token_registry_metadata: Rc<RefCell<TokenRegistryMetadataRepositoryStorage>>,
-//         user_preference: Rc<RefCell<UserPreferenceRepositoryStorage>>,
-//         user_token: Rc<RefCell<UserTokenRepositoryStorage>>,
-//     }
+    /// A struct for testing Repositories and services
+    pub struct TestRepositories {
+        balance_cache: Rc<RefCell<BalanceCacheRepositoryStorage>>,
+        token_registry: Rc<RefCell<TokenRegistryRepositoryStorage>>,
+        token_registry_metadata: Rc<RefCell<TokenRegistryMetadataRepositoryStorage>>,
+        user_preference: Rc<RefCell<UserPreferenceRepositoryStorage>>,
+        user_token: Rc<RefCell<UserTokenRepositoryStorage>>,
+    }
 
-//     impl TestRepositories {
-//         /// Create a new instance of TestRepositories.
-//         ///
-//         /// This is a testing-only implementation of Repositories, which uses an
-//         /// isolated non thread-local storage.
-//         pub fn new() -> Self {
-//             let mm = MemoryManager::init(DefaultMemoryImpl::default());
-//             Self {
-//                 balance_cache: Rc::new(RefCell::new(StableBTreeMap::init(
-//                 mm.get(BALANCE_CACHE_MEMORY_ID),
-//             ))),
-//                 token_registry: Rc::new(RefCell::new(StableBTreeMap::init(
-//                     mm.get(TOKEN_REGISTRY_MEMORY_ID),
-//                 ))),
-//                 token_registry_metadata: Rc::new(RefCell::new(StableCell::init(
-//                     mm.get(TOKEN_REGISTRY_METADATA_ID),
-//                     TokenRegistryMetadata::default()
-//                 ))),
-//                 user_preference: Rc::new(RefCell::new(StableBTreeMap::init(
-//                     mm.get(USER_PREFERENCE_MEMORY_ID),
-//                 ))),
-//                 user_token: Rc::new(RefCell::new(StableBTreeMap::init(
-//                     mm.get(TOKEN_MEMORY_ID),
-//                 ))),
-//             }
-//         }
-//     }
+    impl TestRepositories {
+        /// Create a new instance of TestRepositories.
+        ///
+        /// This is a testing-only implementation of Repositories, which uses an
+        /// isolated non thread-local storage.
+        pub fn new() -> Self {
+            let mm = MemoryManager::init(DefaultMemoryImpl::default());
+            Self {
+                balance_cache: Rc::new(RefCell::new(StableBTreeMap::init(
+                mm.get(BALANCE_CACHE_MEMORY_ID),
+            ))),
+                token_registry: Rc::new(RefCell::new(StableBTreeMap::init(
+                    mm.get(TOKEN_REGISTRY_MEMORY_ID),
+                ))),
+                token_registry_metadata: Rc::new(RefCell::new(StableCell::init(
+                    mm.get(TOKEN_REGISTRY_METADATA_ID),
+                    TokenRegistryMetadata::default()
+                ))),
+                user_preference: Rc::new(RefCell::new(StableBTreeMap::init(
+                    mm.get(USER_PREFERENCE_MEMORY_ID),
+                ))),
+                user_token: Rc::new(RefCell::new(StableBTreeMap::init(
+                    mm.get(TOKEN_MEMORY_ID),
+                ))),
+            }
+        }
+    }
 
-//     impl Repositories for TestRepositories {
-//         type BalanceCache = Rc<RefCell<StableBTreeMap<Principal, BalanceCache, Memory>>>;
-//         type TokenRegistryMetadata = Rc<RefCell<StableCell<TokenRegistryMetadata, Memory>>>;
-//         type TokenRegistry = Rc<RefCell<StableBTreeMap<TokenId, RegistryToken, Memory>>>;
-//         type UserPreference = Rc<RefCell<StableBTreeMap<Principal, UserPreference, Memory>>>;
-//         type UserToken = Rc<RefCell<StableBTreeMap<Principal, UserTokenList, Memory>>>;
+    impl Repositories for TestRepositories {
+        type BalanceCache = Rc<RefCell<StableBTreeMap<Principal, BalanceCache, Memory>>>;
+        type TokenRegistryMetadata = Rc<RefCell<StableCell<TokenRegistryMetadata, Memory>>>;
+        type TokenRegistry = Rc<RefCell<StableBTreeMap<TokenId, RegistryToken, Memory>>>;
+        type UserPreference = Rc<RefCell<StableBTreeMap<Principal, UserPreference, Memory>>>;
+        type UserToken = Rc<RefCell<StableBTreeMap<Principal, UserTokenList, Memory>>>;
 
-//         fn balance_cache(&self) -> BalanceCacheRepository<Self::BalanceCache> {
-//             BalanceCacheRepository::new(self.balance_cache.clone())
-//         }
+        fn balance_cache(&self) -> BalanceCacheRepository<Self::BalanceCache> {
+            BalanceCacheRepository::new(self.balance_cache.clone())
+        }
 
-//         fn token_registry_metadata(
-//             &self,
-//         ) -> TokenRegistryMetadataRepository<Self::TokenRegistryMetadata> {
-//             TokenRegistryMetadataRepository::new(self.token_registry_metadata.clone())
-//         }
+        fn token_registry_metadata(
+            &self,
+        ) -> TokenRegistryMetadataRepository<Self::TokenRegistryMetadata> {
+            TokenRegistryMetadataRepository::new(self.token_registry_metadata.clone())
+        }
 
-//         fn token_registry(&self) -> TokenRegistryRepository<Self::TokenRegistry> {
-//             TokenRegistryRepository::new(self.token_registry.clone())
-//         }
+        fn token_registry(&self) -> TokenRegistryRepository<Self::TokenRegistry> {
+            TokenRegistryRepository::new(self.token_registry.clone())
+        }
 
-//         fn user_preference(&self) -> UserPreferenceRepository<Self::UserPreference> {
-//             UserPreferenceRepository::new(self.user_preference.clone())
-//         }
+        fn user_preference(&self) -> UserPreferenceRepository<Self::UserPreference> {
+            UserPreferenceRepository::new(self.user_preference.clone())
+        }
 
-//         fn user_token(&self) -> UserTokenRepository<Self::UserToken> {
-//             UserTokenRepository::new(self.user_token.clone())
-//         }       
-//     }
+        fn user_token(&self) -> UserTokenRepository<Self::UserToken> {
+            UserTokenRepository::new(self.user_token.clone())
+        }
+    }
 
-// }
+}

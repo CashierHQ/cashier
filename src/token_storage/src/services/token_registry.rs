@@ -5,18 +5,15 @@ use token_storage_types::{IndexId, TokenId, chain::Chain, token::ChainTokenDetai
 
 use crate::{
     repository::{
-        token_registry::{TokenRegistryRepository},
-        token_registry_metadata::{
-            TokenRegistryMetadataRepository,
-        }, Repositories, ThreadlocalRepositories,
+        Repositories, ThreadlocalRepositories, token_registry::TokenRegistryRepository,
+        token_registry_metadata::TokenRegistryMetadataRepository,
     },
     types::{RegistryToken, TokenRegistryMetadata},
 };
 
 pub struct TokenRegistryService<R: Repositories> {
     registry_repository: TokenRegistryRepository<R::TokenRegistry>,
-    metadata_repository:
-        TokenRegistryMetadataRepository<R::TokenRegistryMetadata>,
+    metadata_repository: TokenRegistryMetadataRepository<R::TokenRegistryMetadata>,
 }
 
 impl TokenRegistryService<ThreadlocalRepositories> {
@@ -25,7 +22,7 @@ impl TokenRegistryService<ThreadlocalRepositories> {
     }
 }
 
-impl <R: Repositories> TokenRegistryService<R> {
+impl<R: Repositories> TokenRegistryService<R> {
     pub fn new_with_repo(repo: &R) -> Self {
         Self {
             registry_repository: repo.token_registry(),

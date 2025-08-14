@@ -13,9 +13,7 @@ use token_storage_types::{
 use crate::{
     build_data::canister_build_data,
     constant::default_tokens::get_default_tokens,
-    repository::{
-        Repositories, ThreadlocalRepositories
-    },
+    repository::{Repositories, ThreadlocalRepositories},
     services::{
         token_registry::TokenRegistryService, user_preference::UserPreferenceService,
         user_token::UserTokenService,
