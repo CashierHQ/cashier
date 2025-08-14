@@ -35,7 +35,7 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
         _ => None, // If not provided or empty, use None
     };
 
-    let token_registry_service = TokenRegistryService::new();
+    let mut token_registry_service = TokenRegistryService::new();
 
     // Check if token exists in registry, if not, add it
     if token_registry_service.get_token(&input.token_id).is_none() {
@@ -45,7 +45,7 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
             .await?;
     }
 
-    let service = UserTokenService::new();
+    let mut service = UserTokenService::new();
     info!("Adding token {:?} for user {}", input.token_id, user_id);
     service.add_token(user_id, input.token_id)
 }
@@ -57,7 +57,7 @@ pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
 
     debug!("[add_token_batch] user: {user_id}, input: {input:?}");
 
-    let token_registry_service = TokenRegistryService::new();
+    let mut token_registry_service = TokenRegistryService::new();
 
     // Check each token and add to registry if it doesn't exist
     for token_id in &input.token_ids {
@@ -79,7 +79,7 @@ pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
         }
     }
 
-    let user_token_service = UserTokenService::new();
+    let mut user_token_service = UserTokenService::new();
     user_token_service.add_tokens(user_id, input.token_ids)
 }
 
@@ -89,7 +89,7 @@ pub async fn update_token_registry(input: AddTokenInput) -> Result<(), String> {
     debug!("[update_token_registry] input: {input:?}");
 
     let _user_id = ensure_not_anonymous()?;
-    let token_registry_service = TokenRegistryService::new();
+    let mut token_registry_service = TokenRegistryService::new();
 
     // Re-register the token to update its metadata from the ledger
     token_registry_service
@@ -106,7 +106,7 @@ pub async fn update_token_registry_batch(input: AddTokensInput) -> Result<(), St
 
     let _user_id = ensure_not_anonymous()?;
 
-    let token_registry_service = TokenRegistryService::new();
+    let mut token_registry_service = TokenRegistryService::new();
 
     // Re-register all tokens to update their metadata from the ledger
     for token_id in input.token_ids {
@@ -125,7 +125,7 @@ pub fn update_token_enable(input: UpdateTokenInput) -> Result<(), String> {
 
     let user_id = ensure_not_anonymous()?;
 
-    let service = UserTokenService::new();
+    let mut service = UserTokenService::new();
     service.update_token_enable(user_id, input.token_id, input.is_enabled)
 }
 
@@ -259,7 +259,7 @@ pub fn sync_token_list() -> Result<(), String> {
         return Err("Not allowed for anonymous calls".to_string());
     }
 
-    let user_token_service = UserTokenService::new();
+    let mut user_token_service = UserTokenService::new();
     user_token_service.sync_token_version(caller)
 }
 
@@ -269,7 +269,7 @@ pub fn update_token_balance(input: Vec<UpdateTokenBalanceInput>) -> Result<(), S
     debug!("[update_token_balance] input: {input:?}");
 
     let user_id = ensure_not_anonymous()?;
-    let service = UserTokenService::new();
+    let mut service = UserTokenService::new();
 
     let token_balances: Vec<(TokenId, u128)> = input
         .into_iter()

@@ -1,33 +1,46 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use std::{cell::RefCell, thread::LocalKey};
+
 use candid::Principal;
+use ic_mple_utils::store::Storage;
+use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
 use token_storage_types::user::UserPreference;
 
-// File: src/token_storage/src/repository/user_preference.rs
-use super::USER_PREFERENCE_STORE;
+/// Store for UserPreferenceRepository
+pub type UserPreferenceRepositoryStorage = StableBTreeMap<Principal, UserPreference, VirtualMemory<DefaultMemoryImpl>>;
+pub type ThreadlocalUserPreferenceRepositoryStorage = &'static LocalKey<RefCell<UserPreferenceRepositoryStorage>>;
 
-pub struct UserPreferenceRepository {}
-
-impl Default for UserPreferenceRepository {
-    fn default() -> Self {
-        Self::new()
-    }
+pub struct UserPreferenceRepository<S: Storage<UserPreferenceRepositoryStorage>> {
+    user_pref_storage: S,
 }
 
-impl UserPreferenceRepository {
+impl UserPreferenceRepository<ThreadlocalUserPreferenceRepositoryStorage> {
+    
+    /// Create a new UserPreferenceRepository
     pub fn new() -> Self {
-        Self {}
+        Self::new_with_storage(&super::USER_PREFERENCE_STORE)
+            }
+}
+
+impl <S: Storage<UserPreferenceRepositoryStorage>> UserPreferenceRepository<S> {
+    
+    /// Create a new UserPreferenceRepository
+    pub fn new_with_storage(storage: S) -> Self {
+        Self {
+            user_pref_storage: storage
+        }
     }
 
     pub fn get(&self, id: &Principal) -> UserPreference {
-        USER_PREFERENCE_STORE
+        self.user_pref_storage
             .with_borrow(|store| store.get(id))
             .unwrap_or_default()
     }
 
-    pub fn update(&self, id: Principal, user_preference: UserPreference) {
-        USER_PREFERENCE_STORE.with_borrow_mut(|store| {
+    pub fn update(&mut self, id: Principal, user_preference: UserPreference) {
+        self.user_pref_storage.with_borrow_mut(|store| {
             store.insert(id, user_preference);
         });
     }

@@ -1,30 +1,44 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use std::{cell::RefCell, thread::LocalKey};
+
 use candid::Principal;
+use ic_mple_utils::store::Storage;
+use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
 use token_storage_types::TokenId;
 
-// File: src/token_storage/src/repository/token.rs
-use super::USER_TOKEN_STORE;
 use crate::types::UserTokenList;
 
-pub struct TokenRepository {}
+/// Store for UserTokenRepository
+pub type TokenRepositoryStorage = StableBTreeMap<Principal, UserTokenList, VirtualMemory<DefaultMemoryImpl>>;
+pub type ThreadlocalTokenRepositoryStorage = &'static LocalKey<RefCell<TokenRepositoryStorage>>;
 
-impl Default for TokenRepository {
-    fn default() -> Self {
-        Self::new()
+pub struct TokenRepository<S: Storage<TokenRepositoryStorage>> {
+    token_store: S
+}
+
+impl TokenRepository<ThreadlocalTokenRepositoryStorage> {
+
+    /// Create a new TokenRepository
+    pub fn new() -> Self {
+        Self::new_with_storage( &super::USER_TOKEN_STORE)
     }
 }
 
-impl TokenRepository {
-    pub fn new() -> Self {
-        Self {}
+impl <S: Storage<TokenRepositoryStorage>> TokenRepository<S> {
+
+    /// Create a new TokenRepository
+    pub fn new_with_storage(storage: S) -> Self {
+        Self {
+            token_store: storage
+        }
     }
 
     // Add token to enable list
     // return error if list token is not init
-    pub fn add_token(&self, user_id: Principal, token_id: TokenId) -> Result<(), String> {
-        USER_TOKEN_STORE.with_borrow_mut(|store| {
+    pub fn add_token(&mut self, user_id: Principal, token_id: TokenId) -> Result<(), String> {
+        self.token_store.with_borrow_mut(|store| {
             let mut user_token_list = store
                 .get(&user_id)
                 .ok_or_else(|| "user token list is not init".to_string())?;
@@ -35,8 +49,8 @@ impl TokenRepository {
         })
     }
 
-    pub fn add_bulk_tokens(&self, user_id: Principal, token_ids: &[TokenId]) -> Result<(), String> {
-        USER_TOKEN_STORE.with_borrow_mut(|store| {
+    pub fn add_bulk_tokens(&mut self, user_id: Principal, token_ids: &[TokenId]) -> Result<(), String> {
+        self.token_store.with_borrow_mut(|store| {
             let mut user_token_list = store
                 .get(&user_id)
                 .ok_or_else(|| "user token list is not init".to_string())?;
@@ -52,7 +66,7 @@ impl TokenRepository {
     }
 
     pub fn list_tokens(&self, user_id: &Principal) -> Result<UserTokenList, std::string::String> {
-        USER_TOKEN_STORE.with_borrow(|store| {
+        self.token_store.with_borrow(|store| {
             store
                 .get(user_id)
                 .ok_or_else(|| "user token list is not init 1".to_string())
@@ -60,12 +74,12 @@ impl TokenRepository {
     }
 
     pub fn update_token(
-        &self,
+        &mut self,
         user_id: Principal,
         token_id: TokenId,
         is_enable: bool,
     ) -> Result<(), String> {
-        USER_TOKEN_STORE.with_borrow_mut(|store| {
+        self.token_store.with_borrow_mut(|store| {
             let mut user_token_list = store
                 .get(&user_id)
                 .ok_or_else(|| "user token list is not init".to_string())?;
@@ -83,11 +97,11 @@ impl TokenRepository {
     }
 
     pub fn update_token_list(
-        &self,
+        &mut self,
         user_id: Principal,
         token_list: &UserTokenList,
     ) -> Result<(), String> {
-        USER_TOKEN_STORE.with_borrow_mut(|store| {
+        self.token_store.with_borrow_mut(|store| {
             // Insert the updated token list
             store.insert(user_id, token_list.clone());
             Ok(())

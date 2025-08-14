@@ -6,19 +6,19 @@ use token_storage_types::{TokenId, user::UserPreference};
 
 use crate::{
     repository::{
-        balance_cache::BalanceCacheRepository, token_registry::TokenRegistryRepository,
-        token_registry_metadata::TokenRegistryMetadataRepository,
-        user_preference::UserPreferenceRepository, user_token::TokenRepository,
+        balance_cache::{BalanceCacheRepository, ThreadlocalBalanceCacheRepositoryStorage}, token_registry::{ThreadlocalTokenRegistryRepositoryStorage, TokenRegistryRepository},
+        token_registry_metadata::{ThreadlocalTokenRegistryMetadataRepositoryStorage, TokenRegistryMetadataRepository},
+        user_preference::{ThreadlocalUserPreferenceRepositoryStorage, UserPreferenceRepository}, user_token::{ThreadlocalTokenRepositoryStorage, TokenRepository},
     },
     types::UserTokenList,
 };
 
 pub struct UserTokenService {
-    token_repository: TokenRepository,
-    registry_repository: TokenRegistryRepository,
-    metadata_repository: TokenRegistryMetadataRepository,
-    user_preference_repository: UserPreferenceRepository,
-    balance_cache_repository: BalanceCacheRepository,
+    token_repository: TokenRepository<ThreadlocalTokenRepositoryStorage>,
+    registry_repository: TokenRegistryRepository<ThreadlocalTokenRegistryRepositoryStorage>,
+    metadata_repository: TokenRegistryMetadataRepository<ThreadlocalTokenRegistryMetadataRepositoryStorage>,
+    user_preference_repository: UserPreferenceRepository<ThreadlocalUserPreferenceRepositoryStorage>,
+    balance_cache_repository: BalanceCacheRepository<ThreadlocalBalanceCacheRepositoryStorage>,
 }
 
 impl Default for UserTokenService {
@@ -40,7 +40,7 @@ impl UserTokenService {
 
     /// Ensures the user has a token list initialized
     /// If the user doesn't have a token list, creates one with default settings
-    fn ensure_token_list_initialized(&self, user_id: Principal) -> Result<(), String> {
+    fn ensure_token_list_initialized(&mut self, user_id: Principal) -> Result<(), String> {
         match self.token_repository.list_tokens(&user_id) {
             Ok(_) => Ok(()), // Token list already exists
             Err(_) => {
@@ -67,7 +67,7 @@ impl UserTokenService {
     /// Add a single token to the user's list
     /// If the token is not in either list, it will be added to the enable list
     /// If the token is in the disable list, it will be moved to the enable list
-    pub fn add_token(&self, user_id: Principal, token_id: TokenId) -> Result<(), String> {
+    pub fn add_token(&mut self, user_id: Principal, token_id: TokenId) -> Result<(), String> {
         // Ensure user has a token list initialized
         self.ensure_token_list_initialized(user_id)?;
 
@@ -77,7 +77,7 @@ impl UserTokenService {
 
     /// Add multiple tokens to the user's list
     /// Tokens that don't exist in the registry will be filtered out
-    pub fn add_tokens(&self, user_id: Principal, token_ids: Vec<TokenId>) -> Result<(), String> {
+    pub fn add_tokens(&mut self, user_id: Principal, token_ids: Vec<TokenId>) -> Result<(), String> {
         if token_ids.is_empty() {
             return Ok(());
         }
@@ -106,7 +106,7 @@ impl UserTokenService {
     /// This only swaps a token between the enable and disable lists
     /// Returns an error if the token doesn't exist in the registry
     pub fn update_token_enable(
-        &self,
+        &mut self,
         user_id: Principal,
         token_id: TokenId,
         is_enabled: bool,
@@ -122,7 +122,7 @@ impl UserTokenService {
     /// Synchronize the user token list with the registry
     /// This will add any new tokens from the registry that are enabled_by_default
     /// to the user's enable list if they don't already exist there
-    pub fn sync_token_version(&self, user_id: Principal) -> Result<(), String> {
+    pub fn sync_token_version(&mut self, user_id: Principal) -> Result<(), String> {
         let _ = self.ensure_token_list_initialized(user_id);
 
         // Get the user's token list
@@ -174,7 +174,7 @@ impl UserTokenService {
     }
 
     /// Update balances for multiple tokens at once
-    pub fn update_bulk_balances(&self, user_id: Principal, updates: Vec<(TokenId, u128)>) {
+    pub fn update_bulk_balances(&mut self, user_id: Principal, updates: Vec<(TokenId, u128)>) {
         if !updates.is_empty() {
             self.balance_cache_repository
                 .update_bulk_balances(user_id, updates);
