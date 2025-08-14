@@ -21,6 +21,9 @@ pub enum RateLimitError {
     /// Failed due to lock contention.
     #[error("Contention failure: resource is locked by another operation. Please retry")]
     ContentionFailure,
+
+    #[error("Method '{method}' is not configured")]
+    MethodNotConfigured { method: String },
 }
 
 /// Result type for rate limiting.

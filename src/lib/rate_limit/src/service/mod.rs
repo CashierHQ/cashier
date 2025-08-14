@@ -1,24 +1,22 @@
-use std::collections::HashMap;
 use std::time::Duration;
 
 use crate::algorithm::fixed_window_counter::{
     FixedWindowCounterCore, FixedWindowCounterCoreConfig,
 };
 
+pub mod config;
 pub mod types;
-pub use types::{LimiterEntry, PrecisionType, RateLimitConfig, ServiceError, ServiceSettings};
+pub use types::{
+    LimiterEntry, PrecisionType, RateLimitConfig, RateLimitState, ServiceError, ServiceSettings,
+};
 
 /// Service for managing multiple rate limiters with different identifiers and methods
 pub struct RateLimitService<E>
 where
     E: std::cmp::Eq + std::hash::Hash + Clone,
 {
-    /// Configuration for each method (set once during initialization)
-    method_configs: HashMap<String, RateLimitConfig>,
-    /// Runtime tracking for each (identifier, method) pair (created on-demand)
-    runtime_limiters: HashMap<(E, String), LimiterEntry>,
-    /// Service-wide settings
-    settings: ServiceSettings,
+    /// Grouped state containing all rate limiting data
+    state: RateLimitState<E>,
 }
 
 impl<E> RateLimitService<E>
@@ -28,18 +26,14 @@ where
     /// Create a new empty rate limit service with default settings
     pub fn new() -> Self {
         Self {
-            method_configs: HashMap::new(),
-            runtime_limiters: HashMap::new(),
-            settings: ServiceSettings::default(),
+            state: RateLimitState::new(),
         }
     }
 
     /// Create a new empty rate limit service with custom settings
     pub fn new_with_settings(settings: ServiceSettings) -> Self {
         Self {
-            method_configs: HashMap::new(),
-            runtime_limiters: HashMap::new(),
-            settings,
+            state: RateLimitState::new_with_settings(settings),
         }
     }
 
@@ -65,7 +59,7 @@ where
             });
         }
 
-        self.method_configs.insert(method.to_string(), config);
+        self.state.method_configs.insert(method.to_string(), config);
         Ok(())
     }
 
@@ -79,8 +73,8 @@ where
         let key = (identifier.clone(), method.to_string());
 
         // If limiter doesn't exist, create it using the method's configuration
-        if !self.runtime_limiters.contains_key(&key) {
-            let config = self.method_configs.get(method).ok_or_else(|| {
+        if !self.state.runtime_limiters.contains_key(&key) {
+            let config = self.state.method_configs.get(method).ok_or_else(|| {
                 ServiceError::MethodNotConfigured {
                     method: method.to_string(),
                 }
@@ -90,11 +84,12 @@ where
                 FixedWindowCounterCoreConfig::new(config.capacity, config.window_size);
             let counter = FixedWindowCounterCore::from(counter_config);
             let timestamped_counter = LimiterEntry::new(counter, timestamp_ticks);
-            self.runtime_limiters
+            self.state
+                .runtime_limiters
                 .insert(key.clone(), timestamped_counter);
         }
 
-        Ok(self.runtime_limiters.get_mut(&key).unwrap())
+        Ok(self.state.runtime_limiters.get_mut(&key).unwrap())
     }
 
     /// Try to acquire tokens for a specific identifier and method at the current timestamp
@@ -116,7 +111,7 @@ where
         duration: Duration,
         tokens: u64,
     ) -> Result<(), crate::algorithm::types::RateLimitError> {
-        let timestamp_ticks = self.settings.precision.to_ticks(duration);
+        let timestamp_ticks = self.state.settings.precision.to_ticks(duration);
 
         let limiter_entry = self
             .get_or_create_limiter(&identifier, method, timestamp_ticks)
@@ -160,7 +155,8 @@ where
     fn cleanup_old_counters(&mut self, current_timestamp_ticks: u64, threshold_ticks: u64) {
         let cutoff_time = current_timestamp_ticks.saturating_sub(threshold_ticks);
 
-        self.runtime_limiters
+        self.state
+            .runtime_limiters
             .retain(|_, limiter_entry| limiter_entry.updated_time() > cutoff_time);
     }
 
@@ -169,17 +165,17 @@ where
     /// # Returns
     /// Iterator over all configured method names
     pub fn configured_methods(&self) -> impl Iterator<Item = &String> {
-        self.method_configs.keys()
+        self.state.method_configs.keys()
     }
 
     /// Get the current service settings
     pub fn settings(&self) -> &ServiceSettings {
-        &self.settings
+        &self.state.settings
     }
 
     /// Update service settings
     pub fn update_settings(&mut self, settings: ServiceSettings) {
-        self.settings = settings;
+        self.state.settings = settings;
     }
 
     /// Get statistics about the current runtime limiters
@@ -187,13 +183,15 @@ where
     /// # Returns
     /// A tuple containing (total_counters, oldest_created_time, oldest_updated_time)
     pub fn get_stats(&self) -> (usize, Option<u64>, Option<u64>) {
-        let total_counters = self.runtime_limiters.len();
+        let total_counters = self.state.runtime_limiters.len();
         let oldest_created = self
+            .state
             .runtime_limiters
             .values()
             .map(|counter| counter.created_time())
             .min();
         let oldest_updated = self
+            .state
             .runtime_limiters
             .values()
             .map(|counter| counter.updated_time())
@@ -211,9 +209,9 @@ where
     /// # Returns
     /// Number of counters that were removed
     pub fn force_cleanup(&mut self, current_timestamp_ticks: u64, threshold_ticks: u64) -> usize {
-        let initial_count = self.runtime_limiters.len();
+        let initial_count = self.state.runtime_limiters.len();
         self.cleanup_old_counters(current_timestamp_ticks, threshold_ticks);
-        initial_count.saturating_sub(self.runtime_limiters.len())
+        initial_count.saturating_sub(self.state.runtime_limiters.len())
     }
 }
 
@@ -314,15 +312,15 @@ mod tests {
     #[test]
     fn test_new_service() {
         let service: RateLimitService<TestIdentifier> = RateLimitService::new();
-        assert_eq!(service.method_configs.len(), 0);
-        assert_eq!(service.runtime_limiters.len(), 0);
+        assert_eq!(service.state.method_configs.len(), 0);
+        assert_eq!(service.state.runtime_limiters.len(), 0);
     }
 
     #[test]
     fn test_default_service() {
         let service: RateLimitService<TestIdentifier> = RateLimitService::default();
-        assert_eq!(service.method_configs.len(), 0);
-        assert_eq!(service.runtime_limiters.len(), 0);
+        assert_eq!(service.state.method_configs.len(), 0);
+        assert_eq!(service.state.runtime_limiters.len(), 0);
     }
 
     // ===== Configuration Tests =====

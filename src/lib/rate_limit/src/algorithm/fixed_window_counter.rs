@@ -284,7 +284,8 @@ mod tests {
     fn stable_base_time() -> u64 {
         // Use a fixed tick that's a multiple of common window sizes (60, 100, 300)
         // This makes tests more predictable
-        1_000_000_000 // January 9, 2001 01:46:40 UTC
+        // second timestamp
+        1755186120 // Thursday, 14 August 2025 15:42:00
     }
     use crate::algorithm::types::RateLimitError;
 

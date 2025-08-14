@@ -1,118 +1,121 @@
-use crate::algorithm::fixed_window_counter::FixedWindowCounterCore;
-use crate::percision::{Micros, Millis, Nanos, Precision, Secs};
-use std::time::Duration;
+use std::collections::HashMap;
 
-/// Enum representing different precision types that can be used at runtime
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
-pub enum PrecisionType {
-    /// Nanosecond precision (1 tick = 1 nanosecond)
-    #[default]
-    Nanos,
-    /// Microsecond precision (1 tick = 1 microsecond)
-    Micros,
-    /// Millisecond precision (1 tick = 1 millisecond)
-    Millis,
-    /// Second precision (1 tick = 1 second)
-    Secs,
-}
-
-impl PrecisionType {
-    /// Convert a Duration to ticks using this precision
-    pub fn to_ticks(&self, duration: Duration) -> u64 {
-        match self {
-            PrecisionType::Nanos => Nanos::to_ticks(duration),
-            PrecisionType::Micros => Micros::to_ticks(duration),
-            PrecisionType::Millis => Millis::to_ticks(duration),
-            PrecisionType::Secs => Secs::to_ticks(duration),
-        }
-    }
-
-    /// Convert ticks back to Duration using this precision
-    pub fn from_ticks(&self, ticks: u64) -> Duration {
-        match self {
-            PrecisionType::Nanos => Nanos::from_ticks(ticks),
-            PrecisionType::Micros => Micros::from_ticks(ticks),
-            PrecisionType::Millis => Millis::from_ticks(ticks),
-            PrecisionType::Secs => Secs::from_ticks(ticks),
-        }
-    }
-}
-
-/// Configuration for a specific rate limiter
+/// Configuration for rate limiting a specific method
 #[derive(Debug, Clone)]
 pub struct RateLimitConfig {
-    /// Maximum number of requests allowed per window
+    /// Maximum number of tokens that can be acquired in the time window
     pub capacity: u64,
-    /// Duration of the rate limit window in ticks
+    /// Time window size in ticks (depends on precision)
     pub window_size: u64,
 }
 
-/// Service-wide settings for the rate limiter
+impl RateLimitConfig {
+    /// Create a new rate limit configuration
+    pub fn new(capacity: u64, window_size: u64) -> Self {
+        Self {
+            capacity,
+            window_size,
+        }
+    }
+}
+
+/// Service-wide settings for rate limiting
 #[derive(Debug, Clone)]
 pub struct ServiceSettings {
-    /// Threshold in ticks after which unused counters are eligible for deletion
-    /// If None, counters are never automatically deleted
-    pub delete_threshold_ticks: Option<u64>,
-    /// Precision type used for time calculations
+    /// Precision type for timestamp calculations
     pub precision: PrecisionType,
+    /// Optional threshold for cleaning up old counters (in ticks)
+    pub delete_threshold_ticks: Option<u64>,
 }
 
 impl ServiceSettings {
-    /// Create new service settings with default values
-    pub fn new() -> Self {
-        Self {
-            delete_threshold_ticks: None,
-            precision: PrecisionType::default(),
-        }
-    }
-
-    /// Create service settings with a delete threshold
-    pub fn with_delete_threshold(delete_threshold_ticks: u64) -> Self {
-        Self {
-            delete_threshold_ticks: Some(delete_threshold_ticks),
-            precision: PrecisionType::default(),
-        }
-    }
-
-    /// Create service settings with a specific precision
+    /// Create settings with precision only
     pub fn with_precision(precision: PrecisionType) -> Self {
         Self {
-            delete_threshold_ticks: None,
             precision,
+            delete_threshold_ticks: None,
         }
     }
 
-    /// Create service settings with both delete threshold and precision
+    /// Create settings with delete threshold only
+    pub fn with_delete_threshold(delete_threshold_ticks: u64) -> Self {
+        Self {
+            precision: PrecisionType::default(),
+            delete_threshold_ticks: Some(delete_threshold_ticks),
+        }
+    }
+
+    /// Create settings with both precision and delete threshold
     pub fn with_delete_threshold_and_precision(
         delete_threshold_ticks: u64,
         precision: PrecisionType,
     ) -> Self {
         Self {
-            delete_threshold_ticks: Some(delete_threshold_ticks),
             precision,
+            delete_threshold_ticks: Some(delete_threshold_ticks),
         }
     }
 }
 
 impl Default for ServiceSettings {
     fn default() -> Self {
-        Self::new()
+        Self {
+            precision: PrecisionType::default(),
+            delete_threshold_ticks: None,
+        }
     }
 }
 
-/// Entry in the rate limiter service that tracks a counter with creation and update timestamps
+/// Precision type for timestamp calculations
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PrecisionType {
+    Nanos,
+    Micros,
+    Millis,
+    Secs,
+}
+
+impl PrecisionType {
+    /// Convert a Duration to ticks based on this precision
+    pub fn to_ticks(&self, duration: std::time::Duration) -> u64 {
+        match self {
+            PrecisionType::Nanos => duration.as_nanos() as u64,
+            PrecisionType::Micros => duration.as_micros() as u64,
+            PrecisionType::Millis => duration.as_millis() as u64,
+            PrecisionType::Secs => duration.as_secs(),
+        }
+    }
+
+    /// Convert ticks back to Duration based on this precision
+    pub fn from_ticks(&self, ticks: u64) -> std::time::Duration {
+        match self {
+            PrecisionType::Nanos => std::time::Duration::from_nanos(ticks),
+            PrecisionType::Micros => std::time::Duration::from_micros(ticks),
+            PrecisionType::Millis => std::time::Duration::from_millis(ticks),
+            PrecisionType::Secs => std::time::Duration::from_secs(ticks),
+        }
+    }
+}
+
+impl Default for PrecisionType {
+    fn default() -> Self {
+        Self::Nanos
+    }
+}
+
+/// Entry for a rate limiter with timestamp tracking
 pub struct LimiterEntry {
-    /// The actual rate limiter counter
-    counter: FixedWindowCounterCore,
-    /// Timestamp when this counter was created (in ticks based on precision)
+    counter: crate::algorithm::fixed_window_counter::FixedWindowCounterCore,
     created_time: u64,
-    /// Timestamp when this counter was last updated (in ticks based on precision)
     updated_time: u64,
 }
 
 impl LimiterEntry {
     /// Create a new limiter entry
-    pub fn new(counter: FixedWindowCounterCore, timestamp_ticks: u64) -> Self {
+    pub fn new(
+        counter: crate::algorithm::fixed_window_counter::FixedWindowCounterCore,
+        timestamp_ticks: u64,
+    ) -> Self {
         Self {
             counter,
             created_time: timestamp_ticks,
@@ -120,51 +123,85 @@ impl LimiterEntry {
         }
     }
 
-    /// Update the last accessed timestamp
-    pub fn touch(&mut self, timestamp_ticks: u64) {
-        self.updated_time = timestamp_ticks;
+    /// Get a reference to the counter
+    pub fn counter(&self) -> &crate::algorithm::fixed_window_counter::FixedWindowCounterCore {
+        &self.counter
     }
 
-    /// Get the counter reference
-    pub fn counter(&mut self) -> &mut FixedWindowCounterCore {
+    /// Get a mutable reference to the counter
+    pub fn counter_mut(
+        &mut self,
+    ) -> &mut crate::algorithm::fixed_window_counter::FixedWindowCounterCore {
         &mut self.counter
     }
 
-    /// Get creation time
+    /// Get the creation timestamp
     pub fn created_time(&self) -> u64 {
         self.created_time
     }
 
-    /// Get last updated time
+    /// Get the last update timestamp
     pub fn updated_time(&self) -> u64 {
         self.updated_time
     }
+
+    /// Update the access timestamp
+    pub fn touch(&mut self, timestamp_ticks: u64) {
+        self.updated_time = timestamp_ticks;
+    }
 }
 
-impl RateLimitConfig {
-    /// Create a new rate limit configuration
-    pub fn new(capacity: u64, window_size_seconds: u64) -> Self {
+/// Service errors
+#[derive(Debug, thiserror::Error)]
+pub enum ServiceError {
+    #[error("Invalid configuration: {message}")]
+    InvalidConfiguration { message: String },
+    #[error("Method '{method}' is not configured")]
+    MethodNotConfigured { method: String },
+}
+
+/// Grouped state for rate limiting service
+/// This groups the three main components into a single struct for cleaner thread-local storage
+pub struct RateLimitState<E>
+where
+    E: std::cmp::Eq + std::hash::Hash + Clone,
+{
+    /// Configuration for each method (set once during initialization)
+    pub method_configs: HashMap<String, RateLimitConfig>,
+    /// Runtime tracking for each (identifier, method) pair (created on-demand)
+    pub runtime_limiters: HashMap<(E, String), LimiterEntry>,
+    /// Service-wide settings
+    pub settings: ServiceSettings,
+}
+
+impl<E> RateLimitState<E>
+where
+    E: std::cmp::Eq + std::hash::Hash + Clone,
+{
+    /// Create a new empty rate limit state with default settings
+    pub fn new() -> Self {
         Self {
-            capacity,
-            window_size: window_size_seconds,
+            method_configs: HashMap::new(),
+            runtime_limiters: HashMap::new(),
+            settings: ServiceSettings::default(),
+        }
+    }
+
+    /// Create a new empty rate limit state with custom settings
+    pub fn new_with_settings(settings: ServiceSettings) -> Self {
+        Self {
+            method_configs: HashMap::new(),
+            runtime_limiters: HashMap::new(),
+            settings,
         }
     }
 }
 
-/// Errors that can occur in the rate limit service
-#[derive(Debug, thiserror::Error)]
-pub enum ServiceError {
-    /// Method is not configured in the service
-    #[error("Method '{method}' not configured. Call add_config() first.")]
-    MethodNotConfigured {
-        /// The method name that was not found
-        method: String,
-    },
-
-    /// Invalid configuration provided
-    #[error("Invalid configuration: {message}")]
-    InvalidConfiguration {
-        /// Description of the configuration error
-        message: String,
-    },
+impl<E> Default for RateLimitState<E>
+where
+    E: std::cmp::Eq + std::hash::Hash + Clone,
+{
+    fn default() -> Self {
+        Self::new()
+    }
 }

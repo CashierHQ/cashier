@@ -6,4 +6,5 @@ pub use algorithm::types::{
     RateLimitError, RateLimitResult, VerboseRateLimitError, VerboseRateLimitResult,
 };
 pub use service::RateLimitService;
+pub use service::config::RateLimitConfigService;
 pub use service::types::RateLimitConfig;

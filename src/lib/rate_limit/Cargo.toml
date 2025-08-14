@@ -6,6 +6,7 @@ version.workspace = true
 
 [dependencies]
 thiserror = {workspace = true}
+ic_mple_utils = {workspace = true}
 
 [dev-dependencies]
 candid = {workspace = true}
