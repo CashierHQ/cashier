@@ -8,9 +8,7 @@ use token_storage_types::init::TokenStorageInitData;
 use crate::{
     api::state::get_state,
     constant::default_tokens::get_default_tokens,
-    repository::{
-        Repositories, ThreadlocalRepositories
-    },
+    repository::{Repositories, ThreadlocalRepositories},
 };
 
 #[init]

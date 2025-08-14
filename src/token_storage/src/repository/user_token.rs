@@ -13,7 +13,8 @@ use crate::types::UserTokenList;
 /// Store for UserTokenRepository
 pub type UserTokenRepositoryStorage =
     StableBTreeMap<Principal, UserTokenList, VirtualMemory<DefaultMemoryImpl>>;
-pub type ThreadlocalUserTokenRepositoryStorage = &'static LocalKey<RefCell<UserTokenRepositoryStorage>>;
+pub type ThreadlocalUserTokenRepositoryStorage =
+    &'static LocalKey<RefCell<UserTokenRepositoryStorage>>;
 
 pub struct UserTokenRepository<S: Storage<UserTokenRepositoryStorage>> {
     token_store: S,
@@ -105,28 +106,35 @@ impl<S: Storage<UserTokenRepositoryStorage>> UserTokenRepository<S> {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::repository::{tests::TestRepositories, Repositories};
+#[cfg(test)]
+mod tests {
 
-//     use super::*;
+    use crate::repository::{tests::TestRepositories, Repositories};
+    use super::*;
 
-//     #[test]
-//     fn it_should_add_a_token() {
-//         // Arrange
-//         let repo = TestRepositories::new();
-//         let mut user_token_repository = repo.user_token();
-//         let token_id = TokenId::IC {
-//             ledger_id: Principal::anonymous(),
-//         };
+    #[test]
+    fn it_should_update_the_token_list() {
+        // Arrange
+        let repo = TestRepositories::new();
+        let mut user_token_repository = repo.user_token();
+        let version = 1;
+        let token_id = TokenId::IC {
+            ledger_id: Principal::anonymous(),
+        };
+        let user_id = Principal::anonymous();
+        let token_list = UserTokenList {
+            version,
+            enable_list: vec![token_id.clone()].into_iter().collect(),
+        };
 
-//         // Act
-//         user_token_repository.add_token(Principal::anonymous(), token_id).unwrap();
+        // Act
+        user_token_repository.update_token_list(user_id, &token_list).unwrap();
+        let list = user_token_repository.list_tokens(&user_id).unwrap();
 
-//         // Assert
-//         user_token_repository
-//             .list_tokens(&Principal::anonymous())   
-//             .unwrap();
-//     }
+        // Assert
+        assert_eq!(list.version, version);
+        assert_eq!(list.enable_list.len(), 1);
+        assert_eq!(list.enable_list.contains(&token_id), true);
+    }
 
-// }
+}
