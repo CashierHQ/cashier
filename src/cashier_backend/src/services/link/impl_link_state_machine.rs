@@ -1425,7 +1425,7 @@ mod tests {
     fn it_should_return_empty_prefetch_create_action_if_link_not_found() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let result = service.prefetch_create_action(&link);
         assert!(result.is_ok());
 
@@ -1437,8 +1437,8 @@ mod tests {
     fn it_should_prefetch_create_action() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
-        let _link_action = create_link_action_feature(
+        let link = create_link_fixture(&service, &creator_id);
+        let _link_action = create_link_action_fixture(
             &service,
             &link.id,
             ActionType::CreateLink.to_str(),
@@ -1460,7 +1460,7 @@ mod tests {
     fn it_should_return_empty_prefetch_withdraw_action_if_link_not_found() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let result = service.prefetch_withdraw_action(&link);
         assert!(result.is_ok());
 
@@ -1472,8 +1472,8 @@ mod tests {
     fn it_should_prefetch_withdraw_action() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
-        let _link_action = create_link_action_feature(
+        let link = create_link_fixture(&service, &creator_id);
+        let _link_action = create_link_action_fixture(
             &service,
             &link.id,
             ActionType::Withdraw.to_str(),

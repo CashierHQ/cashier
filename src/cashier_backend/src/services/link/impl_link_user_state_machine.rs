@@ -253,7 +253,7 @@ mod tests {
     fn it_should_error_handle_user_link_state_machine_if_link_not_found() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let action_type = "Use";
 
         let result = service.handle_user_link_state_machine(
@@ -276,10 +276,10 @@ mod tests {
     fn it_should_error_handle_user_link_state_machine_if_link_state_empty() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let action_type = "Use";
 
-        let _link_action = create_link_action_feature(&service, &link.id, action_type, &creator_id);
+        let _link_action = create_link_action_fixture(&service, &link.id, action_type, &creator_id);
 
         let result = service.handle_user_link_state_machine(
             &link.id,
@@ -301,10 +301,10 @@ mod tests {
     fn it_should_error_handle_user_link_state_machine_if_link_uset_state_completed() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let action_type = "Use";
 
-        let link_action = create_link_action_feature(&service, &link.id, action_type, &creator_id);
+        let link_action = create_link_action_fixture(&service, &link.id, action_type, &creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -335,10 +335,10 @@ mod tests {
      {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let action_type = "Use";
 
-        let link_action = create_link_action_feature(&service, &link.id, action_type, &creator_id);
+        let link_action = create_link_action_fixture(&service, &link.id, action_type, &creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -368,10 +368,10 @@ mod tests {
     fn it_should_handle_user_link_state_machine_if_current_state_choose_wallet_and_goto_continue() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let action_type = "Use";
 
-        let link_action = create_link_action_feature(&service, &link.id, action_type, &creator_id);
+        let link_action = create_link_action_fixture(&service, &link.id, action_type, &creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -409,10 +409,10 @@ mod tests {
     fn it_should_error_handle_user_link_state_machine_otherwise() {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let action_type = "Use";
 
-        let link_action = create_link_action_feature(&service, &link.id, action_type, &creator_id);
+        let link_action = create_link_action_fixture(&service, &link.id, action_type, &creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -450,7 +450,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
         let result = service.link_get_user_state(
             &creator,
@@ -475,7 +475,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
         let result = service.link_get_user_state(
             &creator,
@@ -500,7 +500,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator2 = Principal::from_text(random_principal_id()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
         let result = service.link_get_user_state(
             &creator2,
@@ -525,8 +525,8 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
-        let _user_wallet = create_user_wallet_feature(&service, &creator_id, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
+        let _user_wallet = create_user_wallet_fixture(&service, &creator_id, &creator_id);
 
         let result = service.link_get_user_state(
             &creator,
@@ -547,9 +547,9 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
-        let _user_wallet = create_user_wallet_feature(&service, &creator_id, &creator_id);
-        let link_action = create_link_action_feature(&service, &link.id, "Use", &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
+        let _user_wallet = create_user_wallet_fixture(&service, &creator_id, &creator_id);
+        let link_action = create_link_action_fixture(&service, &link.id, "Use", &creator_id);
 
         // Update link action without setting link_user_state
         let updated_link_action = LinkAction {
@@ -584,9 +584,9 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
-        let _user_wallet = create_user_wallet_feature(&service, &creator_id, &creator_id);
-        let link_action = create_link_action_feature(&service, &link.id, "Use", &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
+        let _user_wallet = create_user_wallet_fixture(&service, &creator_id, &creator_id);
+        let link_action = create_link_action_fixture(&service, &link.id, "Use", &creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -621,7 +621,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
         let result = service.link_update_user_state(
             &creator,
@@ -647,7 +647,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
         let result = service.link_update_user_state(
             &creator,
@@ -673,7 +673,7 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator2 = Principal::from_text(random_principal_id()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
         let result = service.link_update_user_state(
             &creator2,
@@ -699,8 +699,8 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
-        let _user_wallet = create_user_wallet_feature(&service, &creator_id, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
+        let _user_wallet = create_user_wallet_fixture(&service, &creator_id, &creator_id);
 
         let result = service.link_update_user_state(
             &creator,
@@ -726,9 +726,9 @@ mod tests {
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
-        let _user_wallet = create_user_wallet_feature(&service, &creator_id, &creator_id);
-        let link_action = create_link_action_feature(&service, &link.id, "Use", &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
+        let _user_wallet = create_user_wallet_fixture(&service, &creator_id, &creator_id);
+        let link_action = create_link_action_fixture(&service, &link.id, "Use", &creator_id);
 
         // Update link action without setting link_user_state
         let updated_link_action = LinkAction {

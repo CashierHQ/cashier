@@ -15,7 +15,12 @@ use cashier_backend_types::repository::{
 };
 use std::str::FromStr;
 
-pub fn create_link_feature(service: &LinkService<MockIcEnvironment>, creator_id: &str) -> Link {
+/// Creates a link fixture for testing purposes.
+/// This function initializes a link with a random ID, sets its state, and associates it with a creator ID.
+/// It also creates a user link for the creator.
+/// Returns the created link.
+/// 
+pub fn create_link_fixture(service: &LinkService<MockIcEnvironment>, creator_id: &str) -> Link {
     let link_id = random_id_string();
     let link = Link {
         id: link_id,
@@ -41,7 +46,7 @@ pub fn create_link_feature(service: &LinkService<MockIcEnvironment>, creator_id:
     link
 }
 
-pub fn create_principal_feature(
+pub fn create_principal_fixture(
     service: &LinkService<MockIcEnvironment>,
     principal_id: &str,
 ) -> Principal {
@@ -56,7 +61,7 @@ pub fn create_principal_feature(
     principal
 }
 
-pub fn create_link_action_feature(
+pub fn create_link_action_fixture(
     service: &LinkService<MockIcEnvironment>,
     link_id: &str,
     action_type: &str,
@@ -83,7 +88,7 @@ pub fn create_link_action_feature(
     link_action
 }
 
-pub fn create_user_wallet_feature(
+pub fn create_user_wallet_fixture(
     service: &LinkService<MockIcEnvironment>,
     wallet_key: &str,
     user_id: &str,
