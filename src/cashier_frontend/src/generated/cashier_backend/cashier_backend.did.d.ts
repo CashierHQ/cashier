@@ -54,6 +54,7 @@ export type CanisterError = { 'InvalidDataError' : string } |
       'message' : string,
     }
   } |
+  { 'RateLimitError' : string } |
   { 'UnboundedError' : string } |
   { 'CallCanisterFailed' : string };
 export interface CashierBackendInitData {

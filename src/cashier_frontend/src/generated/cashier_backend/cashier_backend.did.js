@@ -88,6 +88,7 @@ export const idlFactory = ({ IDL }) => {
         'canister_id' : IDL.Text,
         'message' : IDL.Text,
       }),
+      'RateLimitError' : IDL.Text,
       'UnboundedError' : IDL.Text,
       'CallCanisterFailed' : IDL.Text,
     })

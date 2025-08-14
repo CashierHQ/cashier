@@ -1812,6 +1812,7 @@ name = "rate_limit"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "ic_mple_utils",
  "thiserror 2.0.12",
 ]
 

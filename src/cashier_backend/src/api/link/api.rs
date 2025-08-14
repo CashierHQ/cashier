@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::api::guard::is_not_anonymous;
+use crate::api::state::{RateLimitIdentifier, get_state};
 use crate::services::link::traits::LinkValidation;
 use candid::Principal;
 use cashier_backend_types::dto::action::{
@@ -16,9 +17,6 @@ use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::service::link::{PaginateInput, PaginateResult};
 use ic_cdk::{query, update};
 use log::{debug, error, info};
-use rate_limit::service::types::{PrecisionType, ServiceSettings};
-use rate_limit::{RateLimitConfig, RateLimitService};
-use std::cell::RefCell;
 use std::time::Duration;
 
 use crate::services::link::traits::LinkUserStateMachine;
@@ -32,26 +30,6 @@ use crate::{
     },
     utils::runtime::{IcEnvironment, RealIcEnvironment},
 };
-
-// Thread local rate limit service for create_link endpoint
-thread_local! {
-    static RATE_LIMIT_SERVICE: RefCell<RateLimitService<String>> = RefCell::new({
-        let mut service = RateLimitService::new_with_settings(
-            ServiceSettings::with_delete_threshold_and_precision(
-                60 * 60 * 1_000_000_000, // 1 hour cleanup threshold in nanoseconds
-                PrecisionType::Nanos
-            )
-        );
-
-        // Configure rate limits for create_link method
-        let _ = service.add_config(
-            "create_link",
-            RateLimitConfig::new(10, PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 10))), // 10 requests per 10 minutes
-        );
-
-        service
-    });
-}
 
 /// Retrieves a paginated list of links created by the authenticated caller.
 ///
@@ -421,15 +399,14 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         let current_time = Duration::from_nanos(self.ic_env.time());
 
         // Check rate limit before processing
-        println!("Checking rate limit for caller: {caller_id}");
-        RATE_LIMIT_SERVICE
-            .with(|service| {
-                service.borrow_mut().try_acquire_one_at(
-                    caller_id.clone(),
-                    "create_link",
-                    current_time,
-                )
-            })
+        let mut state = get_state();
+        state
+            .rate_limit_service
+            .try_acquire_one_at(
+                RateLimitIdentifier::UserPrincipal(caller),
+                "create_link",
+                current_time,
+            )
             .map_err(|e| CanisterError::RateLimitError(e.to_string()))?;
 
         match self.link_service.create_link(caller_id, input).await {
@@ -484,6 +461,18 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         input: ProcessActionInput,
     ) -> Result<ActionDto, CanisterError> {
         let caller = self.ic_env.caller();
+        let current_time = Duration::from_nanos(self.ic_env.time());
+
+        // Check rate limit before processing
+        let mut state = get_state();
+        state
+            .rate_limit_service
+            .try_acquire_one_at(
+                RateLimitIdentifier::UserPrincipal(caller),
+                "process_action",
+                current_time,
+            )
+            .map_err(|e| CanisterError::RateLimitError(e.to_string()))?;
 
         self.link_service.process_action(&input, &caller).await
     }
@@ -505,6 +494,19 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         input: CreateActionInput,
     ) -> Result<ActionDto, CanisterError> {
         let caller = self.ic_env.caller();
+        let current_time = Duration::from_nanos(self.ic_env.time());
+
+        // Check rate limit before processing
+        let mut state = get_state();
+        state
+            .rate_limit_service
+            .try_acquire_one_at(
+                RateLimitIdentifier::UserPrincipal(caller),
+                "create_action",
+                current_time,
+            )
+            .map_err(|e| CanisterError::RateLimitError(e.to_string()))?;
+
         self.link_service.create_action(&input, &caller).await
     }
 
@@ -596,6 +598,19 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         input: UpdateActionInput,
     ) -> Result<ActionDto, CanisterError> {
         let caller = self.ic_env.caller();
+        let current_time = Duration::from_nanos(self.ic_env.time());
+
+        // Check rate limit before processing
+        let mut state = get_state();
+        state
+            .rate_limit_service
+            .try_acquire_one_at(
+                RateLimitIdentifier::UserPrincipal(caller),
+                "update_action",
+                current_time,
+            )
+            .map_err(|e| CanisterError::RateLimitError(e.to_string()))?;
+
         self.link_service.update_action(&input, &caller).await
     }
 
@@ -653,57 +668,43 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::test_utils::random_principal_id;
+    use crate::utils::test_utils::runtime::MockIcEnvironment;
 
     use super::*;
     use cashier_backend_types::dto::link::LinkDetailUpdateAssetInfoInput;
+    use rate_limit::{RateLimitConfig, service::PrecisionType};
     use std::time::Duration;
 
-    // Mock environment for testing
-    #[derive(Clone)]
-    struct MockIcEnvironment {
-        caller: Principal,
-        time: u64,
-    }
-
-    impl IcEnvironment for MockIcEnvironment {
-        fn new() -> Self {
-            Self {
-                caller: Principal::from_text("2vxsx-fae").unwrap(),
-                time: 1640995200000000000, // Fixed timestamp in nanoseconds
-            }
-        }
-
-        fn caller(&self) -> Principal {
-            Principal::from_text("hmesu-auimt-hh4dk-f3y2h-bbhyg-tzjwk-r4mji-35zqj-sqykf-zkg6n-lxw")
-                .unwrap()
-        }
-
-        fn id(&self) -> Principal {
-            Principal::from_text("rdmx6-jaaaa-aaaah-qcaiq-cai").unwrap()
-        }
-
-        fn time(&self) -> u64 {
-            self.time
-        }
-
-        fn spawn<F>(&self, _future: F)
-        where
-            F: std::future::Future<Output = ()> + 'static,
-        {
-            // Mock implementation - do nothing
-        }
-
-        fn set_timer(
-            &self,
-            _delay: Duration,
-            _f: impl FnOnce() + 'static,
-        ) -> ic_cdk_timers::TimerId {
-            // Mock implementation - we need to create a valid TimerId
-            // In a real test environment, this would be properly mocked
-            // For now, we'll use a placeholder that won't actually be used
-            ic_cdk_timers::set_timer(_delay, _f)
-        }
+    fn init_rate_limit() {
+        let mut state = get_state();
+        let _ = state.rate_limit_service.add_config(
+            "create_link",
+            RateLimitConfig::new(
+                10,
+                PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 10)),
+            ),
+        );
+        let _ = state.rate_limit_service.add_config(
+            "create_action",
+            RateLimitConfig::new(
+                10,
+                PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 5)),
+            ),
+        );
+        let _ = state.rate_limit_service.add_config(
+            "process_action",
+            RateLimitConfig::new(
+                10,
+                PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 5)),
+            ),
+        );
+        let _ = state.rate_limit_service.add_config(
+            "update_action",
+            RateLimitConfig::new(
+                10,
+                PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 5)),
+            ),
+        );
     }
 
     fn create_test_link_input() -> CreateLinkInput {
@@ -724,52 +725,402 @@ mod tests {
         }
     }
 
+    fn create_test_create_action_input() -> CreateActionInput {
+        CreateActionInput {
+            link_id: "test-link-id".to_string(),
+            action_type: "Use".to_string(),
+        }
+    }
+
+    fn create_test_process_action_input() -> ProcessActionInput {
+        ProcessActionInput {
+            link_id: "test-link-id".to_string(),
+            action_type: "Use".to_string(),
+            action_id: "test-action-id".to_string(),
+        }
+    }
+
+    fn create_test_update_action_input() -> UpdateActionInput {
+        UpdateActionInput {
+            action_id: "test-action-id".to_string(),
+            link_id: "test-link-id".to_string(),
+            external: false,
+        }
+    }
+
     #[tokio::test]
-    async fn test_create_link_rate_limiting() {
-        // Create API instance with mock environment
+    async fn should_return_rate_limit_error_if_reach_threshold() {
+        // Arrange
+        let mut mock_env = MockIcEnvironment::new();
         let api = LinkApi::<MockIcEnvironment> {
             link_service: LinkService::get_instance(),
             action_service: ActionService::get_instance(),
-            ic_env: MockIcEnvironment::new(),
+            ic_env: mock_env.clone(),
         };
-
+        init_rate_limit();
         let test_input = create_test_link_input();
+        let mut rate_limit_error_count = 0;
+        let mut other_count = 0;
 
-        let _result1 = api.create_link(test_input.clone()).await;
-
-        let mut rate_limit_triggered = false;
-        for i in 0..15 {
+        // Act
+        for _ in 0..15 {
+            mock_env.advance_time(Duration::from_secs(1));
             let result = api.create_link(test_input.clone()).await;
-            if let Err(CanisterError::ValidationErrors(msg)) = result {
-                if msg.contains("Rate limit exceeded") {
-                    rate_limit_triggered = true;
-                    break;
-                }
+            if let Err(CanisterError::RateLimitError(_)) = result {
+                rate_limit_error_count += 1;
+            } else {
+                other_count += 1;
             }
         }
 
-        assert!(
-            rate_limit_triggered,
-            "Rate limiting should have been triggered after multiple requests"
-        );
+        // Assert
+        assert_eq!(rate_limit_error_count, 5);
+        assert_eq!(other_count, 10);
+    }
 
-        // Test 3: Verify rate limit state
-        RATE_LIMIT_SERVICE.with(|service| {
-            let service = service.borrow();
-            let (counter_count, _, _) = service.get_stats();
-            assert!(
-                counter_count > 0,
-                "Rate limit service should have active counters"
-            );
+    #[tokio::test]
+    async fn should_return_rate_limit_error_for_create_action_if_reach_threshold() {
+        // Arrange
+        let mut mock_env = MockIcEnvironment::new();
+        let api = LinkApi::<MockIcEnvironment> {
+            link_service: LinkService::get_instance(),
+            action_service: ActionService::get_instance(),
+            ic_env: mock_env.clone(),
+        };
+        init_rate_limit();
+        let test_input = create_test_create_action_input();
+        let mut rate_limit_error_count = 0;
+        let mut other_count = 0;
 
-            // Verify the method is configured
-            let configured_methods: Vec<&String> = service.configured_methods().collect();
-            assert!(
-                configured_methods.contains(&&"create_link".to_string()),
-                "create_link method should be configured in rate limiter"
-            );
-        });
+        // Act
+        for _ in 0..15 {
+            mock_env.advance_time(Duration::from_secs(1));
+            let result = api.create_action(test_input.clone()).await;
+            if let Err(CanisterError::RateLimitError(_)) = result {
+                rate_limit_error_count += 1;
+            } else {
+                other_count += 1;
+            }
+        }
 
-        println!("Rate limiting test completed successfully!");
+        // Assert
+        assert_eq!(rate_limit_error_count, 5);
+        assert_eq!(other_count, 10);
+    }
+
+    #[tokio::test]
+    async fn should_return_rate_limit_error_for_process_action_if_reach_threshold() {
+        // Arrange
+        let mut mock_env = MockIcEnvironment::new();
+        let api = LinkApi::<MockIcEnvironment> {
+            link_service: LinkService::get_instance(),
+            action_service: ActionService::get_instance(),
+            ic_env: mock_env.clone(),
+        };
+        init_rate_limit();
+        let test_input = create_test_process_action_input();
+        let mut rate_limit_error_count = 0;
+        let mut other_count = 0;
+
+        // Act
+        for _ in 0..15 {
+            mock_env.advance_time(Duration::from_secs(1));
+            let result = api.process_action(test_input.clone()).await;
+            if let Err(CanisterError::RateLimitError(_)) = result {
+                rate_limit_error_count += 1;
+            } else {
+                other_count += 1;
+            }
+        }
+
+        // Assert
+        assert_eq!(rate_limit_error_count, 5);
+        assert_eq!(other_count, 10);
+    }
+
+    #[tokio::test]
+    async fn should_return_rate_limit_error_for_update_action_if_reach_threshold() {
+        // Arrange
+        let mut mock_env = MockIcEnvironment::new();
+        let api = LinkApi::<MockIcEnvironment> {
+            link_service: LinkService::get_instance(),
+            action_service: ActionService::get_instance(),
+            ic_env: mock_env.clone(),
+        };
+        init_rate_limit();
+        let test_input = create_test_update_action_input();
+        let mut rate_limit_error_count = 0;
+        let mut other_count = 0;
+
+        // Act
+        for _ in 0..15 {
+            mock_env.advance_time(Duration::from_secs(1));
+            let result = api.update_action(test_input.clone()).await;
+            if let Err(CanisterError::RateLimitError(_)) = result {
+                rate_limit_error_count += 1;
+            } else {
+                other_count += 1;
+            }
+        }
+
+        // Assert
+        assert_eq!(rate_limit_error_count, 5);
+        assert_eq!(other_count, 10);
+    }
+
+    #[tokio::test]
+    async fn should_return_reset_after_window_size() {
+        // Arrange
+        let mock_env = MockIcEnvironment::new();
+        let mut api = LinkApi::<MockIcEnvironment> {
+            link_service: LinkService::get_instance(),
+            action_service: ActionService::get_instance(),
+            ic_env: mock_env,
+        };
+        init_rate_limit();
+        let test_input = create_test_link_input();
+        let mut rate_limit_error_count = 0;
+        let mut other_count = 0;
+
+        // Part 1: Call 10 times - should accept all 10
+        for _ in 0..10 {
+            api.ic_env.advance_time(Duration::from_secs(1));
+            let result = api.create_link(test_input.clone()).await;
+            if let Err(CanisterError::RateLimitError(_)) = result {
+                rate_limit_error_count += 1;
+            } else {
+                other_count += 1;
+            }
+        }
+
+        // Assert Part 1: All 10 calls should be accepted
+        assert_eq!(rate_limit_error_count, 0);
+        assert_eq!(other_count, 10);
+
+        // Advance time to next 10 minutes window
+        api.ic_env.advance_time(Duration::from_secs(60 * 10));
+
+        // Part 2: Call 5 times - should return all errors (window reset)
+        for _ in 0..5 {
+            let result = api.create_link(test_input.clone()).await;
+            if let Err(CanisterError::RateLimitError(_)) = result {
+                rate_limit_error_count += 1;
+            } else {
+                other_count += 1;
+            }
+        }
+
+        // Assert Part 2: All 5 calls should return rate limit errors
+        assert_eq!(rate_limit_error_count, 5);
+        assert_eq!(other_count, 10);
+
+        // Advance time to next 10 minutes window
+        api.ic_env.advance_time(Duration::from_secs(60 * 10));
+
+        // Part 3: Call 15 times - should accept 10, return 5 errors
+        for _ in 0..15 {
+            let result = api.create_link(test_input.clone()).await;
+            if let Err(CanisterError::RateLimitError(_)) = result {
+                rate_limit_error_count += 1;
+            } else {
+                other_count += 1;
+            }
+        }
+
+        // Assert Part 3: 10 accepted, 5 rate limit errors
+        assert_eq!(rate_limit_error_count, 10);
+        assert_eq!(other_count, 20);
+    }
+
+    #[tokio::test]
+    async fn should_return_reset_after_window_size_for_create_action() {
+        // Arrange
+        let mock_env = MockIcEnvironment::new();
+        let mut api = LinkApi::<MockIcEnvironment> {
+            link_service: LinkService::get_instance(),
+            action_service: ActionService::get_instance(),
+            ic_env: mock_env,
+        };
+        init_rate_limit();
+        let test_input = create_test_create_action_input();
+        let mut rate_limit_error_count = 0;
+        let mut other_count = 0;
+
+        // Part 1: Call 10 times - should accept all 10
+        for _ in 0..10 {
+            api.ic_env.advance_time(Duration::from_secs(1));
+            let result = api.create_action(test_input.clone()).await;
+            if let Err(CanisterError::RateLimitError(_)) = result {
+                rate_limit_error_count += 1;
+            } else {
+                other_count += 1;
+            }
+        }
+
+        // Assert Part 1: All 10 calls should be accepted
+        assert_eq!(rate_limit_error_count, 0);
+        assert_eq!(other_count, 10);
+
+        // Advance time to next 5 minutes window
+        api.ic_env.advance_time(Duration::from_secs(60 * 5));
+
+        // Part 2: Call 5 times - should return all errors (window reset)
+        for _ in 0..5 {
+            let result = api.create_action(test_input.clone()).await;
+            if let Err(CanisterError::RateLimitError(_)) = result {
+                rate_limit_error_count += 1;
+            } else {
+                other_count += 1;
+            }
+        }
+
+        // Assert Part 2: All 5 calls should return rate limit errors
+        assert_eq!(rate_limit_error_count, 5);
+        assert_eq!(other_count, 10);
+
+        // Advance time to next 5 minutes window
+        api.ic_env.advance_time(Duration::from_secs(60 * 5));
+
+        // Part 3: Call 15 times - should accept 10, return 5 errors
+        for _ in 0..15 {
+            let result = api.create_action(test_input.clone()).await;
+            if let Err(CanisterError::RateLimitError(_)) = result {
+                rate_limit_error_count += 1;
+            } else {
+                other_count += 1;
+            }
+        }
+
+        // Assert Part 3: 10 accepted, 5 rate limit errors
+        assert_eq!(rate_limit_error_count, 10);
+        assert_eq!(other_count, 20);
+    }
+
+    #[tokio::test]
+    async fn should_return_reset_after_window_size_for_process_action() {
+        // Arrange
+        let mock_env = MockIcEnvironment::new();
+        let mut api = LinkApi::<MockIcEnvironment> {
+            link_service: LinkService::get_instance(),
+            action_service: ActionService::get_instance(),
+            ic_env: mock_env,
+        };
+        init_rate_limit();
+        let test_input = create_test_process_action_input();
+        let mut rate_limit_error_count = 0;
+        let mut other_count = 0;
+
+        // Part 1: Call 10 times - should accept all 10
+        for _ in 0..10 {
+            api.ic_env.advance_time(Duration::from_secs(1));
+            let result = api.process_action(test_input.clone()).await;
+            if let Err(CanisterError::RateLimitError(_)) = result {
+                rate_limit_error_count += 1;
+            } else {
+                other_count += 1;
+            }
+        }
+
+        // Assert Part 1: All 10 calls should be accepted
+        assert_eq!(rate_limit_error_count, 0);
+        assert_eq!(other_count, 10);
+
+        // Advance time to next 5 minutes window
+        api.ic_env.advance_time(Duration::from_secs(60 * 5));
+
+        // Part 2: Call 5 times - should return all errors (window reset)
+        for _ in 0..5 {
+            let result = api.process_action(test_input.clone()).await;
+            if let Err(CanisterError::RateLimitError(_)) = result {
+                rate_limit_error_count += 1;
+            } else {
+                other_count += 1;
+            }
+        }
+
+        // Assert Part 2: All 5 calls should return rate limit errors
+        assert_eq!(rate_limit_error_count, 5);
+        assert_eq!(other_count, 10);
+
+        // Advance time to next 5 minutes window
+        api.ic_env.advance_time(Duration::from_secs(60 * 5));
+
+        // Part 3: Call 15 times - should accept 10, return 5 errors
+        for _ in 0..15 {
+            let result = api.process_action(test_input.clone()).await;
+            if let Err(CanisterError::RateLimitError(_)) = result {
+                rate_limit_error_count += 1;
+            } else {
+                other_count += 1;
+            }
+        }
+
+        // Assert Part 3: 10 accepted, 5 rate limit errors
+        assert_eq!(rate_limit_error_count, 10);
+        assert_eq!(other_count, 20);
+    }
+
+    #[tokio::test]
+    async fn should_return_reset_after_window_size_for_update_action() {
+        // Arrange
+        let mock_env = MockIcEnvironment::new();
+        let mut api = LinkApi::<MockIcEnvironment> {
+            link_service: LinkService::get_instance(),
+            action_service: ActionService::get_instance(),
+            ic_env: mock_env,
+        };
+        init_rate_limit();
+        let test_input = create_test_update_action_input();
+        let mut rate_limit_error_count = 0;
+        let mut other_count = 0;
+
+        // Part 1: Call 10 times - should accept all 10
+        for _ in 0..10 {
+            api.ic_env.advance_time(Duration::from_secs(1));
+            let result = api.update_action(test_input.clone()).await;
+            if let Err(CanisterError::RateLimitError(_)) = result {
+                rate_limit_error_count += 1;
+            } else {
+                other_count += 1;
+            }
+        }
+
+        // Assert Part 1: All 10 calls should be accepted
+        assert_eq!(rate_limit_error_count, 0);
+        assert_eq!(other_count, 10);
+
+        // Advance time to next 5 minutes window
+        api.ic_env.advance_time(Duration::from_secs(60 * 5));
+
+        // Part 2: Call 5 times - should return all errors (window reset)
+        for _ in 0..5 {
+            let result = api.update_action(test_input.clone()).await;
+            if let Err(CanisterError::RateLimitError(_)) = result {
+                rate_limit_error_count += 1;
+            } else {
+                other_count += 1;
+            }
+        }
+
+        // Assert Part 2: All 5 calls should return rate limit errors
+        assert_eq!(rate_limit_error_count, 5);
+        assert_eq!(other_count, 10);
+
+        // Advance time to next 5 minutes window
+        api.ic_env.advance_time(Duration::from_secs(60 * 5));
+
+        // Part 3: Call 15 times - should accept 10, return 5 errors
+        for _ in 0..15 {
+            let result = api.update_action(test_input.clone()).await;
+            if let Err(CanisterError::RateLimitError(_)) = result {
+                rate_limit_error_count += 1;
+            } else {
+                other_count += 1;
+            }
+        }
+
+        // Assert Part 3: 10 accepted, 5 rate limit errors
+        assert_eq!(rate_limit_error_count, 10);
+        assert_eq!(other_count, 20);
     }
 }

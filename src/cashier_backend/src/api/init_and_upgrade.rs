@@ -4,6 +4,8 @@
 use cashier_backend_types::init::CashierBackendInitData;
 use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::info;
+use rate_limit::{RateLimitConfig, service::types::PrecisionType};
+use std::time::Duration;
 
 use crate::api::state::get_state;
 use crate::services::transaction_manager::traits::TimeoutHandler;
@@ -12,11 +14,49 @@ use crate::{
     services::transaction_manager::service::TransactionManagerService,
     utils::{random::init_ic_rand, runtime::RealIcEnvironment},
 };
+
 #[init]
 fn init(init_data: CashierBackendInitData) {
     let log_config = init_data.log_settings.unwrap_or_default();
-    if let Err(err) = get_state().log_service.init(Some(log_config)) {
+    let mut state = get_state();
+    if let Err(err) = state.log_service.init(Some(log_config)) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
+    }
+    if let Err(err) = state.rate_limit_service.add_config(
+        "create_link",
+        RateLimitConfig::new(
+            10,
+            PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 10)),
+        ), // 10 requests per 10 minutes
+    ) {
+        ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
+    }
+    if let Err(err) = state.rate_limit_service.add_config(
+        "create_action",
+        RateLimitConfig::new(
+            10,
+            PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 5)),
+        ), // 10 requests per 5 minutes
+    ) {
+        ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
+    }
+    if let Err(err) = state.rate_limit_service.add_config(
+        "process_action",
+        RateLimitConfig::new(
+            10,
+            PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 5)),
+        ), // 10 requests per 5 minutes
+    ) {
+        ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
+    }
+    if let Err(err) = state.rate_limit_service.add_config(
+        "update_action",
+        RateLimitConfig::new(
+            10,
+            PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 5)),
+        ), // 10 requests per 5 minutes
+    ) {
+        ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
     }
 
     info!("[init] Starting Cashier Backend");
@@ -29,8 +69,45 @@ fn pre_upgrade() {}
 
 #[post_upgrade]
 fn post_upgrade() {
-    if let Err(err) = get_state().log_service.init(None) {
+    let mut state = get_state();
+    if let Err(err) = state.log_service.init(None) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
+    }
+    if let Err(err) = state.rate_limit_service.add_config(
+        "create_link",
+        RateLimitConfig::new(
+            10,
+            PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 10)),
+        ), // 10 requests per 10 minutes
+    ) {
+        ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
+    }
+    if let Err(err) = state.rate_limit_service.add_config(
+        "create_action",
+        RateLimitConfig::new(
+            10,
+            PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 5)),
+        ), // 10 requests per 5 minutes
+    ) {
+        ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
+    }
+    if let Err(err) = state.rate_limit_service.add_config(
+        "process_action",
+        RateLimitConfig::new(
+            10,
+            PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 5)),
+        ), // 10 requests per 5 minutes
+    ) {
+        ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
+    }
+    if let Err(err) = state.rate_limit_service.add_config(
+        "update_action",
+        RateLimitConfig::new(
+            10,
+            PrecisionType::Nanos.to_ticks(Duration::from_secs(60 * 5)),
+        ), // 10 requests per 5 minutes
+    ) {
+        ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
     }
 
     info!("[post_upgrade] Starting Cashier Backend");
