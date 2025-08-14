@@ -21,14 +21,14 @@ pub type ThreadlocalTokenRegistryRepositoryStorage =
     &'static LocalKey<RefCell<TokenRegistryRepositoryStorage>>;
 
 pub struct TokenRegistryRepository<S: Storage<TokenRegistryRepositoryStorage>> {
-    token_reg_meta_repo: S,
+    token_reg_repo: S,
 }
 
 impl<S: Storage<TokenRegistryRepositoryStorage>> TokenRegistryRepository<S> {
     /// Create a new TokenRegistryRepository
     pub fn new(storage: S) -> Self {
         Self {
-            token_reg_meta_repo: storage,
+            token_reg_repo: storage,
         }
     }
 
@@ -40,10 +40,10 @@ impl<S: Storage<TokenRegistryRepositoryStorage>> TokenRegistryRepository<S> {
     ) -> Result<TokenId, String> {
         let token_id = input.details.token_id();
         let is_new_token = !self
-            .token_reg_meta_repo
+            .token_reg_repo
             .with_borrow(|store| store.contains_key(&token_id));
 
-        self.token_reg_meta_repo.with_borrow_mut(|store| {
+        self.token_reg_repo.with_borrow_mut(|store| {
             store.insert(token_id.clone(), input.clone());
         });
 
@@ -55,53 +55,24 @@ impl<S: Storage<TokenRegistryRepositoryStorage>> TokenRegistryRepository<S> {
         Ok(token_id)
     }
 
-    // this function will update the token registry version if a new token is added
-    pub fn add_bulk_tokens<M: Storage<TokenRegistryMetadataRepositoryStorage>>(
-        &mut self,
-        tokens: Vec<RegistryToken>,
-        token_registry_repo: &mut TokenRegistryMetadataRepository<M>,
-    ) -> Result<Vec<TokenId>, String> {
-        let mut token_ids = Vec::new();
-        let mut any_new_tokens = false;
-
-        // First pass: check if any tokens are new
-        for input in &tokens {
-            let is_new = !self
-                .token_reg_meta_repo
-                .with_borrow(|store| store.contains_key(&input.details.token_id()));
-            if is_new {
-                any_new_tokens = true;
-                break;
-            }
-        }
-
-        // Second pass: register all tokens
-        for input in tokens {
-            let token_id = self.register_token(input, token_registry_repo)?;
-            token_ids.push(token_id);
-        }
-
-        // If any tokens were new, increment the version
-        // (this is a safeguard in case register_token didn't increment)
-        if any_new_tokens {
-            token_registry_repo.increase_version();
-        }
-
-        Ok(token_ids)
+    /// Check if a token is in the registry
+    pub fn contains(&self, token_id: &TokenId) -> bool {
+        self.token_reg_repo
+            .with_borrow(|store| store.contains_key(token_id))
     }
 
     pub fn get_token(&self, token_id: &TokenId) -> Option<RegistryToken> {
-        self.token_reg_meta_repo
+        self.token_reg_repo
             .with_borrow(|store| store.get(token_id))
     }
 
     pub fn list_tokens(&self) -> Vec<RegistryToken> {
-        self.token_reg_meta_repo
+        self.token_reg_repo
             .with_borrow(|store| store.iter().map(|entry| entry.value()).collect())
     }
 
     pub fn delete_all(&mut self) -> Result<(), String> {
-        self.token_reg_meta_repo.with_borrow_mut(|store| {
+        self.token_reg_repo.with_borrow_mut(|store| {
             store.clear_new();
             Ok(())
         })

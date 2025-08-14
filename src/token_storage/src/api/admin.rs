@@ -11,14 +11,7 @@ use token_storage_types::{
 };
 
 use crate::{
-    build_data::canister_build_data,
-    constant::default_tokens::get_default_tokens,
-    repository::{Repositories, ThreadlocalRepositories},
-    services::{
-        token_registry::TokenRegistryService, user_preference::UserPreferenceService,
-        user_token::UserTokenService,
-    },
-    types::TokenRegistryMetadata,
+    api::state::{get_state}, build_data::canister_build_data, constant::default_tokens::get_default_tokens, types::TokenRegistryMetadata
 };
 
 fn ensure_is_admin() -> Result<(), String> {
@@ -51,7 +44,7 @@ pub fn admin_get_registry_version() -> u64 {
     ensure_is_admin().unwrap_or_else(|err| {
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
-    let service = TokenRegistryService::new();
+    let service = get_state().token_registry;
     service.get_metadata().version
 }
 
@@ -63,7 +56,7 @@ pub fn admin_get_registry_metadata() -> TokenRegistryMetadata {
     ensure_is_admin().unwrap_or_else(|err| {
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
-    let service = TokenRegistryService::new();
+    let service = get_state().token_registry;
     service.get_metadata()
 }
 
@@ -75,7 +68,7 @@ pub fn admin_get_registry_tokens(only_enable: bool) -> Vec<TokenDto> {
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
 
-    let service = TokenRegistryService::new();
+    let service = get_state().token_registry;
     let list: Vec<TokenDto> = service
         .list_tokens()
         .iter()
@@ -97,10 +90,10 @@ pub fn admin_initialize_registry() -> Result<(), String> {
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
 
-    let mut registry = ThreadlocalRepositories.token_registry();
-    let mut metadata_registry = ThreadlocalRepositories.token_registry_metadata();
-    registry.delete_all()?;
-    registry.add_bulk_tokens(get_default_tokens(), &mut metadata_registry)?;
+    let service = get_state();
+    let mut registry = service.token_registry;
+    registry.delete_all().expect("Should be able to delete registry");
+    registry.add_bulk_tokens(get_default_tokens()).expect("Should be able to add default tokens");
 
     Ok(())
 }
@@ -113,8 +106,9 @@ pub fn admin_get_stats() -> Result<RegistryStats, String> {
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
 
-    let service = TokenRegistryService::new();
-    let list_tokens = service.list_tokens();
+    let state = get_state();
+    let token_registry = state.token_registry;
+    let list_tokens = token_registry.list_tokens();
     let total_tokens = list_tokens.len();
     let total_enabled_default = list_tokens.iter().filter(|t| t.enabled_by_default).count();
 
@@ -132,8 +126,9 @@ pub fn admin_get_user_tokens(wallet: Principal) -> Result<UserTokens, String> {
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
 
-    let token_registry_service = TokenRegistryService::new();
-    let user_token_service = UserTokenService::new();
+    let state = get_state();
+    let token_registry_service = state.token_registry;
+    let user_token_service = state.user_token;
 
     // Check if user's token list exists
     let user_token_list = user_token_service
@@ -157,9 +152,10 @@ pub fn admin_list_tokens_by_wallet(wallet: Principal) -> Result<TokenListRespons
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
 
-    let token_registry_service = TokenRegistryService::new();
-    let user_preference_service = UserPreferenceService::new();
-    let user_token_service = UserTokenService::new();
+    let state = get_state();
+    let token_registry_service = state.token_registry;
+    let user_preference_service = state.user_preference;
+    let user_token_service = state.user_token;
     let registry_metadata = token_registry_service.get_metadata();
 
     let user_preferences = user_preference_service.get_preferences(&wallet);
@@ -224,7 +220,8 @@ pub fn admin_get_user_balance(
         ic_cdk::trap(format!("Admin check failed: {err}"));
     });
 
-    let user_token_service = UserTokenService::new();
+    let state = get_state();
+    let user_token_service = state.user_token;
 
     // Retrieve all balances for the user
     let balances = user_token_service.get_all_user_balances(&wallet);

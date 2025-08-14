@@ -8,7 +8,6 @@ use token_storage_types::init::TokenStorageInitData;
 use crate::{
     api::state::get_state,
     constant::default_tokens::get_default_tokens,
-    repository::{Repositories, ThreadlocalRepositories},
 };
 
 #[init]
@@ -20,9 +19,8 @@ fn init(init_data: TokenStorageInitData) {
 
     info!("[init] Starting Token Storage");
 
-    let mut registry = ThreadlocalRepositories.token_registry();
-    let mut metadata_registry = ThreadlocalRepositories.token_registry_metadata();
-    match registry.add_bulk_tokens(get_default_tokens(), &mut metadata_registry) {
+    let mut state = get_state();
+    match state.token_registry.add_bulk_tokens(get_default_tokens()) {
         Ok(_) => {}
         Err(e) => {
             error!("Error adding default tokens: {e}");
