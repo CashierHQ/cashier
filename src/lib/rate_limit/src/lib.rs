@@ -8,3 +8,6 @@ pub use algorithm::types::{
 pub use service::RateLimitService;
 pub use service::config::RateLimitConfigService;
 pub use service::types::RateLimitConfig;
+
+#[cfg(test)]
+pub mod test_utils;

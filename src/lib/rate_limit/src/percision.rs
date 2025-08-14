@@ -70,10 +70,6 @@ use std::time::Duration;
 /// limiters and executors:
 ///
 /// ```rust
-/// use std::time::Duration;
-/// use rate_guard::precision::{Precision, Millis};
-/// use rate_guard::types::u64;
-///
 /// fn process_with_precision<P: Precision>(duration: Duration) -> u64 {
 ///     P::to_ticks(duration)  // Static dispatch, zero-cost
 /// }

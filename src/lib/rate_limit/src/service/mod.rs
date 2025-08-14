@@ -1,39 +1,33 @@
 use std::time::Duration;
 
-use crate::algorithm::fixed_window_counter::{
-    FixedWindowCounterCore, FixedWindowCounterCoreConfig,
+use crate::{
+    algorithm::fixed_window_counter::{FixedWindowCounterCore, FixedWindowCounterCoreConfig},
+    percision::Precision,
 };
 
 pub mod config;
 pub mod types;
-pub use types::{
-    LimiterEntry, PrecisionType, RateLimitConfig, RateLimitState, ServiceError, ServiceSettings,
-};
+pub use types::{LimiterEntry, RateLimitConfig, RateLimitState, ServiceError, ServiceSettings};
 
 /// Service for managing multiple rate limiters with different identifiers and methods
-pub struct RateLimitService<E>
+pub struct RateLimitService<E, P>
 where
     E: std::cmp::Eq + std::hash::Hash + Clone,
+    P: Precision,
 {
     /// Grouped state containing all rate limiting data
-    state: RateLimitState<E>,
+    state: RateLimitState<E, P>,
 }
 
-impl<E> RateLimitService<E>
+impl<E, P> RateLimitService<E, P>
 where
     E: std::cmp::Eq + std::hash::Hash + Clone,
+    P: Precision,
 {
     /// Create a new empty rate limit service with default settings
-    pub fn new() -> Self {
+    pub fn new(settings: ServiceSettings<P>) -> Self {
         Self {
-            state: RateLimitState::new(),
-        }
-    }
-
-    /// Create a new empty rate limit service with custom settings
-    pub fn new_with_settings(settings: ServiceSettings) -> Self {
-        Self {
-            state: RateLimitState::new_with_settings(settings),
+            state: RateLimitState::new(settings),
         }
     }
 
@@ -45,7 +39,7 @@ where
     pub fn add_config(
         &mut self,
         method: &str,
-        config: RateLimitConfig,
+        config: RateLimitConfig<P>,
     ) -> Result<(), ServiceError> {
         // Validate configuration
         if config.capacity == 0 {
@@ -111,7 +105,7 @@ where
         duration: Duration,
         tokens: u64,
     ) -> Result<(), crate::algorithm::types::RateLimitError> {
-        let timestamp_ticks = self.state.settings.precision.to_ticks(duration);
+        let timestamp_ticks = P::to_ticks(duration);
 
         let limiter_entry = self
             .get_or_create_limiter(&identifier, method, timestamp_ticks)
@@ -169,12 +163,12 @@ where
     }
 
     /// Get the current service settings
-    pub fn settings(&self) -> &ServiceSettings {
+    pub fn settings(&self) -> &ServiceSettings<P> {
         &self.state.settings
     }
 
     /// Update service settings
-    pub fn update_settings(&mut self, settings: ServiceSettings) {
+    pub fn update_settings(&mut self, settings: ServiceSettings<P>) {
         self.state.settings = settings;
     }
 
@@ -215,19 +209,14 @@ where
     }
 }
 
-impl<E> Default for RateLimitService<E>
-where
-    E: std::cmp::Eq + std::hash::Hash + Clone,
-{
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algorithm::types::RateLimitError;
+    use crate::{
+        algorithm::types::RateLimitError,
+        percision::{Millis, Nanos},
+        test_utils::Time,
+    };
     use candid::Principal;
 
     /// Test identifier enum demonstrating flexibility of the generic service
@@ -239,69 +228,30 @@ mod tests {
         AnyUser,
     }
 
-    /// Helper function to get a timestamp at the start of the next window relative to base time
-    ///
-    /// # Arguments
-    /// * `base_time` - The reference time to calculate from
-    /// * `window_size` - The window size in seconds
-    ///
-    /// # Returns
-    /// Timestamp at the start of the next window after `base_time`
-    fn next_window(base_time: u64, window_size: u64) -> u64 {
-        ((base_time / window_size) + 1) * window_size
+    fn get_settings() -> ServiceSettings<Nanos> {
+        // setting with 1 hour delete threshold
+        ServiceSettings::new(Duration::from_secs(60 * 60))
     }
 
-    /// Helper function to get a stable base time for testing
-    /// This returns a predictable timestamp that aligns well with window boundaries
-    fn stable_base_time_ns() -> u64 {
-        // Use a fixed timestamp that's safely in the middle of a window
-        // This makes tests more predictable by avoiding window boundary issues
-        //  Wednesday, 13 August 2025 10:51:33 in nanoseconds
-        1755082293 * 1_000_000_000
-    }
-
-    fn get_service() -> RateLimitService<TestIdentifier> {
-        let mut service: RateLimitService<TestIdentifier> = RateLimitService::new();
+    fn get_service() -> RateLimitService<TestIdentifier, Nanos> {
+        let mut service: RateLimitService<TestIdentifier, Nanos> =
+            RateLimitService::new(ServiceSettings::new(Duration::from_secs(60 * 60)));
         service
             .add_config(
                 "test",
-                RateLimitConfig {
-                    capacity: 10,
-                    window_size: 60,
-                },
+                RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
             )
             .unwrap();
         service
             .add_config(
                 "create_action",
-                RateLimitConfig {
-                    capacity: 10,
-                    window_size: 60,
-                },
+                RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
             )
             .unwrap();
         service
             .add_config(
                 "add_token",
-                RateLimitConfig {
-                    capacity: 60,
-                    window_size: 60,
-                },
-            )
-            .unwrap();
-        service
-    }
-
-    fn get_service_with_settings(settings: ServiceSettings) -> RateLimitService<TestIdentifier> {
-        let mut service: RateLimitService<TestIdentifier> =
-            RateLimitService::new_with_settings(settings);
-        service
-            .add_config(
-                "test",
-                RateLimitConfig {
-                    capacity: 10,
-                    window_size: 60,
-                },
+                RateLimitConfig::new(60, Duration::from_secs(60 * 10)),
             )
             .unwrap();
         service
@@ -311,75 +261,130 @@ mod tests {
 
     #[test]
     fn test_new_service() {
-        let service: RateLimitService<TestIdentifier> = RateLimitService::new();
-        assert_eq!(service.state.method_configs.len(), 0);
-        assert_eq!(service.state.runtime_limiters.len(), 0);
+        // Arrange
+        let delete_threshold = Duration::from_secs(3600); // 1 hour
+        let settings = ServiceSettings::new(delete_threshold);
+
+        // Act
+        let service: RateLimitService<TestIdentifier, Nanos> = RateLimitService::new(settings);
+
+        // Assert
+        assert_eq!(
+            service.state.method_configs.len(),
+            0,
+            "New service should have no method configurations"
+        );
+        assert_eq!(
+            service.state.runtime_limiters.len(),
+            0,
+            "New service should have no runtime limiters"
+        );
+        assert_eq!(
+            service.settings().delete_threshold_ticks,
+            Some(Nanos::to_ticks(delete_threshold)),
+            "Service should have the correct delete threshold settings"
+        );
     }
 
     #[test]
-    fn test_default_service() {
-        let service: RateLimitService<TestIdentifier> = RateLimitService::default();
-        assert_eq!(service.state.method_configs.len(), 0);
-        assert_eq!(service.state.runtime_limiters.len(), 0);
+    fn test_new_service_with_zero_threshold() {
+        // Arrange
+        let zero_threshold = Duration::from_secs(0);
+        let settings = ServiceSettings::new(zero_threshold);
+
+        // Act
+        let service: RateLimitService<TestIdentifier, Nanos> = RateLimitService::new(settings);
+
+        // Assert
+        assert_eq!(
+            service.state.method_configs.len(),
+            0,
+            "New service should have no method configurations"
+        );
+        assert_eq!(
+            service.state.runtime_limiters.len(),
+            0,
+            "New service should have no runtime limiters"
+        );
+        assert_eq!(
+            service.settings().delete_threshold_ticks,
+            Some(0),
+            "Service should have zero delete threshold when created with zero duration"
+        );
     }
 
     // ===== Configuration Tests =====
 
     #[test]
     fn test_configured_methods() {
-        let mut service: RateLimitService<TestIdentifier> = RateLimitService::new();
+        // Arrange
+        let settings = ServiceSettings::new(Duration::from_secs(3600));
+        let mut service: RateLimitService<TestIdentifier, Nanos> = RateLimitService::new(settings);
+        let method1_config = RateLimitConfig::new(10, Duration::from_secs(60));
+        let method2_config = RateLimitConfig::new(20, Duration::from_secs(120));
 
-        service
-            .add_config(
-                "method1",
-                RateLimitConfig {
-                    capacity: 10,
-                    window_size: 60,
-                },
-            )
-            .unwrap();
-        service
-            .add_config(
-                "method2",
-                RateLimitConfig {
-                    capacity: 20,
-                    window_size: 120,
-                },
-            )
-            .unwrap();
-
+        // Act
+        service.add_config("method1", method1_config).unwrap();
+        service.add_config("method2", method2_config).unwrap();
         let methods: Vec<&String> = service.configured_methods().collect();
-        assert_eq!(methods.len(), 2);
-        assert!(methods.contains(&&"method1".to_string()));
-        assert!(methods.contains(&&"method2".to_string()));
+
+        // Assert
+        assert_eq!(
+            methods.len(),
+            2,
+            "Service should have exactly 2 configured methods"
+        );
+        assert!(
+            methods.contains(&&"method1".to_string()),
+            "Service should contain method1"
+        );
+        assert!(
+            methods.contains(&&"method2".to_string()),
+            "Service should contain method2"
+        );
     }
 
     // ===== Token Acquisition Tests =====
 
     #[test]
     fn test_try_acquire_at_success() {
+        // Arrange
+        let time = Time::init();
         let mut service = get_service();
-        let duration = Duration::from_nanos(stable_base_time_ns());
+        let duration = Duration::from_secs(time.now());
 
+        // Act
         let result = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
+
+        // Assert
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_try_acquire_at_zero_tokens() {
+        // Arrange
+        let time = Time::init();
         let mut service = get_service();
-        let duration = Duration::from_nanos(stable_base_time_ns());
+        let duration = Duration::from_secs(time.now());
 
+        // Act
         let result = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 0);
+
+        // Assert
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_try_acquire_at_beyond_capacity() {
+        // Arrange
+        let time = Time::init();
         let mut service = get_service();
-        let duration = Duration::from_nanos(stable_base_time_ns());
+        let duration = Duration::from_secs(time.now());
 
+        // Act
         let result = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 15);
+
+        // Assert
         match result {
             Err(RateLimitError::BeyondCapacity {
                 acquiring,
@@ -394,19 +399,19 @@ mod tests {
 
     #[test]
     fn test_try_acquire_at_insufficient_capacity() {
+        // Arrange
+        let time = Time::init();
         let mut service = get_service();
-        let duration = Duration::from_nanos(stable_base_time_ns());
+        let duration = Duration::from_secs(time.now());
 
-        // Use up most capacity
-        assert!(
-            service
-                .try_acquire_at(TestIdentifier::AnyUser, "test", duration, 8)
-                .is_ok()
-        );
+        // Act
+        let result = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 8);
+        let result_2 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 3);
 
-        // Try to acquire more than remaining
-        let result = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 3);
-        match result {
+        // Assert
+        assert!(result.is_ok());
+        assert!(result_2.is_err());
+        match result_2 {
             Err(RateLimitError::InsufficientCapacity {
                 acquiring,
                 available,
@@ -421,33 +426,36 @@ mod tests {
 
     #[test]
     fn test_try_acquire_one_at() {
+        // Arrange
+        let time = Time::init();
         let mut service = get_service();
-        let duration = Duration::from_nanos(stable_base_time_ns());
+        let duration = Duration::from_secs(time.now());
 
+        // Act
         let result = service.try_acquire_one_at(TestIdentifier::AnyUser, "test", duration);
+
+        // Assert
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_try_acquire_at_window_transition() {
+        // Arrange
+        let mut time = Time::init();
         let mut service = get_service();
-        let base_time = stable_base_time_ns();
-        let base_duration = Duration::from_nanos(base_time);
+        let base_duration = Duration::from_secs(time.now());
 
-        // Fill up first window
-        assert!(
-            service
-                .try_acquire_at(TestIdentifier::AnyUser, "test", base_duration, 10)
-                .is_ok()
-        );
+        // Act
+        let result = service.try_acquire_at(TestIdentifier::AnyUser, "test", base_duration, 10);
+        let result_2 = service.try_acquire_at(TestIdentifier::AnyUser, "test", base_duration, 1);
 
-        // Should be at capacity
-        let result = service.try_acquire_at(TestIdentifier::AnyUser, "test", base_duration, 1);
-        assert!(result.is_err());
+        // Assert
+        assert!(result.is_ok());
+        assert!(result_2.is_err());
 
         // Move to next window - should reset capacity
-        let next_window_time = next_window(base_time / 1_000_000_000, 60);
-        let next_duration = Duration::from_secs(next_window_time);
+        time.next_window(600); // 10 minutes window
+        let next_duration = Duration::from_secs(time.now());
         assert!(
             service
                 .try_acquire_at(TestIdentifier::AnyUser, "test", next_duration, 10)
@@ -457,21 +465,21 @@ mod tests {
 
     #[test]
     fn test_try_acquire_at_expired_tick() {
+        // Arrange
+        let mut time = Time::init();
         let mut service = get_service();
-        let base_time = stable_base_time_ns();
-        let base_duration = Duration::from_nanos(base_time);
+        let base_duration = Duration::from_secs(time.now());
 
-        // Establish current window
-        assert!(
-            service
-                .try_acquire_at(TestIdentifier::AnyUser, "test", base_duration, 5)
-                .is_ok()
-        );
+        // Act
+        let result = service.try_acquire_at(TestIdentifier::AnyUser, "test", base_duration, 5);
+        time.past(300);
+        let past_duration = Duration::from_secs(time.now());
+        let result_2 = service.try_acquire_at(TestIdentifier::AnyUser, "test", past_duration, 1);
 
-        // Try to go backwards in time
-        let past_duration = Duration::from_nanos(base_time - 300_000_000_000); // 5 minutes ago
-        let result = service.try_acquire_at(TestIdentifier::AnyUser, "test", past_duration, 1);
-        match result {
+        // Assert
+        assert!(result.is_ok());
+        assert!(result_2.is_err());
+        match result_2 {
             Err(RateLimitError::ExpiredTick { .. }) => {}
             _ => panic!("Expected ExpiredTick error"),
         }
@@ -480,26 +488,24 @@ mod tests {
 
     #[test]
     fn test_multiple_identifiers() {
+        // Arrange
         let mut service = get_service();
-        let duration = Duration::from_nanos(stable_base_time_ns());
+        let time = Time::init();
+        let duration = Duration::from_secs(time.now());
         let principal = Principal::from_text("2vxsx-fae").unwrap();
 
-        // Different identifiers should have separate limiters
-        assert!(
-            service
-                .try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5)
-                .is_ok()
+        // Act
+        let result_1 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
+        let result_2 = service.try_acquire_at(
+            TestIdentifier::UserPrincipal(principal),
+            "test",
+            duration,
+            5,
         );
-        assert!(
-            service
-                .try_acquire_at(
-                    TestIdentifier::UserPrincipal(principal),
-                    "test",
-                    duration,
-                    5
-                )
-                .is_ok()
-        );
+
+        // Assert
+        assert!(result_1.is_ok());
+        assert!(result_2.is_ok());
 
         // Each should have their own capacity
         let result1 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
@@ -517,8 +523,10 @@ mod tests {
 
     #[test]
     fn test_multiple_methods() {
+        // Arrange
+        let time = Time::init();
         let mut service = get_service();
-        let duration = Duration::from_nanos(stable_base_time_ns());
+        let duration = Duration::from_secs(time.now());
 
         // Different methods should have separate limiters
         assert!(
@@ -551,30 +559,30 @@ mod tests {
 
     #[test]
     fn test_try_acquire_at_unconfigured_method() {
-        let mut service: RateLimitService<TestIdentifier> = RateLimitService::new();
-        let duration = Duration::from_nanos(stable_base_time_ns());
+        // Arrange
+        let time = Time::init();
+        let mut service = get_service();
+        let duration = Duration::from_secs(time.now());
 
+        // Act
         let result = service.try_acquire_at(TestIdentifier::AnyUser, "nonexistent", duration, 1);
         assert!(result.is_err());
         // Should return BeyondCapacity error when method is not configured
         match result {
-            Err(crate::algorithm::types::RateLimitError::BeyondCapacity { .. }) => {}
+            Err(RateLimitError::BeyondCapacity { .. }) => {}
             _ => panic!("Expected BeyondCapacity error"),
         }
     }
 
     #[test]
     fn test_add_config_invalid_capacity() {
-        let mut service: RateLimitService<TestIdentifier> = RateLimitService::new();
+        // Arrange
+        let mut service = get_service();
 
-        let result = service.add_config(
-            "test",
-            RateLimitConfig {
-                capacity: 0,
-                window_size: 60,
-            },
-        );
+        // Act
+        let result = service.add_config("test", RateLimitConfig::new(0, Duration::from_secs(60)));
 
+        // Assert
         assert!(result.is_err());
         match result {
             Err(ServiceError::InvalidConfiguration { message }) => {
@@ -586,16 +594,13 @@ mod tests {
 
     #[test]
     fn test_add_config_invalid_window_size() {
-        let mut service: RateLimitService<TestIdentifier> = RateLimitService::new();
+        // Arrange
+        let mut service = get_service();
 
-        let result = service.add_config(
-            "test",
-            RateLimitConfig {
-                capacity: 10,
-                window_size: 0,
-            },
-        );
+        // Act
+        let result = service.add_config("test", RateLimitConfig::new(10, Duration::from_secs(0)));
 
+        // Assert
         assert!(result.is_err());
         match result {
             Err(ServiceError::InvalidConfiguration { message }) => {
@@ -605,263 +610,365 @@ mod tests {
         }
     }
 
-    // ===== Precision Tests =====
-
     #[test]
-    fn test_different_precisions() {
-        // Test with Nanos precision
-        let nanos_settings = ServiceSettings::with_precision(PrecisionType::Nanos);
-        let mut service_nanos: RateLimitService<TestIdentifier> =
-            RateLimitService::new_with_settings(nanos_settings);
-        service_nanos
-            .add_config(
-                "test",
-                RateLimitConfig {
-                    capacity: 10,
-                    window_size: 60,
-                },
-            )
+    fn test_nanos_precision_force_cleanup() {
+        // Arrange
+        let mut time = Time::init();
+        let mut service = get_service();
+        let base_duration = Duration::from_secs(time.now());
+
+        // Act - Create some limiters at base time
+        service
+            .try_acquire_at(TestIdentifier::AnyUser, "test", base_duration, 5)
+            .unwrap();
+        service
+            .try_acquire_at(TestIdentifier::AnyUser, "create_action", base_duration, 3)
             .unwrap();
 
-        let duration = Duration::from_nanos(stable_base_time_ns());
-        assert!(
-            service_nanos
-                .try_acquire_at(TestIdentifier::AnyUser, "test", duration, 1)
-                .is_ok()
-        );
+        let initial_count = service.get_stats().0;
+        assert_eq!(initial_count, 2, "Should have 2 limiters initially");
 
-        // Test with Millis precision
-        let millis_settings = ServiceSettings::with_precision(PrecisionType::Millis);
-        let mut service_millis: RateLimitService<TestIdentifier> =
-            RateLimitService::new_with_settings(millis_settings);
-        service_millis
+        // Advance time by 2 hours (7200 seconds)
+        time.advance(7200);
+        let future_duration = Duration::from_secs(time.now());
+
+        // Force cleanup with 1 hour threshold (should remove all limiters created 2 hours ago)
+        let current_ticks = Nanos::to_ticks(future_duration);
+        let threshold_ticks = Nanos::to_ticks(Duration::from_secs(3600)); // 1 hour threshold
+        let removed_count = service.force_cleanup(current_ticks, threshold_ticks);
+
+        // Assert
+        assert_eq!(
+            removed_count, 2,
+            "Nanos precision cleanup should remove all old limiters"
+        );
+        assert_eq!(
+            service.get_stats().0,
+            0,
+            "Nanos precision service should have no limiters after cleanup"
+        );
+    }
+
+    // ===== Millis Precision Tests =====
+
+    fn get_millis_service() -> RateLimitService<TestIdentifier, Millis> {
+        let mut service: RateLimitService<TestIdentifier, Millis> =
+            RateLimitService::new(ServiceSettings::new(Duration::from_secs(60 * 60)));
+        service
             .add_config(
                 "test",
-                RateLimitConfig {
-                    capacity: 10,
-                    window_size: 60,
-                },
+                RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
             )
             .unwrap();
+        service
+            .add_config(
+                "create_action",
+                RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
+            )
+            .unwrap();
+        service
+            .add_config(
+                "add_token",
+                RateLimitConfig::new(60, Duration::from_secs(60 * 10)),
+            )
+            .unwrap();
+        service
+    }
 
-        let duration_millis = Duration::from_millis(stable_base_time_ns() / 1_000_000);
-        assert!(
-            service_millis
-                .try_acquire_at(TestIdentifier::AnyUser, "test", duration_millis, 1)
-                .is_ok()
+    #[test]
+    fn test_millis_precision_new_service() {
+        // Arrange
+        let delete_threshold = Duration::from_secs(3600); // 1 hour
+        let settings = ServiceSettings::new(delete_threshold);
+
+        // Act
+        let service: RateLimitService<TestIdentifier, Millis> = RateLimitService::new(settings);
+
+        // Assert
+        assert_eq!(
+            service.state.method_configs.len(),
+            0,
+            "New millis service should have no method configurations"
         );
-    }
-
-    #[test]
-    fn test_precision_settings() {
-        // Test creating settings with different precisions
-        let nanos_settings = ServiceSettings::with_precision(PrecisionType::Nanos);
-        assert_eq!(nanos_settings.precision, PrecisionType::Nanos);
-        assert_eq!(nanos_settings.delete_threshold_ticks, None);
-
-        let millis_settings = ServiceSettings::with_precision(PrecisionType::Millis);
-        assert_eq!(millis_settings.precision, PrecisionType::Millis);
-
-        // Test combined settings
-        let combined_settings =
-            ServiceSettings::with_delete_threshold_and_precision(1000, PrecisionType::Micros);
-        assert_eq!(combined_settings.precision, PrecisionType::Micros);
-        assert_eq!(combined_settings.delete_threshold_ticks, Some(1000));
-    }
-
-    #[test]
-    fn test_precision_conversion() {
-        let duration = Duration::from_millis(1500);
-
-        // Test different precision conversions
-        assert_eq!(PrecisionType::Nanos.to_ticks(duration), 1_500_000_000);
-        assert_eq!(PrecisionType::Micros.to_ticks(duration), 1_500_000);
-        assert_eq!(PrecisionType::Millis.to_ticks(duration), 1_500);
-        assert_eq!(PrecisionType::Secs.to_ticks(duration), 1);
-
-        // Test round-trip conversion
-        let ticks = PrecisionType::Millis.to_ticks(duration);
-        let recovered = PrecisionType::Millis.from_ticks(ticks);
-        assert_eq!(recovered, duration);
-    }
-
-    // ===== Timestamp and Settings Tests =====
-
-    #[test]
-    fn test_service_with_settings() {
-        let settings = ServiceSettings::with_delete_threshold(3_600_000_000_000); // 1 hour in nanoseconds
-        let service = get_service_with_settings(settings.clone());
-
+        assert_eq!(
+            service.state.runtime_limiters.len(),
+            0,
+            "New millis service should have no runtime limiters"
+        );
         assert_eq!(
             service.settings().delete_threshold_ticks,
-            Some(3_600_000_000_000)
+            Some(Millis::to_ticks(delete_threshold)),
+            "Millis service should have the correct delete threshold settings"
         );
     }
 
     #[test]
-    fn test_update_settings() {
-        let mut service = get_service();
-        let new_settings = ServiceSettings::with_delete_threshold(7_200_000_000_000); // 2 hours in nanoseconds
+    fn test_millis_precision_try_acquire_at_success() {
+        // Arrange
+        let time = Time::init();
+        let mut service = get_millis_service();
+        let duration = Duration::from_secs(time.now());
 
-        service.update_settings(new_settings);
+        // Act
+        let result = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
+
+        // Assert
+        assert!(
+            result.is_ok(),
+            "Millis precision should successfully acquire tokens"
+        );
+    }
+
+    #[test]
+    fn test_millis_precision_try_acquire_at_beyond_capacity() {
+        // Arrange
+        let time = Time::init();
+        let mut service = get_millis_service();
+        let duration = Duration::from_secs(time.now());
+
+        // Act
+        let result = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 15);
+
+        // Assert
+        match result {
+            Err(RateLimitError::BeyondCapacity {
+                acquiring,
+                capacity,
+            }) => {
+                assert_eq!(acquiring, 15);
+                assert_eq!(capacity, 10);
+            }
+            _ => panic!("Expected BeyondCapacity error for millis precision"),
+        }
+    }
+
+    #[test]
+    fn test_millis_precision_window_transition() {
+        // Arrange
+        let mut time = Time::init();
+        let mut service = get_millis_service();
+        let base_duration = Duration::from_secs(time.now());
+
+        // Act - Fill the window
+        let result = service.try_acquire_at(TestIdentifier::AnyUser, "test", base_duration, 10);
+        let result_2 = service.try_acquire_at(TestIdentifier::AnyUser, "test", base_duration, 1);
+
+        // Assert - Should fail after capacity is exhausted
+        assert!(result.is_ok());
+        assert!(result_2.is_err());
+
+        // Move to next window - should reset capacity
+        time.next_window(600); // 10 minutes window
+        let next_duration = Duration::from_secs(time.now());
+        assert!(
+            service
+                .try_acquire_at(TestIdentifier::AnyUser, "test", next_duration, 10)
+                .is_ok(),
+            "Millis precision should reset capacity in new window"
+        );
+    }
+
+    #[test]
+    fn test_millis_precision_multiple_methods() {
+        // Arrange
+        let time = Time::init();
+        let mut service = get_millis_service();
+        let duration = Duration::from_secs(time.now());
+
+        // Act - Test different methods with millis precision
+        let result1 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
+        let result2 = service.try_acquire_at(TestIdentifier::AnyUser, "create_action", duration, 5);
+        let result3 = service.try_acquire_at(TestIdentifier::AnyUser, "add_token", duration, 30);
+
+        // Assert - All should succeed with separate capacities
+        assert!(
+            result1.is_ok(),
+            "Millis precision test method should succeed"
+        );
+        assert!(
+            result2.is_ok(),
+            "Millis precision create_action method should succeed"
+        );
+        assert!(
+            result3.is_ok(),
+            "Millis precision add_token method should succeed"
+        );
+
+        // Test remaining capacity
+        let result4 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
+        let result5 = service.try_acquire_at(TestIdentifier::AnyUser, "create_action", duration, 5);
+        let result6 = service.try_acquire_at(TestIdentifier::AnyUser, "add_token", duration, 30);
+
+        assert!(
+            result4.is_ok(),
+            "Millis precision test method should have remaining capacity"
+        );
+        assert!(
+            result5.is_ok(),
+            "Millis precision create_action method should have remaining capacity"
+        );
+        assert!(
+            result6.is_ok(),
+            "Millis precision add_token method should have remaining capacity"
+        );
+    }
+
+    #[test]
+    fn test_millis_precision_multiple_identifiers() {
+        // Arrange
+        let mut service = get_millis_service();
+        let time = Time::init();
+        let duration = Duration::from_secs(time.now());
+        let principal = Principal::from_text("2vxsx-fae").unwrap();
+
+        // Act - Test different identifiers with millis precision
+        let result_1 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
+        let result_2 = service.try_acquire_at(
+            TestIdentifier::UserPrincipal(principal),
+            "test",
+            duration,
+            5,
+        );
+
+        // Assert - Each should have their own capacity
+        assert!(result_1.is_ok(), "Millis precision AnyUser should succeed");
+        assert!(
+            result_2.is_ok(),
+            "Millis precision UserPrincipal should succeed"
+        );
+
+        // Test remaining capacity for each
+        let result1 = service.try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5);
+        let result2 = service.try_acquire_at(
+            TestIdentifier::UserPrincipal(principal),
+            "test",
+            duration,
+            5,
+        );
+        assert!(
+            result1.is_ok(),
+            "Millis precision AnyUser should have remaining capacity"
+        );
+        assert!(
+            result2.is_ok(),
+            "Millis precision UserPrincipal should have remaining capacity"
+        );
+    }
+
+    #[test]
+    fn test_millis_precision_try_acquire_one_at() {
+        // Arrange
+        let time = Time::init();
+        let mut service = get_millis_service();
+        let duration = Duration::from_secs(time.now());
+
+        // Act
+        let result = service.try_acquire_one_at(TestIdentifier::AnyUser, "test", duration);
+
+        // Assert
+        assert!(
+            result.is_ok(),
+            "Millis precision should successfully acquire one token"
+        );
+    }
+
+    #[test]
+    fn test_millis_precision_configured_methods() {
+        // Arrange
+        let settings = ServiceSettings::new(Duration::from_secs(3600));
+        let mut service: RateLimitService<TestIdentifier, Millis> = RateLimitService::new(settings);
+        let method1_config = RateLimitConfig::new(10, Duration::from_secs(60));
+        let method2_config = RateLimitConfig::new(20, Duration::from_secs(120));
+
+        // Act
+        service.add_config("method1", method1_config).unwrap();
+        service.add_config("method2", method2_config).unwrap();
+        let methods: Vec<&String> = service.configured_methods().collect();
+
+        // Assert
         assert_eq!(
-            service.settings().delete_threshold_ticks,
-            Some(7_200_000_000_000)
+            methods.len(),
+            2,
+            "Millis precision service should have exactly 2 configured methods"
+        );
+        assert!(
+            methods.contains(&&"method1".to_string()),
+            "Millis precision service should contain method1"
+        );
+        assert!(
+            methods.contains(&&"method2".to_string()),
+            "Millis precision service should contain method2"
         );
     }
 
     #[test]
-    fn test_get_stats() {
-        let mut service = get_service();
-        let duration = Duration::from_nanos(stable_base_time_ns());
+    fn test_millis_precision_get_stats() {
+        // Arrange
+        let time = Time::init();
+        let mut service = get_millis_service();
+        let duration = Duration::from_secs(time.now());
 
-        // Initially no counters
-        let (count, oldest_created, oldest_updated) = service.get_stats();
-        assert_eq!(count, 0);
-        assert_eq!(oldest_created, None);
-        assert_eq!(oldest_updated, None);
+        // Act - Create some limiters
+        service
+            .try_acquire_at(TestIdentifier::AnyUser, "test", duration, 5)
+            .unwrap();
+        service
+            .try_acquire_at(TestIdentifier::AnyUser, "create_action", duration, 3)
+            .unwrap();
 
-        // Create a counter
-        assert!(
-            service
-                .try_acquire_at(TestIdentifier::AnyUser, "test", duration, 1)
-                .is_ok()
+        let (total_counters, oldest_created, oldest_updated) = service.get_stats();
+
+        // Assert
+        assert_eq!(
+            total_counters, 2,
+            "Millis precision service should have 2 runtime limiters"
         );
-
-        let (count, oldest_created, oldest_updated) = service.get_stats();
-        assert_eq!(count, 1);
-        assert!(oldest_created.is_some());
-        assert!(oldest_updated.is_some());
-        assert_eq!(oldest_created, oldest_updated); // Should be equal for new counter
+        assert!(
+            oldest_created.is_some(),
+            "Millis precision service should have created timestamps"
+        );
+        assert!(
+            oldest_updated.is_some(),
+            "Millis precision service should have updated timestamps"
+        );
     }
 
     #[test]
-    fn test_cleanup_old_counters() {
-        let threshold = 60_000_000_000; // 60 seconds in nanoseconds
-        let settings = ServiceSettings::with_delete_threshold(threshold);
-        let mut service = get_service_with_settings(settings);
+    fn test_millis_precision_force_cleanup() {
+        // Arrange
+        let mut time = Time::init();
+        let mut service = get_millis_service();
+        let base_duration = Duration::from_secs(time.now());
 
-        let base_time = stable_base_time_ns();
-        let old_duration = Duration::from_nanos(base_time);
-        let new_duration = Duration::from_nanos(base_time + threshold + 1_000_000_000); // 1 second past threshold
+        // Act - Create some limiters at base time
+        service
+            .try_acquire_at(TestIdentifier::AnyUser, "test", base_duration, 5)
+            .unwrap();
+        service
+            .try_acquire_at(TestIdentifier::AnyUser, "create_action", base_duration, 3)
+            .unwrap();
 
-        // Create a counter in the past
-        assert!(
-            service
-                .try_acquire_at(TestIdentifier::AnyUser, "test", old_duration, 1)
-                .is_ok()
+        let initial_count = service.get_stats().0;
+        assert_eq!(initial_count, 2, "Should have 2 limiters initially");
+
+        // Advance time by 2 hours (7200 seconds)
+        time.advance(7200);
+        let future_duration = Duration::from_secs(time.now());
+
+        // Force cleanup with 1 hour threshold (should remove all limiters created 2 hours ago)
+        let current_ticks = Millis::to_ticks(future_duration);
+        let threshold_ticks = Millis::to_ticks(Duration::from_secs(3600)); // 1 hour threshold
+        let removed_count = service.force_cleanup(current_ticks, threshold_ticks);
+
+        // Assert
+        assert_eq!(
+            removed_count, 2,
+            "Millis precision cleanup should remove all old limiters"
         );
-
-        let (count, _, _) = service.get_stats();
-        assert_eq!(count, 1);
-
-        // Use the service at a much later time, which should trigger cleanup
-        assert!(
-            service
-                .try_acquire_at(TestIdentifier::AnyUser, "test", new_duration, 1)
-                .is_ok()
+        assert_eq!(
+            service.get_stats().0,
+            0,
+            "Millis precision service should have no limiters after cleanup"
         );
-
-        let (count, _, _) = service.get_stats();
-        assert_eq!(count, 1); // Only the new counter should remain
-    }
-
-    #[test]
-    fn test_force_cleanup() {
-        let mut service = get_service();
-        let base_time = stable_base_time_ns();
-        let old_duration = Duration::from_nanos(base_time);
-        let threshold = 60_000_000_000; // 60 seconds in nanoseconds
-
-        // Create multiple counters
-        assert!(
-            service
-                .try_acquire_at(TestIdentifier::AnyUser, "test", old_duration, 1)
-                .is_ok()
-        );
-        assert!(
-            service
-                .try_acquire_at(
-                    TestIdentifier::UserPrincipal(Principal::from_text("2vxsx-fae").unwrap()),
-                    "test",
-                    old_duration,
-                    1
-                )
-                .is_ok()
-        );
-
-        let (count, _, _) = service.get_stats();
-        assert_eq!(count, 2);
-
-        // Force cleanup of old counters
-        let current_time = base_time + threshold + 1_000_000_000; // 1 second past threshold
-        let removed_count = service.force_cleanup(current_time, threshold);
-
-        assert_eq!(removed_count, 2); // Both counters should be removed
-
-        let (count, _, _) = service.get_stats();
-        assert_eq!(count, 0);
-    }
-
-    #[test]
-    fn test_counter_timestamps_update() {
-        let mut service = get_service();
-        let base_time = stable_base_time_ns();
-        let duration1 = Duration::from_nanos(base_time);
-        let duration2 = Duration::from_nanos(base_time + 30_000_000_000); // 30 seconds later
-
-        // Create a counter
-        assert!(
-            service
-                .try_acquire_at(TestIdentifier::AnyUser, "test", duration1, 1)
-                .is_ok()
-        );
-
-        let (_, created, updated) = service.get_stats();
-        let initial_created = created.unwrap();
-        let initial_updated = updated.unwrap();
-
-        // Use the counter again later
-        assert!(
-            service
-                .try_acquire_at(TestIdentifier::AnyUser, "test", duration2, 1)
-                .is_ok()
-        );
-
-        let (_, created, updated) = service.get_stats();
-        let final_created = created.unwrap();
-        let final_updated = updated.unwrap();
-
-        // Created time should remain the same, updated time should change
-        assert_eq!(initial_created, final_created);
-        assert!(final_updated > initial_updated);
-    }
-
-    #[test]
-    fn test_no_cleanup_without_threshold() {
-        let mut service = get_service(); // Default settings with no cleanup threshold
-        let base_time = stable_base_time_ns();
-        let old_duration = Duration::from_nanos(base_time);
-        let new_duration = Duration::from_nanos(base_time + 3_600_000_000_000); // 1 hour later
-
-        // Create a counter in the past
-        assert!(
-            service
-                .try_acquire_at(TestIdentifier::AnyUser, "test", old_duration, 1)
-                .is_ok()
-        );
-
-        let (count, _, _) = service.get_stats();
-        assert_eq!(count, 1);
-
-        // Use the service much later - without threshold, no cleanup should happen
-        assert!(
-            service
-                .try_acquire_at(TestIdentifier::AnyUser, "test", new_duration, 1)
-                .is_ok()
-        );
-
-        let (count, _, _) = service.get_stats();
-        assert_eq!(count, 1); // Counter should still exist
     }
 }

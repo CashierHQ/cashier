@@ -1,109 +1,48 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
+
+use crate::percision::Precision;
 
 /// Configuration for rate limiting a specific method
-#[derive(Debug, Clone)]
-pub struct RateLimitConfig {
+#[derive(Debug)]
+pub struct RateLimitConfig<P: Precision> {
     /// Maximum number of tokens that can be acquired in the time window
     pub capacity: u64,
     /// Time window size in ticks (depends on precision)
     pub window_size: u64,
+    // Phantom data to ensure that the precision is the same for all methods
+    _phantom: std::marker::PhantomData<P>,
 }
 
-impl RateLimitConfig {
-    /// Create a new rate limit configuration
-    pub fn new(capacity: u64, window_size: u64) -> Self {
+impl<P: Precision> RateLimitConfig<P> {
+    pub fn new(capacity: u64, window_size_duration: Duration) -> Self {
+        let window_size = P::to_ticks(window_size_duration);
         Self {
             capacity,
             window_size,
+            _phantom: std::marker::PhantomData,
         }
     }
 }
 
 /// Service-wide settings for rate limiting
-#[derive(Debug, Clone)]
-pub struct ServiceSettings {
-    /// Precision type for timestamp calculations
-    pub precision: PrecisionType,
+#[derive(Debug, Default, Clone)]
+pub struct ServiceSettings<P: Precision> {
     /// Optional threshold for cleaning up old counters (in ticks)
     pub delete_threshold_ticks: Option<u64>,
+    // Phantom data to ensure that the precision is the same for all methods
+    _phantom: std::marker::PhantomData<P>,
 }
 
-impl ServiceSettings {
-    /// Create settings with precision only
-    pub fn with_precision(precision: PrecisionType) -> Self {
+impl<P: Precision> ServiceSettings<P> {
+    pub fn new(delete_threshold_ticks: Duration) -> Self {
+        let threshold_ticks = P::to_ticks(delete_threshold_ticks);
         Self {
-            precision,
-            delete_threshold_ticks: None,
-        }
-    }
-
-    /// Create settings with delete threshold only
-    pub fn with_delete_threshold(delete_threshold_ticks: u64) -> Self {
-        Self {
-            precision: PrecisionType::default(),
-            delete_threshold_ticks: Some(delete_threshold_ticks),
-        }
-    }
-
-    /// Create settings with both precision and delete threshold
-    pub fn with_delete_threshold_and_precision(
-        delete_threshold_ticks: u64,
-        precision: PrecisionType,
-    ) -> Self {
-        Self {
-            precision,
-            delete_threshold_ticks: Some(delete_threshold_ticks),
+            delete_threshold_ticks: Some(threshold_ticks),
+            _phantom: std::marker::PhantomData,
         }
     }
 }
 
-impl Default for ServiceSettings {
-    fn default() -> Self {
-        Self {
-            precision: PrecisionType::default(),
-            delete_threshold_ticks: None,
-        }
-    }
-}
-
-/// Precision type for timestamp calculations
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum PrecisionType {
-    Nanos,
-    Micros,
-    Millis,
-    Secs,
-}
-
-impl PrecisionType {
-    /// Convert a Duration to ticks based on this precision
-    pub fn to_ticks(&self, duration: std::time::Duration) -> u64 {
-        match self {
-            PrecisionType::Nanos => duration.as_nanos() as u64,
-            PrecisionType::Micros => duration.as_micros() as u64,
-            PrecisionType::Millis => duration.as_millis() as u64,
-            PrecisionType::Secs => duration.as_secs(),
-        }
-    }
-
-    /// Convert ticks back to Duration based on this precision
-    pub fn from_ticks(&self, ticks: u64) -> std::time::Duration {
-        match self {
-            PrecisionType::Nanos => std::time::Duration::from_nanos(ticks),
-            PrecisionType::Micros => std::time::Duration::from_micros(ticks),
-            PrecisionType::Millis => std::time::Duration::from_millis(ticks),
-            PrecisionType::Secs => std::time::Duration::from_secs(ticks),
-        }
-    }
-}
-
-impl Default for PrecisionType {
-    fn default() -> Self {
-        Self::Nanos
-    }
-}
-
-/// Entry for a rate limiter with timestamp tracking
 pub struct LimiterEntry {
     counter: crate::algorithm::fixed_window_counter::FixedWindowCounterCore,
     created_time: u64,
@@ -162,46 +101,30 @@ pub enum ServiceError {
 
 /// Grouped state for rate limiting service
 /// This groups the three main components into a single struct for cleaner thread-local storage
-pub struct RateLimitState<E>
+pub struct RateLimitState<E, P>
 where
     E: std::cmp::Eq + std::hash::Hash + Clone,
+    P: Precision,
 {
     /// Configuration for each method (set once during initialization)
-    pub method_configs: HashMap<String, RateLimitConfig>,
+    pub method_configs: HashMap<String, RateLimitConfig<P>>,
     /// Runtime tracking for each (identifier, method) pair (created on-demand)
     pub runtime_limiters: HashMap<(E, String), LimiterEntry>,
     /// Service-wide settings
-    pub settings: ServiceSettings,
+    pub settings: ServiceSettings<P>,
 }
 
-impl<E> RateLimitState<E>
+impl<E, P> RateLimitState<E, P>
 where
     E: std::cmp::Eq + std::hash::Hash + Clone,
+    P: Precision,
 {
-    /// Create a new empty rate limit state with default settings
-    pub fn new() -> Self {
-        Self {
-            method_configs: HashMap::new(),
-            runtime_limiters: HashMap::new(),
-            settings: ServiceSettings::default(),
-        }
-    }
-
     /// Create a new empty rate limit state with custom settings
-    pub fn new_with_settings(settings: ServiceSettings) -> Self {
+    pub fn new(settings: ServiceSettings<P>) -> Self {
         Self {
             method_configs: HashMap::new(),
             runtime_limiters: HashMap::new(),
             settings,
         }
-    }
-}
-
-impl<E> Default for RateLimitState<E>
-where
-    E: std::cmp::Eq + std::hash::Hash + Clone,
-{
-    fn default() -> Self {
-        Self::new()
     }
 }
