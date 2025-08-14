@@ -5,7 +5,9 @@ use candid::Principal;
 use token_storage_types::user::UserPreference;
 
 // File: src/token_storage/src/services/user_perference.rs
-use crate::repository::user_preference::{ThreadlocalUserPreferenceRepositoryStorage, UserPreferenceRepository};
+use crate::repository::user_preference::{
+    ThreadlocalUserPreferenceRepositoryStorage, UserPreferenceRepository,
+};
 
 pub struct UserPreferenceService {
     repository: UserPreferenceRepository<ThreadlocalUserPreferenceRepositoryStorage>,

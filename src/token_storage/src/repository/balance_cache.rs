@@ -3,39 +3,46 @@
 
 use std::{cell::RefCell, thread::LocalKey};
 
-use crate::{repository::BalanceCache, types::{Candid, TokenBalance}};
+use crate::{
+    repository::BalanceCache,
+    types::{Candid, TokenBalance},
+};
 use candid::Principal;
 use ic_cdk::api::time;
 use ic_mple_utils::store::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 use token_storage_types::TokenId;
 
 /// Store for balance cache repository
-pub type BalanceCacheRepositoryStorage = StableBTreeMap<Principal, BalanceCache, VirtualMemory<DefaultMemoryImpl>>;
-pub type ThreadlocalBalanceCacheRepositoryStorage = &'static LocalKey<RefCell<BalanceCacheRepositoryStorage>>;
+pub type BalanceCacheRepositoryStorage =
+    StableBTreeMap<Principal, BalanceCache, VirtualMemory<DefaultMemoryImpl>>;
+pub type ThreadlocalBalanceCacheRepositoryStorage =
+    &'static LocalKey<RefCell<BalanceCacheRepositoryStorage>>;
 
 pub struct BalanceCacheRepository<S: Storage<BalanceCacheRepositoryStorage>> {
     balance_store: S,
 }
 
 impl BalanceCacheRepository<ThreadlocalBalanceCacheRepositoryStorage> {
-
     /// Create a new BalanceCacheRepository
     pub fn new() -> Self {
         Self::new_with_storage(&super::BALANCE_CACHE_STORE)
     }
 }
 
-impl <S: Storage<BalanceCacheRepositoryStorage>> BalanceCacheRepository<S> {
-
+impl<S: Storage<BalanceCacheRepositoryStorage>> BalanceCacheRepository<S> {
     /// Create a new BalanceCacheRepository
     pub fn new_with_storage(storage: S) -> Self {
         Self {
-            balance_store: storage
+            balance_store: storage,
         }
     }
 
-    pub fn update_bulk_balances(&mut self, user_id: Principal, token_balances: Vec<(TokenId, u128)>) {
+    pub fn update_bulk_balances(
+        &mut self,
+        user_id: Principal,
+        token_balances: Vec<(TokenId, u128)>,
+    ) {
         self.balance_store.with_borrow_mut(|store| {
             // Get existing balances or create new HashMap
             let mut balance_map = store

@@ -6,9 +6,13 @@ use token_storage_types::{TokenId, user::UserPreference};
 
 use crate::{
     repository::{
-        balance_cache::{BalanceCacheRepository, ThreadlocalBalanceCacheRepositoryStorage}, token_registry::{ThreadlocalTokenRegistryRepositoryStorage, TokenRegistryRepository},
-        token_registry_metadata::{ThreadlocalTokenRegistryMetadataRepositoryStorage, TokenRegistryMetadataRepository},
-        user_preference::{ThreadlocalUserPreferenceRepositoryStorage, UserPreferenceRepository}, user_token::{ThreadlocalTokenRepositoryStorage, TokenRepository},
+        balance_cache::{BalanceCacheRepository, ThreadlocalBalanceCacheRepositoryStorage},
+        token_registry::{ThreadlocalTokenRegistryRepositoryStorage, TokenRegistryRepository},
+        token_registry_metadata::{
+            ThreadlocalTokenRegistryMetadataRepositoryStorage, TokenRegistryMetadataRepository,
+        },
+        user_preference::{ThreadlocalUserPreferenceRepositoryStorage, UserPreferenceRepository},
+        user_token::{ThreadlocalTokenRepositoryStorage, TokenRepository},
     },
     types::UserTokenList,
 };
@@ -16,8 +20,10 @@ use crate::{
 pub struct UserTokenService {
     token_repository: TokenRepository<ThreadlocalTokenRepositoryStorage>,
     registry_repository: TokenRegistryRepository<ThreadlocalTokenRegistryRepositoryStorage>,
-    metadata_repository: TokenRegistryMetadataRepository<ThreadlocalTokenRegistryMetadataRepositoryStorage>,
-    user_preference_repository: UserPreferenceRepository<ThreadlocalUserPreferenceRepositoryStorage>,
+    metadata_repository:
+        TokenRegistryMetadataRepository<ThreadlocalTokenRegistryMetadataRepositoryStorage>,
+    user_preference_repository:
+        UserPreferenceRepository<ThreadlocalUserPreferenceRepositoryStorage>,
     balance_cache_repository: BalanceCacheRepository<ThreadlocalBalanceCacheRepositoryStorage>,
 }
 
@@ -77,7 +83,11 @@ impl UserTokenService {
 
     /// Add multiple tokens to the user's list
     /// Tokens that don't exist in the registry will be filtered out
-    pub fn add_tokens(&mut self, user_id: Principal, token_ids: Vec<TokenId>) -> Result<(), String> {
+    pub fn add_tokens(
+        &mut self,
+        user_id: Principal,
+        token_ids: Vec<TokenId>,
+    ) -> Result<(), String> {
         if token_ids.is_empty() {
             return Ok(());
         }
