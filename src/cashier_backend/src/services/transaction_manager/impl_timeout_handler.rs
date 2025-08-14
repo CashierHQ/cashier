@@ -32,7 +32,7 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
                     match res {
                         Ok(_) => {}
                         Err(e) => {
-                            error!("Transaction timeout task executed with error: {}", e);
+                            error!("Transaction timeout task executed with error: {:?}", e);
                         }
                     }
                 });
@@ -68,7 +68,7 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
             match result {
                 Ok(_) => Ok(()),
                 Err(e) => {
-                    error!("Failed to roll up state for action: {}", e);
+                    error!("Failed to roll up state for action: {:?}", e);
                     // Respawn timeout task for retry in case of error
                     let retry_tx_id = tx_id.clone();
                     let _ = self
@@ -105,7 +105,7 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
                         Ok(_) => {}
                         Err(e) => {
                             error!(
-                                "Rescheduled transaction timeout task executed with error: {}",
+                                "Rescheduled transaction timeout task executed with error: {:?}",
                                 e
                             );
                         }
@@ -157,7 +157,7 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
                     match res {
                         Ok(_) => {}
                         Err(e) => {
-                            error!("Transaction timeout task executed with error: {}", e);
+                            error!("Transaction timeout task executed with error: {:?}", e);
                         }
                     }
                 });

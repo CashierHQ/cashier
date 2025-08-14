@@ -32,7 +32,7 @@ pub struct TokenListResponse {
 }
 
 /// The input for updating a token's status (enable/disable)
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct UpdateTokenBalanceInput {
     pub token_id: TokenId,
     pub balance: u128,

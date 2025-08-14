@@ -4,7 +4,7 @@
 use cashier_backend_types::dto::action::TriggerTransactionInput;
 use ic_cdk::api::msg_caller;
 use ic_cdk::update;
-use log::info;
+use log::{debug, info};
 
 use crate::api::guard::is_not_anonymous;
 use crate::services::request_lock::RequestLockService;
@@ -18,6 +18,9 @@ use crate::{
 
 #[update(guard = "is_not_anonymous")]
 pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<String, CanisterError> {
+    info!("[trigger_transaction]");
+    debug!("[trigger_transaction] Input: {:?}", input);
+
     let caller = msg_caller();
     let ic_env = RealIcEnvironment::new();
 

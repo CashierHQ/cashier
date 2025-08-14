@@ -1,4 +1,13 @@
 export const idlFactory = ({ IDL }) => {
+  const LogServiceSettings = IDL.Record({
+    'log_filter' : IDL.Opt(IDL.Text),
+    'in_memory_records' : IDL.Opt(IDL.Nat64),
+    'enable_console' : IDL.Opt(IDL.Bool),
+    'max_record_length' : IDL.Opt(IDL.Nat64),
+  });
+  const TokenStorageInitData = IDL.Record({
+    'log_settings' : IDL.Opt(LogServiceSettings),
+  });
   const AddTokenInput = IDL.Record({
     'token_id' : IDL.Text,
     'index_id' : IDL.Opt(IDL.Text),
@@ -101,4 +110,15 @@ export const idlFactory = ({ IDL }) => {
     'update_token_registry_batch' : IDL.Func([AddTokensInput], [Result], []),
   });
 };
-export const init = ({ IDL }) => { return []; };
+export const init = ({ IDL }) => {
+  const LogServiceSettings = IDL.Record({
+    'log_filter' : IDL.Opt(IDL.Text),
+    'in_memory_records' : IDL.Opt(IDL.Nat64),
+    'enable_console' : IDL.Opt(IDL.Bool),
+    'max_record_length' : IDL.Opt(IDL.Nat64),
+  });
+  const TokenStorageInitData = IDL.Record({
+    'log_settings' : IDL.Opt(LogServiceSettings),
+  });
+  return [TokenStorageInitData];
+};
