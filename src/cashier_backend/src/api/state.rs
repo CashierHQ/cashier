@@ -1,4 +1,4 @@
-use std::{cell::RefCell, thread::LocalKey};
+use std::{cell::RefCell, thread::LocalKey, time::Duration};
 
 use candid::Principal;
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};

@@ -87,10 +87,8 @@ where
                 let counter = crate::algorithm::fixed_window_counter::FixedWindowCounterCore::from(
                     counter_config,
                 );
-                let timestamped_counter = LimiterEntry::new(counter, timestamp_ticks);
-                state
-                    .runtime_limiters
-                    .insert(key.clone(), timestamped_counter);
+                let limiter = LimiterEntry::new(counter, timestamp_ticks);
+                state.runtime_limiters.insert(key.clone(), limiter);
             }
 
             let limiter_entry = state.runtime_limiters.get_mut(&key).unwrap();

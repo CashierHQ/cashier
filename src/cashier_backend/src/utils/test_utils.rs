@@ -39,7 +39,7 @@ pub mod runtime {
                 caller,
                 canister_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
                 // Thursday, 14 August 2025 12:15:00
-                current_time: 1755173700 * 1_000_000_000,
+                current_time: 1755173400 * 1_000_000_000,
                 spawned_futures: RefCell::new(Vec::new()),
                 timers: RefCell::new(Vec::new()),
                 timer_counter: RefCell::new(0),
