@@ -62,8 +62,7 @@ impl<S: Storage<TokenRegistryRepositoryStorage>> TokenRegistryRepository<S> {
     }
 
     pub fn get_token(&self, token_id: &TokenId) -> Option<RegistryToken> {
-        self.token_reg_repo
-            .with_borrow(|store| store.get(token_id))
+        self.token_reg_repo.with_borrow(|store| store.get(token_id))
     }
 
     pub fn list_tokens(&self) -> Vec<RegistryToken> {

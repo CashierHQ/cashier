@@ -2,7 +2,13 @@ use std::{cell::RefCell, thread::LocalKey};
 
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 
-use crate::{repository::{ThreadlocalRepositories, LOGGER_SERVICE_STORE}, services::{token_registry::TokenRegistryService, user_preference::UserPreferenceService, user_token::UserTokenService}};
+use crate::{
+    repository::{LOGGER_SERVICE_STORE, ThreadlocalRepositories},
+    services::{
+        token_registry::TokenRegistryService, user_preference::UserPreferenceService,
+        user_token::UserTokenService,
+    },
+};
 
 /// The state of the canister
 pub struct CanisterState {
@@ -10,7 +16,6 @@ pub struct CanisterState {
     pub token_registry: TokenRegistryService<ThreadlocalRepositories>,
     pub user_preference: UserPreferenceService<ThreadlocalRepositories>,
     pub user_token: UserTokenService<ThreadlocalRepositories>,
-    
 }
 
 impl CanisterState {
