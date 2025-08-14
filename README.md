@@ -107,16 +107,22 @@ just test
 
 ## Code coverage report
 
-- Install `cargo-llvm-cov` package
+-   Install `cargo-llvm-cov` package
 
 ```bash
 $ cargo install cargo-llvm-cov
 ```
 
-- Generate the code-coverage report
+-   Generate the code-coverage report
 
 ```bash
 $ cargo llvm-cov
+
+# better report view in html
+$ cargo llvm-cov --html --open
+
+# with just
+just test_coverage
 ```
 
 ## Code Quality (Clippy)

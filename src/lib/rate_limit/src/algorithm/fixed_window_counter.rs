@@ -11,17 +11,17 @@ use crate::algorithm::types::{RateLimitError, RateLimitResult};
 ///
 /// # Algorithm Behavior
 ///
-/// - Time is divided into fixed windows of `window_duration_seconds` duration
+/// - Time is divided into fixed windows of `window_duration_tick` duration
 /// - Each window has independent capacity tracking
 /// - Counters reset to zero at the start of each new window
 /// - Requests are accepted if they don't exceed the window's remaining capacity
 ///
 /// # Window Boundaries
 ///
-/// Windows are aligned to multiples of `window_duration_seconds`:
-/// - Window 0: [0, window_duration_seconds-1]
-/// - Window 1: [window_duration_seconds, 2*window_duration_seconds-1]
-/// - Window 2: [2*window_duration_seconds, 3*window_duration_seconds-1]
+/// Windows are aligned to multiples of `window_duration_tick`:
+/// - Window 0: [0, window_duration_tick-1]
+/// - Window 1: [window_duration_tick, 2*window_duration_tick-1]
+/// - Window 2: [2*window_duration_tick, 3*window_duration_tick-1]
 /// - And so on...
 /// ```
 pub struct FixedWindowCounterCore {
@@ -47,7 +47,7 @@ impl FixedWindowCounterCore {
     /// # Parameters
     ///
     /// * `capacity` - Maximum number of tokens allowed per window
-    /// * `window_duration_seconds` - Duration of each window
+    /// * `window_duration` - Duration of each window
     ///
     /// # Panics
     ///
@@ -59,16 +59,16 @@ impl FixedWindowCounterCore {
     /// use rate_guard_core::cores::FixedWindowCounterCore;
     /// let counter = FixedWindowCounterCore::new(50, 60); // 50 requests per 60 ticks
     /// ```
-    pub fn new(capacity: u64, window_duration_seconds: u64) -> Self {
+    pub fn new(capacity: u64, window_duration: u64) -> Self {
         assert!(capacity > 0, "capacity must be greater than 0");
         assert!(
-            window_duration_seconds > 0,
-            "window_duration_seconds must be greater than 0"
+            window_duration > 0,
+            "window_duration must be greater than 0"
         );
 
         FixedWindowCounterCore {
             capacity,
-            window_duration: window_duration_seconds,
+            window_duration,
             state: RefCell::new(FixedWindowCounterCoreState {
                 count: 0,
                 start_tick: 0, // First window starts at tick 0
@@ -130,12 +130,12 @@ impl FixedWindowCounterCore {
         } else {
             let available = self.capacity.saturating_sub(state.count);
             let next_window_tick = (current_window + 1) * self.window_duration;
-            let retry_after_seconds = next_window_tick.saturating_sub(current_tick);
+            let retry_after_tick = next_window_tick.saturating_sub(current_tick);
 
             Err(RateLimitError::InsufficientCapacity {
                 acquiring: tokens,
                 available,
-                retry_after_ticks: retry_after_seconds,
+                retry_after_ticks: retry_after_tick,
             })
         }
     }
@@ -192,28 +192,6 @@ impl FixedWindowCounterCore {
     pub fn capacity_remaining_or_0(&self, ticks: u64) -> u64 {
         self.capacity_remaining(ticks).unwrap_or(0)
     }
-
-    /// Gets the current remaining capacity without updating window state.
-    ///
-    /// This method simply returns the remaining tokens that can be acquired in
-    /// the current window **without** checking or triggering a window change.
-    /// Useful for lightweight queries when you do not want to touch state.
-    ///
-    /// # Returns
-    /// * `remaining_capacity` - Remaining capacity in current window (without window update)
-    #[inline(always)]
-    pub fn current_capacity(&self) -> u64 {
-        let state = self.state.borrow();
-
-        self.capacity.saturating_sub(state.count)
-    }
-
-    /// Returns the current remaining capacity
-    /// This method is a convenience wrapper around `current_capacity`
-    #[inline(always)]
-    pub fn current_capacity_or_0(&self) -> u64 {
-        self.current_capacity()
-    }
 }
 
 /// Configuration structure for creating a `FixedWindowCounterCore` limiter.
@@ -227,10 +205,10 @@ pub struct FixedWindowCounterCoreConfig {
 
 impl FixedWindowCounterCoreConfig {
     /// Creates a new configuration instance.
-    pub fn new(capacity: u64, window_size_seconds: u64) -> Self {
+    pub fn new(capacity: u64, window_size_tick: u64) -> Self {
         Self {
             capacity,
-            window_size: window_size_seconds,
+            window_size: window_size_tick,
         }
     }
 }
@@ -239,7 +217,7 @@ impl From<FixedWindowCounterCoreConfig> for FixedWindowCounterCore {
     /// Converts a `FixedWindowCounterCoreConfig` into a `FixedWindowCounterCore` instance.
     ///
     /// # Panics
-    /// This method will panic if either `capacity` or `window_size_seconds` is zero.
+    /// This method will panic if either `capacity` or `window_size_tick` is zero.
     /// It is intended for use with trusted or pre-validated inputs.
     ///
     /// # Examples
@@ -251,7 +229,7 @@ impl From<FixedWindowCounterCoreConfig> for FixedWindowCounterCore {
     ///
     /// let config = FixedWindowCounterCoreConfig {
     ///     capacity: 100,
-    ///     window_size_seconds: 60,
+    ///     window_size_tick: 60,
     /// };
     ///
     /// let limiter = FixedWindowCounterCore::from(config);
@@ -264,7 +242,7 @@ impl From<FixedWindowCounterCoreConfig> for FixedWindowCounterCore {
     ///
     /// let limiter: FixedWindowCounterCore = FixedWindowCounterCoreConfig {
     ///     capacity: 100,
-    ///     window_size_seconds: 60,
+    ///     window_size_tick: 60,
     /// }.into();
     /// ```
     #[inline(always)]
@@ -309,6 +287,18 @@ mod tests {
         1_000_000_000 // January 9, 2001 01:46:40 UTC
     }
     use crate::algorithm::types::RateLimitError;
+
+    #[test]
+    #[should_panic(expected = "capacity must be greater than 0")]
+    fn test_zero_capacity_panics() {
+        FixedWindowCounterCore::new(0, 60);
+    }
+
+    #[test]
+    #[should_panic(expected = "window_duration must be greater than 0")]
+    fn test_zero_duration_panics() {
+        FixedWindowCounterCore::new(10, 0);
+    }
 
     #[test]
     fn test_try_acquire_at_zero_tokens() {
@@ -431,5 +421,214 @@ mod tests {
         // After window transition, should reset
         let next_window_time = next_window(current_time, 60);
         assert!(counter.try_acquire_at(next_window_time, u64::MAX).is_ok());
+    }
+
+    #[test]
+    fn test_capacity_remaining_fresh_counter() {
+        let counter = FixedWindowCounterCore::new(10, 60);
+        let current_time = stable_base_time();
+
+        // Fresh counter should have full capacity
+        assert_eq!(counter.capacity_remaining(current_time).unwrap(), 10);
+
+        // Multiple calls without acquiring should return same result
+        assert_eq!(counter.capacity_remaining(current_time + 1).unwrap(), 10);
+        assert_eq!(counter.capacity_remaining(current_time + 30).unwrap(), 10);
+    }
+
+    #[test]
+    fn test_capacity_remaining_after_acquisitions() {
+        let counter = FixedWindowCounterCore::new(10, 60);
+        let current_time = stable_base_time();
+
+        // Fresh counter should have full capacity
+        assert_eq!(counter.capacity_remaining(current_time).unwrap(), 10);
+
+        // Acquire some tokens
+        assert!(counter.try_acquire_at(current_time, 3).is_ok());
+
+        // Check remaining capacity - should be 7
+        let remaining = counter.capacity_remaining(current_time + 1).unwrap();
+        assert_eq!(remaining, 7);
+
+        // Acquire more tokens
+        assert!(counter.try_acquire_at(current_time + 2, 4).is_ok());
+
+        // Check remaining capacity - should be 3
+        let remaining = counter.capacity_remaining(current_time + 3).unwrap();
+        assert_eq!(remaining, 3);
+
+        // Use remaining capacity
+        assert!(counter.try_acquire_at(current_time + 10, 3).is_ok());
+
+        // Check remaining capacity - should be 0
+        let remaining = counter.capacity_remaining(current_time + 11).unwrap();
+        assert_eq!(remaining, 0);
+    }
+
+    #[test]
+    fn test_capacity_remaining_window_transitions() {
+        let counter = FixedWindowCounterCore::new(10, 60);
+        let current_time = stable_base_time();
+
+        // Use up capacity in first window
+        assert!(counter.try_acquire_at(current_time, 10).is_ok());
+        assert_eq!(counter.capacity_remaining(current_time + 1).unwrap(), 0);
+
+        // Move to next window - capacity should reset
+        let next_window_time = next_window(current_time, 60);
+        assert_eq!(counter.capacity_remaining(next_window_time).unwrap(), 10);
+
+        // Use some capacity in new window
+        assert!(counter.try_acquire_at(next_window_time + 5, 6).is_ok());
+        assert_eq!(
+            counter.capacity_remaining(next_window_time + 10).unwrap(),
+            4
+        );
+
+        // Jump multiple windows ahead - should reset again
+        let far_future_time = next_window_time + 300; // 5 windows later
+        assert_eq!(counter.capacity_remaining(far_future_time).unwrap(), 10);
+    }
+
+    #[test]
+    fn test_capacity_remaining_expired_tick() {
+        let counter = FixedWindowCounterCore::new(10, 60);
+        let current_time = stable_base_time();
+
+        // Establish current window
+        assert!(counter.try_acquire_at(current_time, 5).is_ok());
+        assert_eq!(counter.capacity_remaining(current_time + 10).unwrap(), 5);
+
+        // Try to check capacity with expired tick
+        match counter.capacity_remaining(past(current_time, 100)) {
+            Err(RateLimitError::ExpiredTick {
+                min_acceptable_tick,
+            }) => {
+                // Should return the window start time as minimum acceptable
+                let expected_window_start = (current_time / 60) * 60;
+                assert_eq!(min_acceptable_tick, expected_window_start);
+            }
+            _ => panic!("Expected ExpiredTick error"),
+        }
+
+        // Same tick should still work
+        assert_eq!(counter.capacity_remaining(current_time + 10).unwrap(), 5);
+    }
+
+    #[test]
+    fn test_capacity_remaining_window_boundary_edge_cases() {
+        let counter = FixedWindowCounterCore::new(10, 60);
+        let window_start = 1200; // Aligned to window boundary (1200 / 60 = 20)
+
+        // Check capacity at exact window boundary
+        assert_eq!(counter.capacity_remaining(window_start).unwrap(), 10);
+
+        // Use some capacity
+        assert!(counter.try_acquire_at(window_start + 1, 7).is_ok());
+        assert_eq!(counter.capacity_remaining(window_start + 30).unwrap(), 3);
+
+        // Check at end of window
+        assert_eq!(counter.capacity_remaining(window_start + 59).unwrap(), 3);
+
+        // Move to exact start of next window
+        let next_window_start = window_start + 60;
+        assert_eq!(counter.capacity_remaining(next_window_start).unwrap(), 10);
+    }
+
+    #[test]
+    fn test_capacity_remaining_zero_capacity_edge_case() {
+        let counter = FixedWindowCounterCore::new(5, 60);
+        let current_time = stable_base_time();
+
+        // Initial capacity should be full
+        assert_eq!(counter.capacity_remaining(current_time).unwrap(), 5);
+
+        // Use all capacity
+        assert!(counter.try_acquire_at(current_time, 5).is_ok());
+        assert_eq!(counter.capacity_remaining(current_time + 1).unwrap(), 0);
+
+        // Multiple checks should consistently return 0
+        assert_eq!(counter.capacity_remaining(current_time + 5).unwrap(), 0);
+        assert_eq!(counter.capacity_remaining(current_time + 10).unwrap(), 0);
+        assert_eq!(counter.capacity_remaining(current_time + 15).unwrap(), 0);
+
+        // Window transition should reset to full capacity
+        let next_window_time = next_window(current_time, 60);
+        assert_eq!(counter.capacity_remaining(next_window_time).unwrap(), 5);
+    }
+
+    #[test]
+    fn test_capacity_remaining_large_numbers() {
+        let counter = FixedWindowCounterCore::new(u64::MAX, 60);
+        let current_time = stable_base_time();
+
+        // Should handle maximum capacity
+        assert_eq!(counter.capacity_remaining(current_time).unwrap(), u64::MAX);
+
+        // Use some large amount
+        let large_amount = u64::MAX / 2;
+        assert!(counter.try_acquire_at(current_time, large_amount).is_ok());
+
+        let remaining = counter.capacity_remaining(current_time + 1).unwrap();
+        assert_eq!(remaining, u64::MAX - large_amount);
+
+        // Use remaining capacity
+        assert!(counter.try_acquire_at(current_time + 10, remaining).is_ok());
+        assert_eq!(counter.capacity_remaining(current_time + 15).unwrap(), 0);
+    }
+
+    #[test]
+    fn test_capacity_remaining_or_0_success_cases() {
+        let counter = FixedWindowCounterCore::new(10, 60);
+        let current_time = stable_base_time();
+
+        // Should return capacity when no error
+        assert_eq!(counter.capacity_remaining_or_0(current_time), 10);
+
+        // After using some capacity
+        assert!(counter.try_acquire_at(current_time, 4).is_ok());
+        assert_eq!(counter.capacity_remaining_or_0(current_time + 10), 6);
+    }
+
+    #[test]
+    fn test_capacity_remaining_or_0_error_cases() {
+        let counter = FixedWindowCounterCore::new(10, 60);
+        let current_time = stable_base_time();
+
+        // Establish current window
+        assert!(counter.try_acquire_at(current_time, 3).is_ok());
+
+        // With expired tick, should return 0 instead of error
+        assert_eq!(counter.capacity_remaining_or_0(past(current_time, 100)), 0);
+
+        // Valid tick should still return actual capacity
+        assert_eq!(counter.capacity_remaining_or_0(current_time + 10), 7);
+    }
+
+    #[test]
+    fn test_capacity_remaining_state_updates_correctly() {
+        let counter = FixedWindowCounterCore::new(10, 60);
+        let current_time = stable_base_time();
+
+        // Initial state
+        assert_eq!(counter.capacity_remaining(current_time).unwrap(), 10);
+
+        // Capacity check should update window state if needed
+        let future_window_time = next_window(current_time, 60) + 120; // 2 windows later
+        assert_eq!(counter.capacity_remaining(future_window_time).unwrap(), 10);
+
+        // Use some capacity in the new window
+        assert!(counter.try_acquire_at(future_window_time + 5, 6).is_ok());
+        assert_eq!(
+            counter.capacity_remaining(future_window_time + 10).unwrap(),
+            4
+        );
+
+        // Going back to check an earlier time in same window should work
+        assert_eq!(
+            counter.capacity_remaining(future_window_time + 15).unwrap(),
+            4
+        );
     }
 }
