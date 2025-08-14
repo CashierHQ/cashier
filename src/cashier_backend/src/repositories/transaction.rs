@@ -192,7 +192,7 @@ mod tests {
 
         // Act
         let transactions = repo.batch_get(vec![transaction_id1, transaction_id2]);
-        
+
         // Assert
         assert_eq!(transactions.len(), 2);
         assert_eq!(transactions.first().unwrap(), &transaction1);
@@ -225,7 +225,7 @@ mod tests {
 
         // Act
         let retrieved_transaction = repo.get(&transaction.id);
-        
+
         // Assert
         assert!(retrieved_transaction.is_some());
         assert_eq!(retrieved_transaction.unwrap().id, transaction_id);

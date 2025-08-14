@@ -161,7 +161,7 @@ mod tests {
 
         // Act
         let actions = repo.get_by_prefix(&link_id1, "type1", "user1");
-        
+
         // Assert
         assert_eq!(actions.len(), 1);
         assert_eq!(actions.first().unwrap().link_id, link_id1);
@@ -172,7 +172,7 @@ mod tests {
 
         // Act
         let actions = repo.get_by_prefix(&link_id2, "type2", "user2");
-        
+
         // Assert
         assert_eq!(actions.len(), 1);
         assert_eq!(actions.first().unwrap().link_id, link_id2);
@@ -189,10 +189,10 @@ mod tests {
     fn it_should_create_link_action_repository_by_default() {
         // Arrange
         let repo = LinkActionRepository::default();
-        
+
         // Act
         let actions = repo.get_by_prefix("nonexistent", "type", "user");
-        
+
         // Assert
         assert!(actions.is_empty());
     }

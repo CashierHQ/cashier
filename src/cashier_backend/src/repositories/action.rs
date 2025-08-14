@@ -107,7 +107,7 @@ mod tests {
 
         // Act
         let retrieved_action = repo.get("non_existent_action");
-        
+
         // Assert
         assert!(retrieved_action.is_none());
     }

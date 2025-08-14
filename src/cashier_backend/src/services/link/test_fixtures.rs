@@ -13,7 +13,7 @@ use cashier_backend_types::repository::{
     user_link::v1::UserLink,
     user_wallet::v1::UserWallet,
 };
-use std::{str::FromStr, collections::HashSet};
+use std::{collections::HashSet, str::FromStr};
 
 /// Creates a link fixture for testing purposes.
 /// This function initializes a link with a random ID, sets its state, and associates it with a creator ID.

@@ -55,7 +55,7 @@ mod tests {
 
         // Act
         repo.create(transaction_id.clone(), processing_tx);
-        
+
         // Assert
         assert!(repo.exists(&transaction_id));
     }
@@ -76,7 +76,7 @@ mod tests {
 
         // Act
         repo.delete(&transaction_id);
-        
+
         // Assert
         assert!(!repo.exists(&transaction_id));
     }
@@ -96,7 +96,7 @@ mod tests {
 
         // Act
         let result = repo.exists(&transaction_id);
-        
+
         // Assert
         assert!(result);
     }
@@ -124,7 +124,7 @@ mod tests {
 
         // Act
         let all_transactions = repo.get_all();
-        
+
         // Assert
         assert_eq!(all_transactions.len(), 2);
     }
@@ -133,10 +133,10 @@ mod tests {
     fn it_should_create_a_processing_transaction_repository_by_default() {
         // Arrange
         let repo = ProcessingTransactionRepository::default();
-        
+
         // Act
         let result = repo.get_all();
-        
+
         // Assert
         assert!(result.is_empty());
     }

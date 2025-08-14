@@ -295,7 +295,7 @@ mod tests {
 
         // Act
         let result = service.link_validate_user_create_action(&link_id, &action_type, &user_id);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -317,7 +317,7 @@ mod tests {
 
         // Act
         let result = service.link_validate_user_create_action(&link.id, &action_type, &user_id);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -338,7 +338,7 @@ mod tests {
 
         // Act
         let result = service.link_validate_user_create_action(&link.id, &action_type, &creator_id);
-        
+
         // Assert
         assert!(result.is_ok());
     }
@@ -376,7 +376,7 @@ mod tests {
 
         // Act
         let result = service.link_validate_user_create_action(&link.id, &action_type, &creator_id);
-        
+
         // Assert
         assert!(result.is_ok());
     }
@@ -394,7 +394,7 @@ mod tests {
 
         // Act
         let result = service.link_validate_user_create_action(&link.id, &action_type, &user_id);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -420,7 +420,7 @@ mod tests {
 
         // Act
         let result = service.link_validate_user_create_action(&link.id, &action_type, &user_id);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -443,7 +443,7 @@ mod tests {
 
         // Act
         let result = service.link_validate_user_create_action(&link.id, &action_type, &creator_id);
-        
+
         // Assert
         assert!(result.is_ok());
     }
@@ -486,7 +486,7 @@ mod tests {
 
         // Act
         let result = service.link_validate_user_update_action(&action, &user_id);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -515,7 +515,7 @@ mod tests {
 
         // Act
         let result = service.link_validate_user_update_action(&action, &user_id);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -542,7 +542,7 @@ mod tests {
 
         // Act
         let result = service.link_validate_user_update_action(&action, &creator_id);
-        
+
         // Assert
         assert!(result.is_ok());
     }
@@ -563,7 +563,7 @@ mod tests {
 
         // Act
         let result = service.link_validate_user_update_action(&action, &user_id);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -592,7 +592,7 @@ mod tests {
 
         // Act
         let result = service.link_validate_user_update_action(&action, &user_id);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -619,7 +619,7 @@ mod tests {
 
         // Act
         let result = service.link_validate_user_update_action(&action, &creator_id);
-        
+
         // Assert
         assert!(result.is_ok());
     }
@@ -642,7 +642,7 @@ mod tests {
 
         // Act
         let result = service.link_validate_user_update_action(&action, &user_id);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -670,7 +670,7 @@ mod tests {
 
         // Act
         let result = service.link_validate_user_update_action(&action, &creator_id);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -717,7 +717,7 @@ mod tests {
 
         // Act
         let result = service.link_validate_user_update_action(&action, &user_id);
-        
+
         // Assert
         assert!(result.is_err());
 
@@ -737,7 +737,7 @@ mod tests {
 
         // Act
         let result = service.is_link_creator(&user_id, &link_id);
-        
+
         // Assert
         assert!(!result);
     }
@@ -758,7 +758,7 @@ mod tests {
 
         // Act
         let result = service.is_link_creator(&user_id, &link_id);
-        
+
         // Assert
         assert!(!result);
     }
@@ -778,7 +778,7 @@ mod tests {
 
         // Act
         let result = service.is_link_creator(&creator_id, &link.id);
-        
+
         // Assert
         assert!(result);
     }
@@ -793,7 +793,7 @@ mod tests {
 
         // Act
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
-        
+
         // Assert
         assert!(!result);
     }
@@ -821,7 +821,7 @@ mod tests {
 
         // Act
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
-        
+
         // Assert
         assert!(!result);
     }
@@ -861,7 +861,7 @@ mod tests {
 
         // Act
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
-        
+
         // Assert
         assert!(result);
     }
@@ -879,7 +879,7 @@ mod tests {
 
         // Act
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
-        
+
         // Assert
         assert!(!result);
     }
@@ -910,7 +910,7 @@ mod tests {
 
         // Act
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
-        
+
         // Assert
         assert!(!result);
     }
@@ -933,7 +933,7 @@ mod tests {
 
         // Act
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
-        
+
         // Assert
         assert!(!result);
     }
@@ -974,7 +974,7 @@ mod tests {
 
         // Act
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
-        
+
         // Assert
         assert!(!result);
     }
@@ -997,7 +997,7 @@ mod tests {
 
         // Act
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
-        
+
         // Assert
         assert!(!result);
     }
@@ -1038,7 +1038,7 @@ mod tests {
 
         // Act
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
-        
+
         // Assert
         assert!(!result);
     }
@@ -1069,7 +1069,7 @@ mod tests {
 
         // Act
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
-        
+
         // Assert
         assert!(!result);
     }
@@ -1092,7 +1092,7 @@ mod tests {
 
         // Act
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
-        
+
         // Assert
         assert!(!result);
     }
@@ -1114,7 +1114,7 @@ mod tests {
 
         // Act
         let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
-        
+
         // Assert
         assert!(!result);
     }

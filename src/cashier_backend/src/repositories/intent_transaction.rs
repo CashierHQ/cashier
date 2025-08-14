@@ -131,7 +131,7 @@ mod tests {
 
         // Act
         let transactions = repo.get_by_intent_id(&intent_id1);
-        
+
         // Assert
         assert_eq!(transactions.len(), 1);
         assert_eq!(
@@ -160,7 +160,7 @@ mod tests {
 
         // Act
         let transactions = repo.get_by_transaction_id(&transaction_id1);
-        
+
         // Assert
         assert_eq!(transactions.len(), 1);
         assert_eq!(transactions.first().unwrap().intent_id, intent_id1);

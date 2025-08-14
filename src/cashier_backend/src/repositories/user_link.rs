@@ -150,7 +150,7 @@ mod tests {
 
         // Act
         let links = repo.get_links_by_user_id(&user_id, &PaginateInput::default());
-        
+
         // Assert
         assert_eq!(links.data.len(), 2);
         assert!(links.data.iter().any(|l| l.link_id == link_id1));
