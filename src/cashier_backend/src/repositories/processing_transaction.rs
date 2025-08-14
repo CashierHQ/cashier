@@ -44,6 +44,7 @@ mod tests {
 
     #[test]
     fn it_should_create_a_processing_transaction() {
+        // Arrange
         let repo = ProcessingTransactionRepository::new();
         let transaction_id = random_id_string();
         let processing_tx = ProcessingTransaction {
@@ -52,12 +53,16 @@ mod tests {
             timeout_at: 1622547900,
         };
 
+        // Act
         repo.create(transaction_id.clone(), processing_tx);
+        
+        // Assert
         assert!(repo.exists(&transaction_id));
     }
 
     #[test]
     fn it_should_delete_a_processing_transaction() {
+        // Arrange
         let repo = ProcessingTransactionRepository::new();
         let transaction_id = random_id_string();
         let processing_tx = ProcessingTransaction {
@@ -69,12 +74,16 @@ mod tests {
         repo.create(transaction_id.clone(), processing_tx);
         assert!(repo.exists(&transaction_id));
 
+        // Act
         repo.delete(&transaction_id);
+        
+        // Assert
         assert!(!repo.exists(&transaction_id));
     }
 
     #[test]
     fn it_should_check_if_a_processing_transaction_exists() {
+        // Arrange
         let repo = ProcessingTransactionRepository::new();
         let transaction_id = random_id_string();
         let processing_tx = ProcessingTransaction {
@@ -84,14 +93,17 @@ mod tests {
         };
 
         repo.create(transaction_id.clone(), processing_tx);
-        assert!(repo.exists(&transaction_id));
 
-        repo.delete(&transaction_id);
-        assert!(!repo.exists(&transaction_id));
+        // Act
+        let result = repo.exists(&transaction_id);
+        
+        // Assert
+        assert!(result);
     }
 
     #[test]
     fn it_should_get_all_processing_transactions() {
+        // Arrange
         let repo = ProcessingTransactionRepository::new();
         let transaction_id1 = random_id_string();
         let transaction_id2 = random_id_string();
@@ -110,13 +122,22 @@ mod tests {
         repo.create(transaction_id1, processing_tx1);
         repo.create(transaction_id2, processing_tx2);
 
+        // Act
         let all_transactions = repo.get_all();
+        
+        // Assert
         assert_eq!(all_transactions.len(), 2);
     }
 
     #[test]
     fn it_should_create_a_processing_transaction_repository_by_default() {
+        // Arrange
         let repo = ProcessingTransactionRepository::default();
-        assert!(repo.get_all().is_empty());
+        
+        // Act
+        let result = repo.get_all();
+        
+        // Assert
+        assert!(result.is_empty());
     }
 }

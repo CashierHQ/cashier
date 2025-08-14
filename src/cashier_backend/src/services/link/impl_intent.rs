@@ -596,17 +596,27 @@ mod tests {
 
     #[test]
     fn it_should_create_basic_intent() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+
+        // Act
         let intent =
             service.create_basic_intent(IntentTask::TransferWalletToLink, "Test Label".to_string());
+
+        // Assert
         assert_eq!(intent.task, IntentTask::TransferWalletToLink);
         assert_eq!(intent.label, "Test Label");
     }
 
     #[test]
     fn it_should_create_fee_intent() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+
+        // Act
         let intent = service.create_fee_intent();
+
+        // Assert
         assert_eq!(intent.task, IntentTask::TransferWalletToTreasury);
         assert_eq!(intent.label, INTENT_LABEL_LINK_CREATION_FEE);
         assert!(intent.r#type.as_transfer_from().is_some());
@@ -614,10 +624,12 @@ mod tests {
 
     #[test]
     fn it_should_error_not_found_look_up_intent() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let action_type = ActionType::Use;
 
+        // Act
         let result = service.look_up_intent(
             &Link {
                 id: link_id,
@@ -636,6 +648,7 @@ mod tests {
             &action_type,
         );
 
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::HandleLogicError(msg)) = result {
@@ -647,23 +660,31 @@ mod tests {
 
     #[test]
     fn it_should_return_empty_look_up_intent() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let principal_id1 = random_principal_id();
         let link = create_link_fixture(&service, &principal_id1);
         let action_type = ActionType::Claim;
 
+        // Act
         let intents = service.look_up_intent(&link, &action_type).unwrap();
+        
+        // Assert
         assert!(intents.is_none());
     }
 
     #[test]
     fn it_should_look_up_intent_for_create_link_send_tip() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
         let action_type = ActionType::CreateLink;
 
+        // Act
         let intents = service.look_up_intent(&link, &action_type).unwrap();
+        
+        // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
         assert_eq!(intents.len(), 2); // One for asset transfer, one for fee transfer
@@ -673,12 +694,16 @@ mod tests {
 
     #[test]
     fn it_should_look_up_intent_for_use_link_send_tip() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
         let action_type = ActionType::Use;
 
+        // Act
         let intents = service.look_up_intent(&link, &action_type).unwrap();
+
+        // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
         assert_eq!(intents.len(), 1); // One for asset transfer
@@ -687,12 +712,16 @@ mod tests {
 
     #[test]
     fn it_should_look_up_intent_for_withdraw_link_send_tip() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
         let action_type = ActionType::Withdraw;
 
+        // Act
         let intents = service.look_up_intent(&link, &action_type).unwrap();
+        
+        // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
         assert_eq!(intents.len(), 1); // One for asset transfer
@@ -701,6 +730,7 @@ mod tests {
 
     #[test]
     fn it_should_look_up_intent_for_create_link_send_airdrop() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
@@ -712,7 +742,10 @@ mod tests {
         service.link_repository.update(updated_link.clone());
         let action_type = ActionType::CreateLink;
 
+        // Act
         let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
+
+        // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
         assert_eq!(intents.len(), 2); // One for asset transfer, one for fee transfer
@@ -742,6 +775,7 @@ mod tests {
 
     #[test]
     fn it_should_look_up_intent_for_withdraw_link_send_airdrop() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
@@ -750,10 +784,12 @@ mod tests {
             ..link
         };
         service.link_repository.update(updated_link.clone());
-
         let action_type = ActionType::Withdraw;
 
+        // Act
         let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
+
+        // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
         assert_eq!(intents.len(), 1); // One for asset transfer
@@ -763,6 +799,7 @@ mod tests {
     #[test]
     fn it_should_error_on_look_up_intent_for_create_link_send_token_basket_with_empty_link_assets()
     {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
@@ -774,7 +811,10 @@ mod tests {
         service.link_repository.update(updated_link.clone());
         let action_type = ActionType::CreateLink;
 
+        // Act
         let result = service.look_up_intent(&updated_link, &action_type);
+
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::HandleLogicError(msg)) = result {
@@ -787,6 +827,7 @@ mod tests {
     #[test]
     fn it_should_error_look_up_intent_for_create_link_send_token_basket_with_invalid_asset_info_label()
      {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
@@ -804,7 +845,10 @@ mod tests {
         service.link_repository.update(updated_link.clone());
         let action_type = ActionType::CreateLink;
 
+        // Act
         let result = service.look_up_intent(&updated_link, &action_type);
+        
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::HandleLogicError(msg)) = result {
@@ -816,6 +860,7 @@ mod tests {
 
     #[test]
     fn it_should_look_up_intent_for_create_link_send_token_basket() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
@@ -836,7 +881,10 @@ mod tests {
         service.link_repository.update(updated_link.clone());
         let action_type = ActionType::CreateLink;
 
+        // Act
         let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
+        
+        // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
         assert_eq!(intents.len(), 2); // One for asset transfer, one for fee transfer
@@ -847,6 +895,7 @@ mod tests {
     #[test]
     fn it_should_error_on_look_up_intent_for_use_link_send_token_basket_with_empty_link_assets_info()
      {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
@@ -858,7 +907,10 @@ mod tests {
         service.link_repository.update(updated_link.clone());
         let action_type = ActionType::Use;
 
+        // Act
         let result = service.look_up_intent(&updated_link, &action_type);
+
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::HandleLogicError(msg)) = result {
@@ -870,6 +922,7 @@ mod tests {
 
     #[test]
     fn it_should_look_up_intent_for_use_link_send_token_basket() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
@@ -890,7 +943,10 @@ mod tests {
         service.link_repository.update(updated_link.clone());
         let action_type = ActionType::Use;
 
+        // Act
         let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
+
+        // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
         assert_eq!(intents.len(), 1); // One for asset transfer
@@ -900,6 +956,7 @@ mod tests {
     #[test]
     fn it_should_error_on_look_up_intent_for_withdraw_link_send_token_basket_with_empty_link_assets_info()
      {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
@@ -911,7 +968,10 @@ mod tests {
         service.link_repository.update(updated_link.clone());
         let action_type = ActionType::Withdraw;
 
+        // Act
         let result = service.look_up_intent(&updated_link, &action_type);
+
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::HandleLogicError(msg)) = result {
@@ -923,6 +983,7 @@ mod tests {
 
     #[test]
     fn it_should_look_up_intent_for_withdraw_link_send_token_basket() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
@@ -943,7 +1004,10 @@ mod tests {
         service.link_repository.update(updated_link.clone());
         let action_type = ActionType::Withdraw;
 
+        // Act
         let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
+        
+        // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
         assert_eq!(intents.len(), 1); // One for asset transfer
@@ -952,6 +1016,7 @@ mod tests {
 
     #[test]
     fn it_should_look_up_intent_for_create_link_receive_payment() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
@@ -963,7 +1028,10 @@ mod tests {
         service.link_repository.update(updated_link.clone());
         let action_type = ActionType::CreateLink;
 
+        // Act
         let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
+        
+        // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
         assert_eq!(intents.len(), 1); // One for fee transfer
@@ -972,6 +1040,7 @@ mod tests {
 
     #[test]
     fn it_should_look_up_intent_for_use_link_receive_payment() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
@@ -983,7 +1052,10 @@ mod tests {
         service.link_repository.update(updated_link.clone());
         let action_type = ActionType::Use;
 
+        // Act
         let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
+        
+        // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
         assert_eq!(intents.len(), 1); // One for asset transfer to link
@@ -992,6 +1064,7 @@ mod tests {
 
     #[test]
     fn it_should_look_up_intent_for_withdraw_link_receive_payment() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let link = create_link_fixture(&service, &creator_id);
@@ -1003,7 +1076,10 @@ mod tests {
         service.link_repository.update(updated_link.clone());
         let action_type = ActionType::Withdraw;
 
+        // Act
         let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
+        
+        // Assert
         assert!(intents.is_some());
         let intents = intents.unwrap();
         assert_eq!(intents.len(), 1); // One for asset transfer from link to wallet
@@ -1012,11 +1088,15 @@ mod tests {
 
     #[test]
     fn it_should_error_on_get_assets_for_action_with_invalid_link_id() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link_id = random_id_string();
         let action_type = ActionType::Use;
 
+        // Act
         let result = service.get_assets_for_action(&link_id, &action_type);
+        
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::NotFound(msg)) = result {
@@ -1028,6 +1108,7 @@ mod tests {
 
     #[test]
     fn it_should_error_on_get_assets_for_action_with_empty_link_type() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link = create_link_fixture(&service, &random_principal_id());
         let link = Link {
@@ -1036,7 +1117,10 @@ mod tests {
         };
         service.link_repository.update(link.clone());
 
+        // Act
         let result = service.get_assets_for_action(&link.id, &ActionType::Use);
+        
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::HandleLogicError(msg)) = result {
@@ -1048,10 +1132,14 @@ mod tests {
 
     #[test]
     fn it_should_error_on_get_assets_for_action_with_empty_intents() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link = create_link_fixture(&service, &random_principal_id());
 
+        // Act
         let result = service.get_assets_for_action(&link.id, &ActionType::Claim);
+        
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::HandleLogicError(msg)) = result {
@@ -1064,10 +1152,14 @@ mod tests {
     #[test]
     fn it_should_error_get_assets_for_action_with_intent_task_transfer_wallet_to_link_and_unmatched_link_assets_info_label()
      {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link = create_link_fixture(&service, &random_principal_id());
 
+        // Act
         let result = service.get_assets_for_action(&link.id, &ActionType::CreateLink);
+        
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::HandleLogicError(msg)) = result {
@@ -1079,6 +1171,7 @@ mod tests {
 
     #[test]
     fn it_should_get_assets_for_action_with_intent_task_transfer_wallet_to_link() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link = create_link_fixture(&service, &random_principal_id());
 
@@ -1094,9 +1187,12 @@ mod tests {
         };
         service.link_repository.update(updated_link.clone());
 
+        // Act
         let assets = service
             .get_assets_for_action(&updated_link.id, &ActionType::CreateLink)
             .unwrap();
+        
+        // Assert
         assert_eq!(assets.len(), 2);
         let asset_addresses = assets.iter().map(|a| a.address.clone()).collect::<Vec<_>>();
         assert!(asset_addresses.contains(&asset_address));
@@ -1105,6 +1201,7 @@ mod tests {
 
     #[test]
     fn it_should_get_assets_for_action_with_intent_task_transfer_wallet_to_treasury() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link = create_link_fixture(&service, &random_principal_id());
         let asset_address = random_id_string();
@@ -1119,9 +1216,12 @@ mod tests {
         };
         service.link_repository.update(updated_link.clone());
 
+        // Act
         let assets = service
             .get_assets_for_action(&updated_link.id, &ActionType::CreateLink)
             .unwrap();
+        
+        // Assert
         assert_eq!(assets.len(), 2);
         let asset_addresses = assets.iter().map(|a| a.address.clone()).collect::<Vec<_>>();
         assert!(asset_addresses.contains(&asset_address));
@@ -1131,10 +1231,14 @@ mod tests {
     #[test]
     fn it_should_error_get_assets_for_action_with_intent_task_transfer_link_to_wallet_and_link_assets_info_empty()
      {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link = create_link_fixture(&service, &random_principal_id());
 
+        // Act
         let result = service.get_assets_for_action(&link.id, &ActionType::Use);
+        
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::HandleLogicError(msg)) = result {
@@ -1146,6 +1250,7 @@ mod tests {
 
     #[test]
     fn it_should_get_assets_for_action_with_intent_task_transfer_link_to_wallet() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let link = create_link_fixture(&service, &random_principal_id());
 
@@ -1161,9 +1266,12 @@ mod tests {
         };
         service.link_repository.update(updated_link.clone());
 
+        // Act
         let assets = service
             .get_assets_for_action(&updated_link.id, &ActionType::Use)
             .unwrap();
+        
+        // Assert
         assert_eq!(assets.len(), 1);
         assert_eq!(assets[0].address, asset_address);
         assert_eq!(assets[0].chain, Chain::IC);

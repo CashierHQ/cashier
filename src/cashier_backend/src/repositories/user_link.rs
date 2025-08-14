@@ -88,6 +88,7 @@ mod tests {
 
     #[test]
     fn it_should_create_an_user_link() {
+        // Arrange
         let repo = UserLinkRepository::new();
         let user_id = random_principal_id();
         let link_id = random_id_string();
@@ -96,7 +97,10 @@ mod tests {
             link_id: link_id.clone(),
         };
 
+        // Act
         repo.create(user_link);
+
+        // Assert
         let links = repo.get_links_by_user_id(&user_id, &PaginateInput::default());
         assert_eq!(links.data.len(), 1);
         assert_eq!(links.data.first().unwrap().link_id, link_id);
@@ -105,6 +109,7 @@ mod tests {
 
     #[test]
     fn it_should_delete_a_user_link() {
+        // Arrange
         let repo = UserLinkRepository::new();
         let user_id = random_principal_id();
         let link_id = random_id_string();
@@ -115,14 +120,18 @@ mod tests {
         };
 
         repo.create(user_link.clone());
+
+        // Act
         repo.delete(user_link);
 
+        // Assert
         let links = repo.get_links_by_user_id(&user_id, &PaginateInput::default());
         assert!(links.data.is_empty());
     }
 
     #[test]
     fn it_should_get_links_by_user_id() {
+        // Arrange
         let repo = UserLinkRepository::new();
         let user_id = random_principal_id();
         let link_id1 = random_id_string();
@@ -139,7 +148,10 @@ mod tests {
         repo.create(user_link1);
         repo.create(user_link2);
 
+        // Act
         let links = repo.get_links_by_user_id(&user_id, &PaginateInput::default());
+        
+        // Assert
         assert_eq!(links.data.len(), 2);
         assert!(links.data.iter().any(|l| l.link_id == link_id1));
         assert!(links.data.iter().any(|l| l.link_id == link_id2));
@@ -147,11 +159,13 @@ mod tests {
 
     #[test]
     fn it_should_create_a_user_link_repository_by_default() {
+        // Arrange
         let repo = UserLinkRepository::default();
-        assert!(
-            repo.get_links_by_user_id("user1", &PaginateInput::default())
-                .data
-                .is_empty()
-        );
+
+        // Act
+        let result = repo.get_links_by_user_id("user1", &PaginateInput::default());
+
+        // Assert
+        assert!(result.data.is_empty());
     }
 }
