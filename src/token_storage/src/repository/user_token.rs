@@ -136,6 +136,6 @@ mod tests {
         // Assert
         assert_eq!(list.version, version);
         assert_eq!(list.enable_list.len(), 1);
-        assert_eq!(list.enable_list.contains(&token_id), true);
+        assert!(list.enable_list.contains(&token_id));
     }
 }
