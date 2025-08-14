@@ -251,3 +251,228 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
             .create_icrc_112(action_id, link_id, &tx_execute_from_user_wallet)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::services::transaction_manager::test_fixtures::*;
+    use crate::utils::test_utils::{random_id_string, random_principal_id, runtime::MockIcEnvironment};
+    use cashier_backend_types::repository::{common::{Asset, Wallet, Chain},transaction::v2::{IcTransaction, Icrc1Transfer, Protocol,FromCallType}};
+    use candid::{Principal,Nat};
+
+    #[test]
+    fn it_should_error_update_tx_state_if_tx_not_found() {
+        let service: TransactionManagerService<MockIcEnvironment> =
+            TransactionManagerService::get_instance();
+
+        let mut dummy_tx = Transaction {
+            id: random_id_string(),
+            created_at: 1622547800,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0u16,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from(1000u64),
+                ts: None,
+                memo: None,
+            })),
+            start_ts: None,
+        };
+        let new_state = TransactionState::Processing;
+
+        let result = service.update_tx_state(&mut dummy_tx, &new_state);
+        assert!(result.is_err());
+
+        if let Err(CanisterError::HandleLogicError(msg)) = result {
+            assert!(msg.contains("get_action_by_tx_id failed"));
+        } else {
+            panic!("Expected NotFound error, got {:?}", result);
+        }
+    }
+
+    #[test]
+    fn it_should_update_tx_state() {
+        let service: TransactionManagerService<MockIcEnvironment> =
+            TransactionManagerService::get_instance();
+        let link_id = random_id_string();
+        let action = create_action_with_intents_fixture(&service, link_id.clone());
+        assert!(action.intents.len() > 0);
+        assert_eq!(action.intents[0].transactions.len(), 1);
+        let tx_id1 = &action.intents[0].transactions[0].id;
+        assert_eq!(action.intents[0].transactions[0].state, TransactionState::Created.to_string());
+
+        let mut tx = Transaction {
+            id: tx_id1.clone(),
+            created_at: 1622547800,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0u16,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from(1000u64),
+                ts: None,
+                memo: None,
+            })),
+            start_ts: None,
+        };
+
+        // Update the transaction state
+        let result = service.update_tx_state(&mut tx, &TransactionState::Success);
+        println!("Update result: {:?}", result);
+        assert!(result.is_ok());
+
+        // Verify that the transaction state was updated
+        let updated_tx = service.transaction_service.get_tx_by_id(&tx.id).unwrap();
+        assert_eq!(updated_tx.id, tx.id);
+        assert_eq!(updated_tx.state, TransactionState::Success);
+    }
+
+    #[test]
+    fn it_should_error_create_icrc112_if_invalid_from_account() {
+        let service: TransactionManagerService<MockIcEnvironment> =
+            TransactionManagerService::get_instance();
+        let action_id = random_id_string();
+        let link_id = random_id_string();
+        let tx_id = random_id_string();
+        
+        let tx = Transaction {
+            id: tx_id,
+            created_at: 1622547800,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0u16,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from(1000u64),
+                ts: None,
+                memo: None,
+            })),
+            start_ts: None,
+        };
+
+        let caller = Account {
+            owner: Principal::anonymous(),
+            subaccount: None,
+        };
+
+        // Create ICRC-112 request with an invalid from account
+        let result = service.create_icrc_112(
+            &caller,
+            &action_id,
+            &link_id,
+            &[tx],
+        );
+        assert!(result.is_err());
+
+        if let Err(CanisterError::InvalidDataError(msg)) = result {
+            assert!(msg.contains("invalid principal"));
+        } else {
+            panic!("Expected InvalidDataError, got {:?}", result);
+        }
+    }
+
+    #[test]
+    fn it_should_return_none_create_icrc112_request_if_caller_is_not_from_account() {
+        let service: TransactionManagerService<MockIcEnvironment> =
+            TransactionManagerService::get_instance();
+        let action_id = random_id_string();
+        let link_id = random_id_string();
+        let tx_id = random_id_string();
+        let from_principal_id = random_principal_id();
+
+        let tx = Transaction {
+            id: tx_id,
+            created_at: 1622547800,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0u16,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet {
+                    address: from_principal_id,
+                    chain: Chain::IC,
+                },
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from(1000u64),
+                ts: None,
+                memo: None,
+            })),
+            start_ts: None,
+        };
+
+        let caller = Account {
+            owner: Principal::anonymous(),
+            subaccount: None,
+        };
+
+        // Create ICRC-112 request with a non-matching caller
+        let result = service.create_icrc_112(
+            &caller,
+            &action_id,
+            &link_id,
+            &[tx],
+        ).unwrap();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn it_should_create_icrc112() {
+        let service: TransactionManagerService<MockIcEnvironment> =
+            TransactionManagerService::get_instance();
+        let link_id = random_id_string();
+        let action = create_action_with_intents_fixture(&service, link_id.clone());
+        assert!(action.intents.len() > 0);
+        assert_eq!(action.intents[0].transactions.len(), 1);
+        let tx_id1 = &action.intents[0].transactions[0].id;
+        let creator_id = action.creator;
+
+        let tx1 = Transaction {
+            id: tx_id1.clone(),
+            created_at: 1622547800,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0u16,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet {
+                    address: creator_id.clone(),
+                    chain: Chain::IC,
+                },
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from(1000u64),
+                ts: None,
+                memo: None,
+            })),
+            start_ts: None,
+        };
+
+        let caller = Account {
+            owner: Principal::from_text(&creator_id.to_string()).unwrap(),
+            subaccount: None,
+        };
+
+        // Create ICRC-112 request with a matching caller
+        let result = service.create_icrc_112(
+            &caller,
+            &action.id,
+            &link_id,
+            &[tx1],
+        ).unwrap();
+        
+        assert!(result.is_some());
+        let icrc112_requests = result.unwrap();
+        assert_eq!(icrc112_requests.len(), 1);
+    }
+}

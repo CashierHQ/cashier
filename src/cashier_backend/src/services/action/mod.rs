@@ -18,13 +18,13 @@ use std::collections::HashMap;
 
 pub struct ActionService {
     // Concrete repository implementations
-    action_repository: repositories::action::ActionRepository,
-    intent_repository: repositories::intent::IntentRepository,
-    action_intent_repository: repositories::action_intent::ActionIntentRepository,
-    transaction_repository: repositories::transaction::TransactionRepository,
-    intent_transaction_repository: repositories::intent_transaction::IntentTransactionRepository,
-    link_action_repository: repositories::link_action::LinkActionRepository,
-    user_action_repository: repositories::user_action::UserActionRepository,
+    pub action_repository: repositories::action::ActionRepository,
+    pub intent_repository: repositories::intent::IntentRepository,
+    pub action_intent_repository: repositories::action_intent::ActionIntentRepository,
+    pub transaction_repository: repositories::transaction::TransactionRepository,
+    pub intent_transaction_repository: repositories::intent_transaction::IntentTransactionRepository,
+    pub link_action_repository: repositories::link_action::LinkActionRepository,
+    pub user_action_repository: repositories::user_action::UserActionRepository,
 
     // Domain logic
     domain_logic: ActionDomainLogic,
