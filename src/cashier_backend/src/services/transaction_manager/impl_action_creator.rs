@@ -111,3 +111,167 @@ impl<E: IcEnvironment + Clone> ActionCreator<E> for TransactionManagerService<E>
         ))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Nat;
+    use cashier_backend_types::repository::{action::v1::{ActionState, ActionType}, common::{Chain, Wallet, Asset}, intent::v2::{Intent, IntentState, IntentTask, IntentType, TransferData}};
+    use crate::utils::test_utils::{random_id_string, random_principal_id, runtime::MockIcEnvironment};
+    use crate::services::transaction_manager::test_fixtures::*;
+
+    #[test]
+    fn it_should_error_create_action_if_action_exists() {
+        let service: TransactionManagerService<MockIcEnvironment> =
+            TransactionManagerService::get_instance();
+        let link_id = random_id_string();
+        let action = create_action_fixture(&service, link_id.clone());
+
+        let mut temp_action = TemporaryAction {
+            id: action.id.clone(),
+            r#type: ActionType::CreateLink,
+            creator: action.creator.clone(),
+            link_id: link_id.clone(),
+            intents: vec![],
+            default_link_user_state: None,
+            state: ActionState::Created,
+        };
+
+        let result = service.create_action(&mut temp_action);        
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn it_should_error_create_action_if_dependency_not_found() {
+        let service: TransactionManagerService<MockIcEnvironment> =
+            TransactionManagerService::get_instance();
+        let link_id = random_id_string();
+        let action_id = random_id_string();
+        let intent_id1 = random_id_string();
+        let intent_id2 = random_id_string();
+        let creator_id = random_principal_id();
+
+        let mut temp_action = TemporaryAction {
+            id: action_id,
+            r#type: ActionType::CreateLink,
+            creator: creator_id,
+            link_id: link_id,
+            intents: vec![
+                Intent {
+                    id: intent_id1,
+                    state: IntentState::Created,
+                    created_at: 1622547800,
+                    dependency: vec![],
+                    chain: Chain::IC,
+                    task: IntentTask::TransferWalletToLink,
+                    r#type: IntentType::Transfer(
+                        TransferData {
+                            from: Wallet::default(),
+                            to: Wallet::default(),
+                            asset: Asset::default(),
+                            amount: Nat::from(1000u64),
+                        }
+                    ),
+                    label: "Test Intent".to_string(),
+                },
+                Intent {
+                    id: intent_id2,
+                    state: IntentState::Created,
+                    created_at: 1622547800,
+                    dependency: vec![random_id_string()], // This dependency does not exist
+                    chain: Chain::IC,
+                    task: IntentTask::TransferWalletToLink,
+                    r#type: IntentType::Transfer(
+                        TransferData {
+                            from: Wallet::default(),
+                            to: Wallet::default(),
+                            asset: Asset::default(),
+                            amount: Nat::from(1000u64),
+                        }
+                    ),
+                    label: "Test Intent with Dependency".to_string(),
+                },
+            ],
+            default_link_user_state: None,
+            state: ActionState::Created,
+        };
+
+        let result = service.create_action(&mut temp_action);
+        assert!(result.is_err());
+
+        if let Err(CanisterError::InvalidDataError(msg)) = result {
+            assert!(msg.contains("Dependency ID"));
+        } else {
+            panic!("Expected InvalidDataError, got {:?}", result);
+        }
+    }
+
+    #[test]
+    fn it_should_create_action_successfully() {
+        let service: TransactionManagerService<MockIcEnvironment> =
+            TransactionManagerService::get_instance();
+        let link_id = random_id_string();
+        let action_id = random_id_string();
+        let creator_id = random_principal_id();
+        let intent_id1 = random_id_string();
+        let intent_id2 = random_id_string();
+
+        let mut temp_action = TemporaryAction {
+            id: action_id.clone(),
+            r#type: ActionType::CreateLink,
+            creator: creator_id.clone(),
+            link_id: link_id.clone(),
+            intents: vec![
+                Intent {
+                    id: intent_id1.clone(),
+                    state: IntentState::Created,
+                    created_at: 1622547800,
+                    dependency: vec![],
+                    chain: Chain::IC,
+                    task: IntentTask::TransferWalletToLink,
+                    r#type: IntentType::Transfer(
+                        TransferData {
+                            from: Wallet::default(),
+                            to: Wallet::default(),
+                            asset: Asset::default(),
+                            amount: Nat::from(1000u64),
+                        }
+                    ),
+                    label: "Test Intent".to_string(),
+                },
+                Intent {
+                    id: intent_id2.clone(),
+                    state: IntentState::Created,
+                    created_at: 1622547800,
+                    dependency: vec![intent_id1.clone()],
+                    chain: Chain::IC,
+                    task: IntentTask::TransferWalletToLink,
+                    r#type: IntentType::Transfer(
+                        TransferData {
+                            from: Wallet::default(),
+                            to: Wallet::default(),
+                            asset: Asset::default(),
+                            amount: Nat::from(1000u64),
+                        }
+                    ),
+                    label: "Test Intent with Dependency".to_string(),
+                },
+            ],
+            default_link_user_state: None,
+            state: ActionState::Created,
+        };
+
+        let result = service.create_action(&mut temp_action);
+        assert!(result.is_ok());
+
+        let action_dto = result.unwrap();
+        assert_eq!(action_dto.id, action_id);
+        assert_eq!(action_dto.r#type, ActionType::CreateLink.to_string());
+        assert_eq!(action_dto.creator, creator_id);
+        assert_eq!(action_dto.intents.len(), 2);
+        assert_eq!(action_dto.intents[0].id, intent_id1);
+        assert_eq!(action_dto.intents[1].id, intent_id2);
+        
+    }
+
+}
