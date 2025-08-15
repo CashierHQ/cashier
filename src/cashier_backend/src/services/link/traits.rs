@@ -89,6 +89,7 @@ pub trait LinkUserStateMachine {
 pub trait ActionFlow {
     async fn create_action(
         &mut self,
+        ts: u64,
         input: &CreateActionInput,
         caller: &Principal,
     ) -> Result<ActionDto, CanisterError>;
@@ -104,6 +105,7 @@ pub trait ActionFlow {
     ) -> Result<ActionDto, CanisterError>;
     async fn create_action_anonymous(
         &mut self,
+        ts: u64,
         input: &CreateActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError>;
     async fn process_action_anonymous(

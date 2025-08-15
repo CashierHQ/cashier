@@ -20,7 +20,7 @@ pub struct TransactionManagerService<E: IcEnvironment + Clone, R: Repositories> 
     pub action_service: ActionService<R>,
     pub ic_env: E,
     pub icrc_service: IcrcService,
-    pub intent_adapter: IntentAdapterImpl<E>,
+    pub intent_adapter: IntentAdapterImpl,
     pub user_wallet_repository: UserWalletRepository<R::UserWallet>,
     pub action_repository: ActionRepository<R::Action>,
     pub processing_transaction_repository:

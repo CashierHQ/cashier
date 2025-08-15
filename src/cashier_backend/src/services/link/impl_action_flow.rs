@@ -32,6 +32,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 {
     async fn create_action(
         &mut self,
+        ts: u64,
         input: &CreateActionInput,
         caller: &Principal,
     ) -> Result<ActionDto, CanisterError> {
@@ -99,7 +100,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
             temp_action.intents = intents;
 
             // Create real action
-            self.tx_manager_service.create_action(&mut temp_action)
+            self.tx_manager_service.create_action(ts, &mut temp_action)
         }
         .await;
 
@@ -225,6 +226,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
     async fn create_action_anonymous(
         &mut self,
+        ts: u64,
         input: &CreateActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
         // check wallet address
@@ -324,7 +326,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
             temp_action.intents = intents;
 
             // Create real action
-            self.tx_manager_service.create_action(&mut temp_action)
+            self.tx_manager_service.create_action(ts, &mut temp_action)
         }
         .await;
 

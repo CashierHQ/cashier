@@ -20,6 +20,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> ActionCreator<E>
 {
     fn create_action(
         &mut self,
+        ts: u64,
         temp_action: &mut TemporaryAction,
     ) -> Result<ActionDto, CanisterError> {
         let mut intent_tx_hashmap: HashMap<String, Vec<Transaction>> = HashMap::new();
@@ -39,7 +40,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> ActionCreator<E>
             let chain = intent.chain.clone();
             // assemble txs
 
-            let txs = self.intent_adapter.intent_to_transactions(&chain, intent)?;
+            let txs = self.intent_adapter.intent_to_transactions(&chain, ts, intent)?;
             intent_tx_hashmap.insert(intent.id.clone(), txs.clone());
 
             // store tx ids in hashmap
