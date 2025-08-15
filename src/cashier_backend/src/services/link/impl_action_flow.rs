@@ -26,7 +26,7 @@ use cashier_backend_types::{
 
 impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow for LinkService<E, R> {
     async fn create_action(
-        &self,
+        &mut self,
         input: &CreateActionInput,
         caller: &Principal,
     ) -> Result<ActionDto, CanisterError> {
@@ -105,7 +105,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow f
     }
 
     async fn process_action(
-        &self,
+        &mut self,
         input: &ProcessActionInput,
         caller: &Principal,
     ) -> Result<ActionDto, CanisterError> {
@@ -219,7 +219,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow f
     }
 
     async fn create_action_anonymous(
-        &self,
+        &mut self,
         input: &CreateActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
         // check wallet address
@@ -330,7 +330,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow f
     }
 
     async fn process_action_anonymous(
-        &self,
+        &mut self,
         input: &ProcessActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
         // check wallet address
