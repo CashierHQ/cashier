@@ -1,29 +1,25 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use candid::Principal;
+use token_storage_types::user::UserPreference;
+
 // File: src/token_storage/src/services/user_perference.rs
-use crate::repository::user_preference::UserPreferenceRepository;
-use crate::types::UserPreference;
+use crate::repository::{Repositories, user_preference::UserPreferenceRepository};
 
-pub struct UserPreferenceService {
-    repository: UserPreferenceRepository,
+pub struct UserPreferenceService<R: Repositories> {
+    repository: UserPreferenceRepository<R::UserPreference>,
 }
 
-impl Default for UserPreferenceService {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl UserPreferenceService {
-    pub fn new() -> Self {
+impl<R: Repositories> UserPreferenceService<R> {
+    pub fn new(repo: &R) -> Self {
         Self {
-            repository: UserPreferenceRepository::new(),
+            repository: repo.user_preference(),
         }
     }
 
     /// Get user preferences for the specified user
-    pub fn get_preferences(&self, user_id: &str) -> UserPreference {
+    pub fn get_preferences(&self, user_id: &Principal) -> UserPreference {
         self.repository.get(user_id)
     }
 }

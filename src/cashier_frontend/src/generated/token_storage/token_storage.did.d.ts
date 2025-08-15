@@ -3,10 +3,10 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export interface AddTokenInput {
-  'token_id' : string,
+  'token_id' : TokenId,
   'index_id' : [] | [string],
 }
-export interface AddTokensInput { 'token_ids' : Array<string> }
+export interface AddTokensInput { 'token_ids' : Array<TokenId> }
 export interface BuildData {
   'rustc_semver' : string,
   'git_branch' : string,
@@ -41,22 +41,24 @@ export type Result = { 'Ok' : null } |
   { 'Err' : string };
 export type Result_1 = { 'Ok' : RegistryStats } |
   { 'Err' : string };
-export type Result_2 = { 'Ok' : Array<[string, bigint]> } |
+export type Result_2 = { 'Ok' : Array<[TokenId, bigint]> } |
   { 'Err' : string };
 export type Result_3 = { 'Ok' : UserTokens } |
   { 'Err' : string };
 export type Result_4 = { 'Ok' : TokenListResponse } |
   { 'Err' : string };
 export interface TokenDto {
-  'id' : string,
+  'id' : TokenId,
   'decimals' : number,
   'balance' : [] | [bigint],
-  'chain' : string,
+  'chain' : Chain,
   'name' : string,
   'enabled' : boolean,
   'details' : ChainTokenDetails,
+  'string_id' : string,
   'symbol' : string,
 }
+export type TokenId = { 'IC' : { 'ledger_id' : Principal } };
 export interface TokenListResponse {
   'need_update_version' : boolean,
   'tokens' : Array<TokenDto>,
@@ -71,10 +73,10 @@ export interface TokenStorageInitData {
 }
 export interface UpdateTokenBalanceInput {
   'balance' : bigint,
-  'token_id' : string,
+  'token_id' : TokenId,
 }
 export interface UpdateTokenInput {
-  'token_id' : string,
+  'token_id' : TokenId,
   'is_enabled' : boolean,
 }
 export interface UserPreference {
@@ -90,16 +92,16 @@ export interface UserTokens {
 export interface _SERVICE {
   'add_token' : ActorMethod<[AddTokenInput], Result>,
   'add_token_batch' : ActorMethod<[AddTokensInput], Result>,
+  'admin_get_registry_metadata' : ActorMethod<[], TokenRegistryMetadata>,
+  'admin_get_registry_tokens' : ActorMethod<[boolean], Array<TokenDto>>,
+  'admin_get_registry_version' : ActorMethod<[], bigint>,
+  'admin_get_stats' : ActorMethod<[], Result_1>,
+  'admin_get_user_balance' : ActorMethod<[Principal], Result_2>,
+  'admin_get_user_tokens' : ActorMethod<[Principal], Result_3>,
+  'admin_initialize_registry' : ActorMethod<[], Result>,
+  'admin_list_tokens_by_wallet' : ActorMethod<[Principal], Result_4>,
   'get_canister_build_data' : ActorMethod<[], BuildData>,
-  'get_registry_metadata' : ActorMethod<[], TokenRegistryMetadata>,
-  'get_registry_tokens' : ActorMethod<[boolean], Array<TokenDto>>,
-  'get_registry_version' : ActorMethod<[], bigint>,
-  'get_stats' : ActorMethod<[], Result_1>,
-  'get_user_balance' : ActorMethod<[string], Result_2>,
-  'get_user_tokens' : ActorMethod<[string], Result_3>,
-  'initialize_registry' : ActorMethod<[], Result>,
   'list_tokens' : ActorMethod<[], Result_4>,
-  'list_tokens_by_wallet' : ActorMethod<[string], Result_4>,
   'sync_token_list' : ActorMethod<[], Result>,
   'update_token_balance' : ActorMethod<
     [Array<UpdateTokenBalanceInput>],
