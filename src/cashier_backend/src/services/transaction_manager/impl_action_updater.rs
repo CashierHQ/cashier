@@ -6,6 +6,7 @@ use crate::repositories::Repositories;
 use crate::services::transaction_manager::traits::{
     BatchExecutor, DependencyAnalyzer, TimeoutHandler,
 };
+use candid::Principal;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::{
     dto::action::{ActionDto, Icrc112Requests},
@@ -47,7 +48,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionUpdate
     ///
     /// # Returns
     /// * `Result<ActionDto, CanisterError>` - The updated action data or an error
-    async fn update_action(&mut self, args: UpdateActionArgs) -> Result<ActionDto, CanisterError> {
+    async fn update_action(&mut self, caller: Principal, args: UpdateActionArgs) -> Result<ActionDto, CanisterError> {
         let action_data = self
             .action_service
             .get_action_data(&args.action_id)
@@ -93,7 +94,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionUpdate
 
         // User wallet account
         let caller = Account {
-            owner: self.ic_env.caller(),
+            owner: caller,
             subaccount: None,
         };
 

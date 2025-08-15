@@ -23,15 +23,9 @@ pub struct IcIntentAdapter<E: IcEnvironment + Clone> {
     pub ic_env: E,
 }
 
-impl<E: IcEnvironment + Clone> Default for IcIntentAdapter<E> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl<E: IcEnvironment + Clone> IcIntentAdapter<E> {
-    pub fn new() -> Self {
-        Self { ic_env: E::new() }
+    pub fn new(ic_env: E) -> Self {
+        Self { ic_env }
     }
 
     fn assemble_icrc1_wallet_transfer(

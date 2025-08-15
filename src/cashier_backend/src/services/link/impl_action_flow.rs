@@ -112,10 +112,10 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
     async fn process_action(
         &mut self,
         input: &ProcessActionInput,
-        caller: &Principal,
+        caller: Principal,
     ) -> Result<ActionDto, CanisterError> {
         // input validate
-        let user_id = self.user_service.get_user_id_by_wallet(caller);
+        let user_id = self.user_service.get_user_id_by_wallet(&caller);
 
         let _ = ActionType::from_str(&input.action_type)
             .map_err(|_| CanisterError::ValidationErrors("Invalid action type ".to_string()))?;
@@ -131,7 +131,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         let request_lock_key = self
             .request_lock_service
             .create_request_lock_for_processing_action(
-                caller,
+                &caller,
                 &input.link_id,
                 &input.action_id,
                 self.ic_env.time(),
@@ -155,7 +155,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
             // execute action
             let update_action_res = self
                 .tx_manager_service
-                .update_action(UpdateActionArgs {
+                .update_action(caller, UpdateActionArgs {
                     action_id,
                     link_id: input.link_id.to_string(),
                     execute_wallet_tx: false,
@@ -175,11 +175,11 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
     async fn update_action(
         &mut self,
         input: &UpdateActionInput,
-        caller: &Principal,
+        caller: Principal,
     ) -> Result<ActionDto, CanisterError> {
         let is_creator = self
             .tx_manager_service
-            .is_action_creator(caller, &input.action_id)
+            .is_action_creator(&caller, &input.action_id)
             .map_err(|e| {
                 CanisterError::ValidationErrors(format!("Failed to validate action: {e}"))
             })?;
@@ -194,7 +194,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         let request_lock_key = self
             .request_lock_service
             .create_request_lock_for_updating_action(
-                caller,
+                &caller,
                 &input.link_id,
                 &input.action_id,
                 self.ic_env.time(),
@@ -209,7 +209,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
             };
 
             self.tx_manager_service
-                .update_action(args)
+                .update_action(caller, args)
                 .await
                 .map_err(|e| {
                     CanisterError::HandleLogicError(format!("Failed to update action: {e}"))
@@ -336,6 +336,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
     async fn process_action_anonymous(
         &mut self,
+        caller: Principal,
         input: &ProcessActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
         // check wallet address
@@ -374,7 +375,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         // execute action with our standalone callback
         let update_action_res = self
             .tx_manager_service
-            .update_action(UpdateActionArgs {
+            .update_action(caller, UpdateActionArgs {
                 action_id: action_id.clone(),
                 link_id: input.link_id.clone(),
                 execute_wallet_tx: false,

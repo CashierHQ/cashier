@@ -63,7 +63,7 @@ pub trait TimeoutHandler<E: IcEnvironment + Clone> {
 
 // ---------- 7. High-level action updater ----------
 pub trait ActionUpdater<E: IcEnvironment + Clone> {
-    async fn update_action(&mut self, args: UpdateActionArgs) -> Result<ActionDto, CanisterError>;
+    async fn update_action(&mut self, caller: Principal, args: UpdateActionArgs) -> Result<ActionDto, CanisterError>;
 
     fn update_tx_state(
         &mut self,

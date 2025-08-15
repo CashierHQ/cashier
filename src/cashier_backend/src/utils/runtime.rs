@@ -6,8 +6,6 @@ use std::{future::Future, time::Duration};
 use candid::Principal;
 
 pub trait IcEnvironment {
-    fn new() -> Self;
-    fn caller(&self) -> Principal;
     fn id(&self) -> Principal;
     fn time(&self) -> u64;
     fn spawn<F>(&self, future: F)
@@ -18,7 +16,7 @@ pub trait IcEnvironment {
 }
 
 use ic_cdk::{
-    api::{self, canister_self, msg_caller},
+    api::{self, canister_self},
     futures::spawn,
 };
 use ic_cdk_timers::TimerId;
@@ -26,16 +24,18 @@ use ic_cdk_timers::TimerId;
 #[derive(Clone)]
 pub struct RealIcEnvironment;
 
-impl IcEnvironment for RealIcEnvironment {
-    fn new() -> Self {
+impl RealIcEnvironment {
+    pub fn new() -> Self {
         Self {}
     }
-    fn caller(&self) -> Principal {
-        msg_caller()
-    }
+
+}
+impl IcEnvironment for RealIcEnvironment {
+ 
     fn id(&self) -> Principal {
         canister_self()
     }
+
     fn time(&self) -> u64 {
         api::time()
     }

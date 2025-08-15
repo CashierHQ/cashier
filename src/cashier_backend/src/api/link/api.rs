@@ -118,7 +118,7 @@ pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, Cani
     debug!("[process_action] input: {input:?}");
 
     let mut api = LinkApi::get_instance();
-    api.process_action(&msg_caller(), input).await
+    api.process_action(msg_caller(), input).await
 }
 
 /// Creates a new action for authenticated users on a specific link.
@@ -162,7 +162,7 @@ pub async fn process_action_anonymous(
     debug!("[process_action_anonymous] input: {input:?}");
 
     let mut api = LinkApi::get_instance();
-    api.process_action_anonymous(&msg_caller(), input).await
+    api.process_action_anonymous(msg_caller(), input).await
 }
 
 /// Creates a new action for anonymous users with wallet address.
@@ -255,7 +255,7 @@ pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, Canist
 
     let start = ic_cdk::api::time();
     let mut api = LinkApi::get_instance();
-    let res = api.update_action(&msg_caller(), input).await;
+    let res = api.update_action(msg_caller(), input).await;
 
     let end = ic_cdk::api::time();
 
@@ -413,10 +413,10 @@ impl LinkApi {
     /// * `Err(CanisterError)` - Error if validation fails, action doesn't exist, or processing fails
     pub async fn process_action_anonymous(
         &mut self,
-        caller: &Principal,
+        caller: Principal,
         input: ProcessActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
-        if caller != &Principal::anonymous() {
+        if caller != Principal::anonymous() {
             return Err(CanisterError::ValidationErrors(
                 "Only anonymous caller can call this function".to_string(),
             ));
@@ -424,7 +424,7 @@ impl LinkApi {
 
         self.state
             .link_service
-            .process_action_anonymous(&input)
+            .process_action_anonymous(caller, &input)
             .await
     }
 
@@ -442,7 +442,7 @@ impl LinkApi {
     /// * `Err(CanisterError)` - Error if user not found, action doesn't exist, or processing fails
     pub async fn process_action(
         &mut self,
-        caller: &Principal,
+        caller: Principal,
         input: ProcessActionInput,
     ) -> Result<ActionDto, CanisterError> {
         self.state.link_service.process_action(&input, caller).await
@@ -555,7 +555,7 @@ impl LinkApi {
     /// * `Err(CanisterError)` - Error if unauthorized, validation fails, or execution fails
     pub async fn update_action(
         &mut self,
-        caller: &Principal,
+        caller: Principal,
         input: UpdateActionInput,
     ) -> Result<ActionDto, CanisterError> {
         self.state.link_service.update_action(&input, caller).await
