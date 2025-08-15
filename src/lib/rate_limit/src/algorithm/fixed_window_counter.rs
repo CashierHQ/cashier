@@ -212,7 +212,6 @@ impl From<FixedWindowCounterCoreConfig> for FixedWindowCounterCore {
     /// # Panics
     /// This method will panic if either `capacity` or `window_size_tick` is zero.
     /// It is intended for use with trusted or pre-validated inputs.
-
     #[inline(always)]
     fn from(config: FixedWindowCounterCoreConfig) -> Self {
         FixedWindowCounterCore::new(config.capacity, config.window_size)

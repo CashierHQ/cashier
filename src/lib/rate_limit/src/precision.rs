@@ -19,26 +19,6 @@
 //!
 //! All precision conversions use branchless operations that compile to efficient
 //! conditional move (CMOV) instructions, avoiding branch prediction penalties.
-//!
-//! # Examples
-//!
-//! ```rust
-//! use std::time::Duration;
-//! use rate_limit::percision::{Precision, Millis, Nanos};
-//! // Convert Duration to ticks using different precisions
-//! let duration = Duration::from_millis(100);
-//!
-//! let millis_ticks = Millis::to_ticks(duration);   // 100 ticks
-//! let nanos_ticks = Nanos::to_ticks(duration);     // 100_000_000 ticks
-//!
-//! // Convert back to Duration
-//! let recovered = Millis::from_ticks(millis_ticks);
-//! assert_eq!(recovered, duration);
-//!
-//! // Generic usage (as used in rate limiters)
-//! fn convert_duration<P: Precision>(duration: Duration) -> u64 {
-//!     P::to_ticks(duration)
-//! }
 //! ```
 
 use std::time::Duration;
