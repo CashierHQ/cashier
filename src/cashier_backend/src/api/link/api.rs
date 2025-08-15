@@ -351,7 +351,7 @@ impl LinkApi {
         options: Option<GetLinkOptions>,
     ) -> Result<GetLinkResp, String> {
         // Get raw link and action data from service
-        let (link, action) = self.state.link_service.get_link(id, options, &caller)?;
+        let (link, action) = self.state.link_service.get_link(id, options, caller)?;
 
         // Convert action to DTO if it exists
         let action_dto = action.map(|action| {
@@ -445,10 +445,7 @@ impl LinkApi {
         caller: &Principal,
         input: ProcessActionInput,
     ) -> Result<ActionDto, CanisterError> {
-        self.state
-            .link_service
-            .process_action(&input, &caller)
-            .await
+        self.state.link_service.process_action(&input, caller).await
     }
 
     /// Creates a new action for authenticated users on a specific link.
@@ -468,7 +465,7 @@ impl LinkApi {
         caller: &Principal,
         input: CreateActionInput,
     ) -> Result<ActionDto, CanisterError> {
-        self.state.link_service.create_action(&input, &caller).await
+        self.state.link_service.create_action(&input, caller).await
     }
 
     /// Creates a new action for anonymous users using wallet address authentication.
@@ -518,7 +515,7 @@ impl LinkApi {
         caller: &Principal,
         input: &LinkGetUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
-        self.state.link_service.link_get_user_state(&caller, input)
+        self.state.link_service.link_get_user_state(caller, input)
     }
 
     /// Updates the user state for a specific link action using state machine transitions.
@@ -541,7 +538,7 @@ impl LinkApi {
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
         self.state
             .link_service
-            .link_update_user_state(&caller, input)
+            .link_update_user_state(caller, input)
     }
 
     /// Updates an existing action's state and executes associated blockchain transactions.
@@ -561,7 +558,7 @@ impl LinkApi {
         caller: &Principal,
         input: UpdateActionInput,
     ) -> Result<ActionDto, CanisterError> {
-        self.state.link_service.update_action(&input, &caller).await
+        self.state.link_service.update_action(&input, caller).await
     }
 
     /// Updates an existing link's configuration, state, or parameters.
