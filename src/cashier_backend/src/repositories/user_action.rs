@@ -37,6 +37,7 @@ mod tests {
 
     #[test]
     fn it_should_create_an_user_action() {
+        // Arrange
         let repo = UserActionRepository::new();
         let user_id = random_principal_id();
         let action_id = random_id_string();
@@ -44,8 +45,11 @@ mod tests {
             user_id: user_id.clone(),
             action_id: action_id.clone(),
         };
+
+        // Act
         repo.create(user_action);
 
+        // Assert
         let retrieved_action = USER_ACTION_STORE.with_borrow(|store| {
             store.get(
                 &UserActionKey {
@@ -61,6 +65,7 @@ mod tests {
 
     #[test]
     fn it_should_create_a_user_action_repository_by_default() {
+        // Arrange
         let repo = UserActionRepository::default();
         let user_id = random_principal_id();
         let action_id = random_id_string();
@@ -68,8 +73,11 @@ mod tests {
             user_id: user_id.clone(),
             action_id: action_id.clone(),
         };
+
+        // Act
         repo.create(user_action);
 
+        // Assert
         let retrieved_action = USER_ACTION_STORE.with_borrow(|store| {
             store.get(
                 &UserActionKey {
