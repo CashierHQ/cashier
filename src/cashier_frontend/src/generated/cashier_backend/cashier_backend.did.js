@@ -175,6 +175,7 @@ export const idlFactory = ({ IDL }) => {
     'data' : IDL.Vec(LinkDto),
   });
   const Result_4 = IDL.Variant({ 'Ok' : PaginateResult, 'Err' : IDL.Text });
+  const Result_5 = IDL.Variant({ 'Ok' : UserDto, 'Err' : IDL.Text });
   const Icrc21SupportedStandard = IDL.Record({
     'url' : IDL.Text,
     'name' : IDL.Text,
@@ -220,7 +221,7 @@ export const idlFactory = ({ IDL }) => {
     'UnsupportedCanisterCall' : Icrc21ErrorInfo,
     'ConsentMessageUnavailable' : Icrc21ErrorInfo,
   });
-  const Result_5 = IDL.Variant({
+  const Result_6 = IDL.Variant({
     'Ok' : Icrc21ConsentInfo,
     'Err' : Icrc21Error,
   });
@@ -236,7 +237,7 @@ export const idlFactory = ({ IDL }) => {
     'action' : ActionDto,
     'link_user_state' : IDL.Text,
   });
-  const Result_6 = IDL.Variant({
+  const Result_7 = IDL.Variant({
     'Ok' : IDL.Opt(LinkGetUserStateOutput),
     'Err' : CanisterError,
   });
@@ -262,7 +263,7 @@ export const idlFactory = ({ IDL }) => {
     'action_id' : IDL.Text,
     'link_id' : IDL.Text,
   });
-  const Result_7 = IDL.Variant({ 'Ok' : IDL.Text, 'Err' : CanisterError });
+  const Result_8 = IDL.Variant({ 'Ok' : IDL.Text, 'Err' : CanisterError });
   const UpdateActionInput = IDL.Record({
     'action_id' : IDL.Text,
     'link_id' : IDL.Text,
@@ -299,7 +300,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'get_links' : IDL.Func([IDL.Opt(PaginateInput)], [Result_4], ['query']),
-    'get_user' : IDL.Func([], [Result_2], ['query']),
+    'get_user' : IDL.Func([], [Result_5], ['query']),
     'icrc10_supported_standards' : IDL.Func(
         [],
         [IDL.Vec(Icrc21SupportedStandard)],
@@ -307,14 +308,14 @@ export const idlFactory = ({ IDL }) => {
       ),
     'icrc21_canister_call_consent_message' : IDL.Func(
         [Icrc21ConsentMessageRequest],
-        [Result_5],
+        [Result_6],
         [],
       ),
     'icrc28_trusted_origins' : IDL.Func([], [Icrc28TrustedOriginsResponse], []),
-    'link_get_user_state' : IDL.Func([LinkGetUserStateInput], [Result_6], []),
+    'link_get_user_state' : IDL.Func([LinkGetUserStateInput], [Result_7], []),
     'link_update_user_state' : IDL.Func(
         [LinkUpdateUserStateInput],
-        [Result_6],
+        [Result_7],
         [],
       ),
     'process_action' : IDL.Func([ProcessActionInput], [Result], []),
@@ -323,7 +324,7 @@ export const idlFactory = ({ IDL }) => {
         [Result],
         [],
       ),
-    'trigger_transaction' : IDL.Func([TriggerTransactionInput], [Result_7], []),
+    'trigger_transaction' : IDL.Func([TriggerTransactionInput], [Result_8], []),
     'update_action' : IDL.Func([UpdateActionInput], [Result], []),
     'update_link' : IDL.Func([UpdateLinkInput], [Result_1], []),
   });
