@@ -3,19 +3,19 @@
 
 use cashier_backend_types::repository::{keys::LinkActionKey, link_action::v1::LinkAction};
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
 pub type LinkActionRepositoryStorage =
     StableBTreeMap<String, LinkAction, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
-pub struct LinkActionRepository<S: Storage<LinkActionRepositoryStorage>> {storage: S,}
+pub struct LinkActionRepository<S: Storage<LinkActionRepositoryStorage>> {
+    storage: S,
+}
 
-impl <S: Storage<LinkActionRepositoryStorage>> LinkActionRepository<S> {
+impl<S: Storage<LinkActionRepositoryStorage>> LinkActionRepository<S> {
     pub fn new(storage: S) -> Self {
-        Self {
-            storage,
-        }
+        Self { storage }
     }
 
     pub fn create(&mut self, link_action: LinkAction) {
@@ -73,7 +73,10 @@ impl <S: Storage<LinkActionRepositoryStorage>> LinkActionRepository<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{repositories::{tests::TestRepositories, Repositories}, utils::test_utils::random_id_string};
+    use crate::{
+        repositories::{Repositories, tests::TestRepositories},
+        utils::test_utils::random_id_string,
+    };
     use cashier_backend_types::repository::link_action::v1::LinkUserState;
 
     #[test]
@@ -183,5 +186,4 @@ mod tests {
             Some(LinkUserState::CompletedLink)
         );
     }
-
 }

@@ -22,7 +22,9 @@ use crate::{
     utils::runtime::IcEnvironment,
 };
 
-impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> TransactionExecutor<E> for TransactionManagerService<E,R> {
+impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> TransactionExecutor<E>
+    for TransactionManagerService<E, R>
+{
     /// Execute a transaction by ID
     ///
     /// Fetches transaction by ID and then executes it
@@ -145,7 +147,9 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> TransactionE
     }
 }
 
-impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> TransactionManagerService<E, R> {
+impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories>
+    TransactionManagerService<E, R>
+{
     /// Execute a transaction using the ICRC service
     ///
     /// Core logic for transaction execution

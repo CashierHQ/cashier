@@ -3,19 +3,19 @@
 
 use cashier_backend_types::repository::{keys::UserWalletKey, user_wallet::v1::UserWallet};
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
 pub type UserWalletRepositoryStorage =
     StableBTreeMap<UserWalletKey, UserWallet, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
-pub struct UserWalletRepository<S: Storage<UserWalletRepositoryStorage>> {storage: S,}
+pub struct UserWalletRepository<S: Storage<UserWalletRepositoryStorage>> {
+    storage: S,
+}
 
-impl <S: Storage<UserWalletRepositoryStorage>> UserWalletRepository<S> {
+impl<S: Storage<UserWalletRepositoryStorage>> UserWalletRepository<S> {
     pub fn new(storage: S) -> Self {
-        Self {
-            storage,
-        }
+        Self { storage }
     }
 
     pub fn create(&mut self, wallet: UserWalletKey, user: UserWallet) {
@@ -25,14 +25,18 @@ impl <S: Storage<UserWalletRepositoryStorage>> UserWalletRepository<S> {
     }
 
     pub fn get(&self, wallet: &str) -> Option<UserWallet> {
-        self.storage.with_borrow(|store| store.get(&wallet.to_string()))
+        self.storage
+            .with_borrow(|store| store.get(&wallet.to_string()))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{repositories::{tests::TestRepositories, Repositories}, utils::test_utils::*};
+    use crate::{
+        repositories::{Repositories, tests::TestRepositories},
+        utils::test_utils::*,
+    };
 
     #[test]
     fn it_should_create_an_user_wallet() {
@@ -75,5 +79,4 @@ mod tests {
         assert!(retrieved_wallet.is_some());
         assert_eq!(retrieved_wallet.unwrap().user_id, user_id);
     }
-
 }

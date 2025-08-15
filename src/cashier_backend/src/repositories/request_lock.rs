@@ -3,18 +3,18 @@
 
 use cashier_backend_types::repository::{keys::RequestLockKey, request_lock::RequestLock};
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
 pub type RequestLockRepositoryStorage =
     StableBTreeMap<RequestLockKey, RequestLock, VirtualMemory<DefaultMemoryImpl>>;
 
-pub struct RequestLockRepository<S: Storage<RequestLockRepositoryStorage>> {storage: S,}
+pub struct RequestLockRepository<S: Storage<RequestLockRepositoryStorage>> {
+    storage: S,
+}
 
-impl <S: Storage<RequestLockRepositoryStorage>> RequestLockRepository<S> {
+impl<S: Storage<RequestLockRepositoryStorage>> RequestLockRepository<S> {
     pub fn new(storage: S) -> Self {
-        Self {
-            storage,
-        }
+        Self { storage }
     }
 
     pub fn create(&mut self, request_lock: RequestLock) {
@@ -37,7 +37,10 @@ impl <S: Storage<RequestLockRepositoryStorage>> RequestLockRepository<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{repositories::{tests::TestRepositories, Repositories}, utils::test_utils::*};
+    use crate::{
+        repositories::{Repositories, tests::TestRepositories},
+        utils::test_utils::*,
+    };
     use cashier_backend_types::repository::request_lock::RequestLock;
 
     #[test]
@@ -63,7 +66,9 @@ mod tests {
         let exists = repo.exists(&request_lock.key);
         assert!(exists);
 
-        let retrieved = repo.storage.with_borrow(|store| store.get(&request_lock.key));
+        let retrieved = repo
+            .storage
+            .with_borrow(|store| store.get(&request_lock.key));
         let retrieved = retrieved.expect("Request lock should exist");
         assert_eq!(retrieved.key, request_lock.key);
         assert_eq!(retrieved.timestamp, 1622547800);
@@ -117,5 +122,4 @@ mod tests {
         // Assert
         assert!(exists);
     }
-
 }

@@ -22,10 +22,14 @@ use cashier_backend_types::repository::{
 use crate::repositories::action::{ActionRepository, ActionRepositoryStorage};
 use crate::repositories::action_intent::{ActionIntentRepository, ActionIntentRepositoryStorage};
 use crate::repositories::intent::{IntentRepository, IntentRepositoryStorage};
-use crate::repositories::intent_transaction::{IntentTransactionRepository, IntentTransactionRepositoryStorage};
+use crate::repositories::intent_transaction::{
+    IntentTransactionRepository, IntentTransactionRepositoryStorage,
+};
 use crate::repositories::link::{LinkRepository, LinkRepositoryStorage};
 use crate::repositories::link_action::{LinkActionRepository, LinkActionRepositoryStorage};
-use crate::repositories::processing_transaction::{ProcessingTransactionRepository, ProcessingTransactionRepositoryStorage};
+use crate::repositories::processing_transaction::{
+    ProcessingTransactionRepository, ProcessingTransactionRepositoryStorage,
+};
 use crate::repositories::request_lock::{RequestLockRepository, RequestLockRepositoryStorage};
 use crate::repositories::transaction::{TransactionRepository, TransactionRepositoryStorage};
 use crate::repositories::user::{UserRepository, UserRepositoryStorage};
@@ -105,7 +109,9 @@ pub trait Repositories {
     fn intent_transaction(&self) -> IntentTransactionRepository<Self::IntentTransaction>;
     fn link(&self) -> LinkRepository<Self::Link>;
     fn link_action(&self) -> LinkActionRepository<Self::LinkAction>;
-    fn processing_transaction(&self) -> ProcessingTransactionRepository<Self::ProcessingTransaction>;
+    fn processing_transaction(
+        &self,
+    ) -> ProcessingTransactionRepository<Self::ProcessingTransaction>;
     fn request_lock(&self) -> RequestLockRepository<Self::RequestLock>;
     fn transaction(&self) -> TransactionRepository<Self::Transaction>;
     fn user(&self) -> UserRepository<Self::User>;
@@ -113,7 +119,6 @@ pub trait Repositories {
     fn user_link(&self) -> UserLinkRepository<Self::UserLink>;
     fn user_wallet(&self) -> UserWalletRepository<Self::UserWallet>;
 }
-
 
 /// A factory for creating repositories backed by thread-local storage
 pub struct ThreadlocalRepositories;
@@ -157,7 +162,9 @@ impl Repositories for ThreadlocalRepositories {
         LinkActionRepository::new(&LINK_ACTION_STORE)
     }
 
-    fn processing_transaction(&self) -> ProcessingTransactionRepository<Self::ProcessingTransaction> {
+    fn processing_transaction(
+        &self,
+    ) -> ProcessingTransactionRepository<Self::ProcessingTransaction> {
         ProcessingTransactionRepository::new(&PROCESSING_TRANSACTION_STORE)
     }
 
@@ -184,9 +191,7 @@ impl Repositories for ThreadlocalRepositories {
     fn user_wallet(&self) -> UserWalletRepository<Self::UserWallet> {
         UserWalletRepository::new(&USER_WALLET_STORE)
     }
-
 }
-
 
 thread_local! {
     pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
@@ -364,18 +369,12 @@ pub mod tests {
                 action_intent: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(ACTION_INTENT_MEMORY_ID),
                 ))),
-                action: Rc::new(RefCell::new(StableBTreeMap::init(
-                    mm.get(ACTION_MEMORY_ID),
-                ))),
-                intent: Rc::new(RefCell::new(StableBTreeMap::init(
-                    mm.get(INTENT_MEMORY_ID),
-                ))),
+                action: Rc::new(RefCell::new(StableBTreeMap::init(mm.get(ACTION_MEMORY_ID)))),
+                intent: Rc::new(RefCell::new(StableBTreeMap::init(mm.get(INTENT_MEMORY_ID)))),
                 intent_transaction: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(INTENT_TRANSACTION_MEMORY_ID),
                 ))),
-                link: Rc::new(RefCell::new(StableBTreeMap::init(
-                    mm.get(LINK_MEMORY_ID),
-                ))),
+                link: Rc::new(RefCell::new(StableBTreeMap::init(mm.get(LINK_MEMORY_ID)))),
                 link_action: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(LINK_ACTION_MEMORY_ID),
                 ))),
@@ -388,9 +387,7 @@ pub mod tests {
                 transaction: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(TRANSACTION_MEMORY_ID),
                 ))),
-                user: Rc::new(RefCell::new(StableBTreeMap::init(
-                    mm.get(USER_MEMORY_ID),
-                ))),
+                user: Rc::new(RefCell::new(StableBTreeMap::init(mm.get(USER_MEMORY_ID)))),
                 user_action: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(USER_ACTION_MEMORY_ID),
                 ))),
@@ -419,60 +416,58 @@ pub mod tests {
         type UserLink = Rc<RefCell<UserLinkRepositoryStorage>>;
         type UserWallet = Rc<RefCell<UserWalletRepositoryStorage>>;
 
-            fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent> {
-                ActionIntentRepository::new(self.action_intent.clone())
-            }
+        fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent> {
+            ActionIntentRepository::new(self.action_intent.clone())
+        }
 
-            fn action(&self) -> ActionRepository<Self::Action> {
-                ActionRepository::new(self.action.clone())
-            }
+        fn action(&self) -> ActionRepository<Self::Action> {
+            ActionRepository::new(self.action.clone())
+        }
 
-            fn intent(&self) -> IntentRepository<Self::Intent> {
-                IntentRepository::new(self.intent.clone())
-            }
+        fn intent(&self) -> IntentRepository<Self::Intent> {
+            IntentRepository::new(self.intent.clone())
+        }
 
-            fn intent_transaction(&self) -> IntentTransactionRepository<Self::IntentTransaction> {
-                IntentTransactionRepository::new(self.intent_transaction.clone())
-            }
+        fn intent_transaction(&self) -> IntentTransactionRepository<Self::IntentTransaction> {
+            IntentTransactionRepository::new(self.intent_transaction.clone())
+        }
 
-            fn link(&self) -> LinkRepository<Self::Link> {
-                LinkRepository::new(self.link.clone())
-            }
+        fn link(&self) -> LinkRepository<Self::Link> {
+            LinkRepository::new(self.link.clone())
+        }
 
-            fn link_action(&self) -> LinkActionRepository<Self::LinkAction> {
-                LinkActionRepository::new(self.link_action.clone())
-            }
+        fn link_action(&self) -> LinkActionRepository<Self::LinkAction> {
+            LinkActionRepository::new(self.link_action.clone())
+        }
 
-            fn processing_transaction(
-                &self,
-            ) -> ProcessingTransactionRepository<Self::ProcessingTransaction> {
-                ProcessingTransactionRepository::new(self.processing_transaction.clone())
-            }
+        fn processing_transaction(
+            &self,
+        ) -> ProcessingTransactionRepository<Self::ProcessingTransaction> {
+            ProcessingTransactionRepository::new(self.processing_transaction.clone())
+        }
 
-            fn request_lock(&self) -> RequestLockRepository<Self::RequestLock> {
-                RequestLockRepository::new(self.request_lock.clone())
-            }
+        fn request_lock(&self) -> RequestLockRepository<Self::RequestLock> {
+            RequestLockRepository::new(self.request_lock.clone())
+        }
 
-            fn transaction(&self) -> TransactionRepository<Self::Transaction> {
-                TransactionRepository::new(self.transaction.clone())
-            }
+        fn transaction(&self) -> TransactionRepository<Self::Transaction> {
+            TransactionRepository::new(self.transaction.clone())
+        }
 
-            fn user(&self) -> UserRepository<Self::User> {
-                UserRepository::new(self.user.clone())
-            }
+        fn user(&self) -> UserRepository<Self::User> {
+            UserRepository::new(self.user.clone())
+        }
 
-            fn user_action(&self) -> UserActionRepository<Self::UserAction> {
-                UserActionRepository::new(self.user_action.clone())
-            }
+        fn user_action(&self) -> UserActionRepository<Self::UserAction> {
+            UserActionRepository::new(self.user_action.clone())
+        }
 
-            fn user_link(&self) -> UserLinkRepository<Self::UserLink> {
-                UserLinkRepository::new(self.user_link.clone())
-            }
+        fn user_link(&self) -> UserLinkRepository<Self::UserLink> {
+            UserLinkRepository::new(self.user_link.clone())
+        }
 
-            fn user_wallet(&self) -> UserWalletRepository<Self::UserWallet> {
-                UserWalletRepository::new(self.user_wallet.clone())
-            }
+        fn user_wallet(&self) -> UserWalletRepository<Self::UserWallet> {
+            UserWalletRepository::new(self.user_wallet.clone())
+        }
     }
-
-
 }

@@ -18,10 +18,12 @@ use log::error;
 use uuid::Uuid;
 
 use crate::{
-    repositories::Repositories, services::link::{
+    repositories::Repositories,
+    services::link::{
         service::LinkService,
         traits::{LinkStateMachine, LinkValidation},
-    }, utils::runtime::IcEnvironment
+    },
+    utils::runtime::IcEnvironment,
 };
 
 impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService<E, R> {
@@ -1516,7 +1518,8 @@ mod tests {
     #[test]
     fn it_should_return_empty_prefetch_create_action_if_link_not_found() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
 
@@ -1533,7 +1536,8 @@ mod tests {
     #[test]
     fn it_should_prefetch_create_action() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
         let _link_action = create_link_action_fixture(
@@ -1560,7 +1564,8 @@ mod tests {
     #[test]
     fn it_should_return_empty_prefetch_withdraw_action_if_link_not_found() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
 
@@ -1577,7 +1582,8 @@ mod tests {
     #[test]
     fn it_should_prefetch_withdraw_action() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
         let _link_action = create_link_action_fixture(

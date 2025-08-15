@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::api::guard::is_not_anonymous;
-use crate::api::state::{get_state, CanisterState};
+use crate::api::state::{CanisterState, get_state};
 use crate::services::link::traits::LinkValidation;
 use candid::Principal;
 use cashier_backend_types::dto::action::{
@@ -20,13 +20,7 @@ use ic_cdk::{query, update};
 use log::{debug, error, info};
 
 use crate::services::link::traits::LinkUserStateMachine;
-use crate::{
-    services::{
-        link::{
-            traits::{ActionFlow, LinkStateMachine},
-        },
-    },
-};
+use crate::services::link::traits::{ActionFlow, LinkStateMachine};
 
 /// Retrieves a paginated list of links created by the authenticated caller.
 ///
@@ -303,9 +297,7 @@ impl LinkApi {
     /// This method initializes all the dependent services needed for link operations
     /// including link management, user management, transaction processing, and validation.
     pub fn get_instance() -> Self {
-        Self {
-            state: get_state(),
-        }
+        Self { state: get_state() }
     }
 
     /// Retrieves links created by the calling principal with pagination support.
@@ -324,7 +316,8 @@ impl LinkApi {
         caller: &Principal,
         input: Option<PaginateInput>,
     ) -> Result<PaginateResult<LinkDto>, String> {
-        match self.state
+        match self
+            .state
             .link_service
             .get_links_by_principal(&caller.to_text(), &input.unwrap_or_default())
         {
@@ -357,13 +350,15 @@ impl LinkApi {
         id: &str,
         options: Option<GetLinkOptions>,
     ) -> Result<GetLinkResp, String> {
-
         // Get raw link and action data from service
         let (link, action) = self.state.link_service.get_link(id, options, &caller)?;
 
         // Convert action to DTO if it exists
         let action_dto = action.map(|action| {
-            let intents = self.state.action_service.get_intents_by_action_id(&action.id);
+            let intents = self
+                .state
+                .action_service
+                .get_intents_by_action_id(&action.id);
             ActionDto::from(action, intents)
         });
 
@@ -385,8 +380,13 @@ impl LinkApi {
     /// # Returns
     /// * `Ok(LinkDto)` - Complete data of the newly created link
     /// * `Err(CanisterError)` - Error if link creation fails or validation errors occur
-    pub async fn create_link(&mut self, caller: &Principal, input: CreateLinkInput) -> Result<LinkDto, CanisterError> {
-        match self.state
+    pub async fn create_link(
+        &mut self,
+        caller: &Principal,
+        input: CreateLinkInput,
+    ) -> Result<LinkDto, CanisterError> {
+        match self
+            .state
             .link_service
             .create_link(caller.to_text(), input)
             .await
@@ -422,7 +422,10 @@ impl LinkApi {
             ));
         }
 
-        self.state.link_service.process_action_anonymous(&input).await
+        self.state
+            .link_service
+            .process_action_anonymous(&input)
+            .await
     }
 
     /// Processes an existing action for authenticated users.
@@ -442,7 +445,10 @@ impl LinkApi {
         caller: &Principal,
         input: ProcessActionInput,
     ) -> Result<ActionDto, CanisterError> {
-        self.state.link_service.process_action(&input, &caller).await
+        self.state
+            .link_service
+            .process_action(&input, &caller)
+            .await
     }
 
     /// Creates a new action for authenticated users on a specific link.
@@ -487,7 +493,10 @@ impl LinkApi {
                 "Only anonymous caller can call this function".to_string(),
             ))
         } else {
-            self.state.link_service.create_action_anonymous(&input).await
+            self.state
+                .link_service
+                .create_action_anonymous(&input)
+                .await
         }
     }
 
@@ -530,7 +539,9 @@ impl LinkApi {
         caller: &Principal,
         input: &LinkUpdateUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
-        self.state.link_service.link_update_user_state(&caller, input)
+        self.state
+            .link_service
+            .link_update_user_state(&caller, input)
     }
 
     /// Updates an existing action's state and executes associated blockchain transactions.
@@ -565,8 +576,11 @@ impl LinkApi {
     /// # Returns
     /// * `Ok(LinkDto)` - Updated link data after successful modification
     /// * `Err(CanisterError)` - Error if unauthorized, link not found, or update fails
-    pub async fn update_link(&mut self, caller: &Principal,input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
-
+    pub async fn update_link(
+        &mut self,
+        caller: &Principal,
+        input: UpdateLinkInput,
+    ) -> Result<LinkDto, CanisterError> {
         // Get link
         let link = match self.state.link_service.get_link_by_id(&input.id) {
             Ok(rsp) => rsp,
@@ -577,7 +591,8 @@ impl LinkApi {
         };
 
         // Verify creator
-        if !self.state
+        if !self
+            .state
             .link_service
             .is_link_creator(&caller.to_text(), &input.id)
         {
@@ -595,7 +610,8 @@ impl LinkApi {
         }
 
         let params = input.params.clone();
-        let updated_link = self.state
+        let updated_link = self
+            .state
             .link_service
             .handle_link_state_transition(&input.id, &input.action, params)
             .await?;

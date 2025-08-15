@@ -7,13 +7,13 @@ use cashier_backend_types::{
     repository::{keys::RequestLockKey, request_lock::RequestLock},
 };
 
-use crate::repositories::{request_lock::RequestLockRepository, Repositories};
+use crate::repositories::{Repositories, request_lock::RequestLockRepository};
 
 pub struct RequestLockService<R: Repositories> {
     request_lock_repository: RequestLockRepository<R::RequestLock>,
 }
 
-impl <R: Repositories> RequestLockService<R> {
+impl<R: Repositories> RequestLockService<R> {
     pub fn new(repo: &R) -> Self {
         Self {
             request_lock_repository: repo.request_lock(),

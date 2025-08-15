@@ -3,19 +3,18 @@
 
 use cashier_backend_types::repository::{keys::LinkKey, link::v1::Link};
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
-pub type LinkRepositoryStorage =
-    StableBTreeMap<LinkKey, Link, VirtualMemory<DefaultMemoryImpl>>;
+pub type LinkRepositoryStorage = StableBTreeMap<LinkKey, Link, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
-pub struct LinkRepository<S: Storage<LinkRepositoryStorage>> {storage: S,}
+pub struct LinkRepository<S: Storage<LinkRepositoryStorage>> {
+    storage: S,
+}
 
-impl <S: Storage<LinkRepositoryStorage>> LinkRepository<S> {
+impl<S: Storage<LinkRepositoryStorage>> LinkRepository<S> {
     pub fn new(storage: S) -> Self {
-        Self {
-            storage,
-        }
+        Self { storage }
     }
     pub fn create(&mut self, link: Link) {
         self.storage.with_borrow_mut(|store| {
@@ -29,7 +28,8 @@ impl <S: Storage<LinkRepositoryStorage>> LinkRepository<S> {
     }
 
     pub fn get_batch(&self, ids: Vec<LinkKey>) -> Vec<Link> {
-        self.storage.with_borrow(|store| ids.into_iter().filter_map(|id| store.get(&id)).collect())
+        self.storage
+            .with_borrow(|store| ids.into_iter().filter_map(|id| store.get(&id)).collect())
     }
 
     pub fn update(&mut self, link: Link) {
@@ -49,7 +49,10 @@ impl <S: Storage<LinkRepositoryStorage>> LinkRepository<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{repositories::{tests::TestRepositories, Repositories}, utils::test_utils::*};
+    use crate::{
+        repositories::{Repositories, tests::TestRepositories},
+        utils::test_utils::*,
+    };
     use cashier_backend_types::repository::link::v1::{LinkState, LinkType};
 
     #[test]
@@ -241,5 +244,4 @@ mod tests {
         assert!(fetched_link.is_some());
         assert_eq!(fetched_link.unwrap().id, link_id);
     }
-
 }

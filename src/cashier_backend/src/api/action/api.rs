@@ -6,13 +6,11 @@ use ic_cdk::api::msg_caller;
 use ic_cdk::update;
 use log::{debug, info};
 
+use crate::api::CanisterError;
 use crate::api::guard::is_not_anonymous;
 use crate::api::state::get_state;
 use crate::services::transaction_manager::traits::TransactionExecutor;
 use crate::utils::runtime::{IcEnvironment, RealIcEnvironment};
-use crate::{
-    api::CanisterError,
-};
 
 #[update(guard = "is_not_anonymous")]
 pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<String, CanisterError> {

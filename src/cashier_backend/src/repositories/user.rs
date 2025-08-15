@@ -3,19 +3,18 @@
 
 use cashier_backend_types::repository::{keys::UserKey, user::v1::User};
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
-pub type UserRepositoryStorage =
-    StableBTreeMap<UserKey, User, VirtualMemory<DefaultMemoryImpl>>;
+pub type UserRepositoryStorage = StableBTreeMap<UserKey, User, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
-pub struct UserRepository<S: Storage<UserRepositoryStorage>> {storage: S,}
+pub struct UserRepository<S: Storage<UserRepositoryStorage>> {
+    storage: S,
+}
 
-impl <S: Storage<UserRepositoryStorage>> UserRepository<S> {
+impl<S: Storage<UserRepositoryStorage>> UserRepository<S> {
     pub fn new(storage: S) -> Self {
-        Self {
-            storage,
-        }
+        Self { storage }
     }
 
     pub fn create(&mut self, user: User) {
@@ -32,7 +31,7 @@ impl <S: Storage<UserRepositoryStorage>> UserRepository<S> {
 
 #[cfg(test)]
 mod tests {
-    use crate::repositories::{tests::TestRepositories, Repositories};
+    use crate::repositories::{Repositories, tests::TestRepositories};
 
     use super::*;
 
@@ -72,5 +71,4 @@ mod tests {
         assert!(retrieved_user.is_some());
         assert_eq!(retrieved_user.unwrap().id, user.id);
     }
-
 }

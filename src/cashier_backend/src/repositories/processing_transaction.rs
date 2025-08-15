@@ -1,17 +1,17 @@
 use cashier_backend_types::repository::processing_transaction::ProcessingTransaction;
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
 pub type ProcessingTransactionRepositoryStorage =
     StableBTreeMap<String, ProcessingTransaction, VirtualMemory<DefaultMemoryImpl>>;
 
-pub struct ProcessingTransactionRepository<S: Storage<ProcessingTransactionRepositoryStorage>> {storage: S,}
+pub struct ProcessingTransactionRepository<S: Storage<ProcessingTransactionRepositoryStorage>> {
+    storage: S,
+}
 
-impl <S: Storage<ProcessingTransactionRepositoryStorage>> ProcessingTransactionRepository<S> {
+impl<S: Storage<ProcessingTransactionRepositoryStorage>> ProcessingTransactionRepository<S> {
     pub fn new(storage: S) -> Self {
-        Self {
-            storage,
-        }
+        Self { storage }
     }
 
     pub fn create(&mut self, transaction_id: String, processing_tx: ProcessingTransaction) {
@@ -39,7 +39,10 @@ impl <S: Storage<ProcessingTransactionRepositoryStorage>> ProcessingTransactionR
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{repositories::{tests::TestRepositories, Repositories}, utils::test_utils::random_id_string};
+    use crate::{
+        repositories::{Repositories, tests::TestRepositories},
+        utils::test_utils::random_id_string,
+    };
 
     #[test]
     fn it_should_create_a_processing_transaction() {
@@ -127,5 +130,4 @@ mod tests {
         // Assert
         assert_eq!(all_transactions.len(), 2);
     }
-
 }

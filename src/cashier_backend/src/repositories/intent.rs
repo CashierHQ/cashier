@@ -3,19 +3,18 @@
 
 use cashier_backend_types::repository::intent::v2::Intent;
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
-pub type IntentRepositoryStorage =
-    StableBTreeMap<String, Intent, VirtualMemory<DefaultMemoryImpl>>;
+pub type IntentRepositoryStorage = StableBTreeMap<String, Intent, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
-pub struct IntentRepository<S: Storage<IntentRepositoryStorage>> {storage: S,}
+pub struct IntentRepository<S: Storage<IntentRepositoryStorage>> {
+    storage: S,
+}
 
-impl <S: Storage<IntentRepositoryStorage>> IntentRepository<S> {
+impl<S: Storage<IntentRepositoryStorage>> IntentRepository<S> {
     pub fn new(storage: S) -> Self {
-        Self {
-            storage,
-        }
+        Self { storage }
     }
 
     pub fn batch_create(&mut self, intents: Vec<Intent>) {
@@ -41,14 +40,18 @@ impl <S: Storage<IntentRepositoryStorage>> IntentRepository<S> {
     }
 
     pub fn batch_get(&self, ids: Vec<String>) -> Vec<Intent> {
-        self.storage.with_borrow(|store| ids.into_iter().filter_map(|id| store.get(&id)).collect())
+        self.storage
+            .with_borrow(|store| ids.into_iter().filter_map(|id| store.get(&id)).collect())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{repositories::{tests::TestRepositories, Repositories}, utils::test_utils::random_id_string};
+    use crate::{
+        repositories::{Repositories, tests::TestRepositories},
+        utils::test_utils::random_id_string,
+    };
     use candid::Nat;
     use cashier_backend_types::repository::{
         common::{Asset, Chain, Wallet},
@@ -265,5 +268,4 @@ mod tests {
         assert_eq!(retrieved_intents.first().unwrap().id, intent_id1);
         assert_eq!(retrieved_intents.get(1).unwrap().id, intent_id2);
     }
-
 }
