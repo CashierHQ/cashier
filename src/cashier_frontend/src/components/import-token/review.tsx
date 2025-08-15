@@ -9,11 +9,9 @@ import { Button } from "../ui/button";
 import { mapChainToLogo, mapChainToPrettyName } from "@/utils/map/chain.map";
 import { Label } from "../ui/label";
 import { IconInput } from "../icon-input";
-import { AddTokenInput } from "../../generated/token_storage/token_storage.did";
 import { useState } from "react";
 import { Spinner } from "../ui/spinner";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
-import { toNullable } from "@dfinity/utils";
 
 interface ImportTokenReviewProps {
     token: {
@@ -37,19 +35,14 @@ export function ImportTokenReview({ token }: ImportTokenReviewProps) {
         setImportError(null);
 
         try {
-            const id = `${token.chain}:${token.address}`;
-            const addTokenInput: AddTokenInput = {
-                token_id: id,
-                index_id: toNullable(token.index_id),
-            };
-
-            console.log("Adding token with input:", addTokenInput);
-
-            const res = await addToken(addTokenInput);
+            console.log("Adding token:", token);
+            const res = await addToken({
+                tokenId: token.address,
+                indexId: token.index_id,
+                chain: token.chain,
+            });
 
             console.log("Token added successfully:", res);
-
-            // navigateToPanel("wallet");
         } catch (error) {
             console.error("Failed to import token:", error);
             setImportError(error instanceof Error ? error.message : "Failed to import token");
