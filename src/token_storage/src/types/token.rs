@@ -3,43 +3,39 @@
 
 use candid::CandidType;
 use cashier_macros::storable;
-
-use crate::types::chain::Chain;
-
-use super::common::{IndexId, LedgerId, TokenId};
-
-use serde::{Deserialize, Serialize};
-
-#[derive(CandidType, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
-pub enum ChainTokenDetails {
-    IC {
-        ledger_id: LedgerId,
-        index_id: Option<IndexId>,
-        fee: candid::Nat,
-    },
-    // Add more variants for other chains as needed
-}
-
-impl ChainTokenDetails {
-    pub fn index_id(&self) -> Option<IndexId> {
-        match self {
-            ChainTokenDetails::IC { index_id, .. } => *index_id,
-            // Handle other chains if needed
-        }
-    }
-}
+use token_storage_types::{
+    TokenId,
+    chain::Chain,
+    token::{ChainTokenDetails, TokenDto},
+};
 
 // Central registry token definition
 #[storable]
 #[derive(CandidType, Clone, Eq, PartialEq, Debug)]
 pub struct RegistryToken {
-    pub id: TokenId,
     pub symbol: String,
     pub name: String,
     pub decimals: u8,
     pub chain: Chain,
     pub details: ChainTokenDetails,
     pub enabled_by_default: bool, // Indicates if the token is enabled by default
+}
+
+impl From<RegistryToken> for TokenDto {
+    fn from(token: RegistryToken) -> Self {
+        let token_id = token.details.token_id();
+        Self {
+            string_id: token_id.to_string(),
+            id: token_id,
+            symbol: token.symbol,
+            name: token.name,
+            decimals: token.decimals,
+            chain: token.chain,
+            enabled: token.enabled_by_default,
+            balance: None,
+            details: token.details, // Directly use the enum
+        }
+    }
 }
 
 // User's token preference

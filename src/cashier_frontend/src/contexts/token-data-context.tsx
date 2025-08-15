@@ -24,7 +24,6 @@ import {
 import { ICExplorerService, IcExplorerTokenDetail } from "@/services/icExplorer.service";
 import { FungibleToken, TokenBalanceMap } from "@/types/fungible-token.speculative";
 import TokenStorageService from "@/services/backend/tokenStorage.service";
-import { AddTokenInput, AddTokensInput } from "../generated/token_storage/token_storage.did";
 import {
     BALANCE_CACHE_LAST_CACHE_TIME_KEY,
     BALANCE_CACHE_LAST_CACHED_BALANCES_KEY,
@@ -44,8 +43,12 @@ interface TokenContextValue {
     initialTokenHash: string; // NEW: Hash of the very first token list loaded
 
     // Backend operations
-    addToken: (input: AddTokenInput) => Promise<void>;
-    toggleTokenEnable: (tokenId: string, enable: boolean) => Promise<void>;
+    addToken: (input: {
+        tokenId: string;
+        indexId: string | undefined;
+        chain: string;
+    }) => Promise<void>;
+    toggleTokenEnable: (tokenId: string, enable: boolean, chain: string) => Promise<void>;
     updateTokenInit: () => Promise<void>;
     updateTokenExplorer: () => Promise<void>;
     updateTokenBalance: () => Promise<void>;
@@ -102,9 +105,15 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
     const updateTokenEnableState = useUpdateTokenEnableMutation();
 
     // Backend operations - created once and shared
-    const addToken = async (input: AddTokenInput) => {
+    const addToken = async (input: {
+        tokenId: string;
+        indexId: string | undefined;
+        chain: string;
+    }) => {
+        console.log("Adding token in context:", input);
         setIsImporting(true);
         try {
+            console.log("Adding token:", input);
             await addTokenMutation.mutateAsync(input);
         } catch (error) {
             setError(error as Error);
@@ -113,10 +122,10 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const toggleTokenEnable = async (tokenId: string, enable: boolean) => {
+    const toggleTokenEnable = async (tokenId: string, enable: boolean, chain: string) => {
         setIsSyncPreferences(true);
         try {
-            await updateTokenEnableState.mutateAsync({ tokenId, enable });
+            await updateTokenEnableState.mutateAsync({ tokenId, enable, chain });
             await tokenListQuery.refetch();
             await tokenBalancesQuery.refetch();
         } catch (error) {
@@ -164,9 +173,8 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
         try {
             const tokenList = await getTokenListWithRetry();
             if (tokenList.length > 0) {
-                const tokenIds = tokenList.map((token) => `IC:${token.ledgerId}`);
-                const addTokensInput: AddTokensInput = { token_ids: tokenIds };
-                await addMultipleTokenMutation.mutateAsync(addTokensInput);
+                const tokenIds = tokenList.map((token) => token.ledgerId);
+                await addMultipleTokenMutation.mutateAsync({ tokenIds, chain: "IC" });
                 await tokenListQuery.refetch();
             }
         } catch (error) {
@@ -182,7 +190,9 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const updateTokensInRegistry = async (tokensToUpdate: string[]): Promise<void> => {
+    const updateTokensInRegistry = async (
+        tokensToUpdate: { tokenId: string; chain: string }[],
+    ): Promise<void> => {
         if (!identity) {
             return;
         }
@@ -241,6 +251,7 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
                     .map(([tokenId, balance]) => ({
                         tokenId,
                         balance: balance.amount!,
+                        chain: "IC",
                     }));
 
                 if (balancesToCache.length > 0) {
@@ -446,7 +457,9 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
 
         const updateChangedTokens = async () => {
             try {
-                await updateTokensInRegistry(changedTokenIds);
+                await updateTokensInRegistry(
+                    changedTokenIds.map((tokenId) => ({ tokenId, chain: "IC" })),
+                );
 
                 // Reset the flags after successful update
                 setHasMetadataChanges(false);

@@ -8,11 +8,3 @@ mod ext;
 mod repository;
 mod services;
 mod types;
-
-use crate::api::admin::types::*;
-use crate::api::token::types::*;
-use crate::types::*;
-use cashier_common::build_data::BuildData;
-use token_storage_types::init::TokenStorageInitData;
-
-ic_cdk::export_candid!();
