@@ -7,13 +7,39 @@ use log::info;
 use rate_limit::RateLimitConfig;
 use std::time::Duration;
 
-use crate::api::state::get_state;
+use crate::api::state::{CanisterState, get_state};
 use crate::services::transaction_manager::traits::TimeoutHandler;
 use crate::{
     repositories,
     services::transaction_manager::service::TransactionManagerService,
     utils::{random::init_ic_rand, runtime::RealIcEnvironment},
 };
+
+fn init_rate_limit_config(state: &mut CanisterState) {
+    let configs = [
+        (
+            "create_link",
+            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
+        ), // 10 requests per 10 minutes
+        (
+            "create_action",
+            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
+        ), // 10 requests per 5 minutes
+        (
+            "process_action",
+            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
+        ), // 10 requests per 5 minutes
+        (
+            "update_action",
+            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
+        ), // 10 requests per 5 minutes
+    ];
+    for (name, config) in configs {
+        if let Err(err) = state.rate_limit_service.add_config(name, config) {
+            ic_cdk::println!("error configuring rate limiting for {name}. Err: {err:?}");
+        }
+    }
+}
 
 #[init]
 fn init(init_data: CashierBackendInitData) {
@@ -22,30 +48,7 @@ fn init(init_data: CashierBackendInitData) {
     if let Err(err) = state.log_service.init(Some(log_config)) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
     }
-    if let Err(err) = state.rate_limit_service.add_config(
-        "create_link",
-        RateLimitConfig::new(10, Duration::from_secs(60 * 10)), // 10 requests per 10 minutes
-    ) {
-        ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
-    }
-    if let Err(err) = state.rate_limit_service.add_config(
-        "create_action",
-        RateLimitConfig::new(10, Duration::from_secs(60 * 5)), // 10 requests per 5 minutes
-    ) {
-        ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
-    }
-    if let Err(err) = state.rate_limit_service.add_config(
-        "process_action",
-        RateLimitConfig::new(10, Duration::from_secs(60 * 5)), // 10 requests per 5 minutes
-    ) {
-        ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
-    }
-    if let Err(err) = state.rate_limit_service.add_config(
-        "update_action",
-        RateLimitConfig::new(10, Duration::from_secs(60 * 5)), // 10 requests per 5 minutes
-    ) {
-        ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
-    }
+    init_rate_limit_config(&mut state);
 
     info!("[init] Starting Cashier Backend");
 
@@ -61,30 +64,7 @@ fn post_upgrade() {
     if let Err(err) = state.log_service.init(None) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
     }
-    if let Err(err) = state.rate_limit_service.add_config(
-        "create_link",
-        RateLimitConfig::new(10, Duration::from_secs(60 * 10)), // 10 requests per 10 minutes
-    ) {
-        ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
-    }
-    if let Err(err) = state.rate_limit_service.add_config(
-        "create_action",
-        RateLimitConfig::new(10, Duration::from_secs(60 * 5)), // 10 requests per 5 minutes
-    ) {
-        ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
-    }
-    if let Err(err) = state.rate_limit_service.add_config(
-        "process_action",
-        RateLimitConfig::new(10, Duration::from_secs(60 * 5)), // 10 requests per 5 minutes
-    ) {
-        ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
-    }
-    if let Err(err) = state.rate_limit_service.add_config(
-        "update_action",
-        RateLimitConfig::new(10, Duration::from_secs(60 * 5)), // 10 requests per 5 minutes
-    ) {
-        ic_cdk::println!("error configuring rate limiting. Err: {err:?}")
-    }
+    init_rate_limit_config(&mut state);
 
     info!("[post_upgrade] Starting Cashier Backend");
 
