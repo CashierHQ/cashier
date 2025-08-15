@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::constant::get_tx_timeout_nano_seconds;
+use crate::repositories::Repositories;
 use crate::services::transaction_manager::traits::{
     BatchExecutor, DependencyAnalyzer, TimeoutHandler,
 };
@@ -25,7 +26,7 @@ use crate::{
     utils::{self, helper::to_subaccount, runtime::IcEnvironment},
 };
 
-impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E> {
+impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionUpdater<E> for TransactionManagerService<E, R> {
     /// Updates an action with new state information and executes eligible transactions
     ///
     /// This method:
@@ -44,7 +45,7 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
     ///
     /// # Returns
     /// * `Result<ActionDto, CanisterError>` - The updated action data or an error
-    async fn update_action(&self, args: UpdateActionArgs) -> Result<ActionDto, CanisterError> {
+    async fn update_action(&mut self, args: UpdateActionArgs) -> Result<ActionDto, CanisterError> {
         let action_data = self
             .action_service
             .get_action_data(&args.action_id)
@@ -204,7 +205,7 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
     }
 
     fn update_tx_state(
-        &self,
+        &mut self,
         tx: &mut Transaction,
         state: &TransactionState,
     ) -> Result<(), CanisterError> {

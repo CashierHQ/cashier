@@ -22,13 +22,13 @@ use crate::utils::runtime::IcEnvironment;
 // ---------- 2. Action creation ----------
 /// Persists a TemporaryAction (and its transactions) into storage.
 pub trait ActionCreator<E: IcEnvironment + Clone> {
-    fn create_action(&self, temp: &mut TemporaryAction) -> Result<ActionDto, CanisterError>;
+    fn create_action(&mut self, temp: &mut TemporaryAction) -> Result<ActionDto, CanisterError>;
 }
 
 // ---------- 3. Transaction execution ----------
 pub trait TransactionExecutor<E: IcEnvironment + Clone> {
-    async fn execute_tx_by_id(&self, tx_id: String) -> Result<(), CanisterError>;
-    async fn execute_canister_tx(&self, tx: &mut Transaction) -> Result<(), CanisterError>;
+    async fn execute_tx_by_id(&mut self, tx_id: String) -> Result<(), CanisterError>;
+    async fn execute_canister_tx(&mut self, tx: &mut Transaction) -> Result<(), CanisterError>;
     async fn execute_icrc1_transfer(&self, tx: &Icrc1Transfer) -> Result<(), CanisterError>;
     async fn execute_icrc2_transfer_from(
         &self,
@@ -57,16 +57,16 @@ pub trait DependencyAnalyzer {
 // ---------- 6. Timeout handling ----------
 pub trait TimeoutHandler<E: IcEnvironment + Clone> {
     fn spawn_tx_timeout_task(&self, tx_id: String) -> Result<(), String>;
-    async fn tx_timeout_task(&self, tx_id: String) -> Result<(), CanisterError>;
+    async fn tx_timeout_task(&mut self, tx_id: String) -> Result<(), CanisterError>;
     fn restart_processing_transactions(&self) -> ();
 }
 
 // ---------- 7. High-level action updater ----------
 pub trait ActionUpdater<E: IcEnvironment + Clone> {
-    async fn update_action(&self, args: UpdateActionArgs) -> Result<ActionDto, CanisterError>;
+    async fn update_action(&mut self, args: UpdateActionArgs) -> Result<ActionDto, CanisterError>;
 
     fn update_tx_state(
-        &self,
+        &mut self,
         tx: &mut Transaction,
         state: &TransactionState,
     ) -> Result<(), CanisterError>;
@@ -83,7 +83,7 @@ pub trait ActionUpdater<E: IcEnvironment + Clone> {
 // ---------- 8. Batch helpers ----------
 pub trait BatchExecutor<E: IcEnvironment + Clone> {
     async fn execute_canister_txs_batch(
-        &self,
+        &mut self,
         txs: &mut [Transaction],
     ) -> Result<(), CanisterError>;
 
