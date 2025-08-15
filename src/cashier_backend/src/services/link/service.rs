@@ -320,8 +320,7 @@ mod tests {
     #[test]
     fn it_should_fail_on_get_link_by_nonexistent_id() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
 
         // Act
         let result = service.get_link_by_id("nonexistent_link");
@@ -551,8 +550,7 @@ mod tests {
     #[test]
     fn it_should_get_action_of_link_empty() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
 
         // Act
         let action = service.get_action_of_link("nonexistent_link", "Use", "user_id");
@@ -585,8 +583,7 @@ mod tests {
     #[test]
     fn it_should_get_link_action_user_empty() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
 
         // Act
         let result = service.get_link_action_user("nonexistent_link", "Use", "user_id");
@@ -621,8 +618,7 @@ mod tests {
     #[test]
     fn it_should_get_link_action_empty() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
 
         // Act
         let action = service.get_link_action("nonexistent_link", "Use", "user_id");

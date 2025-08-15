@@ -291,8 +291,7 @@ mod tests {
     #[test]
     fn it_should_error_link_validate_user_create_action_if_link_not_found() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let action_type = ActionType::CreateLink;
         let user_id = random_principal_id();
@@ -486,8 +485,7 @@ mod tests {
     #[test]
     fn it_should_error_link_validate_user_update_action_if_action_type_create_and_link_not_found() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let action = Action {
             id: random_id_string(),
             r#type: ActionType::CreateLink,
@@ -566,8 +564,7 @@ mod tests {
     fn it_should_error_link_validate_user_update_action_if_action_type_withdraw_and_link_not_found()
     {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let action = Action {
             id: random_id_string(),
             r#type: ActionType::Withdraw,
@@ -726,8 +723,7 @@ mod tests {
     #[test]
     fn it_should_error_link_validate_user_update_action_if_action_type_is_unsupported() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let action = Action {
             id: random_id_string(),
             r#type: ActionType::Claim,
@@ -753,8 +749,7 @@ mod tests {
     #[test]
     fn it_should_false_is_link_creator_if_user_wallet_not_found() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let user_id = random_principal_id();
 
