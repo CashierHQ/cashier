@@ -15,6 +15,7 @@ import { Actor, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { TOKEN_STORAGE_CANISTER_ID } from "@/const";
 import { getAgent } from "@/utils/agent";
+import { mapStringToTokenId } from "@/types/token-store.type";
 
 /**
  * Service for interacting with the token storage canister
@@ -35,7 +36,9 @@ class TokenStorageService {
         return response;
     }
     async addToken(input: AddTokenInput): Promise<null> {
+        console.log("Adding token:", input);
         const res = parseResultResponse(await this.actor.add_token(input));
+        console.log("Add token result:", res);
         return res;
     }
     async addTokens(input: AddTokensInput): Promise<null> {
@@ -43,9 +46,10 @@ class TokenStorageService {
         return res;
     }
 
-    async updateTokenRegistryBatch(ids: string[]): Promise<null> {
+    async updateTokenRegistryBatch(ids: { tokenId: string; chain: string }[]): Promise<null> {
+        const ids_update = ids.map((id) => mapStringToTokenId(id.tokenId, id.chain));
         const res = parseResultResponse(
-            await this.actor.update_token_registry_batch({ token_ids: ids }),
+            await this.actor.update_token_registry_batch({ token_ids: ids_update }),
         );
         return res;
     }
@@ -67,10 +71,11 @@ class TokenStorageService {
         balances: {
             tokenId: string;
             balance: bigint;
+            chain: string;
         }[],
     ): Promise<void> {
         const balancesInput: UpdateTokenBalanceInput[] = balances.map((balance) => ({
-            token_id: balance.tokenId,
+            token_id: mapStringToTokenId(balance.tokenId, balance.chain),
             balance: balance.balance,
         }));
 
