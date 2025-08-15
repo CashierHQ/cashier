@@ -21,10 +21,6 @@ impl IcrcBatchService {
         Self
     }
 
-    pub fn get_instance() -> Self {
-        Self::new()
-    }
-
     /// Retrieves token fees for a collection of assets in parallel.
     ///
     /// This function fetches the transaction fees for all IC tokens provided in the assets list.

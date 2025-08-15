@@ -3,14 +3,17 @@ use std::str::FromStr;
 use candid::Principal;
 use uuid::Uuid;
 
-use crate::services::{
-    link::{
-        service::LinkService,
-        traits::{ActionFlow, IntentAssembler, LinkValidation},
-    },
-    transaction_manager::traits::{ActionCreator, ActionUpdater, TransactionValidator},
-};
 use crate::utils::runtime::IcEnvironment;
+use crate::{
+    repositories::Repositories,
+    services::{
+        link::{
+            service::LinkService,
+            traits::{ActionFlow, IntentAssembler, LinkValidation},
+        },
+        transaction_manager::traits::{ActionCreator, ActionUpdater, TransactionValidator},
+    },
+};
 use cashier_backend_types::{
     dto::action::{
         ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
@@ -24,9 +27,12 @@ use cashier_backend_types::{
     service::{link::TemporaryAction, tx_manager::UpdateActionArgs},
 };
 
-impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
+impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
+    for LinkService<E, R>
+{
     async fn create_action(
-        &self,
+        &mut self,
+        ts: u64,
         input: &CreateActionInput,
         caller: &Principal,
     ) -> Result<ActionDto, CanisterError> {
@@ -94,7 +100,7 @@ impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
             temp_action.intents = intents;
 
             // Create real action
-            self.tx_manager_service.create_action(&mut temp_action)
+            self.tx_manager_service.create_action(ts, &mut temp_action)
         }
         .await;
 
@@ -105,12 +111,12 @@ impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
     }
 
     async fn process_action(
-        &self,
+        &mut self,
         input: &ProcessActionInput,
-        caller: &Principal,
+        caller: Principal,
     ) -> Result<ActionDto, CanisterError> {
         // input validate
-        let user_id = self.user_service.get_user_id_by_wallet(caller);
+        let user_id = self.user_service.get_user_id_by_wallet(&caller);
 
         let _ = ActionType::from_str(&input.action_type)
             .map_err(|_| CanisterError::ValidationErrors("Invalid action type ".to_string()))?;
@@ -126,7 +132,7 @@ impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
         let request_lock_key = self
             .request_lock_service
             .create_request_lock_for_processing_action(
-                caller,
+                &caller,
                 &input.link_id,
                 &input.action_id,
                 self.ic_env.time(),
@@ -150,11 +156,14 @@ impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
             // execute action
             let update_action_res = self
                 .tx_manager_service
-                .update_action(UpdateActionArgs {
-                    action_id,
-                    link_id: input.link_id.to_string(),
-                    execute_wallet_tx: false,
-                })
+                .update_action(
+                    caller,
+                    UpdateActionArgs {
+                        action_id,
+                        link_id: input.link_id.to_string(),
+                        execute_wallet_tx: false,
+                    },
+                )
                 .await?;
 
             Ok(update_action_res)
@@ -168,13 +177,13 @@ impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
     }
 
     async fn update_action(
-        &self,
+        &mut self,
         input: &UpdateActionInput,
-        caller: &Principal,
+        caller: Principal,
     ) -> Result<ActionDto, CanisterError> {
         let is_creator = self
             .tx_manager_service
-            .is_action_creator(caller, &input.action_id)
+            .is_action_creator(&caller, &input.action_id)
             .map_err(|e| {
                 CanisterError::ValidationErrors(format!("Failed to validate action: {e}"))
             })?;
@@ -189,7 +198,7 @@ impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
         let request_lock_key = self
             .request_lock_service
             .create_request_lock_for_updating_action(
-                caller,
+                &caller,
                 &input.link_id,
                 &input.action_id,
                 self.ic_env.time(),
@@ -204,7 +213,7 @@ impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
             };
 
             self.tx_manager_service
-                .update_action(args)
+                .update_action(caller, args)
                 .await
                 .map_err(|e| {
                     CanisterError::HandleLogicError(format!("Failed to update action: {e}"))
@@ -219,7 +228,8 @@ impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
     }
 
     async fn create_action_anonymous(
-        &self,
+        &mut self,
+        ts: u64,
         input: &CreateActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
         // check wallet address
@@ -319,7 +329,7 @@ impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
             temp_action.intents = intents;
 
             // Create real action
-            self.tx_manager_service.create_action(&mut temp_action)
+            self.tx_manager_service.create_action(ts, &mut temp_action)
         }
         .await;
 
@@ -330,7 +340,8 @@ impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
     }
 
     async fn process_action_anonymous(
-        &self,
+        &mut self,
+        caller: Principal,
         input: &ProcessActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
         // check wallet address
@@ -369,11 +380,14 @@ impl<E: IcEnvironment + Clone> ActionFlow for LinkService<E> {
         // execute action with our standalone callback
         let update_action_res = self
             .tx_manager_service
-            .update_action(UpdateActionArgs {
-                action_id: action_id.clone(),
-                link_id: input.link_id.clone(),
-                execute_wallet_tx: false,
-            })
+            .update_action(
+                caller,
+                UpdateActionArgs {
+                    action_id: action_id.clone(),
+                    link_id: input.link_id.clone(),
+                    execute_wallet_tx: false,
+                },
+            )
             .await?;
 
         Ok(update_action_res)

@@ -1,51 +1,53 @@
 use cashier_backend_types::repository::processing_transaction::ProcessingTransaction;
+use ic_mple_log::service::Storage;
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
-use crate::repositories::PROCESSING_TRANSACTION_STORE;
+pub type ProcessingTransactionRepositoryStorage =
+    StableBTreeMap<String, ProcessingTransaction, VirtualMemory<DefaultMemoryImpl>>;
 
-pub struct ProcessingTransactionRepository {}
-
-impl Default for ProcessingTransactionRepository {
-    fn default() -> Self {
-        Self::new()
-    }
+pub struct ProcessingTransactionRepository<S: Storage<ProcessingTransactionRepositoryStorage>> {
+    storage: S,
 }
 
-impl ProcessingTransactionRepository {
-    pub fn new() -> Self {
-        Self {}
+impl<S: Storage<ProcessingTransactionRepositoryStorage>> ProcessingTransactionRepository<S> {
+    pub fn new(storage: S) -> Self {
+        Self { storage }
     }
 
-    pub fn create(&self, transaction_id: String, processing_tx: ProcessingTransaction) {
-        PROCESSING_TRANSACTION_STORE.with_borrow_mut(|store| {
+    pub fn create(&mut self, transaction_id: String, processing_tx: ProcessingTransaction) {
+        self.storage.with_borrow_mut(|store| {
             store.insert(transaction_id, processing_tx);
         });
     }
 
     pub fn exists(&self, transaction_id: &str) -> bool {
-        PROCESSING_TRANSACTION_STORE
+        self.storage
             .with_borrow(|store| store.contains_key(&transaction_id.to_string()))
     }
 
-    pub fn delete(&self, transaction_id: &str) {
-        PROCESSING_TRANSACTION_STORE.with_borrow_mut(|store| {
+    pub fn delete(&mut self, transaction_id: &str) {
+        self.storage.with_borrow_mut(|store| {
             store.remove(&transaction_id.to_string());
         });
     }
 
     pub fn get_all(&self) -> Vec<ProcessingTransaction> {
-        PROCESSING_TRANSACTION_STORE.with_borrow(|store| store.values().collect())
+        self.storage.with_borrow(|store| store.values().collect())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::random_id_string;
+    use crate::{
+        repositories::{Repositories, tests::TestRepositories},
+        utils::test_utils::random_id_string,
+    };
 
     #[test]
     fn it_should_create_a_processing_transaction() {
         // Arrange
-        let repo = ProcessingTransactionRepository::new();
+        let mut repo = TestRepositories::new().processing_transaction();
         let transaction_id = random_id_string();
         let processing_tx = ProcessingTransaction {
             transaction_id: transaction_id.clone(),
@@ -63,7 +65,7 @@ mod tests {
     #[test]
     fn it_should_delete_a_processing_transaction() {
         // Arrange
-        let repo = ProcessingTransactionRepository::new();
+        let mut repo = TestRepositories::new().processing_transaction();
         let transaction_id = random_id_string();
         let processing_tx = ProcessingTransaction {
             transaction_id: transaction_id.clone(),
@@ -84,7 +86,7 @@ mod tests {
     #[test]
     fn it_should_check_if_a_processing_transaction_exists() {
         // Arrange
-        let repo = ProcessingTransactionRepository::new();
+        let mut repo = TestRepositories::new().processing_transaction();
         let transaction_id = random_id_string();
         let processing_tx = ProcessingTransaction {
             transaction_id: transaction_id.clone(),
@@ -104,7 +106,7 @@ mod tests {
     #[test]
     fn it_should_get_all_processing_transactions() {
         // Arrange
-        let repo = ProcessingTransactionRepository::new();
+        let mut repo = TestRepositories::new().processing_transaction();
         let transaction_id1 = random_id_string();
         let transaction_id2 = random_id_string();
 
@@ -127,17 +129,5 @@ mod tests {
 
         // Assert
         assert_eq!(all_transactions.len(), 2);
-    }
-
-    #[test]
-    fn it_should_create_a_processing_transaction_repository_by_default() {
-        // Arrange
-        let repo = ProcessingTransactionRepository::default();
-
-        // Act
-        let result = repo.get_all();
-
-        // Assert
-        assert!(result.is_empty());
     }
 }

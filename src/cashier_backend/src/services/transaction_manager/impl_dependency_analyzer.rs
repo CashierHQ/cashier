@@ -7,13 +7,16 @@ use cashier_backend_types::{
 };
 
 use crate::{
+    repositories::Repositories,
     services::transaction_manager::{
         service::TransactionManagerService, traits::DependencyAnalyzer,
     },
     utils::runtime::IcEnvironment,
 };
 
-impl<E: IcEnvironment + Clone> DependencyAnalyzer for TransactionManagerService<E> {
+impl<E: IcEnvironment + Clone, R: Repositories> DependencyAnalyzer
+    for TransactionManagerService<E, R>
+{
     fn has_dependency(&self, tx_id: &str) -> Result<bool, CanisterError> {
         let tx: Transaction = self.transaction_service.get_tx_by_id(&tx_id.to_string())?;
 
@@ -75,7 +78,7 @@ impl<E: IcEnvironment + Clone> DependencyAnalyzer for TransactionManagerService<
     }
 }
 
-impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
+impl<E: IcEnvironment + Clone, R: Repositories> TransactionManagerService<E, R> {
     // if is_skip_check_in_group is true, then skip checking the dependency in the same group
     pub fn is_all_depdendency_success(
         &self,

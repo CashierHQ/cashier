@@ -29,12 +29,12 @@ use candid::Nat;
 // ---------- 1. Link lifecycle ----------
 pub trait LinkStateMachine {
     async fn create_link(
-        &self,
+        &mut self,
         caller: String,
         input: CreateLinkInput,
     ) -> Result<Link, CanisterError>;
     async fn handle_link_state_transition(
-        &self,
+        &mut self,
         link_id: &str,
         goto: &str,
         params: Option<LinkDetailUpdateInput>,
@@ -65,7 +65,7 @@ pub trait LinkStateMachine {
 
 pub trait LinkUserStateMachine {
     fn handle_user_link_state_machine(
-        &self,
+        &mut self,
         link_id: &str,
         action_type: &str,
         user_id: &str,
@@ -79,7 +79,7 @@ pub trait LinkUserStateMachine {
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError>;
 
     fn link_update_user_state(
-        &self,
+        &mut self,
         caller: &Principal,
         input: &LinkUpdateUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError>;
@@ -88,26 +88,29 @@ pub trait LinkUserStateMachine {
 // ---------- 2. Action flow ----------
 pub trait ActionFlow {
     async fn create_action(
-        &self,
+        &mut self,
+        ts: u64,
         input: &CreateActionInput,
         caller: &Principal,
     ) -> Result<ActionDto, CanisterError>;
     async fn process_action(
-        &self,
+        &mut self,
         input: &ProcessActionInput,
-        caller: &Principal,
+        caller: Principal,
     ) -> Result<ActionDto, CanisterError>;
     async fn update_action(
-        &self,
+        &mut self,
         input: &UpdateActionInput,
-        caller: &Principal,
+        caller: Principal,
     ) -> Result<ActionDto, CanisterError>;
     async fn create_action_anonymous(
-        &self,
+        &mut self,
+        ts: u64,
         input: &CreateActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError>;
     async fn process_action_anonymous(
-        &self,
+        &mut self,
+        caller: Principal,
         input: &ProcessActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError>;
 }
