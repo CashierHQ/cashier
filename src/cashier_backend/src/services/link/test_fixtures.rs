@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::{
+    repositories::tests::TestRepositories,
     services::link::service::LinkService,
     utils::test_utils::{random_id_string, runtime::MockIcEnvironment},
 };
@@ -19,7 +20,10 @@ use std::{collections::HashSet, str::FromStr};
 /// This function initializes a link with a random ID, sets its state, and associates it with a creator ID.
 /// It also creates a user link for the creator.
 /// Returns the created link.
-pub fn create_link_fixture(service: &LinkService<MockIcEnvironment>, creator_id: &str) -> Link {
+pub fn create_link_fixture(
+    service: &mut LinkService<MockIcEnvironment, TestRepositories>,
+    creator_id: &str,
+) -> Link {
     let link_id = random_id_string();
     let link = Link {
         id: link_id,
@@ -49,7 +53,7 @@ pub fn create_link_fixture(service: &LinkService<MockIcEnvironment>, creator_id:
 /// This function initializes a principal with a given ID and associates it with a user wallet.
 /// Returns the created principal.
 pub fn create_principal_fixture(
-    service: &LinkService<MockIcEnvironment>,
+    service: &mut LinkService<MockIcEnvironment, TestRepositories>,
     principal_id: &str,
 ) -> Principal {
     let principal = Principal::from_text(principal_id).unwrap();
@@ -68,7 +72,7 @@ pub fn create_principal_fixture(
 /// an action type, and associates it with a user ID.
 /// Returns the created link action.
 pub fn create_link_action_fixture(
-    service: &LinkService<MockIcEnvironment>,
+    service: &mut LinkService<MockIcEnvironment, TestRepositories>,
     link_id: &str,
     action_type: &str,
     user_id: &str,
@@ -98,7 +102,7 @@ pub fn create_link_action_fixture(
 /// This function initializes a user wallet with a given wallet key and associates it with a user ID
 /// Returns the created user wallet.
 pub fn create_user_wallet_fixture(
-    service: &LinkService<MockIcEnvironment>,
+    service: &mut LinkService<MockIcEnvironment, TestRepositories>,
     wallet_key: &str,
     user_id: &str,
 ) -> UserWallet {

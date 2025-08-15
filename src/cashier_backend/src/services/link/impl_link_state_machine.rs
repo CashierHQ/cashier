@@ -18,6 +18,7 @@ use log::error;
 use uuid::Uuid;
 
 use crate::{
+    repositories::Repositories,
     services::link::{
         service::LinkService,
         traits::{LinkStateMachine, LinkValidation},
@@ -25,7 +26,7 @@ use crate::{
     utils::runtime::IcEnvironment,
 };
 
-impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
+impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService<E, R> {
     // this method checking non-whitelist props are changed or not
     // if changed, return true
     // if not changed, return false
@@ -161,7 +162,7 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
     }
 
     async fn create_link(
-        &self,
+        &mut self,
         caller: String,
         input: CreateLinkInput,
     ) -> Result<Link, CanisterError> {
@@ -287,7 +288,7 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
     }
 
     async fn handle_link_state_transition(
-        &self,
+        &mut self,
         link_id: &str,
         go_to: &str,
         params: Option<LinkDetailUpdateInput>,
@@ -597,6 +598,7 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::repositories::tests::TestRepositories;
     use crate::services::link::test_fixtures::*;
     use crate::utils::test_utils::{
         random_id_string, random_principal_id, runtime::MockIcEnvironment,
@@ -607,11 +609,12 @@ mod tests {
         link::v1::{Link, LinkState, LinkType},
     };
     use std::collections::HashMap;
+    use std::rc::Rc;
 
     #[test]
     fn it_should_false_is_props_changed_if_title_unchanged() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let link = Link {
             id: link_id,
@@ -651,7 +654,7 @@ mod tests {
     #[test]
     fn it_should_true_is_props_changed_if_title_changed() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let link = Link {
             id: link_id,
@@ -691,7 +694,7 @@ mod tests {
     #[test]
     fn it_should_false_is_props_changed_if_description_unchanged() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let link = Link {
             id: link_id,
@@ -731,7 +734,7 @@ mod tests {
     #[test]
     fn it_should_true_is_props_changed_if_description_changed() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let link = Link {
             id: link_id,
@@ -771,7 +774,7 @@ mod tests {
     #[test]
     fn it_should_false_is_props_changed_if_link_image_url_unchanged() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let link = Link {
             id: link_id,
@@ -810,7 +813,7 @@ mod tests {
     #[test]
     fn it_should_true_is_props_changed_if_link_image_url_changed() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let meta_data = HashMap::from([(
             "link_image_url".to_string(),
@@ -854,7 +857,7 @@ mod tests {
     #[test]
     fn it_should_false_is_props_changed_if_nft_image_unchanged() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let link = Link {
             id: link_id,
@@ -894,7 +897,7 @@ mod tests {
     #[test]
     fn it_should_true_is_props_changed_if_nft_image_changed() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let meta_data = HashMap::from([(
             "nft_image".to_string(),
@@ -938,7 +941,7 @@ mod tests {
     #[test]
     fn it_should_false_is_props_changed_if_link_type_unchanged() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let link = Link {
             id: link_id,
@@ -978,7 +981,7 @@ mod tests {
     #[test]
     fn it_should_true_is_props_changed_if_link_type_changed() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let link = Link {
             id: link_id,
@@ -1018,7 +1021,7 @@ mod tests {
     #[test]
     fn it_should_false_is_props_changed_if_asset_info_unchanged() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let link = Link {
             id: link_id,
@@ -1068,7 +1071,7 @@ mod tests {
     #[test]
     fn it_should_true_is_props_changed_if_asset_info_changed() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let link = Link {
             id: link_id,
@@ -1118,7 +1121,7 @@ mod tests {
     #[test]
     fn it_should_false_is_props_changed_if_link_use_action_max_count_unchanged() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let link = Link {
             id: link_id,
@@ -1158,7 +1161,7 @@ mod tests {
     #[test]
     fn it_should_true_is_props_changed_if_link_use_action_max_count_changed() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let link = Link {
             id: link_id,
@@ -1198,7 +1201,7 @@ mod tests {
     #[test]
     fn it_should_false_is_props_changed_if_template_unchanged() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let link = Link {
             id: link_id,
@@ -1238,7 +1241,7 @@ mod tests {
     #[test]
     fn it_should_true_is_props_changed_if_template_changed() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
         let link = Link {
             id: link_id,
@@ -1278,7 +1281,7 @@ mod tests {
     #[test]
     fn it_should_error_prefetch_template_if_empty_template_in_params() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let params = LinkDetailUpdateInput {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -1306,7 +1309,7 @@ mod tests {
     #[test]
     fn it_should_error_prefetch_template_if_empty_link_type_in_params() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let params = LinkDetailUpdateInput {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -1334,7 +1337,7 @@ mod tests {
     #[test]
     fn it_should_error_prefetch_template_if_invalid_template_in_params() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let params = LinkDetailUpdateInput {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -1362,7 +1365,7 @@ mod tests {
     #[test]
     fn it_should_error_prefetch_template_if_invalid_link_type_in_params() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let params = LinkDetailUpdateInput {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -1390,7 +1393,7 @@ mod tests {
     #[test]
     fn it_should_prefetch_template() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let params = LinkDetailUpdateInput {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -1416,7 +1419,7 @@ mod tests {
     #[test]
     fn it_should_error_prefetch_params_add_asset_if_empty_link_use_action_max_count() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let params = LinkDetailUpdateInput {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -1444,7 +1447,7 @@ mod tests {
     #[test]
     fn it_should_error_prefetch_params_add_asset_if_empty_asset_info() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let params = LinkDetailUpdateInput {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
@@ -1472,7 +1475,7 @@ mod tests {
     #[test]
     fn it_should_prefetch_params_add_asset() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let address1 = random_principal_id();
         let address2 = random_principal_id();
         let params = LinkDetailUpdateInput {
@@ -1515,9 +1518,10 @@ mod tests {
     #[test]
     fn it_should_return_empty_prefetch_create_action_if_link_not_found() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
-        let link = create_link_fixture(&service, &creator_id);
+        let link = create_link_fixture(&mut service, &creator_id);
 
         // Act
         let result = service.prefetch_create_action(&link);
@@ -1532,11 +1536,12 @@ mod tests {
     #[test]
     fn it_should_prefetch_create_action() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
-        let link = create_link_fixture(&service, &creator_id);
+        let link = create_link_fixture(&mut service, &creator_id);
         let _link_action = create_link_action_fixture(
-            &service,
+            &mut service,
             &link.id,
             ActionType::CreateLink.to_str(),
             &creator_id,
@@ -1559,9 +1564,10 @@ mod tests {
     #[test]
     fn it_should_return_empty_prefetch_withdraw_action_if_link_not_found() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
-        let link = create_link_fixture(&service, &creator_id);
+        let link = create_link_fixture(&mut service, &creator_id);
 
         // Act
         let result = service.prefetch_withdraw_action(&link);
@@ -1576,11 +1582,12 @@ mod tests {
     #[test]
     fn it_should_prefetch_withdraw_action() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
-        let link = create_link_fixture(&service, &creator_id);
+        let link = create_link_fixture(&mut service, &creator_id);
         let _link_action = create_link_action_fixture(
-            &service,
+            &mut service,
             &link.id,
             ActionType::Withdraw.to_str(),
             &creator_id,
