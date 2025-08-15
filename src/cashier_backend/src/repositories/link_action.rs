@@ -79,6 +79,7 @@ mod tests {
 
     #[test]
     fn it_should_create_link_action() {
+        // Arrange
         let repo = LinkActionRepository::new();
         let link_id = random_id_string();
 
@@ -89,8 +90,11 @@ mod tests {
             user_id: "user1".to_string(),
             link_user_state: None,
         };
+
+        // Act
         repo.create(link_action);
 
+        // Assert
         let actions = repo.get_by_prefix(&link_id, "type1", "user1");
         assert_eq!(actions.len(), 1);
         assert!(actions.first().unwrap().link_user_state.is_none());
@@ -98,6 +102,7 @@ mod tests {
 
     #[test]
     fn it_should_update_link_action() {
+        // Arrange
         let repo = LinkActionRepository::new();
         let link_id = random_id_string();
         let link_action = LinkAction {
@@ -116,8 +121,11 @@ mod tests {
             user_id: "user1".to_string(),
             link_user_state: Some(LinkUserState::ChooseWallet),
         };
+
+        // Act
         repo.update(updated_action);
 
+        // Assert
         let actions = repo.get_by_prefix(&link_id, "type1", "user1");
         assert_eq!(actions.len(), 1);
         assert_eq!(
@@ -128,6 +136,7 @@ mod tests {
 
     #[test]
     fn it_should_get_link_action_by_prefix() {
+        // Arrange
         let repo = LinkActionRepository::new();
         let link_id1 = random_id_string();
         let link_id2 = random_id_string();
@@ -150,7 +159,10 @@ mod tests {
         repo.create(link_action1);
         repo.create(link_action2);
 
+        // Act
         let actions = repo.get_by_prefix(&link_id1, "type1", "user1");
+
+        // Assert
         assert_eq!(actions.len(), 1);
         assert_eq!(actions.first().unwrap().link_id, link_id1);
         assert_eq!(actions.first().unwrap().action_type, "type1");
@@ -158,7 +170,10 @@ mod tests {
         assert_eq!(actions.first().unwrap().user_id, "user1");
         assert!(actions.first().unwrap().link_user_state.is_none());
 
+        // Act
         let actions = repo.get_by_prefix(&link_id2, "type2", "user2");
+
+        // Assert
         assert_eq!(actions.len(), 1);
         assert_eq!(actions.first().unwrap().link_id, link_id2);
         assert_eq!(actions.first().unwrap().action_type, "type2");
@@ -172,8 +187,13 @@ mod tests {
 
     #[test]
     fn it_should_create_link_action_repository_by_default() {
+        // Arrange
         let repo = LinkActionRepository::default();
+
+        // Act
         let actions = repo.get_by_prefix("nonexistent", "type", "user");
+
+        // Assert
         assert!(actions.is_empty());
     }
 }

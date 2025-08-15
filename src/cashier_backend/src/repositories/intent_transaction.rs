@@ -78,6 +78,7 @@ mod tests {
 
     #[test]
     fn it_should_batch_create_intent_actions() {
+        // Arrange
         let repo = IntentTransactionRepository::new();
         let intent_id1 = random_id_string();
         let transaction_id1 = random_id_string();
@@ -93,8 +94,11 @@ mod tests {
                 transaction_id: transaction_id2.clone(),
             },
         ];
+
+        // Act
         repo.batch_create(intent_transactions);
 
+        // Assert
         let transactions = repo.get_by_intent_id(&intent_id1);
         assert_eq!(transactions.len(), 1);
         assert_eq!(
@@ -109,6 +113,7 @@ mod tests {
 
     #[test]
     fn it_should_get_intent_action_by_intent_id() {
+        // Arrange
         let repo = IntentTransactionRepository::new();
         let intent_id1 = random_id_string();
         let transaction_id1 = random_id_string();
@@ -124,7 +129,10 @@ mod tests {
         };
         repo.batch_create(vec![intent_transaction1, intent_transaction2]);
 
+        // Act
         let transactions = repo.get_by_intent_id(&intent_id1);
+
+        // Assert
         assert_eq!(transactions.len(), 1);
         assert_eq!(
             transactions.first().unwrap().transaction_id,
@@ -134,6 +142,7 @@ mod tests {
 
     #[test]
     fn it_should_get_intent_action_by_transaction_id() {
+        // Arrange
         let repo = IntentTransactionRepository::new();
         let intent_id1 = random_id_string();
         let transaction_id1 = random_id_string();
@@ -149,14 +158,20 @@ mod tests {
         };
         repo.batch_create(vec![intent_transaction1, intent_transaction2]);
 
+        // Act
         let transactions = repo.get_by_transaction_id(&transaction_id1);
+
+        // Assert
         assert_eq!(transactions.len(), 1);
         assert_eq!(transactions.first().unwrap().intent_id, intent_id1);
     }
 
     #[test]
     fn it_should_create_intent_action_repository_by_default() {
+        // Act
         let repo = IntentTransactionRepository::default();
+
+        // Assert
         assert!(repo.get_by_intent_id("nonexistent").is_empty());
         assert!(repo.get_by_transaction_id("nonexistent").is_empty());
     }
