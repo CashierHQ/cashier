@@ -466,7 +466,10 @@ impl LinkApi {
         caller: &Principal,
         input: CreateActionInput,
     ) -> Result<ActionDto, CanisterError> {
-        self.state.link_service.create_action(self.state.env.time(), &input, caller).await
+        self.state
+            .link_service
+            .create_action(self.state.env.time(), &input, caller)
+            .await
     }
 
     /// Creates a new action for anonymous users using wallet address authentication.

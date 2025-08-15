@@ -156,11 +156,14 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
             // execute action
             let update_action_res = self
                 .tx_manager_service
-                .update_action(caller, UpdateActionArgs {
-                    action_id,
-                    link_id: input.link_id.to_string(),
-                    execute_wallet_tx: false,
-                })
+                .update_action(
+                    caller,
+                    UpdateActionArgs {
+                        action_id,
+                        link_id: input.link_id.to_string(),
+                        execute_wallet_tx: false,
+                    },
+                )
                 .await?;
 
             Ok(update_action_res)
@@ -377,11 +380,14 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         // execute action with our standalone callback
         let update_action_res = self
             .tx_manager_service
-            .update_action(caller, UpdateActionArgs {
-                action_id: action_id.clone(),
-                link_id: input.link_id.clone(),
-                execute_wallet_tx: false,
-            })
+            .update_action(
+                caller,
+                UpdateActionArgs {
+                    action_id: action_id.clone(),
+                    link_id: input.link_id.clone(),
+                    execute_wallet_tx: false,
+                },
+            )
             .await?;
 
         Ok(update_action_res)

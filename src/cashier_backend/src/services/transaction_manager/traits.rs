@@ -22,7 +22,11 @@ use crate::utils::runtime::IcEnvironment;
 // ---------- 2. Action creation ----------
 /// Persists a TemporaryAction (and its transactions) into storage.
 pub trait ActionCreator<E: IcEnvironment + Clone> {
-    fn create_action(&mut self, ts:u64, temp: &mut TemporaryAction) -> Result<ActionDto, CanisterError>;
+    fn create_action(
+        &mut self,
+        ts: u64,
+        temp: &mut TemporaryAction,
+    ) -> Result<ActionDto, CanisterError>;
 }
 
 // ---------- 3. Transaction execution ----------
@@ -63,7 +67,11 @@ pub trait TimeoutHandler<E: IcEnvironment + Clone> {
 
 // ---------- 7. High-level action updater ----------
 pub trait ActionUpdater<E: IcEnvironment + Clone> {
-    async fn update_action(&mut self, caller: Principal, args: UpdateActionArgs) -> Result<ActionDto, CanisterError>;
+    async fn update_action(
+        &mut self,
+        caller: Principal,
+        args: UpdateActionArgs,
+    ) -> Result<ActionDto, CanisterError>;
 
     fn update_tx_state(
         &mut self,

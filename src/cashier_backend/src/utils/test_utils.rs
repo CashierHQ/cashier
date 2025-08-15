@@ -34,7 +34,7 @@ pub mod runtime {
 
     impl MockIcEnvironment {
         pub fn new() -> Self {
-                        Self {
+            Self {
                 canister_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
                 current_time: 1640995200000000000,
                 spawned_futures: RefCell::new(Vec::new()),
@@ -45,7 +45,6 @@ pub mod runtime {
     }
 
     impl IcEnvironment for MockIcEnvironment {
-
         fn id(&self) -> Principal {
             self.canister_id
         }

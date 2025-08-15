@@ -7,22 +7,22 @@ use cashier_backend_types::{
 };
 use ic::intent::IcIntentAdapter;
 
-
 pub mod ic;
 
 /// Specialization for converting intents to transactions
 pub trait IntentAdapter {
-    fn intent_to_transactions(&self, ts: u64, ntent: &Intent) -> Result<Vec<Transaction>, CanisterError>;
+    fn intent_to_transactions(
+        &self,
+        ts: u64,
+        ntent: &Intent,
+    ) -> Result<Vec<Transaction>, CanisterError>;
 }
 
-pub struct IntentAdapterImpl {
-}
-
+pub struct IntentAdapterImpl {}
 
 impl IntentAdapterImpl {
     pub fn new() -> Self {
-        Self {
-        }
+        Self {}
     }
 
     pub fn intent_to_transactions(

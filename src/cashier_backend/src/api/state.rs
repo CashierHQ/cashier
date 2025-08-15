@@ -11,7 +11,7 @@ use crate::{
         transaction_manager::{service::TransactionManagerService, validate::ValidateService},
         user::v2::UserService,
     },
-    utils::runtime::{RealIcEnvironment},
+    utils::runtime::RealIcEnvironment,
 };
 
 /// The state of the canister
