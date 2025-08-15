@@ -177,7 +177,5 @@ export function useTokensV2() {
         setFilters,
         setError,
         setSearchQuery,
-
-        addToken: operations.addToken,
     };
 }

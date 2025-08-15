@@ -31,7 +31,7 @@ export function ManageTokensTokenItem({ token }: ManageTokensTokenItemProps) {
 
         // Toggle the visibility state locally for immediate feedback
         const newVisibility = !isVisible;
-        await toggleTokenEnable(token.id, newVisibility);
+        await toggleTokenEnable(token.id, newVisibility, token.chain);
     };
 
     return (

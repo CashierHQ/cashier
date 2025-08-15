@@ -26,6 +26,7 @@ const ImportPanel: React.FC<ImportPanelProps> = ({ onBack }) => {
         chain: string;
         address: string;
         decimals: number;
+        index_id?: string;
     }>();
     const [isImporting, setIsImporting] = useState(false);
     const [importError, setImportError] = useState<string | null>(null);
@@ -76,6 +77,7 @@ const ImportPanel: React.FC<ImportPanelProps> = ({ onBack }) => {
                 chain: data.chain, // Use the chain from the form data
                 address: data.ledgerCanisterId, // Use the canisterId as the address
                 decimals: metadata.decimals,
+                index_id: data.indexCanisterId,
             };
 
             setTokenMetadata(tokenMetadata);
