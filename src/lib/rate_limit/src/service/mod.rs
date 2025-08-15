@@ -8,14 +8,14 @@ use crate::{RateLimitError, algorithm::types::RateLimitCore, precision::Precisio
 /// Rate limit service that manages rate limiting configurations and runtime limiters
 /// RateLimitService generic parameters:
 /// - I: Identifier type (e.g., user, principal) used for rate limiting, must be Eq, Hash, and Clone
-/// - S: Storage backend implementing Storage for RateLimitState<I, P>
 /// - P: Precision type (e.g., Nanos, Millis) for time calculations, must implement Precision
+/// - S: Storage backend implementing Storage for RateLimitState<I, P>
 /// - R: Rate limiting algorithm core, must implement RateLimitCore (not used directly in struct, but required for trait bounds)
 pub struct RateLimitService<I, S, P, R>
 where
     I: std::cmp::Eq + std::hash::Hash + Clone, // Identifier type
-    S: Storage<RateLimitState<I, P>>,          // Storage backend
     P: Precision,                              // Precision for time
+    S: Storage<RateLimitState<I, P>>,          // Storage backend
     R: RateLimitCore,                          // Rate limiting algorithm core
 {
     storage: S,

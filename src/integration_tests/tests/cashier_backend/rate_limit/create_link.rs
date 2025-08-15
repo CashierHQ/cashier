@@ -27,7 +27,7 @@ async fn it_should_handle_rate_limit_for_create_link() {
                 .as_ref()
                 .unwrap()
                 .create_link(CreateLinkInput {
-                    title: format!("Test Link {}", i),
+                    title: format!("Test Link {i}"),
                     link_use_action_max_count: 1,
                     asset_info: vec![LinkDetailUpdateAssetInfoInput {
                         address: ctx.icp_ledger_principal.to_string(),
@@ -39,7 +39,7 @@ async fn it_should_handle_rate_limit_for_create_link() {
                     link_type: LinkType::SendTip.to_str().to_string(),
                     nft_image: None,
                     link_image_url: None,
-                    description: Some(format!("Test link description {}", i)),
+                    description: Some(format!("Test link description {i}")),
                 })
                 .await
                 .unwrap();
@@ -245,7 +245,7 @@ async fn should_reset_counter_after_10_minutes() {
                 .as_ref()
                 .unwrap()
                 .create_link(CreateLinkInput {
-                    title: format!("Sequential Test Link {}", i),
+                    title: format!("Sequential Test Link {i}"),
                     link_use_action_max_count: 1,
                     asset_info: vec![LinkDetailUpdateAssetInfoInput {
                         address: ctx.icp_ledger_principal.to_string(),
@@ -257,7 +257,7 @@ async fn should_reset_counter_after_10_minutes() {
                     link_type: LinkType::SendTip.to_str().to_string(),
                     nft_image: None,
                     link_image_url: None,
-                    description: Some(format!("Sequential test link description {}", i)),
+                    description: Some(format!("Sequential test link description {i}")),
                 })
                 .await
                 .unwrap();
@@ -270,7 +270,7 @@ async fn should_reset_counter_after_10_minutes() {
                         break;
                     } else {
                         // Other errors might occur, but we expect rate limiting
-                        panic!("Unexpected error: {}", error);
+                        panic!("Unexpected error: {error}");
                     }
                 }
             }

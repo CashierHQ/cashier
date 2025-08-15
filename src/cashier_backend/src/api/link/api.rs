@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::api::guard::is_not_anonymous;
-use crate::api::state::{RateLimitIdentifier, get_state};
+use crate::api::state::get_state;
 use crate::services::link::traits::LinkValidation;
 use candid::Principal;
 use cashier_backend_types::dto::action::{
@@ -15,6 +15,7 @@ use cashier_backend_types::dto::link::{
 };
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::service::link::{PaginateInput, PaginateResult};
+use cashier_backend_types::service::rate_limit::RateLimitIdentifier;
 use ic_cdk::{query, update};
 use log::{debug, error, info};
 use std::time::Duration;

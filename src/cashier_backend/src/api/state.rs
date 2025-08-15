@@ -1,6 +1,8 @@
 use std::{cell::RefCell, thread::LocalKey, time::Duration};
 
-use candid::Principal;
+use cashier_backend_types::service::rate_limit::{
+    RateLimitIdentifier, RateLimitPrecision, RateLimitStateStore,
+};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 use rate_limit::{
     RateLimitService,
@@ -10,11 +12,6 @@ use rate_limit::{
 };
 
 use crate::repositories::LOGGER_SERVICE_STORE;
-
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
-pub enum RateLimitIdentifier {
-    UserPrincipal(Principal),
-}
 
 thread_local! {
     // Thread-local storage for the rate limit state
@@ -28,8 +25,8 @@ pub struct CanisterState {
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
     pub rate_limit_service: RateLimitService<
         RateLimitIdentifier,
-        &'static LocalKey<RefCell<RateLimitState<RateLimitIdentifier, Nanos>>>,
-        Nanos,
+        RateLimitStateStore,
+        RateLimitPrecision,
         FixedWindowCounterCore,
     >,
 }
