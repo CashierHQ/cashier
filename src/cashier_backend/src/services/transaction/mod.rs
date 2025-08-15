@@ -4,7 +4,7 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 
 use crate::{
-    repositories::transaction::TransactionRepository,
+    repositories::{transaction::TransactionRepository, Repositories},
     utils::{helper::to_subaccount, runtime::IcEnvironment},
 };
 use base64::Engine;
@@ -22,27 +22,23 @@ use icrc_ledger_types::{
 };
 
 #[derive(Clone)]
-pub struct TransactionService<E: IcEnvironment + Clone> {
-    transaction_repository: TransactionRepository,
+pub struct TransactionService<E: IcEnvironment + Clone, R: Repositories> {
+    transaction_repository: TransactionRepository<R::Transaction>,
     ic_env: E,
 }
 
-impl<E: IcEnvironment + Clone> TransactionService<E> {
-    pub fn new(transaction_repository: TransactionRepository, ic_env: E) -> Self {
+impl<E: IcEnvironment + Clone, R: Repositories> TransactionService<E, R> {
+    pub fn new(repo: &R, ic_env: E) -> Self {
         Self {
-            transaction_repository,
+            transaction_repository: repo.transaction(),
             ic_env,
         }
-    }
-
-    pub fn get_instance() -> Self {
-        Self::new(TransactionRepository::new(), IcEnvironment::new())
     }
 
     // This method update the state of the transaction only
     // This is not included roll up logic for intent and action
     pub fn update_tx_state(
-        &self,
+        &mut self,
         tx: &mut Transaction,
         state: &TransactionState,
     ) -> Result<(), CanisterError> {
