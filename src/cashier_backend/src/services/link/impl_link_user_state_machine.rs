@@ -1,6 +1,5 @@
 use crate::{
-    services::link::{service::LinkService, traits::LinkUserStateMachine},
-    utils::runtime::IcEnvironment,
+    repositories::Repositories, services::link::{service::LinkService, traits::LinkUserStateMachine}, utils::runtime::IcEnvironment
 };
 use std::str::FromStr;
 
@@ -20,9 +19,9 @@ use cashier_backend_types::{
     },
 };
 
-impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
+impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkService<E, R> {
     fn handle_user_link_state_machine(
-        &self,
+        &mut self,
         link_id: &str,
         action_type: &str,
         user_id: &str,
@@ -168,7 +167,7 @@ impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
     }
 
     fn link_update_user_state(
-        &self,
+        &mut self,
         caller: &Principal,
         input: &LinkUpdateUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {

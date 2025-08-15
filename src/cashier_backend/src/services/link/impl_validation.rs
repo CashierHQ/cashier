@@ -1,7 +1,7 @@
 use candid::Principal;
 use icrc_ledger_types::icrc1::account::Account;
 
-use crate::services::link::service::LinkService;
+use crate::{repositories::Repositories, services::link::service::LinkService};
 use crate::services::link::traits::LinkValidation;
 use crate::utils::helper::to_subaccount;
 use crate::utils::runtime::IcEnvironment;
@@ -15,7 +15,7 @@ use cashier_backend_types::{
     },
 };
 
-impl<E: IcEnvironment + Clone> LinkValidation for LinkService<E> {
+impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E, R> {
     // This method is a synchronous version that performs basic validation without async checks
     fn link_validate_user_create_action(
         &self,

@@ -18,14 +18,13 @@ use log::error;
 use uuid::Uuid;
 
 use crate::{
-    services::link::{
+    repositories::Repositories, services::link::{
         service::LinkService,
         traits::{LinkStateMachine, LinkValidation},
-    },
-    utils::runtime::IcEnvironment,
+    }, utils::runtime::IcEnvironment
 };
 
-impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
+impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService<E, R> {
     // this method checking non-whitelist props are changed or not
     // if changed, return true
     // if not changed, return false
@@ -161,7 +160,7 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
     }
 
     async fn create_link(
-        &self,
+        &mut self,
         caller: String,
         input: CreateLinkInput,
     ) -> Result<Link, CanisterError> {
@@ -287,7 +286,7 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
     }
 
     async fn handle_link_state_transition(
-        &self,
+        &mut self,
         link_id: &str,
         go_to: &str,
         params: Option<LinkDetailUpdateInput>,
@@ -597,6 +596,7 @@ impl<E: IcEnvironment + Clone> LinkStateMachine for LinkService<E> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::repositories::tests::TestRepositories;
     use crate::services::link::test_fixtures::*;
     use crate::utils::test_utils::{
         random_id_string, random_principal_id, runtime::MockIcEnvironment,
@@ -607,11 +607,12 @@ mod tests {
         link::v1::{Link, LinkState, LinkType},
     };
     use std::collections::HashMap;
+    use std::rc::Rc;
 
     #[test]
     fn it_should_false_is_props_changed_if_title_unchanged() {
         // Arrange
-        let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
+        let service: LinkService<MockIcEnvironment, _> = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment);
         let link_id = random_id_string();
         let link = Link {
             id: link_id,
