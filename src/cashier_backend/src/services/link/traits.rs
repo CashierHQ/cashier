@@ -95,12 +95,12 @@ pub trait ActionFlow {
     async fn process_action(
         &mut self,
         input: &ProcessActionInput,
-        caller: &Principal,
+        caller: Principal,
     ) -> Result<ActionDto, CanisterError>;
     async fn update_action(
         &mut self,
         input: &UpdateActionInput,
-        caller: &Principal,
+        caller: Principal,
     ) -> Result<ActionDto, CanisterError>;
     async fn create_action_anonymous(
         &mut self,
@@ -108,6 +108,7 @@ pub trait ActionFlow {
     ) -> Result<ActionDto, CanisterError>;
     async fn process_action_anonymous(
         &mut self,
+        caller: Principal,
         input: &ProcessActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError>;
 }
