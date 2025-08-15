@@ -95,7 +95,7 @@ async fn it_should_handle_rate_limit_for_different_users() {
                 .as_ref()
                 .unwrap()
                 .create_link(CreateLinkInput {
-                    title: format!("User1 Test Link {}", i),
+                    title: format!("User1 Test Link {i}"),
                     link_use_action_max_count: 1,
                     asset_info: vec![LinkDetailUpdateAssetInfoInput {
                         address: ctx.icp_ledger_principal.to_string(),
@@ -182,7 +182,7 @@ async fn it_should_handle_rate_limit_for_create_link_with_differnet_link_types()
                 .as_ref()
                 .unwrap()
                 .create_link(CreateLinkInput {
-                    title: format!("Test Link {} - {:?}", i, link_type),
+                    title: format!("Test Link {i} - {link_type:?}"),
                     link_use_action_max_count: 1,
                     asset_info: vec![LinkDetailUpdateAssetInfoInput {
                         address: ctx.icp_ledger_principal.to_string(),
@@ -194,7 +194,7 @@ async fn it_should_handle_rate_limit_for_create_link_with_differnet_link_types()
                     link_type: link_type.to_str().to_string(),
                     nft_image: None,
                     link_image_url: None,
-                    description: Some(format!("Test link description {} - {:?}", i, link_type)),
+                    description: Some(format!("Test link description {i} - {link_type:?}")),
                 })
                 .await
                 .unwrap();

@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 
-use crate::algorithm::types::{RateLimitError, RateLimitResult};
+use crate::algorithm::types::{RateLimitCore, RateLimitError, RateLimitResult};
 
 /// Core implementation of the fixed window counter rate limiting algorithm.
 ///
@@ -68,7 +68,40 @@ impl FixedWindowCounterCore {
             }),
         }
     }
+}
 
+/// Configuration structure for creating a `FixedWindowCounterCore` limiter.
+#[derive(Debug, Clone)]
+pub struct FixedWindowCounterCoreConfig {
+    /// Maximum number of actions allowed per window.
+    pub capacity: u64,
+    /// Number of that define the fixed window length.
+    pub window_size: u64,
+}
+
+impl FixedWindowCounterCoreConfig {
+    /// Creates a new configuration instance.
+    pub fn new(capacity: u64, window_size_tick: u64) -> Self {
+        Self {
+            capacity,
+            window_size: window_size_tick,
+        }
+    }
+}
+
+impl From<FixedWindowCounterCoreConfig> for FixedWindowCounterCore {
+    /// Converts a `FixedWindowCounterCoreConfig` into a `FixedWindowCounterCore` instance.
+    ///
+    /// # Panics
+    /// This method will panic if either `capacity` or `window_size_tick` is zero.
+    /// It is intended for use with trusted or pre-validated inputs.
+    #[inline(always)]
+    fn from(config: FixedWindowCounterCoreConfig) -> Self {
+        FixedWindowCounterCore::new(config.capacity, config.window_size)
+    }
+}
+
+impl RateLimitCore for FixedWindowCounterCore {
     /// Attempts to acquire tokens at the given tick with detailed diagnostics.
     ///
     /// Returns detailed error information that includes additional context, such as
@@ -85,7 +118,7 @@ impl FixedWindowCounterCore {
     /// * `Err(RateLimitError::BeyondCapacity)` – Requested tokens exceed the configured capacity
     /// * `Err(RateLimitError::InsufficientCapacity)` – Not enough tokens available in current window
     #[inline(always)]
-    pub fn try_acquire_at(&self, current_tick: u64, tokens: u64) -> RateLimitResult {
+    fn try_acquire_at(&self, current_tick: u64, tokens: u64) -> RateLimitResult {
         if tokens == 0 {
             return Ok(());
         }
@@ -146,7 +179,7 @@ impl FixedWindowCounterCore {
     /// * `Ok(remaining_capacity)` - Remaining tokens available in current window
     /// * `Err(RateLimitError::ExpiredTick)` - Time went backwards
     #[inline(always)]
-    pub fn capacity_remaining(&self, ticks: u64) -> Result<u64, RateLimitError> {
+    fn capacity_remaining(&self, ticks: u64) -> Result<u64, RateLimitError> {
         // Get mutable reference to state
         let mut state = self.state.borrow_mut();
 
@@ -182,45 +215,15 @@ impl FixedWindowCounterCore {
     ///
     /// The number of tokens currently available for acquisition, or 0 if error.
     #[inline(always)]
-    pub fn capacity_remaining_or_0(&self, ticks: u64) -> u64 {
+    fn capacity_remaining_or_0(&self, ticks: u64) -> u64 {
         self.capacity_remaining(ticks).unwrap_or(0)
-    }
-}
-
-/// Configuration structure for creating a `FixedWindowCounterCore` limiter.
-#[derive(Debug, Clone)]
-pub struct FixedWindowCounterCoreConfig {
-    /// Maximum number of actions allowed per window.
-    pub capacity: u64,
-    /// Number of that define the fixed window length.
-    pub window_size: u64,
-}
-
-impl FixedWindowCounterCoreConfig {
-    /// Creates a new configuration instance.
-    pub fn new(capacity: u64, window_size_tick: u64) -> Self {
-        Self {
-            capacity,
-            window_size: window_size_tick,
-        }
-    }
-}
-
-impl From<FixedWindowCounterCoreConfig> for FixedWindowCounterCore {
-    /// Converts a `FixedWindowCounterCoreConfig` into a `FixedWindowCounterCore` instance.
-    ///
-    /// # Panics
-    /// This method will panic if either `capacity` or `window_size_tick` is zero.
-    /// It is intended for use with trusted or pre-validated inputs.
-    #[inline(always)]
-    fn from(config: FixedWindowCounterCoreConfig) -> Self {
-        FixedWindowCounterCore::new(config.capacity, config.window_size)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::RateLimitError;
+    use crate::algorithm::types::RateLimitCore;
     use crate::{algorithm::fixed_window_counter::FixedWindowCounterCore, test_utils::Time};
 
     #[test]

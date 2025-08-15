@@ -4,6 +4,7 @@ use candid::Principal;
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 use rate_limit::{
     RateLimitService,
+    algorithm::fixed_window_counter::FixedWindowCounterCore,
     precision::Nanos,
     service::{RateLimitState, ServiceSettings},
 };
@@ -29,6 +30,7 @@ pub struct CanisterState {
         RateLimitIdentifier,
         &'static LocalKey<RefCell<RateLimitState<RateLimitIdentifier, Nanos>>>,
         Nanos,
+        FixedWindowCounterCore,
     >,
 }
 
