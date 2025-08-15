@@ -1,35 +1,34 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::repositories::TRANSACTION_STORE;
-
+use ic_mple_log::service::Storage;
+use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
 use cashier_backend_types::repository::{keys::TransactionKey, transaction::v2::Transaction};
 
+pub type TransactionRepositoryStorage =
+    StableBTreeMap<TransactionKey, Transaction, VirtualMemory<DefaultMemoryImpl>>;
+
 #[derive(Clone)]
-pub struct TransactionRepository {}
+pub struct TransactionRepository<S: Storage<TransactionRepositoryStorage>>  {storage: S,}
 
-impl Default for TransactionRepository {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl TransactionRepository {
-    pub fn new() -> Self {
-        Self {}
+impl <S: Storage<TransactionRepositoryStorage>> TransactionRepository<S> {
+    pub fn new(storage: S) -> Self {
+        Self {
+            storage,
+        }
     }
 
-    pub fn update(&self, transaction: Transaction) -> Transaction {
+    pub fn update(&mut self, transaction: Transaction) -> Transaction {
         let id: TransactionKey = transaction.id.clone();
-        TRANSACTION_STORE.with_borrow_mut(|store| {
+        self.storage.with_borrow_mut(|store| {
             store.insert(id, transaction.clone());
         });
 
         transaction
     }
 
-    pub fn batch_create(&self, transactions: Vec<Transaction>) {
-        TRANSACTION_STORE.with_borrow_mut(|store| {
+    pub fn batch_create(&mut self, transactions: Vec<Transaction>) {
+        self.storage.with_borrow_mut(|store| {
             for transaction in transactions {
                 let id: TransactionKey = transaction.id.clone();
                 store.insert(id, transaction);
@@ -38,19 +37,19 @@ impl TransactionRepository {
     }
 
     pub fn batch_get(&self, ids: Vec<TransactionKey>) -> Vec<Transaction> {
-        TRANSACTION_STORE
+        self.storage
             .with_borrow(|store| ids.into_iter().filter_map(|id| store.get(&id)).collect())
     }
 
     pub fn get(&self, id: &TransactionKey) -> Option<Transaction> {
-        TRANSACTION_STORE.with_borrow(|store| store.get(id))
+        self.storage.with_borrow(|store| store.get(id))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::utils::test_utils::random_id_string;
+
+    use crate::{repositories::{tests::TestRepositories, Repositories}, utils::test_utils::random_id_string};
     use candid::Nat;
     use cashier_backend_types::repository::{
         common::{Asset, Wallet},
@@ -63,7 +62,7 @@ mod tests {
     #[test]
     fn it_should_batch_create_transactions() {
         // Arrange
-        let repo = TransactionRepository::new();
+        let mut repo = TestRepositories::new().transaction();
         let transaction_id1 = random_id_string();
         let transaction_id2 = random_id_string();
         let transaction1 = Transaction {
@@ -114,7 +113,7 @@ mod tests {
     #[test]
     fn it_should_update_a_transaction() {
         // Arrange
-        let repo = TransactionRepository::new();
+        let mut repo = TestRepositories::new().transaction();
         let transaction_id1 = random_id_string();
         let transaction1 = Transaction {
             id: transaction_id1,
@@ -151,7 +150,7 @@ mod tests {
     #[test]
     fn it_should_batch_get_transactions() {
         // Arrange
-        let repo = TransactionRepository::new();
+        let mut repo = TestRepositories::new().transaction();
         let transaction_id1 = random_id_string();
         let transaction_id2 = random_id_string();
         let transaction1 = Transaction {
@@ -202,7 +201,7 @@ mod tests {
     #[test]
     fn it_should_get_a_transaction() {
         // Arrange
-        let repo = TransactionRepository::new();
+        let mut repo = TestRepositories::new().transaction();
         let transaction_id = random_id_string();
         let transaction = Transaction {
             id: transaction_id.clone(),
@@ -231,15 +230,4 @@ mod tests {
         assert_eq!(retrieved_transaction.unwrap().id, transaction_id);
     }
 
-    #[test]
-    fn it_should_create_a_transaction_repository_by_default() {
-        // Arrange
-        let repo = TransactionRepository::default();
-
-        // Act
-        let result = repo.batch_get(vec!["nonexistent".to_string()]);
-
-        // Assert
-        assert!(result.is_empty());
-    }
 }

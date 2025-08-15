@@ -2,26 +2,24 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use cashier_backend_types::repository::intent::v2::Intent;
+use ic_mple_log::service::Storage;
+use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
 
-use crate::repositories::INTENT_STORE;
+pub type IntentRepositoryStorage =
+    StableBTreeMap<String, Intent, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
+pub struct IntentRepository<S: Storage<IntentRepositoryStorage>> {storage: S,}
 
-pub struct IntentRepository {}
-
-impl Default for IntentRepository {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl IntentRepository {
-    pub fn new() -> Self {
-        Self {}
+impl <S: Storage<IntentRepositoryStorage>> IntentRepository<S> {
+    pub fn new(storage: S) -> Self {
+        Self {
+            storage,
+        }
     }
 
-    pub fn batch_create(&self, intents: Vec<Intent>) {
-        INTENT_STORE.with_borrow_mut(|store| {
+    pub fn batch_create(&mut self, intents: Vec<Intent>) {
+        self.storage.with_borrow_mut(|store| {
             for intent in intents {
                 let id = intent.id.clone();
                 store.insert(id, intent);
@@ -29,8 +27,8 @@ impl IntentRepository {
         });
     }
 
-    pub fn batch_update(&self, intents: Vec<Intent>) {
-        INTENT_STORE.with_borrow_mut(|store| {
+    pub fn batch_update(&mut self, intents: Vec<Intent>) {
+        self.storage.with_borrow_mut(|store| {
             for intent in intents {
                 let id = intent.id.clone();
                 store.insert(id, intent);
@@ -39,18 +37,18 @@ impl IntentRepository {
     }
 
     pub fn get(&self, id: &str) -> Option<Intent> {
-        INTENT_STORE.with_borrow(|store| store.get(&id.to_string()))
+        self.storage.with_borrow(|store| store.get(&id.to_string()))
     }
 
     pub fn batch_get(&self, ids: Vec<String>) -> Vec<Intent> {
-        INTENT_STORE.with_borrow(|store| ids.into_iter().filter_map(|id| store.get(&id)).collect())
+        self.storage.with_borrow(|store| ids.into_iter().filter_map(|id| store.get(&id)).collect())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::random_id_string;
+    use crate::{repositories::{tests::TestRepositories, Repositories}, utils::test_utils::random_id_string};
     use candid::Nat;
     use cashier_backend_types::repository::{
         common::{Asset, Chain, Wallet},
@@ -61,7 +59,7 @@ mod tests {
     #[test]
     fn it_should_batch_create_intents() {
         // Arrange
-        let repo = IntentRepository::new();
+        let mut repo = TestRepositories::new().intent();
         let intent_id1 = random_id_string();
         let intent_id2 = random_id_string();
         let intent1 = Intent {
@@ -111,7 +109,7 @@ mod tests {
     #[test]
     fn it_should_batch_update_intents() {
         // Arrange
-        let repo = IntentRepository::new();
+        let mut repo = TestRepositories::new().intent();
         let intent_id1 = random_id_string();
         let intent_id2 = random_id_string();
         let intent1 = Intent {
@@ -194,7 +192,7 @@ mod tests {
     #[test]
     fn it_should_get_an_intent() {
         // Arrange
-        let repo = IntentRepository::new();
+        let mut repo = TestRepositories::new().intent();
         let intent_id = random_id_string();
         let intent = Intent {
             id: intent_id.clone(),
@@ -224,7 +222,7 @@ mod tests {
     #[test]
     fn it_should_batch_get_intents() {
         // Arrange
-        let repo = IntentRepository::new();
+        let mut repo = TestRepositories::new().intent();
         let intent_id1 = random_id_string();
         let intent_id2 = random_id_string();
         let intent1 = Intent {
@@ -268,16 +266,4 @@ mod tests {
         assert_eq!(retrieved_intents.get(1).unwrap().id, intent_id2);
     }
 
-    #[test]
-    fn it_should_create_intent_repository_by_default() {
-        // Act
-        let repo = IntentRepository::default();
-
-        // Assert
-        let intent = repo.get("nonexistent");
-        assert!(intent.is_none());
-
-        let intents = repo.batch_get(vec!["nonexistent".to_string()]);
-        assert!(intents.is_empty());
-    }
 }
