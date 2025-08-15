@@ -5,8 +5,7 @@ use ic_mple_utils::store::Storage;
 
 use crate::{RateLimitError, precision::Precision};
 
-/// Configuration service that manages rate limiting using pluggable storage
-/// This follows the same pattern as LoggerConfigService for consistency
+/// Rate limit service that manages rate limiting configurations and runtime limiters
 pub struct RateLimitService<E, S, P>
 where
     E: std::cmp::Eq + std::hash::Hash + Clone,
