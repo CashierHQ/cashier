@@ -27,7 +27,6 @@ use cashier_backend_types::repository::{
 };
 
 impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<E, R> {
-
     async fn assemble_intents(
         &self,
         link_id: &str,
@@ -419,7 +418,6 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
 
 // --- helper method implementations ---
 impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
-    
     fn create_basic_intent(&self, task: IntentTask, label: String) -> Intent {
         let ts = self.ic_env.time();
         let mut intent = Intent::default();
@@ -667,7 +665,8 @@ mod tests {
     #[test]
     fn it_should_return_empty_look_up_intent() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let link = create_link_fixture(&mut service, &principal_id1);
         let action_type = ActionType::Claim;
@@ -682,7 +681,8 @@ mod tests {
     #[test]
     fn it_should_look_up_intent_for_create_link_send_tip() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
         let action_type = ActionType::CreateLink;
@@ -701,7 +701,8 @@ mod tests {
     #[test]
     fn it_should_look_up_intent_for_use_link_send_tip() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
         let action_type = ActionType::Use;
@@ -719,7 +720,8 @@ mod tests {
     #[test]
     fn it_should_look_up_intent_for_withdraw_link_send_tip() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
         let action_type = ActionType::Withdraw;
@@ -737,7 +739,8 @@ mod tests {
     #[test]
     fn it_should_look_up_intent_for_create_link_send_airdrop() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
 
@@ -761,7 +764,8 @@ mod tests {
 
     #[test]
     fn it_should_look_up_intent_for_use_link_send_airdrop() {
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
         let updated_link = Link {
@@ -782,7 +786,8 @@ mod tests {
     #[test]
     fn it_should_look_up_intent_for_withdraw_link_send_airdrop() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
         let updated_link = Link {
@@ -806,7 +811,8 @@ mod tests {
     fn it_should_error_on_look_up_intent_for_create_link_send_token_basket_with_empty_link_assets()
     {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
 
@@ -834,7 +840,8 @@ mod tests {
     fn it_should_error_look_up_intent_for_create_link_send_token_basket_with_invalid_asset_info_label()
      {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
 
@@ -867,7 +874,8 @@ mod tests {
     #[test]
     fn it_should_look_up_intent_for_create_link_send_token_basket() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
 
@@ -902,7 +910,8 @@ mod tests {
     fn it_should_error_on_look_up_intent_for_use_link_send_token_basket_with_empty_link_assets_info()
      {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
 
@@ -929,7 +938,8 @@ mod tests {
     #[test]
     fn it_should_look_up_intent_for_use_link_send_token_basket() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
 
@@ -963,7 +973,8 @@ mod tests {
     fn it_should_error_on_look_up_intent_for_withdraw_link_send_token_basket_with_empty_link_assets_info()
      {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
 
@@ -990,7 +1001,8 @@ mod tests {
     #[test]
     fn it_should_look_up_intent_for_withdraw_link_send_token_basket() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
 
@@ -1023,7 +1035,8 @@ mod tests {
     #[test]
     fn it_should_look_up_intent_for_create_link_receive_payment() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
 
@@ -1047,7 +1060,8 @@ mod tests {
     #[test]
     fn it_should_look_up_intent_for_use_link_receive_payment() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
 
@@ -1071,7 +1085,8 @@ mod tests {
     #[test]
     fn it_should_look_up_intent_for_withdraw_link_receive_payment() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, &creator_id);
 
@@ -1115,7 +1130,8 @@ mod tests {
     #[test]
     fn it_should_error_on_get_assets_for_action_with_empty_link_type() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link = create_link_fixture(&mut service, &random_principal_id());
         let link = Link {
             link_type: None,
@@ -1139,7 +1155,8 @@ mod tests {
     #[test]
     fn it_should_error_on_get_assets_for_action_with_empty_intents() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link = create_link_fixture(&mut service, &random_principal_id());
 
         // Act
@@ -1159,7 +1176,8 @@ mod tests {
     fn it_should_error_get_assets_for_action_with_intent_task_transfer_wallet_to_link_and_unmatched_link_assets_info_label()
      {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link = create_link_fixture(&mut service, &random_principal_id());
 
         // Act
@@ -1178,7 +1196,8 @@ mod tests {
     #[test]
     fn it_should_get_assets_for_action_with_intent_task_transfer_wallet_to_link() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link = create_link_fixture(&mut service, &random_principal_id());
 
         let asset_address = random_id_string();
@@ -1208,7 +1227,8 @@ mod tests {
     #[test]
     fn it_should_get_assets_for_action_with_intent_task_transfer_wallet_to_treasury() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link = create_link_fixture(&mut service, &random_principal_id());
         let asset_address = random_id_string();
         let updated_link = Link {
@@ -1238,7 +1258,8 @@ mod tests {
     fn it_should_error_get_assets_for_action_with_intent_task_transfer_link_to_wallet_and_link_assets_info_empty()
      {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link = create_link_fixture(&mut service, &random_principal_id());
 
         // Act
@@ -1257,7 +1278,8 @@ mod tests {
     #[test]
     fn it_should_get_assets_for_action_with_intent_task_transfer_link_to_wallet() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link = create_link_fixture(&mut service, &random_principal_id());
 
         let asset_address = random_id_string();

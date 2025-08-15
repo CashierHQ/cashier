@@ -3,20 +3,19 @@
 
 use cashier_backend_types::repository::{action::v1::Action, keys::ActionKey};
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
 pub type ActionRepositoryStorage =
     StableBTreeMap<ActionKey, Action, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
-pub struct ActionRepository<S: Storage<ActionRepositoryStorage>> {storage: S,}
+pub struct ActionRepository<S: Storage<ActionRepositoryStorage>> {
+    storage: S,
+}
 
-impl <S: Storage<ActionRepositoryStorage>> ActionRepository<S> {
-    
+impl<S: Storage<ActionRepositoryStorage>> ActionRepository<S> {
     pub fn new(storage: S) -> Self {
-        Self {
-            storage,
-        }
+        Self { storage }
     }
 
     pub fn create(&mut self, action: Action) {
@@ -27,7 +26,8 @@ impl <S: Storage<ActionRepositoryStorage>> ActionRepository<S> {
     }
 
     pub fn get(&self, action_id: &str) -> Option<Action> {
-        self.storage.with_borrow(|store| store.get(&action_id.to_string()))
+        self.storage
+            .with_borrow(|store| store.get(&action_id.to_string()))
     }
 
     pub fn update(&mut self, action: Action) {
@@ -41,7 +41,10 @@ impl <S: Storage<ActionRepositoryStorage>> ActionRepository<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{repositories::{tests::TestRepositories, Repositories}, utils::test_utils::random_id_string};
+    use crate::{
+        repositories::{Repositories, tests::TestRepositories},
+        utils::test_utils::random_id_string,
+    };
     use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
 
     #[test]
@@ -134,5 +137,4 @@ mod tests {
         let retrieved_action = retrieved_action.expect("Action should be found");
         assert_eq!(retrieved_action.id, action_id);
     }
-
 }

@@ -46,7 +46,6 @@ pub struct LinkService<E: IcEnvironment + Clone, R: Repositories> {
 
 #[allow(clippy::too_many_arguments)]
 impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
-
     pub fn new(repo: Rc<R>, ic_env: E) -> Self {
         Self {
             link_repository: repo.link(),
@@ -321,7 +320,8 @@ mod tests {
     #[test]
     fn it_should_fail_on_get_link_by_nonexistent_id() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
 
         // Act
         let result = service.get_link_by_id("nonexistent_link");
@@ -334,7 +334,8 @@ mod tests {
     #[test]
     fn it_should_get_link_by_id() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
 
         // Act
         let link = service.link_repository.get(&"default_link".to_string());
@@ -360,7 +361,8 @@ mod tests {
     #[test]
     fn it_should_get_link_with_empty_options() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id = random_principal_id();
         let creator = create_principal_fixture(&mut service, &principal_id);
         let created_link = create_link_fixture(&mut service, &creator.to_text());
@@ -378,7 +380,8 @@ mod tests {
     #[test]
     fn it_should_error_on_get_link_with_action_type_create_by_unauthorized_caller() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let principal_id2 = random_principal_id();
         let created_link = create_link_fixture(&mut service, &principal_id1);
@@ -406,7 +409,8 @@ mod tests {
     #[test]
     fn it_should_get_link_with_action_type_create_by_creator() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&mut service, &principal_id1);
         let created_link = create_link_fixture(&mut service, &creator.to_text());
@@ -441,7 +445,8 @@ mod tests {
     #[test]
     fn it_should_error_on_get_link_with_action_type_withdraw_by_unauthorized_caller() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let principal_id2 = random_principal_id();
         let created_link = create_link_fixture(&mut service, &principal_id1);
@@ -469,7 +474,8 @@ mod tests {
     #[test]
     fn it_should_error_on_get_link_with_action_type_use_by_anonymous_caller() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let created_link = create_link_fixture(&mut service, &principal_id1);
 
@@ -495,7 +501,8 @@ mod tests {
     #[test]
     fn it_should_fail_on_get_link_with_action_type_use_and_nonexistent_id() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&mut service, &principal_id1);
 
@@ -516,7 +523,8 @@ mod tests {
     #[test]
     fn it_should_get_link_with_action_type_use_by_creator() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&mut service, &principal_id1);
         let created_link = create_link_fixture(&mut service, &creator.to_text());
@@ -543,7 +551,8 @@ mod tests {
     #[test]
     fn it_should_get_action_of_link_empty() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
 
         // Act
         let action = service.get_action_of_link("nonexistent_link", "Use", "user_id");
@@ -555,7 +564,8 @@ mod tests {
     #[test]
     fn it_should_get_action_of_link() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&mut service, &principal_id1);
         let created_link = create_link_fixture(&mut service, &creator.to_text());
@@ -575,7 +585,8 @@ mod tests {
     #[test]
     fn it_should_get_link_action_user_empty() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
 
         // Act
         let result = service.get_link_action_user("nonexistent_link", "Use", "user_id");
@@ -588,7 +599,8 @@ mod tests {
     #[test]
     fn it_should_get_link_action_user() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&mut service, &principal_id1);
         let created_link = create_link_fixture(&mut service, &creator.to_text());
@@ -609,7 +621,8 @@ mod tests {
     #[test]
     fn it_should_get_link_action_empty() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
 
         // Act
         let action = service.get_link_action("nonexistent_link", "Use", "user_id");
@@ -621,7 +634,8 @@ mod tests {
     #[test]
     fn it_should_get_link_action() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&mut service, &principal_id1);
         let created_link = create_link_fixture(&mut service, &creator.to_text());
@@ -641,7 +655,8 @@ mod tests {
     #[test]
     fn it_should_fail_to_update_link_use_counter_if_exceed_max() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&mut service, &principal_id1);
         let created_link = create_link_fixture(&mut service, &creator.to_text());
@@ -689,7 +704,8 @@ mod tests {
     #[test]
     fn it_should_fail_update_link_use_counter_if_action_state_nonsuccess() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&mut service, &principal_id1);
         let created_link = create_link_fixture(&mut service, &creator.to_text());
@@ -716,7 +732,8 @@ mod tests {
     #[test]
     fn it_should_update_link_use_counter_on_successful_action() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&mut service, &principal_id1);
         let created_link = create_link_fixture(&mut service, &creator.to_text());
@@ -746,7 +763,8 @@ mod tests {
     #[test]
     fn it_should_get_links_by_principal() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let principal = create_principal_fixture(&mut service, &principal_id1);
         let user_id = principal.to_text();
@@ -766,7 +784,8 @@ mod tests {
     #[test]
     fn it_should_get_links_by_user_id() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let principal = create_principal_fixture(&mut service, &principal_id1);
         let user_id = principal.to_text();
@@ -786,7 +805,8 @@ mod tests {
     #[test]
     fn it_should_handle_link_handle_tx_update_if_previous_and_current_state_are_the_same() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&mut service, &principal_id1);
         let created_link = create_link_fixture(&mut service, &creator.to_text());
@@ -811,7 +831,8 @@ mod tests {
     #[test]
     fn it_should_handle_link_handle_tx_update_if_current_state_nonsuccess() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&mut service, &principal_id1);
         let created_link = create_link_fixture(&mut service, &creator.to_text());
@@ -836,7 +857,8 @@ mod tests {
     #[test]
     fn it_should_handle_link_handle_tx_update_if_action_type_is_not_use() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&mut service, &principal_id1);
         let created_link = create_link_fixture(&mut service, &creator.to_text());
@@ -861,7 +883,8 @@ mod tests {
     #[test]
     fn it_should_fail_to_handle_link_handle_tx_update_due_to_counter_exceed_max() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&mut service, &principal_id1);
         let created_link = create_link_fixture(&mut service, &creator.to_text());
@@ -912,7 +935,8 @@ mod tests {
     #[test]
     fn it_should_handle_link_handle_tx_update_successful_action() {
         // Arrange
-        let mut service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
         let creator = create_principal_fixture(&mut service, &principal_id1);
         let created_link = create_link_fixture(&mut service, &creator.to_text());

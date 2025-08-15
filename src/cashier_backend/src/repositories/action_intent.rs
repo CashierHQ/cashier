@@ -3,20 +3,19 @@
 
 use cashier_backend_types::repository::{action_intent::v1::ActionIntent, keys::ActionIntentKey};
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
 pub type ActionIntentRepositoryStorage =
     StableBTreeMap<String, ActionIntent, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
-pub struct ActionIntentRepository<S: Storage<ActionIntentRepositoryStorage>> {storage: S,}
+pub struct ActionIntentRepository<S: Storage<ActionIntentRepositoryStorage>> {
+    storage: S,
+}
 
-
-impl <S: Storage<ActionIntentRepositoryStorage>> ActionIntentRepository<S> {
+impl<S: Storage<ActionIntentRepositoryStorage>> ActionIntentRepository<S> {
     pub fn new(storage: S) -> Self {
-        Self {
-            storage,
-        }
+        Self { storage }
     }
 
     pub fn batch_create(&mut self, action_intents: Vec<ActionIntent>) {
@@ -71,7 +70,10 @@ impl <S: Storage<ActionIntentRepositoryStorage>> ActionIntentRepository<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{repositories::{tests::TestRepositories, Repositories}, utils::test_utils::random_id_string};
+    use crate::{
+        repositories::{Repositories, tests::TestRepositories},
+        utils::test_utils::random_id_string,
+    };
 
     #[test]
     fn it_should_batch_create_action_intents() {
@@ -158,5 +160,4 @@ mod tests {
         assert_eq!(retrieved.first().unwrap().action_id, action_id1);
         assert_eq!(retrieved.first().unwrap().intent_id, intent_id1);
     }
-
 }

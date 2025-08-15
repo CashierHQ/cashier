@@ -6,19 +6,19 @@ use cashier_backend_types::{
     service::link::{PaginateInput, PaginateResult, PaginateResultMetadata},
 };
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
 pub type UserLinkRepositoryStorage =
     StableBTreeMap<String, UserLink, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
-pub struct UserLinkRepository<S: Storage<UserLinkRepositoryStorage>> {storage: S,}
+pub struct UserLinkRepository<S: Storage<UserLinkRepositoryStorage>> {
+    storage: S,
+}
 
-impl <S: Storage<UserLinkRepositoryStorage>> UserLinkRepository<S> {
+impl<S: Storage<UserLinkRepositoryStorage>> UserLinkRepository<S> {
     pub fn new(storage: S) -> Self {
-        Self {
-            storage,
-        }
+        Self { storage }
     }
 
     pub fn create(&mut self, user_link: UserLink) {
@@ -36,7 +36,8 @@ impl <S: Storage<UserLinkRepositoryStorage>> UserLinkRepository<S> {
             user_id: id.user_id.clone(),
             link_id: id.link_id,
         };
-        self.storage.with_borrow_mut(|store| store.remove(&id.to_str()));
+        self.storage
+            .with_borrow_mut(|store| store.remove(&id.to_str()));
     }
 
     pub fn get_links_by_user_id(
@@ -83,7 +84,10 @@ impl <S: Storage<UserLinkRepositoryStorage>> UserLinkRepository<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{repositories::{tests::TestRepositories, Repositories}, utils::test_utils::*};
+    use crate::{
+        repositories::{Repositories, tests::TestRepositories},
+        utils::test_utils::*,
+    };
 
     #[test]
     fn it_should_create_an_user_link() {
@@ -155,5 +159,4 @@ mod tests {
         assert!(links.data.iter().any(|l| l.link_id == link_id1));
         assert!(links.data.iter().any(|l| l.link_id == link_id2));
     }
-
 }

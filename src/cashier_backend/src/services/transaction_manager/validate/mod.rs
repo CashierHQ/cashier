@@ -1,16 +1,15 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::repositories::{action, user_wallet, Repositories};
+use crate::repositories::{Repositories, action, user_wallet};
 
 pub struct ValidateService<R: Repositories> {
     user_wallet_repository: user_wallet::UserWalletRepository<R::UserWallet>,
     action_repository: action::ActionRepository<R::Action>,
 }
 
-impl <R: Repositories> ValidateService<R> {
-    pub fn new(repo: &R,
-    ) -> Self {
+impl<R: Repositories> ValidateService<R> {
+    pub fn new(repo: &R) -> Self {
         Self {
             user_wallet_repository: repo.user_wallet(),
             action_repository: repo.action(),

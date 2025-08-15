@@ -10,11 +10,18 @@ use cashier_backend_types::{
 use std::collections::HashMap;
 
 use crate::{
-    repositories::Repositories, services::transaction_manager::{service::TransactionManagerService, traits::ActionCreator}, utils::runtime::IcEnvironment
+    repositories::Repositories,
+    services::transaction_manager::{service::TransactionManagerService, traits::ActionCreator},
+    utils::runtime::IcEnvironment,
 };
 
-impl<E: IcEnvironment + Clone, R:Repositories> ActionCreator<E> for TransactionManagerService<E, R> {
-    fn create_action(&mut self, temp_action: &mut TemporaryAction) -> Result<ActionDto, CanisterError> {
+impl<E: IcEnvironment + Clone, R: Repositories> ActionCreator<E>
+    for TransactionManagerService<E, R>
+{
+    fn create_action(
+        &mut self,
+        temp_action: &mut TemporaryAction,
+    ) -> Result<ActionDto, CanisterError> {
         let mut intent_tx_hashmap: HashMap<String, Vec<Transaction>> = HashMap::new();
         let mut intent_tx_ids_hashmap: HashMap<String, Vec<String>> = HashMap::new();
 

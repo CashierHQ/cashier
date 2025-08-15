@@ -23,8 +23,8 @@ pub struct ActionService<R: Repositories> {
     intent_repository: repositories::intent::IntentRepository<R::Intent>,
     action_intent_repository: repositories::action_intent::ActionIntentRepository<R::ActionIntent>,
     transaction_repository: repositories::transaction::TransactionRepository<R::Transaction>,
-    intent_transaction_repository: repositories::intent_transaction::IntentTransactionRepository<
-        R::IntentTransaction>,
+    intent_transaction_repository:
+        repositories::intent_transaction::IntentTransactionRepository<R::IntentTransaction>,
     link_action_repository: repositories::link_action::LinkActionRepository<R::LinkAction>,
     user_action_repository: repositories::user_action::UserActionRepository<R::UserAction>,
 
@@ -32,8 +32,8 @@ pub struct ActionService<R: Repositories> {
     domain_logic: ActionDomainLogic,
 }
 
-impl <R: Repositories> ActionService<R> {
-    pub fn new(repo: &R    ) -> Self {
+impl<R: Repositories> ActionService<R> {
+    pub fn new(repo: &R) -> Self {
         Self {
             action_repository: repo.action(),
             action_intent_reposiroty: repo.action_intent(),

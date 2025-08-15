@@ -2,18 +2,20 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Principal;
-use cashier_backend_types::{dto::user::UserDto, repository::{user::v1::User, user_wallet::v1::UserWallet}};
+use cashier_backend_types::{
+    dto::user::UserDto,
+    repository::{user::v1::User, user_wallet::v1::UserWallet},
+};
 use uuid::Uuid;
 
-use crate::repositories::{user::UserRepository, user_wallet::UserWalletRepository, Repositories};
+use crate::repositories::{Repositories, user::UserRepository, user_wallet::UserWalletRepository};
 
 pub struct UserService<R: Repositories> {
     user_repository: UserRepository<R::User>,
     user_wallet_repository: UserWalletRepository<R::UserWallet>,
 }
 
-impl <R: Repositories> UserService<R> {
-    
+impl<R: Repositories> UserService<R> {
     pub fn new(repo: &R) -> Self {
         Self {
             user_repository: repo.user(),
@@ -39,14 +41,14 @@ impl <R: Repositories> UserService<R> {
         };
 
         self.user_repository.create(user);
-        self.user_wallet_repository.create(caller.to_text(), user_wallet);
+        self.user_wallet_repository
+            .create(caller.to_text(), user_wallet);
 
         Ok(UserDto {
             id: id_str,
             email: None,
             wallet: caller.to_text(),
         })
-
     }
 
     pub fn get_user_id_by_wallet(&self, user_wallet: &Principal) -> Option<String> {
@@ -59,7 +61,6 @@ impl <R: Repositories> UserService<R> {
     }
 
     pub fn get_user_dto(&self, caller: &Principal) -> Option<UserDto> {
-
         let user_wallet = self.user_wallet_repository.get(&caller.to_string())?;
         let user = self.user_repository.get(&user_wallet.user_id);
 
@@ -74,7 +75,8 @@ impl <R: Repositories> UserService<R> {
     }
 
     pub fn exists(&self, caller: &Principal) -> bool {
-        self.user_wallet_repository.get(&caller.to_string()).is_some()
+        self.user_wallet_repository
+            .get(&caller.to_string())
+            .is_some()
     }
-
 }

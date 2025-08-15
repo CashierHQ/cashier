@@ -1,7 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::{repositories::Repositories, services::transaction_manager::traits::TransactionValidator};
+use crate::{
+    repositories::Repositories, services::transaction_manager::traits::TransactionValidator,
+};
 use cashier_backend_types::{error::CanisterError, repository::transaction::v2::TransactionState};
 use log::{error, info};
 use std::time::Duration;
@@ -12,7 +14,9 @@ use crate::{
     utils::runtime::{IcEnvironment, RealIcEnvironment},
 };
 
-impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> TimeoutHandler<E> for TransactionManagerService<E, R> {
+impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> TimeoutHandler<E>
+    for TransactionManagerService<E, R>
+{
     fn spawn_tx_timeout_task(&self, tx_id: String) -> Result<(), String> {
         let timeout = get_tx_timeout_seconds();
 
@@ -24,7 +28,6 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> TimeoutHandl
                 let ic_env_in_future = RealIcEnvironment::new();
 
                 ic_env_in_future.spawn(async move {
-
                     // Now use the new service instance
                     let res = service.tx_timeout_task(tx_id).await;
                     match res {
@@ -96,7 +99,6 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> TimeoutHandl
                 let ic_env_in_future = RealIcEnvironment::new();
 
                 ic_env_in_future.spawn(async move {
-
                     let res = service.tx_timeout_task(retry_tx_id).await;
                     match res {
                         Ok(_) => {}
@@ -146,7 +148,6 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> TimeoutHandl
                 let ic_env_in_future = RealIcEnvironment::new();
 
                 ic_env_in_future.spawn(async move {
-
                     // Now use the new service instance
                     let res = service.tx_timeout_task(tx_id).await;
                     match res {

@@ -3,19 +3,19 @@
 
 use cashier_backend_types::repository::{keys::UserActionKey, user_action::v1::UserAction};
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
 pub type UserActionRepositoryStorage =
     StableBTreeMap<String, UserAction, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
-pub struct UserActionRepository<S: Storage<UserActionRepositoryStorage>> {storage: S,}
+pub struct UserActionRepository<S: Storage<UserActionRepositoryStorage>> {
+    storage: S,
+}
 
-impl <S: Storage<UserActionRepositoryStorage>> UserActionRepository<S> {
+impl<S: Storage<UserActionRepositoryStorage>> UserActionRepository<S> {
     pub fn new(storage: S) -> Self {
-        Self {
-            storage,
-        }
+        Self { storage }
     }
 
     pub fn create(&mut self, user_intent: UserAction) {
@@ -32,7 +32,10 @@ impl <S: Storage<UserActionRepositoryStorage>> UserActionRepository<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{repositories::{tests::TestRepositories, Repositories}, utils::test_utils::*};
+    use crate::{
+        repositories::{Repositories, tests::TestRepositories},
+        utils::test_utils::*,
+    };
 
     #[test]
     fn it_should_create_an_user_action() {
@@ -57,5 +60,4 @@ mod tests {
         assert!(retrieved_action.is_some());
         assert_eq!(retrieved_action.unwrap().user_id, user_id);
     }
-
 }

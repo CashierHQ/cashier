@@ -2,7 +2,9 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::{
-    repositories::tests::TestRepositories, services::link::service::LinkService, utils::test_utils::{random_id_string, runtime::MockIcEnvironment}
+    repositories::tests::TestRepositories,
+    services::link::service::LinkService,
+    utils::test_utils::{random_id_string, runtime::MockIcEnvironment},
 };
 use candid::Principal;
 use cashier_backend_types::repository::{
@@ -18,7 +20,10 @@ use std::{collections::HashSet, str::FromStr};
 /// This function initializes a link with a random ID, sets its state, and associates it with a creator ID.
 /// It also creates a user link for the creator.
 /// Returns the created link.
-pub fn create_link_fixture(service: &mut LinkService<MockIcEnvironment, TestRepositories>, creator_id: &str) -> Link {
+pub fn create_link_fixture(
+    service: &mut LinkService<MockIcEnvironment, TestRepositories>,
+    creator_id: &str,
+) -> Link {
     let link_id = random_id_string();
     let link = Link {
         id: link_id,

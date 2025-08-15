@@ -1,21 +1,21 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use ic_mple_log::service::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
 use cashier_backend_types::repository::{keys::TransactionKey, transaction::v2::Transaction};
+use ic_mple_log::service::Storage;
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
 pub type TransactionRepositoryStorage =
     StableBTreeMap<TransactionKey, Transaction, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
-pub struct TransactionRepository<S: Storage<TransactionRepositoryStorage>>  {storage: S,}
+pub struct TransactionRepository<S: Storage<TransactionRepositoryStorage>> {
+    storage: S,
+}
 
-impl <S: Storage<TransactionRepositoryStorage>> TransactionRepository<S> {
+impl<S: Storage<TransactionRepositoryStorage>> TransactionRepository<S> {
     pub fn new(storage: S) -> Self {
-        Self {
-            storage,
-        }
+        Self { storage }
     }
 
     pub fn update(&mut self, transaction: Transaction) -> Transaction {
@@ -49,7 +49,10 @@ impl <S: Storage<TransactionRepositoryStorage>> TransactionRepository<S> {
 #[cfg(test)]
 mod tests {
 
-    use crate::{repositories::{tests::TestRepositories, Repositories}, utils::test_utils::random_id_string};
+    use crate::{
+        repositories::{Repositories, tests::TestRepositories},
+        utils::test_utils::random_id_string,
+    };
     use candid::Nat;
     use cashier_backend_types::repository::{
         common::{Asset, Wallet},
@@ -229,5 +232,4 @@ mod tests {
         assert!(retrieved_transaction.is_some());
         assert_eq!(retrieved_transaction.unwrap().id, transaction_id);
     }
-
 }

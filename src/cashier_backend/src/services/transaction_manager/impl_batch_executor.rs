@@ -13,7 +13,9 @@ use crate::{
     utils::runtime::IcEnvironment,
 };
 
-impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> BatchExecutor<E> for TransactionManagerService<E,R> {
+impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> BatchExecutor<E>
+    for TransactionManagerService<E, R>
+{
     /// Execute multiple canister transactions in parallel (batch)
     ///
     /// This method takes a mutable slice of transactions and executes them concurrently.
@@ -26,9 +28,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> BatchExecuto
         let mut futures_vec = Vec::with_capacity(txs.len());
         for tx in txs.iter_mut() {
             let mut service = self.clone();
-            futures_vec.push(async move {
-                service.execute_canister_tx(tx).await
-            });
+            futures_vec.push(async move { service.execute_canister_tx(tx).await });
         }
         let results = future::join_all(futures_vec).await;
         let errors: Vec<CanisterError> = results

@@ -3,14 +3,17 @@ use std::str::FromStr;
 use candid::Principal;
 use uuid::Uuid;
 
-use crate::{repositories::Repositories, services::{
-    link::{
-        service::LinkService,
-        traits::{ActionFlow, IntentAssembler, LinkValidation},
-    },
-    transaction_manager::traits::{ActionCreator, ActionUpdater, TransactionValidator},
-}};
 use crate::utils::runtime::IcEnvironment;
+use crate::{
+    repositories::Repositories,
+    services::{
+        link::{
+            service::LinkService,
+            traits::{ActionFlow, IntentAssembler, LinkValidation},
+        },
+        transaction_manager::traits::{ActionCreator, ActionUpdater, TransactionValidator},
+    },
+};
 use cashier_backend_types::{
     dto::action::{
         ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
@@ -24,7 +27,9 @@ use cashier_backend_types::{
     service::{link::TemporaryAction, tx_manager::UpdateActionArgs},
 };
 
-impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow for LinkService<E, R> {
+impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
+    for LinkService<E, R>
+{
     async fn create_action(
         &mut self,
         input: &CreateActionInput,

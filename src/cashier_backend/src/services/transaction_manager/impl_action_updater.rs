@@ -26,7 +26,9 @@ use crate::{
     utils::{self, helper::to_subaccount, runtime::IcEnvironment},
 };
 
-impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionUpdater<E> for TransactionManagerService<E, R> {
+impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionUpdater<E>
+    for TransactionManagerService<E, R>
+{
     /// Updates an action with new state information and executes eligible transactions
     ///
     /// This method:
