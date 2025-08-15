@@ -24,15 +24,15 @@ fn init_rate_limit_config(state: &mut CanisterState) {
         (
             "create_action",
             RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
-        ), // 10 requests per 5 minutes
+        ), // 10 requests per 10 minutes
         (
             "process_action",
             RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
-        ), // 10 requests per 5 minutes
+        ), // 10 requests per 10 minutes
         (
             "update_action",
             RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
-        ), // 10 requests per 5 minutes
+        ), // 10 requests per 10 minutes
     ];
     for (name, config) in configs {
         if let Err(err) = state.rate_limit_service.add_config(name, config) {
