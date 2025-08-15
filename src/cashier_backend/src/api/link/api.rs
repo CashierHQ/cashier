@@ -4,6 +4,7 @@
 use crate::api::guard::is_not_anonymous;
 use crate::api::state::{CanisterState, get_state};
 use crate::services::link::traits::LinkValidation;
+use crate::utils::runtime::IcEnvironment;
 use candid::Principal;
 use cashier_backend_types::dto::action::{
     ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
@@ -465,7 +466,7 @@ impl LinkApi {
         caller: &Principal,
         input: CreateActionInput,
     ) -> Result<ActionDto, CanisterError> {
-        self.state.link_service.create_action(&input, caller).await
+        self.state.link_service.create_action(self.state.env.time(), &input, caller).await
     }
 
     /// Creates a new action for anonymous users using wallet address authentication.
@@ -492,7 +493,7 @@ impl LinkApi {
         } else {
             self.state
                 .link_service
-                .create_action_anonymous(&input)
+                .create_action_anonymous(self.state.env.time(), &input)
                 .await
         }
     }
