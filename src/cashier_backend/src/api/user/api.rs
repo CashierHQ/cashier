@@ -2,20 +2,24 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use cashier_backend_types::dto::user::UserDto;
-use ic_cdk::{query, update};
+use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, info};
 
-use crate::{api::guard::is_not_anonymous, services};
+use crate::{api::{guard::is_not_anonymous, state::get_state}};
 
 #[update(guard = "is_not_anonymous")]
 fn create_user() -> Result<UserDto, String> {
     info!("[create_user]");
-    services::user::create_new()
+
+    let caller = msg_caller();
+    let user = get_state().user_service.create_new(caller).expect("Unable to create user");
+    Ok(user)
 }
 
 #[query(guard = "is_not_anonymous")]
-async fn get_user() -> Result<UserDto, String> {
+fn get_user() -> Result<UserDto, &'static str> {
     debug!("[get_user]");
-    let user = services::user::get().ok_or("User not found")?;
-    Ok(user)
+    let caller = msg_caller();
+    let state = get_state();
+    state.user_service.get_user_dto(&caller).ok_or("User not found")
 }

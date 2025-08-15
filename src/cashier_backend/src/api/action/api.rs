@@ -7,13 +7,11 @@ use ic_cdk::update;
 use log::{debug, info};
 
 use crate::api::guard::is_not_anonymous;
-use crate::services::request_lock::RequestLockService;
-use crate::services::transaction_manager::service::TransactionManagerService;
+use crate::api::state::get_state;
 use crate::services::transaction_manager::traits::TransactionExecutor;
 use crate::utils::runtime::{IcEnvironment, RealIcEnvironment};
 use crate::{
     api::CanisterError,
-    services::{self},
 };
 
 #[update(guard = "is_not_anonymous")]
@@ -24,10 +22,10 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
     let caller = msg_caller();
     let ic_env = RealIcEnvironment::new();
 
-    let validate_service = services::transaction_manager::validate::ValidateService::get_instance();
-    let transaction_manager: TransactionManagerService<RealIcEnvironment> =
-        TransactionManagerService::get_instance();
-    let request_lock_service = RequestLockService::get_instance();
+    let state = get_state();
+    let validate_service = state.validate_service;
+    let mut transaction_manager = state.transaction_manager_service;
+    let mut request_lock_service = state.request_lock_service;
 
     let is_creator = validate_service
         .is_action_creator(&caller.to_text(), &input.action_id)

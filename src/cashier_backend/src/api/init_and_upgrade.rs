@@ -8,9 +8,9 @@ use log::info;
 use crate::api::state::get_state;
 use crate::services::transaction_manager::traits::TimeoutHandler;
 use crate::{
-    services::transaction_manager::service::TransactionManagerService,
-    utils::{random::init_ic_rand, runtime::RealIcEnvironment},
+    utils::random::init_ic_rand,
 };
+
 #[init]
 fn init(init_data: CashierBackendInitData) {
     let log_config = init_data.log_settings.unwrap_or_default();
@@ -36,6 +36,6 @@ fn post_upgrade() {
 
     init_ic_rand();
 
-    let tx_manager_service = TransactionManagerService::<RealIcEnvironment>::get_instance();
+    let tx_manager_service = get_state().transaction_manager_service;
     tx_manager_service.restart_processing_transactions();
 }
