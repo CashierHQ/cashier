@@ -1,6 +1,6 @@
 use std::{collections::HashMap, time::Duration};
 
-use crate::percision::Precision;
+use crate::precision::Precision;
 
 /// Configuration for rate limiting a specific method
 #[derive(Debug)]

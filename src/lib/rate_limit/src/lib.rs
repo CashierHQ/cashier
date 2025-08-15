@@ -1,5 +1,5 @@
 pub mod algorithm;
-pub mod percision;
+pub mod precision;
 pub mod service;
 
 pub use algorithm::types::{

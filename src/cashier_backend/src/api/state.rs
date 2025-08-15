@@ -4,7 +4,7 @@ use candid::Principal;
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 use rate_limit::{
     RateLimitService,
-    percision::Nanos,
+    precision::Nanos,
     service::{RateLimitState, ServiceSettings},
 };
 

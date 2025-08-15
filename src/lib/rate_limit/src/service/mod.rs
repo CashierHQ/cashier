@@ -3,7 +3,7 @@ pub use types::{LimiterEntry, RateLimitConfig, RateLimitState, ServiceError, Ser
 
 use ic_mple_utils::store::Storage;
 
-use crate::{RateLimitError, percision::Precision};
+use crate::{RateLimitError, precision::Precision};
 
 /// Configuration service that manages rate limiting using pluggable storage
 /// This follows the same pattern as LoggerConfigService for consistency
@@ -203,7 +203,7 @@ mod tests {
     use super::*;
     use crate::{
         algorithm::types::RateLimitError,
-        percision::{Millis, Nanos},
+        precision::{Millis, Nanos},
         test_utils::Time,
     };
     use candid::Principal;
