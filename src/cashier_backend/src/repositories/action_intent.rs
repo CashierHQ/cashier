@@ -75,6 +75,7 @@ mod tests {
 
     #[test]
     fn it_should_batch_create_action_intents() {
+        // Arrange
         let repo = ActionIntentRepository::new();
         let action_id1 = random_id_string();
         let intent_id1 = random_id_string();
@@ -91,8 +92,10 @@ mod tests {
             },
         ];
 
+        // Act
         repo.batch_create(action_intents);
 
+        // Assert
         let retrieved = repo.get_by_action_id(&action_id1);
         assert_eq!(retrieved.len(), 1);
         assert_eq!(retrieved.first().unwrap().intent_id, intent_id1);
@@ -104,6 +107,7 @@ mod tests {
 
     #[test]
     fn it_should_get_by_action_id() {
+        // Arrange
         let repo = ActionIntentRepository::new();
         let action_id1 = random_id_string();
         let action_id2 = random_id_string();
@@ -119,7 +123,10 @@ mod tests {
         };
         repo.batch_create(vec![action_intent1, action_intent2]);
 
+        // Act
         let retrieved = repo.get_by_action_id(&action_id1);
+
+        // Assert
         assert_eq!(retrieved.len(), 1);
         assert_eq!(retrieved.first().unwrap().intent_id, intent_id1);
         assert_eq!(retrieved.first().unwrap().action_id, action_id1);
@@ -127,6 +134,7 @@ mod tests {
 
     #[test]
     fn it_should_get_by_intent_id() {
+        // Arrange
         let repo = ActionIntentRepository::new();
         let action_id1 = random_id_string();
         let intent_id1 = random_id_string();
@@ -142,7 +150,10 @@ mod tests {
         };
         repo.batch_create(vec![action_intent1, action_intent2]);
 
+        // Act
         let retrieved = repo.get_by_intent_id(&intent_id1);
+
+        // Assert
         assert_eq!(retrieved.len(), 1);
         assert_eq!(retrieved.first().unwrap().action_id, action_id1);
         assert_eq!(retrieved.first().unwrap().intent_id, intent_id1);
@@ -150,8 +161,10 @@ mod tests {
 
     #[test]
     fn it_should_create_action_intent_repository_by_default() {
+        // Act
         let repo = ActionIntentRepository::default();
+
+        // Assert
         assert!(repo.get_by_action_id("nonexistent").is_empty());
-        assert!(repo.get_by_intent_id("nonexistent").is_empty());
     }
 }

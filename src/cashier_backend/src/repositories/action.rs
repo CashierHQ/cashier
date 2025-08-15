@@ -46,6 +46,7 @@ mod tests {
 
     #[test]
     fn it_should_create_an_action() {
+        // Arrange
         let repo = ActionRepository::new();
         let action_id = random_id_string();
         let action = Action {
@@ -55,8 +56,11 @@ mod tests {
             creator: "creator1".to_string(),
             link_id: "link1".to_string(),
         };
+
+        // Act
         repo.create(action);
 
+        // Assert
         let retrieved_action = repo.get(&action_id);
         let retrieved_action = retrieved_action.expect("Action should be found");
         assert_eq!(retrieved_action.id, action_id);
@@ -64,6 +68,7 @@ mod tests {
 
     #[test]
     fn it_should_update_an_action() {
+        // Arrange
         let repo = ActionRepository::new();
         let action_id = random_id_string();
         let action = Action {
@@ -82,8 +87,11 @@ mod tests {
             creator: "creator2".to_string(),
             link_id: "link2".to_string(),
         };
+
+        // Act
         repo.update(updated_action);
 
+        // Assert
         let retrieved_action = repo.get(&action_id);
         assert!(retrieved_action.is_some());
         let action = retrieved_action.expect("Action should be found");
@@ -94,13 +102,19 @@ mod tests {
 
     #[test]
     fn it_should_get_non_existent() {
+        // Arrange
         let repo = ActionRepository::new();
+
+        // Act
         let retrieved_action = repo.get("non_existent_action");
+
+        // Assert
         assert!(retrieved_action.is_none());
     }
 
     #[test]
     fn it_should_get_existent() {
+        // Arrange
         let repo = ActionRepository::new();
         let action_id = random_id_string();
         let action = Action {
@@ -112,7 +126,10 @@ mod tests {
         };
         repo.create(action);
 
+        // Act
         let retrieved_action = repo.get(&action_id);
+
+        // Assert
         assert!(retrieved_action.is_some());
         let retrieved_action = retrieved_action.expect("Action should be found");
         assert_eq!(retrieved_action.id, action_id);
@@ -120,6 +137,7 @@ mod tests {
 
     #[test]
     fn it_should_create_action_repository_by_default() {
+        // Arrange
         let repo = ActionRepository::default();
         let action_id = random_id_string();
         let action = Action {
@@ -129,8 +147,11 @@ mod tests {
             creator: "default_creator".to_string(),
             link_id: "default_link".to_string(),
         };
+
+        // Act
         repo.create(action);
 
+        // Assert
         let retrieved_action = repo.get(&action_id);
         assert!(retrieved_action.is_some());
         assert_eq!(retrieved_action.unwrap().id, action_id);
