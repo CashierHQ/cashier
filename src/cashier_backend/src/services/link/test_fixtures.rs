@@ -13,12 +13,13 @@ use cashier_backend_types::repository::{
     user_link::v1::UserLink,
     user_wallet::v1::UserWallet,
 };
-use std::str::FromStr;
+use std::{collections::HashSet, str::FromStr};
 
-pub const PRINCIPAL_ID1: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
-pub const PRINCIPAL_ID2: &str = "x5qut-viaaa-aaaar-qajda-cai";
-
-pub fn create_link_feature(service: &LinkService<MockIcEnvironment>, creator_id: &str) -> Link {
+/// Creates a link fixture for testing purposes.
+/// This function initializes a link with a random ID, sets its state, and associates it with a creator ID.
+/// It also creates a user link for the creator.
+/// Returns the created link.
+pub fn create_link_fixture(service: &LinkService<MockIcEnvironment>, creator_id: &str) -> Link {
     let link_id = random_id_string();
     let link = Link {
         id: link_id,
@@ -44,7 +45,10 @@ pub fn create_link_feature(service: &LinkService<MockIcEnvironment>, creator_id:
     link
 }
 
-pub fn create_principal_feature(
+/// Creates a principal fixture for testing purposes.
+/// This function initializes a principal with a given ID and associates it with a user wallet.
+/// Returns the created principal.
+pub fn create_principal_fixture(
     service: &LinkService<MockIcEnvironment>,
     principal_id: &str,
 ) -> Principal {
@@ -59,7 +63,11 @@ pub fn create_principal_feature(
     principal
 }
 
-pub fn create_link_action_feature(
+/// Creates a link action fixture for testing purposes.
+/// This function initializes a link action with a random ID, associates it with a link ID and
+/// an action type, and associates it with a user ID.
+/// Returns the created link action.
+pub fn create_link_action_fixture(
     service: &LinkService<MockIcEnvironment>,
     link_id: &str,
     action_type: &str,
@@ -86,7 +94,10 @@ pub fn create_link_action_feature(
     link_action
 }
 
-pub fn create_user_wallet_feature(
+/// Creates a user wallet fixture for testing purposes.
+/// This function initializes a user wallet with a given wallet key and associates it with a user ID
+/// Returns the created user wallet.
+pub fn create_user_wallet_fixture(
     service: &LinkService<MockIcEnvironment>,
     wallet_key: &str,
     user_id: &str,
@@ -98,4 +109,26 @@ pub fn create_user_wallet_feature(
         .user_wallet_repository
         .create(wallet_key.to_string(), user_wallet.clone());
     user_wallet
+}
+
+/// Creates a whitelist of properties for testing purposes.
+/// This function generates a list of properties excluding the specified property name.
+/// Returns a vector of whitelisted properties.
+pub fn create_whitelist_props(prop_name: &str) -> Vec<String> {
+    let props_list = vec![
+        "title".to_string(),
+        "description".to_string(),
+        "asset_info".to_string(),
+        "template".to_string(),
+        "link_type".to_string(),
+        "link_image_url".to_string(),
+        "nft_image".to_string(),
+        "link_use_action_max_count".to_string(),
+    ];
+    let excluded: HashSet<String> = HashSet::from([prop_name.to_string()]);
+    let whitelist_props: Vec<String> = props_list
+        .into_iter()
+        .filter(|prop| !excluded.contains(prop))
+        .collect();
+    whitelist_props
 }

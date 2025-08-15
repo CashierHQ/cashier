@@ -78,7 +78,7 @@ impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
         // Any other transition is invalid
         else {
             return Err(CanisterError::HandleLogicError(format!(
-                "current state {current_user_state:#?} is not allowed to transition: {goto:#?}"
+                "current state {current_user_state:?} is not allowed to transition: {goto:?}"
             )));
         }
 
@@ -251,11 +251,13 @@ mod tests {
 
     #[test]
     fn it_should_error_handle_user_link_state_machine_if_link_not_found() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let action_type = "Use";
 
+        // Act
         let result = service.handle_user_link_state_machine(
             &link.id,
             action_type,
@@ -263,6 +265,7 @@ mod tests {
             &UserStateMachineGoto::Continue,
         );
 
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::NotFound(msg)) = result {
@@ -274,13 +277,15 @@ mod tests {
 
     #[test]
     fn it_should_error_handle_user_link_state_machine_if_link_state_empty() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let action_type = "Use";
 
-        let _link_action = create_link_action_feature(&service, &link.id, action_type, &creator_id);
+        let _link_action = create_link_action_fixture(&service, &link.id, action_type, &creator_id);
 
+        // Act
         let result = service.handle_user_link_state_machine(
             &link.id,
             action_type,
@@ -288,6 +293,7 @@ mod tests {
             &UserStateMachineGoto::Continue,
         );
 
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::HandleLogicError(msg)) = result {
@@ -299,12 +305,13 @@ mod tests {
 
     #[test]
     fn it_should_error_handle_user_link_state_machine_if_link_uset_state_completed() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let action_type = "Use";
 
-        let link_action = create_link_action_feature(&service, &link.id, action_type, &creator_id);
+        let link_action = create_link_action_fixture(&service, &link.id, action_type, &creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -314,6 +321,7 @@ mod tests {
         };
         service.link_action_repository.update(updated_link_action);
 
+        // Act
         let result = service.handle_user_link_state_machine(
             &link.id,
             action_type,
@@ -321,6 +329,7 @@ mod tests {
             &UserStateMachineGoto::Continue,
         );
 
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::HandleLogicError(msg)) = result {
@@ -333,12 +342,13 @@ mod tests {
     #[test]
     fn it_should_error_handle_user_link_state_machine_if_current_state_choose_wallet_and_goto_continue_and_action_state_notsuccess()
      {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let action_type = "Use";
 
-        let link_action = create_link_action_feature(&service, &link.id, action_type, &creator_id);
+        let link_action = create_link_action_fixture(&service, &link.id, action_type, &creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -348,6 +358,7 @@ mod tests {
         };
         service.link_action_repository.update(updated_link_action);
 
+        // Act
         let result = service.handle_user_link_state_machine(
             &link.id,
             action_type,
@@ -355,6 +366,7 @@ mod tests {
             &UserStateMachineGoto::Continue,
         );
 
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::HandleLogicError(msg)) = result {
@@ -366,12 +378,13 @@ mod tests {
 
     #[test]
     fn it_should_handle_user_link_state_machine_if_current_state_choose_wallet_and_goto_continue() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let action_type = "Use";
 
-        let link_action = create_link_action_feature(&service, &link.id, action_type, &creator_id);
+        let link_action = create_link_action_fixture(&service, &link.id, action_type, &creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -390,6 +403,7 @@ mod tests {
         };
         service.action_repository.update(updated_action);
 
+        // Act
         let result = service.handle_user_link_state_machine(
             &link.id,
             action_type,
@@ -397,6 +411,7 @@ mod tests {
             &UserStateMachineGoto::Continue,
         );
 
+        // Assert
         assert!(result.is_ok());
         let link_action = result.unwrap();
         assert_eq!(
@@ -407,12 +422,13 @@ mod tests {
 
     #[test]
     fn it_should_error_handle_user_link_state_machine_otherwise() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
         let action_type = "Use";
 
-        let link_action = create_link_action_feature(&service, &link.id, action_type, &creator_id);
+        let link_action = create_link_action_fixture(&service, &link.id, action_type, &creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -422,6 +438,7 @@ mod tests {
         };
         service.link_action_repository.update(updated_link_action);
 
+        // Act
         let result = service.handle_user_link_state_machine(
             &link.id,
             action_type,
@@ -429,6 +446,7 @@ mod tests {
             &UserStateMachineGoto::Back,
         );
 
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::HandleLogicError(msg)) = result {
@@ -447,11 +465,13 @@ mod tests {
 
     #[test]
     fn it_should_error_link_get_user_state_if_action_type_invalid() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
+        // Act
         let result = service.link_get_user_state(
             &creator,
             &LinkGetUserStateInput {
@@ -461,6 +481,7 @@ mod tests {
             },
         );
 
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
@@ -472,11 +493,13 @@ mod tests {
 
     #[test]
     fn it_should_error_link_get_user_state_if_action_type_invalid_format() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
+        // Act
         let result = service.link_get_user_state(
             &creator,
             &LinkGetUserStateInput {
@@ -486,6 +509,7 @@ mod tests {
             },
         );
 
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
@@ -497,11 +521,13 @@ mod tests {
 
     #[test]
     fn it_should_error_link_get_user_state_if_user_id_not_found() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator2 = Principal::from_text(random_principal_id()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
+        // Act
         let result = service.link_get_user_state(
             &creator2,
             &LinkGetUserStateInput {
@@ -511,6 +537,7 @@ mod tests {
             },
         );
 
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
@@ -522,12 +549,14 @@ mod tests {
 
     #[test]
     fn it_should_link_get_user_state_if_link_action_not_found() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
-        let _user_wallet = create_user_wallet_feature(&service, &creator_id, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
+        let _user_wallet = create_user_wallet_fixture(&service, &creator_id, &creator_id);
 
+        // Act
         let result = service.link_get_user_state(
             &creator,
             &LinkGetUserStateInput {
@@ -537,6 +566,7 @@ mod tests {
             },
         );
 
+        // Assert
         assert!(result.is_ok());
         let output = result.unwrap();
         assert!(output.is_none());
@@ -544,14 +574,14 @@ mod tests {
 
     #[test]
     fn it_should_error_link_get_user_state_if_link_user_state_not_found() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
-        let _user_wallet = create_user_wallet_feature(&service, &creator_id, &creator_id);
-        let link_action = create_link_action_feature(&service, &link.id, "Use", &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
+        let _user_wallet = create_user_wallet_fixture(&service, &creator_id, &creator_id);
+        let link_action = create_link_action_fixture(&service, &link.id, "Use", &creator_id);
 
-        // Update link action without setting link_user_state
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -561,6 +591,7 @@ mod tests {
         };
         service.link_action_repository.update(updated_link_action);
 
+        // Act
         let result = service.link_get_user_state(
             &creator,
             &LinkGetUserStateInput {
@@ -570,6 +601,7 @@ mod tests {
             },
         );
 
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::HandleLogicError(msg)) = result {
@@ -581,12 +613,13 @@ mod tests {
 
     #[test]
     fn it_should_link_get_user_state_if_link_action_found() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
-        let _user_wallet = create_user_wallet_feature(&service, &creator_id, &creator_id);
-        let link_action = create_link_action_feature(&service, &link.id, "Use", &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
+        let _user_wallet = create_user_wallet_fixture(&service, &creator_id, &creator_id);
+        let link_action = create_link_action_fixture(&service, &link.id, "Use", &creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -596,6 +629,7 @@ mod tests {
         };
         service.link_action_repository.update(updated_link_action);
 
+        // Act
         let result = service.link_get_user_state(
             &creator,
             &LinkGetUserStateInput {
@@ -605,6 +639,7 @@ mod tests {
             },
         );
 
+        // Assert
         assert!(result.is_ok());
         let output = result.unwrap();
         assert!(output.is_some());
@@ -618,11 +653,13 @@ mod tests {
 
     #[test]
     fn it_should_error_link_update_user_state_if_action_type_invalid() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
+        // Act
         let result = service.link_update_user_state(
             &creator,
             &LinkUpdateUserStateInput {
@@ -633,6 +670,7 @@ mod tests {
             },
         );
 
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
@@ -644,11 +682,13 @@ mod tests {
 
     #[test]
     fn it_should_error_link_update_user_state_if_action_type_invalid_format() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
+        // Act
         let result = service.link_update_user_state(
             &creator,
             &LinkUpdateUserStateInput {
@@ -659,6 +699,7 @@ mod tests {
             },
         );
 
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
@@ -670,11 +711,13 @@ mod tests {
 
     #[test]
     fn it_should_error_link_update_user_state_if_user_id_not_found() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator2 = Principal::from_text(random_principal_id()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
 
+        // Act
         let result = service.link_update_user_state(
             &creator2,
             &LinkUpdateUserStateInput {
@@ -685,6 +728,7 @@ mod tests {
             },
         );
 
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
@@ -696,12 +740,14 @@ mod tests {
 
     #[test]
     fn it_should_link_update_user_state_if_goto_invalid() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
-        let _user_wallet = create_user_wallet_feature(&service, &creator_id, &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
+        let _user_wallet = create_user_wallet_fixture(&service, &creator_id, &creator_id);
 
+        // Act
         let result = service.link_update_user_state(
             &creator,
             &LinkUpdateUserStateInput {
@@ -712,6 +758,7 @@ mod tests {
             },
         );
 
+        // Assert
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
@@ -723,14 +770,14 @@ mod tests {
 
     #[test]
     fn it_should_link_update_user_state() {
+        // Arrange
         let service: LinkService<MockIcEnvironment> = LinkService::get_instance();
         let creator_id = random_principal_id();
         let creator = Principal::from_text(creator_id.clone()).unwrap();
-        let link = create_link_feature(&service, &creator_id);
-        let _user_wallet = create_user_wallet_feature(&service, &creator_id, &creator_id);
-        let link_action = create_link_action_feature(&service, &link.id, "Use", &creator_id);
+        let link = create_link_fixture(&service, &creator_id);
+        let _user_wallet = create_user_wallet_fixture(&service, &creator_id, &creator_id);
+        let link_action = create_link_action_fixture(&service, &link.id, "Use", &creator_id);
 
-        // Update link action without setting link_user_state
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -749,6 +796,7 @@ mod tests {
         };
         service.action_repository.update(updated_action);
 
+        // Act
         let result = service.link_update_user_state(
             &creator,
             &LinkUpdateUserStateInput {
@@ -759,6 +807,7 @@ mod tests {
             },
         );
 
+        // Assert
         assert!(result.is_ok());
         let output = result.unwrap();
         assert!(output.is_some());

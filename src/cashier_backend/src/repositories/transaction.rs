@@ -51,7 +51,7 @@ impl TransactionRepository {
 mod tests {
     use super::*;
     use crate::utils::test_utils::random_id_string;
-    use candid::types::number::Nat;
+    use candid::Nat;
     use cashier_backend_types::repository::{
         common::{Asset, Wallet},
         transaction::v2::{
@@ -62,6 +62,7 @@ mod tests {
 
     #[test]
     fn it_should_batch_create_transactions() {
+        // Arrange
         let repo = TransactionRepository::new();
         let transaction_id1 = random_id_string();
         let transaction_id2 = random_id_string();
@@ -99,8 +100,11 @@ mod tests {
             })),
             start_ts: None,
         };
+
+        // Act
         repo.batch_create(vec![transaction1.clone(), transaction2.clone()]);
 
+        // Assert
         let transactions = repo.batch_get(vec![transaction_id1, transaction_id2]);
         assert_eq!(transactions.len(), 2);
         assert_eq!(transactions.first().unwrap(), &transaction1);
@@ -109,6 +113,7 @@ mod tests {
 
     #[test]
     fn it_should_update_a_transaction() {
+        // Arrange
         let repo = TransactionRepository::new();
         let transaction_id1 = random_id_string();
         let transaction1 = Transaction {
@@ -132,7 +137,11 @@ mod tests {
 
         let mut transaction1_updated = transaction1;
         transaction1_updated.state = TransactionState::Processing;
+
+        // Act
         repo.update(transaction1_updated.clone());
+
+        // Assert
         assert_eq!(
             repo.get(&transaction1_updated.id),
             Some(transaction1_updated)
@@ -141,6 +150,7 @@ mod tests {
 
     #[test]
     fn it_should_batch_get_transactions() {
+        // Arrange
         let repo = TransactionRepository::new();
         let transaction_id1 = random_id_string();
         let transaction_id2 = random_id_string();
@@ -180,7 +190,10 @@ mod tests {
         };
         repo.batch_create(vec![transaction1.clone(), transaction2.clone()]);
 
+        // Act
         let transactions = repo.batch_get(vec![transaction_id1, transaction_id2]);
+
+        // Assert
         assert_eq!(transactions.len(), 2);
         assert_eq!(transactions.first().unwrap(), &transaction1);
         assert_eq!(transactions.get(1).unwrap(), &transaction2);
@@ -188,6 +201,7 @@ mod tests {
 
     #[test]
     fn it_should_get_a_transaction() {
+        // Arrange
         let repo = TransactionRepository::new();
         let transaction_id = random_id_string();
         let transaction = Transaction {
@@ -209,14 +223,23 @@ mod tests {
         };
         repo.batch_create(vec![transaction.clone()]);
 
+        // Act
         let retrieved_transaction = repo.get(&transaction.id);
+
+        // Assert
         assert!(retrieved_transaction.is_some());
         assert_eq!(retrieved_transaction.unwrap().id, transaction_id);
     }
 
     #[test]
     fn it_should_create_a_transaction_repository_by_default() {
+        // Arrange
         let repo = TransactionRepository::default();
-        assert!(repo.batch_get(vec!["nonexistent".to_string()]).is_empty());
+
+        // Act
+        let result = repo.batch_get(vec!["nonexistent".to_string()]);
+
+        // Assert
+        assert!(result.is_empty());
     }
 }

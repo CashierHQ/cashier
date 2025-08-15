@@ -38,13 +38,17 @@ mod tests {
 
     #[test]
     fn it_should_create_an_user() {
+        // Arrange
         let repo = UserRepository::new();
         let user = User {
             id: "user1".to_string(),
             email: Some("foo@bar.com".to_string()),
         };
 
+        // Act
         repo.create(user.clone());
+
+        // Assert
         let retrieved_user = repo.get(&user.id);
         assert!(retrieved_user.is_some());
         assert_eq!(retrieved_user.unwrap().id, user.id);
@@ -52,6 +56,7 @@ mod tests {
 
     #[test]
     fn it_should_get_a_user() {
+        // Arrange
         let repo = UserRepository::new();
         let user = User {
             id: "user1".to_string(),
@@ -59,20 +64,28 @@ mod tests {
         };
 
         repo.create(user.clone());
+
+        // Act
         let retrieved_user = repo.get(&user.id);
+
+        // Assert
         assert!(retrieved_user.is_some());
         assert_eq!(retrieved_user.unwrap().id, user.id);
     }
 
     #[test]
     fn it_should_create_a_user_repository_by_default() {
+        // Arrange
         let repo = UserRepository::default();
         let user = User {
             id: "user1".to_string(),
             email: Some("foo@bar.com".to_string()),
         };
 
+        // Act
         repo.create(user.clone());
+
+        // Assert
         let retrieved_user = repo.get(&user.id);
         assert!(retrieved_user.is_some());
         assert_eq!(retrieved_user.unwrap().id, user.id);

@@ -37,6 +37,7 @@ mod tests {
 
     #[test]
     fn it_should_create_an_user_wallet() {
+        // Arrange
         let repo = UserWalletRepository::new();
         let key_id = random_id_string();
         let user_id = random_principal_id();
@@ -45,8 +46,11 @@ mod tests {
         let user_wallet = UserWallet {
             user_id: user_id.clone(),
         };
+
+        // Act
         repo.create(wallet_key.clone(), user_wallet);
 
+        // Assert
         let retrieved_wallet = repo.get(&wallet_key);
         assert!(retrieved_wallet.is_some());
         assert_eq!(retrieved_wallet.unwrap().user_id, user_id);
@@ -54,6 +58,7 @@ mod tests {
 
     #[test]
     fn it_should_get_a_user_wallet() {
+        // Arrange
         let repo = UserWalletRepository::new();
         let key_id = random_id_string();
         let user_id = random_principal_id();
@@ -64,13 +69,17 @@ mod tests {
         };
         repo.create(wallet_key.clone(), user_wallet);
 
+        // Act
         let retrieved_wallet = repo.get(&wallet_key);
+
+        // Assert
         assert!(retrieved_wallet.is_some());
         assert_eq!(retrieved_wallet.unwrap().user_id, user_id);
     }
 
     #[test]
     fn it_should_create_a_user_wallet_repository_by_default() {
+        // Arrange
         let repo = UserWalletRepository::default();
         let key_id = random_id_string();
         let user_id = random_principal_id();
@@ -78,8 +87,11 @@ mod tests {
         let user_wallet = UserWallet {
             user_id: user_id.clone(),
         };
+
+        // Act
         repo.create(wallet_key.clone(), user_wallet);
 
+        // Assert
         let retrieved_wallet = repo.get(&wallet_key);
         assert!(retrieved_wallet.is_some());
         assert_eq!(retrieved_wallet.unwrap().user_id, user_id);
