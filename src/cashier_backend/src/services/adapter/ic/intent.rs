@@ -13,17 +13,14 @@ use cashier_backend_types::{
 };
 use uuid::Uuid;
 
-use crate::{
-    services::adapter::IntentAdapter,
-    utils::{helper::to_memo},
-};
+use crate::{services::adapter::IntentAdapter, utils::helper::to_memo};
 
 #[derive(Clone)]
 pub struct IcIntentAdapter;
 
 impl IcIntentAdapter {
     pub fn new() -> Self {
-        Self { }
+        Self {}
     }
 
     fn assemble_icrc1_wallet_transfer(
@@ -170,7 +167,11 @@ impl IcIntentAdapter {
 }
 
 impl IntentAdapter for IcIntentAdapter {
-    fn intent_to_transactions(&self, ts: u64, intent: &Intent) -> Result<Vec<Transaction>, CanisterError> {
+    fn intent_to_transactions(
+        &self,
+        ts: u64,
+        intent: &Intent,
+    ) -> Result<Vec<Transaction>, CanisterError> {
         match (intent.task.clone(), intent.r#type.clone()) {
             (IntentTask::TransferWalletToLink, IntentType::Transfer(transfer_intent)) => {
                 self.assemble_icrc1_wallet_transfer(ts, transfer_intent)

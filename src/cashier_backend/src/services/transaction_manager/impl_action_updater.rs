@@ -48,7 +48,11 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionUpdate
     ///
     /// # Returns
     /// * `Result<ActionDto, CanisterError>` - The updated action data or an error
-    async fn update_action(&mut self, caller: Principal, args: UpdateActionArgs) -> Result<ActionDto, CanisterError> {
+    async fn update_action(
+        &mut self,
+        caller: Principal,
+        args: UpdateActionArgs,
+    ) -> Result<ActionDto, CanisterError> {
         let action_data = self
             .action_service
             .get_action_data(&args.action_id)

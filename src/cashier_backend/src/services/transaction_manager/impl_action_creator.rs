@@ -40,7 +40,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> ActionCreator<E>
             let chain = intent.chain.clone();
             // assemble txs
 
-            let txs = self.intent_adapter.intent_to_transactions(&chain, ts, intent)?;
+            let txs = self
+                .intent_adapter
+                .intent_to_transactions(&chain, ts, intent)?;
             intent_tx_hashmap.insert(intent.id.clone(), txs.clone());
 
             // store tx ids in hashmap
