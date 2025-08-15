@@ -1,29 +1,28 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use super::USER_LINK_STORE;
 use cashier_backend_types::{
     repository::{keys::UserLinkKey, user_link::v1::UserLink},
     service::link::{PaginateInput, PaginateResult, PaginateResultMetadata},
 };
+use ic_mple_log::service::Storage;
+use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+
+pub type UserLinkRepositoryStorage =
+    StableBTreeMap<String, UserLink, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
+pub struct UserLinkRepository<S: Storage<UserLinkRepositoryStorage>> {storage: S,}
 
-pub struct UserLinkRepository {}
-
-impl Default for UserLinkRepository {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl UserLinkRepository {
-    pub fn new() -> Self {
-        Self {}
+impl <S: Storage<UserLinkRepositoryStorage>> UserLinkRepository<S> {
+    pub fn new(storage: S) -> Self {
+        Self {
+            storage,
+        }
     }
 
-    pub fn create(&self, user_link: UserLink) {
-        USER_LINK_STORE.with_borrow_mut(|store| {
+    pub fn create(&mut self, user_link: UserLink) {
+        self.storage.with_borrow_mut(|store| {
             let id: UserLinkKey = UserLinkKey {
                 user_id: user_link.user_id.clone(),
                 link_id: user_link.link_id.clone(),
@@ -32,12 +31,12 @@ impl UserLinkRepository {
         });
     }
 
-    pub fn delete(&self, id: UserLink) {
+    pub fn delete(&mut self, id: UserLink) {
         let id = UserLinkKey {
             user_id: id.user_id.clone(),
             link_id: id.link_id,
         };
-        USER_LINK_STORE.with_borrow_mut(|store| store.remove(&id.to_str()));
+        self.storage.with_borrow_mut(|store| store.remove(&id.to_str()));
     }
 
     pub fn get_links_by_user_id(
@@ -45,7 +44,7 @@ impl UserLinkRepository {
         user_id: &str,
         paginate: &PaginateInput,
     ) -> PaginateResult<UserLink> {
-        USER_LINK_STORE.with_borrow(|store| {
+        self.storage.with_borrow(|store| {
             let user_link_key = UserLinkKey {
                 user_id: user_id.to_string(),
                 link_id: "".to_string(),
@@ -84,12 +83,12 @@ impl UserLinkRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::*;
+    use crate::{repositories::{tests::TestRepositories, Repositories}, utils::test_utils::*};
 
     #[test]
     fn it_should_create_an_user_link() {
         // Arrange
-        let repo = UserLinkRepository::new();
+        let mut repo = TestRepositories::new().user_link();
         let user_id = random_principal_id();
         let link_id = random_id_string();
         let user_link = UserLink {
@@ -110,7 +109,7 @@ mod tests {
     #[test]
     fn it_should_delete_a_user_link() {
         // Arrange
-        let repo = UserLinkRepository::new();
+        let mut repo = TestRepositories::new().user_link();
         let user_id = random_principal_id();
         let link_id = random_id_string();
 
@@ -132,7 +131,7 @@ mod tests {
     #[test]
     fn it_should_get_links_by_user_id() {
         // Arrange
-        let repo = UserLinkRepository::new();
+        let mut repo = TestRepositories::new().user_link();
         let user_id = random_principal_id();
         let link_id1 = random_id_string();
         let link_id2 = random_id_string();
@@ -157,15 +156,4 @@ mod tests {
         assert!(links.data.iter().any(|l| l.link_id == link_id2));
     }
 
-    #[test]
-    fn it_should_create_a_user_link_repository_by_default() {
-        // Arrange
-        let repo = UserLinkRepository::default();
-
-        // Act
-        let result = repo.get_links_by_user_id("user1", &PaginateInput::default());
-
-        // Assert
-        assert!(result.data.is_empty());
-    }
 }

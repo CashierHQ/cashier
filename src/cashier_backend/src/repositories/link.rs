@@ -1,48 +1,46 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use super::LINK_STORE;
 use cashier_backend_types::repository::{keys::LinkKey, link::v1::Link};
+use ic_mple_log::service::Storage;
+use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableBTreeMap};
+
+pub type LinkRepositoryStorage =
+    StableBTreeMap<LinkKey, Link, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
+pub struct LinkRepository<S: Storage<LinkRepositoryStorage>> {storage: S,}
 
-pub struct LinkRepository {}
-
-impl Default for LinkRepository {
-    fn default() -> Self {
-        Self::new()
+impl <S: Storage<LinkRepositoryStorage>> LinkRepository<S> {
+    pub fn new(storage: S) -> Self {
+        Self {
+            storage,
+        }
     }
-}
-
-impl LinkRepository {
-    pub fn new() -> Self {
-        Self {}
-    }
-
-    pub fn create(&self, link: Link) {
-        LINK_STORE.with_borrow_mut(|store| {
+    pub fn create(&mut self, link: Link) {
+        self.storage.with_borrow_mut(|store| {
             let id: LinkKey = link.id.clone();
             store.insert(id, link);
         });
     }
 
     pub fn get(&self, id: &LinkKey) -> Option<Link> {
-        LINK_STORE.with_borrow(|store| store.get(id))
+        self.storage.with_borrow(|store| store.get(id))
     }
 
     pub fn get_batch(&self, ids: Vec<LinkKey>) -> Vec<Link> {
-        LINK_STORE.with_borrow(|store| ids.into_iter().filter_map(|id| store.get(&id)).collect())
+        self.storage.with_borrow(|store| ids.into_iter().filter_map(|id| store.get(&id)).collect())
     }
 
-    pub fn update(&self, link: Link) {
-        LINK_STORE.with_borrow_mut(|store| {
+    pub fn update(&mut self, link: Link) {
+        self.storage.with_borrow_mut(|store| {
             let id: LinkKey = link.id.clone();
             store.insert(id, link);
         });
     }
 
-    pub fn delete(&self, id: &LinkKey) {
-        LINK_STORE.with_borrow_mut(|store| {
+    pub fn delete(&mut self, id: &LinkKey) {
+        self.storage.with_borrow_mut(|store| {
             store.remove(id);
         });
     }
@@ -51,13 +49,13 @@ impl LinkRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::*;
+    use crate::{repositories::{tests::TestRepositories, Repositories}, utils::test_utils::*};
     use cashier_backend_types::repository::link::v1::{LinkState, LinkType};
 
     #[test]
     fn it_should_create_a_link() {
         // Arrange
-        let repo = LinkRepository::new();
+        let mut repo = TestRepositories::new().link();
         let link_id = random_id_string();
         let creator_id = random_principal_id();
         let link = Link {
@@ -88,7 +86,7 @@ mod tests {
     #[test]
     fn it_should_update_a_link() {
         // Arrange
-        let repo = LinkRepository::new();
+        let mut repo = TestRepositories::new().link();
         let link_id = random_id_string();
         let creator_id1 = random_principal_id();
         let creator_id2 = random_principal_id();
@@ -137,7 +135,7 @@ mod tests {
     #[test]
     fn it_should_delete_a_link() {
         // Arrange
-        let repo = LinkRepository::new();
+        let mut repo = TestRepositories::new().link();
         let link_id = random_id_string();
         let creator_id = random_principal_id();
         let link = Link {
@@ -167,7 +165,7 @@ mod tests {
     #[test]
     fn it_should_get_batch_of_links() {
         // Arrange
-        let repo = LinkRepository::new();
+        let mut repo = TestRepositories::new().link();
         let link_id1 = random_id_string();
         let link_id2 = random_id_string();
         let creator1 = random_principal_id();
@@ -217,7 +215,7 @@ mod tests {
     #[test]
     fn it_should_get_a_link() {
         // Arrange
-        let repo = LinkRepository::new();
+        let mut repo = TestRepositories::new().link();
         let link_id = random_id_string();
         let creator_id = random_principal_id();
         let link = Link {
@@ -244,12 +242,4 @@ mod tests {
         assert_eq!(fetched_link.unwrap().id, link_id);
     }
 
-    #[test]
-    fn it_should_create_a_link_repository_by_default() {
-        // Act
-        let repo = LinkRepository::default();
-
-        // Assert
-        assert!(repo.get(&"default_link".to_string()).is_none());
-    }
 }
