@@ -13,9 +13,9 @@ use cashier_backend_types::{
     service::link::{PaginateInput, PaginateResult},
 };
 use log::error;
-use std::str::FromStr;
+use std::{rc::Rc, str::FromStr};
 
-use crate::services::link::traits::LinkValidation;
+use crate::{repositories::Repositories, services::link::traits::LinkValidation};
 use crate::{
     repositories::{
         self, action::ActionRepository, link_action::LinkActionRepository,
@@ -28,38 +28,39 @@ use crate::{
     utils::{icrc::IcrcService, runtime::IcEnvironment},
 };
 
-pub struct LinkService<E: IcEnvironment + Clone> {
+pub struct LinkService<E: IcEnvironment + Clone, R: Repositories> {
     // LinkService fields go here
-    pub link_repository: repositories::link::LinkRepository,
-    pub link_action_repository: LinkActionRepository,
-    pub action_repository: ActionRepository,
-    pub action_service: ActionService,
+    pub link_repository: repositories::link::LinkRepository<R::Link>,
+    pub link_action_repository: LinkActionRepository<R::LinkAction>,
+    pub action_repository: ActionRepository<R::Action>,
+    pub action_service: ActionService<R>,
     pub icrc_service: IcrcService,
-    pub user_wallet_repository: UserWalletRepository,
-    pub user_link_repository: repositories::user_link::UserLinkRepository,
+    pub user_wallet_repository: UserWalletRepository<R::UserWallet>,
+    pub user_link_repository: repositories::user_link::UserLinkRepository<R::UserLink>,
     pub ic_env: E,
-    pub request_lock_service: RequestLockService,
-    pub user_service: UserService,
+    pub request_lock_service: RequestLockService<R>,
+    pub user_service: UserService<R>,
     pub icrc_batch_service: IcrcBatchService,
-    pub tx_manager_service: TransactionManagerService<E>,
+    pub tx_manager_service: TransactionManagerService<E, R>,
 }
 
 #[allow(clippy::too_many_arguments)]
-impl<E: IcEnvironment + Clone> LinkService<E> {
-    pub fn get_instance() -> Self {
+impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
+
+    pub fn new(repo: Rc<R>, ic_env: E) -> Self {
         Self {
-            link_repository: repositories::link::LinkRepository::new(),
-            link_action_repository: LinkActionRepository::new(),
-            action_repository: ActionRepository::new(),
-            action_service: ActionService::get_instance(),
+            link_repository: repo.link(),
+            link_action_repository: repo.link_action(),
+            action_repository: repo.action(),
+            action_service: ActionService::new(&repo),
             icrc_service: IcrcService::new(),
-            user_wallet_repository: UserWalletRepository::new(),
-            user_link_repository: repositories::user_link::UserLinkRepository::new(),
-            ic_env: E::new(),
-            request_lock_service: RequestLockService::get_instance(),
-            user_service: UserService::get_instance(),
-            icrc_batch_service: IcrcBatchService::get_instance(),
-            tx_manager_service: TransactionManagerService::get_instance(),
+            user_wallet_repository: repo.user_wallet(),
+            user_link_repository: repo.user_link(),
+            request_lock_service: RequestLockService::new(&repo),
+            user_service: UserService::new(&repo),
+            icrc_batch_service: IcrcBatchService::new(),
+            tx_manager_service: TransactionManagerService::new(repo, ic_env.clone()),
+            ic_env,
         }
     }
 
@@ -185,7 +186,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     /// Updates link properties after an action completes
     /// Returns true if link properties were updated, false otherwise
     pub fn update_link_use_counter(
-        &self,
+        &mut self,
         link_id: &str,
         action_id: &str,
     ) -> Result<bool, CanisterError> {
@@ -269,7 +270,7 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
     }
 
     pub fn link_handle_tx_update(
-        &self,
+        &mut self,
         previous_state: &ActionState,
         current_state: &ActionState,
         link_id: &str,

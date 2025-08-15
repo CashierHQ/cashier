@@ -218,7 +218,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionUpdate
         })?;
 
         // Pass the action state info to link_handle_tx_update
-        LinkService::<E>::get_instance().link_handle_tx_update(
+        LinkService::new(self.repo.clone(), self.ic_env.clone()).link_handle_tx_update(
             &roll_up_resp.previous_state,
             &roll_up_resp.current_state,
             &roll_up_resp.link_id,
