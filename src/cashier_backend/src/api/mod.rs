@@ -9,7 +9,7 @@ pub mod guard;
 pub mod icrc;
 pub mod init_and_upgrade;
 pub mod link;
-mod state;
+pub mod state;
 pub mod user;
 
 use cashier_backend_types::dto::action::*;

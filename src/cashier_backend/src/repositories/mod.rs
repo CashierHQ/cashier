@@ -3,7 +3,9 @@
 
 use std::cell::RefCell;
 use std::thread::LocalKey;
+use std::time::Duration;
 
+use cashier_backend_types::service::rate_limit::RateLimitStateStoreRunetime;
 use ic_mple_log::LogSettings;
 use ic_mple_log::service::{LoggerServiceStorage, Storage};
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
@@ -18,6 +20,7 @@ use cashier_backend_types::repository::{
     request_lock::RequestLock, transaction::v2::Transaction as TransactionV2, user::v1::User,
     user_action::v1::UserAction, user_link::v1::UserLink, user_wallet::v1::UserWallet,
 };
+use rate_limit::service::{RateLimitState, ServiceSettings};
 
 use crate::repositories::action::{ActionRepository, ActionRepositoryStorage};
 use crate::repositories::action_intent::{ActionIntentRepository, ActionIntentRepositoryStorage};
@@ -204,6 +207,11 @@ thread_local! {
                 LogSettings::default(),
             )
         );
+
+    // Thread-local storage for the rate limit state
+    pub static RATE_LIMIT_STATE: RefCell<RateLimitStateStoreRunetime> = RefCell::new({
+        RateLimitState::new(ServiceSettings::new(Duration::from_secs(60 * 60)))
+    });
 
     static USER_STORE: RefCell<StableBTreeMap<
         UserKey,
