@@ -5,7 +5,7 @@ pub mod service;
 pub use algorithm::types::{
     RateLimitError, RateLimitResult, VerboseRateLimitError, VerboseRateLimitResult,
 };
-pub use service::{RateLimitConfig, RateLimitService};
+pub use service::RateLimitService;
 
 #[cfg(test)]
 pub mod test_utils;

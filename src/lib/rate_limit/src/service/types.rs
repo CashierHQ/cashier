@@ -1,28 +1,6 @@
 use std::{collections::HashMap, time::Duration};
 
-use crate::precision::Precision;
-
-/// Configuration for rate limiting a specific method
-#[derive(Debug)]
-pub struct RateLimitConfig<P: Precision> {
-    /// Maximum number of tokens that can be acquired in the time window
-    pub capacity: u64,
-    /// Time window size in ticks (depends on precision)
-    pub window_size: u64,
-    // Phantom data to ensure that the precision is the same for all methods
-    _phantom: std::marker::PhantomData<P>,
-}
-
-impl<P: Precision> RateLimitConfig<P> {
-    pub fn new(capacity: u64, window_size_duration: Duration) -> Self {
-        let window_size = P::to_ticks(window_size_duration);
-        Self {
-            capacity,
-            window_size,
-            _phantom: std::marker::PhantomData,
-        }
-    }
-}
+use crate::{algorithm::types::RateLimitCore, precision::Precision};
 
 /// Service-wide settings for rate limiting
 #[derive(Debug, Default, Clone)]
@@ -43,18 +21,20 @@ impl<P: Precision> ServiceSettings<P> {
     }
 }
 
-pub struct LimiterEntry {
-    counter: crate::algorithm::fixed_window_counter::FixedWindowCounterCore,
+/// Entry in the rate limiting state for a specific method and identifier
+/// R: The core rate limiting algorithm implementation (must implement `RateLimitCore`)
+pub struct LimiterEntry<R>
+where
+    R: RateLimitCore,
+{
+    counter: R,
     created_time: u64,
     updated_time: u64,
 }
 
-impl LimiterEntry {
+impl<R: RateLimitCore> LimiterEntry<R> {
     /// Create a new limiter entry
-    pub fn new(
-        counter: crate::algorithm::fixed_window_counter::FixedWindowCounterCore,
-        timestamp_ticks: u64,
-    ) -> Self {
+    pub fn new(counter: R, timestamp_ticks: u64) -> Self {
         Self {
             counter,
             created_time: timestamp_ticks,
@@ -63,14 +43,12 @@ impl LimiterEntry {
     }
 
     /// Get a reference to the counter
-    pub fn counter(&self) -> &crate::algorithm::fixed_window_counter::FixedWindowCounterCore {
+    pub fn counter(&self) -> &R {
         &self.counter
     }
 
     /// Get a mutable reference to the counter
-    pub fn counter_mut(
-        &mut self,
-    ) -> &mut crate::algorithm::fixed_window_counter::FixedWindowCounterCore {
+    pub fn counter_mut(&mut self) -> &mut R {
         &mut self.counter
     }
 
@@ -101,22 +79,27 @@ pub enum ServiceError {
 
 /// Grouped state for rate limiting service
 /// This groups the three main components into a single struct for cleaner thread-local storage
-pub struct RateLimitState<E, P>
+/// R: The core rate limiting algorithm implementation (must implement `RateLimitCore`)
+/// I: The identifier type for entities being rate limited (e.g., user ID, IP address)
+/// P: The precision type for time calculations (must implement `Precision`)
+pub struct RateLimitState<R, I, P>
 where
-    E: std::cmp::Eq + std::hash::Hash + Clone,
+    R: RateLimitCore,
+    I: std::cmp::Eq + std::hash::Hash + Clone,
     P: Precision,
 {
     /// Configuration for each method (set once during initialization)
-    pub method_configs: HashMap<String, RateLimitConfig<P>>,
+    pub method_configs: HashMap<String, R::Config>,
     /// Runtime tracking for each (identifier, method) pair (created on-demand)
-    pub runtime_limiters: HashMap<(E, String), LimiterEntry>,
+    pub runtime_limiters: HashMap<(I, String), LimiterEntry<R>>,
     /// Service-wide settings
     pub settings: ServiceSettings<P>,
 }
 
-impl<E, P> RateLimitState<E, P>
+impl<R, I, P> RateLimitState<R, I, P>
 where
-    E: std::cmp::Eq + std::hash::Hash + Clone,
+    R: RateLimitCore,
+    I: std::cmp::Eq + std::hash::Hash + Clone,
     P: Precision,
 {
     /// Create a new empty rate limit state with custom settings

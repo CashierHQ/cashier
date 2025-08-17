@@ -4,7 +4,8 @@
 use cashier_backend_types::init::CashierBackendInitData;
 use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::info;
-use rate_limit::RateLimitConfig;
+use rate_limit::algorithm::fixed_window_counter::FixedWindowCounterConfig;
+use rate_limit::precision::Nanos;
 use std::time::Duration;
 
 use crate::api::state::{CanisterState, get_state};
@@ -19,19 +20,19 @@ fn init_rate_limit_config(state: &mut CanisterState) {
     let configs = [
         (
             "create_link",
-            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
+            FixedWindowCounterConfig::new::<Nanos>(10, Duration::from_secs(60 * 10)),
         ), // 10 requests per 10 minutes
         (
             "create_action",
-            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
+            FixedWindowCounterConfig::new::<Nanos>(10, Duration::from_secs(60 * 10)),
         ), // 10 requests per 10 minutes
         (
             "process_action",
-            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
+            FixedWindowCounterConfig::new::<Nanos>(10, Duration::from_secs(60 * 10)),
         ), // 10 requests per 10 minutes
         (
             "update_action",
-            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
+            FixedWindowCounterConfig::new::<Nanos>(10, Duration::from_secs(60 * 10)),
         ), // 10 requests per 10 minutes
     ];
     for (name, config) in configs {

@@ -1,13 +1,12 @@
 use std::{cell::RefCell, thread::LocalKey, time::Duration};
 
 use cashier_backend_types::service::rate_limit::{
-    RateLimitIdentifier, RateLimitPrecision, RateLimitStateStore,
+    RateLimitIdentifier, RateLimitPrecision, RateLimitStateStore, RateLimitStateStoreRunetime,
 };
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 use rate_limit::{
     RateLimitService,
     algorithm::fixed_window_counter::FixedWindowCounterCore,
-    precision::Nanos,
     service::{RateLimitState, ServiceSettings},
 };
 
@@ -15,7 +14,7 @@ use crate::repositories::LOGGER_SERVICE_STORE;
 
 thread_local! {
     // Thread-local storage for the rate limit state
-    pub static RATE_LIMIT_STATE: RefCell<RateLimitState<RateLimitIdentifier, Nanos>> = RefCell::new({
+    pub static RATE_LIMIT_STATE: RefCell<RateLimitStateStoreRunetime> = RefCell::new({
         RateLimitState::new(ServiceSettings::new(Duration::from_secs(60 * 60)))
     });
 }

@@ -1,6 +1,9 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, time::Duration};
 
-use crate::algorithm::types::{RateLimitCore, RateLimitError, RateLimitResult};
+use crate::{
+    algorithm::types::{RateLimitCore, RateLimitError, RateLimitResult},
+    precision::Precision,
+};
 
 /// Core implementation of the fixed window counter rate limiting algorithm.
 ///
@@ -70,38 +73,27 @@ impl FixedWindowCounterCore {
     }
 }
 
-/// Configuration structure for creating a `FixedWindowCounterCore` limiter.
+// /// Configuration for rate limiting a specific method
 #[derive(Debug, Clone)]
-pub struct FixedWindowCounterCoreConfig {
-    /// Maximum number of actions allowed per window.
+pub struct FixedWindowCounterConfig {
+    /// Maximum number of tokens that can be acquired in the time window
     pub capacity: u64,
-    /// Number of that define the fixed window length.
+    /// Time window size in ticks (depends on precision)
     pub window_size: u64,
 }
 
-impl FixedWindowCounterCoreConfig {
-    /// Creates a new configuration instance.
-    pub fn new(capacity: u64, window_size_tick: u64) -> Self {
-        Self {
+impl FixedWindowCounterConfig {
+    pub fn new<P: Precision>(capacity: u64, window_size_duration: Duration) -> Self {
+        let window_size = P::to_ticks(window_size_duration);
+        FixedWindowCounterConfig {
             capacity,
-            window_size: window_size_tick,
+            window_size,
         }
     }
 }
 
-impl From<FixedWindowCounterCoreConfig> for FixedWindowCounterCore {
-    /// Converts a `FixedWindowCounterCoreConfig` into a `FixedWindowCounterCore` instance.
-    ///
-    /// # Panics
-    /// This method will panic if either `capacity` or `window_size_tick` is zero.
-    /// It is intended for use with trusted or pre-validated inputs.
-    #[inline(always)]
-    fn from(config: FixedWindowCounterCoreConfig) -> Self {
-        FixedWindowCounterCore::new(config.capacity, config.window_size)
-    }
-}
-
 impl RateLimitCore for FixedWindowCounterCore {
+    type Config = FixedWindowCounterConfig;
     /// Attempts to acquire tokens at the given tick with detailed diagnostics.
     ///
     /// Returns detailed error information that includes additional context, such as
@@ -218,13 +210,36 @@ impl RateLimitCore for FixedWindowCounterCore {
     fn capacity_remaining_or_0(&self, ticks: u64) -> u64 {
         self.capacity_remaining(ticks).unwrap_or(0)
     }
+
+    // Create core from config (or however your algorithm initializes)
+    fn new_from_config(cfg: &Self::Config) -> Self {
+        FixedWindowCounterCore::new(cfg.capacity, cfg.window_size)
+    }
+
+    // Validate the configuration.
+    fn is_valid_config(cfg: &Self::Config) -> Result<(), RateLimitError> {
+        if cfg.capacity == 0 {
+            return Err(RateLimitError::InvalidConfiguration {
+                message: "capacity must be greater than 0".to_string(),
+            });
+        }
+        if cfg.window_size == 0 {
+            return Err(RateLimitError::InvalidConfiguration {
+                message: "window_size must be greater than 0".to_string(),
+            });
+        }
+        Ok(())
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::RateLimitError;
     use crate::algorithm::types::RateLimitCore;
-    use crate::{algorithm::fixed_window_counter::FixedWindowCounterCore, test_utils::Time};
+    use crate::{
+        algorithm::fixed_window_counter::{FixedWindowCounterConfig, FixedWindowCounterCore},
+        test_utils::Time,
+    };
 
     #[test]
     #[should_panic(expected = "capacity must be greater than 0")]
@@ -465,5 +480,24 @@ mod tests {
         // Assert
         assert_eq!(remaining_1, 0);
         assert_eq!(remaining_2, 7);
+    }
+
+    #[test]
+    fn test_new_from_config_creates_equivalent_core() {
+        // Arrange
+        let cfg = FixedWindowCounterConfig {
+            capacity: 10,
+            window_size: 60,
+        };
+
+        // Act
+        let core_from_cfg = FixedWindowCounterCore::new_from_config(&cfg);
+        let core_manual = FixedWindowCounterCore::new(cfg.capacity, cfg.window_size);
+        let time = Time::init();
+        let now = time.now();
+
+        // Assert - both cores should allow acquiring up to configured capacity
+        assert!(core_from_cfg.try_acquire_at(now, 10).is_ok());
+        assert!(core_manual.try_acquire_at(now, 10).is_ok());
     }
 }

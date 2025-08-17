@@ -1,5 +1,5 @@
 pub mod types;
-pub use types::{LimiterEntry, RateLimitConfig, RateLimitState, ServiceError, ServiceSettings};
+pub use types::{LimiterEntry, RateLimitState, ServiceError, ServiceSettings};
 
 use ic_mple_utils::store::Storage;
 
@@ -15,7 +15,7 @@ pub struct RateLimitService<I, S, P, R>
 where
     I: std::cmp::Eq + std::hash::Hash + Clone, // Identifier type
     P: Precision,                              // Precision for time
-    S: Storage<RateLimitState<I, P>>,          // Storage backend
+    S: Storage<RateLimitState<R, I, P>>,       // Storage backend
     R: RateLimitCore,                          // Rate limiting algorithm core
 {
     storage: S,
@@ -27,7 +27,7 @@ where
 impl<I, S, P, R> RateLimitService<I, S, P, R>
 where
     I: std::cmp::Eq + std::hash::Hash + Clone,
-    S: Storage<RateLimitState<I, P>>,
+    S: Storage<RateLimitState<R, I, P>>,
     P: Precision + Clone,
     R: RateLimitCore,
 {
@@ -50,22 +50,11 @@ where
     }
 
     /// Add a rate limit configuration for a method
-    pub fn add_config(
-        &mut self,
-        method: &str,
-        config: RateLimitConfig<P>,
-    ) -> Result<(), ServiceError> {
-        // Validate configuration
-        if config.capacity == 0 {
-            return Err(ServiceError::InvalidConfiguration {
-                message: "Capacity must be greater than 0".to_string(),
-            });
-        }
-        if config.window_size == 0 {
-            return Err(ServiceError::InvalidConfiguration {
-                message: "Window size must be greater than 0".to_string(),
-            });
-        }
+    pub fn add_config(&mut self, method: &str, config: R::Config) -> Result<(), ServiceError> {
+        // Validate the configuration
+        R::is_valid_config(&config).map_err(|e| ServiceError::InvalidConfiguration {
+            message: e.to_string(),
+        })?;
 
         self.storage.with_borrow_mut(|state| {
             state.method_configs.insert(method.to_string(), config);
@@ -80,39 +69,36 @@ where
         method: &str,
         duration: std::time::Duration,
     ) -> Result<(), RateLimitError> {
-        self.storage.with_borrow_mut(|state| {
-            let timestamp_ticks = P::to_ticks(duration);
-            let key = (identifier.clone(), method.to_string());
+        self.storage
+            .with_borrow_mut(|state: &mut RateLimitState<R, I, P>| {
+                let timestamp_ticks = P::to_ticks(duration);
+                let key = (identifier.clone(), method.to_string());
 
-            // If limiter doesn't exist, create it using the method's configuration
-            if !state.runtime_limiters.contains_key(&key) {
-                let config =
-                    state
-                        .method_configs
-                        .get(method)
-                        .ok_or(RateLimitError::BeyondCapacity {
-                            acquiring: 1,
-                            capacity: 0,
-                        })?;
+                // If limiter doesn't exist, create it using the method's configuration
+                if !state.runtime_limiters.contains_key(&key) {
+                    let config = state.method_configs.get(method).ok_or(
+                        RateLimitError::MethodNotConfigured {
+                            method: method.to_string(),
+                        },
+                    )?;
 
-                let counter_config =
-                    crate::algorithm::fixed_window_counter::FixedWindowCounterCoreConfig::new(
-                        config.capacity,
-                        config.window_size,
-                    );
-                let counter = crate::algorithm::fixed_window_counter::FixedWindowCounterCore::from(
-                    counter_config,
-                );
-                let limiter = LimiterEntry::new(counter, timestamp_ticks);
-                state.runtime_limiters.insert(key.clone(), limiter);
-            }
+                    R::is_valid_config(config).map_err(|e| {
+                        RateLimitError::InvalidConfiguration {
+                            message: e.to_string(),
+                        }
+                    })?;
 
-            let limiter_entry = state.runtime_limiters.get_mut(&key).unwrap();
-            limiter_entry.touch(timestamp_ticks);
-            limiter_entry
-                .counter_mut()
-                .try_acquire_at(timestamp_ticks, 1)
-        })
+                    let counter = R::new_from_config(config);
+                    let limiter: LimiterEntry<R> = LimiterEntry::new(counter, timestamp_ticks);
+                    state.runtime_limiters.insert(key.clone(), limiter);
+                }
+
+                let limiter_entry = state.runtime_limiters.get_mut(&key).unwrap();
+                limiter_entry.touch(timestamp_ticks);
+                limiter_entry
+                    .counter_mut()
+                    .try_acquire_at(timestamp_ticks, 1)
+            })
     }
 
     /// Try to acquire multiple tokens
@@ -135,14 +121,11 @@ where
                     },
                 )?;
 
-                let counter_config =
-                    crate::algorithm::fixed_window_counter::FixedWindowCounterCoreConfig::new(
-                        config.capacity,
-                        config.window_size,
-                    );
-                let counter = crate::algorithm::fixed_window_counter::FixedWindowCounterCore::from(
-                    counter_config,
-                );
+                R::is_valid_config(config).map_err(|e| RateLimitError::InvalidConfiguration {
+                    message: e.to_string(),
+                })?;
+
+                let counter = R::new_from_config(config);
                 let timestamped_counter = LimiterEntry::new(counter, timestamp_ticks);
                 state
                     .runtime_limiters
@@ -255,6 +238,32 @@ mod tests {
         }
     }
 
+    // Type alias for the rate limit configuration
+    type RateLimitConfig = <FixedWindowCounterCore as RateLimitCore>::Config;
+
+    // Type aliases for the rate limit state and service in nanos
+    type RateLimitStateNanoRuntime = RateLimitState<FixedWindowCounterCore, TestIdentifier, Nanos>;
+
+    /// Type alias for the rate limit state with Millis precision
+    type RateLimitStateMillisRuntime =
+        RateLimitState<FixedWindowCounterCore, TestIdentifier, Millis>;
+
+    /// Type alias for the rate limit service with runtime state and nanos precision
+    type RateLimitServiceRuntime = RateLimitService<
+        TestIdentifier,
+        OwnedStorage<RateLimitStateNanoRuntime>,
+        Nanos,
+        FixedWindowCounterCore,
+    >;
+
+    /// Type alias for the rate limit service with runtime state and millis precision
+    type RateLimitServiceMillisRuntime = RateLimitService<
+        TestIdentifier,
+        OwnedStorage<RateLimitStateMillisRuntime>,
+        Millis,
+        FixedWindowCounterCore,
+    >;
+
     /// Thread-local storage implementation for testing
     struct ThreadLocalStorage<T> {
         data: RefCell<T>,
@@ -290,22 +299,34 @@ mod tests {
 
     fn get_service() -> RateLimitService<
         TestIdentifier,
-        OwnedStorage<RateLimitState<TestIdentifier, Nanos>>,
+        OwnedStorage<RateLimitStateNanoRuntime>,
         Nanos,
         FixedWindowCounterCore,
     > {
-        let mut state: RateLimitState<TestIdentifier, Nanos> = RateLimitState::new(get_settings());
+        let mut state: RateLimitStateNanoRuntime = RateLimitStateNanoRuntime::new(get_settings());
+
+        let window_size = Nanos::to_ticks(Duration::from_secs(60 * 10));
+
         state.method_configs.insert(
             "test".to_string(),
-            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
+            RateLimitConfig {
+                capacity: 10,
+                window_size,
+            },
         );
         state.method_configs.insert(
             "create_action".to_string(),
-            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
+            RateLimitConfig {
+                capacity: 10,
+                window_size,
+            },
         );
         state.method_configs.insert(
             "add_token".to_string(),
-            RateLimitConfig::new(60, Duration::from_secs(60 * 10)),
+            RateLimitConfig {
+                capacity: 60,
+                window_size,
+            },
         );
         let storage = OwnedStorage::new(state);
         RateLimitService::new(storage)
@@ -318,13 +339,13 @@ mod tests {
         // Arrange
         let delete_threshold = Duration::from_secs(3600); // 1 hour
         let settings = ServiceSettings::new(delete_threshold);
-        let state: RateLimitState<TestIdentifier, Nanos> = RateLimitState::new(settings);
+        let state: RateLimitStateNanoRuntime = RateLimitStateNanoRuntime::new(settings);
         let storage = OwnedStorage::new(state);
 
         // Act
         let service: RateLimitService<
             TestIdentifier,
-            OwnedStorage<RateLimitState<TestIdentifier, Nanos>>,
+            OwnedStorage<RateLimitStateNanoRuntime>,
             Nanos,
             FixedWindowCounterCore,
         > = RateLimitService::new(storage);
@@ -353,13 +374,13 @@ mod tests {
         // Arrange
         let zero_threshold = Duration::from_secs(0);
         let settings = ServiceSettings::new(zero_threshold);
-        let state: RateLimitState<TestIdentifier, Nanos> = RateLimitState::new(settings);
+        let state: RateLimitStateNanoRuntime = RateLimitStateNanoRuntime::new(settings);
         let storage = OwnedStorage::new(state);
 
         // Act
         let service: RateLimitService<
             TestIdentifier,
-            OwnedStorage<RateLimitState<TestIdentifier, Nanos>>,
+            OwnedStorage<RateLimitStateNanoRuntime>,
             Nanos,
             FixedWindowCounterCore,
         > = RateLimitService::new(storage);
@@ -388,16 +409,11 @@ mod tests {
     fn test_configured_methods() {
         // Arrange
         let settings = ServiceSettings::new(Duration::from_secs(3600));
-        let state: RateLimitState<TestIdentifier, Nanos> = RateLimitState::new(settings);
+        let state: RateLimitStateNanoRuntime = RateLimitStateNanoRuntime::new(settings);
         let storage = OwnedStorage::new(state);
-        let mut service: RateLimitService<
-            TestIdentifier,
-            OwnedStorage<RateLimitState<TestIdentifier, Nanos>>,
-            Nanos,
-            FixedWindowCounterCore,
-        > = RateLimitService::new(storage);
-        let method1_config = RateLimitConfig::new(10, Duration::from_secs(60));
-        let method2_config = RateLimitConfig::new(20, Duration::from_secs(120));
+        let mut service: RateLimitServiceRuntime = RateLimitService::new(storage);
+        let method1_config = RateLimitConfig::new::<Nanos>(10, Duration::from_secs(60));
+        let method2_config = RateLimitConfig::new::<Nanos>(20, Duration::from_secs(120));
 
         // Act
         service.add_config("method1", method1_config).unwrap();
@@ -687,22 +703,19 @@ mod tests {
     #[test]
     fn test_add_config_invalid_capacity() {
         // Arrange
-        let state: RateLimitState<TestIdentifier, Nanos> = RateLimitState::new(get_settings());
+        let state: RateLimitStateNanoRuntime = RateLimitStateNanoRuntime::new(get_settings());
         let storage = OwnedStorage::new(state);
-        let mut service: RateLimitService<
-            TestIdentifier,
-            OwnedStorage<RateLimitState<TestIdentifier, Nanos>>,
-            Nanos,
-            FixedWindowCounterCore,
-        > = RateLimitService::new(storage);
+        let mut service: RateLimitServiceRuntime = RateLimitService::new(storage);
+        let test_config = RateLimitConfig::new::<Nanos>(0, Duration::from_secs(60));
+
         // Act
-        let result = service.add_config("test", RateLimitConfig::new(0, Duration::from_secs(60)));
+        let result = service.add_config("test", test_config);
 
         // Assert
         assert!(result.is_err());
         match result {
             Err(ServiceError::InvalidConfiguration { message }) => {
-                assert!(message.contains("Capacity must be greater than 0"));
+                assert!(message.contains("capacity must be greater than 0"));
             }
             _ => panic!("Expected InvalidConfiguration error"),
         }
@@ -711,22 +724,18 @@ mod tests {
     #[test]
     fn test_add_config_invalid_window_size() {
         // Arrange
-        let state: RateLimitState<TestIdentifier, Nanos> = RateLimitState::new(get_settings());
+        let state: RateLimitStateNanoRuntime = RateLimitStateNanoRuntime::new(get_settings());
         let storage = OwnedStorage::new(state);
-        let mut service: RateLimitService<
-            TestIdentifier,
-            OwnedStorage<RateLimitState<TestIdentifier, Nanos>>,
-            Nanos,
-            FixedWindowCounterCore,
-        > = RateLimitService::new(storage);
+        let mut service: RateLimitServiceRuntime = RateLimitService::new(storage);
+        let config = RateLimitConfig::new::<Nanos>(10, Duration::from_secs(0));
         // Act
-        let result = service.add_config("test", RateLimitConfig::new(10, Duration::from_secs(0)));
+        let result = service.add_config("test", config);
 
         // Assert
         assert!(result.is_err());
         match result {
             Err(ServiceError::InvalidConfiguration { message }) => {
-                assert!(message.contains("Window size must be greater than 0"));
+                assert!(message.contains("window_size must be greater than 0"));
             }
             _ => panic!("Expected InvalidConfiguration error"),
         }
@@ -775,23 +784,23 @@ mod tests {
 
     fn get_millis_service() -> RateLimitService<
         TestIdentifier,
-        OwnedStorage<RateLimitState<TestIdentifier, Millis>>,
+        OwnedStorage<RateLimitStateMillisRuntime>,
         Millis,
         FixedWindowCounterCore,
     > {
-        let mut state: RateLimitState<TestIdentifier, Millis> =
-            RateLimitState::new(ServiceSettings::new(Duration::from_secs(60 * 60)));
+        let mut state: RateLimitStateMillisRuntime =
+            RateLimitStateMillisRuntime::new(ServiceSettings::new(Duration::from_secs(60 * 60)));
         state.method_configs.insert(
             "test".to_string(),
-            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
+            RateLimitConfig::new::<Millis>(10, Duration::from_secs(60 * 10)),
         );
         state.method_configs.insert(
             "create_action".to_string(),
-            RateLimitConfig::new(10, Duration::from_secs(60 * 10)),
+            RateLimitConfig::new::<Millis>(10, Duration::from_secs(60 * 10)),
         );
         state.method_configs.insert(
             "add_token".to_string(),
-            RateLimitConfig::new(60, Duration::from_secs(60 * 10)),
+            RateLimitConfig::new::<Millis>(60, Duration::from_secs(60 * 10)),
         );
         let storage = OwnedStorage::new(state);
         RateLimitService::new(storage)
@@ -802,16 +811,11 @@ mod tests {
         // Arrange
         let delete_threshold = Duration::from_secs(3600); // 1 hour
         let settings = ServiceSettings::new(delete_threshold);
-        let state: RateLimitState<TestIdentifier, Millis> = RateLimitState::new(settings);
+        let state: RateLimitStateMillisRuntime = RateLimitStateMillisRuntime::new(settings);
         let storage = OwnedStorage::new(state);
 
         // Act
-        let service: RateLimitService<
-            TestIdentifier,
-            OwnedStorage<RateLimitState<TestIdentifier, Millis>>,
-            Millis,
-            FixedWindowCounterCore,
-        > = RateLimitService::new(storage);
+        let service: RateLimitServiceMillisRuntime = RateLimitService::new(storage);
         // Assert
         let (count, _, _) = service.get_stats();
         assert_eq!(
@@ -890,7 +894,7 @@ mod tests {
         assert!(result_2.is_err());
 
         // Move to next window - should reset capacity
-        time.next_window(600); // 10 minutes window
+        time.next_window_duration(Duration::from_secs(60 * 10)); // 10 minutes window
         let next_duration = Duration::from_secs(time.now());
         assert!(
             service
@@ -1018,16 +1022,11 @@ mod tests {
     fn test_millis_precision_configured_methods() {
         // Arrange
         let settings = ServiceSettings::new(Duration::from_secs(3600));
-        let state: RateLimitState<TestIdentifier, Millis> = RateLimitState::new(settings);
+        let state: RateLimitStateMillisRuntime = RateLimitStateMillisRuntime::new(settings);
         let storage = OwnedStorage::new(state);
-        let mut service: RateLimitService<
-            TestIdentifier,
-            OwnedStorage<RateLimitState<TestIdentifier, Millis>>,
-            Millis,
-            FixedWindowCounterCore,
-        > = RateLimitService::new(storage);
-        let method1_config = RateLimitConfig::new(10, Duration::from_secs(60));
-        let method2_config = RateLimitConfig::new(20, Duration::from_secs(120));
+        let mut service: RateLimitServiceMillisRuntime = RateLimitService::new(storage);
+        let method1_config = RateLimitConfig::new::<Millis>(10, Duration::from_secs(60));
+        let method2_config = RateLimitConfig::new::<Millis>(20, Duration::from_secs(120));
 
         // Act
         service.add_config("method1", method1_config).unwrap();
@@ -1127,16 +1126,16 @@ mod tests {
     fn test_rate_limit_service_with_thread_local_storage() {
         // Arrange
         let setting: ServiceSettings<Millis> = ServiceSettings::new(Duration::from_secs(3600));
-        let mut state: RateLimitState<TestIdentifier, Millis> = RateLimitState::new(setting);
+        let mut state: RateLimitStateMillisRuntime = RateLimitStateMillisRuntime::new(setting);
         state.method_configs.insert(
             "test".to_string(),
-            RateLimitConfig::new(10, Duration::from_secs(60)),
+            RateLimitConfig::new::<Millis>(10, Duration::from_secs(60)),
         );
-        let storage: ThreadLocalStorage<RateLimitState<TestIdentifier, Millis>> =
+        let storage: ThreadLocalStorage<RateLimitStateMillisRuntime> =
             ThreadLocalStorage::new(state);
         let mut service: RateLimitService<
             TestIdentifier,
-            ThreadLocalStorage<RateLimitState<TestIdentifier, Millis>>,
+            ThreadLocalStorage<RateLimitStateMillisRuntime>,
             Millis,
             FixedWindowCounterCore,
         > = RateLimitService::new(storage);
@@ -1145,7 +1144,7 @@ mod tests {
         // Act - Add another config
         let add_result = service.add_config(
             "another_test",
-            RateLimitConfig::new(5, Duration::from_secs(30)),
+            RateLimitConfig::new::<Millis>(5, Duration::from_secs(30)),
         );
 
         // Assert - Config addition should succeed
@@ -1170,48 +1169,5 @@ mod tests {
         assert_eq!(methods.len(), 2);
         assert!(methods.contains(&"test".to_string()));
         assert!(methods.contains(&"another_test".to_string()));
-    }
-
-    #[test]
-    fn test_settings_management() {
-        // Arrange
-        let setting: ServiceSettings<Nanos> = ServiceSettings::new(Duration::from_secs(3600));
-        let state: RateLimitState<TestIdentifier, Nanos> = RateLimitState::new(setting);
-        let storage = OwnedStorage::new(state);
-        let mut service: RateLimitService<
-            TestIdentifier,
-            OwnedStorage<RateLimitState<TestIdentifier, Nanos>>,
-            Nanos,
-            FixedWindowCounterCore,
-        > = RateLimitService::new(storage);
-        let initial_settings = ServiceSettings::new(Duration::from_secs(3600));
-        let updated_settings = ServiceSettings::new(Duration::from_secs(1800));
-
-        // Act - Initialize with settings
-        let init_result = service.init(initial_settings.clone());
-
-        // Assert - Initialization should succeed
-        assert!(init_result.is_ok());
-
-        // Act - Get current settings
-        let current_settings = service.settings();
-
-        // Assert - Settings should match initial settings
-        assert_eq!(
-            current_settings.delete_threshold_ticks,
-            initial_settings.delete_threshold_ticks
-        );
-
-        // Act - Update settings
-        service.update_settings(updated_settings.clone());
-
-        // Act - Get updated settings
-        let final_settings = service.settings();
-
-        // Assert - Settings should be updated
-        assert_eq!(
-            final_settings.delete_threshold_ticks,
-            updated_settings.delete_threshold_ticks
-        );
     }
 }
