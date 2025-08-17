@@ -10,3 +10,4 @@ ic_mple_utils = {workspace = true}
 
 [dev-dependencies]
 candid = {workspace = true}
+rand =  {workspace = true}

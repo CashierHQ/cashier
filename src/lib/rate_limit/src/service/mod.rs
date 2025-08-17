@@ -1,5 +1,5 @@
 pub mod types;
-pub use types::{LimiterEntry, RateLimitState, ServiceError, ServiceSettings};
+pub use types::{LimiterEntry, RateLimitState, RatelimitSettings, ServiceError};
 
 use ic_mple_utils::store::Storage;
 
@@ -42,7 +42,7 @@ where
     }
 
     /// Initialize the rate limit service with settings
-    pub fn init(&mut self, settings: ServiceSettings<P>) -> Result<(), ServiceError> {
+    pub fn init(&mut self, settings: RatelimitSettings<P>) -> Result<(), ServiceError> {
         self.storage.with_borrow_mut(|state| {
             state.settings = settings;
             Ok(())
@@ -141,6 +141,7 @@ where
     }
 
     /// Get statistics about the current runtime limiters
+    /// Returns tuple of (total counters, oldest created time, oldest updated time)
     pub fn get_stats(&self) -> (usize, Option<u64>, Option<u64>) {
         self.storage.with_borrow(|state| {
             let total_counters = state.runtime_limiters.len();
@@ -166,10 +167,16 @@ where
     }
 
     /// Force cleanup of old counters
-    pub fn force_cleanup(&mut self, current_timestamp_ticks: u64, threshold_ticks: u64) -> usize {
+    pub fn cleanup(&mut self, current_timestamp_ticks: u64) -> usize {
         self.storage.with_borrow_mut(|state| {
             let initial_count = state.runtime_limiters.len();
-            let cutoff_time = current_timestamp_ticks.saturating_sub(threshold_ticks);
+            println!(
+                "[RateLimitService] Cleaning up old limiters. Initial count: {}",
+                initial_count
+            );
+            let cutoff_time =
+                current_timestamp_ticks.saturating_sub(state.settings.delete_threshold_ticks);
+            // retain only those entries that have been updated after the cutoff time
             state
                 .runtime_limiters
                 .retain(|_, limiter_entry| limiter_entry.updated_time() > cutoff_time);
@@ -177,12 +184,12 @@ where
         })
     }
 
-    pub fn settings(&self) -> ServiceSettings<P> {
+    pub fn settings(&self) -> RatelimitSettings<P> {
         self.storage.with_borrow(|state| state.settings.clone())
     }
 
     /// Update service settings
-    pub fn update_settings(&mut self, settings: ServiceSettings<P>) {
+    pub fn update_settings(&mut self, settings: RatelimitSettings<P>) {
         self.storage.with_borrow_mut(|state| {
             state.settings = settings;
         });
@@ -195,7 +202,7 @@ mod tests {
     use crate::{
         algorithm::{fixed_window_counter::FixedWindowCounterCore, types::RateLimitError},
         precision::{Millis, Nanos},
-        test_utils::Time,
+        test_utils::{Time, random_principal_id},
     };
     use candid::Principal;
     use std::{cell::RefCell, time::Duration};
@@ -293,8 +300,8 @@ mod tests {
         }
     }
 
-    fn get_settings() -> ServiceSettings<Nanos> {
-        ServiceSettings::new(Duration::from_secs(60 * 60))
+    fn get_settings() -> RatelimitSettings<Nanos> {
+        RatelimitSettings::new(Duration::from_secs(60 * 60))
     }
 
     fn get_service() -> RateLimitService<
@@ -338,7 +345,7 @@ mod tests {
     fn test_new_service() {
         // Arrange
         let delete_threshold = Duration::from_secs(3600); // 1 hour
-        let settings = ServiceSettings::new(delete_threshold);
+        let settings = RatelimitSettings::new(delete_threshold);
         let state: RateLimitStateNanoRuntime = RateLimitStateNanoRuntime::new(settings);
         let storage = OwnedStorage::new(state);
 
@@ -364,7 +371,7 @@ mod tests {
         let service_settings = service.settings();
         assert_eq!(
             service_settings.delete_threshold_ticks,
-            Some(Nanos::to_ticks(delete_threshold)),
+            Nanos::to_ticks(delete_threshold),
             "Service should have the correct delete threshold settings"
         );
     }
@@ -373,7 +380,7 @@ mod tests {
     fn test_new_service_with_zero_threshold() {
         // Arrange
         let zero_threshold = Duration::from_secs(0);
-        let settings = ServiceSettings::new(zero_threshold);
+        let settings = RatelimitSettings::new(zero_threshold);
         let state: RateLimitStateNanoRuntime = RateLimitStateNanoRuntime::new(settings);
         let storage = OwnedStorage::new(state);
 
@@ -397,8 +404,7 @@ mod tests {
 
         let service_settings = service.settings();
         assert_eq!(
-            service_settings.delete_threshold_ticks,
-            Some(0),
+            service_settings.delete_threshold_ticks, 0,
             "Service should have zero delete threshold when created with zero duration"
         );
     }
@@ -408,7 +414,7 @@ mod tests {
     #[test]
     fn test_configured_methods() {
         // Arrange
-        let settings = ServiceSettings::new(Duration::from_secs(3600));
+        let settings = RatelimitSettings::new(Duration::from_secs(3600));
         let state: RateLimitStateNanoRuntime = RateLimitStateNanoRuntime::new(settings);
         let storage = OwnedStorage::new(state);
         let mut service: RateLimitServiceRuntime = RateLimitService::new(storage);
@@ -746,18 +752,21 @@ mod tests {
         // Arrange
         let mut time = Time::init();
         let mut service = get_service();
-        let base_duration = Duration::from_secs(time.now());
 
         // Act - Create some limiters at base time
-        service
-            .try_acquire_at(TestIdentifier::AnyUser, "test", base_duration, 5)
-            .unwrap();
-        service
-            .try_acquire_at(TestIdentifier::AnyUser, "create_action", base_duration, 3)
-            .unwrap();
+        for _ in 0..1000 {
+            time.advance(60 * 10); // Advance by 10 minutes
+            let base_duration = Duration::from_secs(time.now());
+            let pid = random_principal_id();
+            let res = service.try_acquire_at(
+                TestIdentifier::UserPrincipal(pid),
+                "test",
+                base_duration,
+                1,
+            );
 
-        let initial_count = service.get_stats().0;
-        assert_eq!(initial_count, 2, "Should have 2 limiters initially");
+            println!("Created limiter at: {:?}", res);
+        }
 
         // Advance time by 2 hours (7200 seconds)
         time.advance(7200);
@@ -765,12 +774,11 @@ mod tests {
 
         // Force cleanup with 1 hour threshold (should remove all limiters created 2 hours ago)
         let current_ticks = Nanos::to_ticks(future_duration);
-        let threshold_ticks = Nanos::to_ticks(Duration::from_secs(3600)); // 1 hour threshold
-        let removed_count = service.force_cleanup(current_ticks, threshold_ticks);
+        let removed_count = service.cleanup(current_ticks);
 
         // Assert
         assert_eq!(
-            removed_count, 2,
+            removed_count, 1000,
             "Nanos precision cleanup should remove all old limiters"
         );
         assert_eq!(
@@ -789,7 +797,7 @@ mod tests {
         FixedWindowCounterCore,
     > {
         let mut state: RateLimitStateMillisRuntime =
-            RateLimitStateMillisRuntime::new(ServiceSettings::new(Duration::from_secs(60 * 60)));
+            RateLimitStateMillisRuntime::new(RatelimitSettings::new(Duration::from_secs(60 * 60)));
         state.method_configs.insert(
             "test".to_string(),
             RateLimitConfig::new::<Millis>(10, Duration::from_secs(60 * 10)),
@@ -810,7 +818,7 @@ mod tests {
     fn test_millis_precision_new_service() {
         // Arrange
         let delete_threshold = Duration::from_secs(3600); // 1 hour
-        let settings = ServiceSettings::new(delete_threshold);
+        let settings = RatelimitSettings::new(delete_threshold);
         let state: RateLimitStateMillisRuntime = RateLimitStateMillisRuntime::new(settings);
         let storage = OwnedStorage::new(state);
 
@@ -833,7 +841,7 @@ mod tests {
         let service_settings = service.settings();
         assert_eq!(
             service_settings.delete_threshold_ticks,
-            Some(Millis::to_ticks(delete_threshold)),
+            Millis::to_ticks(delete_threshold),
             "Millis service should have the correct delete threshold settings"
         );
     }
@@ -1021,7 +1029,7 @@ mod tests {
     #[test]
     fn test_millis_precision_configured_methods() {
         // Arrange
-        let settings = ServiceSettings::new(Duration::from_secs(3600));
+        let settings = RatelimitSettings::new(Duration::from_secs(3600));
         let state: RateLimitStateMillisRuntime = RateLimitStateMillisRuntime::new(settings);
         let storage = OwnedStorage::new(state);
         let mut service: RateLimitServiceMillisRuntime = RateLimitService::new(storage);
@@ -1105,8 +1113,7 @@ mod tests {
 
         // Force cleanup with 1 hour threshold (should remove all limiters created 2 hours ago)
         let current_ticks = Millis::to_ticks(future_duration);
-        let threshold_ticks = Millis::to_ticks(Duration::from_secs(3600)); // 1 hour threshold
-        let removed_count = service.force_cleanup(current_ticks, threshold_ticks);
+        let removed_count = service.cleanup(current_ticks);
 
         // Assert
         assert_eq!(
@@ -1125,7 +1132,7 @@ mod tests {
     #[test]
     fn test_rate_limit_service_with_thread_local_storage() {
         // Arrange
-        let setting: ServiceSettings<Millis> = ServiceSettings::new(Duration::from_secs(3600));
+        let setting: RatelimitSettings<Millis> = RatelimitSettings::new(Duration::from_secs(3600));
         let mut state: RateLimitStateMillisRuntime = RateLimitStateMillisRuntime::new(setting);
         state.method_configs.insert(
             "test".to_string(),

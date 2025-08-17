@@ -1,3 +1,5 @@
+use candid::Principal;
+use rand::prelude::*;
 use std::time::Duration;
 
 pub struct Time {
@@ -42,4 +44,11 @@ impl Time {
         self.seconds -= seconds;
         self.seconds
     }
+}
+
+pub fn random_principal_id() -> Principal {
+    let mut rng = thread_rng();
+    let mut arr = [0u8; 29];
+    rng.fill_bytes(&mut arr);
+    Principal::from_slice(&arr)
 }

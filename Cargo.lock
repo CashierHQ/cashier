@@ -1813,6 +1813,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "ic_mple_utils",
+ "rand 0.8.5",
  "thiserror 2.0.14",
 ]
 

@@ -20,7 +20,7 @@ use cashier_backend_types::repository::{
     request_lock::RequestLock, transaction::v2::Transaction as TransactionV2, user::v1::User,
     user_action::v1::UserAction, user_link::v1::UserLink, user_wallet::v1::UserWallet,
 };
-use rate_limit::service::{RateLimitState, ServiceSettings};
+use rate_limit::service::{RateLimitState, RatelimitSettings};
 
 use crate::repositories::action::{ActionRepository, ActionRepositoryStorage};
 use crate::repositories::action_intent::{ActionIntentRepository, ActionIntentRepositoryStorage};
@@ -199,6 +199,11 @@ impl Repositories for ThreadlocalRepositories {
 thread_local! {
     pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
 
+    // Thread-local storage for the rate limit state
+    pub static RATE_LIMIT_STATE: RefCell<RateLimitStateStoreRunetime> = RefCell::new({
+        RateLimitState::new(RatelimitSettings::new(Duration::from_secs(60 * 60)))
+    });
+
     // Store the logger settings
     pub static LOGGER_SERVICE_STORE: RefCell<LoggerServiceStorage> =
         RefCell::new(
@@ -208,10 +213,6 @@ thread_local! {
             )
         );
 
-    // Thread-local storage for the rate limit state
-    pub static RATE_LIMIT_STATE: RefCell<RateLimitStateStoreRunetime> = RefCell::new({
-        RateLimitState::new(ServiceSettings::new(Duration::from_secs(60 * 60)))
-    });
 
     static USER_STORE: RefCell<StableBTreeMap<
         UserKey,

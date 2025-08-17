@@ -4,18 +4,18 @@ use crate::{algorithm::types::RateLimitCore, precision::Precision};
 
 /// Service-wide settings for rate limiting
 #[derive(Debug, Default, Clone)]
-pub struct ServiceSettings<P: Precision> {
+pub struct RatelimitSettings<P: Precision> {
     /// Optional threshold for cleaning up old counters (in ticks)
-    pub delete_threshold_ticks: Option<u64>,
+    pub delete_threshold_ticks: u64,
     // Phantom data to ensure that the precision is the same for all methods
     _phantom: std::marker::PhantomData<P>,
 }
 
-impl<P: Precision> ServiceSettings<P> {
+impl<P: Precision> RatelimitSettings<P> {
     pub fn new(delete_threshold_ticks: Duration) -> Self {
         let threshold_ticks = P::to_ticks(delete_threshold_ticks);
         Self {
-            delete_threshold_ticks: Some(threshold_ticks),
+            delete_threshold_ticks: threshold_ticks,
             _phantom: std::marker::PhantomData,
         }
     }
@@ -23,6 +23,7 @@ impl<P: Precision> ServiceSettings<P> {
 
 /// Entry in the rate limiting state for a specific method and identifier
 /// R: The core rate limiting algorithm implementation (must implement `RateLimitCore`)
+/// The timestamps are in ticks based on precision, decide by RateLimitService
 pub struct LimiterEntry<R>
 where
     R: RateLimitCore,
@@ -52,17 +53,17 @@ impl<R: RateLimitCore> LimiterEntry<R> {
         &mut self.counter
     }
 
-    /// Get the creation timestamp
+    /// Get the creation tick
     pub fn created_time(&self) -> u64 {
         self.created_time
     }
 
-    /// Get the last update timestamp
+    /// Get the last update tick
     pub fn updated_time(&self) -> u64 {
         self.updated_time
     }
 
-    /// Update the access timestamp
+    /// Update the access tick
     pub fn touch(&mut self, timestamp_ticks: u64) {
         self.updated_time = timestamp_ticks;
     }
@@ -88,12 +89,12 @@ where
     I: std::cmp::Eq + std::hash::Hash + Clone,
     P: Precision,
 {
-    /// Configuration for each method (set once during initialization)
+    /// Configuration for each method (set once during initialization or upgrade)
     pub method_configs: HashMap<String, R::Config>,
     /// Runtime tracking for each (identifier, method) pair (created on-demand)
     pub runtime_limiters: HashMap<(I, String), LimiterEntry<R>>,
     /// Service-wide settings
-    pub settings: ServiceSettings<P>,
+    pub settings: RatelimitSettings<P>,
 }
 
 impl<R, I, P> RateLimitState<R, I, P>
@@ -103,7 +104,7 @@ where
     P: Precision,
 {
     /// Create a new empty rate limit state with custom settings
-    pub fn new(settings: ServiceSettings<P>) -> Self {
+    pub fn new(settings: RatelimitSettings<P>) -> Self {
         Self {
             method_configs: HashMap::new(),
             runtime_limiters: HashMap::new(),
