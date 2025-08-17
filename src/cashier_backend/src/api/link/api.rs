@@ -2,8 +2,9 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::api::guard::is_not_anonymous;
-use crate::api::state::get_state;
+use crate::api::state::{CanisterState, get_state};
 use crate::services::link::traits::LinkValidation;
+use crate::utils::runtime::IcEnvironment;
 use candid::Principal;
 use cashier_backend_types::dto::action::{
     ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
@@ -16,21 +17,13 @@ use cashier_backend_types::dto::link::{
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::service::link::{PaginateInput, PaginateResult};
 use cashier_backend_types::service::rate_limit::RateLimitIdentifier;
+use ic_cdk::api::msg_caller;
 use ic_cdk::{query, update};
 use log::{debug, error, info};
 use std::time::Duration;
 
 use crate::services::link::traits::LinkUserStateMachine;
-use crate::{
-    services::{
-        action::ActionService,
-        link::{
-            service::LinkService,
-            traits::{ActionFlow, LinkStateMachine},
-        },
-    },
-    utils::runtime::{IcEnvironment, RealIcEnvironment},
-};
+use crate::services::link::traits::{ActionFlow, LinkStateMachine};
 
 /// Retrieves a paginated list of links created by the authenticated caller.
 ///
@@ -46,8 +39,8 @@ use crate::{
 #[query(guard = "is_not_anonymous")]
 async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDto>, String> {
     debug!("[get_links] input: {input:?}");
-    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.get_links(input)
+    let api = LinkApi::get_instance();
+    api.get_links(&msg_caller(), input)
 }
 
 /// Retrieves a specific link by its ID with optional action data.
@@ -66,8 +59,8 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDt
 #[query]
 async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLinkResp, String> {
     debug!("[get_link] id: {id}, options: {options:?}");
-    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.get_link(&id, options)
+    let api = LinkApi::get_instance();
+    api.get_link(&msg_caller(), &id, options)
 }
 
 /// Creates a new link using the v2 API format with enhanced features.
@@ -86,8 +79,8 @@ async fn create_link(input: CreateLinkInput) -> Result<LinkDto, CanisterError> {
     info!("[create_link]");
     debug!("[create_link] input: {input:?}");
 
-    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.create_link(input).await
+    let mut api = LinkApi::get_instance();
+    api.create_link(&msg_caller(), input).await
 }
 
 /// Updates an existing link's configuration or state.
@@ -106,8 +99,8 @@ async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
     info!("[update_link]");
     debug!("[update_link] input: {input:?}");
 
-    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.update_link(input).await
+    let mut api = LinkApi::get_instance();
+    api.update_link(&msg_caller(), input).await
 }
 
 /// Processes an existing action for authenticated users.
@@ -127,8 +120,8 @@ pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, Cani
     info!("[process_action]");
     debug!("[process_action] input: {input:?}");
 
-    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.process_action(input).await
+    let mut api = LinkApi::get_instance();
+    api.process_action(msg_caller(), input).await
 }
 
 /// Creates a new action for authenticated users on a specific link.
@@ -148,8 +141,8 @@ pub async fn create_action(input: CreateActionInput) -> Result<ActionDto, Canist
     info!("[create_action]");
     debug!("[create_action] input: {input:?}");
 
-    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.create_action(input).await
+    let mut api = LinkApi::get_instance();
+    api.create_action(&msg_caller(), input).await
 }
 
 /// Processes an existing action for anonymous users with wallet address.
@@ -171,8 +164,8 @@ pub async fn process_action_anonymous(
     info!("[process_action_anonymous]");
     debug!("[process_action_anonymous] input: {input:?}");
 
-    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.process_action_anonymous(input).await
+    let mut api = LinkApi::get_instance();
+    api.process_action_anonymous(msg_caller(), input).await
 }
 
 /// Creates a new action for anonymous users with wallet address.
@@ -194,8 +187,8 @@ pub async fn create_action_anonymous(
     info!("[create_action_anonymous]");
     debug!("[create_action_anonymous] input: {input:?}");
 
-    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.create_action_anonymous(input).await
+    let mut api = LinkApi::get_instance();
+    api.create_action_anonymous(&msg_caller(), input).await
 }
 
 /// Retrieves the current user state for a specific link action.
@@ -218,8 +211,8 @@ pub async fn link_get_user_state(
     info!("[link_get_user_state]");
     debug!("[link_get_user_state] input: {input:?}");
 
-    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.link_get_user_state(&input)
+    let api = LinkApi::get_instance();
+    api.link_get_user_state(&msg_caller(), &input)
 }
 
 /// Updates the user state for a specific link action.
@@ -242,8 +235,8 @@ pub async fn link_update_user_state(
     info!("[link_update_user_state]");
     debug!("[link_update_user_state] input: {input:?}");
 
-    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    api.link_update_user_state(&input)
+    let mut api = LinkApi::get_instance();
+    api.link_update_user_state(&msg_caller(), &input)
 }
 
 /// Updates an existing action's state and executes associated transactions.
@@ -264,8 +257,8 @@ pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, Canist
     debug!("[update_action] input: {input:?}");
 
     let start = ic_cdk::api::time();
-    let api: LinkApi<RealIcEnvironment> = LinkApi::get_instance();
-    let res = api.update_action(input).await;
+    let mut api = LinkApi::get_instance();
+    let res = api.update_action(msg_caller(), input).await;
 
     let end = ic_cdk::api::time();
 
@@ -297,23 +290,17 @@ pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, Canist
 ///
 /// # Generic Parameters
 /// * `E` - Environment interface for Internet Computer operations (typically `RealIcEnvironment`)
-pub struct LinkApi<E: IcEnvironment + Clone> {
-    link_service: LinkService<E>,
-    action_service: ActionService,
-    ic_env: E,
+struct LinkApi {
+    state: CanisterState,
 }
 
-impl<E: IcEnvironment + Clone> LinkApi<E> {
+impl LinkApi {
     /// Creates a new instance of LinkApi with all required services.
     ///
     /// This method initializes all the dependent services needed for link operations
     /// including link management, user management, transaction processing, and validation.
     pub fn get_instance() -> Self {
-        Self {
-            link_service: LinkService::get_instance(),
-            action_service: ActionService::get_instance(),
-            ic_env: E::new(),
-        }
+        Self { state: get_state() }
     }
 
     /// Retrieves links created by the calling principal with pagination support.
@@ -329,11 +316,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Err(String)` - Error message if retrieval fails
     pub fn get_links(
         &self,
+        caller: &Principal,
         input: Option<PaginateInput>,
     ) -> Result<PaginateResult<LinkDto>, String> {
-        let caller = self.ic_env.caller();
-
         match self
+            .state
             .link_service
             .get_links_by_principal(&caller.to_text(), &input.unwrap_or_default())
         {
@@ -362,17 +349,19 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Err(String)` - Error if link not found or access denied
     pub fn get_link(
         &self,
+        caller: &Principal,
         id: &str,
         options: Option<GetLinkOptions>,
     ) -> Result<GetLinkResp, String> {
-        let caller = self.ic_env.caller();
-
         // Get raw link and action data from service
-        let (link, action) = self.link_service.get_link(id, options, &caller)?;
+        let (link, action) = self.state.link_service.get_link(id, options, caller)?;
 
         // Convert action to DTO if it exists
         let action_dto = action.map(|action| {
-            let intents = self.action_service.get_intents_by_action_id(&action.id);
+            let intents = self
+                .state
+                .action_service
+                .get_intents_by_action_id(&action.id);
             ActionDto::from(action, intents)
         });
 
@@ -394,23 +383,17 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// # Returns
     /// * `Ok(LinkDto)` - Complete data of the newly created link
     /// * `Err(CanisterError)` - Error if link creation fails or validation errors occur
-    pub async fn create_link(&self, input: CreateLinkInput) -> Result<LinkDto, CanisterError> {
-        let caller = self.ic_env.caller();
-        let caller_id = caller.to_text();
-        let current_time = Duration::from_nanos(self.ic_env.time());
-
-        // Check rate limit before processing
-        let mut state = get_state();
-        state
-            .rate_limit_service
-            .try_acquire_one_at(
-                RateLimitIdentifier::UserPrincipal(caller),
-                "create_link",
-                current_time,
-            )
-            .map_err(|e| CanisterError::RateLimitError(e.to_string()))?;
-
-        match self.link_service.create_link(caller_id, input).await {
+    pub async fn create_link(
+        &mut self,
+        caller: &Principal,
+        input: CreateLinkInput,
+    ) -> Result<LinkDto, CanisterError> {
+        match self
+            .state
+            .link_service
+            .create_link(caller.to_text(), input)
+            .await
+        {
             Ok(link) => Ok(LinkDto::from(link)),
             Err(e) => {
                 error!("Failed to create link: {e:?}");
@@ -432,17 +415,20 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Ok(ActionDto)` - Updated action data after successful processing
     /// * `Err(CanisterError)` - Error if validation fails, action doesn't exist, or processing fails
     pub async fn process_action_anonymous(
-        &self,
+        &mut self,
+        caller: Principal,
         input: ProcessActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
-        let caller = self.ic_env.caller();
         if caller != Principal::anonymous() {
             return Err(CanisterError::ValidationErrors(
                 "Only anonymous caller can call this function".to_string(),
             ));
         }
 
-        self.link_service.process_action_anonymous(&input).await
+        self.state
+            .link_service
+            .process_action_anonymous(caller, &input)
+            .await
     }
 
     /// Processes an existing action for authenticated users.
@@ -458,24 +444,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Ok(ActionDto)` - Updated action data after successful processing
     /// * `Err(CanisterError)` - Error if user not found, action doesn't exist, or processing fails
     pub async fn process_action(
-        &self,
+        &mut self,
+        caller: Principal,
         input: ProcessActionInput,
     ) -> Result<ActionDto, CanisterError> {
-        let caller = self.ic_env.caller();
-        let current_time = Duration::from_nanos(self.ic_env.time());
-
-        // Check rate limit before processing
-        let mut state = get_state();
-        state
-            .rate_limit_service
-            .try_acquire_one_at(
-                RateLimitIdentifier::UserPrincipal(caller),
-                "process_action",
-                current_time,
-            )
-            .map_err(|e| CanisterError::RateLimitError(e.to_string()))?;
-
-        self.link_service.process_action(&input, &caller).await
+        self.state.link_service.process_action(&input, caller).await
     }
 
     /// Creates a new action for authenticated users on a specific link.
@@ -491,24 +464,14 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Ok(ActionDto)` - Created action data with all associated intents
     /// * `Err(CanisterError)` - Error if user not found, action exists, or creation fails
     pub async fn create_action(
-        &self,
+        &mut self,
+        caller: &Principal,
         input: CreateActionInput,
     ) -> Result<ActionDto, CanisterError> {
-        let caller = self.ic_env.caller();
-        let current_time = Duration::from_nanos(self.ic_env.time());
-
-        // Check rate limit before processing
-        let mut state = get_state();
-        state
-            .rate_limit_service
-            .try_acquire_one_at(
-                RateLimitIdentifier::UserPrincipal(caller),
-                "create_action",
-                current_time,
-            )
-            .map_err(|e| CanisterError::RateLimitError(e.to_string()))?;
-
-        self.link_service.create_action(&input, &caller).await
+        self.state
+            .link_service
+            .create_action(self.state.env.time(), &input, caller)
+            .await
     }
 
     /// Creates a new action for anonymous users using wallet address authentication.
@@ -524,17 +487,19 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Ok(ActionDto)` - Created action data with all associated intents
     /// * `Err(CanisterError)` - Error if validation fails, action exists, or creation fails
     pub async fn create_action_anonymous(
-        &self,
+        &mut self,
+        caller: &Principal,
         input: CreateActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
-        let caller = self.ic_env.caller();
-
-        if caller != Principal::anonymous() {
+        if caller != &Principal::anonymous() {
             Err(CanisterError::ValidationErrors(
                 "Only anonymous caller can call this function".to_string(),
             ))
         } else {
-            self.link_service.create_action_anonymous(&input).await
+            self.state
+                .link_service
+                .create_action_anonymous(self.state.env.time(), &input)
+                .await
         }
     }
 
@@ -553,11 +518,10 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Err(CanisterError)` - Error if validation fails or conflicting authentication methods
     pub fn link_get_user_state(
         &self,
+        caller: &Principal,
         input: &LinkGetUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
-        let caller = self.ic_env.caller();
-
-        self.link_service.link_get_user_state(&caller, input)
+        self.state.link_service.link_get_user_state(caller, input)
     }
 
     /// Updates the user state for a specific link action using state machine transitions.
@@ -574,12 +538,13 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Ok(None)` - If state transition is not valid or action not found
     /// * `Err(CanisterError)` - Error if validation fails or transition not allowed
     pub fn link_update_user_state(
-        &self,
+        &mut self,
+        caller: &Principal,
         input: &LinkUpdateUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
-        let caller = self.ic_env.caller();
-
-        self.link_service.link_update_user_state(&caller, input)
+        self.state
+            .link_service
+            .link_update_user_state(caller, input)
     }
 
     /// Updates an existing action's state and executes associated blockchain transactions.
@@ -595,24 +560,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Ok(ActionDto)` - Updated action data after processing and transaction execution
     /// * `Err(CanisterError)` - Error if unauthorized, validation fails, or execution fails
     pub async fn update_action(
-        &self,
+        &mut self,
+        caller: Principal,
         input: UpdateActionInput,
     ) -> Result<ActionDto, CanisterError> {
-        let caller = self.ic_env.caller();
-        let current_time = Duration::from_nanos(self.ic_env.time());
-
-        // Check rate limit before processing
-        let mut state = get_state();
-        state
-            .rate_limit_service
-            .try_acquire_one_at(
-                RateLimitIdentifier::UserPrincipal(caller),
-                "update_action",
-                current_time,
-            )
-            .map_err(|e| CanisterError::RateLimitError(e.to_string()))?;
-
-        self.link_service.update_action(&input, &caller).await
+        self.state.link_service.update_action(&input, caller).await
     }
 
     /// Updates an existing link's configuration, state, or parameters.
@@ -627,11 +579,13 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// # Returns
     /// * `Ok(LinkDto)` - Updated link data after successful modification
     /// * `Err(CanisterError)` - Error if unauthorized, link not found, or update fails
-    pub async fn update_link(&self, input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
-        let creator = self.ic_env.caller();
-
+    pub async fn update_link(
+        &mut self,
+        caller: &Principal,
+        input: UpdateLinkInput,
+    ) -> Result<LinkDto, CanisterError> {
         // Get link
-        let link = match self.link_service.get_link_by_id(&input.id) {
+        let link = match self.state.link_service.get_link_by_id(&input.id) {
             Ok(rsp) => rsp,
             Err(e) => {
                 error!("Failed to get link: {e:?}");
@@ -641,8 +595,9 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         // Verify creator
         if !self
+            .state
             .link_service
-            .is_link_creator(&creator.to_text(), &input.id)
+            .is_link_creator(&caller.to_text(), &input.id)
         {
             return Err(CanisterError::Unauthorized(
                 "Caller are not the creator of this link".to_string(),
@@ -659,6 +614,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
 
         let params = input.params.clone();
         let updated_link = self
+            .state
             .link_service
             .handle_link_state_transition(&input.id, &input.action, params)
             .await?;

@@ -7,25 +7,21 @@ use cashier_backend_types::{
     repository::{keys::RequestLockKey, request_lock::RequestLock},
 };
 
-use crate::repositories::request_lock::RequestLockRepository;
+use crate::repositories::{Repositories, request_lock::RequestLockRepository};
 
-pub struct RequestLockService {
-    request_lock_repository: RequestLockRepository,
+pub struct RequestLockService<R: Repositories> {
+    request_lock_repository: RequestLockRepository<R::RequestLock>,
 }
 
-impl RequestLockService {
-    pub fn new(request_lock_repository: RequestLockRepository) -> Self {
+impl<R: Repositories> RequestLockService<R> {
+    pub fn new(repo: &R) -> Self {
         Self {
-            request_lock_repository,
+            request_lock_repository: repo.request_lock(),
         }
     }
 
-    pub fn get_instance() -> Self {
-        Self::new(RequestLockRepository::new())
-    }
-
     pub fn create_request_lock_for_executing_transaction(
-        &self,
+        &mut self,
         principal: &Principal,
         action_id: &str,
         transaction_id: &str,
@@ -37,7 +33,7 @@ impl RequestLockService {
     }
 
     pub fn create_request_lock_for_creating_action(
-        &self,
+        &mut self,
         link_id: &str,
         principal: &Principal,
         timestamp: u64,
@@ -47,7 +43,7 @@ impl RequestLockService {
     }
 
     pub fn create_request_lock_for_processing_action(
-        &self,
+        &mut self,
         principal: &Principal,
         link_id: &str,
         action_id: &str,
@@ -58,7 +54,7 @@ impl RequestLockService {
     }
 
     pub fn create_request_lock_for_updating_action(
-        &self,
+        &mut self,
         principal: &Principal,
         link_id: &str,
         action_id: &str,
@@ -72,7 +68,7 @@ impl RequestLockService {
     /// Returns Ok(()) if lock was created successfully
     /// Returns Err if lock already exists
     pub fn create(
-        &self,
+        &mut self,
         key: &RequestLockKey,
         timestamp: u64,
     ) -> Result<RequestLockKey, CanisterError> {
@@ -91,7 +87,7 @@ impl RequestLockService {
 
     /// Drop (delete) a request lock
     /// Returns Ok(()) regardless of whether the lock existed
-    pub fn drop(&self, key: &RequestLockKey) -> Result<(), CanisterError> {
+    pub fn drop(&mut self, key: &RequestLockKey) -> Result<(), CanisterError> {
         self.request_lock_repository.delete(key);
         Ok(())
     }

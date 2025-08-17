@@ -4,26 +4,24 @@
 use cashier_backend_types::repository::{
     intent_transaction::v1::IntentTransaction, keys::IntentTransactionKey,
 };
+use ic_mple_log::service::Storage;
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
-use super::INTENT_TRANSACTION_STORE;
+pub type IntentTransactionRepositoryStorage =
+    StableBTreeMap<String, IntentTransaction, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
-
-pub struct IntentTransactionRepository {}
-
-impl Default for IntentTransactionRepository {
-    fn default() -> Self {
-        Self::new()
-    }
+pub struct IntentTransactionRepository<S: Storage<IntentTransactionRepositoryStorage>> {
+    storage: S,
 }
 
-impl IntentTransactionRepository {
-    pub fn new() -> Self {
-        Self {}
+impl<S: Storage<IntentTransactionRepositoryStorage>> IntentTransactionRepository<S> {
+    pub fn new(storage: S) -> Self {
+        Self { storage }
     }
 
-    pub fn batch_create(&self, intent_transactions: Vec<IntentTransaction>) {
-        INTENT_TRANSACTION_STORE.with_borrow_mut(|store| {
+    pub fn batch_create(&mut self, intent_transactions: Vec<IntentTransaction>) {
+        self.storage.with_borrow_mut(|store| {
             for intent_transaction in intent_transactions {
                 let key = IntentTransactionKey {
                     intent_id: intent_transaction.intent_id.clone(),
@@ -37,7 +35,7 @@ impl IntentTransactionRepository {
     }
 
     pub fn get_by_intent_id(&self, intent_id: &str) -> Vec<IntentTransaction> {
-        INTENT_TRANSACTION_STORE.with_borrow(|store| {
+        self.storage.with_borrow(|store| {
             let key = IntentTransactionKey {
                 intent_id: intent_id.to_string(),
                 transaction_id: "".to_string(),
@@ -54,7 +52,7 @@ impl IntentTransactionRepository {
     }
 
     pub fn get_by_transaction_id(&self, transaction_id: &str) -> Vec<IntentTransaction> {
-        INTENT_TRANSACTION_STORE.with_borrow(|store| {
+        self.storage.with_borrow(|store| {
             let key = IntentTransactionKey {
                 intent_id: "".to_string(),
                 transaction_id: transaction_id.to_string(),
@@ -74,11 +72,15 @@ impl IntentTransactionRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::random_id_string;
+    use crate::{
+        repositories::{Repositories, tests::TestRepositories},
+        utils::test_utils::random_id_string,
+    };
 
     #[test]
     fn it_should_batch_create_intent_actions() {
-        let repo = IntentTransactionRepository::new();
+        // Arrange
+        let mut repo = TestRepositories::new().intent_transaction();
         let intent_id1 = random_id_string();
         let transaction_id1 = random_id_string();
         let intent_id2 = random_id_string();
@@ -93,8 +95,11 @@ mod tests {
                 transaction_id: transaction_id2.clone(),
             },
         ];
+
+        // Act
         repo.batch_create(intent_transactions);
 
+        // Assert
         let transactions = repo.get_by_intent_id(&intent_id1);
         assert_eq!(transactions.len(), 1);
         assert_eq!(
@@ -109,7 +114,8 @@ mod tests {
 
     #[test]
     fn it_should_get_intent_action_by_intent_id() {
-        let repo = IntentTransactionRepository::new();
+        // Arrange
+        let mut repo = TestRepositories::new().intent_transaction();
         let intent_id1 = random_id_string();
         let transaction_id1 = random_id_string();
         let intent_id2 = random_id_string();
@@ -124,7 +130,10 @@ mod tests {
         };
         repo.batch_create(vec![intent_transaction1, intent_transaction2]);
 
+        // Act
         let transactions = repo.get_by_intent_id(&intent_id1);
+
+        // Assert
         assert_eq!(transactions.len(), 1);
         assert_eq!(
             transactions.first().unwrap().transaction_id,
@@ -134,7 +143,8 @@ mod tests {
 
     #[test]
     fn it_should_get_intent_action_by_transaction_id() {
-        let repo = IntentTransactionRepository::new();
+        // Arrange
+        let mut repo = TestRepositories::new().intent_transaction();
         let intent_id1 = random_id_string();
         let transaction_id1 = random_id_string();
         let intent_id2 = random_id_string();
@@ -149,15 +159,11 @@ mod tests {
         };
         repo.batch_create(vec![intent_transaction1, intent_transaction2]);
 
+        // Act
         let transactions = repo.get_by_transaction_id(&transaction_id1);
+
+        // Assert
         assert_eq!(transactions.len(), 1);
         assert_eq!(transactions.first().unwrap().intent_id, intent_id1);
-    }
-
-    #[test]
-    fn it_should_create_intent_action_repository_by_default() {
-        let repo = IntentTransactionRepository::default();
-        assert!(repo.get_by_intent_id("nonexistent").is_empty());
-        assert!(repo.get_by_transaction_id("nonexistent").is_empty());
     }
 }

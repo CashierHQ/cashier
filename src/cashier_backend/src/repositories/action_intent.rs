@@ -2,25 +2,24 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use cashier_backend_types::repository::{action_intent::v1::ActionIntent, keys::ActionIntentKey};
+use ic_mple_log::service::Storage;
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
-use super::ACTION_INTENT_STORE;
+pub type ActionIntentRepositoryStorage =
+    StableBTreeMap<String, ActionIntent, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
-pub struct ActionIntentRepository {}
-
-impl Default for ActionIntentRepository {
-    fn default() -> Self {
-        Self::new()
-    }
+pub struct ActionIntentRepository<S: Storage<ActionIntentRepositoryStorage>> {
+    storage: S,
 }
 
-impl ActionIntentRepository {
-    pub fn new() -> Self {
-        Self {}
+impl<S: Storage<ActionIntentRepositoryStorage>> ActionIntentRepository<S> {
+    pub fn new(storage: S) -> Self {
+        Self { storage }
     }
 
-    pub fn batch_create(&self, action_intents: Vec<ActionIntent>) {
-        ACTION_INTENT_STORE.with_borrow_mut(|store| {
+    pub fn batch_create(&mut self, action_intents: Vec<ActionIntent>) {
+        self.storage.with_borrow_mut(|store| {
             for action_intent in action_intents {
                 let key: ActionIntentKey = ActionIntentKey {
                     action_id: action_intent.action_id.clone(),
@@ -34,7 +33,7 @@ impl ActionIntentRepository {
     }
 
     pub fn get_by_action_id(&self, action_id: &str) -> Vec<ActionIntent> {
-        ACTION_INTENT_STORE.with_borrow(|store| {
+        self.storage.with_borrow(|store| {
             let key = ActionIntentKey {
                 action_id: action_id.to_string(),
                 intent_id: "".to_string(),
@@ -51,7 +50,7 @@ impl ActionIntentRepository {
     }
 
     pub fn get_by_intent_id(&self, intent_id: &str) -> Vec<ActionIntent> {
-        ACTION_INTENT_STORE.with_borrow(|store| {
+        self.storage.with_borrow(|store| {
             let key = ActionIntentKey {
                 action_id: "".to_string(),
                 intent_id: intent_id.to_string(),
@@ -71,11 +70,15 @@ impl ActionIntentRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::random_id_string;
+    use crate::{
+        repositories::{Repositories, tests::TestRepositories},
+        utils::test_utils::random_id_string,
+    };
 
     #[test]
     fn it_should_batch_create_action_intents() {
-        let repo = ActionIntentRepository::new();
+        // Arrange
+        let mut repo = TestRepositories::new().action_intent();
         let action_id1 = random_id_string();
         let intent_id1 = random_id_string();
         let action_id2 = random_id_string();
@@ -91,8 +94,10 @@ mod tests {
             },
         ];
 
+        // Act
         repo.batch_create(action_intents);
 
+        // Assert
         let retrieved = repo.get_by_action_id(&action_id1);
         assert_eq!(retrieved.len(), 1);
         assert_eq!(retrieved.first().unwrap().intent_id, intent_id1);
@@ -104,7 +109,8 @@ mod tests {
 
     #[test]
     fn it_should_get_by_action_id() {
-        let repo = ActionIntentRepository::new();
+        // Arrange
+        let mut repo = TestRepositories::new().action_intent();
         let action_id1 = random_id_string();
         let action_id2 = random_id_string();
         let intent_id1 = random_id_string();
@@ -119,7 +125,10 @@ mod tests {
         };
         repo.batch_create(vec![action_intent1, action_intent2]);
 
+        // Act
         let retrieved = repo.get_by_action_id(&action_id1);
+
+        // Assert
         assert_eq!(retrieved.len(), 1);
         assert_eq!(retrieved.first().unwrap().intent_id, intent_id1);
         assert_eq!(retrieved.first().unwrap().action_id, action_id1);
@@ -127,7 +136,8 @@ mod tests {
 
     #[test]
     fn it_should_get_by_intent_id() {
-        let repo = ActionIntentRepository::new();
+        // Arrange
+        let mut repo = TestRepositories::new().action_intent();
         let action_id1 = random_id_string();
         let intent_id1 = random_id_string();
         let action_id2 = random_id_string();
@@ -142,16 +152,12 @@ mod tests {
         };
         repo.batch_create(vec![action_intent1, action_intent2]);
 
+        // Act
         let retrieved = repo.get_by_intent_id(&intent_id1);
+
+        // Assert
         assert_eq!(retrieved.len(), 1);
         assert_eq!(retrieved.first().unwrap().action_id, action_id1);
         assert_eq!(retrieved.first().unwrap().intent_id, intent_id1);
-    }
-
-    #[test]
-    fn it_should_create_action_intent_repository_by_default() {
-        let repo = ActionIntentRepository::default();
-        assert!(repo.get_by_action_id("nonexistent").is_empty());
-        assert!(repo.get_by_intent_id("nonexistent").is_empty());
     }
 }

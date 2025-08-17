@@ -13,13 +13,16 @@ use log::{error, warn};
 use std::str::FromStr;
 
 use crate::{
+    repositories::Repositories,
     services::transaction_manager::{
         service::TransactionManagerService, traits::TransactionValidator,
     },
     utils::runtime::IcEnvironment,
 };
 
-impl<E: IcEnvironment + Clone> TransactionValidator<E> for TransactionManagerService<E> {
+impl<E: IcEnvironment + Clone, R: Repositories> TransactionValidator<E>
+    for TransactionManagerService<E, R>
+{
     async fn validate_balance_transfer(
         &self,
         icrc1_transfer_info: &Icrc1Transfer,

@@ -228,11 +228,13 @@ export type Result_3 = { 'Ok' : GetLinkResp } |
   { 'Err' : string };
 export type Result_4 = { 'Ok' : PaginateResult } |
   { 'Err' : string };
-export type Result_5 = { 'Ok' : Icrc21ConsentInfo } |
+export type Result_5 = { 'Ok' : UserDto } |
+  { 'Err' : string };
+export type Result_6 = { 'Ok' : Icrc21ConsentInfo } |
   { 'Err' : Icrc21Error };
-export type Result_6 = { 'Ok' : [] | [LinkGetUserStateOutput] } |
+export type Result_7 = { 'Ok' : [] | [LinkGetUserStateOutput] } |
   { 'Err' : CanisterError };
-export type Result_7 = { 'Ok' : string } |
+export type Result_8 = { 'Ok' : string } |
   { 'Err' : CanisterError };
 export interface TransactionDto {
   'id' : string,
@@ -272,24 +274,24 @@ export interface _SERVICE {
   'get_canister_build_data' : ActorMethod<[], BuildData>,
   'get_link' : ActorMethod<[string, [] | [GetLinkOptions]], Result_3>,
   'get_links' : ActorMethod<[[] | [PaginateInput]], Result_4>,
-  'get_user' : ActorMethod<[], Result_2>,
+  'get_user' : ActorMethod<[], Result_5>,
   'icrc10_supported_standards' : ActorMethod<
     [],
     Array<Icrc21SupportedStandard>
   >,
   'icrc21_canister_call_consent_message' : ActorMethod<
     [Icrc21ConsentMessageRequest],
-    Result_5
+    Result_6
   >,
   'icrc28_trusted_origins' : ActorMethod<[], Icrc28TrustedOriginsResponse>,
-  'link_get_user_state' : ActorMethod<[LinkGetUserStateInput], Result_6>,
-  'link_update_user_state' : ActorMethod<[LinkUpdateUserStateInput], Result_6>,
+  'link_get_user_state' : ActorMethod<[LinkGetUserStateInput], Result_7>,
+  'link_update_user_state' : ActorMethod<[LinkUpdateUserStateInput], Result_7>,
   'process_action' : ActorMethod<[ProcessActionInput], Result>,
   'process_action_anonymous' : ActorMethod<
     [ProcessActionAnonymousInput],
     Result
   >,
-  'trigger_transaction' : ActorMethod<[TriggerTransactionInput], Result_7>,
+  'trigger_transaction' : ActorMethod<[TriggerTransactionInput], Result_8>,
   'update_action' : ActorMethod<[UpdateActionInput], Result>,
   'update_link' : ActorMethod<[UpdateLinkInput], Result_1>,
 }

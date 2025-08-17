@@ -1,26 +1,25 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use super::LINK_ACTION_STORE;
 use cashier_backend_types::repository::{keys::LinkActionKey, link_action::v1::LinkAction};
+use ic_mple_log::service::Storage;
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
+
+pub type LinkActionRepositoryStorage =
+    StableBTreeMap<String, LinkAction, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
-
-pub struct LinkActionRepository {}
-
-impl Default for LinkActionRepository {
-    fn default() -> Self {
-        Self::new()
-    }
+pub struct LinkActionRepository<S: Storage<LinkActionRepositoryStorage>> {
+    storage: S,
 }
 
-impl LinkActionRepository {
-    pub fn new() -> Self {
-        Self {}
+impl<S: Storage<LinkActionRepositoryStorage>> LinkActionRepository<S> {
+    pub fn new(storage: S) -> Self {
+        Self { storage }
     }
 
-    pub fn create(&self, link_action: LinkAction) {
-        LINK_ACTION_STORE.with_borrow_mut(|store| {
+    pub fn create(&mut self, link_action: LinkAction) {
+        self.storage.with_borrow_mut(|store| {
             let id: LinkActionKey = LinkActionKey {
                 link_id: link_action.link_id.clone(),
                 action_type: link_action.action_type.clone(),
@@ -31,8 +30,8 @@ impl LinkActionRepository {
         });
     }
 
-    pub fn update(&self, link_action: LinkAction) {
-        LINK_ACTION_STORE.with_borrow_mut(|store| {
+    pub fn update(&mut self, link_action: LinkAction) {
+        self.storage.with_borrow_mut(|store| {
             let id: LinkActionKey = LinkActionKey {
                 link_id: link_action.link_id.clone(),
                 action_type: link_action.action_type.clone(),
@@ -50,7 +49,7 @@ impl LinkActionRepository {
         action_type: &str,
         user_id: &str,
     ) -> Vec<LinkAction> {
-        LINK_ACTION_STORE.with_borrow(|store| {
+        self.storage.with_borrow(|store| {
             let key: LinkActionKey = LinkActionKey {
                 link_id: link_id.to_string(),
                 action_type: action_type.to_string(),
@@ -74,12 +73,16 @@ impl LinkActionRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::random_id_string;
+    use crate::{
+        repositories::{Repositories, tests::TestRepositories},
+        utils::test_utils::random_id_string,
+    };
     use cashier_backend_types::repository::link_action::v1::LinkUserState;
 
     #[test]
     fn it_should_create_link_action() {
-        let repo = LinkActionRepository::new();
+        // Arrange
+        let mut repo = TestRepositories::new().link_action();
         let link_id = random_id_string();
 
         let link_action = LinkAction {
@@ -89,8 +92,11 @@ mod tests {
             user_id: "user1".to_string(),
             link_user_state: None,
         };
+
+        // Act
         repo.create(link_action);
 
+        // Assert
         let actions = repo.get_by_prefix(&link_id, "type1", "user1");
         assert_eq!(actions.len(), 1);
         assert!(actions.first().unwrap().link_user_state.is_none());
@@ -98,7 +104,8 @@ mod tests {
 
     #[test]
     fn it_should_update_link_action() {
-        let repo = LinkActionRepository::new();
+        // Arrange
+        let mut repo = TestRepositories::new().link_action();
         let link_id = random_id_string();
         let link_action = LinkAction {
             link_id: link_id.clone(),
@@ -116,8 +123,11 @@ mod tests {
             user_id: "user1".to_string(),
             link_user_state: Some(LinkUserState::ChooseWallet),
         };
+
+        // Act
         repo.update(updated_action);
 
+        // Assert
         let actions = repo.get_by_prefix(&link_id, "type1", "user1");
         assert_eq!(actions.len(), 1);
         assert_eq!(
@@ -128,7 +138,8 @@ mod tests {
 
     #[test]
     fn it_should_get_link_action_by_prefix() {
-        let repo = LinkActionRepository::new();
+        // Arrange
+        let mut repo = TestRepositories::new().link_action();
         let link_id1 = random_id_string();
         let link_id2 = random_id_string();
         let link_action1 = LinkAction {
@@ -150,7 +161,10 @@ mod tests {
         repo.create(link_action1);
         repo.create(link_action2);
 
+        // Act
         let actions = repo.get_by_prefix(&link_id1, "type1", "user1");
+
+        // Assert
         assert_eq!(actions.len(), 1);
         assert_eq!(actions.first().unwrap().link_id, link_id1);
         assert_eq!(actions.first().unwrap().action_type, "type1");
@@ -158,7 +172,10 @@ mod tests {
         assert_eq!(actions.first().unwrap().user_id, "user1");
         assert!(actions.first().unwrap().link_user_state.is_none());
 
+        // Act
         let actions = repo.get_by_prefix(&link_id2, "type2", "user2");
+
+        // Assert
         assert_eq!(actions.len(), 1);
         assert_eq!(actions.first().unwrap().link_id, link_id2);
         assert_eq!(actions.first().unwrap().action_type, "type2");
@@ -168,12 +185,5 @@ mod tests {
             actions.first().unwrap().link_user_state,
             Some(LinkUserState::CompletedLink)
         );
-    }
-
-    #[test]
-    fn it_should_create_link_action_repository_by_default() {
-        let repo = LinkActionRepository::default();
-        let actions = repo.get_by_prefix("nonexistent", "type", "user");
-        assert!(actions.is_empty());
     }
 }

@@ -1,37 +1,37 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::repository::action::v1::Action;
+use cashier_backend_types::repository::{action::v1::Action, keys::ActionKey};
+use ic_mple_log::service::Storage;
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
-use crate::repositories::ACTION_STORE;
+pub type ActionRepositoryStorage =
+    StableBTreeMap<ActionKey, Action, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
-pub struct ActionRepository {}
-
-impl Default for ActionRepository {
-    fn default() -> Self {
-        Self::new()
-    }
+pub struct ActionRepository<S: Storage<ActionRepositoryStorage>> {
+    storage: S,
 }
 
-impl ActionRepository {
-    pub fn new() -> Self {
-        Self {}
+impl<S: Storage<ActionRepositoryStorage>> ActionRepository<S> {
+    pub fn new(storage: S) -> Self {
+        Self { storage }
     }
 
-    pub fn create(&self, action: Action) {
-        ACTION_STORE.with_borrow_mut(|store| {
+    pub fn create(&mut self, action: Action) {
+        self.storage.with_borrow_mut(|store| {
             let id = action.id.clone();
             store.insert(id, action);
         });
     }
 
     pub fn get(&self, action_id: &str) -> Option<Action> {
-        ACTION_STORE.with_borrow(|store| store.get(&action_id.to_string()))
+        self.storage
+            .with_borrow(|store| store.get(&action_id.to_string()))
     }
 
-    pub fn update(&self, action: Action) {
-        ACTION_STORE.with_borrow_mut(|store| {
+    pub fn update(&mut self, action: Action) {
+        self.storage.with_borrow_mut(|store| {
             let id = action.id.clone();
             store.insert(id, action);
         });
@@ -41,12 +41,16 @@ impl ActionRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::random_id_string;
+    use crate::{
+        repositories::{Repositories, tests::TestRepositories},
+        utils::test_utils::random_id_string,
+    };
     use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
 
     #[test]
     fn it_should_create_an_action() {
-        let repo = ActionRepository::new();
+        // Arrange
+        let mut repo = TestRepositories::new().action();
         let action_id = random_id_string();
         let action = Action {
             id: action_id.clone(),
@@ -55,8 +59,11 @@ mod tests {
             creator: "creator1".to_string(),
             link_id: "link1".to_string(),
         };
+
+        // Act
         repo.create(action);
 
+        // Assert
         let retrieved_action = repo.get(&action_id);
         let retrieved_action = retrieved_action.expect("Action should be found");
         assert_eq!(retrieved_action.id, action_id);
@@ -64,7 +71,8 @@ mod tests {
 
     #[test]
     fn it_should_update_an_action() {
-        let repo = ActionRepository::new();
+        // Arrange
+        let mut repo = TestRepositories::new().action();
         let action_id = random_id_string();
         let action = Action {
             id: action_id.clone(),
@@ -82,8 +90,11 @@ mod tests {
             creator: "creator2".to_string(),
             link_id: "link2".to_string(),
         };
+
+        // Act
         repo.update(updated_action);
 
+        // Assert
         let retrieved_action = repo.get(&action_id);
         assert!(retrieved_action.is_some());
         let action = retrieved_action.expect("Action should be found");
@@ -94,14 +105,20 @@ mod tests {
 
     #[test]
     fn it_should_get_non_existent() {
-        let repo = ActionRepository::new();
+        // Arrange
+        let repo = TestRepositories::new().action();
+
+        // Act
         let retrieved_action = repo.get("non_existent_action");
+
+        // Assert
         assert!(retrieved_action.is_none());
     }
 
     #[test]
     fn it_should_get_existent() {
-        let repo = ActionRepository::new();
+        // Arrange
+        let mut repo = TestRepositories::new().action();
         let action_id = random_id_string();
         let action = Action {
             id: action_id.clone(),
@@ -112,27 +129,12 @@ mod tests {
         };
         repo.create(action);
 
+        // Act
         let retrieved_action = repo.get(&action_id);
+
+        // Assert
         assert!(retrieved_action.is_some());
         let retrieved_action = retrieved_action.expect("Action should be found");
         assert_eq!(retrieved_action.id, action_id);
-    }
-
-    #[test]
-    fn it_should_create_action_repository_by_default() {
-        let repo = ActionRepository::default();
-        let action_id = random_id_string();
-        let action = Action {
-            id: action_id.clone(),
-            r#type: ActionType::CreateLink,
-            state: ActionState::Created,
-            creator: "default_creator".to_string(),
-            link_id: "default_link".to_string(),
-        };
-        repo.create(action);
-
-        let retrieved_action = repo.get(&action_id);
-        assert!(retrieved_action.is_some());
-        assert_eq!(retrieved_action.unwrap().id, action_id);
     }
 }
