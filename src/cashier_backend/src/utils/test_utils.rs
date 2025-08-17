@@ -21,64 +21,75 @@ pub mod runtime {
     use super::super::runtime::IcEnvironment;
     use candid::Principal;
     use ic_cdk_timers::{self, TimerId};
-    use std::{cell::RefCell, future::Future, time::Duration};
+    use std::{cell::RefCell, future::Future, rc::Rc, time::Duration};
 
     #[derive(Clone)]
     pub struct MockIcEnvironment {
-        pub caller: Principal,
-        pub canister_id: Principal,
-        pub current_time: u64,
-        pub spawned_futures: RefCell<Vec<String>>,
-        pub timers: RefCell<Vec<(Duration, String)>>,
-        timer_counter: RefCell<u64>,
+        state: Rc<RefCell<MockIcState>>,
+    }
+
+    struct MockIcState {
+        caller: Principal,
+        canister_id: Principal,
+        current_time: u64,
+        spawned_futures: Vec<String>,
+        timers: Vec<(Duration, String)>,
+        timer_counter: u64,
     }
 
     impl MockIcEnvironment {
         pub fn new() -> Self {
-            Self {
+            let state = MockIcState {
                 canister_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
                 // Thursday, 14 August 2025 12:15:00
                 current_time: 1755173400 * 1_000_000_000,
-                spawned_futures: RefCell::new(Vec::new()),
-                timers: RefCell::new(Vec::new()),
-                timer_counter: RefCell::new(0),
+                spawned_futures: Vec::new(),
+                timers: Vec::new(),
+                timer_counter: 0,
                 caller: Principal::anonymous(),
+            };
+
+            Self {
+                state: Rc::new(RefCell::new(state)),
             }
         }
 
-        pub fn advance_time(&mut self, duration: Duration) {
-            self.current_time += duration.as_nanos() as u64;
+        /// Advance the shared clock. This takes &self so cloned instances can advance the same time.
+        pub fn advance_time(&self, duration: Duration) {
+            let mut s = self.state.borrow_mut();
+            s.current_time = s.current_time.wrapping_add(duration.as_nanos() as u64);
         }
 
         fn caller(&self) -> Principal {
-            self.caller
+            self.state.borrow().caller
         }
     }
 
     impl IcEnvironment for MockIcEnvironment {
         fn id(&self) -> Principal {
-            self.canister_id
+            self.state.borrow().canister_id
         }
 
         fn time(&self) -> u64 {
-            self.current_time
+            self.state.borrow().current_time
         }
 
         fn spawn<F>(&self, _future: F)
         where
             F: Future<Output = ()> + 'static,
         {
-            self.spawned_futures
+            self.state
                 .borrow_mut()
+                .spawned_futures
                 .push("spawned".to_string());
         }
 
         fn set_timer(&self, delay: Duration, _f: impl FnOnce() + 'static) -> TimerId {
-            self.timers.borrow_mut().push((delay, "timer".to_string()));
+            let mut s = self.state.borrow_mut();
+            s.timers.push((delay, "timer".to_string()));
 
             // Increment counter for unique timer IDs
-            let mut counter = self.timer_counter.borrow_mut();
-            *counter += 1;
+            s.timer_counter = s.timer_counter.wrapping_add(1);
 
             ic_cdk_timers::set_timer(Duration::from_secs(1), || {
                 ic_cdk::println!("This is a mock timer!")
