@@ -13,7 +13,7 @@ use crate::services::transaction_manager::traits::TimeoutHandler;
 use crate::utils::random::init_ic_rand;
 
 fn init_rate_limit_config() {
-    let mut state = get_state::<RealIcEnvironment>();
+    let mut state = get_state();
     let configs = [
         (
             "create_link",

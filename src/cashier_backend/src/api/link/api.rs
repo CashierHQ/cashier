@@ -122,7 +122,7 @@ pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, Cani
     debug!("[process_action] input: {input:?}");
 
     let mut api = LinkApi::new(get_state());
-    api.process_action(msg_caller(), input).await
+    api.process_action(&msg_caller(), input).await
 }
 
 /// Creates a new action for authenticated users on a specific link.
@@ -259,7 +259,7 @@ pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, Canist
 
     let start = ic_cdk::api::time();
     let mut api = LinkApi::new(get_state());
-    let res = api.update_action(msg_caller(), input).await;
+    let res = api.update_action(&msg_caller(), input).await;
 
     let end = ic_cdk::api::time();
 
@@ -669,7 +669,7 @@ mod tests {
     use std::time::Duration;
 
     fn init_rate_limit() {
-        let mut state = get_state::<MockIcEnvironment>();
+        let mut state = get_state();
         let _ = state.rate_limit_service.add_config(
             "create_link",
             FixedWindowCounterConfig::new::<Nanos>(10, Duration::from_secs(60 * 10)),
@@ -730,9 +730,8 @@ mod tests {
     }
 
     fn get_link_api_with_mock_env(mock_env: &MockIcEnvironment) -> LinkApi<MockIcEnvironment> {
-        let mut state = get_state::<MockIcEnvironment>();
-        state.env = mock_env.clone();
-        LinkApi { state }
+        let test_state = CanisterState::new(mock_env.clone());
+        LinkApi::new(test_state)
     }
 
     #[tokio::test]
