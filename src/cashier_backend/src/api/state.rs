@@ -11,27 +11,26 @@ use crate::{
         transaction_manager::{service::TransactionManagerService, validate::ValidateService},
         user::v2::UserService,
     },
-    utils::runtime::RealIcEnvironment,
+    utils::runtime::IcEnvironment,
 };
 
 /// The state of the canister
-pub struct CanisterState {
+pub struct CanisterState<E: IcEnvironment + Clone> {
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
     pub action_service: ActionService<ThreadlocalRepositories>,
-    pub link_service: LinkService<RealIcEnvironment, ThreadlocalRepositories>,
+    pub link_service: LinkService<E, ThreadlocalRepositories>,
     pub request_lock_service: RequestLockService<ThreadlocalRepositories>,
-    pub transaction_manager_service:
-        TransactionManagerService<RealIcEnvironment, ThreadlocalRepositories>,
+    pub transaction_manager_service: TransactionManagerService<E, ThreadlocalRepositories>,
     pub user_service: UserService<ThreadlocalRepositories>,
     pub validate_service: ValidateService<ThreadlocalRepositories>,
-    pub env: RealIcEnvironment,
+    pub env: E,
 }
 
-impl CanisterState {
+impl<E: IcEnvironment + Clone> CanisterState<E> {
     /// Creates a new CanisterState
     pub fn new() -> Self {
         let repo = Rc::new(ThreadlocalRepositories);
-        let env = RealIcEnvironment::new();
+        let env = E::new();
         CanisterState {
             log_service: LoggerConfigService::new(&LOGGER_SERVICE_STORE),
             action_service: ActionService::new(&repo),
@@ -46,6 +45,6 @@ impl CanisterState {
 }
 
 /// Returns the state of the canister
-pub fn get_state() -> CanisterState {
+pub fn get_state<E: IcEnvironment + Clone>() -> CanisterState<E> {
     CanisterState::new()
 }

@@ -20,7 +20,7 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
     let caller = msg_caller();
     let ic_env = RealIcEnvironment::new();
 
-    let state = get_state();
+    let state = get_state::<RealIcEnvironment>();
     let validate_service = state.validate_service;
     let mut transaction_manager = state.transaction_manager_service;
     let mut request_lock_service = state.request_lock_service;

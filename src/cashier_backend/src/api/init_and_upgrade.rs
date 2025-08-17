@@ -8,11 +8,15 @@ use log::info;
 use crate::api::state::get_state;
 use crate::services::transaction_manager::traits::TimeoutHandler;
 use crate::utils::random::init_ic_rand;
+use crate::utils::runtime::RealIcEnvironment;
 
 #[init]
 fn init(init_data: CashierBackendInitData) {
     let log_config = init_data.log_settings.unwrap_or_default();
-    if let Err(err) = get_state().log_service.init(Some(log_config)) {
+    if let Err(err) = get_state::<RealIcEnvironment>()
+        .log_service
+        .init(Some(log_config))
+    {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
     }
 
@@ -26,7 +30,7 @@ fn pre_upgrade() {}
 
 #[post_upgrade]
 fn post_upgrade() {
-    if let Err(err) = get_state().log_service.init(None) {
+    if let Err(err) = get_state::<RealIcEnvironment>().log_service.init(None) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
     }
 
@@ -34,6 +38,6 @@ fn post_upgrade() {
 
     init_ic_rand();
 
-    let tx_manager_service = get_state().transaction_manager_service;
+    let tx_manager_service = get_state::<RealIcEnvironment>().transaction_manager_service;
     tx_manager_service.restart_processing_transactions();
 }

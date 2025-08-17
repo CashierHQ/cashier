@@ -32,8 +32,8 @@ pub mod runtime {
         timer_counter: RefCell<u64>,
     }
 
-    impl MockIcEnvironment {
-        pub fn new() -> Self {
+    impl IcEnvironment for MockIcEnvironment {
+        fn new() -> Self {
             Self {
                 canister_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
                 current_time: 1640995200000000000,
@@ -42,9 +42,6 @@ pub mod runtime {
                 timer_counter: RefCell::new(0),
             }
         }
-    }
-
-    impl IcEnvironment for MockIcEnvironment {
         fn id(&self) -> Principal {
             self.canister_id
         }
