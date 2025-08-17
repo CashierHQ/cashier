@@ -33,19 +33,8 @@ pub mod runtime {
         timer_counter: RefCell<u64>,
     }
 
-    impl MockIcEnvironment {
-        pub fn new_with_caller(caller: Principal) -> Self {
-            Self {
-                caller,
-                canister_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
-                // Thursday, 14 August 2025 12:15:00
-                current_time: 1755173400 * 1_000_000_000,
-                spawned_futures: RefCell::new(Vec::new()),
-                timers: RefCell::new(Vec::new()),
-                timer_counter: RefCell::new(0),
-            }
-        }
-        pub fn new() -> Self {
+    impl IcEnvironment for MockIcEnvironment {
+        fn new() -> Self {
             Self {
                 canister_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
                 current_time: 1640995200000000000,
@@ -55,21 +44,6 @@ pub mod runtime {
                 caller: Principal::anonymous(),
             }
         }
-
-        pub fn anonymous() -> Self {
-            Self::new_with_caller(Principal::anonymous())
-        }
-
-        pub fn advance_time(&mut self, duration: Duration) {
-            self.current_time += duration.as_nanos() as u64;
-        }
-
-        fn caller(&self) -> Principal {
-            self.caller
-        }
-    }
-
-    impl IcEnvironment for MockIcEnvironment {
         fn id(&self) -> Principal {
             self.canister_id
         }
