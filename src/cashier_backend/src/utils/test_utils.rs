@@ -56,10 +56,6 @@ pub mod runtime {
     }
 
     impl IcEnvironment for MockIcEnvironment {
-        fn new() -> Self {
-            Self::new()
-        }
-
         fn id(&self) -> Principal {
             self.canister_id
         }
