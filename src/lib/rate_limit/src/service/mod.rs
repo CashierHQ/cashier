@@ -170,10 +170,6 @@ where
     pub fn cleanup(&mut self, current_timestamp_ticks: u64) -> usize {
         self.storage.with_borrow_mut(|state| {
             let initial_count = state.runtime_limiters.len();
-            println!(
-                "[RateLimitService] Cleaning up old limiters. Initial count: {}",
-                initial_count
-            );
             let cutoff_time =
                 current_timestamp_ticks.saturating_sub(state.settings.delete_threshold_ticks);
             // retain only those entries that have been updated after the cutoff time
@@ -764,8 +760,6 @@ mod tests {
                 base_duration,
                 1,
             );
-
-            println!("Created limiter at: {:?}", res);
         }
 
         // Advance time by 2 hours (7200 seconds)

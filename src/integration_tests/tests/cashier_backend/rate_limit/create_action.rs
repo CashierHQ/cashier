@@ -42,7 +42,6 @@ async fn it_should_handle_rate_limit_for_create_action() {
                 })
                 .await
                 .unwrap();
-            println!("result: {result:?}");
             results.push(result);
         }
 
@@ -177,7 +176,6 @@ async fn it_should_resset_counter_after_10_minutes() {
                 })
                 .await
                 .unwrap();
-            println!("result: {result:?}");
             results.push(result);
         }
 

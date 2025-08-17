@@ -433,22 +433,18 @@ mod tests {
             // Test each precision individually
             let nanos_ticks = Nanos::to_ticks(duration);
             let nanos_recovered = Nanos::from_ticks(nanos_ticks);
-            println!("Nanos: {nanos_ticks} ticks -> {nanos_recovered:?}");
             assert_eq!(nanos_recovered, duration);
 
             let micros_ticks = Micros::to_ticks(duration);
             let micros_recovered = Micros::from_ticks(micros_ticks);
-            println!("Micros: {micros_ticks} ticks -> {micros_recovered:?}");
             assert_eq!(micros_recovered, duration);
 
             let millis_ticks = Millis::to_ticks(duration);
             let millis_recovered = Millis::from_ticks(millis_ticks);
-            println!("Millis: {millis_ticks} ticks -> {millis_recovered:?}");
             assert_eq!(millis_recovered, duration);
 
             let secs_ticks = Secs::to_ticks(duration);
             let secs_recovered = Secs::from_ticks(secs_ticks);
-            println!("Secs: {secs_ticks} ticks -> {secs_recovered:?}");
             assert_eq!(secs_recovered, Duration::from_secs(1));
         }
     }
