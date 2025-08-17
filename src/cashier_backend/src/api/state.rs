@@ -11,7 +11,7 @@ use crate::{
         transaction_manager::{service::TransactionManagerService, validate::ValidateService},
         user::v2::UserService,
     },
-    utils::runtime::IcEnvironment,
+    utils::runtime::{IcEnvironment, RealIcEnvironment},
 };
 
 /// The state of the canister
@@ -28,9 +28,8 @@ pub struct CanisterState<E: IcEnvironment + Clone> {
 
 impl<E: IcEnvironment + Clone> CanisterState<E> {
     /// Creates a new CanisterState
-    pub fn new() -> Self {
+    pub fn new(env: E) -> Self {
         let repo = Rc::new(ThreadlocalRepositories);
-        let env = E::new();
         CanisterState {
             log_service: LoggerConfigService::new(&LOGGER_SERVICE_STORE),
             action_service: ActionService::new(&repo),
@@ -45,6 +44,7 @@ impl<E: IcEnvironment + Clone> CanisterState<E> {
 }
 
 /// Returns the state of the canister
-pub fn get_state<E: IcEnvironment + Clone>() -> CanisterState<E> {
-    CanisterState::new()
+#[inline(always)]
+pub fn get_state() -> CanisterState<RealIcEnvironment> {
+    CanisterState::new(RealIcEnvironment::new())
 }
