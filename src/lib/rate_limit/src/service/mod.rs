@@ -1,7 +1,7 @@
 pub mod types;
 use std::time::Duration;
 
-pub use types::{LimiterEntry, RateLimitState, RatelimitSettings, ServiceError};
+pub use types::{LimiterEntry, RateLimitStorage, RatelimitSettings, ServiceError};
 
 use ic_mple_utils::store::Storage;
 
@@ -17,7 +17,7 @@ pub struct RateLimitService<I, S, P, R>
 where
     I: std::cmp::Eq + std::hash::Hash + Clone, // Identifier type
     P: Precision,                              // Precision for time
-    S: Storage<RateLimitState<R, I, P>>,       // Storage backend
+    S: Storage<RateLimitStorage<R, I, P>>,     // Storage data
     R: RateLimitCore,                          // Rate limiting algorithm core
 {
     storage: S,
@@ -29,7 +29,7 @@ where
 impl<I, S, P, R> RateLimitService<I, S, P, R>
 where
     I: std::cmp::Eq + std::hash::Hash + Clone,
-    S: Storage<RateLimitState<R, I, P>>,
+    S: Storage<RateLimitStorage<R, I, P>>,
     P: Precision + Clone,
     R: RateLimitCore,
 {
@@ -64,7 +64,7 @@ where
         duration: std::time::Duration,
     ) -> Result<(), RateLimitError> {
         self.storage
-            .with_borrow_mut(|state: &mut RateLimitState<R, I, P>| {
+            .with_borrow_mut(|state: &mut RateLimitStorage<R, I, P>| {
                 let timestamp_ticks = P::to_ticks(duration);
                 let key = (identifier.clone(), method.to_string());
 
@@ -240,11 +240,12 @@ mod tests {
     type RateLimitConfig = <FixedWindowCounterCore as RateLimitCore>::Config;
 
     // Type aliases for the rate limit state and service in nanos
-    type RateLimitStateNanoRuntime = RateLimitState<FixedWindowCounterCore, TestIdentifier, Nanos>;
+    type RateLimitStateNanoRuntime =
+        RateLimitStorage<FixedWindowCounterCore, TestIdentifier, Nanos>;
 
     /// Type alias for the rate limit state with Millis precision
     type RateLimitStateMillisRuntime =
-        RateLimitState<FixedWindowCounterCore, TestIdentifier, Millis>;
+        RateLimitStorage<FixedWindowCounterCore, TestIdentifier, Millis>;
 
     /// Type alias for the rate limit service with runtime state and nanos precision
     type RateLimitServiceRuntime = RateLimitService<

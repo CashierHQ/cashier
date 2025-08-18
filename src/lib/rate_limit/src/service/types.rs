@@ -82,12 +82,11 @@ pub enum ServiceError {
     MethodNotConfigured { method: String },
 }
 
-/// Grouped state for rate limiting service
-/// This groups the three main components into a single struct for cleaner thread-local storage
+/// Storage state for rate limiting service
 /// R: The core rate limiting algorithm implementation (must implement `RateLimitCore`)
 /// I: The identifier type for entities being rate limited (e.g., user ID, IP address)
 /// P: The precision type for time calculations (must implement `Precision`)
-pub struct RateLimitState<R, I, P>
+pub struct RateLimitStorage<R, I, P>
 where
     R: RateLimitCore,
     I: std::cmp::Eq + std::hash::Hash + Clone,
@@ -102,7 +101,7 @@ where
     pub settings: RatelimitSettings<P>,
 }
 
-impl<R, I, P> RateLimitState<R, I, P>
+impl<R, I, P> RateLimitStorage<R, I, P>
 where
     R: RateLimitCore,
     I: std::cmp::Eq + std::hash::Hash + Clone,
