@@ -13,3 +13,6 @@ pub mod impl_dependency_analyzer;
 pub mod impl_timeout_handler;
 pub mod impl_transaction_executor;
 pub mod impl_transaction_validator;
+
+#[cfg(test)]
+pub mod test_fixtures;

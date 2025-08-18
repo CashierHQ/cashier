@@ -46,6 +46,8 @@ mod tests {
             user_id: user_id.clone(),
             action_id: action_id.clone(),
         };
+
+        // Act
         repo.create(user_action);
 
         let retrieved_action = repo.storage.with_borrow(|store| {

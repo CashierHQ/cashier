@@ -80,3 +80,46 @@ impl<R: Repositories> UserService<R> {
             .is_some()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::repositories::tests::TestRepositories;
+    use crate::utils::test_utils::random_principal_id;
+    use cashier_backend_types::repository::user_wallet::v1::UserWallet;
+
+    #[test]
+    fn it_should_none_get_user_id_by_wallet() {
+        // Arrange
+        let user_service = UserService::new(&TestRepositories::new());
+        let principal_id = random_principal_id();
+
+        // Act
+        let user_id =
+            user_service.get_user_id_by_wallet(&Principal::from_text(principal_id).unwrap());
+
+        // Assert
+        assert!(user_id.is_none());
+    }
+
+    #[test]
+    fn it_should_get_user_id_by_wallet() {
+        // Arrange
+        let mut user_service = UserService::new(&TestRepositories::new());
+        let principal_id = random_principal_id();
+        user_service.user_wallet_repository.create(
+            principal_id.clone(),
+            UserWallet {
+                user_id: principal_id.clone(),
+            },
+        );
+
+        // Act
+        let user_id = user_service
+            .get_user_id_by_wallet(&Principal::from_text(principal_id.clone()).unwrap());
+
+        // Assert
+        assert!(user_id.is_some());
+        assert_eq!(user_id.unwrap(), principal_id);
+    }
+}
