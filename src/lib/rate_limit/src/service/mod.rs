@@ -43,14 +43,6 @@ where
         }
     }
 
-    /// Initialize the rate limit service with settings
-    pub fn init(&mut self, settings: RatelimitSettings<P>) -> Result<(), ServiceError> {
-        self.storage.with_borrow_mut(|state| {
-            state.settings = settings;
-            Ok(())
-        })
-    }
-
     /// Add a rate limit configuration for a method
     pub fn add_config(&mut self, method: &str, config: R::Config) -> Result<(), ServiceError> {
         // Validate the configuration

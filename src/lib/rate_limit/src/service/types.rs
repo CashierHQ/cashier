@@ -96,6 +96,7 @@ where
     /// Configuration for each method (set once during initialization or upgrade)
     pub method_configs: HashMap<String, R::Config>,
     /// Runtime tracking for each (identifier, method) pair (created on-demand)
+    /// this can be overflow, need to be cleaned up periodically (cannot reach 4GB)
     pub runtime_limiters: HashMap<(I, String), LimiterEntry<R>>,
     /// Service-wide settings
     pub settings: RatelimitSettings<P>,

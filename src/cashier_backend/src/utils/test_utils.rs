@@ -29,7 +29,6 @@ pub mod runtime {
     }
 
     struct MockIcState {
-        caller: Principal,
         canister_id: Principal,
         current_time: u64,
         spawned_futures: Vec<String>,
@@ -46,7 +45,6 @@ pub mod runtime {
                 spawned_futures: Vec::new(),
                 timers: Vec::new(),
                 timer_counter: 0,
-                caller: Principal::anonymous(),
             };
 
             Self {
@@ -58,10 +56,6 @@ pub mod runtime {
         pub fn advance_time(&self, duration: Duration) {
             let mut s = self.state.borrow_mut();
             s.current_time = s.current_time.wrapping_add(duration.as_nanos() as u64);
-        }
-
-        fn caller(&self) -> Principal {
-            self.state.borrow().caller
         }
     }
 
