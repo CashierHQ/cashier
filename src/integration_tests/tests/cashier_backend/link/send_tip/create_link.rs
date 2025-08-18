@@ -67,6 +67,6 @@ async fn it_should_error_create_link_send_tip_if_caller_anonymous() {
                 .contains("Anonymous caller is not allowed")
         );
     } else {
-        panic!("Expected an error but got a successful response");
+        panic!("Expected PocketIcTestError");
     }
 }
