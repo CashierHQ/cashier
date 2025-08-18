@@ -117,6 +117,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionManagerService<E, R> 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::repositories::tests::TestRepositories;
     use crate::services::transaction_manager::test_fixtures::*;
     use crate::utils::test_utils::{random_id_string, runtime::MockIcEnvironment};
     use candid::Nat;
@@ -124,14 +125,18 @@ mod tests {
         common::{Asset, Wallet},
         transaction::v2::{FromCallType, IcTransaction, Icrc1Transfer, Protocol},
     };
+    use std::rc::Rc;
 
     #[test]
     fn it_should_true_is_all_depdendency_success_if_dependency_empty() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
 
-        let transaction1 = create_transaction_fixture(&service);
+        let transaction1 = create_transaction_fixture(&mut service);
 
         // Act
         let result = service.is_all_depdendency_success(&transaction1, false);
@@ -144,10 +149,13 @@ mod tests {
     #[test]
     fn it_should_error_is_all_depdendency_success_if_tx_not_found() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
 
-        let transaction1 = create_transaction_fixture(&service);
+        let transaction1 = create_transaction_fixture(&mut service);
         let dummy_tx_id = random_id_string();
 
         let updated_tx1 = Transaction {
@@ -175,12 +183,15 @@ mod tests {
     #[test]
     fn it_should_false_is_all_depedency_success_if_any_dependency_failed() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
 
-        let transaction1 = create_transaction_fixture(&service);
-        let transaction2 = create_transaction_fixture(&service);
-        let transaction3 = create_transaction_fixture(&service);
+        let transaction1 = create_transaction_fixture(&mut service);
+        let transaction2 = create_transaction_fixture(&mut service);
+        let transaction3 = create_transaction_fixture(&mut service);
 
         let updated_tx3 = Transaction {
             id: transaction3.id.clone(),
@@ -203,12 +214,15 @@ mod tests {
     #[test]
     fn it_should_true_is_all_depdendency_success_if_all_dependencies_success() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
 
-        let transaction1 = create_transaction_fixture(&service);
-        let transaction2 = create_transaction_fixture(&service);
-        let transaction3 = create_transaction_fixture(&service);
+        let transaction1 = create_transaction_fixture(&mut service);
+        let transaction2 = create_transaction_fixture(&mut service);
+        let transaction3 = create_transaction_fixture(&mut service);
 
         let updated_tx3 = Transaction {
             id: transaction3.id.clone(),
@@ -254,12 +268,15 @@ mod tests {
     #[test]
     fn it_should_false_is_all_depdendency_success_if_skip_check_in_group() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
 
-        let transaction1 = create_transaction_fixture(&service);
-        let transaction2 = create_transaction_fixture(&service);
-        let transaction3 = create_transaction_fixture(&service);
+        let transaction1 = create_transaction_fixture(&mut service);
+        let transaction2 = create_transaction_fixture(&mut service);
+        let transaction3 = create_transaction_fixture(&mut service);
 
         let updated_tx3 = Transaction {
             id: transaction3.id.clone(),
@@ -305,12 +322,15 @@ mod tests {
     #[test]
     fn it_should_true_is_all_depdendency_success_if_skip_check_in_group() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
 
-        let transaction1 = create_transaction_fixture(&service);
-        let transaction2 = create_transaction_fixture(&service);
-        let transaction3 = create_transaction_fixture(&service);
+        let transaction1 = create_transaction_fixture(&mut service);
+        let transaction2 = create_transaction_fixture(&mut service);
+        let transaction3 = create_transaction_fixture(&mut service);
 
         let updated_tx3 = Transaction {
             id: transaction3.id.clone(),
@@ -356,9 +376,12 @@ mod tests {
     #[test]
     fn it_should_error_is_group_has_dependency_if_action_not_found() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
-        let transaction1 = create_transaction_fixture(&service);
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
+        let transaction1 = create_transaction_fixture(&mut service);
 
         // Act
         let result = service.is_group_has_dependency(&transaction1);
@@ -375,11 +398,14 @@ mod tests {
     #[test]
     fn it_should_false_is_group_has_dependency_if_no_other_txs_in_group() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
 
         let link_id = random_id_string();
-        let action = create_action_with_intents_fixture(&service, link_id);
+        let action = create_action_with_intents_fixture(&mut service, link_id);
 
         let transaction_dto = action.intents[0].transactions[0].clone();
         let transaction1 = Transaction {
@@ -411,9 +437,12 @@ mod tests {
     #[test]
     fn it_should_false_is_group_has_dependency_if_other_txs_in_group_has_dependency() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
-        let (_action, _intents, transactions) = create_action_data_fixture(&service);
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
+        let (_action, _intents, transactions) = create_action_data_fixture(&mut service);
 
         // Act
         let result = service.is_group_has_dependency(&transactions[0]);
@@ -426,9 +455,12 @@ mod tests {
     #[test]
     fn it_should_true_is_group_has_dependency_if_other_txs_in_group_has_dependency() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
-        let (_action, _intents, transactions) = create_action_data_fixture(&service);
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
+        let (_action, _intents, transactions) = create_action_data_fixture(&mut service);
 
         let updated_tx1 = Transaction {
             id: transactions[0].id.clone(),
@@ -473,8 +505,11 @@ mod tests {
     #[test]
     fn it_should_error_has_dependency_if_tx_not_found() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
 
         let tx_id = random_id_string();
 
@@ -493,10 +528,13 @@ mod tests {
     #[test]
     fn it_should_false_has_dependency_if_not_all_dependency_success() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
 
-        let (_action, _intents, transactions) = create_action_data_fixture(&service);
+        let (_action, _intents, transactions) = create_action_data_fixture(&mut service);
 
         let tx_id1 = transactions[0].id.clone();
 
@@ -511,10 +549,13 @@ mod tests {
     #[test]
     fn it_should_true_has_dependency_if_all_dependency_success() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
 
-        let (_action, _intents, transactions) = create_action_data_fixture(&service);
+        let (_action, _intents, transactions) = create_action_data_fixture(&mut service);
 
         let update_tx1 = Transaction {
             id: transactions[0].id.clone(),

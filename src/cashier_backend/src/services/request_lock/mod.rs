@@ -96,12 +96,13 @@ impl<R: Repositories> RequestLockService<R> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::repositories::tests::TestRepositories;
     use crate::utils::test_utils::{random_id_string, random_principal_id};
 
     #[test]
     fn it_should_error_create_request_lock_for_executing_transaction_if_lock_exists() {
         // Arrange
-        let service = RequestLockService::get_instance();
+        let mut service = RequestLockService::new(&TestRepositories::new());
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
         let action_id = random_id_string();
@@ -137,7 +138,7 @@ mod tests {
     #[test]
     fn it_should_create_request_lock_for_executing_transaction() {
         // Arrange
-        let service = RequestLockService::get_instance();
+        let mut service = RequestLockService::new(&TestRepositories::new());
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
         let action_id = random_id_string();
@@ -165,7 +166,7 @@ mod tests {
     #[test]
     fn it_should_error_create_request_lock_for_creating_action_if_lock_exists() {
         // Arrange
-        let service = RequestLockService::get_instance();
+        let mut service = RequestLockService::new(&TestRepositories::new());
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
         let link_id = random_id_string();
@@ -192,7 +193,7 @@ mod tests {
     #[test]
     fn it_should_create_request_lock_for_creating_action() {
         // Arrange
-        let service = RequestLockService::get_instance();
+        let mut service = RequestLockService::new(&TestRepositories::new());
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
         let link_id = random_id_string();
@@ -212,7 +213,7 @@ mod tests {
     #[test]
     fn it_should_error_create_request_lock_for_processing_action_if_lock_exists() {
         // Arrange
-        let service = RequestLockService::get_instance();
+        let mut service = RequestLockService::new(&TestRepositories::new());
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
         let link_id = random_id_string();
@@ -241,7 +242,7 @@ mod tests {
     #[test]
     fn it_should_create_request_lock_for_processing_action() {
         // Arrange
-        let service = RequestLockService::get_instance();
+        let mut service = RequestLockService::new(&TestRepositories::new());
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
         let link_id = random_id_string();
@@ -265,7 +266,7 @@ mod tests {
     #[test]
     fn it_should_error_create_request_lock_for_updating_action_if_lock_exists() {
         // Arrange
-        let service = RequestLockService::get_instance();
+        let mut service = RequestLockService::new(&TestRepositories::new());
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
         let link_id = random_id_string();
@@ -294,7 +295,7 @@ mod tests {
     #[test]
     fn it_should_create_request_lock_for_updating_action() {
         // Arrange
-        let service = RequestLockService::get_instance();
+        let mut service = RequestLockService::new(&TestRepositories::new());
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
         let link_id = random_id_string();

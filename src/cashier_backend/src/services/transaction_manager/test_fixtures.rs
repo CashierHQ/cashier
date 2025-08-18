@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::{
+    repositories::tests::TestRepositories,
     services::transaction_manager::{service::TransactionManagerService, traits::ActionCreator},
     utils::test_utils::{random_id_string, random_principal_id, runtime::MockIcEnvironment},
 };
@@ -25,7 +26,7 @@ use std::collections::HashMap;
 /// This function generates a random action ID and creates a new action
 /// in the action repository.
 pub fn create_action_fixture(
-    service: &TransactionManagerService<MockIcEnvironment>,
+    service: &mut TransactionManagerService<MockIcEnvironment, TestRepositories>,
     link_id: String,
 ) -> Action {
     let action_id = random_id_string();
@@ -46,7 +47,7 @@ pub fn create_action_fixture(
 /// in the action repository.
 /// The action contains 2 intents, which the 2nd intent depends on the 1st intent.
 pub fn create_action_with_intents_fixture(
-    service: &TransactionManagerService<MockIcEnvironment>,
+    service: &mut TransactionManagerService<MockIcEnvironment, TestRepositories>,
     link_id: String,
 ) -> ActionDto {
     let action_id = random_id_string();
@@ -54,6 +55,7 @@ pub fn create_action_with_intents_fixture(
     let intent_id1 = random_id_string();
     let intent_id2 = random_id_string();
 
+    let ts = 1622547800;
     let mut temp_action = TemporaryAction {
         id: action_id,
         r#type: ActionType::CreateLink,
@@ -95,14 +97,14 @@ pub fn create_action_with_intents_fixture(
         state: ActionState::Created,
     };
 
-    service.create_action(&mut temp_action).unwrap()
+    service.create_action(ts, &mut temp_action).unwrap()
 }
 
 /// Creates a new transaction fixture for testing purposes.
 /// This function generates a random transaction ID and creates a new transaction
 /// in the transaction repository.
 pub fn create_transaction_fixture(
-    service: &TransactionManagerService<MockIcEnvironment>,
+    service: &mut TransactionManagerService<MockIcEnvironment, TestRepositories>,
 ) -> Transaction {
     let transaction = Transaction {
         id: random_id_string(),
@@ -132,7 +134,7 @@ pub fn create_transaction_fixture(
 /// This function generates a random action ID, a random link ID, and creates a new action
 /// in the action repository along with its associated intents and transactions.
 pub fn create_action_data_fixture(
-    service: &TransactionManagerService<MockIcEnvironment>,
+    service: &mut TransactionManagerService<MockIcEnvironment, TestRepositories>,
 ) -> (Action, Vec<Intent>, Vec<Transaction>) {
     let action_id = random_id_string();
     let link_id = random_id_string();

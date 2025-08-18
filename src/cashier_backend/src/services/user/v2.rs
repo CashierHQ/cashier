@@ -84,13 +84,14 @@ impl<R: Repositories> UserService<R> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::repositories::tests::TestRepositories;
     use crate::utils::test_utils::random_principal_id;
     use cashier_backend_types::repository::user_wallet::v1::UserWallet;
 
     #[test]
     fn it_should_none_get_user_id_by_wallet() {
         // Arrange
-        let user_service = UserService::get_instance();
+        let user_service = UserService::new(&TestRepositories::new());
         let principal_id = random_principal_id();
 
         // Act
@@ -104,7 +105,7 @@ mod tests {
     #[test]
     fn it_should_get_user_id_by_wallet() {
         // Arrange
-        let user_service = UserService::get_instance();
+        let mut user_service = UserService::new(&TestRepositories::new());
         let principal_id = random_principal_id();
         user_service.user_wallet_repository.create(
             principal_id.clone(),

@@ -124,6 +124,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> ActionCreator<E>
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::repositories::tests::TestRepositories;
     use crate::services::transaction_manager::test_fixtures::*;
     use crate::utils::test_utils::{
         random_id_string, random_principal_id, runtime::MockIcEnvironment,
@@ -134,15 +135,20 @@ mod tests {
         common::{Asset, Chain, Wallet},
         intent::v2::{Intent, IntentState, IntentTask, IntentType, TransferData},
     };
+    use std::rc::Rc;
 
     #[test]
     fn it_should_error_create_action_if_action_exists() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
         let link_id = random_id_string();
-        let action = create_action_fixture(&service, link_id.clone());
+        let action = create_action_fixture(&mut service, link_id.clone());
 
+        let ts = 1622547800;
         let mut temp_action = TemporaryAction {
             id: action.id.clone(),
             r#type: ActionType::CreateLink,
@@ -154,7 +160,7 @@ mod tests {
         };
 
         // Act
-        let result = service.create_action(&mut temp_action);
+        let result = service.create_action(ts, &mut temp_action);
 
         // Assert
         assert!(result.is_err());
@@ -168,14 +174,18 @@ mod tests {
     #[test]
     fn it_should_error_create_action_if_dependency_not_found() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
         let link_id = random_id_string();
         let action_id = random_id_string();
         let intent_id1 = random_id_string();
         let intent_id2 = random_id_string();
         let creator_id = random_principal_id();
 
+        let ts = 1622547800;
         let mut temp_action = TemporaryAction {
             id: action_id,
             r#type: ActionType::CreateLink,
@@ -218,7 +228,7 @@ mod tests {
         };
 
         // Act
-        let result = service.create_action(&mut temp_action);
+        let result = service.create_action(ts, &mut temp_action);
 
         // Assert
         assert!(result.is_err());
@@ -232,14 +242,18 @@ mod tests {
     #[test]
     fn it_should_create_action_successfully() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
         let link_id = random_id_string();
         let action_id = random_id_string();
         let creator_id = random_principal_id();
         let intent_id1 = random_id_string();
         let intent_id2 = random_id_string();
 
+        let ts = 1622547800;
         let mut temp_action = TemporaryAction {
             id: action_id.clone(),
             r#type: ActionType::CreateLink,
@@ -282,7 +296,7 @@ mod tests {
         };
 
         // Act
-        let result = service.create_action(&mut temp_action);
+        let result = service.create_action(ts, &mut temp_action);
 
         // Assert
         assert!(result.is_ok());

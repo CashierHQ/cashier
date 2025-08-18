@@ -263,6 +263,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionUpdate
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::repositories::tests::TestRepositories;
     use crate::services::transaction_manager::test_fixtures::*;
     use crate::utils::test_utils::{
         random_id_string, random_principal_id, runtime::MockIcEnvironment,
@@ -272,12 +273,16 @@ mod tests {
         common::{Asset, Chain, Wallet},
         transaction::v2::{FromCallType, IcTransaction, Icrc1Transfer, Protocol},
     };
+    use std::rc::Rc;
 
     #[test]
     fn it_should_error_update_tx_state_if_tx_not_found() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
 
         let mut dummy_tx = Transaction {
             id: random_id_string(),
@@ -313,10 +318,13 @@ mod tests {
     #[test]
     fn it_should_update_tx_state() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
         let link_id = random_id_string();
-        let action = create_action_with_intents_fixture(&service, link_id);
+        let action = create_action_with_intents_fixture(&mut service, link_id);
         assert!(!action.intents.is_empty());
         assert_eq!(action.intents[0].transactions.len(), 1);
         let tx_id1 = &action.intents[0].transactions[0].id;
@@ -356,8 +364,11 @@ mod tests {
     #[test]
     fn it_should_error_create_icrc112_if_invalid_from_account() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
         let action_id = random_id_string();
         let link_id = random_id_string();
         let tx_id = random_id_string();
@@ -400,8 +411,11 @@ mod tests {
     #[test]
     fn it_should_return_none_create_icrc112_request_if_caller_is_not_from_account() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
         let action_id = random_id_string();
         let link_id = random_id_string();
         let tx_id = random_id_string();
@@ -445,10 +459,13 @@ mod tests {
     #[test]
     fn it_should_create_icrc112() {
         // Arrange
-        let service: TransactionManagerService<MockIcEnvironment> =
-            TransactionManagerService::get_instance();
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
         let link_id = random_id_string();
-        let action = create_action_with_intents_fixture(&service, link_id.clone());
+        let action = create_action_with_intents_fixture(&mut service, link_id.clone());
         assert!(!action.intents.is_empty());
         assert_eq!(action.intents[0].transactions.len(), 1);
         let tx_id1 = &action.intents[0].transactions[0].id;
