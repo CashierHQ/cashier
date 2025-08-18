@@ -37,7 +37,7 @@ use crate::services::link::traits::{ActionFlow, LinkStateMachine};
 #[query(guard = "is_not_anonymous")]
 async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDto>, String> {
     debug!("[get_links] input: {input:?}");
-    let api = LinkApi::get_instance();
+    let api = LinkApi::new(get_state());
     api.get_links(&msg_caller(), input)
 }
 
@@ -57,7 +57,7 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDt
 #[query]
 async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLinkResp, String> {
     debug!("[get_link] id: {id}, options: {options:?}");
-    let api = LinkApi::get_instance();
+    let api = LinkApi::new(get_state());
     api.get_link(&msg_caller(), &id, options)
 }
 
@@ -77,7 +77,7 @@ async fn create_link(input: CreateLinkInput) -> Result<LinkDto, CanisterError> {
     info!("[create_link]");
     debug!("[create_link] input: {input:?}");
 
-    let mut api = LinkApi::get_instance();
+    let mut api = LinkApi::new(get_state());
     api.create_link(&msg_caller(), input).await
 }
 
@@ -97,7 +97,7 @@ async fn update_link(input: UpdateLinkInput) -> Result<LinkDto, CanisterError> {
     info!("[update_link]");
     debug!("[update_link] input: {input:?}");
 
-    let mut api = LinkApi::get_instance();
+    let mut api = LinkApi::new(get_state());
     api.update_link(&msg_caller(), input).await
 }
 
@@ -118,7 +118,7 @@ pub async fn process_action(input: ProcessActionInput) -> Result<ActionDto, Cani
     info!("[process_action]");
     debug!("[process_action] input: {input:?}");
 
-    let mut api = LinkApi::get_instance();
+    let mut api = LinkApi::new(get_state());
     api.process_action(msg_caller(), input).await
 }
 
@@ -139,7 +139,7 @@ pub async fn create_action(input: CreateActionInput) -> Result<ActionDto, Canist
     info!("[create_action]");
     debug!("[create_action] input: {input:?}");
 
-    let mut api = LinkApi::get_instance();
+    let mut api = LinkApi::new(get_state());
     api.create_action(&msg_caller(), input).await
 }
 
@@ -162,7 +162,7 @@ pub async fn process_action_anonymous(
     info!("[process_action_anonymous]");
     debug!("[process_action_anonymous] input: {input:?}");
 
-    let mut api = LinkApi::get_instance();
+    let mut api = LinkApi::new(get_state());
     api.process_action_anonymous(msg_caller(), input).await
 }
 
@@ -185,7 +185,7 @@ pub async fn create_action_anonymous(
     info!("[create_action_anonymous]");
     debug!("[create_action_anonymous] input: {input:?}");
 
-    let mut api = LinkApi::get_instance();
+    let mut api = LinkApi::new(get_state());
     api.create_action_anonymous(&msg_caller(), input).await
 }
 
@@ -209,7 +209,7 @@ pub async fn link_get_user_state(
     info!("[link_get_user_state]");
     debug!("[link_get_user_state] input: {input:?}");
 
-    let api = LinkApi::get_instance();
+    let api = LinkApi::new(get_state());
     api.link_get_user_state(&msg_caller(), &input)
 }
 
@@ -233,7 +233,7 @@ pub async fn link_update_user_state(
     info!("[link_update_user_state]");
     debug!("[link_update_user_state] input: {input:?}");
 
-    let mut api = LinkApi::get_instance();
+    let mut api = LinkApi::new(get_state());
     api.link_update_user_state(&msg_caller(), &input)
 }
 
@@ -255,7 +255,7 @@ pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, Canist
     debug!("[update_action] input: {input:?}");
 
     let start = ic_cdk::api::time();
-    let mut api = LinkApi::get_instance();
+    let mut api = LinkApi::new(get_state());
     let res = api.update_action(msg_caller(), input).await;
 
     let end = ic_cdk::api::time();
@@ -288,17 +288,17 @@ pub async fn update_action(input: UpdateActionInput) -> Result<ActionDto, Canist
 ///
 /// # Generic Parameters
 /// * `E` - Environment interface for Internet Computer operations (typically `RealIcEnvironment`)
-struct LinkApi {
-    state: CanisterState,
+struct LinkApi<E: IcEnvironment + Clone + 'static> {
+    state: CanisterState<E>,
 }
 
-impl LinkApi {
+impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// Creates a new instance of LinkApi with all required services.
     ///
     /// This method initializes all the dependent services needed for link operations
     /// including link management, user management, transaction processing, and validation.
-    pub fn get_instance() -> Self {
-        Self { state: get_state() }
+    pub fn new(state: CanisterState<E>) -> Self {
+        Self { state }
     }
 
     /// Retrieves links created by the calling principal with pagination support.
