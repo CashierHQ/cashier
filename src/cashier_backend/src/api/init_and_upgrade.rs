@@ -6,13 +6,14 @@ use cashier_backend_types::init::CashierBackendInitData;
 use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::info;
 use rate_limit::algorithm::fixed_window_counter::FixedWindowCounterConfig;
-use rate_limit::precision::{Nanos, Precision};
+use rate_limit::precision::Nanos;
 use std::time::Duration;
 
 use crate::api::state::get_state;
 use crate::services::transaction_manager::traits::TimeoutHandler;
 use crate::utils::random::init_ic_rand;
 
+// Initialize rate limit configurations
 fn init_rate_limit_config() {
     let mut state = get_state();
     let configs = [
@@ -40,6 +41,7 @@ fn init_rate_limit_config() {
     }
 }
 
+// Initialize a periodic task to clean up rate limiters based on the configured threshold
 fn init_time_interval_rate_limit_cleanup_task() {
     let state = get_state();
     let interval_time = state.rate_limit_service.settings().delete_threshold();
