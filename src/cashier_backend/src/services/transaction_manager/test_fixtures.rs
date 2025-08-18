@@ -21,6 +21,9 @@ use cashier_backend_types::{
 };
 use std::collections::HashMap;
 
+/// Creates a new action fixture for testing purposes.
+/// This function generates a random action ID and creates a new action
+/// in the action repository.
 pub fn create_action_fixture(
     service: &TransactionManagerService<MockIcEnvironment>,
     link_id: String,
@@ -38,6 +41,10 @@ pub fn create_action_fixture(
     action
 }
 
+/// Creates a new action fixture with intents for testing purposes.
+/// This function generates a random action ID and creates a new action
+/// in the action repository.
+/// The action contains 2 intents, which the 2nd intent depends on the 1st intent.
 pub fn create_action_with_intents_fixture(
     service: &TransactionManagerService<MockIcEnvironment>,
     link_id: String,
@@ -91,7 +98,10 @@ pub fn create_action_with_intents_fixture(
     service.create_action(&mut temp_action).unwrap()
 }
 
-pub fn create_transaction_feature(
+/// Creates a new transaction fixture for testing purposes.
+/// This function generates a random transaction ID and creates a new transaction
+/// in the transaction repository.
+pub fn create_transaction_fixture(
     service: &TransactionManagerService<MockIcEnvironment>,
 ) -> Transaction {
     let transaction = Transaction {
@@ -118,6 +128,9 @@ pub fn create_transaction_feature(
     transaction
 }
 
+/// Creates a new action data fixture for testing purposes.
+/// This function generates a random action ID, a random link ID, and creates a new action
+/// in the action repository along with its associated intents and transactions.
 pub fn create_action_data_fixture(
     service: &TransactionManagerService<MockIcEnvironment>,
 ) -> (Action, Vec<Intent>, Vec<Transaction>) {

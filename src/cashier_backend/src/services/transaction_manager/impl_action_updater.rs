@@ -267,6 +267,7 @@ mod tests {
 
     #[test]
     fn it_should_error_update_tx_state_if_tx_not_found() {
+        // Arrange
         let service: TransactionManagerService<MockIcEnvironment> =
             TransactionManagerService::get_instance();
 
@@ -289,9 +290,11 @@ mod tests {
         };
         let new_state = TransactionState::Processing;
 
+        // Act
         let result = service.update_tx_state(&mut dummy_tx, &new_state);
-        assert!(result.is_err());
 
+        // Assert
+        assert!(result.is_err());
         if let Err(CanisterError::HandleLogicError(msg)) = result {
             assert!(msg.contains("get_action_by_tx_id failed"));
         } else {
@@ -301,6 +304,7 @@ mod tests {
 
     #[test]
     fn it_should_update_tx_state() {
+        // Arrange
         let service: TransactionManagerService<MockIcEnvironment> =
             TransactionManagerService::get_instance();
         let link_id = random_id_string();
@@ -331,12 +335,11 @@ mod tests {
             start_ts: None,
         };
 
-        // Update the transaction state
+        // Act
         let result = service.update_tx_state(&mut tx, &TransactionState::Success);
-        println!("Update result: {:?}", result);
-        assert!(result.is_ok());
 
-        // Verify that the transaction state was updated
+        // Assert
+        assert!(result.is_ok());
         let updated_tx = service.transaction_service.get_tx_by_id(&tx.id).unwrap();
         assert_eq!(updated_tx.id, tx.id);
         assert_eq!(updated_tx.state, TransactionState::Success);
@@ -344,6 +347,7 @@ mod tests {
 
     #[test]
     fn it_should_error_create_icrc112_if_invalid_from_account() {
+        // Arrange
         let service: TransactionManagerService<MockIcEnvironment> =
             TransactionManagerService::get_instance();
         let action_id = random_id_string();
@@ -373,10 +377,11 @@ mod tests {
             subaccount: None,
         };
 
-        // Create ICRC-112 request with an invalid from account
+        // Act
         let result = service.create_icrc_112(&caller, &action_id, &link_id, &[tx]);
-        assert!(result.is_err());
 
+        // Assert
+        assert!(result.is_err());
         if let Err(CanisterError::InvalidDataError(msg)) = result {
             assert!(msg.contains("invalid principal"));
         } else {
@@ -386,6 +391,7 @@ mod tests {
 
     #[test]
     fn it_should_return_none_create_icrc112_request_if_caller_is_not_from_account() {
+        // Arrange
         let service: TransactionManagerService<MockIcEnvironment> =
             TransactionManagerService::get_instance();
         let action_id = random_id_string();
@@ -419,15 +425,18 @@ mod tests {
             subaccount: None,
         };
 
-        // Create ICRC-112 request with a non-matching caller
+        // Act
         let result = service
             .create_icrc_112(&caller, &action_id, &link_id, &[tx])
             .unwrap();
+
+        // Assert
         assert!(result.is_none());
     }
 
     #[test]
     fn it_should_create_icrc112() {
+        // Arrange
         let service: TransactionManagerService<MockIcEnvironment> =
             TransactionManagerService::get_instance();
         let link_id = random_id_string();
@@ -463,11 +472,12 @@ mod tests {
             subaccount: None,
         };
 
-        // Create ICRC-112 request with a matching caller
+        // Act
         let result = service
             .create_icrc_112(&caller, &action.id, &link_id, &[tx1])
             .unwrap();
 
+        // Assert
         assert!(result.is_some());
         let icrc112_requests = result.unwrap();
         assert_eq!(icrc112_requests.len(), 1);

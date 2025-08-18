@@ -128,6 +128,7 @@ mod tests {
 
     #[test]
     fn it_should_error_create_action_if_action_exists() {
+        // Arrange
         let service: TransactionManagerService<MockIcEnvironment> =
             TransactionManagerService::get_instance();
         let link_id = random_id_string();
@@ -143,12 +144,21 @@ mod tests {
             state: ActionState::Created,
         };
 
+        // Act
         let result = service.create_action(&mut temp_action);
+
+        // Assert
         assert!(result.is_err());
+        if let Err(CanisterError::HandleLogicError(msg)) = result {
+            assert!(msg.contains("Action already exists"));
+        } else {
+            panic!("Expected HandleLogicError, got {:?}", result);
+        }
     }
 
     #[test]
     fn it_should_error_create_action_if_dependency_not_found() {
+        // Arrange
         let service: TransactionManagerService<MockIcEnvironment> =
             TransactionManagerService::get_instance();
         let link_id = random_id_string();
@@ -198,9 +208,11 @@ mod tests {
             state: ActionState::Created,
         };
 
+        // Act
         let result = service.create_action(&mut temp_action);
-        assert!(result.is_err());
 
+        // Assert
+        assert!(result.is_err());
         if let Err(CanisterError::InvalidDataError(msg)) = result {
             assert!(msg.contains("Dependency ID"));
         } else {
@@ -210,6 +222,7 @@ mod tests {
 
     #[test]
     fn it_should_create_action_successfully() {
+        // Arrange
         let service: TransactionManagerService<MockIcEnvironment> =
             TransactionManagerService::get_instance();
         let link_id = random_id_string();
@@ -259,9 +272,11 @@ mod tests {
             state: ActionState::Created,
         };
 
+        // Act
         let result = service.create_action(&mut temp_action);
-        assert!(result.is_ok());
 
+        // Assert
+        assert!(result.is_ok());
         let action_dto = result.unwrap();
         assert_eq!(action_dto.id, action_id);
         assert_eq!(action_dto.r#type, ActionType::CreateLink.to_string());

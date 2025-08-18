@@ -34,15 +34,21 @@ mod tests {
 
     #[test]
     fn it_should_none_get_user_id_by_wallet() {
+        // Arrange
         let user_service = UserService::get_instance();
         let principal_id = random_principal_id();
+
+        // Act
         let user_id =
             user_service.get_user_id_by_wallet(&Principal::from_text(principal_id).unwrap());
+
+        // Assert
         assert!(user_id.is_none());
     }
 
     #[test]
     fn it_should_get_user_id_by_wallet() {
+        // Arrange
         let user_service = UserService::get_instance();
         let principal_id = random_principal_id();
         user_service.user_wallet_repository.create(
@@ -52,8 +58,11 @@ mod tests {
             },
         );
 
+        // Act
         let user_id = user_service
             .get_user_id_by_wallet(&Principal::from_text(principal_id.clone()).unwrap());
+
+        // Assert
         assert!(user_id.is_some());
         assert_eq!(user_id.unwrap(), principal_id);
     }

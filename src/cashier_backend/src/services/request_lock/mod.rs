@@ -104,6 +104,7 @@ mod tests {
 
     #[test]
     fn it_should_error_create_request_lock_for_executing_transaction_if_lock_exists() {
+        // Arrange
         let service = RequestLockService::get_instance();
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
@@ -120,15 +121,16 @@ mod tests {
             .request_lock_repository
             .create(RequestLock { key, timestamp });
 
-        // Create the lock
+        // Act
         let result = service.create_request_lock_for_executing_transaction(
             &principal,
             &action_id,
             &transaction_id,
             timestamp,
         );
-        assert!(result.is_err());
 
+        // Assert
+        assert!(result.is_err());
         if let Err(CanisterError::ValidationErrors(msg)) = result {
             assert!(msg.contains("Request lock already exists for key"));
         } else {
@@ -138,6 +140,7 @@ mod tests {
 
     #[test]
     fn it_should_create_request_lock_for_executing_transaction() {
+        // Arrange
         let service = RequestLockService::get_instance();
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
@@ -145,7 +148,7 @@ mod tests {
         let transaction_id = random_id_string();
         let timestamp = 1622547800;
 
-        // Create the lock
+        // Act
         let result = service.create_request_lock_for_executing_transaction(
             &principal,
             &action_id,
@@ -153,6 +156,7 @@ mod tests {
             timestamp,
         );
 
+        // Assert
         assert!(result.is_ok());
         if let Ok(key) = result {
             assert_eq!(
@@ -164,6 +168,7 @@ mod tests {
 
     #[test]
     fn it_should_error_create_request_lock_for_creating_action_if_lock_exists() {
+        // Arrange
         let service = RequestLockService::get_instance();
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
@@ -175,11 +180,12 @@ mod tests {
             .request_lock_repository
             .create(RequestLock { key, timestamp });
 
-        // Create the lock
+        // Act
         let result =
             service.create_request_lock_for_creating_action(&link_id, &principal, timestamp);
-        assert!(result.is_err());
 
+        // Assert
+        assert!(result.is_err());
         if let Err(CanisterError::ValidationErrors(msg)) = result {
             assert!(msg.contains("Request lock already exists for key"));
         } else {
@@ -189,16 +195,18 @@ mod tests {
 
     #[test]
     fn it_should_create_request_lock_for_creating_action() {
+        // Arrange
         let service = RequestLockService::get_instance();
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
         let link_id = random_id_string();
         let timestamp = 1622547800;
 
-        // Create the lock
+        // Act
         let result =
             service.create_request_lock_for_creating_action(&link_id, &principal, timestamp);
 
+        // Assert
         assert!(result.is_ok());
         if let Ok(key) = result {
             assert_eq!(key, RequestLockKey::user_link(principal_id, link_id));
@@ -207,6 +215,7 @@ mod tests {
 
     #[test]
     fn it_should_error_create_request_lock_for_processing_action_if_lock_exists() {
+        // Arrange
         let service = RequestLockService::get_instance();
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
@@ -220,11 +229,12 @@ mod tests {
             .request_lock_repository
             .create(RequestLock { key, timestamp });
 
-        // Create the lock
+        // Act
         let result = service
             .create_request_lock_for_processing_action(&principal, &link_id, &action_id, timestamp);
-        assert!(result.is_err());
 
+        // Assert
+        assert!(result.is_err());
         if let Err(CanisterError::ValidationErrors(msg)) = result {
             assert!(msg.contains("Request lock already exists for key"));
         } else {
@@ -234,6 +244,7 @@ mod tests {
 
     #[test]
     fn it_should_create_request_lock_for_processing_action() {
+        // Arrange
         let service = RequestLockService::get_instance();
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
@@ -241,10 +252,11 @@ mod tests {
         let action_id = random_id_string();
         let timestamp = 1622547800;
 
-        // Create the lock
+        // Act
         let result = service
             .create_request_lock_for_processing_action(&principal, &link_id, &action_id, timestamp);
 
+        // Assert
         assert!(result.is_ok());
         if let Ok(key) = result {
             assert_eq!(
@@ -256,6 +268,7 @@ mod tests {
 
     #[test]
     fn it_should_error_create_request_lock_for_updating_action_if_lock_exists() {
+        // Arrange
         let service = RequestLockService::get_instance();
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
@@ -269,11 +282,12 @@ mod tests {
             .request_lock_repository
             .create(RequestLock { key, timestamp });
 
-        // Create the lock
+        // Act
         let result = service
             .create_request_lock_for_updating_action(&principal, &link_id, &action_id, timestamp);
-        assert!(result.is_err());
 
+        // Assert
+        assert!(result.is_err());
         if let Err(CanisterError::ValidationErrors(msg)) = result {
             assert!(msg.contains("Request lock already exists for key"));
         } else {
@@ -283,6 +297,7 @@ mod tests {
 
     #[test]
     fn it_should_create_request_lock_for_updating_action() {
+        // Arrange
         let service = RequestLockService::get_instance();
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
@@ -290,10 +305,11 @@ mod tests {
         let action_id = random_id_string();
         let timestamp = 1622547800;
 
-        // Create the lock
+        // Act
         let result = service
             .create_request_lock_for_updating_action(&principal, &link_id, &action_id, timestamp);
 
+        // Assert
         assert!(result.is_ok());
         if let Ok(key) = result {
             assert_eq!(
