@@ -29,6 +29,7 @@ impl RealIcEnvironment {
         Self {}
     }
 }
+
 impl IcEnvironment for RealIcEnvironment {
     fn id(&self) -> Principal {
         canister_self()
