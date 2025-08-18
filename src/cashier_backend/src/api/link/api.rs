@@ -737,7 +737,7 @@ mod tests {
     #[tokio::test]
     async fn should_return_rate_limit_error_for_create_link_if_reach_threshold() {
         // Arrange
-        let mut mock_env = MockIcEnvironment::new();
+        let mock_env = MockIcEnvironment::new();
         let mut api = get_link_api_with_mock_env(&mock_env);
         let caller = Principal::anonymous();
         init_rate_limit();
@@ -764,7 +764,7 @@ mod tests {
     #[tokio::test]
     async fn should_return_rate_limit_error_for_create_action_if_reach_threshold() {
         // Arrange
-        let mut mock_env = MockIcEnvironment::new();
+        let mock_env = MockIcEnvironment::new();
         let mut api = get_link_api_with_mock_env(&mock_env);
         let caller = Principal::anonymous();
         init_rate_limit();
@@ -791,7 +791,7 @@ mod tests {
     #[tokio::test]
     async fn should_return_rate_limit_error_for_process_action_if_reach_threshold() {
         // Arrange
-        let mut mock_env = MockIcEnvironment::new();
+        let mock_env = MockIcEnvironment::new();
         let mut api = get_link_api_with_mock_env(&mock_env);
         let caller = Principal::anonymous();
         init_rate_limit();
@@ -818,7 +818,7 @@ mod tests {
     #[tokio::test]
     async fn should_return_rate_limit_error_for_update_action_if_reach_threshold() {
         // Arrange
-        let mut mock_env = MockIcEnvironment::new();
+        let mock_env = MockIcEnvironment::new();
         let mut api = get_link_api_with_mock_env(&mock_env);
         let caller = Principal::anonymous();
         init_rate_limit();
@@ -845,7 +845,7 @@ mod tests {
     #[tokio::test]
     async fn should_reset_after_window_size_for_create_link() {
         // Arrange
-        let mut mock_env = MockIcEnvironment::new();
+        let mock_env = MockIcEnvironment::new();
         let mut api = get_link_api_with_mock_env(&mock_env);
         let caller = Principal::anonymous();
         init_rate_limit();
@@ -906,7 +906,7 @@ mod tests {
     #[tokio::test]
     async fn should_return_reset_after_window_size_for_create_action() {
         // Arrange
-        let mut mock_env = MockIcEnvironment::new();
+        let mock_env = MockIcEnvironment::new();
         let mut api = get_link_api_with_mock_env(&mock_env);
         let caller = Principal::anonymous();
         init_rate_limit();
@@ -967,7 +967,7 @@ mod tests {
     #[tokio::test]
     async fn should_return_reset_after_window_size_for_process_action() {
         // Arrange
-        let mut mock_env = MockIcEnvironment::new();
+        let mock_env = MockIcEnvironment::new();
         let mut api = get_link_api_with_mock_env(&mock_env);
         let caller = Principal::anonymous();
         init_rate_limit();
@@ -1028,7 +1028,7 @@ mod tests {
     #[tokio::test]
     async fn should_return_reset_after_window_size_for_update_action() {
         // Arrange
-        let mut mock_env = MockIcEnvironment::new();
+        let mock_env = MockIcEnvironment::new();
         let mut api = get_link_api_with_mock_env(&mock_env);
         let caller = Principal::anonymous();
         init_rate_limit();
