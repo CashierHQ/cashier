@@ -19,6 +19,10 @@ impl<P: Precision> RatelimitSettings<P> {
             _phantom: std::marker::PhantomData,
         }
     }
+
+    pub fn delete_threshold(&self) -> Duration {
+        P::from_ticks(self.delete_threshold_ticks)
+    }
 }
 
 /// Entry in the rate limiting state for a specific method and identifier

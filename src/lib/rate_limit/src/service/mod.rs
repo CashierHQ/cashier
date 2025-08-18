@@ -1,4 +1,6 @@
 pub mod types;
+use std::time::Duration;
+
 pub use types::{LimiterEntry, RateLimitState, RatelimitSettings, ServiceError};
 
 use ic_mple_utils::store::Storage;
@@ -167,9 +169,10 @@ where
     }
 
     /// Force cleanup of old counters
-    pub fn cleanup(&mut self, current_timestamp_ticks: u64) -> usize {
+    pub fn cleanup(&mut self, current_timestamp: Duration) -> usize {
         self.storage.with_borrow_mut(|state| {
             let initial_count = state.runtime_limiters.len();
+            let current_timestamp_ticks = P::to_ticks(current_timestamp);
             let cutoff_time =
                 current_timestamp_ticks.saturating_sub(state.settings.delete_threshold_ticks);
             // retain only those entries that have been updated after the cutoff time
@@ -777,8 +780,7 @@ mod tests {
         let future_duration = Duration::from_secs(time.now());
 
         // Force cleanup with 1 hour threshold (should remove all limiters created 2 hours ago)
-        let current_ticks = Nanos::to_ticks(future_duration);
-        let removed_count = service.cleanup(current_ticks);
+        let removed_count = service.cleanup(future_duration);
 
         // Assert
         assert_eq!(
@@ -1116,8 +1118,7 @@ mod tests {
         let future_duration = Duration::from_secs(time.now());
 
         // Force cleanup with 1 hour threshold (should remove all limiters created 2 hours ago)
-        let current_ticks = Millis::to_ticks(future_duration);
-        let removed_count = service.cleanup(current_ticks);
+        let removed_count = service.cleanup(future_duration);
 
         // Assert
         assert_eq!(

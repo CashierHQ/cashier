@@ -1,11 +1,12 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::utils::runtime::IcEnvironment;
 use cashier_backend_types::init::CashierBackendInitData;
 use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::info;
 use rate_limit::algorithm::fixed_window_counter::FixedWindowCounterConfig;
-use rate_limit::precision::Nanos;
+use rate_limit::precision::{Nanos, Precision};
 use std::time::Duration;
 
 use crate::api::state::get_state;
@@ -39,6 +40,24 @@ fn init_rate_limit_config() {
     }
 }
 
+fn init_time_interval_rate_limit_cleanup_task() {
+    let state = get_state();
+    let interval_time = state.rate_limit_service.settings().delete_threshold();
+
+    state.env.set_timer(interval_time, || {
+        let mut timer_runtime = get_state();
+        let current_time_duration = Duration::from_nanos(timer_runtime.env.time());
+        let clean_up_count = timer_runtime
+            .rate_limit_service
+            .cleanup(current_time_duration);
+
+        info!(
+            "[init_time_interval_rate_limit_cleanup_task] Cleaned up {} rate limiters",
+            clean_up_count
+        );
+    });
+}
+
 #[init]
 fn init(init_data: CashierBackendInitData) {
     let log_config = init_data.log_settings.unwrap_or_default();
@@ -46,6 +65,7 @@ fn init(init_data: CashierBackendInitData) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
     }
     init_rate_limit_config();
+    init_time_interval_rate_limit_cleanup_task();
 
     info!("[init] Starting Cashier Backend");
 
@@ -61,6 +81,7 @@ fn post_upgrade() {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
     }
     init_rate_limit_config();
+    init_time_interval_rate_limit_cleanup_task();
 
     info!("[post_upgrade] Starting Cashier Backend");
 
