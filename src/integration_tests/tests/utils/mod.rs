@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs::File,
     io::Read,
     path::PathBuf,
@@ -130,6 +130,117 @@ where
     }
 
     result
+}
+
+pub struct PocketIcTestContextBuilder {
+    has_cashier_backend: bool,
+    has_token_storage: bool,
+    has_icp_ledger: bool,
+    icrc_tokens: HashSet<String>,
+}
+
+impl Default for PocketIcTestContextBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl PocketIcTestContextBuilder {
+    pub fn new() -> Self {
+        Self {
+            has_cashier_backend: false,
+            has_token_storage: false,
+            has_icp_ledger: false,
+            icrc_tokens: HashSet::new(),
+        }
+    }
+
+    pub fn with_cashier_backend(mut self) -> Self {
+        self.has_cashier_backend = true;
+        self
+    }
+
+    pub fn with_token_storage(mut self) -> Self {
+        self.has_token_storage = true;
+        self
+    }
+
+    pub fn with_icp_ledger(mut self) -> Self {
+        self.has_icp_ledger = true;
+        self
+    }
+
+    pub fn with_icrc_tokens(mut self, tokens: HashSet<String>) -> Self {
+        self.icrc_tokens = tokens;
+        self
+    }
+
+    pub async fn build_async(&self) -> PocketIcTestContext {
+        let client = Arc::new(get_pocket_ic_client().await.build_async().await);
+        let log = LogServiceSettings {
+            enable_console: Some(true),
+            in_memory_records: None,
+            max_record_length: None,
+            log_filter: Some("debug".to_string()),
+        };
+
+        let mut icrc_token_map = HashMap::new();
+
+        let token_storage_principal = if self.has_token_storage {
+            deploy_canister(
+                &client,
+                None,
+                get_token_storage_canister_bytecode(),
+                &(TokenStorageInitData {
+                    log_settings: Some(log.clone()),
+                }),
+            )
+            .await
+        } else {
+            Principal::anonymous()
+        };
+
+        let cashier_backend_principal = if self.has_cashier_backend {
+            deploy_canister(
+                &client,
+                None,
+                get_cashier_backend_canister_bytecode(),
+                &(CashierBackendInitData {
+                    log_settings: Some(log),
+                }),
+            )
+            .await
+        } else {
+            Principal::anonymous()
+        };
+
+        let icp_ledger_principal = if self.has_icp_ledger {
+            token_icp::deploy_icp_ledger_canister(&client).await
+        } else {
+            Principal::anonymous()
+        };
+
+        for token_name in self.icrc_tokens.iter() {
+            let principal = token_icrc::deploy_single_icrc_ledger_canister(
+                &client,
+                format!("Chain Key {token_name}"),
+                token_name.to_string(),
+                8,     // Default decimals
+                10000, // Default transfer fee
+                None,
+            )
+            .await;
+            icrc_token_map.insert(token_name.to_string(), principal);
+        }
+
+        PocketIcTestContext {
+            client,
+            token_storage_principal,
+            cashier_backend_principal,
+            icp_ledger_principal,
+            icrc_token_map,
+        }
+    }
 }
 
 /// A test context that provides access to a `PocketIc` client and a deployed canister.

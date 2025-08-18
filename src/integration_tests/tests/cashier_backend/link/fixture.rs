@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use candid::Principal;
 use cashier_backend_client::client::CashierBackendClient;
@@ -16,6 +16,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use crate::utils::{PocketIcTestContext, principal::TestUser};
 
 pub struct LinkTestFixture {
+    ctx: Arc<PocketIcTestContext>,
     pub cashier_backend_client: Option<CashierBackendClient<PocketIcClient>>,
 }
 
@@ -30,6 +31,7 @@ impl LinkTestFixture {
         ctx.advance_time(Duration::from_secs(1)).await;
 
         Self {
+            ctx: Arc::new(ctx.clone()),
             cashier_backend_client,
         }
     }
@@ -240,5 +242,23 @@ impl LinkTestFixture {
             .transfer(user_account, amount)
             .await
             .unwrap();
+    }
+
+    pub fn tip_link_input(&self, amount: u64) -> CreateLinkInput {
+        CreateLinkInput {
+            title: "Test Tip Link".to_string(),
+            link_use_action_max_count: 1,
+            asset_info: vec![LinkDetailUpdateAssetInfoInput {
+                address: self.ctx.icp_ledger_principal.to_string(),
+                chain: "IC".to_string(),
+                label: "SEND_TIP_ASSET".to_string(),
+                amount_per_link_use_action: amount,
+            }],
+            template: "Central".to_string(),
+            link_type: "SendTip".to_string(),
+            nft_image: None,
+            link_image_url: None,
+            description: Some("Test tip-link for integration testing".to_string()),
+        }
     }
 }
