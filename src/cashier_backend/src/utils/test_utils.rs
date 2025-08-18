@@ -25,7 +25,6 @@ pub mod runtime {
 
     #[derive(Clone)]
     pub struct MockIcEnvironment {
-        pub caller: Principal,
         pub canister_id: Principal,
         pub current_time: u64,
         pub spawned_futures: RefCell<Vec<String>>,
@@ -34,9 +33,8 @@ pub mod runtime {
     }
 
     impl MockIcEnvironment {
-        pub fn new_with_caller(caller: Principal) -> Self {
+        pub fn new() -> Self {
             Self {
-                caller,
                 canister_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
                 current_time: 1640995200000000000,
                 spawned_futures: RefCell::new(Vec::new()),
@@ -44,21 +42,9 @@ pub mod runtime {
                 timer_counter: RefCell::new(0),
             }
         }
-
-        pub fn anonymous() -> Self {
-            Self::new_with_caller(Principal::anonymous())
-        }
     }
 
     impl IcEnvironment for MockIcEnvironment {
-        fn new() -> Self {
-            Self::anonymous()
-        }
-
-        fn caller(&self) -> Principal {
-            self.caller
-        }
-
         fn id(&self) -> Principal {
             self.canister_id
         }

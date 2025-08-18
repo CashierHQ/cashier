@@ -2,9 +2,11 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::constant::get_tx_timeout_nano_seconds;
+use crate::repositories::Repositories;
 use crate::services::transaction_manager::traits::{
     BatchExecutor, DependencyAnalyzer, TimeoutHandler,
 };
+use candid::Principal;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::{
     dto::action::{ActionDto, Icrc112Requests},
@@ -25,7 +27,9 @@ use crate::{
     utils::{self, helper::to_subaccount, runtime::IcEnvironment},
 };
 
-impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E> {
+impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionUpdater<E>
+    for TransactionManagerService<E, R>
+{
     /// Updates an action with new state information and executes eligible transactions
     ///
     /// This method:
@@ -44,7 +48,11 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
     ///
     /// # Returns
     /// * `Result<ActionDto, CanisterError>` - The updated action data or an error
-    async fn update_action(&self, args: UpdateActionArgs) -> Result<ActionDto, CanisterError> {
+    async fn update_action(
+        &mut self,
+        caller: Principal,
+        args: UpdateActionArgs,
+    ) -> Result<ActionDto, CanisterError> {
         let action_data = self
             .action_service
             .get_action_data(&args.action_id)
@@ -90,7 +98,7 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
 
         // User wallet account
         let caller = Account {
-            owner: self.ic_env.caller(),
+            owner: caller,
             subaccount: None,
         };
 
@@ -204,7 +212,7 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
     }
 
     fn update_tx_state(
-        &self,
+        &mut self,
         tx: &mut Transaction,
         state: &TransactionState,
     ) -> Result<(), CanisterError> {
@@ -217,7 +225,7 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
         })?;
 
         // Pass the action state info to link_handle_tx_update
-        LinkService::<E>::get_instance().link_handle_tx_update(
+        LinkService::new(self.repo.clone(), self.ic_env.clone()).link_handle_tx_update(
             &roll_up_resp.previous_state,
             &roll_up_resp.current_state,
             &roll_up_resp.link_id,

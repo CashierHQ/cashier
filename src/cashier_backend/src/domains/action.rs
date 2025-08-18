@@ -10,13 +10,6 @@ use cashier_backend_types::repository::{
 #[derive(Clone)]
 pub struct ActionDomainLogic {}
 
-// Domain logic for business rules related to actions
-impl Default for ActionDomainLogic {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl ActionDomainLogic {
     pub fn new() -> Self {
         Self {}
