@@ -5,13 +5,14 @@ use cashier_backend_types::{
 
 use crate::utils::principal::TestUser;
 use crate::{cashier_backend::link::fixture::LinkTestFixture, utils::with_pocket_ic_context};
+use std::sync::Arc;
 
 #[tokio::test]
 async fn test_request_lock_for_create_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let fixture = LinkTestFixture::new(ctx, &caller).await;
+        let fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
         // Setup user and create link
         fixture.setup_user().await;

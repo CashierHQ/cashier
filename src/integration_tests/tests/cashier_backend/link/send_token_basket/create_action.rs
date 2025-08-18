@@ -5,13 +5,14 @@ use cashier_backend_types::repository::{
 
 use super::super::fixture::LinkTestFixture;
 use crate::utils::{principal::TestUser, with_pocket_ic_context};
+use std::sync::Arc;
 
 #[tokio::test]
 async fn should_create_token_basket_action_success() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let fixture = LinkTestFixture::new(ctx, &caller).await;
+        let fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
         let user = fixture.setup_user().await;
 
         // Act

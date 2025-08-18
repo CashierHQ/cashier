@@ -7,13 +7,14 @@ use crate::cashier_backend::link::fixture::LinkTestFixture;
 use crate::utils::{
     icrc_112::execute_icrc112_request, principal::TestUser, with_pocket_ic_context,
 };
+use std::sync::Arc;
 
 #[tokio::test]
 async fn test_request_lock_for_update_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let mut fixture = LinkTestFixture::new(ctx, &caller).await;
+        let mut fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
         // Setup user and airdrop tokens
         fixture.setup_user().await;

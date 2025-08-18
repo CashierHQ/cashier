@@ -14,7 +14,7 @@ async fn should_create_send_tip_link_success() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let fixture = LinkTestFixture::new(ctx, &caller).await;
+        let fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
         fixture.setup_user().await;
         let tip_link_amount = 100_000_000u64;
 
@@ -55,7 +55,7 @@ async fn it_should_error_create_link_send_tip_if_caller_anonymous() {
         .build_async()
         .await;
     let be_client = ctx.new_cashier_backend_client(Principal::anonymous());
-    let test_fixture = LinkTestFixture::new(&ctx, &Principal::anonymous()).await;
+    let test_fixture = LinkTestFixture::new(Arc::new(ctx), &Principal::anonymous()).await;
     let input = test_fixture.tip_link_input(100_000_000u64);
     let result = be_client.create_link(input).await;
 

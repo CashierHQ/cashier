@@ -21,7 +21,7 @@ pub struct LinkTestFixture {
 }
 
 impl LinkTestFixture {
-    pub async fn new(ctx: &PocketIcTestContext, caller: &Principal) -> Self {
+    pub async fn new(ctx: Arc<PocketIcTestContext>, caller: &Principal) -> Self {
         // Initialize the cashier backend client with the provided caller
         let cashier_backend_client = Some(ctx.new_cashier_backend_client(*caller));
 
@@ -31,7 +31,7 @@ impl LinkTestFixture {
         ctx.advance_time(Duration::from_secs(1)).await;
 
         Self {
-            ctx: Arc::new(ctx.clone()),
+            ctx,
             cashier_backend_client,
         }
     }

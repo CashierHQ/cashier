@@ -5,6 +5,8 @@ use crate::{
     cashier_backend::link::fixture::LinkTestFixture,
     utils::{principal::TestUser, with_pocket_ic_context},
 };
+use std::sync::Arc;
+
 pub mod fixture;
 pub mod send_tip;
 pub mod send_token_basket;
@@ -13,7 +15,7 @@ pub mod send_token_basket;
 async fn should_setup_environment_success() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         let caller: candid::Principal = TestUser::User1.get_principal();
-        let mut fixture = LinkTestFixture::new(ctx, &caller).await;
+        let mut fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let icrc_ledger_client = ctx.new_icrc_ledger_client("ckBTC", caller);

@@ -9,6 +9,7 @@ use crate::utils::PocketIcTestContext;
 use crate::utils::icrc_112::execute_icrc112_request;
 use crate::utils::{principal::TestUser, with_pocket_ic_context};
 use base64::Engine;
+use std::sync::Arc;
 
 async fn call_and_decode<T: DeserializeOwned + CandidType>(
     ctx: &PocketIcTestContext,
@@ -23,7 +24,7 @@ async fn test_request_lock_for_trigger_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let mut fixture = LinkTestFixture::new(ctx, &caller).await;
+        let mut fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
         // Setup user and airdrop tokens
         fixture.setup_user().await;

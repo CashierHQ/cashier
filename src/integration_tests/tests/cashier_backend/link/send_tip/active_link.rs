@@ -13,6 +13,7 @@ use crate::{
         link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context,
     },
 };
+use std::sync::Arc;
 
 #[cfg(test)]
 mod test_icp_tip_link {
@@ -35,7 +36,7 @@ mod test_icp_tip_link {
     // backend call flow: create link -> create action
     async fn setup_tip_link(ctx: &PocketIcTestContext) -> TipLinkTestData {
         let caller = TestUser::User1.get_principal();
-        let mut fixture = LinkTestFixture::new(ctx, &caller).await;
+        let mut fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
         let user = fixture.setup_user().await;
         fixture.airdrop_icp(ctx, 1_000_000_000, &caller).await;

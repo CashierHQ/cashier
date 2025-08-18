@@ -3,6 +3,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use std::time::Duration;
 
 use crate::utils::{principal::TestUser, with_pocket_ic_context};
+use std::sync::Arc;
 
 #[cfg(test)]
 mod test_canister_upgrade {
@@ -21,7 +22,7 @@ mod test_canister_upgrade {
     // Setup test data for upgrade tests
     async fn setup_upgrade_test(ctx: &PocketIcTestContext) -> UpgradeTestData {
         let caller = TestUser::User1.get_principal();
-        let mut fixture = LinkTestFixture::new(ctx, &caller).await;
+        let mut fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
         let _ = fixture.setup_user().await;
         fixture.airdrop_icp(ctx, 1_000_000_000, &caller).await;
