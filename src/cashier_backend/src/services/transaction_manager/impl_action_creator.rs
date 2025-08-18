@@ -115,10 +115,16 @@ impl<E: IcEnvironment + Clone> ActionCreator<E> for TransactionManagerService<E>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use candid::Nat;
-    use cashier_backend_types::repository::{action::v1::{ActionState, ActionType}, common::{Chain, Wallet, Asset}, intent::v2::{Intent, IntentState, IntentTask, IntentType, TransferData}};
-    use crate::utils::test_utils::{random_id_string, random_principal_id, runtime::MockIcEnvironment};
     use crate::services::transaction_manager::test_fixtures::*;
+    use crate::utils::test_utils::{
+        random_id_string, random_principal_id, runtime::MockIcEnvironment,
+    };
+    use candid::Nat;
+    use cashier_backend_types::repository::{
+        action::v1::{ActionState, ActionType},
+        common::{Asset, Chain, Wallet},
+        intent::v2::{Intent, IntentState, IntentTask, IntentType, TransferData},
+    };
 
     #[test]
     fn it_should_error_create_action_if_action_exists() {
@@ -130,14 +136,14 @@ mod tests {
         let mut temp_action = TemporaryAction {
             id: action.id.clone(),
             r#type: ActionType::CreateLink,
-            creator: action.creator.clone(),
-            link_id: link_id.clone(),
+            creator: action.creator,
+            link_id,
             intents: vec![],
             default_link_user_state: None,
             state: ActionState::Created,
         };
 
-        let result = service.create_action(&mut temp_action);        
+        let result = service.create_action(&mut temp_action);
         assert!(result.is_err());
     }
 
@@ -155,7 +161,7 @@ mod tests {
             id: action_id,
             r#type: ActionType::CreateLink,
             creator: creator_id,
-            link_id: link_id,
+            link_id,
             intents: vec![
                 Intent {
                     id: intent_id1,
@@ -164,14 +170,12 @@ mod tests {
                     dependency: vec![],
                     chain: Chain::IC,
                     task: IntentTask::TransferWalletToLink,
-                    r#type: IntentType::Transfer(
-                        TransferData {
-                            from: Wallet::default(),
-                            to: Wallet::default(),
-                            asset: Asset::default(),
-                            amount: Nat::from(1000u64),
-                        }
-                    ),
+                    r#type: IntentType::Transfer(TransferData {
+                        from: Wallet::default(),
+                        to: Wallet::default(),
+                        asset: Asset::default(),
+                        amount: Nat::from(1000u64),
+                    }),
                     label: "Test Intent".to_string(),
                 },
                 Intent {
@@ -181,14 +185,12 @@ mod tests {
                     dependency: vec![random_id_string()], // This dependency does not exist
                     chain: Chain::IC,
                     task: IntentTask::TransferWalletToLink,
-                    r#type: IntentType::Transfer(
-                        TransferData {
-                            from: Wallet::default(),
-                            to: Wallet::default(),
-                            asset: Asset::default(),
-                            amount: Nat::from(1000u64),
-                        }
-                    ),
+                    r#type: IntentType::Transfer(TransferData {
+                        from: Wallet::default(),
+                        to: Wallet::default(),
+                        asset: Asset::default(),
+                        amount: Nat::from(1000u64),
+                    }),
                     label: "Test Intent with Dependency".to_string(),
                 },
             ],
@@ -220,7 +222,7 @@ mod tests {
             id: action_id.clone(),
             r#type: ActionType::CreateLink,
             creator: creator_id.clone(),
-            link_id: link_id.clone(),
+            link_id,
             intents: vec![
                 Intent {
                     id: intent_id1.clone(),
@@ -229,14 +231,12 @@ mod tests {
                     dependency: vec![],
                     chain: Chain::IC,
                     task: IntentTask::TransferWalletToLink,
-                    r#type: IntentType::Transfer(
-                        TransferData {
-                            from: Wallet::default(),
-                            to: Wallet::default(),
-                            asset: Asset::default(),
-                            amount: Nat::from(1000u64),
-                        }
-                    ),
+                    r#type: IntentType::Transfer(TransferData {
+                        from: Wallet::default(),
+                        to: Wallet::default(),
+                        asset: Asset::default(),
+                        amount: Nat::from(1000u64),
+                    }),
                     label: "Test Intent".to_string(),
                 },
                 Intent {
@@ -246,14 +246,12 @@ mod tests {
                     dependency: vec![intent_id1.clone()],
                     chain: Chain::IC,
                     task: IntentTask::TransferWalletToLink,
-                    r#type: IntentType::Transfer(
-                        TransferData {
-                            from: Wallet::default(),
-                            to: Wallet::default(),
-                            asset: Asset::default(),
-                            amount: Nat::from(1000u64),
-                        }
-                    ),
+                    r#type: IntentType::Transfer(TransferData {
+                        from: Wallet::default(),
+                        to: Wallet::default(),
+                        asset: Asset::default(),
+                        amount: Nat::from(1000u64),
+                    }),
                     label: "Test Intent with Dependency".to_string(),
                 },
             ],
@@ -271,7 +269,5 @@ mod tests {
         assert_eq!(action_dto.intents.len(), 2);
         assert_eq!(action_dto.intents[0].id, intent_id1);
         assert_eq!(action_dto.intents[1].id, intent_id2);
-        
     }
-
 }

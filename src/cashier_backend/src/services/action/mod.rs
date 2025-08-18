@@ -22,7 +22,8 @@ pub struct ActionService {
     pub intent_repository: repositories::intent::IntentRepository,
     pub action_intent_repository: repositories::action_intent::ActionIntentRepository,
     pub transaction_repository: repositories::transaction::TransactionRepository,
-    pub intent_transaction_repository: repositories::intent_transaction::IntentTransactionRepository,
+    pub intent_transaction_repository:
+        repositories::intent_transaction::IntentTransactionRepository,
     pub link_action_repository: repositories::link_action::LinkActionRepository,
     pub user_action_repository: repositories::user_action::UserActionRepository,
 

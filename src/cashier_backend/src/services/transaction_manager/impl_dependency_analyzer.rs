@@ -114,11 +114,13 @@ impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::{random_id_string, random_principal_id, runtime::MockIcEnvironment};
     use crate::services::transaction_manager::test_fixtures::*;
+    use crate::utils::test_utils::{random_id_string, runtime::MockIcEnvironment};
     use candid::Nat;
-    use std::collections::HashMap;
-    use cashier_backend_types::repository::{action::v1::{Action, ActionState, ActionType}, common::{Asset, Chain, Wallet}, intent::{self, v2::{Intent, IntentState, IntentTask, IntentType, TransferData}}, link_action::v1::{LinkAction, LinkUserState}, transaction::v2::{FromCallType, IcTransaction, Icrc1Transfer, Protocol}};
+    use cashier_backend_types::repository::{
+        common::{Asset, Wallet},
+        transaction::v2::{FromCallType, IcTransaction, Icrc1Transfer, Protocol},
+    };
 
     #[test]
     fn it_should_true_is_all_depdendency_success_if_dependency_empty() {
@@ -166,21 +168,20 @@ mod tests {
             TransactionManagerService::get_instance();
 
         let transaction1 = create_transaction_feature(&service);
-        let transaction2 = create_transaction_feature(&service);    
+        let transaction2 = create_transaction_feature(&service);
         let transaction3 = create_transaction_feature(&service);
 
         let updated_tx3 = Transaction {
             id: transaction3.id.clone(),
-            dependency: Some(vec![transaction1.id.clone(), transaction2.id.clone()]),
+            dependency: Some(vec![transaction1.id, transaction2.id]),
             ..transaction3
         };
         service
             .action_service
             .transaction_repository
             .update(updated_tx3.clone());
-        
-        let result = service
-            .is_all_depdendency_success(&updated_tx3, false);
+
+        let result = service.is_all_depdendency_success(&updated_tx3, false);
         assert!(result.is_ok());
         assert!(!result.unwrap());
     }
@@ -205,14 +206,28 @@ mod tests {
             .update(updated_tx3.clone());
 
         // Update the state of dependencies to Success
-        service.transaction_service.update_tx_state(
-            &mut service.action_service.transaction_repository.get(&transaction1.id).unwrap(),
-            &TransactionState::Success,
-        ).unwrap();
-        service.transaction_service.update_tx_state(
-            &mut service.action_service.transaction_repository.get(&transaction2.id).unwrap(),
-            &TransactionState::Success,
-        ).unwrap();
+        service
+            .transaction_service
+            .update_tx_state(
+                &mut service
+                    .action_service
+                    .transaction_repository
+                    .get(&transaction1.id)
+                    .unwrap(),
+                &TransactionState::Success,
+            )
+            .unwrap();
+        service
+            .transaction_service
+            .update_tx_state(
+                &mut service
+                    .action_service
+                    .transaction_repository
+                    .get(&transaction2.id)
+                    .unwrap(),
+                &TransactionState::Success,
+            )
+            .unwrap();
 
         let result = service.is_all_depdendency_success(&updated_tx3, false);
         assert!(result.is_ok());
@@ -248,7 +263,7 @@ mod tests {
         service
             .action_service
             .transaction_repository
-            .update(update_tx1.clone());
+            .update(update_tx1);
 
         let update_tx2 = Transaction {
             id: transaction2.id.clone(),
@@ -259,7 +274,7 @@ mod tests {
         service
             .action_service
             .transaction_repository
-            .update(update_tx2.clone());
+            .update(update_tx2);
 
         let result = service.is_all_depdendency_success(&updated_tx3, true);
         assert!(result.is_ok());
@@ -295,7 +310,7 @@ mod tests {
         service
             .action_service
             .transaction_repository
-            .update(update_tx1.clone());
+            .update(update_tx1);
 
         let update_tx2 = Transaction {
             id: transaction2.id.clone(),
@@ -306,7 +321,7 @@ mod tests {
         service
             .action_service
             .transaction_repository
-            .update(update_tx2.clone());
+            .update(update_tx2);
 
         let result = service.is_all_depdendency_success(&updated_tx3, true);
         assert!(result.is_ok());
@@ -355,7 +370,6 @@ mod tests {
             start_ts: None,
             created_at: 1622547800,
         };
-        
 
         let result = service.is_group_has_dependency(&transaction1);
         assert!(result.is_ok());
@@ -366,8 +380,7 @@ mod tests {
     fn it_should_false_is_group_has_dependency_if_other_txs_in_group_has_dependency() {
         let service: TransactionManagerService<MockIcEnvironment> =
             TransactionManagerService::get_instance();
-        let (_action, _intents, transactions) =
-            create_action_data_fixture(&service);
+        let (_action, _intents, transactions) = create_action_data_fixture(&service);
         let result = service.is_group_has_dependency(&transactions[0]);
         assert!(result.is_ok());
         assert!(!result.unwrap());
@@ -377,8 +390,7 @@ mod tests {
     fn it_should_true_is_group_has_dependency_if_other_txs_in_group_has_dependency() {
         let service: TransactionManagerService<MockIcEnvironment> =
             TransactionManagerService::get_instance();
-        let (_action, _intents, transactions) =
-            create_action_data_fixture(&service);
+        let (_action, _intents, transactions) = create_action_data_fixture(&service);
 
         let updated_tx1 = Transaction {
             id: transactions[0].id.clone(),
@@ -404,15 +416,15 @@ mod tests {
         let updated_tx3 = Transaction {
             id: transactions[2].id.clone(),
             state: TransactionState::Processing,
-            dependency: Some(vec![updated_tx1.id.clone(), updated_tx2.id.clone()]),       
+            dependency: Some(vec![updated_tx1.id.clone(), updated_tx2.id]),
             ..transactions[2].clone()
         };
         service
             .action_service
             .transaction_repository
-            .update(updated_tx3.clone());
+            .update(updated_tx3);
 
-        let result = service.is_group_has_dependency(&updated_tx1);        
+        let result = service.is_group_has_dependency(&updated_tx1);
         assert!(result.is_ok());
         assert!(result.unwrap());
     }
@@ -438,8 +450,7 @@ mod tests {
         let service: TransactionManagerService<MockIcEnvironment> =
             TransactionManagerService::get_instance();
 
-        let (_action, _intents, transactions) =
-            create_action_data_fixture(&service);
+        let (_action, _intents, transactions) = create_action_data_fixture(&service);
 
         let tx_id1 = transactions[0].id.clone();
 
@@ -453,8 +464,7 @@ mod tests {
         let service: TransactionManagerService<MockIcEnvironment> =
             TransactionManagerService::get_instance();
 
-        let (_action, _intents, transactions) =
-            create_action_data_fixture(&service);
+        let (_action, _intents, transactions) = create_action_data_fixture(&service);
 
         let update_tx1 = Transaction {
             id: transactions[0].id.clone(),
@@ -474,11 +484,10 @@ mod tests {
         service
             .action_service
             .transaction_repository
-            .update(update_tx2.clone());
+            .update(update_tx2);
 
         let result = service.has_dependency(&update_tx1.id);
         assert!(result.is_ok());
         assert!(result.unwrap());
     }
-
 }

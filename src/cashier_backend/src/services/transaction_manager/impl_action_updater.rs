@@ -256,9 +256,14 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
 mod tests {
     use super::*;
     use crate::services::transaction_manager::test_fixtures::*;
-    use crate::utils::test_utils::{random_id_string, random_principal_id, runtime::MockIcEnvironment};
-    use cashier_backend_types::repository::{common::{Asset, Wallet, Chain},transaction::v2::{IcTransaction, Icrc1Transfer, Protocol,FromCallType}};
-    use candid::{Principal,Nat};
+    use crate::utils::test_utils::{
+        random_id_string, random_principal_id, runtime::MockIcEnvironment,
+    };
+    use candid::{Nat, Principal};
+    use cashier_backend_types::repository::{
+        common::{Asset, Chain, Wallet},
+        transaction::v2::{FromCallType, IcTransaction, Icrc1Transfer, Protocol},
+    };
 
     #[test]
     fn it_should_error_update_tx_state_if_tx_not_found() {
@@ -299,11 +304,14 @@ mod tests {
         let service: TransactionManagerService<MockIcEnvironment> =
             TransactionManagerService::get_instance();
         let link_id = random_id_string();
-        let action = create_action_with_intents_fixture(&service, link_id.clone());
-        assert!(action.intents.len() > 0);
+        let action = create_action_with_intents_fixture(&service, link_id);
+        assert!(!action.intents.is_empty());
         assert_eq!(action.intents[0].transactions.len(), 1);
         let tx_id1 = &action.intents[0].transactions[0].id;
-        assert_eq!(action.intents[0].transactions[0].state, TransactionState::Created.to_string());
+        assert_eq!(
+            action.intents[0].transactions[0].state,
+            TransactionState::Created.to_string()
+        );
 
         let mut tx = Transaction {
             id: tx_id1.clone(),
@@ -341,7 +349,7 @@ mod tests {
         let action_id = random_id_string();
         let link_id = random_id_string();
         let tx_id = random_id_string();
-        
+
         let tx = Transaction {
             id: tx_id,
             created_at: 1622547800,
@@ -366,12 +374,7 @@ mod tests {
         };
 
         // Create ICRC-112 request with an invalid from account
-        let result = service.create_icrc_112(
-            &caller,
-            &action_id,
-            &link_id,
-            &[tx],
-        );
+        let result = service.create_icrc_112(&caller, &action_id, &link_id, &[tx]);
         assert!(result.is_err());
 
         if let Err(CanisterError::InvalidDataError(msg)) = result {
@@ -417,12 +420,9 @@ mod tests {
         };
 
         // Create ICRC-112 request with a non-matching caller
-        let result = service.create_icrc_112(
-            &caller,
-            &action_id,
-            &link_id,
-            &[tx],
-        ).unwrap();
+        let result = service
+            .create_icrc_112(&caller, &action_id, &link_id, &[tx])
+            .unwrap();
         assert!(result.is_none());
     }
 
@@ -432,7 +432,7 @@ mod tests {
             TransactionManagerService::get_instance();
         let link_id = random_id_string();
         let action = create_action_with_intents_fixture(&service, link_id.clone());
-        assert!(action.intents.len() > 0);
+        assert!(!action.intents.is_empty());
         assert_eq!(action.intents[0].transactions.len(), 1);
         let tx_id1 = &action.intents[0].transactions[0].id;
         let creator_id = action.creator;
@@ -459,18 +459,15 @@ mod tests {
         };
 
         let caller = Account {
-            owner: Principal::from_text(&creator_id.to_string()).unwrap(),
+            owner: Principal::from_text(&creator_id).unwrap(),
             subaccount: None,
         };
 
         // Create ICRC-112 request with a matching caller
-        let result = service.create_icrc_112(
-            &caller,
-            &action.id,
-            &link_id,
-            &[tx1],
-        ).unwrap();
-        
+        let result = service
+            .create_icrc_112(&caller, &action.id, &link_id, &[tx1])
+            .unwrap();
+
         assert!(result.is_some());
         let icrc112_requests = result.unwrap();
         assert_eq!(icrc112_requests.len(), 1);

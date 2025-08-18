@@ -100,7 +100,7 @@ impl RequestLockService {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::test_utils::{random_id_string, random_principal_id, runtime::MockIcEnvironment};
+    use crate::utils::test_utils::{random_id_string, random_principal_id};
 
     #[test]
     fn it_should_error_create_request_lock_for_executing_transaction_if_lock_exists() {
@@ -108,14 +108,25 @@ mod tests {
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
         let action_id = random_id_string();
-        let transaction_id = random_id_string();    
+        let transaction_id = random_id_string();
         let timestamp = 1622547800;
 
-        let key = RequestLockKey::user_action_transaction(principal_id.clone(), action_id.clone(), transaction_id.clone());
-        service.request_lock_repository.create(RequestLock { key, timestamp });
+        let key = RequestLockKey::user_action_transaction(
+            principal_id,
+            action_id.clone(),
+            transaction_id.clone(),
+        );
+        service
+            .request_lock_repository
+            .create(RequestLock { key, timestamp });
 
         // Create the lock
-        let result = service.create_request_lock_for_executing_transaction(&principal, &action_id, &transaction_id, timestamp);        
+        let result = service.create_request_lock_for_executing_transaction(
+            &principal,
+            &action_id,
+            &transaction_id,
+            timestamp,
+        );
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
@@ -131,15 +142,23 @@ mod tests {
         let principal_id = random_principal_id();
         let principal = Principal::from_text(principal_id.clone()).unwrap();
         let action_id = random_id_string();
-        let transaction_id = random_id_string();    
+        let transaction_id = random_id_string();
         let timestamp = 1622547800;
 
         // Create the lock
-        let result = service.create_request_lock_for_executing_transaction(&principal, &action_id, &transaction_id, timestamp);
-        
+        let result = service.create_request_lock_for_executing_transaction(
+            &principal,
+            &action_id,
+            &transaction_id,
+            timestamp,
+        );
+
         assert!(result.is_ok());
         if let Ok(key) = result {
-            assert_eq!(key, RequestLockKey::user_action_transaction(principal_id, action_id, transaction_id));
+            assert_eq!(
+                key,
+                RequestLockKey::user_action_transaction(principal_id, action_id, transaction_id)
+            );
         }
     }
 
@@ -151,11 +170,14 @@ mod tests {
         let link_id = random_id_string();
         let timestamp = 1622547800;
 
-        let key = RequestLockKey::user_link(principal_id.clone(), link_id.clone());
-        service.request_lock_repository.create(RequestLock { key, timestamp });
+        let key = RequestLockKey::user_link(principal_id, link_id.clone());
+        service
+            .request_lock_repository
+            .create(RequestLock { key, timestamp });
 
         // Create the lock
-        let result = service.create_request_lock_for_creating_action(&link_id, &principal, timestamp);
+        let result =
+            service.create_request_lock_for_creating_action(&link_id, &principal, timestamp);
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
@@ -174,8 +196,9 @@ mod tests {
         let timestamp = 1622547800;
 
         // Create the lock
-        let result = service.create_request_lock_for_creating_action(&link_id, &principal, timestamp);
-        
+        let result =
+            service.create_request_lock_for_creating_action(&link_id, &principal, timestamp);
+
         assert!(result.is_ok());
         if let Ok(key) = result {
             assert_eq!(key, RequestLockKey::user_link(principal_id, link_id));
@@ -191,11 +214,15 @@ mod tests {
         let action_id = random_id_string();
         let timestamp = 1622547800;
 
-        let key = RequestLockKey::user_link_action(principal_id.clone(), link_id.clone(), action_id.clone());
-        service.request_lock_repository.create(RequestLock { key, timestamp });
+        let key =
+            RequestLockKey::user_link_action(principal_id, link_id.clone(), action_id.clone());
+        service
+            .request_lock_repository
+            .create(RequestLock { key, timestamp });
 
         // Create the lock
-        let result = service.create_request_lock_for_processing_action(&principal, &link_id, &action_id, timestamp);
+        let result = service
+            .create_request_lock_for_processing_action(&principal, &link_id, &action_id, timestamp);
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
@@ -215,11 +242,15 @@ mod tests {
         let timestamp = 1622547800;
 
         // Create the lock
-        let result = service.create_request_lock_for_processing_action(&principal, &link_id, &action_id, timestamp);
-        
+        let result = service
+            .create_request_lock_for_processing_action(&principal, &link_id, &action_id, timestamp);
+
         assert!(result.is_ok());
         if let Ok(key) = result {
-            assert_eq!(key, RequestLockKey::user_link_action(principal_id, link_id, action_id));
+            assert_eq!(
+                key,
+                RequestLockKey::user_link_action(principal_id, link_id, action_id)
+            );
         }
     }
 
@@ -232,11 +263,15 @@ mod tests {
         let action_id = random_id_string();
         let timestamp = 1622547800;
 
-        let key = RequestLockKey::user_link_action(principal_id.clone(), link_id.clone(), action_id.clone());
-        service.request_lock_repository.create(RequestLock { key, timestamp });
+        let key =
+            RequestLockKey::user_link_action(principal_id, link_id.clone(), action_id.clone());
+        service
+            .request_lock_repository
+            .create(RequestLock { key, timestamp });
 
         // Create the lock
-        let result = service.create_request_lock_for_updating_action(&principal, &link_id, &action_id, timestamp);
+        let result = service
+            .create_request_lock_for_updating_action(&principal, &link_id, &action_id, timestamp);
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
@@ -256,12 +291,15 @@ mod tests {
         let timestamp = 1622547800;
 
         // Create the lock
-        let result = service.create_request_lock_for_updating_action(&principal, &link_id, &action_id, timestamp);
-        
+        let result = service
+            .create_request_lock_for_updating_action(&principal, &link_id, &action_id, timestamp);
+
         assert!(result.is_ok());
         if let Ok(key) = result {
-            assert_eq!(key, RequestLockKey::user_link_action(principal_id, link_id, action_id));
+            assert_eq!(
+                key,
+                RequestLockKey::user_link_action(principal_id, link_id, action_id)
+            );
         }
     }
-
 }
