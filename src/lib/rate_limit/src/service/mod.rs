@@ -754,7 +754,7 @@ mod tests {
             time.advance(60 * 10); // Advance by 10 minutes
             let base_duration = Duration::from_secs(time.now());
             let pid = random_principal_id();
-            let res = service.try_acquire_at(
+            let _ = service.try_acquire_at(
                 TestIdentifier::UserPrincipal(pid),
                 "test",
                 base_duration,
@@ -764,6 +764,16 @@ mod tests {
 
         // Advance time by 2 hours (7200 seconds)
         time.advance(7200);
+        for _ in 0..10 {
+            let base_duration = Duration::from_secs(time.now());
+            let pid = random_principal_id();
+            let _ = service.try_acquire_at(
+                TestIdentifier::UserPrincipal(pid),
+                "test",
+                base_duration,
+                1,
+            );
+        }
         let future_duration = Duration::from_secs(time.now());
 
         // Force cleanup with 1 hour threshold (should remove all limiters created 2 hours ago)
@@ -777,7 +787,7 @@ mod tests {
         );
         assert_eq!(
             service.get_stats().0,
-            0,
+            10,
             "Nanos precision service should have no limiters after cleanup"
         );
     }
