@@ -1,6 +1,11 @@
 use cashier_backend_types::{
-    constant::CREATE_LINK_ACTION,
-    repository::{action::v1::ActionState, intent::v2::IntentState, link::v1::LinkType},
+    constant::{CONTINUE_ACTION, CREATE_LINK_ACTION},
+    dto::link::UpdateLinkInput,
+    repository::{
+        action::v1::ActionState,
+        intent::v2::IntentState,
+        link::v1::{LinkState, LinkType},
+    },
 };
 use cashier_common::utils;
 use ic_mple_client::CanisterClientError;
@@ -164,4 +169,15 @@ async fn it_should_create_link_send_tip_successfully() {
         initial_balance - tip_amount - utils::calculate_create_link_fee(&icp_ledger_fee),
         "Caller balance should be reduced by the tip amount plus the ICP ledger fee"
     );
+
+    // Act
+    let update_link_input = UpdateLinkInput {
+        id: link.id.clone(),
+        action: CONTINUE_ACTION.to_string(),
+        params: None,
+    };
+    let update_link = test_fixture.update_link(update_link_input).await;
+
+    // Assert
+    assert_eq!(update_link.state, LinkState::Active.to_string());
 }

@@ -7,3 +7,4 @@ pub const INTENT_LABEL_RECEIVE_PAYMENT_ASSET: &str = "RECEIVE_PAYMENT_ASSET";
 pub const CREATE_LINK_ACTION: &str = "CreateLink";
 pub const USE_LINK_ACTION: &str = "Use";
 pub const WITHDRAW_LINK_ACTION: &str = "Withdraw";
+pub const CONTINUE_ACTION: &str = "Continue";

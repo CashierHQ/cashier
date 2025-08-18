@@ -6,7 +6,10 @@ use cashier_backend_types::{
     constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
-        link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto, UpdateLinkInput},
+        link::{
+            CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDetailUpdateAssetInfoInput, LinkDto,
+            UpdateLinkInput,
+        },
         user::UserDto,
     },
 };
@@ -216,6 +219,17 @@ impl LinkTestFixture {
             .transfer(user_account, amount)
             .await
             .unwrap();
+    }
+
+    pub async fn get_link(&self, link_id: &str, options: Option<GetLinkOptions>) -> LinkDto {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .get_link(link_id.to_string(), options)
+            .await
+            .unwrap()
+            .unwrap()
+            .link
     }
 
     pub fn tip_link_input(&self, amount: u64) -> CreateLinkInput {
