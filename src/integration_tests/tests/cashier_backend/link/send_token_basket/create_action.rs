@@ -16,7 +16,7 @@ async fn should_create_token_basket_action_success() {
         let user = fixture.setup_user().await;
 
         // Act
-        let link = fixture.create_token_basket_link(ctx).await;
+        let link = fixture.create_token_basket_link().await;
         let action = fixture.create_action(&link.id, "CreateLink").await;
 
         // Assert

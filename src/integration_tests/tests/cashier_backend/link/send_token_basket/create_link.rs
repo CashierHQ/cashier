@@ -17,7 +17,7 @@ async fn should_create_token_basket_link_success() {
         fixture.setup_user().await;
 
         // Act
-        let link = fixture.create_token_basket_link(ctx).await;
+        let link = fixture.create_token_basket_link().await;
 
         // Assert
         assert_eq!(link.link_type, Some(LinkType::SendTokenBasket.to_string()));

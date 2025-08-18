@@ -59,58 +59,43 @@ impl LinkTestFixture {
     }
 
     // Pre-defined input for creating tip link.
-    pub async fn create_tip_link(&self, ctx: &PocketIcTestContext, amount: u64) -> LinkDto {
-        let input = CreateLinkInput {
-            title: "Test Link".to_string(),
-            link_use_action_max_count: 1,
-            asset_info: vec![LinkDetailUpdateAssetInfoInput {
-                address: ctx.icp_ledger_principal.to_string(),
-                chain: "IC".to_string(),
-                label: "SEND_TIP_ASSET".to_string(),
-                amount_per_link_use_action: amount,
-            }],
-            template: "Central".to_string(),
-            link_type: "SendTip".to_string(),
-            nft_image: None,
-            link_image_url: None,
-            description: Some("Test link for integration testing".to_string()),
-        };
-        self.create_link(input).await
+    pub async fn create_tip_link(&self, amount: u64) -> LinkDto {
+        self.create_link(self.tip_link_input(amount)).await
     }
 
     // Pre-defined input for creating token basket link.
-    pub async fn create_token_basket_link(&self, ctx: &PocketIcTestContext) -> LinkDto {
+    pub async fn create_token_basket_link(&self) -> LinkDto {
         let input = CreateLinkInput {
             title: "Test Link".to_string(),
             link_use_action_max_count: 1,
             asset_info: vec![
                 LinkDetailUpdateAssetInfoInput {
-                    address: ctx.icp_ledger_principal.to_string(),
+                    address: self.ctx.icp_ledger_principal.to_string(),
                     chain: "IC".to_string(),
                     label: format!(
                         "{}_{}",
                         INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
-                        ctx.icp_ledger_principal.to_text()
+                        self.ctx.icp_ledger_principal.to_text()
                     ),
                     amount_per_link_use_action: 10_000_000,
                 },
                 LinkDetailUpdateAssetInfoInput {
-                    address: ctx.icrc_token_map["ckBTC"].to_string(),
+                    address: self.ctx.icrc_token_map["ckBTC"].to_string(),
                     chain: "IC".to_string(),
                     label: format!(
                         "{}_{}",
                         INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
-                        ctx.icrc_token_map["ckBTC"].to_text()
+                        self.ctx.icrc_token_map["ckBTC"].to_text()
                     ),
                     amount_per_link_use_action: 1_000_000,
                 },
                 LinkDetailUpdateAssetInfoInput {
-                    address: ctx.icrc_token_map["ckUSDC"].to_string(),
+                    address: self.ctx.icrc_token_map["ckUSDC"].to_string(),
                     chain: "IC".to_string(),
                     label: format!(
                         "{}_{}",
                         INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
-                        ctx.icrc_token_map["ckUSDC"].to_text()
+                        self.ctx.icrc_token_map["ckUSDC"].to_text()
                     ),
                     amount_per_link_use_action: 10_000_000,
                 },
@@ -200,15 +185,10 @@ impl LinkTestFixture {
     }
 
     // This function is used to airdrop ICP to the user.
-    pub async fn airdrop_icp(
-        &mut self,
-        ctx: &PocketIcTestContext,
-        amount: u64,
-        to_user: &Principal,
-    ) -> () {
+    pub async fn airdrop_icp(&mut self, amount: u64, to_user: &Principal) -> () {
         let caller = TestUser::TokenDeployer.get_principal();
 
-        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+        let icp_ledger_client = self.ctx.new_icp_ledger_client(caller);
 
         // Create user account identifier
         let user_account = Account {
@@ -223,15 +203,9 @@ impl LinkTestFixture {
     }
 
     // This function is used to airdrop ICRC to the user.
-    pub async fn airdrop_icrc(
-        &mut self,
-        ctx: &PocketIcTestContext,
-        token_name: &str,
-        amount: u64,
-        to_user: &Principal,
-    ) -> () {
+    pub async fn airdrop_icrc(&mut self, token_name: &str, amount: u64, to_user: &Principal) -> () {
         let caller = TestUser::TokenDeployer.get_principal();
-        let icrc_ledger_client = ctx.new_icrc_ledger_client(token_name, caller);
+        let icrc_ledger_client = self.ctx.new_icrc_ledger_client(token_name, caller);
 
         let user_account = Account {
             owner: *to_user,

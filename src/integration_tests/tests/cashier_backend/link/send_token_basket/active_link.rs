@@ -40,15 +40,13 @@ mod test_token_basket_3_tokens {
         let mut fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
         let user = fixture.setup_user().await;
-        fixture.airdrop_icp(ctx, 1_000_000_000, &caller).await;
+        fixture.airdrop_icp(1_000_000_000, &caller).await;
+        fixture.airdrop_icrc("ckBTC", 100_000_000, &caller).await;
         fixture
-            .airdrop_icrc(ctx, "ckBTC", 100_000_000, &caller)
-            .await;
-        fixture
-            .airdrop_icrc(ctx, "ckUSDC", 10_000_000_000, &caller)
+            .airdrop_icrc("ckUSDC", 10_000_000_000, &caller)
             .await;
 
-        let link = fixture.create_token_basket_link(ctx).await;
+        let link = fixture.create_token_basket_link().await;
         let action = fixture.create_action(&link.id, "CreateLink").await;
 
         let user_account = Account {

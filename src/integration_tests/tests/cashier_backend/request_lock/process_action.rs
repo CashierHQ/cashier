@@ -22,19 +22,17 @@ async fn test_request_lock_for_process_action() {
 
         // Setup user and airdrop tokens
         fixture.setup_user().await;
+        fixture.airdrop_icp(1_000_000_000_000_000, &caller).await;
         fixture
-            .airdrop_icp(ctx, 1_000_000_000_000_000, &caller)
+            .airdrop_icrc("ckBTC", 1_000_000_000_000_000, &caller)
             .await;
         fixture
-            .airdrop_icrc(ctx, "ckBTC", 1_000_000_000_000_000, &caller)
-            .await;
-        fixture
-            .airdrop_icrc(ctx, "ckUSDC", 1_000_000_000_000_000, &caller)
+            .airdrop_icrc("ckUSDC", 1_000_000_000_000_000, &caller)
             .await;
 
         // top up link and active link
         let active_link = {
-            let link = fixture.create_token_basket_link(ctx).await;
+            let link = fixture.create_token_basket_link().await;
             let action = fixture.create_action(&link.id, "CreateLink").await;
             let processing_action = fixture.process_action(&link.id, &action.id).await;
             let _icrc112_execution_result = execute_icrc112_request(
