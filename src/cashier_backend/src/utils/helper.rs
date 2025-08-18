@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::domains::fee::Fee;
 use candid::Nat;
 use cashier_backend_types::error::CanisterError;
 use icrc_ledger_types::icrc1::{account::Subaccount, transfer::Memo};

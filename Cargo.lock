@@ -1257,6 +1257,7 @@ dependencies = [
  "candid",
  "cashier_backend_client",
  "cashier_backend_types",
+ "cashier_common",
  "ic-cdk",
  "ic-ledger-types",
  "ic_mple_client",
