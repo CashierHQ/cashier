@@ -1,12 +1,76 @@
-use crate::cashier_backend::link::fixture::create_token_basket_link_fixture;
+use crate::{
+    cashier_backend::link::fixture::{LinkTestFixture, create_token_basket_link_fixture},
+    utils::principal::TestUser,
+};
+use candid::Principal;
 use cashier_backend_types::{
     constant,
+    dto::action::CreateActionInput,
+    error::CanisterError,
     repository::{
         action::v1::{ActionState, ActionType},
         intent::v2::IntentState,
     },
 };
+use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
+
+#[tokio::test]
+async fn it_should_error_withdraw_link_token_basket_if_caller_anonymous() {
+    // Arrange
+    let (creator_fixture, link) = create_token_basket_link_fixture().await;
+
+    let caller = Principal::anonymous();
+    let caller_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &caller).await;
+    let cashier_backend_client = caller_fixture.ctx.new_cashier_backend_client(caller);
+
+    // Act
+    let result = cashier_backend_client
+        .create_action(CreateActionInput {
+            link_id: link.id.clone(),
+            action_type: constant::WITHDRAW_LINK_ACTION.to_string(),
+        })
+        .await;
+
+    // Assert
+    assert!(result.is_err());
+    if let Err(CanisterClientError::PocketIcTestError(err)) = result {
+        assert!(
+            err.reject_message
+                .contains("Anonymous caller is not allowed")
+        );
+    } else {
+        panic!("Expected PocketIcTestError, got {:?}", result);
+    }
+}
+
+#[tokio::test]
+async fn it_should_error_withdraw_link_token_basket_if_caller_not_creator() {
+    // Arrange
+    let (creator_fixture, link) = create_token_basket_link_fixture().await;
+
+    let caller = TestUser::User2.get_principal();
+    let caller_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &caller).await;
+    caller_fixture.setup_user().await;
+    let cashier_backend_client = caller_fixture.ctx.new_cashier_backend_client(caller);
+
+    // Act
+    let result = cashier_backend_client
+        .create_action(CreateActionInput {
+            link_id: link.id.clone(),
+            action_type: constant::WITHDRAW_LINK_ACTION.to_string(),
+        })
+        .await
+        .unwrap();
+
+    // Assert
+    assert!(result.is_err());
+    if let Err(CanisterError::ValidationErrors(err)) = result {
+        assert!(err.contains("User is not the creator of the link"));
+    } else {
+        panic!("Expected PocketIcTestError, got {:?}", result);
+    }
+}
 
 #[tokio::test]
 async fn it_should_withdraw_link_token_basket_successfully() {

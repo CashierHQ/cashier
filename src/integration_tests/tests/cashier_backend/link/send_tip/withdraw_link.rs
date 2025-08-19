@@ -12,7 +12,6 @@ use cashier_backend_types::{
         intent::v2::IntentState,
     },
 };
-use ic_cdk::api::call;
 use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
 

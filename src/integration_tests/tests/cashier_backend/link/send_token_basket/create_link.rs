@@ -1,3 +1,7 @@
+use super::super::fixture::LinkTestFixture;
+use crate::utils::principal::TestUser;
+use crate::utils::{PocketIcTestContextBuilder, icrc_112};
+use candid::Principal;
 use cashier_backend_types::{
     constant,
     dto::link::UpdateLinkInput,
@@ -8,12 +12,52 @@ use cashier_backend_types::{
     },
 };
 use cashier_common::utils;
-
-use super::super::fixture::LinkTestFixture;
-use crate::utils::principal::TestUser;
-use crate::utils::{PocketIcTestContextBuilder, icrc_112};
+use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
 use std::sync::Arc;
+
+#[tokio::test]
+async fn it_should_error_create_link_tip_if_caller_anonymous() {
+    // Arrange
+    let ctx = PocketIcTestContextBuilder::new()
+        .with_cashier_backend()
+        .with_icp_ledger()
+        .with_icrc_tokens(vec![
+            constant::CKBTC_ICRC_TOKEN.to_string(),
+            constant::CKUSDC_ICRC_TOKEN.to_string(),
+        ])
+        .build_async()
+        .await;
+    let be_client = ctx.new_cashier_backend_client(Principal::anonymous());
+    let test_fixture = LinkTestFixture::new(Arc::new(ctx), &Principal::anonymous()).await;
+    let icp_link_amount = 10_000_000u64;
+    let ckbtc_link_amount = 1_000u64;
+    let ckusdc_link_amount = 50_000_000u64;
+    let link_input = test_fixture
+        .token_basket_link_input(
+            vec![
+                constant::ICP_TOKEN.to_string(),
+                constant::CKBTC_ICRC_TOKEN.to_string(),
+                constant::CKUSDC_ICRC_TOKEN.to_string(),
+            ],
+            vec![icp_link_amount, ckbtc_link_amount, ckusdc_link_amount],
+        )
+        .unwrap();
+
+    // Act
+    let result = be_client.create_link(link_input).await;
+
+    // Assert
+    assert!(result.is_err());
+    if let Err(CanisterClientError::PocketIcTestError(err)) = result {
+        assert!(
+            err.reject_message
+                .contains("Anonymous caller is not allowed")
+        );
+    } else {
+        panic!("Expected PocketIcTestError, got {:?}", result);
+    }
+}
 
 #[tokio::test]
 async fn it_should_create_link_token_basket_successfully() {
