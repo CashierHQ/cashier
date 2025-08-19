@@ -225,11 +225,42 @@ async fn it_should_use_link_send_token_basket_successfully() {
     // Assert
     assert_eq!(processing_action.id, use_action.id);
     assert_eq!(processing_action.r#type, ActionType::Use.to_string());
-    assert_eq!(processing_action.state, ActionState::Processing.to_string());
+    assert_eq!(processing_action.state, ActionState::Success.to_string());
     assert!(
         processing_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Processing.to_string())
+            .all(|intent| intent.state == IntentState::Success.to_string())
+    );
+
+    let claimer_account = Account {
+        owner: claimer,
+        subaccount: None,
+    };
+
+    let claimer_icp_balance_after = icp_ledger_client
+        .balance_of(&claimer_account)
+        .await
+        .unwrap();
+    let claimer_ckbtc_balance_after = ckbtc_ledger_client
+        .balance_of(&claimer_account)
+        .await
+        .unwrap();
+    let claimer_ckusdc_balance_after = ckusdc_ledger_client
+        .balance_of(&claimer_account)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        claimer_icp_balance_after, icp_link_amount,
+        "Claimer ICP balance is incorrect"
+    );
+    assert_eq!(
+        claimer_ckbtc_balance_after, ckbtc_link_amount,
+        "Claimer cKBTC balance is incorrect"
+    );
+    assert_eq!(
+        claimer_ckusdc_balance_after, ckusdc_link_amount,
+        "Claimer cKUSDC balance is incorrect"
     );
 }
