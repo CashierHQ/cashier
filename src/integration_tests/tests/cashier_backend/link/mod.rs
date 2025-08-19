@@ -8,6 +8,7 @@ use crate::{
 use std::sync::Arc;
 
 pub mod fixture;
+pub mod send_airdrop;
 pub mod send_tip;
 pub mod send_token_basket;
 

@@ -6,7 +6,7 @@ use crate::cashier_backend::link::fixture::{LinkTestFixture, create_tip_link_fix
 use crate::utils::principal::TestUser;
 
 #[tokio::test]
-async fn it_should_use_link_send_tip_successfully() {
+async fn it_should_use_link_tip_successfully() {
     // Arrange
     let (creator_fixture, link) = create_tip_link_fixture().await;
 

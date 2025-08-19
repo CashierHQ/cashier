@@ -20,6 +20,7 @@ use cashier_common::utils;
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
 use std::{sync::Arc, time::Duration};
+use token_storage_types::token;
 
 pub struct LinkTestFixture {
     pub ctx: Arc<PocketIcTestContext>,
@@ -262,7 +263,84 @@ impl LinkTestFixture {
             ));
         }
 
-        let asset_info = tokens
+        let asset_info = self.asset_info_from_tokens_and_amount(tokens, amounts)?;
+
+        Ok(CreateLinkInput {
+            title: "Test Token Basket Link".to_string(),
+            link_use_action_max_count: 1,
+            asset_info,
+            template: "Central".to_string(),
+            link_type: constant::SEND_TOKEN_BASKET_LINK_TYPE.to_string(),
+            nft_image: None,
+            link_image_url: None,
+            description: Some("Test token basket link for integration testing".to_string()),
+        })
+    }
+
+    pub fn airdrop_link_input(
+        &self,
+        tokens: Vec<String>,
+        amounts: Vec<u64>,
+        max_count: u64,
+    ) -> Result<CreateLinkInput, String> {
+        if tokens.len() != amounts.len() {
+            return Err(format!(
+                "Tokens and amounts must have the same length: {} vs {}",
+                tokens.len(),
+                amounts.len()
+            ));
+        }
+
+        let asset_info = self.asset_info_from_tokens_and_amount(tokens, amounts)?;
+
+        Ok(CreateLinkInput {
+            title: "Test Airdrop Link".to_string(),
+            link_use_action_max_count: max_count,
+            asset_info,
+            template: "Central".to_string(),
+            link_type: constant::SEND_AIRDROP_LINK_TYPE.to_string(),
+            nft_image: None,
+            link_image_url: None,
+            description: Some("Test airdrop link for integration testing".to_string()),
+        })
+    }
+
+    pub fn receive_payment_link_input(&self) -> CreateLinkInput {
+        CreateLinkInput {
+            title: "Test Receive Payment Link".to_string(),
+            link_use_action_max_count: 1,
+            asset_info: vec![LinkDetailUpdateAssetInfoInput {
+                address: self.ctx.icp_ledger_principal.to_string(),
+                chain: "IC".to_string(),
+                label: format!(
+                    "{}_{}",
+                    constant::INTENT_LABEL_RECEIVE_PAYMENT_ASSET,
+                    self.ctx.icp_ledger_principal.to_text()
+                ),
+                amount_per_link_use_action: 10_000_000,
+            }],
+            template: "Central".to_string(),
+            link_type: constant::RECEIVE_PAYMENT_LINK_TYPE.to_string(),
+            nft_image: None,
+            link_image_url: None,
+            description: Some("Test receive payment link for integration testing".to_string()),
+        }
+    }
+
+    fn asset_info_from_tokens_and_amount(
+        &self,
+        tokens: Vec<String>,
+        amounts: Vec<u64>,
+    ) -> Result<Vec<LinkDetailUpdateAssetInfoInput>, String> {
+        if tokens.len() != amounts.len() {
+            return Err(format!(
+                "Tokens and amounts must have the same length: {} vs {}",
+                tokens.len(),
+                amounts.len()
+            ));
+        }
+
+        tokens
             .into_iter()
             .zip(amounts)
             .map(|(token, amount)| match token.as_str() {
@@ -274,7 +352,7 @@ impl LinkTestFixture {
                         constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
                         self.ctx.icp_ledger_principal.to_text()
                     ),
-                    amount_per_link_use_action: 10_000_000,
+                    amount_per_link_use_action: amount,
                 }),
                 _ => match self.ctx.icrc_token_map.get(&token) {
                     Some(token_principal) => Ok(LinkDetailUpdateAssetInfoInput {
@@ -290,18 +368,7 @@ impl LinkTestFixture {
                     None => Err(format!("Token {} not found in icrc_token_map", token)),
                 },
             })
-            .collect::<Result<Vec<_>, _>>()?;
-
-        Ok(CreateLinkInput {
-            title: "Test Token Basket Link".to_string(),
-            link_use_action_max_count: 1,
-            asset_info,
-            template: "Central".to_string(),
-            link_type: constant::SEND_TOKEN_BASKET_LINK_TYPE.to_string(),
-            nft_image: None,
-            link_image_url: None,
-            description: Some("Test token basket link for integration testing".to_string()),
-        })
+            .collect()
     }
 }
 

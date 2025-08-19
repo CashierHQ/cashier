@@ -20,7 +20,7 @@ use candid::Principal;
 use std::sync::Arc;
 
 #[tokio::test]
-async fn it_should_error_create_link_send_tip_if_caller_anonymous() {
+async fn it_should_error_create_link_tip_if_caller_anonymous() {
     // Arrange
     let ctx = PocketIcTestContextBuilder::new()
         .with_cashier_backend()
@@ -46,7 +46,7 @@ async fn it_should_error_create_link_send_tip_if_caller_anonymous() {
 }
 
 #[tokio::test]
-async fn it_should_create_link_send_tip_successfully() {
+async fn it_should_create_link_tip_successfully() {
     // Arrange
     let ctx = PocketIcTestContextBuilder::new()
         .with_cashier_backend()

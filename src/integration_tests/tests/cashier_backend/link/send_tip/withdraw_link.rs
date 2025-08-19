@@ -9,7 +9,7 @@ use cashier_backend_types::{
 use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]
-async fn it_should_withdraw_link_send_tip_successfully() {
+async fn it_should_withdraw_link_tip_successfully() {
     // Arrange
     let (creator_fixture, link) = create_tip_link_fixture().await;
 
