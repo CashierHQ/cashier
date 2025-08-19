@@ -1,7 +1,10 @@
 use candid::Nat;
-use cashier_backend_types::repository::{
-    action::v1::{ActionState, ActionType},
-    intent::v2::IntentState,
+use cashier_backend_types::{
+    constant,
+    repository::{
+        action::v1::{ActionState, ActionType},
+        intent::v2::IntentState,
+    },
 };
 use icrc_ledger_types::icrc1::account::Account;
 
@@ -88,7 +91,11 @@ mod test_token_basket_3_tokens {
             // Act - backend call flow: process action -> execute icrc112 -> update action
             let processing_action = test_data
                 .fixture
-                .process_action(&test_data.link.id, &test_data.action.id)
+                .process_action(
+                    &test_data.link.id,
+                    &test_data.action.id,
+                    constant::CREATE_LINK_ACTION,
+                )
                 .await;
             let icrc112_execution_result = execute_icrc112_request(
                 processing_action.icrc_112_requests.as_ref().unwrap(),
@@ -156,7 +163,11 @@ mod test_token_basket_3_tokens {
             // Act - backend call flow: process action -> execute icrc112 -> update action
             let processing_action = test_data
                 .fixture
-                .process_action(&test_data.link.id, &test_data.action.id)
+                .process_action(
+                    &test_data.link.id,
+                    &test_data.action.id,
+                    constant::CREATE_LINK_ACTION,
+                )
                 .await;
             let _icrc112_execution_result = execute_icrc112_request(
                 processing_action.icrc_112_requests.as_ref().unwrap(),
@@ -234,7 +245,11 @@ mod test_token_basket_3_tokens {
             // Act
             let processing_action = test_data
                 .fixture
-                .process_action(&test_data.link.id, &test_data.action.id)
+                .process_action(
+                    &test_data.link.id,
+                    &test_data.action.id,
+                    constant::CREATE_LINK_ACTION,
+                )
                 .await;
             let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
 

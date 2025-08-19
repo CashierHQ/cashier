@@ -1,5 +1,5 @@
 use cashier_backend_types::{
-    constant::{self, CONTINUE_ACTION, CREATE_LINK_ACTION},
+    constant,
     dto::link::UpdateLinkInput,
     repository::{
         action::v1::ActionState,
@@ -92,12 +92,12 @@ async fn it_should_create_link_send_tip_successfully() {
 
     // Act
     let create_action = test_fixture
-        .create_action(&link.id, CREATE_LINK_ACTION)
+        .create_action(&link.id, constant::CREATE_LINK_ACTION)
         .await;
 
     // Assert
     assert!(!create_action.id.is_empty());
-    assert_eq!(create_action.r#type, CREATE_LINK_ACTION);
+    assert_eq!(create_action.r#type, constant::CREATE_LINK_ACTION);
     assert_eq!(create_action.state, ActionState::Created.to_string());
     assert_eq!(create_action.intents.len(), 2);
     assert!(
@@ -109,12 +109,12 @@ async fn it_should_create_link_send_tip_successfully() {
 
     // Act
     let processing_action = test_fixture
-        .process_action(&link.id, &create_action.id)
+        .process_action(&link.id, &create_action.id, constant::CREATE_LINK_ACTION)
         .await;
 
     // Assert
     assert!(!processing_action.id.is_empty());
-    assert_eq!(processing_action.r#type, CREATE_LINK_ACTION);
+    assert_eq!(processing_action.r#type, constant::CREATE_LINK_ACTION);
     assert_eq!(processing_action.state, ActionState::Processing.to_string());
     assert!(processing_action.icrc_112_requests.is_some());
     assert_eq!(
@@ -145,7 +145,7 @@ async fn it_should_create_link_send_tip_successfully() {
 
     // Assert
     assert!(!update_action.id.is_empty());
-    assert_eq!(update_action.r#type, CREATE_LINK_ACTION);
+    assert_eq!(update_action.r#type, constant::CREATE_LINK_ACTION);
     assert_eq!(update_action.state, ActionState::Success.to_string());
     assert!(
         update_action
@@ -175,7 +175,7 @@ async fn it_should_create_link_send_tip_successfully() {
     // Act
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
-        action: CONTINUE_ACTION.to_string(),
+        action: constant::CONTINUE_ACTION.to_string(),
         params: None,
     };
     let update_link = test_fixture.update_link(update_link_input).await;

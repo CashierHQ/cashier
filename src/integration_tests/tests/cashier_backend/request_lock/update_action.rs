@@ -1,4 +1,5 @@
 use cashier_backend_types::{
+    constant,
     dto::action::{ActionDto, UpdateActionInput},
     error::CanisterError,
 };
@@ -29,7 +30,9 @@ async fn test_request_lock_for_update_action() {
         // Create and process link to get ICRC-112 requests
         let link = fixture.create_token_basket_link().await;
         let action = fixture.create_action(&link.id, "CreateLink").await;
-        let processing_action = fixture.process_action(&link.id, &action.id).await;
+        let processing_action = fixture
+            .process_action(&link.id, &action.id, constant::CREATE_LINK_ACTION)
+            .await;
 
         // Execute all ICRC112 requests
         if let Some(reqs) = processing_action.icrc_112_requests.as_ref() {

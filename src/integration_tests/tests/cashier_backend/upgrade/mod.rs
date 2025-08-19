@@ -1,4 +1,7 @@
-use cashier_backend_types::repository::{action::v1::ActionState, intent::v2::IntentState};
+use cashier_backend_types::{
+    constant,
+    repository::{action::v1::ActionState, intent::v2::IntentState},
+};
 use icrc_ledger_types::icrc1::account::Account;
 use std::time::Duration;
 
@@ -44,7 +47,9 @@ mod test_canister_upgrade {
             .unwrap();
 
         // Process action to get it into processing state
-        let processing_action = fixture.process_action(&link.id, &action.id).await;
+        let processing_action = fixture
+            .process_action(&link.id, &action.id, constant::CREATE_LINK_ACTION)
+            .await;
 
         UpgradeTestData {
             link,

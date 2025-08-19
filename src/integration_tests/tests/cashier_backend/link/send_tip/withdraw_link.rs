@@ -1,5 +1,5 @@
 use cashier_backend_types::{
-    constant::{self, CONTINUE_ACTION, CREATE_LINK_ACTION},
+    constant,
     dto::{
         action::{CreateActionInput, ProcessActionInput, UpdateActionInput},
         link::UpdateLinkInput,
@@ -49,10 +49,10 @@ async fn it_should_withdraw_link_send_tip_successfully() {
     let link = test_fixture.create_tip_link(tip_amount).await;
 
     let create_action = test_fixture
-        .create_action(&link.id, CREATE_LINK_ACTION)
+        .create_action(&link.id, constant::CREATE_LINK_ACTION)
         .await;
     let processing_action = test_fixture
-        .process_action(&link.id, &create_action.id)
+        .process_action(&link.id, &create_action.id, constant::CREATE_LINK_ACTION)
         .await;
 
     let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
@@ -66,7 +66,7 @@ async fn it_should_withdraw_link_send_tip_successfully() {
     // Act
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
-        action: CONTINUE_ACTION.to_string(),
+        action: constant::CONTINUE_ACTION.to_string(),
         params: None,
     };
     let update_link = test_fixture.update_link(update_link_input).await;

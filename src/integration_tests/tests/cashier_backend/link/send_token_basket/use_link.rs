@@ -16,7 +16,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use std::sync::Arc;
 
 #[tokio::test]
-async fn it_should_create_link_send_token_basket_successfully() {
+async fn it_should_use_link_send_token_basket_successfully() {
     // Arrange
     let ctx = PocketIcTestContextBuilder::new()
         .with_cashier_backend()
@@ -29,8 +29,13 @@ async fn it_should_create_link_send_token_basket_successfully() {
         .await;
 
     let caller = TestUser::User1.get_principal();
-    let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
-    test_fixture.setup_user().await;
+    let claimer = TestUser::User2.get_principal();
+
+    let mut creator_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
+    creator_fixture.setup_user().await;
+
+    let mut claimer_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &claimer).await;
+    claimer_fixture.setup_user().await;
 
     let icp_ledger_client = ctx.new_icp_ledger_client(caller);
     let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);
@@ -40,11 +45,13 @@ async fn it_should_create_link_send_token_basket_successfully() {
     let ckusdc_initial_balance = 1_000_000_000u64;
 
     // Act
-    test_fixture.airdrop_icp(icp_initial_balance, &caller).await;
-    test_fixture
+    creator_fixture
+        .airdrop_icp(icp_initial_balance, &caller)
+        .await;
+    creator_fixture
         .airdrop_icrc(constant::CKBTC_ICRC_TOKEN, ckbtc_initial_balance, &caller)
         .await;
-    test_fixture
+    creator_fixture
         .airdrop_icrc(constant::CKUSDC_ICRC_TOKEN, ckusdc_initial_balance, &caller)
         .await;
 
@@ -71,7 +78,7 @@ async fn it_should_create_link_send_token_basket_successfully() {
     let icp_link_amount = 10_000_000u64;
     let ckbtc_link_amount = 1_000u64;
     let ckusdc_link_amount = 50_000_000u64;
-    let link_input = test_fixture
+    let link_input = creator_fixture
         .token_basket_link_input(
             vec![
                 constant::ICP_TOKEN.to_string(),
@@ -83,7 +90,7 @@ async fn it_should_create_link_send_token_basket_successfully() {
         .unwrap();
 
     // Act
-    let link = test_fixture.create_link(link_input).await;
+    let link = creator_fixture.create_link(link_input).await;
 
     // Assert
     assert!(!link.id.is_empty());
@@ -92,7 +99,7 @@ async fn it_should_create_link_send_token_basket_successfully() {
     assert_eq!(link.asset_info.as_ref().unwrap().len(), 3);
 
     // Act
-    let create_action = test_fixture
+    let create_action = creator_fixture
         .create_action(&link.id, constant::CREATE_LINK_ACTION)
         .await;
 
@@ -103,7 +110,7 @@ async fn it_should_create_link_send_token_basket_successfully() {
     assert_eq!(create_action.intents.len(), 4);
 
     // Act
-    let processing_action = test_fixture
+    let processing_action = creator_fixture
         .process_action(&link.id, &create_action.id, constant::CREATE_LINK_ACTION)
         .await;
 
@@ -138,7 +145,7 @@ async fn it_should_create_link_send_token_basket_successfully() {
     assert!(icrc112_execution_result.is_ok());
 
     // Act
-    let update_action = test_fixture
+    let update_action = creator_fixture
         .update_action(&link.id, &processing_action.id)
         .await;
 
@@ -194,8 +201,35 @@ async fn it_should_create_link_send_token_basket_successfully() {
         action: constant::CONTINUE_ACTION.to_string(),
         params: None,
     };
-    let update_link = test_fixture.update_link(update_link_input).await;
+    let update_link = creator_fixture.update_link(update_link_input).await;
 
     // Assert
     assert_eq!(update_link.state, LinkState::Active.to_string());
+
+    // Act
+    let use_action = claimer_fixture
+        .create_action(&link.id, constant::USE_LINK_ACTION)
+        .await;
+
+    // Assert
+    assert!(!use_action.id.is_empty());
+    assert_eq!(use_action.r#type, ActionType::Use.to_string());
+    assert_eq!(use_action.state, ActionState::Created.to_string());
+    assert_eq!(use_action.intents.len(), 3);
+
+    // Act
+    let processing_action = claimer_fixture
+        .process_action(&link.id, &use_action.id, constant::USE_LINK_ACTION)
+        .await;
+
+    // Assert
+    assert_eq!(processing_action.id, use_action.id);
+    assert_eq!(processing_action.r#type, ActionType::Use.to_string());
+    assert_eq!(processing_action.state, ActionState::Processing.to_string());
+    assert!(
+        processing_action
+            .intents
+            .iter()
+            .all(|intent| intent.state == IntentState::Processing.to_string())
+    );
 }

@@ -1,6 +1,6 @@
 use base64::prelude::BASE64_STANDARD;
 use candid::{CandidType, Decode, Principal};
-use cashier_backend_types::error::CanisterError;
+use cashier_backend_types::{constant, error::CanisterError};
 use ic_mple_pocket_ic::pocket_ic::common::rest::RawMessageId;
 use serde::de::DeserializeOwned;
 
@@ -38,7 +38,9 @@ async fn test_request_lock_for_trigger_action() {
 
         let link = fixture.create_token_basket_link().await;
         let action = fixture.create_action(&link.id, "CreateLink").await;
-        let processing_action = fixture.process_action(&link.id, &action.id).await;
+        let processing_action = fixture
+            .process_action(&link.id, &action.id, constant::CREATE_LINK_ACTION)
+            .await;
 
         // Execute all ICRC-112 requests except trigger_transaction
         if let Some(mut reqs) = processing_action.icrc_112_requests.clone() {

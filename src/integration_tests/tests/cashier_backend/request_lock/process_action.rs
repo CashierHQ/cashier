@@ -1,4 +1,5 @@
 use cashier_backend_types::{
+    constant,
     dto::{
         action::{ActionDto, ProcessActionInput},
         link::UpdateLinkInput,
@@ -34,7 +35,9 @@ async fn test_request_lock_for_process_action() {
         let active_link = {
             let link = fixture.create_token_basket_link().await;
             let action = fixture.create_action(&link.id, "CreateLink").await;
-            let processing_action = fixture.process_action(&link.id, &action.id).await;
+            let processing_action = fixture
+                .process_action(&link.id, &action.id, constant::CREATE_LINK_ACTION)
+                .await;
             let _icrc112_execution_result = execute_icrc112_request(
                 processing_action.icrc_112_requests.as_ref().unwrap(),
                 caller,

@@ -128,13 +128,18 @@ impl LinkTestFixture {
 
     // This function is used to process an action.
     // This function will update the action state to "Action_state_processing". and return icrc-112 requests if any.
-    pub async fn process_action(&self, link_id: &str, action_id: &str) -> ActionDto {
+    pub async fn process_action(
+        &self,
+        link_id: &str,
+        action_id: &str,
+        action_type: &str,
+    ) -> ActionDto {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
             .process_action(ProcessActionInput {
                 action_id: action_id.to_string(),
-                action_type: "CreateLink".to_string(),
+                action_type: action_type.to_string(),
                 link_id: link_id.to_string(),
             })
             .await
