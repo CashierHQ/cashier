@@ -152,4 +152,15 @@ async fn it_should_create_link_payment_successfully() {
             - utils::calculate_create_payment_link_fee(constant::ICP_TOKEN, &icp_ledger_fee),
         "Caller balance after creation is incorrect"
     );
+
+    // Act
+    let update_link_input = UpdateLinkInput {
+        id: link.id.clone(),
+        action: constant::CONTINUE_ACTION.to_string(),
+        params: None,
+    };
+    let update_link = test_fixture.update_link(update_link_input).await;
+
+    // Assert
+    assert_eq!(update_link.state, LinkState::Active.to_string());
 }
