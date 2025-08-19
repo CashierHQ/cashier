@@ -27,7 +27,9 @@ async fn it_should_error_create_link_tip_if_caller_anonymous() {
         .await;
     let be_client = ctx.new_cashier_backend_client(Principal::anonymous());
     let test_fixture = LinkTestFixture::new(Arc::new(ctx), &Principal::anonymous()).await;
-    let input = test_fixture.tip_link_input(100_000_000u64);
+    let input = test_fixture
+        .tip_link_input(vec![constant::ICP_TOKEN.to_string()], vec![1_000_000u64])
+        .unwrap();
 
     // Act
     let result = be_client.create_link(input).await;

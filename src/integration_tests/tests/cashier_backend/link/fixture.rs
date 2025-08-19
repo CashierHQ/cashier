@@ -70,7 +70,10 @@ impl LinkTestFixture {
 
     // Pre-defined input for creating tip link.
     pub async fn create_tip_link(&self, amount: u64) -> LinkDto {
-        self.create_link(self.tip_link_input(amount)).await
+        let link_input = self
+            .tip_link_input(vec![constant::ICP_TOKEN.to_string()], vec![amount])
+            .unwrap();
+        self.create_link(link_input).await
     }
 
     // Pre-defined input for creating token basket link.
@@ -233,22 +236,36 @@ impl LinkTestFixture {
             .unwrap();
     }
 
-    pub fn tip_link_input(&self, amount: u64) -> CreateLinkInput {
-        CreateLinkInput {
+    pub fn tip_link_input(
+        &self,
+        tokens: Vec<String>,
+        amounts: Vec<u64>,
+    ) -> Result<CreateLinkInput, String> {
+        if tokens.len() != amounts.len() {
+            return Err(format!(
+                "Tokens and amounts must have the same length: {} vs {}",
+                tokens.len(),
+                amounts.len()
+            ));
+        }
+
+        let asset_info = self.asset_info_from_tokens_and_amount(
+            tokens,
+            amounts,
+            constant::INTENT_LABEL_SEND_TIP_ASSET,
+            false,
+        )?;
+
+        Ok(CreateLinkInput {
             title: "Test Tip Link".to_string(),
             link_use_action_max_count: 1,
-            asset_info: vec![LinkDetailUpdateAssetInfoInput {
-                address: self.ctx.icp_ledger_principal.to_string(),
-                chain: "IC".to_string(),
-                label: "SEND_TIP_ASSET".to_string(),
-                amount_per_link_use_action: amount,
-            }],
+            asset_info,
             template: "Central".to_string(),
             link_type: constant::SEND_TIP_LINK_TYPE.to_string(),
             nft_image: None,
             link_image_url: None,
             description: Some("Test tip-link for integration testing".to_string()),
-        }
+        })
     }
 
     pub fn token_basket_link_input(
