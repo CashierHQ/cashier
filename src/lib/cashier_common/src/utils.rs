@@ -15,7 +15,7 @@ pub fn calculate_create_link_fee(token: &str, ledger_fee: &Nat, max_use_count: u
 
     match token {
         "ICP" => 10_000u64 + ledger_fee_u64 * (max_use_count + 3),
-        _ => ledger_fee_u64 * 2,
+        _ => ledger_fee_u64 * (max_use_count + 1),
     }
 }
 
