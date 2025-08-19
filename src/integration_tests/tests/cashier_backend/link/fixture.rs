@@ -184,6 +184,7 @@ impl LinkTestFixture {
         response.action.unwrap()
     }
 
+    // This function is used to update a link.
     pub async fn update_link(&self, input: UpdateLinkInput) -> LinkDto {
         self.cashier_backend_client
             .as_ref()
@@ -399,6 +400,18 @@ impl LinkTestFixture {
     }
 
     /// Creates the asset information from the provided tokens and amounts.
+    /// Creates the asset information from the provided tokens and amounts.
+    ///
+    /// # Arguments
+    /// - `tokens`: A vector of token identifiers (e.g., ["ICP"])
+    /// - `amounts`: A vector of corresponding amounts (e.g., [100_000_000])
+    /// - `label`: A label for the asset information (e.g., "SEND_AIRDROP_ASSET")
+    /// - `is_token_basket`: A boolean indicating if the link is a token basket
+    ///
+    /// # Returns
+    /// - A vector of `LinkDetailUpdateAssetInfoInput` structs containing the transformed asset information.
+    /// # Errors
+    /// Returns an error if the tokens not found in the token map
     fn asset_info_from_tokens_and_amount(
         &self,
         tokens: Vec<String>,
