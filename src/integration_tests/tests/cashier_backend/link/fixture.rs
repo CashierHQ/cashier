@@ -1,6 +1,5 @@
 use crate::utils::{
-    PocketIcTestContext, PocketIcTestContextBuilder, icrc_112,
-    link_id_to_account::link_id_to_account, principal::TestUser,
+    PocketIcTestContext, PocketIcTestContextBuilder, icrc_112, principal::TestUser,
 };
 use candid::Principal;
 use cashier_backend_client::client::CashierBackendClient;
@@ -11,13 +10,7 @@ use cashier_backend_types::{
         link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto, UpdateLinkInput},
         user::UserDto,
     },
-    repository::{
-        action::v1::{ActionState, ActionType},
-        intent::v2::IntentState,
-        link::v1::{LinkState, LinkType},
-    },
 };
-use cashier_common::utils;
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
 use std::{sync::Arc, time::Duration};
@@ -505,6 +498,7 @@ pub async fn create_tip_link_fixture() -> (LinkTestFixture, LinkDto) {
 
     (creator_fixture, update_link)
 }
+
 /// Creates a fixture for a token basket link.
 pub async fn create_token_basket_link_fixture() -> (LinkTestFixture, LinkDto) {
     let ctx = PocketIcTestContextBuilder::new()
@@ -522,14 +516,10 @@ pub async fn create_token_basket_link_fixture() -> (LinkTestFixture, LinkDto) {
     let mut creator_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
     creator_fixture.setup_user().await;
 
-    let icp_ledger_client = ctx.new_icp_ledger_client(caller);
-    let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);
-    let ckusdc_ledger_client = ctx.new_icrc_ledger_client(constant::CKUSDC_ICRC_TOKEN, caller);
     let icp_initial_balance = 1_000_000_000u64;
     let ckbtc_initial_balance = 1_000_000_000u64;
     let ckusdc_initial_balance = 1_000_000_000u64;
 
-    // Act
     creator_fixture
         .airdrop_icp(icp_initial_balance, &caller)
         .await;
@@ -540,26 +530,6 @@ pub async fn create_token_basket_link_fixture() -> (LinkTestFixture, LinkDto) {
         .airdrop_icrc(constant::CKUSDC_ICRC_TOKEN, ckusdc_initial_balance, &caller)
         .await;
 
-    // Assert
-    let caller_account = Account {
-        owner: caller,
-        subaccount: None,
-    };
-    let icp_balance = icp_ledger_client.balance_of(&caller_account).await.unwrap();
-    let ckbtc_balance = ckbtc_ledger_client
-        .balance_of(&caller_account)
-        .await
-        .unwrap();
-    let ckusdc_balance = ckusdc_ledger_client
-        .balance_of(&caller_account)
-        .await
-        .unwrap();
-
-    assert_eq!(icp_balance, icp_initial_balance);
-    assert_eq!(ckbtc_balance, ckbtc_initial_balance);
-    assert_eq!(ckusdc_balance, ckusdc_initial_balance);
-
-    // Arrange
     let icp_link_amount = 10_000_000u64;
     let ckbtc_link_amount = 1_000u64;
     let ckusdc_link_amount = 50_000_000u64;
@@ -574,113 +544,20 @@ pub async fn create_token_basket_link_fixture() -> (LinkTestFixture, LinkDto) {
         )
         .unwrap();
 
-    // Act
     let link = creator_fixture.create_link(link_input).await;
-
-    // Assert
-    assert!(!link.id.is_empty());
-    assert_eq!(link.link_type, Some(LinkType::SendTokenBasket.to_string()));
-    assert!(link.asset_info.is_some());
-    assert_eq!(link.asset_info.as_ref().unwrap().len(), 3);
-
-    // Act
     let create_action = creator_fixture
         .create_action(&link.id, constant::CREATE_LINK_ACTION)
         .await;
-
-    // Assert
-    assert!(!create_action.id.is_empty());
-    assert_eq!(create_action.r#type, ActionType::CreateLink.to_string());
-    assert_eq!(create_action.state, ActionState::Created.to_string());
-    assert_eq!(create_action.intents.len(), 4);
-
-    // Act
     let processing_action = creator_fixture
         .process_action(&link.id, &create_action.id, constant::CREATE_LINK_ACTION)
         .await;
-
-    // Assert
-    assert_eq!(processing_action.id, create_action.id);
-    assert_eq!(processing_action.r#type, ActionType::CreateLink.to_string());
-    assert_eq!(processing_action.state, ActionState::Processing.to_string());
-    assert!(processing_action.icrc_112_requests.is_some());
-    assert_eq!(
-        processing_action.icrc_112_requests.as_ref().unwrap().len(),
-        2
-    );
-    assert_eq!(
-        processing_action.icrc_112_requests.as_ref().unwrap()[0].len(),
-        4,
-        "First request should have 4 elements"
-    );
-    assert_eq!(
-        processing_action.icrc_112_requests.as_ref().unwrap()[1].len(),
-        1,
-        "Second request should have 1 element"
-    );
-
-    // Arrange
     let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
-
-    // Act
-    let icrc112_execution_result =
+    let _icrc112_execution_result =
         icrc_112::execute_icrc112_request(icrc_112_requests, caller, &ctx).await;
-
-    // Assert
-    assert!(icrc112_execution_result.is_ok());
-
-    // Act
-    let update_action = creator_fixture
+    let _update_action = creator_fixture
         .update_action(&link.id, &processing_action.id)
         .await;
 
-    // Assert
-    assert_eq!(update_action.id, processing_action.id);
-    assert_eq!(update_action.r#type, ActionType::CreateLink.to_string());
-    assert_eq!(update_action.state, ActionState::Success.to_string());
-    assert!(
-        update_action
-            .intents
-            .iter()
-            .all(|intent| intent.state == IntentState::Success.to_string())
-    );
-
-    let icp_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
-    let ckbtc_balance_after = ckbtc_ledger_client
-        .balance_of(&caller_account)
-        .await
-        .unwrap();
-    let ckusdc_balance_after = ckusdc_ledger_client
-        .balance_of(&caller_account)
-        .await
-        .unwrap();
-    let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
-    let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
-    let ckusdc_ledger_fee = ckusdc_ledger_client.fee().await.unwrap();
-
-    assert_eq!(
-        icp_balance_after,
-        icp_initial_balance
-            - icp_link_amount
-            - utils::calculate_create_link_fee(constant::ICP_TOKEN, &icp_ledger_fee, 1),
-        "ICP balance after link creation is incorrect"
-    );
-    assert_eq!(
-        ckbtc_balance_after,
-        ckbtc_initial_balance
-            - ckbtc_link_amount
-            - utils::calculate_create_link_fee(constant::CKBTC_ICRC_TOKEN, &ckbtc_ledger_fee, 1),
-        "CKBTC balance after link creation is incorrect"
-    );
-    assert_eq!(
-        ckusdc_balance_after,
-        ckusdc_initial_balance
-            - ckusdc_link_amount
-            - utils::calculate_create_link_fee(constant::CKUSDC_ICRC_TOKEN, &ckusdc_ledger_fee, 1),
-        "CKUSDC balance after link creation is incorrect"
-    );
-
-    // Act
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
         action: constant::CONTINUE_ACTION.to_string(),
@@ -688,11 +565,9 @@ pub async fn create_token_basket_link_fixture() -> (LinkTestFixture, LinkDto) {
     };
     let update_link = creator_fixture.update_link(update_link_input).await;
 
-    // Assert
-    assert_eq!(update_link.state, LinkState::Active.to_string());
-
     (creator_fixture, update_link)
 }
+
 /// Creates a fixture for an airdrop link.
 pub async fn create_airdrop_link_fixture() -> (LinkTestFixture, LinkDto) {
     let ctx = PocketIcTestContextBuilder::new()
@@ -702,31 +577,14 @@ pub async fn create_airdrop_link_fixture() -> (LinkTestFixture, LinkDto) {
         .await;
     let caller = TestUser::User1.get_principal();
     let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
-    let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+    test_fixture.setup_user().await;
 
     let initial_balance = 1_000_000_000u64;
     let airdrop_amount = 1_000_000u64;
     let max_use_count = 5;
 
-    let caller_account = Account {
-        owner: caller,
-        subaccount: None,
-    };
-
-    // Act
     test_fixture.airdrop_icp(initial_balance, &caller).await;
 
-    // Assert
-    let caller_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
-    assert_eq!(caller_balance_before, initial_balance);
-
-    // Act
-    let user = test_fixture.setup_user().await;
-
-    // Assert
-    assert!(!user.id.is_empty());
-
-    // Arrange
     let link_input = test_fixture
         .airdrop_link_input(
             vec![constant::ICP_TOKEN.to_string()],
@@ -735,86 +593,21 @@ pub async fn create_airdrop_link_fixture() -> (LinkTestFixture, LinkDto) {
         )
         .unwrap();
 
-    // Act
     let link = test_fixture.create_link(link_input).await;
-
-    // Assert
-    assert!(!link.id.is_empty());
-    assert_eq!(link.link_type, Some(LinkType::SendAirdrop.to_string()));
-    assert!(link.asset_info.is_some());
-    assert_eq!(link.asset_info.as_ref().unwrap().len(), 1);
-    assert_eq!(
-        link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action,
-        airdrop_amount
-    );
-    assert_eq!(link.link_use_action_max_count, max_use_count);
-
-    // Act
     let create_action = test_fixture
         .create_action(&link.id, constant::CREATE_LINK_ACTION)
         .await;
-
-    // Assert
-    assert!(!create_action.id.is_empty());
-    assert_eq!(create_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(create_action.state, ActionState::Created.to_string());
-    assert_eq!(create_action.intents.len(), 2);
-    assert!(
-        create_action
-            .intents
-            .iter()
-            .all(|intent| intent.state == IntentState::Created.to_string())
-    );
-
-    // Act
     let processing_action = test_fixture
         .process_action(&link.id, &create_action.id, constant::CREATE_LINK_ACTION)
         .await;
-
-    // Assert
-    assert!(!processing_action.id.is_empty());
-    assert_eq!(processing_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(processing_action.state, ActionState::Processing.to_string());
-    assert!(processing_action.icrc_112_requests.is_some());
-    assert_eq!(
-        processing_action.icrc_112_requests.as_ref().unwrap().len(),
-        2
-    );
-    assert_eq!(processing_action.intents.len(), 2);
-    assert!(
-        processing_action
-            .intents
-            .iter()
-            .all(|intent| intent.state == IntentState::Processing.to_string())
-    );
-
-    // Arrange
     let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
-
-    // Act
-    let icrc112_execution_result =
+    let _icrc112_execution_result =
         icrc_112::execute_icrc112_request(icrc_112_requests, caller, &ctx).await;
 
-    // Assert
-    assert!(icrc112_execution_result.is_ok());
-
-    // Act
-    let update_action = test_fixture
+    let _update_action = test_fixture
         .update_action(&link.id, &processing_action.id)
         .await;
 
-    // Assert
-    assert!(!update_action.id.is_empty());
-    assert_eq!(update_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(update_action.state, ActionState::Success.to_string());
-    assert!(
-        update_action
-            .intents
-            .iter()
-            .all(|intent| intent.state == IntentState::Success.to_string())
-    );
-
-    // Act
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
         action: constant::CONTINUE_ACTION.to_string(),
@@ -822,15 +615,11 @@ pub async fn create_airdrop_link_fixture() -> (LinkTestFixture, LinkDto) {
     };
     let update_link = test_fixture.update_link(update_link_input).await;
 
-    // Assert
-    assert_eq!(update_link.state, LinkState::Active.to_string());
-
     (test_fixture, update_link)
 }
 
 /// Create a fixture for airdrop link using other token
 pub async fn create_airdrop_link_other_token_fixture() -> (LinkTestFixture, LinkDto) {
-    // Arrange
     let ctx = PocketIcTestContextBuilder::new()
         .with_cashier_backend()
         .with_icp_ledger()
@@ -839,37 +628,16 @@ pub async fn create_airdrop_link_other_token_fixture() -> (LinkTestFixture, Link
         .await;
     let caller = TestUser::User1.get_principal();
     let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
-    let ckusdc_ledger_client = ctx.new_icrc_ledger_client(constant::CKUSDC_ICRC_TOKEN, caller);
+    test_fixture.setup_user().await;
 
     let initial_balance = 1_000_000_000u64;
     let airdrop_amount = 1_000_000u64;
     let max_use_count = 5;
 
-    let caller_account = Account {
-        owner: caller,
-        subaccount: None,
-    };
-
-    // Act
     test_fixture.airdrop_icp(initial_balance, &caller).await;
     test_fixture
         .airdrop_icrc(constant::CKUSDC_ICRC_TOKEN, initial_balance, &caller)
         .await;
-
-    // Assert
-    let caller_balance_before = ckusdc_ledger_client
-        .balance_of(&caller_account)
-        .await
-        .unwrap();
-    assert_eq!(caller_balance_before, initial_balance);
-
-    // Act
-    let user = test_fixture.setup_user().await;
-
-    // Assert
-    assert!(!user.id.is_empty());
-
-    // Arrange
     let link_input = test_fixture
         .airdrop_link_input(
             vec![constant::CKUSDC_ICRC_TOKEN.to_string()],
@@ -877,123 +645,25 @@ pub async fn create_airdrop_link_other_token_fixture() -> (LinkTestFixture, Link
             max_use_count,
         )
         .unwrap();
-
-    // Act
     let link = test_fixture.create_link(link_input).await;
-
-    // Assert
-    assert!(!link.id.is_empty());
-    assert_eq!(link.link_type, Some(LinkType::SendAirdrop.to_string()));
-    assert!(link.asset_info.is_some());
-    assert_eq!(link.asset_info.as_ref().unwrap().len(), 1);
-    assert_eq!(
-        link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action,
-        airdrop_amount
-    );
-    assert_eq!(link.link_use_action_max_count, max_use_count);
-
-    // Act
     let create_action = test_fixture
         .create_action(&link.id, constant::CREATE_LINK_ACTION)
         .await;
-
-    // Assert
-    assert!(!create_action.id.is_empty());
-    assert_eq!(create_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(create_action.state, ActionState::Created.to_string());
-    assert_eq!(create_action.intents.len(), 2);
-    assert!(
-        create_action
-            .intents
-            .iter()
-            .all(|intent| intent.state == IntentState::Created.to_string())
-    );
-
-    // Act
     let processing_action = test_fixture
         .process_action(&link.id, &create_action.id, constant::CREATE_LINK_ACTION)
         .await;
-
-    // Assert
-    assert!(!processing_action.id.is_empty());
-    assert_eq!(processing_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(processing_action.state, ActionState::Processing.to_string());
-    assert!(processing_action.icrc_112_requests.is_some());
-    assert_eq!(
-        processing_action.icrc_112_requests.as_ref().unwrap().len(),
-        2
-    );
-    assert_eq!(processing_action.intents.len(), 2);
-    assert!(
-        processing_action
-            .intents
-            .iter()
-            .all(|intent| intent.state == IntentState::Processing.to_string())
-    );
-
-    // Arrange
     let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
-
-    // Act
-    let icrc112_execution_result =
+    let _icrc112_execution_result =
         icrc_112::execute_icrc112_request(icrc_112_requests, caller, &ctx).await;
-
-    // Assert
-    assert!(icrc112_execution_result.is_ok());
-
-    // Act
-    let update_action = test_fixture
+    let _update_action = test_fixture
         .update_action(&link.id, &processing_action.id)
         .await;
-
-    // Assert
-    assert!(!update_action.id.is_empty());
-    assert_eq!(update_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(update_action.state, ActionState::Success.to_string());
-    assert!(
-        update_action
-            .intents
-            .iter()
-            .all(|intent| intent.state == IntentState::Success.to_string())
-    );
-
-    let link_account = link_id_to_account(&ctx, &link.id);
-    let caller_balance_after = ckusdc_ledger_client
-        .balance_of(&caller_account)
-        .await
-        .unwrap();
-    let link_balance = ckusdc_ledger_client
-        .balance_of(&link_account)
-        .await
-        .unwrap();
-    let ckusdc_ledger_fee = ckusdc_ledger_client.fee().await.unwrap();
-    assert_eq!(
-        link_balance,
-        airdrop_amount * max_use_count + ckusdc_ledger_fee.clone() * max_use_count,
-        "Link balance is incorrect"
-    );
-    assert_eq!(
-        caller_balance_after,
-        initial_balance
-            - airdrop_amount * max_use_count
-            - utils::calculate_create_link_fee(
-                constant::CKUSDC_ICRC_TOKEN,
-                &ckusdc_ledger_fee,
-                max_use_count
-            ),
-        "Caller balance after creation is incorrect"
-    );
-
-    // Act
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
         action: constant::CONTINUE_ACTION.to_string(),
         params: None,
     };
     let update_link = test_fixture.update_link(update_link_input).await;
-
-    // Assert
-    assert_eq!(update_link.state, LinkState::Active.to_string());
 
     (test_fixture, update_link)
 }

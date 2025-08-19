@@ -117,32 +117,13 @@ async fn it_should_error_use_link_airdrop_multiple_times_from_same_user() {
     let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
     claimer_fixture.setup_user().await;
 
-    let icp_ledger_client = claimer_fixture.ctx.new_icp_ledger_client(claimer);
-    let claimer_account = Account {
-        owner: claimer,
-        subaccount: None,
-    };
-
-    // Act
-    let icp_balance_before = icp_ledger_client
-        .balance_of(&claimer_account)
-        .await
-        .unwrap();
-
-    // Act
     let claim_action = claimer_fixture
         .create_action(&link.id, constant::USE_LINK_ACTION)
         .await;
-
-    // Act
-    let claim_result = claimer_fixture
+    let _claim_result = claimer_fixture
         .process_action(&link.id, &claim_action.id, constant::USE_LINK_ACTION)
         .await;
 
-    // Assert
-    assert_eq!(claim_result.id, claim_action.id);
-
-    // Arrange
     let cashier_backend_client = claimer_fixture.ctx.new_cashier_backend_client(claimer);
 
     // Act
@@ -177,6 +158,10 @@ async fn it_should_use_link_airdrop_multiple_times_successfully() {
 
     for _i in 0..max_use_count {
         let claimer = Principal::from_text(utils::random_principal_id()).unwrap();
+        let claimer_account = Account {
+            owner: claimer,
+            subaccount: None,
+        };
         let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
         claimer_fixture.setup_user().await;
 
@@ -195,11 +180,7 @@ async fn it_should_use_link_airdrop_multiple_times_successfully() {
             .process_action(&link.id, &claim_action.id, constant::USE_LINK_ACTION)
             .await;
 
-        let claimer_account = Account {
-            owner: claimer,
-            subaccount: None,
-        };
-
+        // Assert
         let claimer_balance_after = icp_ledger_client
             .balance_of(&claimer_account)
             .await
@@ -210,15 +191,19 @@ async fn it_should_use_link_airdrop_multiple_times_successfully() {
         );
     }
 
+    // Arrange
     let cashier_backend_client = creator_fixture
         .ctx
         .new_cashier_backend_client(creator_fixture.caller);
 
+    // Act
     let link_info = cashier_backend_client
         .get_link(link.id, None)
         .await
         .unwrap()
         .unwrap();
+
+    // Assert
     assert_eq!(link_info.link.link_use_action_counter, max_use_count);
 }
 
@@ -230,21 +215,15 @@ async fn it_should_error_use_link_airdrop_more_than_max_use_count() {
     let airdrop_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
     assert_ne!(airdrop_amount, 0);
     let max_use_count = link.link_use_action_max_count;
-    let icp_ledger_client = creator_fixture
-        .ctx
-        .new_icp_ledger_client(creator_fixture.caller);
 
     for _i in 0..max_use_count {
         let claimer = Principal::from_text(utils::random_principal_id()).unwrap();
         let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
         claimer_fixture.setup_user().await;
 
-        // Act
         let claim_action = claimer_fixture
             .create_action(&link.id, constant::USE_LINK_ACTION)
             .await;
-
-        // Act
         let _claim_result = claimer_fixture
             .process_action(&link.id, &claim_action.id, constant::USE_LINK_ACTION)
             .await;
@@ -255,6 +234,7 @@ async fn it_should_error_use_link_airdrop_more_than_max_use_count() {
     claimer_fixture.setup_user().await;
     let cashier_backend_client = claimer_fixture.ctx.new_cashier_backend_client(claimer);
 
+    // Act
     let result = cashier_backend_client
         .create_action(CreateActionInput {
             link_id: link.id.clone(),

@@ -1,6 +1,5 @@
-use super::super::fixture::LinkTestFixture;
-use crate::utils::principal::TestUser;
-use crate::utils::{PocketIcTestContextBuilder, icrc_112};
+use crate::cashier_backend::link::fixture::LinkTestFixture;
+use crate::utils::{PocketIcTestContextBuilder, icrc_112, principal::TestUser};
 use candid::Principal;
 use cashier_backend_types::{
     constant,

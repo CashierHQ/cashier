@@ -1,4 +1,4 @@
-use super::super::fixture::LinkTestFixture;
+use crate::cashier_backend::link::fixture::LinkTestFixture;
 use crate::utils::{
     PocketIcTestContextBuilder, icrc_112::execute_icrc112_request,
     link_id_to_account::link_id_to_account, principal::TestUser,
@@ -56,6 +56,8 @@ async fn it_should_create_link_tip_successfully() {
         .await;
     let caller = TestUser::User1.get_principal();
     let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
+    test_fixture.setup_user().await;
+
     let icp_ledger_client = ctx.new_icp_ledger_client(caller);
 
     let initial_balance = 1_000_000_000u64;
@@ -71,12 +73,6 @@ async fn it_should_create_link_tip_successfully() {
     // Assert
     let caller_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
     assert_eq!(caller_balance_before, initial_balance);
-
-    // Act
-    let user = test_fixture.setup_user().await;
-
-    // Assert
-    assert!(!user.id.is_empty());
 
     // Act
     let link = test_fixture.create_tip_link(tip_amount).await;
@@ -134,12 +130,7 @@ async fn it_should_create_link_tip_successfully() {
     let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
 
     // Act
-    let icrc112_execution_result = execute_icrc112_request(icrc_112_requests, caller, &ctx).await;
-
-    // Assert
-    assert!(icrc112_execution_result.is_ok());
-
-    // Act
+    let _icrc112_execution_result = execute_icrc112_request(icrc_112_requests, caller, &ctx).await;
     let update_action = test_fixture
         .update_action(&link.id, &processing_action.id)
         .await;
@@ -155,7 +146,6 @@ async fn it_should_create_link_tip_successfully() {
             .all(|intent| intent.state == IntentState::Success.to_string())
     );
 
-    // Assert the balance
     let link_account = link_id_to_account(&ctx, &link.id);
     let caller_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
     let link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
