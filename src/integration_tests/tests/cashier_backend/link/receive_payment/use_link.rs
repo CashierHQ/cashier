@@ -1,5 +1,5 @@
 use crate::cashier_backend::link::fixture::{LinkTestFixture, create_receive_payment_link_fixture};
-use crate::utils::{icrc_112, principal::TestUser};
+use crate::utils::{icrc_112, link_id_to_account::link_id_to_account, principal::TestUser};
 use cashier_backend_types::{
     constant,
     repository::{
@@ -104,5 +104,12 @@ async fn it_should_use_link_receive_payment_successfully() {
         icp_balance_after,
         icp_balance_before - payment_amount - icp_ledger_fee,
         "Claimer balance after claim should be equal to payment amount"
+    );
+
+    let link_account = link_id_to_account(&creator_fixture.ctx, &link.id);
+    let link_icp_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
+    assert_eq!(
+        link_icp_balance, payment_amount,
+        "Link ICP balance should be equal to payment amount"
     );
 }
