@@ -1,19 +1,12 @@
+use crate::cashier_backend::link::fixture::create_token_basket_link_fixture;
 use cashier_backend_types::{
     constant,
-    dto::link::UpdateLinkInput,
     repository::{
         action::v1::{ActionState, ActionType},
         intent::v2::IntentState,
-        link::v1::{LinkState, LinkType},
     },
 };
-use cashier_common::utils;
-
-use crate::cashier_backend::link::fixture::{LinkTestFixture, create_token_basket_link_fixture};
-use crate::utils::principal::TestUser;
-use crate::utils::{PocketIcTestContextBuilder, icrc_112};
 use icrc_ledger_types::icrc1::account::Account;
-use std::sync::Arc;
 
 #[tokio::test]
 async fn it_should_withdraw_link_token_basket_successfully() {
