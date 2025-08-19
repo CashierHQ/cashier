@@ -1,9 +1,40 @@
-use cashier_backend_types::{constant, repository::action::v1::ActionState};
-
-use icrc_ledger_types::icrc1::account::Account;
-
 use crate::cashier_backend::link::fixture::{LinkTestFixture, create_airdrop_link_fixture};
 use crate::utils::principal::TestUser;
+use candid::Principal;
+use cashier_backend_types::{
+    constant, dto::action::CreateActionInput, repository::action::v1::ActionState,
+};
+use ic_mple_client::CanisterClientError;
+use icrc_ledger_types::icrc1::account::Account;
+
+#[tokio::test]
+async fn it_should_error_use_link_airdrop_if_caller_anonymous() {
+    // Arrange
+    let (creator_fixture, link) = create_airdrop_link_fixture().await;
+
+    let claimer = Principal::anonymous();
+    let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
+    let cashier_backend_client = claimer_fixture.ctx.new_cashier_backend_client(claimer);
+
+    // Act
+    let result = cashier_backend_client
+        .create_action(CreateActionInput {
+            link_id: link.id.clone(),
+            action_type: constant::USE_LINK_ACTION.to_string(),
+        })
+        .await;
+
+    // Assert
+    assert!(result.is_err());
+    if let Err(CanisterClientError::PocketIcTestError(err)) = result {
+        assert!(
+            err.reject_message
+                .contains("Anonymous caller is not allowed")
+        );
+    } else {
+        panic!("Expected PocketIcTestError, got {:?}", result);
+    }
+}
 
 #[tokio::test]
 async fn it_should_use_link_airdrop_successfully() {

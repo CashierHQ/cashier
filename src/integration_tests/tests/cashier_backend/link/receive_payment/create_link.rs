@@ -1,3 +1,9 @@
+use super::super::fixture::LinkTestFixture;
+use crate::utils::{
+    PocketIcTestContextBuilder, icrc_112::execute_icrc112_request,
+    link_id_to_account::link_id_to_account, principal::TestUser,
+};
+use candid::Principal;
 use cashier_backend_types::{
     constant,
     dto::link::UpdateLinkInput,
@@ -10,14 +16,37 @@ use cashier_backend_types::{
 use cashier_common::utils;
 use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
-
-use super::super::fixture::LinkTestFixture;
-use crate::utils::{
-    PocketIcTestContextBuilder, icrc_112::execute_icrc112_request,
-    link_id_to_account::link_id_to_account, principal::TestUser,
-};
-use candid::Principal;
 use std::sync::Arc;
+
+#[tokio::test]
+async fn it_should_error_create_link_receive_payment_if_caller_anonymous() {
+    // Arrange
+    let ctx = PocketIcTestContextBuilder::new()
+        .with_cashier_backend()
+        .build_async()
+        .await;
+    let be_client = ctx.new_cashier_backend_client(Principal::anonymous());
+    let test_fixture = LinkTestFixture::new(Arc::new(ctx), &Principal::anonymous()).await;
+
+    let link_amount = 1_000_000u64;
+    let link_input = test_fixture
+        .receive_payment_link_input(vec![constant::ICP_TOKEN.to_string()], vec![link_amount])
+        .unwrap();
+
+    // Act
+    let result = be_client.create_link(link_input).await;
+
+    // Assert
+    assert!(result.is_err());
+    if let Err(CanisterClientError::PocketIcTestError(err)) = result {
+        assert!(
+            err.reject_message
+                .contains("Anonymous caller is not allowed")
+        );
+    } else {
+        panic!("Expected PocketIcTestError, got {:?}", result);
+    }
+}
 
 #[tokio::test]
 async fn it_should_create_link_payment_successfully() {
@@ -32,7 +61,7 @@ async fn it_should_create_link_payment_successfully() {
     let icp_ledger_client = ctx.new_icp_ledger_client(caller);
 
     let initial_balance = 1_000_000_000u64;
-    let airdrop_amount = 1_000_000u64;
+    let link_amount = 1_000_000u64;
 
     let caller_account = Account {
         owner: caller,
@@ -54,7 +83,7 @@ async fn it_should_create_link_payment_successfully() {
 
     // Arrange
     let link_input = test_fixture
-        .receive_payment_link_input(vec![constant::ICP_TOKEN.to_string()], vec![airdrop_amount])
+        .receive_payment_link_input(vec![constant::ICP_TOKEN.to_string()], vec![link_amount])
         .unwrap();
 
     // Act
@@ -67,7 +96,7 @@ async fn it_should_create_link_payment_successfully() {
     assert_eq!(link.asset_info.as_ref().unwrap().len(), 1);
     assert_eq!(
         link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action,
-        airdrop_amount
+        link_amount
     );
 
     // Act

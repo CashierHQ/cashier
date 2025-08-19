@@ -1,14 +1,42 @@
 use crate::cashier_backend::link::fixture::{LinkTestFixture, create_receive_payment_link_fixture};
 use crate::utils::{icrc_112, link_id_to_account::link_id_to_account, principal::TestUser};
+use candid::Principal;
 use cashier_backend_types::{
     constant,
-    repository::{
-        action::v1::ActionState,
-        intent::v2::IntentState,
-        link::v1::{LinkState, LinkType},
-    },
+    dto::action::CreateActionInput,
+    repository::{action::v1::ActionState, intent::v2::IntentState},
 };
+use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
+
+#[tokio::test]
+async fn it_should_error_use_link_receive_payment_if_caller_anonymous() {
+    // Arrange
+    let (creator_fixture, link) = create_receive_payment_link_fixture().await;
+
+    let claimer = Principal::anonymous();
+    let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
+    let cashier_backend_client = claimer_fixture.ctx.new_cashier_backend_client(claimer);
+
+    // Act
+    let result = cashier_backend_client
+        .create_action(CreateActionInput {
+            link_id: link.id.clone(),
+            action_type: constant::USE_LINK_ACTION.to_string(),
+        })
+        .await;
+
+    // Assert
+    assert!(result.is_err());
+    if let Err(CanisterClientError::PocketIcTestError(err)) = result {
+        assert!(
+            err.reject_message
+                .contains("Anonymous caller is not allowed")
+        );
+    } else {
+        panic!("Expected PocketIcTestError, got {:?}", result);
+    }
+}
 
 #[tokio::test]
 async fn it_should_use_link_receive_payment_successfully() {

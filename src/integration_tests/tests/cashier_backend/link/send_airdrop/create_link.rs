@@ -1,3 +1,9 @@
+use super::super::fixture::LinkTestFixture;
+use crate::utils::{
+    PocketIcTestContextBuilder, icrc_112::execute_icrc112_request,
+    link_id_to_account::link_id_to_account, principal::TestUser,
+};
+use candid::Principal;
 use cashier_backend_types::{
     constant,
     dto::link::UpdateLinkInput,
@@ -10,14 +16,42 @@ use cashier_backend_types::{
 use cashier_common::utils;
 use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
-
-use super::super::fixture::LinkTestFixture;
-use crate::utils::{
-    PocketIcTestContextBuilder, icrc_112::execute_icrc112_request,
-    link_id_to_account::link_id_to_account, principal::TestUser,
-};
-use candid::Principal;
 use std::sync::Arc;
+
+#[tokio::test]
+async fn it_should_error_create_link_airdrop_if_caller_anonymous() {
+    // Arrange
+    let ctx = PocketIcTestContextBuilder::new()
+        .with_cashier_backend()
+        .build_async()
+        .await;
+    let be_client = ctx.new_cashier_backend_client(Principal::anonymous());
+    let test_fixture = LinkTestFixture::new(Arc::new(ctx), &Principal::anonymous()).await;
+
+    let airdrop_amount = 1_000_000u64;
+    let max_use_count = 5;
+    let link_input = test_fixture
+        .airdrop_link_input(
+            vec![constant::ICP_TOKEN.to_string()],
+            vec![airdrop_amount],
+            max_use_count,
+        )
+        .unwrap();
+
+    // Act
+    let result = be_client.create_link(link_input).await;
+
+    // Assert
+    assert!(result.is_err());
+    if let Err(CanisterClientError::PocketIcTestError(err)) = result {
+        assert!(
+            err.reject_message
+                .contains("Anonymous caller is not allowed")
+        );
+    } else {
+        panic!("Expected PocketIcTestError, got {:?}", result);
+    }
+}
 
 #[tokio::test]
 async fn it_should_create_link_airdrop_successfully() {
