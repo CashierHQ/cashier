@@ -74,4 +74,93 @@ async fn it_should_create_link_airdrop_successfully() {
         link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action,
         airdrop_amount
     );
+    assert_eq!(link.link_use_action_max_count, max_use_count);
+
+    // Act
+    //println!("{:?}", link.asset_info);
+
+    let cashier_backend_client = test_fixture.ctx.new_cashier_backend_client(caller);
+    let link_info = cashier_backend_client.get_link(link.id.clone(), None).await;
+    println!("{:?}", link_info);
+
+    let create_action = test_fixture
+        .create_action(&link.id, constant::CREATE_LINK_ACTION)
+        .await;
+
+    // Assert
+    assert!(!create_action.id.is_empty());
+    assert_eq!(create_action.r#type, constant::CREATE_LINK_ACTION);
+    assert_eq!(create_action.state, ActionState::Created.to_string());
+    assert_eq!(create_action.intents.len(), 2);
+    assert!(
+        create_action
+            .intents
+            .iter()
+            .all(|intent| intent.state == IntentState::Created.to_string())
+    );
+
+    // Act
+    let processing_action = test_fixture
+        .process_action(&link.id, &create_action.id, constant::CREATE_LINK_ACTION)
+        .await;
+
+    // Assert
+    assert!(!processing_action.id.is_empty());
+    assert_eq!(processing_action.r#type, constant::CREATE_LINK_ACTION);
+    assert_eq!(processing_action.state, ActionState::Processing.to_string());
+    assert!(processing_action.icrc_112_requests.is_some());
+    assert_eq!(
+        processing_action.icrc_112_requests.as_ref().unwrap().len(),
+        2
+    );
+    assert_eq!(processing_action.intents.len(), 2);
+    assert!(
+        processing_action
+            .intents
+            .iter()
+            .all(|intent| intent.state == IntentState::Processing.to_string())
+    );
+
+    // Arrange
+    let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
+
+    // Act
+    let icrc112_execution_result = execute_icrc112_request(icrc_112_requests, caller, &ctx).await;
+
+    // Assert
+    assert!(icrc112_execution_result.is_ok());
+
+    // Act
+    let update_action = test_fixture
+        .update_action(&link.id, &processing_action.id)
+        .await;
+
+    // Assert
+    assert!(!update_action.id.is_empty());
+    assert_eq!(update_action.r#type, constant::CREATE_LINK_ACTION);
+    assert_eq!(update_action.state, ActionState::Success.to_string());
+    assert!(
+        update_action
+            .intents
+            .iter()
+            .all(|intent| intent.state == IntentState::Success.to_string())
+    );
+
+    // Assert the balance
+    let link_account = link_id_to_account(&ctx, &link.id);
+    let caller_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
+    let link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
+    let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
+    assert_eq!(
+        link_balance,
+        airdrop_amount * max_use_count + icp_ledger_fee.clone() * max_use_count,
+        "Link balance is incorrect"
+    );
+    assert_eq!(
+        caller_balance_after,
+        initial_balance
+            - airdrop_amount * max_use_count
+            - utils::calculate_create_link_fee(constant::ICP_TOKEN, &icp_ledger_fee, max_use_count),
+        "Caller balance after creation is incorrect"
+    );
 }

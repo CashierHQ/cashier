@@ -263,7 +263,12 @@ impl LinkTestFixture {
             ));
         }
 
-        let asset_info = self.asset_info_from_tokens_and_amount(tokens, amounts)?;
+        let asset_info = self.asset_info_from_tokens_and_amount(
+            tokens,
+            amounts,
+            constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+            true,
+        )?;
 
         Ok(CreateLinkInput {
             title: "Test Token Basket Link".to_string(),
@@ -291,7 +296,12 @@ impl LinkTestFixture {
             ));
         }
 
-        let asset_info = self.asset_info_from_tokens_and_amount(tokens, amounts)?;
+        let asset_info = self.asset_info_from_tokens_and_amount(
+            tokens,
+            amounts,
+            constant::INTENT_LABEL_SEND_AIRDROP_ASSET,
+            false,
+        )?;
 
         Ok(CreateLinkInput {
             title: "Test Airdrop Link".to_string(),
@@ -331,6 +341,8 @@ impl LinkTestFixture {
         &self,
         tokens: Vec<String>,
         amounts: Vec<u64>,
+        label: &str,
+        is_token_basket: bool,
     ) -> Result<Vec<LinkDetailUpdateAssetInfoInput>, String> {
         if tokens.len() != amounts.len() {
             return Err(format!(
@@ -344,27 +356,41 @@ impl LinkTestFixture {
             .into_iter()
             .zip(amounts)
             .map(|(token, amount)| match token.as_str() {
-                constant::ICP_TOKEN => Ok(LinkDetailUpdateAssetInfoInput {
-                    address: self.ctx.icp_ledger_principal.to_string(),
-                    chain: "IC".to_string(),
-                    label: format!(
-                        "{}_{}",
-                        constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
-                        self.ctx.icp_ledger_principal.to_text()
-                    ),
-                    amount_per_link_use_action: amount,
-                }),
+                constant::ICP_TOKEN => {
+                    if is_token_basket {
+                        Ok(LinkDetailUpdateAssetInfoInput {
+                            address: self.ctx.icp_ledger_principal.to_string(),
+                            chain: "IC".to_string(),
+                            label: format!("{}_{}", label, self.ctx.icp_ledger_principal.to_text()),
+                            amount_per_link_use_action: amount,
+                        })
+                    } else {
+                        Ok(LinkDetailUpdateAssetInfoInput {
+                            address: self.ctx.icp_ledger_principal.to_string(),
+                            chain: "IC".to_string(),
+                            label: label.to_string(),
+                            amount_per_link_use_action: amount,
+                        })
+                    }
+                }
                 _ => match self.ctx.icrc_token_map.get(&token) {
-                    Some(token_principal) => Ok(LinkDetailUpdateAssetInfoInput {
-                        address: token_principal.to_string(),
-                        chain: "IC".to_string(),
-                        label: format!(
-                            "{}_{}",
-                            constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
-                            token_principal.to_text()
-                        ),
-                        amount_per_link_use_action: amount,
-                    }),
+                    Some(token_principal) => {
+                        if is_token_basket {
+                            Ok(LinkDetailUpdateAssetInfoInput {
+                                address: token_principal.to_string(),
+                                chain: "IC".to_string(),
+                                label: format!("{}_{}", label, token_principal.to_text()),
+                                amount_per_link_use_action: amount,
+                            })
+                        } else {
+                            Ok(LinkDetailUpdateAssetInfoInput {
+                                address: token_principal.to_string(),
+                                chain: "IC".to_string(),
+                                label: label.to_string(),
+                                amount_per_link_use_action: amount,
+                            })
+                        }
+                    }
                     None => Err(format!("Token {} not found in icrc_token_map", token)),
                 },
             })
@@ -572,21 +598,21 @@ pub async fn create_token_basket_link_fixture() -> (LinkTestFixture, LinkDto) {
         icp_balance_after,
         icp_initial_balance
             - icp_link_amount
-            - utils::calculate_create_link_fee(constant::ICP_TOKEN, &icp_ledger_fee),
+            - utils::calculate_create_link_fee(constant::ICP_TOKEN, &icp_ledger_fee, 1),
         "ICP balance after link creation is incorrect"
     );
     assert_eq!(
         ckbtc_balance_after,
         ckbtc_initial_balance
             - ckbtc_link_amount
-            - utils::calculate_create_link_fee(constant::CKBTC_ICRC_TOKEN, &ckbtc_ledger_fee),
+            - utils::calculate_create_link_fee(constant::CKBTC_ICRC_TOKEN, &ckbtc_ledger_fee, 1),
         "CKBTC balance after link creation is incorrect"
     );
     assert_eq!(
         ckusdc_balance_after,
         ckusdc_initial_balance
             - ckusdc_link_amount
-            - utils::calculate_create_link_fee(constant::CKUSDC_ICRC_TOKEN, &ckusdc_ledger_fee),
+            - utils::calculate_create_link_fee(constant::CKUSDC_ICRC_TOKEN, &ckusdc_ledger_fee, 1),
         "CKUSDC balance after link creation is incorrect"
     );
 

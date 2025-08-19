@@ -170,21 +170,21 @@ async fn it_should_create_link_token_basket_successfully() {
         icp_balance_after,
         icp_initial_balance
             - icp_link_amount
-            - utils::calculate_create_link_fee(constant::ICP_TOKEN, &icp_ledger_fee),
+            - utils::calculate_create_link_fee(constant::ICP_TOKEN, &icp_ledger_fee, 1),
         "ICP balance after link creation is incorrect"
     );
     assert_eq!(
         ckbtc_balance_after,
         ckbtc_initial_balance
             - ckbtc_link_amount
-            - utils::calculate_create_link_fee(constant::CKBTC_ICRC_TOKEN, &ckbtc_ledger_fee),
+            - utils::calculate_create_link_fee(constant::CKBTC_ICRC_TOKEN, &ckbtc_ledger_fee, 1),
         "CKBTC balance after link creation is incorrect"
     );
     assert_eq!(
         ckusdc_balance_after,
         ckusdc_initial_balance
             - ckusdc_link_amount
-            - utils::calculate_create_link_fee(constant::CKUSDC_ICRC_TOKEN, &ckusdc_ledger_fee),
+            - utils::calculate_create_link_fee(constant::CKUSDC_ICRC_TOKEN, &ckusdc_ledger_fee, 1),
         "CKUSDC balance after link creation is incorrect"
     );
 

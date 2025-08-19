@@ -168,7 +168,7 @@ async fn it_should_create_link_tip_successfully() {
         caller_balance_after,
         initial_balance
             - tip_amount
-            - utils::calculate_create_link_fee(constant::ICP_TOKEN, &icp_ledger_fee),
+            - utils::calculate_create_link_fee(constant::ICP_TOKEN, &icp_ledger_fee, 1),
         "Caller balance should be reduced by the tip amount plus the ICP ledger fee"
     );
 
