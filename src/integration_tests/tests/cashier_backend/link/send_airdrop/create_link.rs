@@ -77,12 +77,6 @@ async fn it_should_create_link_airdrop_successfully() {
     assert_eq!(link.link_use_action_max_count, max_use_count);
 
     // Act
-    //println!("{:?}", link.asset_info);
-
-    let cashier_backend_client = test_fixture.ctx.new_cashier_backend_client(caller);
-    let link_info = cashier_backend_client.get_link(link.id.clone(), None).await;
-    println!("{:?}", link_info);
-
     let create_action = test_fixture
         .create_action(&link.id, constant::CREATE_LINK_ACTION)
         .await;
@@ -146,7 +140,6 @@ async fn it_should_create_link_airdrop_successfully() {
             .all(|intent| intent.state == IntentState::Success.to_string())
     );
 
-    // Assert the balance
     let link_account = link_id_to_account(&ctx, &link.id);
     let caller_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
     let link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();

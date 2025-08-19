@@ -1,9 +1,40 @@
+use crate::cashier_backend::link::fixture::{LinkTestFixture, create_tip_link_fixture};
+use crate::utils::link_id_to_account::link_id_to_account;
+use crate::utils::principal::TestUser;
+use candid::Principal;
+use cashier_backend_types::dto::action::CreateActionInput;
 use cashier_backend_types::{constant, repository::action::v1::ActionState};
-
+use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
 
-use crate::cashier_backend::link::fixture::{LinkTestFixture, create_tip_link_fixture};
-use crate::utils::principal::TestUser;
+#[tokio::test]
+async fn it_should_error_use_link_tip_if_caller_anonymous() {
+    // Arrange
+    let (creator_fixture, link) = create_tip_link_fixture().await;
+
+    let claimer = Principal::anonymous();
+    let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
+    let cashier_backend_client = claimer_fixture.ctx.new_cashier_backend_client(claimer);
+
+    // Act
+    let result = cashier_backend_client
+        .create_action(CreateActionInput {
+            link_id: link.id.clone(),
+            action_type: constant::USE_LINK_ACTION.to_string(),
+        })
+        .await;
+
+    // Assert
+    assert!(result.is_err());
+    if let Err(CanisterClientError::PocketIcTestError(err)) = result {
+        assert!(
+            err.reject_message
+                .contains("Anonymous caller is not allowed")
+        );
+    } else {
+        panic!("Expected PocketIcTestError, got {:?}", result);
+    }
+}
 
 #[tokio::test]
 async fn it_should_use_link_tip_successfully() {
@@ -49,7 +80,6 @@ async fn it_should_use_link_tip_successfully() {
 
     // Assert
     assert_eq!(claim_result.id, claim_action.id);
-
     let tip_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
     assert_ne!(tip_amount, 0);
 
@@ -61,4 +91,8 @@ async fn it_should_use_link_tip_successfully() {
         claimer_balance_after, tip_amount,
         "Claimer balance after claim should be equal to tip amount"
     );
+
+    let link_account = link_id_to_account(&claimer_fixture.ctx, &link.id);
+    let link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
+    assert_eq!(link_balance, 0u64, "Link balance should be equal to zero");
 }

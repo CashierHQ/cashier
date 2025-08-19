@@ -1,3 +1,9 @@
+use super::super::fixture::LinkTestFixture;
+use crate::utils::{
+    PocketIcTestContextBuilder, icrc_112::execute_icrc112_request,
+    link_id_to_account::link_id_to_account, principal::TestUser,
+};
+use candid::Principal;
 use cashier_backend_types::{
     constant,
     dto::link::UpdateLinkInput,
@@ -10,13 +16,6 @@ use cashier_backend_types::{
 use cashier_common::utils;
 use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
-
-use super::super::fixture::LinkTestFixture;
-use crate::utils::{
-    PocketIcTestContextBuilder, icrc_112::execute_icrc112_request,
-    link_id_to_account::link_id_to_account, principal::TestUser,
-};
-use candid::Principal;
 use std::sync::Arc;
 
 #[tokio::test]
