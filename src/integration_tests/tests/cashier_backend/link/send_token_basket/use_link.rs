@@ -13,6 +13,7 @@ use icrc_ledger_types::icrc1::account::Account;
 async fn it_should_use_link_token_basket_successfully() {
     // Arrange
     let (creator_fixture, link) = create_token_basket_link_fixture().await;
+
     let claimer = TestUser::User2.get_principal();
     let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
     claimer_fixture.setup_user().await;

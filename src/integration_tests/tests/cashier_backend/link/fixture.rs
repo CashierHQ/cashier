@@ -39,7 +39,7 @@ impl LinkTestFixture {
 
         Self {
             ctx,
-            caller: caller.clone(),
+            caller: *caller,
             cashier_backend_client,
         }
     }
