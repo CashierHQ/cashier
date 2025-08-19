@@ -1,12 +1,19 @@
 use cashier_common::build_data::BuildData;
-use ic_cdk::query;
+use ic_cdk::{query, update};
 use log::debug;
 
-use crate::build_data::canister_build_data;
+use crate::{api::state::get_state, build_data::canister_build_data};
 
 /// Returns the build data of the canister.
 #[query]
 fn get_canister_build_data() -> BuildData {
     debug!("[get_canister_build_data]");
     canister_build_data()
+}
+
+#[update]
+fn change_to_maintenance_mode(is_maintained: bool) {
+    debug!("[change_to_maintenance_mode] is_maintained: {is_maintained}");
+    let mut state = get_state();
+    state.is_maintained = is_maintained;
 }

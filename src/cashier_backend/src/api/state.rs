@@ -24,6 +24,7 @@ pub struct CanisterState<E: IcEnvironment + Clone> {
     pub user_service: UserService<ThreadlocalRepositories>,
     pub validate_service: ValidateService<ThreadlocalRepositories>,
     pub env: E,
+    pub is_maintained: bool,
 }
 
 impl<E: IcEnvironment + Clone> CanisterState<E> {
@@ -39,6 +40,7 @@ impl<E: IcEnvironment + Clone> CanisterState<E> {
             link_service: LinkService::new(repo.clone(), env.clone()),
             transaction_manager_service: TransactionManagerService::new(repo, env.clone()),
             env,
+            is_maintained: false,
         }
     }
 }

@@ -90,6 +90,15 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     ) -> CanisterClientResult<Result<GetLinkResp, String>> {
         self.client.query("get_link", (id, options)).await
     }
+
+    pub async fn change_to_maintenance_mode(
+        &self,
+        is_maintained: bool,
+    ) -> CanisterClientResult<Result<(), String>> {
+        self.client
+            .update("change_to_maintenance_mode", (is_maintained,))
+            .await
+    }
 }
 
 #[cfg(feature = "pocket_ic")]

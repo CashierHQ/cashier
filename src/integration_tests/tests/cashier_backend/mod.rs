@@ -3,6 +3,7 @@ use candid::Principal;
 use crate::utils::with_pocket_ic_context;
 
 pub mod link;
+pub mod maintain_mode;
 pub mod request_lock;
 pub mod upgrade;
 

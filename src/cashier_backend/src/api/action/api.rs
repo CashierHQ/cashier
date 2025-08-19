@@ -7,12 +7,12 @@ use ic_cdk::update;
 use log::{debug, info};
 
 use crate::api::CanisterError;
-use crate::api::guard::is_not_anonymous;
+use crate::api::guard::{is_not_anonymous, is_not_maintained};
 use crate::api::state::get_state;
 use crate::services::transaction_manager::traits::TransactionExecutor;
 use crate::utils::runtime::{IcEnvironment, RealIcEnvironment};
 
-#[update(guard = "is_not_anonymous")]
+#[update(guard = "is_not_anonymous", guard = "is_not_maintained")]
 pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<String, CanisterError> {
     info!("[trigger_transaction]");
     debug!("[trigger_transaction] Input: {:?}", input);

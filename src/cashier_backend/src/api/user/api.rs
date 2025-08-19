@@ -5,9 +5,12 @@ use cashier_backend_types::dto::user::UserDto;
 use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, info};
 
-use crate::api::{guard::is_not_anonymous, state::get_state};
+use crate::api::{
+    guard::{is_not_anonymous, is_not_maintained},
+    state::get_state,
+};
 
-#[update(guard = "is_not_anonymous")]
+#[update(guard = "is_not_anonymous", guard = "is_not_maintained")]
 fn create_user() -> Result<UserDto, String> {
     info!("[create_user]");
 
