@@ -136,7 +136,7 @@ pub struct PocketIcTestContextBuilder {
     has_cashier_backend: bool,
     has_token_storage: bool,
     has_icp_ledger: bool,
-    icrc_tokens: HashSet<String>,
+    icrc_tokens: Vec<String>,
 }
 
 impl Default for PocketIcTestContextBuilder {
@@ -151,7 +151,7 @@ impl PocketIcTestContextBuilder {
             has_cashier_backend: false,
             has_token_storage: false,
             has_icp_ledger: false,
-            icrc_tokens: HashSet::new(),
+            icrc_tokens: Vec::new(),
         }
     }
 
@@ -170,7 +170,7 @@ impl PocketIcTestContextBuilder {
         self
     }
 
-    pub fn with_icrc_tokens(mut self, tokens: HashSet<String>) -> Self {
+    pub fn with_icrc_tokens(mut self, tokens: Vec<String>) -> Self {
         self.icrc_tokens = tokens;
         self
     }

@@ -1,5 +1,5 @@
 use cashier_backend_types::{
-    constant::{CONTINUE_ACTION, CREATE_LINK_ACTION},
+    constant::{self, CONTINUE_ACTION, CREATE_LINK_ACTION},
     dto::link::UpdateLinkInput,
     repository::{
         action::v1::ActionState,
@@ -166,7 +166,9 @@ async fn it_should_create_link_send_tip_successfully() {
     );
     assert_eq!(
         caller_balance_after,
-        initial_balance - tip_amount - utils::calculate_create_link_fee(&icp_ledger_fee),
+        initial_balance
+            - tip_amount
+            - utils::calculate_create_link_fee(constant::ICP_TOKEN, &icp_ledger_fee),
         "Caller balance should be reduced by the tip amount plus the ICP ledger fee"
     );
 

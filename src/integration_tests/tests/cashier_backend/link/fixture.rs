@@ -3,7 +3,7 @@ use std::{sync::Arc, time::Duration};
 use candid::Principal;
 use cashier_backend_client::client::CashierBackendClient;
 use cashier_backend_types::{
-    constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+    constant,
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
         link::{
@@ -77,7 +77,7 @@ impl LinkTestFixture {
                     chain: "IC".to_string(),
                     label: format!(
                         "{}_{}",
-                        INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+                        constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
                         self.ctx.icp_ledger_principal.to_text()
                     ),
                     amount_per_link_use_action: 10_000_000,
@@ -87,7 +87,7 @@ impl LinkTestFixture {
                     chain: "IC".to_string(),
                     label: format!(
                         "{}_{}",
-                        INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+                        constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
                         self.ctx.icrc_token_map["ckBTC"].to_text()
                     ),
                     amount_per_link_use_action: 1_000_000,
@@ -97,7 +97,7 @@ impl LinkTestFixture {
                     chain: "IC".to_string(),
                     label: format!(
                         "{}_{}",
-                        INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+                        constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
                         self.ctx.icrc_token_map["ckUSDC"].to_text()
                     ),
                     amount_per_link_use_action: 10_000_000,
@@ -243,10 +243,65 @@ impl LinkTestFixture {
                 amount_per_link_use_action: amount,
             }],
             template: "Central".to_string(),
-            link_type: "SendTip".to_string(),
+            link_type: constant::SEND_TIP_LINK_TYPE.to_string(),
             nft_image: None,
             link_image_url: None,
             description: Some("Test tip-link for integration testing".to_string()),
         }
+    }
+
+    pub fn token_basket_link_input(
+        &self,
+        tokens: Vec<String>,
+        amounts: Vec<u64>,
+    ) -> Result<CreateLinkInput, String> {
+        if tokens.len() != amounts.len() {
+            return Err(format!(
+                "Tokens and amounts must have the same length: {} vs {}",
+                tokens.len(),
+                amounts.len()
+            ));
+        }
+
+        let asset_info = tokens
+            .into_iter()
+            .zip(amounts)
+            .map(|(token, amount)| match token.as_str() {
+                constant::ICP_TOKEN => Ok(LinkDetailUpdateAssetInfoInput {
+                    address: self.ctx.icp_ledger_principal.to_string(),
+                    chain: "IC".to_string(),
+                    label: format!(
+                        "{}_{}",
+                        constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+                        self.ctx.icp_ledger_principal.to_text()
+                    ),
+                    amount_per_link_use_action: 10_000_000,
+                }),
+                _ => match self.ctx.icrc_token_map.get(&token) {
+                    Some(token_principal) => Ok(LinkDetailUpdateAssetInfoInput {
+                        address: token_principal.to_string(),
+                        chain: "IC".to_string(),
+                        label: format!(
+                            "{}_{}",
+                            constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+                            token_principal.to_text()
+                        ),
+                        amount_per_link_use_action: amount,
+                    }),
+                    None => Err(format!("Token {} not found in icrc_token_map", token)),
+                },
+            })
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(CreateLinkInput {
+            title: "Test Token Basket Link".to_string(),
+            link_use_action_max_count: 1,
+            asset_info,
+            template: "Central".to_string(),
+            link_type: constant::SEND_TOKEN_BASKET_LINK_TYPE.to_string(),
+            nft_image: None,
+            link_image_url: None,
+            description: Some("Test token basket link for integration testing".to_string()),
+        })
     }
 }
