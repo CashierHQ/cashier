@@ -16,7 +16,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use std::sync::Arc;
 
 #[tokio::test]
-async fn it_should_use_link_send_token_basket_successfully() {
+async fn it_should_use_link_token_basket_successfully() {
     // Arrange
     let ctx = PocketIcTestContextBuilder::new()
         .with_cashier_backend()
@@ -34,7 +34,7 @@ async fn it_should_use_link_send_token_basket_successfully() {
     let mut creator_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
     creator_fixture.setup_user().await;
 
-    let mut claimer_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &claimer).await;
+    let claimer_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &claimer).await;
     claimer_fixture.setup_user().await;
 
     let icp_ledger_client = ctx.new_icp_ledger_client(caller);
