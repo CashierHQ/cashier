@@ -1,9 +1,10 @@
 [workspace]
-members = [
+members = [ 
     "src/cashier_backend",
     "src/cashier_backend_client",
     "src/cashier_backend_types",
-    "src/integration_tests",
+    "src/integration_tests", 
+    "src/lib/canister_settings",
     "src/lib/cashier_common",
     "src/lib/cashier_macros",
     "src/token_storage",

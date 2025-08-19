@@ -1,0 +1,8 @@
+[package]
+name = "canister_settings"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+candid = {workspace = true}
