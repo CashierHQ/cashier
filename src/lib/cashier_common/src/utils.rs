@@ -1,4 +1,6 @@
-use candid::Nat;
+use candid::{Nat, Principal};
+use rand::prelude::*;
+use uuid::Uuid;
 
 pub fn convert_nat_to_u64(nat_value: &Nat) -> Result<u64, String> {
     nat_value
@@ -24,4 +26,16 @@ pub fn calculate_create_payment_link_fee(token: &str, ledger_fee: &Nat) -> u64 {
         "ICP" => 10_000u64 + ledger_fee_u64 * 2,
         _ => ledger_fee_u64 * 2,
     }
+}
+
+pub fn random_id_string() -> String {
+    let id = Uuid::new_v4();
+    id.to_string()
+}
+
+pub fn random_principal_id() -> String {
+    let mut rng = thread_rng();
+    let mut arr = [0u8; 29];
+    rng.fill_bytes(&mut arr);
+    Principal::from_slice(&arr).to_text()
 }

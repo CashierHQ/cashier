@@ -301,8 +301,10 @@ name = "cashier_common"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "rand 0.8.5",
  "serde",
  "serde_bytes",
+ "uuid",
 ]
 
 [[package]]
