@@ -346,6 +346,7 @@ async fn it_should_create_link_airdrop_other_token_successfully() {
         airdrop_amount * max_use_count + ckusdc_ledger_fee.clone() * max_use_count,
         "Link balance is incorrect"
     );
+
     assert_eq!(
         caller_balance_after,
         initial_balance
