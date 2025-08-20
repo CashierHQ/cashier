@@ -94,7 +94,7 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     pub async fn change_to_maintenance_mode(
         &self,
         is_maintained: bool,
-    ) -> CanisterClientResult<Result<(), String>> {
+    ) -> CanisterClientResult<()> {
         self.client
             .update("change_to_maintenance_mode", (is_maintained,))
             .await

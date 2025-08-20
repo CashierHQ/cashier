@@ -58,7 +58,7 @@ where
     let client = Arc::new(get_pocket_ic_client().await.build_async().await);
     let token_storage_principal = deploy_canister(
         &client,
-        None,
+        Some(admin),
         get_token_storage_canister_bytecode(),
         &(TokenStorageInitData {
             log_settings: Some(log.clone()),
@@ -68,7 +68,7 @@ where
 
     let cashier_backend_principal = deploy_canister(
         &client,
-        None,
+        Some(admin),
         get_cashier_backend_canister_bytecode(),
         &(CashierBackendInitData {
             log_settings: Some(log),
@@ -133,6 +133,7 @@ where
         cashier_backend_principal,
         icp_ledger_principal,
         icrc_token_map,
+        admin,
     })
     .await;
 
@@ -151,6 +152,7 @@ pub struct PocketIcTestContext {
     pub cashier_backend_principal: Principal,
     pub icp_ledger_principal: Principal,
     pub icrc_token_map: HashMap<String, Principal>,
+    pub admin: Principal,
 }
 
 impl PocketIcTestContext {
@@ -319,7 +321,7 @@ async fn deploy_canister<T: CandidType>(
     args: &T,
 ) -> Principal {
     let args = encode(args);
-    let canister = client.create_canister().await;
+    let canister = client.create_canister_with_settings(sender, None).await;
     client.add_cycles(canister, u128::MAX).await;
     client
         .install_canister(canister, bytecode, args, sender)
