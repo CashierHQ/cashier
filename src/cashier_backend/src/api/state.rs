@@ -1,9 +1,12 @@
 use std::{cell::RefCell, rc::Rc, thread::LocalKey};
 
+use canister_internal_settings::{
+    service::CanisterInternalSettingsService, types::CanisterInternalSettingsStorage,
+};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 
 use crate::{
-    repositories::{LOGGER_SERVICE_STORE, ThreadlocalRepositories},
+    repositories::{CANISTER_SETTING_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
     services::{
         action::ActionService,
         link::service::LinkService,
@@ -17,6 +20,9 @@ use crate::{
 /// The state of the canister
 pub struct CanisterState<E: IcEnvironment + Clone> {
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
+    pub canister_internal_settings_service: CanisterInternalSettingsService<
+        &'static LocalKey<RefCell<CanisterInternalSettingsStorage>>,
+    >,
     pub action_service: ActionService<ThreadlocalRepositories>,
     pub link_service: LinkService<E, ThreadlocalRepositories>,
     pub request_lock_service: RequestLockService<ThreadlocalRepositories>,
@@ -24,7 +30,6 @@ pub struct CanisterState<E: IcEnvironment + Clone> {
     pub user_service: UserService<ThreadlocalRepositories>,
     pub validate_service: ValidateService<ThreadlocalRepositories>,
     pub env: E,
-    pub is_maintained: bool,
 }
 
 impl<E: IcEnvironment + Clone> CanisterState<E> {
@@ -33,6 +38,9 @@ impl<E: IcEnvironment + Clone> CanisterState<E> {
         let repo = Rc::new(ThreadlocalRepositories);
         CanisterState {
             log_service: LoggerConfigService::new(&LOGGER_SERVICE_STORE),
+            canister_internal_settings_service: CanisterInternalSettingsService::new(
+                &CANISTER_SETTING_SERVICE_STORE,
+            ),
             action_service: ActionService::new(&repo),
             request_lock_service: RequestLockService::new(&repo),
             user_service: UserService::new(&repo),
@@ -40,7 +48,6 @@ impl<E: IcEnvironment + Clone> CanisterState<E> {
             link_service: LinkService::new(repo.clone(), env.clone()),
             transaction_manager_service: TransactionManagerService::new(repo, env.clone()),
             env,
-            is_maintained: false,
         }
     }
 }

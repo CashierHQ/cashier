@@ -6,8 +6,17 @@ export const idlFactory = ({ IDL }) => {
     'enable_console' : IDL.Opt(IDL.Bool),
     'max_record_length' : IDL.Opt(IDL.Nat64),
   });
+  const Mode = IDL.Variant({
+    'Operational' : IDL.Null,
+    'Maintenance' : IDL.Null,
+  });
+  const CanisterInternalSettings = IDL.Record({
+    'list_admin' : IDL.Vec(IDL.Principal),
+    'mode' : Mode,
+  });
   const CashierBackendInitData = IDL.Record({
     'log_settings' : IDL.Opt(LogServiceSettings),
+    'canister_internal_settings' : IDL.Opt(CanisterInternalSettings),
   });
   const CreateActionInput = IDL.Record({
     'link_id' : IDL.Text,
@@ -285,6 +294,7 @@ export const idlFactory = ({ IDL }) => {
     'params' : IDL.Opt(LinkDetailUpdateInput),
   });
   return IDL.Service({
+    'change_to_maintenance_mode' : IDL.Func([IDL.Bool], [], []),
     'create_action' : IDL.Func([CreateActionInput], [Result], []),
     'create_action_anonymous' : IDL.Func(
         [CreateActionAnonymousInput],
@@ -336,8 +346,17 @@ export const init = ({ IDL }) => {
     'enable_console' : IDL.Opt(IDL.Bool),
     'max_record_length' : IDL.Opt(IDL.Nat64),
   });
+  const Mode = IDL.Variant({
+    'Operational' : IDL.Null,
+    'Maintenance' : IDL.Null,
+  });
+  const CanisterInternalSettings = IDL.Record({
+    'list_admin' : IDL.Vec(IDL.Principal),
+    'mode' : Mode,
+  });
   const CashierBackendInitData = IDL.Record({
     'log_settings' : IDL.Opt(LogServiceSettings),
+    'canister_internal_settings' : IDL.Opt(CanisterInternalSettings),
   });
   return [CashierBackendInitData];
 };

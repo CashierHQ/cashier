@@ -16,6 +16,11 @@ fn init(init_data: CashierBackendInitData) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
     }
 
+    let canister_internal_settings = init_data.canister_internal_settings.unwrap_or_default();
+    get_state()
+        .canister_internal_settings_service
+        .init(canister_internal_settings);
+
     info!("[init] Starting Cashier Backend");
 
     init_ic_rand();

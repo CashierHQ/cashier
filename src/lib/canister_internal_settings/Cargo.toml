@@ -1,5 +1,5 @@
 [package]
-name = "canister_settings"
+name = "canister_internal_settings"
 edition.workspace = true
 license.workspace = true
 version.workspace = true

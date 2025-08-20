@@ -4,7 +4,7 @@ members = [
     "src/cashier_backend_client",
     "src/cashier_backend_types",
     "src/integration_tests", 
-    "src/lib/canister_settings",
+    "src/lib/canister_internal_settings",
     "src/lib/cashier_common",
     "src/lib/cashier_macros",
     "src/token_storage",
@@ -26,6 +26,7 @@ cashier_backend_client = { path = "src/cashier_backend_client" }
 cashier_backend_types = { path = "src/cashier_backend_types" }
 cashier_common = { path = "src/lib/cashier_common" }
 cashier_macros = { path = "src/lib/cashier_macros" }
+canister_internal_settings = { path = "src/lib/canister_internal_settings" }
 futures = { version = "0.3", default-features = false }
 getrandom = { version = "0.2", features = ["custom"] }
 ic-cdk = "0.18"

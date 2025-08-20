@@ -56,8 +56,13 @@ export type CanisterError = { 'InvalidDataError' : string } |
   } |
   { 'UnboundedError' : string } |
   { 'CallCanisterFailed' : string };
+export interface CanisterInternalSettings {
+  'list_admin' : Array<Principal>,
+  'mode' : Mode,
+}
 export interface CashierBackendInitData {
   'log_settings' : [] | [LogServiceSettings],
+  'canister_internal_settings' : [] | [CanisterInternalSettings],
 }
 export interface CreateActionAnonymousInput {
   'link_id' : string,
@@ -194,6 +199,8 @@ export type MetadataValue = { 'Nat' : bigint } |
   { 'MaybeMemo' : [] | [Uint8Array | number[]] } |
   { 'Asset' : AssetDto } |
   { 'Wallet' : AssetDto };
+export type Mode = { 'Operational' : null } |
+  { 'Maintenance' : null };
 export interface PaginateInput { 'offset' : bigint, 'limit' : bigint }
 export interface PaginateResult {
   'metadata' : PaginateResultMetadata,
@@ -266,6 +273,7 @@ export interface UserDto {
   'wallet' : string,
 }
 export interface _SERVICE {
+  'change_to_maintenance_mode' : ActorMethod<[boolean], undefined>,
   'create_action' : ActorMethod<[CreateActionInput], Result>,
   'create_action_anonymous' : ActorMethod<[CreateActionAnonymousInput], Result>,
   'create_link' : ActorMethod<[CreateLinkInput], Result_1>,

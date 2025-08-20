@@ -214,7 +214,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "canister_settings"
+name = "canister_internal_settings"
 version = "0.1.0"
 dependencies = [
  "candid",
@@ -256,6 +256,7 @@ dependencies = [
  "anyhow",
  "base64 0.22.1",
  "candid",
+ "canister_internal_settings",
  "cashier_backend_types",
  "cashier_common",
  "futures",
@@ -297,6 +298,7 @@ name = "cashier_backend_types"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_internal_settings",
  "cashier_macros",
  "ic-cdk",
  "ic-cdk-timers",
@@ -1268,6 +1270,7 @@ version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
  "candid",
+ "canister_internal_settings",
  "cashier_backend_client",
  "cashier_backend_types",
  "ic-cdk",
@@ -1276,6 +1279,7 @@ dependencies = [
  "ic_mple_log",
  "ic_mple_pocket_ic",
  "icrc-ledger-types",
+ "rand 0.8.5",
  "serde",
  "serde_bytes",
  "token_storage_client",

@@ -1,4 +1,5 @@
 use candid::Principal;
+use rand::prelude::*;
 
 /// This enum is used to represent the test users
 pub enum TestUser {
@@ -30,4 +31,11 @@ impl TestUser {
             .unwrap(),
         }
     }
+}
+
+pub fn random_principal_id() -> Principal {
+    let mut rng = thread_rng();
+    let mut arr = [0u8; 29];
+    rng.fill_bytes(&mut arr);
+    Principal::from_slice(&arr)
 }

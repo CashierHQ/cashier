@@ -1,3 +1,5 @@
+use crate::api::guard::is_admin;
+use canister_internal_settings::types::Mode;
 use cashier_common::build_data::BuildData;
 use ic_cdk::{query, update};
 use log::debug;
@@ -11,9 +13,17 @@ fn get_canister_build_data() -> BuildData {
     canister_build_data()
 }
 
-#[update]
+#[update(guard = "is_admin")]
 fn change_to_maintenance_mode(is_maintained: bool) {
     debug!("[change_to_maintenance_mode] is_maintained: {is_maintained}");
     let mut state = get_state();
-    state.is_maintained = is_maintained;
+    if is_maintained {
+        state
+            .canister_internal_settings_service
+            .set_mode(Mode::Maintenance);
+    } else {
+        state
+            .canister_internal_settings_service
+            .set_mode(Mode::Operational);
+    }
 }

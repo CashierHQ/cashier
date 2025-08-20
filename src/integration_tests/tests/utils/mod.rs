@@ -8,6 +8,7 @@ use std::{
 };
 
 use candid::{CandidType, Decode, Encode, Principal, utils::ArgumentEncoder};
+use canister_internal_settings::types::{CanisterInternalSettings, Mode};
 use cashier_backend_client::client::CashierBackendClient;
 use cashier_backend_types::init::CashierBackendInitData;
 use ic_cdk::management_canister::{CanisterId, CanisterSettings};
@@ -20,7 +21,9 @@ use token_storage_types::init::TokenStorageInitData;
 
 use crate::{
     constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL},
-    utils::{token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
+    utils::{
+        principal::random_principal_id, token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient,
+    },
 };
 
 pub mod icrc_112;
@@ -45,6 +48,13 @@ where
         log_filter: Some("debug".to_string()),
     };
 
+    let admin = random_principal_id();
+
+    let canister_internal_settings = CanisterInternalSettings {
+        mode: Mode::Operational,
+        list_admin: vec![admin],
+    };
+
     let client = Arc::new(get_pocket_ic_client().await.build_async().await);
     let token_storage_principal = deploy_canister(
         &client,
@@ -62,6 +72,7 @@ where
         get_cashier_backend_canister_bytecode(),
         &(CashierBackendInitData {
             log_settings: Some(log),
+            canister_internal_settings: Some(canister_internal_settings),
         }),
     )
     .await;

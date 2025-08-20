@@ -1,25 +1,27 @@
-use crate::types::{CanisterSettingsStable, CanisterSettingsStorage};
+use crate::types::{CanisterInternalSettings, CanisterInternalSettingsStorage};
 use candid::Principal;
 use ic_mple_utils::store::Storage;
 
 /// Service to manage canister settings persisted in stable storage.
-pub struct CanisterSettingsService<S: Storage<CanisterSettingsStable>> {
-    pub storage: S,
+pub struct CanisterInternalSettingsService<S: Storage<CanisterInternalSettingsStorage>> {
+    pub canister_internal_settings_store: S,
 }
 
-impl<S: Storage<CanisterSettingsStable>> CanisterSettingsService<S> {
-    pub fn new(storage: S) -> Self {
-        Self { storage }
+impl<S: Storage<CanisterInternalSettingsStorage>> CanisterInternalSettingsService<S> {
+    pub fn new(canister_internal_settings_store: S) -> Self {
+        Self {
+            canister_internal_settings_store,
+        }
     }
 
-    pub fn init(&mut self, settings: CanisterSettingsStorage) {
-        self.storage.with_borrow_mut(|store| {
+    pub fn init(&mut self, settings: CanisterInternalSettings) {
+        self.canister_internal_settings_store.with_borrow_mut(|store| {
             store.set(settings);
         });
     }
 
     pub fn add_admin(&mut self, principal: Principal) {
-        self.storage.with_borrow_mut(|store| {
+        self.canister_internal_settings_store.with_borrow_mut(|store| {
             let mut s = store.get().clone();
             if !s.list_admin.contains(&principal) {
                 s.list_admin.push(principal);
@@ -29,7 +31,7 @@ impl<S: Storage<CanisterSettingsStable>> CanisterSettingsService<S> {
     }
 
     pub fn remove_admin(&mut self, principal: Principal) {
-        self.storage.with_borrow_mut(|store| {
+        self.canister_internal_settings_store.with_borrow_mut(|store| {
             let mut s = store.get().clone();
             s.list_admin.retain(|p| p != &principal);
             store.set(s);
@@ -37,24 +39,26 @@ impl<S: Storage<CanisterSettingsStable>> CanisterSettingsService<S> {
     }
 
     pub fn is_admin(&self, caller: Principal) -> bool {
-        self.storage
+        self.canister_internal_settings_store
             .with_borrow(|store| store.get().list_admin.contains(&caller))
     }
 
-    pub fn get_mode(&self) -> CanisterSettingsStorage {
-        self.storage.with_borrow(|store| store.get().clone())
+    pub fn get_mode(&self) -> CanisterInternalSettings {
+        self.canister_internal_settings_store
+            .with_borrow(|store| store.get().clone())
     }
 
     pub fn set_mode(&mut self, mode: crate::types::Mode) {
-        self.storage.with_borrow_mut(|store| {
+        self.canister_internal_settings_store.with_borrow_mut(|store| {
             let mut s = store.get().clone();
             s.mode = mode;
             store.set(s);
         });
     }
 
-    pub fn get_setting(&self) -> CanisterSettingsStorage {
-        self.storage.with_borrow(|store| store.get().clone())
+    pub fn get_setting(&self) -> CanisterInternalSettings {
+        self.canister_internal_settings_store
+            .with_borrow(|store| store.get().clone())
     }
 }
 
@@ -78,17 +82,17 @@ mod tests {
     }
 
     thread_local! {
-        static SETTINGS_STORE: RefCell<CanisterSettingsStable> = RefCell::new(
+        static SETTINGS_STORE: RefCell<CanisterInternalSettingsStorage> = RefCell::new(
             StableCell::new(
                 MemoryManager::init(DefaultMemoryImpl::default()).get(MemoryId::new(1)),
-                CanisterSettingsStorage::default()
+                CanisterInternalSettings::default()
             )
         );
     }
 
     #[test]
-    fn test_canister_settings_service_with_thread_local() {
-        let mut svc = CanisterSettingsService::new(&SETTINGS_STORE);
+    fn test_canister_internal_settings_service_with_thread_local() {
+        let mut svc = CanisterInternalSettingsService::new(&SETTINGS_STORE);
         let p = random_principal_id();
 
         // initially not admin
@@ -111,13 +115,13 @@ mod tests {
     }
 
     #[test]
-    fn test_canister_settings_service_with_local_var() {
+    fn test_canister_internal_settings_service_with_local_var() {
         let store = RefCell::new(StableCell::new(
             MemoryManager::init(DefaultMemoryImpl::default()).get(MemoryId::new(1)),
-            CanisterSettingsStorage::default(),
+            CanisterInternalSettings::default(),
         ));
 
-        let mut svc = CanisterSettingsService::new(store);
+        let mut svc = CanisterInternalSettingsService::new(store);
         let p = random_principal_id();
         assert!(!svc.is_admin(p.clone()));
         svc.add_admin(p.clone());
@@ -130,14 +134,14 @@ mod tests {
 
         let store = RefCell::new(StableCell::new(
             MemoryManager::init(DefaultMemoryImpl::default()).get(MemoryId::new(2)),
-            CanisterSettingsStorage::default(),
+            CanisterInternalSettings::default(),
         ));
 
-        let mut svc = CanisterSettingsService::new(store);
+        let mut svc = CanisterInternalSettingsService::new(store);
 
         // prepare custom settings
         let admin = random_principal_id();
-        let settings = CanisterSettingsStorage {
+        let settings = CanisterInternalSettings {
             mode: Mode::Maintenance,
             list_admin: vec![admin.clone()],
         };

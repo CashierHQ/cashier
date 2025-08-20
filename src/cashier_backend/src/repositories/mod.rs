@@ -4,6 +4,9 @@
 use std::cell::RefCell;
 use std::thread::LocalKey;
 
+use canister_internal_settings::types::{
+    CanisterInternalSettings, CanisterInternalSettingsStorage,
+};
 use ic_mple_log::LogSettings;
 use ic_mple_log::service::{LoggerServiceStorage, Storage};
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
@@ -68,6 +71,7 @@ const PROCESSING_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(12);
 
 const REQUEST_LOCK_MEMORY_ID: MemoryId = MemoryId::new(25);
 const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(26);
+const CANISTER_INTERNAL_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(27);
 
 // Unused Memory IDs but it used before, due to canister doesn't support shrink allocated memory
 const _UNUSED_MEMORY_ID_00: MemoryId = MemoryId::new(0);
@@ -202,6 +206,15 @@ thread_local! {
             StableCell::init(
                 MEMORY_MANAGER.with_borrow(|m| m.get(LOG_SETTINGS_MEMORY_ID)),
                 LogSettings::default(),
+            )
+        );
+
+    // Store the canister settings
+    pub static CANISTER_SETTING_SERVICE_STORE: RefCell<CanisterInternalSettingsStorage> =
+        RefCell::new(
+            StableCell::init(
+                MEMORY_MANAGER.with_borrow(|m| m.get(CANISTER_INTERNAL_SETTINGS_MEMORY_ID)),
+                CanisterInternalSettings::default(),
             )
         );
 

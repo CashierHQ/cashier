@@ -14,12 +14,12 @@ pub enum Mode {
 
 #[derive(Clone, Debug, CandidType, PartialEq, Eq)]
 #[storable]
-pub struct CanisterSettingsStorage {
+pub struct CanisterInternalSettings {
     pub mode: Mode,
     pub list_admin: Vec<Principal>,
 }
 
-impl Default for CanisterSettingsStorage {
+impl Default for CanisterInternalSettings {
     fn default() -> Self {
         Self {
             mode: Mode::Operational,
@@ -28,5 +28,5 @@ impl Default for CanisterSettingsStorage {
     }
 }
 
-pub type CanisterSettingsStable =
-    StableCell<CanisterSettingsStorage, VirtualMemory<DefaultMemoryImpl>>;
+pub type CanisterInternalSettingsStorage =
+    StableCell<CanisterInternalSettings, VirtualMemory<DefaultMemoryImpl>>;

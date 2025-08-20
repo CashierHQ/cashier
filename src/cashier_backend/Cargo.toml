@@ -15,6 +15,7 @@ base64 = { workspace = true }
 candid = { workspace = true }
 cashier_backend_types = { workspace = true }
 cashier_common = { workspace = true }
+canister_internal_settings = { workspace = true }
 futures = { workspace = true }
 getrandom = { workspace = true, features = ["custom"] }
 ic-cdk = { workspace = true }
