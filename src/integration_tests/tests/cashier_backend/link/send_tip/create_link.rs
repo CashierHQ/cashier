@@ -47,7 +47,7 @@ async fn it_should_error_create_link_tip_if_caller_anonymous() {
 }
 
 #[tokio::test]
-async fn it_should_create_link_tip_successfully() {
+async fn it_should_create_link_tip_icp_token_successfully() {
     // Arrange
     let ctx = PocketIcTestContextBuilder::new()
         .with_cashier_backend()
@@ -173,4 +173,51 @@ async fn it_should_create_link_tip_successfully() {
 
     // Assert
     assert_eq!(update_link.state, LinkState::Active.to_string());
+}
+
+#[tokio::test]
+async fn it_should_create_link_tip_other_token_successfully() {
+    // Arrange
+    let ctx = PocketIcTestContextBuilder::new()
+        .with_cashier_backend()
+        .with_icp_ledger()
+        .with_icrc_tokens(vec![constant::CKBTC_ICRC_TOKEN.to_string()])
+        .build_async()
+        .await;
+    let caller = TestUser::User1.get_principal();
+    let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
+    test_fixture.setup_user().await;
+
+    let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+
+    let icp_initial_balance = 1_000_000u64;
+    let ckbtc_initial_balance = 1_000_000_000u64;
+    let tip_amount = 5_000_000u64;
+    let caller_account = Account {
+        owner: caller,
+        subaccount: None,
+    };
+
+    // Act
+    test_fixture.airdrop_icp(icp_initial_balance, &caller).await;
+    test_fixture
+        .airdrop_icrc(constant::CKBTC_ICRC_TOKEN, ckbtc_initial_balance, &caller)
+        .await;
+
+    // Assert
+    let caller_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
+    assert_eq!(caller_balance_before, ckbtc_initial_balance);
+
+    // Act
+    let link = test_fixture.create_tip_link(tip_amount).await;
+
+    // Assert
+    assert!(!link.id.is_empty());
+    assert_eq!(link.link_type, Some(LinkType::SendTip.to_string()));
+    assert!(link.asset_info.is_some());
+    assert_eq!(link.asset_info.as_ref().unwrap().len(), 1);
+    assert_eq!(
+        link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action,
+        tip_amount
+    );
 }
