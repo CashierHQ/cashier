@@ -172,7 +172,7 @@ async fn it_should_create_link_payment_successfully() {
     assert_eq!(
         caller_balance_after,
         initial_balance
-            - test_utils::calculate_create_payment_link_fee(constant::ICP_TOKEN, &icp_ledger_fee),
+            - test_utils::calculate_create_link_fee(constant::ICP_TOKEN, &icp_ledger_fee, 1),
         "Caller balance after creation is incorrect"
     );
 

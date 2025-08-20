@@ -61,9 +61,9 @@ impl LinkTestFixture {
     }
 
     // Pre-defined input for creating tip link.
-    pub async fn create_tip_link(&self, amount: u64) -> LinkDto {
+    pub async fn create_tip_link(&self, token: &str, amount: u64) -> LinkDto {
         let link_input = self
-            .tip_link_input(vec![constant::ICP_TOKEN.to_string()], vec![amount])
+            .tip_link_input(vec![token.to_string()], vec![amount])
             .unwrap();
         self.create_link(link_input).await
     }
@@ -474,22 +474,31 @@ impl LinkTestFixture {
 }
 
 /// Creates a fixture for a tip link.
-pub async fn create_tip_link_fixture() -> (LinkTestFixture, LinkDto) {
-    let ctx = PocketIcTestContextBuilder::new()
+pub async fn create_tip_link_fixture(token: &str, amount: u64) -> (LinkTestFixture, LinkDto) {
+    let mut builder = PocketIcTestContextBuilder::new()
         .with_cashier_backend()
-        .with_icp_ledger()
-        .build_async()
-        .await;
+        .with_icp_ledger();
+
+    if token != constant::ICP_TOKEN {
+        builder = builder.with_icrc_tokens(vec![token.to_string()]);
+    }
+
+    let ctx = builder.build_async().await;
     let caller = TestUser::User1.get_principal();
     let mut creator_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
     let initial_balance = 1_000_000_000u64;
-    let tip_amount = 1_000_000u64;
+    //let tip_amount = 1_000_000u64;
 
     creator_fixture.airdrop_icp(initial_balance, &caller).await;
+    if token != constant::ICP_TOKEN {
+        creator_fixture
+            .airdrop_icrc(token, initial_balance, &caller)
+            .await;
+    }
     creator_fixture.setup_user().await;
 
-    let link = creator_fixture.create_tip_link(tip_amount).await;
+    let link = creator_fixture.create_tip_link(token, amount).await;
     let create_action = creator_fixture
         .create_action(&link.id, constant::CREATE_LINK_ACTION)
         .await;

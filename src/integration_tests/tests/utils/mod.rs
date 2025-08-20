@@ -1,6 +1,5 @@
 use crate::{
     constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL},
-    types::IcrcTokenTestContextInitArgs,
     utils::{token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
 };
 use candid::{CandidType, Decode, Encode, Principal, utils::ArgumentEncoder};

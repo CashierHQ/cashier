@@ -1,6 +1,6 @@
 use crate::{
     cashier_backend::link::fixture::{LinkTestFixture, create_tip_link_fixture},
-    utils::principal::TestUser,
+    utils::{link_id_to_account::link_id_to_account, principal::TestUser},
 };
 use candid::Principal;
 use cashier_backend_types::{
@@ -18,7 +18,7 @@ use icrc_ledger_types::icrc1::account::Account;
 #[tokio::test]
 async fn it_should_error_withdraw_link_tip_if_caller_anonymous() {
     // Arrange
-    let (creator_fixture, link) = create_tip_link_fixture().await;
+    let (creator_fixture, link) = create_tip_link_fixture(constant::ICP_TOKEN, 1u64).await;
 
     let caller = Principal::anonymous();
     let caller_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &caller).await;
@@ -47,7 +47,7 @@ async fn it_should_error_withdraw_link_tip_if_caller_anonymous() {
 #[tokio::test]
 async fn it_should_error_withdraw_link_tip_if_caller_not_creator() {
     // Arrange
-    let (creator_fixture, link) = create_tip_link_fixture().await;
+    let (creator_fixture, link) = create_tip_link_fixture(constant::ICP_TOKEN, 1u64).await;
 
     let caller = TestUser::User2.get_principal();
     let caller_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &caller).await;
@@ -73,9 +73,9 @@ async fn it_should_error_withdraw_link_tip_if_caller_not_creator() {
 }
 
 #[tokio::test]
-async fn it_should_withdraw_link_tip_successfully() {
+async fn it_should_withdraw_link_tip_icp_token_successfully() {
     // Arrange
-    let (creator_fixture, link) = create_tip_link_fixture().await;
+    let (creator_fixture, link) = create_tip_link_fixture(constant::ICP_TOKEN, 10_000u64).await;
 
     let icp_ledger_client = creator_fixture
         .ctx
@@ -121,5 +121,78 @@ async fn it_should_withdraw_link_tip_successfully() {
         caller_balance_after,
         caller_balance_before + tip_amount,
         "Caller balance after withdrawal is incorrect"
+    );
+
+    let link_account = link_id_to_account(&creator_fixture.ctx, &link.id);
+    let link_balance_after = icp_ledger_client.balance_of(&link_account).await.unwrap();
+    assert_eq!(
+        link_balance_after, 0u64,
+        "Link balance after withdrawal is incorrect"
+    );
+}
+
+#[tokio::test]
+async fn it_should_withdraw_link_tip_icrc_token_successfully() {
+    // Arrange
+    let (creator_fixture, link) =
+        create_tip_link_fixture(constant::CKBTC_ICRC_TOKEN, 1_000_000u64).await;
+
+    let icrc_ledger_client = creator_fixture
+        .ctx
+        .new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, creator_fixture.caller);
+    let caller_account = Account {
+        owner: creator_fixture.caller,
+        subaccount: None,
+    };
+    let caller_balance_before = icrc_ledger_client
+        .balance_of(&caller_account)
+        .await
+        .unwrap();
+
+    // Act
+    let withdraw_action = creator_fixture
+        .create_action(&link.id, constant::WITHDRAW_LINK_ACTION)
+        .await;
+
+    // Assert
+    assert!(!withdraw_action.id.is_empty());
+    assert_eq!(withdraw_action.r#type, ActionType::Withdraw.to_string());
+    assert_eq!(withdraw_action.state, ActionState::Created.to_string());
+    assert_eq!(withdraw_action.intents.len(), 1);
+    assert!(
+        withdraw_action
+            .intents
+            .iter()
+            .all(|intent| { intent.state == IntentState::Created.to_string() }),
+    );
+
+    // Act
+    let withdraw_result = creator_fixture
+        .process_action(
+            &link.id,
+            &withdraw_action.id,
+            constant::WITHDRAW_LINK_ACTION,
+        )
+        .await;
+
+    // Assert
+    assert_eq!(withdraw_result.id, withdraw_action.id);
+
+    let tip_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let caller_balance_after = icrc_ledger_client
+        .balance_of(&caller_account)
+        .await
+        .unwrap();
+    assert_eq!(
+        caller_balance_after,
+        caller_balance_before + tip_amount,
+        "Caller balance after withdrawal is incorrect"
+    );
+
+    let link_account = link_id_to_account(&creator_fixture.ctx, &link.id);
+    let link_balance_after = icrc_ledger_client.balance_of(&link_account).await.unwrap();
+    assert_eq!(
+        link_balance_after, 0u64,
+        "Link balance after withdrawal is incorrect"
     );
 }
