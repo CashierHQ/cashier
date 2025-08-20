@@ -1,6 +1,4 @@
-use crate::cashier_backend::link::fixture::{
-    LinkTestFixture, create_airdrop_link_fixture, create_airdrop_link_icrc_token_fixture,
-};
+use crate::cashier_backend::link::fixture::{LinkTestFixture, create_airdrop_link_fixture};
 use crate::utils::principal::TestUser;
 use candid::Principal;
 use cashier_backend_types::error::CanisterError;
@@ -14,7 +12,8 @@ use icrc_ledger_types::icrc1::account::Account;
 #[tokio::test]
 async fn it_should_error_use_link_airdrop_if_caller_anonymous() {
     // Arrange
-    let (creator_fixture, link) = create_airdrop_link_fixture().await;
+    let (creator_fixture, link) =
+        create_airdrop_link_fixture(constant::ICP_TOKEN, 1_000_000, 5).await;
 
     let claimer = Principal::anonymous();
     let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
@@ -43,7 +42,8 @@ async fn it_should_error_use_link_airdrop_if_caller_anonymous() {
 #[tokio::test]
 async fn it_should_use_link_airdrop_successfully() {
     // Arrange
-    let (creator_fixture, link) = create_airdrop_link_fixture().await;
+    let (creator_fixture, link) =
+        create_airdrop_link_fixture(constant::ICP_TOKEN, 1_000_000u64, 5).await;
 
     let claimer = TestUser::User2.get_principal();
     let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
@@ -111,7 +111,8 @@ async fn it_should_use_link_airdrop_successfully() {
 #[tokio::test]
 async fn it_should_error_use_link_airdrop_multiple_times_from_same_user() {
     // Arrange
-    let (creator_fixture, link) = create_airdrop_link_fixture().await;
+    let (creator_fixture, link) =
+        create_airdrop_link_fixture(constant::ICP_TOKEN, 1_000_000u64, 5).await;
 
     let claimer = TestUser::User2.get_principal();
     let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
@@ -147,7 +148,8 @@ async fn it_should_error_use_link_airdrop_multiple_times_from_same_user() {
 #[tokio::test]
 async fn it_should_use_link_airdrop_multiple_times_successfully() {
     // Arrange
-    let (creator_fixture, link) = create_airdrop_link_fixture().await;
+    let (creator_fixture, link) =
+        create_airdrop_link_fixture(constant::ICP_TOKEN, 1_000_000u64, 5).await;
 
     let airdrop_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
     assert_ne!(airdrop_amount, 0);
@@ -210,7 +212,8 @@ async fn it_should_use_link_airdrop_multiple_times_successfully() {
 #[tokio::test]
 async fn it_should_error_use_link_airdrop_more_than_max_use_count() {
     // Arrange
-    let (creator_fixture, link) = create_airdrop_link_fixture().await;
+    let (creator_fixture, link) =
+        create_airdrop_link_fixture(constant::ICP_TOKEN, 1_000_000u64, 5).await;
 
     let airdrop_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
     assert_ne!(airdrop_amount, 0);
@@ -255,7 +258,8 @@ async fn it_should_error_use_link_airdrop_more_than_max_use_count() {
 #[tokio::test]
 async fn it_should_use_link_airdrop_icrc_token_successfully() {
     // Arrange
-    let (creator_fixture, link) = create_airdrop_link_icrc_token_fixture().await;
+    let (creator_fixture, link) =
+        create_airdrop_link_fixture(constant::CKUSDC_ICRC_TOKEN, 1_000_000u64, 5).await;
 
     let claimer = TestUser::User2.get_principal();
     let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;

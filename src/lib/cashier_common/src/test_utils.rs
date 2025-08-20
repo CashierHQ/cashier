@@ -12,15 +12,6 @@ pub fn convert_nat_to_u64(nat_value: &Nat) -> Result<u64, String> {
         .map_err(|_| "Value too large to fit in u64".to_string())
 }
 
-pub fn calculate_create_link_fee(token: &str, ledger_fee: &Nat, max_use_count: u64) -> u64 {
-    let ledger_fee_u64 = convert_nat_to_u64(ledger_fee).unwrap_or(0);
-
-    match token {
-        "ICP" => CREATE_LINK_FEE + ledger_fee_u64 * (max_use_count + 3),
-        _ => ledger_fee_u64 * (max_use_count + 1),
-    }
-}
-
 /// Calculate the fee for creating a link with respect to the ledger fee and max use count.
 pub fn calculate_amount_for_create_link(ledger_fee: &Nat) -> u64 {
     let ledger_fee_u64 = convert_nat_to_u64(ledger_fee).unwrap_or(0);

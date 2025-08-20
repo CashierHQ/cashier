@@ -1,7 +1,5 @@
 use crate::{
-    cashier_backend::link::fixture::{
-        LinkTestFixture, create_airdrop_link_fixture, create_airdrop_link_icrc_token_fixture,
-    },
+    cashier_backend::link::fixture::{LinkTestFixture, create_airdrop_link_fixture},
     utils::principal::TestUser,
 };
 use candid::Principal;
@@ -20,7 +18,8 @@ use icrc_ledger_types::icrc1::account::Account;
 #[tokio::test]
 async fn it_should_error_withdraw_link_airdrop_if_caller_anonymous() {
     // Arrange
-    let (creator_fixture, link) = create_airdrop_link_fixture().await;
+    let (creator_fixture, link) =
+        create_airdrop_link_fixture(constant::ICP_TOKEN, 1_000_000u64, 5).await;
 
     let caller = Principal::anonymous();
     let caller_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &caller).await;
@@ -49,7 +48,8 @@ async fn it_should_error_withdraw_link_airdrop_if_caller_anonymous() {
 #[tokio::test]
 async fn it_should_error_withdraw_link_airdrop_if_caller_not_creator() {
     // Arrange
-    let (creator_fixture, link) = create_airdrop_link_fixture().await;
+    let (creator_fixture, link) =
+        create_airdrop_link_fixture(constant::ICP_TOKEN, 1_000_000u64, 5).await;
 
     let caller = TestUser::User2.get_principal();
     let caller_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &caller).await;
@@ -77,7 +77,8 @@ async fn it_should_error_withdraw_link_airdrop_if_caller_not_creator() {
 #[tokio::test]
 async fn it_should_withdraw_link_airdrop_successfully() {
     // Arrange
-    let (creator_fixture, link) = create_airdrop_link_fixture().await;
+    let (creator_fixture, link) =
+        create_airdrop_link_fixture(constant::ICP_TOKEN, 1_000_000u64, 5).await;
 
     let icp_ledger_client = creator_fixture
         .ctx
@@ -132,7 +133,8 @@ async fn it_should_withdraw_link_airdrop_successfully() {
 #[tokio::test]
 async fn it_should_withdraw_link_airdrop_icrc_token_successfully() {
     // Arrange
-    let (creator_fixture, link) = create_airdrop_link_icrc_token_fixture().await;
+    let (creator_fixture, link) =
+        create_airdrop_link_fixture(constant::CKUSDC_ICRC_TOKEN, 1_000_000u64, 5).await;
 
     let ckusdc_ledger_client = creator_fixture
         .ctx

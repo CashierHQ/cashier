@@ -10,9 +10,10 @@ use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]
-async fn it_should_error_use_link_receive_payment_if_caller_anonymous() {
+async fn it_should_error_use_link_payment_if_caller_anonymous() {
     // Arrange
-    let (creator_fixture, link) = create_receive_payment_link_fixture().await;
+    let (creator_fixture, link) =
+        create_receive_payment_link_fixture(constant::ICP_TOKEN, 1u64).await;
 
     let claimer = Principal::anonymous();
     let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
@@ -39,9 +40,10 @@ async fn it_should_error_use_link_receive_payment_if_caller_anonymous() {
 }
 
 #[tokio::test]
-async fn it_should_use_link_receive_payment_successfully() {
+async fn it_should_use_link_icp_token_successfully() {
     // Arrange
-    let (creator_fixture, link) = create_receive_payment_link_fixture().await;
+    let (creator_fixture, link) =
+        create_receive_payment_link_fixture(constant::ICP_TOKEN, 1_000_000u64).await;
 
     let claimer = TestUser::User2.get_principal();
     let mut claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;

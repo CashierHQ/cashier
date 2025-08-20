@@ -18,9 +18,10 @@ use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]
-async fn it_should_error_withdraw_link_receive_payment_if_caller_anonymous() {
+async fn it_should_error_withdraw_link_payment_if_caller_anonymous() {
     // Arrange
-    let (creator_fixture, link) = create_and_use_receive_payment_link_fixture().await;
+    let (creator_fixture, link) =
+        create_and_use_receive_payment_link_fixture(constant::ICP_TOKEN, 1u64).await;
 
     let caller = Principal::anonymous();
     let caller_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &caller).await;
@@ -47,9 +48,10 @@ async fn it_should_error_withdraw_link_receive_payment_if_caller_anonymous() {
 }
 
 #[tokio::test]
-async fn it_should_error_withdraw_link_receive_payment_if_caller_not_creator() {
+async fn it_should_error_withdraw_link_payment_if_caller_not_creator() {
     // Arrange
-    let (creator_fixture, link) = create_and_use_receive_payment_link_fixture().await;
+    let (creator_fixture, link) =
+        create_and_use_receive_payment_link_fixture(constant::ICP_TOKEN, 1u64).await;
 
     let caller = TestUser::User2.get_principal();
     let caller_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &caller).await;
@@ -74,9 +76,10 @@ async fn it_should_error_withdraw_link_receive_payment_if_caller_not_creator() {
 }
 
 #[tokio::test]
-async fn it_should_withdraw_link_receive_payment_successfully() {
+async fn it_should_withdraw_link_payment_icp_token_successfully() {
     // Arrange
-    let (creator_fixture, link) = create_and_use_receive_payment_link_fixture().await;
+    let (creator_fixture, link) =
+        create_and_use_receive_payment_link_fixture(constant::ICP_TOKEN, 1_000_000u64).await;
 
     let icp_ledger_client = creator_fixture
         .ctx
