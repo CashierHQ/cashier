@@ -641,7 +641,7 @@ pub async fn create_airdrop_link_fixture() -> (LinkTestFixture, LinkDto) {
 }
 
 /// Create a fixture for airdrop link using other token
-pub async fn create_airdrop_link_other_token_fixture() -> (LinkTestFixture, LinkDto) {
+pub async fn create_airdrop_link_icrc_token_fixture() -> (LinkTestFixture, LinkDto) {
     let ctx = PocketIcTestContextBuilder::new()
         .with_cashier_backend()
         .with_icp_ledger()

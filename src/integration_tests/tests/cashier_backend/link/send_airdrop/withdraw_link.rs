@@ -1,6 +1,6 @@
 use crate::{
     cashier_backend::link::fixture::{
-        LinkTestFixture, create_airdrop_link_fixture, create_airdrop_link_other_token_fixture,
+        LinkTestFixture, create_airdrop_link_fixture, create_airdrop_link_icrc_token_fixture,
     },
     utils::principal::TestUser,
 };
@@ -130,9 +130,9 @@ async fn it_should_withdraw_link_airdrop_successfully() {
 }
 
 #[tokio::test]
-async fn it_should_withdraw_link_airdrop_other_token_successfully() {
+async fn it_should_withdraw_link_airdrop_icrc_token_successfully() {
     // Arrange
-    let (creator_fixture, link) = create_airdrop_link_other_token_fixture().await;
+    let (creator_fixture, link) = create_airdrop_link_icrc_token_fixture().await;
 
     let ckusdc_ledger_client = creator_fixture
         .ctx

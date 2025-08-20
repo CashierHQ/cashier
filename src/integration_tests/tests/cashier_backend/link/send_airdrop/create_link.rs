@@ -174,27 +174,6 @@ async fn it_should_create_link_airdrop_icp_token_successfully() {
             .all(|intent| intent.state == IntentState::Success.to_string())
     );
 
-    let link_account = link_id_to_account(&ctx, &link.id);
-    let caller_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
-    let link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
-    let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
-    assert_eq!(
-        link_balance,
-        airdrop_amount * max_use_count + icp_ledger_fee.clone() * max_use_count,
-        "Link balance is incorrect"
-    );
-    assert_eq!(
-        caller_balance_after,
-        initial_balance
-            - airdrop_amount * max_use_count
-            - test_utils::calculate_create_link_fee(
-                constant::ICP_TOKEN,
-                &icp_ledger_fee,
-                max_use_count
-            ),
-        "Caller balance after creation is incorrect"
-    );
-
     // Act
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
@@ -205,10 +184,32 @@ async fn it_should_create_link_airdrop_icp_token_successfully() {
 
     // Assert
     assert_eq!(update_link.state, LinkState::Active.to_string());
+
+    let link_account = link_id_to_account(&ctx, &link.id);
+    let caller_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
+    let link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
+    let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
+    assert_eq!(
+        link_balance,
+        test_utils::calculate_amount_for_wallet_to_link_transfer(
+            airdrop_amount,
+            &icp_ledger_fee,
+            max_use_count
+        ),
+        "Link balance is incorrect"
+    );
+    assert_eq!(
+        caller_balance_after,
+        initial_balance
+            - icp_ledger_fee.clone()
+            - link_balance
+            - test_utils::calculate_amount_for_create_link(&icp_ledger_fee),
+        "Caller balance after creation is incorrect"
+    );
 }
 
 #[tokio::test]
-async fn it_should_create_link_airdrop_other_token_successfully() {
+async fn it_should_create_link_airdrop_icrc_token_successfully() {
     // Arrange
     let ctx = PocketIcTestContextBuilder::new()
         .with_cashier_backend()
@@ -218,6 +219,8 @@ async fn it_should_create_link_airdrop_other_token_successfully() {
         .await;
     let caller = TestUser::User1.get_principal();
     let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
+
+    let icp_ledger_client = ctx.new_icp_ledger_client(caller);
     let ckusdc_ledger_client = ctx.new_icrc_ledger_client(constant::CKUSDC_ICRC_TOKEN, caller);
 
     let initial_balance = 1_000_000_000u64;
@@ -241,6 +244,8 @@ async fn it_should_create_link_airdrop_other_token_successfully() {
         .await
         .unwrap();
     assert_eq!(caller_balance_before, initial_balance);
+    let icp_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
+    assert_eq!(icp_balance_before, initial_balance);
 
     // Act
     let user = test_fixture.setup_user().await;
@@ -335,34 +340,6 @@ async fn it_should_create_link_airdrop_other_token_successfully() {
             .all(|intent| intent.state == IntentState::Success.to_string())
     );
 
-    let link_account = link_id_to_account(&ctx, &link.id);
-    let caller_balance_after = ckusdc_ledger_client
-        .balance_of(&caller_account)
-        .await
-        .unwrap();
-    let link_balance = ckusdc_ledger_client
-        .balance_of(&link_account)
-        .await
-        .unwrap();
-    let ckusdc_ledger_fee = ckusdc_ledger_client.fee().await.unwrap();
-    assert_eq!(
-        link_balance,
-        airdrop_amount * max_use_count + ckusdc_ledger_fee.clone() * max_use_count,
-        "Link balance is incorrect"
-    );
-
-    assert_eq!(
-        caller_balance_after,
-        initial_balance
-            - airdrop_amount * max_use_count
-            - test_utils::calculate_create_link_fee(
-                constant::CKUSDC_ICRC_TOKEN,
-                &ckusdc_ledger_fee,
-                max_use_count
-            ),
-        "Caller balance after creation is incorrect"
-    );
-
     // Act
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
@@ -373,4 +350,37 @@ async fn it_should_create_link_airdrop_other_token_successfully() {
 
     // Assert
     assert_eq!(update_link.state, LinkState::Active.to_string());
+
+    let link_account = link_id_to_account(&ctx, &link.id);
+    let caller_balance_after = ckusdc_ledger_client
+        .balance_of(&caller_account)
+        .await
+        .unwrap();
+    let link_balance = ckusdc_ledger_client
+        .balance_of(&link_account)
+        .await
+        .unwrap();
+    let ckusdc_ledger_fee = ckusdc_ledger_client.fee().await.unwrap();
+    let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
+    let icp_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
+
+    assert_eq!(
+        link_balance,
+        test_utils::calculate_amount_for_wallet_to_link_transfer(
+            airdrop_amount,
+            &ckusdc_ledger_fee,
+            max_use_count
+        ),
+        "Link balance is incorrect"
+    );
+    assert_eq!(
+        caller_balance_after,
+        initial_balance - ckusdc_ledger_fee.clone() - link_balance,
+        "ckUSDC caller balance after creation is incorrect"
+    );
+    assert_eq!(
+        icp_balance_after,
+        icp_balance_before - test_utils::calculate_amount_for_create_link(&icp_ledger_fee),
+        "ICP caller balance after creation is incorrect"
+    )
 }

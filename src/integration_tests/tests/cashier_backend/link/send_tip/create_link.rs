@@ -173,11 +173,7 @@ async fn it_should_create_link_tip_icp_token_successfully() {
         caller_balance_after,
         initial_balance
             - icp_ledger_fee.clone()
-            - test_utils::calculate_amount_for_wallet_to_link_transfer(
-                tip_amount,
-                &icp_ledger_fee,
-                1
-            )
+            - icp_link_balance
             - test_utils::calculate_amount_for_create_link(&icp_ledger_fee),
         "ICP Caller balance is incorrect"
     );
@@ -324,13 +320,7 @@ async fn it_should_create_link_tip_icrc_token_successfully() {
     );
     assert_eq!(
         ckbtc_balance_after,
-        ckbtc_initial_balance
-            - ckbtc_ledger_fee.clone()
-            - test_utils::calculate_amount_for_wallet_to_link_transfer(
-                tip_amount,
-                &ckbtc_ledger_fee,
-                1,
-            ),
+        ckbtc_initial_balance - ckbtc_ledger_fee.clone() - ckbtc_link_balance,
         "ckBTC caller balance is incorrect"
     );
     assert_eq!(

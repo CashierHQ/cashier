@@ -1,5 +1,5 @@
 use crate::cashier_backend::link::fixture::{
-    LinkTestFixture, create_airdrop_link_fixture, create_airdrop_link_other_token_fixture,
+    LinkTestFixture, create_airdrop_link_fixture, create_airdrop_link_icrc_token_fixture,
 };
 use crate::utils::principal::TestUser;
 use candid::Principal;
@@ -253,9 +253,9 @@ async fn it_should_error_use_link_airdrop_more_than_max_use_count() {
 }
 
 #[tokio::test]
-async fn it_should_use_link_airdrop_other_token_successfully() {
+async fn it_should_use_link_airdrop_icrc_token_successfully() {
     // Arrange
-    let (creator_fixture, link) = create_airdrop_link_other_token_fixture().await;
+    let (creator_fixture, link) = create_airdrop_link_icrc_token_fixture().await;
 
     let claimer = TestUser::User2.get_principal();
     let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
