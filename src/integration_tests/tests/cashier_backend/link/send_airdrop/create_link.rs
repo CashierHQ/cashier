@@ -13,7 +13,7 @@ use cashier_backend_types::{
         link::v1::{LinkState, LinkType},
     },
 };
-use cashier_common::utils;
+use cashier_common::test_utils;
 use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
 use std::sync::Arc;
@@ -187,7 +187,11 @@ async fn it_should_create_link_airdrop_icp_token_successfully() {
         caller_balance_after,
         initial_balance
             - airdrop_amount * max_use_count
-            - utils::calculate_create_link_fee(constant::ICP_TOKEN, &icp_ledger_fee, max_use_count),
+            - test_utils::calculate_create_link_fee(
+                constant::ICP_TOKEN,
+                &icp_ledger_fee,
+                max_use_count
+            ),
         "Caller balance after creation is incorrect"
     );
 
@@ -351,7 +355,7 @@ async fn it_should_create_link_airdrop_other_token_successfully() {
         caller_balance_after,
         initial_balance
             - airdrop_amount * max_use_count
-            - utils::calculate_create_link_fee(
+            - test_utils::calculate_create_link_fee(
                 constant::CKUSDC_ICRC_TOKEN,
                 &ckusdc_ledger_fee,
                 max_use_count

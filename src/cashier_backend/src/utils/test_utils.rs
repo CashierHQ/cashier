@@ -1,14 +1,14 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_common::utils;
+use cashier_common::test_utils;
 
 pub fn random_id_string() -> String {
-    utils::random_id_string()
+    test_utils::random_id_string()
 }
 
 pub fn random_principal_id() -> String {
-    utils::random_principal_id()
+    test_utils::random_principal_id()
 }
 
 pub mod runtime {

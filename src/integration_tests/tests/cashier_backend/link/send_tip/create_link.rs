@@ -13,7 +13,7 @@ use cashier_backend_types::{
         link::v1::{LinkState, LinkType},
     },
 };
-use cashier_common::utils;
+use cashier_common::test_utils;
 use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
 use std::sync::Arc;
@@ -159,7 +159,7 @@ async fn it_should_create_link_tip_icp_token_successfully() {
         caller_balance_after,
         initial_balance
             - tip_amount
-            - utils::calculate_create_link_fee(constant::ICP_TOKEN, &icp_ledger_fee, 1),
+            - test_utils::calculate_create_link_fee(constant::ICP_TOKEN, &icp_ledger_fee, 1),
         "Caller balance should be reduced by the tip amount plus the ICP ledger fee"
     );
 

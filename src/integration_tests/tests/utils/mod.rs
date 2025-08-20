@@ -1,3 +1,16 @@
+use crate::{
+    constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL},
+    types::IcrcTokenTestContextInitArgs,
+    utils::{token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
+};
+use candid::{CandidType, Decode, Encode, Principal, utils::ArgumentEncoder};
+use cashier_backend_client::client::CashierBackendClient;
+use cashier_backend_types::{constant, init::CashierBackendInitData};
+use ic_cdk::management_canister::{CanisterId, CanisterSettings};
+use ic_mple_client::PocketIcClient;
+use ic_mple_log::service::LogServiceSettings;
+use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
+use serde::Deserialize;
 use std::{
     collections::HashMap,
     fs::File,
@@ -6,22 +19,8 @@ use std::{
     sync::{Arc, OnceLock},
     time::Duration,
 };
-
-use candid::{CandidType, Decode, Encode, Principal, utils::ArgumentEncoder};
-use cashier_backend_client::client::CashierBackendClient;
-use cashier_backend_types::init::CashierBackendInitData;
-use ic_cdk::management_canister::{CanisterId, CanisterSettings};
-use ic_mple_client::PocketIcClient;
-use ic_mple_log::service::LogServiceSettings;
-use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
-use serde::Deserialize;
 use token_storage_client::client::TokenStorageClient;
 use token_storage_types::init::TokenStorageInitData;
-
-use crate::{
-    constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL},
-    utils::{token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
-};
 
 pub mod icrc_112;
 pub mod link_id_to_account;
@@ -221,16 +220,57 @@ impl PocketIcTestContextBuilder {
         };
 
         for token_name in self.icrc_tokens.iter() {
-            let principal = token_icrc::deploy_single_icrc_ledger_canister(
-                &client,
-                format!("Chain Key {token_name}"),
-                token_name.to_string(),
-                8,     // Default decimals
-                10000, // Default transfer fee
-                None,
-            )
-            .await;
-            icrc_token_map.insert(token_name.to_string(), principal);
+            let principal = match token_name.as_str() {
+                constant::CKBTC_ICRC_TOKEN => {
+                    token_icrc::deploy_single_icrc_ledger_canister(
+                        &client,
+                        format!("Chain Key {}", token_name),
+                        token_name.clone(),
+                        8,
+                        10,
+                        Some(Principal::from_text(CK_BTC_PRINCIPAL).unwrap()),
+                    )
+                    .await
+                }
+                constant::CKETH_ICRC_TOKEN => {
+                    token_icrc::deploy_single_icrc_ledger_canister(
+                        &client,
+                        format!("Chain Key {}", token_name),
+                        token_name.clone(),
+                        18,
+                        2000000000000000000,
+                        Some(Principal::from_text(CK_ETH_PRINCIPAL).unwrap()),
+                    )
+                    .await
+                }
+                constant::CKUSDC_ICRC_TOKEN => {
+                    token_icrc::deploy_single_icrc_ledger_canister(
+                        &client,
+                        format!("Chain Key {}", token_name),
+                        token_name.clone(),
+                        8,
+                        10000,
+                        Some(Principal::from_text(CK_USDC_PRINCIPAL).unwrap()),
+                    )
+                    .await
+                }
+                constant::DOGE_ICRC_TOKEN => {
+                    token_icrc::deploy_single_icrc_ledger_canister(
+                        &client,
+                        format!("Chain Key {}", token_name),
+                        token_name.clone(),
+                        8,
+                        10000,
+                        None,
+                    )
+                    .await
+                }
+                _ => {
+                    panic!("Unsupported ICRC token: {}", token_name);
+                }
+            };
+
+            icrc_token_map.insert(token_name.clone(), principal);
         }
 
         PocketIcTestContext {

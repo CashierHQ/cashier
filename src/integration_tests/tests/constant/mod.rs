@@ -1,3 +1,6 @@
+use crate::types::IcrcTokenTestContextInitArgs;
+use candid::Principal;
+
 // Ledger Principals
 pub const ICP_PRINCIPAL: &str = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 pub const CK_BTC_PRINCIPAL: &str = "mxzaz-hqaaa-aaaar-qaada-cai";

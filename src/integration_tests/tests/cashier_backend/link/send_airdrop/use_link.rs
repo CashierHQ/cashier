@@ -7,7 +7,7 @@ use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::{
     constant, dto::action::CreateActionInput, repository::action::v1::ActionState,
 };
-use cashier_common::utils;
+use cashier_common::test_utils;
 use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
 
@@ -157,7 +157,7 @@ async fn it_should_use_link_airdrop_multiple_times_successfully() {
         .new_icp_ledger_client(creator_fixture.caller);
 
     for _i in 0..max_use_count {
-        let claimer = Principal::from_text(utils::random_principal_id()).unwrap();
+        let claimer = Principal::from_text(test_utils::random_principal_id()).unwrap();
         let claimer_account = Account {
             owner: claimer,
             subaccount: None,
@@ -217,7 +217,7 @@ async fn it_should_error_use_link_airdrop_more_than_max_use_count() {
     let max_use_count = link.link_use_action_max_count;
 
     for _i in 0..max_use_count {
-        let claimer = Principal::from_text(utils::random_principal_id()).unwrap();
+        let claimer = Principal::from_text(test_utils::random_principal_id()).unwrap();
         let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
         claimer_fixture.setup_user().await;
 
@@ -229,7 +229,7 @@ async fn it_should_error_use_link_airdrop_more_than_max_use_count() {
             .await;
     }
 
-    let claimer = Principal::from_text(utils::random_principal_id()).unwrap();
+    let claimer = Principal::from_text(test_utils::random_principal_id()).unwrap();
     let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
     claimer_fixture.setup_user().await;
     let cashier_backend_client = claimer_fixture.ctx.new_cashier_backend_client(claimer);
