@@ -218,6 +218,12 @@ name = "canister_settings"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "cashier_macros",
+ "ic-stable-structures 0.7.0",
+ "ic_mple_utils",
+ "rand 0.8.5",
+ "serde",
+ "serde_cbor",
 ]
 
 [[package]]

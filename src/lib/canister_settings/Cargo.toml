@@ -6,3 +6,11 @@ version.workspace = true
 
 [dependencies]
 candid = {workspace = true}
+serde = { workspace = true, features = ["derive"] }
+ic-stable-structures = { workspace = true }
+ic_mple_utils = { workspace = true }
+cashier_macros = { workspace = true }
+serde_cbor = { workspace = true}
+
+[dev-dependencies]
+rand = {workspace = true}
