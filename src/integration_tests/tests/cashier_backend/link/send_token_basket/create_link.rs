@@ -1,4 +1,5 @@
 use crate::cashier_backend::link::fixture::LinkTestFixture;
+use crate::utils::link_id_to_account::link_id_to_account;
 use crate::utils::{PocketIcTestContextBuilder, icrc_112, principal::TestUser};
 use candid::Principal;
 use cashier_backend_types::{
@@ -196,6 +197,17 @@ async fn it_should_create_link_token_basket_successfully() {
             .all(|intent| intent.state == IntentState::Success.to_string())
     );
 
+    // Act
+    let update_link_input = UpdateLinkInput {
+        id: link.id.clone(),
+        action: constant::CONTINUE_ACTION.to_string(),
+        params: None,
+    };
+    let update_link = test_fixture.update_link(update_link_input).await;
+
+    // Assert
+    assert_eq!(update_link.state, LinkState::Active.to_string());
+
     let icp_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
     let ckbtc_balance_after = ckbtc_ledger_client
         .balance_of(&caller_account)
@@ -209,44 +221,58 @@ async fn it_should_create_link_token_basket_successfully() {
     let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
     let ckusdc_ledger_fee = ckusdc_ledger_client.fee().await.unwrap();
 
+    let link_account = link_id_to_account(&test_fixture.ctx, &link.id);
+    let icp_link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
+    let ckbtc_link_balance = ckbtc_ledger_client.balance_of(&link_account).await.unwrap();
+    let ckusdc_link_balance = ckusdc_ledger_client
+        .balance_of(&link_account)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        icp_link_balance,
+        test_utils::calculate_amount_for_wallet_to_link_transfer(
+            icp_link_amount,
+            &icp_ledger_fee,
+            1
+        ),
+        "ICP Link balance is incorrect"
+    );
+    assert_eq!(
+        ckbtc_link_balance,
+        test_utils::calculate_amount_for_wallet_to_link_transfer(
+            ckbtc_link_amount,
+            &ckbtc_ledger_fee,
+            1
+        ),
+        "CKBTC Link balance is incorrect"
+    );
+    assert_eq!(
+        ckusdc_link_balance,
+        test_utils::calculate_amount_for_wallet_to_link_transfer(
+            ckusdc_link_amount,
+            &ckusdc_ledger_fee,
+            1
+        ),
+        "CKUSDC Link balance is incorrect"
+    );
+
     assert_eq!(
         icp_balance_after,
         icp_initial_balance
-            - icp_link_amount
-            - test_utils::calculate_create_link_fee(constant::ICP_TOKEN, &icp_ledger_fee, 1),
+            - icp_ledger_fee.clone()
+            - icp_link_balance
+            - test_utils::calculate_amount_for_create_link(&icp_ledger_fee),
         "ICP balance after link creation is incorrect"
     );
     assert_eq!(
         ckbtc_balance_after,
-        ckbtc_initial_balance
-            - ckbtc_link_amount
-            - test_utils::calculate_create_link_fee(
-                constant::CKBTC_ICRC_TOKEN,
-                &ckbtc_ledger_fee,
-                1
-            ),
+        ckbtc_initial_balance - ckbtc_ledger_fee.clone() - ckbtc_link_balance,
         "CKBTC balance after link creation is incorrect"
     );
     assert_eq!(
         ckusdc_balance_after,
-        ckusdc_initial_balance
-            - ckusdc_link_amount
-            - test_utils::calculate_create_link_fee(
-                constant::CKUSDC_ICRC_TOKEN,
-                &ckusdc_ledger_fee,
-                1
-            ),
+        ckusdc_initial_balance - ckusdc_ledger_fee.clone() - ckusdc_link_balance,
         "CKUSDC balance after link creation is incorrect"
     );
-
-    // Act
-    let update_link_input = UpdateLinkInput {
-        id: link.id.clone(),
-        action: constant::CONTINUE_ACTION.to_string(),
-        params: None,
-    };
-    let update_link = test_fixture.update_link(update_link_input).await;
-
-    // Assert
-    assert_eq!(update_link.state, LinkState::Active.to_string());
 }
