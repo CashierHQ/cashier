@@ -13,11 +13,11 @@ use icrc_ledger_types::icrc1::account::Account;
 async fn it_should_error_use_link_payment_if_caller_anonymous() {
     // Arrange
     let (creator_fixture, link) =
-        create_receive_payment_link_fixture(constant::ICP_TOKEN, 1u64).await;
+        create_receive_payment_link_fixture(constant::ICP_TOKEN, 1_000_000u64).await;
 
-    let claimer = Principal::anonymous();
-    let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
-    let cashier_backend_client = claimer_fixture.ctx.new_cashier_backend_client(claimer);
+    let payer = Principal::anonymous();
+    let payer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &payer).await;
+    let cashier_backend_client = payer_fixture.ctx.new_cashier_backend_client(payer);
 
     // Act
     let result = cashier_backend_client
@@ -40,53 +40,50 @@ async fn it_should_error_use_link_payment_if_caller_anonymous() {
 }
 
 #[tokio::test]
-async fn it_should_use_link_icp_token_successfully() {
+async fn it_should_use_link_payment_icp_token_successfully() {
     // Arrange
     let (creator_fixture, link) =
         create_receive_payment_link_fixture(constant::ICP_TOKEN, 1_000_000u64).await;
 
-    let claimer = TestUser::User2.get_principal();
-    let mut claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
-    claimer_fixture.setup_user().await;
+    let payer = TestUser::User2.get_principal();
+    let mut payer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &payer).await;
+    payer_fixture.setup_user().await;
 
     let initial_balance = 1_000_000_000u64;
-    claimer_fixture.airdrop_icp(initial_balance, &claimer).await;
+    payer_fixture.airdrop_icp(initial_balance, &payer).await;
 
-    let icp_ledger_client = claimer_fixture.ctx.new_icp_ledger_client(claimer);
-    let claimer_account = Account {
-        owner: claimer,
+    let icp_ledger_client = payer_fixture.ctx.new_icp_ledger_client(payer);
+    let payer_account = Account {
+        owner: payer,
         subaccount: None,
     };
 
     // Act
-    let icp_balance_before = icp_ledger_client
-        .balance_of(&claimer_account)
-        .await
-        .unwrap();
+    let icp_balance_before = icp_ledger_client.balance_of(&payer_account).await.unwrap();
 
     // Assert
-    assert_ne!(
-        icp_balance_before, 0u64,
-        "Claimer should has zero-balance before claiming"
+    assert_eq!(
+        icp_balance_before, initial_balance,
+        "payer should has initial balance before using"
     );
 
     // Act
-    let claim_action = claimer_fixture
+    let pay_action = payer_fixture
         .create_action(&link.id, constant::USE_LINK_ACTION)
         .await;
 
     // Assert
-    assert!(!claim_action.id.is_empty());
-    assert_eq!(claim_action.r#type, constant::USE_LINK_ACTION);
-    assert_eq!(claim_action.state, ActionState::Created.to_string());
+    assert!(!pay_action.id.is_empty());
+    assert_eq!(pay_action.r#type, constant::USE_LINK_ACTION);
+    assert_eq!(pay_action.state, ActionState::Created.to_string());
 
     // Act
-    let processing_action = claimer_fixture
-        .process_action(&link.id, &claim_action.id, constant::USE_LINK_ACTION)
+    let processing_action = payer_fixture
+        .process_action(&link.id, &pay_action.id, constant::USE_LINK_ACTION)
         .await;
 
     // Assert
-    assert_eq!(processing_action.id, claim_action.id);
+    assert_eq!(processing_action.id, pay_action.id);
     assert!(processing_action.icrc_112_requests.is_some());
     assert!(
         !processing_action
@@ -101,13 +98,13 @@ async fn it_should_use_link_icp_token_successfully() {
 
     // Act
     let icrc112_execution_result =
-        icrc_112::execute_icrc112_request(icrc_112_requests, claimer, &claimer_fixture.ctx).await;
+        icrc_112::execute_icrc112_request(icrc_112_requests, payer, &payer_fixture.ctx).await;
 
     // Assert
     assert!(icrc112_execution_result.is_ok());
 
     // Act
-    let update_action = claimer_fixture
+    let update_action = payer_fixture
         .update_action(&link.id, &processing_action.id)
         .await;
 
@@ -125,21 +122,135 @@ async fn it_should_use_link_icp_token_successfully() {
     let payment_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
     assert_ne!(payment_amount, 0);
 
-    let icp_balance_after = icp_ledger_client
-        .balance_of(&claimer_account)
-        .await
-        .unwrap();
+    let icp_balance_after = icp_ledger_client.balance_of(&payer_account).await.unwrap();
     let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
     assert_eq!(
         icp_balance_after,
         icp_balance_before - payment_amount - icp_ledger_fee,
-        "Claimer balance after claim should be equal to payment amount"
+        "payer balance after is incorrect"
     );
 
     let link_account = link_id_to_account(&creator_fixture.ctx, &link.id);
     let link_icp_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
     assert_eq!(
         link_icp_balance, payment_amount,
-        "Link ICP balance should be equal to payment amount"
+        "Link ICP balance is incorrect"
+    );
+}
+
+#[tokio::test]
+async fn it_should_use_link_payment_icrc_token_successfully() {
+    // Arrange
+    let (creator_fixture, link) =
+        create_receive_payment_link_fixture(constant::CKUSDC_ICRC_TOKEN, 1_000_000u64).await;
+
+    println!("Link {:?}", link);
+
+    let payer = TestUser::User2.get_principal();
+    let mut payer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &payer).await;
+    payer_fixture.setup_user().await;
+
+    let initial_balance = 1_000_000_000u64;
+
+    payer_fixture.airdrop_icp(initial_balance, &payer).await;
+    payer_fixture
+        .airdrop_icrc(constant::CKUSDC_ICRC_TOKEN, initial_balance, &payer)
+        .await;
+
+    let ckusdc_ledger_client = payer_fixture
+        .ctx
+        .new_icrc_ledger_client(constant::CKUSDC_ICRC_TOKEN, payer);
+
+    let payer_account = Account {
+        owner: payer,
+        subaccount: None,
+    };
+
+    // Act
+    let ckusdc_balance_before = ckusdc_ledger_client
+        .balance_of(&payer_account)
+        .await
+        .unwrap();
+
+    // Assert
+    assert_eq!(
+        ckusdc_balance_before, initial_balance,
+        "payer should has initial balance before using"
+    );
+
+    // Act
+    let pay_action = payer_fixture
+        .create_action(&link.id, constant::USE_LINK_ACTION)
+        .await;
+
+    // Assert
+    assert!(!pay_action.id.is_empty());
+    assert_eq!(pay_action.r#type, constant::USE_LINK_ACTION);
+    assert_eq!(pay_action.state, ActionState::Created.to_string());
+
+    // Act
+    let processing_action = payer_fixture
+        .process_action(&link.id, &pay_action.id, constant::USE_LINK_ACTION)
+        .await;
+
+    // Assert
+    assert_eq!(processing_action.id, pay_action.id);
+    assert!(processing_action.icrc_112_requests.is_some());
+    assert!(
+        !processing_action
+            .icrc_112_requests
+            .as_ref()
+            .unwrap()
+            .is_empty()
+    );
+
+    // Arrange
+    let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
+
+    // Act
+    let icrc112_execution_result =
+        icrc_112::execute_icrc112_request(icrc_112_requests, payer, &payer_fixture.ctx).await;
+
+    // Assert
+    assert!(icrc112_execution_result.is_ok());
+
+    // Act
+    let update_action = payer_fixture
+        .update_action(&link.id, &processing_action.id)
+        .await;
+
+    // Assert
+    assert!(!update_action.id.is_empty());
+    assert_eq!(update_action.r#type, constant::USE_LINK_ACTION);
+    assert_eq!(update_action.state, ActionState::Success.to_string());
+    assert!(
+        update_action
+            .intents
+            .iter()
+            .all(|intent| intent.state == IntentState::Success.to_string())
+    );
+
+    let payment_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    assert_ne!(payment_amount, 0);
+
+    let ckusdc_balance_after = ckusdc_ledger_client
+        .balance_of(&payer_account)
+        .await
+        .unwrap();
+    let ckusdc_ledger_fee = ckusdc_ledger_client.fee().await.unwrap();
+    assert_eq!(
+        ckusdc_balance_after,
+        ckusdc_balance_before - payment_amount - ckusdc_ledger_fee,
+        "payer balance after is incorrect"
+    );
+
+    let link_account = link_id_to_account(&creator_fixture.ctx, &link.id);
+    let link_ckusdc_balance = ckusdc_ledger_client
+        .balance_of(&link_account)
+        .await
+        .unwrap();
+    assert_eq!(
+        link_ckusdc_balance, payment_amount,
+        "Link CKUSDC balance is incorrect"
     );
 }

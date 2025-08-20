@@ -663,11 +663,9 @@ pub async fn create_receive_payment_link_fixture(
     let ctx = builder.build_async().await;
     let caller = TestUser::User1.get_principal();
     let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
-
-    let initial_balance = 1_000_000_000u64;
-
-    test_fixture.airdrop_icp(initial_balance, &caller).await;
     test_fixture.setup_user().await;
+    let initial_balance = 1_000_000_000u64;
+    test_fixture.airdrop_icp(initial_balance, &caller).await;
 
     let link_input = test_fixture
         .receive_payment_link_input(vec![token.to_string()], vec![amount])

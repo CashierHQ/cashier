@@ -193,14 +193,14 @@ async fn it_should_create_link_payment_icrc_token_successfully() {
     let ctx = PocketIcTestContextBuilder::new()
         .with_cashier_backend()
         .with_icp_ledger()
-        .with_icrc_tokens(vec![constant::CKETH_ICRC_TOKEN.to_string()])
+        .with_icrc_tokens(vec![constant::CKUSDC_ICRC_TOKEN.to_string()])
         .build_async()
         .await;
     let caller = TestUser::User1.get_principal();
     let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
     let icp_ledger_client = ctx.new_icp_ledger_client(caller);
-    let icrc_ledger_client = ctx.new_icrc_ledger_client(constant::CKETH_ICRC_TOKEN, caller);
+    let icrc_ledger_client = ctx.new_icrc_ledger_client(constant::CKUSDC_ICRC_TOKEN, caller);
 
     let initial_balance = 1_000_000_000u64;
     let link_amount = 1_000_000u64;
@@ -226,7 +226,7 @@ async fn it_should_create_link_payment_icrc_token_successfully() {
     // Arrange
     let link_input = test_fixture
         .receive_payment_link_input(
-            vec![constant::CKETH_ICRC_TOKEN.to_string()],
+            vec![constant::CKUSDC_ICRC_TOKEN.to_string()],
             vec![link_amount],
         )
         .unwrap();
