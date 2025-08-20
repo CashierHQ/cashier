@@ -9,4 +9,5 @@ candid = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 uuid = { workspace = true }
+getrandom = { workspace = true, features = ["custom"] }
 rand = { workspace = true, features = ["getrandom"] }
