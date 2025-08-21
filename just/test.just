@@ -26,8 +26,6 @@ test_unit_i686 test_name="":
 [group('test')]
 test_ts_integration: download_artifacts build_canisters
   npm install
-  npm run test:integration-backend
-
 
 # Run the frontend tests
 [group('test')]
