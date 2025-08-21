@@ -113,11 +113,11 @@ mod tests {
         assert!(!svc.is_admin(p));
 
         // add admin and check
-        svc.add_admin(p);
+        let _ = svc.add_admin(p);
         assert!(svc.is_admin(p));
 
         // remove admin and check
-        svc.remove_admin(p);
+        let _ = svc.remove_admin(p);
         assert!(!svc.is_admin(p));
 
         // mode default is Operational
@@ -138,7 +138,7 @@ mod tests {
         let mut svc = CanisterInternalSettingsService::new(store);
         let p = random_principal_id();
         assert!(!svc.is_admin(p));
-        svc.add_admin(p);
+        let _ = svc.add_admin(p);
         assert!(svc.is_admin(p));
     }
 
