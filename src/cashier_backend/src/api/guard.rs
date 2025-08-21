@@ -29,7 +29,7 @@ pub fn is_admin() -> Result<(), String> {
     let caller = msg_caller();
     if !get_state()
         .canister_internal_settings_service
-        .is_admin(caller)
+        .is_admin(&caller)
     {
         return Err("Caller is not an admin".to_string());
     }

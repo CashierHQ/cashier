@@ -1,4 +1,5 @@
 use crate::api::guard::is_admin;
+use candid::Principal;
 use canister_internal_settings::types::Mode;
 use cashier_common::build_data::BuildData;
 use ic_cdk::{api::msg_caller, query, update};
@@ -33,17 +34,19 @@ fn admin_change_to_maintenance_mode(is_maintained: bool) {
 
 /// Method to add a new admin to the canister.
 /// This method can only be called by an admin.
+/// Iignore needless_pass_by_value because this is canister endpoint
+#[allow(clippy::needless_pass_by_value)]
 #[update(guard = "is_admin", hidden = true)]
 fn admin_add_new_admin(principal_str: String) -> Result<(), String> {
     let caller = msg_caller();
-    let principal = principal_str
+    let principal: Principal = principal_str
         .parse()
         .expect("Failed to parse principal from string");
 
     let mut state = get_state();
     state
         .canister_internal_settings_service
-        .add_admin(principal)?;
+        .add_admin(&principal)?;
 
     info!(
         "[admin_add_new_admin] Added new admin: {} by {caller}",
@@ -56,15 +59,17 @@ fn admin_add_new_admin(principal_str: String) -> Result<(), String> {
 /// Method to remove an admin from the canister.
 /// This method can only be called by an admin.
 #[update(guard = "is_admin", hidden = true)]
+/// Iignore needless_pass_by_value because this is canister endpoint
+#[allow(clippy::needless_pass_by_value)]
 fn admin_remove_admin(principal_str: String) -> Result<(), String> {
     let caller = msg_caller();
-    let principal = principal_str
+    let principal: Principal = principal_str
         .parse()
         .expect("Failed to parse principal from string");
     let mut state = get_state();
     state
         .canister_internal_settings_service
-        .remove_admin(principal)?;
+        .remove_admin(&principal)?;
 
     info!(
         "[admin_add_new_admin] Removed admin: {} by {caller}",

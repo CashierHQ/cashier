@@ -21,46 +21,51 @@ impl<S: Storage<CanisterInternalSettingsStorage>> CanisterInternalSettingsServic
             });
     }
 
-    pub fn add_admin(&mut self, principal: Principal) -> Result<(), String> {
+    // Add an admin principal to the canister settings.
+    pub fn add_admin(&mut self, principal: &Principal) -> Result<(), String> {
         self.canister_internal_settings_store
             .with_borrow_mut(|store| {
-                if store.get().list_admin.contains(&principal) {
+                if store.get().list_admin.contains(principal) {
                     return Err("Principal is already an admin".to_string());
                 }
 
                 let mut s = store.get().clone();
-                s.list_admin.push(principal);
+                s.list_admin.push(*principal);
                 store.set(s);
 
                 Ok(())
             })
     }
 
-    pub fn remove_admin(&mut self, principal: Principal) -> Result<(), String> {
+    // Remove an admin principal from the canister settings.
+    pub fn remove_admin(&mut self, principal: &Principal) -> Result<(), String> {
         self.canister_internal_settings_store
             .with_borrow_mut(|store| {
-                if !store.get().list_admin.contains(&principal) {
+                if !store.get().list_admin.contains(principal) {
                     return Err("Principal is not an admin".to_string());
                 }
 
                 let mut s = store.get().clone();
-                s.list_admin.retain(|p| p != &principal);
+                s.list_admin.retain(|p| p != principal);
                 store.set(s);
 
                 Ok(())
             })
     }
 
-    pub fn is_admin(&self, caller: Principal) -> bool {
+    // Check if a principal is an admin.
+    pub fn is_admin(&self, caller: &Principal) -> bool {
         self.canister_internal_settings_store
-            .with_borrow(|store| store.get().list_admin.contains(&caller))
+            .with_borrow(|store| store.get().list_admin.contains(caller))
     }
 
+    // Get the current mode of the canister.
     pub fn get_mode(&self) -> CanisterInternalSettings {
         self.canister_internal_settings_store
             .with_borrow(|store| store.get().clone())
     }
 
+    // Set the mode of the canister.
     pub fn set_mode(&mut self, mode: crate::types::Mode) {
         self.canister_internal_settings_store
             .with_borrow_mut(|store| {
@@ -70,6 +75,7 @@ impl<S: Storage<CanisterInternalSettingsStorage>> CanisterInternalSettingsServic
             });
     }
 
+    // Get the current settings of the canister.
     pub fn get_setting(&self) -> CanisterInternalSettings {
         self.canister_internal_settings_store
             .with_borrow(|store| store.get().clone())
@@ -110,15 +116,15 @@ mod tests {
         let p = random_principal_id();
 
         // initially not admin
-        assert!(!svc.is_admin(p));
+        assert!(!svc.is_admin(&p));
 
         // add admin and check
-        let _ = svc.add_admin(p);
-        assert!(svc.is_admin(p));
+        let _ = svc.add_admin(&p);
+        assert!(svc.is_admin(&p));
 
         // remove admin and check
-        let _ = svc.remove_admin(p);
-        assert!(!svc.is_admin(p));
+        let _ = svc.remove_admin(&p);
+        assert!(!svc.is_admin(&p));
 
         // mode default is Operational
         assert_eq!(svc.get_mode().mode, crate::types::Mode::Operational);
@@ -137,9 +143,9 @@ mod tests {
 
         let mut svc = CanisterInternalSettingsService::new(store);
         let p = random_principal_id();
-        assert!(!svc.is_admin(p));
-        let _ = svc.add_admin(p);
-        assert!(svc.is_admin(p));
+        assert!(!svc.is_admin(&p));
+        let _ = svc.add_admin(&p);
+        assert!(svc.is_admin(&p));
     }
 
     #[test]
@@ -167,6 +173,6 @@ mod tests {
         assert_eq!(got, settings);
 
         // and is_admin should reflect persisted admin
-        assert!(svc.is_admin(admin));
+        assert!(svc.is_admin(&admin));
     }
 }
