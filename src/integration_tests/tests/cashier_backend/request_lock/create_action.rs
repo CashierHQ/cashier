@@ -1,21 +1,24 @@
+use crate::utils::principal::TestUser;
+use crate::{cashier_backend::link::fixture::LinkTestFixture, utils::with_pocket_ic_context};
 use cashier_backend_types::{
+    constant,
     dto::action::{ActionDto, CreateActionInput},
     error::CanisterError,
 };
-
-use crate::utils::principal::TestUser;
-use crate::{cashier_backend::link::fixture::LinkTestFixture, utils::with_pocket_ic_context};
+use std::sync::Arc;
 
 #[tokio::test]
 async fn test_request_lock_for_create_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let fixture = LinkTestFixture::new(ctx, &caller).await;
+        let fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
         // Setup user and create link
         fixture.setup_user().await;
-        let link = fixture.create_tip_link(ctx, 100_000_000u64).await;
+        let link = fixture
+            .create_tip_link(constant::ICP_TOKEN, 100_000_000u64)
+            .await;
 
         // Act - submit 3 create_action calls concurrently
         let mut msgs = Vec::with_capacity(3);

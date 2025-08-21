@@ -1,6 +1,6 @@
 use base64::prelude::BASE64_STANDARD;
 use candid::{CandidType, Decode, Principal};
-use cashier_backend_types::error::CanisterError;
+use cashier_backend_types::{constant, error::CanisterError};
 use ic_mple_pocket_ic::pocket_ic::common::rest::RawMessageId;
 use serde::de::DeserializeOwned;
 
@@ -9,6 +9,7 @@ use crate::utils::PocketIcTestContext;
 use crate::utils::icrc_112::execute_icrc112_request;
 use crate::utils::{principal::TestUser, with_pocket_ic_context};
 use base64::Engine;
+use std::sync::Arc;
 
 async fn call_and_decode<T: DeserializeOwned + CandidType>(
     ctx: &PocketIcTestContext,
@@ -23,23 +24,23 @@ async fn test_request_lock_for_trigger_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let mut fixture = LinkTestFixture::new(ctx, &caller).await;
+        let mut fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
         // Setup user and airdrop tokens
         fixture.setup_user().await;
+        fixture.airdrop_icp(1_000_000_000_000_000, &caller).await;
         fixture
-            .airdrop_icp(ctx, 1_000_000_000_000_000, &caller)
+            .airdrop_icrc("ckBTC", 1_000_000_000_000_000, &caller)
             .await;
         fixture
-            .airdrop_icrc(ctx, "ckBTC", 1_000_000_000_000_000, &caller)
-            .await;
-        fixture
-            .airdrop_icrc(ctx, "ckUSDC", 1_000_000_000_000_000, &caller)
+            .airdrop_icrc("ckUSDC", 1_000_000_000_000_000, &caller)
             .await;
 
-        let link = fixture.create_token_basket_link(ctx).await;
+        let link = fixture.create_token_basket_link().await;
         let action = fixture.create_action(&link.id, "CreateLink").await;
-        let processing_action = fixture.process_action(&link.id, &action.id).await;
+        let processing_action = fixture
+            .process_action(&link.id, &action.id, constant::CREATE_LINK_ACTION)
+            .await;
 
         // Execute all ICRC-112 requests except trigger_transaction
         if let Some(mut reqs) = processing_action.icrc_112_requests.clone() {

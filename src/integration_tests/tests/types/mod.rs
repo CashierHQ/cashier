@@ -3,7 +3,7 @@ use candid::Principal;
 use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::BlockIndex;
 use icrc_ledger_types::icrc1::transfer::TransferError;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 
 /// Result type for ICRC1 transfer operations
@@ -255,4 +255,13 @@ pub enum IcpLedgerCanisterPayload {
     Init(IcpInitArgs),
     /// Upgrade an existing ICP ledger with new configuration
     Upgrade(Option<IcpUpgradeArgs>),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct IcrcTokenTestContextInitArgs {
+    pub token_name: String,
+    pub token_symbol: String,
+    pub decimals: u8,
+    pub ledger_fee: u64,
+    pub canister_id: Option<Principal>,
 }

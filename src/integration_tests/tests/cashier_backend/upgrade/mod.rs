@@ -1,8 +1,11 @@
-use cashier_backend_types::repository::{action::v1::ActionState, intent::v2::IntentState};
-use icrc_ledger_types::icrc1::account::Account;
-use std::time::Duration;
-
 use crate::utils::{principal::TestUser, with_pocket_ic_context};
+use cashier_backend_types::{
+    constant,
+    repository::{action::v1::ActionState, intent::v2::IntentState},
+};
+use icrc_ledger_types::icrc1::account::Account;
+use std::sync::Arc;
+use std::time::Duration;
 
 #[cfg(test)]
 mod test_canister_upgrade {
@@ -21,14 +24,16 @@ mod test_canister_upgrade {
     // Setup test data for upgrade tests
     async fn setup_upgrade_test(ctx: &PocketIcTestContext) -> UpgradeTestData {
         let caller = TestUser::User1.get_principal();
-        let mut fixture = LinkTestFixture::new(ctx, &caller).await;
+        let mut fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
         let _ = fixture.setup_user().await;
-        fixture.airdrop_icp(ctx, 1_000_000_000, &caller).await;
+        fixture.airdrop_icp(1_000_000_000, &caller).await;
 
         // Create tip link with 1 ICP
         let tip_link_amount = 100_000_000u64;
-        let link = fixture.create_tip_link(ctx, tip_link_amount).await;
+        let link = fixture
+            .create_tip_link(constant::ICP_TOKEN, tip_link_amount)
+            .await;
         let action = fixture.create_action(&link.id, "CreateLink").await;
 
         let user_account = Account {
@@ -43,7 +48,9 @@ mod test_canister_upgrade {
             .unwrap();
 
         // Process action to get it into processing state
-        let processing_action = fixture.process_action(&link.id, &action.id).await;
+        let processing_action = fixture
+            .process_action(&link.id, &action.id, constant::CREATE_LINK_ACTION)
+            .await;
 
         UpgradeTestData {
             link,

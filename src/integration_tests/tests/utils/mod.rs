@@ -1,3 +1,15 @@
+use crate::{
+    constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL},
+    utils::{token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
+};
+use candid::{CandidType, Decode, Encode, Principal, utils::ArgumentEncoder};
+use cashier_backend_client::client::CashierBackendClient;
+use cashier_backend_types::{constant, init::CashierBackendInitData};
+use ic_cdk::management_canister::{CanisterId, CanisterSettings};
+use ic_mple_client::PocketIcClient;
+use ic_mple_log::service::LogServiceSettings;
+use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
+use serde::Deserialize;
 use std::{
     collections::HashMap,
     fs::File,
@@ -6,22 +18,8 @@ use std::{
     sync::{Arc, OnceLock},
     time::Duration,
 };
-
-use candid::{CandidType, Decode, Encode, Principal, utils::ArgumentEncoder};
-use cashier_backend_client::client::CashierBackendClient;
-use cashier_backend_types::init::CashierBackendInitData;
-use ic_cdk::management_canister::{CanisterId, CanisterSettings};
-use ic_mple_client::PocketIcClient;
-use ic_mple_log::service::LogServiceSettings;
-use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
-use serde::Deserialize;
 use token_storage_client::client::TokenStorageClient;
 use token_storage_types::init::TokenStorageInitData;
-
-use crate::{
-    constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL},
-    utils::{token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
-};
 
 pub mod icrc_112;
 pub mod link_id_to_account;
@@ -130,6 +128,158 @@ where
     }
 
     result
+}
+
+pub struct PocketIcTestContextBuilder {
+    has_cashier_backend: bool,
+    has_token_storage: bool,
+    has_icp_ledger: bool,
+    icrc_tokens: Vec<String>,
+}
+
+impl Default for PocketIcTestContextBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl PocketIcTestContextBuilder {
+    pub fn new() -> Self {
+        Self {
+            has_cashier_backend: false,
+            has_token_storage: false,
+            has_icp_ledger: false,
+            icrc_tokens: Vec::new(),
+        }
+    }
+
+    pub fn with_cashier_backend(mut self) -> Self {
+        self.has_cashier_backend = true;
+        self
+    }
+
+    pub fn with_token_storage(mut self) -> Self {
+        self.has_token_storage = true;
+        self
+    }
+
+    pub fn with_icp_ledger(mut self) -> Self {
+        self.has_icp_ledger = true;
+        self
+    }
+
+    pub fn with_icrc_tokens(mut self, tokens: Vec<String>) -> Self {
+        self.icrc_tokens = tokens;
+        self
+    }
+
+    pub async fn build_async(&self) -> PocketIcTestContext {
+        let client = Arc::new(get_pocket_ic_client().await.build_async().await);
+        let log = LogServiceSettings {
+            enable_console: Some(true),
+            in_memory_records: None,
+            max_record_length: None,
+            log_filter: Some("debug".to_string()),
+        };
+
+        let mut icrc_token_map = HashMap::new();
+
+        let token_storage_principal = if self.has_token_storage {
+            deploy_canister(
+                &client,
+                None,
+                get_token_storage_canister_bytecode(),
+                &(TokenStorageInitData {
+                    log_settings: Some(log.clone()),
+                }),
+            )
+            .await
+        } else {
+            Principal::anonymous()
+        };
+
+        let cashier_backend_principal = if self.has_cashier_backend {
+            deploy_canister(
+                &client,
+                None,
+                get_cashier_backend_canister_bytecode(),
+                &(CashierBackendInitData {
+                    log_settings: Some(log),
+                }),
+            )
+            .await
+        } else {
+            Principal::anonymous()
+        };
+
+        let icp_ledger_principal = if self.has_icp_ledger {
+            token_icp::deploy_icp_ledger_canister(&client).await
+        } else {
+            Principal::anonymous()
+        };
+
+        for token_name in self.icrc_tokens.iter() {
+            let principal = match token_name.as_str() {
+                constant::CKBTC_ICRC_TOKEN => {
+                    token_icrc::deploy_single_icrc_ledger_canister(
+                        &client,
+                        format!("Chain Key {}", token_name),
+                        token_name.clone(),
+                        8,
+                        10,
+                        Some(Principal::from_text(CK_BTC_PRINCIPAL).unwrap()),
+                    )
+                    .await
+                }
+                constant::CKETH_ICRC_TOKEN => {
+                    token_icrc::deploy_single_icrc_ledger_canister(
+                        &client,
+                        format!("Chain Key {}", token_name),
+                        token_name.clone(),
+                        18,
+                        2000000000000000000,
+                        Some(Principal::from_text(CK_ETH_PRINCIPAL).unwrap()),
+                    )
+                    .await
+                }
+                constant::CKUSDC_ICRC_TOKEN => {
+                    token_icrc::deploy_single_icrc_ledger_canister(
+                        &client,
+                        format!("Chain Key {}", token_name),
+                        token_name.clone(),
+                        8,
+                        10000,
+                        Some(Principal::from_text(CK_USDC_PRINCIPAL).unwrap()),
+                    )
+                    .await
+                }
+                constant::DOGE_ICRC_TOKEN => {
+                    token_icrc::deploy_single_icrc_ledger_canister(
+                        &client,
+                        format!("Chain Key {}", token_name),
+                        token_name.clone(),
+                        8,
+                        10000,
+                        None,
+                    )
+                    .await
+                }
+                _ => {
+                    panic!("Unsupported ICRC token: {}", token_name);
+                }
+            };
+
+            icrc_token_map.insert(token_name.clone(), principal);
+        }
+
+        PocketIcTestContext {
+            client,
+            token_storage_principal,
+            cashier_backend_principal,
+            icp_ledger_principal,
+            icrc_token_map,
+        }
+    }
 }
 
 /// A test context that provides access to a `PocketIc` client and a deployed canister.
