@@ -44,3 +44,16 @@ pub fn random_principal_id() -> String {
     rng.fill_bytes(&mut arr);
     Principal::from_slice(&arr).to_text()
 }
+
+/// Derive a principal from a given text by hashing it with SHA-256.
+/// This is useful for creating deterministic principals based on input strings.
+pub fn derive_principal(text: &str) -> Principal {
+    // Deterministically derive a principal from the provided text by
+    // hashing with SHA-256 and taking the first 29 bytes.
+    use sha2::{Digest, Sha256};
+
+    let hash = Sha256::digest(text.as_bytes());
+    let mut arr = [0u8; 29];
+    arr.copy_from_slice(&hash[..29]);
+    Principal::from_slice(&arr)
+}

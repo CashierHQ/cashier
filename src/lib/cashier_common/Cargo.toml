@@ -11,3 +11,4 @@ serde_bytes = { workspace = true }
 uuid = { workspace = true }
 getrandom = { workspace = true, features = ["custom"] }
 rand = { workspace = true, features = ["getrandom"] }
+sha2 = "0.10"

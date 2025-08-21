@@ -1,8 +1,9 @@
 use crate::{
     constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL},
-    utils::{token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
+    utils::{principal::TestUser, token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
 };
 use candid::{CandidType, Decode, Encode, Principal, utils::ArgumentEncoder};
+use canister_internal_settings::types::{CanisterInternalSettings, Mode};
 use cashier_backend_client::client::CashierBackendClient;
 use cashier_backend_types::{constant, init::CashierBackendInitData};
 use ic_cdk::management_canister::{CanisterId, CanisterSettings};
@@ -17,13 +18,6 @@ use std::{
     path::PathBuf,
     sync::{Arc, OnceLock},
     time::Duration,
-};
-
-use crate::{
-    constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL},
-    utils::{
-        principal::random_principal_id, token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient,
-    },
 };
 
 use token_storage_client::client::TokenStorageClient;
@@ -51,17 +45,18 @@ where
         log_filter: Some("debug".to_string()),
     };
 
-    let admin = random_principal_id();
+    let admin1 = TestUser::AdminDeployer.get_principal();
+    let admin2 = TestUser::Admin2.get_principal();
 
     let canister_internal_settings = CanisterInternalSettings {
         mode: Mode::Operational,
-        list_admin: vec![admin],
+        list_admin: vec![admin1, admin2],
     };
 
     let client = Arc::new(get_pocket_ic_client().await.build_async().await);
     let token_storage_principal = deploy_canister(
         &client,
-        Some(admin),
+        Some(admin1),
         get_token_storage_canister_bytecode(),
         &(TokenStorageInitData {
             log_settings: Some(log.clone()),
@@ -71,7 +66,7 @@ where
 
     let cashier_backend_principal = deploy_canister(
         &client,
-        Some(admin),
+        Some(admin1),
         get_cashier_backend_canister_bytecode(),
         &(CashierBackendInitData {
             log_settings: Some(log),
@@ -136,7 +131,6 @@ where
         cashier_backend_principal,
         icp_ledger_principal,
         icrc_token_map,
-        admin,
     })
     .await;
 
@@ -200,6 +194,13 @@ impl PocketIcTestContextBuilder {
         };
 
         let mut icrc_token_map = HashMap::new();
+        let admin1 = TestUser::AdminDeployer.get_principal();
+        let admin2 = TestUser::Admin2.get_principal();
+
+        let canister_internal_settings = CanisterInternalSettings {
+            mode: Mode::Operational,
+            list_admin: vec![admin1, admin2],
+        };
 
         let token_storage_principal = if self.has_token_storage {
             deploy_canister(
@@ -222,7 +223,7 @@ impl PocketIcTestContextBuilder {
                 get_cashier_backend_canister_bytecode(),
                 &(CashierBackendInitData {
                     log_settings: Some(log),
-                    canister_internal_settings,
+                    canister_internal_settings: Some(canister_internal_settings),
                 }),
             )
             .await
@@ -296,7 +297,6 @@ impl PocketIcTestContextBuilder {
             cashier_backend_principal,
             icp_ledger_principal,
             icrc_token_map,
-            admin,
         }
     }
 }
@@ -309,7 +309,6 @@ pub struct PocketIcTestContext {
     pub cashier_backend_principal: Principal,
     pub icp_ledger_principal: Principal,
     pub icrc_token_map: HashMap<String, Principal>,
-    pub admin: Principal,
 }
 
 impl PocketIcTestContext {

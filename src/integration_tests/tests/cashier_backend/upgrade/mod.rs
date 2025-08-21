@@ -74,8 +74,13 @@ mod test_canister_upgrade {
 
             // Act - Upgrade the canister
             let new_bytecode = crate::utils::get_cashier_backend_canister_bytecode();
-            ctx.upgrade_canister(ctx.cashier_backend_principal, None, new_bytecode, ())
-                .await;
+            ctx.upgrade_canister(
+                ctx.cashier_backend_principal,
+                Some(TestUser::AdminDeployer.get_principal()),
+                new_bytecode,
+                (),
+            )
+            .await;
 
             // Wait a bit for post_upgrade to complete
             ctx.advance_time(Duration::from_secs(1)).await;
@@ -125,7 +130,7 @@ mod test_canister_upgrade {
             let new_bytecode = crate::utils::get_cashier_backend_canister_bytecode();
             ctx.upgrade_canister(
                 ctx.cashier_backend_principal,
-                None,
+                Some(TestUser::AdminDeployer.get_principal()),
                 new_bytecode.clone(),
                 (),
             )
@@ -145,8 +150,13 @@ mod test_canister_upgrade {
             );
 
             // Second upgrade
-            ctx.upgrade_canister(ctx.cashier_backend_principal, None, new_bytecode, ())
-                .await;
+            ctx.upgrade_canister(
+                ctx.cashier_backend_principal,
+                Some(TestUser::AdminDeployer.get_principal()),
+                new_bytecode,
+                (),
+            )
+            .await;
 
             ctx.advance_time(Duration::from_secs(1)).await;
 

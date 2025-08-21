@@ -320,6 +320,7 @@ dependencies = [
  "rand 0.8.5",
  "serde",
  "serde_bytes",
+ "sha2",
  "uuid",
 ]
 
@@ -1283,7 +1284,6 @@ dependencies = [
  "ic_mple_log",
  "ic_mple_pocket_ic",
  "icrc-ledger-types",
- "rand 0.8.5",
  "serde",
  "serde_bytes",
  "token_storage_client",
