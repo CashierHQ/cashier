@@ -92,11 +92,6 @@ jobs:
           tar -xvf /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -C /usr/local/bin
           chmod +x /usr/local/bin/candid-extractor
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-            node-version: "22.x"
-
       - name: Configure Rust Cache
         uses: Swatinem/rust-cache@v2
         if: ${{ (github.event.pull_request.base.ref != 'main') && (github.ref_name != 'main') }}
