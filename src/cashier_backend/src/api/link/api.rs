@@ -8,6 +8,10 @@ use crate::api::state::{CanisterState, get_state};
 use crate::services::link::traits::LinkValidation;
 use crate::utils::runtime::IcEnvironment;
 use candid::Principal;
+use cashier_backend_types::constant::{
+    API_CREATE_ACTION_METHOD_NAME, API_CREATE_LINK_METHOD_NAME, API_PROCESS_ACTION_METHOD_NAME,
+    API_UPDATE_ACTION_METHOD_NAME,
+};
 use cashier_backend_types::dto::action::{
     ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
     ProcessActionInput, UpdateActionInput,
@@ -393,7 +397,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         let called_at = self.state.env.time();
         self.state.rate_limit_service.try_acquire_one_at(
             RateLimitIdentifier::UserPrincipal(*caller),
-            "create_link",
+            API_CREATE_LINK_METHOD_NAME,
             Duration::from_nanos(called_at),
         )?;
 
@@ -461,7 +465,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         let called_at = self.state.env.time();
         self.state.rate_limit_service.try_acquire_one_at(
             RateLimitIdentifier::UserPrincipal(*caller),
-            "process_action",
+            API_PROCESS_ACTION_METHOD_NAME,
             Duration::from_nanos(called_at),
         )?;
 
@@ -492,7 +496,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         let called_at = self.state.env.time();
         self.state.rate_limit_service.try_acquire_one_at(
             RateLimitIdentifier::UserPrincipal(*caller),
-            "create_action",
+            API_CREATE_ACTION_METHOD_NAME,
             Duration::from_nanos(called_at),
         )?;
 
@@ -596,7 +600,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         let called_at = self.state.env.time();
         self.state.rate_limit_service.try_acquire_one_at(
             RateLimitIdentifier::UserPrincipal(*caller),
-            "update_action",
+            API_UPDATE_ACTION_METHOD_NAME,
             Duration::from_nanos(called_at),
         )?;
 
@@ -664,26 +668,32 @@ mod tests {
     use crate::utils::test_utils::runtime::MockIcEnvironment;
 
     use super::*;
-    use cashier_backend_types::dto::link::LinkDetailUpdateAssetInfoInput;
+    use cashier_backend_types::{
+        constant::{
+            API_CREATE_ACTION_METHOD_NAME, API_PROCESS_ACTION_METHOD_NAME,
+            API_UPDATE_ACTION_METHOD_NAME,
+        },
+        dto::link::LinkDetailUpdateAssetInfoInput,
+    };
     use rate_limit::{algorithm::fixed_window_counter::FixedWindowCounterConfig, precision::Nanos};
     use std::time::Duration;
 
     fn init_rate_limit() {
         let mut state = get_state();
         let _ = state.rate_limit_service.add_config(
-            "create_link",
+            API_CREATE_LINK_METHOD_NAME,
             FixedWindowCounterConfig::new::<Nanos>(10, Duration::from_secs(60 * 10)),
         );
         let _ = state.rate_limit_service.add_config(
-            "create_action",
+            API_CREATE_ACTION_METHOD_NAME,
             FixedWindowCounterConfig::new::<Nanos>(10, Duration::from_secs(60 * 10)),
         );
         let _ = state.rate_limit_service.add_config(
-            "process_action",
+            API_PROCESS_ACTION_METHOD_NAME,
             FixedWindowCounterConfig::new::<Nanos>(10, Duration::from_secs(60 * 10)),
         );
         let _ = state.rate_limit_service.add_config(
-            "update_action",
+            API_UPDATE_ACTION_METHOD_NAME,
             FixedWindowCounterConfig::new::<Nanos>(10, Duration::from_secs(60 * 10)),
         );
     }

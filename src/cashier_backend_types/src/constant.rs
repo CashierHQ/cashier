@@ -19,3 +19,9 @@ pub const CKBTC_ICRC_TOKEN: &str = "ckBTC";
 pub const CKUSDC_ICRC_TOKEN: &str = "ckUSDC";
 pub const CKETH_ICRC_TOKEN: &str = "ckETH";
 pub const DOGE_ICRC_TOKEN: &str = "DOGE";
+
+// API method names
+pub const API_CREATE_LINK_METHOD_NAME: &str = "create_link";
+pub const API_CREATE_ACTION_METHOD_NAME: &str = "create_action";
+pub const API_PROCESS_ACTION_METHOD_NAME: &str = "process_action";
+pub const API_UPDATE_ACTION_METHOD_NAME: &str = "update_action";

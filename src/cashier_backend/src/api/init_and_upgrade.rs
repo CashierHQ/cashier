@@ -2,6 +2,10 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::utils::runtime::IcEnvironment;
+use cashier_backend_types::constant::{
+    API_CREATE_ACTION_METHOD_NAME, API_CREATE_LINK_METHOD_NAME, API_PROCESS_ACTION_METHOD_NAME,
+    API_UPDATE_ACTION_METHOD_NAME,
+};
 use cashier_backend_types::init::CashierBackendInitData;
 use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::info;
@@ -18,19 +22,19 @@ fn init_rate_limit_config() {
     let mut state = get_state();
     let configs = [
         (
-            "create_link",
+            API_CREATE_LINK_METHOD_NAME,
             FixedWindowCounterConfig::new::<Nanos>(10, Duration::from_secs(60 * 10)),
         ), // 10 requests per 10 minutes
         (
-            "create_action",
+            API_CREATE_ACTION_METHOD_NAME,
             FixedWindowCounterConfig::new::<Nanos>(10, Duration::from_secs(60 * 10)),
         ), // 10 requests per 10 minutes
         (
-            "process_action",
+            API_PROCESS_ACTION_METHOD_NAME,
             FixedWindowCounterConfig::new::<Nanos>(10, Duration::from_secs(60 * 10)),
         ), // 10 requests per 10 minutes
         (
-            "update_action",
+            API_UPDATE_ACTION_METHOD_NAME,
             FixedWindowCounterConfig::new::<Nanos>(10, Duration::from_secs(60 * 10)),
         ), // 10 requests per 10 minutes
     ];
