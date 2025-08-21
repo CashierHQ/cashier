@@ -98,3 +98,52 @@ async fn should_success_for_another_admin() {
         .await
         .expect("Admin2 should be able to disable maintenance mode");
 }
+
+#[tokio::test]
+async fn should_success_add_and_remove_admin() {
+    // Arrange
+    let ctx = PocketIcTestContextBuilder::new()
+        .with_cashier_backend()
+        .build_async()
+        .await;
+    let arc_ctx = Arc::new(ctx);
+
+    let admin_deployer_client =
+        arc_ctx.new_cashier_backend_client(TestUser::AdminDeployer.get_principal());
+    let user1_client = arc_ctx.new_cashier_backend_client(TestUser::User1.get_principal());
+
+    // Act - add User1 as an admin
+    let add_admin_res = admin_deployer_client
+        .add_new_admin(TestUser::User1.get_principal().to_string())
+        .await
+        .unwrap();
+
+    // Assert
+    assert!(add_admin_res.is_ok(), "admin_add_new_admin call failed");
+
+    // Act - User1 should now be able to change maintenance mode
+    let change_mode_res = user1_client.change_to_maintenance_mode(true).await;
+
+    // Assert that User1 can change maintenance mode after being added as admin
+    assert!(
+        change_mode_res.is_ok(),
+        "User1 should be able to change maintenance mode after being added as admin"
+    );
+
+    // Act - remove User1 as an admin
+    let remove_admin_res = admin_deployer_client
+        .remove_admin(TestUser::User1.get_principal().to_string())
+        .await;
+
+    // Assert that the admin removal was successful
+    assert!(remove_admin_res.is_ok(), "admin_remove_admin call failed");
+
+    // Act - User1 should no longer be able to change maintenance mode
+    let res = user1_client.change_to_maintenance_mode(false).await;
+
+    // Assert that User1 cannot change maintenance mode after being removed as admin
+    assert!(
+        res.is_err(),
+        "Removed admin should not be able to change maintenance mode"
+    );
+}

@@ -21,24 +21,34 @@ impl<S: Storage<CanisterInternalSettingsStorage>> CanisterInternalSettingsServic
             });
     }
 
-    pub fn add_admin(&mut self, principal: Principal) {
+    pub fn add_admin(&mut self, principal: Principal) -> Result<(), String> {
         self.canister_internal_settings_store
             .with_borrow_mut(|store| {
-                let mut s = store.get().clone();
-                if !s.list_admin.contains(&principal) {
-                    s.list_admin.push(principal);
-                    store.set(s);
+                if store.get().list_admin.contains(&principal) {
+                    return Err("Principal is already an admin".to_string());
                 }
-            });
+
+                let mut s = store.get().clone();
+                s.list_admin.push(principal);
+                store.set(s);
+
+                Ok(())
+            })
     }
 
-    pub fn remove_admin(&mut self, principal: Principal) {
+    pub fn remove_admin(&mut self, principal: Principal) -> Result<(), String> {
         self.canister_internal_settings_store
             .with_borrow_mut(|store| {
+                if !store.get().list_admin.contains(&principal) {
+                    return Err("Principal is not an admin".to_string());
+                }
+
                 let mut s = store.get().clone();
                 s.list_admin.retain(|p| p != &principal);
                 store.set(s);
-            });
+
+                Ok(())
+            })
     }
 
     pub fn is_admin(&self, caller: Principal) -> bool {

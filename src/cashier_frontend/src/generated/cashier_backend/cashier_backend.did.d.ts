@@ -273,7 +273,6 @@ export interface UserDto {
   'wallet' : string,
 }
 export interface _SERVICE {
-  'change_to_maintenance_mode' : ActorMethod<[boolean], undefined>,
   'create_action' : ActorMethod<[CreateActionInput], Result>,
   'create_action_anonymous' : ActorMethod<[CreateActionAnonymousInput], Result>,
   'create_link' : ActorMethod<[CreateLinkInput], Result_1>,

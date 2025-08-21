@@ -294,7 +294,6 @@ export const idlFactory = ({ IDL }) => {
     'params' : IDL.Opt(LinkDetailUpdateInput),
   });
   return IDL.Service({
-    'change_to_maintenance_mode' : IDL.Func([IDL.Bool], [], []),
     'create_action' : IDL.Func([CreateActionInput], [Result], []),
     'create_action_anonymous' : IDL.Func(
         [CreateActionAnonymousInput],

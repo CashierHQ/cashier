@@ -96,7 +96,25 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         is_maintained: bool,
     ) -> CanisterClientResult<()> {
         self.client
-            .update("change_to_maintenance_mode", (is_maintained,))
+            .update("admin_change_to_maintenance_mode", (is_maintained,))
+            .await
+    }
+
+    pub async fn add_new_admin(
+        &self,
+        principal_str: String,
+    ) -> CanisterClientResult<Result<(), String>> {
+        self.client
+            .update("admin_add_new_admin", (principal_str,))
+            .await
+    }
+
+    pub async fn remove_admin(
+        &self,
+        principal_str: String,
+    ) -> CanisterClientResult<Result<(), String>> {
+        self.client
+            .update("admin_remove_admin", (principal_str,))
             .await
     }
 }
