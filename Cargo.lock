@@ -316,8 +316,11 @@ name = "cashier_common"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "getrandom 0.2.16",
+ "rand 0.8.5",
  "serde",
  "serde_bytes",
+ "uuid",
 ]
 
 [[package]]
@@ -1273,6 +1276,7 @@ dependencies = [
  "canister_internal_settings",
  "cashier_backend_client",
  "cashier_backend_types",
+ "cashier_common",
  "ic-cdk",
  "ic-ledger-types",
  "ic_mple_client",

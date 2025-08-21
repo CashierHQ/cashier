@@ -13,7 +13,7 @@ cashier_backend_types = { workspace = true }
 canister_internal_settings = { workspace = true }
 ic-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
-ic_mple_client = { workspace = true, features = ["pocket-ic"]}
+ic_mple_client = { workspace = true, features = ["pocket-ic"] }
 ic_mple_log = { workspace = true }
 ic_mple_pocket_ic = { workspace = true }
 icrc-ledger-types = { workspace = true }
@@ -24,3 +24,4 @@ token_storage_types = { workspace = true }
 tokio = { workspace = true }
 uuid = { workspace = true }
 rand = {workspace = true}
+cashier_common = { workspace = true }
