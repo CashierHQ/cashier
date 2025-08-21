@@ -24,12 +24,30 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
   #!/usr/bin/env bash
   set -e
 
+  DEPLOYER=$(dfx identity get-principal)
+  echo "======"
+  echo "Deployer principal: $DEPLOYER"
+
   dfx deploy token_storage --argument "(record {
-      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug,token_storage=debug\"; };
+      log_settings=opt record { 
+          enable_console=opt true; 
+          in_memory_records=opt 10000; 
+          log_filter=opt \"global,cashier=debug,token_storage=debug\"; 
+      };
+      canister_internal_settings=opt record {
+          list_admin=vec {
+              \"$DEPLOYER\"
+          };
+          mode=variant { Operational };
+      };
   })"
 
   dfx deploy cashier_backend --argument "(record {
-      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
+      log_settings=opt record { 
+          enable_console=opt true; 
+          in_memory_records=opt 10000; 
+          log_filter=opt \"global,cashier=debug\"; 
+      };
   })"
 
   dfx deploy internet_identity
