@@ -37,7 +37,7 @@ async fn should_return_error_if_in_maintenance_mode() {
     fixture.setup_user().await;
 
     // Act
-    let _ = cashier_backend_admin_client
+    cashier_backend_admin_client
         .change_to_maintenance_mode(true)
         .await
         .expect("canister call failed");
