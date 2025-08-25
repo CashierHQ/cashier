@@ -19,110 +19,115 @@ import { WalletSelectionModal } from "@/components/wallet-selection-modal";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 export default function ClaimPage() {
-    const { linkId } = useParams();
+  const { linkId } = useParams();
 
-    const { renderSkeleton } = useSkeletonLoading();
+  const { renderSkeleton } = useSkeletonLoading();
 
-    const identity = useIdentity();
-    const { updateTokenInit } = useTokensV2();
-    const { goToChooseWallet, handleStateBasedNavigation } = useLinkUseNavigation(linkId);
+  const identity = useIdentity();
+  const { updateTokenInit } = useTokensV2();
+  const { goToChooseWallet, handleStateBasedNavigation } =
+    useLinkUseNavigation(linkId);
 
-    // State for wallet selection modal
-    const [showWalletModal, setShowWalletModal] = useState(false);
-    // const [selectedWalletAddress, setSelectedWalletAddress] = useState<string>("");
+  // State for wallet selection modal
+  const [showWalletModal, setShowWalletModal] = useState(false);
+  // const [selectedWalletAddress, setSelectedWalletAddress] = useState<string>("");
 
-    // Data fetching hooks
-    const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE_LINK);
-    const linkData = linkDetailQuery.data?.link;
-    const isLoadingLinkData = linkDetailQuery.isLoading;
+  // Data fetching hooks
+  const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE_LINK);
+  const linkData = linkDetailQuery.data?.link;
+  const isLoadingLinkData = linkDetailQuery.isLoading;
 
-    const { data: linkUserState, isFetching: isUserStateLoading } = useLinkUserState(
-        {
-            action_type: ACTION_TYPE.USE_LINK,
-            link_id: linkId ?? "",
-            anonymous_wallet_address: "",
-        },
-        !!linkId && !!identity,
+  const { data: linkUserState, isFetching: isUserStateLoading } =
+    useLinkUserState(
+      {
+        action_type: ACTION_TYPE.USE_LINK,
+        link_id: linkId ?? "",
+        anonymous_wallet_address: "",
+      },
+      !!linkId && !!identity,
     );
 
-    // Fetch link data when linkId changes
-    useEffect(() => {
-        if (linkId && !linkData) {
-            linkDetailQuery.refetch();
-        }
-    }, [linkId, linkData]);
-
-    // Enable linkUserState fetching when link data is available
-    useEffect(() => {
-        if (linkData) {
-            updateTokenInit();
-        }
-    }, [linkData]);
-
-    // Handle state-based navigation for logged-in users
-    useEffect(() => {
-        if (linkData && identity) {
-            handleStateBasedNavigation(linkUserState, true);
-        }
-    }, [linkData, linkUserState, identity, handleStateBasedNavigation]);
-
-    const handleClickClaim = useMemo(
-        () => () => {
-            if (identity) {
-                // User is authenticated, go directly to choose-wallet page
-                goToChooseWallet();
-            } else {
-                // User is not authenticated, show wallet selection modal
-                setShowWalletModal(true);
-            }
-        },
-        [identity, goToChooseWallet],
-    );
-
-    const handleWalletConnected = (address?: string) => {
-        setShowWalletModal(false);
-        if (address || identity) {
-            // Store the selected wallet address if provided
-            if (address) {
-                // setSelectedWalletAddress(address);
-                // Store in sessionStorage to pass to choose-wallet page
-                sessionStorage.setItem(`wallet-address-${linkId}`, address);
-            }
-            // Navigate to choose-wallet page after wallet selection
-            goToChooseWallet();
-        }
-    };
-
-    // Early return for inactive links
-    if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
-        return <LinkNotFound />;
+  // Fetch link data when linkId changes
+  useEffect(() => {
+    if (linkId && !linkData) {
+      linkDetailQuery.refetch();
     }
+  }, [linkId, linkData]);
 
-    return (
-        <MainAppLayout>
-            <SheetWrapper>
-                {isLoadingLinkData && !linkData ? (
-                    renderSkeleton()
-                ) : (
-                    <>
-                        <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] py-3">
-                            <DefaultPage
-                                linkData={linkData}
-                                onClickClaim={handleClickClaim}
-                                isUserStateLoading={isUserStateLoading}
-                                isLoggedIn={!!identity}
-                                isCompletePage={false}
-                            />
-                        </div>
+  // Enable linkUserState fetching when link data is available
+  useEffect(() => {
+    if (linkData) {
+      updateTokenInit();
+    }
+  }, [linkData]);
 
-                        <WalletSelectionModal
-                            open={showWalletModal}
-                            onOpenChange={setShowWalletModal}
-                            onWalletConnected={handleWalletConnected}
-                        />
-                    </>
-                )}
-            </SheetWrapper>
-        </MainAppLayout>
-    );
+  // Handle state-based navigation for logged-in users
+  useEffect(() => {
+    if (linkData && identity) {
+      handleStateBasedNavigation(linkUserState, true);
+    }
+  }, [linkData, linkUserState, identity, handleStateBasedNavigation]);
+
+  const handleClickClaim = useMemo(
+    () => () => {
+      if (identity) {
+        // User is authenticated, go directly to choose-wallet page
+        goToChooseWallet();
+      } else {
+        // User is not authenticated, show wallet selection modal
+        setShowWalletModal(true);
+      }
+    },
+    [identity, goToChooseWallet],
+  );
+
+  const handleWalletConnected = (address?: string) => {
+    setShowWalletModal(false);
+    if (address || identity) {
+      // Store the selected wallet address if provided
+      if (address) {
+        // setSelectedWalletAddress(address);
+        // Store in sessionStorage to pass to choose-wallet page
+        sessionStorage.setItem(`wallet-address-${linkId}`, address);
+      }
+      // Navigate to choose-wallet page after wallet selection
+      goToChooseWallet();
+    }
+  };
+
+  // Early return for inactive links
+  if (
+    linkData?.state === LINK_STATE.INACTIVE ||
+    linkData?.state === LINK_STATE.INACTIVE_ENDED
+  ) {
+    return <LinkNotFound />;
+  }
+
+  return (
+    <MainAppLayout>
+      <SheetWrapper>
+        {isLoadingLinkData && !linkData ? (
+          renderSkeleton()
+        ) : (
+          <>
+            <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] py-3">
+              <DefaultPage
+                linkData={linkData}
+                onClickClaim={handleClickClaim}
+                isUserStateLoading={isUserStateLoading}
+                isLoggedIn={!!identity}
+                isCompletePage={false}
+              />
+            </div>
+
+            <WalletSelectionModal
+              open={showWalletModal}
+              onOpenChange={setShowWalletModal}
+              onWalletConnected={handleWalletConnected}
+            />
+          </>
+        )}
+      </SheetWrapper>
+    </MainAppLayout>
+  );
 }

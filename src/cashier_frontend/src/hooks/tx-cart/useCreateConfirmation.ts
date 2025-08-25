@@ -13,157 +13,157 @@ import { useInvalidateLinkDetailQueries } from "@/hooks/link-hooks";
 import { useLinkCreateValidation } from "@/hooks/form/useLinkCreateValidation";
 
 interface UseCreateConfirmationProps {
-    link: LinkDetailModel;
-    currentAction: ActionModel | undefined;
-    updateInternalAction: (action: ActionModel | undefined) => void;
-    onCashierError?: (error: Error) => void;
+  link: LinkDetailModel;
+  currentAction: ActionModel | undefined;
+  updateInternalAction: (action: ActionModel | undefined) => void;
+  onCashierError?: (error: Error) => void;
 }
 
 interface UseCreateConfirmationReturn {
-    handleSuccessContinue: () => Promise<void>;
-    handleConfirmTransaction: () => Promise<void>;
-    onActionResult?: (action: ActionModel) => void;
-    onCashierError: (error: Error) => void;
+  handleSuccessContinue: () => Promise<void>;
+  handleConfirmTransaction: () => Promise<void>;
+  onActionResult?: (action: ActionModel) => void;
+  onCashierError: (error: Error) => void;
 }
 
 export const useCreateConfirmation = ({
-    link,
-    currentAction,
-    updateInternalAction,
-    onCashierError = () => {},
+  link,
+  currentAction,
+  updateInternalAction,
+  onCashierError = () => {},
 }: UseCreateConfirmationProps): UseCreateConfirmationReturn => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    // Mutation hooks
-    const { mutateAsync: processAction } = useProcessAction();
-    const { mutateAsync: updateAction } = useUpdateAction();
-    const { mutateAsync: icrc112Execute } = useIcrc112Execute();
-    const { callLinkStateMachine } = useLinkMutations();
-    const invalidateLinkDetailQueries = useInvalidateLinkDetailQueries();
+  // Mutation hooks
+  const { mutateAsync: processAction } = useProcessAction();
+  const { mutateAsync: updateAction } = useUpdateAction();
+  const { mutateAsync: icrc112Execute } = useIcrc112Execute();
+  const { callLinkStateMachine } = useLinkMutations();
+  const invalidateLinkDetailQueries = useInvalidateLinkDetailQueries();
 
-    // Validation hook
-    const { validateLinkPreviewWithBalance } = useLinkCreateValidation();
+  // Validation hook
+  const { validateLinkPreviewWithBalance } = useLinkCreateValidation();
 
-    /**
-     * Processes the create action with the backend
-     */
-    const handleProcessCreateAction = useCallback(async (): Promise<void> => {
-        try {
-            if (!currentAction || !link) {
-                throw new Error("Action or Link is not defined");
-            }
+  /**
+   * Processes the create action with the backend
+   */
+  const handleProcessCreateAction = useCallback(async (): Promise<void> => {
+    try {
+      if (!currentAction || !link) {
+        throw new Error("Action or Link is not defined");
+      }
 
-            const validationResult = validateLinkPreviewWithBalance(link, {
-                maxActionNumber: link.maxActionNumber,
-                includeLinkCreationFee: true, // Include creation fee for processing existing actions
-            });
-            if (!validationResult.isValid) {
-                const msg = validationResult.errors
-                    .map((error: { message: string }) => error.message)
-                    .join(", ");
-                throw new Error(msg);
-            }
+      const validationResult = validateLinkPreviewWithBalance(link, {
+        maxActionNumber: link.maxActionNumber,
+        includeLinkCreationFee: true, // Include creation fee for processing existing actions
+      });
+      if (!validationResult.isValid) {
+        const msg = validationResult.errors
+          .map((error: { message: string }) => error.message)
+          .join(", ");
+        throw new Error(msg);
+      }
 
-            const firstUpdatedAction = await processAction({
-                actionId: currentAction.id,
-                linkId: link.id,
-                actionType: currentAction.type,
-            });
+      const firstUpdatedAction = await processAction({
+        actionId: currentAction.id,
+        linkId: link.id,
+        actionType: currentAction.type,
+      });
 
-            updateInternalAction(firstUpdatedAction);
+      updateInternalAction(firstUpdatedAction);
 
-            if (firstUpdatedAction) {
-                const response = await icrc112Execute({
-                    transactions: firstUpdatedAction.icrc112Requests,
-                });
-
-                if (response) {
-                    const secondUpdatedAction = await updateAction({
-                        actionId: currentAction.id,
-                        linkId: link.id,
-                        external: true,
-                    });
-
-                    if (secondUpdatedAction) {
-                        updateInternalAction(secondUpdatedAction);
-
-                        // Invalidate cache to ensure all components see the updated action
-                        if (link?.id) {
-                            invalidateLinkDetailQueries(link.id);
-                        }
-                    }
-                }
-            }
-        } catch (error) {
-            console.error("Error in handleProcessCreateAction:", error);
-            throw error;
-        }
-    }, [
-        currentAction,
-        link,
-        validateLinkPreviewWithBalance,
-        processAction,
-        updateInternalAction,
-        icrc112Execute,
-        updateAction,
-        invalidateLinkDetailQueries,
-    ]);
-
-    /**
-     * Sets the link to active state after successful creation
-     */
-    const handleSetLinkToActive = useCallback(async () => {
-        if (!link) throw new Error("Link is not defined");
-
-        const res = await callLinkStateMachine({
-            linkId: link.id,
-            linkModel: {},
-            isContinue: true,
+      if (firstUpdatedAction) {
+        const response = await icrc112Execute({
+          transactions: firstUpdatedAction.icrc112Requests,
         });
 
-        if (res.state === LINK_STATE.ACTIVE) {
-            navigate(`/details/${link.id}`);
+        if (response) {
+          const secondUpdatedAction = await updateAction({
+            actionId: currentAction.id,
+            linkId: link.id,
+            external: true,
+          });
+
+          if (secondUpdatedAction) {
+            updateInternalAction(secondUpdatedAction);
+
+            // Invalidate cache to ensure all components see the updated action
+            if (link?.id) {
+              invalidateLinkDetailQueries(link.id);
+            }
+          }
         }
-    }, [link, callLinkStateMachine, navigate]);
+      }
+    } catch (error) {
+      console.error("Error in handleProcessCreateAction:", error);
+      throw error;
+    }
+  }, [
+    currentAction,
+    link,
+    validateLinkPreviewWithBalance,
+    processAction,
+    updateInternalAction,
+    icrc112Execute,
+    updateAction,
+    invalidateLinkDetailQueries,
+  ]);
 
-    /**
-     * Handles successful creation continuation - sets link to active
-     */
-    const handleSuccessContinue = useCallback(async () => {
-        await handleSetLinkToActive();
-    }, [handleSetLinkToActive]);
+  /**
+   * Sets the link to active state after successful creation
+   */
+  const handleSetLinkToActive = useCallback(async () => {
+    if (!link) throw new Error("Link is not defined");
 
-    /**
-     * Starts the creation transaction process
-     */
-    const handleConfirmTransaction = useCallback(async () => {
-        await handleProcessCreateAction();
-    }, [handleProcessCreateAction]);
+    const res = await callLinkStateMachine({
+      linkId: link.id,
+      linkModel: {},
+      isContinue: true,
+    });
 
-    /**
-     * Handles action result updates (optional for create confirmation)
-     */
-    const onActionResult = useMemo(
-        () => (action: ActionModel) => {
-            updateInternalAction(action);
-        },
-        [updateInternalAction],
-    );
+    if (res.state === LINK_STATE.ACTIVE) {
+      navigate(`/details/${link.id}`);
+    }
+  }, [link, callLinkStateMachine, navigate]);
 
-    /**
-     * Passes through the error handler from props
-     */
-    const handleCashierError = useMemo(
-        () => (error: Error) => {
-            onCashierError(error);
-        },
-        [onCashierError],
-    );
+  /**
+   * Handles successful creation continuation - sets link to active
+   */
+  const handleSuccessContinue = useCallback(async () => {
+    await handleSetLinkToActive();
+  }, [handleSetLinkToActive]);
 
-    return {
-        handleSuccessContinue,
-        handleConfirmTransaction,
-        onActionResult,
-        onCashierError: handleCashierError,
-    };
+  /**
+   * Starts the creation transaction process
+   */
+  const handleConfirmTransaction = useCallback(async () => {
+    await handleProcessCreateAction();
+  }, [handleProcessCreateAction]);
+
+  /**
+   * Handles action result updates (optional for create confirmation)
+   */
+  const onActionResult = useMemo(
+    () => (action: ActionModel) => {
+      updateInternalAction(action);
+    },
+    [updateInternalAction],
+  );
+
+  /**
+   * Passes through the error handler from props
+   */
+  const handleCashierError = useMemo(
+    () => (error: Error) => {
+      onCashierError(error);
+    },
+    [onCashierError],
+  );
+
+  return {
+    handleSuccessContinue,
+    handleConfirmTransaction,
+    onActionResult,
+    onCashierError: handleCashierError,
+  };
 };

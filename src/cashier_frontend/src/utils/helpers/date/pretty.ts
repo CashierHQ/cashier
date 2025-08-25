@@ -2,9 +2,9 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 export function formatDate(date: Date) {
-    return date.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-    });
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
