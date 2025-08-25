@@ -7,23 +7,23 @@ import { useNavigate } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 
 interface RequireAuthProps {
-    children: JSX.Element;
+  children: JSX.Element;
 }
 
 const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
-    const navigate = useNavigate();
-    const identity = useIdentity();
+  const navigate = useNavigate();
+  const identity = useIdentity();
 
-    useEffect(() => {
-        if (!identity) {
-            navigate("/");
-        }
-    }, [identity, navigate]);
+  useEffect(() => {
+    if (!identity) {
+      navigate("/");
+    }
+  }, [identity, navigate]);
 
-    return identity ? children : null;
+  return identity ? children : null;
 };
 RequireAuth.propTypes = {
-    children: PropTypes.element.isRequired,
+  children: PropTypes.element.isRequired,
 };
 
 export default RequireAuth;

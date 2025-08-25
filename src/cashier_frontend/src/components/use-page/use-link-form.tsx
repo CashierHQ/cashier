@@ -11,54 +11,54 @@ import UseActionButton from "./use-action-button";
 import { UseSchema } from "./claim-form-options";
 
 interface UsePageFormProps {
-    form: UseFormReturn<z.infer<typeof UseSchema>>;
-    formData: LinkDetailModel;
-    onSubmit: (address: string | undefined) => void;
-    onBack?: () => void;
-    isDisabled: boolean;
-    setDisabled: (disabled: boolean) => void;
-    buttonText: string;
-    walletAddress?: string;
-    onOpenWalletModal?: () => void;
+  form: UseFormReturn<z.infer<typeof UseSchema>>;
+  formData: LinkDetailModel;
+  onSubmit: (address: string | undefined) => void;
+  onBack?: () => void;
+  isDisabled: boolean;
+  setDisabled: (disabled: boolean) => void;
+  buttonText: string;
+  walletAddress?: string;
+  onOpenWalletModal?: () => void;
 }
 
 const UseLinkForm: React.FC<UsePageFormProps> = ({
-    form,
-    formData,
-    onSubmit,
-    isDisabled,
-    setDisabled,
-    buttonText,
-    walletAddress,
-    onOpenWalletModal,
+  form,
+  formData,
+  onSubmit,
+  isDisabled,
+  setDisabled,
+  buttonText,
+  walletAddress,
+  onOpenWalletModal,
 }) => {
-    const handleSubmit = () => {
-        // Disable the button immediately on submission
-        setDisabled(true);
-        onSubmit(form.getValues("address"));
-    };
+  const handleSubmit = () => {
+    // Disable the button immediately on submission
+    setDisabled(true);
+    onSubmit(form.getValues("address"));
+  };
 
-    return (
-        <div className="w-full flex flex-col flex-grow relative">
-            <Form {...form}>
-                <form className="w-full flex flex-col gap-3 h-full">
-                    <ClaimFormOptions
-                        form={form}
-                        formData={formData}
-                        setDisabled={setDisabled}
-                        walletAddress={walletAddress}
-                        onOpenWalletModal={onOpenWalletModal}
-                    />
-                    <UseActionButton
-                        isDisabled={isDisabled}
-                        buttonText={buttonText}
-                        onSubmit={handleSubmit}
-                        setDisabled={setDisabled}
-                    />
-                </form>
-            </Form>
-        </div>
-    );
+  return (
+    <div className="w-full flex flex-col flex-grow relative">
+      <Form {...form}>
+        <form className="w-full flex flex-col gap-3 h-full">
+          <ClaimFormOptions
+            form={form}
+            formData={formData}
+            setDisabled={setDisabled}
+            walletAddress={walletAddress}
+            onOpenWalletModal={onOpenWalletModal}
+          />
+          <UseActionButton
+            isDisabled={isDisabled}
+            buttonText={buttonText}
+            onSubmit={handleSubmit}
+            setDisabled={setDisabled}
+          />
+        </form>
+      </Form>
+    </div>
+  );
 };
 
 export default UseLinkForm;

@@ -3,24 +3,28 @@
 
 import { create } from "zustand";
 import { IdentityKitSignerConfig } from "@nfid/identitykit";
-import { WALLET_OPTIONS, defaultSigners, allWalletSigners } from "@/constants/wallet-options";
+import {
+  WALLET_OPTIONS,
+  defaultSigners,
+  allWalletSigners,
+} from "@/constants/wallet-options";
 
 interface SignerState {
-    signers: IdentityKitSignerConfig[];
-    currentConnectOption: WALLET_OPTIONS;
-    setSigners: (signers: IdentityKitSignerConfig[]) => void;
-    setCurrentConnectOption: (option: WALLET_OPTIONS) => void;
-    reset: () => void;
+  signers: IdentityKitSignerConfig[];
+  currentConnectOption: WALLET_OPTIONS;
+  setSigners: (signers: IdentityKitSignerConfig[]) => void;
+  setCurrentConnectOption: (option: WALLET_OPTIONS) => void;
+  reset: () => void;
 } // Re-export for backward compatibility
 
 export const useSignerStore = create<SignerState>((set) => ({
-    signers: allWalletSigners,
-    currentConnectOption: WALLET_OPTIONS.INTERNET_IDENTITY,
-    setSigners: (signers) => set({ signers }),
-    setCurrentConnectOption: (option) => set({ currentConnectOption: option }),
-    reset: () =>
-        set({
-            signers: defaultSigners,
-            currentConnectOption: WALLET_OPTIONS.INTERNET_IDENTITY,
-        }),
+  signers: allWalletSigners,
+  currentConnectOption: WALLET_OPTIONS.INTERNET_IDENTITY,
+  setSigners: (signers) => set({ signers }),
+  setCurrentConnectOption: (option) => set({ currentConnectOption: option }),
+  reset: () =>
+    set({
+      signers: defaultSigners,
+      currentConnectOption: WALLET_OPTIONS.INTERNET_IDENTITY,
+    }),
 }));

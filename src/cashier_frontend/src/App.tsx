@@ -27,94 +27,94 @@ export const IDLE_TIMEOUT_MILLI_SEC = 15 * 60 * 1_000; // 15 minutes
 
 // only apply for production
 const getDerivationOrigin = () => {
-    if (import.meta.env.MODE === "production") {
-        return {
-            derivationOrigin: "https://cashierapp.io",
-        };
-    }
+  if (import.meta.env.MODE === "production") {
+    return {
+      derivationOrigin: "https://cashierapp.io",
+    };
+  }
 
-    return {};
+  return {};
 };
 const logBuildInfo = () => {
-    const buildInfo = {
-        appVersion: __APP_VERSION__,
-        buildHash: __BUILD_HASH__,
-    };
+  const buildInfo = {
+    appVersion: __APP_VERSION__,
+    buildHash: __BUILD_HASH__,
+  };
 
-    if (import.meta.env.MODE === "dev") {
-        console.log("App Version:", buildInfo.appVersion);
-        console.log("Build Hash:", buildInfo.buildHash);
-    }
+  if (import.meta.env.MODE === "dev") {
+    console.log("App Version:", buildInfo.appVersion);
+    console.log("Build Hash:", buildInfo.buildHash);
+  }
 };
 
 logBuildInfo();
 
 function App() {
-    const queryClient = new QueryClient();
-    const { signers } = useSignerStore();
+  const queryClient = new QueryClient();
+  const { signers } = useSignerStore();
 
-    // Console logging is now handled at build time via vite.config.js esbuild.pure option
-    // No need for runtime console manipulation
+  // Console logging is now handled at build time via vite.config.js esbuild.pure option
+  // No need for runtime console manipulation
 
-    return (
-        <IdentityKitProvider
-            featuredSigner={false}
-            onConnectFailure={(e: Error) => {
-                console.log("Connect to Identity fail: " + e);
+  return (
+    <IdentityKitProvider
+      featuredSigner={false}
+      onConnectFailure={(e: Error) => {
+        console.log("Connect to Identity fail: " + e);
+      }}
+      onConnectSuccess={() => {}}
+      onDisconnect={() => {
+        queryClient.clear();
+        // Clear idle timeout keys for all users
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith("cashier_lastActive_")) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach((key) => localStorage.removeItem(key));
+      }}
+      authType={IdentityKitAuthType.DELEGATION}
+      signers={signers}
+      signerClientOptions={{
+        targets,
+        maxTimeToLive: TIMEOUT_NANO_SEC,
+        idleOptions: {
+          idleTimeout: IDLE_TIMEOUT_MILLI_SEC * 2,
+        },
+        // if derivationOrigin is not null, it will be used to derive the signer
+        ...getDerivationOrigin(),
+      }}
+      discoverExtensionSigners={true}
+    >
+      <QueryClientProvider client={queryClient}>
+        <TokenDataProvider>
+          <ImageCacheProvider>
+            <IdleTimeoutProvider>
+              <AppRouter />
+            </IdleTimeoutProvider>
+          </ImageCacheProvider>
+          <Toaster
+            position="top-center"
+            expand={true}
+            richColors={true}
+            toastOptions={{
+              classNames: {
+                toast: "toast",
+                title: "title",
+                description: "description",
+                actionButton: "action-button",
+                cancelButton: "cancel-button",
+                closeButton: "close-button",
+              },
             }}
-            onConnectSuccess={() => {}}
-            onDisconnect={() => {
-                queryClient.clear();
-                // Clear idle timeout keys for all users
-                const keysToRemove = [];
-                for (let i = 0; i < localStorage.length; i++) {
-                    const key = localStorage.key(i);
-                    if (key && key.startsWith("cashier_lastActive_")) {
-                        keysToRemove.push(key);
-                    }
-                }
-                keysToRemove.forEach((key) => localStorage.removeItem(key));
-            }}
-            authType={IdentityKitAuthType.DELEGATION}
-            signers={signers}
-            signerClientOptions={{
-                targets,
-                maxTimeToLive: TIMEOUT_NANO_SEC,
-                idleOptions: {
-                    idleTimeout: IDLE_TIMEOUT_MILLI_SEC * 2,
-                },
-                // if derivationOrigin is not null, it will be used to derive the signer
-                ...getDerivationOrigin(),
-            }}
-            discoverExtensionSigners={true}
-        >
-            <QueryClientProvider client={queryClient}>
-                <TokenDataProvider>
-                    <ImageCacheProvider>
-                        <IdleTimeoutProvider>
-                            <AppRouter />
-                        </IdleTimeoutProvider>
-                    </ImageCacheProvider>
-                    <Toaster
-                        position="top-center"
-                        expand={true}
-                        richColors={true}
-                        toastOptions={{
-                            classNames: {
-                                toast: "toast",
-                                title: "title",
-                                description: "description",
-                                actionButton: "action-button",
-                                cancelButton: "cancel-button",
-                                closeButton: "close-button",
-                            },
-                        }}
-                    />
-                    <ReactQueryDevtools initialIsOpen={true} />
-                </TokenDataProvider>
-            </QueryClientProvider>
-        </IdentityKitProvider>
-    );
+          />
+          <ReactQueryDevtools initialIsOpen={true} />
+        </TokenDataProvider>
+      </QueryClientProvider>
+    </IdentityKitProvider>
+  );
 }
 
 export default App;

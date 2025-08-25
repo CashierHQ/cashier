@@ -8,10 +8,10 @@ import { HTMLAttributes } from "react";
 interface MessageProps extends HTMLAttributes<HTMLDivElement> {}
 
 export function Message({ children, className, ...props }: MessageProps) {
-    return (
-        <div className={cn("flex place-items-start", className)} {...props}>
-            <Info className="text-green mr-2" size={22} />
-            <p className="text-green w-fit text-[14px]">{children}</p>
-        </div>
-    );
+  return (
+    <div className={cn("flex place-items-start", className)} {...props}>
+      <Info className="text-green mr-2" size={22} />
+      <p className="text-green w-fit text-[14px]">{children}</p>
+    </div>
+  );
 }

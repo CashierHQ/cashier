@@ -10,12 +10,12 @@ import { FEATURE_FLAGS } from "@/const";
  * and makes it easier to update the implementation in the future.
  */
 export const useFeatureFlags = () => {
-    return {
-        /**
-         * Whether the Swap functionality is enabled
-         */
-        isSwapEnabled: FEATURE_FLAGS.ENABLE_SWAP,
+  return {
+    /**
+     * Whether the Swap functionality is enabled
+     */
+    isSwapEnabled: FEATURE_FLAGS.ENABLE_SWAP,
 
-        // Add getter methods for other feature flags here
-    };
+    // Add getter methods for other feature flags here
+  };
 };
