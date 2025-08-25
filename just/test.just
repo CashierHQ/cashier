@@ -1,6 +1,6 @@
 # Run all Rust and TypeScript tests for backend and frontend
 [group('test')]
-test_all: test test_ts_integration test_frontend
+test_all: test test_frontend
 
 
 # Run unit tests
@@ -21,11 +21,6 @@ test test_name="": download_artifacts build_canisters
 test_unit_i686 test_name="":
   cargo test {{test_name}} --lib --bins --target i686-unknown-linux-gnu
 
-
-# Run TypeScript based integration tests
-[group('test')]
-test_ts_integration: download_artifacts build_canisters
-  npm install
 
 # Run the frontend tests
 [group('test')]
