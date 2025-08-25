@@ -3,8 +3,8 @@
 
 import LinkService from "@/services/link/link.service";
 import {
-    LinkUpdateUserStateInputModel,
-    LinkGetUserStateInputModel,
+  LinkUpdateUserStateInputModel,
+  LinkGetUserStateInputModel,
 } from "@/services/types/link.service.types";
 import { Identity } from "@dfinity/agent";
 import { useIdentity } from "@nfid/identitykit/react";
@@ -12,62 +12,65 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 
 // Helper to generate the query key
 const getLinkUserStateQueryKey = (link_id: string, user_pid: string) =>
-    ["linkUserState", link_id, user_pid] as const;
+  ["linkUserState", link_id, user_pid] as const;
 
 export function useUpdateLinkUserState() {
-    const identity = useIdentity();
+  const identity = useIdentity();
 
-    const mutation = useMutation({
-        mutationFn: async (vars: { input: LinkUpdateUserStateInputModel }) => {
-            const linkService = new LinkService(identity);
-            const result = await linkService.updateLinkUserState(vars.input);
-            return result;
-        },
-        onError: (e) => {
-            console.error("Error updating link user state ", e.message);
-        },
-    });
+  const mutation = useMutation({
+    mutationFn: async (vars: { input: LinkUpdateUserStateInputModel }) => {
+      const linkService = new LinkService(identity);
+      const result = await linkService.updateLinkUserState(vars.input);
+      return result;
+    },
+    onError: (e) => {
+      console.error("Error updating link user state ", e.message);
+    },
+  });
 
-    return mutation;
+  return mutation;
 }
 
-export function useLinkUserState(input: LinkGetUserStateInputModel, isEnabled: boolean) {
-    const identity = useIdentity();
-    const user_pid = identity?.getPrincipal().toString() ?? "";
+export function useLinkUserState(
+  input: LinkGetUserStateInputModel,
+  isEnabled: boolean,
+) {
+  const identity = useIdentity();
+  const user_pid = identity?.getPrincipal().toString() ?? "";
 
-    return useQuery({
-        queryKey: getLinkUserStateQueryKey(input.link_id, user_pid),
-        queryFn: async () => {
-            const linkService = new LinkService(identity);
-            const userState = await linkService.getLinkUserState(input);
-            return userState;
-        },
-        enabled: isEnabled,
-        refetchOnWindowFocus: false,
-        staleTime: 1 * 1000, // 5 seconds
-        retry: (failureCount, error) => {
-            if (error.toString().includes("Identity is required")) {
-                return false;
-            }
-            return failureCount < 2;
-        },
-    });
+  return useQuery({
+    queryKey: getLinkUserStateQueryKey(input.link_id, user_pid),
+    queryFn: async () => {
+      const linkService = new LinkService(identity);
+      const userState = await linkService.getLinkUserState(input);
+      return userState;
+    },
+    enabled: isEnabled,
+    refetchOnWindowFocus: false,
+    staleTime: 1 * 1000, // 5 seconds
+    retry: (failureCount, error) => {
+      if (error.toString().includes("Identity is required")) {
+        return false;
+      }
+      return failureCount < 2;
+    },
+  });
 }
 
 export async function getLinkUserState(
-    input: LinkGetUserStateInputModel,
-    identity: Identity | undefined,
+  input: LinkGetUserStateInputModel,
+  identity: Identity | undefined,
 ) {
-    const linkService = new LinkService(identity);
-    const userState = await linkService.getLinkUserState(input);
-    console.log("userState", userState);
-    return userState;
+  const linkService = new LinkService(identity);
+  const userState = await linkService.getLinkUserState(input);
+  console.log("userState", userState);
+  return userState;
 }
 
 export async function fetchLinkUserState(
-    input: LinkGetUserStateInputModel,
-    identity: Identity | undefined,
+  input: LinkGetUserStateInputModel,
+  identity: Identity | undefined,
 ) {
-    const linkService = new LinkService(identity);
-    return await linkService.getLinkUserState(input);
+  const linkService = new LinkService(identity);
+  return await linkService.getLinkUserState(input);
 }

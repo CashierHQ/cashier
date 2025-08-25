@@ -9,176 +9,180 @@ import { FungibleToken } from "@/types/fungible-token.speculative";
 type TokenMetadataWorker = Worker;
 
 interface UseTokenMetadataWorkerOptions {
-    batchSize?: number;
-    onProgress?: (processed: number, total: number) => void;
+  batchSize?: number;
+  onProgress?: (processed: number, total: number) => void;
 }
 
 interface WorkerState {
-    isLoading: boolean;
-    error: Error | null;
-    metadataMap: TokenMetadataMap;
+  isLoading: boolean;
+  error: Error | null;
+  metadataMap: TokenMetadataMap;
 }
 
 /**
  * Custom hook to manage the token metadata web worker
  */
-export function useTokenMetadataWorker(options: UseTokenMetadataWorkerOptions = {}) {
-    const { batchSize = 300, onProgress } = options;
+export function useTokenMetadataWorker(
+  options: UseTokenMetadataWorkerOptions = {},
+) {
+  const { batchSize = 300, onProgress } = options;
 
-    // Worker reference
-    const workerRef = useRef<TokenMetadataWorker | null>(null);
+  // Worker reference
+  const workerRef = useRef<TokenMetadataWorker | null>(null);
 
-    // State for worker results
-    const [state, setState] = useState<WorkerState>({
+  // State for worker results
+  const [state, setState] = useState<WorkerState>({
+    isLoading: false,
+    error: null,
+    metadataMap: {},
+  });
+
+  // Setup worker on mount
+  useEffect(() => {
+    // Create worker instance
+    const worker = new Worker(
+      new URL("../../workers/token-metadata.worker.ts", import.meta.url),
+      {
+        type: "module",
+      },
+    );
+
+    // Set up message handler
+    worker.onmessage = (event) => {
+      const { type, payload } = event.data;
+
+      switch (type) {
+        case "ready":
+          // Worker is initialized
+          console.log("[Main] Token metadata worker is ready");
+          break;
+
+        case "progress":
+          // Handle progress updates
+          if (onProgress) {
+            onProgress(payload.processed, payload.total);
+          }
+          // Optionally update partial results
+          // setState(prev => ({ ...prev, metadataMap: {...prev.metadataMap, ...payload.partialResults} }));
+          break;
+
+        case "complete":
+          // Final result received
+          console.log("[Main] Received complete message from worker");
+          console.log(
+            "[Main] Metadata map received:",
+            Object.keys(payload.metadataMap).length,
+            "entries",
+          );
+
+          setState({
+            isLoading: false,
+            error: null,
+            metadataMap: payload.metadataMap || {},
+          });
+
+          console.log(
+            `[Main] Fetched metadata for ${payload.tokenCount} tokens in ${payload.duration}ms`,
+          );
+          break;
+
+        case "error":
+          // Handle errors from worker
+          setState((prev) => ({
+            ...prev,
+            isLoading: false,
+            error: new Error(payload.message),
+          }));
+          console.error("[Worker Error]", payload.message);
+          break;
+      }
+    };
+
+    // Handle worker errors
+    worker.onerror = (error) => {
+      setState((prev) => ({
+        ...prev,
         isLoading: false,
-        error: null,
-        metadataMap: {},
-    });
+        error: new Error(`Worker error: ${error.message}`),
+      }));
+      console.error("Worker error:", error);
+    };
 
-    // Setup worker on mount
-    useEffect(() => {
-        // Create worker instance
-        const worker = new Worker(
-            new URL("../../workers/token-metadata.worker.ts", import.meta.url),
-            {
-                type: "module",
-            },
-        );
+    // Store worker reference
+    workerRef.current = worker;
 
-        // Set up message handler
-        worker.onmessage = (event) => {
-            const { type, payload } = event.data;
+    // Clean up worker on unmount
+    return () => {
+      worker.terminate();
+      workerRef.current = null;
+    };
+  }, []);
 
-            switch (type) {
-                case "ready":
-                    // Worker is initialized
-                    console.log("[Main] Token metadata worker is ready");
-                    break;
+  /**
+   * Function to fetch metadata for tokens
+   */
+  const fetchMetadata = async (
+    tokens: FungibleToken[],
+  ): Promise<TokenMetadataMap> => {
+    if (!workerRef.current) {
+      throw new Error("Worker not initialized");
+    }
 
-                case "progress":
-                    // Handle progress updates
-                    if (onProgress) {
-                        onProgress(payload.processed, payload.total);
-                    }
-                    // Optionally update partial results
-                    // setState(prev => ({ ...prev, metadataMap: {...prev.metadataMap, ...payload.partialResults} }));
-                    break;
+    if (!tokens || tokens.length === 0) {
+      setState({ isLoading: false, error: null, metadataMap: {} });
+      return {};
+    }
 
-                case "complete":
-                    // Final result received
-                    console.log("[Main] Received complete message from worker");
-                    console.log(
-                        "[Main] Metadata map received:",
-                        Object.keys(payload.metadataMap).length,
-                        "entries",
-                    );
+    console.log(`[Main] Preparing to send ${tokens.length} tokens to worker`);
 
-                    setState({
-                        isLoading: false,
-                        error: null,
-                        metadataMap: payload.metadataMap || {},
-                    });
+    // Reset state
+    setState({ isLoading: true, error: null, metadataMap: {} });
 
-                    console.log(
-                        `[Main] Fetched metadata for ${payload.tokenCount} tokens in ${payload.duration}ms`,
-                    );
-                    break;
+    // Return a Promise that resolves when the worker completes
+    return new Promise((resolve, reject) => {
+      if (!workerRef.current) {
+        reject(new Error("Worker not initialized"));
+        return;
+      }
 
-                case "error":
-                    // Handle errors from worker
-                    setState((prev) => ({
-                        ...prev,
-                        isLoading: false,
-                        error: new Error(payload.message),
-                    }));
-                    console.error("[Worker Error]", payload.message);
-                    break;
-            }
-        };
+      // Set up one-time message handler for this request
+      const handleMessage = (event: MessageEvent) => {
+        const { type, payload } = event.data;
 
-        // Handle worker errors
-        worker.onerror = (error) => {
-            setState((prev) => ({
-                ...prev,
-                isLoading: false,
-                error: new Error(`Worker error: ${error.message}`),
-            }));
-            console.error("Worker error:", error);
-        };
-
-        // Store worker reference
-        workerRef.current = worker;
-
-        // Clean up worker on unmount
-        return () => {
-            worker.terminate();
-            workerRef.current = null;
-        };
-    }, []);
-
-    /**
-     * Function to fetch metadata for tokens
-     */
-    const fetchMetadata = async (tokens: FungibleToken[]): Promise<TokenMetadataMap> => {
-        if (!workerRef.current) {
-            throw new Error("Worker not initialized");
+        if (type === "complete") {
+          // Remove the handler
+          workerRef.current?.removeEventListener("message", handleMessage);
+          resolve(payload.metadataMap || {});
+        } else if (type === "error") {
+          // Remove the handler
+          workerRef.current?.removeEventListener("message", handleMessage);
+          reject(new Error(payload.message));
         }
+      };
 
-        if (!tokens || tokens.length === 0) {
-            setState({ isLoading: false, error: null, metadataMap: {} });
-            return {};
-        }
+      // Add the one-time handler
+      workerRef.current.addEventListener("message", handleMessage);
 
-        console.log(`[Main] Preparing to send ${tokens.length} tokens to worker`);
-
-        // Reset state
-        setState({ isLoading: true, error: null, metadataMap: {} });
-
-        // Return a Promise that resolves when the worker completes
-        return new Promise((resolve, reject) => {
-            if (!workerRef.current) {
-                reject(new Error("Worker not initialized"));
-                return;
-            }
-
-            // Set up one-time message handler for this request
-            const handleMessage = (event: MessageEvent) => {
-                const { type, payload } = event.data;
-
-                if (type === "complete") {
-                    // Remove the handler
-                    workerRef.current?.removeEventListener("message", handleMessage);
-                    resolve(payload.metadataMap || {});
-                } else if (type === "error") {
-                    // Remove the handler
-                    workerRef.current?.removeEventListener("message", handleMessage);
-                    reject(new Error(payload.message));
-                }
-            };
-
-            // Add the one-time handler
-            workerRef.current.addEventListener("message", handleMessage);
-
-            try {
-                workerRef.current.postMessage({
-                    type: "fetchMetadata",
-                    payload: {
-                        tokens,
-                        batchSize,
-                    },
-                });
-            } catch (error) {
-                // Remove the handler
-                workerRef.current?.removeEventListener("message", handleMessage);
-                console.error("[Main] Error sending message to worker:", error);
-                setState({ isLoading: false, error: error as Error, metadataMap: {} });
-                reject(error);
-            }
+      try {
+        workerRef.current.postMessage({
+          type: "fetchMetadata",
+          payload: {
+            tokens,
+            batchSize,
+          },
         });
-    };
+      } catch (error) {
+        // Remove the handler
+        workerRef.current?.removeEventListener("message", handleMessage);
+        console.error("[Main] Error sending message to worker:", error);
+        setState({ isLoading: false, error: error as Error, metadataMap: {} });
+        reject(error);
+      }
+    });
+  };
 
-    return {
-        ...state,
-        fetchMetadata,
-    };
+  return {
+    ...state,
+    fetchMetadata,
+  };
 }

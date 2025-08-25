@@ -4,7 +4,11 @@
 import { UseFormReturn } from "react-hook-form";
 import { UseFieldArrayReturn } from "react-hook-form";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import { CHAIN, LINK_TYPE, LINK_INTENT_ASSET_LABEL } from "@/services/types/enum";
+import {
+  CHAIN,
+  LINK_TYPE,
+  LINK_INTENT_ASSET_LABEL,
+} from "@/services/types/enum";
 
 /**
  * Creates an asset select handler function for opening the asset drawer
@@ -13,13 +17,13 @@ import { CHAIN, LINK_TYPE, LINK_INTENT_ASSET_LABEL } from "@/services/types/enum
  * @returns A function that takes an index and opens the asset drawer for that asset
  */
 export const createAssetSelectHandler = (
-    setEditingAssetIndex: React.Dispatch<React.SetStateAction<number>>,
-    setShowAssetDrawer: React.Dispatch<React.SetStateAction<boolean>>,
+  setEditingAssetIndex: React.Dispatch<React.SetStateAction<number>>,
+  setShowAssetDrawer: React.Dispatch<React.SetStateAction<boolean>>,
 ) => {
-    return (index: number) => {
-        setEditingAssetIndex(index);
-        setShowAssetDrawer(true);
-    };
+  return (index: number) => {
+    setEditingAssetIndex(index);
+    setShowAssetDrawer(true);
+  };
 };
 
 /**
@@ -33,32 +37,32 @@ export const createAssetSelectHandler = (
  * @returns A function that handles selecting a token address
  */
 export const createTokenAddressHandler = (
-    editingAssetIndex: number,
-    link: LinkDetailModel | null,
-    setValue: UseFormReturn<{
-        assets: {
-            tokenAddress: string;
-            amount: bigint;
-            label?: string | LINK_INTENT_ASSET_LABEL;
-            chain?: CHAIN;
-        }[];
-    }>["setValue"],
-    selectedAssetAddresses: string[],
-    setSelectedAssetAddresses: React.Dispatch<React.SetStateAction<string[]>>,
-    setShowAssetDrawer: React.Dispatch<React.SetStateAction<boolean>>,
+  editingAssetIndex: number,
+  link: LinkDetailModel | null,
+  setValue: UseFormReturn<{
+    assets: {
+      tokenAddress: string;
+      amount: bigint;
+      label?: string | LINK_INTENT_ASSET_LABEL;
+      chain?: CHAIN;
+    }[];
+  }>["setValue"],
+  selectedAssetAddresses: string[],
+  setSelectedAssetAddresses: React.Dispatch<React.SetStateAction<string[]>>,
+  setShowAssetDrawer: React.Dispatch<React.SetStateAction<boolean>>,
 ) => {
-    return (address: string) => {
-        if (editingAssetIndex < 0 || !link?.id) return;
+  return (address: string) => {
+    if (editingAssetIndex < 0 || !link?.id) return;
 
-        // Reset the amount values when selecting a new token
-        setValue(`assets.${editingAssetIndex}.tokenAddress`, address);
-        setValue(`assets.${editingAssetIndex}.amount`, BigInt(0));
+    // Reset the amount values when selecting a new token
+    setValue(`assets.${editingAssetIndex}.tokenAddress`, address);
+    setValue(`assets.${editingAssetIndex}.amount`, BigInt(0));
 
-        const updatedAssets = [...selectedAssetAddresses];
-        updatedAssets[editingAssetIndex] = address;
-        setSelectedAssetAddresses(updatedAssets);
-        setShowAssetDrawer(false);
-    };
+    const updatedAssets = [...selectedAssetAddresses];
+    updatedAssets[editingAssetIndex] = address;
+    setSelectedAssetAddresses(updatedAssets);
+    setShowAssetDrawer(false);
+  };
 };
 
 /**
@@ -69,35 +73,35 @@ export const createTokenAddressHandler = (
  * @returns A function that removes an asset from the form
  */
 export const createRemoveAssetHandler = (
-    getValues: UseFormReturn<{
-        assets: {
-            tokenAddress: string;
-            amount: bigint;
-            label?: string | LINK_INTENT_ASSET_LABEL;
-            chain?: CHAIN;
-        }[];
-    }>["getValues"],
-    setSelectedAssetAddresses: React.Dispatch<React.SetStateAction<string[]>>,
-    assetFields: UseFieldArrayReturn<
-        {
-            assets: {
-                tokenAddress: string;
-                amount: bigint;
-                label?: string | LINK_INTENT_ASSET_LABEL;
-                chain?: CHAIN;
-            }[];
-        },
-        "assets",
-        "id"
-    >,
+  getValues: UseFormReturn<{
+    assets: {
+      tokenAddress: string;
+      amount: bigint;
+      label?: string | LINK_INTENT_ASSET_LABEL;
+      chain?: CHAIN;
+    }[];
+  }>["getValues"],
+  setSelectedAssetAddresses: React.Dispatch<React.SetStateAction<string[]>>,
+  assetFields: UseFieldArrayReturn<
+    {
+      assets: {
+        tokenAddress: string;
+        amount: bigint;
+        label?: string | LINK_INTENT_ASSET_LABEL;
+        chain?: CHAIN;
+      }[];
+    },
+    "assets",
+    "id"
+  >,
 ) => {
-    return (index: number) => {
-        const removedAsset = getValues(`assets.${index}`);
-        setSelectedAssetAddresses((prev) =>
-            prev.filter((address) => address !== removedAsset.tokenAddress),
-        );
-        assetFields.remove(index);
-    };
+  return (index: number) => {
+    const removedAsset = getValues(`assets.${index}`);
+    setSelectedAssetAddresses((prev) =>
+      prev.filter((address) => address !== removedAsset.tokenAddress),
+    );
+    assetFields.remove(index);
+  };
 };
 
 /**
@@ -107,33 +111,33 @@ export const createRemoveAssetHandler = (
  * @returns Assets formatted with correct labels
  */
 export const formatAssetsForSubmission = (
-    formAssets: {
-        tokenAddress: string;
-        amount: bigint;
-        label?: string | LINK_INTENT_ASSET_LABEL | undefined;
-        chain?: CHAIN | undefined;
-    }[],
-    link: LinkDetailModel | null,
+  formAssets: {
+    tokenAddress: string;
+    amount: bigint;
+    label?: string | LINK_INTENT_ASSET_LABEL | undefined;
+    chain?: CHAIN | undefined;
+  }[],
+  link: LinkDetailModel | null,
 ) => {
-    if (!link?.linkType) return formAssets;
+  if (!link?.linkType) return formAssets;
 
-    return formAssets.map((asset) => {
-        let label = asset.label || "";
+  return formAssets.map((asset) => {
+    let label = asset.label || "";
 
-        // Assign the correct label based on link type
-        if (link.linkType === LINK_TYPE.SEND_TOKEN_BASKET) {
-            label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET}_${asset.tokenAddress}`;
-        } else if (link.linkType === LINK_TYPE.SEND_AIRDROP) {
-            label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET}`;
-        } else if (link.linkType === LINK_TYPE.RECEIVE_PAYMENT) {
-            label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET}`;
-        } else if (link.linkType === LINK_TYPE.SEND_TIP) {
-            label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TIP_ASSET}`;
-        }
+    // Assign the correct label based on link type
+    if (link.linkType === LINK_TYPE.SEND_TOKEN_BASKET) {
+      label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET}_${asset.tokenAddress}`;
+    } else if (link.linkType === LINK_TYPE.SEND_AIRDROP) {
+      label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET}`;
+    } else if (link.linkType === LINK_TYPE.RECEIVE_PAYMENT) {
+      label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET}`;
+    } else if (link.linkType === LINK_TYPE.SEND_TIP) {
+      label = `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TIP_ASSET}`;
+    }
 
-        return {
-            ...asset,
-            label,
-        };
-    });
+    return {
+      ...asset,
+      label,
+    };
+  });
 };
