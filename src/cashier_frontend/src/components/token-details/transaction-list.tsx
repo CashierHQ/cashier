@@ -7,24 +7,24 @@ import { TransactionRecord } from "@/types/transaction-record.speculative";
 import React from "react";
 
 interface TransactionHistoryListProps {
-    items: TransactionRecord[];
+  items: TransactionRecord[];
 }
 
 export function TransactionHistoryList({ items }: TransactionHistoryListProps) {
-    const groupedRecords = groupTransactionsByDate(items);
+  const groupedRecords = groupTransactionsByDate(items);
 
-    return (
-        <div className="w-full">
-            <History.Root>
-                {groupedRecords.map(({ date, transactions }) => (
-                    <React.Fragment key={date}>
-                        <History.Timestamp date={new Date(date)} />
-                        {transactions.map((tx) => (
-                            <History.Item key={tx.id} record={tx} />
-                        ))}
-                    </React.Fragment>
-                ))}
-            </History.Root>
-        </div>
-    );
+  return (
+    <div className="w-full">
+      <History.Root>
+        {groupedRecords.map(({ date, transactions }) => (
+          <React.Fragment key={date}>
+            <History.Timestamp date={new Date(date)} />
+            {transactions.map((tx) => (
+              <History.Item key={tx.id} record={tx} />
+            ))}
+          </React.Fragment>
+        ))}
+      </History.Root>
+    </div>
+  );
 }

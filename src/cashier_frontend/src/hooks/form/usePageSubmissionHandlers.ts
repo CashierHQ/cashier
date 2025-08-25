@@ -3,9 +3,9 @@
 
 import { useCallback } from "react";
 import {
-    useSubmissionHandler,
-    FormSubmissionContext,
-    TemplateSubmissionContext,
+  useSubmissionHandler,
+  FormSubmissionContext,
+  TemplateSubmissionContext,
 } from "./useSubmissionHandler";
 import { useLinkTemplateValidation } from "./useLinkTemplateValidation";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
@@ -19,36 +19,36 @@ import { LinkDetailModel } from "@/services/types/link.service.types";
  * (SendTipForm, SendAirdropForm, SendTokenBasketForm, ReceivePaymentForm)
  */
 const useFormSubmissionHandler = (link: LinkDetailModel) => {
-    const { handleFormSubmission } = useSubmissionHandler(link);
+  const { handleFormSubmission } = useSubmissionHandler(link);
 
-    const submitForm = useCallback(
-        async (
-            linkId: string,
-            formAssets: FormAsset[],
-            maxActionNumber: number,
-            linkType: LINK_TYPE,
-            options?: {
-                skipBalanceCheck?: boolean;
-                isAirdrop?: boolean;
-                errorHandler?: (error: Error) => void;
-            },
-        ) => {
-            const context: FormSubmissionContext = {
-                linkId,
-                formAssets,
-                maxActionNumber,
-                linkType,
-                skipBalanceCheck: options?.skipBalanceCheck,
-                isAirdrop: options?.isAirdrop,
-                errorHandler: options?.errorHandler,
-            };
+  const submitForm = useCallback(
+    async (
+      linkId: string,
+      formAssets: FormAsset[],
+      maxActionNumber: number,
+      linkType: LINK_TYPE,
+      options?: {
+        skipBalanceCheck?: boolean;
+        isAirdrop?: boolean;
+        errorHandler?: (error: Error) => void;
+      },
+    ) => {
+      const context: FormSubmissionContext = {
+        linkId,
+        formAssets,
+        maxActionNumber,
+        linkType,
+        skipBalanceCheck: options?.skipBalanceCheck,
+        isAirdrop: options?.isAirdrop,
+        errorHandler: options?.errorHandler,
+      };
 
-            await handleFormSubmission(context);
-        },
-        [handleFormSubmission],
-    );
+      await handleFormSubmission(context);
+    },
+    [handleFormSubmission],
+  );
 
-    return { submitForm };
+  return { submitForm };
 };
 
 /**
@@ -56,135 +56,163 @@ const useFormSubmissionHandler = (link: LinkDetailModel) => {
  * (LinkTemplate component)
  */
 export const useLinkTemplateHandler = (link: LinkDetailModel) => {
-    const { handleTemplateSubmission } = useSubmissionHandler(link);
-    const { validateLinkTemplate, isLinkTypeSupported } = useLinkTemplateValidation();
-    const { getUserInput } = useLinkCreationFormStore();
-    const carousel = useCarousel();
+  const { handleTemplateSubmission } = useSubmissionHandler(link);
+  const { validateLinkTemplate, isLinkTypeSupported } =
+    useLinkTemplateValidation();
+  const { getUserInput } = useLinkCreationFormStore();
+  const carousel = useCarousel();
 
-    const submitTemplate = useCallback(
-        async (onUnsupportedType: () => void, errorHandler?: (error: Error) => void) => {
-            const currentLink = link ? getUserInput(link.id) : undefined;
+  const submitTemplate = useCallback(
+    async (
+      onUnsupportedType: () => void,
+      errorHandler?: (error: Error) => void,
+    ) => {
+      const currentLink = link ? getUserInput(link.id) : undefined;
 
-            const context: TemplateSubmissionContext = {
-                currentLink: currentLink || {},
-                carouselIndex: carousel.current,
-                validateTemplate: validateLinkTemplate,
-                isLinkTypeSupported,
-                onUnsupportedType,
-                errorHandler,
-            };
+      const context: TemplateSubmissionContext = {
+        currentLink: currentLink || {},
+        carouselIndex: carousel.current,
+        validateTemplate: validateLinkTemplate,
+        isLinkTypeSupported,
+        onUnsupportedType,
+        errorHandler,
+      };
 
-            await handleTemplateSubmission(context);
-        },
-        [
-            handleTemplateSubmission,
-            validateLinkTemplate,
-            isLinkTypeSupported,
-            getUserInput,
-            link,
-            carousel,
-        ],
-    );
+      await handleTemplateSubmission(context);
+    },
+    [
+      handleTemplateSubmission,
+      validateLinkTemplate,
+      isLinkTypeSupported,
+      getUserInput,
+      link,
+      carousel,
+    ],
+  );
 
-    return { submitTemplate };
+  return { submitTemplate };
 };
 
 /**
  * Hook specifically for SendTipForm component
  */
 export const useSendTipFormHandler = (link: LinkDetailModel) => {
-    const { submitForm } = useFormSubmissionHandler(link);
+  const { submitForm } = useFormSubmissionHandler(link);
 
-    const submitTipForm = useCallback(
-        async (
-            linkId: string,
-            formAssets: FormAsset[],
-            maxActionNumber: number,
-            errorHandler?: (error: Error) => void,
-        ) => {
-            await submitForm(linkId, formAssets, maxActionNumber, LINK_TYPE.SEND_TIP, {
-                skipBalanceCheck: false,
-                isAirdrop: false,
-                errorHandler,
-            });
+  const submitTipForm = useCallback(
+    async (
+      linkId: string,
+      formAssets: FormAsset[],
+      maxActionNumber: number,
+      errorHandler?: (error: Error) => void,
+    ) => {
+      await submitForm(
+        linkId,
+        formAssets,
+        maxActionNumber,
+        LINK_TYPE.SEND_TIP,
+        {
+          skipBalanceCheck: false,
+          isAirdrop: false,
+          errorHandler,
         },
-        [submitForm],
-    );
+      );
+    },
+    [submitForm],
+  );
 
-    return { submitTipForm };
+  return { submitTipForm };
 };
 
 /**
  * Hook specifically for SendAirdropForm component
  */
 export const useSendAirdropFormHandler = (link: LinkDetailModel) => {
-    const { submitForm } = useFormSubmissionHandler(link);
+  const { submitForm } = useFormSubmissionHandler(link);
 
-    const submitAirdropForm = useCallback(
-        async (
-            linkId: string,
-            formAssets: FormAsset[],
-            maxActionNumber: number,
-            errorHandler?: (error: Error) => void,
-        ) => {
-            await submitForm(linkId, formAssets, maxActionNumber, LINK_TYPE.SEND_AIRDROP, {
-                skipBalanceCheck: false,
-                isAirdrop: true,
-                errorHandler,
-            });
+  const submitAirdropForm = useCallback(
+    async (
+      linkId: string,
+      formAssets: FormAsset[],
+      maxActionNumber: number,
+      errorHandler?: (error: Error) => void,
+    ) => {
+      await submitForm(
+        linkId,
+        formAssets,
+        maxActionNumber,
+        LINK_TYPE.SEND_AIRDROP,
+        {
+          skipBalanceCheck: false,
+          isAirdrop: true,
+          errorHandler,
         },
-        [submitForm],
-    );
+      );
+    },
+    [submitForm],
+  );
 
-    return { submitAirdropForm };
+  return { submitAirdropForm };
 };
 
 /**
  * Hook specifically for SendTokenBasketForm component
  */
 export const useSendTokenBasketFormHandler = (link: LinkDetailModel) => {
-    const { submitForm } = useFormSubmissionHandler(link);
+  const { submitForm } = useFormSubmissionHandler(link);
 
-    const submitTokenBasketForm = useCallback(
-        async (
-            linkId: string,
-            formAssets: FormAsset[],
-            maxActionNumber: number,
-            errorHandler?: (error: Error) => void,
-        ) => {
-            await submitForm(linkId, formAssets, maxActionNumber, LINK_TYPE.SEND_TOKEN_BASKET, {
-                skipBalanceCheck: false,
-                isAirdrop: false,
-                errorHandler,
-            });
+  const submitTokenBasketForm = useCallback(
+    async (
+      linkId: string,
+      formAssets: FormAsset[],
+      maxActionNumber: number,
+      errorHandler?: (error: Error) => void,
+    ) => {
+      await submitForm(
+        linkId,
+        formAssets,
+        maxActionNumber,
+        LINK_TYPE.SEND_TOKEN_BASKET,
+        {
+          skipBalanceCheck: false,
+          isAirdrop: false,
+          errorHandler,
         },
-        [submitForm],
-    );
+      );
+    },
+    [submitForm],
+  );
 
-    return { submitTokenBasketForm };
+  return { submitTokenBasketForm };
 };
 
 /**
  * Hook specifically for ReceivePaymentForm component
  */
 export const useReceivePaymentFormHandler = (link: LinkDetailModel) => {
-    const { submitForm } = useFormSubmissionHandler(link);
+  const { submitForm } = useFormSubmissionHandler(link);
 
-    const submitReceivePaymentForm = useCallback(
-        async (
-            linkId: string,
-            formAssets: FormAsset[],
-            maxActionNumber: number,
-            errorHandler?: (error: Error) => void,
-        ) => {
-            await submitForm(linkId, formAssets, maxActionNumber, LINK_TYPE.RECEIVE_PAYMENT, {
-                skipBalanceCheck: true,
-                isAirdrop: false,
-                errorHandler,
-            });
+  const submitReceivePaymentForm = useCallback(
+    async (
+      linkId: string,
+      formAssets: FormAsset[],
+      maxActionNumber: number,
+      errorHandler?: (error: Error) => void,
+    ) => {
+      await submitForm(
+        linkId,
+        formAssets,
+        maxActionNumber,
+        LINK_TYPE.RECEIVE_PAYMENT,
+        {
+          skipBalanceCheck: true,
+          isAirdrop: false,
+          errorHandler,
         },
-        [submitForm],
-    );
+      );
+    },
+    [submitForm],
+  );
 
-    return { submitReceivePaymentForm };
+  return { submitReceivePaymentForm };
 };
