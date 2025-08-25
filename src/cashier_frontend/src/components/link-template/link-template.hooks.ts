@@ -5,20 +5,20 @@ import { useEffect, useState } from "react";
 import { CarouselApi } from "../ui/carousel";
 
 export function useCarousel() {
-    const [current, setCurrent] = useState(0);
-    const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
+  const [api, setApi] = useState<CarouselApi>();
 
-    useEffect(() => {
-        if (api) {
-            setCurrent(api.selectedScrollSnap());
-            api.on("select", () => setCurrent(api.selectedScrollSnap()));
-        }
-    }, [api]);
+  useEffect(() => {
+    if (api) {
+      setCurrent(api.selectedScrollSnap());
+      api.on("select", () => setCurrent(api.selectedScrollSnap()));
+    }
+  }, [api]);
 
-    return {
-        current,
-        setCurrent,
-        api,
-        setApi,
-    };
+  return {
+    current,
+    setCurrent,
+    api,
+    setApi,
+  };
 }

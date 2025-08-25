@@ -3,4 +3,7 @@
 
 import { FungibleToken } from "@/types/fungible-token.speculative";
 
-export type AssetSelectItem = Pick<FungibleToken, "id" | "name" | "address" | "amount" | "logo">;
+export type AssetSelectItem = Pick<
+  FungibleToken,
+  "id" | "name" | "address" | "amount" | "logo"
+>;

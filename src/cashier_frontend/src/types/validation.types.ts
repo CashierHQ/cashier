@@ -9,21 +9,21 @@ import { ErrorCode } from "./error.enum";
  */
 
 export interface ValidationError {
-    field: string;
-    code: ErrorCode;
-    message: string;
-    metadata?: Record<string, unknown>;
+  field: string;
+  code: ErrorCode;
+  message: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ValidationResult {
-    isValid: boolean;
-    errors: ValidationError[];
-    error?: string; // Optional single error message for backward compatibility
+  isValid: boolean;
+  errors: ValidationError[];
+  error?: string; // Optional single error message for backward compatibility
 }
 
 export interface FormAsset {
-    tokenAddress: string;
-    amount: bigint;
-    label?: string | LINK_INTENT_ASSET_LABEL;
-    chain?: CHAIN;
+  tokenAddress: string;
+  amount: bigint;
+  label?: string | LINK_INTENT_ASSET_LABEL;
+  chain?: CHAIN;
 }

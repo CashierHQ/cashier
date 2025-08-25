@@ -2,22 +2,22 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 import {
-    CHAIN,
-    LINK_TYPE,
-    LINK_INTENT_ASSET_LABEL,
-    getAssetLabelForLinkType,
+  CHAIN,
+  LINK_TYPE,
+  LINK_INTENT_ASSET_LABEL,
+  getAssetLabelForLinkType,
 } from "@/services/types/enum";
 import { UserInputItem } from "@/stores/linkCreationFormStore";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 
 type InitialFormValues = {
-    assets: {
-        tokenAddress: string;
-        amount: bigint;
-        label: string | LINK_INTENT_ASSET_LABEL;
-        chain: CHAIN;
-    }[];
+  assets: {
+    tokenAddress: string;
+    amount: bigint;
+    label: string | LINK_INTENT_ASSET_LABEL;
+    chain: CHAIN;
+  }[];
 };
 
 /**
@@ -32,23 +32,23 @@ type InitialFormValues = {
  * Helper function to get the correct label for a link type and token address
  */
 function getCorrectLabel(linkType: string, tokenAddress: string): string {
-    if (linkType === LINK_TYPE.SEND_TOKEN_BASKET) {
-        return `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET}_${tokenAddress}`;
-    } else if (linkType === LINK_TYPE.SEND_AIRDROP) {
-        return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET;
-    } else if (linkType === LINK_TYPE.RECEIVE_PAYMENT) {
-        return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET;
-    } else if (linkType === LINK_TYPE.SEND_TIP) {
-        return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TIP_ASSET;
-    } else {
-        try {
-            // Use the utility function for other link types
-            return getAssetLabelForLinkType(linkType, tokenAddress);
-        } catch (e) {
-            console.error("Error getting asset label:", e);
-            return ""; // Fallback to empty string
-        }
+  if (linkType === LINK_TYPE.SEND_TOKEN_BASKET) {
+    return `${LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TOKEN_BASKET_ASSET}_${tokenAddress}`;
+  } else if (linkType === LINK_TYPE.SEND_AIRDROP) {
+    return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_AIRDROP_ASSET;
+  } else if (linkType === LINK_TYPE.RECEIVE_PAYMENT) {
+    return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_RECEIVE_PAYMENT_ASSET;
+  } else if (linkType === LINK_TYPE.SEND_TIP) {
+    return LINK_INTENT_ASSET_LABEL.INTENT_LABEL_SEND_TIP_ASSET;
+  } else {
+    try {
+      // Use the utility function for other link types
+      return getAssetLabelForLinkType(linkType, tokenAddress);
+    } catch (e) {
+      console.error("Error getting asset label:", e);
+      return ""; // Fallback to empty string
     }
+  }
 }
 
 /**
@@ -60,89 +60,98 @@ function getCorrectLabel(linkType: string, tokenAddress: string): string {
  * @returns Initial values for the form
  */
 export function useLinkFormInitialization(
-    currentInput: Partial<UserInputItem> | undefined,
-    allAvailableTokens: FungibleToken[] | undefined,
-    link: LinkDetailModel | null | undefined,
+  currentInput: Partial<UserInputItem> | undefined,
+  allAvailableTokens: FungibleToken[] | undefined,
+  link: LinkDetailModel | null | undefined,
 ) {
-    // Get initial values from current input or link data
-    let values = getInitialFormValues(currentInput, link);
+  // Get initial values from current input or link data
+  let values = getInitialFormValues(currentInput, link);
 
-    // If link type exists, ensure labels are consistent with the current link type
+  // If link type exists, ensure labels are consistent with the current link type
 
-    if (!link || !link.linkType) {
-        return undefined; // or some default value
-    }
+  if (!link || !link.linkType) {
+    return undefined; // or some default value
+  }
 
-    if (values && link && link.linkType) {
-        // Update labels to match current link type
-        values = {
-            assets: values.assets.map((asset) => {
-                // Generate appropriate label based on current link type
-                const updatedLabel = getCorrectLabel(link.linkType!, asset.tokenAddress);
+  if (values && link && link.linkType) {
+    // Update labels to match current link type
+    values = {
+      assets: values.assets.map((asset) => {
+        // Generate appropriate label based on current link type
+        const updatedLabel = getCorrectLabel(
+          link.linkType!,
+          asset.tokenAddress,
+        );
 
-                // Keep all properties except update the label
-                return {
-                    ...asset,
-                    label: updatedLabel,
-                };
-            }),
-        };
-    }
-
-    if (!values && allAvailableTokens && allAvailableTokens.length > 0 && link && link.linkType) {
-        // Create default values with the first available token if no values exist
-        const tokenAddress = allAvailableTokens[0].address;
-        const label = getCorrectLabel(link.linkType, tokenAddress);
-
+        // Keep all properties except update the label
         return {
-            assets: [
-                {
-                    tokenAddress: tokenAddress,
-                    amount: BigInt(0),
-                    label: label,
-                    chain: CHAIN.IC,
-                },
-            ],
+          ...asset,
+          label: updatedLabel,
         };
-    }
-    return values;
+      }),
+    };
+  }
+
+  if (
+    !values &&
+    allAvailableTokens &&
+    allAvailableTokens.length > 0 &&
+    link &&
+    link.linkType
+  ) {
+    // Create default values with the first available token if no values exist
+    const tokenAddress = allAvailableTokens[0].address;
+    const label = getCorrectLabel(link.linkType, tokenAddress);
+
+    return {
+      assets: [
+        {
+          tokenAddress: tokenAddress,
+          amount: BigInt(0),
+          label: label,
+          chain: CHAIN.IC,
+        },
+      ],
+    };
+  }
+  return values;
 }
 
 /**
  * Helper function to get initial form values from user input or link data
  */
 function getInitialFormValues(
-    input: Partial<UserInputItem> | undefined,
-    link: LinkDetailModel | null | undefined,
+  input: Partial<UserInputItem> | undefined,
+  link: LinkDetailModel | null | undefined,
 ): InitialFormValues | undefined {
-    if (!input?.assets || input.assets.length === 0) {
-        // If link has assets but no user input, check if we have link data directly
-        if (link?.asset_info && link.asset_info.length > 0) {
-            return {
-                assets: link.asset_info.map((asset) => {
-                    if (asset.label == undefined || asset.chain == undefined) {
-                        throw new Error(
-                            `Asset label is undefined for asset with address ${asset.address}`,
-                        );
-                    }
-                    return {
-                        tokenAddress: asset.address,
-                        amount: asset.amountPerUse,
-                        label: asset.label,
-                        chain: asset.chain,
-                    };
-                }),
-            };
-        }
-        return undefined;
-    }
-
-    return {
-        assets: input.assets.map((asset) => ({
+  if (!input?.assets || input.assets.length === 0) {
+    // If link has assets but no user input, check if we have link data directly
+    if (link?.asset_info && link.asset_info.length > 0) {
+      return {
+        assets: link.asset_info.map((asset) => {
+          if (asset.label == undefined || asset.chain == undefined) {
+            throw new Error(
+              `Asset label is undefined for asset with address ${asset.address}`,
+            );
+          }
+          return {
             tokenAddress: asset.address,
-            amount: asset.linkUseAmount,
+            amount: asset.amountPerUse,
             label: asset.label,
             chain: asset.chain,
-        })),
-    };
+          };
+        }),
+      };
+    }
+    return undefined;
+  }
+
+  return {
+    assets: input.assets.map((asset) => ({
+      tokenAddress: asset.address,
+      amount: asset.linkUseAmount,
+      label: asset.label,
+      chain: asset.chain,
+    })),
+  };
 }

@@ -4,14 +4,14 @@
 import { Agent } from "@dfinity/agent";
 
 export interface CallCanisterRequest {
-    canisterId: string;
-    calledMethodName: string;
-    parameters: string;
-    agent: Agent;
+  canisterId: string;
+  calledMethodName: string;
+  parameters: string;
+  agent: Agent;
 }
 
 export interface CallCanisterResponse {
-    contentMap: string;
-    certificate: string;
-    reply?: ArrayBuffer;
+  contentMap: string;
+  certificate: string;
+  reply?: ArrayBuffer;
 }

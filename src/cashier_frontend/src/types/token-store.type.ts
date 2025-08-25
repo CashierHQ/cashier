@@ -2,9 +2,9 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 import {
-    Chain as BackendChain,
-    TokenDto,
-    TokenId,
+  Chain as BackendChain,
+  TokenDto,
+  TokenId,
 } from "../generated/token_storage/token_storage.did";
 import { TokenModel } from "@/types/fungible-token.speculative";
 import { Chain } from "@/services/types/link.service.types";
@@ -12,52 +12,52 @@ import { IC_EXPLORER_IMAGES_PATH } from "@/const";
 import { Principal } from "@dfinity/principal";
 
 export interface TokenFilters {
-    hideZeroBalance: boolean;
-    hideUnknownToken: boolean;
-    selectedChain: string[];
+  hideZeroBalance: boolean;
+  hideUnknownToken: boolean;
+  selectedChain: string[];
 }
 
 const mapStringToFrontendChain = (chain: BackendChain): Chain => {
-    if ("IC" in chain) {
-        return Chain.IC;
-    }
+  if ("IC" in chain) {
+    return Chain.IC;
+  }
 
-    throw new Error(`Unsupported chain: ${chain}`);
+  throw new Error(`Unsupported chain: ${chain}`);
 };
 
 const mapTokenIdToString = (tokenId: TokenId): string => {
-    if ("IC" in tokenId) {
-        return tokenId.IC.ledger_id.toString();
-    }
+  if ("IC" in tokenId) {
+    return tokenId.IC.ledger_id.toString();
+  }
 
-    throw new Error(`Unsupported tokenId: ${tokenId}`);
+  throw new Error(`Unsupported tokenId: ${tokenId}`);
 };
 
 export const mapStringToTokenId = (tokenId: string, chain: string): TokenId => {
-    if (chain === "IC") {
-        return { IC: { ledger_id: Principal.fromText(tokenId) } };
-    }
-    throw new Error(`Unsupported tokenId: ${tokenId}`);
+  if (chain === "IC") {
+    return { IC: { ledger_id: Principal.fromText(tokenId) } };
+  }
+  throw new Error(`Unsupported tokenId: ${tokenId}`);
 };
 
 // Helper function to map UserToken to FungibleToken
 export const mapTokenDtoToTokenModel = (token: TokenDto): TokenModel => {
-    const tokenId = token.details.IC.ledger_id?.toString() || "";
+  const tokenId = token.details.IC.ledger_id?.toString() || "";
 
-    let enable = false;
-    if ("enabled" in token) {
-        enable = token.enabled;
-    }
+  let enable = false;
+  if ("enabled" in token) {
+    enable = token.enabled;
+  }
 
-    return {
-        id: mapTokenIdToString(token.id),
-        address: tokenId,
-        chain: mapStringToFrontendChain(token.chain),
-        name: token.name?.toString() || "Unknown Token",
-        symbol: token.symbol?.toString() || "???",
-        logo: `${IC_EXPLORER_IMAGES_PATH}${tokenId}`, // Would need to be populated from elsewhere
-        decimals: token.decimals || 8,
-        enabled: enable,
-        fee: token.details.IC.fee,
-    };
+  return {
+    id: mapTokenIdToString(token.id),
+    address: tokenId,
+    chain: mapStringToFrontendChain(token.chain),
+    name: token.name?.toString() || "Unknown Token",
+    symbol: token.symbol?.toString() || "???",
+    logo: `${IC_EXPLORER_IMAGES_PATH}${tokenId}`, // Would need to be populated from elsewhere
+    decimals: token.decimals || 8,
+    enabled: enable,
+    fee: token.details.IC.fee,
+  };
 };

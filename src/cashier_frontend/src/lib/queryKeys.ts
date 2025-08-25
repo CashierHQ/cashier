@@ -9,43 +9,43 @@ import { PartialIdentity } from "@dfinity/identity";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 
 const QUERY_KEYS = {
-    USERS: "users",
-    LINKS: "links",
-    TOKENS: "tokens",
+  USERS: "users",
+  LINKS: "links",
+  TOKENS: "tokens",
 };
 
 export const queryKeys = createQueryKeyStore({
-    users: {
-        detail: (identity: Identity | PartialIdentity | undefined) => ({
-            queryKey: [QUERY_KEYS.USERS],
-            queryFn: async () => {
-                try {
-                    const userService = new UserService(identity);
-                    const user = await userService.getUser();
-                    return user;
-                } catch (error) {
-                    console.log("🚀 ~ queryFn: ~ error:", error);
-                    throw error;
-                }
-            },
-        }),
-    },
-    links: {
-        userState: (
-            input: LinkGetUserStateInputModel,
-            identity: Identity | PartialIdentity | undefined,
-        ) => ({
-            queryKey: [QUERY_KEYS.LINKS, input.link_id, input.action_type],
-            queryFn: async () => {
-                try {
-                    const linkService = new LinkService(identity);
-                    const userState = await linkService.getLinkUserState(input);
-                    return userState;
-                } catch (error) {
-                    console.log("🚀 ~ queryFn: ~ error:", error);
-                    throw error;
-                }
-            },
-        }),
-    },
+  users: {
+    detail: (identity: Identity | PartialIdentity | undefined) => ({
+      queryKey: [QUERY_KEYS.USERS],
+      queryFn: async () => {
+        try {
+          const userService = new UserService(identity);
+          const user = await userService.getUser();
+          return user;
+        } catch (error) {
+          console.log("🚀 ~ queryFn: ~ error:", error);
+          throw error;
+        }
+      },
+    }),
+  },
+  links: {
+    userState: (
+      input: LinkGetUserStateInputModel,
+      identity: Identity | PartialIdentity | undefined,
+    ) => ({
+      queryKey: [QUERY_KEYS.LINKS, input.link_id, input.action_type],
+      queryFn: async () => {
+        try {
+          const linkService = new LinkService(identity);
+          const userState = await linkService.getLinkUserState(input);
+          return userState;
+        } catch (error) {
+          console.log("🚀 ~ queryFn: ~ error:", error);
+          throw error;
+        }
+      },
+    }),
+  },
 });

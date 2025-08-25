@@ -6,22 +6,22 @@ import { TransactionHistoryList } from "./transaction-list";
 import { TransactionRecord } from "@/types/transaction-record.speculative";
 
 interface TransactionHistory {
-    items: TransactionRecord[] | undefined;
+  items: TransactionRecord[] | undefined;
 }
 
 export function TransactionHistory({ items }: TransactionHistory) {
-    const isEmptyHistory = items && items.length === 0;
+  const isEmptyHistory = items && items.length === 0;
 
-    return (
-        <div className="px-4">
-            <h3 className="text-lg font-semibold mb-4">Transaction History</h3>
-            <div className="w-full">
-                {isEmptyHistory ? (
-                    <EmptyHistoryMessage />
-                ) : (
-                    <TransactionHistoryList items={items ?? []} />
-                )}
-            </div>
-        </div>
-    );
+  return (
+    <div className="px-4">
+      <h3 className="text-lg font-semibold mb-4">Transaction History</h3>
+      <div className="w-full">
+        {isEmptyHistory ? (
+          <EmptyHistoryMessage />
+        ) : (
+          <TransactionHistoryList items={items ?? []} />
+        )}
+      </div>
+    </div>
+  );
 }
