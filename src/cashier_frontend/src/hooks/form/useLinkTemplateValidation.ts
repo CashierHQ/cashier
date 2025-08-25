@@ -11,10 +11,10 @@ import { ValidationResult, ValidationError } from "@/types/validation.types";
 import { ErrorCode } from "@/types/error.enum";
 
 interface LinkTemplateValidationState {
-    showNoNameError: boolean;
-    showComingSoonError: boolean;
-    showUnsupportedTypeError: boolean;
-    validationErrors: ValidationError[];
+  showNoNameError: boolean;
+  showComingSoonError: boolean;
+  showUnsupportedTypeError: boolean;
+  validationErrors: ValidationError[];
 }
 
 /**
@@ -53,256 +53,270 @@ interface LinkTemplateValidationState {
  * ```
  */
 export const useLinkTemplateValidation = () => {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
 
-    // Centralized validation state
-    const [validationState, setValidationState] = useState<LinkTemplateValidationState>({
-        showNoNameError: false,
-        showComingSoonError: false,
-        showUnsupportedTypeError: false,
-        validationErrors: [],
+  // Centralized validation state
+  const [validationState, setValidationState] =
+    useState<LinkTemplateValidationState>({
+      showNoNameError: false,
+      showComingSoonError: false,
+      showUnsupportedTypeError: false,
+      validationErrors: [],
     });
 
-    // Clear all validation errors
-    const clearValidationErrors = useCallback(() => {
-        setValidationState({
-            showNoNameError: false,
-            showComingSoonError: false,
-            showUnsupportedTypeError: false,
-            validationErrors: [],
+  // Clear all validation errors
+  const clearValidationErrors = useCallback(() => {
+    setValidationState({
+      showNoNameError: false,
+      showComingSoonError: false,
+      showUnsupportedTypeError: false,
+      validationErrors: [],
+    });
+  }, []);
+
+  // Clear specific validation error
+  const clearValidationError = useCallback(
+    (errorType: keyof LinkTemplateValidationState) => {
+      setValidationState((prev) => ({
+        ...prev,
+        [errorType]: false,
+      }));
+    },
+    [],
+  );
+
+  // Clear validation errors by field
+  const clearValidationErrorsByField = useCallback((field: string) => {
+    setValidationState((prev) => ({
+      ...prev,
+      validationErrors: prev.validationErrors.filter(
+        (error) => error.field !== field,
+      ),
+    }));
+  }, []);
+
+  // Show specific validation error
+  const showValidationError = useCallback(
+    (errorType: keyof LinkTemplateValidationState) => {
+      setValidationState((prev) => ({
+        ...prev,
+        [errorType]: true,
+      }));
+    },
+    [],
+  );
+
+  // Show toast notification for validation errors
+  const showValidationErrorToast = useCallback(
+    (errors: ValidationError[]) => {
+      errors.forEach((error) => {
+        switch (error.code) {
+          case ErrorCode.REQUIRED:
+            toast.error(t("common.error"), {
+              description: error.message,
+            });
+            break;
+          case ErrorCode.TEMPLATE_COMING_SOON:
+            toast.info(t("error.template.template_coming_soon"), {
+              description: error.message,
+            });
+            break;
+          case ErrorCode.LINK_TYPE_UNSUPPORTED:
+            toast.error(t("error.link.link_type_unsupported"), {
+              description: error.message,
+            });
+            break;
+          case ErrorCode.NOT_FOUND:
+            toast.error(t("error.resource.not_found"), {
+              description: error.message,
+            });
+            break;
+          default:
+            toast.error(t("error.form.form_validation_failed"), {
+              description: error.message,
+            });
+            break;
+        }
+      });
+    },
+    [t],
+  );
+
+  // Check if link type is supported
+  const isLinkTypeSupported = useCallback((linkType: LINK_TYPE) => {
+    const supportedLinkTypes = [
+      LINK_TYPE.SEND_TIP,
+      LINK_TYPE.SEND_TOKEN_BASKET,
+      LINK_TYPE.SEND_AIRDROP,
+      LINK_TYPE.RECEIVE_PAYMENT,
+    ];
+    return supportedLinkTypes.includes(linkType);
+  }, []);
+
+  // Validate link template submission with toast notifications
+  const validateLinkTemplate = useCallback(
+    (
+      currentLink: Partial<UserInputItem> | undefined,
+      carouselIndex: number,
+    ): ValidationResult => {
+      const errors: ValidationError[] = [];
+
+      // Clear previous errors
+      clearValidationErrors();
+
+      // Validate link name
+      if (!currentLink?.title || currentLink.title.trim() === "") {
+        showValidationError("showNoNameError");
+        errors.push({
+          field: "title",
+          code: ErrorCode.REQUIRED,
+          message: t("create.errors.no_name"),
         });
-    }, []);
+      }
 
-    // Clear specific validation error
-    const clearValidationError = useCallback((errorType: keyof LinkTemplateValidationState) => {
-        setValidationState((prev) => ({
-            ...prev,
-            [errorType]: false,
-        }));
-    }, []);
+      // Validate template availability
+      const selectedTemplate = LINK_TEMPLATES[carouselIndex];
+      if (selectedTemplate?.isComingSoon) {
+        showValidationError("showComingSoonError");
+        errors.push({
+          field: "template",
+          code: ErrorCode.TEMPLATE_COMING_SOON,
+          message: t("error.template.template_coming_soon"),
+        });
+      }
 
-    // Clear validation errors by field
-    const clearValidationErrorsByField = useCallback((field: string) => {
-        setValidationState((prev) => ({
-            ...prev,
-            validationErrors: prev.validationErrors.filter((error) => error.field !== field),
-        }));
-    }, []);
+      // Validate link type support
+      if (
+        currentLink?.linkType &&
+        !isLinkTypeSupported(currentLink.linkType as LINK_TYPE)
+      ) {
+        showValidationError("showUnsupportedTypeError");
+        errors.push({
+          field: "linkType",
+          code: ErrorCode.LINK_TYPE_UNSUPPORTED,
+          message: t("error.link.link_type_unsupported"),
+        });
+      }
 
-    // Show specific validation error
-    const showValidationError = useCallback((errorType: keyof LinkTemplateValidationState) => {
-        setValidationState((prev) => ({
-            ...prev,
-            [errorType]: true,
-        }));
-    }, []);
+      // Validate link existence
+      if (currentLink && !currentLink.linkId) {
+        errors.push({
+          field: "linkId",
+          code: ErrorCode.LINK_NOT_FOUND,
+          message: t("error.resource.link_not_found"),
+        });
+      }
 
-    // Show toast notification for validation errors
-    const showValidationErrorToast = useCallback(
-        (errors: ValidationError[]) => {
-            errors.forEach((error) => {
-                switch (error.code) {
-                    case ErrorCode.REQUIRED:
-                        toast.error(t("common.error"), {
-                            description: error.message,
-                        });
-                        break;
-                    case ErrorCode.TEMPLATE_COMING_SOON:
-                        toast.info(t("error.template.template_coming_soon"), {
-                            description: error.message,
-                        });
-                        break;
-                    case ErrorCode.LINK_TYPE_UNSUPPORTED:
-                        toast.error(t("error.link.link_type_unsupported"), {
-                            description: error.message,
-                        });
-                        break;
-                    case ErrorCode.NOT_FOUND:
-                        toast.error(t("error.resource.not_found"), {
-                            description: error.message,
-                        });
-                        break;
-                    default:
-                        toast.error(t("error.form.form_validation_failed"), {
-                            description: error.message,
-                        });
-                        break;
-                }
-            });
-        },
-        [t],
+      // Store validation errors in state
+      setValidationState((prev) => ({
+        ...prev,
+        validationErrors: errors,
+      }));
+
+      // Show toast notifications for errors
+      if (errors.length > 0) {
+        showValidationErrorToast(errors);
+      }
+
+      return {
+        isValid: errors.length === 0,
+        errors,
+      };
+    },
+    [
+      t,
+      clearValidationErrors,
+      showValidationError,
+      isLinkTypeSupported,
+      showValidationErrorToast,
+    ],
+  );
+
+  // Get validation message for display (fallback for UI components)
+  const getValidationMessage = useCallback(
+    (errorType: keyof LinkTemplateValidationState): string => {
+      // First check for specific validation errors
+      const relevantError = validationState.validationErrors.find((error) => {
+        switch (errorType) {
+          case "showNoNameError":
+            return error.field === "title" && error.code === ErrorCode.REQUIRED;
+          case "showComingSoonError":
+            return (
+              error.field === "template" &&
+              error.code === ErrorCode.TEMPLATE_COMING_SOON
+            );
+          case "showUnsupportedTypeError":
+            return (
+              error.field === "linkType" &&
+              error.code === ErrorCode.LINK_TYPE_UNSUPPORTED
+            );
+          default:
+            return false;
+        }
+      });
+
+      // Return the specific error message if found
+      if (relevantError) {
+        return relevantError.message;
+      }
+
+      // Fallback to default messages
+      switch (errorType) {
+        case "showNoNameError":
+          return t("create.errors.no_name");
+        case "showComingSoonError":
+          return t("error.template.template_coming_soon");
+        case "showUnsupportedTypeError":
+          return t("error.link.link_type_unsupported");
+        default:
+          return "";
+      }
+    },
+    [t, validationState.validationErrors],
+  );
+
+  // Check if any validation errors are active
+  const hasValidationErrors = useCallback(() => {
+    return (
+      Object.values(validationState).some((error) => error) ||
+      validationState.validationErrors.length > 0
     );
+  }, [validationState]);
 
-    // Check if link type is supported
-    const isLinkTypeSupported = useCallback((linkType: LINK_TYPE) => {
-        const supportedLinkTypes = [
-            LINK_TYPE.SEND_TIP,
-            LINK_TYPE.SEND_TOKEN_BASKET,
-            LINK_TYPE.SEND_AIRDROP,
-            LINK_TYPE.RECEIVE_PAYMENT,
-        ];
-        return supportedLinkTypes.includes(linkType);
-    }, []);
+  // Get all validation errors for display
+  const getAllValidationErrors = useCallback(() => {
+    return validationState.validationErrors;
+  }, [validationState.validationErrors]);
 
-    // Validate link template submission with toast notifications
-    const validateLinkTemplate = useCallback(
-        (
-            currentLink: Partial<UserInputItem> | undefined,
-            carouselIndex: number,
-        ): ValidationResult => {
-            const errors: ValidationError[] = [];
+  // Get validation errors by field
+  const getValidationErrorsByField = useCallback(
+    (field: string) => {
+      return validationState.validationErrors.filter(
+        (error) => error.field === field,
+      );
+    },
+    [validationState.validationErrors],
+  );
 
-            // Clear previous errors
-            clearValidationErrors();
+  return {
+    // Validation state
+    validationState,
 
-            // Validate link name
-            if (!currentLink?.title || currentLink.title.trim() === "") {
-                showValidationError("showNoNameError");
-                errors.push({
-                    field: "title",
-                    code: ErrorCode.REQUIRED,
-                    message: t("create.errors.no_name"),
-                });
-            }
+    // Validation methods
+    validateLinkTemplate,
+    clearValidationErrors,
+    clearValidationError,
+    clearValidationErrorsByField,
+    showValidationError,
+    isLinkTypeSupported,
 
-            // Validate template availability
-            const selectedTemplate = LINK_TEMPLATES[carouselIndex];
-            if (selectedTemplate?.isComingSoon) {
-                showValidationError("showComingSoonError");
-                errors.push({
-                    field: "template",
-                    code: ErrorCode.TEMPLATE_COMING_SOON,
-                    message: t("error.template.template_coming_soon"),
-                });
-            }
+    // Toast methods
+    showValidationErrorToast,
 
-            // Validate link type support
-            if (currentLink?.linkType && !isLinkTypeSupported(currentLink.linkType as LINK_TYPE)) {
-                showValidationError("showUnsupportedTypeError");
-                errors.push({
-                    field: "linkType",
-                    code: ErrorCode.LINK_TYPE_UNSUPPORTED,
-                    message: t("error.link.link_type_unsupported"),
-                });
-            }
-
-            // Validate link existence
-            if (currentLink && !currentLink.linkId) {
-                errors.push({
-                    field: "linkId",
-                    code: ErrorCode.LINK_NOT_FOUND,
-                    message: t("error.resource.link_not_found"),
-                });
-            }
-
-            // Store validation errors in state
-            setValidationState((prev) => ({
-                ...prev,
-                validationErrors: errors,
-            }));
-
-            // Show toast notifications for errors
-            if (errors.length > 0) {
-                showValidationErrorToast(errors);
-            }
-
-            return {
-                isValid: errors.length === 0,
-                errors,
-            };
-        },
-        [
-            t,
-            clearValidationErrors,
-            showValidationError,
-            isLinkTypeSupported,
-            showValidationErrorToast,
-        ],
-    );
-
-    // Get validation message for display (fallback for UI components)
-    const getValidationMessage = useCallback(
-        (errorType: keyof LinkTemplateValidationState): string => {
-            // First check for specific validation errors
-            const relevantError = validationState.validationErrors.find((error) => {
-                switch (errorType) {
-                    case "showNoNameError":
-                        return error.field === "title" && error.code === ErrorCode.REQUIRED;
-                    case "showComingSoonError":
-                        return (
-                            error.field === "template" &&
-                            error.code === ErrorCode.TEMPLATE_COMING_SOON
-                        );
-                    case "showUnsupportedTypeError":
-                        return (
-                            error.field === "linkType" &&
-                            error.code === ErrorCode.LINK_TYPE_UNSUPPORTED
-                        );
-                    default:
-                        return false;
-                }
-            });
-
-            // Return the specific error message if found
-            if (relevantError) {
-                return relevantError.message;
-            }
-
-            // Fallback to default messages
-            switch (errorType) {
-                case "showNoNameError":
-                    return t("create.errors.no_name");
-                case "showComingSoonError":
-                    return t("error.template.template_coming_soon");
-                case "showUnsupportedTypeError":
-                    return t("error.link.link_type_unsupported");
-                default:
-                    return "";
-            }
-        },
-        [t, validationState.validationErrors],
-    );
-
-    // Check if any validation errors are active
-    const hasValidationErrors = useCallback(() => {
-        return (
-            Object.values(validationState).some((error) => error) ||
-            validationState.validationErrors.length > 0
-        );
-    }, [validationState]);
-
-    // Get all validation errors for display
-    const getAllValidationErrors = useCallback(() => {
-        return validationState.validationErrors;
-    }, [validationState.validationErrors]);
-
-    // Get validation errors by field
-    const getValidationErrorsByField = useCallback(
-        (field: string) => {
-            return validationState.validationErrors.filter((error) => error.field === field);
-        },
-        [validationState.validationErrors],
-    );
-
-    return {
-        // Validation state
-        validationState,
-
-        // Validation methods
-        validateLinkTemplate,
-        clearValidationErrors,
-        clearValidationError,
-        clearValidationErrorsByField,
-        showValidationError,
-        isLinkTypeSupported,
-
-        // Toast methods
-        showValidationErrorToast,
-
-        // Utility methods
-        getValidationMessage,
-        hasValidationErrors,
-        getAllValidationErrors,
-        getValidationErrorsByField,
-    };
+    // Utility methods
+    getValidationMessage,
+    hasValidationErrors,
+    getAllValidationErrors,
+    getValidationErrorsByField,
+  };
 };

@@ -5,9 +5,9 @@ import { Children, ReactElement, ReactNode, useEffect } from "react";
 import { ChevronLeft, LoaderCircle, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-    MultiStepFormContext,
-    MultiStepFormProvider,
-    useMultiStepFormContext,
+  MultiStepFormContext,
+  MultiStepFormProvider,
+  useMultiStepFormContext,
 } from "@/contexts/multistep-form-context";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { Button } from "./ui/button";
@@ -17,173 +17,183 @@ import { useWalletContext } from "@/contexts/wallet-context";
 import { useDeviceSize } from "@/hooks/responsive-hook";
 
 interface MultiStepFormProps {
-    initialStep: number;
-    children: ReactNode;
+  initialStep: number;
+  children: ReactNode;
 }
 
-export function MultiStepForm({ initialStep = 0, children }: MultiStepFormProps) {
-    return (
-        <MultiStepFormProvider initialStep={initialStep}>
-            <div className="w-full flex-grow flex flex-col h-full">{children}</div>
-        </MultiStepFormProvider>
-    );
+export function MultiStepForm({
+  initialStep = 0,
+  children,
+}: MultiStepFormProps) {
+  return (
+    <MultiStepFormProvider initialStep={initialStep}>
+      <div className="w-full flex-grow flex flex-col h-full">{children}</div>
+    </MultiStepFormProvider>
+  );
 }
 
 interface MultiStepFormHeaderProps {
-    onClickBack?: (context: MultiStepFormContext) => void;
-    showIndicator?: boolean;
-    showHeader?: boolean;
-    backButtonDisabled?: boolean;
+  onClickBack?: (context: MultiStepFormContext) => void;
+  showIndicator?: boolean;
+  showHeader?: boolean;
+  backButtonDisabled?: boolean;
 }
 
 function MultiStepFormHeader({
-    onClickBack = () => {},
-    showIndicator = true,
-    showHeader = true,
-    backButtonDisabled = false,
+  onClickBack = () => {},
+  showIndicator = true,
+  showHeader = true,
+  backButtonDisabled = false,
 }: MultiStepFormHeaderProps) {
-    const context = useMultiStepFormContext();
-    const { openWallet } = useWalletContext();
-    const responsive = useDeviceSize();
+  const context = useMultiStepFormContext();
+  const { openWallet } = useWalletContext();
+  const responsive = useDeviceSize();
 
-    return (
-        <div className="w-full flex-none">
-            {showHeader && (
-                <div className="w-full flex items-center justify-center mb-1.5 py-1 relative">
-                    <h4 className="scroll-m-20 text-lg font-semibold tracking-tight self-center transition-opacity duration-200">
-                        {context.stepName}
-                    </h4>
-                    <button
-                        className="absolute left-0 cursor-pointer text-[1.5rem] transition-transform hover:scale-105"
-                        onClick={() => onClickBack(context)}
-                        disabled={backButtonDisabled}
-                    >
-                        {backButtonDisabled ? (
-                            <LoaderCircle
-                                width={22}
-                                height={22}
-                                strokeWidth={2}
-                                className="animate-spin"
-                            />
-                        ) : (
-                            <ChevronLeft width={25} height={25} strokeWidth={2} />
-                        )}
-                    </button>
-
-                    {responsive.isSmallDevice && (
-                        <div className="flex items-center gap-3 absolute right-0">
-                            <Button
-                                variant="outline"
-                                className="ml-auto light-borders p-0 w-9 h-9"
-                                onClick={() => openWallet()}
-                            >
-                                <Wallet size={16} color={"#35A18A"} />
-                            </Button>
-                            <SheetTrigger asChild>
-                                <Button variant="outline" size="icon" className="light-borders">
-                                    <RiMenu2Line />
-                                </Button>
-                            </SheetTrigger>
-                        </div>
-                    )}
-                </div>
+  return (
+    <div className="w-full flex-none">
+      {showHeader && (
+        <div className="w-full flex items-center justify-center mb-1.5 py-1 relative">
+          <h4 className="scroll-m-20 text-lg font-semibold tracking-tight self-center transition-opacity duration-200">
+            {context.stepName}
+          </h4>
+          <button
+            className="absolute left-0 cursor-pointer text-[1.5rem] transition-transform hover:scale-105"
+            onClick={() => onClickBack(context)}
+            disabled={backButtonDisabled}
+          >
+            {backButtonDisabled ? (
+              <LoaderCircle
+                width={22}
+                height={22}
+                strokeWidth={2}
+                className="animate-spin"
+              />
+            ) : (
+              <ChevronLeft width={25} height={25} strokeWidth={2} />
             )}
+          </button>
 
-            {showIndicator && (
-                <div className="flex w-full mb-3">
-                    {new Array(context.steps).fill(0).map((_, index) => (
-                        <div
-                            key={index}
-                            className={cn(
-                                "h-[6px] rounded-full mx-[2px] transition-all duration-300",
-                                {
-                                    "bg-green": index <= context.step,
-                                    "bg-lightgreen": index > context.step,
-                                },
-                            )}
-                            style={{ width: `${100 / context.steps}%` }}
-                        />
-                    ))}
-                </div>
-            )}
+          {responsive.isSmallDevice && (
+            <div className="flex items-center gap-3 absolute right-0">
+              <Button
+                variant="outline"
+                className="ml-auto light-borders p-0 w-9 h-9"
+                onClick={() => openWallet()}
+              >
+                <Wallet size={16} color={"#35A18A"} />
+              </Button>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="light-borders">
+                  <RiMenu2Line />
+                </Button>
+              </SheetTrigger>
+            </div>
+          )}
         </div>
-    );
+      )}
+
+      {showIndicator && (
+        <div className="flex w-full mb-3">
+          {new Array(context.steps).fill(0).map((_, index) => (
+            <div
+              key={index}
+              className={cn(
+                "h-[6px] rounded-full mx-[2px] transition-all duration-300",
+                {
+                  "bg-green": index <= context.step,
+                  "bg-lightgreen": index > context.step,
+                },
+              )}
+              style={{ width: `${100 / context.steps}%` }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 interface MultiStepFormItemsProps {
-    children?: ReactNode;
-    disableAnimations?: boolean;
+  children?: ReactNode;
+  disableAnimations?: boolean;
 }
 
-function MultiStepFormItems({ children, disableAnimations = false }: MultiStepFormItemsProps) {
-    const { step, setSteps, setStepName, direction } = useMultiStepFormContext();
+function MultiStepFormItems({
+  children,
+  disableAnimations = false,
+}: MultiStepFormItemsProps) {
+  const { step, setSteps, setStepName, direction } = useMultiStepFormContext();
 
-    const stepsList = Children.toArray(children) as ReactElement<MultiStepFormItemProps>[];
-    const stepComponent = stepsList[step];
+  const stepsList = Children.toArray(
+    children,
+  ) as ReactElement<MultiStepFormItemProps>[];
+  const stepComponent = stepsList[step];
 
-    useEffect(() => {
-        setSteps(stepsList.length);
-        setStepName(stepComponent.props.name);
-    }, [step, children]);
+  useEffect(() => {
+    setSteps(stepsList.length);
+    setStepName(stepComponent.props.name);
+  }, [step, children]);
 
-    return (
-        <div className="relative w-full flex-1 flex flex-col">
-            <div
-                key={step}
-                className={cn(
-                    "w-full h-full flex flex-col flex-grow",
-                    !disableAnimations && "transition-all duration-300 ease-in-out",
-                    !disableAnimations &&
-                        direction === "forward" && [
-                            "animate-in slide-in-from-right",
-                            "data-[state=entering]:translate-x-full",
-                            "data-[state=entered]:translate-x-0",
-                        ],
-                    !disableAnimations &&
-                        direction === "backward" && [
-                            "animate-in slide-in-from-left",
-                            "data-[state=entering]:translate-x-[-100%]",
-                            "data-[state=entered]:translate-x-0",
-                        ],
-                )}
-            >
-                {stepComponent}
-            </div>
-        </div>
-    );
+  return (
+    <div className="relative w-full flex-1 flex flex-col">
+      <div
+        key={step}
+        className={cn(
+          "w-full h-full flex flex-col flex-grow",
+          !disableAnimations && "transition-all duration-300 ease-in-out",
+          !disableAnimations &&
+            direction === "forward" && [
+              "animate-in slide-in-from-right",
+              "data-[state=entering]:translate-x-full",
+              "data-[state=entered]:translate-x-0",
+            ],
+          !disableAnimations &&
+            direction === "backward" && [
+              "animate-in slide-in-from-left",
+              "data-[state=entering]:translate-x-[-100%]",
+              "data-[state=entered]:translate-x-0",
+            ],
+        )}
+      >
+        {stepComponent}
+      </div>
+    </div>
+  );
 }
 
 interface MultiStepFormFooterProps {
-    showFixedButton?: boolean;
+  showFixedButton?: boolean;
 }
 
-function MultiStepFormFooter({ showFixedButton = true }: MultiStepFormFooterProps) {
-    const { buttonState } = useLinkCreationFormStore();
+function MultiStepFormFooter({
+  showFixedButton = true,
+}: MultiStepFormFooterProps) {
+  const { buttonState } = useLinkCreationFormStore();
 
-    if (!showFixedButton) return null;
+  if (!showFixedButton) return null;
 
-    return (
-        <div className="flex-none w-full mb-5 w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10">
-            <Button
-                type="button"
-                variant="default"
-                className="w-full disabled:bg-disabledgreen"
-                onClick={buttonState.action || undefined}
-                disabled={buttonState.isDisabled}
-            >
-                {buttonState.label}
-            </Button>
-        </div>
-    );
+  return (
+    <div className="flex-none w-full mb-5 w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10">
+      <Button
+        type="button"
+        variant="default"
+        className="w-full disabled:bg-disabledgreen"
+        onClick={buttonState.action || undefined}
+        disabled={buttonState.isDisabled}
+      >
+        {buttonState.label}
+      </Button>
+    </div>
+  );
 }
 
 interface MultiStepFormItemProps {
-    name: string;
-    children: ReactNode;
+  name: string;
+  children: ReactNode;
 }
 
 function MultiStepFormItem({ children }: MultiStepFormItemProps) {
-    return <div className="flex flex-col flex-1">{children}</div>;
+  return <div className="flex flex-col flex-1">{children}</div>;
 }
 
 MultiStepForm.Header = MultiStepFormHeader;
