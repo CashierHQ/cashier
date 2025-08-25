@@ -4,14 +4,14 @@
 /// <reference types="vite/client" />
 
 interface ImportMeta {
-    readonly env: ImportMetaEnv;
+  readonly env: ImportMetaEnv;
 }
 
 declare module "*.worker.ts" {
-    const workerConstructor: {
-        new (options?: WorkerOptions): Worker;
-    };
-    export default workerConstructor;
+  const workerConstructor: {
+    new (options?: WorkerOptions): Worker;
+  };
+  export default workerConstructor;
 }
 
 // Build information globals

@@ -10,155 +10,171 @@ import { Principal } from "@dfinity/principal";
 import { Token, TokenAmountV2 } from "@dfinity/utils";
 
 export class TokenUtilService {
-    private agent: Agent;
-    private identity: Identity | undefined;
+  private agent: Agent;
+  private identity: Identity | undefined;
 
-    constructor(identity?: Identity | PartialIdentity | undefined) {
-        this.agent = getAgent(identity);
-        this.identity = identity;
+  constructor(identity?: Identity | PartialIdentity | undefined) {
+    this.agent = getAgent(identity);
+    this.identity = identity;
+  }
+  public static async getTokenMetadata(tokenAddres: string) {
+    const { metadata } = IcrcLedgerCanister.create({
+      agent: getAgent(),
+      canisterId: Principal.fromText(tokenAddres ?? ""),
+    });
+    const data = await metadata({});
+    const result = mapTokenMetadata(data);
+    return result;
+  }
+
+  public static async getHumanReadableAmount(
+    amount: bigint,
+    tokenAddress: string,
+  ): Promise<number> {
+    if (!amount || !tokenAddress) {
+      return 0;
     }
-    public static async getTokenMetadata(tokenAddres: string) {
-        const { metadata } = IcrcLedgerCanister.create({
-            agent: getAgent(),
-            canisterId: Principal.fromText(tokenAddres ?? ""),
+
+    const tokenMetadata = await this.getTokenMetadata(tokenAddress);
+    const tokenV2 = TokenAmountV2.fromUlps({
+      amount,
+      token: tokenMetadata as Token,
+    });
+    const upls = tokenV2.toUlps();
+    return Number(upls) / 10 ** tokenV2.token.decimals;
+  }
+
+  // For token objects (sync)
+  public static getHumanReadableAmountFromToken(
+    amount: bigint,
+    token: FungibleToken,
+  ): number {
+    if (!amount || !token || token.decimals === undefined) {
+      return 0;
+    }
+
+    return Number(amount) / 10 ** token.decimals;
+  }
+
+  async balanceOf(tokenAddress: string) {
+    const ledgerCanister = IcrcLedgerCanister.create({
+      agent: this.agent,
+      canisterId: Principal.fromText(tokenAddress),
+    });
+
+    const pid = this.identity?.getPrincipal().toString() ?? "";
+
+    try {
+      const balance = await ledgerCanister.balance({
+        owner: Principal.fromText(pid),
+      });
+      return balance;
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+      return BigInt(0);
+    }
+  }
+
+  async batchBalanceOfAccount(
+    account: {
+      owner: Principal;
+      subaccount?: Uint8Array | undefined;
+    },
+    ledgers: Principal[],
+  ) {
+    const tasks = ledgers.map(async (ledgerCanisterId) => {
+      const ledgerCanister = IcrcLedgerCanister.create({
+        agent: this.agent,
+        canisterId: ledgerCanisterId,
+      });
+
+      try {
+        const balance = await ledgerCanister.balance(account);
+        console.log(
+          `Fetched balance for ${ledgerCanisterId.toString()}: ${balance.toString()}`,
+        );
+        return { tokenAddress: ledgerCanisterId, balance };
+      } catch (error) {
+        console.error(error);
+        // Return the original token address with zero balance when there's an error
+        return { tokenAddress: ledgerCanisterId, balance: BigInt(0) };
+      }
+    });
+
+    return await Promise.all(tasks);
+  }
+
+  async batchBalanceOf(tokenAddresses: Principal[]) {
+    const tasks = tokenAddresses.map(async (tokenAddress) => {
+      const ledgerCanister = IcrcLedgerCanister.create({
+        agent: this.agent,
+        canisterId: tokenAddress,
+      });
+
+      const pid = this.identity?.getPrincipal().toString() ?? "";
+
+      try {
+        const balance = await ledgerCanister.balance({
+          owner: Principal.fromText(pid),
         });
-        const data = await metadata({});
-        const result = mapTokenMetadata(data);
-        return result;
-    }
+        return { tokenAddress, balance };
+      } catch (error) {
+        console.error(
+          "Error fetching balance for ${tokenAddress.toString()}:",
+          error,
+        );
+        // Return the original token address with zero balance when there's an error
+        return { tokenAddress, balance: BigInt(0) };
+      }
+    });
 
-    public static async getHumanReadableAmount(
-        amount: bigint,
-        tokenAddress: string,
-    ): Promise<number> {
-        if (!amount || !tokenAddress) {
-            return 0;
-        }
+    const results = await Promise.allSettled(tasks);
 
-        const tokenMetadata = await this.getTokenMetadata(tokenAddress);
-        const tokenV2 = TokenAmountV2.fromUlps({ amount, token: tokenMetadata as Token });
-        const upls = tokenV2.toUlps();
-        return Number(upls) / 10 ** tokenV2.token.decimals;
-    }
+    // Process results, preserving the original tokenAddress even for rejected promises
+    const balances = results.map((result, index) => {
+      if (result.status === "fulfilled") {
+        return result.value;
+      } else {
+        // For rejected promises, use the original tokenAddress from our input array
+        return {
+          tokenAddress: tokenAddresses[index],
+          balance: BigInt(0),
+        };
+      }
+    });
 
-    // For token objects (sync)
-    public static getHumanReadableAmountFromToken(amount: bigint, token: FungibleToken): number {
-        if (!amount || !token || token.decimals === undefined) {
-            return 0;
-        }
+    return balances;
+  }
 
-        return Number(amount) / 10 ** token.decimals;
-    }
+  // the amount is in human readable format
+  async transferTo(
+    receiverAddress: string,
+    tokenAddress: string,
+    amount: number,
+  ) {
+    const ledgerCanister = IcrcLedgerCanister.create({
+      agent: this.agent,
+      canisterId: Principal.fromText(tokenAddress),
+    });
 
-    async balanceOf(tokenAddress: string) {
-        const ledgerCanister = IcrcLedgerCanister.create({
-            agent: this.agent,
-            canisterId: Principal.fromText(tokenAddress),
-        });
+    const tokenMetadata = await TokenUtilService.getTokenMetadata(tokenAddress);
+    const tokenV2 = TokenAmountV2.fromNumber({
+      amount,
+      token: tokenMetadata as Token,
+    });
 
-        const pid = this.identity?.getPrincipal().toString() ?? "";
+    const transfer_amount = tokenV2.toE8s();
 
-        try {
-            const balance = await ledgerCanister.balance({
-                owner: Principal.fromText(pid),
-            });
-            return balance;
-        } catch (error) {
-            console.error("Error fetching balance:", error);
-            return BigInt(0);
-        }
-    }
-
-    async batchBalanceOfAccount(
-        account: {
-            owner: Principal;
-            subaccount?: Uint8Array | undefined;
-        },
-        ledgers: Principal[],
-    ) {
-        const tasks = ledgers.map(async (ledgerCanisterId) => {
-            const ledgerCanister = IcrcLedgerCanister.create({
-                agent: this.agent,
-                canisterId: ledgerCanisterId,
-            });
-
-            try {
-                const balance = await ledgerCanister.balance(account);
-                console.log(
-                    `Fetched balance for ${ledgerCanisterId.toString()}: ${balance.toString()}`,
-                );
-                return { tokenAddress: ledgerCanisterId, balance };
-            } catch (error) {
-                console.error(error);
-                // Return the original token address with zero balance when there's an error
-                return { tokenAddress: ledgerCanisterId, balance: BigInt(0) };
-            }
-        });
-
-        return await Promise.all(tasks);
-    }
-
-    async batchBalanceOf(tokenAddresses: Principal[]) {
-        const tasks = tokenAddresses.map(async (tokenAddress) => {
-            const ledgerCanister = IcrcLedgerCanister.create({
-                agent: this.agent,
-                canisterId: tokenAddress,
-            });
-
-            const pid = this.identity?.getPrincipal().toString() ?? "";
-
-            try {
-                const balance = await ledgerCanister.balance({
-                    owner: Principal.fromText(pid),
-                });
-                return { tokenAddress, balance };
-            } catch (error) {
-                console.error("Error fetching balance for ${tokenAddress.toString()}:", error);
-                // Return the original token address with zero balance when there's an error
-                return { tokenAddress, balance: BigInt(0) };
-            }
-        });
-
-        const results = await Promise.allSettled(tasks);
-
-        // Process results, preserving the original tokenAddress even for rejected promises
-        const balances = results.map((result, index) => {
-            if (result.status === "fulfilled") {
-                return result.value;
-            } else {
-                // For rejected promises, use the original tokenAddress from our input array
-                return {
-                    tokenAddress: tokenAddresses[index],
-                    balance: BigInt(0),
-                };
-            }
-        });
-
-        return balances;
-    }
-
-    // the amount is in human readable format
-    async transferTo(receiverAddress: string, tokenAddress: string, amount: number) {
-        const ledgerCanister = IcrcLedgerCanister.create({
-            agent: this.agent,
-            canisterId: Principal.fromText(tokenAddress),
-        });
-
-        const tokenMetadata = await TokenUtilService.getTokenMetadata(tokenAddress);
-        const tokenV2 = TokenAmountV2.fromNumber({ amount, token: tokenMetadata as Token });
-
-        const transfer_amount = tokenV2.toE8s();
-
-        return await ledgerCanister.transfer({
-            to: {
-                owner: Principal.fromText(receiverAddress),
-                subaccount: [],
-            },
-            amount: transfer_amount,
-            fee: undefined,
-            memo: undefined,
-            from_subaccount: undefined,
-            created_at_time: undefined,
-        });
-    }
+    return await ledgerCanister.transfer({
+      to: {
+        owner: Principal.fromText(receiverAddress),
+        subaccount: [],
+      },
+      amount: transfer_amount,
+      fee: undefined,
+      memo: undefined,
+      from_subaccount: undefined,
+      created_at_time: undefined,
+    });
+  }
 }

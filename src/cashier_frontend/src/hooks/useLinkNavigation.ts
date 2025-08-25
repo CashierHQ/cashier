@@ -30,57 +30,60 @@ import { LinkGetUserStateOutputModel } from "@/services/types/link.service.types
  * goToComplete({ replace: true });
  */
 export const useLinkUseNavigation = (linkId?: string) => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    /**
-     * Navigate to the link's default view
-     */
-    const goToLinkDefault = useCallback(() => {
-        if (!linkId) return;
-        navigate(`/${linkId}`);
-    }, [linkId, navigate]);
+  /**
+   * Navigate to the link's default view
+   */
+  const goToLinkDefault = useCallback(() => {
+    if (!linkId) return;
+    navigate(`/${linkId}`);
+  }, [linkId, navigate]);
 
-    /**
-     * Navigate to the choose wallet view
-     */
-    const goToChooseWallet = useCallback(() => {
-        if (!linkId) return;
-        navigate(`/${linkId}/choose-wallet`);
-    }, [linkId, navigate]);
+  /**
+   * Navigate to the choose wallet view
+   */
+  const goToChooseWallet = useCallback(() => {
+    if (!linkId) return;
+    navigate(`/${linkId}/choose-wallet`);
+  }, [linkId, navigate]);
 
-    /**
-     * Navigate to the completion view
-     * @param options Navigation options
-     */
-    const goToComplete = useCallback(
-        (options?: NavigateOptions) => {
-            if (!linkId) return;
-            navigate(`/${linkId}/complete`, options);
-        },
-        [linkId, navigate],
-    );
+  /**
+   * Navigate to the completion view
+   * @param options Navigation options
+   */
+  const goToComplete = useCallback(
+    (options?: NavigateOptions) => {
+      if (!linkId) return;
+      navigate(`/${linkId}/complete`, options);
+    },
+    [linkId, navigate],
+  );
 
-    /**
-     * Handle navigation based on link user state
-     * @param userState The current link user state
-     * @param isAuthenticated Whether the user is authenticated
-     */
-    const handleStateBasedNavigation = useCallback(
-        (userState?: LinkGetUserStateOutputModel, isAuthenticated?: boolean) => {
-            if (!linkId) return;
+  /**
+   * Handle navigation based on link user state
+   * @param userState The current link user state
+   * @param isAuthenticated Whether the user is authenticated
+   */
+  const handleStateBasedNavigation = useCallback(
+    (userState?: LinkGetUserStateOutputModel, isAuthenticated?: boolean) => {
+      if (!linkId) return;
 
-            // For logged-in users with complete state, redirect to complete page
-            if (isAuthenticated && userState?.link_user_state === LINK_USER_STATE.COMPLETE) {
-                goToComplete({ replace: true });
-            }
-        },
-        [linkId, goToComplete],
-    );
+      // For logged-in users with complete state, redirect to complete page
+      if (
+        isAuthenticated &&
+        userState?.link_user_state === LINK_USER_STATE.COMPLETE
+      ) {
+        goToComplete({ replace: true });
+      }
+    },
+    [linkId, goToComplete],
+  );
 
-    return {
-        goToLinkDefault,
-        goToChooseWallet,
-        goToComplete,
-        handleStateBasedNavigation,
-    };
+  return {
+    goToLinkDefault,
+    goToChooseWallet,
+    goToComplete,
+    handleStateBasedNavigation,
+  };
 };
