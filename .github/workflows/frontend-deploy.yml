@@ -86,9 +86,6 @@ jobs:
                   dfx identity use deployer
                   dfx identity get-principal
 
-            - name: Install project dependencies
-              run: npm install
-
             - name: Deploy to ${{ needs.setup_environment.outputs.environment }} environment
               env:
                   VITE_IC_EXPLORER_BASE_URL: ${{ vars.VITE_IC_EXPLORER_BASE_URL }}
