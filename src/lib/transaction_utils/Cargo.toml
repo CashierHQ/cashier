@@ -9,5 +9,3 @@ base64 = { workspace = true }
 candid = { workspace = true }
 icrc-ledger-types = { workspace = true }
 serde = { workspace = true }
-
-[dev-dependencies]
