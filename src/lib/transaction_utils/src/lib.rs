@@ -5,6 +5,8 @@ use crate::types::CanisterCall;
 
 pub mod types;
 
+// build a canister call payload with base64 encoded argument
+// this canister call only execute on client side
 pub fn build_canister_call<T: CandidType>(
     canister_id: &Principal,
     method: impl Into<String>,
