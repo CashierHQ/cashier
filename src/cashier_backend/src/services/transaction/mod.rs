@@ -108,7 +108,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionService<E, R> {
                 let canister_call = build_canister_call(&canister_id, "icrc1_transfer", &arg);
 
                 Ok(Icrc112Request {
-                    canister_id: canister_call.canister_id.to_text(),
+                    canister_id: canister_call.canister_id,
                     method: canister_call.method,
                     arg: canister_call.arg,
                     nonce: Some(tx.id.clone()),
@@ -138,7 +138,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionService<E, R> {
                 let canister_call = build_canister_call(&canister_id, "icrc2_approve", &arg);
 
                 Ok(Icrc112Request {
-                    canister_id: canister_call.canister_id.to_text(),
+                    canister_id: canister_call.canister_id,
                     method: canister_call.method,
                     arg: canister_call.arg,
                     nonce: Some(tx.id.clone()),
@@ -155,7 +155,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionService<E, R> {
                 let canister_call = build_canister_call(canister_id, method, &input);
 
                 Ok(Icrc112Request {
-                    canister_id: canister_call.canister_id.to_text(),
+                    canister_id: canister_call.canister_id,
                     method: canister_call.method,
                     arg: canister_call.arg,
                     nonce: Some(tx.id.clone()),

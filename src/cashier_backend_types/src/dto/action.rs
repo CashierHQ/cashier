@@ -3,7 +3,7 @@
 
 use std::collections::HashMap;
 
-use candid::{CandidType, Nat};
+use candid::{CandidType, Nat, Principal};
 
 use icrc_ledger_types::icrc1::transfer::Memo;
 use serde::{Deserialize, Serialize};
@@ -383,7 +383,8 @@ impl From<Transaction> for TransactionDto {
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct Icrc112Request {
-    pub canister_id: String,
+    // pub canister_id: String,
+    pub canister_id: Principal,
     pub method: String,
     pub arg: String,
     pub nonce: Option<String>,

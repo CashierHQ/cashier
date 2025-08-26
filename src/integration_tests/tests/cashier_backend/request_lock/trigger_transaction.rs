@@ -71,14 +71,12 @@ async fn test_request_lock_for_trigger_action() {
             .unwrap();
 
         // Act: submit 3 concurrent calls and collect results
-        let canister_id = Principal::from_text(&trigger_transaction_req.canister_id)
-            .expect("invalid canister ID");
         let mut msgs = Vec::with_capacity(3);
         for _ in 0..3 {
             msgs.push(
                 ctx.client
                     .submit_call(
-                        canister_id,
+                        trigger_transaction_req.canister_id,
                         caller,
                         &trigger_transaction_req.method,
                         payload.clone(),
