@@ -263,6 +263,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionUpdate
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::constant::ICP_CANISTER_ID;
     use crate::repositories::tests::TestRepositories;
     use crate::services::transaction_manager::test_fixtures::*;
     use crate::utils::test_utils::{
@@ -485,7 +486,7 @@ mod tests {
                 },
                 to: Wallet::default(),
                 asset: Asset {
-                    address: "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
+                    address: ICP_CANISTER_ID.to_string(),
                     chain: Chain::IC,
                 },
                 amount: Nat::from(1000u64),
