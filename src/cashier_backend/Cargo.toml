@@ -21,8 +21,8 @@ ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic_mple_log = { workspace = true }
 ic-stable-structures = { workspace = true }
-icrc-ledger-types = { workspace = true }
 icrc_112_utils = { workspace = true }
+icrc-ledger-types = { workspace = true }
 itertools = { workspace = true }
 log = { workspace = true }
 rand = { workspace = true, features = ["getrandom"] }
