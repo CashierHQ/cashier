@@ -249,7 +249,6 @@ dependencies = [
  "getrandom 0.2.16",
  "ic-cdk",
  "ic-cdk-timers",
- "ic-icrc-tx",
  "ic-stable-structures 0.7.0",
  "ic_mple_log",
  "icrc-ledger-types",
@@ -263,6 +262,7 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.14",
  "tokio",
+ "transaction_utils",
  "uuid",
  "vergen-gitcl",
 ]
@@ -939,18 +939,6 @@ dependencies = [
  "serde",
  "strum",
  "strum_macros",
-]
-
-[[package]]
-name = "ic-icrc-tx"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9f57deff04c85b9121cc8b99c39e606c4b35e7eb4fda4631fd9e0526fc46086"
-dependencies = [
- "base64 0.22.1",
- "candid",
- "icrc-ledger-types",
- "serde",
 ]
 
 [[package]]
@@ -2713,6 +2701,16 @@ dependencies = [
  "tracing-core",
  "tracing-log",
  "tracing-serde",
+]
+
+[[package]]
+name = "transaction_utils"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "candid",
+ "icrc-ledger-types",
+ "serde",
 ]
 
 [[package]]

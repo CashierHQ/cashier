@@ -21,7 +21,7 @@ pub struct Asset {
 impl Default for Asset {
     fn default() -> Self {
         Asset {
-            address: "".to_string(),
+            address: "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
             chain: Chain::IC,
         }
     }
