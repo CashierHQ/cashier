@@ -1,36 +1,42 @@
 [
-    {
-        "match": "**/*",
-        "headers": {
-            "Content-Security-Policy": "default-src 'self'; require-trusted-types-for 'script'; script-src 'self';connect-src 'self' https://*.icexplorer.io https://icp0.io https://*.icp0.io https://icp-api.io;img-src 'self' https://*.icexplorer.io data:;style-src * 'unsafe-inline';style-src-elem * 'unsafe-inline';font-src *;object-src 'none';base-uri 'self';frame-ancestors 'none';form-action 'self';upgrade-insecure-requests;",
+  {
+    "match": "**/*",
+    "headers": {
+      "Content-Security-Policy": "default-src 'self'; script-src 'self';connect-src 'self' https://*.icexplorer.io https://icp0.io https://*.icp0.io https://icp-api.io;img-src 'self' https://*.icexplorer.io data:;style-src * 'unsafe-inline';style-src-elem * 'unsafe-inline';font-src *;object-src 'none';base-uri 'self';frame-ancestors 'none';form-action 'self';upgrade-insecure-requests; worker-src 'self'",
 
-            "Permissions-Policy": "Permissions-Policy: accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=(), geolocation=(), gyroscope=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), navigation-override=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=(), clipboard-read=(self), clipboard-write=(self), gamepad=(self), speaker-selection=(self), conversion-measurement=(), focus-without-user-activation=(), hid=(), idle-detection=(), interest-cohort=(), serial=(), sync-script=(), trust-token-redemption=(), unload=(), window-placement=(), vertical-scroll=()",
+      "Permissions-Policy": "accelerometer=(), ambient-light-sensor=(), autoplay=(), battery=(), camera=(), cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=(), geolocation=(), gyroscope=(), keyboard-map=(), magnetometer=(), microphone=(), midi=(), navigation-override=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=(), clipboard-read=(self), clipboard-write=(self), gamepad=(), speaker-selection=(), conversion-measurement=(), focus-without-user-activation=(), hid=(), idle-detection=(), interest-cohort=(), serial=(), sync-script=(), trust-token-redemption=(), unload=(), window-placement=(), vertical-scroll=()",
 
-            "X-Frame-Options": "DENY",
+      "X-Frame-Options": "DENY",
 
-            "Referrer-Policy": "same-origin",
+      "Referrer-Policy": "same-origin",
 
-            "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+      "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 
-            "X-Content-Type-Options": "nosniff",
+      "X-Content-Type-Options": "nosniff",
 
-            "X-XSS-Protection": "1; mode=block",
+      "X-XSS-Protection": "1; mode=block",
 
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache",
-            "Expires": "0"
-        }
-    },
-    {
-        "match": ".well-known",
-        "ignore": false
-    },
-    {
-        "match": ".well-known/ii-alternative-origins",
-        "headers": {
-            "Access-Control-Allow-Origin": "*",
-            "Content-Type": "application/json"
-        },
-        "ignore": false
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+
+      "Cross-Origin-Resource-Policy": "same-origin",
+
+      "Cross-Origin-Opener-Policy": "same-origin",
+
+      "Pragma": "no-cache",
+
+      "Expires": "0"
     }
+  },
+  {
+    "match": ".well-known",
+    "ignore": false
+  },
+  {
+    "match": ".well-known/ii-alternative-origins",
+    "headers": {
+      "Access-Control-Allow-Origin": "*",
+      "Content-Type": "application/json"
+    },
+    "ignore": false
+  }
 ]
