@@ -12,16 +12,13 @@ pub async fn execute_icrc112_request(
     for parallel_requests in icrc_112_requests {
         // Execute parallel requests sequentially for now (can be made parallel later)
         for (i, request) in parallel_requests.iter().enumerate() {
-            let canister_id = Principal::from_text(&request.canister_id)
-                .map_err(|e| format!("Invalid canister ID: {e}"))?;
-
             let payload = BASE64_STANDARD
                 .decode(&request.arg)
                 .map_err(|e| format!("Invalid base64 payload: {e}"))?;
 
             let res = ctx
                 .client
-                .update_call(canister_id, caller, &request.method, payload)
+                .update_call(request.canister_id, caller, &request.method, payload)
                 .await;
 
             // Stop iteration if there's an error
