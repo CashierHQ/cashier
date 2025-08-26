@@ -15,11 +15,11 @@ use cashier_backend_types::{
     dto::action::{Icrc112Request, Icrc112Requests, TriggerTransactionInput},
     error::CanisterError,
 };
+use icrc_112_utils::build_canister_call;
 use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
     icrc2::approve::ApproveArgs,
 };
-use transaction_utils::build_canister_call;
 
 #[derive(Clone)]
 pub struct TransactionService<E: IcEnvironment + Clone, R: Repositories> {

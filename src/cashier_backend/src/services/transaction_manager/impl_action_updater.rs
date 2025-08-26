@@ -484,7 +484,10 @@ mod tests {
                     chain: Chain::IC,
                 },
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset {
+                    address: "ryjl3-tyaaa-aaaaa-aaaba-cai".to_string(),
+                    chain: Chain::IC,
+                },
                 amount: Nat::from(1000u64),
                 ts: None,
                 memo: None,

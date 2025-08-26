@@ -5,7 +5,7 @@ members = [
     "src/cashier_backend_types",
     "src/integration_tests",
     "src/lib/cashier_common",
-    "src/lib/cashier_macros", "src/lib/transaction_utils",
+    "src/lib/cashier_macros", "src/lib/icrc_112_utils",
     "src/token_storage",
     "src/token_storage_client", 
     "src/token_storage_types",
@@ -51,7 +51,7 @@ thiserror = "2.0"
 token_storage_client = { path = "src/token_storage_client" }
 token_storage_types = { path = "src/token_storage_types" }
 tokio = { version = "1", features = ["rt", "macros"] }
-transaction_utils = { path = "src/lib/transaction_utils" }
+icrc_112_utils = { path = "src/lib/icrc_112_utils" }
 # Use fixed uuid version to avoid getrandom incompatibility. To be fixed.
 uuid = { version = "=1.12.1", features = ["v4"] }
 vergen-gitcl = { version = "1", default-features = false, features = [

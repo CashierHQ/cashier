@@ -252,6 +252,7 @@ dependencies = [
  "ic-stable-structures 0.7.0",
  "ic_mple_log",
  "icrc-ledger-types",
+ "icrc_112_utils",
  "itertools 0.14.0",
  "log",
  "rand 0.8.5",
@@ -262,7 +263,6 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.14",
  "tokio",
- "transaction_utils",
  "uuid",
  "vergen-gitcl",
 ]
@@ -1106,6 +1106,16 @@ dependencies = [
  "strum",
  "strum_macros",
  "time",
+]
+
+[[package]]
+name = "icrc_112_utils"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "candid",
+ "icrc-ledger-types",
+ "serde",
 ]
 
 [[package]]
@@ -2701,16 +2711,6 @@ dependencies = [
  "tracing-core",
  "tracing-log",
  "tracing-serde",
-]
-
-[[package]]
-name = "transaction_utils"
-version = "0.1.0"
-dependencies = [
- "base64 0.22.1",
- "candid",
- "icrc-ledger-types",
- "serde",
 ]
 
 [[package]]

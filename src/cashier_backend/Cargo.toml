@@ -22,6 +22,7 @@ ic-cdk-timers = { workspace = true }
 ic_mple_log = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc-ledger-types = { workspace = true }
+icrc_112_utils = { workspace = true }
 itertools = { workspace = true }
 log = { workspace = true }
 rand = { workspace = true, features = ["getrandom"] }
@@ -31,7 +32,6 @@ serde_bytes = { workspace = true }
 serde_cbor = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
-transaction_utils = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
 
 
