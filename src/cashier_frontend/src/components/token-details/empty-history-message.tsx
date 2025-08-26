@@ -5,17 +5,19 @@ import { useTranslation } from "react-i18next";
 import { Link } from "@/components/ui/link";
 
 export function EmptyHistoryMessage() {
-    const { t } = useTranslation();
+  const { t } = useTranslation();
 
-    return (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="font-medium text-gray-600 mb-2">{t("history.list.noData")}</p>
-            <div className="text-sm font-medium text-gray-500">
-                <span>{t("history.list.cannotFind")}</span>{" "}
-                <Link to="#" className="text-green hover:underline">
-                    {t("history.list.checkExplorer")}
-                </Link>
-            </div>
-        </div>
-    );
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <p className="font-medium text-gray-600 mb-2">
+        {t("history.list.noData")}
+      </p>
+      <div className="text-sm font-medium text-gray-500">
+        <span>{t("history.list.cannotFind")}</span>{" "}
+        <Link to="#" className="text-green hover:underline">
+          {t("history.list.checkExplorer")}
+        </Link>
+      </div>
+    </div>
+  );
 }

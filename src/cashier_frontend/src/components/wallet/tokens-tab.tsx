@@ -7,20 +7,20 @@ import { useWalletContext } from "@/contexts/wallet-context";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 export function WalletTokensTab() {
-    const { t } = useTranslation();
-    const { navigateToPanel } = useWalletContext();
-    const { displayTokens } = useTokensV2();
-    const handleManageClick = (e: React.MouseEvent) => {
-        e.preventDefault();
-        navigateToPanel("manage");
-    };
+  const { t } = useTranslation();
+  const { navigateToPanel } = useWalletContext();
+  const { displayTokens } = useTokensV2();
+  const handleManageClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    navigateToPanel("manage");
+  };
 
-    return (
-        <div className="relative h-full w-full">
-            <div className="absolute inset-0 overflow-y-auto scrollbar-hide">
-                <div className="flex flex-col gap-4 py-4 pb-32">
-                    {/* TODO: Might need in future, just disable it for now */}
-                    {/* <div className="flex justify-end px-4">
+  return (
+    <div className="relative h-full w-full">
+      <div className="absolute inset-0 overflow-y-auto scrollbar-hide">
+        <div className="flex flex-col gap-4 py-4 pb-32">
+          {/* TODO: Might need in future, just disable it for now */}
+          {/* <div className="flex justify-end px-4">
                         <button
                             onClick={handleRefresh}
                             disabled={isLoading}
@@ -46,19 +46,19 @@ export function WalletTokensTab() {
                         </button>
                     </div> */}
 
-                    {/* Token list */}
-                    {displayTokens.map((token) => (
-                        <WalletToken key={token.id} token={token} />
-                    ))}
+          {/* Token list */}
+          {displayTokens.map((token) => (
+            <WalletToken key={token.id} token={token} />
+          ))}
 
-                    <button
-                        onClick={handleManageClick}
-                        className="mx-auto font-normal whitespace-nowrap py-2 text-[#36A18B]"
-                    >
-                        + {t("wallet.tabs.tokens.manage")}
-                    </button>
-                </div>
-            </div>
+          <button
+            onClick={handleManageClick}
+            className="mx-auto font-normal whitespace-nowrap py-2 text-[#36A18B]"
+          >
+            + {t("wallet.tabs.tokens.manage")}
+          </button>
         </div>
-    );
+      </div>
+    </div>
+  );
 }
