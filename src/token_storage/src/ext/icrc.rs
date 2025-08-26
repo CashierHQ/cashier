@@ -448,7 +448,7 @@ impl Service {
     }
 
     pub async fn icrc_1_decimals(&self) -> Result<u8, CanisterError> {
-        let res = Call::unbounded_wait(self.0, "icrc1_decimals")
+        let res = Call::bounded_wait(self.0, "icrc1_decimals")
             .await
             .map_err(CanisterError::from)?;
         let parsed_res: Result<u8, CandidDecodeFailed> = res.candid();
@@ -456,7 +456,7 @@ impl Service {
     }
 
     pub async fn icrc_1_fee(&self) -> Result<Icrc1Tokens, CanisterError> {
-        let res = Call::unbounded_wait(self.0, "icrc1_fee")
+        let res = Call::bounded_wait(self.0, "icrc1_fee")
             .await
             .map_err(CanisterError::from)?;
         let parsed_res: Result<Icrc1Tokens, CandidDecodeFailed> = res.candid();
@@ -464,7 +464,7 @@ impl Service {
     }
 
     pub async fn icrc_1_name(&self) -> Result<String, CanisterError> {
-        let res = Call::unbounded_wait(self.0, "icrc1_name")
+        let res = Call::bounded_wait(self.0, "icrc1_name")
             .await
             .map_err(CanisterError::from)?;
         let parsed_res: Result<String, CandidDecodeFailed> = res.candid();
@@ -472,7 +472,7 @@ impl Service {
     }
 
     pub async fn icrc_1_symbol(&self) -> Result<String, CanisterError> {
-        let res = Call::unbounded_wait(self.0, "icrc1_symbol")
+        let res = Call::bounded_wait(self.0, "icrc1_symbol")
             .await
             .map_err(CanisterError::from)?;
         let parsed_res: Result<String, CandidDecodeFailed> = res.candid();
