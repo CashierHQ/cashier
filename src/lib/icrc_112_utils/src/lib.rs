@@ -12,7 +12,7 @@ pub fn build_canister_call<T: CandidType>(
     arg: &T,
 ) -> CanisterCall {
     CanisterCall {
-        canister_id: canister_id.to_string(),
+        canister_id: *canister_id,
         method: method.into(),
         arg: base64::engine::general_purpose::STANDARD.encode(Encode!(arg).unwrap()),
     }
@@ -51,7 +51,7 @@ mod tests {
         let result = build_canister_call(&canister_id, "icrc1_transfer", &transfer_arg);
 
         // Assert
-        assert_eq!(result.canister_id, canister_id.to_text());
+        assert_eq!(result.canister_id, canister_id);
         assert_eq!(result.method, "icrc1_transfer".to_string());
         assert_eq!(
             result.arg,
@@ -83,7 +83,7 @@ mod tests {
         let result = build_canister_call(&canister_id, "icrc2_approve", &transfer_arg);
 
         // Assert
-        assert_eq!(result.canister_id, canister_id.to_text());
+        assert_eq!(result.canister_id, canister_id);
         assert_eq!(result.method, "icrc2_approve".to_string());
         assert_eq!(
             result.arg,
@@ -112,7 +112,7 @@ mod tests {
         let result = build_canister_call(&canister_id, "mock_method", &payload);
 
         // Assert
-        assert_eq!(result.canister_id, canister_id.to_text());
+        assert_eq!(result.canister_id, canister_id);
         assert_eq!(result.method, "mock_method".to_string());
         assert_eq!(
             result.arg,
