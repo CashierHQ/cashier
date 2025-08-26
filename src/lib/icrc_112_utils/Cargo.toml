@@ -1,0 +1,11 @@
+[package]
+name = "icrc_112_utils"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+base64 = { workspace = true }
+candid = { workspace = true }
+icrc-ledger-types = { workspace = true }
+serde = { workspace = true }

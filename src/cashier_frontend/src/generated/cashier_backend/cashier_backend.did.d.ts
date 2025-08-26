@@ -83,7 +83,7 @@ export interface GetLinkResp { 'action' : [] | [ActionDto], 'link' : LinkDto }
 export interface Icrc112Request {
   'arg' : string,
   'method' : string,
-  'canister_id' : string,
+  'canister_id' : Principal,
   'nonce' : [] | [string],
 }
 export interface Icrc21ConsentInfo {

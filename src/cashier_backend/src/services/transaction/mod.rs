@@ -7,8 +7,7 @@ use crate::{
     repositories::{Repositories, transaction::TransactionRepository},
     utils::{helper::to_subaccount, runtime::IcEnvironment},
 };
-use base64::Engine;
-use candid::{Encode, Principal};
+use candid::Principal;
 use cashier_backend_types::repository::transaction::v2::{
     IcTransaction, Protocol, Transaction, TransactionState,
 };
@@ -16,6 +15,7 @@ use cashier_backend_types::{
     dto::action::{Icrc112Request, Icrc112Requests, TriggerTransactionInput},
     error::CanisterError,
 };
+use icrc_112_utils::build_canister_call;
 use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
     icrc2::approve::ApproveArgs,
@@ -100,10 +100,12 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionService<E, R> {
                     from_subaccount: None,
                 };
 
-                let canister_call = ic_icrc_tx::builder::icrc1::build_icrc1_transfer(
-                    tx_transfer.asset.address.clone(),
-                    arg,
-                );
+                let canister_id =
+                    Principal::from_text(&tx_transfer.asset.address).map_err(|e| {
+                        CanisterError::InvalidInput(format!("Invalid canister id: {e}"))
+                    })?;
+
+                let canister_call = build_canister_call(&canister_id, "icrc1_transfer", &arg);
 
                 Ok(Icrc112Request {
                     canister_id: canister_call.canister_id,
@@ -129,10 +131,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionService<E, R> {
                     created_at_time: None,
                 };
 
-                let canister_call = ic_icrc_tx::builder::icrc2::build_icrc2_approve(
-                    tx_approve.asset.address.clone(),
-                    arg,
-                );
+                let canister_id = Principal::from_text(&tx_approve.asset.address).map_err(|e| {
+                    CanisterError::InvalidInput(format!("Invalid canister id: {e}"))
+                })?;
+
+                let canister_call = build_canister_call(&canister_id, "icrc2_approve", &arg);
 
                 Ok(Icrc112Request {
                     canister_id: canister_call.canister_id,
@@ -149,13 +152,12 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionService<E, R> {
                 };
 
                 let method = "trigger_transaction";
-
-                let arg = base64::engine::general_purpose::STANDARD.encode(Encode!(&input)?);
+                let canister_call = build_canister_call(canister_id, method, &input);
 
                 Ok(Icrc112Request {
-                    canister_id: canister_id.to_text(),
-                    method: method.to_string(),
-                    arg,
+                    canister_id: canister_call.canister_id,
+                    method: canister_call.method,
+                    arg: canister_call.arg,
                     nonce: Some(tx.id.clone()),
                 })
             }

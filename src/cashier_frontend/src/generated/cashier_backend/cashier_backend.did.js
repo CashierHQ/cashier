@@ -16,7 +16,7 @@ export const idlFactory = ({ IDL }) => {
   const Icrc112Request = IDL.Record({
     'arg' : IDL.Text,
     'method' : IDL.Text,
-    'canister_id' : IDL.Text,
+    'canister_id' : IDL.Principal,
     'nonce' : IDL.Opt(IDL.Text),
   });
   const AssetDto = IDL.Record({ 'chain' : IDL.Text, 'address' : IDL.Text });

@@ -8,6 +8,6 @@ export const mapICRC112Request = (dto: Icrc112Request): Icrc112RequestModel => {
   return {
     arg: dto.arg,
     method: dto.method,
-    canisterId: dto.canister_id,
+    canisterId: dto.canister_id.toString(),
   };
 };
