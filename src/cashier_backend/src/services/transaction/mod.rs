@@ -152,8 +152,6 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionService<E, R> {
                 };
 
                 let method = "trigger_transaction";
-                let canister_id = canister_id;
-
                 let canister_call = build_canister_call(canister_id, method, &input);
 
                 Ok(Icrc112Request {
