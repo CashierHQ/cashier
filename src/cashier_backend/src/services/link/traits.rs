@@ -74,13 +74,13 @@ pub trait LinkUserStateMachine {
 
     fn link_get_user_state(
         &self,
-        caller: &Principal,
+        caller: Principal,
         input: &LinkGetUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError>;
 
     fn link_update_user_state(
         &mut self,
-        caller: &Principal,
+        caller: Principal,
         input: &LinkUpdateUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError>;
 }

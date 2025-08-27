@@ -19,6 +19,12 @@ pub enum Asset {
     }
 }
 
+impl Default for Asset {
+    fn default() -> Self {
+        Asset::IC { address: Principal::anonymous() }
+    }
+}
+
 impl Asset {
     /// Returns the chain of the asset
     pub fn chain(&self) -> Chain {

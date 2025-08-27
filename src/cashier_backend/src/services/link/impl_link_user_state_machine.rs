@@ -95,7 +95,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
 
     fn link_get_user_state(
         &self,
-        caller: &Principal,
+        caller: Principal,
         input: &LinkGetUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
         // only support claim action type
@@ -120,13 +120,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
             }
         }
 
-        let temp_user_id = if *caller != Principal::anonymous() {
-            self.user_service.get_user_id_by_wallet(caller)
+        let temp_user_id = if caller != Principal::anonymous() {
+            Some(caller)
         } else {
             input
                 .anonymous_wallet_address
-                .as_ref()
-                .map(|addr| format!("ANON#{addr}"))
         };
         // Check if temp_user_id is None and return error
         let temp_user_id = temp_user_id
@@ -137,7 +135,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
         // link_action type = input action type
         // link_action user_id = search_user_id
         let link_action =
-            self.get_link_action_user(&input.link_id, &input.action_type, &temp_user_id)?;
+            self.get_link_action_user(&input.link_id, &input.action_type, temp_user_id)?;
 
         if link_action.is_none() {
             return Ok(None);
@@ -170,7 +168,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
 
     fn link_update_user_state(
         &mut self,
-        caller: &Principal,
+        caller: Principal,
         input: &LinkUpdateUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
         // validate action type
@@ -195,13 +193,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
             }
         }
 
-        let temp_user_id = if *caller != Principal::anonymous() {
-            self.user_service.get_user_id_by_wallet(caller)
+        let temp_user_id = if caller != Principal::anonymous() {
+            Some(caller)
         } else {
             input
                 .anonymous_wallet_address
-                .as_ref()
-                .map(|addr| format!("ANON#{addr}"))
         };
         // Check if temp_user_id is None and return error
         let temp_user_id = temp_user_id
@@ -213,7 +209,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
         let link_action = self.handle_user_link_state_machine(
             &input.link_id,
             &input.action_type,
-            &temp_user_id,
+            temp_user_id,
             &goto,
         )?;
 
@@ -488,7 +484,7 @@ mod tests {
 
         // Act
         let result = service.link_get_user_state(
-            &creator,
+            creator,
             &LinkGetUserStateInput {
                 link_id: link.id,
                 action_type: "CreateLink".to_string(),
@@ -516,7 +512,7 @@ mod tests {
 
         // Act
         let result = service.link_get_user_state(
-            &creator,
+            creator,
             &LinkGetUserStateInput {
                 link_id: link.id,
                 action_type: "InvalidActionType".to_string(),
@@ -545,7 +541,7 @@ mod tests {
 
         // Act
         let result = service.link_get_user_state(
-            &creator2,
+            creator2,
             &LinkGetUserStateInput {
                 link_id: link.id,
                 action_type: "Use".to_string(),
@@ -573,7 +569,7 @@ mod tests {
 
         // Act
         let result = service.link_get_user_state(
-            &creator,
+            creator,
             &LinkGetUserStateInput {
                 link_id: link.id,
                 action_type: "Use".to_string(),
@@ -607,7 +603,7 @@ mod tests {
 
         // Act
         let result = service.link_get_user_state(
-            &creator,
+            creator,
             &LinkGetUserStateInput {
                 link_id: link.id,
                 action_type: "Use".to_string(),
@@ -644,7 +640,7 @@ mod tests {
 
         // Act
         let result = service.link_get_user_state(
-            &creator_id,
+            creator_id,
             &LinkGetUserStateInput {
                 link_id: link.id,
                 action_type: "Use".to_string(),
@@ -674,7 +670,7 @@ mod tests {
 
         // Act
         let result = service.link_update_user_state(
-            &creator_id,
+            creator_id,
             &LinkUpdateUserStateInput {
                 link_id: link.id,
                 action_type: "CreateLink".to_string(),
@@ -703,7 +699,7 @@ mod tests {
 
         // Act
         let result = service.link_update_user_state(
-            &creator_id,
+            creator_id,
             &LinkUpdateUserStateInput {
                 link_id: link.id,
                 action_type: "InvalidActionType".to_string(),
@@ -733,7 +729,7 @@ mod tests {
 
         // Act
         let result = service.link_update_user_state(
-            &creator2,
+            creator2,
             &LinkUpdateUserStateInput {
                 link_id: link.id,
                 action_type: "Use".to_string(),
@@ -762,7 +758,7 @@ mod tests {
 
         // Act
         let result = service.link_update_user_state(
-            &creator_id,
+            creator_id,
             &LinkUpdateUserStateInput {
                 link_id: link.id,
                 action_type: "Use".to_string(),
@@ -810,7 +806,7 @@ mod tests {
 
         // Act
         let result = service.link_update_user_state(
-            &creator_id,
+            creator_id,
             &LinkUpdateUserStateInput {
                 link_id: link.id,
                 action_type: "Use".to_string(),
