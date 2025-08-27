@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use candid::Principal;
 use cashier_backend_types::{
     repository::{keys::UserLinkKey, user_link::v1::UserLink},
     service::link::{PaginateInput, PaginateResult, PaginateResultMetadata},
@@ -42,12 +43,12 @@ impl<S: Storage<UserLinkRepositoryStorage>> UserLinkRepository<S> {
 
     pub fn get_links_by_user_id(
         &self,
-        user_id: &str,
+        user_id: Principal,
         paginate: &PaginateInput,
     ) -> PaginateResult<UserLink> {
         self.storage.with_borrow(|store| {
             let user_link_key = UserLinkKey {
-                user_id: user_id.to_string(),
+                user_id,
                 link_id: "".to_string(),
             };
 
@@ -104,7 +105,7 @@ mod tests {
         repo.create(user_link);
 
         // Assert
-        let links = repo.get_links_by_user_id(&user_id, &PaginateInput::default());
+        let links = repo.get_links_by_user_id(user_id, &PaginateInput::default());
         assert_eq!(links.data.len(), 1);
         assert_eq!(links.data.first().unwrap().link_id, link_id);
         assert_eq!(links.data.first().unwrap().user_id, user_id);
@@ -128,7 +129,7 @@ mod tests {
         repo.delete(user_link);
 
         // Assert
-        let links = repo.get_links_by_user_id(&user_id, &PaginateInput::default());
+        let links = repo.get_links_by_user_id(user_id, &PaginateInput::default());
         assert!(links.data.is_empty());
     }
 
@@ -152,7 +153,7 @@ mod tests {
         repo.create(user_link2);
 
         // Act
-        let links = repo.get_links_by_user_id(&user_id, &PaginateInput::default());
+        let links = repo.get_links_by_user_id(user_id, &PaginateInput::default());
 
         // Assert
         assert_eq!(links.data.len(), 2);

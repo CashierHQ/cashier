@@ -125,7 +125,7 @@ pub struct LinkDto {
     pub link_type: Option<String>,
     pub asset_info: Option<Vec<AssetInfoDto>>,
     pub template: Option<String>,
-    pub creator: String,
+    pub creator: Principal,
     pub create_at: u64,
     pub metadata: Option<HashMap<String, String>>,
     pub link_use_action_counter: u64,

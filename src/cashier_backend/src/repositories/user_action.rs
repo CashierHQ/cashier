@@ -43,7 +43,7 @@ mod tests {
         let user_id = random_principal_id();
         let action_id = random_id_string();
         let user_action = UserAction {
-            user_id: user_id.clone(),
+            user_id,
             action_id: action_id.clone(),
         };
 
@@ -53,7 +53,7 @@ mod tests {
         let retrieved_action = repo.storage.with_borrow(|store| {
             store.get(
                 &UserActionKey {
-                    user_id: user_id.clone(),
+                    user_id,
                     action_id: action_id.clone(),
                 }
                 .to_str(),

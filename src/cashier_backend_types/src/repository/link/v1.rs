@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use candid::Principal;
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -18,7 +19,7 @@ pub struct Link {
     pub link_type: Option<LinkType>,
     pub asset_info: Option<Vec<AssetInfo>>,
     pub template: Option<Template>,
-    pub creator: String,
+    pub creator: Principal,
     pub create_at: u64,
     pub metadata: Option<HashMap<String, String>>,
     pub link_use_action_counter: u64,
