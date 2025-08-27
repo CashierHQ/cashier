@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use candid::Principal;
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -11,7 +12,7 @@ pub struct LinkAction {
     pub link_id: String,
     pub action_id: String,
     pub action_type: String,
-    pub user_id: String,
+    pub user_id: Principal,
     pub link_user_state: Option<LinkUserState>,
 }
 

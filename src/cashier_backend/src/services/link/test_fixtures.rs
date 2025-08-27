@@ -48,24 +48,6 @@ pub fn create_link_fixture(
     link
 }
 
-/// Creates a principal fixture for testing purposes.
-/// This function initializes a principal with a given ID and associates it with a user wallet.
-/// Returns the created principal.
-pub fn create_principal_fixture(
-    service: &mut LinkService<MockIcEnvironment, TestRepositories>,
-    principal_id: &str,
-) -> Principal {
-    let principal = Principal::from_text(principal_id).unwrap();
-
-    service.user_wallet_repository.create(
-        principal_id.to_string(),
-        UserWallet {
-            user_id: principal_id.to_string(),
-        },
-    );
-    principal
-}
-
 /// Creates a link action fixture for testing purposes.
 /// This function initializes a link action with a random ID, associates it with a link ID and
 /// an action type, and associates it with a user ID.
@@ -74,14 +56,14 @@ pub fn create_link_action_fixture(
     service: &mut LinkService<MockIcEnvironment, TestRepositories>,
     link_id: &str,
     action_type: &str,
-    user_id: &str,
+    user_id: Principal,
 ) -> LinkAction {
     let action_id = random_id_string();
     let link_action = LinkAction {
         link_id: link_id.to_string(),
         action_id,
         action_type: action_type.to_string(),
-        user_id: user_id.to_string(),
+        user_id,
         link_user_state: None,
     };
     service.link_action_repository.create(link_action.clone());
@@ -90,28 +72,11 @@ pub fn create_link_action_fixture(
         id: link_action.action_id.clone(),
         r#type: ActionType::from_str(action_type).unwrap(),
         state: ActionState::Created,
-        creator: user_id.to_string(),
+        creator: user_id,
         link_id: link_id.to_string(),
     };
     service.action_repository.create(action);
     link_action
-}
-
-/// Creates a user wallet fixture for testing purposes.
-/// This function initializes a user wallet with a given wallet key and associates it with a user ID
-/// Returns the created user wallet.
-pub fn create_user_wallet_fixture(
-    service: &mut LinkService<MockIcEnvironment, TestRepositories>,
-    wallet_key: &str,
-    user_id: &str,
-) -> UserWallet {
-    let user_wallet = UserWallet {
-        user_id: user_id.to_string(),
-    };
-    service
-        .user_wallet_repository
-        .create(wallet_key.to_string(), user_wallet.clone());
-    user_wallet
 }
 
 /// Creates a whitelist of properties for testing purposes.

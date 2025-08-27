@@ -34,16 +34,12 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         &mut self,
         ts: u64,
         input: &CreateActionInput,
-        caller: &Principal,
+        caller: Principal,
     ) -> Result<ActionDto, CanisterError> {
         // input validate
-        let user_id = self.user_service.get_user_id_by_wallet(caller);
 
         let action_type = ActionType::from_str(&input.action_type)
             .map_err(|_| CanisterError::ValidationErrors("Invalid action type ".to_string()))?;
-
-        let user_id =
-            user_id.ok_or_else(|| CanisterError::ValidationErrors("User not found".to_string()))?;
 
         // Create lock for action creation
         let request_lock_key = self
@@ -52,7 +48,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
         // Execute main logic and capture result
         let result = async {
-            let action = self.get_action_of_link(&input.link_id, &input.action_type, &user_id);
+            let action = self.get_action_of_link(&input.link_id, &input.action_type, caller);
 
             if action.is_some() {
                 return Err(CanisterError::ValidationErrors(
@@ -60,10 +56,10 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
                 ));
             }
 
-            self.link_validate_user_create_action(&input.link_id, &action_type, &user_id)?;
+            self.link_validate_user_create_action(&input.link_id, &action_type, caller)?;
 
             // Validate user can create action
-            self.link_validate_user_create_action(&input.link_id, &action_type, &user_id)?;
+            self.link_validate_user_create_action(&input.link_id, &action_type, caller)?;
 
             // Create temp action with default state
             let default_link_user_state = match action_type {
@@ -86,7 +82,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
                 id: Uuid::new_v4().to_string(),
                 r#type: action_type.clone(),
                 state: ActionState::Created,
-                creator: user_id.clone(),
+                creator: caller,
                 link_id: input.link_id.clone(),
                 intents: vec![],
                 default_link_user_state,

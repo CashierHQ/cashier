@@ -6,7 +6,7 @@ use std::rc::Rc;
 use crate::{
     repositories::{
         Repositories, action::ActionRepository,
-        processing_transaction::ProcessingTransactionRepository, user_wallet::UserWalletRepository,
+        processing_transaction::ProcessingTransactionRepository,
     },
     services::{
         action::ActionService, adapter::IntentAdapterImpl, transaction::TransactionService,
@@ -21,7 +21,6 @@ pub struct TransactionManagerService<E: IcEnvironment + Clone, R: Repositories> 
     pub ic_env: E,
     pub icrc_service: IcrcService,
     pub intent_adapter: IntentAdapterImpl,
-    pub user_wallet_repository: UserWalletRepository<R::UserWallet>,
     pub action_repository: ActionRepository<R::Action>,
     pub processing_transaction_repository:
         ProcessingTransactionRepository<R::ProcessingTransaction>,
@@ -39,7 +38,6 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionManagerService<E, R> 
         Self {
             transaction_service: TransactionService::new(&repo, ic_env.clone()),
             action_service: ActionService::new(&repo),
-            user_wallet_repository: repo.user_wallet(),
             ic_env,
             icrc_service: IcrcService::new(),
             intent_adapter: IntentAdapterImpl::new(),

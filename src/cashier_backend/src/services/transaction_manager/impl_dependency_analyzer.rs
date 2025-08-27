@@ -120,7 +120,7 @@ mod tests {
     use crate::repositories::tests::TestRepositories;
     use crate::services::transaction_manager::test_fixtures::*;
     use crate::utils::test_utils::{random_id_string, runtime::MockIcEnvironment};
-    use candid::Nat;
+    use candid::{Nat, Principal};
     use cashier_backend_types::repository::{
         common::{Asset, Wallet},
         transaction::v2::{FromCallType, IcTransaction, Icrc1Transfer, Protocol},
@@ -415,7 +415,7 @@ mod tests {
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: Principal::anonymous() },
                 amount: Nat::from(1000u64),
                 ts: None,
                 memo: None,

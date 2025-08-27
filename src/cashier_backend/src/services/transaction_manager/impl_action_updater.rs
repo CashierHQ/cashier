@@ -263,7 +263,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionUpdate
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::constant::ICP_CANISTER_ID;
+    use crate::constant::ICP_CANISTER_PRINCIPAL;
     use crate::repositories::tests::TestRepositories;
     use crate::services::transaction_manager::test_fixtures::*;
     use crate::utils::test_utils::{
@@ -295,7 +295,7 @@ mod tests {
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from(1000u64),
                 ts: None,
                 memo: None,
@@ -344,7 +344,7 @@ mod tests {
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from(1000u64),
                 ts: None,
                 memo: None,
@@ -384,7 +384,7 @@ mod tests {
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from(1000u64),
                 ts: None,
                 memo: None,
@@ -435,7 +435,7 @@ mod tests {
                     chain: Chain::IC,
                 },
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from(1000u64),
                 ts: None,
                 memo: None,
@@ -481,13 +481,12 @@ mod tests {
             from_call_type: FromCallType::Canister,
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
                 from: Wallet {
-                    address: creator_id.clone(),
+                    address: creator_id.to_text(),
                     chain: Chain::IC,
                 },
                 to: Wallet::default(),
-                asset: Asset {
-                    address: ICP_CANISTER_ID.to_string(),
-                    chain: Chain::IC,
+                asset: Asset::IC {
+                    address: ICP_CANISTER_PRINCIPAL,
                 },
                 amount: Nat::from(1000u64),
                 ts: None,
@@ -497,7 +496,7 @@ mod tests {
         };
 
         let caller = Account {
-            owner: Principal::from_text(&creator_id).unwrap(),
+            owner: creator_id,
             subaccount: None,
         };
 
