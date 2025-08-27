@@ -11,7 +11,6 @@ crate-type = ["cdylib"]
 
 
 [dependencies]
-base64 = { workspace = true }
 candid = { workspace = true }
 cashier_backend_types = { workspace = true }
 cashier_common = { workspace = true }

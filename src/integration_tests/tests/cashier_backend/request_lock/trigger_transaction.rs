@@ -1,4 +1,3 @@
-use base64::prelude::BASE64_STANDARD;
 use candid::{CandidType, Decode};
 use cashier_backend_types::{constant, error::CanisterError};
 use ic_mple_pocket_ic::pocket_ic::common::rest::RawMessageId;
@@ -8,7 +7,6 @@ use crate::cashier_backend::link::fixture::LinkTestFixture;
 use crate::utils::PocketIcTestContext;
 use crate::utils::icrc_112::execute_icrc112_request;
 use crate::utils::{principal::TestUser, with_pocket_ic_context};
-use base64::Engine;
 use std::sync::Arc;
 
 async fn call_and_decode<T: DeserializeOwned + CandidType>(
@@ -65,10 +63,7 @@ async fn test_request_lock_for_trigger_action() {
             })
             .expect("no trigger_transaction request found");
 
-        let payload = BASE64_STANDARD
-            .decode(&trigger_transaction_req.arg)
-            .map_err(|e| format!("Invalid base64 payload: {e}"))
-            .unwrap();
+        let payload = &trigger_transaction_req.arg.clone();
 
         // Act: submit 3 concurrent calls and collect results
         let mut msgs = Vec::with_capacity(3);

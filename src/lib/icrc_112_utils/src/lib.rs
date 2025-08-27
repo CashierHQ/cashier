@@ -1,4 +1,3 @@
-use base64::Engine;
 use candid::{CandidType, Encode, Principal};
 
 use crate::types::CanisterCall;
@@ -14,7 +13,7 @@ pub fn build_canister_call<T: CandidType>(
     CanisterCall {
         canister_id: *canister_id,
         method: method.into(),
-        arg: base64::engine::general_purpose::STANDARD.encode(Encode!(arg).unwrap()),
+        arg: Encode!(arg).unwrap(),
     }
 }
 
@@ -53,10 +52,7 @@ mod tests {
         // Assert
         assert_eq!(result.canister_id, canister_id);
         assert_eq!(result.method, "icrc1_transfer".to_string());
-        assert_eq!(
-            result.arg,
-            base64::engine::general_purpose::STANDARD.encode(Encode!(&transfer_arg).unwrap())
-        );
+        assert_eq!(result.arg, Encode!(&transfer_arg).unwrap());
     }
 
     #[test]
@@ -85,10 +81,7 @@ mod tests {
         // Assert
         assert_eq!(result.canister_id, canister_id);
         assert_eq!(result.method, "icrc2_approve".to_string());
-        assert_eq!(
-            result.arg,
-            base64::engine::general_purpose::STANDARD.encode(Encode!(&transfer_arg).unwrap())
-        );
+        assert_eq!(result.arg, Encode!(&transfer_arg).unwrap());
     }
 
     #[test]
@@ -114,9 +107,6 @@ mod tests {
         // Assert
         assert_eq!(result.canister_id, canister_id);
         assert_eq!(result.method, "mock_method".to_string());
-        assert_eq!(
-            result.arg,
-            base64::engine::general_purpose::STANDARD.encode(Encode!(&payload).unwrap())
-        );
+        assert_eq!(result.arg, Encode!(&payload).unwrap());
     }
 }

@@ -1,4 +1,3 @@
-use base64::prelude::*;
 use candid::Principal;
 
 use cashier_backend_types::dto::action::Icrc112Request;
@@ -12,13 +11,14 @@ pub async fn execute_icrc112_request(
     for parallel_requests in icrc_112_requests {
         // Execute parallel requests sequentially for now (can be made parallel later)
         for (i, request) in parallel_requests.iter().enumerate() {
-            let payload = BASE64_STANDARD
-                .decode(&request.arg)
-                .map_err(|e| format!("Invalid base64 payload: {e}"))?;
-
             let res = ctx
                 .client
-                .update_call(request.canister_id, caller, &request.method, payload)
+                .update_call(
+                    request.canister_id,
+                    caller,
+                    &request.method,
+                    request.arg.clone(),
+                )
                 .await;
 
             // Stop iteration if there's an error

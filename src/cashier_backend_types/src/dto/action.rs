@@ -386,7 +386,7 @@ pub struct Icrc112Request {
     // pub canister_id: String,
     pub canister_id: Principal,
     pub method: String,
-    pub arg: String,
+    pub arg: Vec<u8>,
     pub nonce: Option<String>,
 }
 
