@@ -252,7 +252,7 @@ pub struct LinkGetUserStateOutput {
 pub struct LinkUpdateUserStateInput {
     pub link_id: String,
     pub action_type: String,
-    pub anonymous_wallet_address: Option<String>,
+    pub anonymous_wallet_address: Option<Principal>,
     pub goto: String,
 }
 
