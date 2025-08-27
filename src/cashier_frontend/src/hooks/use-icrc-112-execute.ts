@@ -4,7 +4,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useIdentity } from "@nfid/identitykit/react";
 import { Icrc112RequestModel } from "@/services/types/transaction.service.types";
-import SignerV2 from "@/services/signerV2";
+import SignerV2 from "@/services/signer";
 
 export function useIcrc112Execute() {
   const identity = useIdentity();

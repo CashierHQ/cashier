@@ -3,9 +3,8 @@
 
 import { HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
-import { BatchCallCanisterRequest, JsonResponse, Signer } from "@slide-computer/signer";
+import { BatchCallCanisterRequest, BatchCallCanisterResponse, Signer } from "@slide-computer/signer";
 import { getAgent } from "@/utils/agent";
-import { Icrc112Response } from "../signerService/icrc112.service";
 import { AgentTransport } from "@slide-computer/signer-test";
 import { Icrc112RequestModel, toRPCRequest } from "../types/transaction.service.types";
 
@@ -16,7 +15,7 @@ class SignerV2 {
         this.agent = getAgent(identity);
     }
 
-    async execute(requests: Icrc112RequestModel[][]): Promise<Icrc112Response> {
+    async execute(requests: Icrc112RequestModel[][]): Promise<BatchCallCanisterResponse> {
         const transport = await AgentTransport.create({
             agent: this.agent,
         });
@@ -37,21 +36,15 @@ class SignerV2 {
                 requests: batchInput,
             },
         };
-        const response = await signer.sendRequest(request);
+        const response: BatchCallCanisterResponse = await signer.sendRequest(request);
         console.log(
             "🚀 ~ CallSignerService ~ executeIcrc112 ~ response:",
             response,
         );
-        return this.parseResponse<Icrc112Response>(response);
+        return response;
     }
 
-    private parseResponse<T>(jsonObj: JsonResponse): T {
-        if ("result" in jsonObj) {
-            return jsonObj.result as unknown as T;
-        } else {
-            throw new Error(`Error in response: ${JSON.stringify(jsonObj.error)}`);
-        }
-    }
+
 }
 
 export default SignerV2;
