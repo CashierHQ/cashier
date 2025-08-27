@@ -47,7 +47,6 @@ async fn it_should_use_link_payment_icp_token_successfully() {
 
     let payer = TestUser::User2.get_principal();
     let mut payer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &payer).await;
-    payer_fixture.setup_user().await;
 
     let initial_balance = 1_000_000_000u64;
     payer_fixture.airdrop_icp(initial_balance, &payer).await;
@@ -148,7 +147,6 @@ async fn it_should_use_link_payment_icrc_token_successfully() {
 
     let payer = TestUser::User2.get_principal();
     let mut payer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &payer).await;
-    payer_fixture.setup_user().await;
 
     let initial_balance = 1_000_000_000u64;
 

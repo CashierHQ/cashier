@@ -48,7 +48,6 @@ async fn it_should_use_link_token_basket_successfully() {
 
     let claimer = TestUser::User2.get_principal();
     let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
-    claimer_fixture.setup_user().await;
 
     let icp_ledger_client = claimer_fixture.ctx.new_icp_ledger_client(claimer);
     let ckbtc_ledger_client = claimer_fixture

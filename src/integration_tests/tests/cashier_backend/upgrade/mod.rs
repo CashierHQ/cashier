@@ -26,7 +26,6 @@ mod test_canister_upgrade {
         let caller = TestUser::User1.get_principal();
         let mut fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
-        let _ = fixture.setup_user().await;
         fixture.airdrop_icp(1_000_000_000, &caller).await;
 
         // Create tip link with 1 ICP
