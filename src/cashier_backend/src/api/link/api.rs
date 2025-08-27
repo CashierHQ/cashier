@@ -38,7 +38,7 @@ use crate::services::link::traits::{ActionFlow, LinkStateMachine};
 async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDto>, String> {
     debug!("[get_links] input: {input:?}");
     let api = LinkApi::new(get_state());
-    api.get_links(&msg_caller(), input)
+    api.get_links(msg_caller(), input)
 }
 
 /// Retrieves a specific link by its ID with optional action data.
@@ -58,7 +58,7 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDt
 async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLinkResp, String> {
     debug!("[get_link] id: {id}, options: {options:?}");
     let api = LinkApi::new(get_state());
-    api.get_link(&msg_caller(), &id, options)
+    api.get_link(msg_caller(), &id, options)
 }
 
 /// Creates a new link using the v2 API format with enhanced features.
@@ -78,7 +78,7 @@ async fn create_link(input: CreateLinkInput) -> Result<LinkDto, CanisterError> {
     debug!("[create_link] input: {input:?}");
 
     let mut api = LinkApi::new(get_state());
-    api.create_link(&msg_caller(), input).await
+    api.create_link(msg_caller(), input).await
 }
 
 /// Updates an existing link's configuration or state.
@@ -140,7 +140,7 @@ pub async fn create_action(input: CreateActionInput) -> Result<ActionDto, Canist
     debug!("[create_action] input: {input:?}");
 
     let mut api = LinkApi::new(get_state());
-    api.create_action(&msg_caller(), input).await
+    api.create_action(msg_caller(), input).await
 }
 
 /// Processes an existing action for anonymous users with wallet address.
@@ -314,13 +314,13 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Err(String)` - Error message if retrieval fails
     pub fn get_links(
         &self,
-        caller: &Principal,
+        caller: Principal,
         input: Option<PaginateInput>,
     ) -> Result<PaginateResult<LinkDto>, String> {
         match self
             .state
             .link_service
-            .get_links_by_principal(&caller.to_text(), &input.unwrap_or_default())
+            .get_links_by_principal(caller, &input.unwrap_or_default())
         {
             Ok(links) => Ok(links.map(LinkDto::from)),
             Err(e) => {
@@ -347,7 +347,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Err(String)` - Error if link not found or access denied
     pub fn get_link(
         &self,
-        caller: &Principal,
+        caller: Principal,
         id: &str,
         options: Option<GetLinkOptions>,
     ) -> Result<GetLinkResp, String> {
@@ -383,13 +383,13 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Err(CanisterError)` - Error if link creation fails or validation errors occur
     pub async fn create_link(
         &mut self,
-        caller: &Principal,
+        caller: Principal,
         input: CreateLinkInput,
     ) -> Result<LinkDto, CanisterError> {
         match self
             .state
             .link_service
-            .create_link(caller.to_text(), input)
+            .create_link(caller, input)
             .await
         {
             Ok(link) => Ok(LinkDto::from(link)),
@@ -463,7 +463,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Err(CanisterError)` - Error if user not found, action exists, or creation fails
     pub async fn create_action(
         &mut self,
-        caller: &Principal,
+        caller: Principal,
         input: CreateActionInput,
     ) -> Result<ActionDto, CanisterError> {
         self.state
@@ -595,7 +595,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         if !self
             .state
             .link_service
-            .is_link_creator(&caller.to_text(), &input.id)
+            .is_link_creator(&caller, &input.id)
         {
             return Err(CanisterError::Unauthorized(
                 "Caller are not the creator of this link".to_string(),
