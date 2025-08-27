@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+import { fromNullable } from "@dfinity/utils";
 import { Icrc112Request } from "../../../generated/cashier_backend/cashier_backend.did";
 import { Icrc112RequestModel } from "../transaction.service.types";
 
@@ -9,5 +10,6 @@ export const mapICRC112Request = (dto: Icrc112Request): Icrc112RequestModel => {
     arg: dto.arg,
     method: dto.method,
     canisterId: dto.canister_id.toString(),
+    nonce: fromNullable(dto.nonce)
   };
 };

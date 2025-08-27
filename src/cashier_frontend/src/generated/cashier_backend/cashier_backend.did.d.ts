@@ -81,7 +81,7 @@ export interface CreateLinkInput {
 export interface GetLinkOptions { 'action_type' : string }
 export interface GetLinkResp { 'action' : [] | [ActionDto], 'link' : LinkDto }
 export interface Icrc112Request {
-  'arg' : string,
+  'arg' : Uint8Array | number[],
   'method' : string,
   'canister_id' : Principal,
   'nonce' : [] | [string],

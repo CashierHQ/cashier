@@ -187,7 +187,6 @@ export class FeeService {
    * Calculate network fees in BigInt format (from FeeHelpers)
    */
   calculateNetworkFeesInBigInt(tokenInfo: FungibleToken): bigint {
-    console.log("Calculating network fees for token:", tokenInfo);
     switch (tokenInfo.chain) {
       case Chain.IC:
         const fee = tokenInfo.fee;
@@ -416,7 +415,7 @@ export class FeeService {
     return false;
   }
 
-  calculateAssetFee() {}
+  calculateAssetFee() { }
 }
 
 // Export a singleton instance for easy use across the app

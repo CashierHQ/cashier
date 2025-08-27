@@ -14,7 +14,7 @@ export const idlFactory = ({ IDL }) => {
     'action_type' : IDL.Text,
   });
   const Icrc112Request = IDL.Record({
-    'arg' : IDL.Text,
+    'arg' : IDL.Vec(IDL.Nat8),
     'method' : IDL.Text,
     'canister_id' : IDL.Principal,
     'nonce' : IDL.Opt(IDL.Text),

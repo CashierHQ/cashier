@@ -3,9 +3,8 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useIdentity } from "@nfid/identitykit/react";
-import CallSignerService from "@/services/signerService/callSigner.service";
 import { Icrc112RequestModel } from "@/services/types/transaction.service.types";
-import { SequenceRequest } from "@/services/signerService/icrc112.service";
+import SignerV2 from "@/services/signerV2";
 
 export function useIcrc112Execute() {
   const identity = useIdentity();
@@ -16,18 +15,21 @@ export function useIcrc112Execute() {
     }: {
       transactions: Icrc112RequestModel[][] | undefined;
     }) => {
-      const identityProvided = !!identity;
       const transactionsProvided = transactions && transactions.length > 0;
 
-      if (!identityProvided || !transactionsProvided) {
-        return;
+      if (!identity) {
+        throw new Error("Identity is not available");
       }
 
-      const signerService = new CallSignerService(identity);
+      if (transactions === undefined || !transactionsProvided) {
+        throw new Error("Transactions not provided");
+      }
+
+      const signerService = new SignerV2(identity);
 
       try {
         const res = await signerService.execute(
-          transactions as unknown as SequenceRequest,
+          transactions!,
         );
         return res;
       } catch (error) {
