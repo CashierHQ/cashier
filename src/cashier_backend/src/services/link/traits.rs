@@ -30,7 +30,7 @@ use candid::Nat;
 pub trait LinkStateMachine {
     async fn create_link(
         &mut self,
-        caller: String,
+        caller: Principal,
         input: CreateLinkInput,
     ) -> Result<Link, CanisterError>;
     async fn handle_link_state_transition(

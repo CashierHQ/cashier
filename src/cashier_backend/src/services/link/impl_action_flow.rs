@@ -109,26 +109,17 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
     async fn process_action(
         &mut self,
         input: &ProcessActionInput,
-        caller: Principal,
+        user_id: Principal,
     ) -> Result<ActionDto, CanisterError> {
-        // input validate
-        let user_id = self.user_service.get_user_id_by_wallet(&caller);
 
         let _ = ActionType::from_str(&input.action_type)
             .map_err(|_| CanisterError::ValidationErrors("Invalid action type ".to_string()))?;
-
-        // basic validations
-        if user_id.is_none() {
-            return Err(CanisterError::ValidationErrors(
-                "User not found".to_string(),
-            ));
-        }
 
         // Create lock for action processing
         let request_lock_key = self
             .request_lock_service
             .create_request_lock_for_processing_action(
-                &caller,
+                user_id,
                 &input.link_id,
                 &input.action_id,
                 self.ic_env.time(),
@@ -136,24 +127,21 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
         // Execute main logic and capture result
         let result = async {
-            let user_id_ref = user_id
-                .as_ref()
-                .ok_or_else(|| CanisterError::ValidationErrors("User not found".to_string()))?;
 
-            let action = self.get_action_of_link(&input.link_id, &input.action_type, user_id_ref);
+            let action = self.get_action_of_link(&input.link_id, &input.action_type, user_id);
 
             let action_ref = action.as_ref().ok_or_else(|| {
                 CanisterError::ValidationErrors("Action is not existed".to_string())
             })?;
 
-            self.link_validate_user_update_action(action_ref, user_id_ref)?;
+            self.link_validate_user_update_action(action_ref, user_id)?;
             let action_id = action_ref.id.clone();
 
             // execute action
             let update_action_res = self
                 .tx_manager_service
                 .update_action(
-                    caller,
+                    user_id,
                     UpdateActionArgs {
                         action_id,
                         link_id: input.link_id.to_string(),
@@ -194,7 +182,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         let request_lock_key = self
             .request_lock_service
             .create_request_lock_for_updating_action(
-                &caller,
+                caller,
                 &input.link_id,
                 &input.action_id,
                 self.ic_env.time(),
@@ -256,13 +244,13 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
             .request_lock_service
             .create_request_lock_for_creating_action(
                 &input.link_id,
-                &wallet_principal,
+                wallet_principal,
                 self.ic_env.time(),
             )?;
 
         // Execute main logic and capture result
         let result = async {
-            let action = self.get_action_of_link(&input.link_id, &input.action_type, &user_id);
+            let action = self.get_action_of_link(&input.link_id, &input.action_type, user_id);
 
             if action.is_some() {
                 return Err(CanisterError::ValidationErrors(

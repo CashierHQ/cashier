@@ -11,6 +11,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use uuid::Uuid;
 
+use crate::constant::{FEE_TREASURY_PRINCIPAL, ICP_CANISTER_PRINCIPAL};
 use crate::domains::fee::Fee;
 use crate::repositories::Repositories;
 use crate::services::link::service::LinkService;
@@ -69,7 +70,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                         )
                     })?;
 
-                    let fee_in_nat = fee_map.get(&asset_info.address).ok_or_else(|| {
+                    let address = match asset_info.asset {
+                        Asset::IC { address } => address,
+                    };
+
+                    let fee_in_nat = fee_map.get(&address).ok_or_else(|| {
                         CanisterError::HandleLogicError(
                             "Fee not found for link creation".to_string(),
                         )
@@ -79,10 +84,6 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                     let amount = (asset_info.amount_per_link_use_action + fee_amount)
                         * link.link_use_action_max_count;
 
-                    let asset = Asset {
-                        address: asset_info.address.clone(),
-                        chain: asset_info.chain.clone(),
-                    };
                     let from_wallet = Wallet {
                         address: Account {
                             owner: user_wallet,
@@ -100,13 +101,13 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                         chain: Chain::IC,
                     };
 
-                    (amount, None, None, asset, from_wallet, to_wallet, None)
+                    (amount, None, None, asset_info.asset, from_wallet, to_wallet, None)
                 }
 
                 // for approve   create link fee + ledger_fee = (0.009 ICP)
                 (ActionType::CreateLink, IntentTask::TransferWalletToTreasury) => {
                     let fee_in_nat =
-                        fee_map.get(&ICP_CANISTER_ID.to_string()).ok_or_else(|| {
+                        fee_map.get(&ICP_CANISTER_PRINCIPAL).ok_or_else(|| {
                             CanisterError::HandleLogicError(
                                 "Fee not found for link creation".to_string(),
                             )
@@ -117,13 +118,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                     let actual_amount = amount;
                     let approve_amount = amount + fee_amount;
 
-                    let asset = Asset {
-                        address: ICP_CANISTER_ID.to_string(),
-                        chain: Chain::IC,
-                    };
+                    let asset = Asset::IC { address: ICP_CANISTER_PRINCIPAL };
+
                     let from_wallet = Wallet {
                         address: Account {
-                            owner: *user_wallet,
+                            owner: user_wallet,
                             subaccount: None,
                         }
                         .to_string(),
@@ -131,11 +130,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                     };
                     let to_wallet = Wallet {
                         address: Account {
-                            owner: Principal::from_str(FEE_TREASURY_ADDRESS).map_err(|e| {
-                                CanisterError::HandleLogicError(format!(
-                                    "Error converting fee treasury address to principal: {e:?}"
-                                ))
-                            })?,
+                            owner: FEE_TREASURY_PRINCIPAL,
                             subaccount: None,
                         }
                         .to_string(),
@@ -172,10 +167,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
 
                     let amount = asset_info.amount_per_link_use_action;
 
-                    let asset = Asset {
-                        address: asset_info.address.clone(),
-                        chain: asset_info.chain.clone(),
-                    };
+                    let asset = asset_info.asset;
                     let from_wallet = Wallet {
                         address: Account {
                             owner: self.ic_env.id(),
@@ -203,13 +195,10 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
 
                     let amount = asset_info.amount_per_link_use_action;
 
-                    let asset = Asset {
-                        address: asset_info.address.clone(),
-                        chain: asset_info.chain.clone(),
-                    };
+                    let asset = asset_info.asset;
                     let from_wallet = Wallet {
                         address: Account {
-                            owner: *user_wallet,
+                            owner: user_wallet,
                             subaccount: None,
                         }
                         .to_string(),
@@ -236,14 +225,13 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                         )
                     })?;
 
+                    let address = match asset_info.asset {
+                        Asset::IC { address } => address,
+                    };
+
                     let link_balance = self
                         .icrc_service
-                        .balance_of(
-                            Principal::from_text(asset_info.address.clone()).map_err(|e| {
-                                CanisterError::HandleLogicError(format!(
-                                    "Error converting token address to principal: {e:?}"
-                                ))
-                            })?,
+                        .balance_of(address,
                             Account {
                                 owner: self.ic_env.id(),
                                 subaccount: Some(to_subaccount(&link.id)?),
@@ -251,7 +239,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                         )
                         .await?;
 
-                    let fee_in_nat = fee_map.get(&asset_info.address).ok_or_else(|| {
+                    let fee_in_nat = fee_map.get(&address).ok_or_else(|| {
                         CanisterError::HandleLogicError(
                             "Fee not found for link creation".to_string(),
                         )
@@ -271,10 +259,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                     }
 
                     let amount = link_balance - fee_amount;
-                    let asset = Asset {
-                        address: asset_info.address.clone(),
-                        chain: asset_info.chain.clone(),
-                    };
+                    let asset = asset_info.asset;
                     let from_wallet = Wallet {
                         address: Account {
                             owner: self.ic_env.id(),
@@ -379,17 +364,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                         )
                     })?;
 
-                    assets.push(Asset {
-                        address: asset_info.address.clone(),
-                        chain: asset_info.chain.clone(),
-                    });
+                    assets.push(asset_info.asset);
                 }
                 IntentTask::TransferWalletToTreasury => {
                     // Fee payment always uses ICP
-                    assets.push(Asset {
-                        address: ICP_CANISTER_ID.to_string(),
-                        chain: Chain::IC,
-                    });
+                    assets.push(Asset::IC { address: ICP_CANISTER_PRINCIPAL });
                 }
                 IntentTask::TransferLinkToWallet => {
                     let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
@@ -399,17 +378,14 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                         )
                     })?;
 
-                    assets.push(Asset {
-                        address: asset_info.address.clone(),
-                        chain: asset_info.chain.clone(),
-                    });
+                    assets.push(asset_info.asset);
                 }
             }
         }
 
         // Remove duplicates by converting to a set-like structure
-        assets.sort_by(|a, b| a.address.cmp(&b.address));
-        assets.dedup_by(|a, b| a.address == b.address && a.chain == b.chain);
+        assets.sort();
+        assets.dedup();
 
         Ok(assets)
     }
@@ -1199,7 +1175,7 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link = create_link_fixture(&mut service, &random_principal_id());
 
-        let asset_address = random_id_string();
+        let asset_address = random_principal_id();
         let updated_link = Link {
             asset_info: Some(vec![AssetInfo {
                 address: asset_address.clone(),
@@ -1229,7 +1205,7 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link = create_link_fixture(&mut service, &random_principal_id());
-        let asset_address = random_id_string();
+        let asset_address = random_principal_id();
         let updated_link = Link {
             asset_info: Some(vec![AssetInfo {
                 address: asset_address.clone(),
@@ -1281,7 +1257,7 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link = create_link_fixture(&mut service, &random_principal_id());
 
-        let asset_address = random_id_string();
+        let asset_address = random_principal_id();
         let updated_link = Link {
             asset_info: Some(vec![AssetInfo {
                 address: asset_address.clone(),

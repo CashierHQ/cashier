@@ -73,6 +73,7 @@ pub struct Wallet {
 
 impl Default for Wallet {
     fn default() -> Self {
+        let x = 0;
         Wallet {
             address: "".to_string(),
             chain: Chain::IC,

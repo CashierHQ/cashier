@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use candid::Principal;
 use cashier_backend_types::{
     dto::link::{
         CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDetailUpdateInput,
@@ -163,15 +164,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
 
     async fn create_link(
         &mut self,
-        caller: String,
+        user_id: Principal,
         input: CreateLinkInput,
     ) -> Result<Link, CanisterError> {
-        let user_wallet = self
-            .user_wallet_repository
-            .get(&caller)
-            .ok_or_else(|| "User not found".to_string())?;
-
-        let user_id = user_wallet.user_id;
 
         let ts = self.ic_env.time();
         let id = Uuid::new_v4();
