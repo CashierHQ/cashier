@@ -22,7 +22,6 @@ async fn test_request_lock_for_process_action() {
         let mut fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
         // Setup user and airdrop tokens
-        fixture.setup_user().await;
         fixture.airdrop_icp(1_000_000_000_000_000, &caller).await;
         fixture
             .airdrop_icrc("ckBTC", 1_000_000_000_000_000, &caller)

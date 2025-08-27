@@ -74,7 +74,6 @@ async fn it_should_create_link_token_basket_successfully() {
 
     let caller = TestUser::User1.get_principal();
     let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
-    test_fixture.setup_user().await;
 
     let icp_ledger_client = ctx.new_icp_ledger_client(caller);
     let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);

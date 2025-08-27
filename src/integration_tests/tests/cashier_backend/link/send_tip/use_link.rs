@@ -43,7 +43,6 @@ async fn it_should_use_link_tip_icp_token_successfully() {
 
     let claimer = TestUser::User2.get_principal();
     let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
-    claimer_fixture.setup_user().await;
 
     let icp_ledger_client = claimer_fixture.ctx.new_icp_ledger_client(claimer);
     let claimer_account = Account {
@@ -105,7 +104,6 @@ async fn it_should_use_link_tip_icrc_token_successfully() {
 
     let claimer = TestUser::User2.get_principal();
     let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
-    claimer_fixture.setup_user().await;
 
     let icrc_ledger_client = claimer_fixture
         .ctx

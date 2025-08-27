@@ -53,7 +53,6 @@ async fn it_should_error_withdraw_link_airdrop_if_caller_not_creator() {
 
     let caller = TestUser::User2.get_principal();
     let caller_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &caller).await;
-    caller_fixture.setup_user().await;
     let cashier_backend_client = caller_fixture.ctx.new_cashier_backend_client(caller);
 
     // Act

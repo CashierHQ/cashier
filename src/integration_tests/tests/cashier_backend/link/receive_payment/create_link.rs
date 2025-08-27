@@ -75,12 +75,6 @@ async fn it_should_create_link_payment_icp_token_successfully() {
     let caller_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
     assert_eq!(caller_balance_before, initial_balance);
 
-    // Act
-    let user = test_fixture.setup_user().await;
-
-    // Assert
-    assert!(!user.id.is_empty());
-
     // Arrange
     let link_input = test_fixture
         .receive_payment_link_input(vec![constant::ICP_TOKEN.to_string()], vec![link_amount])
@@ -216,12 +210,6 @@ async fn it_should_create_link_payment_icrc_token_successfully() {
     // Assert
     let icp_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
     assert_eq!(icp_balance_before, initial_balance);
-
-    // Act
-    let user = test_fixture.setup_user().await;
-
-    // Assert
-    assert!(!user.id.is_empty());
 
     // Arrange
     let link_input = test_fixture

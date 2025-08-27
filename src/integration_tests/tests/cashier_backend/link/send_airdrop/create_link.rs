@@ -81,12 +81,6 @@ async fn it_should_create_link_airdrop_icp_token_successfully() {
     let caller_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
     assert_eq!(caller_balance_before, initial_balance);
 
-    // Act
-    let user = test_fixture.setup_user().await;
-
-    // Assert
-    assert!(!user.id.is_empty());
-
     // Arrange
     let link_input = test_fixture
         .airdrop_link_input(
@@ -246,12 +240,6 @@ async fn it_should_create_link_airdrop_icrc_token_successfully() {
     assert_eq!(caller_balance_before, initial_balance);
     let icp_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
     assert_eq!(icp_balance_before, initial_balance);
-
-    // Act
-    let user = test_fixture.setup_user().await;
-
-    // Assert
-    assert!(!user.id.is_empty());
 
     // Arrange
     let link_input = test_fixture
