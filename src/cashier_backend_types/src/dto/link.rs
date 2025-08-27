@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::dto::action::ActionDto;
 use crate::repository::asset_info::AssetInfo;
-use crate::repository::common::Chain;
+use crate::repository::common::Asset;
 use crate::repository::intent::v2::{Intent, IntentType};
 use crate::repository::link::v1::{Link, LinkType, Template};
 
@@ -30,40 +30,24 @@ pub struct CreateLinkInput {
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct LinkDetailUpdateAssetInfoInput {
-    pub address: String,
-    pub chain: String,
+    pub asset: Asset,
     pub label: String,
     pub amount_per_link_use_action: u64,
 }
 
 impl LinkDetailUpdateAssetInfoInput {
     pub fn to_model(&self) -> AssetInfo {
-        let chain = match Chain::from_str(self.chain.as_str()) {
-            Ok(chain) => chain,
-            Err(_) => Chain::IC,
-        };
-
         AssetInfo {
-            address: self.address.clone(),
-            chain,
+            asset: self.asset.clone(),
             label: self.label.clone(),
             amount_per_link_use_action: self.amount_per_link_use_action,
         }
     }
 
     pub fn is_changed(&self, asset_info: &AssetInfo) -> bool {
-        self.address == asset_info.address
-            && self.chain == asset_info.chain.to_string()
-            && self.label == asset_info.label
-            && self.amount_per_link_use_action == asset_info.amount_per_link_use_action
+        self.to_model() != *asset_info
     }
 
-    pub fn validate(&self) -> Result<(), String> {
-        match Principal::from_text(self.address.as_str()) {
-            Ok(_) => Ok(()),
-            Err(_) => Err("Invalid address".to_string()),
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -134,8 +118,7 @@ pub struct LinkDto {
 
 #[derive(Debug, Clone, Serialize, Deserialize, CandidType)]
 pub struct AssetInfoDto {
-    pub address: String,
-    pub chain: String,
+    pub asset: Asset,
     pub label: String,
     pub amount_per_link_use_action: u64,
 }
@@ -171,27 +154,14 @@ impl From<Intent> for IntentDto {
 
 impl From<LinkDetailUpdateAssetInfoInput> for AssetInfo {
     fn from(input: LinkDetailUpdateAssetInfoInput) -> Self {
-        let chain = match Chain::from_str(input.chain.as_str()) {
-            Ok(chain) => chain,
-            Err(_) => Chain::IC,
-        };
-
-        AssetInfo {
-            address: input.address,
-            chain,
-            label: input.label,
-            amount_per_link_use_action: input.amount_per_link_use_action,
-        }
+        input.to_model()
     }
 }
 
 impl From<&AssetInfo> for AssetInfoDto {
     fn from(input: &AssetInfo) -> Self {
-        let chain = input.chain.to_string();
-
         AssetInfoDto {
-            address: input.address.clone(),
-            chain,
+            asset: input.asset.clone(),
             label: input.label.clone(),
             amount_per_link_use_action: input.amount_per_link_use_action,
         }
@@ -232,11 +202,8 @@ impl From<Link> for LinkDto {
 
 impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfoDto {
     fn from(input: &LinkDetailUpdateAssetInfoInput) -> Self {
-        let chain = input.chain.to_string();
-
         AssetInfoDto {
-            address: input.address.clone(),
-            chain,
+            asset: input.asset.clone(),
             label: input.label.clone(),
             amount_per_link_use_action: input.amount_per_link_use_action,
         }
@@ -251,12 +218,6 @@ impl LinkDetailUpdateInput {
 
         if let Some(link_type) = &self.link_type {
             LinkType::from_str(link_type).map_err(|_| "Invalid link type ".to_string())?;
-        }
-
-        if let Some(asset_info) = &self.asset_info {
-            for asset_info_input in asset_info {
-                asset_info_input.validate()?;
-            }
         }
 
         Ok(())

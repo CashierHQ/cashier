@@ -22,26 +22,6 @@ pub struct Intent {
     pub label: String,
 }
 
-impl Default for Intent {
-    fn default() -> Self {
-        Self {
-            id: "".to_string(),
-            state: IntentState::Created,
-            created_at: 0,
-            dependency: vec![],
-            chain: Chain::IC,
-            task: IntentTask::TransferWalletToTreasury,
-            r#type: IntentType::Transfer(TransferData {
-                from: Wallet::default(),
-                to: Wallet::default(),
-                asset: Asset::default(),
-                amount: Nat::from(0u64),
-            }),
-            label: "".to_string(),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub enum IntentState {
     Created,
@@ -77,26 +57,6 @@ impl IntentType {
         }
     }
 
-    pub fn default_transfer() -> Self {
-        IntentType::Transfer(TransferData {
-            from: Wallet::default(),
-            to: Wallet::default(),
-            asset: Asset::default(),
-            amount: Nat::from(0u64),
-        })
-    }
-
-    pub fn default_transfer_from() -> Self {
-        IntentType::TransferFrom(TransferFromData {
-            from: Wallet::default(),
-            to: Wallet::default(),
-            spender: Wallet::default(),
-            asset: Asset::default(),
-            amount: Nat::from(0u64),
-            actual_amount: None,
-            approve_amount: None,
-        })
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, CandidType, PartialEq, Eq, Ord, PartialOrd)]

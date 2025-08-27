@@ -431,7 +431,7 @@ mod tests {
             from_call_type: FromCallType::Canister,
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
                 from: Wallet {
-                    address: from_principal_id,
+                    address: from_principal_id.to_text(),
                     chain: Chain::IC,
                 },
                 to: Wallet::default(),

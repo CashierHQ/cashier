@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::{CandidType, Principal, types::principal::PrincipalError};
+use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::{Account, ICRC1TextReprError};
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -13,24 +13,19 @@ pub enum Chain {
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
-pub struct Asset {
-    pub address: String,
-    pub chain: Chain,
-}
-
-impl Default for Asset {
-    fn default() -> Self {
-        Asset {
-            address: "".to_string(),
-            chain: Chain::IC,
-        }
+pub enum Asset {
+    IC {
+        address: Principal,
     }
 }
 
 impl Asset {
-    pub fn get_principal(&self) -> Result<Principal, PrincipalError> {
-        Principal::from_text(self.address.clone())
-    }
+    /// Returns the chain of the asset
+    pub fn chain(&self) -> Chain {
+        match self {
+            Asset::IC { .. } => Chain::IC,
+        }
+    }   
 }
 
 impl Chain {
