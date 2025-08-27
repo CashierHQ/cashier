@@ -557,7 +557,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         let link_creation_action: Vec<LinkAction> = self.link_action_repository.get_by_prefix(
             &link.id,
             ActionType::CreateLink.to_str(),
-            &link.creator,
+            link.creator,
         );
 
         let Some(link_creation_action) = link_creation_action.first() else {
@@ -573,7 +573,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         let link_withdraw_action: Vec<LinkAction> = self.link_action_repository.get_by_prefix(
             &link.id,
             &ActionType::Withdraw.to_string(),
-            &link.creator.clone(),
+            link.creator,
         );
 
         if link_withdraw_action.is_empty() {
@@ -598,9 +598,9 @@ mod tests {
     use crate::utils::test_utils::{
         random_id_string, random_principal_id, runtime::MockIcEnvironment,
     };
+    use cashier_backend_types::repository::common::Asset;
     use cashier_backend_types::repository::{
         asset_info::AssetInfo,
-        common::Chain,
         link::v1::{Link, LinkState, LinkType},
     };
     use std::collections::HashMap;
@@ -619,7 +619,7 @@ mod tests {
             link_type: None,
             asset_info: None,
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
             metadata: None,
             link_use_action_counter: 0,
@@ -659,7 +659,7 @@ mod tests {
             link_type: None,
             asset_info: None,
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
             metadata: None,
             link_use_action_counter: 0,
@@ -699,7 +699,7 @@ mod tests {
             link_type: None,
             asset_info: None,
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
             metadata: None,
             link_use_action_counter: 0,
@@ -739,7 +739,7 @@ mod tests {
             link_type: None,
             asset_info: None,
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
             metadata: None,
             link_use_action_counter: 0,
@@ -779,7 +779,7 @@ mod tests {
             link_type: None,
             asset_info: None,
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
             metadata: Some(HashMap::new()),
             link_use_action_counter: 0,
@@ -822,7 +822,7 @@ mod tests {
             link_type: None,
             asset_info: None,
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
             metadata: Some(meta_data),
             link_use_action_counter: 0,
@@ -862,7 +862,7 @@ mod tests {
             link_type: None,
             asset_info: None,
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
             metadata: Some(HashMap::new()),
             link_use_action_counter: 0,
@@ -906,7 +906,7 @@ mod tests {
             link_type: None,
             asset_info: None,
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
             metadata: Some(meta_data),
             link_use_action_counter: 0,
@@ -946,7 +946,7 @@ mod tests {
             link_type: Some(LinkType::SendTip),
             asset_info: None,
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
             metadata: Some(HashMap::new()),
             link_use_action_counter: 0,
@@ -986,7 +986,7 @@ mod tests {
             link_type: Some(LinkType::SendTip),
             asset_info: None,
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
             metadata: Some(HashMap::new()),
             link_use_action_counter: 0,
@@ -1025,13 +1025,12 @@ mod tests {
             description: Some("Description".to_string()),
             link_type: None,
             asset_info: Some(vec![AssetInfo {
-                address: "some_address".to_string(),
-                chain: Chain::IC,
+                asset: Asset::IC { address: random_principal_id() },
                 amount_per_link_use_action: 100,
                 label: "some_label".to_string(),
             }]),
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
             metadata: Some(HashMap::new()),
             link_use_action_counter: 0,
@@ -1044,8 +1043,7 @@ mod tests {
             link_image_url: None,
             nft_image: None,
             asset_info: Some(vec![LinkDetailUpdateAssetInfoInput {
-                address: "some_address".to_string(),
-                chain: Chain::IC.to_string(),
+                                asset: Asset::IC { address: random_principal_id() },
                 amount_per_link_use_action: 101,
                 label: "some_label".to_string(),
             }]),
@@ -1075,13 +1073,12 @@ mod tests {
             description: Some("Description".to_string()),
             link_type: None,
             asset_info: Some(vec![AssetInfo {
-                address: "some_address".to_string(),
-                chain: Chain::IC,
+                                asset: Asset::IC { address: random_principal_id() },
                 amount_per_link_use_action: 100,
                 label: "some_label".to_string(),
             }]),
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
             metadata: Some(HashMap::new()),
             link_use_action_counter: 0,
@@ -1094,8 +1091,7 @@ mod tests {
             link_image_url: None,
             nft_image: None,
             asset_info: Some(vec![LinkDetailUpdateAssetInfoInput {
-                address: "some_address".to_string(),
-                chain: Chain::IC.to_string(),
+                           asset: Asset::IC { address: random_principal_id() },
                 amount_per_link_use_action: 100,
                 label: "some_label".to_string(),
             }]),
@@ -1126,7 +1122,7 @@ mod tests {
             link_type: None,
             asset_info: None,
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
             metadata: Some(HashMap::new()),
             link_use_action_counter: 0,
@@ -1166,7 +1162,7 @@ mod tests {
             link_type: None,
             asset_info: None,
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
             metadata: Some(HashMap::new()),
             link_use_action_counter: 0,
@@ -1206,7 +1202,7 @@ mod tests {
             link_type: None,
             asset_info: None,
             template: Some(Template::Central),
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
             metadata: Some(HashMap::new()),
             link_use_action_counter: 0,
@@ -1246,7 +1242,7 @@ mod tests {
             link_type: None,
             asset_info: None,
             template: Some(Template::Central),
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
             metadata: Some(HashMap::new()),
             link_use_action_counter: 0,
@@ -1480,14 +1476,12 @@ mod tests {
             nft_image: None,
             asset_info: Some(vec![
                 LinkDetailUpdateAssetInfoInput {
-                    address: address1.clone(),
-                    chain: Chain::IC.to_string(),
+                    asset: Asset::IC { address: address1.clone() },
                     amount_per_link_use_action: 100,
                     label: "some_label".to_string(),
                 },
                 LinkDetailUpdateAssetInfoInput {
-                    address: address2.clone(),
-                    chain: Chain::IC.to_string(),
+                    asset: Asset::IC { address: address2.clone() },
                     amount_per_link_use_action: 200,
                     label: "another_label".to_string(),
                 },
@@ -1506,8 +1500,8 @@ mod tests {
         let (link_use_action_max_count, asset_info_input) = result.unwrap();
         assert_eq!(link_use_action_max_count, 10);
         assert_eq!(asset_info_input.len(), 2);
-        assert_eq!(asset_info_input[0].address, address1);
-        assert_eq!(asset_info_input[1].address, address2);
+        assert_eq!(asset_info_input[0].asset, Asset::IC { address: address1 });
+        assert_eq!(asset_info_input[1].asset, Asset::IC { address: address2 });
     }
 
     #[test]
@@ -1516,7 +1510,7 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
-        let link = create_link_fixture(&mut service, &creator_id);
+        let link = create_link_fixture(&mut service, creator_id);
 
         // Act
         let result = service.prefetch_create_action(&link);
@@ -1534,12 +1528,12 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
-        let link = create_link_fixture(&mut service, &creator_id);
+        let link = create_link_fixture(&mut service, creator_id);
         let _link_action = create_link_action_fixture(
             &mut service,
             &link.id,
             ActionType::CreateLink.to_str(),
-            &creator_id,
+            creator_id,
         );
 
         // Act
@@ -1562,7 +1556,7 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
-        let link = create_link_fixture(&mut service, &creator_id);
+        let link = create_link_fixture(&mut service, creator_id);
 
         // Act
         let result = service.prefetch_withdraw_action(&link);
@@ -1580,12 +1574,12 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
-        let link = create_link_fixture(&mut service, &creator_id);
+        let link = create_link_fixture(&mut service, creator_id);
         let _link_action = create_link_action_fixture(
             &mut service,
             &link.id,
             ActionType::Withdraw.to_str(),
-            &creator_id,
+            creator_id,
         );
 
         // Act

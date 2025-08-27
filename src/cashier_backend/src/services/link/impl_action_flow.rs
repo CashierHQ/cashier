@@ -217,14 +217,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         input: &CreateActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
         // check wallet address
-        let wallet_principal = match Principal::from_text(input.wallet_address.clone()) {
-            Ok(wa) => wa,
-            Err(_) => {
-                return Err(CanisterError::ValidationErrors(
-                    "Invalid wallet address".to_string(),
-                ));
-            }
-        };
+        let wallet_principal = input.wallet_address;
 
         let action_type = ActionType::from_str(&input.action_type)
             .map_err(|_| CanisterError::ValidationErrors("Invalid action type".to_string()))?;
@@ -236,8 +229,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
             ));
         }
 
-        // add prefix for easy query
-        let user_id = format!("ANON#{}", input.wallet_address);
+        let user_id = input.wallet_address;
 
         // Create lock for action creation using wallet principal for anonymous users
         let request_lock_key = self
@@ -258,9 +250,9 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
                 ));
             }
 
-            self.link_validate_user_create_action(&input.link_id, &action_type, &user_id)?;
+            self.link_validate_user_create_action(&input.link_id, &action_type, user_id)?;
 
-            let action = self.get_action_of_link(&input.link_id, &input.action_type, &user_id);
+            let action = self.get_action_of_link(&input.link_id, &input.action_type, user_id);
 
             if action.is_some() {
                 return Err(CanisterError::ValidationErrors(
@@ -268,10 +260,10 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
                 ));
             }
 
-            self.link_validate_user_create_action(&input.link_id, &action_type, &user_id)?;
+            self.link_validate_user_create_action(&input.link_id, &action_type, user_id)?;
 
             // Validate user can create action
-            self.link_validate_user_create_action(&input.link_id, &action_type, &user_id)?;
+            self.link_validate_user_create_action(&input.link_id, &action_type, user_id)?;
 
             // Create temp action with default state
             let default_link_user_state = match action_type {
@@ -305,7 +297,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
                 .assemble_intents(
                     &temp_action.link_id,
                     &temp_action.r#type,
-                    &wallet_principal,
+                    wallet_principal,
                     &fee_map,
                 )
                 .await?;
@@ -328,15 +320,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         caller: Principal,
         input: &ProcessActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
-        // check wallet address
-        let _ = match Principal::from_text(input.wallet_address.clone()) {
-            Ok(wa) => wa,
-            Err(_) => {
-                return Err(CanisterError::ValidationErrors(
-                    "Invalid wallet address".to_string(),
-                ));
-            }
-        };
+
 
         let action_type = ActionType::from_str(&input.action_type)
             .map_err(|_| CanisterError::ValidationErrors("Invalid action type ".to_string()))?;
@@ -348,16 +332,15 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
             ));
         }
 
-        // add prefix for easy query
-        let user_id = format!("ANON#{}", input.wallet_address);
+        let user_id = input.wallet_address;
 
-        let action = self.get_action_of_link(&input.link_id, &input.action_type, &user_id);
+        let action = self.get_action_of_link(&input.link_id, &input.action_type, user_id);
 
         let action = action
             .ok_or_else(|| CanisterError::ValidationErrors("Action does not exist".to_string()))?;
 
         // validate action
-        self.link_validate_user_update_action(&action, &user_id)?;
+        self.link_validate_user_update_action(&action, user_id)?;
 
         let action_id = action.id.clone();
 
