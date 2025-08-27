@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use candid::Principal;
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -12,20 +13,8 @@ pub struct Action {
     pub id: String,
     pub r#type: ActionType,
     pub state: ActionState,
-    pub creator: String,
+    pub creator: Principal,
     pub link_id: String,
-}
-
-impl Default for Action {
-    fn default() -> Self {
-        Action {
-            id: "".to_string(),
-            r#type: ActionType::CreateLink,
-            state: ActionState::Created,
-            creator: "".to_string(),
-            link_id: "".to_string(),
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -33,8 +22,6 @@ pub enum ActionType {
     CreateLink,
     Withdraw,
     Use,
-    // deprecated
-    Claim,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
@@ -51,7 +38,6 @@ impl ActionType {
             ActionType::Use => "Use",
             ActionType::CreateLink => "CreateLink",
             ActionType::Withdraw => "Withdraw",
-            ActionType::Claim => "Use",
         }
     }
 }

@@ -22,45 +22,45 @@ impl<R: Repositories> RequestLockService<R> {
 
     pub fn create_request_lock_for_executing_transaction(
         &mut self,
-        principal: &Principal,
+        principal: Principal,
         action_id: &str,
         transaction_id: &str,
         timestamp: u64,
     ) -> Result<RequestLockKey, CanisterError> {
         let key =
-            RequestLockKey::user_action_transaction(principal.to_text(), action_id, transaction_id);
+            RequestLockKey::user_action_transaction(principal, action_id, transaction_id);
         self.create(&key, timestamp)
     }
 
     pub fn create_request_lock_for_creating_action(
         &mut self,
         link_id: &str,
-        principal: &Principal,
+        principal: Principal,
         timestamp: u64,
     ) -> Result<RequestLockKey, CanisterError> {
-        let key = RequestLockKey::user_link(principal.to_text(), link_id);
+        let key = RequestLockKey::user_link(principal, link_id);
         self.create(&key, timestamp)
     }
 
     pub fn create_request_lock_for_processing_action(
         &mut self,
-        principal: &Principal,
+        principal: Principal,
         link_id: &str,
         action_id: &str,
         timestamp: u64,
     ) -> Result<RequestLockKey, CanisterError> {
-        let key = RequestLockKey::user_link_action(principal.to_text(), link_id, action_id);
+        let key = RequestLockKey::user_link_action(principal, link_id, action_id);
         self.create(&key, timestamp)
     }
 
     pub fn create_request_lock_for_updating_action(
         &mut self,
-        principal: &Principal,
+        principal: Principal,
         link_id: &str,
         action_id: &str,
         timestamp: u64,
     ) -> Result<RequestLockKey, CanisterError> {
-        let key = RequestLockKey::user_link_action(principal.to_text(), link_id, action_id);
+        let key = RequestLockKey::user_link_action(principal, link_id, action_id);
         self.create(&key, timestamp)
     }
 
@@ -104,8 +104,7 @@ mod tests {
         // Arrange
         let mut service = RequestLockService::new(&TestRepositories::new());
         let principal_id = random_principal_id();
-        let principal = Principal::from_text(principal_id.clone()).unwrap();
-        let action_id = random_id_string();
+            let action_id = random_id_string();
         let transaction_id = random_id_string();
         let timestamp = 1622547800;
 
@@ -120,7 +119,7 @@ mod tests {
 
         // Act
         let result = service.create_request_lock_for_executing_transaction(
-            &principal,
+            principal_id,
             &action_id,
             &transaction_id,
             timestamp,
@@ -139,15 +138,14 @@ mod tests {
     fn it_should_create_request_lock_for_executing_transaction() {
         // Arrange
         let mut service = RequestLockService::new(&TestRepositories::new());
-        let principal_id = random_principal_id();
-        let principal = Principal::from_text(principal_id.clone()).unwrap();
+        let principal = random_principal_id();
         let action_id = random_id_string();
         let transaction_id = random_id_string();
         let timestamp = 1622547800;
 
         // Act
         let result = service.create_request_lock_for_executing_transaction(
-            &principal,
+            principal,
             &action_id,
             &transaction_id,
             timestamp,
@@ -158,7 +156,7 @@ mod tests {
         if let Ok(key) = result {
             assert_eq!(
                 key,
-                RequestLockKey::user_action_transaction(principal_id, action_id, transaction_id)
+                RequestLockKey::user_action_transaction(principal, action_id, transaction_id)
             );
         }
     }
@@ -167,19 +165,18 @@ mod tests {
     fn it_should_error_create_request_lock_for_creating_action_if_lock_exists() {
         // Arrange
         let mut service = RequestLockService::new(&TestRepositories::new());
-        let principal_id = random_principal_id();
-        let principal = Principal::from_text(principal_id.clone()).unwrap();
+        let principal = random_principal_id();
         let link_id = random_id_string();
         let timestamp = 1622547800;
 
-        let key = RequestLockKey::user_link(principal_id, link_id.clone());
+        let key = RequestLockKey::user_link(principal, link_id.clone());
         service
             .request_lock_repository
             .create(RequestLock { key, timestamp });
 
         // Act
         let result =
-            service.create_request_lock_for_creating_action(&link_id, &principal, timestamp);
+            service.create_request_lock_for_creating_action(&link_id, principal, timestamp);
 
         // Assert
         assert!(result.is_err());
@@ -194,19 +191,18 @@ mod tests {
     fn it_should_create_request_lock_for_creating_action() {
         // Arrange
         let mut service = RequestLockService::new(&TestRepositories::new());
-        let principal_id = random_principal_id();
-        let principal = Principal::from_text(principal_id.clone()).unwrap();
+        let principal = random_principal_id();
         let link_id = random_id_string();
         let timestamp = 1622547800;
 
         // Act
         let result =
-            service.create_request_lock_for_creating_action(&link_id, &principal, timestamp);
+            service.create_request_lock_for_creating_action(&link_id, principal, timestamp);
 
         // Assert
         assert!(result.is_ok());
         if let Ok(key) = result {
-            assert_eq!(key, RequestLockKey::user_link(principal_id, link_id));
+            assert_eq!(key, RequestLockKey::user_link(principal, link_id));
         }
     }
 
@@ -214,21 +210,20 @@ mod tests {
     fn it_should_error_create_request_lock_for_processing_action_if_lock_exists() {
         // Arrange
         let mut service = RequestLockService::new(&TestRepositories::new());
-        let principal_id = random_principal_id();
-        let principal = Principal::from_text(principal_id.clone()).unwrap();
+        let principal = random_principal_id();
         let link_id = random_id_string();
         let action_id = random_id_string();
         let timestamp = 1622547800;
 
         let key =
-            RequestLockKey::user_link_action(principal_id, link_id.clone(), action_id.clone());
+            RequestLockKey::user_link_action(principal, link_id.clone(), action_id.clone());
         service
             .request_lock_repository
             .create(RequestLock { key, timestamp });
 
         // Act
         let result = service
-            .create_request_lock_for_processing_action(&principal, &link_id, &action_id, timestamp);
+            .create_request_lock_for_processing_action(principal, &link_id, &action_id, timestamp);
 
         // Assert
         assert!(result.is_err());
@@ -243,22 +238,21 @@ mod tests {
     fn it_should_create_request_lock_for_processing_action() {
         // Arrange
         let mut service = RequestLockService::new(&TestRepositories::new());
-        let principal_id = random_principal_id();
-        let principal = Principal::from_text(principal_id.clone()).unwrap();
+        let principal = random_principal_id();
         let link_id = random_id_string();
         let action_id = random_id_string();
         let timestamp = 1622547800;
 
         // Act
         let result = service
-            .create_request_lock_for_processing_action(&principal, &link_id, &action_id, timestamp);
+            .create_request_lock_for_processing_action(principal, &link_id, &action_id, timestamp);
 
         // Assert
         assert!(result.is_ok());
         if let Ok(key) = result {
             assert_eq!(
                 key,
-                RequestLockKey::user_link_action(principal_id, link_id, action_id)
+                RequestLockKey::user_link_action(principal, link_id, action_id)
             );
         }
     }
@@ -267,21 +261,20 @@ mod tests {
     fn it_should_error_create_request_lock_for_updating_action_if_lock_exists() {
         // Arrange
         let mut service = RequestLockService::new(&TestRepositories::new());
-        let principal_id = random_principal_id();
-        let principal = Principal::from_text(principal_id.clone()).unwrap();
+        let principal = random_principal_id();
         let link_id = random_id_string();
         let action_id = random_id_string();
         let timestamp = 1622547800;
 
         let key =
-            RequestLockKey::user_link_action(principal_id, link_id.clone(), action_id.clone());
+            RequestLockKey::user_link_action(principal, link_id.clone(), action_id.clone());
         service
             .request_lock_repository
             .create(RequestLock { key, timestamp });
 
         // Act
         let result = service
-            .create_request_lock_for_updating_action(&principal, &link_id, &action_id, timestamp);
+            .create_request_lock_for_updating_action(principal, &link_id, &action_id, timestamp);
 
         // Assert
         assert!(result.is_err());
@@ -296,22 +289,21 @@ mod tests {
     fn it_should_create_request_lock_for_updating_action() {
         // Arrange
         let mut service = RequestLockService::new(&TestRepositories::new());
-        let principal_id = random_principal_id();
-        let principal = Principal::from_text(principal_id.clone()).unwrap();
+        let principal = random_principal_id();
         let link_id = random_id_string();
         let action_id = random_id_string();
         let timestamp = 1622547800;
 
         // Act
         let result = service
-            .create_request_lock_for_updating_action(&principal, &link_id, &action_id, timestamp);
+            .create_request_lock_for_updating_action(principal, &link_id, &action_id, timestamp);
 
         // Assert
         assert!(result.is_ok());
         if let Ok(key) = result {
             assert_eq!(
                 key,
-                RequestLockKey::user_link_action(principal_id, link_id, action_id)
+                RequestLockKey::user_link_action(principal, link_id, action_id)
             );
         }
     }

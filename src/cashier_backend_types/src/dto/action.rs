@@ -80,7 +80,7 @@ pub struct ActionDto {
     pub id: String,
     pub r#type: String,
     pub state: String,
-    pub creator: String,
+    pub creator: Principal,
     pub intents: Vec<IntentDto>,
     pub icrc_112_requests: Option<Icrc112Requests>,
 }
@@ -118,8 +118,7 @@ pub struct WalletDto {
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq)]
 
 pub struct AssetDto {
-    pub address: String,
-    pub chain: String,
+    pub asset: Asset,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq)]
@@ -225,8 +224,7 @@ impl From<Wallet> for WalletDto {
 impl From<Asset> for AssetDto {
     fn from(asset: Asset) -> Self {
         Self {
-            address: asset.address,
-            chain: asset.chain.to_string(),
+            asset,
         }
     }
 }

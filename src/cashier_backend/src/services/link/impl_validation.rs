@@ -467,7 +467,7 @@ mod tests {
         let mut link = create_link_fixture(&mut service, &creator_id);
         link.state = LinkState::Active; // Ensure link is active
         service.link_repository.update(link.clone());
-        let action_type = ActionType::Claim;
+        let action_type = ActionType::Use;
 
         // Act
         let result = service.link_validate_user_create_action(&link.id, &action_type, &creator_id);

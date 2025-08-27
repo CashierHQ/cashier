@@ -1160,7 +1160,7 @@ mod tests {
         let link = create_link_fixture(&mut service, &random_principal_id());
 
         // Act
-        let result = service.get_assets_for_action(&link.id, &ActionType::Claim);
+        let result = service.get_assets_for_action(&link.id, &ActionType::Use);
 
         // Assert
         assert!(result.is_err());
