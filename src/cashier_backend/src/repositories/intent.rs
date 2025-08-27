@@ -57,6 +57,7 @@ mod tests {
         common::{Asset, Chain, Wallet},
         intent::v2::{IntentState, IntentTask, IntentType, TransferData},
     };
+    use cashier_common::test_utils::random_principal_id;
     use std::str::FromStr;
 
     #[test]
@@ -75,7 +76,7 @@ mod tests {
             r#type: IntentType::Transfer(TransferData {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from_str("0").unwrap(),
             }),
             label: "Test Intent".to_string(),
@@ -90,7 +91,7 @@ mod tests {
             r#type: IntentType::Transfer(TransferData {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from_str("100").unwrap(),
             }),
             label: "Another Test Intent".to_string(),
@@ -125,7 +126,7 @@ mod tests {
             r#type: IntentType::Transfer(TransferData {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from_str("0").unwrap(),
             }),
             label: "Test Intent".to_string(),
@@ -141,7 +142,7 @@ mod tests {
             r#type: IntentType::Transfer(TransferData {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from_str("100").unwrap(),
             }),
             label: "Updated Test Intent".to_string(),
@@ -158,7 +159,7 @@ mod tests {
             r#type: IntentType::Transfer(TransferData {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from_str("100").unwrap(),
             }),
             label: "Updated Intent".to_string(),
@@ -173,7 +174,7 @@ mod tests {
             r#type: IntentType::Transfer(TransferData {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from_str("200").unwrap(),
             }),
             label: "Updated Another Test Intent".to_string(),
@@ -207,7 +208,7 @@ mod tests {
             r#type: IntentType::Transfer(TransferData {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from_str("0").unwrap(),
             }),
             label: "Test Intent".to_string(),
@@ -238,7 +239,7 @@ mod tests {
             r#type: IntentType::Transfer(TransferData {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from_str("0").unwrap(),
             }),
             label: "Test Intent".to_string(),
@@ -253,7 +254,7 @@ mod tests {
             r#type: IntentType::Transfer(TransferData {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from_str("100").unwrap(),
             }),
             label: "Another Test Intent".to_string(),

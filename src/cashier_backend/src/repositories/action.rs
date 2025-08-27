@@ -42,8 +42,8 @@ impl<S: Storage<ActionRepositoryStorage>> ActionRepository<S> {
 mod tests {
     use super::*;
     use crate::{
-        repositories::{Repositories, tests::TestRepositories},
-        utils::test_utils::random_id_string,
+        repositories::{tests::TestRepositories, Repositories},
+        utils::test_utils::{random_id_string, random_principal_id},
     };
     use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
 
@@ -56,7 +56,7 @@ mod tests {
             id: action_id.clone(),
             r#type: ActionType::CreateLink,
             state: ActionState::Processing,
-            creator: "creator1".to_string(),
+            creator: random_principal_id(),
             link_id: "link1".to_string(),
         };
 
@@ -78,7 +78,7 @@ mod tests {
             id: action_id.clone(),
             r#type: ActionType::CreateLink,
             state: ActionState::Processing,
-            creator: "creator1".to_string(),
+            creator: random_principal_id(),
             link_id: "link1".to_string(),
         };
         repo.create(action);
@@ -87,19 +87,19 @@ mod tests {
             id: action_id.clone(),
             r#type: ActionType::CreateLink,
             state: ActionState::Success,
-            creator: "creator2".to_string(),
+            creator: random_principal_id(),
             link_id: "link2".to_string(),
         };
 
         // Act
-        repo.update(updated_action);
+        repo.update(updated_action.clone());
 
         // Assert
         let retrieved_action = repo.get(&action_id);
         assert!(retrieved_action.is_some());
         let action = retrieved_action.expect("Action should be found");
         assert_eq!(action.state, ActionState::Success);
-        assert_eq!(action.creator, "creator2");
+        assert_eq!(action.creator, updated_action.creator);
         assert_eq!(action.link_id, "link2");
     }
 
@@ -124,7 +124,7 @@ mod tests {
             id: action_id.clone(),
             r#type: ActionType::CreateLink,
             state: ActionState::Created,
-            creator: "creator1".to_string(),
+            creator: random_principal_id(),
             link_id: "link1".to_string(),
         };
         repo.create(action);

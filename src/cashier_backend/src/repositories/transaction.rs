@@ -50,8 +50,8 @@ impl<S: Storage<TransactionRepositoryStorage>> TransactionRepository<S> {
 mod tests {
 
     use crate::{
-        repositories::{Repositories, tests::TestRepositories},
-        utils::test_utils::random_id_string,
+        repositories::{tests::TestRepositories, Repositories},
+        utils::test_utils::{random_id_string, random_principal_id},
     };
     use candid::Nat;
     use cashier_backend_types::repository::{
@@ -78,7 +78,7 @@ mod tests {
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from_str("100").unwrap(),
                 memo: None,
                 ts: Some(1622547800),
@@ -95,7 +95,7 @@ mod tests {
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from_str("200").unwrap(),
                 memo: None,
                 ts: Some(1622547900),
@@ -128,7 +128,7 @@ mod tests {
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from_str("100").unwrap(),
                 memo: None,
                 ts: Some(1622547800),
@@ -166,7 +166,7 @@ mod tests {
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from_str("100").unwrap(),
                 memo: None,
                 ts: Some(1622547800),
@@ -183,7 +183,7 @@ mod tests {
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from_str("200").unwrap(),
                 memo: None,
                 ts: Some(1622547900),
@@ -216,7 +216,7 @@ mod tests {
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::default(),
+                asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from_str("100").unwrap(),
                 memo: None,
                 ts: Some(1622547800),
