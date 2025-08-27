@@ -495,8 +495,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
                     }
 
                     // Create intent for transfer asset to link
-                    let label =
-                        format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, asset.address);
+                    let label = match asset.asset {
+                        Asset::IC { address } => format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, address)
+                    };
                     let transfer_asset_intent =
                         self.create_basic_intent(IntentTask::TransferWalletToLink, label);
 
@@ -516,8 +517,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
                 // Create intents for each asset in asset_info
                 for asset in asset_info.iter() {
                     // Create intent for transfer asset from link to wallet
-                    let label =
-                        format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, asset.address);
+                    let label = match asset.asset {
+                        Asset::IC { address } => format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, address)
+                    };
                     let transfer_asset_intent =
                         self.create_basic_intent(IntentTask::TransferLinkToWallet, label);
 
