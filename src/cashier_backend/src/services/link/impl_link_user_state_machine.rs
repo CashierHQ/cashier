@@ -26,7 +26,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
         &mut self,
         link_id: &str,
         action_type: &str,
-        user_id: &str,
+        user_id: Principal,
         goto: &UserStateMachineGoto,
     ) -> Result<LinkAction, CanisterError> {
         // check inputs that can be changed this state

@@ -100,7 +100,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> ActionCreator<E>
             link_id: temp_action.link_id.clone(),
             action_type: temp_action.r#type.to_string(),
             action_id: temp_action.id.clone(),
-            user_id: temp_action.creator.clone(),
+            user_id: temp_action.creator,
             link_user_state: temp_action.default_link_user_state.clone(),
         };
 
@@ -129,7 +129,7 @@ mod tests {
     use crate::utils::test_utils::{
         random_id_string, random_principal_id, runtime::MockIcEnvironment,
     };
-    use candid::Nat;
+    use candid::{Nat, Principal};
     use cashier_backend_types::repository::{
         action::v1::{ActionState, ActionType},
         common::{Asset, Chain, Wallet},
@@ -202,7 +202,7 @@ mod tests {
                     r#type: IntentType::Transfer(TransferData {
                         from: Wallet::default(),
                         to: Wallet::default(),
-                        asset: Asset::default(),
+                        asset: Asset::IC { address: Principal::anonymous() },
                         amount: Nat::from(1000u64),
                     }),
                     label: "Test Intent".to_string(),
@@ -217,7 +217,7 @@ mod tests {
                     r#type: IntentType::Transfer(TransferData {
                         from: Wallet::default(),
                         to: Wallet::default(),
-                        asset: Asset::default(),
+                        asset: Asset::IC { address: Principal::anonymous() },
                         amount: Nat::from(1000u64),
                     }),
                     label: "Test Intent with Dependency".to_string(),
@@ -270,7 +270,7 @@ mod tests {
                     r#type: IntentType::Transfer(TransferData {
                         from: Wallet::default(),
                         to: Wallet::default(),
-                        asset: Asset::default(),
+                        asset: Asset::IC { address: Principal::anonymous() },
                         amount: Nat::from(1000u64),
                     }),
                     label: "Test Intent".to_string(),
@@ -285,7 +285,7 @@ mod tests {
                     r#type: IntentType::Transfer(TransferData {
                         from: Wallet::default(),
                         to: Wallet::default(),
-                        asset: Asset::default(),
+                        asset: Asset::IC { address: Principal::anonymous() },
                         amount: Nat::from(1000u64),
                     }),
                     label: "Test Intent with Dependency".to_string(),

@@ -11,7 +11,6 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use uuid::Uuid;
 
-use crate::constant::{FEE_TREASURY_ADDRESS, ICP_CANISTER_ID};
 use crate::domains::fee::Fee;
 use crate::repositories::Repositories;
 use crate::services::link::service::LinkService;
@@ -31,8 +30,8 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
         &self,
         link_id: &str,
         action_type: &ActionType,
-        user_wallet: &Principal,
-        fee_map: &HashMap<String, Nat>,
+        user_wallet: Principal,
+        fee_map: &HashMap<Principal, Nat>,
     ) -> Result<Vec<Intent>, CanisterError> {
         let link = self.get_link_by_id(link_id)?;
 
@@ -86,7 +85,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                     };
                     let from_wallet = Wallet {
                         address: Account {
-                            owner: *user_wallet,
+                            owner: user_wallet,
                             subaccount: None,
                         }
                         .to_string(),
