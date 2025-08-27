@@ -55,13 +55,13 @@ impl IcrcBatchService {
     pub async fn get_batch_tokens_fee(
         &self,
         assets: &Vec<Asset>,
-    ) -> Result<HashMap<String, Nat>, CanisterError> {
+    ) -> Result<HashMap<Principal, Nat>, CanisterError> {
 
         // Create a vector to store the principal and corresponding fee call future
         let mut get_fee_calls: Vec<GetFeeTaskResponse> = Vec::new();
 
         // Create a HashMap to store the final results
-        let mut fee_map: HashMap<String, Nat> = HashMap::new();
+        let mut fee_map = HashMap::new();
 
         for asset in assets {
             match asset {
@@ -87,7 +87,7 @@ impl IcrcBatchService {
                 Ok(fee) => {
                     // If call succeeds, convert fee to Nat and add to the HashMap
                     let fee_n = fee;
-                    fee_map.insert(principal.to_text(), fee_n);
+                    fee_map.insert(principal, fee_n);
                 }
                 Err(errr) => {
                     return Err(CanisterError::CallCanisterFailed(format!(
