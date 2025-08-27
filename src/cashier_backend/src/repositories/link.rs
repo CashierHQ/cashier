@@ -69,7 +69,7 @@ mod tests {
             link_type: Some(LinkType::SendTip),
             asset_info: None,
             template: None,
-            creator: creator_id.clone(),
+            creator: creator_id,
             create_at: 1622547800,
             metadata: None,
             link_use_action_counter: 0,

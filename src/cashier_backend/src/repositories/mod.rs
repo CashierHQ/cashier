@@ -15,8 +15,8 @@ use cashier_backend_types::repository::{
     action::v1::Action, action_intent::v1::ActionIntent, intent::v2::Intent as IntentV2,
     intent_transaction::v1::IntentTransaction, keys::*, link::v1::Link,
     link_action::v1::LinkAction, processing_transaction::ProcessingTransaction,
-    request_lock::RequestLock, transaction::v2::Transaction as TransactionV2, user::v1::User,
-    user_action::v1::UserAction, user_link::v1::UserLink, user_wallet::v1::UserWallet,
+    request_lock::RequestLock, transaction::v2::Transaction as TransactionV2,
+    user_action::v1::UserAction, user_link::v1::UserLink,
 };
 
 use crate::repositories::action::{ActionRepository, ActionRepositoryStorage};
@@ -32,10 +32,8 @@ use crate::repositories::processing_transaction::{
 };
 use crate::repositories::request_lock::{RequestLockRepository, RequestLockRepositoryStorage};
 use crate::repositories::transaction::{TransactionRepository, TransactionRepositoryStorage};
-use crate::repositories::user::{UserRepository, UserRepositoryStorage};
 use crate::repositories::user_action::{UserActionRepository, UserActionRepositoryStorage};
 use crate::repositories::user_link::{UserLinkRepository, UserLinkRepositoryStorage};
-use crate::repositories::user_wallet::{UserWalletRepository, UserWalletRepositoryStorage};
 
 pub mod action;
 pub mod action_intent;
@@ -46,13 +44,10 @@ pub mod link_action;
 pub mod processing_transaction;
 pub mod request_lock;
 pub mod transaction;
-pub mod user;
 pub mod user_action;
 pub mod user_link;
-pub mod user_wallet;
 
-const USER_MEMORY_ID: MemoryId = MemoryId::new(1);
-const USER_WALLET_MEMORY_ID: MemoryId = MemoryId::new(2);
+
 const USER_LINK_MEMORY_ID: MemoryId = MemoryId::new(3);
 const USER_ACTION_MEMORY_ID: MemoryId = MemoryId::new(4);
 const LINK_MEMORY_ID: MemoryId = MemoryId::new(5);
@@ -71,6 +66,8 @@ const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(26);
 
 // Unused Memory IDs but it used before, due to canister doesn't support shrink allocated memory
 const _UNUSED_MEMORY_ID_00: MemoryId = MemoryId::new(0);
+const _UNUSED_MEMORY_ID_01: MemoryId = MemoryId::new(1);
+const _UNUSED_MEMORY_ID_02: MemoryId = MemoryId::new(2);
 const _UNUSED_MEMORY_ID_12: MemoryId = MemoryId::new(12);
 const _UNUSED_MEMORY_ID_13: MemoryId = MemoryId::new(13);
 const _UNUSED_MEMORY_ID_14: MemoryId = MemoryId::new(14);
@@ -98,10 +95,8 @@ pub trait Repositories {
     type ProcessingTransaction: Storage<ProcessingTransactionRepositoryStorage>;
     type RequestLock: Storage<RequestLockRepositoryStorage>;
     type Transaction: Storage<TransactionRepositoryStorage>;
-    type User: Storage<UserRepositoryStorage>;
     type UserAction: Storage<UserActionRepositoryStorage>;
     type UserLink: Storage<UserLinkRepositoryStorage>;
-    type UserWallet: Storage<UserWalletRepositoryStorage>;
 
     fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent>;
     fn action(&self) -> ActionRepository<Self::Action>;
@@ -114,10 +109,8 @@ pub trait Repositories {
     ) -> ProcessingTransactionRepository<Self::ProcessingTransaction>;
     fn request_lock(&self) -> RequestLockRepository<Self::RequestLock>;
     fn transaction(&self) -> TransactionRepository<Self::Transaction>;
-    fn user(&self) -> UserRepository<Self::User>;
     fn user_action(&self) -> UserActionRepository<Self::UserAction>;
     fn user_link(&self) -> UserLinkRepository<Self::UserLink>;
-    fn user_wallet(&self) -> UserWalletRepository<Self::UserWallet>;
 }
 
 /// A factory for creating repositories backed by thread-local storage
@@ -133,10 +126,9 @@ impl Repositories for ThreadlocalRepositories {
     type ProcessingTransaction = &'static LocalKey<RefCell<ProcessingTransactionRepositoryStorage>>;
     type RequestLock = &'static LocalKey<RefCell<RequestLockRepositoryStorage>>;
     type Transaction = &'static LocalKey<RefCell<TransactionRepositoryStorage>>;
-    type User = &'static LocalKey<RefCell<UserRepositoryStorage>>;
     type UserAction = &'static LocalKey<RefCell<UserActionRepositoryStorage>>;
     type UserLink = &'static LocalKey<RefCell<UserLinkRepositoryStorage>>;
-    type UserWallet = &'static LocalKey<RefCell<UserWalletRepositoryStorage>>;
+
 
     fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent> {
         ActionIntentRepository::new(&ACTION_INTENT_STORE)
@@ -176,20 +168,12 @@ impl Repositories for ThreadlocalRepositories {
         TransactionRepository::new(&TRANSACTION_STORE)
     }
 
-    fn user(&self) -> UserRepository<Self::User> {
-        UserRepository::new(&USER_STORE)
-    }
-
     fn user_action(&self) -> UserActionRepository<Self::UserAction> {
         UserActionRepository::new(&USER_ACTION_STORE)
     }
 
     fn user_link(&self) -> UserLinkRepository<Self::UserLink> {
         UserLinkRepository::new(&USER_LINK_STORE)
-    }
-
-    fn user_wallet(&self) -> UserWalletRepository<Self::UserWallet> {
-        UserWalletRepository::new(&USER_WALLET_STORE)
     }
 }
 
@@ -205,25 +189,6 @@ thread_local! {
             )
         );
 
-    static USER_STORE: RefCell<StableBTreeMap<
-        UserKey,
-        User,
-        Memory
-    >> = RefCell::new(
-        StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(USER_MEMORY_ID)),
-        )
-    );
-
-    static USER_WALLET_STORE: RefCell<StableBTreeMap<
-        UserWalletKey,
-        UserWallet,
-        Memory
-    >> = RefCell::new(
-        StableBTreeMap::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(USER_WALLET_MEMORY_ID)),
-        )
-    );
 
     static USER_LINK_STORE: RefCell<StableBTreeMap<
         String,
@@ -352,10 +317,8 @@ pub mod tests {
         processing_transaction: Rc<RefCell<ProcessingTransactionRepositoryStorage>>,
         request_lock: Rc<RefCell<RequestLockRepositoryStorage>>,
         transaction: Rc<RefCell<TransactionRepositoryStorage>>,
-        user: Rc<RefCell<UserRepositoryStorage>>,
         user_action: Rc<RefCell<UserActionRepositoryStorage>>,
         user_link: Rc<RefCell<UserLinkRepositoryStorage>>,
-        user_wallet: Rc<RefCell<UserWalletRepositoryStorage>>,
     }
 
     impl TestRepositories {
@@ -387,15 +350,11 @@ pub mod tests {
                 transaction: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(TRANSACTION_MEMORY_ID),
                 ))),
-                user: Rc::new(RefCell::new(StableBTreeMap::init(mm.get(USER_MEMORY_ID)))),
                 user_action: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(USER_ACTION_MEMORY_ID),
                 ))),
                 user_link: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(USER_LINK_MEMORY_ID),
-                ))),
-                user_wallet: Rc::new(RefCell::new(StableBTreeMap::init(
-                    mm.get(USER_WALLET_MEMORY_ID),
                 ))),
             }
         }
@@ -411,10 +370,8 @@ pub mod tests {
         type ProcessingTransaction = Rc<RefCell<ProcessingTransactionRepositoryStorage>>;
         type RequestLock = Rc<RefCell<RequestLockRepositoryStorage>>;
         type Transaction = Rc<RefCell<TransactionRepositoryStorage>>;
-        type User = Rc<RefCell<UserRepositoryStorage>>;
         type UserAction = Rc<RefCell<UserActionRepositoryStorage>>;
         type UserLink = Rc<RefCell<UserLinkRepositoryStorage>>;
-        type UserWallet = Rc<RefCell<UserWalletRepositoryStorage>>;
 
         fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent> {
             ActionIntentRepository::new(self.action_intent.clone())
@@ -454,10 +411,6 @@ pub mod tests {
             TransactionRepository::new(self.transaction.clone())
         }
 
-        fn user(&self) -> UserRepository<Self::User> {
-            UserRepository::new(self.user.clone())
-        }
-
         fn user_action(&self) -> UserActionRepository<Self::UserAction> {
             UserActionRepository::new(self.user_action.clone())
         }
@@ -466,8 +419,5 @@ pub mod tests {
             UserLinkRepository::new(self.user_link.clone())
         }
 
-        fn user_wallet(&self) -> UserWalletRepository<Self::UserWallet> {
-            UserWalletRepository::new(self.user_wallet.clone())
-        }
     }
 }

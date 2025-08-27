@@ -1,12 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use candid::Principal;
 use cashier_macros::storable;
 use std::fmt;
-
-pub type UserKey = String;
-
-pub type UserWalletKey = String;
 
 pub type LinkKey = String;
 
@@ -19,7 +16,7 @@ pub type IntentKey = String;
 pub type TransactionKey = String;
 
 pub struct UserLinkKey {
-    pub user_id: UserKey,
+    pub user_id: Principal,
     pub link_id: LinkKey,
 }
 
@@ -30,7 +27,7 @@ impl UserLinkKey {
 }
 
 pub struct UserActionKey {
-    pub user_id: String,
+    pub user_id: Principal,
     pub action_id: String,
 }
 
@@ -100,18 +97,18 @@ impl IntentTransactionKey {
 pub enum RequestLockKey {
     /// User + Link + Action composite key
     UserLinkAction {
-        user_principal: String,
+        user_principal: Principal,
         link_id: String,
         action_id: String,
     },
     /// User + Link composite key
     UserLink {
-        user_principal: String,
+        user_principal: Principal,
         link_id: String,
     },
     /// User + Action + Transaction composite key
     UserActionTransaction {
-        user_principal: String,
+        user_principal: Principal,
         action_id: String,
         transaction_id: String,
     },
@@ -150,33 +147,33 @@ impl fmt::Display for RequestLockKey {
 impl RequestLockKey {
     /// Create a User + Link + Action key
     pub fn user_link_action(
-        user_principal: impl Into<String>,
+        user_principal: Principal,
         link_id: impl Into<String>,
         action_id: impl Into<String>,
     ) -> Self {
         Self::UserLinkAction {
-            user_principal: user_principal.into(),
+            user_principal,
             link_id: link_id.into(),
             action_id: action_id.into(),
         }
     }
 
     /// Create a User + Link key
-    pub fn user_link(user_principal: impl Into<String>, link_id: impl Into<String>) -> Self {
+    pub fn user_link(user_principal: Principal, link_id: impl Into<String>) -> Self {
         Self::UserLink {
-            user_principal: user_principal.into(),
+            user_principal,
             link_id: link_id.into(),
         }
     }
 
     /// Create a User + Action + Transaction key
     pub fn user_action_transaction(
-        user_principal: impl Into<String>,
+        user_principal: Principal,
         action_id: impl Into<String>,
         transaction_id: impl Into<String>,
     ) -> Self {
         Self::UserActionTransaction {
-            user_principal: user_principal.into(),
+            user_principal,
             action_id: action_id.into(),
             transaction_id: transaction_id.into(),
         }
