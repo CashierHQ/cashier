@@ -42,7 +42,6 @@ pub struct LinkActionKey {
     pub link_id: String,
     pub action_type: String,
     pub action_id: String,
-    // if it is anonymous user, user_id = ANON#<anonymous_wallet_address>
     pub user_id: Principal,
 }
 

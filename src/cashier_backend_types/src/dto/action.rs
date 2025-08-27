@@ -43,19 +43,19 @@ pub struct ProcessActionAnonymousInput {
     pub link_id: String,
     pub action_type: String,
     pub action_id: String,
-    pub wallet_address: String,
+    pub wallet_address: Principal,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateActionAnonymousInput {
     pub link_id: String,
     pub action_type: String,
-    pub wallet_address: String,
+    pub wallet_address: Principal,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct ClaimIntentParams {
-    address: Option<String>,
+    address: Option<Principal>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]

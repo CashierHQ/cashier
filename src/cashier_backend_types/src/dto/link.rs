@@ -238,7 +238,7 @@ impl LinkStateMachineGoto {
 pub struct LinkGetUserStateInput {
     pub link_id: String,
     pub action_type: String,
-    pub anonymous_wallet_address: Option<String>,
+    pub anonymous_wallet_address: Option<Principal>,
     // pub create_if_not_exist: bool,
 }
 
