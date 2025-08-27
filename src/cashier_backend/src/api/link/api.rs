@@ -210,7 +210,7 @@ pub async fn link_get_user_state(
     debug!("[link_get_user_state] input: {input:?}");
 
     let api = LinkApi::new(get_state());
-    api.link_get_user_state(&msg_caller(), &input)
+    api.link_get_user_state(msg_caller(), &input)
 }
 
 /// Updates the user state for a specific link action.
@@ -234,7 +234,7 @@ pub async fn link_update_user_state(
     debug!("[link_update_user_state] input: {input:?}");
 
     let mut api = LinkApi::new(get_state());
-    api.link_update_user_state(&msg_caller(), &input)
+    api.link_update_user_state(msg_caller(), &input)
 }
 
 /// Updates an existing action's state and executes associated transactions.
@@ -516,7 +516,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Err(CanisterError)` - Error if validation fails or conflicting authentication methods
     pub fn link_get_user_state(
         &self,
-        caller: &Principal,
+        caller: Principal,
         input: &LinkGetUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
         self.state.link_service.link_get_user_state(caller, input)
@@ -537,7 +537,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Err(CanisterError)` - Error if validation fails or transition not allowed
     pub fn link_update_user_state(
         &mut self,
-        caller: &Principal,
+        caller: Principal,
         input: &LinkUpdateUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
         self.state
