@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use std::fmt;
-use std::{collections::HashMap, str::FromStr};
+use std::collections::HashMap;
 
 use candid::{CandidType, Principal};
 
@@ -11,9 +11,10 @@ use serde::{Deserialize, Serialize};
 use crate::dto::action::ActionDto;
 use crate::repository::action::v1::ActionType;
 use crate::repository::asset_info::AssetInfo;
-use crate::repository::common::Asset;
-use crate::repository::intent::v2::{Intent, IntentType};
+use crate::repository::common::{Asset, Chain};
+use crate::repository::intent::v2::{Intent, IntentState, IntentTask, IntentType};
 use crate::repository::link::v1::{Link, LinkState, LinkType, Template};
+use crate::repository::link_action::v1::LinkUserState;
 
 // Structs and Enums
 
@@ -127,10 +128,10 @@ pub struct AssetInfoDto {
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct IntentDto {
     pub id: String,
-    pub state: String,
+    pub state: IntentState,
     pub created_at: u64,
-    pub chain: String,
-    pub task: String,
+    pub chain: Chain,
+    pub task: IntentTask,
     pub r#type: IntentType,
 }
 
@@ -144,10 +145,10 @@ impl From<Intent> for IntentDto {
     fn from(intent: Intent) -> Self {
         IntentDto {
             id: intent.id,
-            state: intent.state.to_string(),
+            state: intent.state,
             created_at: intent.created_at,
-            chain: intent.chain.to_string(),
-            task: intent.task.to_string(),
+            chain: intent.chain,
+            task: intent.task,
             r#type: intent.r#type,
         }
     }
@@ -215,17 +216,6 @@ impl LinkDetailUpdateInput {
     }
 }
 
-impl LinkStateMachineGoto {
-    pub fn from_string(intent: &str) -> Result<LinkStateMachineGoto, String> {
-        let remove_me = "";
-        match intent {
-            "Continue" => Ok(LinkStateMachineGoto::Continue),
-            "Back" => Ok(LinkStateMachineGoto::Back),
-            _ => Err("Invalid LinkStateMachineAction. Valid value: Continue, Back".to_string()),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct LinkGetUserStateInput {
     pub link_id: String,
@@ -237,7 +227,7 @@ pub struct LinkGetUserStateInput {
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct LinkGetUserStateOutput {
     pub action: ActionDto,
-    pub link_user_state: String,
+    pub link_user_state: LinkUserState,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -245,7 +235,7 @@ pub struct LinkUpdateUserStateInput {
     pub link_id: String,
     pub action_type: ActionType,
     pub anonymous_wallet_address: Option<Principal>,
-    pub goto: String,
+    pub goto: UserStateMachineGoto,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq)]
@@ -259,18 +249,6 @@ impl fmt::Display for UserStateMachineGoto {
         match self {
             UserStateMachineGoto::Continue => write!(f, "Continue"),
             UserStateMachineGoto::Back => write!(f, "Back"),
-        }
-    }
-}
-
-impl FromStr for UserStateMachineGoto {
-    type Err = String;
-    fn from_str(intent: &str) -> Result<Self, Self::Err> {
-        let remove_me = "";
-        match intent {
-            "Continue" => Ok(UserStateMachineGoto::Continue),
-            "Back" => Ok(UserStateMachineGoto::Back),
-            _ => Err("Invalid UserStateMachineGoto. Valid value: Continue, Back".to_string()),
         }
     }
 }

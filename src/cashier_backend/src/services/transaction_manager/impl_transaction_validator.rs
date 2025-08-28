@@ -29,6 +29,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionValidator<E>
     ) -> Result<bool, CanisterError> {
         let target = icrc1_transfer_info.to.clone();
 
+        let investigate_me = 0;
         let target_account = Account::from_str(&target.address)
             .map_err(|e| CanisterError::ParseAccountError(e.to_string()))?;
 

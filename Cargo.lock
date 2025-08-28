@@ -284,6 +284,7 @@ name = "cashier_backend_types"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "cashier_common",
  "cashier_macros",
  "ic-cdk",
  "ic-cdk-timers",
@@ -301,10 +302,13 @@ name = "cashier_common"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "cashier_macros",
  "getrandom 0.2.16",
+ "ic-stable-structures 0.7.0",
  "rand 0.8.5",
  "serde",
  "serde_bytes",
+ "serde_cbor",
  "uuid",
 ]
 
@@ -2520,6 +2524,7 @@ name = "token_storage_types"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "cashier_common",
  "cashier_macros",
  "ic-stable-structures 0.7.0",
  "ic_mple_log",

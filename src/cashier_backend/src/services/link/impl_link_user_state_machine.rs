@@ -3,7 +3,6 @@ use crate::{
     services::link::{service::LinkService, traits::LinkUserStateMachine},
     utils::runtime::IcEnvironment,
 };
-use std::str::FromStr;
 
 use candid::Principal;
 use cashier_backend_types::{
@@ -150,7 +149,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
 
         Ok(Some(LinkGetUserStateOutput {
             action: ActionDto::from_with_tx(action.action, action.intents, &action.intent_txs),
-            link_user_state: link_user_state.to_string(),
+            link_user_state,
         }))
     }
 
@@ -177,14 +176,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
         let temp_user_id = temp_user_id
             .ok_or_else(|| CanisterError::ValidationErrors("User ID is required".to_string()))?;
 
-        let goto = UserStateMachineGoto::from_str(&input.goto)
-            .map_err(|e| CanisterError::ValidationErrors(format!("Invalid goto: {e}")))?;
-
         let link_action = self.handle_user_link_state_machine(
             &input.link_id,
             input.action_type.clone(),
             temp_user_id,
-            &goto,
+            &input.goto,
         )?;
 
         // If not found
@@ -208,7 +204,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
 
         Ok(Some(LinkGetUserStateOutput {
             action: ActionDto::from_with_tx(action.action, action.intents, &action.intent_txs),
-            link_user_state: link_user_state.to_string(),
+            link_user_state,
         }))
     }
 }
@@ -600,7 +596,7 @@ mod tests {
         let output = output.unwrap();
         assert_eq!(
             output.link_user_state,
-            LinkUserState::ChooseWallet.to_string()
+            LinkUserState::ChooseWallet
         );
         assert_eq!(output.action.creator, creator_id);
     }
@@ -619,7 +615,7 @@ mod tests {
             &LinkUpdateUserStateInput {
                 link_id: link.id,
                 action_type: ActionType::CreateLink,
-                goto: UserStateMachineGoto::Continue.to_string(),
+                goto: UserStateMachineGoto::Continue,
                 anonymous_wallet_address: None,
             },
         );
@@ -648,7 +644,7 @@ mod tests {
             &LinkUpdateUserStateInput {
                 link_id: link.id,
                 action_type: ActionType::CreateLink,
-                goto: UserStateMachineGoto::Continue.to_string(),
+                goto: UserStateMachineGoto::Continue,
                 anonymous_wallet_address: None,
             },
         );
@@ -658,35 +654,6 @@ mod tests {
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
             assert!(msg.contains("Invalid action type"));
-        } else {
-            panic!("Expected ValidationErrors");
-        }
-    }
-
-    #[test]
-    fn it_should_link_update_user_state_if_goto_invalid() {
-        // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let creator_id = random_principal_id();
-        let link = create_link_fixture(&mut service, creator_id);
-
-        // Act
-        let result = service.link_update_user_state(
-            creator_id,
-            &LinkUpdateUserStateInput {
-                link_id: link.id,
-                action_type: ActionType::Use,
-                goto: "InvalidGoto".to_string(),
-                anonymous_wallet_address: None,
-            },
-        );
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::ValidationErrors(msg)) = result {
-            assert!(msg.contains("Invalid goto"));
         } else {
             panic!("Expected ValidationErrors");
         }
@@ -725,7 +692,7 @@ mod tests {
             &LinkUpdateUserStateInput {
                 link_id: link.id,
                 action_type: ActionType::Use,
-                goto: UserStateMachineGoto::Continue.to_string(),
+                goto: UserStateMachineGoto::Continue,
                 anonymous_wallet_address: None,
             },
         );
@@ -737,7 +704,7 @@ mod tests {
         let output = output.unwrap();
         assert_eq!(
             output.link_user_state,
-            LinkUserState::CompletedLink.to_string()
+            LinkUserState::CompletedLink
         );
         assert_eq!(output.action.creator, creator_id);
     }
