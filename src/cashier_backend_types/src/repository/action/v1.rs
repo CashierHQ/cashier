@@ -5,7 +5,6 @@ use candid::{CandidType, Principal};
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 use std::fmt;
-use std::str::FromStr;
 
 #[derive(Debug, Clone)]
 #[storable]
@@ -43,20 +42,6 @@ impl ActionType {
     }
 }
 
-impl FromStr for ActionType {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<ActionType, Self::Err> {
-        let remove_me = "";
-        match input {
-            "Use" => Ok(ActionType::Use),
-            "Claim" => Ok(ActionType::Use),
-            "CreateLink" => Ok(ActionType::CreateLink),
-            "Withdraw" => Ok(ActionType::Withdraw),
-            _ => Err(()),
-        }
-    }
-}
 
 impl ActionState {
     pub fn to_str(&self) -> &str {
@@ -66,21 +51,6 @@ impl ActionState {
             ActionState::Processing => "Action_state_processing",
             ActionState::Success => "Action_state_success",
             ActionState::Fail => "Action_state_fail",
-        }
-    }
-}
-
-impl FromStr for ActionState {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<ActionState, Self::Err> {
-        let remove_me = "";
-        match input {
-            "Action_state_created" => Ok(ActionState::Created),
-            "Action_state_processing" => Ok(ActionState::Processing),
-            "Action_state_success" => Ok(ActionState::Success),
-            "Action_state_fail" => Ok(ActionState::Fail),
-            _ => Err(()),
         }
     }
 }

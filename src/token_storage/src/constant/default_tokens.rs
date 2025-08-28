@@ -3,7 +3,8 @@
 
 // Create a new constant file to store the default tokens
 use candid::{Nat, Principal};
-use token_storage_types::{chain::Chain, token::ChainTokenDetails};
+use cashier_common::chain::Chain;
+use token_storage_types::token::ChainTokenDetails;
 
 use crate::types::RegistryToken;
 

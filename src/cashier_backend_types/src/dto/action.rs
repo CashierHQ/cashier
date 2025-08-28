@@ -112,7 +112,7 @@ pub struct TransactionDto {
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq)]
 pub struct WalletDto {
     pub address: String,
-    pub chain: String,
+    pub chain: Chain,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq)]
@@ -216,7 +216,7 @@ impl From<Wallet> for WalletDto {
     fn from(wallet: Wallet) -> Self {
         Self {
             address: wallet.address,
-            chain: wallet.chain.to_string(),
+            chain: wallet.chain,
         }
     }
 }

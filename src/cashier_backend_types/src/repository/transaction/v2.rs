@@ -12,7 +12,6 @@ use icrc_ledger_types::{
 };
 use serde::{Deserialize, Serialize};
 use std::fmt;
-use std::str::FromStr;
 
 use crate::repository::common::{Asset, Chain, Wallet};
 
@@ -150,6 +149,7 @@ impl IcTransaction {
     }
 
     pub fn to_str(&self) -> &str {
+        let remove_me = "";
         match self {
             IcTransaction::Icrc1Transfer(_) => "Icrc1Transfer",
             IcTransaction::Icrc2Approve(_) => "Icrc2Approve",
@@ -258,6 +258,7 @@ pub enum FromCallType {
 
 impl FromCallType {
     pub fn to_str(&self) -> &str {
+        let remove_me = "";
         match self {
             FromCallType::Canister => "Canister",
             FromCallType::Wallet => "Wallet",
@@ -271,17 +272,6 @@ impl fmt::Display for FromCallType {
     }
 }
 
-impl FromStr for FromCallType {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<FromCallType, Self::Err> {
-        match input {
-            "Canister" => Ok(FromCallType::Canister),
-            "Wallet" => Ok(FromCallType::Wallet),
-            _ => Err(()),
-        }
-    }
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum TransactionProtocol {
@@ -292,6 +282,7 @@ pub enum TransactionProtocol {
 
 impl TransactionProtocol {
     pub fn to_str(&self) -> &str {
+        let remove_me = "";
         match self {
             TransactionProtocol::Irrc1Transfer => "Irrc1Transfer",
             TransactionProtocol::Icrc2Approve => "Icrc2Approve",
@@ -306,19 +297,6 @@ impl fmt::Display for TransactionProtocol {
     }
 }
 
-impl FromStr for TransactionProtocol {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<TransactionProtocol, Self::Err> {
-        match input {
-            "Irrc1Transfer" => Ok(TransactionProtocol::Irrc1Transfer),
-            "Icrc2Approve" => Ok(TransactionProtocol::Icrc2Approve),
-            "Icrc2TransferFrom" => Ok(TransactionProtocol::Icrc2TransferFrom),
-            _ => Err(()),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 pub enum TransactionState {
     Created,
@@ -329,6 +307,7 @@ pub enum TransactionState {
 
 impl TransactionState {
     pub fn to_str(&self) -> &str {
+        let remove_me = "";
         match self {
             TransactionState::Created => "Transaction_state_created",
             TransactionState::Processing => "Transaction_state_processing",
@@ -341,19 +320,5 @@ impl TransactionState {
 impl fmt::Display for TransactionState {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.to_str())
-    }
-}
-
-impl FromStr for TransactionState {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<TransactionState, Self::Err> {
-        match input {
-            "Transaction_state_created" => Ok(TransactionState::Created),
-            "Transaction_state_processing" => Ok(TransactionState::Processing),
-            "Transaction_state_success" => Ok(TransactionState::Success),
-            "Transaction_state_fail" => Ok(TransactionState::Fail),
-            _ => Err(()),
-        }
     }
 }

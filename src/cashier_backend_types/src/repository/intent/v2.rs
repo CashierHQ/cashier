@@ -5,7 +5,6 @@ use candid::{CandidType, Nat};
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 use std::fmt;
-use std::str::FromStr;
 
 use crate::repository::common::{Asset, Chain, Wallet};
 
@@ -131,6 +130,7 @@ pub enum IntentTask {
 
 impl IntentTask {
     pub fn to_str(&self) -> &str {
+        let remove_me = "";
         match self {
             IntentTask::TransferWalletToTreasury => "transfer_wallet_to_treasury",
             IntentTask::TransferWalletToLink => "transfer_wallet_to_link",
@@ -145,21 +145,9 @@ impl fmt::Display for IntentTask {
     }
 }
 
-impl FromStr for IntentTask {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<IntentTask, Self::Err> {
-        match input {
-            "transfer_wallet_to_treasury" => Ok(IntentTask::TransferWalletToTreasury),
-            "transfer_wallet_to_link" => Ok(IntentTask::TransferWalletToLink),
-            "transfer_link_to_wallet" => Ok(IntentTask::TransferLinkToWallet),
-            _ => Err(()),
-        }
-    }
-}
-
 impl IntentState {
     pub fn to_str(&self) -> &str {
+        let remove_me = "";
         match self {
             IntentState::Created => "Intent_state_created",
             IntentState::Processing => "Intent_state_processing",
@@ -172,19 +160,5 @@ impl IntentState {
 impl fmt::Display for IntentState {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.to_str())
-    }
-}
-
-impl FromStr for IntentState {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<IntentState, Self::Err> {
-        match input {
-            "Intent_state_created" => Ok(IntentState::Created),
-            "Intent_state_processing" => Ok(IntentState::Processing),
-            "Intent_state_success" => Ok(IntentState::Success),
-            "Intent_state_fail" => Ok(IntentState::Fail),
-            _ => Err(()),
-        }
     }
 }

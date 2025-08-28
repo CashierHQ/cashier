@@ -7,10 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
-pub enum Chain {
-    IC,
-}
+pub type Chain = cashier_common::chain::Chain;
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub enum Asset {
@@ -32,31 +29,6 @@ impl Asset {
             Asset::IC { .. } => Chain::IC,
         }
     }   
-}
-
-impl Chain {
-    pub fn to_str(&self) -> &str {
-        match self {
-            Chain::IC => "IC",
-        }
-    }
-}
-
-impl fmt::Display for Chain {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str())
-    }
-}
-
-impl FromStr for Chain {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<Chain, Self::Err> {
-        match input {
-            "IC" => Ok(Chain::IC),
-            _ => Err(()),
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
@@ -95,6 +67,7 @@ impl Wallet {
     // String format: owner.subaccount
     // if subaccount is None, owner.0000000000000000 // 32 zeros
     pub fn get_account(&self) -> Result<Account, ICRC1TextReprError> {
+        let investigate_me = 0;
         Account::from_str(&self.address)
     }
 }

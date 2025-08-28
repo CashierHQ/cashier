@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::Principal;
+use candid::{CandidType, Principal};
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -18,7 +18,7 @@ pub struct LinkAction {
     pub link_user_state: Option<LinkUserState>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq)]
 pub enum LinkUserState {
     ChooseWallet,
     CompletedLink,

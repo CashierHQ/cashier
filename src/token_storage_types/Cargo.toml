@@ -6,6 +6,7 @@ version.workspace = true
 
 [dependencies]
 candid = { workspace = true }
+cashier_common = { workspace = true }
 cashier_macros = { workspace = true }
 ic_mple_log = { workspace = true }
 ic-stable-structures = { workspace = true }

@@ -5,7 +5,7 @@ use candid::{CandidType, Principal};
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 use std::fmt;
-use std::{collections::HashMap, str::FromStr};
+use std::collections::HashMap;
 
 use crate::repository::asset_info::AssetInfo;
 
@@ -75,25 +75,6 @@ impl fmt::Display for LinkType {
     }
 }
 
-impl FromStr for LinkType {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<LinkType, Self::Err> {
-        let remove_me = "";
-        match input {
-            "NftCreateAndAirdrop" => Ok(LinkType::NftCreateAndAirdrop),
-            "SendTip" => Ok(LinkType::SendTip),
-            "SendAirdrop" => Ok(LinkType::SendAirdrop),
-            "SendTokenBasket" => Ok(LinkType::SendTokenBasket),
-            "ReceivePayment" => Ok(LinkType::ReceivePayment),
-            "ReceiveMutliPayment" => Ok(LinkType::ReceiveMutliPayment),
-            "SwapSingleAsset" => Ok(LinkType::SwapSingleAsset),
-            "SwapMultiAsset" => Ok(LinkType::SwapMultiAsset),
-            _ => Err(()),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, CandidType)]
 pub enum LinkState {
     ChooseLinkType,
@@ -126,24 +107,6 @@ impl fmt::Display for LinkState {
     }
 }
 
-impl FromStr for LinkState {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<LinkState, Self::Err> {
-        let remove_me = "";
-        match input {
-            "Link_state_choose_link_type" => Ok(LinkState::ChooseLinkType),
-            "Link_state_add_assets" => Ok(LinkState::AddAssets),
-            "Link_state_preview" => Ok(LinkState::Preview),
-            "Link_state_create_link" => Ok(LinkState::CreateLink),
-            "Link_state_active" => Ok(LinkState::Active),
-            "Link_state_inactive" => Ok(LinkState::Inactive),
-            "Link_state_inactive_ended" => Ok(LinkState::InactiveEnded),
-            _ => Err(()),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq)]
 pub enum Template {
     Left,
@@ -158,20 +121,6 @@ impl Template {
             Template::Left => "Left",
             Template::Right => "Right",
             Template::Central => "Central",
-        }
-    }
-}
-
-impl FromStr for Template {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<Template, Self::Err> {
-        let remove_me = "";
-        match input {
-            "Left" => Ok(Template::Left),
-            "Right" => Ok(Template::Right),
-            "Central" => Ok(Template::Central),
-            _ => Err(()),
         }
     }
 }
