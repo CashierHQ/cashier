@@ -151,7 +151,7 @@ pub fn create_action_data_fixture(
         link_id: link_id.clone(),
         action_id: action_id.clone(),
         action_type: ActionType::CreateLink,
-        user_id: user_id.clone(),
+        user_id,
         link_user_state: None,
     };
 
@@ -159,7 +159,7 @@ pub fn create_action_data_fixture(
         id: action_id,
         r#type: ActionType::CreateLink,
         state: ActionState::Created,
-        creator: user_id.clone(),
+        creator: user_id,
         link_id,
     };
     let intents = vec![Intent {

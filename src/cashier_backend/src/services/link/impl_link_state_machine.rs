@@ -167,14 +167,14 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
             link_type: Some(input.link_type),
             asset_info: vec![],
             template: Some(Template::Central),
-            creator: user_id.clone(),
+            creator: user_id,
             create_at: ts,
             metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
         let new_user_link = UserLink {
-            user_id: user_id.clone(),
+            user_id,
             link_id: link_id_str.clone(),
         };
 
@@ -187,7 +187,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         let choose_link_type_params = LinkDetailUpdateInput {
             title: Some(input.title.clone()),
             template: Some(input.template.clone()),
-            link_type: Some(input.link_type.clone()),
+            link_type: Some(input.link_type),
             description: None,
             link_image_url: None,
             nft_image: None,
@@ -513,7 +513,6 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
 
         let link_type = params
             .link_type
-            .clone()
             .ok_or_else(|| CanisterError::ValidationErrors("Link type is required".to_string()))?;
 
         Ok((template, link_type))
@@ -1413,16 +1412,12 @@ mod tests {
             nft_image: None,
             asset_info: vec![
                 LinkDetailUpdateAssetInfoInput {
-                    asset: Asset::IC {
-                        address: address1.clone(),
-                    },
+                    asset: Asset::IC { address: address1 },
                     amount_per_link_use_action: 100,
                     label: "some_label".to_string(),
                 },
                 LinkDetailUpdateAssetInfoInput {
-                    asset: Asset::IC {
-                        address: address2.clone(),
-                    },
+                    asset: Asset::IC { address: address2 },
                     amount_per_link_use_action: 200,
                     label: "another_label".to_string(),
                 },

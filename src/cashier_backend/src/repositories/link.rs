@@ -117,7 +117,7 @@ mod tests {
             link_type: Some(LinkType::ReceivePayment),
             asset_info: vec![],
             template: None,
-            creator: creator_id2.clone(),
+            creator: creator_id2,
             create_at: 1622547800,
             metadata: Default::default(),
             link_use_action_counter: 1,

@@ -25,7 +25,7 @@ impl<S: Storage<UserLinkRepositoryStorage>> UserLinkRepository<S> {
     pub fn create(&mut self, user_link: UserLink) {
         self.storage.with_borrow_mut(|store| {
             let id: UserLinkKey = UserLinkKey {
-                user_id: user_link.user_id.clone(),
+                user_id: user_link.user_id,
                 link_id: user_link.link_id.clone(),
             };
             store.insert(id.to_str(), user_link);
@@ -34,7 +34,7 @@ impl<S: Storage<UserLinkRepositoryStorage>> UserLinkRepository<S> {
 
     pub fn delete(&mut self, id: UserLink) {
         let id = UserLinkKey {
-            user_id: id.user_id.clone(),
+            user_id: id.user_id,
             link_id: id.link_id,
         };
         self.storage
@@ -97,7 +97,7 @@ mod tests {
         let user_id = random_principal_id();
         let link_id = random_id_string();
         let user_link = UserLink {
-            user_id: user_id.clone(),
+            user_id,
             link_id: link_id.clone(),
         };
 
@@ -118,10 +118,7 @@ mod tests {
         let user_id = random_principal_id();
         let link_id = random_id_string();
 
-        let user_link = UserLink {
-            user_id: user_id.clone(),
-            link_id,
-        };
+        let user_link = UserLink { user_id, link_id };
 
         repo.create(user_link.clone());
 
@@ -141,11 +138,11 @@ mod tests {
         let link_id1 = random_id_string();
         let link_id2 = random_id_string();
         let user_link1 = UserLink {
-            user_id: user_id.clone(),
+            user_id,
             link_id: link_id1.clone(),
         };
         let user_link2 = UserLink {
-            user_id: user_id.clone(),
+            user_id,
             link_id: link_id2.clone(),
         };
 
