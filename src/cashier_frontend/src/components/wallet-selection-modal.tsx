@@ -215,7 +215,7 @@ export const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
     walletOption: WALLET_OPTIONS,
     title: string,
     iconOrImage?: string | JSX.Element,
-    disabled?: boolean,
+    disabled?: boolean
   ) => {
     const finalIconOrImage = iconOrImage || getWalletIcon(walletOption);
 
@@ -284,19 +284,19 @@ export const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
             <div className="flex flex-col gap-2">
               {renderWalletButton(
                 WALLET_OPTIONS.INTERNET_IDENTITY,
-                "Internet Identity",
+                "Internet Identity"
               )}
               {renderWalletButton(
                 WALLET_OPTIONS.GOOGLE,
                 "Google",
                 undefined,
-                true,
+                true
               )}
               {renderWalletButton(
                 WALLET_OPTIONS.OTHER,
                 "Other wallets",
                 undefined,
-                true,
+                true
               )}
             </div>
 

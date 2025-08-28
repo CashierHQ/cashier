@@ -13,12 +13,7 @@ import {
   toBase64,
 } from "@slide-computer/signer";
 import { AgentTransportError } from "./agentTransport";
-import {
-  ICRC_114_METHOD_NAME,
-  MAINNET_ROOT_KEY,
-  scopes,
-  supportedStandards,
-} from "./constants";
+import { ICRC_114_METHOD_NAME, MAINNET_ROOT_KEY, scopes, supportedStandards } from "./constants";
 import { DelegationChain, DelegationIdentity } from "@dfinity/identity";
 import {
   Actor,
@@ -32,6 +27,8 @@ import {
 import { Principal } from "@dfinity/principal";
 import { IDL } from "@dfinity/candid";
 import { Icrc114ValidateArgs } from "@/generated/cashier_backend/cashier_backend.did";
+
+
 
 /**
  * AgentChannel implements the `Channel` contract used by the signer layer.
@@ -200,12 +197,12 @@ export class AgentChannel implements Channel {
             : undefined;
         const expiration = new Date(
           Date.now() +
-            Number(
-              delegationRequest.params!.maxTimeToLive
-                ? BigInt(delegationRequest.params!.maxTimeToLive) /
-                    BigInt(1_000_000)
-                : BigInt(8) * BigInt(3_600_000),
-            ),
+          Number(
+            delegationRequest.params!.maxTimeToLive
+              ? BigInt(delegationRequest.params!.maxTimeToLive) /
+              BigInt(1_000_000)
+              : BigInt(8) * BigInt(3_600_000),
+          ),
         );
         const signedDelegationChain = await DelegationChain.create(
           identity,
@@ -230,10 +227,10 @@ export class AgentChannel implements Channel {
                   expiration: delegation.expiration.toString(),
                   ...(delegation.targets
                     ? {
-                        targets: delegation.targets.map((target) =>
-                          target.toText(),
-                        ),
-                      }
+                      targets: delegation.targets.map((target) =>
+                        target.toText(),
+                      ),
+                    }
                     : {}),
                 },
                 signature: toBase64(signature),
@@ -292,10 +289,7 @@ export class AgentChannel implements Channel {
         const batchCallCanisterRequest = request as BatchCallCanisterRequest;
 
         // if more than 1 request in batch, validation is required
-        if (
-          batchCallCanisterRequest.params!.requests.length > 1 &&
-          !batchCallCanisterRequest.params?.validationCanisterId
-        ) {
+        if (batchCallCanisterRequest.params!.requests.length > 1 && !batchCallCanisterRequest.params?.validationCanisterId) {
           return {
             id,
             jsonrpc: "2.0",
@@ -307,31 +301,31 @@ export class AgentChannel implements Channel {
         }
 
         const { pollForResponse, defaultStrategy } = polling;
-        const validationActor = batchCallCanisterRequest.params
-          ?.validationCanisterId
+        const validationActor = batchCallCanisterRequest.params?.validationCanisterId
           ? Actor.createActor(
-              ({ IDL }) =>
-                IDL.Service({
-                  [ICRC_114_METHOD_NAME]: IDL.Func(
+            ({ IDL }) =>
+              IDL.Service({
+                [ICRC_114_METHOD_NAME]:
+                  IDL.Func(
                     [
                       IDL.Record({
-                        arg: IDL.Vec(IDL.Nat8),
-                        res: IDL.Vec(IDL.Nat8),
-                        method: IDL.Text,
-                        canister_id: IDL.Principal,
-                        nonce: IDL.Opt(IDL.Vec(IDL.Nat8)),
-                      }),
+                        'arg': IDL.Vec(IDL.Nat8),
+                        'res': IDL.Vec(IDL.Nat8),
+                        'method': IDL.Text,
+                        'canister_id': IDL.Principal,
+                        'nonce': IDL.Opt(IDL.Vec(IDL.Nat8)),
+                      })
                     ],
                     [IDL.Bool],
                     [],
                   ),
-                }),
-              {
-                canisterId:
-                  batchCallCanisterRequest.params?.validationCanisterId,
-                agent: this.#agent,
-              },
-            )
+              }),
+            {
+              canisterId:
+                batchCallCanisterRequest.params?.validationCanisterId,
+              agent: this.#agent,
+            },
+          )
           : undefined;
         const batchCallCanisterResponse: BatchCallCanisterResponse = {
           id,
@@ -399,7 +393,7 @@ export class AgentChannel implements Channel {
                   if (
                     status.status !== LookupStatus.Found ||
                     new TextDecoder().decode(status.value as ArrayBuffer) !==
-                      "replied" ||
+                    "replied" ||
                     reply.status !== LookupStatus.Found
                   ) {
                     batchFailed = true;
@@ -421,7 +415,7 @@ export class AgentChannel implements Channel {
                     try {
                       const value = IDL.decode(
                         [IDL.Variant({ Err: IDL.Reserved })],
-                        reply.value as ArrayBuffer,
+                        reply.value as ArrayBuffer
                       );
                       console.log("[Decoded value for validation:]", value);
                       if ("Err" in value) {
@@ -433,7 +427,8 @@ export class AgentChannel implements Channel {
                           },
                         };
                       }
-                    } catch {
+                    }
+                    catch {
                       // If this return error likely the response is not included Err variant
                       // so we can assume it's valid
                       return {
@@ -451,19 +446,22 @@ export class AgentChannel implements Channel {
                       method: request.method,
                       arg: new Uint8Array(fromBase64(request.arg)),
                       res: new Uint8Array(reply.value as ArrayBuffer),
-                      nonce: request.nonce
-                        ? [new Uint8Array(fromBase64(request.nonce))]
-                        : [],
-                    };
+                      nonce: request.nonce ? [
+                        new Uint8Array(fromBase64(request.nonce)),
+                      ] : [],
+                    }
 
                     console.log("ICRC-114 validation args:", icrc114Args);
 
-                    const isValid =
-                      await validationActor[ICRC_114_METHOD_NAME](icrc114Args);
+                    const isValid = await validationActor[
+                      ICRC_114_METHOD_NAME
+                    ](icrc114Args);
 
                     console.log("Validation result:", isValid);
 
-                    if (!isValid) {
+                    if (
+                      !isValid
+                    ) {
                       batchFailed = true;
                       return {
                         error: {

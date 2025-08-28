@@ -30,7 +30,7 @@ export const useCreateConfirmation = ({
   link,
   currentAction,
   updateInternalAction,
-  onCashierError = () => {},
+  onCashierError = () => { },
 }: UseCreateConfirmationProps): UseCreateConfirmationReturn => {
   const navigate = useNavigate();
 

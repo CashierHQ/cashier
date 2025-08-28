@@ -16,11 +16,9 @@ const toArrayBuffer = (input: Uint8Array | number[]): ArrayBuffer => {
     // If the view covers the whole underlying ArrayBuffer and it's actually an ArrayBuffer,
     // we can return it without copying. Otherwise create a new ArrayBuffer to avoid
     // returning a SharedArrayBuffer (which causes the type error).
-    if (
-      input.byteOffset === 0 &&
+    if (input.byteOffset === 0 &&
       input.byteLength === input.buffer.byteLength &&
-      input.buffer instanceof ArrayBuffer
-    ) {
+      input.buffer instanceof ArrayBuffer) {
       return input.buffer;
     }
     // Create a new ArrayBuffer that contains only the bytes represented by the view.
@@ -31,9 +29,8 @@ const toArrayBuffer = (input: Uint8Array | number[]): ArrayBuffer => {
 };
 // ...existing code.
 
-export const toRPCRequest = (
-  req: Icrc112RequestModel,
-): {
+
+export const toRPCRequest = (req: Icrc112RequestModel): {
   arg: string;
   canisterId: string;
   method: string;
@@ -45,4 +42,4 @@ export const toRPCRequest = (
     canisterId: req.canisterId,
     nonce: req.nonce ? toBase64(toArrayBuffer(req.nonce)) : undefined, // default to empty nonce
   };
-};
+}
