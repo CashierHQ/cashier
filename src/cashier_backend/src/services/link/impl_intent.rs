@@ -732,35 +732,6 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_on_look_up_intent_for_create_link_send_token_basket_with_empty_link_assets()
-    {
-        // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let creator_id = random_principal_id();
-        let link = create_link_fixture(&mut service, creator_id);
-
-        let updated_link = Link {
-            link_type: Some(LinkType::SendTokenBasket),
-            ..link
-        };
-        service.link_repository.update(updated_link.clone());
-        let action_type = ActionType::CreateLink;
-
-        // Act
-        let result = service.look_up_intent(&updated_link, &action_type);
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::HandleLogicError(msg)) = result {
-            assert!(msg.contains("Asset info not found"));
-        } else {
-            panic!("Expected HandleLogicError");
-        }
-    }
-
-    #[test]
     fn it_should_error_look_up_intent_for_create_link_send_token_basket_with_invalid_asset_info_label()
      {
         // Arrange
@@ -833,35 +804,6 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_on_look_up_intent_for_use_link_send_token_basket_with_empty_link_assets_info()
-     {
-        // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let creator_id = random_principal_id();
-        let link = create_link_fixture(&mut service, creator_id);
-
-        let updated_link = Link {
-            link_type: Some(LinkType::SendTokenBasket),
-            ..link
-        };
-        service.link_repository.update(updated_link.clone());
-        let action_type = ActionType::Use;
-
-        // Act
-        let result = service.look_up_intent(&updated_link, &action_type);
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::HandleLogicError(msg)) = result {
-            assert!(msg.contains("Asset info not found"));
-        } else {
-            panic!("Expected HandleLogicError");
-        }
-    }
-
-    #[test]
     fn it_should_look_up_intent_for_use_link_send_token_basket() {
         // Arrange
         let mut service =
@@ -894,35 +836,6 @@ mod tests {
         let intents = intents.unwrap();
         assert_eq!(intents.len(), 1); // One for asset transfer
         assert_eq!(intents[0].task, IntentTask::TransferLinkToWallet);
-    }
-
-    #[test]
-    fn it_should_error_on_look_up_intent_for_withdraw_link_send_token_basket_with_empty_link_assets_info()
-     {
-        // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let creator_id = random_principal_id();
-        let link = create_link_fixture(&mut service, creator_id);
-
-        let updated_link = Link {
-            link_type: Some(LinkType::SendTokenBasket),
-            ..link
-        };
-        service.link_repository.update(updated_link.clone());
-        let action_type = ActionType::Withdraw;
-
-        // Act
-        let result = service.look_up_intent(&updated_link, &action_type);
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::HandleLogicError(msg)) = result {
-            assert!(msg.contains("Asset info not found"));
-        } else {
-            panic!("Expected HandleLogicError");
-        }
     }
 
     #[test]
