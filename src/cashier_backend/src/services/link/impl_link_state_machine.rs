@@ -1001,10 +1001,12 @@ mod tests {
     }
 
     #[test]
-    fn it_should_false_is_props_changed_if_asset_info_unchanged() {
+    fn it_should_return_true_if_asset_info_has_changed() {
         // Arrange
         let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
+        let asset_address = random_principal_id();
+
         let link = Link {
             id: link_id,
             state: LinkState::ChooseLinkType,
@@ -1012,7 +1014,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_type: None,
             asset_info: Some(vec![AssetInfo {
-                asset: Asset::IC { address: random_principal_id() },
+                asset: Asset::IC { address: asset_address },
                 amount_per_link_use_action: 100,
                 label: "some_label".to_string(),
             }]),
@@ -1030,7 +1032,7 @@ mod tests {
             link_image_url: None,
             nft_image: None,
             asset_info: Some(vec![LinkDetailUpdateAssetInfoInput {
-                                asset: Asset::IC { address: random_principal_id() },
+                                asset: Asset::IC { address: asset_address },
                 amount_per_link_use_action: 101,
                 label: "some_label".to_string(),
             }]),
@@ -1040,12 +1042,12 @@ mod tests {
         };
 
         let whitelist_props = create_whitelist_props("asset_info");
-
+        
         // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
 
         // Assert
-        assert!(!changed);
+        assert!(changed);
     }
 
     #[test]
