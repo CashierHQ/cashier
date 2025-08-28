@@ -27,6 +27,7 @@ import {
 } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { IDL } from "@dfinity/candid";
+import { Icrc114ValidateArgs } from "@/generated/cashier_backend/cashier_backend.did";
 
 const ROOT_KEY = new Uint8Array(
   IC_ROOT_KEY.match(/[\da-f]{2}/gi)!.map((h) => parseInt(h, 16)),
@@ -235,6 +236,8 @@ export class AgentChannel implements Channel {
           };
         }
 
+
+
         const { pollForResponse, defaultStrategy } = polling;
         const validationActor = batchCallCanisterRequest.params?.validationCanisterId
           ? Actor.createActor(
@@ -244,12 +247,12 @@ export class AgentChannel implements Channel {
                   IDL.Func(
                     [
                       IDL.Record({
-                        canister_id: IDL.Principal,
-                        method: IDL.Text,
-                        arg: IDL.Vec(IDL.Nat8),
-                        res: IDL.Vec(IDL.Nat8),
-                        nonce: IDL.Opt(IDL.Vec(IDL.Nat8)),
-                      }),
+                        'arg': IDL.Vec(IDL.Nat8),
+                        'res': IDL.Vec(IDL.Nat8),
+                        'method': IDL.Text,
+                        'canister_id': IDL.Principal,
+                        'nonce': IDL.Opt(IDL.Vec(IDL.Nat8)),
+                      })
                     ],
                     [IDL.Bool],
                     [],
@@ -366,8 +369,6 @@ export class AgentChannel implements Channel {
                     catch {
                       // If this return error likely the response is not included Err variant
                       // so we can assume it's valid
-                      console.log("Auto-validation passed");
-
                       return {
                         result: {
                           contentMap: toBase64(contentMap!),
@@ -378,22 +379,32 @@ export class AgentChannel implements Channel {
                   }
 
                   if (validationActor) {
+                    const icrc114Args: Icrc114ValidateArgs = {
+                      canister_id: Principal.fromText(request.canisterId),
+                      method: request.method,
+                      arg: new Uint8Array(fromBase64(request.arg)),
+                      res: new Uint8Array(reply.value as ArrayBuffer),
+                      nonce: request.nonce ? [
+                        new Uint8Array(fromBase64(request.nonce)),
+                      ] : [],
+                    }
+
+                    console.log("ICRC-114 validation args:", icrc114Args);
+
+                    const isValid = await validationActor[
+                      ICRC_114_METHOD_NAME
+                    ](icrc114Args);
+
+                    console.log("Validation result:", isValid);
+
                     if (
-                      !(await validationActor[
-                        ICRC_114_METHOD_NAME
-                      ]({
-                        canister_id: Principal.fromText(request.canisterId),
-                        method: request.method,
-                        arg: fromBase64(request.arg),
-                        res: reply.value as ArrayBuffer,
-                        nonce: request.nonce ? [fromBase64(request.nonce)] : [],
-                      }).catch(() => false))
+                      !isValid
                     ) {
                       batchFailed = true;
                       return {
                         error: {
                           code: 1003,
-                          message: "Validation failed 387.",
+                          message: "Validation failed.",
                         },
                       };
                     }
