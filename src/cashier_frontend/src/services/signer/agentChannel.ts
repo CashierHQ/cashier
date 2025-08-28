@@ -361,7 +361,7 @@ export class AgentChannel implements Channel {
                         return {
                           error: {
                             code: 1003,
-                            message: "Validation failed 360.",
+                            message: "Validation failed.",
                           },
                         };
                       }
