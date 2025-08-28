@@ -2,6 +2,9 @@ import { type Channel, type Transport } from "@slide-computer/signer";
 import { AgentChannel } from "./agentChannel";
 import { HttpAgent } from "@dfinity/agent";
 
+/**
+ * Error type used by the AgentTransport implementation.
+ */
 export class AgentTransportError extends Error {
   constructor(message: string) {
     super(message);
@@ -17,7 +20,12 @@ export interface AgentTransportOptions {
   agent: HttpAgent;
 }
 
+/**
+ * Transport implementation that wraps an {@link HttpAgent}
+ * Transport for communication between relying party and signer 
+ */
 export class AgentTransport implements Transport {
+  // Internal flag used to prevent direct construction via `new`.
   static #isInternalConstructing: boolean = false;
   readonly #agent: HttpAgent;
 
@@ -30,6 +38,13 @@ export class AgentTransport implements Transport {
     this.#agent = agent;
   }
 
+  /**
+   * Async factory that returns a ready-to-use `AgentTransport`.
+   *
+   * Behavior:
+   * - If `options.agent` is provided that agent is used.
+   * - Otherwise an anonymous {@link HttpAgent} is created.
+   */
   static async create(
     options?: AgentTransportOptions,
   ): Promise<AgentTransport> {
@@ -39,6 +54,12 @@ export class AgentTransport implements Transport {
     return new AgentTransport(agent);
   }
 
+  /**
+   * Establish a channel backed by the transport's `HttpAgent`.
+   *
+   * Returns a fresh `AgentChannel` which will forward JSON-RPC requests to
+   * the agent and emit `response`/`close` events.
+   */
   async establishChannel(): Promise<Channel> {
     return new AgentChannel(this.#agent);
   }

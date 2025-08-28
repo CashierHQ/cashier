@@ -1,3 +1,4 @@
+import { IC_ROOT_KEY } from "@dfinity/agent";
 import type {
   PermissionScope,
   PermissionState,
@@ -37,6 +38,10 @@ export const supportedStandards: SupportedStandard[] = [
     name: "ICRC-49",
     url: "https://github.com/dfinity/ICRC/blob/main/ICRCs/ICRC-49/ICRC-49.md",
   },
+  {
+    name: "ICRC-112",
+    url: "https://github.com/dfinity/wg-identity-authentication/blob/main/topics/icrc_112_batch_call_canister.md",
+  },
 ];
 
 export const scopes: Array<{
@@ -70,3 +75,7 @@ export const scopes: Array<{
   ];
 
 export const ICRC_114_METHOD_NAME = "icrc114_validate";
+
+export const MAINNET_ROOT_KEY = new Uint8Array(
+  IC_ROOT_KEY.match(/[\da-f]{2}/gi)!.map((h) => parseInt(h, 16)),
+).buffer;

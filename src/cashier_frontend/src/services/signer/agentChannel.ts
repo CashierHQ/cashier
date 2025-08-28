@@ -13,14 +13,13 @@ import {
   toBase64,
 } from "@slide-computer/signer";
 import { AgentTransportError } from "./agentTransport";
-import { ICRC_114_METHOD_NAME, scopes, supportedStandards } from "./constants";
+import { ICRC_114_METHOD_NAME, MAINNET_ROOT_KEY, scopes, supportedStandards } from "./constants";
 import { DelegationChain, DelegationIdentity } from "@dfinity/identity";
 import {
   Actor,
   Cbor,
   Certificate,
   HttpAgent,
-  IC_ROOT_KEY,
   LookupStatus,
   polling,
   type SignIdentity,
@@ -29,10 +28,24 @@ import { Principal } from "@dfinity/principal";
 import { IDL } from "@dfinity/candid";
 import { Icrc114ValidateArgs } from "@/generated/cashier_backend/cashier_backend.did";
 
-const ROOT_KEY = new Uint8Array(
-  IC_ROOT_KEY.match(/[\da-f]{2}/gi)!.map((h) => parseInt(h, 16)),
-).buffer;
 
+
+/**
+ * AgentChannel implements the `Channel` contract used by the signer layer.
+ *
+ * Responsibilities:
+ * - Bridge JSON-RPC requests (from signer consumers) to an underlying
+ *   `HttpAgent` and translate responses back to JSON-RPC format.
+ * - Provide a lightweight event listener model for `response` and `close`
+ *   events so callers (for example UI code) can react to replies.
+ *
+ * Notes:
+ * - The channel intentionally ignores one-way requests (requests without an
+ *   `id`).
+ * - Some request methods (ICRC-related) receive special handling and are
+ *   translated into agent calls, read-state checks, delegation creation, or
+ *   validation flows.
+ */
 export class AgentChannel implements Channel {
   readonly #agent: HttpAgent;
   readonly #closeListeners = new Set<() => void>();
@@ -47,6 +60,16 @@ export class AgentChannel implements Channel {
     return this.#closed;
   }
 
+  /**
+   * Register an event listener.
+   *
+   * Supported events:
+   * - "close": called with no args when the channel is closed.
+   * - "response": called with the JSON-RPC response object whenever a
+   *   request (with an `id`) finishes processing.
+   *
+   * Returns an unsubscribe function that removes the listener when invoked.
+   */
   addEventListener(
     ...[event, listener]:
       | [event: "close", listener: () => void]
@@ -66,6 +89,20 @@ export class AgentChannel implements Channel {
     }
   }
 
+  /**
+   * Send a JSON-RPC request through the channel.
+   *
+   * Behavior:
+   * - If the channel is closed, throws an `AgentTransportError`.
+   * - One-way requests (no `id`) are ignored.
+   * - Otherwise the request is handled by `#createResponse` and every
+   *   registered `response` listener is invoked with the resulting
+   *   `JsonResponse`.
+   *
+   * This method never returns a response directly; results are delivered via
+   * the `response` listeners to match the `Channel` interface used by the
+   * signer layer.
+   */
   async send(request: JsonRequest): Promise<void> {
     if (this.closed) {
       throw new AgentTransportError("Communication channel is closed");
@@ -82,11 +119,38 @@ export class AgentChannel implements Channel {
     this.#responseListeners.forEach((listener) => listener(response));
   }
 
+  /**
+   * Close the channel and notify "close" listeners.
+   * After calling `close()` the channel will reject further `send()` calls
+   * with an `AgentTransportError`.
+   */
   async close(): Promise<void> {
     this.#closed = true;
     this.#closeListeners.forEach((listener) => listener());
   }
 
+  /**
+   * Internal request handler that turns an incoming JSON-RPC request into a
+   * JSON-RPC response.
+   *
+   * Inputs:
+   * - `request`: a validated JSON-RPC request with a non-null `id`.
+   *
+   * Outputs:
+   * - A `JsonResponse` object which either contains `result` or `error`.
+   *
+   * Error handling / special cases:
+   * - Invalid JSON-RPC requests receive a `INVALID_REQUEST_ERROR` response.
+   * - Unsupported methods receive a `NOT_SUPPORTED_ERROR` response.
+   * - For batched canister calls (`icrc112_batch_call_canister`) the method
+   *   performs per-request validation and returns structured errors when a
+   *   per-request validation or execution failure happens.
+   *
+   * This method is intentionally private. It performs the heavy lifting for
+   * mapping ICRC-related helper RPCs to agent operations (delegation
+   * creation, call/submit/read-state, validation via an optional
+   * validation canister, etc.).
+   */
   async #createResponse(
     request: JsonRequest & { id: NonNullable<JsonRequest["id"]> },
   ): Promise<JsonResponse> {
@@ -236,8 +300,6 @@ export class AgentChannel implements Channel {
           };
         }
 
-
-
         const { pollForResponse, defaultStrategy } = polling;
         const validationActor = batchCallCanisterRequest.params?.validationCanisterId
           ? Actor.createActor(
@@ -315,7 +377,7 @@ export class AgentChannel implements Channel {
                   });
                   const validCertificate = await Certificate.create({
                     certificate,
-                    rootKey: agent.rootKey ?? ROOT_KEY,
+                    rootKey: agent.rootKey ?? MAINNET_ROOT_KEY,
                     canisterId,
                   });
                   const status = validCertificate.lookup([

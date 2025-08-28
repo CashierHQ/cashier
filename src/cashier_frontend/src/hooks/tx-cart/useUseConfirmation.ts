@@ -116,13 +116,10 @@ export const useUseConfirmation = ({
           actionType: internalAction?.type ?? ACTION_TYPE.USE_LINK,
           actionId: internalAction.id,
         });
-
-        console.log("processActionResult", processActionResult);
-
         setInternalAction(processActionResult);
 
         // Execute ICRC-1 transactions if needed
-        if (processActionResult.icrc112Requests) {
+        if (processActionResult.icrc112Requests && processActionResult.icrc112Requests?.length > 0) {
           const response = await icrc112Execute({
             transactions: processActionResult.icrc112Requests,
           });

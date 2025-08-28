@@ -8,7 +8,6 @@ import { ACTION_TYPE } from "@/services/types/enum";
 import { ActionModel } from "@/services/types/action.service.types";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
-import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
 import { usePollingLinkAndAction } from "@/hooks/polling/usePollingLinkAndAction";
 import { Identity } from "@dfinity/agent";
@@ -44,7 +43,6 @@ export const useWithdrawConfirmation = ({
   // Mutation hooks
   const { mutateAsync: processAction } = useProcessAction();
   const { mutateAsync: updateAction } = useUpdateAction();
-  const { mutateAsync: icrc112Execute } = useIcrc112Execute();
   const { callLinkStateMachine } = useLinkMutations();
 
   // Polling hook for tracking action state during withdrawal
@@ -72,32 +70,11 @@ export const useWithdrawConfirmation = ({
         identity || undefined,
       );
 
-      const firstUpdatedAction = await processAction({
+      await processAction({
         linkId: link.id,
         actionType: ACTION_TYPE.WITHDRAW_LINK,
         actionId: currentAction.id,
       });
-
-      // Update local action state with enriched action
-      if (firstUpdatedAction.icrc112Requests) {
-        setCurrentAction(firstUpdatedAction);
-
-        const response = await icrc112Execute({
-          transactions: firstUpdatedAction.icrc112Requests,
-        });
-
-        if (response) {
-          const secondUpdatedAction = await updateAction({
-            actionId: currentAction.id,
-            linkId: link.id,
-            external: true,
-          });
-
-          if (secondUpdatedAction) {
-            setCurrentAction(secondUpdatedAction);
-          }
-        }
-      }
     } catch (error) {
       console.error("Error in withdrawal process:", error);
       throw error;
@@ -112,7 +89,6 @@ export const useWithdrawConfirmation = ({
     identity,
     processAction,
     updateAction,
-    icrc112Execute,
     setCurrentAction,
     startPollingLinkDetail,
     stopPolling,

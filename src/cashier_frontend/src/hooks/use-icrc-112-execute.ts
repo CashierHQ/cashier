@@ -4,7 +4,9 @@
 import { useMutation } from "@tanstack/react-query";
 import { useIdentity } from "@nfid/identitykit/react";
 import { Icrc112RequestModel } from "@/services/types/transaction.service.types";
-import SignerV2 from "@/services/signer";
+import SignerService from "@/services/signer";
+import { AgentTransport } from "@/services/signer/agentTransport";
+import { getAgent } from "@/utils/agent";
 
 export function useIcrc112Execute() {
   const identity = useIdentity();
@@ -15,23 +17,32 @@ export function useIcrc112Execute() {
     }: {
       transactions: Icrc112RequestModel[][] | undefined;
     }) => {
-      const transactionsProvided = transactions && transactions.length > 0;
-
+      console.log("useIcrc112Execute called with transactions:", transactions);
       if (!identity) {
         throw new Error("Identity is not available");
       }
 
-      if (transactions === undefined || !transactionsProvided) {
+      if (transactions === undefined || transactions.length == 0) {
         throw new Error("Transactions not provided");
       }
 
-      // TODO check signer support ICRC-112
-      // TODO if not support, fallback to old implementation
-      const signerService = new SignerV2(identity);
+      const transport = await AgentTransport.create({
+        agent: getAgent(identity),
+      });
 
+      const signerService = new SignerService({
+        transport
+      });
+
+      const supportedStandards = await signerService.supportedStandards();
+      console.log("Supported standards:", supportedStandards);
+      if (!supportedStandards.map((s) => s.name).includes("ICRC-112")) {
+        throw new Error("ICRC-112 is not supported by the signer");
+      }
 
       try {
-        const res = await signerService.execute(
+        const res = await signerService.execute_icrc112(
+          identity.getPrincipal(),
           transactions!,
         );
         return res;
