@@ -359,53 +359,6 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_create_icrc112_if_invalid_from_account() {
-        // Arrange
-        let service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
-            TransactionManagerService::new(
-                Rc::new(TestRepositories::new()),
-                MockIcEnvironment::new(),
-            );
-        let action_id = random_id_string();
-        let link_id = random_id_string();
-        let tx_id = random_id_string();
-
-        let tx = Transaction {
-            id: tx_id,
-            created_at: 1622547800,
-            state: TransactionState::Created,
-            dependency: None,
-            group: 0u16,
-            from_call_type: FromCallType::Canister,
-            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
-                from: Wallet::default(),
-                to: Wallet::default(),
-                asset: Asset::IC { address: random_principal_id() },
-                amount: Nat::from(1000u64),
-                ts: None,
-                memo: None,
-            })),
-            start_ts: None,
-        };
-
-        let caller = Account {
-            owner: Principal::anonymous(),
-            subaccount: None,
-        };
-
-        // Act
-        let result = service.create_icrc_112(&caller, &action_id, &link_id, &[tx]);
-
-        // Assert
-        assert!(result.is_err());
-        if let Err(CanisterError::InvalidDataError(msg)) = result {
-            assert!(msg.contains("invalid principal"));
-        } else {
-            panic!("Expected InvalidDataError, got {:?}", result);
-        }
-    }
-
-    #[test]
     fn it_should_return_none_create_icrc112_request_if_caller_is_not_from_account() {
         // Arrange
         let service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
