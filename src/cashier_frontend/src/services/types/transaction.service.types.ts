@@ -7,7 +7,7 @@ export type Icrc112RequestModel = {
   arg: Uint8Array | number[];
   method: string;
   canisterId: string;
-  nonce?: string;
+  nonce?: Uint8Array | number[];
 };
 
 // Type-safe converter: returns ArrayBuffer representing only the bytes of the input
@@ -40,6 +40,6 @@ export const toRPCRequest = (req: Icrc112RequestModel): {
     arg: toBase64(toArrayBuffer(req.arg)),
     method: req.method,
     canisterId: req.canisterId,
-    nonce: req.nonce,
+    nonce: req.nonce ? toBase64(toArrayBuffer(req.nonce)) : undefined, // default to empty nonce
   };
 }

@@ -5,8 +5,9 @@ import { HttpAgent, Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { BatchCallCanisterRequest, BatchCallCanisterResponse, Signer } from "@slide-computer/signer";
 import { getAgent } from "@/utils/agent";
-import { AgentTransport } from "@slide-computer/signer-test";
 import { Icrc112RequestModel, toRPCRequest } from "../types/transaction.service.types";
+import { BACKEND_CANISTER_ID } from "@/const";
+import { AgentTransport } from "./agentTransport";
 
 class SignerV2 {
     private agent: HttpAgent;
@@ -34,6 +35,7 @@ class SignerV2 {
             params: {
                 sender: (await this.agent.getPrincipal()).toString(),
                 requests: batchInput,
+                validationCanisterId: BACKEND_CANISTER_ID
             },
         };
         const response: BatchCallCanisterResponse = await signer.sendRequest(request);

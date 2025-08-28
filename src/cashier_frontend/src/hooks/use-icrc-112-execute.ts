@@ -25,7 +25,10 @@ export function useIcrc112Execute() {
         throw new Error("Transactions not provided");
       }
 
+      // TODO check signer support ICRC-112
+      // TODO if not support, fallback to old implementation
       const signerService = new SignerV2(identity);
+
 
       try {
         const res = await signerService.execute(
