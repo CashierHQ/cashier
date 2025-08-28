@@ -1,13 +1,15 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use candid::Decode;
+use cashier_backend_types::error::CanisterError;
 use ic_cdk::{query, update};
 use itertools::Itertools;
 
 use cashier_common::icrc::{
     Icrc21ConsentInfo, Icrc21ConsentMessage, Icrc21ConsentMessageMetadata,
     Icrc21ConsentMessageRequest, Icrc21DeviceSpec, Icrc21Error, Icrc21LineDisplayPage,
-    Icrc21SupportedStandard, Icrc28TrustedOriginsResponse,
+    Icrc21SupportedStandard, Icrc28TrustedOriginsResponse, Icrc114ValidateArgs,
 };
 use log::{debug, info};
 
@@ -150,4 +152,20 @@ fn consent_msg_text_pages(
             lines: page.collect(),
         })
         .collect()
+}
+
+#[update]
+// following the ICRC-114 standard for helping signer validate the canister call
+fn icrc114_validate(args: Icrc114ValidateArgs) -> bool {
+    if args.method == "trigger_transaction" {
+        match Decode!(args.res.as_slice(), Result<String, CanisterError>) {
+            Ok(Ok(_ok)) => return true,
+            Ok(Err(_err)) => return false,
+            Err(_decode_err) => {
+                return false;
+            }
+        }
+    }
+
+    false
 }

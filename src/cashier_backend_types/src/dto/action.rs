@@ -387,7 +387,7 @@ pub struct Icrc112Request {
     pub canister_id: Principal,
     pub method: String,
     pub arg: Vec<u8>,
-    pub nonce: Option<String>,
+    pub nonce: Option<Vec<u8>>,
 }
 
 pub type ParallelRequests = Vec<Icrc112Request>;
