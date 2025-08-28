@@ -9,8 +9,6 @@ use ic_mple_log::service::{LoggerServiceStorage, Storage};
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 
-// Import v2 types directly
-
 use cashier_backend_types::repository::{
     action::v1::Action, action_intent::v1::ActionIntent, intent::v2::Intent as IntentV2,
     intent_transaction::v1::IntentTransaction, keys::*, link::v1::Link,
@@ -47,39 +45,18 @@ pub mod transaction;
 pub mod user_action;
 pub mod user_link;
 
+const INTENT_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(0);
+const TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(1);
+const INTENT_MEMORY_ID: MemoryId = MemoryId::new(2);
 const USER_LINK_MEMORY_ID: MemoryId = MemoryId::new(3);
 const USER_ACTION_MEMORY_ID: MemoryId = MemoryId::new(4);
 const LINK_MEMORY_ID: MemoryId = MemoryId::new(5);
 const LINK_ACTION_MEMORY_ID: MemoryId = MemoryId::new(6);
 const ACTION_MEMORY_ID: MemoryId = MemoryId::new(7);
 const ACTION_INTENT_MEMORY_ID: MemoryId = MemoryId::new(8);
-const INTENT_MEMORY_ID: MemoryId = MemoryId::new(9);
-const INTENT_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(10);
-const TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(11);
-
-// processing transactions, for canister upgrading
-const PROCESSING_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(12);
-
-const REQUEST_LOCK_MEMORY_ID: MemoryId = MemoryId::new(25);
-const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(26);
-
-// Unused Memory IDs but it used before, due to canister doesn't support shrink allocated memory
-const _UNUSED_MEMORY_ID_00: MemoryId = MemoryId::new(0);
-const _UNUSED_MEMORY_ID_01: MemoryId = MemoryId::new(1);
-const _UNUSED_MEMORY_ID_02: MemoryId = MemoryId::new(2);
-const _UNUSED_MEMORY_ID_12: MemoryId = MemoryId::new(12);
-const _UNUSED_MEMORY_ID_13: MemoryId = MemoryId::new(13);
-const _UNUSED_MEMORY_ID_14: MemoryId = MemoryId::new(14);
-const _UNUSED_MEMORY_ID_15: MemoryId = MemoryId::new(15);
-const _UNUSED_MEMORY_ID_16: MemoryId = MemoryId::new(16);
-const _UNUSED_MEMORY_ID_17: MemoryId = MemoryId::new(17);
-const _UNUSED_MEMORY_ID_18: MemoryId = MemoryId::new(18);
-const _UNUSED_MEMORY_ID_19: MemoryId = MemoryId::new(19);
-const _UNUSED_MEMORY_ID_20: MemoryId = MemoryId::new(20);
-const _UNUSED_MEMORY_ID_21: MemoryId = MemoryId::new(21);
-const _UNUSED_MEMORY_ID_22: MemoryId = MemoryId::new(22);
-const _UNUSED_MEMORY_ID_23: MemoryId = MemoryId::new(23);
-const _UNUSED_MEMORY_ID_24: MemoryId = MemoryId::new(24);
+const PROCESSING_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(9);
+const REQUEST_LOCK_MEMORY_ID: MemoryId = MemoryId::new(10);
+const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(11);
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
