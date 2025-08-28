@@ -117,7 +117,7 @@ async fn it_should_withdraw_link_airdrop_successfully() {
     // Assert
     assert_eq!(withdraw_result.id, withdraw_action.id);
 
-    let link_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let link_amount = link.asset_info[0].amount_per_link_use_action;
     let max_use_count = link.link_use_action_max_count;
     let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
 
@@ -176,7 +176,7 @@ async fn it_should_withdraw_link_airdrop_icrc_token_successfully() {
     // Assert
     assert_eq!(withdraw_result.id, withdraw_action.id);
 
-    let link_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let link_amount = link.asset_info[0].amount_per_link_use_action;
     let max_use_count = link.link_use_action_max_count;
 
     let ckusdc_ledger_fee = ckusdc_ledger_client.fee().await.unwrap();

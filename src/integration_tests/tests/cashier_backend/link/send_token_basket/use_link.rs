@@ -116,9 +116,9 @@ async fn it_should_use_link_token_basket_successfully() {
             .all(|intent| intent.state == IntentState::Success)
     );
 
-    let icp_link_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
-    let ckbtc_link_amount = link.asset_info.as_ref().unwrap()[1].amount_per_link_use_action;
-    let ckusdc_link_amount = link.asset_info.as_ref().unwrap()[2].amount_per_link_use_action;
+    let icp_link_amount = link.asset_info[0].amount_per_link_use_action;
+    let ckbtc_link_amount = link.asset_info[1].amount_per_link_use_action;
+    let ckusdc_link_amount = link.asset_info[2].amount_per_link_use_action;
 
     let claimer_icp_balance_after = icp_ledger_client
         .balance_of(&claimer_account)

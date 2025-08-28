@@ -80,7 +80,7 @@ async fn it_should_use_link_tip_icp_token_successfully() {
 
     // Assert
     assert_eq!(claim_result.id, claim_action.id);
-    let tip_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let tip_amount = link.asset_info[0].amount_per_link_use_action;
     assert_ne!(tip_amount, 0);
 
     let claimer_balance_after = icp_ledger_client
@@ -143,7 +143,7 @@ async fn it_should_use_link_tip_icrc_token_successfully() {
 
     // Assert
     assert_eq!(claim_result.id, claim_action.id);
-    let tip_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let tip_amount = link.asset_info[0].amount_per_link_use_action;
     assert_ne!(tip_amount, 0);
 
     let claimer_balance_after = icrc_ledger_client

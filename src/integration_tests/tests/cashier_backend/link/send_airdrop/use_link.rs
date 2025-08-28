@@ -85,7 +85,7 @@ async fn it_should_use_link_airdrop_successfully() {
     // Assert
     assert_eq!(claim_result.id, claim_action.id);
 
-    let airdrop_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let airdrop_amount = link.asset_info[0].amount_per_link_use_action;
     assert_ne!(airdrop_amount, 0);
 
     let claimer_balance_after = icp_ledger_client
@@ -150,7 +150,7 @@ async fn it_should_use_link_airdrop_multiple_times_successfully() {
     let (creator_fixture, link) =
         create_airdrop_link_fixture(constant::ICP_TOKEN, 1_000_000u64, 5).await;
 
-    let airdrop_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let airdrop_amount = link.asset_info[0].amount_per_link_use_action;
     assert_ne!(airdrop_amount, 0);
     let max_use_count = link.link_use_action_max_count;
     let icp_ledger_client = creator_fixture
@@ -213,7 +213,7 @@ async fn it_should_error_use_link_airdrop_more_than_max_use_count() {
     let (creator_fixture, link) =
         create_airdrop_link_fixture(constant::ICP_TOKEN, 1_000_000u64, 5).await;
 
-    let airdrop_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let airdrop_amount = link.asset_info[0].amount_per_link_use_action;
     assert_ne!(airdrop_amount, 0);
     let max_use_count = link.link_use_action_max_count;
 
@@ -298,7 +298,7 @@ async fn it_should_use_link_airdrop_icrc_token_successfully() {
     // Assert
     assert_eq!(claim_result.id, claim_action.id);
 
-    let airdrop_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let airdrop_amount = link.asset_info[0].amount_per_link_use_action;
     assert_ne!(airdrop_amount, 0);
 
     let claimer_balance_after = ckusdc_ledger_client

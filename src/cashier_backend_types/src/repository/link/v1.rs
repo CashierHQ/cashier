@@ -17,27 +17,23 @@ pub struct Link {
     pub title: Option<String>,
     pub description: Option<String>,
     pub link_type: Option<LinkType>,
-    pub asset_info: Option<Vec<AssetInfo>>,
+    pub asset_info: Vec<AssetInfo>,
     pub template: Option<Template>,
     pub creator: Principal,
     pub create_at: u64,
-    pub metadata: Option<HashMap<String, String>>,
+    pub metadata: HashMap<String, String>,
     pub link_use_action_counter: u64,
     pub link_use_action_max_count: u64,
 }
 
 impl Link {
     pub fn get_asset_by_label(&self, label: &str) -> Option<AssetInfo> {
-        self.asset_info
-            .as_ref()
-            .and_then(|asset_info| asset_info.iter().find(|asset| asset.label == label))
+        self.asset_info.iter().find(|asset| asset.label == label)
             .cloned()
     }
 
     pub fn get_metadata(&self, key: &str) -> Option<String> {
-        self.metadata
-            .as_ref()
-            .and_then(|metadata| metadata.get(key).cloned())
+        self.metadata.get(key).cloned()
     }
 }
 

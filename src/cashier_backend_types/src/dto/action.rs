@@ -54,25 +54,9 @@ pub struct CreateActionAnonymousInput {
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct ClaimIntentParams {
-    address: Option<Principal>,
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-
-pub enum CreateActionParams {
-    Claim(ClaimIntentParams),
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct ConfirmActionInput {
     pub action_id: String,
     pub link_id: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct CreateActionResponse {
-    pub action: ActionDto,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -123,13 +107,12 @@ pub struct AssetDto {
 
 impl ActionDto {
     pub fn from(action: Action, intents: Vec<Intent>) -> Self {
-        let intents_dto = intents.into_iter().map(IntentDto::from).collect();
         Self {
             id: action.id,
             r#type: action.r#type,
             state: action.state,
             creator: action.creator,
-            intents: intents_dto,
+            intents: intents.into_iter().map(IntentDto::from).collect(),
             icrc_112_requests: None,
         }
     }
@@ -247,7 +230,6 @@ impl From<Transaction> for TransactionDto {
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct Icrc112Request {
-    // pub canister_id: String,
     pub canister_id: Principal,
     pub method: String,
     pub arg: String,

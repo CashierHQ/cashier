@@ -88,10 +88,9 @@ async fn it_should_create_link_payment_icp_token_successfully() {
     // Assert
     assert!(!link.id.is_empty());
     assert_eq!(link.link_type, Some(LinkType::ReceivePayment));
-    assert!(link.asset_info.is_some());
-    assert_eq!(link.asset_info.as_ref().unwrap().len(), 1);
+    assert_eq!(link.asset_info.len(), 1);
     assert_eq!(
-        link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action,
+        link.asset_info[0].amount_per_link_use_action,
         link_amount
     );
 
@@ -227,10 +226,9 @@ async fn it_should_create_link_payment_icrc_token_successfully() {
     // Assert
     assert!(!link.id.is_empty());
     assert_eq!(link.link_type, Some(LinkType::ReceivePayment));
-    assert!(link.asset_info.is_some());
-    assert_eq!(link.asset_info.as_ref().unwrap().len(), 1);
+    assert_eq!(link.asset_info.len(), 1);
     assert_eq!(
-        link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action,
+        link.asset_info[0].amount_per_link_use_action,
         link_amount
     );
 

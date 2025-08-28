@@ -11,8 +11,7 @@ use serde::{Deserialize, Serialize};
 use crate::dto::action::ActionDto;
 use crate::repository::action::v1::ActionType;
 use crate::repository::asset_info::AssetInfo;
-use crate::repository::common::{Asset, Chain};
-use crate::repository::intent::v2::{Intent, IntentState, IntentTask, IntentType};
+use crate::repository::common::Asset;
 use crate::repository::link::v1::{Link, LinkState, LinkType, Template};
 use crate::repository::link_action::v1::LinkUserState;
 
@@ -58,21 +57,10 @@ pub struct LinkDetailUpdateInput {
     pub description: Option<String>,
     pub link_image_url: Option<String>,
     pub nft_image: Option<String>,
-    pub asset_info: Option<Vec<LinkDetailUpdateAssetInfoInput>>,
+    pub asset_info: Vec<LinkDetailUpdateAssetInfoInput>,
     pub template: Option<Template>,
     pub link_type: Option<LinkType>,
     pub link_use_action_max_count: Option<u64>,
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct LinkDetailUpdate {
-    pub title: Option<String>,
-    pub description: Option<String>,
-    pub nft_image: Option<String>,
-    pub link_image_url: Option<String>,
-    pub asset_info: Option<Vec<AssetInfoDto>>,
-    pub template: Option<Template>,
-    pub link_type: Option<LinkType>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Display)]
@@ -100,11 +88,11 @@ pub struct LinkDto {
     pub title: Option<String>,
     pub description: Option<String>,
     pub link_type: Option<LinkType>,
-    pub asset_info: Option<Vec<AssetInfoDto>>,
+    pub asset_info: Vec<AssetInfoDto>,
     pub template: Option<Template>,
     pub creator: Principal,
     pub create_at: u64,
-    pub metadata: Option<HashMap<String, String>>,
+    pub metadata: HashMap<String, String>,
     pub link_use_action_counter: u64,
     pub link_use_action_max_count: u64,
 }
@@ -117,32 +105,9 @@ pub struct AssetInfoDto {
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct IntentDto {
-    pub id: String,
-    pub state: IntentState,
-    pub created_at: u64,
-    pub chain: Chain,
-    pub task: IntentTask,
-    pub r#type: IntentType,
-}
-
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct GetLinkResp {
     pub link: LinkDto,
     pub action: Option<ActionDto>,
-}
-
-impl From<Intent> for IntentDto {
-    fn from(intent: Intent) -> Self {
-        IntentDto {
-            id: intent.id,
-            state: intent.state,
-            created_at: intent.created_at,
-            chain: intent.chain,
-            task: intent.task,
-            r#type: intent.r#type,
-        }
-    }
 }
 
 impl From<LinkDetailUpdateAssetInfoInput> for AssetInfo {
@@ -163,22 +128,13 @@ impl From<&AssetInfo> for AssetInfoDto {
 
 impl From<Link> for LinkDto {
     fn from(link: Link) -> Self {
-        let asset_info = match link.asset_info {
-            Some(asset_info) => {
-                let asset_info_vec = asset_info.iter().map(AssetInfoDto::from).collect();
-
-                Some(asset_info_vec)
-            }
-            None => None,
-        };
-
         LinkDto {
             id: link.id,
             state: link.state,
             title: link.title,
             description: link.description,
             link_type: link.link_type,
-            asset_info,
+            asset_info: link.asset_info.iter().map(AssetInfoDto::from).collect(),
             template: link.template,
             creator: link.creator,
             create_at: link.create_at,
