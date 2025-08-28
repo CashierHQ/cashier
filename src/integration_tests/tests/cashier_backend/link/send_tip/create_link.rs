@@ -4,6 +4,8 @@ use crate::utils::{
     link_id_to_account::link_id_to_account, principal::TestUser,
 };
 use candid::Principal;
+use cashier_backend_types::dto::link::LinkStateMachineGoto;
+use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::{
     constant,
     dto::link::UpdateLinkInput,
@@ -80,7 +82,7 @@ async fn it_should_create_link_tip_icp_token_successfully() {
 
     // Assert
     assert!(!link.id.is_empty());
-    assert_eq!(link.link_type, Some(LinkType::SendTip.to_string()));
+    assert_eq!(link.link_type, Some(LinkType::SendTip));
     assert!(link.asset_info.is_some());
     assert_eq!(link.asset_info.as_ref().unwrap().len(), 1);
     assert_eq!(
@@ -90,13 +92,13 @@ async fn it_should_create_link_tip_icp_token_successfully() {
 
     // Act
     let create_action = test_fixture
-        .create_action(&link.id, constant::CREATE_LINK_ACTION)
+        .create_action(&link.id, ActionType::CreateLink)
         .await;
 
     // Assert
     assert!(!create_action.id.is_empty());
-    assert_eq!(create_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(create_action.state, ActionState::Created.to_string());
+    assert_eq!(create_action.r#type, ActionType::CreateLink);
+    assert_eq!(create_action.state, ActionState::Created);
     assert_eq!(create_action.intents.len(), 2);
     assert!(
         create_action
@@ -107,13 +109,13 @@ async fn it_should_create_link_tip_icp_token_successfully() {
 
     // Act
     let processing_action = test_fixture
-        .process_action(&link.id, &create_action.id, constant::CREATE_LINK_ACTION)
+        .process_action(&link.id, &create_action.id, ActionType::CreateLink)
         .await;
 
     // Assert
     assert!(!processing_action.id.is_empty());
-    assert_eq!(processing_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(processing_action.state, ActionState::Processing.to_string());
+    assert_eq!(processing_action.r#type, ActionType::CreateLink);
+    assert_eq!(processing_action.state, ActionState::Processing);
     assert!(processing_action.icrc_112_requests.is_some());
     assert_eq!(
         processing_action.icrc_112_requests.as_ref().unwrap().len(),
@@ -138,8 +140,8 @@ async fn it_should_create_link_tip_icp_token_successfully() {
 
     // Assert
     assert!(!update_action.id.is_empty());
-    assert_eq!(update_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(update_action.state, ActionState::Success.to_string());
+    assert_eq!(update_action.r#type, ActionType::CreateLink);
+    assert_eq!(update_action.state, ActionState::Success);
     assert!(
         update_action
             .intents
@@ -150,13 +152,13 @@ async fn it_should_create_link_tip_icp_token_successfully() {
     // Act
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
-        action: constant::CONTINUE_ACTION.to_string(),
+        action: LinkStateMachineGoto::Continue,
         params: None,
     };
     let update_link = test_fixture.update_link(update_link_input).await;
 
     // Assert
-    assert_eq!(update_link.state, LinkState::Active.to_string());
+    assert_eq!(update_link.state, LinkState::Active);
 
     let link_account = link_id_to_account(&ctx, &link.id);
     let caller_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
@@ -223,7 +225,7 @@ async fn it_should_create_link_tip_icrc_token_successfully() {
 
     // Assert
     assert!(!link.id.is_empty());
-    assert_eq!(link.link_type, Some(LinkType::SendTip.to_string()));
+    assert_eq!(link.link_type, Some(LinkType::SendTip));
     assert!(link.asset_info.is_some());
     assert_eq!(link.asset_info.as_ref().unwrap().len(), 1);
     assert_eq!(
@@ -233,13 +235,13 @@ async fn it_should_create_link_tip_icrc_token_successfully() {
 
     // Act
     let create_action = test_fixture
-        .create_action(&link.id, constant::CREATE_LINK_ACTION)
+        .create_action(&link.id, ActionType::CreateLink)
         .await;
 
     // Assert
     assert!(!create_action.id.is_empty());
-    assert_eq!(create_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(create_action.state, ActionState::Created.to_string());
+    assert_eq!(create_action.r#type, ActionType::CreateLink);
+    assert_eq!(create_action.state, ActionState::Created);
     assert_eq!(create_action.intents.len(), 2);
     assert!(
         create_action
@@ -250,13 +252,13 @@ async fn it_should_create_link_tip_icrc_token_successfully() {
 
     // Act
     let processing_action = test_fixture
-        .process_action(&link.id, &create_action.id, constant::CREATE_LINK_ACTION)
+        .process_action(&link.id, &create_action.id, ActionType::CreateLink)
         .await;
 
     // Assert
     assert!(!processing_action.id.is_empty());
-    assert_eq!(processing_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(processing_action.state, ActionState::Processing.to_string());
+    assert_eq!(processing_action.r#type, ActionType::CreateLink);
+    assert_eq!(processing_action.state, ActionState::Processing);
     assert!(processing_action.icrc_112_requests.is_some());
     assert_eq!(
         processing_action.icrc_112_requests.as_ref().unwrap().len(),
@@ -281,8 +283,8 @@ async fn it_should_create_link_tip_icrc_token_successfully() {
 
     // Assert
     assert!(!update_action.id.is_empty());
-    assert_eq!(update_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(update_action.state, ActionState::Success.to_string());
+    assert_eq!(update_action.r#type, ActionType::CreateLink);
+    assert_eq!(update_action.state, ActionState::Success);
     assert!(
         update_action
             .intents
@@ -293,13 +295,13 @@ async fn it_should_create_link_tip_icrc_token_successfully() {
     // Act
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
-        action: constant::CONTINUE_ACTION.to_string(),
+        action: LinkStateMachineGoto::Continue,
         params: None,
     };
     let update_link = test_fixture.update_link(update_link_input).await;
 
     // Assert
-    assert_eq!(update_link.state, LinkState::Active.to_string());
+    assert_eq!(update_link.state, LinkState::Active);
 
     let link_account = link_id_to_account(&ctx, &link.id);
     let icp_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();

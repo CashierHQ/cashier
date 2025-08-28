@@ -3,6 +3,7 @@ use crate::utils::link_id_to_account::link_id_to_account;
 use crate::utils::principal::TestUser;
 use candid::Principal;
 use cashier_backend_types::dto::action::CreateActionInput;
+use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::{constant, repository::action::v1::ActionState};
 use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
@@ -20,7 +21,7 @@ async fn it_should_error_use_link_tip_if_caller_anonymous() {
     let result = cashier_backend_client
         .create_action(CreateActionInput {
             link_id: link.id.clone(),
-            action_type: constant::USE_LINK_ACTION.to_string(),
+            action_type: ActionType::Use,
         })
         .await;
 
@@ -64,17 +65,17 @@ async fn it_should_use_link_tip_icp_token_successfully() {
 
     // Act
     let claim_action = claimer_fixture
-        .create_action(&link.id, constant::USE_LINK_ACTION)
+        .create_action(&link.id, ActionType::Use)
         .await;
 
     // Assert
     assert!(!claim_action.id.is_empty());
-    assert_eq!(claim_action.r#type, constant::USE_LINK_ACTION);
-    assert_eq!(claim_action.state, ActionState::Created.to_string());
+    assert_eq!(claim_action.r#type, ActionType::Use);
+    assert_eq!(claim_action.state, ActionState::Created);
 
     // Act
     let claim_result = claimer_fixture
-        .process_action(&link.id, &claim_action.id, constant::USE_LINK_ACTION)
+        .process_action(&link.id, &claim_action.id, ActionType::Use)
         .await;
 
     // Assert
@@ -127,17 +128,17 @@ async fn it_should_use_link_tip_icrc_token_successfully() {
 
     // Act
     let claim_action = claimer_fixture
-        .create_action(&link.id, constant::USE_LINK_ACTION)
+        .create_action(&link.id, ActionType::Use)
         .await;
 
     // Assert
     assert!(!claim_action.id.is_empty());
-    assert_eq!(claim_action.r#type, constant::USE_LINK_ACTION);
-    assert_eq!(claim_action.state, ActionState::Created.to_string());
+    assert_eq!(claim_action.r#type, ActionType::Use);
+    assert_eq!(claim_action.state, ActionState::Created);
 
     // Act
     let claim_result = claimer_fixture
-        .process_action(&link.id, &claim_action.id, constant::USE_LINK_ACTION)
+        .process_action(&link.id, &claim_action.id, ActionType::Use)
         .await;
 
     // Assert

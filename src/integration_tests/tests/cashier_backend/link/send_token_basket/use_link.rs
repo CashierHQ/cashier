@@ -25,7 +25,7 @@ async fn it_should_error_use_link_token_basket_if_caller_anonymous() {
     let result = cashier_backend_client
         .create_action(CreateActionInput {
             link_id: link.id.clone(),
-            action_type: constant::USE_LINK_ACTION.to_string(),
+            action_type: ActionType::Use,
         })
         .await;
 
@@ -91,24 +91,24 @@ async fn it_should_use_link_token_basket_successfully() {
 
     // Act
     let use_action = claimer_fixture
-        .create_action(&link.id, constant::USE_LINK_ACTION)
+        .create_action(&link.id, ActionType::Use)
         .await;
 
     // Assert
     assert!(!use_action.id.is_empty());
-    assert_eq!(use_action.r#type, ActionType::Use.to_string());
-    assert_eq!(use_action.state, ActionState::Created.to_string());
+    assert_eq!(use_action.r#type, ActionType::Use);
+    assert_eq!(use_action.state, ActionState::Created);
     assert_eq!(use_action.intents.len(), 3);
 
     // Act
     let processing_action = claimer_fixture
-        .process_action(&link.id, &use_action.id, constant::USE_LINK_ACTION)
+        .process_action(&link.id, &use_action.id, ActionType::Use)
         .await;
 
     // Assert
     assert_eq!(processing_action.id, use_action.id);
-    assert_eq!(processing_action.r#type, ActionType::Use.to_string());
-    assert_eq!(processing_action.state, ActionState::Success.to_string());
+    assert_eq!(processing_action.r#type, ActionType::Use);
+    assert_eq!(processing_action.state, ActionState::Success);
     assert!(
         processing_action
             .intents

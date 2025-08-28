@@ -1,5 +1,6 @@
 use crate::utils::principal::TestUser;
 use crate::{cashier_backend::link::fixture::LinkTestFixture, utils::with_pocket_ic_context};
+use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::{
     constant,
     dto::action::{ActionDto, CreateActionInput},
@@ -29,7 +30,7 @@ async fn test_request_lock_for_create_action() {
                     .unwrap()
                     .submit_create_action(CreateActionInput {
                         link_id: link.id.to_string(),
-                        action_type: "CreateLink".to_string(),
+                        action_type: ActionType::CreateLink,
                     })
                     .await
                     .unwrap(),

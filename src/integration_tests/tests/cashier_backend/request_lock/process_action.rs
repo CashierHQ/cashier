@@ -1,11 +1,10 @@
 use cashier_backend_types::{
-    constant,
     dto::{
         action::{ActionDto, ProcessActionInput},
-        link::UpdateLinkInput,
+        link::{LinkStateMachineGoto, UpdateLinkInput},
     },
     error::CanisterError,
-    repository::link::v1::LinkState,
+    repository::{action::v1::ActionType, link::v1::LinkState},
 };
 
 use crate::cashier_backend::link::fixture::LinkTestFixture;
@@ -33,9 +32,9 @@ async fn test_request_lock_for_process_action() {
         // top up link and active link
         let active_link = {
             let link = fixture.create_token_basket_link().await;
-            let action = fixture.create_action(&link.id, "CreateLink").await;
+            let action = fixture.create_action(&link.id, ActionType::CreateLink).await;
             let processing_action = fixture
-                .process_action(&link.id, &action.id, constant::CREATE_LINK_ACTION)
+                .process_action(&link.id, &action.id, ActionType::CreateLink)
                 .await;
             let _icrc112_execution_result = execute_icrc112_request(
                 processing_action.icrc_112_requests.as_ref().unwrap(),
@@ -47,12 +46,12 @@ async fn test_request_lock_for_process_action() {
             fixture
                 .update_link(UpdateLinkInput {
                     id: link.id.to_string(),
-                    action: "Continue".to_string(),
+                    action: LinkStateMachineGoto::Continue,
                     params: None,
                 })
                 .await
         };
-        let use_action = fixture.create_action(&active_link.id, "Use").await;
+        let use_action = fixture.create_action(&active_link.id, ActionType::Use).await;
 
         // Act - submit call 3 times concurrently
         let mut msgs = Vec::with_capacity(3);
@@ -65,7 +64,7 @@ async fn test_request_lock_for_process_action() {
                     .submit_process_action(ProcessActionInput {
                         link_id: active_link.id.to_string(),
                         action_id: use_action.id.to_string(),
-                        action_type: "Use".to_string(),
+                        action_type: ActionType::Use,
                     })
                     .await
                     .unwrap(),
@@ -89,7 +88,7 @@ async fn test_request_lock_for_process_action() {
         let failed_actions = results.iter().filter(|r| r.is_err()).collect::<Vec<_>>();
 
         // Assert
-        assert_eq!(active_link.state, LinkState::Active.to_str());
+        assert_eq!(active_link.state, LinkState::Active);
 
         assert_eq!(success_count, 1, "Expected exactly 1 action to succeed");
 

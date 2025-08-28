@@ -2,6 +2,7 @@ use crate::cashier_backend::link::fixture::{LinkTestFixture, create_airdrop_link
 use crate::utils::principal::TestUser;
 use candid::Principal;
 use cashier_backend_types::error::CanisterError;
+use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::{
     constant, dto::action::CreateActionInput, repository::action::v1::ActionState,
 };
@@ -23,7 +24,7 @@ async fn it_should_error_use_link_airdrop_if_caller_anonymous() {
     let result = cashier_backend_client
         .create_action(CreateActionInput {
             link_id: link.id.clone(),
-            action_type: constant::USE_LINK_ACTION.to_string(),
+            action_type: ActionType::Use,
         })
         .await;
 
@@ -68,17 +69,17 @@ async fn it_should_use_link_airdrop_successfully() {
 
     // Act
     let claim_action = claimer_fixture
-        .create_action(&link.id, constant::USE_LINK_ACTION)
+        .create_action(&link.id, ActionType::Use)
         .await;
 
     // Assert
     assert!(!claim_action.id.is_empty());
-    assert_eq!(claim_action.r#type, constant::USE_LINK_ACTION);
-    assert_eq!(claim_action.state, ActionState::Created.to_string());
+    assert_eq!(claim_action.r#type, ActionType::Use);
+    assert_eq!(claim_action.state, ActionState::Created);
 
     // Act
     let claim_result = claimer_fixture
-        .process_action(&link.id, &claim_action.id, constant::USE_LINK_ACTION)
+        .process_action(&link.id, &claim_action.id, ActionType::Use)
         .await;
 
     // Assert
@@ -117,10 +118,10 @@ async fn it_should_error_use_link_airdrop_multiple_times_from_same_user() {
     let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
 
     let claim_action = claimer_fixture
-        .create_action(&link.id, constant::USE_LINK_ACTION)
+        .create_action(&link.id, ActionType::Use)
         .await;
     let _claim_result = claimer_fixture
-        .process_action(&link.id, &claim_action.id, constant::USE_LINK_ACTION)
+        .process_action(&link.id, &claim_action.id, ActionType::Use)
         .await;
 
     let cashier_backend_client = claimer_fixture.ctx.new_cashier_backend_client(claimer);
@@ -129,7 +130,7 @@ async fn it_should_error_use_link_airdrop_multiple_times_from_same_user() {
     let result = cashier_backend_client
         .create_action(CreateActionInput {
             link_id: link.id.clone(),
-            action_type: constant::USE_LINK_ACTION.to_string(),
+            action_type: ActionType::Use,
         })
         .await
         .unwrap();
@@ -166,17 +167,17 @@ async fn it_should_use_link_airdrop_multiple_times_successfully() {
 
         // Act
         let claim_action = claimer_fixture
-            .create_action(&link.id, constant::USE_LINK_ACTION)
+            .create_action(&link.id, ActionType::Use)
             .await;
 
         // Assert
         assert!(!claim_action.id.is_empty());
-        assert_eq!(claim_action.r#type, constant::USE_LINK_ACTION);
-        assert_eq!(claim_action.state, ActionState::Created.to_string());
+        assert_eq!(claim_action.r#type, ActionType::Use);
+        assert_eq!(claim_action.state, ActionState::Created);
 
         // Act
         let _claim_result = claimer_fixture
-            .process_action(&link.id, &claim_action.id, constant::USE_LINK_ACTION)
+            .process_action(&link.id, &claim_action.id, ActionType::Use)
             .await;
 
         // Assert
@@ -221,10 +222,10 @@ async fn it_should_error_use_link_airdrop_more_than_max_use_count() {
         let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
 
         let claim_action = claimer_fixture
-            .create_action(&link.id, constant::USE_LINK_ACTION)
+            .create_action(&link.id, ActionType::Use)
             .await;
         let _claim_result = claimer_fixture
-            .process_action(&link.id, &claim_action.id, constant::USE_LINK_ACTION)
+            .process_action(&link.id, &claim_action.id, ActionType::Use)
             .await;
     }
 
@@ -236,7 +237,7 @@ async fn it_should_error_use_link_airdrop_more_than_max_use_count() {
     let result = cashier_backend_client
         .create_action(CreateActionInput {
             link_id: link.id.clone(),
-            action_type: constant::USE_LINK_ACTION.to_string(),
+            action_type: ActionType::Use,
         })
         .await
         .unwrap();
@@ -281,17 +282,17 @@ async fn it_should_use_link_airdrop_icrc_token_successfully() {
 
     // Act
     let claim_action = claimer_fixture
-        .create_action(&link.id, constant::USE_LINK_ACTION)
+        .create_action(&link.id, ActionType::Use)
         .await;
 
     // Assert
     assert!(!claim_action.id.is_empty());
-    assert_eq!(claim_action.r#type, constant::USE_LINK_ACTION);
-    assert_eq!(claim_action.state, ActionState::Created.to_string());
+    assert_eq!(claim_action.r#type, ActionType::Use);
+    assert_eq!(claim_action.state, ActionState::Created);
 
     // Act
     let claim_result = claimer_fixture
-        .process_action(&link.id, &claim_action.id, constant::USE_LINK_ACTION)
+        .process_action(&link.id, &claim_action.id, ActionType::Use)
         .await;
 
     // Assert

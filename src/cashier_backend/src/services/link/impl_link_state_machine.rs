@@ -204,7 +204,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         };
 
         let result = self
-            .handle_link_state_transition(&link_id_str, "Continue", Some(choose_link_type_params))
+            .handle_link_state_transition(&link_id_str, LinkStateMachineGoto::Continue, Some(choose_link_type_params))
             .await;
 
         if result.is_err() {
@@ -231,7 +231,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         };
 
         let result = self
-            .handle_link_state_transition(&link_id_str, "Continue", Some(add_assets_params))
+            .handle_link_state_transition(&link_id_str, LinkStateMachineGoto::Continue, Some(add_assets_params))
             .await;
 
         if result.is_err() {
@@ -257,7 +257,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         };
 
         let result = self
-            .handle_link_state_transition(&link_id_str, "Continue", Some(add_assets_params))
+            .handle_link_state_transition(&link_id_str, LinkStateMachineGoto::Continue, Some(add_assets_params))
             .await;
 
         if result.is_err() {
@@ -277,13 +277,10 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
     async fn handle_link_state_transition(
         &mut self,
         link_id: &str,
-        go_to: &str,
+        link_state_goto: LinkStateMachineGoto,
         params: Option<LinkDetailUpdateInput>,
     ) -> Result<Link, CanisterError> {
         let mut link = self.get_link_by_id(link_id)?;
-
-        let link_state_goto =
-            LinkStateMachineGoto::from_string(go_to).map_err(CanisterError::ValidationErrors)?;
 
         // if params is None, all params are None
         // some goto not required params like Back

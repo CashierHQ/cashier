@@ -92,7 +92,7 @@ impl fmt::Display for LinkStateMachineGoto {
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct UpdateLinkInput {
     pub id: String,
-    pub action: String, // goto
+    pub action: LinkStateMachineGoto, // goto
     pub params: Option<LinkDetailUpdateInput>,
 }
 

@@ -10,8 +10,7 @@ use cashier_backend_types::dto::action::{
     UpdateActionInput,
 };
 use cashier_backend_types::dto::link::{
-    CreateLinkInput, LinkDetailUpdateInput, LinkGetUserStateInput, LinkGetUserStateOutput,
-    LinkUpdateUserStateInput, UserStateMachineGoto,
+    CreateLinkInput, LinkDetailUpdateInput, LinkGetUserStateInput, LinkGetUserStateOutput, LinkStateMachineGoto, LinkUpdateUserStateInput, UserStateMachineGoto
 };
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::action::v1::Action;
@@ -36,7 +35,7 @@ pub trait LinkStateMachine {
     async fn handle_link_state_transition(
         &mut self,
         link_id: &str,
-        goto: &str,
+        goto: LinkStateMachineGoto,
         params: Option<LinkDetailUpdateInput>,
     ) -> Result<Link, CanisterError>;
 
