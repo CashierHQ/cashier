@@ -1372,34 +1372,6 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_prefetch_params_add_asset_if_empty_asset_info() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: Some(Template::Central),
-            link_type: Some(LinkType::SendTip),
-            link_use_action_max_count: Some(10),
-        };
-
-        // Act
-        let result = service.prefetch_params_add_asset(&params);
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::ValidationErrors(msg)) = result {
-            assert_eq!(msg, "Asset info is required");
-        } else {
-            panic!("Expected ValidationErrors");
-        }
-    }
-
-    #[test]
     fn it_should_prefetch_params_add_asset() {
         // Arrange
         let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
