@@ -8,9 +8,7 @@ use cashier_backend_types::{
         IcTransaction, Icrc1Transfer, Icrc2Approve, Protocol, Transaction, TransactionState,
     }},
 };
-use icrc_ledger_types::icrc1::account::Account;
 use log::{error, warn};
-use std::str::FromStr;
 
 use crate::{
     repositories::Repositories,
@@ -28,10 +26,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionValidator<E>
         icrc1_transfer_info: &Icrc1Transfer,
     ) -> Result<bool, CanisterError> {
         let target = icrc1_transfer_info.to.clone();
-
-        let investigate_me = 0;
-        let target_account = Account::from_str(&target.address)
-            .map_err(|e| CanisterError::ParseAccountError(e.to_string()))?;
+        let target_account = target.get_account();
 
         let asset = match icrc1_transfer_info.asset {
             Asset::IC { address } => address,
@@ -52,13 +47,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionValidator<E>
     ) -> Result<bool, CanisterError> {
         let from_wallet_account = icrc2_transfer_from_info
             .from
-            .get_account()
-            .map_err(|e| CanisterError::ParseAccountError(e.to_string()))?;
+            .get_account();
 
         let spender_account = icrc2_transfer_from_info
             .spender
-            .get_account()
-            .map_err(|e| CanisterError::ParseAccountError(format!("Error parsing spender: {e}")))?;
+            .get_account();
 
         let allowance_amount = icrc2_transfer_from_info.amount.clone();
 

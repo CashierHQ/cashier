@@ -20,7 +20,7 @@ use crate::utils::runtime::IcEnvironment;
 
 use cashier_backend_types::repository::{
     action::v1::ActionType,
-    common::{Asset, Chain, Wallet},
+    common::{Asset, Wallet},
     intent::v2::{Intent, IntentState, IntentTask, IntentType},
     link::v1::{Link, LinkType},
 };
@@ -83,22 +83,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                     let amount = (asset_info.amount_per_link_use_action + fee_amount)
                         * link.link_use_action_max_count;
 
-                    let from_wallet = Wallet {
-                        address: Account {
-                            owner: user_wallet,
-                            subaccount: None,
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
-                    let to_wallet = Wallet {
-                        address: Account {
+                    let from_wallet = Wallet::new(user_wallet);
+                    let to_wallet = Account {
                             owner: self.ic_env.id(),
                             subaccount: Some(to_subaccount(&link.id)?),
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
+                        }.into();
 
                     (amount, None, None, asset_info.asset, from_wallet, to_wallet, None)
                 }
@@ -119,30 +108,16 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
 
                     let asset = Asset::IC { address: ICP_CANISTER_PRINCIPAL };
 
-                    let from_wallet = Wallet {
-                        address: Account {
-                            owner: user_wallet,
-                            subaccount: None,
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
-                    let to_wallet = Wallet {
-                        address: Account {
+                    let from_wallet = Wallet::new(user_wallet);
+                    let to_wallet = Account {
                             owner: FEE_TREASURY_PRINCIPAL,
                             subaccount: None,
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
-                    let spender_wallet = Wallet {
-                        address: Account {
+                        }.into();
+
+                    let spender_wallet = Account {
                             owner: self.ic_env.id(),
                             subaccount: None,
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
+                        }.into()  ;
 
                     (
                         amount,
@@ -167,18 +142,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                     let amount = asset_info.amount_per_link_use_action;
 
                     let asset = asset_info.asset;
-                    let from_wallet = Wallet {
-                        address: Account {
+                    let from_wallet = Account {
                             owner: self.ic_env.id(),
                             subaccount: Some(to_subaccount(&link.id)?),
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
-                    let to_wallet = Wallet {
-                        address: user_wallet.to_string(),
-                        chain: Chain::IC,
-                    };
+                        }.into();
+                    let to_wallet = Wallet::new(user_wallet);
 
                     (amount, None, None, asset, from_wallet, to_wallet, None)
                 }
@@ -195,22 +163,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                     let amount = asset_info.amount_per_link_use_action;
 
                     let asset = asset_info.asset;
-                    let from_wallet = Wallet {
-                        address: Account {
-                            owner: user_wallet,
-                            subaccount: None,
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
-                    let to_wallet = Wallet {
-                        address: Account {
+                    let from_wallet = Wallet::new(user_wallet);
+                    let to_wallet = Account {
                             owner: self.ic_env.id(),
                             subaccount: Some(to_subaccount(&link.id)?),
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
+                        }.into();
 
                     (amount, None, None, asset, from_wallet, to_wallet, None)
                 }
@@ -259,18 +216,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
 
                     let amount = link_balance - fee_amount;
                     let asset = asset_info.asset;
-                    let from_wallet = Wallet {
-                        address: Account {
+                    let from_wallet = Account {
                             owner: self.ic_env.id(),
                             subaccount: Some(to_subaccount(&link.id)?),
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
-                    let to_wallet = Wallet {
-                        address: user_wallet.to_string(),
-                        chain: Chain::IC,
-                    };
+                        }.into();
+                    let to_wallet = Wallet::new(user_wallet);
 
                     let amount_64 = convert_nat_to_u64(&amount)?;
 
