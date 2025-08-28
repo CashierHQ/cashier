@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::Nat;
+use candid::{CandidType, Nat};
 use cashier_macros::storable;
 use derive_more::Display;
 use icrc_ledger_types::{
@@ -38,14 +38,6 @@ impl Transaction {
             Protocol::IC(IcTransaction::Icrc2TransferFrom(icrc2_transfer_from)) => {
                 icrc2_transfer_from.asset.clone()
             }
-        }
-    }
-
-    pub fn get_tx_type(&self) -> String {
-        match &self.protocol {
-            Protocol::IC(IcTransaction::Icrc1Transfer(_)) => "Icrc1Transfer".to_string(),
-            Protocol::IC(IcTransaction::Icrc2Approve(_)) => "Icrc2Approve".to_string(),
-            Protocol::IC(IcTransaction::Icrc2TransferFrom(_)) => "Icrc2TransferFrom".to_string(),
         }
     }
 
@@ -90,7 +82,7 @@ impl Transaction {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
 pub enum Protocol {
     IC(IcTransaction),
 }
@@ -104,7 +96,7 @@ impl Protocol {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
 pub enum IcTransaction {
     Icrc1Transfer(Icrc1Transfer),
     Icrc2Approve(Icrc2Approve),
@@ -135,7 +127,7 @@ impl IcTransaction {
 
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
 pub struct Icrc1Transfer {
     pub from: Wallet,
     pub to: Wallet,
@@ -171,7 +163,7 @@ impl TryFrom<Icrc1Transfer> for TransferArg {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
 pub struct Icrc2Approve {
     pub from: Wallet,
     pub spender: Wallet,
@@ -180,7 +172,7 @@ pub struct Icrc2Approve {
     pub memo: Option<Memo>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
 pub struct Icrc2TransferFrom {
     pub from: Wallet,
     pub to: Wallet,
@@ -222,20 +214,20 @@ impl TryFrom<Icrc2TransferFrom> for TransferFromArgs {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Display)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, CandidType, Eq, Display)]
 pub enum FromCallType {
     Canister,
     Wallet,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Display)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, CandidType, Eq, Display)]
 pub enum TransactionProtocol {
     Irrc1Transfer,
     Icrc2Approve,
     Icrc2TransferFrom,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Display)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, CandidType, Eq, Display)]
 pub enum TransactionState {
     Created,
     Processing,
