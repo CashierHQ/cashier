@@ -102,7 +102,7 @@ async fn it_should_withdraw_link_airdrop_successfully() {
         withdraw_action
             .intents
             .iter()
-            .all(|intent| { intent.state == IntentState::Created.to_string() }),
+            .all(|intent| { intent.state == IntentState::Created}),
     );
 
     // Act
@@ -161,7 +161,7 @@ async fn it_should_withdraw_link_airdrop_icrc_token_successfully() {
         withdraw_action
             .intents
             .iter()
-            .all(|intent| { intent.state == IntentState::Created.to_string() }),
+            .all(|intent| { intent.state == IntentState::Created }),
     );
 
     // Act

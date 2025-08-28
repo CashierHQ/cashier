@@ -99,7 +99,7 @@ async fn it_should_withdraw_link_tip_icp_token_successfully() {
         withdraw_action
             .intents
             .iter()
-            .all(|intent| { intent.state == IntentState::Created.to_string() }),
+            .all(|intent| { intent.state == IntentState::Created}),
     );
 
     // Act
@@ -162,7 +162,7 @@ async fn it_should_withdraw_link_tip_icrc_token_successfully() {
         withdraw_action
             .intents
             .iter()
-            .all(|intent| { intent.state == IntentState::Created.to_string() }),
+            .all(|intent| { intent.state == IntentState::Created }),
     );
 
     // Act
