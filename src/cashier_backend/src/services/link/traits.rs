@@ -67,7 +67,7 @@ pub trait LinkUserStateMachine {
     fn handle_user_link_state_machine(
         &mut self,
         link_id: &str,
-        action_type: &str,
+        action_type: ActionType,
         user_id: Principal,
         goto: &UserStateMachineGoto,
     ) -> Result<LinkAction, CanisterError>;

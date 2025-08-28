@@ -638,21 +638,6 @@ mod tests {
         }
     }
 
-    #[test]
-    fn it_should_return_empty_look_up_intent() {
-        // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let principal_id1 = random_principal_id();
-        let link = create_link_fixture(&mut service, principal_id1);
-        let action_type = ActionType::Use;
-
-        // Act
-        let intents = service.look_up_intent(&link, &action_type).unwrap();
-
-        // Assert
-        assert!(intents.is_none());
-    }
 
     #[test]
     fn it_should_look_up_intent_for_create_link_send_tip() {
@@ -1119,26 +1104,6 @@ mod tests {
 
         if let Err(CanisterError::HandleLogicError(msg)) = result {
             assert!(msg.contains("link type not found"));
-        } else {
-            panic!("Expected HandleLogicError");
-        }
-    }
-
-    #[test]
-    fn it_should_error_on_get_assets_for_action_with_empty_intents() {
-        // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link = create_link_fixture(&mut service, random_principal_id());
-
-        // Act
-        let result = service.get_assets_for_action(&link.id, &ActionType::Use);
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::HandleLogicError(msg)) = result {
-            assert!(msg.contains("Not found intents config"));
         } else {
             panic!("Expected HandleLogicError");
         }

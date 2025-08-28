@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use candid::Principal;
 use uuid::Uuid;
 
@@ -36,10 +34,6 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         input: &CreateActionInput,
         caller: Principal,
     ) -> Result<ActionDto, CanisterError> {
-        // input validate
-
-        let action_type = ActionType::from_str(&input.action_type)
-            .map_err(|_| CanisterError::ValidationErrors("Invalid action type ".to_string()))?;
 
         // Create lock for action creation
         let request_lock_key = self
@@ -48,7 +42,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
         // Execute main logic and capture result
         let result = async {
-            let action = self.get_action_of_link(&input.link_id, &input.action_type, caller);
+            let action = self.get_action_of_link(&input.link_id, input.action_type.clone(), caller);
 
             if action.is_some() {
                 return Err(CanisterError::ValidationErrors(
@@ -56,18 +50,16 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
                 ));
             }
 
-            self.link_validate_user_create_action(&input.link_id, &action_type, caller)?;
-
             // Validate user can create action
-            self.link_validate_user_create_action(&input.link_id, &action_type, caller)?;
+            self.link_validate_user_create_action(&input.link_id, &input.action_type, caller)?;
 
             // Create temp action with default state
-            let default_link_user_state = match action_type {
+            let default_link_user_state = match input.action_type {
                 ActionType::Use => Some(LinkUserState::ChooseWallet),
                 _ => None,
             };
 
-            let assets = self.get_assets_for_action(&input.link_id, &action_type)?;
+            let assets = self.get_assets_for_action(&input.link_id, &input.action_type)?;
 
             let fee_map = self
                 .icrc_batch_service
@@ -80,7 +72,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
             // fill in default_link_user_state info
             let mut temp_action = TemporaryAction {
                 id: Uuid::new_v4().to_string(),
-                r#type: action_type.clone(),
+                r#type: input.action_type.clone(),
                 state: ActionState::Created,
                 creator: caller,
                 link_id: input.link_id.clone(),
@@ -112,9 +104,6 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         user_id: Principal,
     ) -> Result<ActionDto, CanisterError> {
 
-        let _ = ActionType::from_str(&input.action_type)
-            .map_err(|_| CanisterError::ValidationErrors("Invalid action type ".to_string()))?;
-
         // Create lock for action processing
         let request_lock_key = self
             .request_lock_service
@@ -128,7 +117,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         // Execute main logic and capture result
         let result = async {
 
-            let action = self.get_action_of_link(&input.link_id, &input.action_type, user_id);
+            let action = self.get_action_of_link(&input.link_id, input.action_type.clone(), user_id);
 
             let action_ref = action.as_ref().ok_or_else(|| {
                 CanisterError::ValidationErrors("Action is not existed".to_string())
@@ -219,11 +208,8 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         // check wallet address
         let wallet_principal = input.wallet_address;
 
-        let action_type = ActionType::from_str(&input.action_type)
-            .map_err(|_| CanisterError::ValidationErrors("Invalid action type".to_string()))?;
-
         // check action type is claim
-        if action_type != ActionType::Use {
+        if input.action_type != ActionType::Use {
             return Err(CanisterError::ValidationErrors(
                 "Invalid action type, only Claim or Use action type is allowed".to_string(),
             ));
@@ -242,7 +228,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
         // Execute main logic and capture result
         let result = async {
-            let action = self.get_action_of_link(&input.link_id, &input.action_type, user_id);
+            let action = self.get_action_of_link(&input.link_id, input.action_type.clone(), user_id);
 
             if action.is_some() {
                 return Err(CanisterError::ValidationErrors(
@@ -250,9 +236,9 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
                 ));
             }
 
-            self.link_validate_user_create_action(&input.link_id, &action_type, user_id)?;
+            self.link_validate_user_create_action(&input.link_id, &input.action_type, user_id)?;
 
-            let action = self.get_action_of_link(&input.link_id, &input.action_type, user_id);
+            let action = self.get_action_of_link(&input.link_id, input.action_type.clone(), user_id);
 
             if action.is_some() {
                 return Err(CanisterError::ValidationErrors(
@@ -260,13 +246,13 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
                 ));
             }
 
-            self.link_validate_user_create_action(&input.link_id, &action_type, user_id)?;
+            self.link_validate_user_create_action(&input.link_id, &input.action_type, user_id)?;
 
             // Validate user can create action
-            self.link_validate_user_create_action(&input.link_id, &action_type, user_id)?;
+            self.link_validate_user_create_action(&input.link_id, &input.action_type, user_id)?;
 
             // Create temp action with default state
-            let default_link_user_state = match action_type {
+            let default_link_user_state = match input.action_type {
                 ActionType::Use => Some(LinkUserState::ChooseWallet),
                 _ => None,
             };
@@ -277,7 +263,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
             // fill in default_link_user_state info
             let mut temp_action = TemporaryAction {
                 id: Uuid::new_v4().to_string(),
-                r#type: action_type.clone(),
+                r#type: input.action_type.clone(),
                 state: ActionState::Created,
                 creator: user_id.clone(),
                 link_id: input.link_id.clone(),
@@ -321,12 +307,8 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         input: &ProcessActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
 
-
-        let action_type = ActionType::from_str(&input.action_type)
-            .map_err(|_| CanisterError::ValidationErrors("Invalid action type ".to_string()))?;
-
         // check action type is claim
-        if action_type != ActionType::Use {
+        if input.action_type != ActionType::Use {
             return Err(CanisterError::ValidationErrors(
                 "Invalid action type, only Claim or Use action type is allowed".to_string(),
             ));
@@ -334,7 +316,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
         let user_id = input.wallet_address;
 
-        let action = self.get_action_of_link(&input.link_id, &input.action_type, user_id);
+        let action = self.get_action_of_link(&input.link_id, input.action_type.clone(), user_id);
 
         let action = action
             .ok_or_else(|| CanisterError::ValidationErrors("Action does not exist".to_string()))?;

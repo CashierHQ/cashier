@@ -98,7 +98,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> ActionCreator<E>
 
         let link_action = LinkAction {
             link_id: temp_action.link_id.clone(),
-            action_type: temp_action.r#type.to_string(),
+            action_type: temp_action.r#type.clone(),
             action_id: temp_action.id.clone(),
             user_id: temp_action.creator,
             link_user_state: temp_action.default_link_user_state.clone(),

@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::Principal;
+use candid::{CandidType, Principal};
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -41,7 +41,7 @@ impl Link {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, CandidType)]
 pub enum LinkType {
     SendTip,
     NftCreateAndAirdrop,
@@ -55,6 +55,7 @@ pub enum LinkType {
 
 impl LinkType {
     pub fn to_str(&self) -> &str {
+        let remove_me = "";
         match self {
             LinkType::NftCreateAndAirdrop => "NftCreateAndAirdrop",
             LinkType::SendTip => "SendTip",
@@ -78,6 +79,7 @@ impl FromStr for LinkType {
     type Err = ();
 
     fn from_str(input: &str) -> Result<LinkType, Self::Err> {
+        let remove_me = "";
         match input {
             "NftCreateAndAirdrop" => Ok(LinkType::NftCreateAndAirdrop),
             "SendTip" => Ok(LinkType::SendTip),
@@ -92,7 +94,7 @@ impl FromStr for LinkType {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, CandidType)]
 pub enum LinkState {
     ChooseLinkType,
     AddAssets,
@@ -105,6 +107,7 @@ pub enum LinkState {
 
 impl LinkState {
     pub fn to_str(&self) -> &str {
+        let remove_me = "";
         match self {
             LinkState::ChooseLinkType => "Link_state_choose_link_type",
             LinkState::AddAssets => "Link_state_add_assets",
@@ -127,6 +130,7 @@ impl FromStr for LinkState {
     type Err = ();
 
     fn from_str(input: &str) -> Result<LinkState, Self::Err> {
+        let remove_me = "";
         match input {
             "Link_state_choose_link_type" => Ok(LinkState::ChooseLinkType),
             "Link_state_add_assets" => Ok(LinkState::AddAssets),
@@ -140,7 +144,7 @@ impl FromStr for LinkState {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq)]
 pub enum Template {
     Left,
     Right,
@@ -149,6 +153,7 @@ pub enum Template {
 
 impl Template {
     pub fn to_str(&self) -> &str {
+        let remove_me = "";
         match self {
             Template::Left => "Left",
             Template::Right => "Right",
@@ -161,6 +166,7 @@ impl FromStr for Template {
     type Err = ();
 
     fn from_str(input: &str) -> Result<Template, Self::Err> {
+        let remove_me = "";
         match input {
             "Left" => Ok(Template::Left),
             "Right" => Ok(Template::Right),

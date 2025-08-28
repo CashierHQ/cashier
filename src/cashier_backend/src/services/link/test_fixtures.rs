@@ -13,7 +13,7 @@ use cashier_backend_types::repository::{
     link_action::v1::LinkAction,
     user_link::v1::UserLink,
 };
-use std::{collections::HashSet, str::FromStr};
+use std::collections::HashSet;
 
 /// Creates a link fixture for testing purposes.
 /// This function initializes a link with a random ID, sets its state, and associates it with a creator ID.
@@ -55,14 +55,14 @@ pub fn create_link_fixture(
 pub fn create_link_action_fixture(
     service: &mut LinkService<MockIcEnvironment, TestRepositories>,
     link_id: &str,
-    action_type: &str,
+    action_type: ActionType,
     user_id: Principal,
 ) -> LinkAction {
     let action_id = random_id_string();
     let link_action = LinkAction {
         link_id: link_id.to_string(),
         action_id,
-        action_type: action_type.to_string(),
+        action_type: action_type.clone(),
         user_id,
         link_user_state: None,
     };
@@ -70,7 +70,7 @@ pub fn create_link_action_fixture(
 
     let action = Action {
         id: link_action.action_id.clone(),
-        r#type: ActionType::from_str(action_type).unwrap(),
+        r#type: action_type,
         state: ActionState::Created,
         creator: user_id,
         link_id: link_id.to_string(),

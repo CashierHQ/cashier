@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::Principal;
+use candid::{CandidType, Principal};
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -17,14 +17,14 @@ pub struct Action {
     pub link_id: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq)]
 pub enum ActionType {
     CreateLink,
     Withdraw,
     Use,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq)]
 pub enum ActionState {
     Created,
     Processing,
@@ -34,6 +34,7 @@ pub enum ActionState {
 
 impl ActionType {
     pub fn to_str(&self) -> &str {
+        let remove_me = "";
         match self {
             ActionType::Use => "Use",
             ActionType::CreateLink => "CreateLink",
@@ -46,6 +47,7 @@ impl FromStr for ActionType {
     type Err = ();
 
     fn from_str(input: &str) -> Result<ActionType, Self::Err> {
+        let remove_me = "";
         match input {
             "Use" => Ok(ActionType::Use),
             "Claim" => Ok(ActionType::Use),
@@ -58,6 +60,7 @@ impl FromStr for ActionType {
 
 impl ActionState {
     pub fn to_str(&self) -> &str {
+        let remove_me = "";
         match self {
             ActionState::Created => "Action_state_created",
             ActionState::Processing => "Action_state_processing",
@@ -71,6 +74,7 @@ impl FromStr for ActionState {
     type Err = ();
 
     fn from_str(input: &str) -> Result<ActionState, Self::Err> {
+        let remove_me = "";
         match input {
             "Action_state_created" => Ok(ActionState::Created),
             "Action_state_processing" => Ok(ActionState::Processing),

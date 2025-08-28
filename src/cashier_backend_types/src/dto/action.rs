@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     repository::{
-        action::v1::Action,
+        action::v1::{Action, ActionState, ActionType},
         common::{Asset, Wallet},
         intent::v2::{Intent, IntentType},
         transaction::v2::{IcTransaction, Protocol, Transaction},
@@ -21,7 +21,7 @@ use crate::{
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateActionInput {
     pub link_id: String,
-    pub action_type: String,
+    pub action_type: ActionType,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -34,14 +34,14 @@ pub struct TriggerTransactionInput {
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct ProcessActionInput {
     pub link_id: String,
-    pub action_type: String,
+    pub action_type: ActionType,
     pub action_id: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct ProcessActionAnonymousInput {
     pub link_id: String,
-    pub action_type: String,
+    pub action_type: ActionType,
     pub action_id: String,
     pub wallet_address: Principal,
 }
@@ -49,7 +49,7 @@ pub struct ProcessActionAnonymousInput {
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct CreateActionAnonymousInput {
     pub link_id: String,
-    pub action_type: String,
+    pub action_type: ActionType,
     pub wallet_address: Principal,
 }
 
@@ -78,8 +78,8 @@ pub struct CreateActionResponse {
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct ActionDto {
     pub id: String,
-    pub r#type: String,
-    pub state: String,
+    pub r#type: ActionType,
+    pub state: ActionState,
     pub creator: Principal,
     pub intents: Vec<IntentDto>,
     pub icrc_112_requests: Option<Icrc112Requests>,
@@ -137,8 +137,8 @@ impl ActionDto {
         let intents_dto = intents.into_iter().map(IntentDto::from).collect();
         Self {
             id: action.id,
-            r#type: action.r#type.to_string(),
-            state: action.state.to_string(),
+            r#type: action.r#type,
+            state: action.state,
             creator: action.creator,
             intents: intents_dto,
             icrc_112_requests: None,
@@ -168,8 +168,8 @@ impl ActionDto {
 
         Self {
             id: action.id,
-            r#type: action.r#type.to_string(),
-            state: action.state.to_string(),
+            r#type: action.r#type,
+            state: action.state,
             creator: action.creator,
             intents: intents_dto,
             icrc_112_requests: None,
@@ -203,8 +203,8 @@ impl ActionDto {
 
         Self {
             id: action.id,
-            r#type: action.r#type.to_string(),
-            state: action.state.to_string(),
+            r#type: action.r#type,
+            state: action.state,
             creator: action.creator,
             intents: intents_dto,
             icrc_112_requests,

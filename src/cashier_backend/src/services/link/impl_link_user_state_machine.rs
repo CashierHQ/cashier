@@ -25,14 +25,14 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
     fn handle_user_link_state_machine(
         &mut self,
         link_id: &str,
-        action_type: &str,
+        action_type: ActionType,
         user_id: Principal,
         goto: &UserStateMachineGoto,
     ) -> Result<LinkAction, CanisterError> {
         // check inputs that can be changed this state
         let action_list = self
             .link_action_repository
-            .get_by_prefix(link_id, action_type, user_id);
+            .get_by_prefix(link_id, action_type.clone(), user_id);
 
         let Some(mut link_action) = action_list.first().cloned() else {
             return Err(CanisterError::NotFound("Link action not found".to_string()));
@@ -98,26 +98,14 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
         caller: Principal,
         input: &LinkGetUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
-        // only support claim action type
-        match ActionType::from_str(&input.action_type) {
-            Ok(action_type) => {
-                if action_type != ActionType::Use {
-                    return Err(CanisterError::ValidationErrors(
+
+        if input.action_type != ActionType::Use {
+            return Err(CanisterError::ValidationErrors(
+                "
+                        Invalid action type, only Claim or Use action type is allowed
                         "
-                                Invalid action type, only Claim or Use action type is allowed
-                                "
-                        .to_string(),
-                    ));
-                }
-            }
-            Err(_) => {
-                return Err(CanisterError::ValidationErrors(
-                    "
-                            Invalid action type
-                            "
-                    .to_string(),
-                ));
-            }
+                .to_string(),
+            ));
         }
 
         let temp_user_id = if caller != Principal::anonymous() {
@@ -135,7 +123,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
         // link_action type = input action type
         // link_action user_id = search_user_id
         let link_action =
-            self.get_link_action_user(&input.link_id, &input.action_type, temp_user_id)?;
+            self.get_link_action_user(&input.link_id, input.action_type.clone(), temp_user_id)?;
 
         if link_action.is_none() {
             return Ok(None);
@@ -172,25 +160,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
         input: &LinkUpdateUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
         // validate action type
-        match ActionType::from_str(&input.action_type) {
-            Ok(action_type) => {
-                if action_type != ActionType::Use {
-                    return Err(CanisterError::ValidationErrors(
-                        "
-                        Invalid action type, only Claim or Use  action type is allowed
-                        "
-                        .to_string(),
-                    ));
-                }
-            }
-            Err(_) => {
-                return Err(CanisterError::ValidationErrors(
-                    "
-                    Invalid action type
-                    "
-                    .to_string(),
-                ));
-            }
+        if input.action_type != ActionType::Use {
+            return Err(CanisterError::ValidationErrors(
+                "Invalid action type, only Claim or Use  action type is allowed"
+                .to_string(),
+            ));
         }
 
         let temp_user_id = if caller != Principal::anonymous() {
@@ -208,7 +182,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
 
         let link_action = self.handle_user_link_state_machine(
             &input.link_id,
-            &input.action_type,
+            input.action_type.clone(),
             temp_user_id,
             &goto,
         )?;
@@ -256,7 +230,7 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
-        let action_type = "Use";
+        let action_type = ActionType::Use;
 
         // Act
         let result = service.handle_user_link_state_machine(
@@ -283,10 +257,10 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
-        let action_type = "Use";
+        let action_type = ActionType::Use;
 
         let _link_action =
-            create_link_action_fixture(&mut service, &link.id, action_type, creator_id);
+            create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
 
         // Act
         let result = service.handle_user_link_state_machine(
@@ -313,10 +287,10 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
-        let action_type = "Use";
+        let action_type = ActionType::Use;
 
         let link_action =
-            create_link_action_fixture(&mut service, &link.id, action_type, creator_id);
+            create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -352,10 +326,10 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
-        let action_type = "Use";
+        let action_type = ActionType::Use;
 
         let link_action =
-            create_link_action_fixture(&mut service, &link.id, action_type, creator_id);
+            create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -390,10 +364,10 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
-        let action_type = "Use";
+        let action_type = ActionType::Use;
 
         let link_action =
-            create_link_action_fixture(&mut service, &link.id, action_type, creator_id);
+            create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -436,10 +410,10 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
-        let action_type = "Use";
+        let action_type = ActionType::Use;
 
         let link_action =
-            create_link_action_fixture(&mut service, &link.id, action_type, creator_id);
+            create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -487,7 +461,7 @@ mod tests {
             creator,
             &LinkGetUserStateInput {
                 link_id: link.id,
-                action_type: "CreateLink".to_string(),
+                action_type: ActionType::CreateLink,
                 anonymous_wallet_address: None,
             },
         );
@@ -515,7 +489,7 @@ mod tests {
             creator,
             &LinkGetUserStateInput {
                 link_id: link.id,
-                action_type: "InvalidActionType".to_string(),
+                action_type: ActionType::CreateLink,
                 anonymous_wallet_address: None,
             },
         );
@@ -544,7 +518,7 @@ mod tests {
             creator2,
             &LinkGetUserStateInput {
                 link_id: link.id,
-                action_type: "Use".to_string(),
+                action_type: ActionType::Use,
                 anonymous_wallet_address: None,
             },
         );
@@ -572,7 +546,7 @@ mod tests {
             creator,
             &LinkGetUserStateInput {
                 link_id: link.id,
-                action_type: "Use".to_string(),
+                action_type: ActionType::Use,
                 anonymous_wallet_address: None,
             },
         );
@@ -590,7 +564,7 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator = random_principal_id();
         let link = create_link_fixture(&mut service, creator);
-        let link_action = create_link_action_fixture(&mut service, &link.id, "Use", creator);
+        let link_action = create_link_action_fixture(&mut service, &link.id, ActionType::Use, creator);
 
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
@@ -606,7 +580,7 @@ mod tests {
             creator,
             &LinkGetUserStateInput {
                 link_id: link.id,
-                action_type: "Use".to_string(),
+                action_type: ActionType::Use,
                 anonymous_wallet_address: None,
             },
         );
@@ -628,7 +602,7 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
-        let link_action = create_link_action_fixture(&mut service, &link.id, "Use", creator_id);
+        let link_action = create_link_action_fixture(&mut service, &link.id, ActionType::Use, creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -643,7 +617,7 @@ mod tests {
             creator_id,
             &LinkGetUserStateInput {
                 link_id: link.id,
-                action_type: "Use".to_string(),
+                action_type: ActionType::Use,
                 anonymous_wallet_address: None,
             },
         );
@@ -673,7 +647,7 @@ mod tests {
             creator_id,
             &LinkUpdateUserStateInput {
                 link_id: link.id,
-                action_type: "CreateLink".to_string(),
+                action_type: ActionType::CreateLink,
                 goto: UserStateMachineGoto::Continue.to_string(),
                 anonymous_wallet_address: None,
             },
@@ -702,7 +676,7 @@ mod tests {
             creator_id,
             &LinkUpdateUserStateInput {
                 link_id: link.id,
-                action_type: "InvalidActionType".to_string(),
+                action_type: ActionType::CreateLink,
                 goto: UserStateMachineGoto::Continue.to_string(),
                 anonymous_wallet_address: None,
             },
@@ -732,7 +706,7 @@ mod tests {
             creator2,
             &LinkUpdateUserStateInput {
                 link_id: link.id,
-                action_type: "Use".to_string(),
+                action_type: ActionType::Use,
                 goto: UserStateMachineGoto::Continue.to_string(),
                 anonymous_wallet_address: None,
             },
@@ -761,7 +735,7 @@ mod tests {
             creator_id,
             &LinkUpdateUserStateInput {
                 link_id: link.id,
-                action_type: "Use".to_string(),
+                action_type: ActionType::Use,
                 goto: "InvalidGoto".to_string(),
                 anonymous_wallet_address: None,
             },
@@ -784,7 +758,7 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
-        let link_action = create_link_action_fixture(&mut service, &link.id, "Use", creator_id);
+        let link_action = create_link_action_fixture(&mut service, &link.id, ActionType::Use, creator_id);
 
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
@@ -809,7 +783,7 @@ mod tests {
             creator_id,
             &LinkUpdateUserStateInput {
                 link_id: link.id,
-                action_type: "Use".to_string(),
+                action_type: ActionType::Use,
                 goto: UserStateMachineGoto::Continue.to_string(),
                 anonymous_wallet_address: None,
             },

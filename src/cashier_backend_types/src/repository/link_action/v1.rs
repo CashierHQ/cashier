@@ -6,12 +6,14 @@ use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+use crate::repository::action::v1::ActionType;
+
 #[derive(Debug, Clone)]
 #[storable]
 pub struct LinkAction {
     pub link_id: String,
     pub action_id: String,
-    pub action_type: String,
+    pub action_type: ActionType,
     pub user_id: Principal,
     pub link_user_state: Option<LinkUserState>,
 }

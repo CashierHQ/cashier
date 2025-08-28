@@ -5,6 +5,8 @@ use candid::Principal;
 use cashier_macros::storable;
 use std::fmt;
 
+use crate::repository::action::v1::ActionType;
+
 pub type LinkKey = String;
 
 pub type ActionKey = String;
@@ -40,7 +42,7 @@ impl UserActionKey {
 #[derive(Debug, Clone)]
 pub struct LinkActionKey {
     pub link_id: String,
-    pub action_type: String,
+    pub action_type: ActionType,
     pub action_id: String,
     pub user_id: Principal,
 }
