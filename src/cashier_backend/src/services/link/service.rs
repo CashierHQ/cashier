@@ -13,7 +13,7 @@ use cashier_backend_types::{
     service::link::{PaginateInput, PaginateResult},
 };
 use log::error;
-use std::{rc::Rc, str::FromStr};
+use std::rc::Rc;
 
 use crate::{repositories::Repositories, services::link::traits::LinkValidation};
 use crate::{
@@ -90,12 +90,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
         };
 
         // Extract action_type from options
-        let action_type = match options {
-            Some(options) => ActionType::from_str(&options.action_type)
-                .map_err(|_| "Invalid action type".to_string())
-                .map(Some)?,
-            None => None,
-        };
+        let action_type = options.map(|opt| opt.action_type);
 
         // Handle different action types based on permissions
         let action_type = match action_type {
@@ -121,7 +116,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
         // Get action data (only if user_id exists)
         let action = match (action_type, caller) {
             (Some(action_type), user_id) => {
-                self.get_link_action(id, action_type.to_str(), user_id)
+                self.get_link_action(id, action_type, user_id)
             }
             _ => None,
         };
@@ -132,7 +127,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
     pub fn get_action_of_link(
         &self,
         link_id: &str,
-        action_type: &str,
+        action_type: ActionType,
         user_id: Principal,
     ) -> Option<Action> {
         let link_actions = self
@@ -147,7 +142,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
     pub fn get_link_action_user(
         &self,
         link_id: &str,
-        action_type: &str,
+        action_type: ActionType,
         user_id: Principal,
     ) -> Result<Option<LinkAction>, CanisterError> {
         let link_action = self
@@ -163,7 +158,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
     pub fn get_link_action(
         &self,
         link_id: &str,
-        action_type: &str,
+        action_type: ActionType,
         user_id: Principal,
     ) -> Option<Action> {
         let link_actions = self
@@ -373,7 +368,7 @@ mod tests {
         let result = service.get_link(
             &created_link.id,
             Some(GetLinkOptions {
-                action_type: "CreateLink".to_string(),
+                action_type: ActionType::CreateLink,
             }),
             principal_id2,
         );
@@ -398,7 +393,7 @@ mod tests {
         let _link_action = create_link_action_fixture(
             &mut service,
             &created_link.id,
-            "CreateLink",
+            ActionType::CreateLink,
             creator,
         );
 
@@ -407,7 +402,7 @@ mod tests {
             .get_link(
                 &created_link.id,
                 Some(GetLinkOptions {
-                    action_type: "CreateLink".to_string(),
+                    action_type: ActionType::CreateLink,
                 }),
                 creator,
             )
@@ -436,7 +431,7 @@ mod tests {
         let result = service.get_link(
             &created_link.id,
             Some(GetLinkOptions {
-                action_type: "Withdraw".to_string(),
+                action_type: ActionType::Withdraw,
             }),
             principal_id2,
         );
@@ -463,7 +458,7 @@ mod tests {
         let result = service.get_link(
             &created_link.id,
             Some(GetLinkOptions {
-                action_type: "CreateLink".to_string(),
+                action_type: ActionType::CreateLink,
             }),
             Principal::anonymous(),
         );
@@ -489,7 +484,7 @@ mod tests {
         let result = service.get_link(
             "nonexistent_link",
             Some(GetLinkOptions {
-                action_type: "Use".to_string(),
+                action_type: ActionType::Use,
             }),
             principal_id1,
         );
@@ -512,7 +507,7 @@ mod tests {
             .get_link(
                 &created_link.id,
                 Some(GetLinkOptions {
-                    action_type: "Use".to_string(),
+                    action_type: ActionType::Use,
                 }),
                 principal_id1,
             )
@@ -533,7 +528,7 @@ mod tests {
 let principal_id1 = random_principal_id();
 
         // Act
-        let action = service.get_action_of_link("nonexistent_link", "Use", principal_id1);
+        let action = service.get_action_of_link("nonexistent_link", ActionType::Use, principal_id1);
 
         // Assert
         assert!(action.is_none());
@@ -547,10 +542,10 @@ let principal_id1 = random_principal_id();
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
         let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, "Use", creator);
+            create_link_action_fixture(&mut service, &created_link.id, ActionType::Use, creator);
 
         // Act
-        let action = service.get_action_of_link(&created_link.id, "Use", creator);
+        let action = service.get_action_of_link(&created_link.id, ActionType::Use, creator);
 
         // Assert
         assert!(action.is_some());
@@ -566,7 +561,7 @@ let principal_id1 = random_principal_id();
 let creator = random_principal_id();
 
         // Act
-        let result = service.get_link_action_user("nonexistent_link", "Use", creator);
+        let result = service.get_link_action_user("nonexistent_link", ActionType::Use, creator);
 
         // Assert
         assert!(result.is_ok());
@@ -581,10 +576,10 @@ let creator = random_principal_id();
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
         let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, "Use", creator);
+            create_link_action_fixture(&mut service, &created_link.id, ActionType::Use, creator);
 
         // Act
-        let result = service.get_link_action_user(&created_link.id, "Use", creator);
+        let result = service.get_link_action_user(&created_link.id, ActionType::Use, creator);
 
         // Assert
         assert!(result.is_ok());
@@ -601,7 +596,7 @@ let creator = random_principal_id();
 let creator = random_principal_id();
 
         // Act
-        let action = service.get_link_action("nonexistent_link", "Use", creator);
+        let action = service.get_link_action("nonexistent_link", ActionType::Use, creator);
 
         // Assert
         assert!(action.is_none());
@@ -615,10 +610,10 @@ let creator = random_principal_id();
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
         let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, "Use", creator);
+            create_link_action_fixture(&mut service, &created_link.id, ActionType::Use, creator);
 
         // Act
-        let action = service.get_link_action(&created_link.id, "Use", creator);
+        let action = service.get_link_action(&created_link.id, ActionType::Use, creator);
 
         // Assert
         assert!(action.is_some());
@@ -635,7 +630,7 @@ let creator = random_principal_id();
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
         let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, "Use", creator);
+            create_link_action_fixture(&mut service, &created_link.id, ActionType::Use, creator);
 
         let updated_action = Action {
             id: link_action.action_id.clone(),
@@ -683,7 +678,7 @@ let creator = random_principal_id();
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
         let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, "Use", creator);
+            create_link_action_fixture(&mut service, &created_link.id, ActionType::Use, creator);
 
         let updated_action = Action {
             id: link_action.action_id.clone(),
@@ -710,7 +705,7 @@ let creator = random_principal_id();
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
         let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, "Use", creator);
+            create_link_action_fixture(&mut service, &created_link.id, ActionType::Use, creator);
 
         let updated_action = Action {
             id: link_action.action_id.clone(),

@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Principal;
-use cashier_backend_types::repository::{keys::LinkActionKey, link_action::v1::LinkAction};
+use cashier_backend_types::repository::{action::v1::ActionType, keys::LinkActionKey, link_action::v1::LinkAction};
 use ic_mple_log::service::Storage;
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
@@ -47,13 +47,13 @@ impl<S: Storage<LinkActionRepositoryStorage>> LinkActionRepository<S> {
     pub fn get_by_prefix(
         &self,
         link_id: &str,
-        action_type: &str,
+        action_type: ActionType,
         user_id: Principal,
     ) -> Vec<LinkAction> {
         self.storage.with_borrow(|store| {
             let key = LinkActionKey {
                 link_id: link_id.to_string(),
-                action_type: action_type.to_string(),
+                action_type,
                 user_id,
                 action_id: "".to_string(),
             };
@@ -89,7 +89,7 @@ mod tests {
 
         let link_action = LinkAction {
             link_id: link_id.clone(),
-            action_type: "type1".to_string(),
+            action_type: ActionType::CreateLink,
             action_id: "action1".to_string(),
             user_id: user1,
             link_user_state: None,
@@ -99,7 +99,7 @@ mod tests {
         repo.create(link_action);
 
         // Assert
-        let actions = repo.get_by_prefix(&link_id, "type1", user1);
+        let actions = repo.get_by_prefix(&link_id, ActionType::CreateLink, user1);
         assert_eq!(actions.len(), 1);
         assert!(actions.first().unwrap().link_user_state.is_none());
     }
@@ -113,7 +113,7 @@ mod tests {
 
         let link_action = LinkAction {
             link_id: link_id.clone(),
-            action_type: "type1".to_string(),
+            action_type: ActionType::Use,
             action_id: "action1".to_string(),
             user_id: user1,
             link_user_state: None,
@@ -122,7 +122,7 @@ mod tests {
 
         let updated_action = LinkAction {
             link_id: link_id.clone(),
-            action_type: "type1".to_string(),
+            action_type: ActionType::Use,
             action_id: "action1".to_string(),
             user_id: user1,
             link_user_state: Some(LinkUserState::ChooseWallet),
@@ -132,7 +132,7 @@ mod tests {
         repo.update(updated_action);
 
         // Assert
-        let actions = repo.get_by_prefix(&link_id, "type1", user1);
+        let actions = repo.get_by_prefix(&link_id, ActionType::Use, user1);
         assert_eq!(actions.len(), 1);
         assert_eq!(
             actions.first().unwrap().link_user_state,
@@ -151,7 +151,7 @@ mod tests {
 
         let link_action1 = LinkAction {
             link_id: link_id1.clone(),
-            action_type: "type1".to_string(),
+            action_type: ActionType::Use,
             action_id: "action1".to_string(),
             user_id: user1,
             link_user_state: None,
@@ -159,7 +159,7 @@ mod tests {
 
         let link_action2 = LinkAction {
             link_id: link_id2.clone(),
-            action_type: "type2".to_string(),
+            action_type: ActionType::Withdraw,
             action_id: "action2".to_string(),
             user_id: user2,
             link_user_state: Some(LinkUserState::CompletedLink),
@@ -169,23 +169,23 @@ mod tests {
         repo.create(link_action2);
 
         // Act
-        let actions = repo.get_by_prefix(&link_id1, "type1", user1);
+        let actions = repo.get_by_prefix(&link_id1, ActionType::Use, user1);
 
         // Assert
         assert_eq!(actions.len(), 1);
         assert_eq!(actions.first().unwrap().link_id, link_id1);
-        assert_eq!(actions.first().unwrap().action_type, "type1");
+        assert_eq!(actions.first().unwrap().action_type, ActionType::Use);
         assert_eq!(actions.first().unwrap().action_id, "action1");
         assert_eq!(actions.first().unwrap().user_id, user1);
         assert!(actions.first().unwrap().link_user_state.is_none());
 
         // Act
-        let actions = repo.get_by_prefix(&link_id2, "type2", user2);
+        let actions = repo.get_by_prefix(&link_id2, ActionType::Withdraw, user2);
 
         // Assert
         assert_eq!(actions.len(), 1);
         assert_eq!(actions.first().unwrap().link_id, link_id2);
-        assert_eq!(actions.first().unwrap().action_type, "type2");
+        assert_eq!(actions.first().unwrap().action_type, ActionType::Withdraw);
         assert_eq!(actions.first().unwrap().action_id, "action2");
         assert_eq!(actions.first().unwrap().user_id, user2);
         assert_eq!(

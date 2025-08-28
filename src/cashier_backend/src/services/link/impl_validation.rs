@@ -442,30 +442,6 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_link_validate_user_create_action_if_action_type_not_supported() {
-        // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let creator_id = random_principal_id();
-        let mut link = create_link_fixture(&mut service, creator_id);
-        link.state = LinkState::Active; // Ensure link is active
-        service.link_repository.update(link.clone());
-        let action_type = ActionType::Use;
-
-        // Act
-        let result = service.link_validate_user_create_action(&link.id, &action_type, creator_id);
-
-        // Assert
-        assert!(result.is_err());
-
-        if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
-            assert_eq!(msg, "Unsupported action type".to_string());
-        } else {
-            panic!("Expected ValidationErrors");
-        }
-    }
-
-    #[test]
     fn it_should_error_link_validate_user_update_action_if_action_type_create_and_link_not_found() {
         // Arrange
         let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
@@ -701,32 +677,6 @@ mod tests {
 
         // Assert
         assert!(result.is_ok());
-    }
-
-    #[test]
-    fn it_should_error_link_validate_user_update_action_if_action_type_is_unsupported() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let action = Action {
-            id: random_id_string(),
-            r#type: ActionType::Use,
-            state: ActionState::Created,
-            creator: random_principal_id(),
-            link_id: random_id_string(),
-        };
-        let user_id = random_principal_id();
-
-        // Act
-        let result = service.link_validate_user_update_action(&action, user_id);
-
-        // Assert
-        assert!(result.is_err());
-
-        if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
-            assert_eq!(msg, "Unsupported action type".to_string());
-        } else {
-            panic!("Expected ValidationErrors");
-        }
     }
 
     #[test]

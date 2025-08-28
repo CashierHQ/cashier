@@ -144,7 +144,7 @@ pub fn create_action_data_fixture(
     let link_action = LinkAction {
         link_id: link_id.clone(),
         action_id: action_id.clone(),
-        action_type: ActionType::CreateLink.to_string(),
+        action_type: ActionType::CreateLink,
         user_id: user_id.clone(),
         link_user_state: None,
     };

@@ -9,10 +9,11 @@ use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 
 use crate::dto::action::ActionDto;
+use crate::repository::action::v1::ActionType;
 use crate::repository::asset_info::AssetInfo;
 use crate::repository::common::Asset;
 use crate::repository::intent::v2::{Intent, IntentType};
-use crate::repository::link::v1::{Link, LinkType, Template};
+use crate::repository::link::v1::{Link, LinkState, LinkType, Template};
 
 // Structs and Enums
 
@@ -21,8 +22,8 @@ pub struct CreateLinkInput {
     pub title: String,
     pub link_use_action_max_count: u64,
     pub asset_info: Vec<LinkDetailUpdateAssetInfoInput>,
-    pub template: String,
-    pub link_type: String,
+    pub template: Template,
+    pub link_type: LinkType,
     pub nft_image: Option<String>,
     pub link_image_url: Option<String>,
     pub description: Option<String>,
@@ -57,8 +58,8 @@ pub struct LinkDetailUpdateInput {
     pub link_image_url: Option<String>,
     pub nft_image: Option<String>,
     pub asset_info: Option<Vec<LinkDetailUpdateAssetInfoInput>>,
-    pub template: Option<String>,
-    pub link_type: Option<String>,
+    pub template: Option<Template>,
+    pub link_type: Option<LinkType>,
     pub link_use_action_max_count: Option<u64>,
 }
 
@@ -69,8 +70,8 @@ pub struct LinkDetailUpdate {
     pub nft_image: Option<String>,
     pub link_image_url: Option<String>,
     pub asset_info: Option<Vec<AssetInfoDto>>,
-    pub template: Option<String>,
-    pub link_type: Option<String>,
+    pub template: Option<Template>,
+    pub link_type: Option<LinkType>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq)]
@@ -97,18 +98,18 @@ pub struct UpdateLinkInput {
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct GetLinkOptions {
-    pub action_type: String,
+    pub action_type: ActionType,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct LinkDto {
     pub id: String,
-    pub state: String,
+    pub state: LinkState,
     pub title: Option<String>,
     pub description: Option<String>,
-    pub link_type: Option<String>,
+    pub link_type: Option<LinkType>,
     pub asset_info: Option<Vec<AssetInfoDto>>,
-    pub template: Option<String>,
+    pub template: Option<Template>,
     pub creator: Principal,
     pub create_at: u64,
     pub metadata: Option<HashMap<String, String>>,
@@ -179,16 +180,14 @@ impl From<Link> for LinkDto {
             None => None,
         };
 
-        let link_type_str = link.link_type.map(|link_type| link_type.to_string());
-
         LinkDto {
             id: link.id,
-            state: link.state.to_string(),
+            state: link.state,
             title: link.title,
             description: link.description,
-            link_type: link_type_str,
+            link_type: link.link_type,
             asset_info,
-            template: link.template.map(|t| t.to_string()),
+            template: link.template,
             creator: link.creator,
             create_at: link.create_at,
             metadata: link.metadata,
@@ -212,20 +211,13 @@ impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfoDto {
 
 impl LinkDetailUpdateInput {
     pub fn validate(&self) -> Result<(), String> {
-        if let Some(template) = &self.template {
-            Template::from_str(template).map_err(|_| "Invalid template: ".to_string())?;
-        }
-
-        if let Some(link_type) = &self.link_type {
-            LinkType::from_str(link_type).map_err(|_| "Invalid link type ".to_string())?;
-        }
-
         Ok(())
     }
 }
 
 impl LinkStateMachineGoto {
     pub fn from_string(intent: &str) -> Result<LinkStateMachineGoto, String> {
+        let remove_me = "";
         match intent {
             "Continue" => Ok(LinkStateMachineGoto::Continue),
             "Back" => Ok(LinkStateMachineGoto::Back),
@@ -237,7 +229,7 @@ impl LinkStateMachineGoto {
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct LinkGetUserStateInput {
     pub link_id: String,
-    pub action_type: String,
+    pub action_type: ActionType,
     pub anonymous_wallet_address: Option<Principal>,
     // pub create_if_not_exist: bool,
 }
@@ -251,7 +243,7 @@ pub struct LinkGetUserStateOutput {
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct LinkUpdateUserStateInput {
     pub link_id: String,
-    pub action_type: String,
+    pub action_type: ActionType,
     pub anonymous_wallet_address: Option<Principal>,
     pub goto: String,
 }
@@ -274,6 +266,7 @@ impl fmt::Display for UserStateMachineGoto {
 impl FromStr for UserStateMachineGoto {
     type Err = String;
     fn from_str(intent: &str) -> Result<Self, Self::Err> {
+        let remove_me = "";
         match intent {
             "Continue" => Ok(UserStateMachineGoto::Continue),
             "Back" => Ok(UserStateMachineGoto::Back),
