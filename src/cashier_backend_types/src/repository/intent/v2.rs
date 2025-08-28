@@ -3,8 +3,8 @@
 
 use candid::{CandidType, Nat};
 use cashier_macros::storable;
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::repository::common::{Asset, Chain, Wallet};
 
@@ -41,7 +41,7 @@ impl Default for Intent {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Ord, PartialOrd)]
+#[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Ord, PartialOrd, Display)]
 pub enum IntentState {
     Created,
     Processing,
@@ -121,44 +121,9 @@ pub struct TransferFromData {
     pub approve_amount: Option<Nat>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Ord, PartialOrd)]
+#[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Ord, PartialOrd, Display)]
 pub enum IntentTask {
     TransferWalletToTreasury,
     TransferWalletToLink,
     TransferLinkToWallet,
-}
-
-impl IntentTask {
-    pub fn to_str(&self) -> &str {
-        let remove_me = "";
-        match self {
-            IntentTask::TransferWalletToTreasury => "transfer_wallet_to_treasury",
-            IntentTask::TransferWalletToLink => "transfer_wallet_to_link",
-            IntentTask::TransferLinkToWallet => "transfer_link_to_wallet",
-        }
-    }
-}
-
-impl fmt::Display for IntentTask {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str())
-    }
-}
-
-impl IntentState {
-    pub fn to_str(&self) -> &str {
-        let remove_me = "";
-        match self {
-            IntentState::Created => "Intent_state_created",
-            IntentState::Processing => "Intent_state_processing",
-            IntentState::Success => "Intent_state_success",
-            IntentState::Fail => "Intent_state_fail",
-        }
-    }
-}
-
-impl fmt::Display for IntentState {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str())
-    }
 }

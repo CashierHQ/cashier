@@ -3,6 +3,7 @@
 
 use candid::Nat;
 use cashier_macros::storable;
+use derive_more::Display;
 use icrc_ledger_types::{
     icrc1::{
         account::{Account, ICRC1TextReprError},
@@ -11,7 +12,6 @@ use icrc_ledger_types::{
     icrc2::transfer_from::TransferFromArgs,
 };
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::repository::common::{Asset, Chain, Wallet};
 
@@ -148,14 +148,6 @@ impl IcTransaction {
         }
     }
 
-    pub fn to_str(&self) -> &str {
-        let remove_me = "";
-        match self {
-            IcTransaction::Icrc1Transfer(_) => "Icrc1Transfer",
-            IcTransaction::Icrc2Approve(_) => "Icrc2Approve",
-            IcTransaction::Icrc2TransferFrom(_) => "Icrc2TransferFrom",
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -250,75 +242,23 @@ impl TryFrom<Icrc2TransferFrom> for TransferFromArgs {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Display)]
 pub enum FromCallType {
     Canister,
     Wallet,
 }
 
-impl FromCallType {
-    pub fn to_str(&self) -> &str {
-        let remove_me = "";
-        match self {
-            FromCallType::Canister => "Canister",
-            FromCallType::Wallet => "Wallet",
-        }
-    }
-}
-
-impl fmt::Display for FromCallType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str())
-    }
-}
-
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Display)]
 pub enum TransactionProtocol {
     Irrc1Transfer,
     Icrc2Approve,
     Icrc2TransferFrom,
 }
 
-impl TransactionProtocol {
-    pub fn to_str(&self) -> &str {
-        let remove_me = "";
-        match self {
-            TransactionProtocol::Irrc1Transfer => "Irrc1Transfer",
-            TransactionProtocol::Icrc2Approve => "Icrc2Approve",
-            TransactionProtocol::Icrc2TransferFrom => "Icrc2TransferFrom",
-        }
-    }
-}
-
-impl fmt::Display for TransactionProtocol {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str())
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Display)]
 pub enum TransactionState {
     Created,
     Processing,
     Success,
     Fail,
-}
-
-impl TransactionState {
-    pub fn to_str(&self) -> &str {
-        let remove_me = "";
-        match self {
-            TransactionState::Created => "Transaction_state_created",
-            TransactionState::Processing => "Transaction_state_processing",
-            TransactionState::Success => "Transaction_state_success",
-            TransactionState::Fail => "Transaction_state_fail",
-        }
-    }
-}
-
-impl fmt::Display for TransactionState {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str())
-    }
 }
