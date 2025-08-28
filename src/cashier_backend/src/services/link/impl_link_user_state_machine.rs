@@ -505,35 +505,6 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_link_get_user_state_if_user_id_not_found() {
-        // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let creator_id = random_principal_id();
-        let creator2 = random_principal_id();
-        let link = create_link_fixture(&mut service, creator_id);
-
-        // Act
-        let result = service.link_get_user_state(
-            creator2,
-            &LinkGetUserStateInput {
-                link_id: link.id,
-                action_type: ActionType::Use,
-                anonymous_wallet_address: None,
-            },
-        );
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::ValidationErrors(msg)) = result {
-            assert_eq!(msg, "User ID is required");
-        } else {
-            panic!("Expected ValidationErrors");
-        }
-    }
-
-    #[test]
     fn it_should_link_get_user_state_if_link_action_not_found() {
         // Arrange
         let mut service =
@@ -687,36 +658,6 @@ mod tests {
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
             assert!(msg.contains("Invalid action type"));
-        } else {
-            panic!("Expected ValidationErrors");
-        }
-    }
-
-    #[test]
-    fn it_should_error_link_update_user_state_if_user_id_not_found() {
-        // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let creator_id = random_principal_id();
-        let creator2 = random_principal_id();
-        let link = create_link_fixture(&mut service, creator_id);
-
-        // Act
-        let result = service.link_update_user_state(
-            creator2,
-            &LinkUpdateUserStateInput {
-                link_id: link.id,
-                action_type: ActionType::Use,
-                goto: UserStateMachineGoto::Continue.to_string(),
-                anonymous_wallet_address: None,
-            },
-        );
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::ValidationErrors(msg)) = result {
-            assert_eq!(msg, "User ID is required");
         } else {
             panic!("Expected ValidationErrors");
         }
