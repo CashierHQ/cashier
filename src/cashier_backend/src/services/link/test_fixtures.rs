@@ -30,11 +30,11 @@ pub fn create_link_fixture(
         title: Some("Test Link".to_string()),
         description: Some("This is a test link".to_string()),
         link_type: Some(LinkType::SendTip),
-        asset_info: None,
+        asset_info: vec![],
         template: None,
         creator: creator_id,
         create_at: 1622547800,
-        metadata: None,
+        metadata: Default::default(),
         link_use_action_counter: 0,
         link_use_action_max_count: 10,
     };

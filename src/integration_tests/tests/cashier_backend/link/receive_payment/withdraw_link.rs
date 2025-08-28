@@ -119,7 +119,7 @@ async fn it_should_withdraw_link_payment_icp_token_successfully() {
     // Assert
     assert_eq!(withdraw_result.id, withdraw_action.id);
 
-    let link_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let link_amount = link.asset_info[0].amount_per_link_use_action;
     let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
 
     let caller_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
@@ -184,7 +184,7 @@ async fn it_should_withdraw_link_payment_icrc_token_successfully() {
     // Assert
     assert_eq!(withdraw_result.id, withdraw_action.id);
 
-    let link_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let link_amount = link.asset_info[0].amount_per_link_use_action;
     let ckusdc_ledger_fee = ckusdc_ledger_client.fee().await.unwrap();
 
     let ckusdc_balance_after = ckusdc_ledger_client

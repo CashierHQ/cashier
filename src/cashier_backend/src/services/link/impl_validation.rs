@@ -230,8 +230,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
     async fn check_link_asset_left(&self, link: &Link) -> Result<bool, CanisterError> {
         let asset_info = link
             .asset_info
-            .clone()
-            .ok_or_else(|| CanisterError::HandleLogicError("Asset info not found".to_string()))?;
+            .clone();
 
         if asset_info.is_empty() {
             return Err(CanisterError::HandleLogicError(

@@ -114,7 +114,7 @@ async fn it_should_withdraw_link_tip_icp_token_successfully() {
     // Assert
     assert_eq!(withdraw_result.id, withdraw_action.id);
 
-    let tip_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let tip_amount = link.asset_info[0].amount_per_link_use_action;
     let caller_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
     assert_eq!(
         caller_balance_after,
@@ -177,7 +177,7 @@ async fn it_should_withdraw_link_tip_icrc_token_successfully() {
     // Assert
     assert_eq!(withdraw_result.id, withdraw_action.id);
 
-    let tip_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let tip_amount = link.asset_info[0].amount_per_link_use_action;
     let caller_balance_after = icrc_ledger_client
         .balance_of(&caller_account)
         .await

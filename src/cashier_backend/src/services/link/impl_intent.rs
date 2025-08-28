@@ -429,12 +429,8 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
 
             // SendTokenBasket link type handlers
             (LinkType::SendTokenBasket, ActionType::CreateLink) => {
-                let asset_info = link.asset_info.clone().ok_or_else(|| {
-                    CanisterError::HandleLogicError("Asset info not found".to_string())
-                })?;
-
                 // Create intents for each asset in asset_info
-                for asset in asset_info.iter() {
+                for asset in link.asset_info.iter() {
                     if !asset
                         .label
                         .starts_with(INTENT_LABEL_SEND_TOKEN_BASKET_ASSET)
@@ -460,12 +456,8 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
             }
             (LinkType::SendTokenBasket, ActionType::Use)
             | (LinkType::SendTokenBasket, ActionType::Withdraw) => {
-                let asset_info = link.asset_info.clone().ok_or_else(|| {
-                    CanisterError::HandleLogicError("Asset info not found".to_string())
-                })?;
-
                 // Create intents for each asset in asset_info
-                for asset in asset_info.iter() {
+                for asset in link.asset_info.iter() {
                     // Create intent for transfer asset from link to wallet
                     let label = match asset.asset {
                         Asset::IC { address } => format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, address)
@@ -567,11 +559,11 @@ mod tests {
                 title: None,
                 description: None,
                 link_type: None,
-                asset_info: None,
+                asset_info: vec![],
                 template: None,
                 creator: random_principal_id(),
                 create_at: 0,
-                metadata: None,
+                metadata: Default::default(),
                 link_use_action_counter: 0,
                 link_use_action_max_count: 10,
             },
@@ -758,11 +750,11 @@ mod tests {
 
         let updated_link = Link {
             link_type: Some(LinkType::SendTokenBasket),
-            asset_info: Some(vec![AssetInfo {
+            asset_info: vec![AssetInfo {
                 asset: Asset::IC { address: random_principal_id()},
                 amount_per_link_use_action: 100,
                 label: "invalid_label".to_string(), // Invalid label
-            }]),
+            }],
             ..link
         };
         service.link_repository.update(updated_link.clone());
@@ -791,14 +783,14 @@ mod tests {
 
         let updated_link = Link {
             link_type: Some(LinkType::SendTokenBasket),
-            asset_info: Some(vec![AssetInfo {
+            asset_info: vec![AssetInfo {
                 asset: Asset::IC { address: random_principal_id()},
                 amount_per_link_use_action: 100,
                 label: format!(
                     "{}_{}",
                     INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"
                 ),
-            }]),
+            }],
             ..link
         };
         service.link_repository.update(updated_link.clone());
@@ -854,14 +846,14 @@ mod tests {
 
         let updated_link = Link {
             link_type: Some(LinkType::SendTokenBasket),
-            asset_info: Some(vec![AssetInfo {
+            asset_info: vec![AssetInfo {
                 asset: Asset::IC { address: random_principal_id()},
                 amount_per_link_use_action: 100,
                 label: format!(
                     "{}_{}",
                     INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"
                 ),
-            }]),
+            }],
             ..link
         };
         service.link_repository.update(updated_link.clone());
@@ -916,14 +908,14 @@ mod tests {
 
         let updated_link = Link {
             link_type: Some(LinkType::SendTokenBasket),
-            asset_info: Some(vec![AssetInfo {
+            asset_info: vec![AssetInfo {
                 asset: Asset::IC { address: random_principal_id()},
                 amount_per_link_use_action: 100,
                 label: format!(
                     "{}_{}",
                     INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"
                 ),
-            }]),
+            }],
             ..link
         };
         service.link_repository.update(updated_link.clone());
@@ -1089,11 +1081,11 @@ mod tests {
 
         let asset_address = random_principal_id();
         let updated_link = Link {
-            asset_info: Some(vec![AssetInfo {
+            asset_info: vec![AssetInfo {
                 asset: Asset::IC { address: asset_address.clone()},
                 amount_per_link_use_action: 100,
                 label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
-            }]),
+            }],
             ..link
         };
         service.link_repository.update(updated_link.clone());
@@ -1120,11 +1112,11 @@ mod tests {
         let link = create_link_fixture(&mut service, random_principal_id());
         let asset_address = random_principal_id();
         let updated_link = Link {
-            asset_info: Some(vec![AssetInfo {
+            asset_info: vec![AssetInfo {
                 asset: Asset::IC { address: asset_address.clone()},
                 amount_per_link_use_action: 100,
                 label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
-            }]),
+            }],
             ..link
         };
         service.link_repository.update(updated_link.clone());
@@ -1173,11 +1165,11 @@ mod tests {
 
         let asset_address = random_principal_id();
         let updated_link = Link {
-            asset_info: Some(vec![AssetInfo {
+            asset_info: vec![AssetInfo {
                 asset: Asset::IC { address: asset_address.clone()},
                 amount_per_link_use_action: 100,
                 label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
-            }]),
+            }],
             ..link
         };
         service.link_repository.update(updated_link.clone());

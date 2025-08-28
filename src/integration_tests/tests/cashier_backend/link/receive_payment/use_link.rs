@@ -119,7 +119,7 @@ async fn it_should_use_link_payment_icp_token_successfully() {
             .all(|intent| intent.state == IntentState::Success)
     );
 
-    let payment_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let payment_amount = link.asset_info[0].amount_per_link_use_action;
     assert_ne!(payment_amount, 0);
 
     let icp_balance_after = icp_ledger_client.balance_of(&payer_account).await.unwrap();
@@ -229,7 +229,7 @@ async fn it_should_use_link_payment_icrc_token_successfully() {
             .all(|intent| intent.state == IntentState::Success)
     );
 
-    let payment_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let payment_amount = link.asset_info[0].amount_per_link_use_action;
     assert_ne!(payment_amount, 0);
 
     let ckusdc_balance_after = ckusdc_ledger_client

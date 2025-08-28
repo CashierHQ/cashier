@@ -132,8 +132,7 @@ async fn it_should_create_link_token_basket_successfully() {
     // Assert
     assert!(!link.id.is_empty());
     assert_eq!(link.link_type, Some(LinkType::SendTokenBasket));
-    assert!(link.asset_info.is_some());
-    assert_eq!(link.asset_info.as_ref().unwrap().len(), 3);
+    assert_eq!(link.asset_info.len(), 3);
 
     // Act
     let create_action = test_fixture

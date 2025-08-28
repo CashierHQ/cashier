@@ -115,16 +115,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
                     }
                 }
                 "asset_info" => {
-                    match (&link.asset_info, &params.asset_info) {
-                        (_, None) => {
-                            return false;
-                        }
-                        (Some(link_asset_info), Some(params_asset_info)) => {
                             // Compare IDs in both lists
                             let link_ids: Vec<_> =
-                                link_asset_info.iter().map(|asset| &asset.label).collect();
+                                link.asset_info.iter().map(|asset| &asset.label).collect();
                             let params_ids: Vec<_> =
-                                params_asset_info.iter().map(|asset| &asset.label).collect();
+                                params.asset_info.iter().map(|asset| &asset.label).collect();
 
                             // asset info changed
                             if link_ids.len() != params_ids.len()
@@ -134,8 +129,8 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
                             }
 
                             // Compare updated data
-                            for param_asset in params_asset_info {
-                                if let Some(link_asset) = link_asset_info
+                            for param_asset in &params.asset_info {
+                                if let Some(link_asset) = link.asset_info
                                     .iter()
                                     .find(|asset| asset.label == param_asset.label)
                                 {
@@ -147,9 +142,6 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
                                 }
                             }
                         }
-                        _ => {}
-                    }
-                }
                 _ => {}
             }
         }
@@ -173,11 +165,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
             title: None,
             description: None,
             link_type: Some(input.link_type),
-            asset_info: None,
+            asset_info: vec![],
             template: Some(Template::Central),
             creator: user_id.clone(),
             create_at: ts,
-            metadata: None,
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -199,7 +191,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
             description: None,
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             link_use_action_max_count: None,
         };
 
@@ -226,7 +218,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
             description: input.description.clone(),
             link_image_url: input.link_image_url.clone(),
             nft_image: input.nft_image.clone(),
-            asset_info: Some(input.asset_info.clone()),
+            asset_info: input.asset_info.clone(),
             link_use_action_max_count: Some(input.link_use_action_max_count),
         };
 
@@ -252,7 +244,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
             description: None,
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             link_use_action_max_count: None,
         };
 
@@ -289,7 +281,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
             description: None,
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -362,7 +354,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
                     ));
                 }
 
-                link.asset_info = Some(asset_info);
+                link.asset_info = asset_info;
                 link.link_use_action_max_count = link_use_action_max_count;
                 link.state = LinkState::Preview;
                 self.link_repository.update(link.clone());
@@ -371,7 +363,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
             // ===== Back Go to =====
             else if link_state_goto == LinkStateMachineGoto::Back {
                 link.state = LinkState::ChooseLinkType;
-                link.asset_info = Some(asset_info);
+                link.asset_info = asset_info;
                 link.link_use_action_max_count = link_use_action_max_count;
                 self.link_repository.update(link.clone());
                 Ok(link.clone())
@@ -525,8 +517,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
 
         let asset_info_input = params
             .asset_info
-            .clone()
-            .ok_or_else(|| CanisterError::ValidationErrors("Asset info is required".to_string()))?;
+            .clone();
 
         Ok((
             link_use_action_max_count,
@@ -601,11 +592,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: None,
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             creator: random_principal_id(),
             create_at: 0,
-            metadata: None,
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -615,7 +606,7 @@ mod tests {
             description: None,
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -641,11 +632,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: None,
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             creator: random_principal_id(),
             create_at: 0,
-            metadata: None,
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -655,7 +646,7 @@ mod tests {
             description: None,
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -681,11 +672,11 @@ mod tests {
             title: None,
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             creator: random_principal_id(),
             create_at: 0,
-            metadata: None,
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -695,7 +686,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -721,11 +712,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             creator: random_principal_id(),
             create_at: 0,
-            metadata: None,
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -735,7 +726,7 @@ mod tests {
             description: Some("New Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -761,11 +752,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -775,7 +766,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -804,11 +795,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(meta_data),
+            metadata: meta_data,
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -818,7 +809,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: Some("http://example.com/new_image.png".to_string()),
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -844,11 +835,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -858,7 +849,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -888,11 +879,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(meta_data),
+            metadata: meta_data,
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -902,7 +893,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: Some("http://example.com/new_nft.png".to_string()),
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -928,11 +919,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: Some(LinkType::SendTip),
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -942,7 +933,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: Some(LinkType::SendTip),
             link_use_action_max_count: None,
@@ -968,11 +959,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: Some(LinkType::SendTip),
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -982,7 +973,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: Some(LinkType::SendAirdrop),
             link_use_action_max_count: None,
@@ -1010,15 +1001,15 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: Some(vec![AssetInfo {
+            asset_info: vec![AssetInfo {
                 asset: Asset::IC { address: asset_address },
                 amount_per_link_use_action: 100,
                 label: "some_label".to_string(),
-            }]),
+            }],
             template: None,
             creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -1028,11 +1019,11 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: Some(vec![LinkDetailUpdateAssetInfoInput {
+            asset_info: vec![LinkDetailUpdateAssetInfoInput {
                                 asset: Asset::IC { address: asset_address },
                 amount_per_link_use_action: 101,
                 label: "some_label".to_string(),
-            }]),
+            }],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -1058,15 +1049,15 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: Some(vec![AssetInfo {
+            asset_info: vec![AssetInfo {
                                 asset: Asset::IC { address: random_principal_id() },
                 amount_per_link_use_action: 100,
                 label: "some_label".to_string(),
-            }]),
+            }],
             template: None,
             creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -1076,11 +1067,11 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: Some(vec![LinkDetailUpdateAssetInfoInput {
+            asset_info: vec![LinkDetailUpdateAssetInfoInput {
                            asset: Asset::IC { address: random_principal_id() },
                 amount_per_link_use_action: 100,
                 label: "some_label".to_string(),
-            }]),
+            }],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -1106,11 +1097,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 10,
         };
@@ -1120,7 +1111,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: Some(10),
@@ -1146,11 +1137,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 10,
         };
@@ -1160,7 +1151,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: Some(20),
@@ -1186,11 +1177,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: Some(Template::Central),
             creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -1200,7 +1191,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: Some(Template::Central),
             link_type: None,
             link_use_action_max_count: None,
@@ -1226,11 +1217,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: Some(Template::Central),
             creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -1240,7 +1231,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: Some(Template::Left),
             link_type: None,
             link_use_action_max_count: None,
@@ -1264,7 +1255,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -1292,7 +1283,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: Some(Template::Central),
             link_type: None,
             link_use_action_max_count: None,
@@ -1320,7 +1311,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: Some(Template::Central),
             link_type: Some(LinkType::SendTip),
             link_use_action_max_count: None,
@@ -1346,7 +1337,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: Some(Template::Central),
             link_type: Some(LinkType::SendTip),
             link_use_action_max_count: None,
@@ -1374,7 +1365,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: Some(Template::Central),
             link_type: Some(LinkType::SendTip),
             link_use_action_max_count: Some(10),
@@ -1404,7 +1395,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: Some(vec![
+            asset_info: vec![
                 LinkDetailUpdateAssetInfoInput {
                     asset: Asset::IC { address: address1.clone() },
                     amount_per_link_use_action: 100,
@@ -1415,7 +1406,7 @@ mod tests {
                     amount_per_link_use_action: 200,
                     label: "another_label".to_string(),
                 },
-            ]),
+            ],
             template: Some(Template::Central),
             link_type: Some(LinkType::SendTip),
             link_use_action_max_count: Some(10),
