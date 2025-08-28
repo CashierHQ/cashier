@@ -1,5 +1,3 @@
-use std::str::FromStr;
-
 use candid::Principal;
 use cashier_backend_types::{
     dto::link::{
@@ -92,21 +90,18 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
                     }
                 }
                 "link_type" => {
-                    let link_link_type_str = link.link_type.as_ref().map(LinkType::to_string);
-
                     if params.link_type.is_none() {
                         return false;
                     }
-                    if params.link_type != link_link_type_str {
+                    if params.link_type != link.link_type {
                         return true;
                     }
                 }
                 "template" => {
-                    let link_template_str = link.template.as_ref().map(Template::to_string);
                     if params.template.is_none() {
                         return false;
                     }
-                    if params.template != link_template_str {
+                    if params.template != link.template {
                         return true;
                     }
                 }
@@ -172,15 +167,12 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         let id = Uuid::new_v4();
         let link_id_str = id.to_string();
 
-        let link_type = LinkType::from_str(input.link_type.as_str())
-            .map_err(|_| "Invalid link type".to_string())?;
-
         let new_link = Link {
             id: link_id_str.clone(),
             state: LinkState::ChooseLinkType,
             title: None,
             description: None,
-            link_type: Some(link_type),
+            link_type: Some(input.link_type),
             asset_info: None,
             template: Some(Template::Central),
             creator: user_id.clone(),
@@ -513,24 +505,19 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         &self,
         params: &LinkDetailUpdateInput,
     ) -> Result<(Template, LinkType), CanisterError> {
-        let template_str = params
+        let template = params
             .template
             .clone()
             .ok_or_else(|| CanisterError::ValidationErrors("Template is required".to_string()))?;
 
-        let link_type_str = params
+        let link_type = params
             .link_type
             .clone()
             .ok_or_else(|| CanisterError::ValidationErrors("Link type is required".to_string()))?;
 
-        let template = Template::from_str(template_str.as_str())
-            .map_err(|_| CanisterError::ValidationErrors("Invalid template".to_string()))?;
-
-        let link_type = LinkType::from_str(link_type_str.as_str())
-            .map_err(|_| CanisterError::ValidationErrors("Invalid link type".to_string()))?;
-
         Ok((template, link_type))
     }
+
     fn prefetch_params_add_asset(
         &self,
         params: &LinkDetailUpdateInput,
@@ -556,7 +543,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
     fn prefetch_create_action(&self, link: &Link) -> Result<Option<Action>, CanisterError> {
         let link_creation_action: Vec<LinkAction> = self.link_action_repository.get_by_prefix(
             &link.id,
-            ActionType::CreateLink.to_str(),
+            ActionType::CreateLink,
             link.creator,
         );
 
@@ -572,7 +559,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
     fn prefetch_withdraw_action(&self, link: &Link) -> Result<Option<Action>, CanisterError> {
         let link_withdraw_action: Vec<LinkAction> = self.link_action_repository.get_by_prefix(
             &link.id,
-            &ActionType::Withdraw.to_string(),
+            ActionType::Withdraw,
             link.creator,
         );
 
@@ -960,7 +947,7 @@ mod tests {
             nft_image: None,
             asset_info: None,
             template: None,
-            link_type: Some(LinkType::SendTip.to_string()),
+            link_type: Some(LinkType::SendTip),
             link_use_action_max_count: None,
         };
 
@@ -1000,7 +987,7 @@ mod tests {
             nft_image: None,
             asset_info: None,
             template: None,
-            link_type: Some(LinkType::SendAirdrop.to_string()),
+            link_type: Some(LinkType::SendAirdrop),
             link_use_action_max_count: None,
         };
 
@@ -1215,7 +1202,7 @@ mod tests {
             link_image_url: None,
             nft_image: None,
             asset_info: None,
-            template: Some(Template::Central.to_string()),
+            template: Some(Template::Central),
             link_type: None,
             link_use_action_max_count: None,
         };
@@ -1255,7 +1242,7 @@ mod tests {
             link_image_url: None,
             nft_image: None,
             asset_info: None,
-            template: Some(Template::Left.to_string()),
+            template: Some(Template::Left),
             link_type: None,
             link_use_action_max_count: None,
         };
@@ -1307,7 +1294,7 @@ mod tests {
             link_image_url: None,
             nft_image: None,
             asset_info: None,
-            template: Some(Template::Central.to_string()),
+            template: Some(Template::Central),
             link_type: None,
             link_use_action_max_count: None,
         };
@@ -1326,62 +1313,6 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_prefetch_template_if_invalid_template_in_params() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: None,
-            template: Some("InvalidTemplate".to_string()),
-            link_type: Some(LinkType::SendTip.to_string()),
-            link_use_action_max_count: None,
-        };
-
-        // Act
-        let result = service.prefetch_template(&params);
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::ValidationErrors(msg)) = result {
-            assert_eq!(msg, "Invalid template");
-        } else {
-            panic!("Expected ValidationErrors");
-        }
-    }
-
-    #[test]
-    fn it_should_error_prefetch_template_if_invalid_link_type_in_params() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: None,
-            template: Some(Template::Central.to_string()),
-            link_type: Some("InvalidLinkType".to_string()),
-            link_use_action_max_count: None,
-        };
-
-        // Act
-        let result = service.prefetch_template(&params);
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::ValidationErrors(msg)) = result {
-            assert_eq!(msg, "Invalid link type");
-        } else {
-            panic!("Expected ValidationErrors");
-        }
-    }
-
-    #[test]
     fn it_should_prefetch_template() {
         // Arrange
         let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
@@ -1391,8 +1322,8 @@ mod tests {
             link_image_url: None,
             nft_image: None,
             asset_info: None,
-            template: Some(Template::Central.to_string()),
-            link_type: Some(LinkType::SendTip.to_string()),
+            template: Some(Template::Central),
+            link_type: Some(LinkType::SendTip),
             link_use_action_max_count: None,
         };
 
@@ -1403,8 +1334,8 @@ mod tests {
         assert!(result.is_ok());
 
         let (template, link_type) = result.unwrap();
-        assert_eq!(template.to_string(), Template::Central.to_string());
-        assert_eq!(link_type.to_string(), LinkType::SendTip.to_string());
+        assert_eq!(template, Template::Central);
+        assert_eq!(link_type, LinkType::SendTip);
     }
 
     #[test]
@@ -1417,8 +1348,8 @@ mod tests {
             link_image_url: None,
             nft_image: None,
             asset_info: None,
-            template: Some(Template::Central.to_string()),
-            link_type: Some(LinkType::SendTip.to_string()),
+            template: Some(Template::Central),
+            link_type: Some(LinkType::SendTip),
             link_use_action_max_count: None,
         };
 
@@ -1445,8 +1376,8 @@ mod tests {
             link_image_url: None,
             nft_image: None,
             asset_info: None,
-            template: Some(Template::Central.to_string()),
-            link_type: Some(LinkType::SendTip.to_string()),
+            template: Some(Template::Central),
+            link_type: Some(LinkType::SendTip),
             link_use_action_max_count: Some(10),
         };
 
@@ -1486,8 +1417,8 @@ mod tests {
                     label: "another_label".to_string(),
                 },
             ]),
-            template: Some(Template::Central.to_string()),
-            link_type: Some(LinkType::SendTip.to_string()),
+            template: Some(Template::Central),
+            link_type: Some(LinkType::SendTip),
             link_use_action_max_count: Some(10),
         };
 
@@ -1532,7 +1463,7 @@ mod tests {
         let _link_action = create_link_action_fixture(
             &mut service,
             &link.id,
-            ActionType::CreateLink.to_str(),
+            ActionType::CreateLink,
             creator_id,
         );
 
@@ -1578,7 +1509,7 @@ mod tests {
         let _link_action = create_link_action_fixture(
             &mut service,
             &link.id,
-            ActionType::Withdraw.to_str(),
+            ActionType::Withdraw,
             creator_id,
         );
 
