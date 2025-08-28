@@ -6,14 +6,14 @@ use cashier_macros::storable;
 use derive_more::Display;
 use icrc_ledger_types::{
     icrc1::{
-        account::{Account, ICRC1TextReprError},
+        account::Account,
         transfer::{Memo, TransferArg},
     },
     icrc2::transfer_from::TransferFromArgs,
 };
 use serde::{Deserialize, Serialize};
 
-use crate::repository::common::{Asset, Chain, Wallet};
+use crate::repository::common::{Asset, Wallet};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[storable]
@@ -49,7 +49,7 @@ impl Transaction {
         }
     }
 
-    pub fn try_get_from_account(&self) -> Result<Account, ICRC1TextReprError> {
+    pub fn get_from_account(&self) -> Account {
         match &self.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
                 icrc1_transfer.from.clone().get_account()
@@ -66,22 +66,13 @@ impl Transaction {
     pub fn set_from(&mut self, from_account: Account) {
         match &mut self.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
-                icrc1_transfer.from = Wallet {
-                    address: from_account.to_string(),
-                    chain: Chain::IC,
-                }
+                icrc1_transfer.from = from_account.into()
             }
             Protocol::IC(IcTransaction::Icrc2Approve(icrc2_approve)) => {
-                icrc2_approve.from = Wallet {
-                    address: from_account.to_string(),
-                    chain: Chain::IC,
-                }
+                icrc2_approve.from = from_account.into()
             }
             Protocol::IC(IcTransaction::Icrc2TransferFrom(icrc2_transfer_from)) => {
-                icrc2_transfer_from.from = Wallet {
-                    address: from_account.to_string(),
-                    chain: Chain::IC,
-                }
+                icrc2_transfer_from.from = from_account.into()
             }
         }
     }
@@ -89,16 +80,10 @@ impl Transaction {
     pub fn set_to(&mut self, to_account: Account) {
         match &mut self.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
-                icrc1_transfer.to = Wallet {
-                    address: to_account.to_string(),
-                    chain: Chain::IC,
-                }
+                icrc1_transfer.to = to_account.into()
             }
             Protocol::IC(IcTransaction::Icrc2TransferFrom(icrc2_transfer_from)) => {
-                icrc2_transfer_from.to = Wallet {
-                    address: to_account.to_string(),
-                    chain: Chain::IC,
-                }
+                icrc2_transfer_from.to = to_account.into()
             }
             _ => {}
         }
@@ -166,13 +151,11 @@ impl TryFrom<Icrc1Transfer> for TransferArg {
     fn try_from(value: Icrc1Transfer) -> Result<Self, Self::Error> {
         let from = value
             .from
-            .get_account()
-            .map_err(|e| format!("Failed to parse from account: {e}"))?;
+            .get_account();
 
         let to = value
             .to
-            .get_account()
-            .map_err(|e| format!("Failed to parse to account: {e}"))?;
+            .get_account();
 
         let amount = value.amount;
         let memo = value.memo;
@@ -214,18 +197,15 @@ impl TryFrom<Icrc2TransferFrom> for TransferFromArgs {
     fn try_from(value: Icrc2TransferFrom) -> Result<Self, Self::Error> {
         let spender_account = value
             .spender
-            .get_account()
-            .map_err(|e| format!("Failed to parse spender account: {e}"))?;
+            .get_account();
 
         let from = value
             .from
-            .get_account()
-            .map_err(|e| format!("Failed to parse from account: {e}"))?;
+            .get_account();
 
         let to = value
             .to
-            .get_account()
-            .map_err(|e| format!("Failed to parse to account: {e}"))?;
+            .get_account();
 
         let amount = value.amount;
         let memo = value.memo;

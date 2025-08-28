@@ -130,10 +130,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionUpdate
             }
 
             // Transaction is eligible, categorize it based on from_account
-            let from_account = match tx.try_get_from_account() {
-                Ok(account) => account,
-                Err(e) => return Err(CanisterError::InvalidDataError(e.to_string())),
-            };
+            let from_account = tx.get_from_account();
 
             if from_account == caller {
                 eligible_wallet_txs.push(tx.clone());
@@ -247,8 +244,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionUpdate
 
         for tx in txs {
             let from_account = tx
-                .try_get_from_account()
-                .map_err(|e| CanisterError::InvalidDataError(e.to_string()))?;
+                .get_from_account();
             // check from_account is caller or not
             if from_account == *caller {
                 tx_execute_from_user_wallet.push(tx.clone());
@@ -271,7 +267,7 @@ mod tests {
     };
     use candid::{Nat, Principal};
     use cashier_backend_types::repository::{
-        common::{Asset, Chain, Wallet},
+        common::{Asset, Wallet},
         transaction::v2::{FromCallType, IcTransaction, Icrc1Transfer, Protocol},
     };
     use std::rc::Rc;
@@ -430,10 +426,7 @@ mod tests {
             group: 0u16,
             from_call_type: FromCallType::Canister,
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
-                from: Wallet {
-                    address: from_principal_id.to_text(),
-                    chain: Chain::IC,
-                },
+                from: Wallet::new(from_principal_id),
                 to: Wallet::default(),
                 asset: Asset::IC { address: random_principal_id() },
                 amount: Nat::from(1000u64),
@@ -480,10 +473,7 @@ mod tests {
             group: 0u16,
             from_call_type: FromCallType::Canister,
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
-                from: Wallet {
-                    address: creator_id.to_text(),
-                    chain: Chain::IC,
-                },
+                from: Wallet::new(creator_id),
                 to: Wallet::default(),
                 asset: Asset::IC {
                     address: ICP_CANISTER_PRINCIPAL,

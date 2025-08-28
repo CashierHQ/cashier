@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use candid::{CandidType, Nat, Principal};
 
-use icrc_ledger_types::icrc1::transfer::Memo;
+use icrc_ledger_types::icrc1::{account::Subaccount, transfer::Memo};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -110,9 +110,11 @@ pub struct TransactionDto {
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq)]
-pub struct WalletDto {
-    pub address: String,
-    pub chain: Chain,
+pub enum WalletDto {
+    IC {
+        address: Principal,
+        subaccount: Option<Subaccount>,
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq)]
@@ -214,9 +216,8 @@ impl ActionDto {
 
 impl From<Wallet> for WalletDto {
     fn from(wallet: Wallet) -> Self {
-        Self {
-            address: wallet.address,
-            chain: wallet.chain,
+        match wallet {
+            Wallet::IC { address, subaccount } => WalletDto::IC { address, subaccount },
         }
     }
 }
