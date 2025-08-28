@@ -115,7 +115,7 @@ async fn it_should_withdraw_link_token_basket_successfully() {
         withdraw_action
             .intents
             .iter()
-            .all(|intent| { intent.state == IntentState::Created.to_string() }),
+            .all(|intent| { intent.state == IntentState::Created }),
     );
 
     // Act
@@ -135,7 +135,7 @@ async fn it_should_withdraw_link_token_basket_successfully() {
         withdraw_result
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Success.to_string())
+            .all(|intent| intent.state == IntentState::Success)
     );
 
     let icp_link_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;

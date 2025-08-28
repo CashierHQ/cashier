@@ -42,7 +42,7 @@ impl Default for Intent {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
+#[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Ord, PartialOrd)]
 pub enum IntentState {
     Created,
     Processing,
@@ -122,7 +122,7 @@ pub struct TransferFromData {
     pub approve_amount: Option<Nat>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
+#[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Ord, PartialOrd)]
 pub enum IntentTask {
     TransferWalletToTreasury,
     TransferWalletToLink,

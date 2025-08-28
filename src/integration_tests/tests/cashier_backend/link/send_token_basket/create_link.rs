@@ -194,7 +194,7 @@ async fn it_should_create_link_token_basket_successfully() {
         update_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Success.to_string())
+            .all(|intent| intent.state == IntentState::Success)
     );
 
     // Act

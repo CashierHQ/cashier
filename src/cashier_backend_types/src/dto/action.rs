@@ -11,8 +11,8 @@ use serde::{Deserialize, Serialize};
 use crate::{
     repository::{
         action::v1::{Action, ActionState, ActionType},
-        common::{Asset, Wallet},
-        intent::v2::{Intent, IntentType},
+        common::{Asset, Chain, Wallet},
+        intent::v2::{Intent, IntentState, IntentTask, IntentType},
         transaction::v2::{IcTransaction, Protocol, Transaction},
     },
     service::action::ActionData,
@@ -88,10 +88,10 @@ pub struct ActionDto {
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct IntentDto {
     pub id: String,
-    pub state: String,
+    pub state: IntentState,
     pub created_at: u64,
-    pub chain: String,
-    pub task: String,
+    pub chain: Chain,
+    pub task: IntentTask,
     pub r#type: String,
     pub type_metadata: HashMap<String, MetadataValue>,
     pub transactions: Vec<TransactionDto>,
@@ -231,6 +231,9 @@ impl From<Asset> for AssetDto {
 
 impl From<Intent> for IntentDto {
     fn from(intent: Intent) -> Self {
+
+        let investigate_type = 0;
+
         let (r#type, type_metadata) = match intent.r#type {
             IntentType::Transfer(metadata) => {
                 let mut type_metadata = HashMap::new();
@@ -280,10 +283,10 @@ impl From<Intent> for IntentDto {
 
         Self {
             id: intent.id,
-            state: intent.state.to_string(),
+            state: intent.state,
             created_at: intent.created_at,
-            task: intent.task.to_string(),
-            chain: intent.chain.to_string(),
+            task: intent.task,
+            chain: intent.chain,
             r#type,
             type_metadata,
             transactions: Vec::new(),

@@ -104,7 +104,7 @@ async fn it_should_create_link_tip_icp_token_successfully() {
         create_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Created.to_string())
+            .all(|intent| intent.state == IntentState::Created)
     );
 
     // Act
@@ -126,7 +126,7 @@ async fn it_should_create_link_tip_icp_token_successfully() {
         processing_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Processing.to_string())
+            .all(|intent| intent.state == IntentState::Processing)
     );
 
     // Arrange
@@ -146,7 +146,7 @@ async fn it_should_create_link_tip_icp_token_successfully() {
         update_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Success.to_string())
+            .all(|intent| intent.state == IntentState::Success)
     );
 
     // Act
@@ -247,7 +247,7 @@ async fn it_should_create_link_tip_icrc_token_successfully() {
         create_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Created.to_string())
+            .all(|intent| intent.state == IntentState::Created)
     );
 
     // Act
@@ -269,7 +269,7 @@ async fn it_should_create_link_tip_icrc_token_successfully() {
         processing_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Processing.to_string())
+            .all(|intent| intent.state == IntentState::Processing)
     );
 
     // Arrange
@@ -289,7 +289,7 @@ async fn it_should_create_link_tip_icrc_token_successfully() {
         update_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Success.to_string())
+            .all(|intent| intent.state == IntentState::Success)
     );
 
     // Act
