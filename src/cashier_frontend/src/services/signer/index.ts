@@ -9,7 +9,12 @@ import { v4 as v4uuid } from "uuid";
 import { Principal } from "@dfinity/principal";
 
 /**
- * 
+ * SignerService
+ *
+ * Lightweight interoperable adapter for delegated identity.
+ * Acts as an RPC forwarder.
+ * The signer logic (AgentChannel + AgentTransport) handles request dispatch.
+ * Provides execute_icrc112 to convert request models to RPC and send via transport.
  */
 class SignerService extends Signer<AgentTransport> {
     async execute_icrc112(sender: Principal, requests: Icrc112RequestModel[][]): Promise<BatchCallCanisterResponse> {

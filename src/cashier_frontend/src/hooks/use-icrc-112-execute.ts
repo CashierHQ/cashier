@@ -2,14 +2,16 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 import { useMutation } from "@tanstack/react-query";
-import { useIdentity } from "@nfid/identitykit/react";
+import { useIdentity, useSigner } from "@nfid/identitykit/react";
 import { Icrc112RequestModel } from "@/services/types/transaction.service.types";
 import SignerService from "@/services/signer";
 import { AgentTransport } from "@/services/signer/agentTransport";
 import { getAgent } from "@/utils/agent";
+import { InternetIdentity } from "@nfid/identitykit";
 
 export function useIcrc112Execute() {
   const identity = useIdentity();
+  const signerConfig = useSigner()
 
   const mutation = useMutation({
     mutationFn: async ({
@@ -26,6 +28,11 @@ export function useIcrc112Execute() {
         throw new Error("Transactions not provided");
       }
 
+      // TODO: fallback to normal call if signer does not support ICRC-112
+      if (signerConfig?.id != InternetIdentity.id) {
+        throw new Error("Only Internet Identity is supported for ICRC-112 execution");
+      }
+
       const transport = await AgentTransport.create({
         agent: getAgent(identity),
       });
@@ -39,6 +46,7 @@ export function useIcrc112Execute() {
       if (!supportedStandards.map((s) => s.name).includes("ICRC-112")) {
         throw new Error("ICRC-112 is not supported by the signer");
       }
+
 
       try {
         const res = await signerService.execute_icrc112(
