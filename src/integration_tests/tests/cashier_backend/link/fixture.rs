@@ -7,8 +7,8 @@ use cashier_backend_types::{
     constant,
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
-        link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto, UpdateLinkInput},
-    }, repository::common::Asset,
+        link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto, LinkStateMachineGoto, UpdateLinkInput},
+    }, repository::{action::v1::ActionType, common::Asset, link::v1::{LinkType, Template}},
 };
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
@@ -90,8 +90,8 @@ impl LinkTestFixture {
                     amount_per_link_use_action: 10_000_000,
                 },
             ],
-            template: "Central".to_string(),
-            link_type: "SendTokenBasket".to_string(),
+            template: Template::Central,
+            link_type: LinkType::SendTokenBasket,
             nft_image: None,
             link_image_url: None,
             description: Some("Test link for integration testing".to_string()),
@@ -100,13 +100,13 @@ impl LinkTestFixture {
     }
 
     // This function is used to create an action.
-    pub async fn create_action(&self, link_id: &str, action_type: &str) -> ActionDto {
+    pub async fn create_action(&self, link_id: &str, action_type: ActionType) -> ActionDto {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
             .create_action(CreateActionInput {
                 link_id: link_id.to_string(),
-                action_type: action_type.to_string(),
+                action_type,
             })
             .await
             .unwrap()
@@ -119,14 +119,14 @@ impl LinkTestFixture {
         &self,
         link_id: &str,
         action_id: &str,
-        action_type: &str,
+        action_type: ActionType,
     ) -> ActionDto {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
             .process_action(ProcessActionInput {
                 action_id: action_id.to_string(),
-                action_type: action_type.to_string(),
+                action_type,
                 link_id: link_id.to_string(),
             })
             .await
@@ -150,7 +150,7 @@ impl LinkTestFixture {
     }
 
     // This function is used to get an action by link_id and action_id.
-    pub async fn get_action(&self, link_id: &str, _action_id: &str) -> ActionDto {
+    pub async fn get_action(&self, link_id: &str) -> ActionDto {
         // Use get_link with action type to retrieve the action
         let response = self
             .cashier_backend_client
@@ -159,7 +159,7 @@ impl LinkTestFixture {
             .get_link(
                 link_id.to_string(),
                 Some(cashier_backend_types::dto::link::GetLinkOptions {
-                    action_type: "CreateLink".to_string(),
+                    action_type: ActionType::CreateLink,
                 }),
             )
             .await
@@ -248,8 +248,8 @@ impl LinkTestFixture {
             title: "Test Tip Link".to_string(),
             link_use_action_max_count: 1,
             asset_info,
-            template: "Central".to_string(),
-            link_type: constant::SEND_TIP_LINK_TYPE.to_string(),
+            template: Template::Central,
+            link_type: LinkType::SendTip,
             nft_image: None,
             link_image_url: None,
             description: Some("Test tip-link for integration testing".to_string()),
@@ -290,8 +290,8 @@ impl LinkTestFixture {
             title: "Test Token Basket Link".to_string(),
             link_use_action_max_count: 1,
             asset_info,
-            template: "Central".to_string(),
-            link_type: constant::SEND_TOKEN_BASKET_LINK_TYPE.to_string(),
+            template: Template::Central,
+            link_type: LinkType::SendTokenBasket,
             nft_image: None,
             link_image_url: None,
             description: Some("Test token basket link for integration testing".to_string()),
@@ -334,8 +334,8 @@ impl LinkTestFixture {
             title: "Test Airdrop Link".to_string(),
             link_use_action_max_count: max_count,
             asset_info,
-            template: "Central".to_string(),
-            link_type: constant::SEND_AIRDROP_LINK_TYPE.to_string(),
+            template: Template::Central,
+            link_type: LinkType::SendAirdrop,
             nft_image: None,
             link_image_url: None,
             description: Some("Test airdrop link for integration testing".to_string()),
@@ -376,8 +376,8 @@ impl LinkTestFixture {
             title: "Test Receive Payment Link".to_string(),
             link_use_action_max_count: 1,
             asset_info,
-            template: "Central".to_string(),
-            link_type: constant::RECEIVE_PAYMENT_LINK_TYPE.to_string(),
+            template: Template::Central,
+            link_type: LinkType::ReceivePayment,
             nft_image: None,
             link_image_url: None,
             description: Some("Test receive payment link for integration testing".to_string()),
@@ -480,10 +480,10 @@ pub async fn create_tip_link_fixture(token: &str, amount: u64) -> (LinkTestFixtu
 
     let link = creator_fixture.create_tip_link(token, amount).await;
     let create_action = creator_fixture
-        .create_action(&link.id, constant::CREATE_LINK_ACTION)
+        .create_action(&link.id, ActionType::CreateLink)
         .await;
     let processing_action = creator_fixture
-        .process_action(&link.id, &create_action.id, constant::CREATE_LINK_ACTION)
+        .process_action(&link.id, &create_action.id, ActionType::CreateLink)
         .await;
     let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
     let _icrc112_execution_result =
@@ -493,7 +493,7 @@ pub async fn create_tip_link_fixture(token: &str, amount: u64) -> (LinkTestFixtu
         .await;
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
-        action: constant::CONTINUE_ACTION.to_string(),
+        action: LinkStateMachineGoto::Continue,
         params: None,
     };
     let update_link = creator_fixture.update_link(update_link_input).await;
@@ -547,10 +547,10 @@ pub async fn create_token_basket_link_fixture() -> (LinkTestFixture, LinkDto) {
 
     let link = creator_fixture.create_link(link_input).await;
     let create_action = creator_fixture
-        .create_action(&link.id, constant::CREATE_LINK_ACTION)
+        .create_action(&link.id, ActionType::CreateLink)
         .await;
     let processing_action = creator_fixture
-        .process_action(&link.id, &create_action.id, constant::CREATE_LINK_ACTION)
+        .process_action(&link.id, &create_action.id, ActionType::CreateLink)
         .await;
     let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
     let _icrc112_execution_result =
@@ -561,7 +561,7 @@ pub async fn create_token_basket_link_fixture() -> (LinkTestFixture, LinkDto) {
 
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
-        action: constant::CONTINUE_ACTION.to_string(),
+        action: LinkStateMachineGoto::Continue,
         params: None,
     };
     let update_link = creator_fixture.update_link(update_link_input).await;
@@ -602,10 +602,10 @@ pub async fn create_airdrop_link_fixture(
 
     let link = test_fixture.create_link(link_input).await;
     let create_action = test_fixture
-        .create_action(&link.id, constant::CREATE_LINK_ACTION)
+        .create_action(&link.id, ActionType::CreateLink)
         .await;
     let processing_action = test_fixture
-        .process_action(&link.id, &create_action.id, constant::CREATE_LINK_ACTION)
+        .process_action(&link.id, &create_action.id, ActionType::CreateLink)
         .await;
     let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
     let _icrc112_execution_result =
@@ -617,7 +617,7 @@ pub async fn create_airdrop_link_fixture(
 
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
-        action: constant::CONTINUE_ACTION.to_string(),
+        action: LinkStateMachineGoto::Continue,
         params: None,
     };
     let update_link = test_fixture.update_link(update_link_input).await;
@@ -652,11 +652,11 @@ pub async fn create_receive_payment_link_fixture(
     let link = test_fixture.create_link(link_input).await;
 
     let create_action = test_fixture
-        .create_action(&link.id, constant::CREATE_LINK_ACTION)
+        .create_action(&link.id, ActionType::CreateLink)
         .await;
 
     let processing_action = test_fixture
-        .process_action(&link.id, &create_action.id, constant::CREATE_LINK_ACTION)
+        .process_action(&link.id, &create_action.id, ActionType::CreateLink)
         .await;
 
     let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
@@ -670,7 +670,7 @@ pub async fn create_receive_payment_link_fixture(
 
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
-        action: constant::CONTINUE_ACTION.to_string(),
+        action: LinkStateMachineGoto::Continue,
         params: None,
     };
     let update_link = test_fixture.update_link(update_link_input).await;
@@ -698,10 +698,10 @@ pub async fn create_and_use_receive_payment_link_fixture(
     }
 
     let claim_action = claimer_fixture
-        .create_action(&link.id, constant::USE_LINK_ACTION)
+        .create_action(&link.id, ActionType::Use)
         .await;
     let processing_action = claimer_fixture
-        .process_action(&link.id, &claim_action.id, constant::USE_LINK_ACTION)
+        .process_action(&link.id, &claim_action.id, ActionType::Use)
         .await;
     let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
     let _icrc112_execution_result =

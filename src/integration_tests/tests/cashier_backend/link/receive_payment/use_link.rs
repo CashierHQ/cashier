@@ -1,6 +1,7 @@
 use crate::cashier_backend::link::fixture::{LinkTestFixture, create_receive_payment_link_fixture};
 use crate::utils::{icrc_112, link_id_to_account::link_id_to_account, principal::TestUser};
 use candid::Principal;
+use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::{
     constant,
     dto::action::CreateActionInput,
@@ -23,7 +24,7 @@ async fn it_should_error_use_link_payment_if_caller_anonymous() {
     let result = cashier_backend_client
         .create_action(CreateActionInput {
             link_id: link.id.clone(),
-            action_type: constant::USE_LINK_ACTION.to_string(),
+            action_type: ActionType::Use,
         })
         .await;
 
@@ -68,17 +69,17 @@ async fn it_should_use_link_payment_icp_token_successfully() {
 
     // Act
     let pay_action = payer_fixture
-        .create_action(&link.id, constant::USE_LINK_ACTION)
+        .create_action(&link.id, ActionType::Use)
         .await;
 
     // Assert
     assert!(!pay_action.id.is_empty());
-    assert_eq!(pay_action.r#type, constant::USE_LINK_ACTION);
-    assert_eq!(pay_action.state, ActionState::Created.to_string());
+    assert_eq!(pay_action.r#type, ActionType::Use);
+    assert_eq!(pay_action.state, ActionState::Created);
 
     // Act
     let processing_action = payer_fixture
-        .process_action(&link.id, &pay_action.id, constant::USE_LINK_ACTION)
+        .process_action(&link.id, &pay_action.id, ActionType::Use)
         .await;
 
     // Assert
@@ -109,8 +110,8 @@ async fn it_should_use_link_payment_icp_token_successfully() {
 
     // Assert
     assert!(!update_action.id.is_empty());
-    assert_eq!(update_action.r#type, constant::USE_LINK_ACTION);
-    assert_eq!(update_action.state, ActionState::Success.to_string());
+    assert_eq!(update_action.r#type, ActionType::Use);
+    assert_eq!(update_action.state, ActionState::Success);
     assert!(
         update_action
             .intents
@@ -178,17 +179,17 @@ async fn it_should_use_link_payment_icrc_token_successfully() {
 
     // Act
     let pay_action = payer_fixture
-        .create_action(&link.id, constant::USE_LINK_ACTION)
+        .create_action(&link.id, ActionType::Use)
         .await;
 
     // Assert
     assert!(!pay_action.id.is_empty());
-    assert_eq!(pay_action.r#type, constant::USE_LINK_ACTION);
-    assert_eq!(pay_action.state, ActionState::Created.to_string());
+    assert_eq!(pay_action.r#type, ActionType::Use);
+    assert_eq!(pay_action.state, ActionState::Created);
 
     // Act
     let processing_action = payer_fixture
-        .process_action(&link.id, &pay_action.id, constant::USE_LINK_ACTION)
+        .process_action(&link.id, &pay_action.id, ActionType::Use)
         .await;
 
     // Assert
@@ -219,8 +220,8 @@ async fn it_should_use_link_payment_icrc_token_successfully() {
 
     // Assert
     assert!(!update_action.id.is_empty());
-    assert_eq!(update_action.r#type, constant::USE_LINK_ACTION);
-    assert_eq!(update_action.state, ActionState::Success.to_string());
+    assert_eq!(update_action.r#type, ActionType::Use);
+    assert_eq!(update_action.state, ActionState::Success);
     assert!(
         update_action
             .intents

@@ -28,7 +28,7 @@ async fn it_should_error_withdraw_link_token_basket_if_caller_anonymous() {
     let result = cashier_backend_client
         .create_action(CreateActionInput {
             link_id: link.id.clone(),
-            action_type: constant::WITHDRAW_LINK_ACTION.to_string(),
+            action_type: ActionType::Withdraw,
         })
         .await;
 
@@ -57,7 +57,7 @@ async fn it_should_error_withdraw_link_token_basket_if_caller_not_creator() {
     let result = cashier_backend_client
         .create_action(CreateActionInput {
             link_id: link.id.clone(),
-            action_type: constant::WITHDRAW_LINK_ACTION.to_string(),
+            action_type: ActionType::Withdraw,
         })
         .await
         .unwrap();
@@ -103,13 +103,13 @@ async fn it_should_withdraw_link_token_basket_successfully() {
 
     // Act
     let withdraw_action = creator_fixture
-        .create_action(&link.id, constant::WITHDRAW_LINK_ACTION)
+        .create_action(&link.id, ActionType::Withdraw)
         .await;
 
     // Assert
     assert!(!withdraw_action.id.is_empty());
-    assert_eq!(withdraw_action.r#type, ActionType::Withdraw.to_string());
-    assert_eq!(withdraw_action.state, ActionState::Created.to_string());
+    assert_eq!(withdraw_action.r#type, ActionType::Withdraw);
+    assert_eq!(withdraw_action.state, ActionState::Created);
     assert_eq!(withdraw_action.intents.len(), 3);
     assert!(
         withdraw_action
@@ -123,14 +123,14 @@ async fn it_should_withdraw_link_token_basket_successfully() {
         .process_action(
             &link.id,
             &withdraw_action.id,
-            constant::WITHDRAW_LINK_ACTION,
+            ActionType::Withdraw,
         )
         .await;
 
     // Assert
     assert_eq!(withdraw_result.id, withdraw_action.id);
-    assert_eq!(withdraw_result.r#type, ActionType::Withdraw.to_string());
-    assert_eq!(withdraw_result.state, ActionState::Success.to_string());
+    assert_eq!(withdraw_result.r#type, ActionType::Withdraw);
+    assert_eq!(withdraw_result.state, ActionState::Success);
     assert!(
         withdraw_result
             .intents
