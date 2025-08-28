@@ -4,7 +4,6 @@
 use candid::{CandidType, Principal};
 use icrc_ledger_types::icrc1::account::{Account, ICRC1TextReprError};
 use serde::{Deserialize, Serialize};
-use std::fmt;
 use std::str::FromStr;
 
 pub type Chain = cashier_common::chain::Chain;

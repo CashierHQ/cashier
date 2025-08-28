@@ -1,11 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use std::fmt;
 use std::collections::HashMap;
 
 use candid::{CandidType, Principal};
 
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
 use crate::dto::action::ActionDto;
@@ -75,19 +75,10 @@ pub struct LinkDetailUpdate {
     pub link_type: Option<LinkType>,
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Display)]
 pub enum LinkStateMachineGoto {
     Continue,
     Back,
-}
-
-impl fmt::Display for LinkStateMachineGoto {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            LinkStateMachineGoto::Continue => write!(f, "Continue"),
-            LinkStateMachineGoto::Back => write!(f, "Back"),
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -238,17 +229,9 @@ pub struct LinkUpdateUserStateInput {
     pub goto: UserStateMachineGoto,
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Display)]
 pub enum UserStateMachineGoto {
     Continue,
     Back,
 }
 
-impl fmt::Display for UserStateMachineGoto {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            UserStateMachineGoto::Continue => write!(f, "Continue"),
-            UserStateMachineGoto::Back => write!(f, "Back"),
-        }
-    }
-}

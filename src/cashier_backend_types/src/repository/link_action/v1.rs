@@ -3,8 +3,8 @@
 
 use candid::{CandidType, Principal};
 use cashier_macros::storable;
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 
 use crate::repository::action::v1::ActionType;
 
@@ -18,23 +18,8 @@ pub struct LinkAction {
     pub link_user_state: Option<LinkUserState>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Display)]
 pub enum LinkUserState {
     ChooseWallet,
     CompletedLink,
-}
-
-impl fmt::Display for LinkUserState {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str())
-    }
-}
-
-impl LinkUserState {
-    pub fn to_str(&self) -> &str {
-        match self {
-            LinkUserState::ChooseWallet => "User_state_choose_wallet",
-            LinkUserState::CompletedLink => "User_state_completed_link",
-        }
-    }
 }

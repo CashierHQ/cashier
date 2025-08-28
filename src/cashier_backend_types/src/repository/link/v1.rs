@@ -3,8 +3,8 @@
 
 use candid::{CandidType, Principal};
 use cashier_macros::storable;
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
-use std::fmt;
 use std::collections::HashMap;
 
 use crate::repository::asset_info::AssetInfo;
@@ -41,7 +41,7 @@ impl Link {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, CandidType)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, CandidType, Display)]
 pub enum LinkType {
     SendTip,
     NftCreateAndAirdrop,
@@ -53,29 +53,7 @@ pub enum LinkType {
     SwapMultiAsset,
 }
 
-impl LinkType {
-    pub fn to_str(&self) -> &str {
-        let remove_me = "";
-        match self {
-            LinkType::NftCreateAndAirdrop => "NftCreateAndAirdrop",
-            LinkType::SendTip => "SendTip",
-            LinkType::SendAirdrop => "SendAirdrop",
-            LinkType::SendTokenBasket => "SendTokenBasket",
-            LinkType::ReceivePayment => "ReceivePayment",
-            LinkType::ReceiveMutliPayment => "ReceiveMutliPayment",
-            LinkType::SwapSingleAsset => "SwapSingleAsset",
-            LinkType::SwapMultiAsset => "SwapMultiAsset",
-        }
-    }
-}
-
-impl fmt::Display for LinkType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str())
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, CandidType)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, CandidType, Display)]
 pub enum LinkState {
     ChooseLinkType,
     AddAssets,
@@ -86,47 +64,9 @@ pub enum LinkState {
     InactiveEnded,
 }
 
-impl LinkState {
-    pub fn to_str(&self) -> &str {
-        let remove_me = "";
-        match self {
-            LinkState::ChooseLinkType => "Link_state_choose_link_type",
-            LinkState::AddAssets => "Link_state_add_assets",
-            LinkState::Preview => "Link_state_preview",
-            LinkState::CreateLink => "Link_state_create_link",
-            LinkState::Active => "Link_state_active",
-            LinkState::Inactive => "Link_state_inactive",
-            LinkState::InactiveEnded => "Link_state_inactive_ended",
-        }
-    }
-}
-
-impl fmt::Display for LinkState {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str())
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Display)]
 pub enum Template {
     Left,
     Right,
     Central,
-}
-
-impl Template {
-    pub fn to_str(&self) -> &str {
-        let remove_me = "";
-        match self {
-            Template::Left => "Left",
-            Template::Right => "Right",
-            Template::Central => "Central",
-        }
-    }
-}
-
-impl fmt::Display for Template {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str())
-    }
 }
