@@ -645,7 +645,7 @@ mod tests {
             link_type: created_link.link_type,
             asset_info: created_link.asset_info.clone(),
             template: created_link.template.clone(),
-            creator: created_link.creator.clone(),
+            creator: created_link.creator,
             create_at: created_link.create_at,
             metadata: created_link.metadata.clone(),
             link_use_action_counter: 10, // Set to max count
@@ -863,7 +863,7 @@ mod tests {
             link_type: created_link.link_type,
             asset_info: created_link.asset_info.clone(),
             template: created_link.template.clone(),
-            creator: created_link.creator.clone(),
+            creator: created_link.creator,
             create_at: created_link.create_at,
             metadata: created_link.metadata.clone(),
             link_use_action_counter: 10, // Set to max count

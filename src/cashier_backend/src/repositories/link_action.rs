@@ -27,7 +27,7 @@ impl<S: Storage<LinkActionRepositoryStorage>> LinkActionRepository<S> {
                 link_id: link_action.link_id.clone(),
                 action_type: link_action.action_type.clone(),
                 action_id: link_action.action_id.clone(),
-                user_id: link_action.user_id.clone(),
+                user_id: link_action.user_id,
             };
             store.insert(id.to_str(), link_action);
         });
@@ -39,7 +39,7 @@ impl<S: Storage<LinkActionRepositoryStorage>> LinkActionRepository<S> {
                 link_id: link_action.link_id.clone(),
                 action_type: link_action.action_type.clone(),
                 action_id: link_action.action_id.clone(),
-                user_id: link_action.user_id.clone(),
+                user_id: link_action.user_id,
             };
             store.insert(id.to_str(), link_action);
         });

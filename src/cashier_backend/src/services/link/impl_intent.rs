@@ -1112,7 +1112,7 @@ mod tests {
         let updated_link = Link {
             asset_info: vec![AssetInfo {
                 asset: Asset::IC {
-                    address: asset_address.clone(),
+                    address: asset_address,
                 },
                 amount_per_link_use_action: 100,
                 label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
@@ -1131,7 +1131,7 @@ mod tests {
         let asset_addresses = assets
             .iter()
             .map(|a| match a {
-                Asset::IC { address } => address.clone(),
+                Asset::IC { address } => *address,
             })
             .collect::<Vec<_>>();
         assert!(asset_addresses.contains(&asset_address));
@@ -1148,7 +1148,7 @@ mod tests {
         let updated_link = Link {
             asset_info: vec![AssetInfo {
                 asset: Asset::IC {
-                    address: asset_address.clone(),
+                    address: asset_address,
                 },
                 amount_per_link_use_action: 100,
                 label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
@@ -1167,7 +1167,7 @@ mod tests {
         let asset_addresses = assets
             .iter()
             .map(|a| match a {
-                Asset::IC { address } => address.clone(),
+                Asset::IC { address } => *address,
             })
             .collect::<Vec<_>>();
         assert!(asset_addresses.contains(&asset_address));
@@ -1206,7 +1206,7 @@ mod tests {
         let updated_link = Link {
             asset_info: vec![AssetInfo {
                 asset: Asset::IC {
-                    address: asset_address.clone(),
+                    address: asset_address,
                 },
                 amount_per_link_use_action: 100,
                 label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
@@ -1225,7 +1225,7 @@ mod tests {
         assert_eq!(
             assets[0],
             Asset::IC {
-                address: asset_address.clone()
+                address: asset_address
             }
         );
     }

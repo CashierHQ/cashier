@@ -110,7 +110,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> ActionCreator<E>
             temp_action.as_action(),
             temp_action.intents.clone(),
             intent_tx_hashmap.clone(),
-            temp_action.creator.clone(),
+            temp_action.creator,
         );
 
         Ok(ActionDto::from_with_tx(
@@ -261,7 +261,7 @@ mod tests {
         let mut temp_action = TemporaryAction {
             id: action_id.clone(),
             r#type: ActionType::CreateLink,
-            creator: creator_id.clone(),
+            creator: creator_id,
             link_id,
             intents: vec![
                 Intent {

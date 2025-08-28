@@ -265,7 +265,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
                 id: Uuid::new_v4().to_string(),
                 r#type: input.action_type.clone(),
                 state: ActionState::Created,
-                creator: user_id.clone(),
+                creator: user_id,
                 link_id: input.link_id.clone(),
                 intents: vec![],
                 default_link_user_state,

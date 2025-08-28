@@ -364,7 +364,7 @@ mod tests {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
             action_id: link_action.action_id.clone(),
-            user_id: link_action.user_id.clone(),
+            user_id: link_action.user_id,
             link_user_state: Some(LinkUserState::ChooseWallet),
         };
         service.link_action_repository.update(updated_link_action);
@@ -373,7 +373,7 @@ mod tests {
             id: link_action.action_id,
             r#type: ActionType::Use,
             state: ActionState::Success,
-            creator: creator_id.clone(),
+            creator: creator_id,
             link_id: link.id.clone(),
         };
         service.action_repository.update(updated_action);
@@ -668,7 +668,7 @@ mod tests {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
             action_id: link_action.action_id.clone(),
-            user_id: link_action.user_id.clone(),
+            user_id: link_action.user_id,
             link_user_state: Some(LinkUserState::ChooseWallet),
         };
         service.link_action_repository.update(updated_link_action);
@@ -677,7 +677,7 @@ mod tests {
             id: link_action.action_id,
             r#type: ActionType::Use,
             state: ActionState::Success,
-            creator: creator_id.clone(),
+            creator: creator_id,
             link_id: link.id.clone(),
         };
         service.action_repository.update(updated_action);

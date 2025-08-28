@@ -505,7 +505,7 @@ mod tests {
             id: random_id_string(),
             r#type: ActionType::CreateLink,
             state: ActionState::Created,
-            creator: creator_id.clone(),
+            creator: creator_id,
             link_id: link.id,
         };
 
@@ -584,7 +584,7 @@ mod tests {
             id: random_id_string(),
             r#type: ActionType::Withdraw,
             state: ActionState::Created,
-            creator: creator_id.clone(),
+            creator: creator_id,
             link_id: link.id,
         };
 
@@ -637,7 +637,7 @@ mod tests {
             id: random_id_string(),
             r#type: ActionType::Use,
             state: ActionState::Success,
-            creator: creator_id.clone(),
+            creator: creator_id,
             link_id: link.id,
         };
 
@@ -665,7 +665,7 @@ mod tests {
             id: random_id_string(),
             r#type: ActionType::Use,
             state: ActionState::Created,
-            creator: creator_id.clone(),
+            creator: creator_id,
             link_id: link.id,
         };
 

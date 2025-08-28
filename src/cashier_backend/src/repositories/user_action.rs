@@ -21,7 +21,7 @@ impl<S: Storage<UserActionRepositoryStorage>> UserActionRepository<S> {
     pub fn create(&mut self, user_intent: UserAction) {
         self.storage.with_borrow_mut(|store| {
             let id = UserActionKey {
-                user_id: user_intent.user_id.clone(),
+                user_id: user_intent.user_id,
                 action_id: user_intent.action_id.clone(),
             };
             store.insert(id.to_str(), user_intent);
