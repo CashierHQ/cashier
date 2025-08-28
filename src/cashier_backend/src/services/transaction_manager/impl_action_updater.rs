@@ -327,7 +327,7 @@ mod tests {
         let tx_id1 = &action.intents[0].transactions[0].id;
         assert_eq!(
             action.intents[0].transactions[0].state,
-            TransactionState::Created.to_string()
+            TransactionState::Created
         );
 
         let mut tx = Transaction {
