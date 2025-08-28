@@ -228,9 +228,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
     // return true if any balance > 0 or gas fee
     // return false if all balance == 0
     async fn check_link_asset_left(&self, link: &Link) -> Result<bool, CanisterError> {
-        let asset_info = link
-            .asset_info
-            .clone();
+        let asset_info = link.asset_info.clone();
 
         if asset_info.is_empty() {
             return Err(CanisterError::HandleLogicError(
@@ -695,8 +693,7 @@ mod tests {
     #[test]
     fn it_should_false_is_link_creator_if_link_not_found() {
         // Arrange
-        let service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let user_id = random_principal_id();
 
         let link_id = random_id_string();
@@ -748,12 +745,16 @@ mod tests {
         let link = create_link_fixture(&mut service, random_principal_id());
         let asset_infos = vec![
             AssetInfo {
-                asset: Asset::IC { address: random_principal_id() },
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
                 amount_per_link_use_action: 100,
                 label: "some_label".to_string(),
             },
             AssetInfo {
-                asset: Asset::IC { address: random_principal_id() },
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
                 amount_per_link_use_action: 200,
                 label: "another_label".to_string(),
             },
@@ -774,7 +775,9 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link = create_link_fixture(&mut service, random_principal_id());
         let asset_infos = vec![AssetInfo {
-asset: Asset::IC { address: random_principal_id() },
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount_per_link_use_action: 0,
             label: "some_label".to_string(),
         }];
@@ -794,7 +797,9 @@ asset: Asset::IC { address: random_principal_id() },
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link = create_link_fixture(&mut service, random_principal_id());
         let asset_infos = vec![AssetInfo {
-asset: Asset::IC { address: random_principal_id() },
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount_per_link_use_action: 100,
             label: "some_label".to_string(),
         }];
@@ -837,12 +842,16 @@ asset: Asset::IC { address: random_principal_id() },
 
         let asset_infos = vec![
             AssetInfo {
-                asset: Asset::IC { address: random_principal_id() },
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
                 amount_per_link_use_action: 100,
                 label: "some_label".to_string(),
             },
             AssetInfo {
-                asset: Asset::IC { address: random_principal_id() },
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
                 amount_per_link_use_action: 200,
                 label: "another_label".to_string(),
             },
@@ -866,7 +875,9 @@ asset: Asset::IC { address: random_principal_id() },
         service.link_repository.update(link.clone());
 
         let asset_infos = vec![AssetInfo {
-asset: Asset::IC { address: random_principal_id() },
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount_per_link_use_action: 0,
             label: "some_label".to_string(),
         }];
@@ -889,7 +900,9 @@ asset: Asset::IC { address: random_principal_id() },
         service.link_repository.update(link.clone());
 
         let asset_infos = vec![AssetInfo {
-asset: Asset::IC { address: random_principal_id() },
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount_per_link_use_action: 100,
             label: "some_label".to_string(),
         }];
@@ -931,7 +944,9 @@ asset: Asset::IC { address: random_principal_id() },
         service.link_repository.update(link.clone());
 
         let asset_infos = vec![AssetInfo {
-asset: Asset::IC { address: random_principal_id() },
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount_per_link_use_action: 0,
             label: "some_label".to_string(),
         }];
@@ -954,7 +969,9 @@ asset: Asset::IC { address: random_principal_id() },
         service.link_repository.update(link.clone());
 
         let asset_infos = vec![AssetInfo {
-asset: Asset::IC { address: random_principal_id() },
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount_per_link_use_action: 100,
             label: "some_label".to_string(),
         }];
@@ -997,12 +1014,16 @@ asset: Asset::IC { address: random_principal_id() },
 
         let asset_infos = vec![
             AssetInfo {
-                asset: Asset::IC { address: random_principal_id() },
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
                 amount_per_link_use_action: 100,
                 label: "some_label".to_string(),
             },
             AssetInfo {
-                asset: Asset::IC { address: random_principal_id() },
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
                 amount_per_link_use_action: 200,
                 label: "another_label".to_string(),
             },
@@ -1026,7 +1047,9 @@ asset: Asset::IC { address: random_principal_id() },
         service.link_repository.update(link.clone());
 
         let asset_infos = vec![AssetInfo {
-asset: Asset::IC { address: random_principal_id() },
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount_per_link_use_action: 1,
             label: "some_label".to_string(),
         }];
@@ -1048,7 +1071,9 @@ asset: Asset::IC { address: random_principal_id() },
         service.link_repository.update(link.clone());
 
         let asset_infos = vec![AssetInfo {
-            asset: Asset::IC { address: random_principal_id() },
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount_per_link_use_action: 100,
             label: "some_label".to_string(),
         }];

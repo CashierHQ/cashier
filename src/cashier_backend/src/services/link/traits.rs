@@ -10,7 +10,8 @@ use cashier_backend_types::dto::action::{
     UpdateActionInput,
 };
 use cashier_backend_types::dto::link::{
-    CreateLinkInput, LinkDetailUpdateInput, LinkGetUserStateInput, LinkGetUserStateOutput, LinkStateMachineGoto, LinkUpdateUserStateInput, UserStateMachineGoto
+    CreateLinkInput, LinkDetailUpdateInput, LinkGetUserStateInput, LinkGetUserStateOutput,
+    LinkStateMachineGoto, LinkUpdateUserStateInput, UserStateMachineGoto,
 };
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::action::v1::Action;

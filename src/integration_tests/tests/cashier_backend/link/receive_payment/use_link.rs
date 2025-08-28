@@ -68,9 +68,7 @@ async fn it_should_use_link_payment_icp_token_successfully() {
     );
 
     // Act
-    let pay_action = payer_fixture
-        .create_action(&link.id, ActionType::Use)
-        .await;
+    let pay_action = payer_fixture.create_action(&link.id, ActionType::Use).await;
 
     // Assert
     assert!(!pay_action.id.is_empty());
@@ -178,9 +176,7 @@ async fn it_should_use_link_payment_icrc_token_successfully() {
     );
 
     // Act
-    let pay_action = payer_fixture
-        .create_action(&link.id, ActionType::Use)
-        .await;
+    let pay_action = payer_fixture.create_action(&link.id, ActionType::Use).await;
 
     // Assert
     assert!(!pay_action.id.is_empty());

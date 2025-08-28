@@ -17,9 +17,7 @@ use std::rc::Rc;
 
 use crate::{repositories::Repositories, services::link::traits::LinkValidation};
 use crate::{
-    repositories::{
-        self, action::ActionRepository, link_action::LinkActionRepository,
-    },
+    repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
     services::{
         action::ActionService, ext::icrc_batch::IcrcBatchService, request_lock::RequestLockService,
         transaction_manager::service::TransactionManagerService,
@@ -80,7 +78,6 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
         options: Option<GetLinkOptions>,
         caller: Principal,
     ) -> Result<(Link, Option<Action>), String> {
-
         // Allow both anonymous callers and non-anonymous callers without user IDs to proceed
 
         let is_valid_creator = if caller != Principal::anonymous() {
@@ -115,9 +112,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
 
         // Get action data (only if user_id exists)
         let action = match (action_type, caller) {
-            (Some(action_type), user_id) => {
-                self.get_link_action(id, action_type, user_id)
-            }
+            (Some(action_type), user_id) => self.get_link_action(id, action_type, user_id),
             _ => None,
         };
 
@@ -346,7 +341,9 @@ mod tests {
         let created_link = create_link_fixture(&mut service, principal_id);
 
         // Act
-        let (fetched_link, _action) = service.get_link(&created_link.id, None, principal_id).unwrap();
+        let (fetched_link, _action) = service
+            .get_link(&created_link.id, None, principal_id)
+            .unwrap();
 
         // Assert
         assert_eq!(fetched_link.id, created_link.id);
@@ -476,8 +473,7 @@ mod tests {
     #[test]
     fn it_should_fail_on_get_link_with_action_type_use_and_nonexistent_id() {
         // Arrange
-        let service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let principal_id1 = random_principal_id();
 
         // Act
@@ -525,7 +521,7 @@ mod tests {
     fn it_should_get_action_of_link_empty() {
         // Arrange
         let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-let principal_id1 = random_principal_id();
+        let principal_id1 = random_principal_id();
 
         // Act
         let action = service.get_action_of_link("nonexistent_link", ActionType::Use, principal_id1);
@@ -558,7 +554,7 @@ let principal_id1 = random_principal_id();
     fn it_should_get_link_action_user_empty() {
         // Arrange
         let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-let creator = random_principal_id();
+        let creator = random_principal_id();
 
         // Act
         let result = service.get_link_action_user("nonexistent_link", ActionType::Use, creator);
@@ -593,7 +589,7 @@ let creator = random_principal_id();
     fn it_should_get_link_action_empty() {
         // Arrange
         let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-let creator = random_principal_id();
+        let creator = random_principal_id();
 
         // Act
         let action = service.get_link_action("nonexistent_link", ActionType::Use, creator);

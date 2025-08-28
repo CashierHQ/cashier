@@ -41,7 +41,9 @@ impl Default for Intent {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Ord, PartialOrd, Display)]
+#[derive(
+    Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Ord, PartialOrd, Display,
+)]
 pub enum IntentState {
     Created,
     Processing,
@@ -76,7 +78,7 @@ impl IntentType {
         }
     }
 
-        pub fn default_transfer() -> Self {
+    pub fn default_transfer() -> Self {
         IntentType::Transfer(TransferData {
             from: Wallet::default(),
             to: Wallet::default(),
@@ -96,7 +98,6 @@ impl IntentType {
             approve_amount: None,
         })
     }
-
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, CandidType, PartialEq, Eq, Ord, PartialOrd)]
@@ -121,7 +122,9 @@ pub struct TransferFromData {
     pub approve_amount: Option<Nat>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Ord, PartialOrd, Display)]
+#[derive(
+    Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Ord, PartialOrd, Display,
+)]
 pub enum IntentTask {
     TransferWalletToTreasury,
     TransferWalletToLink,

@@ -47,7 +47,6 @@ pub mod transaction;
 pub mod user_action;
 pub mod user_link;
 
-
 const USER_LINK_MEMORY_ID: MemoryId = MemoryId::new(3);
 const USER_ACTION_MEMORY_ID: MemoryId = MemoryId::new(4);
 const LINK_MEMORY_ID: MemoryId = MemoryId::new(5);
@@ -128,7 +127,6 @@ impl Repositories for ThreadlocalRepositories {
     type Transaction = &'static LocalKey<RefCell<TransactionRepositoryStorage>>;
     type UserAction = &'static LocalKey<RefCell<UserActionRepositoryStorage>>;
     type UserLink = &'static LocalKey<RefCell<UserLinkRepositoryStorage>>;
-
 
     fn action_intent(&self) -> ActionIntentRepository<Self::ActionIntent> {
         ActionIntentRepository::new(&ACTION_INTENT_STORE)
@@ -418,6 +416,5 @@ pub mod tests {
         fn user_link(&self) -> UserLinkRepository<Self::UserLink> {
             UserLinkRepository::new(self.user_link.clone())
         }
-
     }
 }

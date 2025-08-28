@@ -56,7 +56,6 @@ impl IcrcBatchService {
         &self,
         assets: &Vec<Asset>,
     ) -> Result<HashMap<Principal, Nat>, CanisterError> {
-
         // Create a vector to store the principal and corresponding fee call future
         let mut get_fee_calls: Vec<GetFeeTaskResponse> = Vec::new();
 
@@ -73,7 +72,7 @@ impl IcrcBatchService {
                         let fee_res = service.icrc_1_fee().await;
 
                         (address, fee_res)
-                    }));                    
+                    }));
                 }
             }
         }

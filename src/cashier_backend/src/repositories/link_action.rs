@@ -2,7 +2,9 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Principal;
-use cashier_backend_types::repository::{action::v1::ActionType, keys::LinkActionKey, link_action::v1::LinkAction};
+use cashier_backend_types::repository::{
+    action::v1::ActionType, keys::LinkActionKey, link_action::v1::LinkAction,
+};
 use ic_mple_log::service::Storage;
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
@@ -75,7 +77,7 @@ impl<S: Storage<LinkActionRepositoryStorage>> LinkActionRepository<S> {
 mod tests {
     use super::*;
     use crate::{
-        repositories::{tests::TestRepositories, Repositories},
+        repositories::{Repositories, tests::TestRepositories},
         utils::test_utils::{random_id_string, random_principal_id},
     };
     use cashier_backend_types::repository::link_action::v1::LinkUserState;

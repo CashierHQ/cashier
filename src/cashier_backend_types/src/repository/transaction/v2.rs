@@ -124,7 +124,6 @@ impl IcTransaction {
             _ => None,
         }
     }
-
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
@@ -141,13 +140,9 @@ impl TryFrom<Icrc1Transfer> for TransferArg {
     type Error = String;
 
     fn try_from(value: Icrc1Transfer) -> Result<Self, Self::Error> {
-        let from = value
-            .from
-            .get_account();
+        let from = value.from.get_account();
 
-        let to = value
-            .to
-            .get_account();
+        let to = value.to.get_account();
 
         let amount = value.amount;
         let memo = value.memo;
@@ -187,17 +182,11 @@ impl TryFrom<Icrc2TransferFrom> for TransferFromArgs {
     type Error = String;
 
     fn try_from(value: Icrc2TransferFrom) -> Result<Self, Self::Error> {
-        let spender_account = value
-            .spender
-            .get_account();
+        let spender_account = value.spender.get_account();
 
-        let from = value
-            .from
-            .get_account();
+        let from = value.from.get_account();
 
-        let to = value
-            .to
-            .get_account();
+        let to = value.to.get_account();
 
         let amount = value.amount;
         let memo = value.memo;

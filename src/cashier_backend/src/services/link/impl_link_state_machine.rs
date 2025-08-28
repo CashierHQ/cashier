@@ -115,33 +115,34 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
                     }
                 }
                 "asset_info" => {
-                            // Compare IDs in both lists
-                            let link_ids: Vec<_> =
-                                link.asset_info.iter().map(|asset| &asset.label).collect();
-                            let params_ids: Vec<_> =
-                                params.asset_info.iter().map(|asset| &asset.label).collect();
+                    // Compare IDs in both lists
+                    let link_ids: Vec<_> =
+                        link.asset_info.iter().map(|asset| &asset.label).collect();
+                    let params_ids: Vec<_> =
+                        params.asset_info.iter().map(|asset| &asset.label).collect();
 
-                            // asset info changed
-                            if link_ids.len() != params_ids.len()
-                                || !link_ids.iter().all(|id| params_ids.contains(id))
-                            {
+                    // asset info changed
+                    if link_ids.len() != params_ids.len()
+                        || !link_ids.iter().all(|id| params_ids.contains(id))
+                    {
+                        return true;
+                    }
+
+                    // Compare updated data
+                    for param_asset in &params.asset_info {
+                        if let Some(link_asset) = link
+                            .asset_info
+                            .iter()
+                            .find(|asset| asset.label == param_asset.label)
+                        {
+                            if param_asset.is_changed(link_asset) {
                                 return true;
                             }
-
-                            // Compare updated data
-                            for param_asset in &params.asset_info {
-                                if let Some(link_asset) = link.asset_info
-                                    .iter()
-                                    .find(|asset| asset.label == param_asset.label)
-                                {
-                                    if param_asset.is_changed(link_asset) {
-                                        return true;
-                                    }
-                                } else {
-                                    return true;
-                                }
-                            }
+                        } else {
+                            return true;
                         }
+                    }
+                }
                 _ => {}
             }
         }
@@ -154,7 +155,6 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         user_id: Principal,
         input: CreateLinkInput,
     ) -> Result<Link, CanisterError> {
-
         let ts = self.ic_env.time();
         let id = Uuid::new_v4();
         let link_id_str = id.to_string();
@@ -196,7 +196,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         };
 
         let result = self
-            .handle_link_state_transition(&link_id_str, LinkStateMachineGoto::Continue, Some(choose_link_type_params))
+            .handle_link_state_transition(
+                &link_id_str,
+                LinkStateMachineGoto::Continue,
+                Some(choose_link_type_params),
+            )
             .await;
 
         if result.is_err() {
@@ -223,7 +227,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         };
 
         let result = self
-            .handle_link_state_transition(&link_id_str, LinkStateMachineGoto::Continue, Some(add_assets_params))
+            .handle_link_state_transition(
+                &link_id_str,
+                LinkStateMachineGoto::Continue,
+                Some(add_assets_params),
+            )
             .await;
 
         if result.is_err() {
@@ -249,7 +257,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         };
 
         let result = self
-            .handle_link_state_transition(&link_id_str, LinkStateMachineGoto::Continue, Some(add_assets_params))
+            .handle_link_state_transition(
+                &link_id_str,
+                LinkStateMachineGoto::Continue,
+                Some(add_assets_params),
+            )
             .await;
 
         if result.is_err() {
@@ -515,9 +527,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
             CanisterError::ValidationErrors("Link use action max count is required".to_string())
         })?;
 
-        let asset_info_input = params
-            .asset_info
-            .clone();
+        let asset_info_input = params.asset_info.clone();
 
         Ok((
             link_use_action_max_count,
@@ -545,11 +555,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
     }
 
     fn prefetch_withdraw_action(&self, link: &Link) -> Result<Option<Action>, CanisterError> {
-        let link_withdraw_action: Vec<LinkAction> = self.link_action_repository.get_by_prefix(
-            &link.id,
-            ActionType::Withdraw,
-            link.creator,
-        );
+        let link_withdraw_action: Vec<LinkAction> =
+            self.link_action_repository
+                .get_by_prefix(&link.id, ActionType::Withdraw, link.creator);
 
         if link_withdraw_action.is_empty() {
             return Ok(None);
@@ -1002,7 +1010,9 @@ mod tests {
             description: Some("Description".to_string()),
             link_type: None,
             asset_info: vec![AssetInfo {
-                asset: Asset::IC { address: asset_address },
+                asset: Asset::IC {
+                    address: asset_address,
+                },
                 amount_per_link_use_action: 100,
                 label: "some_label".to_string(),
             }],
@@ -1020,7 +1030,9 @@ mod tests {
             link_image_url: None,
             nft_image: None,
             asset_info: vec![LinkDetailUpdateAssetInfoInput {
-                                asset: Asset::IC { address: asset_address },
+                asset: Asset::IC {
+                    address: asset_address,
+                },
                 amount_per_link_use_action: 101,
                 label: "some_label".to_string(),
             }],
@@ -1030,7 +1042,7 @@ mod tests {
         };
 
         let whitelist_props = create_whitelist_props("asset_info");
-        
+
         // Act
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
 
@@ -1050,7 +1062,9 @@ mod tests {
             description: Some("Description".to_string()),
             link_type: None,
             asset_info: vec![AssetInfo {
-                                asset: Asset::IC { address: random_principal_id() },
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
                 amount_per_link_use_action: 100,
                 label: "some_label".to_string(),
             }],
@@ -1068,7 +1082,9 @@ mod tests {
             link_image_url: None,
             nft_image: None,
             asset_info: vec![LinkDetailUpdateAssetInfoInput {
-                           asset: Asset::IC { address: random_principal_id() },
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
                 amount_per_link_use_action: 100,
                 label: "some_label".to_string(),
             }],
@@ -1397,12 +1413,16 @@ mod tests {
             nft_image: None,
             asset_info: vec![
                 LinkDetailUpdateAssetInfoInput {
-                    asset: Asset::IC { address: address1.clone() },
+                    asset: Asset::IC {
+                        address: address1.clone(),
+                    },
                     amount_per_link_use_action: 100,
                     label: "some_label".to_string(),
                 },
                 LinkDetailUpdateAssetInfoInput {
-                    asset: Asset::IC { address: address2.clone() },
+                    asset: Asset::IC {
+                        address: address2.clone(),
+                    },
                     amount_per_link_use_action: 200,
                     label: "another_label".to_string(),
                 },
@@ -1450,12 +1470,8 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
-        let _link_action = create_link_action_fixture(
-            &mut service,
-            &link.id,
-            ActionType::CreateLink,
-            creator_id,
-        );
+        let _link_action =
+            create_link_action_fixture(&mut service, &link.id, ActionType::CreateLink, creator_id);
 
         // Act
         let result = service.prefetch_create_action(&link);
@@ -1496,12 +1512,8 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
-        let _link_action = create_link_action_fixture(
-            &mut service,
-            &link.id,
-            ActionType::Withdraw,
-            creator_id,
-        );
+        let _link_action =
+            create_link_action_fixture(&mut service, &link.id, ActionType::Withdraw, creator_id);
 
         // Act
         let result = service.prefetch_withdraw_action(&link);

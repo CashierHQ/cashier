@@ -72,7 +72,9 @@ pub fn create_action_with_intents_fixture(
                 r#type: IntentType::Transfer(TransferData {
                     from: Wallet::default(),
                     to: Wallet::default(),
-                    asset: Asset::IC { address: Principal::anonymous() },
+                    asset: Asset::IC {
+                        address: Principal::anonymous(),
+                    },
                     amount: Nat::from(1000u64),
                 }),
                 label: "Test Intent".to_string(),
@@ -87,7 +89,9 @@ pub fn create_action_with_intents_fixture(
                 r#type: IntentType::Transfer(TransferData {
                     from: Wallet::default(),
                     to: Wallet::default(),
-                    asset: Asset::IC { address: Principal::anonymous() },
+                    asset: Asset::IC {
+                        address: Principal::anonymous(),
+                    },
                     amount: Nat::from(1000u64),
                 }),
                 label: "Test Intent with Dependency".to_string(),
@@ -114,7 +118,9 @@ pub fn create_transaction_fixture(
         protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
             from: Wallet::default(),
             to: Wallet::default(),
-            asset: Asset::IC { address: random_principal_id() },
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount: Nat::from(1000u64),
             ts: None,
             memo: None,
@@ -161,7 +167,9 @@ pub fn create_action_data_fixture(
         r#type: IntentType::Transfer(TransferData {
             from: Wallet::default(),
             to: Wallet::default(),
-            asset: Asset::IC { address: random_principal_id() },
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount: Nat::from(1000u64),
         }),
         state: IntentState::Created,
@@ -179,7 +187,9 @@ pub fn create_action_data_fixture(
         protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
             from: Wallet::default(),
             to: Wallet::default(),
-            asset: Asset::IC { address: random_principal_id() },
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount: Nat::from(1000u64),
             ts: None,
             memo: None,
@@ -197,7 +207,9 @@ pub fn create_action_data_fixture(
         protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
             from: Wallet::default(),
             to: Wallet::default(),
-            asset: Asset::IC { address: random_principal_id() },
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount: Nat::from(1000u64),
             ts: None,
             memo: None,
@@ -215,7 +227,9 @@ pub fn create_action_data_fixture(
         protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
             from: Wallet::default(),
             to: Wallet::default(),
-            asset: Asset::IC { address: random_principal_id() },
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount: Nat::from(1000u64),
             ts: None,
             memo: None,

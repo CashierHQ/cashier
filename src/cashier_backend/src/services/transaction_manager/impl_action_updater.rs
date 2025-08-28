@@ -243,8 +243,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionUpdate
         let mut tx_execute_from_user_wallet = vec![];
 
         for tx in txs {
-            let from_account = tx
-                .get_from_account();
+            let from_account = tx.get_from_account();
             // check from_account is caller or not
             if from_account == *caller {
                 tx_execute_from_user_wallet.push(tx.clone());
@@ -291,7 +290,9 @@ mod tests {
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::IC { address: random_principal_id() },
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
                 amount: Nat::from(1000u64),
                 ts: None,
                 memo: None,
@@ -340,7 +341,9 @@ mod tests {
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::IC { address: random_principal_id() },
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
                 amount: Nat::from(1000u64),
                 ts: None,
                 memo: None,
@@ -381,7 +384,9 @@ mod tests {
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
                 from: Wallet::new(from_principal_id),
                 to: Wallet::default(),
-                asset: Asset::IC { address: random_principal_id() },
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
                 amount: Nat::from(1000u64),
                 ts: None,
                 memo: None,

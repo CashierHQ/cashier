@@ -120,11 +120,7 @@ async fn it_should_withdraw_link_token_basket_successfully() {
 
     // Act
     let withdraw_result = creator_fixture
-        .process_action(
-            &link.id,
-            &withdraw_action.id,
-            ActionType::Withdraw,
-        )
+        .process_action(&link.id, &withdraw_action.id, ActionType::Withdraw)
         .await;
 
     // Assert

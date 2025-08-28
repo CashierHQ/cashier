@@ -34,7 +34,6 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         input: &CreateActionInput,
         caller: Principal,
     ) -> Result<ActionDto, CanisterError> {
-
         // Create lock for action creation
         let request_lock_key = self
             .request_lock_service
@@ -103,7 +102,6 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         input: &ProcessActionInput,
         user_id: Principal,
     ) -> Result<ActionDto, CanisterError> {
-
         // Create lock for action processing
         let request_lock_key = self
             .request_lock_service
@@ -116,8 +114,8 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
         // Execute main logic and capture result
         let result = async {
-
-            let action = self.get_action_of_link(&input.link_id, input.action_type.clone(), user_id);
+            let action =
+                self.get_action_of_link(&input.link_id, input.action_type.clone(), user_id);
 
             let action_ref = action.as_ref().ok_or_else(|| {
                 CanisterError::ValidationErrors("Action is not existed".to_string())
@@ -228,7 +226,8 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
         // Execute main logic and capture result
         let result = async {
-            let action = self.get_action_of_link(&input.link_id, input.action_type.clone(), user_id);
+            let action =
+                self.get_action_of_link(&input.link_id, input.action_type.clone(), user_id);
 
             if action.is_some() {
                 return Err(CanisterError::ValidationErrors(
@@ -238,7 +237,8 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
             self.link_validate_user_create_action(&input.link_id, &input.action_type, user_id)?;
 
-            let action = self.get_action_of_link(&input.link_id, input.action_type.clone(), user_id);
+            let action =
+                self.get_action_of_link(&input.link_id, input.action_type.clone(), user_id);
 
             if action.is_some() {
                 return Err(CanisterError::ValidationErrors(
@@ -306,7 +306,6 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         caller: Principal,
         input: &ProcessActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
-
         // check action type is claim
         if input.action_type != ActionType::Use {
             return Err(CanisterError::ValidationErrors(

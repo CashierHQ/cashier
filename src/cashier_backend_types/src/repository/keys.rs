@@ -183,17 +183,16 @@ impl RequestLockKey {
 
 #[cfg(test)]
 mod test {
-    use super::*;   
+    use super::*;
 
     #[test]
     fn test_link_to_str() {
-
         let user_id = Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap();
         let link_id = "link_id".to_string();
         let key = UserLinkKey { user_id, link_id };
-        assert_eq!(key.to_str(), "USER#rdmx6-jaaaa-aaaaa-aaadq-cai#LINK#link_id");
-
+        assert_eq!(
+            key.to_str(),
+            "USER#rdmx6-jaaaa-aaaaa-aaadq-cai#LINK#link_id"
+        );
     }
-
-
 }
