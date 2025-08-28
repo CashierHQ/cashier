@@ -16,7 +16,6 @@ mod test_canister_upgrade {
 
     struct UpgradeTestData {
         link: LinkDto,
-        action: ActionDto,
         fixture: LinkTestFixture,
         processing_action: ActionDto,
     }
@@ -53,7 +52,6 @@ mod test_canister_upgrade {
 
         UpgradeTestData {
             link,
-            action,
             fixture,
             processing_action,
         }
