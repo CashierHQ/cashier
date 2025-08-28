@@ -415,7 +415,7 @@ export class FeeService {
     return false;
   }
 
-  calculateAssetFee() { }
+  calculateAssetFee() {}
 }
 
 // Export a singleton instance for easy use across the app
