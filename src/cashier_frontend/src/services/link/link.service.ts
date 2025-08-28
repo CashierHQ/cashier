@@ -110,11 +110,11 @@ class LinkService {
     };
     responseModel.data = response.data
       ? response.data.map((link: LinkDto) => {
-        return {
-          link: mapPartialDtoToLinkDetailModel(link),
-          action_create: undefined,
-        };
-      })
+          return {
+            link: mapPartialDtoToLinkDetailModel(link),
+            action_create: undefined,
+          };
+        })
       : [];
     return responseModel;
   }
@@ -125,10 +125,10 @@ class LinkService {
         linkId,
         actionType
           ? [
-            {
-              action_type: actionType,
-            },
-          ]
+              {
+                action_type: actionType,
+              },
+            ]
           : [],
       ),
     );

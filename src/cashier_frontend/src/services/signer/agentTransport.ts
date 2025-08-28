@@ -12,7 +12,7 @@ export class AgentTransportError extends Error {
   }
 }
 
-export interface AgentTransportOptions {
+interface AgentTransportOptions {
   /**
    * Used to make canister calls
    * @default uses anonymous {@link HttpAgent} by default
@@ -22,7 +22,7 @@ export interface AgentTransportOptions {
 
 /**
  * Transport implementation that wraps an {@link HttpAgent}
- * Transport for communication between relying party and signer 
+ * Transport for communication between relying party and signer
  */
 export class AgentTransport implements Transport {
   // Internal flag used to prevent direct construction via `new`.

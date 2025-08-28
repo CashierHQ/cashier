@@ -11,7 +11,7 @@ import { InternetIdentity } from "@nfid/identitykit";
 
 export function useIcrc112Execute() {
   const identity = useIdentity();
-  const signerConfig = useSigner()
+  const signerConfig = useSigner();
 
   const mutation = useMutation({
     mutationFn: async ({
@@ -30,7 +30,9 @@ export function useIcrc112Execute() {
 
       // TODO: fallback to normal call if signer does not support ICRC-112
       if (signerConfig?.id != InternetIdentity.id) {
-        throw new Error("Only Internet Identity is supported for ICRC-112 execution");
+        throw new Error(
+          "Only Internet Identity is supported for ICRC-112 execution",
+        );
       }
 
       const transport = await AgentTransport.create({
@@ -38,7 +40,7 @@ export function useIcrc112Execute() {
       });
 
       const signerService = new SignerService({
-        transport
+        transport,
       });
 
       const supportedStandards = await signerService.supportedStandards();
@@ -46,7 +48,6 @@ export function useIcrc112Execute() {
       if (!supportedStandards.map((s) => s.name).includes("ICRC-112")) {
         throw new Error("ICRC-112 is not supported by the signer");
       }
-
 
       try {
         const res = await signerService.execute_icrc112(

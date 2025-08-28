@@ -21,7 +21,6 @@ export const mapActionModel = (
       intents: [],
     };
   } else {
-
     console.log("🚀 ~ mapActionModel ~ actionDTO:", actionDTO);
 
     return {
@@ -40,8 +39,8 @@ export const mapActionModel = (
       ),
       icrc112Requests: fromNullable(actionDTO.icrc_112_requests)
         ? fromNullable(actionDTO.icrc_112_requests)?.map((request) => {
-          return request.map((req) => mapICRC112Request(req));
-        })
+            return request.map((req) => mapICRC112Request(req));
+          })
         : [],
     };
   }
