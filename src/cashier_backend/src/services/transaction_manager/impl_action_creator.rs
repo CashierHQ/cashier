@@ -302,7 +302,7 @@ mod tests {
         assert!(result.is_ok());
         let action_dto = result.unwrap();
         assert_eq!(action_dto.id, action_id);
-        assert_eq!(action_dto.r#type, ActionType::CreateLink.to_string());
+        assert_eq!(action_dto.r#type, ActionType::CreateLink);
         assert_eq!(action_dto.creator, creator_id);
         assert_eq!(action_dto.intents.len(), 2);
         assert_eq!(action_dto.intents[0].id, intent_id1);
