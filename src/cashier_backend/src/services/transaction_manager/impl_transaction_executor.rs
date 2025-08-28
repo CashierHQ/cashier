@@ -5,10 +5,12 @@ use crate::{repositories::Repositories, services::transaction_manager::traits::A
 use cashier_backend_types::{
     error::CanisterError,
     repository::{
-        common::Asset, intent::v2::IntentTask, transaction::v2::{
+        common::Asset,
+        intent::v2::IntentTask,
+        transaction::v2::{
             FromCallType, IcTransaction, Icrc1Transfer, Icrc2TransferFrom, Transaction,
             TransactionState,
-        }
+        },
     },
 };
 use icrc_ledger_types::{icrc1::transfer::TransferArg, icrc2::transfer_from::TransferFromArgs};

@@ -386,12 +386,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         caller: Principal,
         input: CreateLinkInput,
     ) -> Result<LinkDto, CanisterError> {
-        match self
-            .state
-            .link_service
-            .create_link(caller, input)
-            .await
-        {
+        match self.state.link_service.create_link(caller, input).await {
             Ok(link) => Ok(LinkDto::from(link)),
             Err(e) => {
                 error!("Failed to create link: {e:?}");
@@ -592,11 +587,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         };
 
         // Verify creator
-        if !self
-            .state
-            .link_service
-            .is_link_creator(&caller, &input.id)
-        {
+        if !self.state.link_service.is_link_creator(&caller, &input.id) {
             return Err(CanisterError::Unauthorized(
                 "Caller are not the creator of this link".to_string(),
             ));

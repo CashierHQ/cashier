@@ -28,7 +28,9 @@ pub struct Link {
 
 impl Link {
     pub fn get_asset_by_label(&self, label: &str) -> Option<AssetInfo> {
-        self.asset_info.iter().find(|asset| asset.label == label)
+        self.asset_info
+            .iter()
+            .find(|asset| asset.label == label)
             .cloned()
     }
 

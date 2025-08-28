@@ -27,8 +27,7 @@ impl<R: Repositories> RequestLockService<R> {
         transaction_id: &str,
         timestamp: u64,
     ) -> Result<RequestLockKey, CanisterError> {
-        let key =
-            RequestLockKey::user_action_transaction(principal, action_id, transaction_id);
+        let key = RequestLockKey::user_action_transaction(principal, action_id, transaction_id);
         self.create(&key, timestamp)
     }
 
@@ -104,7 +103,7 @@ mod tests {
         // Arrange
         let mut service = RequestLockService::new(&TestRepositories::new());
         let principal_id = random_principal_id();
-            let action_id = random_id_string();
+        let action_id = random_id_string();
         let transaction_id = random_id_string();
         let timestamp = 1622547800;
 
@@ -215,8 +214,7 @@ mod tests {
         let action_id = random_id_string();
         let timestamp = 1622547800;
 
-        let key =
-            RequestLockKey::user_link_action(principal, link_id.clone(), action_id.clone());
+        let key = RequestLockKey::user_link_action(principal, link_id.clone(), action_id.clone());
         service
             .request_lock_repository
             .create(RequestLock { key, timestamp });
@@ -266,8 +264,7 @@ mod tests {
         let action_id = random_id_string();
         let timestamp = 1622547800;
 
-        let key =
-            RequestLockKey::user_link_action(principal, link_id.clone(), action_id.clone());
+        let key = RequestLockKey::user_link_action(principal, link_id.clone(), action_id.clone());
         service
             .request_lock_repository
             .create(RequestLock { key, timestamp });

@@ -32,7 +32,9 @@ async fn test_request_lock_for_process_action() {
         // top up link and active link
         let active_link = {
             let link = fixture.create_token_basket_link().await;
-            let action = fixture.create_action(&link.id, ActionType::CreateLink).await;
+            let action = fixture
+                .create_action(&link.id, ActionType::CreateLink)
+                .await;
             let processing_action = fixture
                 .process_action(&link.id, &action.id, ActionType::CreateLink)
                 .await;
@@ -51,7 +53,9 @@ async fn test_request_lock_for_process_action() {
                 })
                 .await
         };
-        let use_action = fixture.create_action(&active_link.id, ActionType::Use).await;
+        let use_action = fixture
+            .create_action(&active_link.id, ActionType::Use)
+            .await;
 
         // Act - submit call 3 times concurrently
         let mut msgs = Vec::with_capacity(3);

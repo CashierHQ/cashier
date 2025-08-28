@@ -9,14 +9,14 @@ pub type Chain = cashier_common::chain::Chain;
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub enum Asset {
-    IC {
-        address: Principal,
-    }
+    IC { address: Principal },
 }
 
 impl Default for Asset {
     fn default() -> Self {
-        Asset::IC { address: Principal::anonymous() }
+        Asset::IC {
+            address: Principal::anonymous(),
+        }
     }
 }
 
@@ -26,7 +26,7 @@ impl Asset {
         match self {
             Asset::IC { .. } => Chain::IC,
         }
-    }   
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Ord, PartialOrd)]
@@ -34,33 +34,42 @@ pub enum Wallet {
     IC {
         address: Principal,
         subaccount: Option<Subaccount>,
-    }
+    },
 }
 
 impl Default for Wallet {
     fn default() -> Self {
-        Wallet::IC { address: Principal::anonymous(), subaccount: None }
+        Wallet::IC {
+            address: Principal::anonymous(),
+            subaccount: None,
+        }
     }
 }
 
 impl Wallet {
-
     pub fn new(address: Principal) -> Self {
-        Wallet::IC { address, subaccount: None }
+        Wallet::IC {
+            address,
+            subaccount: None,
+        }
     }
 
     pub fn new_with_subaccount(address: Principal, subaccount: Option<Subaccount>) -> Self {
-        Wallet::IC { address, subaccount }
+        Wallet::IC {
+            address,
+            subaccount,
+        }
     }
 
     pub fn get_account(&self) -> Account {
         match self {
-            Wallet::IC { address , subaccount} => {
-                Account {
-                    owner: *address,
-                    subaccount: *subaccount,
-                }
-            }
+            Wallet::IC {
+                address,
+                subaccount,
+            } => Account {
+                owner: *address,
+                subaccount: *subaccount,
+            },
         }
     }
 }

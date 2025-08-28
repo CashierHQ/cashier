@@ -42,7 +42,7 @@ impl<S: Storage<ActionRepositoryStorage>> ActionRepository<S> {
 mod tests {
     use super::*;
     use crate::{
-        repositories::{tests::TestRepositories, Repositories},
+        repositories::{Repositories, tests::TestRepositories},
         utils::test_utils::{random_id_string, random_principal_id},
     };
     use cashier_backend_types::repository::action::v1::{ActionState, ActionType};

@@ -7,8 +7,16 @@ use cashier_backend_types::{
     constant,
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
-        link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto, LinkStateMachineGoto, UpdateLinkInput},
-    }, repository::{action::v1::ActionType, common::Asset, link::v1::{LinkType, Template}},
+        link::{
+            CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto, LinkStateMachineGoto,
+            UpdateLinkInput,
+        },
+    },
+    repository::{
+        action::v1::ActionType,
+        common::Asset,
+        link::v1::{LinkType, Template},
+    },
 };
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
@@ -63,7 +71,9 @@ impl LinkTestFixture {
             link_use_action_max_count: 1,
             asset_info: vec![
                 LinkDetailUpdateAssetInfoInput {
-                    asset: Asset::IC { address: self.ctx.icp_ledger_principal },
+                    asset: Asset::IC {
+                        address: self.ctx.icp_ledger_principal,
+                    },
                     label: format!(
                         "{}_{}",
                         constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
@@ -72,7 +82,9 @@ impl LinkTestFixture {
                     amount_per_link_use_action: 10_000_000,
                 },
                 LinkDetailUpdateAssetInfoInput {
-                    asset: Asset::IC { address: self.ctx.icrc_token_map["ckBTC"] },
+                    asset: Asset::IC {
+                        address: self.ctx.icrc_token_map["ckBTC"],
+                    },
                     label: format!(
                         "{}_{}",
                         constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
@@ -81,7 +93,9 @@ impl LinkTestFixture {
                     amount_per_link_use_action: 1_000_000,
                 },
                 LinkDetailUpdateAssetInfoInput {
-                    asset: Asset::IC { address: self.ctx.icrc_token_map["ckUSDC"] },
+                    asset: Asset::IC {
+                        address: self.ctx.icrc_token_map["ckUSDC"],
+                    },
                     label: format!(
                         "{}_{}",
                         constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
@@ -419,13 +433,17 @@ impl LinkTestFixture {
                 constant::ICP_TOKEN => {
                     if is_token_basket {
                         Ok(LinkDetailUpdateAssetInfoInput {
-                            asset: Asset::IC { address: self.ctx.icp_ledger_principal },
+                            asset: Asset::IC {
+                                address: self.ctx.icp_ledger_principal,
+                            },
                             label: format!("{}_{}", label, self.ctx.icp_ledger_principal.to_text()),
                             amount_per_link_use_action: amount,
                         })
                     } else {
                         Ok(LinkDetailUpdateAssetInfoInput {
-                            asset: Asset::IC { address: self.ctx.icp_ledger_principal },
+                            asset: Asset::IC {
+                                address: self.ctx.icp_ledger_principal,
+                            },
                             label: label.to_string(),
                             amount_per_link_use_action: amount,
                         })
@@ -435,13 +453,17 @@ impl LinkTestFixture {
                     Some(token_principal) => {
                         if is_token_basket {
                             Ok(LinkDetailUpdateAssetInfoInput {
-                                asset: Asset::IC { address: *token_principal },
+                                asset: Asset::IC {
+                                    address: *token_principal,
+                                },
                                 label: format!("{}_{}", label, token_principal.to_text()),
                                 amount_per_link_use_action: amount,
                             })
                         } else {
                             Ok(LinkDetailUpdateAssetInfoInput {
-                                asset: Asset::IC { address: *token_principal },
+                                asset: Asset::IC {
+                                    address: *token_principal,
+                                },
                                 label: label.to_string(),
                                 amount_per_link_use_action: amount,
                             })

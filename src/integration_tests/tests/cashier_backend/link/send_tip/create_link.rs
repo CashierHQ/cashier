@@ -84,10 +84,7 @@ async fn it_should_create_link_tip_icp_token_successfully() {
     assert!(!link.id.is_empty());
     assert_eq!(link.link_type, Some(LinkType::SendTip));
     assert_eq!(link.asset_info.len(), 1);
-    assert_eq!(
-        link.asset_info[0].amount_per_link_use_action,
-        tip_amount
-    );
+    assert_eq!(link.asset_info[0].amount_per_link_use_action, tip_amount);
 
     // Act
     let create_action = test_fixture
@@ -226,10 +223,7 @@ async fn it_should_create_link_tip_icrc_token_successfully() {
     assert!(!link.id.is_empty());
     assert_eq!(link.link_type, Some(LinkType::SendTip));
     assert_eq!(link.asset_info.len(), 1);
-    assert_eq!(
-        link.asset_info[0].amount_per_link_use_action,
-        tip_amount
-    );
+    assert_eq!(link.asset_info[0].amount_per_link_use_action, tip_amount);
 
     // Act
     let create_action = test_fixture

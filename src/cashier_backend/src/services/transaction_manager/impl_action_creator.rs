@@ -202,7 +202,9 @@ mod tests {
                     r#type: IntentType::Transfer(TransferData {
                         from: Wallet::default(),
                         to: Wallet::default(),
-                        asset: Asset::IC { address: Principal::anonymous() },
+                        asset: Asset::IC {
+                            address: Principal::anonymous(),
+                        },
                         amount: Nat::from(1000u64),
                     }),
                     label: "Test Intent".to_string(),
@@ -217,7 +219,9 @@ mod tests {
                     r#type: IntentType::Transfer(TransferData {
                         from: Wallet::default(),
                         to: Wallet::default(),
-                        asset: Asset::IC { address: Principal::anonymous() },
+                        asset: Asset::IC {
+                            address: Principal::anonymous(),
+                        },
                         amount: Nat::from(1000u64),
                     }),
                     label: "Test Intent with Dependency".to_string(),
@@ -270,7 +274,9 @@ mod tests {
                     r#type: IntentType::Transfer(TransferData {
                         from: Wallet::default(),
                         to: Wallet::default(),
-                        asset: Asset::IC { address: Principal::anonymous() },
+                        asset: Asset::IC {
+                            address: Principal::anonymous(),
+                        },
                         amount: Nat::from(1000u64),
                     }),
                     label: "Test Intent".to_string(),
@@ -285,7 +291,9 @@ mod tests {
                     r#type: IntentType::Transfer(TransferData {
                         from: Wallet::default(),
                         to: Wallet::default(),
-                        asset: Asset::IC { address: Principal::anonymous() },
+                        asset: Asset::IC {
+                            address: Principal::anonymous(),
+                        },
                         amount: Nat::from(1000u64),
                     }),
                     label: "Test Intent with Dependency".to_string(),

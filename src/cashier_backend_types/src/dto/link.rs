@@ -48,7 +48,6 @@ impl LinkDetailUpdateAssetInfoInput {
     pub fn is_changed(&self, asset_info: &AssetInfo) -> bool {
         self.to_model() != *asset_info
     }
-
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -190,4 +189,3 @@ pub enum UserStateMachineGoto {
     Continue,
     Back,
 }
-

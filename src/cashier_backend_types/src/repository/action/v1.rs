@@ -3,8 +3,8 @@
 
 use candid::{CandidType, Principal};
 use cashier_macros::storable;
-use serde::{Deserialize, Serialize};
 use derive_more::Display;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 #[storable]

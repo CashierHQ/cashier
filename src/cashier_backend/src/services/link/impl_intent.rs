@@ -85,39 +85,51 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
 
                     let from_wallet = Wallet::new(user_wallet);
                     let to_wallet = Account {
-                            owner: self.ic_env.id(),
-                            subaccount: Some(to_subaccount(&link.id)?),
-                        }.into();
+                        owner: self.ic_env.id(),
+                        subaccount: Some(to_subaccount(&link.id)?),
+                    }
+                    .into();
 
-                    (amount, None, None, asset_info.asset, from_wallet, to_wallet, None)
+                    (
+                        amount,
+                        None,
+                        None,
+                        asset_info.asset,
+                        from_wallet,
+                        to_wallet,
+                        None,
+                    )
                 }
 
                 // for approve   create link fee + ledger_fee = (0.009 ICP)
                 (ActionType::CreateLink, IntentTask::TransferWalletToTreasury) => {
-                    let fee_in_nat =
-                        fee_map.get(&ICP_CANISTER_PRINCIPAL).ok_or_else(|| {
-                            CanisterError::HandleLogicError(
-                                "Fee not found for link creation".to_string(),
-                            )
-                        })?;
+                    let fee_in_nat = fee_map.get(&ICP_CANISTER_PRINCIPAL).ok_or_else(|| {
+                        CanisterError::HandleLogicError(
+                            "Fee not found for link creation".to_string(),
+                        )
+                    })?;
                     let fee_amount = convert_nat_to_u64(fee_in_nat)?;
 
                     let amount = Fee::CreateTipLinkFeeIcp.as_u64();
                     let actual_amount = amount;
                     let approve_amount = amount + fee_amount;
 
-                    let asset = Asset::IC { address: ICP_CANISTER_PRINCIPAL };
+                    let asset = Asset::IC {
+                        address: ICP_CANISTER_PRINCIPAL,
+                    };
 
                     let from_wallet = Wallet::new(user_wallet);
                     let to_wallet = Account {
-                            owner: FEE_TREASURY_PRINCIPAL,
-                            subaccount: None,
-                        }.into();
+                        owner: FEE_TREASURY_PRINCIPAL,
+                        subaccount: None,
+                    }
+                    .into();
 
                     let spender_wallet = Account {
-                            owner: self.ic_env.id(),
-                            subaccount: None,
-                        }.into()  ;
+                        owner: self.ic_env.id(),
+                        subaccount: None,
+                    }
+                    .into();
 
                     (
                         amount,
@@ -143,9 +155,10 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
 
                     let asset = asset_info.asset;
                     let from_wallet = Account {
-                            owner: self.ic_env.id(),
-                            subaccount: Some(to_subaccount(&link.id)?),
-                        }.into();
+                        owner: self.ic_env.id(),
+                        subaccount: Some(to_subaccount(&link.id)?),
+                    }
+                    .into();
                     let to_wallet = Wallet::new(user_wallet);
 
                     (amount, None, None, asset, from_wallet, to_wallet, None)
@@ -165,9 +178,10 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                     let asset = asset_info.asset;
                     let from_wallet = Wallet::new(user_wallet);
                     let to_wallet = Account {
-                            owner: self.ic_env.id(),
-                            subaccount: Some(to_subaccount(&link.id)?),
-                        }.into();
+                        owner: self.ic_env.id(),
+                        subaccount: Some(to_subaccount(&link.id)?),
+                    }
+                    .into();
 
                     (amount, None, None, asset, from_wallet, to_wallet, None)
                 }
@@ -187,7 +201,8 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
 
                     let link_balance = self
                         .icrc_service
-                        .balance_of(address,
+                        .balance_of(
+                            address,
                             Account {
                                 owner: self.ic_env.id(),
                                 subaccount: Some(to_subaccount(&link.id)?),
@@ -217,9 +232,10 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                     let amount = link_balance - fee_amount;
                     let asset = asset_info.asset;
                     let from_wallet = Account {
-                            owner: self.ic_env.id(),
-                            subaccount: Some(to_subaccount(&link.id)?),
-                        }.into();
+                        owner: self.ic_env.id(),
+                        subaccount: Some(to_subaccount(&link.id)?),
+                    }
+                    .into();
                     let to_wallet = Wallet::new(user_wallet);
 
                     let amount_64 = convert_nat_to_u64(&amount)?;
@@ -317,7 +333,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                 }
                 IntentTask::TransferWalletToTreasury => {
                     // Fee payment always uses ICP
-                    assets.push(Asset::IC { address: ICP_CANISTER_PRINCIPAL });
+                    assets.push(Asset::IC {
+                        address: ICP_CANISTER_PRINCIPAL,
+                    });
                 }
                 IntentTask::TransferLinkToWallet => {
                     let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
@@ -442,7 +460,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
 
                     // Create intent for transfer asset to link
                     let label = match asset.asset {
-                        Asset::IC { address } => format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, address)
+                        Asset::IC { address } => {
+                            format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, address)
+                        }
                     };
                     let transfer_asset_intent =
                         self.create_basic_intent(IntentTask::TransferWalletToLink, label);
@@ -460,7 +480,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
                 for asset in link.asset_info.iter() {
                     // Create intent for transfer asset from link to wallet
                     let label = match asset.asset {
-                        Asset::IC { address } => format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, address)
+                        Asset::IC { address } => {
+                            format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, address)
+                        }
                     };
                     let transfer_asset_intent =
                         self.create_basic_intent(IntentTask::TransferLinkToWallet, label);
@@ -579,7 +601,6 @@ mod tests {
             panic!("Expected HandleLogicError");
         }
     }
-
 
     #[test]
     fn it_should_look_up_intent_for_create_link_send_tip() {
@@ -751,7 +772,9 @@ mod tests {
         let updated_link = Link {
             link_type: Some(LinkType::SendTokenBasket),
             asset_info: vec![AssetInfo {
-                asset: Asset::IC { address: random_principal_id()},
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
                 amount_per_link_use_action: 100,
                 label: "invalid_label".to_string(), // Invalid label
             }],
@@ -784,7 +807,9 @@ mod tests {
         let updated_link = Link {
             link_type: Some(LinkType::SendTokenBasket),
             asset_info: vec![AssetInfo {
-                asset: Asset::IC { address: random_principal_id()},
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
                 amount_per_link_use_action: 100,
                 label: format!(
                     "{}_{}",
@@ -847,7 +872,9 @@ mod tests {
         let updated_link = Link {
             link_type: Some(LinkType::SendTokenBasket),
             asset_info: vec![AssetInfo {
-                asset: Asset::IC { address: random_principal_id()},
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
                 amount_per_link_use_action: 100,
                 label: format!(
                     "{}_{}",
@@ -909,7 +936,9 @@ mod tests {
         let updated_link = Link {
             link_type: Some(LinkType::SendTokenBasket),
             asset_info: vec![AssetInfo {
-                asset: Asset::IC { address: random_principal_id()},
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
                 amount_per_link_use_action: 100,
                 label: format!(
                     "{}_{}",
@@ -1082,7 +1111,9 @@ mod tests {
         let asset_address = random_principal_id();
         let updated_link = Link {
             asset_info: vec![AssetInfo {
-                asset: Asset::IC { address: asset_address.clone()},
+                asset: Asset::IC {
+                    address: asset_address.clone(),
+                },
                 amount_per_link_use_action: 100,
                 label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
             }],
@@ -1097,9 +1128,12 @@ mod tests {
 
         // Assert
         assert_eq!(assets.len(), 2);
-        let asset_addresses = assets.iter().map(|a| match a {
-            Asset::IC { address } => address.clone(),
-        }).collect::<Vec<_>>();
+        let asset_addresses = assets
+            .iter()
+            .map(|a| match a {
+                Asset::IC { address } => address.clone(),
+            })
+            .collect::<Vec<_>>();
         assert!(asset_addresses.contains(&asset_address));
         assert!(asset_addresses.contains(&ICP_CANISTER_PRINCIPAL));
     }
@@ -1113,7 +1147,9 @@ mod tests {
         let asset_address = random_principal_id();
         let updated_link = Link {
             asset_info: vec![AssetInfo {
-                asset: Asset::IC { address: asset_address.clone()},
+                asset: Asset::IC {
+                    address: asset_address.clone(),
+                },
                 amount_per_link_use_action: 100,
                 label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
             }],
@@ -1128,9 +1164,12 @@ mod tests {
 
         // Assert
         assert_eq!(assets.len(), 2);
-        let asset_addresses = assets.iter().map(|a| match a {
-            Asset::IC { address } => address.clone(),
-        }).collect::<Vec<_>>();
+        let asset_addresses = assets
+            .iter()
+            .map(|a| match a {
+                Asset::IC { address } => address.clone(),
+            })
+            .collect::<Vec<_>>();
         assert!(asset_addresses.contains(&asset_address));
         assert!(asset_addresses.contains(&ICP_CANISTER_PRINCIPAL));
     }
@@ -1166,7 +1205,9 @@ mod tests {
         let asset_address = random_principal_id();
         let updated_link = Link {
             asset_info: vec![AssetInfo {
-                asset: Asset::IC { address: asset_address.clone()},
+                asset: Asset::IC {
+                    address: asset_address.clone(),
+                },
                 amount_per_link_use_action: 100,
                 label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
             }],
@@ -1181,6 +1222,11 @@ mod tests {
 
         // Assert
         assert_eq!(assets.len(), 1);
-        assert_eq!(assets[0], Asset::IC { address: asset_address.clone()});
+        assert_eq!(
+            assets[0],
+            Asset::IC {
+                address: asset_address.clone()
+            }
+        );
     }
 }

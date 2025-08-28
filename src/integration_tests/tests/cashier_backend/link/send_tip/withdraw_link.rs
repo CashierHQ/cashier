@@ -99,16 +99,12 @@ async fn it_should_withdraw_link_tip_icp_token_successfully() {
         withdraw_action
             .intents
             .iter()
-            .all(|intent| { intent.state == IntentState::Created}),
+            .all(|intent| { intent.state == IntentState::Created }),
     );
 
     // Act
     let withdraw_result = creator_fixture
-        .process_action(
-            &link.id,
-            &withdraw_action.id,
-            ActionType::Withdraw,
-        )
+        .process_action(&link.id, &withdraw_action.id, ActionType::Withdraw)
         .await;
 
     // Assert
@@ -167,11 +163,7 @@ async fn it_should_withdraw_link_tip_icrc_token_successfully() {
 
     // Act
     let withdraw_result = creator_fixture
-        .process_action(
-            &link.id,
-            &withdraw_action.id,
-            ActionType::Withdraw,
-        )
+        .process_action(&link.id, &withdraw_action.id, ActionType::Withdraw)
         .await;
 
     // Assert

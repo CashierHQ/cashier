@@ -4,9 +4,12 @@
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    repository::{common::Asset, transaction::v2::{
-        IcTransaction, Icrc1Transfer, Icrc2Approve, Protocol, Transaction, TransactionState,
-    }},
+    repository::{
+        common::Asset,
+        transaction::v2::{
+            IcTransaction, Icrc1Transfer, Icrc2Approve, Protocol, Transaction, TransactionState,
+        },
+    },
 };
 use log::{error, warn};
 
@@ -45,13 +48,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionValidator<E>
         &self,
         icrc2_transfer_from_info: &Icrc2Approve,
     ) -> Result<bool, CanisterError> {
-        let from_wallet_account = icrc2_transfer_from_info
-            .from
-            .get_account();
+        let from_wallet_account = icrc2_transfer_from_info.from.get_account();
 
-        let spender_account = icrc2_transfer_from_info
-            .spender
-            .get_account();
+        let spender_account = icrc2_transfer_from_info.spender.get_account();
 
         let allowance_amount = icrc2_transfer_from_info.amount.clone();
 

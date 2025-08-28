@@ -415,7 +415,9 @@ mod tests {
             protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
                 from: Wallet::default(),
                 to: Wallet::default(),
-                asset: Asset::IC { address: Principal::anonymous() },
+                asset: Asset::IC {
+                    address: Principal::anonymous(),
+                },
                 amount: Nat::from(1000u64),
                 ts: None,
                 memo: None,
