@@ -31,7 +31,7 @@ export default function DetailPage() {
   const navigate = useNavigate();
   const { renderSkeleton } = useSkeletonLoading();
 
-  const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.WITHDRAW_LINK);
+  const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.WITHDRAW);
   const { callLinkStateMachine, isUpdating, createAction, isCreatingAction } =
     useLinkMutations();
 
@@ -46,7 +46,7 @@ export default function DetailPage() {
 
   const [showOverlay, setShowOverlay] = React.useState(true);
   const [driverObj, setDriverObj] = React.useState<Driver | undefined>(
-    undefined,
+    undefined
   );
 
   const [showShareLinkDrawer, setShowShareLinkDrawer] = React.useState(false);
@@ -182,7 +182,7 @@ export default function DetailPage() {
         // Create new action
         const actionResult = await createAction({
           linkId: link.id,
-          actionType: ACTION_TYPE.WITHDRAW_LINK,
+          actionType: ACTION_TYPE.WITHDRAW,
         });
         if (actionResult) {
           setCurrentAction(actionResult);

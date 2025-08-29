@@ -6,7 +6,6 @@ import { create } from "zustand";
 
 export interface UserInputAsset {
   address: string;
-  // amount for one claim action (per-claim amount)
   linkUseAmount: bigint;
   chain: CHAIN;
   label: string;

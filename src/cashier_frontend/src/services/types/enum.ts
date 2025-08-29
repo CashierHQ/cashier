@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 export enum TEMPLATE {
-  CENTRAL = "Central",
+  CENTRAL = "Central"
 }
 
 export enum LINK_STATE {
@@ -154,15 +154,6 @@ export enum CHAIN {
   IC = "IC",
 }
 
-export const mapStringToChain = (chain: string) => {
-  switch (chain) {
-    case CHAIN.IC:
-      return CHAIN.IC;
-    default:
-      throw new Error("Unknown chain");
-  }
-};
-
 export function mapStringToEnum<T extends object>(
   enumObject: T,
   value: string,
@@ -180,20 +171,9 @@ export enum TASK {
 
 export enum ACTION_TYPE {
   CREATE_LINK = "CreateLink",
-  WITHDRAW_LINK = "Withdraw",
-  USE_LINK = "Use",
+  WITHDRAW = "Withdraw",
+  USE = "Use",
 }
-
-// export enum IC_TRANSACTION_PROTOCAL {
-//     ICRC1_TRANSFER = "ICRC1Transfer",
-//     ICRC2_TRANSFER = "ICRC2Transfer",
-//     ICRC2_APPROVE = "ICRC2Approve",
-// }
-
-// export enum WALLET {
-//     WALLET = "Wallet",
-//     CANISTER = "Canister",
-// }
 
 export enum LINK_INTENT_ASSET_LABEL {
   INTENT_LABEL_LINK_CREATION_FEE = "LINK_CREATION_FEE", // fee transfer
@@ -239,4 +219,5 @@ export const getAssetLabelForLinkType = (linkType: string, address: string) => {
 
 export enum LINK_USER_STATE {
   COMPLETE = "User_state_completed_link",
+  CHOOSE_WALLET = "User_state_choose_wallet",
 }

@@ -26,18 +26,18 @@ export default function CompletePage() {
     useLinkUseNavigation(linkId);
 
   // Data fetching hooks
-  const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE_LINK);
+  const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE);
   const linkData = linkDetailQuery.data?.link;
   const isLoadingLinkData = linkDetailQuery.isLoading;
 
   const { data: linkUserState, isFetching: isUserStateLoading } =
     useLinkUserState(
       {
-        action_type: ACTION_TYPE.USE_LINK,
+        action_type: ACTION_TYPE.USE,
         link_id: linkId ?? "",
         anonymous_wallet_address: "",
       },
-      !!linkId && !!identity,
+      !!linkId && !!identity
     );
 
   // Initialize tokens when link data is available
@@ -58,7 +58,7 @@ export default function CompletePage() {
     () => () => {
       goToChooseWallet();
     },
-    [goToChooseWallet],
+    [goToChooseWallet]
   );
 
   // Early return for inactive links

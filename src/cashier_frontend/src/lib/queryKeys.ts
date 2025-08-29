@@ -3,33 +3,15 @@
 
 import LinkService from "@/services/link/link.service";
 import { LinkGetUserStateInputModel } from "@/services/types/link.service.types";
-import UserService from "@/services/user.service";
 import { Identity } from "@dfinity/agent";
 import { PartialIdentity } from "@dfinity/identity";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 
 const QUERY_KEYS = {
-  USERS: "users",
   LINKS: "links",
-  TOKENS: "tokens",
 };
 
 export const queryKeys = createQueryKeyStore({
-  users: {
-    detail: (identity: Identity | PartialIdentity | undefined) => ({
-      queryKey: [QUERY_KEYS.USERS],
-      queryFn: async () => {
-        try {
-          const userService = new UserService(identity);
-          const user = await userService.getUser();
-          return user;
-        } catch (error) {
-          console.log("🚀 ~ queryFn: ~ error:", error);
-          throw error;
-        }
-      },
-    }),
-  },
   links: {
     userState: (
       input: LinkGetUserStateInputModel,

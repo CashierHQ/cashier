@@ -6,14 +6,12 @@ import LinkService from "@/services/link/link.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import { ACTION_TYPE } from "@/services/types/enum";
 import { UpdateLinkParams } from "./useLinkMutations";
-import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
 import { groupLinkListByDate } from "@/utils";
 import { LinkModel } from "@/services/types/link.service.types";
 import {
-  mapParitalLinkDtoToCreateLinkInput,
-  mapPartialDtoToLinkDetailModel,
+  mapLinkDetailModelToCreateLinkInput,
 } from "@/services/types/mapper/link.service.mapper";
-import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
+import LinkLocalStorageServiceV2, { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service.v2";
 import { Identity } from "@dfinity/agent";
 
 // Centralized query keys for consistent caching
@@ -65,7 +63,7 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
 
   return useQuery({
     queryKey: LINK_QUERY_KEYS.detail(linkId, actionType),
-    queryFn: async () => {
+    queryFn: async (): Promise<LinkModel> => {
       if (!linkId) throw new Error("linkId are required");
 
       if (linkId.startsWith(LOCAL_lINK_ID_PREFIX) && identity) {
@@ -73,15 +71,12 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
           identity.getPrincipal().toString(),
         );
         const localLink = linkLocalStorageService.getLink(linkId);
-
-        const linkDetailModel = mapPartialDtoToLinkDetailModel(localLink);
-
         const linkModel: LinkModel = {
-          link: linkDetailModel,
+          link: localLink,
         };
 
         if (localLink) {
-          return Promise.resolve(linkModel);
+          return linkModel
         } else {
           throw new Error("Link not found in local storage");
         }
@@ -127,7 +122,10 @@ export function useUpdateLinkMutation() {
           data.linkId,
           data.linkModel,
           data.isContinue,
+          identity.getPrincipal().toString(),
         );
+
+
         return Promise.resolve(localStorageLink);
       } else {
         const updated_link = await linkService.updateLink(
@@ -170,9 +168,9 @@ export function useCreateNewLinkMutation() {
 
       const link = linkLocalStorageService.getLink(localLinkId);
 
-      const input = mapParitalLinkDtoToCreateLinkInput(link);
+      const input = mapLinkDetailModelToCreateLinkInput(link);
 
-      const backendLink = await linkService.createLinkV2(input);
+      const backendLink = await linkService.createLink(input);
 
       return {
         link: backendLink,
