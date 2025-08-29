@@ -127,7 +127,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
     ) -> Option<Action> {
         let link_actions = self
             .link_action_repository
-            .get_by_prefix(link_id, action_type, user_id);
+            .get_by_prefix(link_id, &action_type, &user_id);
 
         link_actions
             .first()
@@ -142,7 +142,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
     ) -> Result<Option<LinkAction>, CanisterError> {
         let link_action = self
             .link_action_repository
-            .get_by_prefix(link_id, action_type, user_id);
+            .get_by_prefix(link_id, &action_type, &user_id);
         if link_action.is_empty() {
             return Ok(None);
         }
@@ -158,7 +158,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
     ) -> Option<Action> {
         let link_actions = self
             .link_action_repository
-            .get_by_prefix(link_id, action_type, user_id);
+            .get_by_prefix(link_id, &action_type, &user_id);
 
         link_actions
             .first()
@@ -215,7 +215,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
     /// Get links by principal
     pub fn get_links_by_principal(
         &self,
-        user_id: Principal,
+        user_id: &Principal,
         pagination: &PaginateInput,
     ) -> Result<PaginateResult<Link>, String> {
         let links = self.get_links_by_user_id(user_id, pagination)?;
@@ -225,7 +225,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
     /// Get links by user ID
     pub fn get_links_by_user_id(
         &self,
-        user_id: Principal,
+        user_id: &Principal,
         pagination: &PaginateInput,
     ) -> Result<PaginateResult<Link>, String> {
         let user_links = self
@@ -733,7 +733,7 @@ mod tests {
         let pagination = PaginateInput::default();
 
         // Act
-        let result = service.get_links_by_principal(user_id, &pagination);
+        let result = service.get_links_by_principal(&user_id, &pagination);
 
         // Assert
         assert!(result.is_ok());
@@ -752,7 +752,7 @@ mod tests {
         let pagination = PaginateInput::default();
 
         // Act
-        let result = service.get_links_by_user_id(user_id, &pagination);
+        let result = service.get_links_by_user_id(&user_id, &pagination);
 
         // Assert
         assert!(result.is_ok());

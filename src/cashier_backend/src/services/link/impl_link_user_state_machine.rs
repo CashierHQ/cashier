@@ -31,7 +31,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
         // check inputs that can be changed this state
         let action_list =
             self.link_action_repository
-                .get_by_prefix(link_id, action_type.clone(), user_id);
+                .get_by_prefix(link_id, &action_type, &user_id);
 
         let Some(mut link_action) = action_list.first().cloned() else {
             return Err(CanisterError::NotFound("Link action not found".to_string()));
