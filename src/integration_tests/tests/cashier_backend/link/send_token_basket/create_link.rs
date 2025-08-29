@@ -199,7 +199,7 @@ async fn it_should_create_link_token_basket_successfully() {
     // Act
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
-        action: LinkStateMachineGoto::Continue,
+        goto: LinkStateMachineGoto::Continue,
         params: None,
     };
     let update_link = test_fixture.update_link(update_link_input).await;

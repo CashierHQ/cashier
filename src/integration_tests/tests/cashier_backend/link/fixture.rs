@@ -515,7 +515,7 @@ pub async fn create_tip_link_fixture(token: &str, amount: u64) -> (LinkTestFixtu
         .await;
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
-        action: LinkStateMachineGoto::Continue,
+        goto: LinkStateMachineGoto::Continue,
         params: None,
     };
     let update_link = creator_fixture.update_link(update_link_input).await;
@@ -583,7 +583,7 @@ pub async fn create_token_basket_link_fixture() -> (LinkTestFixture, LinkDto) {
 
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
-        action: LinkStateMachineGoto::Continue,
+        goto: LinkStateMachineGoto::Continue,
         params: None,
     };
     let update_link = creator_fixture.update_link(update_link_input).await;
@@ -639,7 +639,7 @@ pub async fn create_airdrop_link_fixture(
 
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
-        action: LinkStateMachineGoto::Continue,
+        goto: LinkStateMachineGoto::Continue,
         params: None,
     };
     let update_link = test_fixture.update_link(update_link_input).await;
@@ -692,7 +692,7 @@ pub async fn create_receive_payment_link_fixture(
 
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
-        action: LinkStateMachineGoto::Continue,
+        goto: LinkStateMachineGoto::Continue,
         params: None,
     };
     let update_link = test_fixture.update_link(update_link_input).await;
