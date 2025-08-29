@@ -24,14 +24,14 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
     fn handle_user_link_state_machine(
         &mut self,
         link_id: &str,
-        action_type: ActionType,
+        action_type: &ActionType,
         user_id: Principal,
         goto: &UserStateMachineGoto,
     ) -> Result<LinkAction, CanisterError> {
         // check inputs that can be changed this state
-        let action_list =
-            self.link_action_repository
-                .get_by_prefix(link_id, &action_type, &user_id);
+        let action_list = self
+            .link_action_repository
+            .get_by_prefix(link_id, action_type, &user_id);
 
         let Some(mut link_action) = action_list.first().cloned() else {
             return Err(CanisterError::NotFound("Link action not found".to_string()));
@@ -120,7 +120,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
         // link_action type = input action type
         // link_action user_id = search_user_id
         let link_action =
-            self.get_link_action_user(&input.link_id, input.action_type.clone(), temp_user_id)?;
+            self.get_link_action_user(&input.link_id, &input.action_type, temp_user_id)?;
 
         if link_action.is_none() {
             return Ok(None);
@@ -174,7 +174,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
 
         let link_action = self.handle_user_link_state_machine(
             &input.link_id,
-            input.action_type.clone(),
+            &input.action_type,
             temp_user_id,
             &input.goto,
         )?;
@@ -227,7 +227,7 @@ mod tests {
         // Act
         let result = service.handle_user_link_state_machine(
             &link.id,
-            action_type,
+            &action_type,
             creator_id,
             &UserStateMachineGoto::Continue,
         );
@@ -257,7 +257,7 @@ mod tests {
         // Act
         let result = service.handle_user_link_state_machine(
             &link.id,
-            action_type,
+            &action_type,
             creator_id,
             &UserStateMachineGoto::Continue,
         );
@@ -295,7 +295,7 @@ mod tests {
         // Act
         let result = service.handle_user_link_state_machine(
             &link.id,
-            action_type,
+            &action_type,
             creator_id,
             &UserStateMachineGoto::Continue,
         );
@@ -334,7 +334,7 @@ mod tests {
         // Act
         let result = service.handle_user_link_state_machine(
             &link.id,
-            action_type,
+            &action_type,
             creator_id,
             &UserStateMachineGoto::Continue,
         );
@@ -381,7 +381,7 @@ mod tests {
         // Act
         let result = service.handle_user_link_state_machine(
             &link.id,
-            action_type,
+            &action_type,
             creator_id,
             &UserStateMachineGoto::Continue,
         );
@@ -418,7 +418,7 @@ mod tests {
         // Act
         let result = service.handle_user_link_state_machine(
             &link.id,
-            action_type,
+            &action_type,
             creator_id,
             &UserStateMachineGoto::Back,
         );
