@@ -32,6 +32,10 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
       log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
   })"
 
+  dfx deploy gate_service_backend --argument "(record {
+      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
+  })"
+
   dfx deploy internet_identity
 
   just dfx_local_deploy_icp_ledger
@@ -51,15 +55,18 @@ dfx_local_info:
   cashier_backend_id=$(dfx canister id cashier_backend)
   token_storage_id=$(dfx canister id token_storage)
   internet_identity_id=$(dfx canister id internet_identity)
+  gate_service_backend_id=$(dfx canister id gate_service_backend)
 
   echo "webserver-port: $dfx_webserver_port"
   echo "cashier_backend id: $cashier_backend_id"
   echo "token_storage id: $token_storage_id"
   echo "internet_identity id: $internet_identity_id"
+  echo "gate_service_backend_id: $gate_service_backend_id"
 
   echo "cashier_backend url: http://$cashier_backend_id.raw.localhost:$dfx_webserver_port"
   echo "token_storage url: http://$token_storage_id.raw.localhost:$dfx_webserver_port"
   echo "internet_identity url: http://$internet_identity_id.raw.localhost:$dfx_webserver_port"
+  echo "gate_service_backend url: http://$gate_service_backend_id.raw.localhost:$dfx_webserver_port"
 
 # Airdrop tokens to the target principal
 [group('dfx')]
