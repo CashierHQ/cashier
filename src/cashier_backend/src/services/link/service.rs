@@ -112,7 +112,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
 
         // Get action data (only if user_id exists)
         let action = match (action_type, caller) {
-            (Some(action_type), user_id) => self.get_link_action(id, action_type, user_id),
+            (Some(action_type), user_id) => self.get_link_action(id, &action_type, user_id),
             _ => None,
         };
 
@@ -122,12 +122,12 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
     pub fn get_action_of_link(
         &self,
         link_id: &str,
-        action_type: ActionType,
+        action_type: &ActionType,
         user_id: Principal,
     ) -> Option<Action> {
         let link_actions =
             self.link_action_repository
-                .get_by_prefix(link_id, &action_type, &user_id);
+                .get_by_prefix(link_id, action_type, &user_id);
 
         link_actions
             .first()
@@ -137,7 +137,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
     pub fn get_link_action_user(
         &self,
         link_id: &str,
-        action_type: ActionType,
+        action_type: &ActionType,
         user_id: Principal,
     ) -> Result<Option<LinkAction>, CanisterError> {
         let link_action =
@@ -153,7 +153,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
     pub fn get_link_action(
         &self,
         link_id: &str,
-        action_type: ActionType,
+        action_type: &ActionType,
         user_id: Principal,
     ) -> Option<Action> {
         let link_actions =
@@ -524,7 +524,8 @@ mod tests {
         let principal_id1 = random_principal_id();
 
         // Act
-        let action = service.get_action_of_link("nonexistent_link", ActionType::Use, principal_id1);
+        let action =
+            service.get_action_of_link("nonexistent_link", &ActionType::Use, principal_id1);
 
         // Assert
         assert!(action.is_none());
@@ -541,7 +542,7 @@ mod tests {
             create_link_action_fixture(&mut service, &created_link.id, ActionType::Use, creator);
 
         // Act
-        let action = service.get_action_of_link(&created_link.id, ActionType::Use, creator);
+        let action = service.get_action_of_link(&created_link.id, &ActionType::Use, creator);
 
         // Assert
         assert!(action.is_some());
@@ -557,7 +558,7 @@ mod tests {
         let creator = random_principal_id();
 
         // Act
-        let result = service.get_link_action_user("nonexistent_link", ActionType::Use, creator);
+        let result = service.get_link_action_user("nonexistent_link", &ActionType::Use, creator);
 
         // Assert
         assert!(result.is_ok());
@@ -575,7 +576,7 @@ mod tests {
             create_link_action_fixture(&mut service, &created_link.id, ActionType::Use, creator);
 
         // Act
-        let result = service.get_link_action_user(&created_link.id, ActionType::Use, creator);
+        let result = service.get_link_action_user(&created_link.id, &ActionType::Use, creator);
 
         // Assert
         assert!(result.is_ok());
@@ -592,7 +593,7 @@ mod tests {
         let creator = random_principal_id();
 
         // Act
-        let action = service.get_link_action("nonexistent_link", ActionType::Use, creator);
+        let action = service.get_link_action("nonexistent_link", &ActionType::Use, creator);
 
         // Assert
         assert!(action.is_none());
@@ -609,7 +610,7 @@ mod tests {
             create_link_action_fixture(&mut service, &created_link.id, ActionType::Use, creator);
 
         // Act
-        let action = service.get_link_action(&created_link.id, ActionType::Use, creator);
+        let action = service.get_link_action(&created_link.id, &ActionType::Use, creator);
 
         // Assert
         assert!(action.is_some());

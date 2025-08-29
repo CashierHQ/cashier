@@ -41,7 +41,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
         // Execute main logic and capture result
         let result = async {
-            let action = self.get_action_of_link(&input.link_id, input.action_type.clone(), caller);
+            let action = self.get_action_of_link(&input.link_id, &input.action_type, caller);
 
             if action.is_some() {
                 return Err(CanisterError::ValidationErrors(
@@ -114,8 +114,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
         // Execute main logic and capture result
         let result = async {
-            let action =
-                self.get_action_of_link(&input.link_id, input.action_type.clone(), user_id);
+            let action = self.get_action_of_link(&input.link_id, &input.action_type, user_id);
 
             let action_ref = action.as_ref().ok_or_else(|| {
                 CanisterError::ValidationErrors("Action is not existed".to_string())
@@ -226,8 +225,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
         // Execute main logic and capture result
         let result = async {
-            let action =
-                self.get_action_of_link(&input.link_id, input.action_type.clone(), user_id);
+            let action = self.get_action_of_link(&input.link_id, &input.action_type, user_id);
 
             if action.is_some() {
                 return Err(CanisterError::ValidationErrors(
@@ -237,8 +235,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
             self.link_validate_user_create_action(&input.link_id, &input.action_type, user_id)?;
 
-            let action =
-                self.get_action_of_link(&input.link_id, input.action_type.clone(), user_id);
+            let action = self.get_action_of_link(&input.link_id, &input.action_type, user_id);
 
             if action.is_some() {
                 return Err(CanisterError::ValidationErrors(
@@ -315,7 +312,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
         let user_id = input.wallet_address;
 
-        let action = self.get_action_of_link(&input.link_id, input.action_type.clone(), user_id);
+        let action = self.get_action_of_link(&input.link_id, &input.action_type, user_id);
 
         let action = action
             .ok_or_else(|| CanisterError::ValidationErrors("Action does not exist".to_string()))?;
