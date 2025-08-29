@@ -11,6 +11,7 @@ import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
 import { useInvalidateLinkDetailQueries } from "@/hooks/link-hooks";
 import { useLinkCreateValidation } from "@/hooks/form/useLinkCreateValidation";
+import { mapLinkStateToEnum } from "@/services/types/mapper/link.service.mapper";
 
 interface UseCreateConfirmationProps {
   link: LinkDetailModel;
@@ -30,7 +31,7 @@ export const useCreateConfirmation = ({
   link,
   currentAction,
   updateInternalAction,
-  onCashierError = () => {},
+  onCashierError = () => { },
 }: UseCreateConfirmationProps): UseCreateConfirmationReturn => {
   const navigate = useNavigate();
 
@@ -120,8 +121,8 @@ export const useCreateConfirmation = ({
       linkModel: {},
       isContinue: true,
     });
-
-    if (res.state === LINK_STATE.ACTIVE) {
+    const state = mapLinkStateToEnum(res.state);
+    if (state === LINK_STATE.ACTIVE) {
       navigate(`/details/${link.id}`);
     }
   }, [link, callLinkStateMachine, navigate]);

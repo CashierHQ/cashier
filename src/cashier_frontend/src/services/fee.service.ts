@@ -93,12 +93,12 @@ export class FeeService {
    * Get network fee for a specific intent
    */
   async getNetworkFee(intent: IntentModel): Promise<FeeModel | undefined> {
-    const meta = await TokenUtilService.getTokenMetadata(intent.asset.address);
+    const meta = await TokenUtilService.getTokenMetadata(intent.typeDetails.asset.address);
     if (!meta) return undefined;
 
     return {
-      address: intent.asset.address,
-      chain: intent.asset.chain,
+      address: intent.typeDetails.asset.address,
+      chain: intent.typeDetails.asset.chain,
       amount: meta.fee,
       type: "network_fee",
     };
@@ -122,8 +122,8 @@ export class FeeService {
   async calculateIntentsTotal(intents: IntentModel[]): Promise<number> {
     return this.calculateAmountTotal(
       intents.map((intent) => ({
-        address: intent.asset.address,
-        amount: intent.amount,
+        address: intent.typeDetails.asset.address,
+        amount: intent.typeDetails.amount,
       })),
     );
   }
@@ -360,7 +360,7 @@ export class FeeService {
     tokenInfo: FungibleToken,
   ) {
     // Use BigInt arithmetic to avoid floating-point precision issues
-    const amountBigInt = intent.amount;
+    const amountBigInt = intent.typeDetails.amount;
     console.log("intent", intent);
     const networkFeeBigInt = this.calculateNetworkFeesInBigInt(tokenInfo);
 
@@ -368,7 +368,7 @@ export class FeeService {
 
     if (actionType === ACTION_TYPE.CREATE_LINK) {
       displayAmountBigInt = amountBigInt + networkFeeBigInt;
-    } else if (actionType === ACTION_TYPE.USE_LINK) {
+    } else if (actionType === ACTION_TYPE.USE) {
       if (
         linkType === "ReceivePayment" &&
         intent.task === TASK.TRANSFER_WALLET_TO_LINK
@@ -380,7 +380,7 @@ export class FeeService {
           displayAmountBigInt,
         );
       }
-    } else if (actionType === ACTION_TYPE.WITHDRAW_LINK) {
+    } else if (actionType === ACTION_TYPE.WITHDRAW) {
       // No additional fees for withdraw
     }
 
@@ -400,9 +400,9 @@ export class FeeService {
   ): boolean {
     if (actionType === ACTION_TYPE.CREATE_LINK) {
       return true;
-    } else if (actionType === ACTION_TYPE.WITHDRAW_LINK) {
+    } else if (actionType === ACTION_TYPE.WITHDRAW) {
       return true;
-    } else if (actionType === ACTION_TYPE.USE_LINK) {
+    } else if (actionType === ACTION_TYPE.USE) {
       if (
         linkType === "ReceivePayment" &&
         intentTask === TASK.TRANSFER_LINK_TO_WALLET
@@ -416,7 +416,7 @@ export class FeeService {
     return false;
   }
 
-  calculateAssetFee() {}
+  calculateAssetFee() { }
 }
 
 // Export a singleton instance for easy use across the app

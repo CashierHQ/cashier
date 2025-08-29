@@ -19,14 +19,15 @@ import {
   getLinkTypeString,
 } from "@/services/types/enum";
 import { Avatar } from "@radix-ui/react-avatar";
-import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
 import { Info } from "lucide-react";
 import { InformationOnAssetDrawer } from "@/components/information-on-asset-drawer/information-on-asset-drawer";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useIdentity } from "@nfid/identitykit/react";
 import { mapLinkDtoToUserInputItem } from "@/services/types/mapper/link.service.mapper";
 import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
-import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
+import LinkLocalStorageServiceV2, {
+  LOCAL_lINK_ID_PREFIX,
+} from "@/services/link/link-local-storage.service.v2";
 import { FeeHelpers } from "@/services/fee.service";
 import { useLinkCreateValidation } from "@/hooks/form/useLinkCreateValidation";
 import { LinkDetailModel } from "@/services/types/link.service.types";
@@ -105,7 +106,7 @@ function LinkPreview({
 
   // Internal action state that can be updated independently
   const [internalAction, setInternalAction] = useState<ActionModel | undefined>(
-    undefined,
+    undefined
   );
 
   // Computed current action - use internal action if available, otherwise query action
@@ -235,7 +236,7 @@ function LinkPreview({
 
     // Track the number of times this effect is triggered (for debugging)
     console.log(
-      `Redirect effect called at timestamp: ${new Date().toISOString()}`,
+      `Redirect effect called at timestamp: ${new Date().toISOString()}`
     );
 
     const handleRedirect = async () => {
@@ -250,7 +251,7 @@ function LinkPreview({
 
         if (oldIdParam && identity) {
           const localStorageService = new LinkLocalStorageServiceV2(
-            identity.getPrincipal().toString(),
+            identity.getPrincipal().toString()
           );
           localStorageService.deleteLink(oldIdParam);
         }
@@ -346,7 +347,7 @@ function LinkPreview({
         // Clean up old local storage entry
         if (identity) {
           const localStorageService = new LinkLocalStorageServiceV2(
-            identity.getPrincipal().toString(),
+            identity.getPrincipal().toString()
           );
           localStorageService.deleteLink(res.oldId);
         }
@@ -429,7 +430,7 @@ function LinkPreview({
                       (
                         Number(asset.amountPerUse) /
                         10 ** token.decimals
-                      ).toString(),
+                      ).toString()
                     )}{" "}
                     {token.symbol}
                   </p>
@@ -462,7 +463,7 @@ function LinkPreview({
                       (
                         Number(asset.amountPerUse) /
                         10 ** token.decimals
-                      ).toString(),
+                      ).toString()
                     )}{" "}
                     {token.symbol}
                   </p>
@@ -543,7 +544,7 @@ function LinkPreview({
                   FeeHelpers.forecastActualAmountForPreview(
                     token!,
                     BigInt(asset.amountPerUse),
-                    Number(link?.maxActionNumber ?? 1),
+                    Number(link?.maxActionNumber ?? 1)
                   );
                 const tokenSymbol = token?.symbol;
 
@@ -602,7 +603,7 @@ function LinkPreview({
               token!,
               BigInt(fee.amount),
               // only for link creation fee
-              Number(1),
+              Number(1)
             );
 
             const tokenPrice = getTokenPrice(fee.address) || 0;

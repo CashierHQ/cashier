@@ -52,7 +52,7 @@ export default function ChooseWalletPage() {
   });
 
   // Data fetching with new hooks
-  const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE_LINK);
+  const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE);
   const { createAction, createActionAnonymous } = useLinkMutations();
 
   const link = linkDetailQuery.data?.link;
@@ -64,18 +64,18 @@ export default function ChooseWalletPage() {
     isFetching: isUserStateLoading,
   } = useLinkUserState(
     {
-      action_type: ACTION_TYPE.USE_LINK,
+      action_type: ACTION_TYPE.USE,
       link_id: linkId ?? "",
       anonymous_wallet_address: "",
     },
-    !!linkId && !!identity,
+    !!linkId && !!identity
   );
 
   const queryAction = linkUserState?.action;
 
   // Internal action state that can be updated independently
   const [internalAction, setInternalAction] = useState<ActionModel | undefined>(
-    queryAction,
+    queryAction
   );
   const [showWalletModal, setShowWalletModal] = useState(false);
 
@@ -160,7 +160,7 @@ export default function ChooseWalletPage() {
 
     const newAction = await createAction({
       linkId: linkId!,
-      actionType: ACTION_TYPE.USE_LINK,
+      actionType: ACTION_TYPE.USE,
     });
 
     setInternalAction(newAction);
@@ -171,12 +171,12 @@ export default function ChooseWalletPage() {
    * Creates an action for anonymous users
    */
   const handleCreateActionAnonymous = async (
-    walletAddress: string,
+    walletAddress: string
   ): Promise<ActionModel> => {
     const newAction = await createActionAnonymous({
       linkId: linkId!,
       walletAddress: walletAddress,
-      actionType: ACTION_TYPE.USE_LINK,
+      actionType: ACTION_TYPE.USE,
     });
 
     setInternalAction(newAction);
@@ -230,23 +230,28 @@ export default function ChooseWalletPage() {
         // Anonymous user flow
         const anonymousLinkUserState = await fetchLinkUserState(
           {
-            action_type: ACTION_TYPE.USE_LINK,
+            action_type: ACTION_TYPE.USE,
             link_id: linkId ?? "",
             anonymous_wallet_address: addressToUse,
           },
-          identity,
+          identity
         );
+
+        if (!anonymousLinkUserState) {
+          toast.error(t("link_detail.error.use_without_login_or_wallet"));
+          return;
+        }
 
         if (!anonymousLinkUserState.link_user_state) {
           await handleCreateActionAnonymous(addressToUse);
           setAnonymousWalletAddress(addressToUse);
           await fetchLinkUserState(
             {
-              action_type: ACTION_TYPE.USE_LINK,
+              action_type: ACTION_TYPE.USE,
               link_id: linkId ?? "",
               anonymous_wallet_address: addressToUse,
             },
-            identity,
+            identity
           );
           setShowConfirmation(true);
         } else if (
@@ -297,7 +302,7 @@ export default function ChooseWalletPage() {
     () => () => {
       goToLinkDefault();
     },
-    [goToLinkDefault],
+    [goToLinkDefault]
   );
 
   const setDisabled = useCallback((disabled: boolean) => {
