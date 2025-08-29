@@ -38,7 +38,7 @@ use crate::services::link::traits::{ActionFlow, LinkStateMachine};
 async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDto>, String> {
     debug!("[get_links] input: {input:?}");
     let api = LinkApi::new(get_state());
-    api.get_links(msg_caller(), input)
+    api.get_links(&msg_caller(), input)
 }
 
 /// Retrieves a specific link by its ID with optional action data.
@@ -314,7 +314,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// * `Err(String)` - Error message if retrieval fails
     pub fn get_links(
         &self,
-        caller: Principal,
+        caller: &Principal,
         input: Option<PaginateInput>,
     ) -> Result<PaginateResult<LinkDto>, String> {
         match self

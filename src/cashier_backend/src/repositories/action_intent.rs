@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::repository::{action_intent::v1::ActionIntent, keys::ActionIntentKey};
+use cashier_backend_types::repository::{action_intent::v1::ActionIntent};
 use ic_mple_log::service::Storage;
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
@@ -13,6 +13,22 @@ pub struct ActionIntentRepository<S: Storage<ActionIntentRepositoryStorage>> {
     storage: S,
 }
 
+#[derive(Debug, Clone)]
+struct ActionIntentKey<'a> {
+    pub action_id: &'a str,
+    pub intent_id: &'a str,
+}
+
+impl ActionIntentKey<'_> {
+    pub fn to_str(&self) -> String {
+        format!("ACTION#{}#INTENT#{}", self.action_id, self.intent_id)
+    }
+
+    pub fn to_str_reverse(&self) -> String {
+        format!("INTENT#{}#ACTION#{}", self.intent_id, self.action_id)
+    }
+}
+
 impl<S: Storage<ActionIntentRepositoryStorage>> ActionIntentRepository<S> {
     pub fn new(storage: S) -> Self {
         Self { storage }
@@ -22,8 +38,8 @@ impl<S: Storage<ActionIntentRepositoryStorage>> ActionIntentRepository<S> {
         self.storage.with_borrow_mut(|store| {
             for action_intent in action_intents {
                 let key: ActionIntentKey = ActionIntentKey {
-                    action_id: action_intent.action_id.clone(),
-                    intent_id: action_intent.intent_id.clone(),
+                    action_id: &action_intent.action_id,
+                    intent_id: &action_intent.intent_id,
                 };
 
                 store.insert(key.to_str(), action_intent.clone());
@@ -35,8 +51,8 @@ impl<S: Storage<ActionIntentRepositoryStorage>> ActionIntentRepository<S> {
     pub fn get_by_action_id(&self, action_id: &str) -> Vec<ActionIntent> {
         self.storage.with_borrow(|store| {
             let key = ActionIntentKey {
-                action_id: action_id.to_string(),
-                intent_id: "".to_string(),
+                action_id,
+                intent_id: "",
             };
 
             let prefix = key.to_str();
@@ -52,8 +68,8 @@ impl<S: Storage<ActionIntentRepositoryStorage>> ActionIntentRepository<S> {
     pub fn get_by_intent_id(&self, intent_id: &str) -> Vec<ActionIntent> {
         self.storage.with_borrow(|store| {
             let key = ActionIntentKey {
-                action_id: "".to_string(),
-                intent_id: intent_id.to_string(),
+                action_id: "",
+                intent_id,
             };
 
             let prefix = key.to_str_reverse();

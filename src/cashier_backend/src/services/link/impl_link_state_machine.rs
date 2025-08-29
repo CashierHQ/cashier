@@ -206,7 +206,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         if result.is_err() {
             // Clean up on failure
             self.link_repository.delete(&link_id_str);
-            self.user_link_repository.delete(new_user_link);
+            self.user_link_repository.delete(&new_user_link);
             return Err(CanisterError::HandleLogicError(format!(
                 "Create link failed: transition from ChooseLinkType to AddAssets {:?}",
                 result.err()
@@ -237,7 +237,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         if result.is_err() {
             // Clean up on failure
             self.link_repository.delete(&link_id_str);
-            self.user_link_repository.delete(new_user_link);
+            self.user_link_repository.delete(&new_user_link);
             return Err(CanisterError::HandleLogicError(format!(
                 "Create link failed: transition from AddAssets to Preview {:?}",
                 result.err()
@@ -267,7 +267,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         if result.is_err() {
             // Clean up on failure
             self.link_repository.delete(&link_id_str);
-            self.user_link_repository.delete(new_user_link);
+            self.user_link_repository.delete(&new_user_link);
             return Err(CanisterError::HandleLogicError(format!(
                 "Create link failed: transition from Preview to CreateLink {:?}",
                 result.err()
@@ -540,8 +540,8 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
     fn prefetch_create_action(&self, link: &Link) -> Result<Option<Action>, CanisterError> {
         let link_creation_action: Vec<LinkAction> = self.link_action_repository.get_by_prefix(
             &link.id,
-            ActionType::CreateLink,
-            link.creator,
+            &ActionType::CreateLink,
+            &link.creator,
         );
 
         let Some(link_creation_action) = link_creation_action.first() else {
@@ -556,7 +556,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
     fn prefetch_withdraw_action(&self, link: &Link) -> Result<Option<Action>, CanisterError> {
         let link_withdraw_action: Vec<LinkAction> =
             self.link_action_repository
-                .get_by_prefix(&link.id, ActionType::Withdraw, link.creator);
+                .get_by_prefix(&link.id, &ActionType::Withdraw, &link.creator);
 
         if link_withdraw_action.is_empty() {
             return Ok(None);
