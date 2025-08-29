@@ -3,7 +3,7 @@
 
 use candid::Principal;
 use cashier_backend_types::{
-    repository::{user_link::v1::UserLink},
+    repository::user_link::v1::UserLink,
     service::link::{PaginateInput, PaginateResult, PaginateResultMetadata},
 };
 use ic_mple_log::service::Storage;
@@ -17,7 +17,7 @@ struct UserLinkKey<'a> {
     pub link_id: &'a str,
 }
 
-impl <'a> UserLinkKey<'a> {
+impl<'a> UserLinkKey<'a> {
     pub fn to_str(&self) -> String {
         format!("USER#{}#LINK#{}", self.user_id, self.link_id)
     }
@@ -101,11 +101,14 @@ mod tests {
         utils::test_utils::*,
     };
 
-        #[test]
+    #[test]
     fn test_link_to_str() {
         let user_id = Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap();
         let link_id = "link_id";
-        let key = UserLinkKey { user_id: &user_id, link_id };
+        let key = UserLinkKey {
+            user_id: &user_id,
+            link_id,
+        };
         assert_eq!(
             key.to_str(),
             "USER#rdmx6-jaaaa-aaaaa-aaadq-cai#LINK#link_id"

@@ -554,9 +554,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
     }
 
     fn prefetch_withdraw_action(&self, link: &Link) -> Result<Option<Action>, CanisterError> {
-        let link_withdraw_action: Vec<LinkAction> =
-            self.link_action_repository
-                .get_by_prefix(&link.id, &ActionType::Withdraw, &link.creator);
+        let link_withdraw_action: Vec<LinkAction> = self.link_action_repository.get_by_prefix(
+            &link.id,
+            &ActionType::Withdraw,
+            &link.creator,
+        );
 
         if link_withdraw_action.is_empty() {
             return Ok(None);
