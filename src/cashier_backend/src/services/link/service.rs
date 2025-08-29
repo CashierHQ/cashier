@@ -125,9 +125,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
         action_type: ActionType,
         user_id: Principal,
     ) -> Option<Action> {
-        let link_actions = self
-            .link_action_repository
-            .get_by_prefix(link_id, &action_type, &user_id);
+        let link_actions =
+            self.link_action_repository
+                .get_by_prefix(link_id, &action_type, &user_id);
 
         link_actions
             .first()
@@ -140,9 +140,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
         action_type: ActionType,
         user_id: Principal,
     ) -> Result<Option<LinkAction>, CanisterError> {
-        let link_action = self
-            .link_action_repository
-            .get_by_prefix(link_id, &action_type, &user_id);
+        let link_action =
+            self.link_action_repository
+                .get_by_prefix(link_id, &action_type, &user_id);
         if link_action.is_empty() {
             return Ok(None);
         }
@@ -156,9 +156,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
         action_type: ActionType,
         user_id: Principal,
     ) -> Option<Action> {
-        let link_actions = self
-            .link_action_repository
-            .get_by_prefix(link_id, &action_type, &user_id);
+        let link_actions =
+            self.link_action_repository
+                .get_by_prefix(link_id, &action_type, &user_id);
 
         link_actions
             .first()

@@ -2,9 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Principal;
-use cashier_backend_types::repository::{
-    action::v1::ActionType, link_action::v1::LinkAction,
-};
+use cashier_backend_types::repository::{action::v1::ActionType, link_action::v1::LinkAction};
 use ic_mple_log::service::Storage;
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
@@ -19,7 +17,7 @@ struct LinkActionKey<'a> {
     pub user_id: &'a Principal,
 }
 
-impl <'a> LinkActionKey<'a> {
+impl<'a> LinkActionKey<'a> {
     pub fn to_str(&self) -> String {
         format!(
             "LINK#{}#USER#{}#TYPE#{}#ACTION#{}",

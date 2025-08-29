@@ -1,9 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::repository::{
-    intent_transaction::v1::IntentTransaction,
-};
+use cashier_backend_types::repository::intent_transaction::v1::IntentTransaction;
 use ic_mple_log::service::Storage;
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
 
@@ -15,7 +13,7 @@ struct IntentTransactionKey<'a> {
     pub transaction_id: &'a str,
 }
 
-impl <'a> IntentTransactionKey<'a> {
+impl<'a> IntentTransactionKey<'a> {
     pub fn to_str(&self) -> String {
         format!(
             "INTENT#{}#TRANSACTION#{}",
