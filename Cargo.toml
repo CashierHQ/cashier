@@ -5,11 +5,13 @@ members = [
     "src/cashier_backend_types",
     "src/integration_tests",
     "src/lib/cashier_common",
-    "src/lib/cashier_macros", 
+    "src/lib/cashier_macros",
     "src/lib/icrc_112_utils",
     "src/token_storage",
-    "src/token_storage_client", 
+    "src/token_storage_client",
     "src/token_storage_types",
+    "src/gate_types",
+    "src/gate_service_backend",
 ]
 resolver = "2"
 
@@ -60,6 +62,8 @@ vergen-gitcl = { version = "1", default-features = false, features = [
     "cargo",
     "rustc",
 ] }
+async-trait = "0.1.89"
+argon2 = "0.5.3"
 
 
 [profile.release]

@@ -1,0 +1,13 @@
+[package]
+name = "gate_types"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+candid = { workspace = true }
+ic-cdk = { workspace = true }
+serde = { workspace = true }
+cashier_macros = { path = "../lib/cashier_macros" }
+ic-stable-structures = { workspace = true }
+serde_cbor = { workspace = true }
+async-trait = { workspace = true }

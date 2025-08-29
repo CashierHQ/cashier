@@ -11,3 +11,5 @@ serde_bytes = { workspace = true }
 uuid = { workspace = true }
 getrandom = { workspace = true, features = ["custom"] }
 rand = { workspace = true, features = ["getrandom"] }
+ic-cdk = { workspace = true }
+ic-cdk-timers = { workspace = true }
