@@ -71,7 +71,7 @@ pub enum LinkStateMachineGoto {
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct UpdateLinkInput {
     pub id: String,
-    pub action: LinkStateMachineGoto, // goto
+    pub goto: LinkStateMachineGoto,
     pub params: Option<LinkDetailUpdateInput>,
 }
 

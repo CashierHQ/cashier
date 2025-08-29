@@ -48,7 +48,7 @@ async fn test_request_lock_for_process_action() {
             fixture
                 .update_link(UpdateLinkInput {
                     id: link.id.to_string(),
-                    action: LinkStateMachineGoto::Continue,
+                    goto: LinkStateMachineGoto::Continue,
                     params: None,
                 })
                 .await
