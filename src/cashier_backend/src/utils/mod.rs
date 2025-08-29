@@ -4,7 +4,6 @@
 pub mod collections;
 pub mod helper;
 pub mod icrc;
-pub mod random;
 pub mod runtime;
 
 #[cfg(test)]
