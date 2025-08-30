@@ -15,17 +15,17 @@ export const safeParseJSON = (
 
 type Response<T, E> =
   | {
-      ok: T;
-    }
+    ok: T;
+  }
   | {
-      err: E;
-    }
+    err: E;
+  }
   | {
-      Ok: T;
-    }
+    Ok: T;
+  }
   | {
-      Err: E;
-    };
+    Err: E;
+  };
 
 export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
   if ("ok" in response) {
@@ -49,6 +49,35 @@ export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
   throw new Error("Invalid response");
 };
 
+// Helper: normalize various timestamp inputs to BigInt nanoseconds
+const toBigIntNanoseconds = (input: unknown): bigint => {
+  if (input === undefined || input === null) return 0n;
+
+  // If already a bigint, assume it's nanoseconds
+  if (typeof input === "bigint") return input as bigint;
+
+  const s = String(input).trim();
+
+  // If it's not purely numeric, try parsing as a date string (ISO etc.) -> ms
+  if (!/^[-+]?\d+$/.test(s)) {
+    const ms = Date.parse(s);
+    if (Number.isNaN(ms)) return 0n;
+    return BigInt(ms) * 1000000n; // ms -> ns
+  }
+
+  // It's a numeric string or number
+  const n = BigInt(s);
+
+  // Heuristic: if absolute value >= 1e15 treat as nanoseconds already (ns ~1e18, ms ~1e12)
+  const abs = n < 0n ? -n : n;
+  if (abs >= 1000000000000000n) {
+    return n; // treat as ns
+  }
+
+  // Otherwise treat as milliseconds and convert to nanoseconds
+  return n * 1000000n;
+};
+
 // Group link list by creation date (start of day in milliseconds)
 // Eg: { "1672531200000": [LinkDetailModel, ...], "1672617600000": [LinkDetailModel, ...], ... }
 export const groupLinkListByDate = (
@@ -56,45 +85,42 @@ export const groupLinkListByDate = (
 ): Record<string, LinkDetailModel[]> => {
   if (linkList?.length > 0) {
     // Copy before sorting to avoid mutating the original array
-    const sortedItems = [...linkList].sort(
-      (a, b) => Number(b.create_at) - Number(a.create_at),
-    );
+    const sortedItems = [...linkList].sort((a, b) => {
+      const na = toBigIntNanoseconds(a.create_at);
+      const nb = toBigIntNanoseconds(b.create_at);
+      return nb > na ? 1 : nb < na ? -1 : 0;
+    });
 
-    return sortedItems.reduce(
-      (groups: Record<string, LinkDetailModel[]>, item: LinkDetailModel) => {
-        // Normalize create_at to a number (supports number | string | bigint-like values)
-        const ts = Number(item.create_at);
+    return sortedItems.reduce((groups: Record<string, LinkDetailModel[]>, item: LinkDetailModel) => {
+      // Convert create_at to BigInt nanoseconds
+      const ns = toBigIntNanoseconds(item.create_at);
 
-        // Calculate start-of-day timestamp in milliseconds (UTC)
-        const dayStart = Math.floor(ts / 86400000) * 86400000;
+      // Calculate start-of-day timestamp in nanoseconds (UTC)
+      const nsPerDay = 86400000n * 1000000n; // ms in day * ns per ms
+      const dayStartNs = (ns / nsPerDay) * nsPerDay;
 
-        // Use the day-start timestamp as the group key (stringified)
-        const dateKey = String(dayStart);
+      const dateKey = String(dayStartNs);
 
-        if (!groups[dateKey]) {
-          groups[dateKey] = [];
-        }
-        groups[dateKey].push(item);
-        return groups;
-      },
-      {},
-    );
+      if (!groups[dateKey]) groups[dateKey] = [];
+      groups[dateKey].push(item);
+      return groups;
+    }, {});
   }
 
   return {};
 };
 
 // Format a date input (start-of-day timestamp in ms or ISO/date string) to "MMM D, YYYY"
-export const formatDateString = (dateInput?: string | number): string => {
+export const formatDateString = (dateInput?: string | number | bigint): string => {
   if (dateInput === undefined || dateInput === null) return "";
 
-  // Accept either a numeric timestamp (ms) or an ISO/date string.
-  const isNumeric =
-    typeof dateInput === "number" || /^\\d+$/.test(String(dateInput).trim());
-  const date = isNumeric
-    ? new Date(Number(dateInput))
-    : new Date(String(dateInput));
+  // Convert input to BigInt nanoseconds first
+  const ns = toBigIntNanoseconds(dateInput as unknown);
+  if (ns === 0n) return "";
 
+  // Convert nanoseconds to milliseconds for Date
+  const ms = Number(ns / 1000000n);
+  const date = new Date(ms);
   if (Number.isNaN(date.getTime())) return "";
 
   const monthShort = date.toLocaleString("default", { month: "short" });
