@@ -49,36 +49,50 @@ export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
   throw new Error("Invalid response");
 };
 
+// Group link list by creation date (start of day in milliseconds)
+// Eg: { "1672531200000": [LinkDetailModel, ...], "1672617600000": [LinkDetailModel, ...], ... }
 export const groupLinkListByDate = (
   linkList: LinkDetailModel[],
 ): Record<string, LinkDetailModel[]> => {
   if (linkList?.length > 0) {
-    const sortedItems = linkList.sort((a, b) => b.create_at - a.create_at);
-    return sortedItems.reduce(
-      (groups: Record<string, LinkDetailModel[]>, item: LinkDetailModel) => {
-        const dateKey = new Date(item.create_at).toISOString().split("T")[0];
-        if (!groups[dateKey]) {
-          groups[dateKey] = [];
-        }
-        groups[dateKey].push(item);
-        return groups;
-      },
-      {},
-    );
+    // Copy before sorting to avoid mutating the original array
+    const sortedItems = [...linkList].sort((a, b) => Number(b.create_at) - Number(a.create_at));
+
+    return sortedItems.reduce((groups: Record<string, LinkDetailModel[]>, item: LinkDetailModel) => {
+      // Normalize create_at to a number (supports number | string | bigint-like values)
+      const ts = Number(item.create_at);
+
+      // Calculate start-of-day timestamp in milliseconds (UTC)
+      const dayStart = Math.floor(ts / 86400000) * 86400000;
+
+      // Use the day-start timestamp as the group key (stringified)
+      const dateKey = String(dayStart);
+
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      groups[dateKey].push(item);
+      return groups;
+    }, {});
   }
+
   return {};
 };
 
-export const formatDateString = (dateString: string): string => {
-  if (dateString && dateString.trim() !== "") {
-    const date = new Date(dateString);
-    const monthShort = date.toLocaleString("default", { month: "short" });
-    const day = date.getDate();
-    const year = date.getFullYear();
-    return `${monthShort} ${day}, ${year}`;
-  } else {
-    return "";
-  }
+// Format a date input (start-of-day timestamp in ms or ISO/date string) to "MMM D, YYYY"
+export const formatDateString = (dateInput?: string | number): string => {
+  if (dateInput === undefined || dateInput === null) return "";
+
+  // Accept either a numeric timestamp (ms) or an ISO/date string.
+  const isNumeric = typeof dateInput === "number" || /^\\d+$/.test(String(dateInput).trim());
+  const date = isNumeric ? new Date(Number(dateInput)) : new Date(String(dateInput));
+
+  if (Number.isNaN(date.getTime())) return "";
+
+  const monthShort = date.toLocaleString("default", { month: "short" });
+  const day = date.getDate();
+  const year = date.getFullYear();
+  return `${monthShort} ${day}, ${year}`;
 };
 
 // Convert token amount to number with exponential token's decimals
