@@ -51,7 +51,7 @@ export function useTokensV2() {
   // Data computation methods (memoized for performance)
   const getToken = useMemo(() => {
     return (tokenAddress: string): FungibleToken | undefined => {
-      console.log("rawTokenList", rawTokenList, tokenAddress)
+      console.log("rawTokenList", rawTokenList, tokenAddress);
       return rawTokenList.find((token) => token.address === tokenAddress);
     };
   }, [rawTokenList, memoKey.identityKey]);

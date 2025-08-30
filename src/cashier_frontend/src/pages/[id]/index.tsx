@@ -44,7 +44,7 @@ export default function ClaimPage() {
         link_id: linkId ?? "",
         anonymous_wallet_address: "",
       },
-      !!linkId && !!identity
+      !!linkId && !!identity,
     );
 
   // Fetch link data when linkId changes
@@ -78,7 +78,7 @@ export default function ClaimPage() {
         setShowWalletModal(true);
       }
     },
-    [identity, goToChooseWallet]
+    [identity, goToChooseWallet],
   );
 
   const handleWalletConnected = (address?: string) => {

@@ -107,7 +107,11 @@ class LinkLocalStorageServiceV2 {
   }
 
   /** Update a link in local storage */
-  updateLink(linkId: string, data: Partial<UserInputItem>, caller: string): LinkDto {
+  updateLink(
+    linkId: string,
+    data: Partial<UserInputItem>,
+    caller: string,
+  ): LinkDto {
     const links = this.getLinks();
     if (!links[linkId]) throw new Error("Link not found");
 
@@ -124,7 +128,6 @@ class LinkLocalStorageServiceV2 {
 
     links[linkId] = composed;
     this.saveLinks(links);
-
 
     return mapLinkDetailModelToLinkDto(composed);
   }

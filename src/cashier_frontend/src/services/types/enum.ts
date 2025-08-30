@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 export enum TEMPLATE {
-  CENTRAL = "Central"
+  CENTRAL = "Central",
 }
 
 export enum LINK_STATE {

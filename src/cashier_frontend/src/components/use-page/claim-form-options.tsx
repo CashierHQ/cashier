@@ -158,7 +158,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
     walletOption: WALLET_OPTIONS,
     title: string,
     iconOrImage?: string | JSX.Element,
-    disabled?: boolean
+    disabled?: boolean,
   ) => {
     // Get the icon from centralized function if not provided
     const finalIconOrImage = iconOrImage || getWalletIcon(walletOption);
@@ -210,7 +210,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
 
   const firstTilte = t(`claim_page.${link?.linkType}.choose_wallet.use_asset`);
   const secondTitle = t(
-    `claim_page.${link?.linkType}.choose_wallet.wallet_options`
+    `claim_page.${link?.linkType}.choose_wallet.wallet_options`,
   );
 
   return (
@@ -242,7 +242,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
         <div className="flex flex-col gap-2">
           {renderWalletButton(
             WALLET_OPTIONS.INTERNET_IDENTITY,
-            "Internet Identity"
+            "Internet Identity",
           )}
         </div>
       </div>

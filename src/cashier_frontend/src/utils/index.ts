@@ -15,17 +15,17 @@ export const safeParseJSON = (
 
 type Response<T, E> =
   | {
-    ok: T;
-  }
+      ok: T;
+    }
   | {
-    err: E;
-  }
+      err: E;
+    }
   | {
-    Ok: T;
-  }
+      Ok: T;
+    }
   | {
-    Err: E;
-  };
+      Err: E;
+    };
 
 export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
   if ("ok" in response) {
@@ -66,9 +66,7 @@ export const groupLinkListByDate = (
   linkList: LinkDetailModel[],
 ): Record<string, LinkDetailModel[]> => {
   if (linkList?.length > 0) {
-    const sortedItems = linkList.sort(
-      (a, b) => b.create_at - a.create_at,
-    );
+    const sortedItems = linkList.sort((a, b) => b.create_at - a.create_at);
     return sortedItems.reduce(
       (groups: Record<string, LinkDetailModel[]>, item: LinkDetailModel) => {
         const dateKey = new Date(item.create_at).toISOString().split("T")[0];

@@ -8,10 +8,10 @@ import { ACTION_TYPE } from "@/services/types/enum";
 import { UpdateLinkParams } from "./useLinkMutations";
 import { groupLinkListByDate } from "@/utils";
 import { LinkModel } from "@/services/types/link.service.types";
-import {
-  mapLinkDetailModelToCreateLinkInput,
-} from "@/services/types/mapper/link.service.mapper";
-import LinkLocalStorageServiceV2, { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service.v2";
+import { mapLinkDetailModelToCreateLinkInput } from "@/services/types/mapper/link.service.mapper";
+import LinkLocalStorageServiceV2, {
+  LOCAL_lINK_ID_PREFIX,
+} from "@/services/link/link-local-storage.service.v2";
 import { Identity } from "@dfinity/agent";
 import { LinkDto } from "@/generated/cashier_backend/cashier_backend.did";
 
@@ -77,7 +77,7 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
         };
 
         if (localLink) {
-          return linkModel
+          return linkModel;
         } else {
           throw new Error("Link not found in local storage");
         }

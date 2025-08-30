@@ -195,13 +195,13 @@ export class ValidationService {
     // Handle link creation fee if needed
     const assetsWithFees = includeLinkCreationFee
       ? [
-        ...assets,
-        {
-          tokenAddress: FeeHelpers.getLinkCreationFee().address,
-          amount: FeeHelpers.getLinkCreationFee().amount,
-          chain: CHAIN.IC,
-        },
-      ]
+          ...assets,
+          {
+            tokenAddress: FeeHelpers.getLinkCreationFee().address,
+            amount: FeeHelpers.getLinkCreationFee().amount,
+            chain: CHAIN.IC,
+          },
+        ]
       : assets;
 
     // Process each asset for fee calculation and balance validation

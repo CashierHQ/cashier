@@ -93,7 +93,9 @@ export class FeeService {
    * Get network fee for a specific intent
    */
   async getNetworkFee(intent: IntentModel): Promise<FeeModel | undefined> {
-    const meta = await TokenUtilService.getTokenMetadata(intent.typeDetails.asset.address);
+    const meta = await TokenUtilService.getTokenMetadata(
+      intent.typeDetails.asset.address,
+    );
     if (!meta) return undefined;
 
     return {
@@ -416,7 +418,7 @@ export class FeeService {
     return false;
   }
 
-  calculateAssetFee() { }
+  calculateAssetFee() {}
 }
 
 // Export a singleton instance for easy use across the app
