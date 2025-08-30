@@ -447,50 +447,6 @@ export const mapUserInputItemToLinkDetailModel = (
   };
 };
 
-const mapPartialLinkDtoToCreateLinkInput = (
-  dto: Partial<LinkDto>,
-): CreateLinkInput => {
-  // Build asset_info expected by CreateLinkInput
-  const assetInfo: Array<{
-    asset: Asset;
-    amount_per_link_use_action: bigint;
-    label: string;
-  }> =
-    dto.asset_info && dto.asset_info.length > 0
-      ? dto.asset_info.map((a) => ({
-          asset: a.asset,
-          amount_per_link_use_action: a.amount_per_link_use_action,
-          label: a.label,
-        }))
-      : [];
-  // Ensure exact types required by CreateLinkInput
-  const title: string =
-    dto.title && dto.title.length > 0 ? (dto.title[0] as string) : "";
-  const link_type: LinkType =
-    dto.link_type && dto.link_type.length > 0
-      ? (dto.link_type[0] as LinkType)
-      : ({ SendTip: null } as LinkType);
-  const description: [] | [string] =
-    dto.description && dto.description.length > 0
-      ? (dto.description as [string])
-      : [];
-  const template: Template =
-    dto.template && dto.template.length > 0
-      ? (dto.template[0] as Template)
-      : ({ Central: null } as Template);
-
-  return {
-    title,
-    asset_info: assetInfo,
-    link_type,
-    description,
-    link_image_url: [],
-    template,
-    link_use_action_max_count: dto.link_use_action_max_count ?? BigInt(0),
-    nft_image: [],
-  };
-};
-
 // Map front-end LinkDetailModel directly to CreateLinkInput (used when creating a link from local model)
 export const mapLinkDetailModelToCreateLinkInput = (
   model: LinkDetailModel,
