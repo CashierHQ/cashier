@@ -154,15 +154,6 @@ export enum CHAIN {
   IC = "IC",
 }
 
-export function mapStringToEnum<T extends object>(
-  enumObject: T,
-  value: string,
-): T[keyof T] | undefined {
-  return Object.values(enumObject).includes(value as T[keyof T])
-    ? (value as T[keyof T])
-    : undefined;
-}
-
 export enum TASK {
   TRANSFER_WALLET_TO_TREASURY = "transfer_wallet_to_treasury",
   TRANSFER_WALLET_TO_LINK = "transfer_wallet_to_link",

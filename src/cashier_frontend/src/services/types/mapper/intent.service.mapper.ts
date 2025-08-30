@@ -20,7 +20,7 @@ import { mapChainToChainEnum } from ".";
 import { assertNever, getKeyVariant } from ".";
 
 // Mapper for Intent type (backend -> front-end INTENT_TYPE enum)
-export const mapIntentTypeToEnum = (intentType: IntentType): INTENT_TYPE => {
+const mapIntentTypeToEnum = (intentType: IntentType): INTENT_TYPE => {
   const key = getKeyVariant(intentType);
   switch (key) {
     case "TransferFrom":
@@ -33,7 +33,7 @@ export const mapIntentTypeToEnum = (intentType: IntentType): INTENT_TYPE => {
 };
 
 // Mapper for Intent task (backend -> front-end TASK enum)
-export const mapIntentTaskToEnum = (task: IntentTask): TASK => {
+const mapIntentTaskToEnum = (task: IntentTask): TASK => {
   const key = getKeyVariant(task);
   switch (key) {
     case "TransferWalletToLink":
@@ -48,7 +48,7 @@ export const mapIntentTaskToEnum = (task: IntentTask): TASK => {
 };
 
 // Mapper for Intent state (backend -> front-end INTENT_STATE enum)
-export const mapIntentStateToEnum = (state: IntentState): INTENT_STATE => {
+const mapIntentStateToEnum = (state: IntentState): INTENT_STATE => {
   const key = getKeyVariant(state);
   switch (key) {
     case "Created":
@@ -81,7 +81,7 @@ export const mapIntentDtoToIntentModel = (dto: IntentDto): IntentModel => {
 };
 
 // Convert backend IntentType variant into a normalized IntentTypeModel
-export const mapIntentTypeDtoToModel = (
+const mapIntentTypeDtoToModel = (
   intentType: IntentType,
 ): TransferDataModel | TransferFromDataModel => {
   const key = getKeyVariant(intentType);

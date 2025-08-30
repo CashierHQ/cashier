@@ -14,10 +14,10 @@ import { fromNullable } from "@dfinity/utils";
 import { assertNever, getKeyVariant } from ".";
 
 // Back-end ActionState variant
-export type ActionState = IntentState;
+type ActionState = IntentState;
 
 // Map back-end ActionType to Front-end ACTION_TYPE enum
-export const mapActionTypeToEnum = (actionType: ActionType): ACTION_TYPE => {
+const mapActionTypeToEnum = (actionType: ActionType): ACTION_TYPE => {
   const key = getKeyVariant(actionType);
   switch (key) {
     case "Use":
@@ -32,7 +32,7 @@ export const mapActionTypeToEnum = (actionType: ActionType): ACTION_TYPE => {
 };
 
 // Map back-end ActionState to Front-end ACTION_STATE enum
-export const mapActionStateToEnum = (actionState: ActionState) => {
+const mapActionStateToEnum = (actionState: ActionState) => {
   const key = getKeyVariant(actionState);
   switch (key) {
     case "Created":
@@ -76,8 +76,8 @@ export const mapActionModel = (actionDTO: ActionDto): ActionModel => {
     ),
     icrc112Requests: fromNullable(actionDTO.icrc_112_requests)
       ? fromNullable(actionDTO.icrc_112_requests)?.map((request) => {
-          return request.map((req) => mapICRC112Request(req));
-        })
+        return request.map((req) => mapICRC112Request(req));
+      })
       : [],
   };
 };
