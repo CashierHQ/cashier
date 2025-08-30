@@ -29,7 +29,7 @@ async fn it_should_error_withdraw_link_airdrop_if_caller_anonymous() {
     let result = cashier_backend_client
         .create_action(CreateActionInput {
             link_id: link.id.clone(),
-            action_type: constant::WITHDRAW_LINK_ACTION.to_string(),
+            action_type: ActionType::Withdraw,
         })
         .await;
 
@@ -53,14 +53,13 @@ async fn it_should_error_withdraw_link_airdrop_if_caller_not_creator() {
 
     let caller = TestUser::User2.get_principal();
     let caller_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &caller).await;
-    caller_fixture.setup_user().await;
     let cashier_backend_client = caller_fixture.ctx.new_cashier_backend_client(caller);
 
     // Act
     let result = cashier_backend_client
         .create_action(CreateActionInput {
             link_id: link.id.clone(),
-            action_type: constant::WITHDRAW_LINK_ACTION.to_string(),
+            action_type: ActionType::Withdraw,
         })
         .await
         .unwrap();
@@ -91,34 +90,30 @@ async fn it_should_withdraw_link_airdrop_successfully() {
 
     // Act
     let withdraw_action = creator_fixture
-        .create_action(&link.id, constant::WITHDRAW_LINK_ACTION)
+        .create_action(&link.id, ActionType::Withdraw)
         .await;
 
     // Assert
     assert!(!withdraw_action.id.is_empty());
-    assert_eq!(withdraw_action.r#type, ActionType::Withdraw.to_string());
-    assert_eq!(withdraw_action.state, ActionState::Created.to_string());
+    assert_eq!(withdraw_action.r#type, ActionType::Withdraw);
+    assert_eq!(withdraw_action.state, ActionState::Created);
     assert_eq!(withdraw_action.intents.len(), 1);
     assert!(
         withdraw_action
             .intents
             .iter()
-            .all(|intent| { intent.state == IntentState::Created.to_string() }),
+            .all(|intent| { intent.state == IntentState::Created }),
     );
 
     // Act
     let withdraw_result = creator_fixture
-        .process_action(
-            &link.id,
-            &withdraw_action.id,
-            constant::WITHDRAW_LINK_ACTION,
-        )
+        .process_action(&link.id, &withdraw_action.id, ActionType::Withdraw)
         .await;
 
     // Assert
     assert_eq!(withdraw_result.id, withdraw_action.id);
 
-    let link_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let link_amount = link.asset_info[0].amount_per_link_use_action;
     let max_use_count = link.link_use_action_max_count;
     let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
 
@@ -150,34 +145,30 @@ async fn it_should_withdraw_link_airdrop_icrc_token_successfully() {
 
     // Act
     let withdraw_action = creator_fixture
-        .create_action(&link.id, constant::WITHDRAW_LINK_ACTION)
+        .create_action(&link.id, ActionType::Withdraw)
         .await;
 
     // Assert
     assert!(!withdraw_action.id.is_empty());
-    assert_eq!(withdraw_action.r#type, ActionType::Withdraw.to_string());
-    assert_eq!(withdraw_action.state, ActionState::Created.to_string());
+    assert_eq!(withdraw_action.r#type, ActionType::Withdraw);
+    assert_eq!(withdraw_action.state, ActionState::Created);
     assert_eq!(withdraw_action.intents.len(), 1);
     assert!(
         withdraw_action
             .intents
             .iter()
-            .all(|intent| { intent.state == IntentState::Created.to_string() }),
+            .all(|intent| { intent.state == IntentState::Created }),
     );
 
     // Act
     let withdraw_result = creator_fixture
-        .process_action(
-            &link.id,
-            &withdraw_action.id,
-            constant::WITHDRAW_LINK_ACTION,
-        )
+        .process_action(&link.id, &withdraw_action.id, ActionType::Withdraw)
         .await;
 
     // Assert
     assert_eq!(withdraw_result.id, withdraw_action.id);
 
-    let link_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let link_amount = link.asset_info[0].amount_per_link_use_action;
     let max_use_count = link.link_use_action_max_count;
 
     let ckusdc_ledger_fee = ckusdc_ledger_client.fee().await.unwrap();

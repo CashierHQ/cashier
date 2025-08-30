@@ -19,17 +19,17 @@ const getIntentTitle = (
   ) {
     return t("transaction.confirm_popup.asset_label");
   } else if (
-    actionType === ACTION_TYPE.WITHDRAW_LINK &&
+    actionType === ACTION_TYPE.WITHDRAW &&
     intent.task === TASK.TRANSFER_LINK_TO_WALLET
   ) {
     return t("transaction.confirm_popup.asset_withdraw_label");
   } else if (
-    actionType === ACTION_TYPE.USE_LINK &&
+    actionType === ACTION_TYPE.USE &&
     intent.task === TASK.TRANSFER_LINK_TO_WALLET
   ) {
     return t("transaction.confirm_popup.asset_claim_label");
   } else if (
-    actionType === ACTION_TYPE.USE_LINK &&
+    actionType === ACTION_TYPE.USE &&
     intent.task === TASK.TRANSFER_WALLET_TO_LINK
   ) {
     return t("transaction.confirm_popup.asset_payment_label");
@@ -47,9 +47,9 @@ export const useIntentMetadata = (
   const { t } = useTranslation();
 
   // Get token data directly from
-  const token = getToken(intent.asset.address);
+  const token = getToken(intent.typeDetails.asset.address);
 
-  const feeToken = getToken(intent.asset.address);
+  const feeToken = getToken(intent.typeDetails.asset.address);
 
   const [assetAmount, setAssetAmount] = useState<number>();
   const [feeAmount, setFeeAmount] = useState<number>();
@@ -57,7 +57,7 @@ export const useIntentMetadata = (
   useEffect(() => {
     if (token && token.decimals !== undefined) {
       // Calculate amounts using token data
-      const rawAmount = intent.amount;
+      const rawAmount = intent.typeDetails.amount;
       setAssetAmount(Number(rawAmount) / 10 ** token.decimals);
 
       // Handle fee if present
@@ -65,7 +65,7 @@ export const useIntentMetadata = (
         setFeeAmount(Number(token.fee) / 10 ** token.decimals);
       }
     }
-  }, [token, intent.amount]);
+  }, [token, intent.typeDetails.amount]);
 
   return {
     assetAmount,

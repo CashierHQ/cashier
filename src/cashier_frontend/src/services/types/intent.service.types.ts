@@ -19,11 +19,27 @@ export type IntentModel = {
   chain: CHAIN;
   state: INTENT_STATE;
   type: INTENT_TYPE;
-  from: WalletModel;
+  typeDetails: TransferDataModel | TransferFromDataModel;
+};
+
+// Front-end friendly representations of backend Intent transfer payloads
+export type TransferDataModel = {
   to: WalletModel;
   asset: AssetModel;
+  from: WalletModel;
   amount: bigint;
-  createdAt: Date;
+};
+
+export type TransferFromDataModel = {
+  to: WalletModel;
+  asset: AssetModel;
+  from: WalletModel;
+  // optional actual amount after fees
+  actual_amount?: bigint;
+  amount: bigint;
+  // optional approve amount used for ERC20-style transferFrom flows
+  approve_amount?: bigint;
+  spender?: WalletModel;
 };
 
 type TransactionModel = {

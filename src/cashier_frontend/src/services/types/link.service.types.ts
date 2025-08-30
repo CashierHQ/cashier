@@ -3,7 +3,7 @@
 
 import { IntentCreateModel } from "./intent.service.types";
 import { ActionModel } from "./action.service.types";
-import { ACTION_TYPE, CHAIN, LINK_INTENT_ASSET_LABEL } from "./enum";
+import { ACTION_TYPE, CHAIN, LINK_STATE, LINK_TYPE } from "./enum";
 
 export enum Chain {
   IC = "IC",
@@ -12,8 +12,8 @@ export enum Chain {
 export type AssetInfoModel = {
   address: string;
   amountPerUse: bigint;
-  label?: LINK_INTENT_ASSET_LABEL | string;
-  chain?: CHAIN;
+  label: string;
+  chain: CHAIN;
 };
 
 export type LinkDetailModel = {
@@ -21,11 +21,11 @@ export type LinkDetailModel = {
   title: string;
   description: string;
   image: string;
-  linkType?: string;
-  state?: string;
+  linkType?: LINK_TYPE;
+  state?: LINK_STATE;
   template?: string;
   creator?: string;
-  create_at: Date;
+  create_at: number;
   asset_info: AssetInfoModel[];
   maxActionNumber: bigint;
   useActionCounter: bigint;
@@ -51,6 +51,6 @@ export type LinkUpdateUserStateInputModel = {
 };
 
 export type LinkGetUserStateOutputModel = {
-  action: ActionModel | undefined;
-  link_user_state: string | undefined;
+  action?: ActionModel;
+  link_user_state?: string;
 };

@@ -6,9 +6,9 @@ use crate::utils::{
 use candid::Principal;
 use cashier_backend_types::{
     constant,
-    dto::link::UpdateLinkInput,
+    dto::link::{LinkStateMachineGoto, UpdateLinkInput},
     repository::{
-        action::v1::ActionState,
+        action::v1::{ActionState, ActionType},
         intent::v2::IntentState,
         link::v1::{LinkState, LinkType},
     },
@@ -81,12 +81,6 @@ async fn it_should_create_link_airdrop_icp_token_successfully() {
     let caller_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
     assert_eq!(caller_balance_before, initial_balance);
 
-    // Act
-    let user = test_fixture.setup_user().await;
-
-    // Assert
-    assert!(!user.id.is_empty());
-
     // Arrange
     let link_input = test_fixture
         .airdrop_link_input(
@@ -101,41 +95,40 @@ async fn it_should_create_link_airdrop_icp_token_successfully() {
 
     // Assert
     assert!(!link.id.is_empty());
-    assert_eq!(link.link_type, Some(LinkType::SendAirdrop.to_string()));
-    assert!(link.asset_info.is_some());
-    assert_eq!(link.asset_info.as_ref().unwrap().len(), 1);
+    assert_eq!(link.link_type, Some(LinkType::SendAirdrop));
+    assert_eq!(link.asset_info.len(), 1);
     assert_eq!(
-        link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action,
+        link.asset_info[0].amount_per_link_use_action,
         airdrop_amount
     );
     assert_eq!(link.link_use_action_max_count, max_use_count);
 
     // Act
     let create_action = test_fixture
-        .create_action(&link.id, constant::CREATE_LINK_ACTION)
+        .create_action(&link.id, ActionType::CreateLink)
         .await;
 
     // Assert
     assert!(!create_action.id.is_empty());
-    assert_eq!(create_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(create_action.state, ActionState::Created.to_string());
+    assert_eq!(create_action.r#type, ActionType::CreateLink);
+    assert_eq!(create_action.state, ActionState::Created);
     assert_eq!(create_action.intents.len(), 2);
     assert!(
         create_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Created.to_string())
+            .all(|intent| intent.state == IntentState::Created)
     );
 
     // Act
     let processing_action = test_fixture
-        .process_action(&link.id, &create_action.id, constant::CREATE_LINK_ACTION)
+        .process_action(&link.id, &create_action.id, ActionType::CreateLink)
         .await;
 
     // Assert
     assert!(!processing_action.id.is_empty());
-    assert_eq!(processing_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(processing_action.state, ActionState::Processing.to_string());
+    assert_eq!(processing_action.r#type, ActionType::CreateLink);
+    assert_eq!(processing_action.state, ActionState::Processing);
     assert!(processing_action.icrc_112_requests.is_some());
     assert_eq!(
         processing_action.icrc_112_requests.as_ref().unwrap().len(),
@@ -146,7 +139,7 @@ async fn it_should_create_link_airdrop_icp_token_successfully() {
         processing_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Processing.to_string())
+            .all(|intent| intent.state == IntentState::Processing)
     );
 
     // Arrange
@@ -165,25 +158,25 @@ async fn it_should_create_link_airdrop_icp_token_successfully() {
 
     // Assert
     assert!(!update_action.id.is_empty());
-    assert_eq!(update_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(update_action.state, ActionState::Success.to_string());
+    assert_eq!(update_action.r#type, ActionType::CreateLink);
+    assert_eq!(update_action.state, ActionState::Success);
     assert!(
         update_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Success.to_string())
+            .all(|intent| intent.state == IntentState::Success)
     );
 
     // Act
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
-        action: constant::CONTINUE_ACTION.to_string(),
+        goto: LinkStateMachineGoto::Continue,
         params: None,
     };
     let update_link = test_fixture.update_link(update_link_input).await;
 
     // Assert
-    assert_eq!(update_link.state, LinkState::Active.to_string());
+    assert_eq!(update_link.state, LinkState::Active);
 
     let link_account = link_id_to_account(&ctx, &link.id);
     let caller_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
@@ -247,12 +240,6 @@ async fn it_should_create_link_airdrop_icrc_token_successfully() {
     let icp_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
     assert_eq!(icp_balance_before, initial_balance);
 
-    // Act
-    let user = test_fixture.setup_user().await;
-
-    // Assert
-    assert!(!user.id.is_empty());
-
     // Arrange
     let link_input = test_fixture
         .airdrop_link_input(
@@ -267,41 +254,40 @@ async fn it_should_create_link_airdrop_icrc_token_successfully() {
 
     // Assert
     assert!(!link.id.is_empty());
-    assert_eq!(link.link_type, Some(LinkType::SendAirdrop.to_string()));
-    assert!(link.asset_info.is_some());
-    assert_eq!(link.asset_info.as_ref().unwrap().len(), 1);
+    assert_eq!(link.link_type, Some(LinkType::SendAirdrop));
+    assert_eq!(link.asset_info.len(), 1);
     assert_eq!(
-        link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action,
+        link.asset_info[0].amount_per_link_use_action,
         airdrop_amount
     );
     assert_eq!(link.link_use_action_max_count, max_use_count);
 
     // Act
     let create_action = test_fixture
-        .create_action(&link.id, constant::CREATE_LINK_ACTION)
+        .create_action(&link.id, ActionType::CreateLink)
         .await;
 
     // Assert
     assert!(!create_action.id.is_empty());
-    assert_eq!(create_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(create_action.state, ActionState::Created.to_string());
+    assert_eq!(create_action.r#type, ActionType::CreateLink);
+    assert_eq!(create_action.state, ActionState::Created);
     assert_eq!(create_action.intents.len(), 2);
     assert!(
         create_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Created.to_string())
+            .all(|intent| intent.state == IntentState::Created)
     );
 
     // Act
     let processing_action = test_fixture
-        .process_action(&link.id, &create_action.id, constant::CREATE_LINK_ACTION)
+        .process_action(&link.id, &create_action.id, ActionType::CreateLink)
         .await;
 
     // Assert
     assert!(!processing_action.id.is_empty());
-    assert_eq!(processing_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(processing_action.state, ActionState::Processing.to_string());
+    assert_eq!(processing_action.r#type, ActionType::CreateLink);
+    assert_eq!(processing_action.state, ActionState::Processing);
     assert!(processing_action.icrc_112_requests.is_some());
     assert_eq!(
         processing_action.icrc_112_requests.as_ref().unwrap().len(),
@@ -312,7 +298,7 @@ async fn it_should_create_link_airdrop_icrc_token_successfully() {
         processing_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Processing.to_string())
+            .all(|intent| intent.state == IntentState::Processing)
     );
 
     // Arrange
@@ -331,25 +317,25 @@ async fn it_should_create_link_airdrop_icrc_token_successfully() {
 
     // Assert
     assert!(!update_action.id.is_empty());
-    assert_eq!(update_action.r#type, constant::CREATE_LINK_ACTION);
-    assert_eq!(update_action.state, ActionState::Success.to_string());
+    assert_eq!(update_action.r#type, ActionType::CreateLink);
+    assert_eq!(update_action.state, ActionState::Success);
     assert!(
         update_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Success.to_string())
+            .all(|intent| intent.state == IntentState::Success)
     );
 
     // Act
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
-        action: constant::CONTINUE_ACTION.to_string(),
+        goto: LinkStateMachineGoto::Continue,
         params: None,
     };
     let update_link = test_fixture.update_link(update_link_input).await;
 
     // Assert
-    assert_eq!(update_link.state, LinkState::Active.to_string());
+    assert_eq!(update_link.state, LinkState::Active);
 
     let link_account = link_id_to_account(&ctx, &link.id);
     let caller_balance_after = ckusdc_ledger_client

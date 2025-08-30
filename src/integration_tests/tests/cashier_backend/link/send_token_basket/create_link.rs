@@ -2,6 +2,7 @@ use crate::cashier_backend::link::fixture::LinkTestFixture;
 use crate::utils::link_id_to_account::link_id_to_account;
 use crate::utils::{PocketIcTestContextBuilder, icrc_112, principal::TestUser};
 use candid::Principal;
+use cashier_backend_types::dto::link::LinkStateMachineGoto;
 use cashier_backend_types::{
     constant,
     dto::link::UpdateLinkInput,
@@ -74,7 +75,6 @@ async fn it_should_create_link_token_basket_successfully() {
 
     let caller = TestUser::User1.get_principal();
     let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
-    test_fixture.setup_user().await;
 
     let icp_ledger_client = ctx.new_icp_ledger_client(caller);
     let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);
@@ -131,30 +131,29 @@ async fn it_should_create_link_token_basket_successfully() {
 
     // Assert
     assert!(!link.id.is_empty());
-    assert_eq!(link.link_type, Some(LinkType::SendTokenBasket.to_string()));
-    assert!(link.asset_info.is_some());
-    assert_eq!(link.asset_info.as_ref().unwrap().len(), 3);
+    assert_eq!(link.link_type, Some(LinkType::SendTokenBasket));
+    assert_eq!(link.asset_info.len(), 3);
 
     // Act
     let create_action = test_fixture
-        .create_action(&link.id, constant::CREATE_LINK_ACTION)
+        .create_action(&link.id, ActionType::CreateLink)
         .await;
 
     // Assert
     assert!(!create_action.id.is_empty());
-    assert_eq!(create_action.r#type, ActionType::CreateLink.to_string());
-    assert_eq!(create_action.state, ActionState::Created.to_string());
+    assert_eq!(create_action.r#type, ActionType::CreateLink);
+    assert_eq!(create_action.state, ActionState::Created);
     assert_eq!(create_action.intents.len(), 4);
 
     // Act
     let processing_action = test_fixture
-        .process_action(&link.id, &create_action.id, constant::CREATE_LINK_ACTION)
+        .process_action(&link.id, &create_action.id, ActionType::CreateLink)
         .await;
 
     // Assert
     assert_eq!(processing_action.id, create_action.id);
-    assert_eq!(processing_action.r#type, ActionType::CreateLink.to_string());
-    assert_eq!(processing_action.state, ActionState::Processing.to_string());
+    assert_eq!(processing_action.r#type, ActionType::CreateLink);
+    assert_eq!(processing_action.state, ActionState::Processing);
     assert!(processing_action.icrc_112_requests.is_some());
     assert_eq!(
         processing_action.icrc_112_requests.as_ref().unwrap().len(),
@@ -188,25 +187,25 @@ async fn it_should_create_link_token_basket_successfully() {
 
     // Assert
     assert_eq!(update_action.id, processing_action.id);
-    assert_eq!(update_action.r#type, ActionType::CreateLink.to_string());
-    assert_eq!(update_action.state, ActionState::Success.to_string());
+    assert_eq!(update_action.r#type, ActionType::CreateLink);
+    assert_eq!(update_action.state, ActionState::Success);
     assert!(
         update_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Success.to_string())
+            .all(|intent| intent.state == IntentState::Success)
     );
 
     // Act
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
-        action: constant::CONTINUE_ACTION.to_string(),
+        goto: LinkStateMachineGoto::Continue,
         params: None,
     };
     let update_link = test_fixture.update_link(update_link_input).await;
 
     // Assert
-    assert_eq!(update_link.state, LinkState::Active.to_string());
+    assert_eq!(update_link.state, LinkState::Active);
 
     let icp_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
     let ckbtc_balance_after = ckbtc_ledger_client

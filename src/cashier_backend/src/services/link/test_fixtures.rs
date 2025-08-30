@@ -12,9 +12,8 @@ use cashier_backend_types::repository::{
     link::v1::{Link, LinkState, LinkType},
     link_action::v1::LinkAction,
     user_link::v1::UserLink,
-    user_wallet::v1::UserWallet,
 };
-use std::{collections::HashSet, str::FromStr};
+use std::collections::HashSet;
 
 /// Creates a link fixture for testing purposes.
 /// This function initializes a link with a random ID, sets its state, and associates it with a creator ID.
@@ -22,7 +21,7 @@ use std::{collections::HashSet, str::FromStr};
 /// Returns the created link.
 pub fn create_link_fixture(
     service: &mut LinkService<MockIcEnvironment, TestRepositories>,
-    creator_id: &str,
+    creator_id: Principal,
 ) -> Link {
     let link_id = random_id_string();
     let link = Link {
@@ -31,40 +30,22 @@ pub fn create_link_fixture(
         title: Some("Test Link".to_string()),
         description: Some("This is a test link".to_string()),
         link_type: Some(LinkType::SendTip),
-        asset_info: None,
+        asset_info: vec![],
         template: None,
-        creator: creator_id.to_string(),
+        creator: creator_id,
         create_at: 1622547800,
-        metadata: None,
+        metadata: Default::default(),
         link_use_action_counter: 0,
         link_use_action_max_count: 10,
     };
     service.link_repository.create(link.clone());
 
     let user_link = UserLink {
-        user_id: creator_id.to_string(),
+        user_id: creator_id,
         link_id: link.id.clone(),
     };
     service.user_link_repository.create(user_link);
     link
-}
-
-/// Creates a principal fixture for testing purposes.
-/// This function initializes a principal with a given ID and associates it with a user wallet.
-/// Returns the created principal.
-pub fn create_principal_fixture(
-    service: &mut LinkService<MockIcEnvironment, TestRepositories>,
-    principal_id: &str,
-) -> Principal {
-    let principal = Principal::from_text(principal_id).unwrap();
-
-    service.user_wallet_repository.create(
-        principal_id.to_string(),
-        UserWallet {
-            user_id: principal_id.to_string(),
-        },
-    );
-    principal
 }
 
 /// Creates a link action fixture for testing purposes.
@@ -74,45 +55,28 @@ pub fn create_principal_fixture(
 pub fn create_link_action_fixture(
     service: &mut LinkService<MockIcEnvironment, TestRepositories>,
     link_id: &str,
-    action_type: &str,
-    user_id: &str,
+    action_type: ActionType,
+    user_id: Principal,
 ) -> LinkAction {
     let action_id = random_id_string();
     let link_action = LinkAction {
         link_id: link_id.to_string(),
         action_id,
-        action_type: action_type.to_string(),
-        user_id: user_id.to_string(),
+        action_type: action_type.clone(),
+        user_id,
         link_user_state: None,
     };
     service.link_action_repository.create(link_action.clone());
 
     let action = Action {
         id: link_action.action_id.clone(),
-        r#type: ActionType::from_str(action_type).unwrap(),
+        r#type: action_type,
         state: ActionState::Created,
-        creator: user_id.to_string(),
+        creator: user_id,
         link_id: link_id.to_string(),
     };
     service.action_repository.create(action);
     link_action
-}
-
-/// Creates a user wallet fixture for testing purposes.
-/// This function initializes a user wallet with a given wallet key and associates it with a user ID
-/// Returns the created user wallet.
-pub fn create_user_wallet_fixture(
-    service: &mut LinkService<MockIcEnvironment, TestRepositories>,
-    wallet_key: &str,
-    user_id: &str,
-) -> UserWallet {
-    let user_wallet = UserWallet {
-        user_id: user_id.to_string(),
-    };
-    service
-        .user_wallet_repository
-        .create(wallet_key.to_string(), user_wallet.clone());
-    user_wallet
 }
 
 /// Creates a whitelist of properties for testing purposes.

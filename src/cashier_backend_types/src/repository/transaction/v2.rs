@@ -1,20 +1,19 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::Nat;
+use candid::{CandidType, Nat};
 use cashier_macros::storable;
+use derive_more::Display;
 use icrc_ledger_types::{
     icrc1::{
-        account::{Account, ICRC1TextReprError},
+        account::Account,
         transfer::{Memo, TransferArg},
     },
     icrc2::transfer_from::TransferFromArgs,
 };
 use serde::{Deserialize, Serialize};
-use std::fmt;
-use std::str::FromStr;
 
-use crate::repository::common::{Asset, Chain, Wallet};
+use crate::repository::common::{Asset, Wallet};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[storable]
@@ -42,15 +41,7 @@ impl Transaction {
         }
     }
 
-    pub fn get_tx_type(&self) -> String {
-        match &self.protocol {
-            Protocol::IC(IcTransaction::Icrc1Transfer(_)) => "Icrc1Transfer".to_string(),
-            Protocol::IC(IcTransaction::Icrc2Approve(_)) => "Icrc2Approve".to_string(),
-            Protocol::IC(IcTransaction::Icrc2TransferFrom(_)) => "Icrc2TransferFrom".to_string(),
-        }
-    }
-
-    pub fn try_get_from_account(&self) -> Result<Account, ICRC1TextReprError> {
+    pub fn get_from_account(&self) -> Account {
         match &self.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
                 icrc1_transfer.from.clone().get_account()
@@ -67,22 +58,13 @@ impl Transaction {
     pub fn set_from(&mut self, from_account: Account) {
         match &mut self.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
-                icrc1_transfer.from = Wallet {
-                    address: from_account.to_string(),
-                    chain: Chain::IC,
-                }
+                icrc1_transfer.from = from_account.into()
             }
             Protocol::IC(IcTransaction::Icrc2Approve(icrc2_approve)) => {
-                icrc2_approve.from = Wallet {
-                    address: from_account.to_string(),
-                    chain: Chain::IC,
-                }
+                icrc2_approve.from = from_account.into()
             }
             Protocol::IC(IcTransaction::Icrc2TransferFrom(icrc2_transfer_from)) => {
-                icrc2_transfer_from.from = Wallet {
-                    address: from_account.to_string(),
-                    chain: Chain::IC,
-                }
+                icrc2_transfer_from.from = from_account.into()
             }
         }
     }
@@ -90,23 +72,17 @@ impl Transaction {
     pub fn set_to(&mut self, to_account: Account) {
         match &mut self.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => {
-                icrc1_transfer.to = Wallet {
-                    address: to_account.to_string(),
-                    chain: Chain::IC,
-                }
+                icrc1_transfer.to = to_account.into()
             }
             Protocol::IC(IcTransaction::Icrc2TransferFrom(icrc2_transfer_from)) => {
-                icrc2_transfer_from.to = Wallet {
-                    address: to_account.to_string(),
-                    chain: Chain::IC,
-                }
+                icrc2_transfer_from.to = to_account.into()
             }
             _ => {}
         }
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
 pub enum Protocol {
     IC(IcTransaction),
 }
@@ -120,7 +96,7 @@ impl Protocol {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
 pub enum IcTransaction {
     Icrc1Transfer(Icrc1Transfer),
     Icrc2Approve(Icrc2Approve),
@@ -148,17 +124,9 @@ impl IcTransaction {
             _ => None,
         }
     }
-
-    pub fn to_str(&self) -> &str {
-        match self {
-            IcTransaction::Icrc1Transfer(_) => "Icrc1Transfer",
-            IcTransaction::Icrc2Approve(_) => "Icrc2Approve",
-            IcTransaction::Icrc2TransferFrom(_) => "Icrc2TransferFrom",
-        }
-    }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
 pub struct Icrc1Transfer {
     pub from: Wallet,
     pub to: Wallet,
@@ -172,15 +140,9 @@ impl TryFrom<Icrc1Transfer> for TransferArg {
     type Error = String;
 
     fn try_from(value: Icrc1Transfer) -> Result<Self, Self::Error> {
-        let from = value
-            .from
-            .get_account()
-            .map_err(|e| format!("Failed to parse from account: {e}"))?;
+        let from = value.from.get_account();
 
-        let to = value
-            .to
-            .get_account()
-            .map_err(|e| format!("Failed to parse to account: {e}"))?;
+        let to = value.to.get_account();
 
         let amount = value.amount;
         let memo = value.memo;
@@ -196,7 +158,7 @@ impl TryFrom<Icrc1Transfer> for TransferArg {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
 pub struct Icrc2Approve {
     pub from: Wallet,
     pub spender: Wallet,
@@ -205,7 +167,7 @@ pub struct Icrc2Approve {
     pub memo: Option<Memo>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
 pub struct Icrc2TransferFrom {
     pub from: Wallet,
     pub to: Wallet,
@@ -220,20 +182,11 @@ impl TryFrom<Icrc2TransferFrom> for TransferFromArgs {
     type Error = String;
 
     fn try_from(value: Icrc2TransferFrom) -> Result<Self, Self::Error> {
-        let spender_account = value
-            .spender
-            .get_account()
-            .map_err(|e| format!("Failed to parse spender account: {e}"))?;
+        let spender_account = value.spender.get_account();
 
-        let from = value
-            .from
-            .get_account()
-            .map_err(|e| format!("Failed to parse from account: {e}"))?;
+        let from = value.from.get_account();
 
-        let to = value
-            .to
-            .get_account()
-            .map_err(|e| format!("Failed to parse to account: {e}"))?;
+        let to = value.to.get_account();
 
         let amount = value.amount;
         let memo = value.memo;
@@ -250,110 +203,23 @@ impl TryFrom<Icrc2TransferFrom> for TransferFromArgs {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, CandidType, Eq, Display)]
 pub enum FromCallType {
     Canister,
     Wallet,
 }
 
-impl FromCallType {
-    pub fn to_str(&self) -> &str {
-        match self {
-            FromCallType::Canister => "Canister",
-            FromCallType::Wallet => "Wallet",
-        }
-    }
-}
-
-impl fmt::Display for FromCallType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str())
-    }
-}
-
-impl FromStr for FromCallType {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<FromCallType, Self::Err> {
-        match input {
-            "Canister" => Ok(FromCallType::Canister),
-            "Wallet" => Ok(FromCallType::Wallet),
-            _ => Err(()),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, CandidType, Eq, Display)]
 pub enum TransactionProtocol {
     Irrc1Transfer,
     Icrc2Approve,
     Icrc2TransferFrom,
 }
 
-impl TransactionProtocol {
-    pub fn to_str(&self) -> &str {
-        match self {
-            TransactionProtocol::Irrc1Transfer => "Irrc1Transfer",
-            TransactionProtocol::Icrc2Approve => "Icrc2Approve",
-            TransactionProtocol::Icrc2TransferFrom => "Icrc2TransferFrom",
-        }
-    }
-}
-
-impl fmt::Display for TransactionProtocol {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str())
-    }
-}
-
-impl FromStr for TransactionProtocol {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<TransactionProtocol, Self::Err> {
-        match input {
-            "Irrc1Transfer" => Ok(TransactionProtocol::Irrc1Transfer),
-            "Icrc2Approve" => Ok(TransactionProtocol::Icrc2Approve),
-            "Icrc2TransferFrom" => Ok(TransactionProtocol::Icrc2TransferFrom),
-            _ => Err(()),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, CandidType, Eq, Display)]
 pub enum TransactionState {
     Created,
     Processing,
     Success,
     Fail,
-}
-
-impl TransactionState {
-    pub fn to_str(&self) -> &str {
-        match self {
-            TransactionState::Created => "Transaction_state_created",
-            TransactionState::Processing => "Transaction_state_processing",
-            TransactionState::Success => "Transaction_state_success",
-            TransactionState::Fail => "Transaction_state_fail",
-        }
-    }
-}
-
-impl fmt::Display for TransactionState {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str())
-    }
-}
-
-impl FromStr for TransactionState {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<TransactionState, Self::Err> {
-        match input {
-            "Transaction_state_created" => Ok(TransactionState::Created),
-            "Transaction_state_processing" => Ok(TransactionState::Processing),
-            "Transaction_state_success" => Ok(TransactionState::Success),
-            "Transaction_state_fail" => Ok(TransactionState::Fail),
-            _ => Err(()),
-        }
-    }
 }
