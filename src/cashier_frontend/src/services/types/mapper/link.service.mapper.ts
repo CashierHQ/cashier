@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { convertNanoSecondsToDate } from "@/utils";
+// (convertNanoSecondsToDate not used here after switching to numeric create_at)
 import {
   Asset,
   AssetInfoDto,
@@ -271,8 +271,8 @@ const mapDtoToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
     template: linkTemplate ? mapTemplateToEnum(linkTemplate) : undefined,
     creator: link.creator.toString(),
     create_at: link.create_at
-      ? convertNanoSecondsToDate(link.create_at)
-      : new Date("2000-10-01"),
+      ? Number(link.create_at / 1000000n)
+      : new Date("2000-10-01").getTime(),
     asset_info: link.asset_info.map(a => {
       return mapAssetInfoToFrontendAssetInfo(a);
     }),
@@ -316,7 +316,7 @@ export const mapPartialDtoToLinkDetailModel = (
     state,
     template,
     creator,
-    create_at: link.create_at ? convertNanoSecondsToDate(link.create_at) : new Date("2000-10-01"),
+    create_at: link.create_at ? Number(link.create_at / 1000000n) : new Date("2000-10-01").getTime(),
     asset_info: asset_info,
     maxActionNumber: link.link_use_action_max_count ?? BigInt(0),
     useActionCounter: link.link_use_action_counter ?? BigInt(0),
@@ -327,20 +327,15 @@ export const mapPartialDtoToLinkDetailModel = (
 
 // This method mapping LinkDetailModel to LinkDto - using for frontend state machine
 export const mapLinkDetailModelToLinkDto = (
-  model: {
-    id: string;
-    title: string;
-    description: string;
-    image: string;
-    linkType: LINK_TYPE;
-    state: LINK_STATE;
-    creator: string;
-    create_at: Date;
-    asset_info: AssetInfoModel[];
-    maxActionNumber: bigint;
-    useActionCounter: bigint;
-  },
+  model: LinkDetailModel,
 ): LinkDto => {
+  if (!model.state) {
+    throw new Error("Link state is undefined");
+  }
+  if (!model.creator) {
+    throw new Error("Link creator is undefined");
+  }
+
   const linkDto: LinkDto = {
     id: model.id,
     state: mapFrontendLinkStateToLinkState(model.state),
@@ -351,8 +346,8 @@ export const mapLinkDetailModelToLinkDto = (
     template: toNullable(mapFrontendTemplateToTemplate(TEMPLATE.CENTRAL)),
     creator: Principal.fromText(model.creator),
     create_at: model.create_at
-      ? BigInt(model.create_at.getTime() * 1_000_000)
-      : BigInt(0), // Convert Date to nanoseconds
+      ? (BigInt(model.create_at) * 1000000n)
+      : BigInt(0),
     metadata: [],
     link_use_action_counter: model.useActionCounter || BigInt(0),
     link_use_action_max_count: model.maxActionNumber || BigInt(0),
@@ -395,7 +390,7 @@ export const mapUserInputItemToLinkDetailModel = (
   image: string;
   linkType: LINK_TYPE;
   state: LINK_STATE;
-  create_at: Date;
+  create_at: number;
   asset_info: AssetInfoModel[];
   maxActionNumber: bigint;
   useActionCounter: bigint;
@@ -419,7 +414,7 @@ export const mapUserInputItemToLinkDetailModel = (
     asset_info: assets,
     maxActionNumber: model.maxActionNumber || BigInt(0),
     useActionCounter: BigInt(0), // Default to 0 for new links
-    create_at: new Date(), // Default to current date for new links
+    create_at: Date.now(), // Default to current date (ms) for new links
   };
 };
 

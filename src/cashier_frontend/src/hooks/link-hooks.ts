@@ -13,6 +13,7 @@ import {
 } from "@/services/types/mapper/link.service.mapper";
 import LinkLocalStorageServiceV2, { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service.v2";
 import { Identity } from "@dfinity/agent";
+import { LinkDto } from "@/generated/cashier_backend/cashier_backend.did";
 
 // Centralized query keys for consistent caching
 const LINK_QUERY_KEYS = {
@@ -109,7 +110,7 @@ export function useUpdateLinkMutation() {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async (data: UpdateLinkParams) => {
+    mutationFn: async (data: UpdateLinkParams): Promise<LinkDto> => {
       if (!identity) throw new Error("Identity is required");
       const linkService = new LinkService(identity);
       const linkLocalStorageService = new LinkLocalStorageServiceV2(
@@ -124,7 +125,6 @@ export function useUpdateLinkMutation() {
           data.isContinue,
           identity.getPrincipal().toString(),
         );
-
 
         return Promise.resolve(localStorageLink);
       } else {

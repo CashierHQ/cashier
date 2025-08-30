@@ -15,17 +15,17 @@ export const safeParseJSON = (
 
 type Response<T, E> =
   | {
-      ok: T;
-    }
+    ok: T;
+  }
   | {
-      err: E;
-    }
+    err: E;
+  }
   | {
-      Ok: T;
-    }
+    Ok: T;
+  }
   | {
-      Err: E;
-    };
+    Err: E;
+  };
 
 export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
   if ("ok" in response) {
@@ -53,7 +53,8 @@ export const convertNanoSecondsToDate = (nanoSeconds: bigint): Date => {
   let result = new Date();
   try {
     const parseValue = Number(nanoSeconds);
-    result = new Date(parseValue / 1000000);
+    // candid uses nat64 nanoseconds; convert to milliseconds
+    result = new Date(Math.floor(parseValue / 1000000));
   } catch (error) {
     console.log(error);
   } finally {
@@ -66,11 +67,11 @@ export const groupLinkListByDate = (
 ): Record<string, LinkDetailModel[]> => {
   if (linkList?.length > 0) {
     const sortedItems = linkList.sort(
-      (a, b) => b.create_at.getTime() - a.create_at.getTime(),
+      (a, b) => b.create_at - a.create_at,
     );
     return sortedItems.reduce(
       (groups: Record<string, LinkDetailModel[]>, item: LinkDetailModel) => {
-        const dateKey = item.create_at.toISOString().split("T")[0];
+        const dateKey = new Date(item.create_at).toISOString().split("T")[0];
         if (!groups[dateKey]) {
           groups[dateKey] = [];
         }
@@ -79,9 +80,8 @@ export const groupLinkListByDate = (
       },
       {},
     );
-  } else {
-    return {};
   }
+  return {};
 };
 
 export const formatDateString = (dateString: string): string => {

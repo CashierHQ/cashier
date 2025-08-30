@@ -25,7 +25,7 @@ export type LinkDetailModel = {
   state?: LINK_STATE;
   template?: string;
   creator?: string;
-  create_at: Date;
+  create_at: number;
   asset_info: AssetInfoModel[];
   maxActionNumber: bigint;
   useActionCounter: bigint;
