@@ -38,9 +38,9 @@ pub fn random_id_string() -> String {
 }
 
 /// Generate a random principal ID.
-pub fn random_principal_id() -> String {
+pub fn random_principal_id() -> Principal {
     let mut rng = thread_rng();
     let mut arr = [0u8; 29];
     rng.fill_bytes(&mut arr);
-    Principal::from_slice(&arr).to_text()
+    Principal::from_slice(&arr)
 }

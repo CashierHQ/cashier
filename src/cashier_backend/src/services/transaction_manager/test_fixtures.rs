@@ -6,7 +6,7 @@ use crate::{
     services::transaction_manager::{service::TransactionManagerService, traits::ActionCreator},
     utils::test_utils::{random_id_string, random_principal_id, runtime::MockIcEnvironment},
 };
-use candid::Nat;
+use candid::{Nat, Principal};
 use cashier_backend_types::{
     dto::action::ActionDto,
     repository::{
@@ -72,7 +72,9 @@ pub fn create_action_with_intents_fixture(
                 r#type: IntentType::Transfer(TransferData {
                     from: Wallet::default(),
                     to: Wallet::default(),
-                    asset: Asset::default(),
+                    asset: Asset::IC {
+                        address: Principal::anonymous(),
+                    },
                     amount: Nat::from(1000u64),
                 }),
                 label: "Test Intent".to_string(),
@@ -87,7 +89,9 @@ pub fn create_action_with_intents_fixture(
                 r#type: IntentType::Transfer(TransferData {
                     from: Wallet::default(),
                     to: Wallet::default(),
-                    asset: Asset::default(),
+                    asset: Asset::IC {
+                        address: Principal::anonymous(),
+                    },
                     amount: Nat::from(1000u64),
                 }),
                 label: "Test Intent with Dependency".to_string(),
@@ -114,7 +118,9 @@ pub fn create_transaction_fixture(
         protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
             from: Wallet::default(),
             to: Wallet::default(),
-            asset: Asset::default(),
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount: Nat::from(1000u64),
             ts: None,
             memo: None,
@@ -144,8 +150,8 @@ pub fn create_action_data_fixture(
     let link_action = LinkAction {
         link_id: link_id.clone(),
         action_id: action_id.clone(),
-        action_type: ActionType::CreateLink.to_string(),
-        user_id: user_id.clone(),
+        action_type: ActionType::CreateLink,
+        user_id,
         link_user_state: None,
     };
 
@@ -153,7 +159,7 @@ pub fn create_action_data_fixture(
         id: action_id,
         r#type: ActionType::CreateLink,
         state: ActionState::Created,
-        creator: user_id.clone(),
+        creator: user_id,
         link_id,
     };
     let intents = vec![Intent {
@@ -161,7 +167,9 @@ pub fn create_action_data_fixture(
         r#type: IntentType::Transfer(TransferData {
             from: Wallet::default(),
             to: Wallet::default(),
-            asset: Asset::default(),
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount: Nat::from(1000u64),
         }),
         state: IntentState::Created,
@@ -179,7 +187,9 @@ pub fn create_action_data_fixture(
         protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
             from: Wallet::default(),
             to: Wallet::default(),
-            asset: Asset::default(),
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount: Nat::from(1000u64),
             ts: None,
             memo: None,
@@ -197,7 +207,9 @@ pub fn create_action_data_fixture(
         protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
             from: Wallet::default(),
             to: Wallet::default(),
-            asset: Asset::default(),
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount: Nat::from(1000u64),
             ts: None,
             memo: None,
@@ -215,7 +227,9 @@ pub fn create_action_data_fixture(
         protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
             from: Wallet::default(),
             to: Wallet::default(),
-            asset: Asset::default(),
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
             amount: Nat::from(1000u64),
             ts: None,
             memo: None,

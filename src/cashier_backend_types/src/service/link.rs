@@ -12,7 +12,7 @@ pub struct TemporaryAction {
     pub id: String,
     pub r#type: ActionType,
     pub state: ActionState,
-    pub creator: String,
+    pub creator: Principal,
     pub link_id: String,
     pub intents: Vec<Intent>,
     pub default_link_user_state: Option<LinkUserState>,
@@ -24,7 +24,7 @@ impl TemporaryAction {
             id: self.id.clone(),
             r#type: self.r#type.clone(),
             state: self.state.clone(),
-            creator: self.creator.clone(),
+            creator: self.creator,
             link_id: self.link_id.clone(),
         }
     }
@@ -33,7 +33,7 @@ impl TemporaryAction {
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::Deserialize;
 
 #[derive(Clone, Debug, CandidType, Deserialize)]

@@ -11,7 +11,7 @@ use cashier_backend_types::dto::action::{
 };
 use cashier_backend_types::dto::link::{
     CreateLinkInput, LinkDetailUpdateInput, LinkGetUserStateInput, LinkGetUserStateOutput,
-    LinkUpdateUserStateInput, UserStateMachineGoto,
+    LinkStateMachineGoto, LinkUpdateUserStateInput, UserStateMachineGoto,
 };
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::action::v1::Action;
@@ -30,13 +30,13 @@ use candid::Nat;
 pub trait LinkStateMachine {
     async fn create_link(
         &mut self,
-        caller: String,
+        caller: Principal,
         input: CreateLinkInput,
     ) -> Result<Link, CanisterError>;
     async fn handle_link_state_transition(
         &mut self,
         link_id: &str,
-        goto: &str,
+        goto: LinkStateMachineGoto,
         params: Option<LinkDetailUpdateInput>,
     ) -> Result<Link, CanisterError>;
 
@@ -67,20 +67,20 @@ pub trait LinkUserStateMachine {
     fn handle_user_link_state_machine(
         &mut self,
         link_id: &str,
-        action_type: &str,
-        user_id: &str,
+        action_type: &ActionType,
+        user_id: Principal,
         goto: &UserStateMachineGoto,
     ) -> Result<LinkAction, CanisterError>;
 
     fn link_get_user_state(
         &self,
-        caller: &Principal,
+        caller: Principal,
         input: &LinkGetUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError>;
 
     fn link_update_user_state(
         &mut self,
-        caller: &Principal,
+        caller: Principal,
         input: &LinkUpdateUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError>;
 }
@@ -91,7 +91,7 @@ pub trait ActionFlow {
         &mut self,
         ts: u64,
         input: &CreateActionInput,
-        caller: &Principal,
+        caller: Principal,
     ) -> Result<ActionDto, CanisterError>;
     async fn process_action(
         &mut self,
@@ -121,8 +121,8 @@ pub trait IntentAssembler {
         &self,
         link_id: &str,
         action_type: &ActionType,
-        caller: &Principal,
-        fee_map: &HashMap<String, Nat>,
+        caller: Principal,
+        fee_map: &HashMap<Principal, Nat>,
     ) -> Result<Vec<Intent>, CanisterError>;
     fn get_assets_for_action(
         &self,
@@ -137,16 +137,16 @@ pub trait LinkValidation {
         &self,
         link_id: &str,
         action_type: &ActionType,
-        user_id: &str,
+        user_id: Principal,
     ) -> Result<(), CanisterError>;
 
     fn link_validate_user_update_action(
         &self,
         action: &Action,
-        user_id: &str,
+        user_id: Principal,
     ) -> Result<(), CanisterError>;
 
-    fn is_link_creator(&self, caller: &str, link_id: &str) -> bool;
+    fn is_link_creator(&self, caller: &Principal, link_id: &str) -> bool;
 
     async fn check_link_asset_left(&self, link: &Link) -> Result<bool, CanisterError>;
 

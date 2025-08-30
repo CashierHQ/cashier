@@ -26,7 +26,7 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
     let mut request_lock_service = state.request_lock_service;
 
     let is_creator = validate_service
-        .is_action_creator(&caller.to_text(), &input.action_id)
+        .is_action_creator(caller, &input.action_id)
         .map_err(|e| CanisterError::ValidationErrors(format!("Failed to validate action: {e}")))?;
 
     if !is_creator {
@@ -37,7 +37,7 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
 
     // Create lock for transaction execution
     let request_lock_key = request_lock_service.create_request_lock_for_executing_transaction(
-        &caller,
+        caller,
         &input.action_id,
         &input.transaction_id,
         ic_env.time(),

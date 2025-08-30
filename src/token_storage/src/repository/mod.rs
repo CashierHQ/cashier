@@ -43,13 +43,12 @@ pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
 pub type BalanceCache = Candid<HashMap<TokenId, TokenBalance>>;
 
-const _UPGRADES: MemoryId = MemoryId::new(0);
+const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(0);
 const TOKEN_MEMORY_ID: MemoryId = MemoryId::new(1);
 const USER_PREFERENCE_MEMORY_ID: MemoryId = MemoryId::new(2);
 const TOKEN_REGISTRY_MEMORY_ID: MemoryId = MemoryId::new(3);
 const BALANCE_CACHE_MEMORY_ID: MemoryId = MemoryId::new(4);
 const TOKEN_REGISTRY_METADATA_ID: MemoryId = MemoryId::new(5);
-const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(6);
 
 /// A trait for accessing repositories
 pub trait Repositories {
