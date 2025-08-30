@@ -15,17 +15,17 @@ export const safeParseJSON = (
 
 type Response<T, E> =
   | {
-    ok: T;
-  }
+      ok: T;
+    }
   | {
-    err: E;
-  }
+      err: E;
+    }
   | {
-    Ok: T;
-  }
+      Ok: T;
+    }
   | {
-    Err: E;
-  };
+      Err: E;
+    };
 
 export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
   if ("ok" in response) {
@@ -91,27 +91,32 @@ export const groupLinkListByDate = (
       return nb > na ? 1 : nb < na ? -1 : 0;
     });
 
-    return sortedItems.reduce((groups: Record<string, LinkDetailModel[]>, item: LinkDetailModel) => {
-      // Convert create_at to BigInt nanoseconds
-      const ns = toBigIntNanoseconds(item.create_at);
+    return sortedItems.reduce(
+      (groups: Record<string, LinkDetailModel[]>, item: LinkDetailModel) => {
+        // Convert create_at to BigInt nanoseconds
+        const ns = toBigIntNanoseconds(item.create_at);
 
-      // Calculate start-of-day timestamp in nanoseconds (UTC)
-      const nsPerDay = 86400000n * 1000000n; // ms in day * ns per ms
-      const dayStartNs = (ns / nsPerDay) * nsPerDay;
+        // Calculate start-of-day timestamp in nanoseconds (UTC)
+        const nsPerDay = 86400000n * 1000000n; // ms in day * ns per ms
+        const dayStartNs = (ns / nsPerDay) * nsPerDay;
 
-      const dateKey = String(dayStartNs);
+        const dateKey = String(dayStartNs);
 
-      if (!groups[dateKey]) groups[dateKey] = [];
-      groups[dateKey].push(item);
-      return groups;
-    }, {});
+        if (!groups[dateKey]) groups[dateKey] = [];
+        groups[dateKey].push(item);
+        return groups;
+      },
+      {},
+    );
   }
 
   return {};
 };
 
 // Format a date input (start-of-day timestamp in ms or ISO/date string) to "MMM D, YYYY"
-export const formatDateString = (dateInput?: string | number | bigint): string => {
+export const formatDateString = (
+  dateInput?: string | number | bigint,
+): string => {
   if (dateInput === undefined || dateInput === null) return "";
 
   // Convert input to BigInt nanoseconds first
