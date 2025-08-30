@@ -7,15 +7,20 @@ import { v4 as uuidv4 } from "uuid";
 import { LinkDetailModel } from "../types/link.service.types";
 import { LINK_STATE, LINK_TYPE } from "../types/enum";
 import {
+  mapLinkDetailModelToLinkDto,
   mapUserInputItemToLinkDetailModel,
 } from "../types/mapper/link.service.mapper";
 import { ResponseLinksModel } from "./link.service";
 import linkStateMachine from "./link-state-machine";
 import { LinkStateMachine } from "./link-state-machine";
 import { Principal } from "@dfinity/principal";
+import { LinkDto } from "@/generated/cashier_backend/cashier_backend.did";
 
 const LINK_STORAGE_KEY = "cashier_link_storage";
 export const LOCAL_lINK_ID_PREFIX = "local_link_";
+
+// Helper to get current time in nanoseconds as bigint
+export const nowInNanoseconds = (): bigint => BigInt(Date.now()) * 1_000_000n;
 
 // Helper function to safely stringify BigInt and Principal and Date
 const replacer = (key: string, value: any) => {
@@ -69,7 +74,7 @@ class LinkLocalStorageServiceV2 {
     const linkData: LinkDetailModel = {
       id: linkId,
       creator: this.userPid,
-      create_at: new Date(),
+      create_at: new Date().getTime() * 1_000_000, // store as nanoseconds
       state: LINK_STATE.CHOOSE_TEMPLATE,
       title: "",
       linkType: LINK_TYPE.SEND_TIP,
@@ -102,7 +107,7 @@ class LinkLocalStorageServiceV2 {
   }
 
   /** Update a link in local storage */
-  updateLink(linkId: string, data: Partial<UserInputItem>, caller: string): LinkDetailModel {
+  updateLink(linkId: string, data: Partial<UserInputItem>, caller: string): LinkDto {
     const links = this.getLinks();
     if (!links[linkId]) throw new Error("Link not found");
 
@@ -114,12 +119,14 @@ class LinkLocalStorageServiceV2 {
       ...updatedlinkModelDetail,
       creator: caller,
       id: linkId,
-      create_at: existing.create_at || new Date(),
-    } as LinkDetailModel;
+      create_at: existing.create_at || new Date().getTime() * 1_000_000, // store as nanoseconds
+    };
 
     links[linkId] = composed;
     this.saveLinks(links);
-    return composed;
+
+
+    return mapLinkDetailModelToLinkDto(composed);
   }
 
   /** Delete a link from local storage */
@@ -137,7 +144,7 @@ class LinkLocalStorageServiceV2 {
     data: Partial<UserInputItem>,
     isContinue: boolean,
     caller: string,
-  ): LinkDetailModel {
+  ): LinkDto {
     const link = this.getLink(linkId);
     if (!link) throw new Error("Link not found");
     if (!link.state) throw new Error("Link state is undefined");
