@@ -249,8 +249,8 @@ export const mapLinkDetailModelToUpdateLinkInputModel = (
         title: toNullable(linkDetailModel.title),
         asset_info: linkDetailModel.assets
           ? linkDetailModel.assets.map((asset) =>
-            mapFrontendAssetInfoToAssetInfo(asset),
-          )
+              mapFrontendAssetInfoToAssetInfo(asset),
+            )
           : [],
         description: toNullable(linkDetailModel.description),
         template: toNullable(mapFrontendTemplateToTemplate(TEMPLATE.CENTRAL)),
@@ -458,10 +458,10 @@ const mapPartialLinkDtoToCreateLinkInput = (
   }> =
     dto.asset_info && dto.asset_info.length > 0
       ? dto.asset_info.map((a) => ({
-        asset: a.asset,
-        amount_per_link_use_action: a.amount_per_link_use_action,
-        label: a.label,
-      }))
+          asset: a.asset,
+          amount_per_link_use_action: a.amount_per_link_use_action,
+          label: a.label,
+        }))
       : [];
   // Ensure exact types required by CreateLinkInput
   const title: string =
@@ -562,13 +562,13 @@ export const mapLinkDtoToUserInputItem = (dto: LinkDto): UserInputItem => {
   const assets: UserInputAsset[] =
     dto.asset_info && dto.asset_info.length > 0
       ? dto.asset_info.map((asset) => ({
-        address: asset.asset.IC.address.toText(),
-        linkUseAmount: asset.amount_per_link_use_action,
-        usdEquivalent: 0,
-        usdConversionRate: 0,
-        chain: CHAIN.IC,
-        label: mapStringToLabel(asset.label),
-      }))
+          address: asset.asset.IC.address.toText(),
+          linkUseAmount: asset.amount_per_link_use_action,
+          usdEquivalent: 0,
+          usdConversionRate: 0,
+          chain: CHAIN.IC,
+          label: mapStringToLabel(asset.label),
+        }))
       : [];
 
   return {

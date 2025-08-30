@@ -2,11 +2,11 @@ import { Chain } from "@/generated/cashier_backend/cashier_backend.did";
 import { CHAIN } from "../enum";
 
 export const mapChainToChainEnum = (chain: Chain) => {
-    if ("IC" in chain) {
-        return CHAIN.IC;
-    }
+  if ("IC" in chain) {
+    return CHAIN.IC;
+  }
 
-    throw new Error(`Unknown chain: ${JSON.stringify(chain)}`);
+  throw new Error(`Unknown chain: ${JSON.stringify(chain)}`);
 };
 
 /**
@@ -23,12 +23,12 @@ type KeyVariant<T> = T extends Record<infer K, any> ? K : never;
  * @returns - The key of the variant, e.g., "A" or "B"
  */
 export const getKeyVariant = <T extends object>(v: T): KeyVariant<T> => {
-    return Object.keys(v)[0] as KeyVariant<T>;
+  return Object.keys(v)[0] as KeyVariant<T>;
 };
 
 // Helper function to ensure exhaustive checks in switch statements
 export function assertNever(x: never): never {
-    throw new Error("Unexpected object: " + x);
+  throw new Error("Unexpected object: " + x);
 }
 
 /**
@@ -46,10 +46,10 @@ type EnumKey<T> = T extends Record<infer K, unknown> ? K : never;
  * @throws Error if the value is not found in the enum
  */
 export const getEnumKey = <T extends Record<string, string>>(
-    enumObject: T,
-    value: string,
+  enumObject: T,
+  value: string,
 ): EnumKey<T> => {
-    const entry = Object.entries(enumObject).find(([, v]) => v === value);
-    if (!entry) throw new Error(`Unknown enum value: ${value}`);
-    return entry[0] as EnumKey<T>;
+  const entry = Object.entries(enumObject).find(([, v]) => v === value);
+  if (!entry) throw new Error(`Unknown enum value: ${value}`);
+  return entry[0] as EnumKey<T>;
 };

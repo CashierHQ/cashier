@@ -15,17 +15,17 @@ export const safeParseJSON = (
 
 type Response<T, E> =
   | {
-    ok: T;
-  }
+      ok: T;
+    }
   | {
-    err: E;
-  }
+      err: E;
+    }
   | {
-    Ok: T;
-  }
+      Ok: T;
+    }
   | {
-    Err: E;
-  };
+      Err: E;
+    };
 
 export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
   if ("ok" in response) {
@@ -56,24 +56,29 @@ export const groupLinkListByDate = (
 ): Record<string, LinkDetailModel[]> => {
   if (linkList?.length > 0) {
     // Copy before sorting to avoid mutating the original array
-    const sortedItems = [...linkList].sort((a, b) => Number(b.create_at) - Number(a.create_at));
+    const sortedItems = [...linkList].sort(
+      (a, b) => Number(b.create_at) - Number(a.create_at),
+    );
 
-    return sortedItems.reduce((groups: Record<string, LinkDetailModel[]>, item: LinkDetailModel) => {
-      // Normalize create_at to a number (supports number | string | bigint-like values)
-      const ts = Number(item.create_at);
+    return sortedItems.reduce(
+      (groups: Record<string, LinkDetailModel[]>, item: LinkDetailModel) => {
+        // Normalize create_at to a number (supports number | string | bigint-like values)
+        const ts = Number(item.create_at);
 
-      // Calculate start-of-day timestamp in milliseconds (UTC)
-      const dayStart = Math.floor(ts / 86400000) * 86400000;
+        // Calculate start-of-day timestamp in milliseconds (UTC)
+        const dayStart = Math.floor(ts / 86400000) * 86400000;
 
-      // Use the day-start timestamp as the group key (stringified)
-      const dateKey = String(dayStart);
+        // Use the day-start timestamp as the group key (stringified)
+        const dateKey = String(dayStart);
 
-      if (!groups[dateKey]) {
-        groups[dateKey] = [];
-      }
-      groups[dateKey].push(item);
-      return groups;
-    }, {});
+        if (!groups[dateKey]) {
+          groups[dateKey] = [];
+        }
+        groups[dateKey].push(item);
+        return groups;
+      },
+      {},
+    );
   }
 
   return {};
@@ -84,8 +89,11 @@ export const formatDateString = (dateInput?: string | number): string => {
   if (dateInput === undefined || dateInput === null) return "";
 
   // Accept either a numeric timestamp (ms) or an ISO/date string.
-  const isNumeric = typeof dateInput === "number" || /^\\d+$/.test(String(dateInput).trim());
-  const date = isNumeric ? new Date(Number(dateInput)) : new Date(String(dateInput));
+  const isNumeric =
+    typeof dateInput === "number" || /^\\d+$/.test(String(dateInput).trim());
+  const date = isNumeric
+    ? new Date(Number(dateInput))
+    : new Date(String(dateInput));
 
   if (Number.isNaN(date.getTime())) return "";
 
