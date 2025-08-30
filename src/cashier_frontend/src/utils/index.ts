@@ -15,17 +15,17 @@ export const safeParseJSON = (
 
 type Response<T, E> =
   | {
-      ok: T;
-    }
+    ok: T;
+  }
   | {
-      err: E;
-    }
+    err: E;
+  }
   | {
-      Ok: T;
-    }
+    Ok: T;
+  }
   | {
-      Err: E;
-    };
+    Err: E;
+  };
 
 export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
   if ("ok" in response) {
@@ -47,19 +47,6 @@ export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
   }
 
   throw new Error("Invalid response");
-};
-
-export const convertNanoSecondsToDate = (nanoSeconds: bigint): Date => {
-  let result = new Date();
-  try {
-    const parseValue = Number(nanoSeconds);
-    // candid uses nat64 nanoseconds; convert to milliseconds
-    result = new Date(Math.floor(parseValue / 1000000));
-  } catch (error) {
-    console.log(error);
-  } finally {
-    return result;
-  }
 };
 
 export const groupLinkListByDate = (

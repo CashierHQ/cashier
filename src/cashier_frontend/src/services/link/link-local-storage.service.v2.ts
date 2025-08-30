@@ -19,9 +19,6 @@ import { LinkDto } from "@/generated/cashier_backend/cashier_backend.did";
 const LINK_STORAGE_KEY = "cashier_link_storage";
 export const LOCAL_lINK_ID_PREFIX = "local_link_";
 
-// Helper to get current time in nanoseconds as bigint
-export const nowInNanoseconds = (): bigint => BigInt(Date.now()) * 1_000_000n;
-
 // Helper function to safely stringify BigInt and Principal and Date
 const replacer = (key: string, value: any) => {
   if (typeof value === "bigint") {
