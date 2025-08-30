@@ -67,7 +67,7 @@ export const ConfirmationPopupFeesSection: FC<
           const final_amount = FeeHelpers.forecastIcrc2FeeEs8(
             token!,
             DEFAULT_CREATION_FEE,
-            1
+            1,
           );
 
           totalFeesMapArray.push({
@@ -193,7 +193,7 @@ export const ConfirmationPopupFeesSection: FC<
               ? t("confirmation_drawer.fee-breakdown.link_creation_fee")
               : t("confirmation_drawer.fee-breakdown.network_fee"),
           amount: formatNumber(
-            (tokenAmount * (Number(maxActionNumber ?? 1) + 1)).toString()
+            (tokenAmount * (Number(maxActionNumber ?? 1) + 1)).toString(),
           ),
           tokenSymbol: token?.symbol || "Unknown",
           tokenAddress: tokenAddress!,

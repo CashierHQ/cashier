@@ -46,7 +46,7 @@ export default function DetailPage() {
 
   const [showOverlay, setShowOverlay] = React.useState(true);
   const [driverObj, setDriverObj] = React.useState<Driver | undefined>(
-    undefined
+    undefined,
   );
 
   const [showShareLinkDrawer, setShowShareLinkDrawer] = React.useState(false);

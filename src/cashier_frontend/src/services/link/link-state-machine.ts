@@ -313,7 +313,9 @@ export class LinkStateMachine {
     if ((linkDto as LinkDetailModel).asset_info !== undefined) {
       linkDetailModel = linkDto as LinkDetailModel;
     } else {
-      linkDetailModel = mapPartialDtoToLinkDetailModel(linkDto as Partial<LinkDto>);
+      linkDetailModel = mapPartialDtoToLinkDetailModel(
+        linkDto as Partial<LinkDto>,
+      );
     }
 
     for (const prop of propsToCheck) {

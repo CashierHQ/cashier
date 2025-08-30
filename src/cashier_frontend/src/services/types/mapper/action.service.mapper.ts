@@ -1,7 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { ActionDto, ActionType, IntentState } from "../../../generated/cashier_backend/cashier_backend.did";
+import {
+  ActionDto,
+  ActionType,
+  IntentState,
+} from "../../../generated/cashier_backend/cashier_backend.did";
 import { ACTION_STATE, ACTION_TYPE } from "../enum";
 import { ActionModel } from "../action.service.types";
 import { mapIntentDtoToIntentModel } from "./intent.service.mapper";
@@ -42,10 +46,12 @@ export const mapActionStateToEnum = (actionState: ActionState) => {
     default:
       assertNever(key);
   }
-}
+};
 
 // Map Front-end ACTION_TYPE enum to back-end ActionType
-export const mapFrontendActionTypeToActionType = (actionType: ACTION_TYPE): ActionType => {
+export const mapFrontendActionTypeToActionType = (
+  actionType: ACTION_TYPE,
+): ActionType => {
   switch (actionType) {
     case ACTION_TYPE.USE:
       return { Use: null };
@@ -58,11 +64,8 @@ export const mapFrontendActionTypeToActionType = (actionType: ACTION_TYPE): Acti
   }
 };
 
-
 // Map back-end Action DTO to Front-end Action model
-export const mapActionModel = (
-  actionDTO: ActionDto,
-): ActionModel => {
+export const mapActionModel = (actionDTO: ActionDto): ActionModel => {
   return {
     id: actionDTO.id,
     creator: actionDTO.creator,
@@ -73,8 +76,8 @@ export const mapActionModel = (
     ),
     icrc112Requests: fromNullable(actionDTO.icrc_112_requests)
       ? fromNullable(actionDTO.icrc_112_requests)?.map((request) => {
-        return request.map((req) => mapICRC112Request(req));
-      })
+          return request.map((req) => mapICRC112Request(req));
+        })
       : [],
   };
 };

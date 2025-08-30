@@ -36,7 +36,7 @@ export const TransactionItem = memo(function TransactionItem({
     title: intentTitle,
   } = useIntentMetadata(intent, actionType);
   const [adjustedAmount, setAdjustedAmount] = useState<number | undefined>(
-    assetAmount
+    assetAmount,
   );
 
   const { getToken, getTokenPrice } = useTokensV2();
@@ -51,7 +51,7 @@ export const TransactionItem = memo(function TransactionItem({
     const networkFee = fees.find(
       (fee) =>
         fee.address === intent.typeDetails.asset.address &&
-        fee.type === "network_fee"
+        fee.type === "network_fee",
     );
 
     if (!link || !link.linkType) {
@@ -64,7 +64,7 @@ export const TransactionItem = memo(function TransactionItem({
         link.linkType,
         actionType,
         intent,
-        token
+        token,
       );
 
       setAdjustedAmount(totalTokenAmount);
@@ -73,7 +73,7 @@ export const TransactionItem = memo(function TransactionItem({
       const totalTokenAmount = FeeHelpers.forecastIcrc2Fee(
         token,
         intent.typeDetails.amount,
-        1
+        1,
       );
       setAdjustedAmount(totalTokenAmount);
     }

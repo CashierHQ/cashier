@@ -42,11 +42,11 @@ const mapFrontendAssetToAsset = ({ address, chain }: UserInputAsset): Asset => {
   const key = getEnumKey(CHAIN, chain);
   switch (key) {
     case "IC":
-      return { 'IC': { 'address': Principal.fromText(address) } };
+      return { IC: { address: Principal.fromText(address) } };
     default:
       return assertNever(key);
   }
-}
+};
 
 const mapFrontendAssetInfoToAssetInfo = (
   asset: UserInputAsset,
@@ -55,54 +55,56 @@ const mapFrontendAssetInfoToAssetInfo = (
     asset: mapFrontendAssetToAsset(asset),
     amount_per_link_use_action: asset.linkUseAmount,
     label: asset.label,
-  }
-}
+  };
+};
 
 const mapFrontendTemplateToTemplate = (template: TEMPLATE): Template => {
   const key = getEnumKey(TEMPLATE, template);
   switch (key) {
     case "CENTRAL":
-      return { 'Central': null }
+      return { Central: null };
     default:
       return assertNever(key);
   }
-}
+};
 
 const mapFrontendLinkTypeToLinkType = (linkType: LINK_TYPE): LinkType => {
   const key = getEnumKey(LINK_TYPE, linkType);
   switch (key) {
     case "SEND_TIP":
-      return { 'SendTip': null };
+      return { SendTip: null };
     case "NFT_CREATE_AND_AIRDROP":
-      return { 'NftCreateAndAirdrop': null };
+      return { NftCreateAndAirdrop: null };
     case "SEND_AIRDROP":
-      return { 'SendAirdrop': null };
+      return { SendAirdrop: null };
     case "SEND_TOKEN_BASKET":
-      return { 'SendTokenBasket': null };
+      return { SendTokenBasket: null };
     case "RECEIVE_PAYMENT":
-      return { 'ReceivePayment': null };
+      return { ReceivePayment: null };
     case "RECEIVE_MULTI_PAYMENT":
-      return { 'ReceiveMutliPayment': null };
+      return { ReceiveMutliPayment: null };
     case "SWAP_SINGLE_ASSET":
-      return { 'SwapSingleAsset': null };
+      return { SwapSingleAsset: null };
     case "SWAP_MULTI_ASSET":
-      return { 'SwapMultiAsset': null };
+      return { SwapMultiAsset: null };
     default:
       return assertNever(key);
   }
-}
+};
 
-export const mapFrontendGotoToUserStateMachineGoto = (goto: "Continue" | "Back"): LinkStateMachineGoto => {
+export const mapFrontendGotoToUserStateMachineGoto = (
+  goto: "Continue" | "Back",
+): LinkStateMachineGoto => {
   const key = goto;
   switch (key) {
     case "Continue":
-      return { 'Continue': null };
+      return { Continue: null };
     case "Back":
-      return { 'Back': null };
+      return { Back: null };
     default:
       return assertNever(key);
   }
-}
+};
 
 const mapLinkTypeToEnum = (linkType: LinkType): LINK_TYPE => {
   const key = getKeyVariant(linkType);
@@ -126,9 +128,11 @@ const mapLinkTypeToEnum = (linkType: LinkType): LINK_TYPE => {
     default:
       return assertNever(key);
   }
-}
+};
 
-export const mapLinkStateToEnum = (linkState: LinkState): LINK_STATE | undefined => {
+export const mapLinkStateToEnum = (
+  linkState: LinkState,
+): LINK_STATE | undefined => {
   const key = getKeyVariant(linkState);
   switch (key) {
     case "Active":
@@ -148,7 +152,7 @@ export const mapLinkStateToEnum = (linkState: LinkState): LINK_STATE | undefined
     default:
       return undefined;
   }
-}
+};
 
 const mapTemplateToEnum = (template: Template): TEMPLATE | undefined => {
   const key = getKeyVariant(template);
@@ -160,7 +164,9 @@ const mapTemplateToEnum = (template: Template): TEMPLATE | undefined => {
   }
 };
 
-const mapAssetInfoToFrontendAssetInfo = (assetInfo: AssetInfoDto): AssetInfoModel => {
+const mapAssetInfoToFrontendAssetInfo = (
+  assetInfo: AssetInfoDto,
+): AssetInfoModel => {
   const key = getKeyVariant(assetInfo.asset);
   console.log("[mapAssetInfoToFrontendAssetInfo] input:", assetInfo);
   switch (key) {
@@ -174,29 +180,29 @@ const mapAssetInfoToFrontendAssetInfo = (assetInfo: AssetInfoDto): AssetInfoMode
     default:
       return assertNever(key);
   }
-}
+};
 
 const mapFrontendLinkStateToLinkState = (state: LINK_STATE): LinkState => {
   const key = getEnumKey(LINK_STATE, state);
   switch (key) {
     case "ACTIVE":
-      return { 'Active': null };
+      return { Active: null };
     case "PREVIEW":
-      return { 'Preview': null };
+      return { Preview: null };
     case "CHOOSE_TEMPLATE":
-      return { 'ChooseLinkType': null };
+      return { ChooseLinkType: null };
     case "ADD_ASSET":
-      return { 'AddAssets': null };
+      return { AddAssets: null };
     case "CREATE_LINK":
-      return { 'CreateLink': null };
+      return { CreateLink: null };
     case "INACTIVE":
-      return { 'Inactive': null };
+      return { Inactive: null };
     case "INACTIVE_ENDED":
-      return { 'InactiveEnded': null };
+      return { InactiveEnded: null };
     default:
       return assertNever(key);
   }
-}
+};
 
 const mapFrontendAssetInfoModelToAssetInfo = (
   asset: AssetInfoModel,
@@ -204,26 +210,28 @@ const mapFrontendAssetInfoModelToAssetInfo = (
   switch (asset.chain) {
     case CHAIN.IC:
       return {
-        asset: { 'IC': { 'address': Principal.fromText(asset.address) } },
+        asset: { IC: { address: Principal.fromText(asset.address) } },
         amount_per_link_use_action: asset.amountPerUse,
         label: asset.label,
       };
     default:
       return assertNever(asset.chain);
   }
-}
+};
 
-const mapUserLinkStateToFrontendLinkUserState = (state: LinkUserState): LINK_USER_STATE => {
+const mapUserLinkStateToFrontendLinkUserState = (
+  state: LinkUserState,
+): LINK_USER_STATE => {
   const key = getKeyVariant(state);
   switch (key) {
     case "CompletedLink":
-      return LINK_USER_STATE.COMPLETE
+      return LINK_USER_STATE.COMPLETE;
     case "ChooseWallet":
       return LINK_USER_STATE.CHOOSE_WALLET;
     default:
       return assertNever(key);
   }
-}
+};
 
 // Map front-end 'Link' model to back-end model
 export const mapLinkDetailModelToUpdateLinkInputModel = (
@@ -233,22 +241,24 @@ export const mapLinkDetailModelToUpdateLinkInputModel = (
 ): UpdateLinkInput => {
   const updateLinkInput: UpdateLinkInput = {
     id: linkId,
-    goto: mapFrontendGotoToUserStateMachineGoto(isContinue ? "Continue" : "Back"),
+    goto: mapFrontendGotoToUserStateMachineGoto(
+      isContinue ? "Continue" : "Back",
+    ),
     params: [
       {
         title: toNullable(linkDetailModel.title),
         asset_info: linkDetailModel.assets
           ? linkDetailModel.assets.map((asset) =>
-            mapFrontendAssetInfoToAssetInfo(asset),
-          )
+              mapFrontendAssetInfoToAssetInfo(asset),
+            )
           : [],
         description: toNullable(linkDetailModel.description),
-        template: toNullable(
-          mapFrontendTemplateToTemplate(TEMPLATE.CENTRAL)
-        ),
+        template: toNullable(mapFrontendTemplateToTemplate(TEMPLATE.CENTRAL)),
         nft_image: [],
         link_image_url: [],
-        link_type: linkDetailModel.linkType ? toNullable(mapFrontendLinkTypeToLinkType(linkDetailModel.linkType)) : toNullable(),
+        link_type: linkDetailModel.linkType
+          ? toNullable(mapFrontendLinkTypeToLinkType(linkDetailModel.linkType))
+          : toNullable(),
         link_use_action_max_count: toNullable(linkDetailModel.maxActionNumber),
       },
     ],
@@ -273,7 +283,7 @@ const mapDtoToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
     create_at: link.create_at
       ? Number(link.create_at / 1000000n)
       : new Date("2000-10-01").getTime(),
-    asset_info: link.asset_info.map(a => {
+    asset_info: link.asset_info.map((a) => {
       return mapAssetInfoToFrontendAssetInfo(a);
     }),
     maxActionNumber: link.link_use_action_max_count,
@@ -287,25 +297,36 @@ export const mapPartialDtoToLinkDetailModel = (
 ): LinkDetailModel => {
   // Title and description come as [] | [string] in the candid types
 
-  const title: string = link.title && link.title.length > 0 ? (link.title[0] as string) : "";
-  const description: string = link.description && link.description.length > 0 ? (link.description[0] as string) : "";
+  const title: string =
+    link.title && link.title.length > 0 ? (link.title[0] as string) : "";
+  const description: string =
+    link.description && link.description.length > 0
+      ? (link.description[0] as string)
+      : "";
 
   // link_type, template and state are optional candid variants
-  const linkType: LINK_TYPE | undefined = link.link_type && link.link_type.length > 0
-    ? mapLinkTypeToEnum(link.link_type[0] as LinkType)
+  const linkType: LINK_TYPE | undefined =
+    link.link_type && link.link_type.length > 0
+      ? mapLinkTypeToEnum(link.link_type[0] as LinkType)
+      : undefined;
+  const state: LINK_STATE | undefined = link.state
+    ? mapLinkStateToEnum(link.state)
     : undefined;
-  const state: LINK_STATE | undefined = link.state ? mapLinkStateToEnum(link.state) : undefined;
-  const template: TEMPLATE | undefined = link.template && link.template.length > 0
-    ? mapTemplateToEnum(link.template[0] as Template)
-    : undefined;
+  const template: TEMPLATE | undefined =
+    link.template && link.template.length > 0
+      ? mapTemplateToEnum(link.template[0] as Template)
+      : undefined;
 
   // creator may be a Principal
-  const creator: string | undefined = link.creator ? link.creator.toString() : undefined;
+  const creator: string | undefined = link.creator
+    ? link.creator.toString()
+    : undefined;
 
   // asset_info may be missing or empty
-  const asset_info: AssetInfoModel[] = link.asset_info && link.asset_info.length > 0
-    ? link.asset_info.map((a) => mapAssetInfoToFrontendAssetInfo(a))
-    : [];
+  const asset_info: AssetInfoModel[] =
+    link.asset_info && link.asset_info.length > 0
+      ? link.asset_info.map((a) => mapAssetInfoToFrontendAssetInfo(a))
+      : [];
 
   const result: LinkDetailModel = {
     id: link.id ?? "",
@@ -316,14 +337,15 @@ export const mapPartialDtoToLinkDetailModel = (
     state,
     template,
     creator,
-    create_at: link.create_at ? Number(link.create_at / 1000000n) : new Date("2000-10-01").getTime(),
+    create_at: link.create_at
+      ? Number(link.create_at / 1000000n)
+      : new Date("2000-10-01").getTime(),
     asset_info: asset_info,
     maxActionNumber: link.link_use_action_max_count ?? BigInt(0),
     useActionCounter: link.link_use_action_counter ?? BigInt(0),
   };
   return result;
 };
-
 
 // This method mapping LinkDetailModel to LinkDto - using for frontend state machine
 export const mapLinkDetailModelToLinkDto = (
@@ -341,13 +363,15 @@ export const mapLinkDetailModelToLinkDto = (
     state: mapFrontendLinkStateToLinkState(model.state),
     title: model.title ? toNullable(model.title) : [],
     description: model.description ? toNullable(model.description) : [],
-    link_type: model.linkType ? toNullable(mapFrontendLinkTypeToLinkType(model.linkType)) : [],
-    asset_info: model.asset_info.map((asset) => mapFrontendAssetInfoModelToAssetInfo(asset)),
+    link_type: model.linkType
+      ? toNullable(mapFrontendLinkTypeToLinkType(model.linkType))
+      : [],
+    asset_info: model.asset_info.map((asset) =>
+      mapFrontendAssetInfoModelToAssetInfo(asset),
+    ),
     template: toNullable(mapFrontendTemplateToTemplate(TEMPLATE.CENTRAL)),
     creator: Principal.fromText(model.creator),
-    create_at: model.create_at
-      ? (BigInt(model.create_at) * 1000000n)
-      : BigInt(0),
+    create_at: model.create_at ? BigInt(model.create_at) * 1000000n : BigInt(0),
     metadata: [],
     link_use_action_counter: model.useActionCounter || BigInt(0),
     link_use_action_max_count: model.maxActionNumber || BigInt(0),
@@ -376,7 +400,9 @@ export const mapLinkUserStateModel = (
 ): LinkGetUserStateOutputModel => {
   return {
     action: model ? mapActionModel(model.action) : undefined,
-    link_user_state: mapUserLinkStateToFrontendLinkUserState(model.link_user_state),
+    link_user_state: mapUserLinkStateToFrontendLinkUserState(
+      model.link_user_state,
+    ),
   };
 };
 
@@ -396,12 +422,15 @@ export const mapUserInputItemToLinkDetailModel = (
   useActionCounter: bigint;
   template: TEMPLATE;
 } => {
-  const assets = model.assets?.map((asset): AssetInfoModel => ({
-    address: asset.address,
-    chain: asset.chain,
-    label: asset.label,
-    amountPerUse: asset.linkUseAmount,
-  })) || [];
+  const assets =
+    model.assets?.map(
+      (asset): AssetInfoModel => ({
+        address: asset.address,
+        chain: asset.chain,
+        label: asset.label,
+        amountPerUse: asset.linkUseAmount,
+      }),
+    ) || [];
 
   return {
     id: model.linkId || "",
@@ -422,25 +451,33 @@ export const mapPartialLinkDtoToCreateLinkInput = (
   dto: Partial<LinkDto>,
 ): CreateLinkInput => {
   // Build asset_info expected by CreateLinkInput
-  const assetInfo: Array<{ asset: Asset; amount_per_link_use_action: bigint; label: string }> =
+  const assetInfo: Array<{
+    asset: Asset;
+    amount_per_link_use_action: bigint;
+    label: string;
+  }> =
     dto.asset_info && dto.asset_info.length > 0
       ? dto.asset_info.map((a) => ({
-        asset: a.asset,
-        amount_per_link_use_action: a.amount_per_link_use_action,
-        label: a.label,
-      }))
+          asset: a.asset,
+          amount_per_link_use_action: a.amount_per_link_use_action,
+          label: a.label,
+        }))
       : [];
   // Ensure exact types required by CreateLinkInput
-  const title: string = dto.title && dto.title.length > 0 ? (dto.title[0] as string) : "";
-  const link_type: LinkType = dto.link_type && dto.link_type.length > 0
-    ? (dto.link_type[0] as LinkType)
-    : ({ 'SendTip': null } as LinkType);
-  const description: [] | [string] = dto.description && dto.description.length > 0
-    ? (dto.description as [string])
-    : [];
-  const template: Template = dto.template && dto.template.length > 0
-    ? (dto.template[0] as Template)
-    : ({ 'Central': null } as Template);
+  const title: string =
+    dto.title && dto.title.length > 0 ? (dto.title[0] as string) : "";
+  const link_type: LinkType =
+    dto.link_type && dto.link_type.length > 0
+      ? (dto.link_type[0] as LinkType)
+      : ({ SendTip: null } as LinkType);
+  const description: [] | [string] =
+    dto.description && dto.description.length > 0
+      ? (dto.description as [string])
+      : [];
+  const template: Template =
+    dto.template && dto.template.length > 0
+      ? (dto.template[0] as Template)
+      : ({ Central: null } as Template);
 
   return {
     title,
@@ -458,18 +495,28 @@ export const mapPartialLinkDtoToCreateLinkInput = (
 export const mapLinkDetailModelToCreateLinkInput = (
   model: LinkDetailModel,
 ): CreateLinkInput => {
-  const assetInfo = model.asset_info && model.asset_info.length > 0
-    ? model.asset_info.map((a) => mapFrontendAssetInfoModelToAssetInfo(a))
-    : [];
+  const assetInfo =
+    model.asset_info && model.asset_info.length > 0
+      ? model.asset_info.map((a) => mapFrontendAssetInfoModelToAssetInfo(a))
+      : [];
 
   const title: string = model.title || "";
-  const link_type: LinkType = model.linkType ? mapFrontendLinkTypeToLinkType(model.linkType) : ({ 'SendTip': null } as LinkType);
-  const description: [] | [string] = model.description ? ([model.description] as [string]) : [];
+  const link_type: LinkType = model.linkType
+    ? mapFrontendLinkTypeToLinkType(model.linkType)
+    : ({ SendTip: null } as LinkType);
+  const description: [] | [string] = model.description
+    ? ([model.description] as [string])
+    : [];
   let template: Template;
-  if (model.template && (Object.values(TEMPLATE) as string[]).includes(model.template)) {
-    template = mapFrontendTemplateToTemplate(model.template as unknown as TEMPLATE);
+  if (
+    model.template &&
+    (Object.values(TEMPLATE) as string[]).includes(model.template)
+  ) {
+    template = mapFrontendTemplateToTemplate(
+      model.template as unknown as TEMPLATE,
+    );
   } else {
-    template = ({ 'Central': null } as Template);
+    template = { Central: null } as Template;
   }
 
   return {
@@ -497,9 +544,11 @@ export const mapLinkDtoToUserInputItem = (dto: LinkDto): UserInputItem => {
   // dto.state is a LinkState variant; map to frontend LINK_STATE enum
   const mappedState = mapLinkStateToEnum(dto.state);
   // dto.link_type is [] | [LinkType]
-  const candidLinkType = dto.link_type && dto.link_type.length > 0 ? dto.link_type[0] : undefined;
-  const mappedLinkType = candidLinkType ? mapLinkTypeToEnum(candidLinkType) : undefined;
-
+  const candidLinkType =
+    dto.link_type && dto.link_type.length > 0 ? dto.link_type[0] : undefined;
+  const mappedLinkType = candidLinkType
+    ? mapLinkTypeToEnum(candidLinkType)
+    : undefined;
 
   if (!mappedState) {
     throw new Error("Link state is not valid");
@@ -513,13 +562,13 @@ export const mapLinkDtoToUserInputItem = (dto: LinkDto): UserInputItem => {
   const assets: UserInputAsset[] =
     dto.asset_info && dto.asset_info.length > 0
       ? dto.asset_info.map((asset) => ({
-        address: asset.asset.IC.address.toText(),
-        linkUseAmount: asset.amount_per_link_use_action,
-        usdEquivalent: 0,
-        usdConversionRate: 0,
-        chain: CHAIN.IC,
-        label: mapStringToLabel(asset.label),
-      }))
+          address: asset.asset.IC.address.toText(),
+          linkUseAmount: asset.amount_per_link_use_action,
+          usdEquivalent: 0,
+          usdConversionRate: 0,
+          chain: CHAIN.IC,
+          label: mapStringToLabel(asset.label),
+        }))
       : [];
 
   return {

@@ -14,7 +14,10 @@ import { formatAssetsForSubmission } from "@/components/link-details/form-handle
 import { ValidationService } from "@/services/validation.service";
 import { LINK_TYPE, getAssetLabelForLinkType } from "@/services/types/enum";
 import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service.v2";
-import { mapLinkDtoToUserInputItem, mapLinkStateToEnum } from "@/services/types/mapper/link.service.mapper";
+import {
+  mapLinkDtoToUserInputItem,
+  mapLinkStateToEnum,
+} from "@/services/types/mapper/link.service.mapper";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 
 // Import centralized validation types and error handling
