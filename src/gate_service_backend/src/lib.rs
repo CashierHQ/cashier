@@ -1,5 +1,4 @@
 mod gates;
-mod guard;
 mod repository;
 mod service;
 mod utils;
@@ -8,11 +7,11 @@ mod utils;
 mod test_utils;
 
 use candid::Principal;
+use cashier_common::guard::is_not_anonymous;
 use cashier_common::utils::init_ic_rand;
 use gate_types::{
     Gate, GateForCaller, GateKey, NewGate, OpenGateSuccessResult, VerificationResult,
 };
-use guard::is_not_anonymous;
 use ic_cdk::{api::msg_caller, init, post_upgrade, pre_upgrade, query, update};
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 use ic_stable_structures::DefaultMemoryImpl;
