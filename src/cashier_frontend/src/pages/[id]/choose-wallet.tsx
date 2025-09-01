@@ -33,7 +33,7 @@ import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
 import { useUseConfirmation } from "@/hooks/tx-cart/useUseConfirmation";
 import { WalletSelectionModal } from "@/components/wallet-selection-modal";
-import { UseSchema } from "@/components/use-page/claim-form-options";
+import { UseSchema } from "@/components/use-page/use-link-options";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 export default function ChooseWalletPage() {
@@ -68,14 +68,14 @@ export default function ChooseWalletPage() {
       link_id: linkId ?? "",
       anonymous_wallet_address: "",
     },
-    !!linkId && !!identity,
+    !!linkId && !!identity
   );
 
   const queryAction = linkUserState?.action;
 
   // Internal action state that can be updated independently
   const [internalAction, setInternalAction] = useState<ActionModel | undefined>(
-    queryAction,
+    queryAction
   );
   const [showWalletModal, setShowWalletModal] = useState(false);
 
@@ -171,7 +171,7 @@ export default function ChooseWalletPage() {
    * Creates an action for anonymous users
    */
   const handleCreateActionAnonymous = async (
-    walletAddress: string,
+    walletAddress: string
   ): Promise<ActionModel> => {
     const newAction = await createActionAnonymous({
       linkId: linkId!,
@@ -234,7 +234,7 @@ export default function ChooseWalletPage() {
             link_id: linkId ?? "",
             anonymous_wallet_address: addressToUse,
           },
-          identity,
+          identity
         );
 
         if (!anonymousLinkUserState) {
@@ -251,7 +251,7 @@ export default function ChooseWalletPage() {
               link_id: linkId ?? "",
               anonymous_wallet_address: addressToUse,
             },
-            identity,
+            identity
           );
           setShowConfirmation(true);
         } else if (
@@ -302,7 +302,7 @@ export default function ChooseWalletPage() {
     () => () => {
       goToLinkDefault();
     },
-    [goToLinkDefault],
+    [goToLinkDefault]
   );
 
   const setDisabled = useCallback((disabled: boolean) => {
