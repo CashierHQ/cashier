@@ -72,15 +72,15 @@ impl<R: GateRepository> GateService<R> {
 
     /// Retrieves a gate by its owner's ID.
     /// # Arguments
-    /// * `owner_id`: The ID of the owner whose gate is to be retrieved.
+    /// * `subject_id`: The ID of the owner whose gate is to be retrieved.
     /// # Returns
     /// * `Ok(Some(Gate))`: If a gate is found.
     /// * `Ok(None)`: If no gate is found.
     /// * `Err(String)`: If there is an error during retrieval.
-    pub fn get_gate_by_owner(&self, owner_id: &str) -> Option<Gate> {
+    pub fn get_gate_by_owner(&self, subject_id: &str) -> Option<Gate> {
         let repository = self.repository.borrow();
         repository
-            .get_gate_by_owner(owner_id)
+            .get_gate_by_owner(subject_id)
             .map(|mut g| match g.gate_type {
                 GateType::Password => {
                     // redact password from gate info
@@ -149,22 +149,22 @@ mod tests {
         let service = gate_service_fixture();
         let gates = vec![
             NewGate {
-                owner_id: "owner1".to_string(),
+                subject_id: "owner1".to_string(),
                 gate_type: GateType::Password,
                 key: GateKey::Password("password123".to_string()),
             },
             NewGate {
-                owner_id: "owner2".to_string(),
+                subject_id: "owner2".to_string(),
                 gate_type: GateType::XFollowing,
                 key: GateKey::XFollowing("x_handle".to_string()),
             },
             NewGate {
-                owner_id: "owner3".to_string(),
+                subject_id: "owner3".to_string(),
                 gate_type: GateType::TelegramGroup,
                 key: GateKey::TelegramGroup("telegram_group_id".to_string()),
             },
             NewGate {
-                owner_id: "owner4".to_string(),
+                subject_id: "owner4".to_string(),
                 gate_type: GateType::DiscordServer,
                 key: GateKey::DiscordServer("discord_server_id".to_string()),
             },
@@ -176,7 +176,7 @@ mod tests {
 
             // Assert
             assert!(!created_gate.id.is_empty());
-            assert_eq!(created_gate.owner_id, gate.owner_id);
+            assert_eq!(created_gate.subject_id, gate.subject_id);
             assert_eq!(created_gate.gate_type, gate.gate_type);
             if gate.gate_type == GateType::Password {
                 if let GateKey::Password(p) = created_gate.key {
@@ -207,7 +207,7 @@ mod tests {
         // Arrange
         let service = gate_service_fixture();
         let new_gate = NewGate {
-            owner_id: "owner1".to_string(),
+            subject_id: "owner1".to_string(),
             gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
@@ -227,9 +227,9 @@ mod tests {
     fn it_should_get_xfollowing_gate() {
         // Arrange
         let service = gate_service_fixture();
-        let owner_id = random_id_string();
+        let subject_id = random_id_string();
         let new_gate = NewGate {
-            owner_id: owner_id.clone(),
+            subject_id: subject_id.clone(),
             gate_type: GateType::XFollowing,
             key: GateKey::XFollowing("x_handle".to_string()),
         };
@@ -246,31 +246,31 @@ mod tests {
     }
 
     #[test]
-    fn it_should_none_get_gate_by_owner_id() {
+    fn it_should_none_get_gate_by_subject_id() {
         // Arrange
         let service = gate_service_fixture();
 
         // Act
-        let gate = service.get_gate_by_owner("non_existent_owner_id");
+        let gate = service.get_gate_by_owner("non_existent_subject_id");
 
         // Assert
         assert!(gate.is_none());
     }
 
     #[test]
-    fn it_should_get_password_gate_by_owner_id() {
+    fn it_should_get_password_gate_by_subject_id() {
         // Arrange
         let service = gate_service_fixture();
-        let owner_id = random_id_string();
+        let subject_id = random_id_string();
         let new_gate = NewGate {
-            owner_id: owner_id.clone(),
+            subject_id: subject_id.clone(),
             gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
         service.add_gate(new_gate).unwrap();
 
         // Act
-        let gate = service.get_gate_by_owner(&owner_id);
+        let gate = service.get_gate_by_owner(&subject_id);
 
         // Assert
         assert!(gate.is_some());
@@ -280,19 +280,19 @@ mod tests {
     }
 
     #[test]
-    fn it_should_get_xfollowing_gate_by_owner_id() {
+    fn it_should_get_xfollowing_gate_by_subject_id() {
         // Arrange
         let service = gate_service_fixture();
-        let owner_id = random_id_string();
+        let subject_id = random_id_string();
         let new_gate = NewGate {
-            owner_id: owner_id.clone(),
+            subject_id: subject_id.clone(),
             gate_type: GateType::XFollowing,
             key: GateKey::XFollowing("x_handle".to_string()),
         };
         service.add_gate(new_gate).unwrap();
 
         // Act
-        let gate = service.get_gate_by_owner(&owner_id);
+        let gate = service.get_gate_by_owner(&subject_id);
 
         // Assert
         assert!(gate.is_some());
@@ -323,7 +323,7 @@ mod tests {
         // Arrange
         let service = gate_service_fixture();
         let new_gate = NewGate {
-            owner_id: "owner1".to_string(),
+            subject_id: "owner1".to_string(),
             gate_type: GateType::XFollowing,
             key: GateKey::XFollowing("x_handle".to_string()),
         };
@@ -346,7 +346,7 @@ mod tests {
         // Arrange
         let service = gate_service_fixture();
         let new_gate = NewGate {
-            owner_id: "owner1".to_string(),
+            subject_id: "owner1".to_string(),
             gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
@@ -364,7 +364,7 @@ mod tests {
         // Arrange
         let service = gate_service_fixture();
         let new_gate = NewGate {
-            owner_id: "owner1".to_string(),
+            subject_id: "owner1".to_string(),
             gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
@@ -401,7 +401,7 @@ mod tests {
         // Arrange
         let service = gate_service_fixture();
         let new_gate = NewGate {
-            owner_id: "owner1".to_string(),
+            subject_id: "owner1".to_string(),
             gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
