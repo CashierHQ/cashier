@@ -44,7 +44,7 @@ export default function ClaimPage() {
         link_id: linkId ?? "",
         anonymous_wallet_address: "",
       },
-      !!linkId && !!identity,
+      !!linkId && !!identity
     );
 
   // Fetch link data when linkId changes
@@ -56,10 +56,11 @@ export default function ClaimPage() {
 
   // Enable linkUserState fetching when link data is available
   useEffect(() => {
+    console.log("linkData changed, refetching linkUserState", linkData);
     if (linkData) {
       updateTokenInit();
     }
-  }, [linkData]);
+  }, []);
 
   // Handle state-based navigation for logged-in users
   useEffect(() => {
@@ -78,7 +79,7 @@ export default function ClaimPage() {
         setShowWalletModal(true);
       }
     },
-    [identity, goToChooseWallet],
+    [identity, goToChooseWallet]
   );
 
   const handleWalletConnected = (address?: string) => {

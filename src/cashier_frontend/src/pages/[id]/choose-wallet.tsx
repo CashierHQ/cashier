@@ -126,7 +126,7 @@ export default function ChooseWalletPage() {
     if (link) {
       updateTokenInit();
     }
-  }, [link, updateTokenInit]);
+  }, []);
 
   // Handle state-based navigation for logged-in users
   useEffect(() => {

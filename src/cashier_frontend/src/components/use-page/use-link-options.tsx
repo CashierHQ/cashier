@@ -194,8 +194,6 @@ const UseLinkOptions: React.FC<ClaimFormOptionsProps> = ({
       }
     }
 
-    console.log("isConnected", isConnected, walletOption, signerConfig);
-
     if (isConnected) {
       return (
         <CustomConnectedWalletButton

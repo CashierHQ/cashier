@@ -63,15 +63,13 @@ export const DefaultPage: FC<LinkCardPageProps> = ({
     });
   }, [linkData, isCompletePage]);
 
-  console.log("DefaultPage linkData", linkData);
-
   return (
     <LinkCardWithoutPhoneFrame
       label={linkLabel}
       displayComponent={getDisplayComponentForLink(
         linkData,
         getToken,
-        isDataLoading,
+        isDataLoading
       )}
       message={linkMessage}
       title={getTitleForLink(linkData, getToken)}
