@@ -39,8 +39,8 @@ const sortIntentsByAddress = (intents: IntentModel[]): IntentModel[] => {
     if (!aIsFee && bIsFee) return -1; // Non-fee comes first
 
     // If both are fees or both are not fees, then sort by address
-    if (a.asset.address < b.asset.address) return -1;
-    if (a.asset.address > b.asset.address) return 1;
+    if (a.typeDetails.asset.address < a.typeDetails.asset.address) return -1;
+    if (a.typeDetails.asset.address > a.typeDetails.asset.address) return 1;
 
     return 0;
   });
@@ -65,7 +65,7 @@ export const ConfirmationPopupAssetsSection: FC<
       console.log("intents", intents);
       // Process each intent to get associated fees
       for (const intent of intents) {
-        const tokenAddress = intent.asset.address;
+        const tokenAddress = intent.typeDetails.asset.address;
         const token = getToken(tokenAddress);
 
         if (!token) continue;
@@ -76,7 +76,7 @@ export const ConfirmationPopupAssetsSection: FC<
         // Network fee for this token
         if (token.fee && intent.task !== TASK.TRANSFER_WALLET_TO_TREASURY) {
           tokenFees.push({
-            chain: intent.asset.chain,
+            chain: intent.typeDetails.asset.chain,
             type: "network_fee",
             address: tokenAddress,
             amount: token.fee,
@@ -89,7 +89,7 @@ export const ConfirmationPopupAssetsSection: FC<
 
           if (linkCreationFee) {
             tokenFees.push({
-              chain: intent.asset.chain,
+              chain: intent.typeDetails.asset.chain,
               type: "link_creation_fee",
               address: tokenAddress,
               amount: linkCreationFee,
@@ -124,7 +124,7 @@ export const ConfirmationPopupAssetsSection: FC<
               actionType={actionType}
               key={intent.id}
               intent={intent}
-              fees={feesMap.get(intent.asset.address) || []}
+              fees={feesMap.get(intent.typeDetails.asset.address) || []}
             />
           </li>
         ))}

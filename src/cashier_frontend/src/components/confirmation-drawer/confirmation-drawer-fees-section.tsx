@@ -62,7 +62,7 @@ export const ConfirmationPopupFeesSection: FC<
       const totalFeesMapArray = [];
       // intent is already sorted, the transfer fee create link is the first one
       for (const intent of intents) {
-        const token = getToken(intent.asset.address);
+        const token = getToken(intent.typeDetails.asset.address);
         if (intent.task === TASK.TRANSFER_WALLET_TO_TREASURY && link) {
           const final_amount = FeeHelpers.forecastIcrc2FeeEs8(
             token!,
@@ -73,9 +73,9 @@ export const ConfirmationPopupFeesSection: FC<
           totalFeesMapArray.push({
             intent,
             fee: {
-              chain: intent.asset.chain,
+              chain: intent.typeDetails.asset.chain,
               type: "link_creation_fee",
-              address: intent.asset.address,
+              address: intent.typeDetails.asset.address,
               amount: final_amount,
             },
           });
@@ -83,9 +83,9 @@ export const ConfirmationPopupFeesSection: FC<
           const transfer: Transfer = {
             intent,
             fee: {
-              chain: intent.asset.chain,
+              chain: intent.typeDetails.asset.chain,
               type: "network_fee",
-              address: intent.asset.address,
+              address: intent.typeDetails.asset.address,
               amount: token?.fee || 0n,
             },
           };
@@ -104,7 +104,7 @@ export const ConfirmationPopupFeesSection: FC<
 
       // If no fees found but we have intents, add the first intent's asset address
       if (uniqueTokenAddresses.size === 0 && intents.length > 0) {
-        uniqueTokenAddresses.add(intents[0].asset.address);
+        uniqueTokenAddresses.add(intents[0].typeDetails.asset.address);
       }
 
       // Get metadata for all unique tokens at once

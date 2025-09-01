@@ -1,6 +1,7 @@
 use base64::prelude::BASE64_STANDARD;
 use candid::{CandidType, Decode};
-use cashier_backend_types::{constant, error::CanisterError};
+use cashier_backend_types::error::CanisterError;
+use cashier_backend_types::repository::action::v1::ActionType;
 use ic_mple_pocket_ic::pocket_ic::common::rest::RawMessageId;
 use serde::de::DeserializeOwned;
 
@@ -27,7 +28,6 @@ async fn test_request_lock_for_trigger_action() {
         let mut fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
         // Setup user and airdrop tokens
-        fixture.setup_user().await;
         fixture.airdrop_icp(1_000_000_000_000_000, &caller).await;
         fixture
             .airdrop_icrc("ckBTC", 1_000_000_000_000_000, &caller)
@@ -37,9 +37,11 @@ async fn test_request_lock_for_trigger_action() {
             .await;
 
         let link = fixture.create_token_basket_link().await;
-        let action = fixture.create_action(&link.id, "CreateLink").await;
+        let action = fixture
+            .create_action(&link.id, ActionType::CreateLink)
+            .await;
         let processing_action = fixture
-            .process_action(&link.id, &action.id, constant::CREATE_LINK_ACTION)
+            .process_action(&link.id, &action.id, ActionType::CreateLink)
             .await;
 
         // Execute all ICRC-112 requests except trigger_transaction

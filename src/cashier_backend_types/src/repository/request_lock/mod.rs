@@ -23,23 +23,26 @@ impl RequestLock {
 
 #[cfg(test)]
 mod tests {
+    use candid::Principal;
+
     use crate::repository::keys::RequestLockKey;
 
     #[test]
     fn test_request_lock_key_to_string() {
-        let key1 = RequestLockKey::user_link_action("user123", "link456", "action789");
+        let user = Principal::anonymous();
+        let key1 = RequestLockKey::user_link_action(user, "link456", "action789");
         assert_eq!(
             key1.to_string(),
-            "USER#user123#LINK#link456#ACTION#action789"
+            format!("USER#{}#LINK#link456#ACTION#action789", user)
         );
 
-        let key2 = RequestLockKey::user_link("user123", "link456");
-        assert_eq!(key2.to_string(), "USER#user123#LINK#link456");
+        let key2 = RequestLockKey::user_link(user, "link456");
+        assert_eq!(key2.to_string(), format!("USER#{}#LINK#link456", user));
 
-        let key3 = RequestLockKey::user_action_transaction("user123", "action789", "tx101");
+        let key3 = RequestLockKey::user_action_transaction(user, "action789", "tx101");
         assert_eq!(
             key3.to_string(),
-            "USER#user123#ACTION#action789#TRANSACTION#tx101"
+            format!("USER#{}#ACTION#action789#TRANSACTION#tx101", user)
         );
     }
 }

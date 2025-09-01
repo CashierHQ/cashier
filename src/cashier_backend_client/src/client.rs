@@ -2,7 +2,6 @@ use cashier_backend_types::{
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
         link::{CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDto, UpdateLinkInput},
-        user::UserDto,
     },
     error::CanisterError,
 };
@@ -31,16 +30,6 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     /// Returns the build data of the canister.
     pub async fn get_canister_build_data(&self) -> CanisterClientResult<BuildData> {
         self.client.query("get_canister_build_data", ()).await
-    }
-
-    /// Creates a new user. User should be created before creating a link.
-    pub async fn create_user(&self) -> CanisterClientResult<Result<UserDto, String>> {
-        self.client.update("create_user", ()).await
-    }
-
-    /// Returns the user in backend.
-    pub async fn get_user(&self) -> CanisterClientResult<Result<UserDto, String>> {
-        self.client.query("get_user", ()).await
     }
 
     /// Creates a new link.

@@ -68,13 +68,13 @@ export const useWithdrawConfirmation = ({
       // Start polling to track action state changes
       startPollingLinkDetail(
         linkId,
-        ACTION_TYPE.WITHDRAW_LINK,
+        ACTION_TYPE.WITHDRAW,
         identity || undefined,
       );
 
       const firstUpdatedAction = await processAction({
         linkId: link.id,
-        actionType: ACTION_TYPE.WITHDRAW_LINK,
+        actionType: ACTION_TYPE.WITHDRAW,
         actionId: currentAction.id,
       });
 

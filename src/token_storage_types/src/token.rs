@@ -1,10 +1,11 @@
 use std::fmt::Display;
 
 use candid::CandidType;
+use cashier_common::chain::Chain;
 use cashier_macros::storable;
 use serde::{Deserialize, Serialize};
 
-use crate::{IndexId, LedgerId, chain::Chain, user::UserPreference};
+use crate::{IndexId, LedgerId, user::UserPreference};
 
 /// A token identifier
 #[derive(CandidType, Clone, Eq, PartialEq, Debug, Hash, Ord, PartialOrd)]

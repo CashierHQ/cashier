@@ -19,14 +19,15 @@ import {
   getLinkTypeString,
 } from "@/services/types/enum";
 import { Avatar } from "@radix-ui/react-avatar";
-import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service";
 import { Info } from "lucide-react";
 import { InformationOnAssetDrawer } from "@/components/information-on-asset-drawer/information-on-asset-drawer";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { useIdentity } from "@nfid/identitykit/react";
 import { mapLinkDtoToUserInputItem } from "@/services/types/mapper/link.service.mapper";
 import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
-import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
+import LinkLocalStorageServiceV2, {
+  LOCAL_lINK_ID_PREFIX,
+} from "@/services/link/link-local-storage.service.v2";
 import { FeeHelpers } from "@/services/fee.service";
 import { useLinkCreateValidation } from "@/hooks/form/useLinkCreateValidation";
 import { LinkDetailModel } from "@/services/types/link.service.types";

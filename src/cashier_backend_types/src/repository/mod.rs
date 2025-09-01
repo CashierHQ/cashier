@@ -13,7 +13,5 @@ pub mod link_action;
 pub mod processing_transaction;
 pub mod request_lock;
 pub mod transaction;
-pub mod user;
 pub mod user_action;
 pub mod user_link;
-pub mod user_wallet;

@@ -3,6 +3,7 @@
 
 use crate::domains::action::ActionDomainLogic;
 use crate::repositories::{self, Repositories};
+use candid::Principal;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::service::action::RollUpStateResp;
 use cashier_backend_types::{
@@ -173,7 +174,7 @@ impl<R: Repositories> ActionService<R> {
         action: Action,
         intents: Vec<Intent>,
         intent_tx_map: HashMap<String, Vec<Transaction>>,
-        user_id: String,
+        user_id: Principal,
     ) -> Result<(), CanisterError> {
         let action_intents = intents
             .iter()

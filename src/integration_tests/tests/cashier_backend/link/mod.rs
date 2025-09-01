@@ -30,14 +30,11 @@ async fn should_setup_environment_success() {
             subaccount: None,
         };
 
-        let user = fixture.setup_user().await;
         let icp_balance = icp_ledger_client.balance_of(&account).await.unwrap();
         let icrc_balance = icrc_ledger_client.balance_of(&account).await.unwrap();
 
         assert_eq!(icp_balance, Nat::from(10000000000u64));
         assert_eq!(icrc_balance, Nat::from(1000000u64));
-        assert!(!user.id.is_empty());
-        assert!(!user.wallet.is_empty());
 
         Ok(())
     })

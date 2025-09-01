@@ -1,7 +1,6 @@
 use candid::CandidType;
+use cashier_common::chain::Chain;
 use cashier_macros::storable;
-
-use crate::chain::Chain;
 
 #[storable]
 #[derive(Clone, Eq, PartialEq, Debug, CandidType)]
