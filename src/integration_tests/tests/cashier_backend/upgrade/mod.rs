@@ -12,11 +12,13 @@ mod test_canister_upgrade {
     use crate::{cashier_backend::link::fixture::LinkTestFixture, utils::PocketIcTestContext};
 
     use super::*;
-    use cashier_backend_types::dto::{action::ActionDto, link::LinkDto};
+    use cashier_backend_types::{
+        dto::{action::ActionDto, link::LinkDto},
+        repository::action::v1::ActionType,
+    };
 
     struct UpgradeTestData {
         link: LinkDto,
-        action: ActionDto,
         fixture: LinkTestFixture,
         processing_action: ActionDto,
     }
@@ -26,7 +28,6 @@ mod test_canister_upgrade {
         let caller = TestUser::User1.get_principal();
         let mut fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
-        let _ = fixture.setup_user().await;
         fixture.airdrop_icp(1_000_000_000, &caller).await;
 
         // Create tip link with 1 ICP
@@ -34,7 +35,9 @@ mod test_canister_upgrade {
         let link = fixture
             .create_tip_link(constant::ICP_TOKEN, tip_link_amount)
             .await;
-        let action = fixture.create_action(&link.id, "CreateLink").await;
+        let action = fixture
+            .create_action(&link.id, ActionType::CreateLink)
+            .await;
 
         let user_account = Account {
             owner: caller,
@@ -49,12 +52,11 @@ mod test_canister_upgrade {
 
         // Process action to get it into processing state
         let processing_action = fixture
-            .process_action(&link.id, &action.id, constant::CREATE_LINK_ACTION)
+            .process_action(&link.id, &action.id, ActionType::CreateLink)
             .await;
 
         UpgradeTestData {
             link,
-            action,
             fixture,
             processing_action,
         }
@@ -67,10 +69,7 @@ mod test_canister_upgrade {
             let test_data = setup_upgrade_test(ctx).await;
 
             // Verify action is in processing state
-            assert_eq!(
-                test_data.processing_action.state,
-                ActionState::Processing.to_string()
-            );
+            assert_eq!(test_data.processing_action.state, ActionState::Processing);
 
             // Act - Upgrade the canister
             let new_bytecode = crate::utils::get_cashier_backend_canister_bytecode();
@@ -87,12 +86,9 @@ mod test_canister_upgrade {
             }
 
             // Assert - Action should be failed after timeout
-            let action_after_timeout = test_data
-                .fixture
-                .get_action(&test_data.link.id, &test_data.action.id)
-                .await;
+            let action_after_timeout = test_data.fixture.get_action(&test_data.link.id).await;
 
-            assert_eq!(action_after_timeout.state, ActionState::Fail.to_string());
+            assert_eq!(action_after_timeout.state, ActionState::Fail);
 
             // Verify intents are also failed
             assert_eq!(action_after_timeout.intents.len(), 2);
@@ -100,7 +96,7 @@ mod test_canister_upgrade {
                 action_after_timeout
                     .intents
                     .iter()
-                    .all(|intent| intent.state == IntentState::Fail.to_string())
+                    .all(|intent| intent.state == IntentState::Fail)
             );
 
             Ok(())
@@ -116,10 +112,7 @@ mod test_canister_upgrade {
             let test_data = setup_upgrade_test(ctx).await;
 
             // Verify action is in processing state
-            assert_eq!(
-                test_data.processing_action.state,
-                ActionState::Processing.to_string()
-            );
+            assert_eq!(test_data.processing_action.state, ActionState::Processing);
 
             // Act - First upgrade
             let new_bytecode = crate::utils::get_cashier_backend_canister_bytecode();
@@ -134,15 +127,9 @@ mod test_canister_upgrade {
             ctx.advance_time(Duration::from_secs(1)).await;
 
             // Verify still processing after first upgrade
-            let action_after_first_upgrade = test_data
-                .fixture
-                .get_action(&test_data.link.id, &test_data.action.id)
-                .await;
+            let action_after_first_upgrade = test_data.fixture.get_action(&test_data.link.id).await;
 
-            assert_eq!(
-                action_after_first_upgrade.state,
-                ActionState::Processing.to_string()
-            );
+            assert_eq!(action_after_first_upgrade.state, ActionState::Processing);
 
             // Second upgrade
             ctx.upgrade_canister(ctx.cashier_backend_principal, None, new_bytecode, ())
@@ -151,15 +138,10 @@ mod test_canister_upgrade {
             ctx.advance_time(Duration::from_secs(1)).await;
 
             // Verify still processing after second upgrade
-            let action_after_second_upgrade = test_data
-                .fixture
-                .get_action(&test_data.link.id, &test_data.action.id)
-                .await;
+            let action_after_second_upgrade =
+                test_data.fixture.get_action(&test_data.link.id).await;
 
-            assert_eq!(
-                action_after_second_upgrade.state,
-                ActionState::Processing.to_string()
-            );
+            assert_eq!(action_after_second_upgrade.state, ActionState::Processing);
 
             // Advance time to trigger timeout
             ctx.advance_time(Duration::from_secs(60 * 5)).await;
@@ -168,12 +150,9 @@ mod test_canister_upgrade {
             }
 
             // Assert - Action should be failed after timeout despite multiple upgrades
-            let action_after_timeout = test_data
-                .fixture
-                .get_action(&test_data.link.id, &test_data.action.id)
-                .await;
+            let action_after_timeout = test_data.fixture.get_action(&test_data.link.id).await;
 
-            assert_eq!(action_after_timeout.state, ActionState::Fail.to_string());
+            assert_eq!(action_after_timeout.state, ActionState::Fail);
 
             Ok(())
         })

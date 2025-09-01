@@ -14,7 +14,10 @@ import { formatAssetsForSubmission } from "@/components/link-details/form-handle
 import { ValidationService } from "@/services/validation.service";
 import { LINK_TYPE, getAssetLabelForLinkType } from "@/services/types/enum";
 import { LOCAL_lINK_ID_PREFIX } from "@/services/link/link-local-storage.service.v2";
-import { mapLinkDtoToUserInputItem } from "@/services/types/mapper/link.service.mapper";
+import {
+  mapLinkDtoToUserInputItem,
+  mapLinkStateToEnum,
+} from "@/services/types/mapper/link.service.mapper";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 
 // Import centralized validation types and error handling
@@ -204,8 +207,6 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
           );
         }
 
-        console.log("Submitting form with input:", input);
-
         // Call state machine
         const stateMachineResponse = await callLinkStateMachine({
           linkId,
@@ -213,9 +214,8 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
           isContinue: true,
         });
 
-        console.log("State machine response:", stateMachineResponse);
-
-        const stepIndex = stateToStepIndex(stateMachineResponse.state);
+        const state = mapLinkStateToEnum(stateMachineResponse.state);
+        const stepIndex = stateToStepIndex(state);
         setStep(stepIndex);
       } catch (error) {
         console.error("Form submission error:", error);
@@ -328,8 +328,8 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
           linkModel: currentLink,
           isContinue: true,
         });
-
-        const stepIndex = stateToStepIndex(stateMachineRes.state);
+        const state = mapLinkStateToEnum(stateMachineRes.state);
+        const stepIndex = stateToStepIndex(state);
         setStep(stepIndex);
       } else {
         onUnsupportedType();

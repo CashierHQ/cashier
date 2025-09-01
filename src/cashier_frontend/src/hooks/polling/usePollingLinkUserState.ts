@@ -30,7 +30,7 @@ export const usePollingLinkUserState = (
 
         try {
           const res = await getLinkUserState(input, identity);
-          if (res.action && onUpdate) {
+          if (res?.action && onUpdate) {
             console.log("polling res state", res.action.state);
             onUpdate(res.action);
           }

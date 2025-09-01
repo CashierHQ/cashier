@@ -1,13 +1,14 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use candid::Principal;
 use cashier_common::test_utils;
 
 pub fn random_id_string() -> String {
     test_utils::random_id_string()
 }
 
-pub fn random_principal_id() -> String {
+pub fn random_principal_id() -> Principal {
     test_utils::random_principal_id()
 }
 

@@ -25,7 +25,7 @@ async fn it_should_error_use_link_token_basket_if_caller_anonymous() {
     let result = cashier_backend_client
         .create_action(CreateActionInput {
             link_id: link.id.clone(),
-            action_type: constant::USE_LINK_ACTION.to_string(),
+            action_type: ActionType::Use,
         })
         .await;
 
@@ -48,7 +48,6 @@ async fn it_should_use_link_token_basket_successfully() {
 
     let claimer = TestUser::User2.get_principal();
     let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
-    claimer_fixture.setup_user().await;
 
     let icp_ledger_client = claimer_fixture.ctx.new_icp_ledger_client(claimer);
     let ckbtc_ledger_client = claimer_fixture
@@ -92,34 +91,34 @@ async fn it_should_use_link_token_basket_successfully() {
 
     // Act
     let use_action = claimer_fixture
-        .create_action(&link.id, constant::USE_LINK_ACTION)
+        .create_action(&link.id, ActionType::Use)
         .await;
 
     // Assert
     assert!(!use_action.id.is_empty());
-    assert_eq!(use_action.r#type, ActionType::Use.to_string());
-    assert_eq!(use_action.state, ActionState::Created.to_string());
+    assert_eq!(use_action.r#type, ActionType::Use);
+    assert_eq!(use_action.state, ActionState::Created);
     assert_eq!(use_action.intents.len(), 3);
 
     // Act
     let processing_action = claimer_fixture
-        .process_action(&link.id, &use_action.id, constant::USE_LINK_ACTION)
+        .process_action(&link.id, &use_action.id, ActionType::Use)
         .await;
 
     // Assert
     assert_eq!(processing_action.id, use_action.id);
-    assert_eq!(processing_action.r#type, ActionType::Use.to_string());
-    assert_eq!(processing_action.state, ActionState::Success.to_string());
+    assert_eq!(processing_action.r#type, ActionType::Use);
+    assert_eq!(processing_action.state, ActionState::Success);
     assert!(
         processing_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Success.to_string())
+            .all(|intent| intent.state == IntentState::Success)
     );
 
-    let icp_link_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
-    let ckbtc_link_amount = link.asset_info.as_ref().unwrap()[1].amount_per_link_use_action;
-    let ckusdc_link_amount = link.asset_info.as_ref().unwrap()[2].amount_per_link_use_action;
+    let icp_link_amount = link.asset_info[0].amount_per_link_use_action;
+    let ckbtc_link_amount = link.asset_info[1].amount_per_link_use_action;
+    let ckusdc_link_amount = link.asset_info[2].amount_per_link_use_action;
 
     let claimer_icp_balance_after = icp_ledger_client
         .balance_of(&claimer_account)

@@ -1,6 +1,7 @@
 use crate::cashier_backend::link::fixture::{LinkTestFixture, create_receive_payment_link_fixture};
 use crate::utils::{icrc_112, link_id_to_account::link_id_to_account, principal::TestUser};
 use candid::Principal;
+use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::{
     constant,
     dto::action::CreateActionInput,
@@ -23,7 +24,7 @@ async fn it_should_error_use_link_payment_if_caller_anonymous() {
     let result = cashier_backend_client
         .create_action(CreateActionInput {
             link_id: link.id.clone(),
-            action_type: constant::USE_LINK_ACTION.to_string(),
+            action_type: ActionType::Use,
         })
         .await;
 
@@ -47,7 +48,6 @@ async fn it_should_use_link_payment_icp_token_successfully() {
 
     let payer = TestUser::User2.get_principal();
     let mut payer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &payer).await;
-    payer_fixture.setup_user().await;
 
     let initial_balance = 1_000_000_000u64;
     payer_fixture.airdrop_icp(initial_balance, &payer).await;
@@ -68,18 +68,16 @@ async fn it_should_use_link_payment_icp_token_successfully() {
     );
 
     // Act
-    let pay_action = payer_fixture
-        .create_action(&link.id, constant::USE_LINK_ACTION)
-        .await;
+    let pay_action = payer_fixture.create_action(&link.id, ActionType::Use).await;
 
     // Assert
     assert!(!pay_action.id.is_empty());
-    assert_eq!(pay_action.r#type, constant::USE_LINK_ACTION);
-    assert_eq!(pay_action.state, ActionState::Created.to_string());
+    assert_eq!(pay_action.r#type, ActionType::Use);
+    assert_eq!(pay_action.state, ActionState::Created);
 
     // Act
     let processing_action = payer_fixture
-        .process_action(&link.id, &pay_action.id, constant::USE_LINK_ACTION)
+        .process_action(&link.id, &pay_action.id, ActionType::Use)
         .await;
 
     // Assert
@@ -110,16 +108,16 @@ async fn it_should_use_link_payment_icp_token_successfully() {
 
     // Assert
     assert!(!update_action.id.is_empty());
-    assert_eq!(update_action.r#type, constant::USE_LINK_ACTION);
-    assert_eq!(update_action.state, ActionState::Success.to_string());
+    assert_eq!(update_action.r#type, ActionType::Use);
+    assert_eq!(update_action.state, ActionState::Success);
     assert!(
         update_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Success.to_string())
+            .all(|intent| intent.state == IntentState::Success)
     );
 
-    let payment_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let payment_amount = link.asset_info[0].amount_per_link_use_action;
     assert_ne!(payment_amount, 0);
 
     let icp_balance_after = icp_ledger_client.balance_of(&payer_account).await.unwrap();
@@ -148,7 +146,6 @@ async fn it_should_use_link_payment_icrc_token_successfully() {
 
     let payer = TestUser::User2.get_principal();
     let mut payer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &payer).await;
-    payer_fixture.setup_user().await;
 
     let initial_balance = 1_000_000_000u64;
 
@@ -179,18 +176,16 @@ async fn it_should_use_link_payment_icrc_token_successfully() {
     );
 
     // Act
-    let pay_action = payer_fixture
-        .create_action(&link.id, constant::USE_LINK_ACTION)
-        .await;
+    let pay_action = payer_fixture.create_action(&link.id, ActionType::Use).await;
 
     // Assert
     assert!(!pay_action.id.is_empty());
-    assert_eq!(pay_action.r#type, constant::USE_LINK_ACTION);
-    assert_eq!(pay_action.state, ActionState::Created.to_string());
+    assert_eq!(pay_action.r#type, ActionType::Use);
+    assert_eq!(pay_action.state, ActionState::Created);
 
     // Act
     let processing_action = payer_fixture
-        .process_action(&link.id, &pay_action.id, constant::USE_LINK_ACTION)
+        .process_action(&link.id, &pay_action.id, ActionType::Use)
         .await;
 
     // Assert
@@ -221,16 +216,16 @@ async fn it_should_use_link_payment_icrc_token_successfully() {
 
     // Assert
     assert!(!update_action.id.is_empty());
-    assert_eq!(update_action.r#type, constant::USE_LINK_ACTION);
-    assert_eq!(update_action.state, ActionState::Success.to_string());
+    assert_eq!(update_action.r#type, ActionType::Use);
+    assert_eq!(update_action.state, ActionState::Success);
     assert!(
         update_action
             .intents
             .iter()
-            .all(|intent| intent.state == IntentState::Success.to_string())
+            .all(|intent| intent.state == IntentState::Success)
     );
 
-    let payment_amount = link.asset_info.as_ref().unwrap()[0].amount_per_link_use_action;
+    let payment_amount = link.asset_info[0].amount_per_link_use_action;
     assert_ne!(payment_amount, 0);
 
     let ckusdc_balance_after = ckusdc_ledger_client

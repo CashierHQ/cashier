@@ -1,5 +1,4 @@
-use std::str::FromStr;
-
+use candid::Principal;
 use cashier_backend_types::{
     dto::link::{
         CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDetailUpdateInput,
@@ -91,21 +90,18 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
                     }
                 }
                 "link_type" => {
-                    let link_link_type_str = link.link_type.as_ref().map(LinkType::to_string);
-
                     if params.link_type.is_none() {
                         return false;
                     }
-                    if params.link_type != link_link_type_str {
+                    if params.link_type != link.link_type {
                         return true;
                     }
                 }
                 "template" => {
-                    let link_template_str = link.template.as_ref().map(Template::to_string);
                     if params.template.is_none() {
                         return false;
                     }
-                    if params.template != link_template_str {
+                    if params.template != link.template {
                         return true;
                     }
                 }
@@ -119,39 +115,32 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
                     }
                 }
                 "asset_info" => {
-                    match (&link.asset_info, &params.asset_info) {
-                        (_, None) => {
-                            return false;
-                        }
-                        (Some(link_asset_info), Some(params_asset_info)) => {
-                            // Compare IDs in both lists
-                            let link_ids: Vec<_> =
-                                link_asset_info.iter().map(|asset| &asset.label).collect();
-                            let params_ids: Vec<_> =
-                                params_asset_info.iter().map(|asset| &asset.label).collect();
+                    // Compare IDs in both lists
+                    let link_ids: Vec<_> =
+                        link.asset_info.iter().map(|asset| &asset.label).collect();
+                    let params_ids: Vec<_> =
+                        params.asset_info.iter().map(|asset| &asset.label).collect();
 
-                            // asset info changed
-                            if link_ids.len() != params_ids.len()
-                                || !link_ids.iter().all(|id| params_ids.contains(id))
-                            {
+                    // asset info changed
+                    if link_ids.len() != params_ids.len()
+                        || !link_ids.iter().all(|id| params_ids.contains(id))
+                    {
+                        return true;
+                    }
+
+                    // Compare updated data
+                    for param_asset in &params.asset_info {
+                        if let Some(link_asset) = link
+                            .asset_info
+                            .iter()
+                            .find(|asset| asset.label == param_asset.label)
+                        {
+                            if param_asset.is_changed(link_asset) {
                                 return true;
                             }
-
-                            // Compare updated data
-                            for param_asset in params_asset_info {
-                                if let Some(link_asset) = link_asset_info
-                                    .iter()
-                                    .find(|asset| asset.label == param_asset.label)
-                                {
-                                    if param_asset.is_changed(link_asset) {
-                                        return true;
-                                    }
-                                } else {
-                                    return true;
-                                }
-                            }
+                        } else {
+                            return true;
                         }
-                        _ => {}
                     }
                 }
                 _ => {}
@@ -163,39 +152,29 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
 
     async fn create_link(
         &mut self,
-        caller: String,
+        user_id: Principal,
         input: CreateLinkInput,
     ) -> Result<Link, CanisterError> {
-        let user_wallet = self
-            .user_wallet_repository
-            .get(&caller)
-            .ok_or_else(|| "User not found".to_string())?;
-
-        let user_id = user_wallet.user_id;
-
         let ts = self.ic_env.time();
         let id = Uuid::new_v4();
         let link_id_str = id.to_string();
-
-        let link_type = LinkType::from_str(input.link_type.as_str())
-            .map_err(|_| "Invalid link type".to_string())?;
 
         let new_link = Link {
             id: link_id_str.clone(),
             state: LinkState::ChooseLinkType,
             title: None,
             description: None,
-            link_type: Some(link_type),
-            asset_info: None,
+            link_type: Some(input.link_type),
+            asset_info: vec![],
             template: Some(Template::Central),
-            creator: user_id.clone(),
+            creator: user_id,
             create_at: ts,
-            metadata: None,
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
         let new_user_link = UserLink {
-            user_id: user_id.clone(),
+            user_id,
             link_id: link_id_str.clone(),
         };
 
@@ -208,22 +187,26 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         let choose_link_type_params = LinkDetailUpdateInput {
             title: Some(input.title.clone()),
             template: Some(input.template.clone()),
-            link_type: Some(input.link_type.clone()),
+            link_type: Some(input.link_type),
             description: None,
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             link_use_action_max_count: None,
         };
 
         let result = self
-            .handle_link_state_transition(&link_id_str, "Continue", Some(choose_link_type_params))
+            .handle_link_state_transition(
+                &link_id_str,
+                LinkStateMachineGoto::Continue,
+                Some(choose_link_type_params),
+            )
             .await;
 
         if result.is_err() {
             // Clean up on failure
             self.link_repository.delete(&link_id_str);
-            self.user_link_repository.delete(new_user_link);
+            self.user_link_repository.delete(&new_user_link);
             return Err(CanisterError::HandleLogicError(format!(
                 "Create link failed: transition from ChooseLinkType to AddAssets {:?}",
                 result.err()
@@ -239,18 +222,22 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
             description: input.description.clone(),
             link_image_url: input.link_image_url.clone(),
             nft_image: input.nft_image.clone(),
-            asset_info: Some(input.asset_info.clone()),
+            asset_info: input.asset_info.clone(),
             link_use_action_max_count: Some(input.link_use_action_max_count),
         };
 
         let result = self
-            .handle_link_state_transition(&link_id_str, "Continue", Some(add_assets_params))
+            .handle_link_state_transition(
+                &link_id_str,
+                LinkStateMachineGoto::Continue,
+                Some(add_assets_params),
+            )
             .await;
 
         if result.is_err() {
             // Clean up on failure
             self.link_repository.delete(&link_id_str);
-            self.user_link_repository.delete(new_user_link);
+            self.user_link_repository.delete(&new_user_link);
             return Err(CanisterError::HandleLogicError(format!(
                 "Create link failed: transition from AddAssets to Preview {:?}",
                 result.err()
@@ -265,18 +252,22 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
             description: None,
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             link_use_action_max_count: None,
         };
 
         let result = self
-            .handle_link_state_transition(&link_id_str, "Continue", Some(add_assets_params))
+            .handle_link_state_transition(
+                &link_id_str,
+                LinkStateMachineGoto::Continue,
+                Some(add_assets_params),
+            )
             .await;
 
         if result.is_err() {
             // Clean up on failure
             self.link_repository.delete(&link_id_str);
-            self.user_link_repository.delete(new_user_link);
+            self.user_link_repository.delete(&new_user_link);
             return Err(CanisterError::HandleLogicError(format!(
                 "Create link failed: transition from Preview to CreateLink {:?}",
                 result.err()
@@ -290,13 +281,10 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
     async fn handle_link_state_transition(
         &mut self,
         link_id: &str,
-        go_to: &str,
+        link_state_goto: LinkStateMachineGoto,
         params: Option<LinkDetailUpdateInput>,
     ) -> Result<Link, CanisterError> {
         let mut link = self.get_link_by_id(link_id)?;
-
-        let link_state_goto =
-            LinkStateMachineGoto::from_string(go_to).map_err(CanisterError::ValidationErrors)?;
 
         // if params is None, all params are None
         // some goto not required params like Back
@@ -305,7 +293,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
             description: None,
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -378,7 +366,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
                     ));
                 }
 
-                link.asset_info = Some(asset_info);
+                link.asset_info = asset_info;
                 link.link_use_action_max_count = link_use_action_max_count;
                 link.state = LinkState::Preview;
                 self.link_repository.update(link.clone());
@@ -387,7 +375,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
             // ===== Back Go to =====
             else if link_state_goto == LinkStateMachineGoto::Back {
                 link.state = LinkState::ChooseLinkType;
-                link.asset_info = Some(asset_info);
+                link.asset_info = asset_info;
                 link.link_use_action_max_count = link_use_action_max_count;
                 self.link_repository.update(link.clone());
                 Ok(link.clone())
@@ -518,24 +506,18 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         &self,
         params: &LinkDetailUpdateInput,
     ) -> Result<(Template, LinkType), CanisterError> {
-        let template_str = params
+        let template = params
             .template
             .clone()
             .ok_or_else(|| CanisterError::ValidationErrors("Template is required".to_string()))?;
 
-        let link_type_str = params
+        let link_type = params
             .link_type
-            .clone()
             .ok_or_else(|| CanisterError::ValidationErrors("Link type is required".to_string()))?;
-
-        let template = Template::from_str(template_str.as_str())
-            .map_err(|_| CanisterError::ValidationErrors("Invalid template".to_string()))?;
-
-        let link_type = LinkType::from_str(link_type_str.as_str())
-            .map_err(|_| CanisterError::ValidationErrors("Invalid link type".to_string()))?;
 
         Ok((template, link_type))
     }
+
     fn prefetch_params_add_asset(
         &self,
         params: &LinkDetailUpdateInput,
@@ -544,10 +526,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
             CanisterError::ValidationErrors("Link use action max count is required".to_string())
         })?;
 
-        let asset_info_input = params
-            .asset_info
-            .clone()
-            .ok_or_else(|| CanisterError::ValidationErrors("Asset info is required".to_string()))?;
+        let asset_info_input = params.asset_info.clone();
 
         Ok((
             link_use_action_max_count,
@@ -561,7 +540,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
     fn prefetch_create_action(&self, link: &Link) -> Result<Option<Action>, CanisterError> {
         let link_creation_action: Vec<LinkAction> = self.link_action_repository.get_by_prefix(
             &link.id,
-            ActionType::CreateLink.to_str(),
+            &ActionType::CreateLink,
             &link.creator,
         );
 
@@ -577,8 +556,8 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
     fn prefetch_withdraw_action(&self, link: &Link) -> Result<Option<Action>, CanisterError> {
         let link_withdraw_action: Vec<LinkAction> = self.link_action_repository.get_by_prefix(
             &link.id,
-            &ActionType::Withdraw.to_string(),
-            &link.creator.clone(),
+            &ActionType::Withdraw,
+            &link.creator,
         );
 
         if link_withdraw_action.is_empty() {
@@ -603,9 +582,9 @@ mod tests {
     use crate::utils::test_utils::{
         random_id_string, random_principal_id, runtime::MockIcEnvironment,
     };
+    use cashier_backend_types::repository::common::Asset;
     use cashier_backend_types::repository::{
         asset_info::AssetInfo,
-        common::Chain,
         link::v1::{Link, LinkState, LinkType},
     };
     use std::collections::HashMap;
@@ -622,11 +601,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: None,
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
-            metadata: None,
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -636,7 +615,7 @@ mod tests {
             description: None,
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -662,11 +641,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: None,
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
-            metadata: None,
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -676,7 +655,7 @@ mod tests {
             description: None,
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -702,11 +681,11 @@ mod tests {
             title: None,
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
-            metadata: None,
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -716,7 +695,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -742,11 +721,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
-            metadata: None,
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -756,7 +735,7 @@ mod tests {
             description: Some("New Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -782,11 +761,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -796,7 +775,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -825,11 +804,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(meta_data),
+            metadata: meta_data,
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -839,7 +818,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: Some("http://example.com/new_image.png".to_string()),
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -865,11 +844,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -879,7 +858,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -909,11 +888,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(meta_data),
+            metadata: meta_data,
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -923,7 +902,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: Some("http://example.com/new_nft.png".to_string()),
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -949,11 +928,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: Some(LinkType::SendTip),
-            asset_info: None,
+            asset_info: vec![],
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -963,9 +942,9 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
-            link_type: Some(LinkType::SendTip.to_string()),
+            link_type: Some(LinkType::SendTip),
             link_use_action_max_count: None,
         };
 
@@ -989,11 +968,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: Some(LinkType::SendTip),
-            asset_info: None,
+            asset_info: vec![],
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -1003,9 +982,9 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
-            link_type: Some(LinkType::SendAirdrop.to_string()),
+            link_type: Some(LinkType::SendAirdrop),
             link_use_action_max_count: None,
         };
 
@@ -1019,26 +998,29 @@ mod tests {
     }
 
     #[test]
-    fn it_should_false_is_props_changed_if_asset_info_unchanged() {
+    fn it_should_return_true_if_asset_info_has_changed() {
         // Arrange
         let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
+        let asset_address = random_principal_id();
+
         let link = Link {
             id: link_id,
             state: LinkState::ChooseLinkType,
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: Some(vec![AssetInfo {
-                address: "some_address".to_string(),
-                chain: Chain::IC,
+            asset_info: vec![AssetInfo {
+                asset: Asset::IC {
+                    address: asset_address,
+                },
                 amount_per_link_use_action: 100,
                 label: "some_label".to_string(),
-            }]),
+            }],
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -1048,12 +1030,13 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: Some(vec![LinkDetailUpdateAssetInfoInput {
-                address: "some_address".to_string(),
-                chain: Chain::IC.to_string(),
+            asset_info: vec![LinkDetailUpdateAssetInfoInput {
+                asset: Asset::IC {
+                    address: asset_address,
+                },
                 amount_per_link_use_action: 101,
                 label: "some_label".to_string(),
-            }]),
+            }],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -1065,7 +1048,7 @@ mod tests {
         let changed = service.is_props_changed(&whitelist_props, &params, &link);
 
         // Assert
-        assert!(!changed);
+        assert!(changed);
     }
 
     #[test]
@@ -1079,16 +1062,17 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: Some(vec![AssetInfo {
-                address: "some_address".to_string(),
-                chain: Chain::IC,
+            asset_info: vec![AssetInfo {
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
                 amount_per_link_use_action: 100,
                 label: "some_label".to_string(),
-            }]),
+            }],
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -1098,12 +1082,13 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: Some(vec![LinkDetailUpdateAssetInfoInput {
-                address: "some_address".to_string(),
-                chain: Chain::IC.to_string(),
+            asset_info: vec![LinkDetailUpdateAssetInfoInput {
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
                 amount_per_link_use_action: 100,
                 label: "some_label".to_string(),
-            }]),
+            }],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -1129,11 +1114,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 10,
         };
@@ -1143,7 +1128,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: Some(10),
@@ -1169,11 +1154,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 10,
         };
@@ -1183,7 +1168,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: Some(20),
@@ -1209,11 +1194,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: Some(Template::Central),
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -1223,8 +1208,8 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
-            template: Some(Template::Central.to_string()),
+            asset_info: vec![],
+            template: Some(Template::Central),
             link_type: None,
             link_use_action_max_count: None,
         };
@@ -1249,11 +1234,11 @@ mod tests {
             title: Some("Title".to_string()),
             description: Some("Description".to_string()),
             link_type: None,
-            asset_info: None,
+            asset_info: vec![],
             template: Some(Template::Central),
-            creator: "user1".to_string(),
+            creator: random_principal_id(),
             create_at: 0,
-            metadata: Some(HashMap::new()),
+            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 0,
         };
@@ -1263,8 +1248,8 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
-            template: Some(Template::Left.to_string()),
+            asset_info: vec![],
+            template: Some(Template::Left),
             link_type: None,
             link_use_action_max_count: None,
         };
@@ -1287,7 +1272,7 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
+            asset_info: vec![],
             template: None,
             link_type: None,
             link_use_action_max_count: None,
@@ -1315,8 +1300,8 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
-            template: Some(Template::Central.to_string()),
+            asset_info: vec![],
+            template: Some(Template::Central),
             link_type: None,
             link_use_action_max_count: None,
         };
@@ -1335,62 +1320,6 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_prefetch_template_if_invalid_template_in_params() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: None,
-            template: Some("InvalidTemplate".to_string()),
-            link_type: Some(LinkType::SendTip.to_string()),
-            link_use_action_max_count: None,
-        };
-
-        // Act
-        let result = service.prefetch_template(&params);
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::ValidationErrors(msg)) = result {
-            assert_eq!(msg, "Invalid template");
-        } else {
-            panic!("Expected ValidationErrors");
-        }
-    }
-
-    #[test]
-    fn it_should_error_prefetch_template_if_invalid_link_type_in_params() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: None,
-            template: Some(Template::Central.to_string()),
-            link_type: Some("InvalidLinkType".to_string()),
-            link_use_action_max_count: None,
-        };
-
-        // Act
-        let result = service.prefetch_template(&params);
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::ValidationErrors(msg)) = result {
-            assert_eq!(msg, "Invalid link type");
-        } else {
-            panic!("Expected ValidationErrors");
-        }
-    }
-
-    #[test]
     fn it_should_prefetch_template() {
         // Arrange
         let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
@@ -1399,9 +1328,9 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
-            template: Some(Template::Central.to_string()),
-            link_type: Some(LinkType::SendTip.to_string()),
+            asset_info: vec![],
+            template: Some(Template::Central),
+            link_type: Some(LinkType::SendTip),
             link_use_action_max_count: None,
         };
 
@@ -1412,8 +1341,8 @@ mod tests {
         assert!(result.is_ok());
 
         let (template, link_type) = result.unwrap();
-        assert_eq!(template.to_string(), Template::Central.to_string());
-        assert_eq!(link_type.to_string(), LinkType::SendTip.to_string());
+        assert_eq!(template, Template::Central);
+        assert_eq!(link_type, LinkType::SendTip);
     }
 
     #[test]
@@ -1425,9 +1354,9 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: None,
-            template: Some(Template::Central.to_string()),
-            link_type: Some(LinkType::SendTip.to_string()),
+            asset_info: vec![],
+            template: Some(Template::Central),
+            link_type: Some(LinkType::SendTip),
             link_use_action_max_count: None,
         };
 
@@ -1445,34 +1374,6 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_prefetch_params_add_asset_if_empty_asset_info() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: None,
-            template: Some(Template::Central.to_string()),
-            link_type: Some(LinkType::SendTip.to_string()),
-            link_use_action_max_count: Some(10),
-        };
-
-        // Act
-        let result = service.prefetch_params_add_asset(&params);
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::ValidationErrors(msg)) = result {
-            assert_eq!(msg, "Asset info is required");
-        } else {
-            panic!("Expected ValidationErrors");
-        }
-    }
-
-    #[test]
     fn it_should_prefetch_params_add_asset() {
         // Arrange
         let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
@@ -1483,22 +1384,20 @@ mod tests {
             description: Some("Description".to_string()),
             link_image_url: None,
             nft_image: None,
-            asset_info: Some(vec![
+            asset_info: vec![
                 LinkDetailUpdateAssetInfoInput {
-                    address: address1.clone(),
-                    chain: Chain::IC.to_string(),
+                    asset: Asset::IC { address: address1 },
                     amount_per_link_use_action: 100,
                     label: "some_label".to_string(),
                 },
                 LinkDetailUpdateAssetInfoInput {
-                    address: address2.clone(),
-                    chain: Chain::IC.to_string(),
+                    asset: Asset::IC { address: address2 },
                     amount_per_link_use_action: 200,
                     label: "another_label".to_string(),
                 },
-            ]),
-            template: Some(Template::Central.to_string()),
-            link_type: Some(LinkType::SendTip.to_string()),
+            ],
+            template: Some(Template::Central),
+            link_type: Some(LinkType::SendTip),
             link_use_action_max_count: Some(10),
         };
 
@@ -1511,8 +1410,8 @@ mod tests {
         let (link_use_action_max_count, asset_info_input) = result.unwrap();
         assert_eq!(link_use_action_max_count, 10);
         assert_eq!(asset_info_input.len(), 2);
-        assert_eq!(asset_info_input[0].address, address1);
-        assert_eq!(asset_info_input[1].address, address2);
+        assert_eq!(asset_info_input[0].asset, Asset::IC { address: address1 });
+        assert_eq!(asset_info_input[1].asset, Asset::IC { address: address2 });
     }
 
     #[test]
@@ -1521,7 +1420,7 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
-        let link = create_link_fixture(&mut service, &creator_id);
+        let link = create_link_fixture(&mut service, creator_id);
 
         // Act
         let result = service.prefetch_create_action(&link);
@@ -1539,13 +1438,9 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
-        let link = create_link_fixture(&mut service, &creator_id);
-        let _link_action = create_link_action_fixture(
-            &mut service,
-            &link.id,
-            ActionType::CreateLink.to_str(),
-            &creator_id,
-        );
+        let link = create_link_fixture(&mut service, creator_id);
+        let _link_action =
+            create_link_action_fixture(&mut service, &link.id, ActionType::CreateLink, creator_id);
 
         // Act
         let result = service.prefetch_create_action(&link);
@@ -1567,7 +1462,7 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
-        let link = create_link_fixture(&mut service, &creator_id);
+        let link = create_link_fixture(&mut service, creator_id);
 
         // Act
         let result = service.prefetch_withdraw_action(&link);
@@ -1585,13 +1480,9 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
-        let link = create_link_fixture(&mut service, &creator_id);
-        let _link_action = create_link_action_fixture(
-            &mut service,
-            &link.id,
-            ActionType::Withdraw.to_str(),
-            &creator_id,
-        );
+        let link = create_link_fixture(&mut service, creator_id);
+        let _link_action =
+            create_link_action_fixture(&mut service, &link.id, ActionType::Withdraw, creator_id);
 
         // Act
         let result = service.prefetch_withdraw_action(&link);

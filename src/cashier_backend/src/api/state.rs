@@ -9,7 +9,6 @@ use crate::{
         link::service::LinkService,
         request_lock::RequestLockService,
         transaction_manager::{service::TransactionManagerService, validate::ValidateService},
-        user::v2::UserService,
     },
     utils::runtime::{IcEnvironment, RealIcEnvironment},
 };
@@ -21,7 +20,6 @@ pub struct CanisterState<E: IcEnvironment + Clone> {
     pub link_service: LinkService<E, ThreadlocalRepositories>,
     pub request_lock_service: RequestLockService<ThreadlocalRepositories>,
     pub transaction_manager_service: TransactionManagerService<E, ThreadlocalRepositories>,
-    pub user_service: UserService<ThreadlocalRepositories>,
     pub validate_service: ValidateService<ThreadlocalRepositories>,
     pub env: E,
 }
@@ -34,7 +32,6 @@ impl<E: IcEnvironment + Clone> CanisterState<E> {
             log_service: LoggerConfigService::new(&LOGGER_SERVICE_STORE),
             action_service: ActionService::new(&repo),
             request_lock_service: RequestLockService::new(&repo),
-            user_service: UserService::new(&repo),
             validate_service: ValidateService::new(&repo),
             link_service: LinkService::new(repo.clone(), env.clone()),
             transaction_manager_service: TransactionManagerService::new(repo, env.clone()),

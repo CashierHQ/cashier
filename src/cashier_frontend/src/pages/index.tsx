@@ -113,9 +113,9 @@ export default function HomePage() {
 
               addUserInput(link.id, {
                 linkId: link.id,
-                state: link.state as LINK_STATE,
+                state: link.state,
                 title: link.title,
-                linkType: link.linkType as LINK_TYPE,
+                linkType: link.linkType,
                 assets: processedAssets,
               });
             }

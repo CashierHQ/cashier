@@ -49,51 +49,89 @@ export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
   throw new Error("Invalid response");
 };
 
-export const convertNanoSecondsToDate = (nanoSeconds: bigint): Date => {
-  let result = new Date();
-  try {
-    const parseValue = Number(nanoSeconds);
-    result = new Date(parseValue / 1000000);
-  } catch (error) {
-    console.log(error);
-  } finally {
-    return result;
+// Helper: normalize various timestamp inputs to BigInt nanoseconds
+const toBigIntNanoseconds = (input: unknown): bigint => {
+  if (input === undefined || input === null) return 0n;
+
+  // If already a bigint, assume it's nanoseconds
+  if (typeof input === "bigint") return input as bigint;
+
+  const s = String(input).trim();
+
+  // If it's not purely numeric, try parsing as a date string (ISO etc.) -> ms
+  if (!/^[-+]?\d+$/.test(s)) {
+    const ms = Date.parse(s);
+    if (Number.isNaN(ms)) return 0n;
+    return BigInt(ms) * 1000000n; // ms -> ns
   }
+
+  // It's a numeric string or number
+  const n = BigInt(s);
+
+  // Heuristic: if absolute value >= 1e15 treat as nanoseconds already (ns ~1e18, ms ~1e12)
+  const abs = n < 0n ? -n : n;
+  if (abs >= 1000000000000000n) {
+    return n; // treat as ns
+  }
+
+  // Otherwise treat as milliseconds and convert to nanoseconds
+  return n * 1000000n;
 };
 
+// Group link list by creation date (start of day in milliseconds)
+// Eg: { "1672531200000": [LinkDetailModel, ...], "1672617600000": [LinkDetailModel, ...], ... }
 export const groupLinkListByDate = (
   linkList: LinkDetailModel[],
 ): Record<string, LinkDetailModel[]> => {
   if (linkList?.length > 0) {
-    const sortedItems = linkList.sort(
-      (a, b) => b.create_at.getTime() - a.create_at.getTime(),
-    );
+    // Copy before sorting to avoid mutating the original array
+    const sortedItems = [...linkList].sort((a, b) => {
+      const na = toBigIntNanoseconds(a.create_at);
+      const nb = toBigIntNanoseconds(b.create_at);
+      return nb > na ? 1 : nb < na ? -1 : 0;
+    });
+
     return sortedItems.reduce(
       (groups: Record<string, LinkDetailModel[]>, item: LinkDetailModel) => {
-        const dateKey = item.create_at.toISOString().split("T")[0];
-        if (!groups[dateKey]) {
-          groups[dateKey] = [];
-        }
+        // Convert create_at to BigInt nanoseconds
+        const ns = toBigIntNanoseconds(item.create_at);
+
+        // Calculate start-of-day timestamp in nanoseconds (UTC)
+        const nsPerDay = 86400000n * 1000000n; // ms in day * ns per ms
+        const dayStartNs = (ns / nsPerDay) * nsPerDay;
+
+        const dateKey = String(dayStartNs);
+
+        if (!groups[dateKey]) groups[dateKey] = [];
         groups[dateKey].push(item);
         return groups;
       },
       {},
     );
-  } else {
-    return {};
   }
+
+  return {};
 };
 
-export const formatDateString = (dateString: string): string => {
-  if (dateString && dateString.trim() !== "") {
-    const date = new Date(dateString);
-    const monthShort = date.toLocaleString("default", { month: "short" });
-    const day = date.getDate();
-    const year = date.getFullYear();
-    return `${monthShort} ${day}, ${year}`;
-  } else {
-    return "";
-  }
+// Format a date input (start-of-day timestamp in ms or ISO/date string) to "MMM D, YYYY"
+export const formatDateString = (
+  dateInput?: string | number | bigint,
+): string => {
+  if (dateInput === undefined || dateInput === null) return "";
+
+  // Convert input to BigInt nanoseconds first
+  const ns = toBigIntNanoseconds(dateInput as unknown);
+  if (ns === 0n) return "";
+
+  // Convert nanoseconds to milliseconds for Date
+  const ms = Number(ns / 1000000n);
+  const date = new Date(ms);
+  if (Number.isNaN(date.getTime())) return "";
+
+  const monthShort = date.toLocaleString("default", { month: "short" });
+  const day = date.getDate();
+  const year = date.getFullYear();
+  return `${monthShort} ${day}, ${year}`;
 };
 
 // Convert token amount to number with exponential token's decimals

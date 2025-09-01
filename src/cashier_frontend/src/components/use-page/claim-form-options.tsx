@@ -57,7 +57,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
   const { linkId } = useParams();
   const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
 
-  const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE_LINK);
+  const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE);
   const link = linkDetailQuery.data?.link;
   const isLoading = linkDetailQuery.isLoading;
 
