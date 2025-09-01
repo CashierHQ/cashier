@@ -22,6 +22,8 @@ version = "0.1.0"
 
 [workspace.dependencies]
 anyhow = "1.0"
+async-trait = "0.1.89"
+argon2 = "0.5.3"
 base64 = "0.22"
 candid = "0.10"
 cashier_backend_client = { path = "src/cashier_backend_client" }
@@ -64,8 +66,6 @@ vergen-gitcl = { version = "1", default-features = false, features = [
     "cargo",
     "rustc",
 ] }
-async-trait = "0.1.89"
-argon2 = "0.5.3"
 
 
 [profile.release]
