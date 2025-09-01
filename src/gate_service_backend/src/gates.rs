@@ -1,6 +1,6 @@
 pub mod password;
 
-use gate_types::{GateKey, GateType, GateVerifier};
+use gate_service_types::{GateKey, GateType, GateVerifier};
 use password::PasswordGate;
 
 pub struct GateFactory {}

@@ -763,7 +763,7 @@ dependencies = [
  "candid",
  "cashier_common",
  "cashier_macros",
- "gate_types",
+ "gate_service_types",
  "getrandom 0.2.16",
  "ic-cdk",
  "ic-cdk-timers",
@@ -774,7 +774,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "gate_types"
+name = "gate_service_types"
 version = "0.1.0"
 dependencies = [
  "async-trait",

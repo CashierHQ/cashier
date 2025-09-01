@@ -15,9 +15,9 @@ ic-cdk-timers = { workspace = true }
 getrandom = { workspace = true, features = ["custom"] }
 rand = { workspace = true, features = ["getrandom"] }
 uuid = { workspace = true, features = ["v4"] }
-gate_types = { path = "../gate_types" }
-cashier_common = { path = "../lib/cashier_common" }
-cashier_macros = { path = "../lib/cashier_macros" }
+gate_service_types = { workspace = true }
+cashier_common = { workspace = true }
+cashier_macros = { workspace = true }
 ic-stable-structures = { workspace = true }
 argon2 = "0.5.3"
 tokio = { workspace = true }

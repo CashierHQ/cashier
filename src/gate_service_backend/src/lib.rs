@@ -9,7 +9,7 @@ mod test_utils;
 use candid::Principal;
 use cashier_common::guard::is_not_anonymous;
 use cashier_common::utils::init_ic_rand;
-use gate_types::{
+use gate_service_types::{
     Gate, GateForCaller, GateKey, NewGate, OpenGateSuccessResult, VerificationResult,
 };
 use ic_cdk::{api::msg_caller, init, post_upgrade, pre_upgrade, query, update};

@@ -1,5 +1,5 @@
 use candid::Principal;
-use gate_types::{Gate, GateStatus, GateUser, GateUserStatus, NewGate};
+use gate_service_types::{Gate, GateStatus, GateUser, GateUserStatus, NewGate};
 use ic_stable_structures::memory_manager::VirtualMemory;
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
 use std::cell::RefCell;
@@ -134,7 +134,7 @@ mod tests {
     use super::*;
     use crate::test_utils::gate_repository_fixture;
     use cashier_common::test_utils::{random_id_string, random_principal_id};
-    use gate_types::{GateKey, GateType};
+    use gate_service_types::{GateKey, GateType};
 
     #[test]
     fn it_should_success_create_password_gate() {
