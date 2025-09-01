@@ -132,7 +132,8 @@ impl GateRepository for StableGateRepository {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::{gate_repository_fixture, random_id_string, random_principal};
+    use crate::test_utils::gate_repository_fixture;
+    use cashier_common::test_utils::{random_id_string, random_principal_id};
     use gate_types::{GateKey, GateType};
 
     #[test]
@@ -250,7 +251,7 @@ mod tests {
         // Arrange
         let repo = gate_repository_fixture();
         let gate_id = random_id_string();
-        let user = random_principal();
+        let user = random_principal_id();
 
         // Act
         let status = repo.get_gate_user_status(&gate_id, user);
@@ -269,7 +270,7 @@ mod tests {
             key: GateKey::Password("password123".to_string()),
         };
         let gate = repo.create_gate(new_gate.clone()).unwrap();
-        let user = random_principal();
+        let user = random_principal_id();
 
         // Act
         let result = repo.open_gate(gate.clone(), user);

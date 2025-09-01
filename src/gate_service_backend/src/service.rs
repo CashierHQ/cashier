@@ -139,7 +139,8 @@ impl<R: GateRepository> GateService<R> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::{gate_service_fixture, random_id_string, random_principal};
+    use crate::test_utils::gate_service_fixture;
+    use cashier_common::test_utils::{random_id_string, random_principal_id};
     use gate_types::GateStatus;
 
     #[test]
@@ -368,7 +369,7 @@ mod tests {
             key: GateKey::Password("password123".to_string()),
         };
         let gate = service.add_gate(new_gate).unwrap();
-        let user = random_principal();
+        let user = random_principal_id();
 
         // Act
         let result = service.open_gate(gate.clone(), user);
@@ -386,7 +387,7 @@ mod tests {
     fn it_should_none_get_gate_user_status() {
         // Arrange
         let service = gate_service_fixture();
-        let user = random_principal();
+        let user = random_principal_id();
 
         // Act
         let result = service.get_gate_user_status("non_existent_gate_id", user);
@@ -405,7 +406,7 @@ mod tests {
             key: GateKey::Password("password123".to_string()),
         };
         let gate = service.add_gate(new_gate).unwrap();
-        let user = random_principal();
+        let user = random_principal_id();
         let _ = service.open_gate(gate.clone(), user);
 
         // Act

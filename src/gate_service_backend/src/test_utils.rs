@@ -1,28 +1,9 @@
 use crate::{repository::StableGateRepository, service::GateService};
-use candid::Principal;
 use ic_stable_structures::{
     memory_manager::{MemoryId, MemoryManager},
     DefaultMemoryImpl,
 };
-use rand::prelude::*;
 use std::{cell::RefCell, rc::Rc};
-use uuid::Uuid;
-
-#[cfg(test)]
-/// Generate a random UUID string.
-pub fn random_id_string() -> String {
-    let id = Uuid::new_v4();
-    id.to_string()
-}
-
-#[cfg(test)]
-/// Generate a random principal ID.
-pub fn random_principal() -> Principal {
-    let mut rng = thread_rng();
-    let mut arr = [0u8; 29];
-    rng.fill_bytes(&mut arr);
-    Principal::from_slice(&arr)
-}
 
 #[cfg(test)]
 /// Generate a fixture for the gate repository using stable memory.
