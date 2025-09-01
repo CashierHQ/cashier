@@ -7,10 +7,10 @@ version.workspace = true
 [dependencies]
 candid = { workspace = true }
 cashier_macros = { workspace = true }
+ciborium = { workspace = true }
 getrandom = { workspace = true, features = ["custom"] }
 ic-stable-structures = { workspace = true }
 rand = { workspace = true, features = ["getrandom"] }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-serde_cbor = { workspace = true }
 uuid = { workspace = true }
