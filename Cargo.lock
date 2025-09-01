@@ -777,7 +777,6 @@ dependencies = [
 name = "gate_service_types"
 version = "0.1.0"
 dependencies = [
- "async-trait",
  "candid",
  "cashier_macros",
  "ic-cdk",

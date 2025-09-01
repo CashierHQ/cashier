@@ -1,7 +1,19 @@
 pub mod password;
 
-use gate_service_types::{GateKey, GateType, GateVerifier};
+use async_trait::async_trait;
+use gate_service_types::{GateKey, GateType, VerificationResult};
 use password::PasswordGate;
+
+#[async_trait]
+pub trait GateVerifier {
+    /// Verifies the provided key against the gate's key.
+    /// # Arguments
+    /// * `key`: The key to be verified.
+    /// # Returns
+    /// * `Ok(VerificationResult)`: If the key is verified successfully.
+    /// * `Err(String)`: If there is an error during verification.
+    async fn verify(&self, key: GateKey) -> Result<VerificationResult, String>;
+}
 
 pub struct GateFactory {}
 

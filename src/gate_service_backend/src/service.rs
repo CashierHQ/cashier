@@ -1,8 +1,10 @@
-use crate::gates::GateFactory;
-use crate::repository::GateRepository;
-use crate::utils::hash_password;
+use crate::{
+    gates::{GateFactory, GateVerifier},
+    repository::GateRepository,
+    utils::hash_password,
+};
 use candid::Principal;
-use gate_service_types::{Gate, GateKey, GateType, GateUserStatus, GateVerifier, NewGate};
+use gate_service_types::{Gate, GateKey, GateType, GateUserStatus, NewGate};
 use std::cell::RefCell;
 use std::rc::Rc;
 
