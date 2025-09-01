@@ -75,8 +75,8 @@ fn get_gate(gate_id: String) -> Option<Gate> {
 }
 
 #[query]
-/// Retrieves a gate and its user status for a specific user.
-/// The user status of a gate indicates whether user has opened it or not.
+/// Retrieves a gate and its opening status for a specific user.
+/// The gate opening status for an user indicates whether user has opened it or not.
 /// # Arguments
 /// * `gate_id`: The ID of the gate to be retrieved.
 /// * `user`: The user for whom the gate is being retrieved.
