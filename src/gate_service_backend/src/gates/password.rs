@@ -1,6 +1,6 @@
 use crate::utils::verify_password;
 use async_trait::async_trait;
-use gate_types::{GateKey, GateVerifier, VerificationResult};
+use gate_service_types::{GateKey, GateVerifier, VerificationResult};
 
 pub struct PasswordGate {
     password_hash: String,

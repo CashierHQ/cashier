@@ -2,7 +2,7 @@ use crate::gates::GateFactory;
 use crate::repository::GateRepository;
 use crate::utils::hash_password;
 use candid::Principal;
-use gate_types::{Gate, GateKey, GateType, GateUserStatus, GateVerifier, NewGate};
+use gate_service_types::{Gate, GateKey, GateType, GateUserStatus, GateVerifier, NewGate};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -141,7 +141,7 @@ mod tests {
     use super::*;
     use crate::test_utils::gate_service_fixture;
     use cashier_common::test_utils::{random_id_string, random_principal_id};
-    use gate_types::GateStatus;
+    use gate_service_types::GateStatus;
 
     #[test]
     fn it_should_add_gate() {
