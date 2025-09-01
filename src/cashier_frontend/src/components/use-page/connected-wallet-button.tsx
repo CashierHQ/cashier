@@ -3,7 +3,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { LuWallet2 } from "react-icons/lu";
+import { LuWallet } from "react-icons/lu";
 import { transformShortAddress } from "@/utils";
 
 interface CustomConnectedWalletButtonProps {
@@ -35,7 +35,7 @@ const CustomConnectedWalletButton: React.FC<
         "ring-offset-background",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
         "flex items-center justify-start",
-        disabled && "opacity-50 cursor-not-allowed",
+        disabled && "opacity-50 cursor-not-allowed"
       )}
       onClick={(e) => {
         // Prevent form submission
@@ -50,7 +50,7 @@ const CustomConnectedWalletButton: React.FC<
         {postfixIcon ? (
           postfixIcon
         ) : (
-          <LuWallet2 className="mr-2" color="#35A18B" size={22} />
+          <LuWallet className="mr-2" color="#35A18B" size={22} />
         )}
         <span className="flex-grow text-left text-[14px]">
           {transformShortAddress(connectedAccount || "")}

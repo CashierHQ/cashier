@@ -3,7 +3,7 @@
 
 import { SidebarMenuItem } from "@/components/app-sidebar";
 import { LuCompass } from "react-icons/lu";
-import { LuGanttChartSquare } from "react-icons/lu";
+import { LuAlignLeft } from "react-icons/lu";
 import React from "react";
 import { CircleHelp, Link } from "lucide-react";
 
@@ -40,7 +40,7 @@ export const TOP_MENU_ITEMS: SidebarMenuItem[] = [
   },
   {
     title: "Cashier project overview",
-    icon: React.createElement(LuGanttChartSquare, { size: 22 }),
+    icon: React.createElement(LuAlignLeft, { size: 22 }),
     onClick: () =>
       window.open(
         "https://doc.clickup.com/9012452868/d/h/8cjy7g4-4292/9a3796b6e853ef0",

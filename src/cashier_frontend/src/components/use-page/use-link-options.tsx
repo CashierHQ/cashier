@@ -24,10 +24,12 @@ import {
   walletDialogConfigOptions,
   getWalletIcon,
   GoogleSigner,
+  LocalInternetIdentity,
 } from "@/constants/wallet-options";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
 
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
+import { FEATURE_FLAGS } from "@/const";
 export const UseSchema = z.object({
   token: z.string().min(5),
   amount: z.coerce.number().min(1),
@@ -43,7 +45,7 @@ interface ClaimFormOptionsProps {
   onOpenWalletModal?: () => void;
 }
 
-const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
+const UseLinkOptions: React.FC<ClaimFormOptionsProps> = ({
   form,
   setDisabled,
 }) => {
@@ -51,7 +53,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
   const { user, disconnect } = useAuth();
   const identity = useIdentity();
   const { open, options, hideDialog, showDialog } = useConfirmDialog();
-  const signer = useSigner();
+  const signerConfig = useSigner();
   const { connectToWallet } = useConnectToWallet();
   const { setCurrentConnectOption } = useSignerStore();
   const { linkId } = useParams();
@@ -63,7 +65,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
 
   const { updateTokenInit } = useTokensV2();
 
-  const isGoogleLogin = signer?.id === "GoogleSigner";
+  const isGoogleLogin = signerConfig?.id === "GoogleSigner";
 
   const isAddressValid = () => {
     const address = form.getValues("address");
@@ -120,7 +122,11 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
     switch (walletOption) {
       case WALLET_OPTIONS.INTERNET_IDENTITY:
         if (!identity) {
-          connectToWallet(InternetIdentity.id);
+          if (FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER) {
+            connectToWallet(LocalInternetIdentity.id);
+          } else {
+            connectToWallet(InternetIdentity.id);
+          }
         }
         break;
       case WALLET_OPTIONS.OTHER:
@@ -158,19 +164,37 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
     walletOption: WALLET_OPTIONS,
     title: string,
     iconOrImage?: string | JSX.Element,
-    disabled?: boolean,
+    disabled?: boolean
   ) => {
     // Get the icon from centralized function if not provided
     const finalIconOrImage = iconOrImage || getWalletIcon(walletOption);
 
-    const isConnected =
-      identity &&
-      ((walletOption === WALLET_OPTIONS.GOOGLE && isGoogleLogin) ||
-        (walletOption === WALLET_OPTIONS.INTERNET_IDENTITY &&
-          signer?.id === "InternetIdentity") ||
-        (walletOption === WALLET_OPTIONS.OTHER &&
-          signer?.id !== "InternetIdentity" &&
-          !isGoogleLogin));
+    let isConnected = false;
+
+    if (identity) {
+      if (walletOption === WALLET_OPTIONS.GOOGLE && isGoogleLogin) {
+        isConnected = true;
+      } else if (
+        walletOption === WALLET_OPTIONS.INTERNET_IDENTITY &&
+        signerConfig?.id === "InternetIdentity"
+      ) {
+        isConnected = true;
+      } else if (
+        walletOption === WALLET_OPTIONS.OTHER &&
+        signerConfig?.id !== "InternetIdentity" &&
+        !isGoogleLogin
+      ) {
+        isConnected = true;
+      } else if (
+        FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER &&
+        walletOption === WALLET_OPTIONS.INTERNET_IDENTITY &&
+        signerConfig?.id === "LocalInternetIdentity"
+      ) {
+        isConnected = true;
+      }
+    }
+
+    console.log("isConnected", isConnected, walletOption, signerConfig);
 
     if (isConnected) {
       return (
@@ -210,7 +234,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
 
   const firstTilte = t(`claim_page.${link?.linkType}.choose_wallet.use_asset`);
   const secondTitle = t(
-    `claim_page.${link?.linkType}.choose_wallet.wallet_options`,
+    `claim_page.${link?.linkType}.choose_wallet.wallet_options`
   );
 
   return (
@@ -242,7 +266,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
         <div className="flex flex-col gap-2">
           {renderWalletButton(
             WALLET_OPTIONS.INTERNET_IDENTITY,
-            "Internet Identity",
+            "Internet Identity"
           )}
         </div>
       </div>
@@ -274,4 +298,4 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
   );
 };
 
-export default ClaimFormOptions;
+export default UseLinkOptions;

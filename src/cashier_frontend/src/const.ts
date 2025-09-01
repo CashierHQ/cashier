@@ -38,5 +38,9 @@ export const FEATURE_FLAGS = {
 
   ENABLE_LOCAL_IDENTITY_PROVIDER:
     import.meta.env.VITE_FEATURE_FLAGS_ENABLE_LOCAL_IDENTITY_PROVIDER ===
-      "true" || false,
+    "true" || false,
+
+  ENABLE_ANONYMOUS_CLAIMING:
+    import.meta.env.VITE_FEATURE_FLAGS_ENABLE_ANONYMOUS_CLAIMING === "true" ||
+    false,
 };

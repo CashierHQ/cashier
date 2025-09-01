@@ -42,8 +42,10 @@ import {
   walletDialogConfigOptions,
   getWalletIcon,
   GoogleSigner,
+  LocalInternetIdentity,
 } from "@/constants/wallet-options";
 import { InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
+import { FEATURE_FLAGS } from "@/const";
 
 const WalletSchema = z.object({
   address: z.string().optional(),
@@ -131,7 +133,11 @@ export const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
     switch (walletOption) {
       case WALLET_OPTIONS.INTERNET_IDENTITY:
         if (!identity) {
-          connectToWallet(InternetIdentity.id);
+          if (FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER) {
+            connectToWallet(LocalInternetIdentity.id);
+          } else {
+            connectToWallet(InternetIdentity.id);
+          }
         }
         break;
       case WALLET_OPTIONS.OTHER:
@@ -215,7 +221,7 @@ export const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
     walletOption: WALLET_OPTIONS,
     title: string,
     iconOrImage?: string | JSX.Element,
-    disabled?: boolean,
+    disabled?: boolean
   ) => {
     const finalIconOrImage = iconOrImage || getWalletIcon(walletOption);
 
@@ -284,19 +290,19 @@ export const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
             <div className="flex flex-col gap-2">
               {renderWalletButton(
                 WALLET_OPTIONS.INTERNET_IDENTITY,
-                "Internet Identity",
+                "Internet Identity"
               )}
               {renderWalletButton(
                 WALLET_OPTIONS.GOOGLE,
                 "Google",
                 undefined,
-                true,
+                true
               )}
               {renderWalletButton(
                 WALLET_OPTIONS.OTHER,
                 "Other wallets",
                 undefined,
-                true,
+                true
               )}
             </div>
 
