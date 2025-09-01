@@ -9,7 +9,7 @@ import {
   SheetClose,
 } from "./ui/sheet";
 import { cn } from "@/lib/utils";
-import { LuWallet2 } from "react-icons/lu";
+import { LuWallet } from "react-icons/lu";
 import { BOTTOM_MENU_ITEMS, TOP_MENU_ITEMS } from "@/constants/otherConst";
 import { useAuth } from "@nfid/identitykit/react";
 import { transformShortAddress } from "@/utils";
@@ -86,7 +86,7 @@ const AppSidebar: React.FC<AppSidebarProps> = () => {
             title={transformShortAddress(user?.principal?.toString() || "")}
             onClick={() => {}}
             className="mt-1"
-            icon={<LuWallet2 size={22} />}
+            icon={<LuWallet size={22} />}
             iconRight={<Copy size={22} />}
             onIconRightClick={handleCopy}
             hoverDisabled
@@ -127,7 +127,7 @@ const ListItem: React.FC<MenuItemProps> = (props: MenuItemProps) => {
             ? ""
             : "group hover:text-accent-foreground hover:text-[#36A18B] hover:cursor-pointer hover:bg-[#E8F2EE] focus:bg-accent focus:text-accent-foreground"
         }`,
-        props.className,
+        props.className
       )}
     >
       <div className="flex items-center justify-between">

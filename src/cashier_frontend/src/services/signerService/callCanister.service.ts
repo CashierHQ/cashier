@@ -35,7 +35,7 @@ export class CallCanisterService {
         request.agent,
         fromBase64(request.parameters),
       );
-      const certificate: string = toBase64(response.certificate);
+      const certificate: string = toBase64(response.certificate.buffer);
       const cborContentMap = Cbor.encode(response.contentMap);
       const contentMap: string = toBase64(cborContentMap);
       const reply = response.reply ? response.reply : undefined;
@@ -62,7 +62,7 @@ export class CallCanisterService {
     agent: Agent,
     arg: ArrayBuffer,
   ): Promise<{
-    certificate: Uint8Array;
+    certificate: Uint8Array<ArrayBuffer>;
     contentMap: CallRequest | undefined;
     reply: ArrayBuffer | undefined;
   }> {
@@ -88,7 +88,7 @@ export class CallCanisterService {
         canisterId: Principal.from(canisterId),
         blsVerify,
       });
-      const path = [new TextEncoder().encode("request_status"), requestId];
+      const path = [new TextEncoder().encode("request_status").buffer, requestId];
       const status = new TextDecoder().decode(
         lookupResultToBuffer(certificate.lookup([...path, "status"])),
       );
@@ -164,7 +164,7 @@ export class CallCanisterService {
     };
   }
 
-  public async getReply() {}
+  public async getReply() { }
 }
 
 export const callCanisterService = new CallCanisterService();
