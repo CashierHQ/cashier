@@ -10,7 +10,7 @@ use candid::Principal;
 use cashier_common::guard::is_not_anonymous;
 use cashier_common::utils::init_ic_rand;
 use gate_service_types::{
-    Gate, GateForCaller, GateKey, NewGate, OpenGateSuccessResult, VerificationResult,
+    Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult, VerificationResult,
 };
 use ic_cdk::{api::msg_caller, init, post_upgrade, pre_upgrade, query, update};
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
@@ -71,14 +71,14 @@ fn add_gate(new_gate: NewGate) -> Result<Gate, String> {
 #[query]
 /// Retrieves a gate by its owner's ID.
 /// # Arguments
-/// * `owner_id`: The ID of the owner whose gate is to be retrieved.
+/// * `subject_id`: The ID of the owner whose gate is to be retrieved.
 /// # Returns
 /// * `Ok(Some(Gate))`: If a gate is found.
 /// * `Ok(None)`: If no gate is found.
 /// * `Err(String)`: If there is an error during retrieval.
-fn get_gate_by_owner(owner_id: String) -> Result<Option<Gate>, String> {
+fn get_gate_by_owner(subject_id: String) -> Result<Option<Gate>, String> {
     let another_service = GATE_SERVICE.with(Rc::clone);
-    let gate = another_service.borrow().get_gate_by_owner(&owner_id);
+    let gate = another_service.borrow().get_gate_by_owner(&subject_id);
     Ok(gate)
 }
 
@@ -103,16 +103,16 @@ fn get_gate(gate_id: String) -> Option<Gate> {
 /// * `gate_id`: The ID of the gate to be retrieved.
 /// * `user`: The user for whom the gate is being retrieved.
 /// # Returns
-/// * `Ok(GateForCaller)`: If the gate is found.
+/// * `Ok(GateForUser)`: If the gate is found.
 /// * `Err(String)`: If there is an error during retrieval.
-fn get_gate_for_user(gate_id: String, user: Principal) -> Result<GateForCaller, String> {
+fn get_gate_for_user(gate_id: String, user: Principal) -> Result<GateForUser, String> {
     let gate_service = GATE_SERVICE.with(Rc::clone);
     let gate = gate_service
         .borrow()
         .get_gate(&gate_id)
         .ok_or_else(|| "Gate not found".to_string())?;
     let gate_user_status = gate_service.borrow().get_gate_user_status(&gate_id, user);
-    Ok(GateForCaller {
+    Ok(GateForUser {
         gate,
         gate_user_status,
     })

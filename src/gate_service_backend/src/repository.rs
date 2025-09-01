@@ -24,12 +24,12 @@ pub trait GateRepository {
 
     /// Retrieves a gate by its owner's ID.
     /// # Arguments
-    /// * `owner_id`: The ID of the owner whose gate is to be retrieved.
+    /// * `subject_id`: The ID of the owner whose gate is to be retrieved.
     /// # Returns
     /// * `Ok(Some(Gate))`: If a gate is found.
     /// * `Ok(None)`: If no gate is found.
     /// * `Err(String)`: If there is an error during retrieval.
-    fn get_gate_by_owner(&self, owner_id: &str) -> Option<Gate>;
+    fn get_gate_by_owner(&self, subject_id: &str) -> Option<Gate>;
 
     /// Retrieves the user status of a gate for a specific user.
     /// The user status of a gate indicates whether user has opened it or not.
@@ -79,7 +79,7 @@ impl GateRepository for StableGateRepository {
 
         let gate = Gate {
             id: gate_id.clone(),
-            owner_id: new_gate.owner_id.clone(),
+            subject_id: new_gate.subject_id.clone(),
             gate_type: new_gate.gate_type.clone(),
             key: new_gate.key.clone(),
         };
@@ -90,7 +90,7 @@ impl GateRepository for StableGateRepository {
 
         self.owner_map
             .borrow_mut()
-            .insert(new_gate.owner_id.clone(), gate_id);
+            .insert(new_gate.subject_id.clone(), gate_id);
 
         Ok(gate)
     }
@@ -99,8 +99,8 @@ impl GateRepository for StableGateRepository {
         self.gate_map.borrow().get(&gate_id.to_string())
     }
 
-    fn get_gate_by_owner(&self, owner_id: &str) -> Option<Gate> {
-        if let Some(gate_id) = self.owner_map.borrow().get(&owner_id.to_string()) {
+    fn get_gate_by_owner(&self, subject_id: &str) -> Option<Gate> {
+        if let Some(gate_id) = self.owner_map.borrow().get(&subject_id.to_string()) {
             return self.get_gate(&gate_id);
         }
         None
@@ -143,22 +143,22 @@ mod tests {
 
         let gates = vec![
             NewGate {
-                owner_id: "owner1".to_string(),
+                subject_id: "owner1".to_string(),
                 gate_type: GateType::Password,
                 key: GateKey::Password("password123".to_string()),
             },
             NewGate {
-                owner_id: "owner2".to_string(),
+                subject_id: "owner2".to_string(),
                 gate_type: GateType::XFollowing,
                 key: GateKey::XFollowing("x_handle".to_string()),
             },
             NewGate {
-                owner_id: "owner3".to_string(),
+                subject_id: "owner3".to_string(),
                 gate_type: GateType::TelegramGroup,
                 key: GateKey::TelegramGroup("telegram_group_id".to_string()),
             },
             NewGate {
-                owner_id: "owner4".to_string(),
+                subject_id: "owner4".to_string(),
                 gate_type: GateType::DiscordServer,
                 key: GateKey::DiscordServer("discord_server_id".to_string()),
             },
@@ -170,7 +170,7 @@ mod tests {
 
             // Assert
             assert!(!created_gate.id.is_empty());
-            assert_eq!(created_gate.owner_id, gate.owner_id);
+            assert_eq!(created_gate.subject_id, gate.subject_id);
             assert_eq!(created_gate.gate_type, gate.gate_type);
             assert_eq!(created_gate.key, gate.key);
         }
@@ -193,7 +193,7 @@ mod tests {
         // Arrange
         let repo = gate_repository_fixture();
         let new_gate = NewGate {
-            owner_id: "owner1".to_string(),
+            subject_id: "owner1".to_string(),
             gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
@@ -206,13 +206,13 @@ mod tests {
         assert!(gate.is_some());
         let gate = gate.unwrap();
         assert!(!gate.id.is_empty());
-        assert_eq!(gate.owner_id, new_gate.owner_id);
+        assert_eq!(gate.subject_id, new_gate.subject_id);
         assert_eq!(gate.gate_type, new_gate.gate_type);
         assert_eq!(gate.key, new_gate.key);
     }
 
     #[test]
-    fn it_should_none_get_gate_by_owner_id() {
+    fn it_should_none_get_gate_by_subject_id() {
         // Arrange
         let repo = gate_repository_fixture();
 
@@ -224,24 +224,24 @@ mod tests {
     }
 
     #[test]
-    fn it_should_get_gate_by_owner_id() {
+    fn it_should_get_gate_by_subject_id() {
         // Arrange
         let repo = gate_repository_fixture();
         let new_gate = NewGate {
-            owner_id: "owner1".to_string(),
+            subject_id: "owner1".to_string(),
             gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
         let gate = repo.create_gate(new_gate.clone()).unwrap();
 
         // Act
-        let gate = repo.get_gate_by_owner(&gate.owner_id);
+        let gate = repo.get_gate_by_owner(&gate.subject_id);
 
         // Assert
         assert!(gate.is_some());
         let gate = gate.unwrap();
         assert!(!gate.id.is_empty());
-        assert_eq!(gate.owner_id, new_gate.owner_id);
+        assert_eq!(gate.subject_id, new_gate.subject_id);
         assert_eq!(gate.gate_type, new_gate.gate_type);
         assert_eq!(gate.key, new_gate.key);
     }
@@ -265,7 +265,7 @@ mod tests {
         // Arrange
         let repo = gate_repository_fixture();
         let new_gate = NewGate {
-            owner_id: "owner1".to_string(),
+            subject_id: "owner1".to_string(),
             gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
