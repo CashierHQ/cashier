@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-async-trait = { workspace = true }
 candid = { workspace = true }
 cashier_macros = { workspace = true }
 ic-cdk = { workspace = true }

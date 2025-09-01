@@ -8,7 +8,7 @@ mod test_utils;
 
 use candid::Principal;
 use cashier_common::guard::is_not_anonymous;
-use cashier_common::utils::init_ic_rand;
+use cashier_common::random::init_ic_rand;
 use gate_service_types::{
     Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult, VerificationResult,
 };

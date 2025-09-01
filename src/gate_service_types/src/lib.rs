@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use candid::{self, CandidType, Deserialize, Principal};
 use cashier_macros::storable;
 use serde::Serialize;
@@ -141,15 +140,4 @@ pub enum VerificationResult {
 pub struct OpenGateSuccessResult {
     pub gate: Gate,
     pub gate_user_status: GateUserStatus,
-}
-
-#[async_trait]
-pub trait GateVerifier {
-    /// Verifies the provided key against the gate's key.
-    /// # Arguments
-    /// * `key`: The key to be verified.
-    /// # Returns
-    /// * `Ok(VerificationResult)`: If the key is verified successfully.
-    /// * `Err(String)`: If there is an error during verification.
-    async fn verify(&self, key: GateKey) -> Result<VerificationResult, String>;
 }
