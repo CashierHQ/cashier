@@ -9,7 +9,7 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-argon2 = "0.5.3"
+argon2 = { workspace = true }
 async-trait = { workspace = true }
 candid = { workspace = true }
 cashier_common = { workspace = true }
