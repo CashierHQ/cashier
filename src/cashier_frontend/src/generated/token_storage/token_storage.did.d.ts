@@ -33,6 +33,7 @@ export interface LogServiceSettings {
   'enable_console' : [] | [boolean],
   'max_record_length' : [] | [bigint],
 }
+export type Permission = { 'Admin' : null };
 export interface RegistryStats {
   'total_enabled_default' : bigint,
   'total_tokens' : bigint,
@@ -47,6 +48,8 @@ export type Result_3 = { 'Ok' : UserTokens } |
   { 'Err' : string };
 export type Result_4 = { 'Ok' : TokenListResponse } |
   { 'Err' : string };
+export type Result_5 = { 'Ok' : Array<Permission> } |
+  { 'Err' : TokenStorageError };
 export interface TokenDto {
   'id' : TokenId,
   'decimals' : number,
@@ -68,7 +71,9 @@ export interface TokenRegistryMetadata {
   'last_updated' : bigint,
   'version' : bigint,
 }
+export type TokenStorageError = { 'AuthError' : string };
 export interface TokenStorageInitData {
+  'owner' : Principal,
   'log_settings' : [] | [LogServiceSettings],
 }
 export interface UpdateTokenBalanceInput {
@@ -94,12 +99,20 @@ export interface _SERVICE {
   'add_token_batch' : ActorMethod<[AddTokensInput], Result>,
   'admin_get_registry_metadata' : ActorMethod<[], TokenRegistryMetadata>,
   'admin_get_registry_tokens' : ActorMethod<[boolean], Array<TokenDto>>,
-  'admin_get_registry_version' : ActorMethod<[], bigint>,
   'admin_get_stats' : ActorMethod<[], Result_1>,
   'admin_get_user_balance' : ActorMethod<[Principal], Result_2>,
   'admin_get_user_tokens' : ActorMethod<[Principal], Result_3>,
   'admin_initialize_registry' : ActorMethod<[], Result>,
   'admin_list_tokens_by_wallet' : ActorMethod<[Principal], Result_4>,
+  'admin_permissions_add' : ActorMethod<
+    [Principal, Array<Permission>],
+    Result_5
+  >,
+  'admin_permissions_get' : ActorMethod<[Principal], Array<Permission>>,
+  'admin_permissions_remove' : ActorMethod<
+    [Principal, Array<Permission>],
+    Result_5
+  >,
   'get_canister_build_data' : ActorMethod<[], BuildData>,
   'list_tokens' : ActorMethod<[], Result_4>,
   'sync_token_list' : ActorMethod<[], Result>,
