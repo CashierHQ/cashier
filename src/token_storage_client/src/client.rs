@@ -1,5 +1,7 @@
+use candid::Principal;
 use cashier_common::build_data::BuildData;
 use ic_mple_client::{CanisterClient, CanisterClientResult};
+use token_storage_types::{auth::Permission, error::TokenStorageError};
 
 /// A TokenStorage canister client.
 #[derive(Debug, Clone)]
@@ -18,6 +20,29 @@ impl<C: CanisterClient> TokenStorageClient<C> {
     /// * `client` - The client.
     pub fn new(client: C) -> Self {
         Self { client }
+    }
+
+        /// Returns the permissions of a principal.
+    pub async fn admin_permissions_get(&self, principal: Principal) -> CanisterClientResult<Vec<Permission>> {
+        self.client.query("admin_permissions_get", (principal,)).await
+    }
+
+    /// Adds permissions to a principal and returns the principal permissions.
+    pub async fn admin_permissions_add(
+        &self, 
+        principal: Principal,
+        permissions: Vec<Permission>,
+    ) -> CanisterClientResult<Result<Vec<Permission>, TokenStorageError>> {
+        self.client.update("admin_permissions_add", ((principal, permissions),)).await
+    }
+
+    /// Removes permissions from a principal and returns the principal permissions.
+    pub async fn admin_permissions_remove(
+        &self,
+        principal: Principal,
+        permissions: Vec<Permission>,
+    ) -> CanisterClientResult<Result<Vec<Permission>, TokenStorageError>> {
+        self.client.update("admin_permissions_remove", ((principal, permissions),)).await
     }
 
     /// Returns the build data of the canister.
