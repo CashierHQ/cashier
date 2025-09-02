@@ -20,6 +20,12 @@ pub struct LinkAction {
 
 #[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Display)]
 pub enum LinkUserState {
-    ChooseWallet,
+    // user_state_address
+    Address,
+    // user_state_gate_closed
+    GateClosed,
+    // user_state_gate_opened
+    GateOpened,
+    // user_state_completed_link
     CompletedLink,
 }
