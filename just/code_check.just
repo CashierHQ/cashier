@@ -3,6 +3,7 @@
 fmt args="":
   cargo fmt --all {{args}}
 
+
 # Formats the code using the nightly version of rustfmt
 [group('code_check')]
 fmt_nightly:
