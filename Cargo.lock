@@ -253,6 +253,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-timers",
  "ic-stable-structures 0.7.0",
+ "ic_mple_auth",
  "ic_mple_log",
  "icrc-ledger-types",
  "icrc_112_utils",
@@ -1103,10 +1104,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8877193e1921b5fd16accb0305eb46016868cd1935b05c05eca0ec007b943272"
 
 [[package]]
-name = "ic_mple_client"
-version = "0.9.5"
+name = "ic_mple_auth"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e61fa7508dd9659c9ab1942662b56b3b0d2a4222dd47d9a1d3b30c09657240eb"
+checksum = "2006868af422444eae23a15f6fe146915260378a377fa2e6be185fe8f9237f66"
+dependencies = [
+ "candid",
+ "ic-cdk",
+ "ic-stable-structures 0.7.0",
+ "ic_mple_utils",
+ "log",
+ "serde",
+ "thiserror 2.0.16",
+]
+
+[[package]]
+name = "ic_mple_client"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05822ef319839090dec57d93cc806cf04f06e3815abedf8f324b83705ec41077"
 dependencies = [
  "candid",
  "ic-cdk",
@@ -1117,9 +1133,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_log"
-version = "0.9.5"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de1fea06163f72d1773d9da7fd50f046c1af5c5f3c931562eb69c6df3c2a943f"
+checksum = "3aecd8dcb22eef348735f0b686f66f047977475d4462babd70e266022a0fcd1d"
 dependencies = [
  "arc-swap",
  "candid",
@@ -1135,9 +1151,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_pocket_ic"
-version = "0.9.5"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b83c62dfd169e2e9b25780d41c691fc935e4bac61b70146f6c9ae4b83bde14e"
+checksum = "501d30229d0a8f32fc211cbc4f9b045a4f448a287d4865c611e98fb55b69af9d"
 dependencies = [
  "flate2",
  "log",
@@ -1148,9 +1164,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_utils"
-version = "0.9.5"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76b5839e90ff0367e8707767d8cd2e4a8c89e0c966a75dd931ac6154349a372d"
+checksum = "4e9adf5bf6a267561e4cb1ee5bb87975f341092c235b700906cf95dba1045d93"
 
 [[package]]
 name = "ic_principal"
@@ -2554,6 +2570,7 @@ dependencies = [
  "futures",
  "ic-cdk",
  "ic-stable-structures 0.7.0",
+ "ic_mple_auth",
  "ic_mple_log",
  "ic_mple_pocket_ic",
  "ic_mple_utils",

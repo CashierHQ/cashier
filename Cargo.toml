@@ -33,10 +33,11 @@ getrandom = { version = "0.2", features = ["custom"] }
 ic-cdk = "0.18"
 ic-cdk-timers = "0.12"
 ic-stable-structures = "0.7"
-ic_mple_client = "0.9"
-ic_mple_log = { version = "0.9", features = ["service"] }
-ic_mple_pocket_ic = "0.9"
-ic_mple_utils = "0.9"
+ic_mple_auth = "0.11"
+ic_mple_client = "0.11"
+ic_mple_log = { version = "0.11", features = ["service"] }
+ic_mple_pocket_ic = "0.11"
+ic_mple_utils = "0.11"
 ic-ledger-types = "0.15.0"
 icrc_112_utils = { path = "src/lib/icrc_112_utils" }
 icrc-ledger-types = "0.1.10"
