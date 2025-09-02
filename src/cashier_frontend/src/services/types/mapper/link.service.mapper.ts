@@ -225,9 +225,13 @@ const mapUserLinkStateToFrontendLinkUserState = (
   const key = getKeyVariant(state);
   switch (key) {
     case "CompletedLink":
-      return LINK_USER_STATE.COMPLETE;
-    case "ChooseWallet":
-      return LINK_USER_STATE.CHOOSE_WALLET;
+      return LINK_USER_STATE.COMPLETED;
+    case "Address":
+      return LINK_USER_STATE.ADDRESS;
+    case "GateOpened":
+      return LINK_USER_STATE.GATE_OPENED;
+    case "GateClosed":
+      return LINK_USER_STATE.GATE_CLOSED;
     default:
       return assertNever(key);
   }
@@ -249,8 +253,8 @@ export const mapLinkDetailModelToUpdateLinkInputModel = (
         title: toNullable(linkDetailModel.title),
         asset_info: linkDetailModel.assets
           ? linkDetailModel.assets.map((asset) =>
-              mapFrontendAssetInfoToAssetInfo(asset),
-            )
+            mapFrontendAssetInfoToAssetInfo(asset),
+          )
           : [],
         description: toNullable(linkDetailModel.description),
         template: toNullable(mapFrontendTemplateToTemplate(TEMPLATE.CENTRAL)),
@@ -518,13 +522,13 @@ export const mapLinkDtoToUserInputItem = (dto: LinkDto): UserInputItem => {
   const assets: UserInputAsset[] =
     dto.asset_info && dto.asset_info.length > 0
       ? dto.asset_info.map((asset) => ({
-          address: asset.asset.IC.address.toText(),
-          linkUseAmount: asset.amount_per_link_use_action,
-          usdEquivalent: 0,
-          usdConversionRate: 0,
-          chain: CHAIN.IC,
-          label: mapStringToLabel(asset.label),
-        }))
+        address: asset.asset.IC.address.toText(),
+        linkUseAmount: asset.amount_per_link_use_action,
+        usdEquivalent: 0,
+        usdConversionRate: 0,
+        chain: CHAIN.IC,
+        label: mapStringToLabel(asset.label),
+      }))
       : [];
 
   return {

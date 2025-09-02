@@ -17,14 +17,6 @@ export enum LINK_STATE {
   INACTIVE_ENDED = "Link_state_inactive_ended",
 }
 
-// export enum TRANSACTION_STATE {
-//     CREATED = "Transaction_state_created",
-//     PROCESSING = "Transaction_state_processing",
-//     SUCCESS = "Transaction_state_success",
-//     FAIL = "Transaction_state_fail",
-//     TIMEOUT = "Transaction_state_timeout",
-// }
-
 export enum INTENT_STATE {
   CREATED = "Intent_state_created",
   PROCESSING = "Intent_state_processing",
@@ -209,6 +201,9 @@ export const getAssetLabelForLinkType = (linkType: string, address: string) => {
 };
 
 export enum LINK_USER_STATE {
-  COMPLETE = "User_state_completed_link",
-  CHOOSE_WALLET = "User_state_choose_wallet",
+  ADDRESS = "User_state_address",
+  GATE_OPENED = "User_state_gate_opened",
+  GATE_CLOSED = "User_state_gate_closed",
+  COMPLETED = "User_state_completed_link",
+
 }

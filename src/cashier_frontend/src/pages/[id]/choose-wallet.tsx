@@ -68,14 +68,14 @@ export default function ChooseWalletPage() {
       link_id: linkId ?? "",
       anonymous_wallet_address: "",
     },
-    !!linkId && !!identity,
+    !!linkId && !!identity
   );
 
   const queryAction = linkUserState?.action;
 
   // Internal action state that can be updated independently
   const [internalAction, setInternalAction] = useState<ActionModel | undefined>(
-    queryAction,
+    queryAction
   );
   const [showWalletModal, setShowWalletModal] = useState(false);
 
@@ -163,7 +163,7 @@ export default function ChooseWalletPage() {
    * Creates an action for anonymous users
    */
   const handleCreateActionAnonymous = async (
-    walletAddress: string,
+    walletAddress: string
   ): Promise<ActionModel> => {
     const newAction = await createActionAnonymous({
       linkId: linkId!,
@@ -226,7 +226,7 @@ export default function ChooseWalletPage() {
             link_id: linkId ?? "",
             anonymous_wallet_address: addressToUse,
           },
-          identity,
+          identity
         );
 
         if (!anonymousLinkUserState) {
@@ -242,11 +242,11 @@ export default function ChooseWalletPage() {
               link_id: linkId ?? "",
               anonymous_wallet_address: addressToUse,
             },
-            identity,
+            identity
           );
           setShowConfirmation(true);
         } else if (
-          anonymousLinkUserState.link_user_state === LINK_USER_STATE.COMPLETE
+          anonymousLinkUserState.link_user_state === LINK_USER_STATE.COMPLETED
         ) {
           goToComplete();
         } else {
@@ -276,7 +276,7 @@ export default function ChooseWalletPage() {
     () => () => {
       goToLinkDefault();
     },
-    [goToLinkDefault],
+    [goToLinkDefault]
   );
 
   const setDisabled = useCallback((disabled: boolean) => {

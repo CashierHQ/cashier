@@ -72,7 +72,7 @@ export const useLinkUseNavigation = (linkId?: string) => {
       // For logged-in users with complete state, redirect to complete page
       if (
         isAuthenticated &&
-        userState?.link_user_state === LINK_USER_STATE.COMPLETE
+        userState?.link_user_state === LINK_USER_STATE.COMPLETED
       ) {
         goToComplete({ replace: true });
       }
