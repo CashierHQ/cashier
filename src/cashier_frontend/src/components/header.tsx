@@ -47,7 +47,7 @@ const Header: React.FC<HeaderProps> = () => {
         {showHeaderWithBackButtonAndWalletButton(
           location.pathname,
           location.search,
-          !user
+          !user,
         ) ? (
           <ChevronLeft
             size={24}
@@ -93,7 +93,7 @@ const Header: React.FC<HeaderProps> = () => {
         >
           {showHeaderWithBackButtonAndWalletButton(
             location.pathname,
-            location.search
+            location.search,
           ) ? (
             <ChevronLeft
               size={24}

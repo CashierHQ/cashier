@@ -39,7 +39,7 @@ const WalletButton: React.FC<WalletButtonProps> = ({
         "flex items-center justify-start",
         disabled
           ? "bg-gray-100 text-gray-500 cursor-not-allowed"
-          : "bg-background text-foreground hover:bg-accent hover:text-accent-foreground"
+          : "bg-background text-foreground hover:bg-accent hover:text-accent-foreground",
       )}
       disabled={disabled}
     >
