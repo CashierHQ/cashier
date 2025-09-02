@@ -6,7 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
-import { useConnectToWallet } from "@/hooks/user-hook";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { useLinksListQuery } from "@/hooks/link-hooks";
@@ -22,7 +21,6 @@ export default function HomePage() {
   const identity = useIdentity();
   const { userInputs, addUserInput } = useLinkCreationFormStore();
   const { user: walletUser } = useAuth();
-  const { connectToWallet } = useConnectToWallet();
   const {
     data: linkData,
     isLoading: isLinksLoading,
