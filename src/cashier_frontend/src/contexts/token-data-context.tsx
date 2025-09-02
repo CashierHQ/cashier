@@ -549,6 +549,11 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
     }
   }, [identity]);
 
+  // Fetch initial token list on mount
+  useEffect(() => {
+    tokenListQuery.refetch();
+  }, []);
+
   // Context value
   const contextValue: TokenContextValue = {
     rawTokenList: enrichedTokens,
