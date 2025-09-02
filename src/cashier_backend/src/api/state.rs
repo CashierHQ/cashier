@@ -3,9 +3,13 @@ use std::{cell::RefCell, rc::Rc, thread::LocalKey};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 
 use crate::{
-    repositories::{ThreadlocalRepositories, AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE},
+    repositories::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
     services::{
-        action::ActionService, auth::{AuthService, AuthServiceStorage}, link::service::LinkService, request_lock::RequestLockService, transaction_manager::{service::TransactionManagerService, validate::ValidateService}
+        action::ActionService,
+        auth::{AuthService, AuthServiceStorage},
+        link::service::LinkService,
+        request_lock::RequestLockService,
+        transaction_manager::{service::TransactionManagerService, validate::ValidateService},
     },
     utils::runtime::{IcEnvironment, RealIcEnvironment},
 };

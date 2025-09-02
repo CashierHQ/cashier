@@ -13,45 +13,57 @@ fn get_canister_build_data() -> BuildData {
     canister_build_data()
 }
 
-    /// Adds permissions to a principal and returns the principal permissions.
-    #[update]
-    pub fn admin_permissions_add(
-        principal: Principal,
-        permissions: Vec<Permission>,
-    ) -> Result<Vec<Permission>, CanisterError> {
-        let mut state = get_state();
-        let caller = msg_caller();
-        state.auth_service.must_have_permission(&caller, Permission::Admin);
+/// Adds permissions to a principal and returns the principal permissions.
+#[update]
+pub fn admin_permissions_add(
+    principal: Principal,
+    permissions: Vec<Permission>,
+) -> Result<Vec<Permission>, CanisterError> {
+    let mut state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
 
-        state.auth_service.add_permissions(principal, permissions)
-        .map(|p| p.permissions.into_iter()
-        .collect())
+    state
+        .auth_service
+        .add_permissions(principal, permissions)
+        .map(|p| p.permissions.into_iter().collect())
         .map_err(|e| CanisterError::AuthError(format!("{e:?}")))
-    }
+}
 
-    /// Removes permissions from a principal and returns the principal permissions.
-    #[update]
-    pub fn admin_permissions_remove(
-        principal: Principal,
-        permissions: Vec<Permission>,
-    ) -> Result<Vec<Permission>, CanisterError> {
-                let mut state = get_state();
-        let caller = msg_caller();
-        state.auth_service.must_have_permission(&caller, Permission::Admin);
+/// Removes permissions from a principal and returns the principal permissions.
+#[update]
+pub fn admin_permissions_remove(
+    principal: Principal,
+    permissions: Vec<Permission>,
+) -> Result<Vec<Permission>, CanisterError> {
+    let mut state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
 
-        state.auth_service.remove_permissions(principal, &permissions)
-        .map(|p| p.permissions.into_iter()
-        .collect())
+    state
+        .auth_service
+        .remove_permissions(principal, &permissions)
+        .map(|p| p.permissions.into_iter().collect())
         .map_err(|e| CanisterError::AuthError(format!("{e:?}")))
-    }
+}
 
-    /// Returns the permissions of a principal.
-    #[query]
-    pub fn admin_permissions_get(principal: Principal) -> Vec<Permission> {
-                let state = get_state();
-        let caller = msg_caller();
-        state.auth_service.must_have_permission(&caller, Permission::Admin);
+/// Returns the permissions of a principal.
+#[query]
+pub fn admin_permissions_get(principal: Principal) -> Vec<Permission> {
+    let state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
 
-        state.auth_service.get_permissions(&principal).permissions.into_iter()
+    state
+        .auth_service
+        .get_permissions(&principal)
+        .permissions
+        .into_iter()
         .collect()
-    }
+}

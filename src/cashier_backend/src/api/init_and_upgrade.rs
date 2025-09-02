@@ -21,7 +21,10 @@ fn init(init_data: CashierBackendInitData) {
     info!("[init] Starting Cashier Backend");
 
     info!("Set {:?} as canister admin", init_data.owner);
-    state.auth_service.add_permissions(init_data.owner, vec![Permission::Admin]).expect("Should be able to set the admin");
+    state
+        .auth_service
+        .add_permissions(init_data.owner, vec![Permission::Admin])
+        .expect("Should be able to set the admin");
 
     init_ic_rand();
 }

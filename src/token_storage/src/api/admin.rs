@@ -6,11 +6,15 @@ use cashier_common::build_data::BuildData;
 use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, info};
 use token_storage_types::{
-    error::TokenStorageError, token::{RegistryStats, TokenDto, TokenListResponse, UserTokens}, TokenId
+    TokenId,
+    error::TokenStorageError,
+    token::{RegistryStats, TokenDto, TokenListResponse, UserTokens},
 };
 
 use crate::{
-    api::state::get_state, build_data::canister_build_data, constant::default_tokens::get_default_tokens, services::auth::Permission, types::TokenRegistryMetadata
+    api::state::get_state, build_data::canister_build_data,
+    constant::default_tokens::get_default_tokens, services::auth::Permission,
+    types::TokenRegistryMetadata,
 };
 
 /// Returns the build data of the canister.
@@ -20,49 +24,60 @@ fn get_canister_build_data() -> BuildData {
     canister_build_data()
 }
 
-    /// Adds permissions to a principal and returns the principal permissions.
-    #[update]
-    pub fn admin_permissions_add(
-        principal: Principal,
-        permissions: Vec<Permission>,
-    ) -> Result<Vec<Permission>, TokenStorageError> {
-        let mut state = get_state();
-        let caller = msg_caller();
-        state.auth_service.must_have_permission(&caller, Permission::Admin);
+/// Adds permissions to a principal and returns the principal permissions.
+#[update]
+pub fn admin_permissions_add(
+    principal: Principal,
+    permissions: Vec<Permission>,
+) -> Result<Vec<Permission>, TokenStorageError> {
+    let mut state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
 
-        state.auth_service.add_permissions(principal, permissions)
-        .map(|p| p.permissions.into_iter()
-        .collect())
+    state
+        .auth_service
+        .add_permissions(principal, permissions)
+        .map(|p| p.permissions.into_iter().collect())
         .map_err(|e| TokenStorageError::AuthError(format!("{e:?}")))
-    }
+}
 
-    /// Removes permissions from a principal and returns the principal permissions.
-    #[update]
-    pub fn admin_permissions_remove(
-        principal: Principal,
-        permissions: Vec<Permission>,
-    ) -> Result<Vec<Permission>, TokenStorageError> {
-                let mut state = get_state();
-        let caller = msg_caller();
-        state.auth_service.must_have_permission(&caller, Permission::Admin);
+/// Removes permissions from a principal and returns the principal permissions.
+#[update]
+pub fn admin_permissions_remove(
+    principal: Principal,
+    permissions: Vec<Permission>,
+) -> Result<Vec<Permission>, TokenStorageError> {
+    let mut state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
 
-        state.auth_service.remove_permissions(principal, &permissions)
-        .map(|p| p.permissions.into_iter()
-        .collect())
+    state
+        .auth_service
+        .remove_permissions(principal, &permissions)
+        .map(|p| p.permissions.into_iter().collect())
         .map_err(|e| TokenStorageError::AuthError(format!("{e:?}")))
-    }
+}
 
-    /// Returns the permissions of a principal.
-    #[query]
-    pub fn admin_permissions_get(principal: Principal) -> Vec<Permission> {
-                let state = get_state();
-        let caller = msg_caller();
-        state.auth_service.must_have_permission(&caller, Permission::Admin);
+/// Returns the permissions of a principal.
+#[query]
+pub fn admin_permissions_get(principal: Principal) -> Vec<Permission> {
+    let state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
 
-        state.auth_service.get_permissions(&principal).permissions.into_iter()
+    state
+        .auth_service
+        .get_permissions(&principal)
+        .permissions
+        .into_iter()
         .collect()
-    }
-    
+}
 
 /// Gets the current version of the token registry
 /// This can be used by clients to check if they need to refresh their token lists
@@ -71,7 +86,9 @@ pub fn admin_get_registry_version() -> u64 {
     debug!("[admin_get_registry_version]");
     let state = get_state();
     let caller = msg_caller();
-    state.auth_service.must_have_permission(&caller, Permission::Admin);
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
 
     let service = state.token_registry;
     service.get_metadata().version
@@ -84,7 +101,9 @@ pub fn admin_get_registry_metadata() -> TokenRegistryMetadata {
     debug!("[admin_get_registry_metadata]");
     let state = get_state();
     let caller = msg_caller();
-    state.auth_service.must_have_permission(&caller, Permission::Admin);
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
 
     let service = state.token_registry;
     service.get_metadata()
@@ -95,7 +114,9 @@ pub fn admin_get_registry_tokens(only_enable: bool) -> Vec<TokenDto> {
     debug!("[admin_get_registry_tokens] only_enable: {only_enable}");
     let state = get_state();
     let caller = msg_caller();
-    state.auth_service.must_have_permission(&caller, Permission::Admin);
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
 
     let service = state.token_registry;
     let list: Vec<TokenDto> = service
@@ -116,7 +137,9 @@ pub fn admin_initialize_registry() -> Result<(), String> {
     info!("[admin_initialize_registry]");
     let state = get_state();
     let caller = msg_caller();
-    state.auth_service.must_have_permission(&caller, Permission::Admin);
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
 
     let mut registry = state.token_registry;
     registry
@@ -135,7 +158,9 @@ pub fn admin_get_stats() -> Result<RegistryStats, String> {
 
     let state = get_state();
     let caller = msg_caller();
-    state.auth_service.must_have_permission(&caller, Permission::Admin);
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
 
     let token_registry = state.token_registry;
     let list_tokens = token_registry.list_tokens();
@@ -154,7 +179,9 @@ pub fn admin_get_user_tokens(wallet: Principal) -> Result<UserTokens, String> {
 
     let state = get_state();
     let caller = msg_caller();
-    state.auth_service.must_have_permission(&caller, Permission::Admin);
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
 
     let token_registry_service = state.token_registry;
     let user_token_service = state.user_token;
@@ -179,7 +206,9 @@ pub fn admin_list_tokens_by_wallet(wallet: Principal) -> Result<TokenListRespons
 
     let state = get_state();
     let caller = msg_caller();
-    state.auth_service.must_have_permission(&caller, Permission::Admin);
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
 
     let token_registry_service = state.token_registry;
     let user_preference_service = state.user_preference;
@@ -246,7 +275,9 @@ pub fn admin_get_user_balance(
 
     let state = get_state();
     let caller = msg_caller();
-    state.auth_service.must_have_permission(&caller, Permission::Admin);
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
 
     let user_token_service = state.user_token;
 

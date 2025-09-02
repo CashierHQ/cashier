@@ -128,7 +128,7 @@ thread_local! {
                 LogSettings::default(),
             )
         );
-        
+
     // Store user's token references (not full token data)
     // user enable list
     static USER_TOKEN_STORE: RefCell<StableBTreeMap<Principal, UserTokenList, Memory>> =

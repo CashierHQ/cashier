@@ -84,7 +84,7 @@ pub enum CanisterError {
     UnboundedError(String),
 
     #[error("Auth error: {0}")]
-    AuthError(String)
+    AuthError(String),
 }
 
 impl CanisterError {

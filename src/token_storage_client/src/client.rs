@@ -22,18 +22,25 @@ impl<C: CanisterClient> TokenStorageClient<C> {
         Self { client }
     }
 
-        /// Returns the permissions of a principal.
-    pub async fn admin_permissions_get(&self, principal: Principal) -> CanisterClientResult<Vec<Permission>> {
-        self.client.query("admin_permissions_get", (principal,)).await
+    /// Returns the permissions of a principal.
+    pub async fn admin_permissions_get(
+        &self,
+        principal: Principal,
+    ) -> CanisterClientResult<Vec<Permission>> {
+        self.client
+            .query("admin_permissions_get", (principal,))
+            .await
     }
 
     /// Adds permissions to a principal and returns the principal permissions.
     pub async fn admin_permissions_add(
-        &self, 
+        &self,
         principal: Principal,
         permissions: Vec<Permission>,
     ) -> CanisterClientResult<Result<Vec<Permission>, TokenStorageError>> {
-        self.client.update("admin_permissions_add", (principal, permissions,)).await
+        self.client
+            .update("admin_permissions_add", (principal, permissions))
+            .await
     }
 
     /// Removes permissions from a principal and returns the principal permissions.
@@ -42,7 +49,9 @@ impl<C: CanisterClient> TokenStorageClient<C> {
         principal: Principal,
         permissions: Vec<Permission>,
     ) -> CanisterClientResult<Result<Vec<Permission>, TokenStorageError>> {
-        self.client.update("admin_permissions_remove", (principal, permissions,)).await
+        self.client
+            .update("admin_permissions_remove", (principal, permissions))
+            .await
     }
 
     /// Returns the build data of the canister.
