@@ -37,6 +37,7 @@ use crate::repository::user_preference::{
 use crate::repository::user_token::{
     ThreadlocalUserTokenRepositoryStorage, UserTokenRepository, UserTokenRepositoryStorage,
 };
+use crate::services::auth::AuthServiceStorage;
 use crate::types::{Candid, RegistryToken, TokenBalance, TokenRegistryMetadata, UserTokenList};
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
@@ -49,6 +50,7 @@ const USER_PREFERENCE_MEMORY_ID: MemoryId = MemoryId::new(2);
 const TOKEN_REGISTRY_MEMORY_ID: MemoryId = MemoryId::new(3);
 const BALANCE_CACHE_MEMORY_ID: MemoryId = MemoryId::new(4);
 const TOKEN_REGISTRY_METADATA_ID: MemoryId = MemoryId::new(5);
+const AUTH_SERVICE_MEMORY_ID: MemoryId = MemoryId::new(6);
 
 /// A trait for accessing repositories
 pub trait Repositories {
@@ -110,7 +112,15 @@ thread_local! {
         MemoryManager::init(DefaultMemoryImpl::default())
     );
 
-    // Store the logger settings
+    /// Store for the auth service
+        pub static AUTH_SERVICE_STORE: RefCell<AuthServiceStorage> =
+        RefCell::new(
+            StableBTreeMap::init(
+                MEMORY_MANAGER.with_borrow(|m| m.get(AUTH_SERVICE_MEMORY_ID)),
+            )
+        );
+
+    // Store for the logger settings
     pub static LOGGER_SERVICE_STORE: RefCell<LoggerServiceStorage> =
         RefCell::new(
             StableCell::init(
@@ -118,7 +128,7 @@ thread_local! {
                 LogSettings::default(),
             )
         );
-
+        
     // Store user's token references (not full token data)
     // user enable list
     static USER_TOKEN_STORE: RefCell<StableBTreeMap<Principal, UserTokenList, Memory>> =

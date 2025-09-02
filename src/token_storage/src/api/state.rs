@@ -3,15 +3,15 @@ use std::{cell::RefCell, thread::LocalKey};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 
 use crate::{
-    repository::{LOGGER_SERVICE_STORE, ThreadlocalRepositories},
+    repository::{ThreadlocalRepositories, AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE},
     services::{
-        token_registry::TokenRegistryService, user_preference::UserPreferenceService,
-        user_token::UserTokenService,
+        auth::{AuthService, AuthServiceStorage}, token_registry::TokenRegistryService, user_preference::UserPreferenceService, user_token::UserTokenService
     },
 };
 
 /// The state of the canister
 pub struct CanisterState {
+    pub auth_service: AuthService<&'static LocalKey<RefCell<AuthServiceStorage>>>,
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
     pub token_registry: TokenRegistryService<ThreadlocalRepositories>,
     pub user_preference: UserPreferenceService<ThreadlocalRepositories>,
@@ -23,6 +23,7 @@ impl CanisterState {
     pub fn new() -> Self {
         let repo = ThreadlocalRepositories;
         CanisterState {
+            auth_service: AuthService::new(&AUTH_SERVICE_STORE),
             log_service: LoggerConfigService::new(&LOGGER_SERVICE_STORE),
             token_registry: TokenRegistryService::new(&repo),
             user_preference: UserPreferenceService::new(&repo),

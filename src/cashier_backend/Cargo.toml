@@ -20,6 +20,7 @@ futures = { workspace = true }
 getrandom = { workspace = true, features = ["custom"] }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
+ic_mple_auth = { workspace = true }
 ic_mple_log = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc_112_utils = { workspace = true }

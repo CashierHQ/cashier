@@ -32,6 +32,7 @@ use crate::repositories::request_lock::{RequestLockRepository, RequestLockReposi
 use crate::repositories::transaction::{TransactionRepository, TransactionRepositoryStorage};
 use crate::repositories::user_action::{UserActionRepository, UserActionRepositoryStorage};
 use crate::repositories::user_link::{UserLinkRepository, UserLinkRepositoryStorage};
+use crate::services::auth::AuthServiceStorage;
 
 pub mod action;
 pub mod action_intent;
@@ -57,6 +58,7 @@ const ACTION_INTENT_MEMORY_ID: MemoryId = MemoryId::new(8);
 const PROCESSING_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(9);
 const REQUEST_LOCK_MEMORY_ID: MemoryId = MemoryId::new(10);
 const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(11);
+const AUTH_SERVICE_MEMORY_ID: MemoryId = MemoryId::new(12);
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -155,12 +157,20 @@ impl Repositories for ThreadlocalRepositories {
 thread_local! {
     pub static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
 
-    // Store the logger settings
+    // Store for the logger settings
     pub static LOGGER_SERVICE_STORE: RefCell<LoggerServiceStorage> =
         RefCell::new(
             StableCell::init(
                 MEMORY_MANAGER.with_borrow(|m| m.get(LOG_SETTINGS_MEMORY_ID)),
                 LogSettings::default(),
+            )
+        );
+
+        /// Store for the auth service
+    pub static AUTH_SERVICE_STORE: RefCell<AuthServiceStorage> =
+        RefCell::new(
+            StableBTreeMap::init(
+                MEMORY_MANAGER.with_borrow(|m| m.get(AUTH_SERVICE_MEMORY_ID)),
             )
         );
 
