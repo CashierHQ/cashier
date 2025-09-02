@@ -2,7 +2,6 @@
 [group('code_check')]
 fmt args="":
   cargo fmt --all {{args}}
-  cd {{FRONTEND_DIR}} && npm run format
 
 # Formats the code using the nightly version of rustfmt
 [group('code_check')]
