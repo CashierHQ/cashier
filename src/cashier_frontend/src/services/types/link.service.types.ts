@@ -3,7 +3,13 @@
 
 import { IntentCreateModel } from "./intent.service.types";
 import { ActionModel } from "./action.service.types";
-import { ACTION_TYPE, CHAIN, LINK_STATE, LINK_TYPE } from "./enum";
+import {
+  ACTION_TYPE,
+  CHAIN,
+  LINK_STATE,
+  LINK_TYPE,
+  LINK_USER_STATE,
+} from "./enum";
 
 export enum Chain {
   IC = "IC",
@@ -52,5 +58,5 @@ export type LinkUpdateUserStateInputModel = {
 
 export type LinkGetUserStateOutputModel = {
   action?: ActionModel;
-  link_user_state?: string;
+  link_user_state?: LINK_USER_STATE;
 };
