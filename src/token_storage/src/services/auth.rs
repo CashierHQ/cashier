@@ -1,5 +1,4 @@
 use candid::CandidType;
-use ic_mple_log::service::Storage;
 use serde::Deserialize;
 
     /// Principal specific permission
@@ -24,4 +23,4 @@ use serde::Deserialize;
     pub type AuthServiceStorage = ic_mple_auth::AuthServiceStorage<Permission>;
 
     /// Auth service
-    pub type AuthService<T: Storage<AuthServiceStorage>> = ic_mple_auth::AuthService<T, Permission>;
+    pub type AuthService<T> = ic_mple_auth::AuthService<T, Permission>;
