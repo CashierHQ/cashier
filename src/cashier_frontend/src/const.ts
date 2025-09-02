@@ -39,4 +39,11 @@ export const FEATURE_FLAGS = {
   ENABLE_LOCAL_IDENTITY_PROVIDER:
     import.meta.env.VITE_FEATURE_FLAGS_ENABLE_LOCAL_IDENTITY_PROVIDER ===
       "true" || false,
+
+  ENABLE_ANONYMOUS_GOOGLE_LOGIN:
+    import.meta.env.VITE_FATURE_FLAGS_ENABLE_GOOGLE_LOGIN === "true" || false,
+
+  ENABLE_ANONYMOUS_USE_LINK:
+    import.meta.env.VITE_FEATURE_FLAGS_ENABLE_ANONYMOUS_USE_LINK === "true" ||
+    false,
 };

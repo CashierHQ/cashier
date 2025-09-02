@@ -103,7 +103,7 @@ export const useUseConfirmation = ({
       if (identity) {
         startPolling(
           {
-            action_type: ACTION_TYPE.USE_LINK,
+            action_type: ACTION_TYPE.USE,
             link_id: linkId,
             anonymous_wallet_address: "",
           },
@@ -113,7 +113,7 @@ export const useUseConfirmation = ({
         // Process action for authenticated user
         const processActionResult = await processAction({
           linkId: link.id,
-          actionType: internalAction?.type ?? ACTION_TYPE.USE_LINK,
+          actionType: internalAction?.type ?? ACTION_TYPE.USE,
           actionId: internalAction.id,
         });
         setInternalAction(processActionResult);
@@ -149,7 +149,7 @@ export const useUseConfirmation = ({
           linkId: link.id,
           actionId: internalAction.id,
           walletAddress: anonymousWalletAddress,
-          actionType: ACTION_TYPE.USE_LINK,
+          actionType: ACTION_TYPE.USE,
         });
 
         if (processActionResult) {
@@ -211,12 +211,16 @@ export const useUseConfirmation = ({
     try {
       const result = await updateLinkUserState.mutateAsync({
         input: {
-          action_type: ACTION_TYPE.USE_LINK,
+          action_type: ACTION_TYPE.USE,
           link_id: linkId,
           isContinue: true,
           anonymous_wallet_address: anonymousWalletAddress,
         },
       });
+
+      if (!result) {
+        throw new Error("Failed to update link user state");
+      }
 
       try {
         await enhancedRefresh();

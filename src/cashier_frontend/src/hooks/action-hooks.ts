@@ -91,7 +91,7 @@ export function useCreateActionAnonymous() {
 
       return linkService.createActionAnonymous({
         linkId: params.linkId,
-        actionType: params.actionType.toString(),
+        actionType: params.actionType,
         walletAddress: params.walletAddress,
       });
     },
@@ -126,7 +126,7 @@ export function useProcessActionAnonymous() {
 
       return linkService.processActionAnonymousV2({
         linkId: params.linkId,
-        actionType: params.actionType.toString(),
+        actionType: params.actionType,
         actionId: params.actionId,
         walletAddress: params.walletAddress,
       });

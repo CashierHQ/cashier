@@ -6,8 +6,6 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
-import { headerWalletOptions } from "@/constants/wallet-options";
-import { useConnectToWallet } from "@/hooks/user-hook";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { useLinksListQuery } from "@/hooks/link-hooks";
@@ -23,7 +21,6 @@ export default function HomePage() {
   const identity = useIdentity();
   const { userInputs, addUserInput } = useLinkCreationFormStore();
   const { user: walletUser } = useAuth();
-  const { connectToWallet } = useConnectToWallet();
   const {
     data: linkData,
     isLoading: isLinksLoading,
@@ -113,9 +110,9 @@ export default function HomePage() {
 
               addUserInput(link.id, {
                 linkId: link.id,
-                state: link.state as LINK_STATE,
+                state: link.state,
                 title: link.title,
-                linkType: link.linkType as LINK_TYPE,
+                linkType: link.linkType,
                 assets: processedAssets,
               });
             }
@@ -136,10 +133,7 @@ export default function HomePage() {
   return (
     <MainAppLayout>
       {!walletUser ? (
-        <UnauthenticatedContent
-          headerWalletOptions={headerWalletOptions}
-          connectToWallet={connectToWallet}
-        />
+        <UnauthenticatedContent />
       ) : (
         <AuthenticatedContent
           showGuide={showGuide}

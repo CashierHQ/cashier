@@ -2,10 +2,10 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::CandidType;
+use cashier_common::chain::Chain;
 use cashier_macros::storable;
 use token_storage_types::{
     TokenId,
-    chain::Chain,
     token::{ChainTokenDetails, TokenDto},
 };
 

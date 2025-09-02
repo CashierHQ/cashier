@@ -1,5 +1,6 @@
+use cashier_common::chain::Chain;
 use futures::try_join;
-use token_storage_types::{IndexId, TokenId, chain::Chain, token::ChainTokenDetails};
+use token_storage_types::{IndexId, TokenId, token::ChainTokenDetails};
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 

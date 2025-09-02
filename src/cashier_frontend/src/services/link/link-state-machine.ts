@@ -3,9 +3,9 @@
 
 import { UserInputAsset, UserInputItem } from "@/stores/linkCreationFormStore";
 import { LINK_STATE, LINK_TYPE } from "../types/enum";
+import { AssetInfoModel, LinkDetailModel } from "../types/link.service.types";
 import { LinkDto } from "../../generated/cashier_backend/cashier_backend.did";
 import { mapPartialDtoToLinkDetailModel } from "../types/mapper/link.service.mapper";
-import { AssetInfoModel } from "../types/link.service.types";
 
 /**
  * Singleton class that handles the state machine logic for link creation flow
@@ -84,14 +84,16 @@ export class LinkStateMachine {
    * @throws Error with a descriptive message if validation fails
    */
   public validateStateTransition(
-    link: Partial<LinkDto>,
+    link: Partial<LinkDetailModel>,
     action: string,
     updateLinkInput?: Partial<UserInputItem>,
   ): boolean {
     if (!updateLinkInput) throw new Error("Missing update link input data");
 
+    const state = link.state;
+
     // CHOOSE_TEMPLATE -> ADD_ASSET
-    if (link.state === LINK_STATE.CHOOSE_TEMPLATE) {
+    if (state === LINK_STATE.CHOOSE_TEMPLATE) {
       if (action === "Continue") {
         if (!updateLinkInput?.title) {
           throw new Error("Title is required for this transition");
@@ -115,7 +117,7 @@ export class LinkStateMachine {
     }
 
     // ADD_ASSET -> PREVIEW
-    if (link.state === LINK_STATE.ADD_ASSET) {
+    if (state === LINK_STATE.ADD_ASSET) {
       if (action === "Continue") {
         // Validate required fields for this transition
         if (!updateLinkInput?.assets || updateLinkInput.assets.length === 0) {
@@ -161,7 +163,7 @@ export class LinkStateMachine {
       throw new Error(`Invalid action ${action} for state ${link.state}`);
     }
 
-    if (link.state === LINK_STATE.PREVIEW) {
+    if (state === LINK_STATE.PREVIEW) {
       if (action === "Continue") {
         // When going to CREATE_LINK, no property changes are allowed
         const whitelist: string[] = [];
@@ -295,7 +297,7 @@ export class LinkStateMachine {
   public checkPropsChanged(
     whitelistProps: string[],
     userInput: Partial<UserInputItem>,
-    linkDto: Partial<LinkDto>,
+    linkDto: Partial<LinkDetailModel> | Partial<LinkDto>,
   ): boolean {
     const propsToCheck = [
       "title",
@@ -306,8 +308,15 @@ export class LinkStateMachine {
       "maxActionNumber", // maps to link_use_action_max_count
     ].filter((prop) => !whitelistProps.includes(prop));
 
-    // Convert LinkDto to LinkDetailModel for easier comparison
-    const linkDetailModel = mapPartialDtoToLinkDetailModel(linkDto);
+    // If already a LinkDetailModel use it directly, otherwise map from DTO
+    let linkDetailModel: LinkDetailModel;
+    if ((linkDto as LinkDetailModel).asset_info !== undefined) {
+      linkDetailModel = linkDto as LinkDetailModel;
+    } else {
+      linkDetailModel = mapPartialDtoToLinkDetailModel(
+        linkDto as Partial<LinkDto>,
+      );
+    }
 
     for (const prop of propsToCheck) {
       switch (prop) {

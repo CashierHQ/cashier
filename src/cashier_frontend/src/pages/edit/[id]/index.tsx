@@ -27,8 +27,9 @@ import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { toast } from "sonner";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
+import { mapLinkStateToEnum } from "@/services/types/mapper/link.service.mapper";
 
-export function stateToStepIndex(state: string | undefined): number {
+export function stateToStepIndex(state: LINK_STATE | undefined): number {
   if (state === LINK_STATE.CHOOSE_TEMPLATE) {
     return 0;
   }
@@ -103,9 +104,11 @@ export default function LinkPage() {
     }
 
     if (link) {
+      console.log("[link] ", link);
+      if (!link.state) throw new Error("Link state is undefined");
       const userInput: Partial<UserInputItem> = {
         linkId: link.id,
-        state: mapStringToLinkState(link.state!),
+        state: mapStringToLinkState(link.state),
         title: link.title,
         linkType: mapStringToLinkType(link.linkType),
         assets: link.asset_info.map((asset) => ({
@@ -146,8 +149,7 @@ export default function LinkPage() {
             isContinue: false,
           });
 
-          const currentState = res.state;
-
+          const currentState = mapLinkStateToEnum(res.state);
           const stepIndex = stateToStepIndex(currentState);
           if (stepIndex === undefined) {
             throw new Error("Step index not found");

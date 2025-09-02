@@ -5,17 +5,19 @@ import type { IDL } from '@dfinity/candid';
 export interface ActionDto {
   'id' : string,
   'icrc_112_requests' : [] | [Array<Array<Icrc112Request>>],
-  'creator' : string,
+  'creator' : Principal,
   'intents' : Array<IntentDto>,
-  'type' : string,
-  'state' : string,
+  'type' : ActionType,
+  'state' : IntentState,
 }
-export interface AssetDto { 'chain' : string, 'address' : string }
+export type ActionType = { 'Use' : null } |
+  { 'Withdraw' : null } |
+  { 'CreateLink' : null };
+export type Asset = { 'IC' : { 'address' : Principal } };
 export interface AssetInfoDto {
+  'asset' : Asset,
   'amount_per_link_use_action' : bigint,
-  'chain' : string,
   'label' : string,
-  'address' : string,
 }
 export interface BuildData {
   'rustc_semver' : string,
@@ -59,27 +61,33 @@ export type CanisterError = { 'InvalidDataError' : string } |
 export interface CashierBackendInitData {
   'log_settings' : [] | [LogServiceSettings],
 }
+export type Chain = { 'IC' : null };
 export interface CreateActionAnonymousInput {
   'link_id' : string,
-  'action_type' : string,
-  'wallet_address' : string,
+  'action_type' : ActionType,
+  'wallet_address' : Principal,
 }
 export interface CreateActionInput {
   'link_id' : string,
-  'action_type' : string,
+  'action_type' : ActionType,
 }
 export interface CreateLinkInput {
   'title' : string,
   'asset_info' : Array<LinkDetailUpdateAssetInfoInput>,
-  'link_type' : string,
+  'link_type' : LinkType,
   'description' : [] | [string],
   'link_image_url' : [] | [string],
-  'template' : string,
+  'template' : Template,
   'link_use_action_max_count' : bigint,
   'nft_image' : [] | [string],
 }
-export interface GetLinkOptions { 'action_type' : string }
+export type FromCallType = { 'Canister' : null } |
+  { 'Wallet' : null };
+export interface GetLinkOptions { 'action_type' : ActionType }
 export interface GetLinkResp { 'action' : [] | [ActionDto], 'link' : LinkDto }
+export type IcTransaction = { 'Icrc2Approve' : Icrc2Approve } |
+  { 'Icrc1Transfer' : Icrc1Transfer } |
+  { 'Icrc2TransferFrom' : Icrc2TransferFrom };
 export interface Icrc112Request {
   'arg' : Uint8Array | number[],
   'method' : string,
@@ -92,6 +100,14 @@ export interface Icrc114ValidateArgs {
   'method' : string,
   'canister_id' : Principal,
   'nonce' : [] | [Uint8Array | number[]],
+}
+export interface Icrc1Transfer {
+  'to' : Wallet,
+  'ts' : [] | [bigint],
+  'asset' : Asset,
+  'from' : Wallet,
+  'memo' : [] | [Uint8Array | number[]],
+  'amount' : bigint,
 }
 export interface Icrc21ConsentInfo {
   'metadata' : Icrc21ConsentMessageMetadata,
@@ -133,74 +149,107 @@ export interface Icrc21SupportedStandard { 'url' : string, 'name' : string }
 export interface Icrc28TrustedOriginsResponse {
   'trusted_origins' : Array<string>,
 }
+export interface Icrc2Approve {
+  'asset' : Asset,
+  'from' : Wallet,
+  'memo' : [] | [Uint8Array | number[]],
+  'amount' : bigint,
+  'spender' : Wallet,
+}
+export interface Icrc2TransferFrom {
+  'to' : Wallet,
+  'ts' : [] | [bigint],
+  'asset' : Asset,
+  'from' : Wallet,
+  'memo' : [] | [Uint8Array | number[]],
+  'amount' : bigint,
+  'spender' : Wallet,
+}
 export interface IntentDto {
   'id' : string,
-  'chain' : string,
-  'task' : string,
-  'type' : string,
+  'chain' : Chain,
+  'task' : IntentTask,
+  'type' : IntentType,
   'created_at' : bigint,
-  'type_metadata' : Array<[string, MetadataValue]>,
-  'state' : string,
+  'state' : IntentState,
   'transactions' : Array<TransactionDto>,
 }
+export type IntentState = { 'Fail' : null } |
+  { 'Success' : null } |
+  { 'Processing' : null } |
+  { 'Created' : null };
+export type IntentTask = { 'TransferWalletToLink' : null } |
+  { 'TransferLinkToWallet' : null } |
+  { 'TransferWalletToTreasury' : null };
+export type IntentType = { 'Transfer' : TransferData } |
+  { 'TransferFrom' : TransferFromData };
 export interface LinkDetailUpdateAssetInfoInput {
+  'asset' : Asset,
   'amount_per_link_use_action' : bigint,
-  'chain' : string,
   'label' : string,
-  'address' : string,
 }
 export interface LinkDetailUpdateInput {
   'title' : [] | [string],
-  'asset_info' : [] | [Array<AssetInfoDto>],
-  'link_type' : [] | [string],
+  'asset_info' : Array<AssetInfoDto>,
+  'link_type' : [] | [LinkType],
   'description' : [] | [string],
   'link_image_url' : [] | [string],
-  'template' : [] | [string],
+  'template' : [] | [Template],
   'link_use_action_max_count' : [] | [bigint],
   'nft_image' : [] | [string],
 }
 export interface LinkDto {
   'id' : string,
   'title' : [] | [string],
-  'creator' : string,
-  'asset_info' : [] | [Array<AssetInfoDto>],
-  'link_type' : [] | [string],
-  'metadata' : [] | [Array<[string, string]>],
+  'creator' : Principal,
+  'asset_info' : Array<AssetInfoDto>,
+  'link_type' : [] | [LinkType],
+  'metadata' : Array<[string, string]>,
   'create_at' : bigint,
   'description' : [] | [string],
-  'state' : string,
-  'template' : [] | [string],
+  'state' : LinkState,
+  'template' : [] | [Template],
   'link_use_action_max_count' : bigint,
   'link_use_action_counter' : bigint,
 }
 export interface LinkGetUserStateInput {
   'link_id' : string,
-  'action_type' : string,
-  'anonymous_wallet_address' : [] | [string],
+  'action_type' : ActionType,
+  'anonymous_wallet_address' : [] | [Principal],
 }
 export interface LinkGetUserStateOutput {
   'action' : ActionDto,
-  'link_user_state' : string,
+  'link_user_state' : LinkUserState,
 }
+export type LinkState = { 'Preview' : null } |
+  { 'ChooseLinkType' : null } |
+  { 'Inactive' : null } |
+  { 'Active' : null } |
+  { 'CreateLink' : null } |
+  { 'AddAssets' : null } |
+  { 'InactiveEnded' : null };
+export type LinkType = { 'SendAirdrop' : null } |
+  { 'ReceiveMutliPayment' : null } |
+  { 'SendTip' : null } |
+  { 'ReceivePayment' : null } |
+  { 'SendTokenBasket' : null } |
+  { 'SwapMultiAsset' : null } |
+  { 'NftCreateAndAirdrop' : null } |
+  { 'SwapSingleAsset' : null };
 export interface LinkUpdateUserStateInput {
   'link_id' : string,
-  'action_type' : string,
-  'goto' : string,
-  'anonymous_wallet_address' : [] | [string],
+  'action_type' : ActionType,
+  'goto' : UserStateMachineGoto,
+  'anonymous_wallet_address' : [] | [Principal],
 }
+export type LinkUserState = { 'CompletedLink' : null } |
+  { 'ChooseWallet' : null };
 export interface LogServiceSettings {
   'log_filter' : [] | [string],
   'in_memory_records' : [] | [bigint],
   'enable_console' : [] | [boolean],
   'max_record_length' : [] | [bigint],
 }
-export type MetadataValue = { 'Nat' : bigint } |
-  { 'U64' : bigint } |
-  { 'MaybeNat' : [] | [bigint] } |
-  { 'String' : string } |
-  { 'MaybeMemo' : [] | [Uint8Array | number[]] } |
-  { 'Asset' : AssetDto } |
-  { 'Wallet' : AssetDto };
 export interface PaginateInput { 'offset' : bigint, 'limit' : bigint }
 export interface PaginateResult {
   'metadata' : PaginateResultMetadata,
@@ -216,41 +265,55 @@ export interface PaginateResultMetadata {
 export interface ProcessActionAnonymousInput {
   'action_id' : string,
   'link_id' : string,
-  'action_type' : string,
-  'wallet_address' : string,
+  'action_type' : ActionType,
+  'wallet_address' : Principal,
 }
 export interface ProcessActionInput {
   'action_id' : string,
   'link_id' : string,
-  'action_type' : string,
+  'action_type' : ActionType,
 }
+export type Protocol = { 'IC' : IcTransaction };
 export type Result = { 'Ok' : ActionDto } |
   { 'Err' : CanisterError };
 export type Result_1 = { 'Ok' : LinkDto } |
   { 'Err' : CanisterError };
-export type Result_2 = { 'Ok' : UserDto } |
+export type Result_2 = { 'Ok' : GetLinkResp } |
   { 'Err' : string };
-export type Result_3 = { 'Ok' : GetLinkResp } |
+export type Result_3 = { 'Ok' : PaginateResult } |
   { 'Err' : string };
-export type Result_4 = { 'Ok' : PaginateResult } |
-  { 'Err' : string };
-export type Result_5 = { 'Ok' : UserDto } |
-  { 'Err' : string };
-export type Result_6 = { 'Ok' : Icrc21ConsentInfo } |
+export type Result_4 = { 'Ok' : Icrc21ConsentInfo } |
   { 'Err' : Icrc21Error };
-export type Result_7 = { 'Ok' : [] | [LinkGetUserStateOutput] } |
+export type Result_5 = { 'Ok' : [] | [LinkGetUserStateOutput] } |
   { 'Err' : CanisterError };
-export type Result_8 = { 'Ok' : string } |
+export type Result_6 = { 'Ok' : string } |
   { 'Err' : CanisterError };
+export type Template = { 'Left' : null } |
+  { 'Right' : null } |
+  { 'Central' : null };
 export interface TransactionDto {
   'id' : string,
-  'protocol' : string,
-  'protocol_metadata' : Array<[string, MetadataValue]>,
-  'from_call_type' : string,
+  'protocol' : Protocol,
+  'from_call_type' : FromCallType,
   'created_at' : bigint,
-  'state' : string,
+  'state' : IntentState,
   'dependency' : [] | [Array<string>],
   'group' : number,
+}
+export interface TransferData {
+  'to' : Wallet,
+  'asset' : Asset,
+  'from' : Wallet,
+  'amount' : bigint,
+}
+export interface TransferFromData {
+  'to' : Wallet,
+  'asset' : Asset,
+  'from' : Wallet,
+  'actual_amount' : [] | [bigint],
+  'amount' : bigint,
+  'approve_amount' : [] | [bigint],
+  'spender' : Wallet,
 }
 export interface TriggerTransactionInput {
   'transaction_id' : string,
@@ -264,23 +327,24 @@ export interface UpdateActionInput {
 }
 export interface UpdateLinkInput {
   'id' : string,
-  'action' : string,
+  'goto' : UserStateMachineGoto,
   'params' : [] | [LinkDetailUpdateInput],
 }
-export interface UserDto {
-  'id' : string,
-  'email' : [] | [string],
-  'wallet' : string,
-}
+export type UserStateMachineGoto = { 'Continue' : null } |
+  { 'Back' : null };
+export type Wallet = {
+    'IC' : {
+      'subaccount' : [] | [Uint8Array | number[]],
+      'address' : Principal,
+    }
+  };
 export interface _SERVICE {
   'create_action' : ActorMethod<[CreateActionInput], Result>,
   'create_action_anonymous' : ActorMethod<[CreateActionAnonymousInput], Result>,
   'create_link' : ActorMethod<[CreateLinkInput], Result_1>,
-  'create_user' : ActorMethod<[], Result_2>,
   'get_canister_build_data' : ActorMethod<[], BuildData>,
-  'get_link' : ActorMethod<[string, [] | [GetLinkOptions]], Result_3>,
-  'get_links' : ActorMethod<[[] | [PaginateInput]], Result_4>,
-  'get_user' : ActorMethod<[], Result_5>,
+  'get_link' : ActorMethod<[string, [] | [GetLinkOptions]], Result_2>,
+  'get_links' : ActorMethod<[[] | [PaginateInput]], Result_3>,
   'icrc10_supported_standards' : ActorMethod<
     [],
     Array<Icrc21SupportedStandard>
@@ -288,17 +352,17 @@ export interface _SERVICE {
   'icrc114_validate' : ActorMethod<[Icrc114ValidateArgs], boolean>,
   'icrc21_canister_call_consent_message' : ActorMethod<
     [Icrc21ConsentMessageRequest],
-    Result_6
+    Result_4
   >,
   'icrc28_trusted_origins' : ActorMethod<[], Icrc28TrustedOriginsResponse>,
-  'link_get_user_state' : ActorMethod<[LinkGetUserStateInput], Result_7>,
-  'link_update_user_state' : ActorMethod<[LinkUpdateUserStateInput], Result_7>,
+  'link_get_user_state' : ActorMethod<[LinkGetUserStateInput], Result_5>,
+  'link_update_user_state' : ActorMethod<[LinkUpdateUserStateInput], Result_5>,
   'process_action' : ActorMethod<[ProcessActionInput], Result>,
   'process_action_anonymous' : ActorMethod<
     [ProcessActionAnonymousInput],
     Result
   >,
-  'trigger_transaction' : ActorMethod<[TriggerTransactionInput], Result_8>,
+  'trigger_transaction' : ActorMethod<[TriggerTransactionInput], Result_6>,
   'update_action' : ActorMethod<[UpdateActionInput], Result>,
   'update_link' : ActorMethod<[UpdateLinkInput], Result_1>,
 }

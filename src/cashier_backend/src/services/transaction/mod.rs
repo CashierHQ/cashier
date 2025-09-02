@@ -8,8 +8,9 @@ use crate::{
     utils::{helper::to_subaccount, runtime::IcEnvironment},
 };
 use candid::Principal;
-use cashier_backend_types::repository::transaction::v2::{
-    IcTransaction, Protocol, Transaction, TransactionState,
+use cashier_backend_types::repository::{
+    common::Asset,
+    transaction::v2::{IcTransaction, Protocol, Transaction, TransactionState},
 };
 use cashier_backend_types::{
     dto::action::{Icrc112Request, Icrc112Requests, TriggerTransactionInput},
@@ -105,10 +106,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionService<E, R> {
                     created_at_time: None,
                     from_subaccount: None,
                 };
-                let canister_id =
-                    Principal::from_text(&tx_transfer.asset.address).map_err(|e| {
-                        CanisterError::InvalidInput(format!("Invalid canister id: {e}"))
-                    })?;
+
+                let canister_id = match tx_transfer.asset {
+                    Asset::IC { address } => address,
+                };
+
                 let canister_call = build_canister_call(&canister_id, "icrc1_transfer", &arg);
                 let nonce = self.nonce_from_tx_id(&tx.id)?;
 
@@ -134,9 +136,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionService<E, R> {
                     memo: tx_approve.memo.clone(),
                     created_at_time: None,
                 };
-                let canister_id = Principal::from_text(&tx_approve.asset.address).map_err(|e| {
-                    CanisterError::InvalidInput(format!("Invalid canister id: {e}"))
-                })?;
+
+                let canister_id = match tx_approve.asset {
+                    Asset::IC { address } => address,
+                };
+
                 let canister_call = build_canister_call(&canister_id, "icrc2_approve", &arg);
                 let nonce = self.nonce_from_tx_id(&tx.id)?;
 

@@ -98,9 +98,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> ActionCreator<E>
 
         let link_action = LinkAction {
             link_id: temp_action.link_id.clone(),
-            action_type: temp_action.r#type.to_string(),
+            action_type: temp_action.r#type.clone(),
             action_id: temp_action.id.clone(),
-            user_id: temp_action.creator.clone(),
+            user_id: temp_action.creator,
             link_user_state: temp_action.default_link_user_state.clone(),
         };
 
@@ -110,7 +110,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> ActionCreator<E>
             temp_action.as_action(),
             temp_action.intents.clone(),
             intent_tx_hashmap.clone(),
-            temp_action.creator.clone(),
+            temp_action.creator,
         );
 
         Ok(ActionDto::from_with_tx(
@@ -129,7 +129,7 @@ mod tests {
     use crate::utils::test_utils::{
         random_id_string, random_principal_id, runtime::MockIcEnvironment,
     };
-    use candid::Nat;
+    use candid::{Nat, Principal};
     use cashier_backend_types::repository::{
         action::v1::{ActionState, ActionType},
         common::{Asset, Chain, Wallet},
@@ -202,7 +202,9 @@ mod tests {
                     r#type: IntentType::Transfer(TransferData {
                         from: Wallet::default(),
                         to: Wallet::default(),
-                        asset: Asset::default(),
+                        asset: Asset::IC {
+                            address: Principal::anonymous(),
+                        },
                         amount: Nat::from(1000u64),
                     }),
                     label: "Test Intent".to_string(),
@@ -217,7 +219,9 @@ mod tests {
                     r#type: IntentType::Transfer(TransferData {
                         from: Wallet::default(),
                         to: Wallet::default(),
-                        asset: Asset::default(),
+                        asset: Asset::IC {
+                            address: Principal::anonymous(),
+                        },
                         amount: Nat::from(1000u64),
                     }),
                     label: "Test Intent with Dependency".to_string(),
@@ -257,7 +261,7 @@ mod tests {
         let mut temp_action = TemporaryAction {
             id: action_id.clone(),
             r#type: ActionType::CreateLink,
-            creator: creator_id.clone(),
+            creator: creator_id,
             link_id,
             intents: vec![
                 Intent {
@@ -270,7 +274,9 @@ mod tests {
                     r#type: IntentType::Transfer(TransferData {
                         from: Wallet::default(),
                         to: Wallet::default(),
-                        asset: Asset::default(),
+                        asset: Asset::IC {
+                            address: Principal::anonymous(),
+                        },
                         amount: Nat::from(1000u64),
                     }),
                     label: "Test Intent".to_string(),
@@ -285,7 +291,9 @@ mod tests {
                     r#type: IntentType::Transfer(TransferData {
                         from: Wallet::default(),
                         to: Wallet::default(),
-                        asset: Asset::default(),
+                        asset: Asset::IC {
+                            address: Principal::anonymous(),
+                        },
                         amount: Nat::from(1000u64),
                     }),
                     label: "Test Intent with Dependency".to_string(),
@@ -302,7 +310,7 @@ mod tests {
         assert!(result.is_ok());
         let action_dto = result.unwrap();
         assert_eq!(action_dto.id, action_id);
-        assert_eq!(action_dto.r#type, ActionType::CreateLink.to_string());
+        assert_eq!(action_dto.r#type, ActionType::CreateLink);
         assert_eq!(action_dto.creator, creator_id);
         assert_eq!(action_dto.intents.len(), 2);
         assert_eq!(action_dto.intents[0].id, intent_id1);

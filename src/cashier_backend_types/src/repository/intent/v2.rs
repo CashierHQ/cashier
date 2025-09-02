@@ -3,9 +3,8 @@
 
 use candid::{CandidType, Nat};
 use cashier_macros::storable;
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
-use std::fmt;
-use std::str::FromStr;
 
 use crate::repository::common::{Asset, Chain, Wallet};
 
@@ -42,7 +41,9 @@ impl Default for Intent {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
+#[derive(
+    Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Ord, PartialOrd, Display,
+)]
 pub enum IntentState {
     Created,
     Processing,
@@ -121,69 +122,11 @@ pub struct TransferFromData {
     pub approve_amount: Option<Nat>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
+#[derive(
+    Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Ord, PartialOrd, Display,
+)]
 pub enum IntentTask {
     TransferWalletToTreasury,
     TransferWalletToLink,
     TransferLinkToWallet,
-}
-
-impl IntentTask {
-    pub fn to_str(&self) -> &str {
-        match self {
-            IntentTask::TransferWalletToTreasury => "transfer_wallet_to_treasury",
-            IntentTask::TransferWalletToLink => "transfer_wallet_to_link",
-            IntentTask::TransferLinkToWallet => "transfer_link_to_wallet",
-        }
-    }
-}
-
-impl fmt::Display for IntentTask {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str())
-    }
-}
-
-impl FromStr for IntentTask {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<IntentTask, Self::Err> {
-        match input {
-            "transfer_wallet_to_treasury" => Ok(IntentTask::TransferWalletToTreasury),
-            "transfer_wallet_to_link" => Ok(IntentTask::TransferWalletToLink),
-            "transfer_link_to_wallet" => Ok(IntentTask::TransferLinkToWallet),
-            _ => Err(()),
-        }
-    }
-}
-
-impl IntentState {
-    pub fn to_str(&self) -> &str {
-        match self {
-            IntentState::Created => "Intent_state_created",
-            IntentState::Processing => "Intent_state_processing",
-            IntentState::Success => "Intent_state_success",
-            IntentState::Fail => "Intent_state_fail",
-        }
-    }
-}
-
-impl fmt::Display for IntentState {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_str())
-    }
-}
-
-impl FromStr for IntentState {
-    type Err = ();
-
-    fn from_str(input: &str) -> Result<IntentState, Self::Err> {
-        match input {
-            "Intent_state_created" => Ok(IntentState::Created),
-            "Intent_state_processing" => Ok(IntentState::Processing),
-            "Intent_state_success" => Ok(IntentState::Success),
-            "Intent_state_fail" => Ok(IntentState::Fail),
-            _ => Err(()),
-        }
-    }
 }

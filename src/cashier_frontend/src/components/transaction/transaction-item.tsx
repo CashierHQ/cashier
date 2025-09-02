@@ -40,8 +40,8 @@ export const TransactionItem = memo(function TransactionItem({
   );
 
   const { getToken, getTokenPrice } = useTokensV2();
-  const token = getToken(intent.asset.address);
-  const tokenUsdPrice = getTokenPrice(intent.asset.address);
+  const token = getToken(intent.typeDetails.asset.address);
+  const tokenUsdPrice = getTokenPrice(intent.typeDetails.asset.address);
 
   // Calculate adjusted amount by subtracting only the network fee
   useEffect(() => {
@@ -50,7 +50,8 @@ export const TransactionItem = memo(function TransactionItem({
     // Find the network fee for this token
     const networkFee = fees.find(
       (fee) =>
-        fee.address === intent.asset.address && fee.type === "network_fee",
+        fee.address === intent.typeDetails.asset.address &&
+        fee.type === "network_fee",
     );
 
     if (!link || !link.linkType) {
@@ -71,12 +72,12 @@ export const TransactionItem = memo(function TransactionItem({
       // only for create link fee
       const totalTokenAmount = FeeHelpers.forecastIcrc2Fee(
         token,
-        intent.amount,
+        intent.typeDetails.amount,
         1,
       );
       setAdjustedAmount(totalTokenAmount);
     }
-  }, [assetAmount, fees, intent.asset.address, token]);
+  }, [assetAmount, fees, intent.typeDetails.asset.address, token]);
 
   const getDisplayAmount = () => {
     return formatNumber(adjustedAmount?.toString() || "0");

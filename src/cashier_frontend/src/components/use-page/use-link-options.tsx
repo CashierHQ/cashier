@@ -6,9 +6,8 @@ import { useTranslation } from "react-i18next";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import WalletButton from "./connect-wallet-button";
-import { useAuth, useIdentity, useSigner } from "@nfid/identitykit/react";
-import CustomConnectedWalletButton from "./connected-wallet-button";
+import { useAuth, useIdentity } from "@nfid/identitykit/react";
+import WalletOptionButton from "../wallet-connect/wallet-option-button";
 import ConfirmDialog from "../confirm-dialog";
 import { useConfirmDialog } from "@/hooks/useDialog";
 import { Principal } from "@dfinity/principal";
@@ -17,17 +16,16 @@ import { useConnectToWallet } from "@/hooks/user-hook";
 import { useParams } from "react-router-dom";
 import { ACTION_TYPE } from "@/services/types/enum";
 import TokenItem from "./token-item";
-import WalletConnectDialog from "@/components/wallet-connect-dialog";
-import { InternetIdentity, NFIDW, Stoic } from "@nfid/identitykit";
+import { InternetIdentity } from "@nfid/identitykit";
 import {
   WALLET_OPTIONS,
-  walletDialogConfigOptions,
-  getWalletIcon,
   GoogleSigner,
+  LocalInternetIdentity,
 } from "@/constants/wallet-options";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
-
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
+import { FEATURE_FLAGS } from "@/const";
+import { WalletSelectionModal } from "../wallet-connect/wallet-selection-modal";
 export const UseSchema = z.object({
   token: z.string().min(5),
   amount: z.coerce.number().min(1),
@@ -39,31 +37,27 @@ interface ClaimFormOptionsProps {
   formData?: LinkDetailModel;
   setDisabled: (disabled: boolean) => void;
   disabledInput?: boolean;
-  walletAddress?: string;
   onOpenWalletModal?: () => void;
 }
 
-const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
+const UseLinkOptions: React.FC<ClaimFormOptionsProps> = ({
   form,
   setDisabled,
 }) => {
   const { t } = useTranslation();
-  const { user, disconnect } = useAuth();
+  const { disconnect } = useAuth();
   const identity = useIdentity();
   const { open, options, hideDialog, showDialog } = useConfirmDialog();
-  const signer = useSigner();
   const { connectToWallet } = useConnectToWallet();
   const { setCurrentConnectOption } = useSignerStore();
   const { linkId } = useParams();
   const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
 
-  const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE_LINK);
+  const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE);
   const link = linkDetailQuery.data?.link;
   const isLoading = linkDetailQuery.isLoading;
 
   const { updateTokenInit } = useTokensV2();
-
-  const isGoogleLogin = signer?.id === "GoogleSigner";
 
   const isAddressValid = () => {
     const address = form.getValues("address");
@@ -120,7 +114,11 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
     switch (walletOption) {
       case WALLET_OPTIONS.INTERNET_IDENTITY:
         if (!identity) {
-          connectToWallet(InternetIdentity.id);
+          if (FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER) {
+            connectToWallet(LocalInternetIdentity.id);
+          } else {
+            connectToWallet(InternetIdentity.id);
+          }
         }
         break;
       case WALLET_OPTIONS.OTHER:
@@ -136,77 +134,7 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
     }
   };
 
-  const handleWalletSelection = (walletId: string) => {
-    setIsWalletDialogOpen(false);
-
-    if (walletId === "stoic") {
-      connectToWallet(Stoic.id);
-    } else if (walletId === "nfid") {
-      connectToWallet(NFIDW.id);
-    } else if (walletId === "internet-identity") {
-      connectToWallet(InternetIdentity.id);
-    }
-  };
-
-  // Use wallet dialog options from centralized file
-  const dialogOptions = walletDialogConfigOptions.map((option) => ({
-    ...option,
-    onClick: () => handleWalletSelection(option.id),
-  }));
-
-  const renderWalletButton = (
-    walletOption: WALLET_OPTIONS,
-    title: string,
-    iconOrImage?: string | JSX.Element,
-    disabled?: boolean,
-  ) => {
-    // Get the icon from centralized function if not provided
-    const finalIconOrImage = iconOrImage || getWalletIcon(walletOption);
-
-    const isConnected =
-      identity &&
-      ((walletOption === WALLET_OPTIONS.GOOGLE && isGoogleLogin) ||
-        (walletOption === WALLET_OPTIONS.INTERNET_IDENTITY &&
-          signer?.id === "InternetIdentity") ||
-        (walletOption === WALLET_OPTIONS.OTHER &&
-          signer?.id !== "InternetIdentity" &&
-          !isGoogleLogin));
-
-    if (isConnected) {
-      return (
-        <CustomConnectedWalletButton
-          connectedAccount={user?.principal.toString()}
-          postfixText="Connected"
-          postfixIcon={
-            typeof finalIconOrImage === "string" ? (
-              <img
-                src={finalIconOrImage}
-                alt={title}
-                className="w-6 h-6 mr-2"
-              />
-            ) : null
-          }
-          handleConnect={() => handleConnectWallet(walletOption)}
-          disabled={disabled}
-        />
-      );
-    }
-
-    return (
-      <WalletButton
-        title={title}
-        handleConnect={() => handleConnectWallet(walletOption)}
-        image={
-          typeof finalIconOrImage === "string" ? finalIconOrImage : undefined
-        }
-        icon={
-          typeof finalIconOrImage !== "string" ? finalIconOrImage : undefined
-        }
-        disabled={disabled}
-        postfixText={disabled ? "Coming Soon" : undefined}
-      />
-    );
-  };
+  // ...existing code... (wallet rendering handled by WalletOptionButton)
 
   const firstTilte = t(`claim_page.${link?.linkType}.choose_wallet.use_asset`);
   const secondTitle = t(
@@ -238,21 +166,31 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
 
       <div className="mt-4">
         <h2 className="text-[16px] font-medium mb-2">{secondTitle}</h2>
-
         <div className="flex flex-col gap-2">
-          {renderWalletButton(
-            WALLET_OPTIONS.INTERNET_IDENTITY,
-            "Internet Identity",
+          <WalletOptionButton
+            walletOption={WALLET_OPTIONS.INTERNET_IDENTITY}
+            title="Internet Identity"
+            identity={identity}
+            handleConnect={handleConnectWallet}
+          />
+          {FEATURE_FLAGS.ENABLE_ANONYMOUS_GOOGLE_LOGIN && (
+            <WalletOptionButton
+              walletOption={WALLET_OPTIONS.GOOGLE}
+              title="Google"
+              identity={identity}
+              handleConnect={handleConnectWallet}
+              disabled={true}
+            />
           )}
         </div>
       </div>
 
-      <WalletConnectDialog
+      <WalletSelectionModal
         open={isWalletDialogOpen}
         onOpenChange={setIsWalletDialogOpen}
-        walletOptions={dialogOptions}
-        title="Connect your wallet"
-        viewAllLink={false}
+        onWalletConnected={() => {
+          setIsWalletDialogOpen(false);
+        }}
       />
 
       <ConfirmDialog
@@ -274,4 +212,4 @@ const ClaimFormOptions: React.FC<ClaimFormOptionsProps> = ({
   );
 };
 
-export default ClaimFormOptions;
+export default UseLinkOptions;
