@@ -11,24 +11,8 @@ use token_storage_types::{
 };
 
 use crate::{
-    api::state::get_state, build_data::canister_build_data,
-    constant::default_tokens::get_default_tokens, types::TokenRegistryMetadata,
+    api::state::get_state, build_data::canister_build_data, constant::default_tokens::get_default_tokens, services::auth::Permission, types::TokenRegistryMetadata
 };
-
-fn ensure_is_admin() -> Result<(), String> {
-    let caller = msg_caller();
-
-    if caller
-        == Principal::from_text("rvc37-afcl7-ag74c-jyr6z-zoprx-finqf-px5k5-dqpaa-jgmzy-jgmht-dqe")
-            .unwrap()
-    {
-        return Ok(());
-    }
-
-    // Placeholder for admin check logic
-    // This should verify if the caller is an admin
-    Ok(())
-}
 
 /// Returns the build data of the canister.
 #[query]
@@ -42,10 +26,11 @@ fn get_canister_build_data() -> BuildData {
 #[query]
 pub fn admin_get_registry_version() -> u64 {
     debug!("[admin_get_registry_version]");
-    ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(format!("Admin check failed: {err}"));
-    });
-    let service = get_state().token_registry;
+    let state = get_state();
+    let caller = msg_caller();
+    state.auth_service.must_have_permission(&caller, Permission::Admin);
+
+    let service = state.token_registry;
     service.get_metadata().version
 }
 
@@ -54,22 +39,22 @@ pub fn admin_get_registry_version() -> u64 {
 #[query]
 pub fn admin_get_registry_metadata() -> TokenRegistryMetadata {
     debug!("[admin_get_registry_metadata]");
-    ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(format!("Admin check failed: {err}"));
-    });
-    let service = get_state().token_registry;
+    let state = get_state();
+    let caller = msg_caller();
+    state.auth_service.must_have_permission(&caller, Permission::Admin);
+
+    let service = state.token_registry;
     service.get_metadata()
 }
 
 #[query]
 pub fn admin_get_registry_tokens(only_enable: bool) -> Vec<TokenDto> {
     debug!("[admin_get_registry_tokens] only_enable: {only_enable}");
+    let state = get_state();
+    let caller = msg_caller();
+    state.auth_service.must_have_permission(&caller, Permission::Admin);
 
-    ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(format!("Admin check failed: {err}"));
-    });
-
-    let service = get_state().token_registry;
+    let service = state.token_registry;
     let list: Vec<TokenDto> = service
         .list_tokens()
         .iter()
@@ -86,13 +71,11 @@ pub fn admin_get_registry_tokens(only_enable: bool) -> Vec<TokenDto> {
 #[update]
 pub fn admin_initialize_registry() -> Result<(), String> {
     info!("[admin_initialize_registry]");
+    let state = get_state();
+    let caller = msg_caller();
+    state.auth_service.must_have_permission(&caller, Permission::Admin);
 
-    ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(format!("Admin check failed: {err}"));
-    });
-
-    let service = get_state();
-    let mut registry = service.token_registry;
+    let mut registry = state.token_registry;
     registry
         .delete_all()
         .expect("Should be able to delete registry");
@@ -107,11 +90,10 @@ pub fn admin_initialize_registry() -> Result<(), String> {
 pub fn admin_get_stats() -> Result<RegistryStats, String> {
     debug!("[admin_get_stats]");
 
-    ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(format!("Admin check failed: {err}"));
-    });
-
     let state = get_state();
+    let caller = msg_caller();
+    state.auth_service.must_have_permission(&caller, Permission::Admin);
+
     let token_registry = state.token_registry;
     let list_tokens = token_registry.list_tokens();
     let total_tokens = list_tokens.len();
@@ -127,11 +109,10 @@ pub fn admin_get_stats() -> Result<RegistryStats, String> {
 pub fn admin_get_user_tokens(wallet: Principal) -> Result<UserTokens, String> {
     debug!("[admin_get_user_tokens] wallet: {wallet}");
 
-    ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(format!("Admin check failed: {err}"));
-    });
-
     let state = get_state();
+    let caller = msg_caller();
+    state.auth_service.must_have_permission(&caller, Permission::Admin);
+
     let token_registry_service = state.token_registry;
     let user_token_service = state.user_token;
 
@@ -153,11 +134,10 @@ pub fn admin_get_user_tokens(wallet: Principal) -> Result<UserTokens, String> {
 pub fn admin_list_tokens_by_wallet(wallet: Principal) -> Result<TokenListResponse, String> {
     debug!("[admin_list_tokens_by_wallet] wallet: {wallet}");
 
-    ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(format!("Admin check failed: {err}"));
-    });
-
     let state = get_state();
+    let caller = msg_caller();
+    state.auth_service.must_have_permission(&caller, Permission::Admin);
+
     let token_registry_service = state.token_registry;
     let user_preference_service = state.user_preference;
     let user_token_service = state.user_token;
@@ -221,11 +201,10 @@ pub fn admin_get_user_balance(
 ) -> Result<std::collections::HashMap<TokenId, u128>, String> {
     debug!("[admin_get_user_balance] wallet: {wallet}");
 
-    ensure_is_admin().unwrap_or_else(|err| {
-        ic_cdk::trap(format!("Admin check failed: {err}"));
-    });
-
     let state = get_state();
+    let caller = msg_caller();
+    state.auth_service.must_have_permission(&caller, Permission::Admin);
+
     let user_token_service = state.user_token;
 
     // Retrieve all balances for the user
