@@ -5,7 +5,9 @@ use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::{error, info};
 use token_storage_types::init::TokenStorageInitData;
 
-use crate::{api::state::get_state, constant::default_tokens::get_default_tokens, services::auth::Permission};
+use crate::{
+    api::state::get_state, constant::default_tokens::get_default_tokens, services::auth::Permission,
+};
 
 #[init]
 fn init(init_data: TokenStorageInitData) {
@@ -19,8 +21,11 @@ fn init(init_data: TokenStorageInitData) {
     info!("[init] Starting Token Storage");
 
     info!("Set {:?} as canister admin", init_data.owner);
-    state.auth_service.add_permissions(init_data.owner, vec![Permission::Admin]).expect("Should be able to set the admin");
-    
+    state
+        .auth_service
+        .add_permissions(init_data.owner, vec![Permission::Admin])
+        .expect("Should be able to set the admin");
+
     match state.token_registry.add_bulk_tokens(get_default_tokens()) {
         Ok(_) => {}
         Err(e) => {
