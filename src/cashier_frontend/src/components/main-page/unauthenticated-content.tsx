@@ -7,20 +7,7 @@ import { useTranslation } from "react-i18next";
 import { Feather, Lock, Zap, ChevronDown, ChevronUp } from "lucide-react";
 import { WalletSelectionModal } from "../wallet-connect/wallet-selection-modal";
 
-interface UnauthenticatedContentProps {
-  headerWalletOptions: Array<{
-    id: string;
-    name: string;
-    icon: string;
-    description?: string;
-  }>;
-  connectToWallet: (id: string) => void;
-}
-
-export const UnauthenticatedContent = ({
-  headerWalletOptions,
-  connectToWallet,
-}: UnauthenticatedContentProps) => {
+export const UnauthenticatedContent = () => {
   const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
   const [isDevelopmentBannerCollapsed, setIsDevelopmentBannerCollapsed] =
     useState(false);
@@ -62,14 +49,6 @@ export const UnauthenticatedContent = ({
       ),
     },
   ];
-
-  const walletDialogOptions = headerWalletOptions.map((option) => ({
-    ...option,
-    onClick: () => {
-      setIsWalletDialogOpen(false);
-      connectToWallet(option.id);
-    },
-  }));
 
   return (
     <>
@@ -219,9 +198,6 @@ export const UnauthenticatedContent = ({
       <WalletSelectionModal
         open={isWalletDialogOpen}
         onOpenChange={setIsWalletDialogOpen}
-        walletOptions={walletDialogOptions}
-        title={t("main_page.unauthenticated_content.connect_wallet_title")}
-        viewAllLink={false}
       />
     </>
   );

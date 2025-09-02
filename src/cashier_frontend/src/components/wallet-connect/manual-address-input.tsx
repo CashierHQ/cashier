@@ -21,7 +21,7 @@ interface ManualAddressInputProps {
   onSubmit: (address: string) => void;
 }
 
-export function validatePrincipalAddress(address: string): boolean {
+function validatePrincipalAddress(address: string): boolean {
   if (!address) return false;
   try {
     Principal.fromText(address);
