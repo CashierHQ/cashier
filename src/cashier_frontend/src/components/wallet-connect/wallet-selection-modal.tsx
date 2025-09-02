@@ -102,9 +102,8 @@ export const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
     // Only show disconnect dialog if we're allowing wallet changes and user is connected
     if ((hasAddress || identity) && allowChangeWallet) {
       showDialog({
-        title: "Are you sure?",
-        description:
-          "You are connected to another wallet. Would you like to disconnect and continue?",
+        title: t("wallet_connect_modal.logout_title"),
+        description: t("wallet_connect_modal.logout_description"),
       });
       return true;
     }
@@ -144,9 +143,8 @@ export const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
       // If user is authenticated and we're allowing wallet changes, show disconnect dialog first
       if (identity && allowChangeWallet) {
         showDialog({
-          title: "Are you sure?",
-          description:
-            "You are connected to another wallet. Would you like to disconnect and use this address instead?",
+          title: t("wallet_connect_modal.logout_title"),
+          description: t("wallet_connect_modal.logout_description"),
         });
         // Store the address for use after disconnect confirmation
         form.setValue("pendingAddress", address);
@@ -165,7 +163,7 @@ export const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
         <DialogContent className="max-w-sm !rounded-[2rem] border-none shadow-2xl overflow-hidden">
           <DialogHeader>
             <DialogTitle>
-              {t("claim.choose_wallet_title", {
+              {t("wallet_connect_modal.title", {
                 defaultValue: "Choose your wallet",
               })}
             </DialogTitle>

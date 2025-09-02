@@ -510,5 +510,10 @@
         "wallet_options": "Send options"
       }
     }
+  },
+  "wallet_connect_modal": {
+    "title": "Choose your wallet",
+    "logout_title": "Are you sure?",
+    "logout_description": "You are connected to another wallet. Would you like to disconnect and use this address instead?"
   }
 }
