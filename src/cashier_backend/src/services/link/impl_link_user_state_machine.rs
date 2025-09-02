@@ -55,8 +55,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
         //
         // !Start of user state machine
         //
-        // Check for valid transition: ChooseWallet -> CompletedLink
-        else if current_user_state == LinkUserState::ChooseWallet
+        // Check for valid transition: Address -> CompletedLink
+        // TODO check gate, right now gate is not implemented
+        else if current_user_state == LinkUserState::Address
             && *goto == UserStateMachineGoto::Continue
         {
             // Validate the action exists and is successful
@@ -327,7 +328,7 @@ mod tests {
             action_type: link_action.action_type.clone(),
             action_id: link_action.action_id.clone(),
             user_id: link_action.user_id,
-            link_user_state: Some(LinkUserState::ChooseWallet),
+            link_user_state: Some(LinkUserState::Address),
         };
         service.link_action_repository.update(updated_link_action);
 
@@ -365,7 +366,7 @@ mod tests {
             action_type: link_action.action_type.clone(),
             action_id: link_action.action_id.clone(),
             user_id: link_action.user_id,
-            link_user_state: Some(LinkUserState::ChooseWallet),
+            link_user_state: Some(LinkUserState::Address),
         };
         service.link_action_repository.update(updated_link_action);
 
@@ -411,7 +412,7 @@ mod tests {
             action_type: link_action.action_type.clone(),
             action_id: link_action.action_id.clone(),
             user_id: link_action.user_id,
-            link_user_state: Some(LinkUserState::ChooseWallet),
+            link_user_state: Some(LinkUserState::Address),
         };
         service.link_action_repository.update(updated_link_action);
 
@@ -431,7 +432,7 @@ mod tests {
                 msg,
                 format!(
                     "current state {:?} is not allowed to transition: {:?}",
-                    LinkUserState::ChooseWallet,
+                    LinkUserState::Address,
                     UserStateMachineGoto::Back
                 )
             );
@@ -573,7 +574,7 @@ mod tests {
             action_type: link_action.action_type.clone(),
             action_id: link_action.action_id.clone(),
             user_id: link_action.user_id,
-            link_user_state: Some(LinkUserState::ChooseWallet),
+            link_user_state: Some(LinkUserState::Address),
         };
         service.link_action_repository.update(updated_link_action);
 
@@ -592,7 +593,7 @@ mod tests {
         let output = result.unwrap();
         assert!(output.is_some());
         let output = output.unwrap();
-        assert_eq!(output.link_user_state, LinkUserState::ChooseWallet);
+        assert_eq!(output.link_user_state, LinkUserState::Address);
         assert_eq!(output.action.creator, creator_id);
     }
 
@@ -669,7 +670,7 @@ mod tests {
             action_type: link_action.action_type.clone(),
             action_id: link_action.action_id.clone(),
             user_id: link_action.user_id,
-            link_user_state: Some(LinkUserState::ChooseWallet),
+            link_user_state: Some(LinkUserState::Address),
         };
         service.link_action_repository.update(updated_link_action);
 
