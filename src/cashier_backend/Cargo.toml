@@ -15,6 +15,7 @@ base64 = { workspace = true }
 candid = { workspace = true }
 cashier_backend_types = { workspace = true }
 cashier_common = { workspace = true }
+ciborium = { workspace = true }
 futures = { workspace = true }
 getrandom = { workspace = true, features = ["custom"] }
 ic-cdk = { workspace = true }
@@ -29,7 +30,6 @@ rand = { workspace = true, features = ["getrandom"] }
 rm = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-serde_cbor = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true, features = ["v4"] }
