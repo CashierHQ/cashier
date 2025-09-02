@@ -205,5 +205,4 @@ export enum LINK_USER_STATE {
   GATE_OPENED = "User_state_gate_opened",
   GATE_CLOSED = "User_state_gate_closed",
   COMPLETED = "User_state_completed_link",
-
 }
