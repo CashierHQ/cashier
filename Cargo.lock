@@ -1108,9 +1108,9 @@ checksum = "8877193e1921b5fd16accb0305eb46016868cd1935b05c05eca0ec007b943272"
 
 [[package]]
 name = "ic_mple_auth"
-version = "0.11.1"
+version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49da8a398bce08cb503b4c944af132567102132710ff436325f904c6e45817bf"
+checksum = "84a49355bcc993d262ee3a85d8a30e1de1954507f441d925f9999d8a966a4f11"
 dependencies = [
  "candid",
  "ic-cdk",
@@ -1123,9 +1123,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_client"
-version = "0.11.1"
+version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55aa10f4accdea0f64b0e654b8a40cafe6122d7e1ae2098f3c541b8c5cd800d6"
+checksum = "5f9b21f791873d087e5ab6deb13204ffd2de960ee9af199e8da5dfd2980fdc07"
 dependencies = [
  "candid",
  "ic-cdk",
@@ -1136,9 +1136,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_log"
-version = "0.11.1"
+version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da8ee8169e04ae1919fdc64928fb01b5c9a1d2774528e74293144a77c11766e0"
+checksum = "4ae0b119aaa7c7be6fe705708f5a346e3f9b9b9cdcc580e5d61f4bce77bddf36"
 dependencies = [
  "arc-swap",
  "candid",
@@ -1154,9 +1154,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_pocket_ic"
-version = "0.11.1"
+version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "47191bbd7f008ccb1e93c14bf6b536bf94164cdc3ec8720be86cf5354ac53560"
+checksum = "65cc0a2826ab9b0e20f5a736ea76c3fceebd9420101d6a8b4fba1ba793563c23"
 dependencies = [
  "flate2",
  "log",
@@ -1167,9 +1167,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_utils"
-version = "0.11.1"
+version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6acd03d3dc3139eb5e4822533b05487cd4aac11987103d969a91966ffc1a41a"
+checksum = "142ca0b232f5d4a79e9451b6f0fcb41c284e1b3971481f1aa83ac5264e67cb2a"
 
 [[package]]
 name = "ic_principal"
@@ -2607,6 +2607,7 @@ dependencies = [
  "ic-stable-structures 0.7.0",
  "ic_mple_log",
  "serde",
+ "thiserror 2.0.16",
 ]
 
 [[package]]

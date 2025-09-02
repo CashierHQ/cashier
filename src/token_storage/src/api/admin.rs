@@ -6,8 +6,7 @@ use cashier_common::build_data::BuildData;
 use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, info};
 use token_storage_types::{
-    TokenId,
-    token::{RegistryStats, TokenDto, TokenListResponse, UserTokens},
+    error::TokenStorageError, token::{RegistryStats, TokenDto, TokenListResponse, UserTokens}, TokenId
 };
 
 use crate::{
@@ -20,6 +19,50 @@ fn get_canister_build_data() -> BuildData {
     debug!("[get_canister_build_data]");
     canister_build_data()
 }
+
+    /// Adds permissions to a principal and returns the principal permissions.
+    #[update]
+    pub fn admin_permissions_add(
+        principal: Principal,
+        permissions: Vec<Permission>,
+    ) -> Result<Vec<Permission>, TokenStorageError> {
+        let mut state = get_state();
+        let caller = msg_caller();
+        state.auth_service.must_have_permission(&caller, Permission::Admin);
+
+        state.auth_service.add_permissions(principal, permissions)
+        .map(|p| p.permissions.into_iter()
+        .collect())
+        .map_err(|e| TokenStorageError::AuthError(format!("{e:?}")))
+    }
+
+    /// Removes permissions from a principal and returns the principal permissions.
+    #[update]
+    pub fn admin_permissions_remove(
+        principal: Principal,
+        permissions: Vec<Permission>,
+    ) -> Result<Vec<Permission>, TokenStorageError> {
+                let mut state = get_state();
+        let caller = msg_caller();
+        state.auth_service.must_have_permission(&caller, Permission::Admin);
+
+        state.auth_service.remove_permissions(principal, &permissions)
+        .map(|p| p.permissions.into_iter()
+        .collect())
+        .map_err(|e| TokenStorageError::AuthError(format!("{e:?}")))
+    }
+
+    /// Returns the permissions of a principal.
+    #[query]
+    pub fn admin_permissions_get(principal: Principal) -> Vec<Permission> {
+                let state = get_state();
+        let caller = msg_caller();
+        state.auth_service.must_have_permission(&caller, Permission::Admin);
+
+        state.auth_service.get_permissions(&principal).permissions.into_iter()
+        .collect()
+    }
+    
 
 /// Gets the current version of the token registry
 /// This can be used by clients to check if they need to refresh their token lists

@@ -11,11 +11,13 @@ pub mod init_and_upgrade;
 pub mod link;
 mod state;
 
+use candid::Principal;
 use cashier_backend_types::dto::action::*;
 use cashier_backend_types::dto::link::*;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::init::CashierBackendInitData;
 use cashier_backend_types::service::link::*;
+use cashier_backend_types::auth::*;
 use cashier_common::icrc::*;
 
 ic_cdk::export_candid!();
