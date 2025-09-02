@@ -236,7 +236,9 @@ export interface LinkUpdateUserStateInput {
   'anonymous_wallet_address' : [] | [Principal],
 }
 export type LinkUserState = { 'CompletedLink' : null } |
-  { 'ChooseWallet' : null };
+  { 'Address' : null } |
+  { 'GateClosed' : null } |
+  { 'GateOpened' : null };
 export interface LogServiceSettings {
   'log_filter' : [] | [string],
   'in_memory_records' : [] | [bigint],
