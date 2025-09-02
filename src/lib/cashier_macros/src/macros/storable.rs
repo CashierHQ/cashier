@@ -189,15 +189,19 @@ fn expand_cbor_impl(
 
         impl ic_stable_structures::Storable for #object_name {
             fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-                std::borrow::Cow::Owned(serde_cbor::to_vec(self).unwrap())
+                let mut writer = Vec::new();
+                ciborium::into_writer(self, &mut writer).expect("Should be able to serialize to cbor");
+                std::borrow::Cow::Owned(writer)
             }
 
             fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-                serde_cbor::from_slice(bytes.as_ref()).unwrap()
+                ciborium::from_reader(bytes.as_ref()).expect("Should be able to deserialize from cbor")
             }
 
             fn into_bytes(self) -> Vec<u8> {
-                serde_cbor::to_vec(&self).unwrap()
+                let mut writer = Vec::new();
+                ciborium::into_writer(&self, &mut writer).expect("Should be able to serialize to cbor");
+                writer
             }
 
             #storage_bounds
@@ -265,15 +269,19 @@ mod tests {
 
                 impl ic_stable_structures::Storable for MyStruct {
                     fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-                        std::borrow::Cow::Owned(serde_cbor::to_vec(self).unwrap())
+                        let mut writer = Vec::new();
+                        ciborium::into_writer(self, &mut writer).expect("Should be able to serialize to cbor");
+                        std::borrow::Cow::Owned(writer)
                     }
 
                     fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-                        serde_cbor::from_slice(bytes.as_ref()).unwrap()
+                        ciborium::from_reader(bytes.as_ref()).expect("Should be able to deserialize from cbor")
                     }
 
                     fn into_bytes(self) -> Vec<u8> {
-                        serde_cbor::to_vec(&self).unwrap()
+                        let mut writer = Vec::new();
+                        ciborium::into_writer(&self, &mut writer).expect("Should be able to serialize to cbor");
+                        writer
                     }
 
                     const BOUND: ic_stable_structures::storable::Bound = ic_stable_structures::storable::Bound::Unbounded;
