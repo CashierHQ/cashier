@@ -32,9 +32,9 @@ import UseLinkForm from "@/components/use-page/use-link-form";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
 import { useUseConfirmation } from "@/hooks/tx-cart/useUseConfirmation";
-import { WalletSelectionModal } from "@/components/wallet-selection-modal";
-import { UseSchema } from "@/components/use-page/claim-form-options";
+import { UseSchema } from "@/components/use-page/use-link-options";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
+import { WalletSelectionModal } from "@/components/wallet-connect/wallet-selection-modal";
 
 export default function ChooseWalletPage() {
   const { linkId } = useParams();
@@ -79,12 +79,6 @@ export default function ChooseWalletPage() {
   );
   const [showWalletModal, setShowWalletModal] = useState(false);
 
-  // Get wallet address from sessionStorage if available
-  const storedWalletAddress =
-    sessionStorage.getItem(`wallet-address-${linkId}`) || "";
-  const [walletAddress, setWalletAddress] =
-    useState<string>(storedWalletAddress);
-
   // Sync internal action with query action when query action changes
   useEffect(() => {
     if (queryAction && !internalAction) {
@@ -96,8 +90,6 @@ export default function ChooseWalletPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [manuallyClosedDrawer, setManuallyClosedDrawer] = useState(false);
-  const [anonymousWalletAddress, setAnonymousWalletAddress] =
-    useState<string>(storedWalletAddress);
 
   // Use confirmation hook for all confirmation-related methods
   const { handleSuccessContinue, handleConfirmTransaction, onCashierError } =
@@ -106,7 +98,7 @@ export default function ChooseWalletPage() {
       link: link!,
       internalAction,
       setInternalAction,
-      anonymousWalletAddress,
+      anonymousWalletAddress: undefined,
       identity,
       refetchLinkUserStateFn,
       linkDetailQuery,
@@ -126,7 +118,7 @@ export default function ChooseWalletPage() {
     if (link) {
       updateTokenInit();
     }
-  }, [link, updateTokenInit]);
+  }, []);
 
   // Handle state-based navigation for logged-in users
   useEffect(() => {
@@ -193,7 +185,7 @@ export default function ChooseWalletPage() {
     }
 
     // Use provided address or the one already stored
-    const addressToUse = providedWalletAddress || anonymousWalletAddress;
+    const addressToUse = providedWalletAddress;
 
     if (!identity && !addressToUse) {
       toast.error(t("link_detail.error.use_without_login_or_wallet"));
@@ -244,7 +236,6 @@ export default function ChooseWalletPage() {
 
         if (!anonymousLinkUserState.link_user_state) {
           await handleCreateActionAnonymous(addressToUse);
-          setAnonymousWalletAddress(addressToUse);
           await fetchLinkUserState(
             {
               action_type: ACTION_TYPE.USE,
@@ -259,7 +250,6 @@ export default function ChooseWalletPage() {
         ) {
           goToComplete();
         } else {
-          setAnonymousWalletAddress(addressToUse);
           await refetchLinkUserStateFn();
           setShowConfirmation(true);
         }
@@ -280,22 +270,6 @@ export default function ChooseWalletPage() {
 
   const handleOpenWalletModal = () => {
     setShowWalletModal(true);
-  };
-
-  const handleWalletConnected = (address?: string) => {
-    if (address && address.length > 0) {
-      setWalletAddress(address);
-      setAnonymousWalletAddress(address);
-      // Update sessionStorage
-      sessionStorage.setItem(`wallet-address-${linkId}`, address);
-    } else if (address === "") {
-      // Handle disconnection
-      setWalletAddress("");
-      setAnonymousWalletAddress("");
-      // Clear sessionStorage
-      sessionStorage.removeItem(`wallet-address-${linkId}`);
-    }
-    setShowWalletModal(false);
   };
 
   const memoizedOnBack = useMemo(
@@ -338,7 +312,6 @@ export default function ChooseWalletPage() {
                 buttonText={
                   useLinkButton.text || t("confirmation_drawer.confirm_button")
                 }
-                walletAddress={walletAddress}
                 onOpenWalletModal={handleOpenWalletModal}
               />
             </div>
@@ -346,7 +319,7 @@ export default function ChooseWalletPage() {
             <WalletSelectionModal
               open={showWalletModal}
               onOpenChange={setShowWalletModal}
-              onWalletConnected={handleWalletConnected}
+              onWalletConnected={() => {}}
               allowChangeWallet={true}
             />
 
