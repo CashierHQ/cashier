@@ -33,7 +33,7 @@ impl<C: CanisterClient> TokenStorageClient<C> {
         principal: Principal,
         permissions: Vec<Permission>,
     ) -> CanisterClientResult<Result<Vec<Permission>, TokenStorageError>> {
-        self.client.update("admin_permissions_add", ((principal, permissions),)).await
+        self.client.update("admin_permissions_add", (principal, permissions,)).await
     }
 
     /// Removes permissions from a principal and returns the principal permissions.
@@ -42,7 +42,7 @@ impl<C: CanisterClient> TokenStorageClient<C> {
         principal: Principal,
         permissions: Vec<Permission>,
     ) -> CanisterClientResult<Result<Vec<Permission>, TokenStorageError>> {
-        self.client.update("admin_permissions_remove", ((principal, permissions),)).await
+        self.client.update("admin_permissions_remove", (principal, permissions,)).await
     }
 
     /// Returns the build data of the canister.
