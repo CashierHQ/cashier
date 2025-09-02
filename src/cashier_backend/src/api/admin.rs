@@ -68,4 +68,3 @@ pub fn admin_permissions_remove(
         .map(|p| p.permissions.into_iter().collect())
         .map_err(|e| CanisterError::AuthError(format!("{e:?}")))
 }
-
