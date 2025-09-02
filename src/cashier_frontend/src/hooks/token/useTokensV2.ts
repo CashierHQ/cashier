@@ -52,7 +52,6 @@ export function useTokensV2() {
   const getToken = useMemo(() => {
     return (tokenAddress: string): FungibleToken | undefined => {
       console.log("rawTokenList", rawTokenList, tokenAddress);
-      console.trace("getToken call stack");
       return rawTokenList.find((token) => token.address === tokenAddress);
     };
   }, [rawTokenList, memoKey.identityKey]);
