@@ -82,6 +82,9 @@ pub enum CanisterError {
 
     #[error("Call failed: {0}")]
     UnboundedError(String),
+
+    #[error("Auth error: {0}")]
+    AuthError(String)
 }
 
 impl CanisterError {

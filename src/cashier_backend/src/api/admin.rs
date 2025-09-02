@@ -1,8 +1,10 @@
+use candid::Principal;
+use cashier_backend_types::error::CanisterError;
 use cashier_common::build_data::BuildData;
-use ic_cdk::query;
+use ic_cdk::{api::msg_caller, query, update};
 use log::debug;
 
-use crate::build_data::canister_build_data;
+use crate::{api::state::get_state, build_data::canister_build_data, services::auth::Permission};
 
 /// Returns the build data of the canister.
 #[query]
@@ -10,3 +12,46 @@ fn get_canister_build_data() -> BuildData {
     debug!("[get_canister_build_data]");
     canister_build_data()
 }
+
+    /// Adds permissions to a principal and returns the principal permissions.
+    #[update]
+    pub fn admin_permissions_add(
+        principal: Principal,
+        permissions: Vec<Permission>,
+    ) -> Result<Vec<Permission>, CanisterError> {
+        let mut state = get_state();
+        let caller = msg_caller();
+        state.auth_service.must_have_permission(&caller, Permission::Admin);
+
+        state.auth_service.add_permissions(principal, permissions)
+        .map(|p| p.permissions.into_iter()
+        .collect())
+        .map_err(|e| CanisterError::AuthError(format!("{e:?}")))
+    }
+
+    /// Removes permissions from a principal and returns the principal permissions.
+    #[update]
+    pub fn admin_permissions_remove(
+        principal: Principal,
+        permissions: Vec<Permission>,
+    ) -> Result<Vec<Permission>, CanisterError> {
+                let mut state = get_state();
+        let caller = msg_caller();
+        state.auth_service.must_have_permission(&caller, Permission::Admin);
+
+        state.auth_service.remove_permissions(principal, &permissions)
+        .map(|p| p.permissions.into_iter()
+        .collect())
+        .map_err(|e| CanisterError::AuthError(format!("{e:?}")))
+    }
+
+    /// Returns the permissions of a principal.
+    #[query]
+    pub fn admin_permissions_get(principal: Principal) -> Vec<Permission> {
+                let state = get_state();
+        let caller = msg_caller();
+        state.auth_service.must_have_permission(&caller, Permission::Admin);
+
+        state.auth_service.get_permissions(&principal).permissions.into_iter()
+        .collect()
+    }
