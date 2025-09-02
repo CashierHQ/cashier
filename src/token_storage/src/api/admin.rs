@@ -43,6 +43,23 @@ pub fn admin_permissions_add(
         .map_err(|e| TokenStorageError::AuthError(format!("{e:?}")))
 }
 
+/// Returns the permissions of a principal.
+#[query]
+pub fn admin_permissions_get(principal: Principal) -> Vec<Permission> {
+    let state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
+
+    state
+        .auth_service
+        .get_permissions(&principal)
+        .permissions
+        .into_iter()
+        .collect()
+}
+
 /// Removes permissions from a principal and returns the principal permissions.
 #[update]
 #[allow(clippy::needless_pass_by_value)]
@@ -61,38 +78,6 @@ pub fn admin_permissions_remove(
         .remove_permissions(principal, &permissions)
         .map(|p| p.permissions.into_iter().collect())
         .map_err(|e| TokenStorageError::AuthError(format!("{e:?}")))
-}
-
-/// Returns the permissions of a principal.
-#[query]
-pub fn admin_permissions_get(principal: Principal) -> Vec<Permission> {
-    let state = get_state();
-    let caller = msg_caller();
-    state
-        .auth_service
-        .must_have_permission(&caller, Permission::Admin);
-
-    state
-        .auth_service
-        .get_permissions(&principal)
-        .permissions
-        .into_iter()
-        .collect()
-}
-
-/// Gets the current version of the token registry
-/// This can be used by clients to check if they need to refresh their token lists
-#[query]
-pub fn admin_get_registry_version() -> u64 {
-    debug!("[admin_get_registry_version]");
-    let state = get_state();
-    let caller = msg_caller();
-    state
-        .auth_service
-        .must_have_permission(&caller, Permission::Admin);
-
-    let service = state.token_registry;
-    service.get_metadata().version
 }
 
 /// Gets the full metadata of the token registry

@@ -21,7 +21,7 @@ async fn should_allow_admin_to_get_permissions() {
 }
 
 #[tokio::test]
-async fn should_not_allowuser_to_get_permissions() {
+async fn should_not_allow_user_to_get_permissions() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let user = TestUser::User1.get_principal();
@@ -77,7 +77,7 @@ async fn should_allow_admin_to_set_and_remove_permissions() {
 }
 
 #[tokio::test]
-async fn should_not_allow_to_set_and_remove_permissions() {
+async fn should_not_allow_user_to_set_and_remove_permissions() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let user = TestUser::User1.get_principal();
