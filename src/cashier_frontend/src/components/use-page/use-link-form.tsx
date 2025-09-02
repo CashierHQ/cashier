@@ -18,7 +18,6 @@ interface UsePageFormProps {
   isDisabled: boolean;
   setDisabled: (disabled: boolean) => void;
   buttonText: string;
-  walletAddress?: string;
   onOpenWalletModal?: () => void;
 }
 
@@ -29,7 +28,6 @@ const UseLinkForm: React.FC<UsePageFormProps> = ({
   isDisabled,
   setDisabled,
   buttonText,
-  walletAddress,
   onOpenWalletModal,
 }) => {
   const handleSubmit = () => {
@@ -46,7 +44,6 @@ const UseLinkForm: React.FC<UsePageFormProps> = ({
             form={form}
             formData={formData}
             setDisabled={setDisabled}
-            walletAddress={walletAddress}
             onOpenWalletModal={onOpenWalletModal}
           />
           <UseActionButton

@@ -10,15 +10,8 @@ import { SheetTrigger } from "./ui/sheet";
 import { RiMenu2Line } from "react-icons/ri";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDeviceSize, useHeader } from "@/hooks/responsive-hook";
-import { useConnectToWallet } from "@/hooks/user-hook";
 import { useWalletContext } from "@/contexts/wallet-context";
-import WalletConnectDialog from "./wallet-connect-dialog";
-import { InternetIdentity } from "@nfid/identitykit";
-import {
-  headerWalletOptions,
-  LocalInternetIdentity,
-} from "@/constants/wallet-options";
-import { FEATURE_FLAGS } from "@/const";
+import { WalletSelectionModal } from "./wallet-connect/wallet-selection-modal";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface HeaderProps {}
@@ -34,7 +27,6 @@ const Header: React.FC<HeaderProps> = () => {
     hideHeader,
   } = useHeader();
 
-  const { connectToWallet } = useConnectToWallet();
   const { openWallet } = useWalletContext();
   const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
 
@@ -47,24 +39,6 @@ const Header: React.FC<HeaderProps> = () => {
     }
   };
 
-  const handleWalletSelection = (walletId: string) => {
-    setIsWalletDialogOpen(false);
-    if (walletId === "InternetIdentity") {
-      connectToWallet(InternetIdentity.id);
-    } else if (
-      FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER &&
-      walletId === "LocalInternetIdentity"
-    ) {
-      connectToWallet(LocalInternetIdentity.id);
-    }
-  };
-
-  // Use the centralized wallet options with onClick handlers
-  const walletDialogOptions = headerWalletOptions.map((option) => ({
-    ...option,
-    onClick: () => handleWalletSelection(option.id),
-  }));
-
   if (!user) {
     return (
       <div
@@ -73,7 +47,7 @@ const Header: React.FC<HeaderProps> = () => {
         {showHeaderWithBackButtonAndWalletButton(
           location.pathname,
           location.search,
-          !user,
+          !user
         ) ? (
           <ChevronLeft
             size={24}
@@ -101,12 +75,10 @@ const Header: React.FC<HeaderProps> = () => {
           Login
         </LoginButton>
 
-        <WalletConnectDialog
+        <WalletSelectionModal
           open={isWalletDialogOpen}
           onOpenChange={setIsWalletDialogOpen}
-          walletOptions={walletDialogOptions}
-          title="Connect your wallet"
-          viewAllLink={false}
+          isHeaderModal={true}
         />
       </div>
     );
@@ -121,7 +93,7 @@ const Header: React.FC<HeaderProps> = () => {
         >
           {showHeaderWithBackButtonAndWalletButton(
             location.pathname,
-            location.search,
+            location.search
           ) ? (
             <ChevronLeft
               size={24}

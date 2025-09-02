@@ -15,8 +15,8 @@ import { MainAppLayout } from "@/components/ui/main-app-layout";
 
 import { useIdentity } from "@nfid/identitykit/react";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
-import { WalletSelectionModal } from "@/components/wallet-selection-modal";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
+import { WalletSelectionModal } from "@/components/wallet-connect/wallet-selection-modal";
 
 export default function ClaimPage() {
   const { linkId } = useParams();
@@ -30,7 +30,6 @@ export default function ClaimPage() {
 
   // State for wallet selection modal
   const [showWalletModal, setShowWalletModal] = useState(false);
-  // const [selectedWalletAddress, setSelectedWalletAddress] = useState<string>("");
 
   // Data fetching hooks
   const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE);
@@ -56,7 +55,6 @@ export default function ClaimPage() {
 
   // Enable linkUserState fetching when link data is available
   useEffect(() => {
-    console.log("linkData changed, refetching linkUserState", linkData);
     if (linkData) {
       updateTokenInit();
     }
@@ -82,16 +80,9 @@ export default function ClaimPage() {
     [identity, goToChooseWallet]
   );
 
-  const handleWalletConnected = (address?: string) => {
+  const handleWalletConnected = () => {
     setShowWalletModal(false);
-    if (address || identity) {
-      // Store the selected wallet address if provided
-      if (address) {
-        // setSelectedWalletAddress(address);
-        // Store in sessionStorage to pass to choose-wallet page
-        sessionStorage.setItem(`wallet-address-${linkId}`, address);
-      }
-      // Navigate to choose-wallet page after wallet selection
+    if (identity) {
       goToChooseWallet();
     }
   };
