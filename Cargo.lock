@@ -2590,6 +2590,7 @@ dependencies = [
 name = "token_storage_client"
 version = "0.1.0"
 dependencies = [
+ "candid",
  "cashier_common",
  "ic_mple_client",
  "token_storage_types",

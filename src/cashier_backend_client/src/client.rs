@@ -1,9 +1,9 @@
+use candid::Principal;
 use cashier_backend_types::{
-    dto::{
+    auth::Permission, dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
         link::{CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDto, UpdateLinkInput},
-    },
-    error::CanisterError,
+    }, error::CanisterError
 };
 use cashier_common::build_data::BuildData;
 use ic_mple_client::{CanisterClient, CanisterClientResult};
@@ -25,6 +25,29 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     /// * `client` - The canister client.
     pub fn new(client: C) -> Self {
         Self { client }
+    }
+
+    /// Returns the permissions of a principal.
+    pub async fn admin_permissions_get(&self, principal: Principal) -> CanisterClientResult<Vec<Permission>> {
+        self.client.query("admin_permissions_get", (principal,)).await
+    }
+
+    /// Adds permissions to a principal and returns the principal permissions.
+    pub async fn admin_permissions_add(
+        &self, 
+        principal: Principal,
+        permissions: Vec<Permission>,
+    ) -> CanisterClientResult<Result<Vec<Permission>, CanisterError>> {
+        self.client.update("admin_permissions_add", ((principal, permissions),)).await
+    }
+
+    /// Removes permissions from a principal and returns the principal permissions.
+    pub async fn admin_permissions_remove(
+        &self,
+        principal: Principal,
+        permissions: Vec<Permission>,
+    ) -> CanisterClientResult<Result<Vec<Permission>, CanisterError>> {
+        self.client.update("admin_permissions_remove", ((principal, permissions),)).await
     }
 
     /// Returns the build data of the canister.
