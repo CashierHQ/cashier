@@ -1,8 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { useEffect } from "react";
-import PropTypes from "prop-types";
+import { JSX, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIdentity } from "@nfid/identitykit/react";
 
@@ -21,9 +20,6 @@ const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
   }, [identity, navigate]);
 
   return identity ? children : null;
-};
-RequireAuth.propTypes = {
-  children: PropTypes.element.isRequired,
 };
 
 export default RequireAuth;

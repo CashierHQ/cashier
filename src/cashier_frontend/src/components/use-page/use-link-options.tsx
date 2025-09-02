@@ -26,9 +26,11 @@ import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
 import { FEATURE_FLAGS } from "@/const";
 import { WalletSelectionModal } from "../wallet-connect/wallet-selection-modal";
+
+export const TODO_MSG = "TODO_COERCE";
 export const UseSchema = z.object({
   token: z.string().min(5),
-  amount: z.coerce.number().min(1),
+  amount: z.number().min(1),
   address: z.string().optional(),
 });
 

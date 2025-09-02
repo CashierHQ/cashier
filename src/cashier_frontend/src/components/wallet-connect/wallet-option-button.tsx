@@ -1,4 +1,4 @@
-import React from "react";
+import { FC, JSX } from "react";
 import CustomConnectedWalletButton from "../use-page/connected-wallet-button";
 import WalletButton from "../use-page/connect-wallet-button";
 import { WALLET_OPTIONS, getWalletIcon } from "@/constants/wallet-options";
@@ -14,7 +14,7 @@ interface WalletOptionButtonProps {
   handleConnect: (walletOption: WALLET_OPTIONS) => void;
 }
 
-const WalletOptionButton: React.FC<WalletOptionButtonProps> = ({
+const WalletOptionButton: FC<WalletOptionButtonProps> = ({
   walletOption,
   title,
   iconOrImage,
