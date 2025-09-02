@@ -34,6 +34,7 @@ pub fn admin_permissions_add(
 
 /// Removes permissions from a principal and returns the principal permissions.
 #[update]
+#[allow(clippy::needless_pass_by_value)]
 pub fn admin_permissions_remove(
     principal: Principal,
     permissions: Vec<Permission>,
