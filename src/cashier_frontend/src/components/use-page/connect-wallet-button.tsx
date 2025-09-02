@@ -3,7 +3,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { LuWallet2 } from "react-icons/lu";
+import { LuWallet } from "react-icons/lu";
 
 interface WalletButtonProps {
   title: string;
@@ -47,7 +47,7 @@ const WalletButton: React.FC<WalletButtonProps> = ({
         {image ? (
           <img src={image} alt={title} className="h-6 w-6 mr-2" />
         ) : (
-          icon || <LuWallet2 className="mr-2 h-6 w-6" color="#359F89" />
+          icon || <LuWallet className="mr-2 h-6 w-6" color="#359F89" />
         )}
         <span className="flex-grow text-left">{title}</span>
         {postfixText && <span className="ml-auto">{postfixText}</span>}
