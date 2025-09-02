@@ -69,7 +69,7 @@ export const DefaultPage: FC<LinkCardPageProps> = ({
       displayComponent={getDisplayComponentForLink(
         linkData,
         getToken,
-        isDataLoading
+        isDataLoading,
       )}
       message={linkMessage}
       title={getTitleForLink(linkData, getToken)}

@@ -88,7 +88,10 @@ export class CallCanisterService {
         canisterId: Principal.from(canisterId),
         blsVerify,
       });
-      const path = [new TextEncoder().encode("request_status").buffer, requestId];
+      const path = [
+        new TextEncoder().encode("request_status").buffer,
+        requestId,
+      ];
       const status = new TextDecoder().decode(
         lookupResultToBuffer(certificate.lookup([...path, "status"])),
       );
@@ -164,7 +167,7 @@ export class CallCanisterService {
     };
   }
 
-  public async getReply() { }
+  public async getReply() {}
 }
 
 export const callCanisterService = new CallCanisterService();

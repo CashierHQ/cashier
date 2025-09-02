@@ -44,13 +44,13 @@ export const walletDialogConfigOptions = [
     id: "nfid",
     name: "NFID Wallet",
     icon: NFIDW.icon!,
-    onClick: () => { }, // This will be set by the component
+    onClick: () => {}, // This will be set by the component
   },
   {
     id: "stoic",
     name: "Stoic",
     icon: Stoic.icon!,
-    onClick: () => { }, // This will be set by the component
+    onClick: () => {}, // This will be set by the component
   },
   // Uncomment when Plug wallet support is added
 ];
@@ -58,21 +58,21 @@ export const walletDialogConfigOptions = [
 // Internet Identity wallet option for the header
 export const headerWalletOptions = FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER
   ? [
-    {
-      id: "LocalInternetIdentity",
-      name: "Internet Identity",
-      icon: "/icpLogo.png",
-      onClick: () => { },
-    },
-  ]
+      {
+        id: "LocalInternetIdentity",
+        name: "Internet Identity",
+        icon: "/icpLogo.png",
+        onClick: () => {},
+      },
+    ]
   : [
-    {
-      id: "InternetIdentity",
-      name: "Internet Identity",
-      icon: "/icpLogo.png",
-      onClick: () => { }, // This will be set by the component
-    },
-  ];
+      {
+        id: "InternetIdentity",
+        name: "Internet Identity",
+        icon: "/icpLogo.png",
+        onClick: () => {}, // This will be set by the component
+      },
+    ];
 
 // Function to get wallet icon (string or React component)
 export const getWalletIcon = (

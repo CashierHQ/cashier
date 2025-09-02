@@ -37,7 +37,7 @@ export default function CompletePage() {
         link_id: linkId ?? "",
         anonymous_wallet_address: "",
       },
-      !!linkId && !!identity
+      !!linkId && !!identity,
     );
 
   // Initialize tokens when link data is available
@@ -58,7 +58,7 @@ export default function CompletePage() {
     () => () => {
       goToChooseWallet();
     },
-    [goToChooseWallet]
+    [goToChooseWallet],
   );
 
   // Early return for inactive links

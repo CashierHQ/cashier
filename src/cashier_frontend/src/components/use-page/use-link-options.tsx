@@ -138,7 +138,7 @@ const UseLinkOptions: React.FC<ClaimFormOptionsProps> = ({
 
   const firstTilte = t(`claim_page.${link?.linkType}.choose_wallet.use_asset`);
   const secondTitle = t(
-    `claim_page.${link?.linkType}.choose_wallet.wallet_options`
+    `claim_page.${link?.linkType}.choose_wallet.wallet_options`,
   );
 
   return (

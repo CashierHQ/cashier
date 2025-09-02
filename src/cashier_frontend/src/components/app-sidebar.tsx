@@ -127,7 +127,7 @@ const ListItem: React.FC<MenuItemProps> = (props: MenuItemProps) => {
             ? ""
             : "group hover:text-accent-foreground hover:text-[#36A18B] hover:cursor-pointer hover:bg-[#E8F2EE] focus:bg-accent focus:text-accent-foreground"
         }`,
-        props.className
+        props.className,
       )}
     >
       <div className="flex items-center justify-between">
