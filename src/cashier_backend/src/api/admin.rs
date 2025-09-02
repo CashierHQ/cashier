@@ -32,6 +32,23 @@ pub fn admin_permissions_add(
         .map_err(|e| CanisterError::AuthError(format!("{e:?}")))
 }
 
+/// Returns the permissions of a principal.
+#[query]
+pub fn admin_permissions_get(principal: Principal) -> Vec<Permission> {
+    let state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
+
+    state
+        .auth_service
+        .get_permissions(&principal)
+        .permissions
+        .into_iter()
+        .collect()
+}
+
 /// Removes permissions from a principal and returns the principal permissions.
 #[update]
 #[allow(clippy::needless_pass_by_value)]
@@ -52,19 +69,3 @@ pub fn admin_permissions_remove(
         .map_err(|e| CanisterError::AuthError(format!("{e:?}")))
 }
 
-/// Returns the permissions of a principal.
-#[query]
-pub fn admin_permissions_get(principal: Principal) -> Vec<Permission> {
-    let state = get_state();
-    let caller = msg_caller();
-    state
-        .auth_service
-        .must_have_permission(&caller, Permission::Admin);
-
-    state
-        .auth_service
-        .get_permissions(&principal)
-        .permissions
-        .into_iter()
-        .collect()
-}
