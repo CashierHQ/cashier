@@ -1,12 +1,8 @@
-use candid::Principal;
-use cashier_backend_types::repository::common::Asset;
-use icrc_ledger_types::icrc1::account::Account;
-
 use crate::services::link::traits::LinkValidation;
 use crate::utils::helper::to_subaccount;
-use crate::utils::runtime::IcEnvironment;
 use crate::{repositories::Repositories, services::link::service::LinkService};
-
+use candid::Principal;
+use cashier_backend_types::repository::common::Asset;
 use cashier_backend_types::{
     error::CanisterError,
     repository::{
@@ -15,6 +11,8 @@ use cashier_backend_types::{
         link::v1::{Link, LinkState, LinkType},
     },
 };
+use cashier_common::runtime::IcEnvironment;
+use icrc_ledger_types::icrc1::account::Account;
 
 impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E, R> {
     // This method is a synchronous version that performs basic validation without async checks

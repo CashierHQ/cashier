@@ -22,5 +22,6 @@ gate_service_types = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
+ic_mple_log = { workspace = true }
 rand = { workspace = true, features = ["getrandom"] }
 uuid = { workspace = true, features = ["v4"] }

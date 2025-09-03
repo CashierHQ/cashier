@@ -1,5 +1,6 @@
 pub mod gate;
 pub mod init_and_upgrade;
+mod state;
 
 use candid::Principal;
 use gate_service_types::{

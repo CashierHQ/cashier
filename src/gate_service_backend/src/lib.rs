@@ -1,8 +1,5 @@
 mod api;
 mod gates;
-mod repository;
-mod service;
+mod repositories;
+mod services;
 mod utils;
-
-#[cfg(test)]
-mod test_utils;
