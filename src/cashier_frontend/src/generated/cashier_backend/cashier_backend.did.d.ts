@@ -35,6 +35,7 @@ export type CanisterError = { 'InvalidDataError' : string } |
   { 'InvalidStateTransition' : { 'to' : string, 'from' : string } } |
   { 'TransactionTimeout' : string } |
   { 'BatchError' : Array<CanisterError> } |
+  { 'AuthError' : string } |
   { 'InvalidInput' : string } |
   { 'HandleLogicError' : string } |
   { 'ParsePrincipalError' : string } |
@@ -59,6 +60,7 @@ export type CanisterError = { 'InvalidDataError' : string } |
   { 'UnboundedError' : string } |
   { 'CallCanisterFailed' : string };
 export interface CashierBackendInitData {
+  'owner' : Principal,
   'log_settings' : [] | [LogServiceSettings],
 }
 export type Chain = { 'IC' : null };
@@ -257,6 +259,7 @@ export interface PaginateResultMetadata {
   'offset' : bigint,
   'limit' : bigint,
 }
+export type Permission = { 'Admin' : null };
 export interface ProcessActionAnonymousInput {
   'action_id' : string,
   'link_id' : string,
@@ -269,19 +272,21 @@ export interface ProcessActionInput {
   'action_type' : ActionType,
 }
 export type Protocol = { 'IC' : IcTransaction };
-export type Result = { 'Ok' : ActionDto } |
+export type Result = { 'Ok' : Array<Permission> } |
   { 'Err' : CanisterError };
-export type Result_1 = { 'Ok' : LinkDto } |
+export type Result_1 = { 'Ok' : ActionDto } |
   { 'Err' : CanisterError };
-export type Result_2 = { 'Ok' : GetLinkResp } |
+export type Result_2 = { 'Ok' : LinkDto } |
+  { 'Err' : CanisterError };
+export type Result_3 = { 'Ok' : GetLinkResp } |
   { 'Err' : string };
-export type Result_3 = { 'Ok' : PaginateResult } |
+export type Result_4 = { 'Ok' : PaginateResult } |
   { 'Err' : string };
-export type Result_4 = { 'Ok' : Icrc21ConsentInfo } |
+export type Result_5 = { 'Ok' : Icrc21ConsentInfo } |
   { 'Err' : Icrc21Error };
-export type Result_5 = { 'Ok' : [] | [LinkGetUserStateOutput] } |
+export type Result_6 = { 'Ok' : [] | [LinkGetUserStateOutput] } |
   { 'Err' : CanisterError };
-export type Result_6 = { 'Ok' : string } |
+export type Result_7 = { 'Ok' : string } |
   { 'Err' : CanisterError };
 export type Template = { 'Left' : null } |
   { 'Right' : null } |
@@ -334,31 +339,40 @@ export type Wallet = {
     }
   };
 export interface _SERVICE {
-  'create_action' : ActorMethod<[CreateActionInput], Result>,
-  'create_action_anonymous' : ActorMethod<[CreateActionAnonymousInput], Result>,
-  'create_link' : ActorMethod<[CreateLinkInput], Result_1>,
+  'admin_permissions_add' : ActorMethod<[Principal, Array<Permission>], Result>,
+  'admin_permissions_get' : ActorMethod<[Principal], Array<Permission>>,
+  'admin_permissions_remove' : ActorMethod<
+    [Principal, Array<Permission>],
+    Result
+  >,
+  'create_action' : ActorMethod<[CreateActionInput], Result_1>,
+  'create_action_anonymous' : ActorMethod<
+    [CreateActionAnonymousInput],
+    Result_1
+  >,
+  'create_link' : ActorMethod<[CreateLinkInput], Result_2>,
   'get_canister_build_data' : ActorMethod<[], BuildData>,
-  'get_link' : ActorMethod<[string, [] | [GetLinkOptions]], Result_2>,
-  'get_links' : ActorMethod<[[] | [PaginateInput]], Result_3>,
+  'get_link' : ActorMethod<[string, [] | [GetLinkOptions]], Result_3>,
+  'get_links' : ActorMethod<[[] | [PaginateInput]], Result_4>,
   'icrc10_supported_standards' : ActorMethod<
     [],
     Array<Icrc21SupportedStandard>
   >,
   'icrc21_canister_call_consent_message' : ActorMethod<
     [Icrc21ConsentMessageRequest],
-    Result_4
+    Result_5
   >,
   'icrc28_trusted_origins' : ActorMethod<[], Icrc28TrustedOriginsResponse>,
-  'link_get_user_state' : ActorMethod<[LinkGetUserStateInput], Result_5>,
-  'link_update_user_state' : ActorMethod<[LinkUpdateUserStateInput], Result_5>,
-  'process_action' : ActorMethod<[ProcessActionInput], Result>,
+  'link_get_user_state' : ActorMethod<[LinkGetUserStateInput], Result_6>,
+  'link_update_user_state' : ActorMethod<[LinkUpdateUserStateInput], Result_6>,
+  'process_action' : ActorMethod<[ProcessActionInput], Result_1>,
   'process_action_anonymous' : ActorMethod<
     [ProcessActionAnonymousInput],
-    Result
+    Result_1
   >,
-  'trigger_transaction' : ActorMethod<[TriggerTransactionInput], Result_6>,
-  'update_action' : ActorMethod<[UpdateActionInput], Result>,
-  'update_link' : ActorMethod<[UpdateLinkInput], Result_1>,
+  'trigger_transaction' : ActorMethod<[TriggerTransactionInput], Result_7>,
+  'update_action' : ActorMethod<[UpdateActionInput], Result_1>,
+  'update_link' : ActorMethod<[UpdateLinkInput], Result_2>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

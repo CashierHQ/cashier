@@ -9,6 +9,8 @@ pub mod token;
 use crate::types::*;
 use candid::Principal;
 use cashier_common::build_data::BuildData;
+use token_storage_types::auth::*;
+use token_storage_types::error::*;
 use token_storage_types::init::*;
 use token_storage_types::token::*;
 

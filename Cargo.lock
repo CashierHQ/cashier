@@ -46,15 +46,13 @@ checksum = "23b62fc65de8e4e7f52534fb52b0f3ed04746ae267519eef2a83941e8085068b"
 
 [[package]]
 name = "async-compression"
-version = "0.4.29"
+version = "0.4.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5bee399cc3a623ec5a2db2c5b90ee0190a2260241fbe0c023ac8f7bab426aaf8"
+checksum = "977eb15ea9efd848bb8a4a1a2500347ed7f0bf794edf0dc3ddcf439f43d36b23"
 dependencies = [
  "compression-codecs",
  "compression-core",
- "flate2",
  "futures-core",
- "memchr",
  "pin-project-lite",
  "tokio",
 ]
@@ -140,9 +138,9 @@ dependencies = [
 
 [[package]]
 name = "bitflags"
-version = "2.9.3"
+version = "2.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "34efbcccd345379ca2868b2b2c9d3782e9cc58ba87bc7d79d5b53d9c9ae6f25d"
+checksum = "2261d10cca569e4643e526d8dc2e62e433cc8aba21ab764233731f8d369bf394"
 
 [[package]]
 name = "block-buffer"
@@ -253,6 +251,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-timers",
  "ic-stable-structures 0.7.0",
+ "ic_mple_auth",
  "ic_mple_log",
  "icrc-ledger-types",
  "icrc_112_utils",
@@ -326,10 +325,11 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.2.34"
+version = "1.2.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42bc4aea80032b7bf409b0bc7ccad88853858911b7713a8062fdc0623867bedc"
+checksum = "590f9024a68a8c40351881787f1934dc11afd69090f5edb6831464694d836ea3"
 dependencies = [
+ "find-msvc-tools",
  "shlex",
 ]
 
@@ -374,15 +374,13 @@ dependencies = [
 
 [[package]]
 name = "compression-codecs"
-version = "0.4.29"
+version = "0.4.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7eea68f0e02c2b0aa8856e9a9478444206d4b6828728e7b0697c0f8cca265cb"
+checksum = "485abf41ac0c8047c07c87c72c8fb3eb5197f6e9d7ded615dfd1a00ae00a0f64"
 dependencies = [
  "compression-core",
  "flate2",
- "futures-core",
  "memchr",
- "pin-project-lite",
 ]
 
 [[package]]
@@ -499,9 +497,9 @@ checksum = "2a2330da5de22e8a3cb63252ce2abb30116bf5265e89c0e01bc17015ce30a476"
 
 [[package]]
 name = "deranged"
-version = "0.4.0"
+version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c9e6a11ca8224451684bc0d7d5a7adbf8f2fd6887261a1cfc3c0432f9d4068e"
+checksum = "d630bccd429a5bb5a64b5e94f693bfc48c9f8566418fda4c494cc94f911f87cc"
 dependencies = [
  "powerfmt",
 ]
@@ -631,6 +629,12 @@ name = "fastrand"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
+
+[[package]]
+name = "find-msvc-tools"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e178e4fba8a2726903f6ba98a6d221e76f9c12c650d5dc0e6afdc50677b49650"
 
 [[package]]
 name = "flate2"
@@ -1103,10 +1107,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8877193e1921b5fd16accb0305eb46016868cd1935b05c05eca0ec007b943272"
 
 [[package]]
-name = "ic_mple_client"
-version = "0.9.5"
+name = "ic_mple_auth"
+version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e61fa7508dd9659c9ab1942662b56b3b0d2a4222dd47d9a1d3b30c09657240eb"
+checksum = "84a49355bcc993d262ee3a85d8a30e1de1954507f441d925f9999d8a966a4f11"
+dependencies = [
+ "candid",
+ "ic-cdk",
+ "ic-stable-structures 0.7.0",
+ "ic_mple_utils",
+ "log",
+ "serde",
+ "thiserror 2.0.16",
+]
+
+[[package]]
+name = "ic_mple_client"
+version = "0.11.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5f9b21f791873d087e5ab6deb13204ffd2de960ee9af199e8da5dfd2980fdc07"
 dependencies = [
  "candid",
  "ic-cdk",
@@ -1117,9 +1136,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_log"
-version = "0.9.5"
+version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de1fea06163f72d1773d9da7fd50f046c1af5c5f3c931562eb69c6df3c2a943f"
+checksum = "4ae0b119aaa7c7be6fe705708f5a346e3f9b9b9cdcc580e5d61f4bce77bddf36"
 dependencies = [
  "arc-swap",
  "candid",
@@ -1135,9 +1154,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_pocket_ic"
-version = "0.9.5"
+version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b83c62dfd169e2e9b25780d41c691fc935e4bac61b70146f6c9ae4b83bde14e"
+checksum = "65cc0a2826ab9b0e20f5a736ea76c3fceebd9420101d6a8b4fba1ba793563c23"
 dependencies = [
  "flate2",
  "log",
@@ -1148,9 +1167,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_utils"
-version = "0.9.5"
+version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76b5839e90ff0367e8707767d8cd2e4a8c89e0c966a75dd931ac6154349a372d"
+checksum = "142ca0b232f5d4a79e9451b6f0fcb41c284e1b3971481f1aa83ac5264e67cb2a"
 
 [[package]]
 name = "ic_principal"
@@ -2486,12 +2505,11 @@ dependencies = [
 
 [[package]]
 name = "time"
-version = "0.3.41"
+version = "0.3.42"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a7619e19bc266e0f9c5e6686659d394bc57973859340060a69221e57dbc0c40"
+checksum = "8ca967379f9d8eb8058d86ed467d81d03e81acd45757e4ca341c24affbe8e8e3"
 dependencies = [
  "deranged",
- "itoa",
  "libc",
  "num-conv",
  "num_threads",
@@ -2503,15 +2521,15 @@ dependencies = [
 
 [[package]]
 name = "time-core"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9e9a38711f559d9e3ce1cdb06dd7c5b8ea546bc90052da6d06bb76da74bb07c"
+checksum = "a9108bb380861b07264b950ded55a44a14a4adc68b9f5efd85aafc3aa4d40a68"
 
 [[package]]
 name = "time-macros"
-version = "0.2.22"
+version = "0.2.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3526739392ec93fd8b359c8e98514cb3e8e021beb4e5f597b00a0221f8ed8a49"
+checksum = "7182799245a7264ce590b349d90338f1c1affad93d2639aed5f8f69c090b334c"
 dependencies = [
  "num-conv",
  "time-core",
@@ -2554,6 +2572,7 @@ dependencies = [
  "futures",
  "ic-cdk",
  "ic-stable-structures 0.7.0",
+ "ic_mple_auth",
  "ic_mple_log",
  "ic_mple_pocket_ic",
  "ic_mple_utils",
@@ -2571,6 +2590,7 @@ dependencies = [
 name = "token_storage_client"
 version = "0.1.0"
 dependencies = [
+ "candid",
  "cashier_common",
  "ic_mple_client",
  "token_storage_types",
@@ -2588,6 +2608,7 @@ dependencies = [
  "ic-stable-structures 0.7.0",
  "ic_mple_log",
  "serde",
+ "thiserror 2.0.16",
 ]
 
 [[package]]

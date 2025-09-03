@@ -2,6 +2,8 @@ use candid::Principal;
 
 use crate::utils::with_pocket_ic_context;
 
+pub mod admin;
+
 /// Tests that the token storage canister can be deployed.
 #[tokio::test]
 async fn should_deploy_the_token_storage_canister() {
