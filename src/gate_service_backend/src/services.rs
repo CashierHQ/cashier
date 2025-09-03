@@ -1,7 +1,7 @@
 use crate::{
     gates::{GateFactory, GateVerifier},
     repositories::{gate::GateRepository, Repositories},
-    utils::hash_password,
+    utils::hashing::hash_password,
 };
 use candid::Principal;
 use gate_service_types::{
