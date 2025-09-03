@@ -45,7 +45,7 @@ export default function CompletePage() {
     if (linkData) {
       updateTokenInit();
     }
-  }, [linkData, updateTokenInit]);
+  }, []);
 
   // Handle state-based navigation for logged-in users
   useEffect(() => {

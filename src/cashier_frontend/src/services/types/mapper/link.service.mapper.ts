@@ -225,9 +225,13 @@ const mapUserLinkStateToFrontendLinkUserState = (
   const key = getKeyVariant(state);
   switch (key) {
     case "CompletedLink":
-      return LINK_USER_STATE.COMPLETE;
-    case "ChooseWallet":
-      return LINK_USER_STATE.CHOOSE_WALLET;
+      return LINK_USER_STATE.COMPLETED;
+    case "Address":
+      return LINK_USER_STATE.ADDRESS;
+    case "GateOpened":
+      return LINK_USER_STATE.GATE_OPENED;
+    case "GateClosed":
+      return LINK_USER_STATE.GATE_CLOSED;
     default:
       return assertNever(key);
   }
