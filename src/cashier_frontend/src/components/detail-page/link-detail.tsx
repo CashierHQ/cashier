@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import React from "react";
+import { FC, JSX } from "react";
 import { Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Label } from "@/components/ui/label";
@@ -22,10 +22,7 @@ interface LinkDetailProps {
   onShareClick: () => void;
 }
 
-export const LinkDetail: React.FC<LinkDetailProps> = ({
-  link,
-  onShareClick,
-}) => {
+export const LinkDetail: FC<LinkDetailProps> = ({ link, onShareClick }) => {
   const { t } = useTranslation();
   const { getToken } = useTokensV2();
   const { balances, loading, error } = useLinkAssetBalance(link);

@@ -15,7 +15,6 @@ interface ImportPanelProps {
   onBack: () => void;
 }
 
-// eslint-disable-next-line react/prop-types
 const ImportPanel: React.FC<ImportPanelProps> = ({ onBack }) => {
   const { t } = useTranslation();
   const { getToken } = useTokensV2();

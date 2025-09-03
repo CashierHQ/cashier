@@ -21,7 +21,6 @@ interface ManagePanelProps {
   onBack: () => void;
 }
 
-// eslint-disable-next-line react/prop-types
 const ManagePanel: React.FC<ManagePanelProps> = ({ onBack }) => {
   const { t } = useTranslation();
   const { navigateToPanel } = useWalletContext();
