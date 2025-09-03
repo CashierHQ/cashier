@@ -1,4 +1,4 @@
-use crate::{gates::GateVerifier, utils::verify_password};
+use crate::{gates::GateVerifier, utils::hashing::verify_password};
 use async_trait::async_trait;
 use gate_service_types::{error::GateServiceError, GateKey, VerificationResult};
 use std::fmt::Debug;
@@ -39,7 +39,7 @@ impl PasswordGate {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::hash_password;
+    use crate::utils::hashing::hash_password;
     use core::panic;
 
     #[tokio::test]
