@@ -6,6 +6,7 @@ export const idlFactory = ({ IDL }) => {
     'max_record_length' : IDL.Opt(IDL.Nat64),
   });
   const TokenStorageInitData = IDL.Record({
+    'owner' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
   const TokenId = IDL.Variant({
@@ -66,6 +67,12 @@ export const idlFactory = ({ IDL }) => {
     'perference' : IDL.Opt(UserPreference),
   });
   const Result_4 = IDL.Variant({ 'Ok' : TokenListResponse, 'Err' : IDL.Text });
+  const Permission = IDL.Variant({ 'Admin' : IDL.Null });
+  const TokenStorageError = IDL.Variant({ 'AuthError' : IDL.Text });
+  const Result_5 = IDL.Variant({
+    'Ok' : IDL.Vec(Permission),
+    'Err' : TokenStorageError,
+  });
   const BuildData = IDL.Record({
     'rustc_semver' : IDL.Text,
     'git_branch' : IDL.Text,
@@ -99,7 +106,6 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(TokenDto)],
         ['query'],
       ),
-    'admin_get_registry_version' : IDL.Func([], [IDL.Nat64], ['query']),
     'admin_get_stats' : IDL.Func([], [Result_1], ['query']),
     'admin_get_user_balance' : IDL.Func([IDL.Principal], [Result_2], ['query']),
     'admin_get_user_tokens' : IDL.Func([IDL.Principal], [Result_3], ['query']),
@@ -108,6 +114,21 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Principal],
         [Result_4],
         ['query'],
+      ),
+    'admin_permissions_add' : IDL.Func(
+        [IDL.Principal, IDL.Vec(Permission)],
+        [Result_5],
+        [],
+      ),
+    'admin_permissions_get' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Vec(Permission)],
+        ['query'],
+      ),
+    'admin_permissions_remove' : IDL.Func(
+        [IDL.Principal, IDL.Vec(Permission)],
+        [Result_5],
+        [],
       ),
     'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),
     'list_tokens' : IDL.Func([], [Result_4], ['query']),
@@ -130,6 +151,7 @@ export const init = ({ IDL }) => {
     'max_record_length' : IDL.Opt(IDL.Nat64),
   });
   const TokenStorageInitData = IDL.Record({
+    'owner' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
   return [TokenStorageInitData];

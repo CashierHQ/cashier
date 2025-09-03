@@ -246,7 +246,7 @@ export default function ChooseWalletPage() {
           );
           setShowConfirmation(true);
         } else if (
-          anonymousLinkUserState.link_user_state === LINK_USER_STATE.COMPLETE
+          anonymousLinkUserState.link_user_state === LINK_USER_STATE.COMPLETED
         ) {
           goToComplete();
         } else {

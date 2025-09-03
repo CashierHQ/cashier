@@ -228,7 +228,7 @@ export const useUseConfirmation = ({
         console.error("Error during comprehensive data refresh:", refreshError);
       }
 
-      if (result.link_user_state === LINK_USER_STATE.COMPLETE) {
+      if (result.link_user_state === LINK_USER_STATE.COMPLETED) {
         setTimeout(() => {
           goToComplete({ replace: true });
         }, 500);

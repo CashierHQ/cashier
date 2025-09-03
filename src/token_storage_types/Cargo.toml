@@ -13,3 +13,4 @@ derive_more = { workspace = true }
 ic_mple_log = { workspace = true }
 ic-stable-structures = { workspace = true }
 serde = { workspace = true }
+thiserror = { workspace = true }
