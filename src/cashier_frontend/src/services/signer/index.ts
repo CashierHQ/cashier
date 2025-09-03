@@ -14,6 +14,7 @@ import { BACKEND_CANISTER_ID } from "@/const";
 import { AgentTransport } from "./agentTransport";
 import { v4 as v4uuid } from "uuid";
 import { Principal } from "@dfinity/principal";
+import { ICRC_114_METHOD_NAME } from "./constants";
 
 /**
  * SignerService
@@ -36,7 +37,15 @@ class SignerService extends Signer<AgentTransport> {
       params: {
         sender: sender.toString(),
         requests: batchInput,
-        validationCanisterId: BACKEND_CANISTER_ID,
+        // TODO: remove after @slide-computer/signer upgrade to new schema
+        // This is outdated field, but still required by @slide-computer/signer
+        validation: {
+          canisterId: BACKEND_CANISTER_ID,
+          method: ICRC_114_METHOD_NAME,
+        },
+        // TODO: un-comment after @slide-computer/signer upgrade to new schema
+        // This is correct value
+        // validationCanisterId: BACKEND_CANISTER_ID,
       },
     };
     const response: BatchCallCanisterResponse = await this.sendRequest(request);

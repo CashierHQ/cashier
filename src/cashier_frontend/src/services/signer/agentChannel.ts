@@ -294,7 +294,7 @@ export class AgentChannel implements Channel {
         // if more than 1 request in batch, validation is required
         if (
           batchCallCanisterRequest.params!.requests.length > 1 &&
-          !batchCallCanisterRequest.params?.validationCanisterId
+          !batchCallCanisterRequest.params?.validation?.canisterId
         ) {
           return {
             id,
@@ -307,8 +307,8 @@ export class AgentChannel implements Channel {
         }
 
         const { pollForResponse, defaultStrategy } = polling;
-        const validationActor = batchCallCanisterRequest.params
-          ?.validationCanisterId
+        const validationActor = batchCallCanisterRequest.params?.validation
+          ?.canisterId
           ? Actor.createActor(
               ({ IDL }) =>
                 IDL.Service({
@@ -328,7 +328,7 @@ export class AgentChannel implements Channel {
                 }),
               {
                 canisterId:
-                  batchCallCanisterRequest.params?.validationCanisterId,
+                  batchCallCanisterRequest.params?.validation?.canisterId,
                 agent: this.#agent,
               },
             )

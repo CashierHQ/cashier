@@ -158,6 +158,7 @@ fn consent_msg_text_pages(
 // This method is canister exposed method there for we cannot pass by value
 #[allow(clippy::needless_pass_by_value)]
 // following the ICRC-114 standard for helping signer validate the canister call
+// Source: https://github.com/dfinity/wg-identity-authentication/blob/main/topics/icrc_114_validate_batch_call.md
 fn icrc114_validate(args: Icrc114ValidateArgs) -> bool {
     if args.method == "trigger_transaction" {
         match Decode!(args.res.as_slice(), Result<String, CanisterError>) {

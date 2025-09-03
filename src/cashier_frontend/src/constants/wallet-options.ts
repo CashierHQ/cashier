@@ -69,4 +69,7 @@ export const ALL_WALLET_SIGNERS = [
   FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER ? [LocalInternetIdentity] : [],
 );
 
-export const ICRC112_SUPPORTED_WALLETS = [InternetIdentity.id, LocalInternetIdentity.id];
+export const ICRC112_SUPPORTED_WALLETS = [
+  InternetIdentity.id,
+  LocalInternetIdentity.id,
+];
