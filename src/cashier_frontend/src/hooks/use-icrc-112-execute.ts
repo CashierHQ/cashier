@@ -7,7 +7,7 @@ import { Icrc112RequestModel } from "@/services/types/transaction.service.types"
 import SignerService from "@/services/signer";
 import { AgentTransport } from "@/services/signer/agentTransport";
 import { getAgent } from "@/utils/agent";
-import { InternetIdentity } from "@nfid/identitykit";
+import { ICRC112_SUPPORTED_WALLETS } from "@/constants/wallet-options";
 
 export function useIcrc112Execute() {
   const identity = useIdentity();
@@ -29,7 +29,8 @@ export function useIcrc112Execute() {
       }
 
       // TODO: fallback to normal call if signer does not support ICRC-112
-      if (signerConfig?.id != InternetIdentity.id) {
+      console.log("Using signer:", signerConfig);
+      if (!ICRC112_SUPPORTED_WALLETS.includes(signerConfig?.id || "")) {
         throw new Error(
           "Only Internet Identity is supported for ICRC-112 execution",
         );
