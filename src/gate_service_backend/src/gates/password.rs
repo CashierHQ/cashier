@@ -1,26 +1,27 @@
 use crate::{gates::GateVerifier, utils::hashing::verify_password};
-use async_trait::async_trait;
 use gate_service_types::{error::GateServiceError, GateKey, VerificationResult};
-use std::fmt::Debug;
+use std::{fmt::Debug, future::Future, pin::Pin};
 
 pub struct PasswordGate {
     password_hash: String,
 }
 
-#[async_trait]
 impl GateVerifier for PasswordGate {
-    async fn verify(&self, key: GateKey) -> Result<VerificationResult, GateServiceError> {
-        if let GateKey::Password(provided_key) = key {
-            match verify_password(&provided_key, &self.password_hash) {
-                Ok(()) => Ok(VerificationResult::Success),
-                Err(e) => Err(GateServiceError::KeyVerificationFailed(format!(
-                    "Error verifying password: {}",
-                    e
-                ))),
+    fn verify(&self, key: GateKey) -> Pin<Box<dyn Future<Output = Result<VerificationResult, GateServiceError>>>> {
+        let password_hash = self.password_hash.clone();
+        Box::pin(async move {
+            if let GateKey::Password(provided_key) = key {
+                match verify_password(&provided_key, &password_hash) {
+                    Ok(()) => Ok(VerificationResult::Success),
+                    Err(e) => Err(GateServiceError::KeyVerificationFailed(format!(
+                        "Error verifying password: {}",
+                        e
+                    ))),
+                }
+            } else {
+                Err(GateServiceError::InvalidKeyType("PasswordGate".to_string()))
             }
-        } else {
-            Err(GateServiceError::InvalidKeyType("PasswordGate".to_string()))
-        }
+        })
     }
 }
 
