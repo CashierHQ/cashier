@@ -11,7 +11,10 @@ pub trait GateVerifier: Debug {
     /// # Returns
     /// * `Ok(VerificationResult)`: If the key is verified successfully.
     /// * `Err(String)`: If there is an error during verification.
-    fn verify(&self, key: GateKey) -> Pin<Box<dyn Future<Output = Result<VerificationResult, GateServiceError>>>>;
+    fn verify(
+        &self,
+        key: GateKey,
+    ) -> Pin<Box<dyn Future<Output = Result<VerificationResult, GateServiceError>>>>;
 }
 
 pub struct GateFactory {}

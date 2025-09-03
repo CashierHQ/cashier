@@ -7,7 +7,10 @@ pub struct PasswordGate {
 }
 
 impl GateVerifier for PasswordGate {
-    fn verify(&self, key: GateKey) -> Pin<Box<dyn Future<Output = Result<VerificationResult, GateServiceError>>>> {
+    fn verify(
+        &self,
+        key: GateKey,
+    ) -> Pin<Box<dyn Future<Output = Result<VerificationResult, GateServiceError>>>> {
         let password_hash = self.password_hash.clone();
         Box::pin(async move {
             if let GateKey::Password(provided_key) = key {
