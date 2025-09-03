@@ -813,10 +813,10 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "cashier_macros",
+ "ciborium",
  "ic-cdk",
  "ic-stable-structures 0.7.0",
  "serde",
- "serde_cbor",
  "thiserror 2.0.16",
 ]
 
