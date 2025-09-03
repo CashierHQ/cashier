@@ -26,9 +26,9 @@ import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
 import { FEATURE_FLAGS } from "@/const";
 import { WalletSelectionModal } from "../wallet-connect/wallet-selection-modal";
+
+// This schema is used to validate the form input for the address field, only in case of anonymous user
 export const UseSchema = z.object({
-  token: z.string().min(5),
-  amount: z.coerce.number().min(1),
   address: z.string().optional(),
 });
 
@@ -133,8 +133,6 @@ const UseLinkOptions: React.FC<ClaimFormOptionsProps> = ({
         break;
     }
   };
-
-  // ...existing code... (wallet rendering handled by WalletOptionButton)
 
   const firstTilte = t(`claim_page.${link?.linkType}.choose_wallet.use_asset`);
   const secondTitle = t(

@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import React from "react";
+import { FC } from "react";
 import { Form } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
@@ -21,7 +21,7 @@ interface UsePageFormProps {
   onOpenWalletModal?: () => void;
 }
 
-const UseLinkForm: React.FC<UsePageFormProps> = ({
+const UseLinkForm: FC<UsePageFormProps> = ({
   form,
   formData,
   onSubmit,
