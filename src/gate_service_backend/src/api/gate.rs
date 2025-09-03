@@ -3,7 +3,6 @@ use candid::Principal;
 use cashier_common::guard::is_not_anonymous;
 use gate_service_types::{
     error::GateServiceError, Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult,
-    VerificationResult,
 };
 use ic_cdk::{api::msg_caller, query, update};
 
@@ -60,14 +59,7 @@ fn get_gate(gate_id: String) -> Option<Gate> {
 /// * `Err(String)`: If there is an error during retrieval.
 fn get_gate_for_user(gate_id: String, user: Principal) -> Result<GateForUser, GateServiceError> {
     let gate_service = get_state().gate_service;
-    let gate = gate_service
-        .get_gate(&gate_id)
-        .ok_or(GateServiceError::NotFound)?;
-    let gate_user_status = gate_service.get_gate_user_status(&gate_id, user);
-    Ok(GateForUser {
-        gate,
-        gate_user_status,
-    })
+    gate_service.get_gate_for_user(&gate_id, user)
 }
 
 #[update(guard = "is_not_anonymous")]
@@ -84,32 +76,6 @@ async fn open_gate(
     gate_id: String,
     key: GateKey,
 ) -> Result<OpenGateSuccessResult, GateServiceError> {
-    let gate = {
-        let gate_service = get_state().gate_service;
-        gate_service.get_gate(&gate_id)
-    };
-    let gate = gate.ok_or(GateServiceError::NotFound)?;
-
-    let opening_gate = {
-        let gate_service = get_state().gate_service;
-        gate_service.get_opening_gate(&gate_id)
-    }?;
-
-    let caller = msg_caller();
-
-    match opening_gate.verify(key).await {
-        Ok(VerificationResult::Success) => {
-            let (gate, gate_user_status) = {
-                let mut gate_service = get_state().gate_service;
-                gate_service.open_gate(gate, caller)
-            }?;
-
-            Ok(OpenGateSuccessResult {
-                gate,
-                gate_user_status,
-            })
-        }
-        Ok(VerificationResult::Failure(e)) => Err(GateServiceError::KeyVerificationFailed(e)),
-        Err(e) => Err(e),
-    }
+    let mut gate_service = get_state().gate_service;
+    gate_service.open_gate(&gate_id, key, msg_caller()).await
 }

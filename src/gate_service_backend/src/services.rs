@@ -5,7 +5,8 @@ use crate::{
 };
 use candid::Principal;
 use gate_service_types::{
-    error::GateServiceError, Gate, GateKey, GateType, GateUserStatus, NewGate,
+    error::GateServiceError, Gate, GateForUser, GateKey, GateType, GateUserStatus, NewGate,
+    OpenGateSuccessResult, VerificationResult,
 };
 use std::rc::Rc;
 
@@ -118,23 +119,6 @@ impl<R: Repositories> GateService<R> {
         Ok(gate)
     }
 
-    /// Opens a gate for a specific user.
-    /// # Arguments
-    /// * `gate`: The gate to be opened.
-    /// * `user`: The user who is opening the gate.
-    /// # Returns
-    /// * `Ok((Gate, GateUserStatus))`: If the gate is opened successfully.
-    /// * `Err(String)`: If there is an error during gate opening.
-    pub fn open_gate(
-        &mut self,
-        gate: Gate,
-        user: Principal,
-    ) -> Result<(Gate, GateUserStatus), GateServiceError> {
-        self.repository
-            .open_gate(gate, user)
-            .map_err(GateServiceError::RepositoryError)
-    }
-
     /// Retrieves the user status of a gate for a specific user.
     /// # Arguments
     /// * `gate_id`: The ID of the gate to be checked.
@@ -145,6 +129,61 @@ impl<R: Repositories> GateService<R> {
     /// * `Err(String)`: If there is an error during retrieval.
     pub fn get_gate_user_status(&self, gate_id: &str, user: Principal) -> Option<GateUserStatus> {
         self.repository.get_gate_user_status(gate_id, user)
+    }
+
+    /// Retrieves a gate with its status for a specific user.
+    /// # Arguments
+    /// * `gate_id`: The ID of the gate to be checked.
+    /// * `user`: The user for whom the gate status is to be checked.
+    /// # Returns
+    /// * `Ok(GateForUser)`: If the gate and user status are found.
+    /// * `Err(String)`: If there is an error during retrieval.
+    pub fn get_gate_for_user(
+        &self,
+        gate_id: &str,
+        user: Principal,
+    ) -> Result<GateForUser, GateServiceError> {
+        let gate = self.get_gate(gate_id).ok_or(GateServiceError::NotFound)?;
+        let gate_user_status = self.get_gate_user_status(gate_id, user);
+        Ok(GateForUser {
+            gate,
+            gate_user_status,
+        })
+    }
+
+    /// Opens a gate for caller if the provided key is valid.
+    /// # Arguments
+    /// * `gate_id`: The ID of the gate to be opened.
+    /// * `key`: The key to be used for opening the gate.
+    /// # Returns
+    /// * `Ok(OpenGateSuccessResult)`: If the gate is opened successfully.
+    /// * `Err(String)`: If there is an error during gate opening.
+    pub async fn open_gate(
+        &mut self,
+        gate_id: &str,
+        key: GateKey,
+        user: Principal,
+    ) -> Result<OpenGateSuccessResult, GateServiceError> {
+        let gate = self.get_gate(gate_id);
+        let gate = gate.ok_or(GateServiceError::NotFound)?;
+
+        let opening_gate = self.get_opening_gate(gate_id)?;
+
+        match opening_gate.verify(key).await {
+            Ok(VerificationResult::Success) => {
+                let (gate, gate_user_status) = self
+                    .repository
+                    .open_gate(gate, user)
+                    .map_err(GateServiceError::RepositoryError)?;
+
+                Ok(OpenGateSuccessResult {
+                    gate,
+                    gate_user_status,
+                })
+            }
+            Ok(VerificationResult::Failure(e)) => Err(GateServiceError::KeyVerificationFailed(e)),
+            Err(e) => Err(e),
+        }
     }
 }
 
@@ -375,8 +414,8 @@ mod tests {
         assert!(result.is_ok());
     }
 
-    #[test]
-    fn it_should_open_password_gate() {
+    #[tokio::test]
+    async fn it_should_open_password_gate() {
         // Arrange
         let mut service = gate_service_fixture();
         let new_gate = NewGate {
@@ -385,18 +424,18 @@ mod tests {
             key: GateKey::Password("password123".to_string()),
         };
         let gate = service.add_gate(new_gate).unwrap();
+        let gate_key = GateKey::Password("password123".to_string());
         let user = random_principal_id();
 
         // Act
-        let result = service.open_gate(gate.clone(), user);
+        let result = service.open_gate(&gate.id, gate_key, user).await;
 
         // Assert
         assert!(result.is_ok());
-        let (result_gate, gate_user_status) = result.unwrap();
-        assert_eq!(result_gate.id, gate.id);
-        assert_eq!(gate_user_status.gate_id, gate.id);
-        assert_eq!(gate_user_status.user_id, user);
-        assert_eq!(gate_user_status.status, GateStatus::Open);
+        let result = result.unwrap();
+        assert_eq!(result.gate.id, gate.id);
+        assert_eq!(result.gate_user_status.status, GateStatus::Open);
+        assert_eq!(result.gate_user_status.user_id, user);
     }
 
     #[test]
@@ -412,8 +451,8 @@ mod tests {
         assert!(result.is_none());
     }
 
-    #[test]
-    fn it_should_get_password_gate_user_status() {
+    #[tokio::test]
+    async fn it_should_get_password_gate_user_status() {
         // Arrange
         let mut service = gate_service_fixture();
         let new_gate = NewGate {
@@ -422,8 +461,9 @@ mod tests {
             key: GateKey::Password("password123".to_string()),
         };
         let gate = service.add_gate(new_gate).unwrap();
+        let gate_key = GateKey::Password("password123".to_string());
         let user = random_principal_id();
-        let _ = service.open_gate(gate.clone(), user);
+        let _ = service.open_gate(&gate.id, gate_key, user).await;
 
         // Act
         let result = service.get_gate_user_status(&gate.id, user);
