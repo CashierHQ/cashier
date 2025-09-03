@@ -1,11 +1,9 @@
 pub mod password;
 
-use async_trait::async_trait;
 use gate_service_types::{error::GateServiceError, GateKey, GateType, VerificationResult};
 use password::PasswordGate;
-use std::fmt::Debug;
+use std::{fmt::Debug, future::Future, pin::Pin};
 
-#[async_trait]
 pub trait GateVerifier: Debug {
     /// Verifies the provided key against the gate's key.
     /// # Arguments
@@ -13,7 +11,7 @@ pub trait GateVerifier: Debug {
     /// # Returns
     /// * `Ok(VerificationResult)`: If the key is verified successfully.
     /// * `Err(String)`: If there is an error during verification.
-    async fn verify(&self, key: GateKey) -> Result<VerificationResult, GateServiceError>;
+    fn verify(&self, key: GateKey) -> Pin<Box<dyn Future<Output = Result<VerificationResult, GateServiceError>>>>;
 }
 
 pub struct GateFactory {}
