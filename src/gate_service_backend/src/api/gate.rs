@@ -1,5 +1,4 @@
-use crate::repository::StableGateRepository;
-use crate::service::GateService;
+use crate::api::state::get_state;
 use candid::Principal;
 use cashier_common::guard::is_not_anonymous;
 use gate_service_types::{
@@ -7,57 +6,33 @@ use gate_service_types::{
     VerificationResult,
 };
 use ic_cdk::{api::msg_caller, query, update};
-use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-use ic_stable_structures::DefaultMemoryImpl;
-use std::{cell::RefCell, rc::Rc};
-
-thread_local! {
-    // The memory manager is used for simulating multiple memories. Given a `MemoryId` it can
-    // return a memory that can be used by stable structures.
-    static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
-        RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
-
-    // Initialized the repositories
-    static GATE_REPOSITORY: Rc<RefCell<StableGateRepository>> = Rc::new(RefCell::new({
-        let gate_memory = MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(0)));
-        let owner_memory = MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(1)));
-        let gate_user_memory = MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(2)));
-        StableGateRepository::new(gate_memory, owner_memory, gate_user_memory)
-    }));
-
-    // Initialize the services
-    static GATE_SERVICE: Rc<RefCell<GateService<StableGateRepository>>> = Rc::new(RefCell::new({
-        let gate_repository = GATE_REPOSITORY.with(Rc::clone);
-        GateService::new(gate_repository)
-    }));
-}
 
 #[update(guard = "is_not_anonymous")]
 /// Adds a new gate
-/// This function facilitates the creation of a new gate and associates it with the owner.
+/// This function facilitates the creation of a new gate and associates it with the subject.
 /// # Arguments
 /// * `new_gate`: The details of the new gate to be created.
 /// # Returns
 /// * `Ok(Gate)`: If the gate is created successfully.
 /// * `Err(String)`: If there is an error during gate creation.
 fn add_gate(new_gate: NewGate) -> Result<Gate, GateServiceError> {
-    let gate_service = GATE_SERVICE.with(Rc::clone);
-    let gate = gate_service.borrow().add_gate(new_gate)?;
+    let mut gate_service = get_state().gate_service;
+    let gate = gate_service.add_gate(new_gate)?;
 
     Ok(gate)
 }
 
 #[query]
-/// Retrieves a gate by its owner's ID.
+/// Retrieves a gate by its subject's ID.
 /// # Arguments
-/// * `subject_id`: The ID of the owner whose gate is to be retrieved.
+/// * `subject_id`: The ID of the subject whose gate is to be retrieved.
 /// # Returns
 /// * `Ok(Some(Gate))`: If a gate is found.
 /// * `Ok(None)`: If no gate is found.
 /// * `Err(String)`: If there is an error during retrieval.
-fn get_gate_by_owner(subject_id: String) -> Result<Option<Gate>, GateServiceError> {
-    let another_service = GATE_SERVICE.with(Rc::clone);
-    let gate = another_service.borrow().get_gate_by_owner(&subject_id);
+fn get_gate_by_subject(subject_id: String) -> Result<Option<Gate>, GateServiceError> {
+    let gate_service = get_state().gate_service;
+    let gate = gate_service.get_gate_by_subject(&subject_id);
     Ok(gate)
 }
 
@@ -70,9 +45,8 @@ fn get_gate_by_owner(subject_id: String) -> Result<Option<Gate>, GateServiceErro
 /// * `Ok(None)`: If no gate is found.
 /// * `Err(String)`: If there is an error during retrieval.
 fn get_gate(gate_id: String) -> Option<Gate> {
-    let gate_service = GATE_SERVICE.with(Rc::clone);
-    let gate = gate_service.borrow().get_gate(&gate_id);
-    gate
+    let gate_service = get_state().gate_service;
+    gate_service.get_gate(&gate_id)
 }
 
 #[query]
@@ -85,12 +59,11 @@ fn get_gate(gate_id: String) -> Option<Gate> {
 /// * `Ok(GateForUser)`: If the gate is found.
 /// * `Err(String)`: If there is an error during retrieval.
 fn get_gate_for_user(gate_id: String, user: Principal) -> Result<GateForUser, GateServiceError> {
-    let gate_service = GATE_SERVICE.with(Rc::clone);
+    let gate_service = get_state().gate_service;
     let gate = gate_service
-        .borrow()
         .get_gate(&gate_id)
         .ok_or(GateServiceError::NotFound)?;
-    let gate_user_status = gate_service.borrow().get_gate_user_status(&gate_id, user);
+    let gate_user_status = gate_service.get_gate_user_status(&gate_id, user);
     Ok(GateForUser {
         gate,
         gate_user_status,
@@ -112,15 +85,13 @@ async fn open_gate(
     key: GateKey,
 ) -> Result<OpenGateSuccessResult, GateServiceError> {
     let gate = {
-        let gate_service = GATE_SERVICE.with(Rc::clone);
-        let gate_service = gate_service.borrow();
+        let gate_service = get_state().gate_service;
         gate_service.get_gate(&gate_id)
     };
     let gate = gate.ok_or(GateServiceError::NotFound)?;
 
     let opening_gate = {
-        let gate_service = GATE_SERVICE.with(Rc::clone);
-        let gate_service = gate_service.borrow();
+        let gate_service = get_state().gate_service;
         gate_service.get_opening_gate(&gate_id)
     }?;
 
@@ -129,8 +100,7 @@ async fn open_gate(
     match opening_gate.verify(key).await {
         Ok(VerificationResult::Success) => {
             let (gate, gate_user_status) = {
-                let gate_service = GATE_SERVICE.with(Rc::clone);
-                let gate_service = gate_service.borrow();
+                let mut gate_service = get_state().gate_service;
                 gate_service.open_gate(gate, caller)
             }?;
 

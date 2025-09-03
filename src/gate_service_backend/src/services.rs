@@ -1,35 +1,34 @@
 use crate::{
     gates::{GateFactory, GateVerifier},
-    repository::GateRepository,
+    repositories::{gate::GateRepository, Repositories},
     utils::hash_password,
 };
 use candid::Principal;
 use gate_service_types::{
     error::GateServiceError, Gate, GateKey, GateType, GateUserStatus, NewGate,
 };
-use std::cell::RefCell;
 use std::rc::Rc;
 
-pub struct GateService<R: GateRepository> {
-    repository: Rc<RefCell<R>>,
+pub struct GateService<R: Repositories> {
+    repository: GateRepository<R::Gate, R::SubjectGate, R::GateUserStatus>,
     gate_factory: GateFactory,
 }
 
-impl<R: GateRepository> GateService<R> {
-    pub fn new(repository: Rc<RefCell<R>>) -> Self {
+impl<R: Repositories> GateService<R> {
+    pub fn new(repositories: Rc<R>) -> Self {
         Self {
-            repository,
+            repository: repositories.gate(),
             gate_factory: GateFactory {},
         }
     }
 
-    /// Create a new gate and associate it with its owner.
+    /// Create a new gate and associate it with its subject.
     /// # Arguments
     /// * `new_gate`: The details of the new gate to be created.
     /// # Returns
     /// * `Ok(Gate)`: If the gate is created successfully.
     /// * `Err(String)`: If there is an error during gate creation.
-    pub fn add_gate(&self, new_gate: NewGate) -> Result<Gate, GateServiceError> {
+    pub fn add_gate(&mut self, new_gate: NewGate) -> Result<Gate, GateServiceError> {
         let gate_key = match &new_gate.key {
             GateKey::Password(password) => {
                 let hashed_password =
@@ -39,9 +38,8 @@ impl<R: GateRepository> GateService<R> {
             _ => new_gate.key.clone(),
         };
 
-        let repository = self.repository.borrow_mut();
-
-        let mut gate = repository
+        let mut gate = self
+            .repository
             .create_gate(NewGate {
                 key: gate_key,
                 ..new_gate
@@ -66,28 +64,28 @@ impl<R: GateRepository> GateService<R> {
     /// * `Ok(None)`: If no gate is found.
     /// * `Err(String)`: If there is an error during retrieval.
     pub fn get_gate(&self, gate_id: &str) -> Option<Gate> {
-        let repository = self.repository.borrow();
-        repository.get_gate(gate_id).map(|mut g| match g.gate_type {
-            GateType::Password => {
-                // redact password from gate info
-                g.key = GateKey::Password("".to_string());
-                g
-            }
-            _ => g,
-        })
+        self.repository
+            .get_gate(gate_id)
+            .map(|mut g| match g.gate_type {
+                GateType::Password => {
+                    // redact password from gate info
+                    g.key = GateKey::Password("".to_string());
+                    g
+                }
+                _ => g,
+            })
     }
 
-    /// Retrieves a gate by its owner's ID.
+    /// Retrieves a gate by its subject's ID.
     /// # Arguments
-    /// * `subject_id`: The ID of the owner whose gate is to be retrieved.
+    /// * `subject_id`: The ID of the subject whose gate is to be retrieved.
     /// # Returns
     /// * `Ok(Some(Gate))`: If a gate is found.
     /// * `Ok(None)`: If no gate is found.
     /// * `Err(String)`: If there is an error during retrieval.
-    pub fn get_gate_by_owner(&self, subject_id: &str) -> Option<Gate> {
-        let repository = self.repository.borrow();
-        repository
-            .get_gate_by_owner(subject_id)
+    pub fn get_gate_by_subject(&self, subject_id: &str) -> Option<Gate> {
+        self.repository
+            .get_gate_by_subject(subject_id)
             .map(|mut g| match g.gate_type {
                 GateType::Password => {
                     // redact password from gate info
@@ -108,8 +106,8 @@ impl<R: GateRepository> GateService<R> {
         &self,
         gate_id: &str,
     ) -> Result<Box<dyn GateVerifier>, GateServiceError> {
-        let repository = self.repository.borrow();
-        let gate_info = repository
+        let gate_info = self
+            .repository
             .get_gate(gate_id)
             .ok_or(GateServiceError::NotFound)?;
 
@@ -128,12 +126,11 @@ impl<R: GateRepository> GateService<R> {
     /// * `Ok((Gate, GateUserStatus))`: If the gate is opened successfully.
     /// * `Err(String)`: If there is an error during gate opening.
     pub fn open_gate(
-        &self,
+        &mut self,
         gate: Gate,
         user: Principal,
     ) -> Result<(Gate, GateUserStatus), GateServiceError> {
-        let repository = self.repository.borrow_mut();
-        repository
+        self.repository
             .open_gate(gate, user)
             .map_err(GateServiceError::RepositoryError)
     }
@@ -147,40 +144,44 @@ impl<R: GateRepository> GateService<R> {
     /// * `Ok(None)`: If no gate user status is found.
     /// * `Err(String)`: If there is an error during retrieval.
     pub fn get_gate_user_status(&self, gate_id: &str, user: Principal) -> Option<GateUserStatus> {
-        let repository = self.repository.borrow();
-        repository.get_gate_user_status(gate_id, user)
+        self.repository.get_gate_user_status(gate_id, user)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::gate_service_fixture;
+    use crate::repositories::tests::TestRepositories;
     use cashier_common::test_utils::{random_id_string, random_principal_id};
     use gate_service_types::GateStatus;
+
+    /// Generate a fixture for the gate service using a stable gate repository.
+    fn gate_service_fixture() -> GateService<TestRepositories> {
+        GateService::new(Rc::new(TestRepositories::new()))
+    }
 
     #[test]
     fn it_should_add_gate() {
         // Arrange
-        let service = gate_service_fixture();
+        let mut service = gate_service_fixture();
         let gates = vec![
             NewGate {
-                subject_id: "owner1".to_string(),
+                subject_id: "subject1".to_string(),
                 gate_type: GateType::Password,
                 key: GateKey::Password("password123".to_string()),
             },
             NewGate {
-                subject_id: "owner2".to_string(),
+                subject_id: "subject2".to_string(),
                 gate_type: GateType::XFollowing,
                 key: GateKey::XFollowing("x_handle".to_string()),
             },
             NewGate {
-                subject_id: "owner3".to_string(),
+                subject_id: "subject3".to_string(),
                 gate_type: GateType::TelegramGroup,
                 key: GateKey::TelegramGroup("telegram_group_id".to_string()),
             },
             NewGate {
-                subject_id: "owner4".to_string(),
+                subject_id: "subject4".to_string(),
                 gate_type: GateType::DiscordServer,
                 key: GateKey::DiscordServer("discord_server_id".to_string()),
             },
@@ -221,9 +222,9 @@ mod tests {
     #[test]
     fn it_should_get_password_gate() {
         // Arrange
-        let service = gate_service_fixture();
+        let mut service = gate_service_fixture();
         let new_gate = NewGate {
-            subject_id: "owner1".to_string(),
+            subject_id: "subject1".to_string(),
             gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
@@ -242,7 +243,7 @@ mod tests {
     #[test]
     fn it_should_get_xfollowing_gate() {
         // Arrange
-        let service = gate_service_fixture();
+        let mut service = gate_service_fixture();
         let subject_id = random_id_string();
         let new_gate = NewGate {
             subject_id: subject_id.clone(),
@@ -267,7 +268,7 @@ mod tests {
         let service = gate_service_fixture();
 
         // Act
-        let gate = service.get_gate_by_owner("non_existent_subject_id");
+        let gate = service.get_gate_by_subject("non_existent_subject_id");
 
         // Assert
         assert!(gate.is_none());
@@ -276,7 +277,7 @@ mod tests {
     #[test]
     fn it_should_get_password_gate_by_subject_id() {
         // Arrange
-        let service = gate_service_fixture();
+        let mut service = gate_service_fixture();
         let subject_id = random_id_string();
         let new_gate = NewGate {
             subject_id: subject_id.clone(),
@@ -286,7 +287,7 @@ mod tests {
         service.add_gate(new_gate).unwrap();
 
         // Act
-        let gate = service.get_gate_by_owner(&subject_id);
+        let gate = service.get_gate_by_subject(&subject_id);
 
         // Assert
         assert!(gate.is_some());
@@ -298,7 +299,7 @@ mod tests {
     #[test]
     fn it_should_get_xfollowing_gate_by_subject_id() {
         // Arrange
-        let service = gate_service_fixture();
+        let mut service = gate_service_fixture();
         let subject_id = random_id_string();
         let new_gate = NewGate {
             subject_id: subject_id.clone(),
@@ -308,7 +309,7 @@ mod tests {
         service.add_gate(new_gate).unwrap();
 
         // Act
-        let gate = service.get_gate_by_owner(&subject_id);
+        let gate = service.get_gate_by_subject(&subject_id);
 
         // Assert
         assert!(gate.is_some());
@@ -336,9 +337,9 @@ mod tests {
     #[test]
     fn it_should_error_get_opening_gate_due_to_unsupported_gate_type() {
         // Arrange
-        let service = gate_service_fixture();
+        let mut service = gate_service_fixture();
         let new_gate = NewGate {
-            subject_id: "owner1".to_string(),
+            subject_id: "subject1".to_string(),
             gate_type: GateType::XFollowing,
             key: GateKey::XFollowing("x_handle".to_string()),
         };
@@ -359,9 +360,9 @@ mod tests {
     #[test]
     fn it_should_get_opening_gate_password() {
         // Arrange
-        let service = gate_service_fixture();
+        let mut service = gate_service_fixture();
         let new_gate = NewGate {
-            subject_id: "owner1".to_string(),
+            subject_id: "subject1".to_string(),
             gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
@@ -377,9 +378,9 @@ mod tests {
     #[test]
     fn it_should_open_password_gate() {
         // Arrange
-        let service = gate_service_fixture();
+        let mut service = gate_service_fixture();
         let new_gate = NewGate {
-            subject_id: "owner1".to_string(),
+            subject_id: "subject1".to_string(),
             gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
@@ -414,9 +415,9 @@ mod tests {
     #[test]
     fn it_should_get_password_gate_user_status() {
         // Arrange
-        let service = gate_service_fixture();
+        let mut service = gate_service_fixture();
         let new_gate = NewGate {
-            subject_id: "owner1".to_string(),
+            subject_id: "subject1".to_string(),
             gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };

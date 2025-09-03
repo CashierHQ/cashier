@@ -3,7 +3,6 @@
 
 use crate::api::state::{CanisterState, get_state};
 use crate::services::link::traits::LinkValidation;
-use crate::utils::runtime::IcEnvironment;
 use candid::Principal;
 use cashier_backend_types::dto::action::{
     ActionDto, CreateActionAnonymousInput, CreateActionInput, ProcessActionAnonymousInput,
@@ -15,7 +14,7 @@ use cashier_backend_types::dto::link::{
 };
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::service::link::{PaginateInput, PaginateResult};
-use cashier_common::guard::is_not_anonymous;
+use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
 use ic_cdk::api::msg_caller;
 use ic_cdk::{query, update};
 use log::{debug, error, info};

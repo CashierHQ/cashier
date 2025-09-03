@@ -1,18 +1,17 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::{
-    error::CanisterError,
-    repository::transaction::v2::{Transaction, TransactionState},
-};
-
 use crate::{
     repositories::Repositories,
     services::transaction_manager::{
         service::TransactionManagerService, traits::DependencyAnalyzer,
     },
-    utils::runtime::IcEnvironment,
 };
+use cashier_backend_types::{
+    error::CanisterError,
+    repository::transaction::v2::{Transaction, TransactionState},
+};
+use cashier_common::runtime::IcEnvironment;
 
 impl<E: IcEnvironment + Clone, R: Repositories> DependencyAnalyzer
     for TransactionManagerService<E, R>

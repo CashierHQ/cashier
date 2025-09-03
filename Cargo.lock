@@ -768,6 +768,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-timers",
  "ic-stable-structures 0.7.0",
+ "ic_mple_log",
  "rand 0.8.5",
  "tokio",
  "uuid",

@@ -1,80 +1,45 @@
 use candid::Principal;
 use gate_service_types::{Gate, GateStatus, GateUser, GateUserStatus, NewGate};
+use ic_mple_log::service::Storage;
 use ic_stable_structures::memory_manager::VirtualMemory;
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
-use std::cell::RefCell;
 
-pub trait GateRepository {
+pub type GateStorage = StableBTreeMap<String, Gate, VirtualMemory<DefaultMemoryImpl>>;
+pub type SubjectGateStorage = StableBTreeMap<String, String, VirtualMemory<DefaultMemoryImpl>>;
+pub type GateUserStatusStorage =
+    StableBTreeMap<GateUser, GateUserStatus, VirtualMemory<DefaultMemoryImpl>>;
+
+pub struct GateRepository<
+    G: Storage<GateStorage>,
+    S: Storage<SubjectGateStorage>,
+    U: Storage<GateUserStatusStorage>,
+> {
+    gate_map: G,
+    subject_gate_map: S,
+    gate_user_map: U,
+}
+
+impl<
+        G: Storage<GateStorage>,
+        S: Storage<SubjectGateStorage>,
+        U: Storage<GateUserStatusStorage>,
+    > GateRepository<G, S, U>
+{
+    pub fn new(gate_map: G, subject_gate_map: S, gate_user_map: U) -> Self {
+        Self {
+            gate_map,
+            subject_gate_map,
+            gate_user_map,
+        }
+    }
+
     /// Creates a new gate in the repository.
     /// # Arguments
     /// * `new_gate`: The details of the new gate to be created.
     /// # Returns
     /// * `Ok(Gate)`: If the gate is created successfully.
     /// * `Err(String)`: If there is an error during gate creation.
-    fn create_gate(&self, gate: NewGate) -> Result<Gate, String>;
-
-    /// Retrieves a gate from the repository.
-    /// # Arguments
-    /// * `gate_id`: The ID of the gate to be retrieved.
-    /// # Returns
-    /// * `Ok(Some(Gate))`: If the gate is found.
-    /// * `Ok(None)`: If no gate is found.
-    /// * `Err(String)`: If there is an error during retrieval.
-    fn get_gate(&self, gate_id: &str) -> Option<Gate>;
-
-    /// Retrieves a gate by its owner's ID.
-    /// # Arguments
-    /// * `subject_id`: The ID of the owner whose gate is to be retrieved.
-    /// # Returns
-    /// * `Ok(Some(Gate))`: If a gate is found.
-    /// * `Ok(None)`: If no gate is found.
-    /// * `Err(String)`: If there is an error during retrieval.
-    fn get_gate_by_owner(&self, subject_id: &str) -> Option<Gate>;
-
-    /// Retrieves the user status of a gate for a specific user.
-    /// The user status of a gate indicates whether user has opened it or not.
-    /// # Arguments
-    /// * `gate_id`: The ID of the gate to be checked.
-    /// * `user`: The user for whom the gate status is to be checked.
-    /// # Returns
-    /// * `Ok(Some(GateUserStatus))`: If the gate user status is found.
-    /// * `Ok(None)`: If no gate user status is found.
-    /// * `Err(String)`: If there is an error during retrieval.
-    fn get_gate_user_status(&self, gate_id: &str, user: Principal) -> Option<GateUserStatus>;
-
-    /// Opens a gate for a specific user.
-    /// # Arguments
-    /// * `gate`: The gate to be opened.
-    /// * `user`: The user who is opening the gate.
-    /// # Returns
-    /// * `Ok((Gate, GateUserStatus))`: If the gate is opened successfully.
-    /// * `Err(String)`: If there is an error during gate opening.
-    fn open_gate(&self, gate: Gate, user: Principal) -> Result<(Gate, GateUserStatus), String>;
-}
-
-pub struct StableGateRepository {
-    gate_map: RefCell<StableBTreeMap<String, Gate, VirtualMemory<DefaultMemoryImpl>>>,
-    owner_map: RefCell<StableBTreeMap<String, String, VirtualMemory<DefaultMemoryImpl>>>,
-    gate_user_map:
-        RefCell<StableBTreeMap<GateUser, GateUserStatus, VirtualMemory<DefaultMemoryImpl>>>,
-}
-
-impl StableGateRepository {
-    pub fn new(
-        gate_memory: VirtualMemory<DefaultMemoryImpl>,
-        owner_memory: VirtualMemory<DefaultMemoryImpl>,
-        gate_user_memory: VirtualMemory<DefaultMemoryImpl>,
-    ) -> Self {
-        Self {
-            gate_map: RefCell::new(StableBTreeMap::init(gate_memory)),
-            owner_map: RefCell::new(StableBTreeMap::init(owner_memory)),
-            gate_user_map: RefCell::new(StableBTreeMap::init(gate_user_memory)),
-        }
-    }
-}
-
-impl GateRepository for StableGateRepository {
-    fn create_gate(&self, new_gate: NewGate) -> Result<Gate, String> {
+    pub fn create_gate(&mut self, new_gate: NewGate) -> Result<Gate, String> {
         let gate_id = uuid::Uuid::new_v4().to_string();
 
         let gate = Gate {
@@ -85,80 +50,115 @@ impl GateRepository for StableGateRepository {
         };
 
         self.gate_map
-            .borrow_mut()
-            .insert(gate_id.clone(), gate.clone());
+            .with_borrow_mut(|map| map.insert(gate_id.clone(), gate.clone()));
 
-        self.owner_map
-            .borrow_mut()
-            .insert(new_gate.subject_id.clone(), gate_id);
+        self.subject_gate_map
+            .with_borrow_mut(|map| map.insert(new_gate.subject_id.clone(), gate_id));
 
         Ok(gate)
     }
 
-    fn get_gate(&self, gate_id: &str) -> Option<Gate> {
-        self.gate_map.borrow().get(&gate_id.to_string())
+    /// Retrieves a gate from the repository.
+    /// # Arguments
+    /// * `gate_id`: The ID of the gate to be retrieved.
+    /// # Returns
+    /// * `Ok(Some(Gate))`: If the gate is found.
+    /// * `Ok(None)`: If no gate is found.
+    /// * `Err(String)`: If there is an error during retrieval.
+    pub fn get_gate(&self, gate_id: &str) -> Option<Gate> {
+        self.gate_map
+            .with_borrow(|map| map.get(&gate_id.to_string()))
     }
 
-    fn get_gate_by_owner(&self, subject_id: &str) -> Option<Gate> {
-        if let Some(gate_id) = self.owner_map.borrow().get(&subject_id.to_string()) {
-            return self.get_gate(&gate_id);
-        }
-        None
+    /// Retrieves a gate by its subject's ID.
+    /// # Arguments
+    /// * `subject_id`: The ID of the subject whose gate is to be retrieved.
+    /// # Returns
+    /// * `Ok(Some(Gate))`: If a gate is found.
+    /// * `Ok(None)`: If no gate is found.
+    /// * `Err(String)`: If there is an error during retrieval.
+    pub fn get_gate_by_subject(&self, subject_id: &str) -> Option<Gate> {
+        self.subject_gate_map
+            .with_borrow(|map| map.get(&subject_id.to_string()))
+            .and_then(|gate_id| self.get_gate(&gate_id))
     }
 
-    fn get_gate_user_status(&self, gate_id: &str, user: Principal) -> Option<GateUserStatus> {
-        self.gate_user_map.borrow().get(&GateUser {
-            gate_id: gate_id.to_string(),
-            user_id: user,
+    /// Retrieves the user status of a gate for a specific user.
+    /// The user status of a gate indicates whether user has opened it or not.
+    /// # Arguments
+    /// * `gate_id`: The ID of the gate to be checked.
+    /// * `user`: The user for whom the gate status is to be checked.
+    /// # Returns
+    /// * `Ok(Some(GateUserStatus))`: If the gate user status is found.
+    /// * `Ok(None)`: If no gate user status is found.
+    /// * `Err(String)`: If there is an error during retrieval.
+    pub fn get_gate_user_status(&self, gate_id: &str, user: Principal) -> Option<GateUserStatus> {
+        self.gate_user_map.with_borrow(|map| {
+            map.get(&GateUser {
+                gate_id: gate_id.to_string(),
+                user_id: user,
+            })
         })
     }
 
-    fn open_gate(&self, gate: Gate, user: Principal) -> Result<(Gate, GateUserStatus), String> {
-        let mut gate_user_map = self.gate_user_map.borrow_mut();
-        let gate_user = GateUser {
-            gate_id: gate.id.clone(),
-            user_id: user,
-        };
-        let gate_user_status = GateUserStatus {
-            gate_id: gate.id.clone(),
-            user_id: user,
-            status: GateStatus::Open,
-        };
-        gate_user_map.insert(gate_user, gate_user_status.clone());
-        Ok((gate, gate_user_status))
+    /// Opens a gate for a specific user.
+    /// # Arguments
+    /// * `gate`: The gate to be opened.
+    /// * `user`: The user who is opening the gate.
+    /// # Returns
+    /// * `Ok((Gate, GateUserStatus))`: If the gate is opened successfully.
+    /// * `Err(String)`: If there is an error during gate opening.
+    pub fn open_gate(
+        &mut self,
+        gate: Gate,
+        user: Principal,
+    ) -> Result<(Gate, GateUserStatus), String> {
+        self.gate_user_map.with_borrow_mut(|map| {
+            let gate_user = GateUser {
+                gate_id: gate.id.clone(),
+                user_id: user,
+            };
+            let gate_user_status = GateUserStatus {
+                gate_id: gate.id.clone(),
+                user_id: user,
+                status: GateStatus::Open,
+            };
+            map.insert(gate_user, gate_user_status.clone());
+            Ok((gate, gate_user_status))
+        })
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::gate_repository_fixture;
+    use crate::repositories::{tests::TestRepositories, Repositories};
     use cashier_common::test_utils::{random_id_string, random_principal_id};
     use gate_service_types::{GateKey, GateType};
 
     #[test]
     fn it_should_success_create_password_gate() {
         // Arrange
-        let repo = gate_repository_fixture();
+        let mut repo = TestRepositories::new().gate();
 
         let gates = vec![
             NewGate {
-                subject_id: "owner1".to_string(),
+                subject_id: "subject1".to_string(),
                 gate_type: GateType::Password,
                 key: GateKey::Password("password123".to_string()),
             },
             NewGate {
-                subject_id: "owner2".to_string(),
+                subject_id: "subject2".to_string(),
                 gate_type: GateType::XFollowing,
                 key: GateKey::XFollowing("x_handle".to_string()),
             },
             NewGate {
-                subject_id: "owner3".to_string(),
+                subject_id: "subject3".to_string(),
                 gate_type: GateType::TelegramGroup,
                 key: GateKey::TelegramGroup("telegram_group_id".to_string()),
             },
             NewGate {
-                subject_id: "owner4".to_string(),
+                subject_id: "subject4".to_string(),
                 gate_type: GateType::DiscordServer,
                 key: GateKey::DiscordServer("discord_server_id".to_string()),
             },
@@ -179,7 +179,7 @@ mod tests {
     #[test]
     fn it_should_none_get_gate_by_id() {
         // Arrange
-        let repo = gate_repository_fixture();
+        let repo = TestRepositories::new().gate();
 
         // Act
         let gate = repo.get_gate("non_existent_id");
@@ -191,9 +191,9 @@ mod tests {
     #[test]
     fn it_should_get_gate_by_id() {
         // Arrange
-        let repo = gate_repository_fixture();
+        let mut repo = TestRepositories::new().gate();
         let new_gate = NewGate {
-            subject_id: "owner1".to_string(),
+            subject_id: "subject1".to_string(),
             gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
@@ -214,10 +214,10 @@ mod tests {
     #[test]
     fn it_should_none_get_gate_by_subject_id() {
         // Arrange
-        let repo = gate_repository_fixture();
+        let repo = TestRepositories::new().gate();
 
         // Act
-        let gate = repo.get_gate_by_owner("non_existent_owner");
+        let gate = repo.get_gate_by_subject("non_existent_subject");
 
         // Assert
         assert!(gate.is_none());
@@ -226,16 +226,16 @@ mod tests {
     #[test]
     fn it_should_get_gate_by_subject_id() {
         // Arrange
-        let repo = gate_repository_fixture();
+        let mut repo = TestRepositories::new().gate();
         let new_gate = NewGate {
-            subject_id: "owner1".to_string(),
+            subject_id: "subject1".to_string(),
             gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
         let gate = repo.create_gate(new_gate.clone()).unwrap();
 
         // Act
-        let gate = repo.get_gate_by_owner(&gate.subject_id);
+        let gate = repo.get_gate_by_subject(&gate.subject_id);
 
         // Assert
         assert!(gate.is_some());
@@ -249,7 +249,7 @@ mod tests {
     #[test]
     fn it_should_none_get_gate_user_status() {
         // Arrange
-        let repo = gate_repository_fixture();
+        let repo = TestRepositories::new().gate();
         let gate_id = random_id_string();
         let user = random_principal_id();
 
@@ -263,9 +263,9 @@ mod tests {
     #[test]
     fn it_should_open_gate_and_get_gate_user_status() {
         // Arrange
-        let repo = gate_repository_fixture();
+        let mut repo = TestRepositories::new().gate();
         let new_gate = NewGate {
-            subject_id: "owner1".to_string(),
+            subject_id: "subject1".to_string(),
             gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
