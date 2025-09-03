@@ -102,6 +102,7 @@ pub enum GateType {
 /// The gate key enum
 pub enum GateKey {
     Password(String),
+    PasswordRedacted,
     XFollowing(String),
     TelegramGroup(String),
     DiscordServer(String),
