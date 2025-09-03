@@ -15,7 +15,6 @@ interface DetailsPanelProps {
   onBack: () => void;
 }
 
-// eslint-disable-next-line react/prop-types
 const DetailsPanel: React.FC<DetailsPanelProps> = ({ tokenId, onBack }) => {
   const { isLoadingBalances, displayTokens } = useTokensV2();
 

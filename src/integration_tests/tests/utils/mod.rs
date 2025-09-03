@@ -1,6 +1,6 @@
 use crate::{
     constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL},
-    utils::{token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
+    utils::{principal::TestUser, token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
 };
 use candid::{CandidType, Decode, Encode, Principal, utils::ArgumentEncoder};
 use cashier_backend_client::client::CashierBackendClient;
@@ -50,6 +50,7 @@ where
         get_token_storage_canister_bytecode(),
         &(TokenStorageInitData {
             log_settings: Some(log.clone()),
+            owner: TestUser::TokenStorageAdmin.get_principal(),
         }),
     )
     .await;
@@ -60,6 +61,7 @@ where
         get_cashier_backend_canister_bytecode(),
         &(CashierBackendInitData {
             log_settings: Some(log),
+            owner: TestUser::CashierBackendAdmin.get_principal(),
         }),
     )
     .await;
@@ -191,6 +193,7 @@ impl PocketIcTestContextBuilder {
                 get_token_storage_canister_bytecode(),
                 &(TokenStorageInitData {
                     log_settings: Some(log.clone()),
+                    owner: TestUser::TokenStorageAdmin.get_principal(),
                 }),
             )
             .await
@@ -205,6 +208,7 @@ impl PocketIcTestContextBuilder {
                 get_cashier_backend_canister_bytecode(),
                 &(CashierBackendInitData {
                     log_settings: Some(log),
+                    owner: TestUser::CashierBackendAdmin.get_principal(),
                 }),
             )
             .await

@@ -3,7 +3,7 @@
 
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
-import React, { useState, useEffect } from "react";
+import { JSX, useState, useEffect, memo } from "react";
 import { useTranslation } from "react-i18next";
 import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
@@ -660,7 +660,7 @@ function LinkPreview({
 
 // Memoize the component to prevent re-renders when link data is essentially the same
 // This is crucial when transitioning from local link ID to backend link ID
-export default React.memo(LinkPreview, (prevProps, nextProps) => {
+export default memo(LinkPreview, (prevProps, nextProps) => {
   // If we're in a transitioning state, don't re-render
   const prevLink = prevProps.linkDetailQuery.data?.link;
   const nextLink = nextProps.linkDetailQuery.data?.link;
