@@ -4,7 +4,9 @@ use crate::{
     utils::hash_password,
 };
 use candid::Principal;
-use gate_service_types::{Gate, GateKey, GateType, GateUserStatus, NewGate};
+use gate_service_types::{
+    error::GateServiceError, Gate, GateKey, GateType, GateUserStatus, NewGate,
+};
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -27,10 +29,11 @@ impl<R: GateRepository> GateService<R> {
     /// # Returns
     /// * `Ok(Gate)`: If the gate is created successfully.
     /// * `Err(String)`: If there is an error during gate creation.
-    pub fn add_gate(&self, new_gate: NewGate) -> Result<Gate, String> {
+    pub fn add_gate(&self, new_gate: NewGate) -> Result<Gate, GateServiceError> {
         let gate_key = match &new_gate.key {
             GateKey::Password(password) => {
-                let hashed_password = hash_password(password)?;
+                let hashed_password =
+                    hash_password(password).map_err(GateServiceError::HashingFailed)?;
                 GateKey::Password(hashed_password)
             }
             _ => new_gate.key.clone(),
@@ -38,10 +41,12 @@ impl<R: GateRepository> GateService<R> {
 
         let repository = self.repository.borrow_mut();
 
-        let mut gate = repository.create_gate(NewGate {
-            key: gate_key,
-            ..new_gate
-        })?;
+        let mut gate = repository
+            .create_gate(NewGate {
+                key: gate_key,
+                ..new_gate
+            })
+            .map_err(GateServiceError::RepositoryError)?;
 
         // redact password
         match gate.gate_type {
@@ -99,11 +104,14 @@ impl<R: GateRepository> GateService<R> {
     /// # Returns
     /// * `Ok(Box<dyn GateVerifier>)`: A gate instance of `GateVerifier` trait if gate has been found.
     /// * `Err(String)`: If there is an error during retrieval.
-    pub fn get_opening_gate(&self, gate_id: &str) -> Result<Box<dyn GateVerifier>, String> {
+    pub fn get_opening_gate(
+        &self,
+        gate_id: &str,
+    ) -> Result<Box<dyn GateVerifier>, GateServiceError> {
         let repository = self.repository.borrow();
         let gate_info = repository
             .get_gate(gate_id)
-            .ok_or_else(|| "Gate not found".to_string())?;
+            .ok_or(GateServiceError::NotFound)?;
 
         let gate = self
             .gate_factory
@@ -119,9 +127,15 @@ impl<R: GateRepository> GateService<R> {
     /// # Returns
     /// * `Ok((Gate, GateUserStatus))`: If the gate is opened successfully.
     /// * `Err(String)`: If there is an error during gate opening.
-    pub fn open_gate(&self, gate: Gate, user: Principal) -> Result<(Gate, GateUserStatus), String> {
+    pub fn open_gate(
+        &self,
+        gate: Gate,
+        user: Principal,
+    ) -> Result<(Gate, GateUserStatus), GateServiceError> {
         let repository = self.repository.borrow_mut();
-        repository.open_gate(gate, user)
+        repository
+            .open_gate(gate, user)
+            .map_err(GateServiceError::RepositoryError)
     }
 
     /// Retrieves the user status of a gate for a specific user.
@@ -313,8 +327,7 @@ mod tests {
 
         // Assert
         assert!(result.is_err());
-        if let Err(e) = result {
-            assert_eq!(e, "Gate not found".to_string());
+        if let Err(GateServiceError::NotFound) = result {
         } else {
             panic!("Expected error but got success");
         }
@@ -336,8 +349,8 @@ mod tests {
 
         // Assert
         assert!(result.is_err());
-        if let Err(e) = result {
-            assert!(e.contains("Unsupported gate type"));
+        if let Err(GateServiceError::UnsupportedGateType(e)) = result {
+            assert!(e.contains("XFollowing"));
         } else {
             panic!("Expected error but got success");
         }

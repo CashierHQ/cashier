@@ -3,7 +3,8 @@ use crate::service::GateService;
 use candid::Principal;
 use cashier_common::guard::is_not_anonymous;
 use gate_service_types::{
-    Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult, VerificationResult,
+    error::GateServiceError, Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult,
+    VerificationResult,
 };
 use ic_cdk::{api::msg_caller, query, update};
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
@@ -39,7 +40,7 @@ thread_local! {
 /// # Returns
 /// * `Ok(Gate)`: If the gate is created successfully.
 /// * `Err(String)`: If there is an error during gate creation.
-fn add_gate(new_gate: NewGate) -> Result<Gate, String> {
+fn add_gate(new_gate: NewGate) -> Result<Gate, GateServiceError> {
     let gate_service = GATE_SERVICE.with(Rc::clone);
     let gate = gate_service.borrow().add_gate(new_gate)?;
 
@@ -54,7 +55,7 @@ fn add_gate(new_gate: NewGate) -> Result<Gate, String> {
 /// * `Ok(Some(Gate))`: If a gate is found.
 /// * `Ok(None)`: If no gate is found.
 /// * `Err(String)`: If there is an error during retrieval.
-fn get_gate_by_owner(subject_id: String) -> Result<Option<Gate>, String> {
+fn get_gate_by_owner(subject_id: String) -> Result<Option<Gate>, GateServiceError> {
     let another_service = GATE_SERVICE.with(Rc::clone);
     let gate = another_service.borrow().get_gate_by_owner(&subject_id);
     Ok(gate)
@@ -83,12 +84,12 @@ fn get_gate(gate_id: String) -> Option<Gate> {
 /// # Returns
 /// * `Ok(GateForUser)`: If the gate is found.
 /// * `Err(String)`: If there is an error during retrieval.
-fn get_gate_for_user(gate_id: String, user: Principal) -> Result<GateForUser, String> {
+fn get_gate_for_user(gate_id: String, user: Principal) -> Result<GateForUser, GateServiceError> {
     let gate_service = GATE_SERVICE.with(Rc::clone);
     let gate = gate_service
         .borrow()
         .get_gate(&gate_id)
-        .ok_or_else(|| "Gate not found".to_string())?;
+        .ok_or(GateServiceError::NotFound)?;
     let gate_user_status = gate_service.borrow().get_gate_user_status(&gate_id, user);
     Ok(GateForUser {
         gate,
@@ -106,13 +107,16 @@ fn get_gate_for_user(gate_id: String, user: Principal) -> Result<GateForUser, St
 /// # Returns
 /// * `Ok(OpenGateSuccessResult)`: If the gate is opened successfully.
 /// * `Err(String)`: If there is an error during gate opening.
-async fn open_gate(gate_id: String, key: GateKey) -> Result<OpenGateSuccessResult, String> {
+async fn open_gate(
+    gate_id: String,
+    key: GateKey,
+) -> Result<OpenGateSuccessResult, GateServiceError> {
     let gate = {
         let gate_service = GATE_SERVICE.with(Rc::clone);
         let gate_service = gate_service.borrow();
         gate_service.get_gate(&gate_id)
     };
-    let gate = gate.ok_or_else(|| "Gate not found".to_string())?;
+    let gate = gate.ok_or(GateServiceError::NotFound)?;
 
     let opening_gate = {
         let gate_service = GATE_SERVICE.with(Rc::clone);
@@ -135,7 +139,7 @@ async fn open_gate(gate_id: String, key: GateKey) -> Result<OpenGateSuccessResul
                 gate_user_status,
             })
         }
-        Ok(VerificationResult::Failure(e)) => Err(format!("Verification failed: {}", e)),
+        Ok(VerificationResult::Failure(e)) => Err(GateServiceError::KeyVerificationFailed(e)),
         Err(e) => Err(e),
     }
 }
