@@ -92,7 +92,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> ActionCreator<E>
         }
 
         // set link_user_state based on action type
-        // if action type is claim, then set link_user_state to ChooseWallet
+        // if action type is claim, then set link_user_state to Address (user_state_address)
         // else set it to None
 
         let link_action = LinkAction {

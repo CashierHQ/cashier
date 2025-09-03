@@ -142,7 +142,7 @@ mod tests {
             action_type: ActionType::Use,
             action_id: "action1".to_string(),
             user_id: user1,
-            link_user_state: Some(LinkUserState::ChooseWallet),
+            link_user_state: Some(LinkUserState::Address),
         };
 
         // Act
@@ -153,7 +153,7 @@ mod tests {
         assert_eq!(actions.len(), 1);
         assert_eq!(
             actions.first().unwrap().link_user_state,
-            Some(LinkUserState::ChooseWallet)
+            Some(LinkUserState::Address)
         );
     }
 

@@ -54,7 +54,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
             // Create temp action with default state
             let default_link_user_state = match input.action_type {
-                ActionType::Use => Some(LinkUserState::ChooseWallet),
+                ActionType::Use => Some(LinkUserState::Address),
                 _ => None,
             };
 
@@ -250,7 +250,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
             // Create temp action with default state
             let default_link_user_state = match input.action_type {
-                ActionType::Use => Some(LinkUserState::ChooseWallet),
+                ActionType::Use => Some(LinkUserState::Address),
                 _ => None,
             };
 

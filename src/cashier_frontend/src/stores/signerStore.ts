@@ -11,9 +11,9 @@ import {
 
 interface SignerState {
   signers: IdentityKitSignerConfig[];
-  currentConnectOption: WALLET_OPTIONS;
+  currentConnectOption: WALLET_OPTIONS | undefined;
   setSigners: (signers: IdentityKitSignerConfig[]) => void;
-  setCurrentConnectOption: (option: WALLET_OPTIONS) => void;
+  setCurrentConnectOption: (option: WALLET_OPTIONS | undefined) => void;
   reset: () => void;
 } // Re-export for backward compatibility
 

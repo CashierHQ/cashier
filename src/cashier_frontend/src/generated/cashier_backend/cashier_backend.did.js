@@ -317,7 +317,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const LinkUserState = IDL.Variant({
     'CompletedLink' : IDL.Null,
-    'ChooseWallet' : IDL.Null,
+    'Address' : IDL.Null,
+    'GateClosed' : IDL.Null,
+    'GateOpened' : IDL.Null,
   });
   const LinkGetUserStateOutput = IDL.Record({
     'action' : ActionDto,

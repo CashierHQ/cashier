@@ -9,13 +9,13 @@ license.workspace = true
 candid = { workspace = true }
 cashier_macros = { workspace = true }
 cashier_common = { workspace = true }
+ciborium = { workspace = true }
 derive_more = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic_mple_log = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc-ledger-types = { workspace = true }
 serde = { workspace = true, features = ['derive'] }
-serde_cbor = { workspace = true }
 serde_json = { workspace = true }
 ic-cdk = { workspace = true }
 thiserror = { workspace = true }
