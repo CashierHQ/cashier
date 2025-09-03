@@ -1,18 +1,19 @@
 pub mod password;
 
 use async_trait::async_trait;
-use gate_service_types::{GateKey, GateType, VerificationResult};
+use gate_service_types::{error::GateServiceError, GateKey, GateType, VerificationResult};
 use password::PasswordGate;
+use std::fmt::Debug;
 
 #[async_trait]
-pub trait GateVerifier {
+pub trait GateVerifier: Debug {
     /// Verifies the provided key against the gate's key.
     /// # Arguments
     /// * `key`: The key to be verified.
     /// # Returns
     /// * `Ok(VerificationResult)`: If the key is verified successfully.
     /// * `Err(String)`: If there is an error during verification.
-    async fn verify(&self, key: GateKey) -> Result<VerificationResult, String>;
+    async fn verify(&self, key: GateKey) -> Result<VerificationResult, GateServiceError>;
 }
 
 pub struct GateFactory {}
@@ -30,16 +31,19 @@ impl GateFactory {
         &self,
         gate_type: GateType,
         gate_key: GateKey,
-    ) -> Result<Box<dyn GateVerifier + Send + Sync>, String> {
+    ) -> Result<Box<dyn GateVerifier + Send + Sync>, GateServiceError> {
         match gate_type {
             GateType::Password => {
                 let GateKey::Password(gate_key) = gate_key else {
-                    return Err("Invalid key type for PasswordGate".to_string());
+                    return Err(GateServiceError::InvalidKeyType("PasswordGate".to_string()));
                 };
                 let gate = PasswordGate::new(gate_key);
                 Ok(Box::new(gate))
             }
-            _ => Err("Unsupported gate type".to_string()),
+            _ => Err(GateServiceError::UnsupportedGateType(format!(
+                "{:?}",
+                gate_type
+            ))),
         }
     }
 }
@@ -60,8 +64,27 @@ mod tests {
 
         // Assert
         assert!(result.is_err());
-        if let Err(e) = result {
-            assert_eq!(e, "Unsupported gate type".to_string());
+        if let Err(GateServiceError::UnsupportedGateType(e)) = result {
+            assert!(e.contains("XFollowing"));
+        } else {
+            panic!("Expected error but got success");
+        }
+    }
+
+    #[test]
+    fn it_should_error_create_gate_due_to_invalid_key_type() {
+        // Arrange
+        let factory = GateFactory {};
+        let gate_type = GateType::Password;
+        let gate_key = GateKey::XFollowing("elon_musk".to_string());
+
+        // Act
+        let result = factory.create_gate(gate_type, gate_key);
+
+        // Assert
+        assert!(result.is_err());
+        if let Err(GateServiceError::InvalidKeyType(e)) = result {
+            assert!(e.contains("PasswordGate"));
         } else {
             panic!("Expected error but got success");
         }

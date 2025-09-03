@@ -1,6 +1,7 @@
 use crate::{gates::GateVerifier, utils::verify_password};
 use async_trait::async_trait;
-use gate_service_types::{GateKey, VerificationResult};
+use gate_service_types::{error::GateServiceError, GateKey, VerificationResult};
+use std::fmt::Debug;
 
 pub struct PasswordGate {
     password_hash: String,
@@ -8,15 +9,24 @@ pub struct PasswordGate {
 
 #[async_trait]
 impl GateVerifier for PasswordGate {
-    async fn verify(&self, key: GateKey) -> Result<VerificationResult, String> {
+    async fn verify(&self, key: GateKey) -> Result<VerificationResult, GateServiceError> {
         if let GateKey::Password(provided_key) = key {
             match verify_password(&provided_key, &self.password_hash) {
                 Ok(()) => Ok(VerificationResult::Success),
-                Err(e) => Err(format!("Error verifying password: {}", e)),
+                Err(e) => Err(GateServiceError::KeyVerificationFailed(format!(
+                    "Error verifying password: {}",
+                    e
+                ))),
             }
         } else {
-            Err("Invalid key type for PasswordGate".to_string())
+            Err(GateServiceError::InvalidKeyType("PasswordGate".to_string()))
         }
+    }
+}
+
+impl Debug for PasswordGate {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "PasswordGate")
     }
 }
 
@@ -47,7 +57,7 @@ mod tests {
 
         // Assert
         assert!(result.is_err());
-        if let Err(e) = result {
+        if let Err(GateServiceError::KeyVerificationFailed(e)) = result {
             assert!(e.contains("Error verifying password"));
         } else {
             panic!("Expected error but got success");
@@ -68,8 +78,8 @@ mod tests {
 
         // Assert
         assert!(result.is_err());
-        if let Err(e) = result {
-            assert!(e.contains("Invalid key type for PasswordGate"));
+        if let Err(GateServiceError::InvalidKeyType(e)) = result {
+            assert!(e.contains("PasswordGate"));
         } else {
             panic!("Expected error but got success");
         }

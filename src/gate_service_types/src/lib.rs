@@ -1,3 +1,5 @@
+pub mod error;
+
 use candid::{self, CandidType, Deserialize, Principal};
 use cashier_macros::storable;
 use serde::Serialize;

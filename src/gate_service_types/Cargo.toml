@@ -10,3 +10,4 @@ ic-cdk = { workspace = true }
 ic-stable-structures = { workspace = true }
 serde = { workspace = true }
 serde_cbor = { workspace = true }
+thiserror = { workspace = true }
