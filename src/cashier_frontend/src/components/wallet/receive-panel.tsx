@@ -67,7 +67,6 @@ interface ReceivePanelProps {
   onBack: () => void;
 }
 
-// eslint-disable-next-line react/prop-types
 const ReceivePanel: React.FC<ReceivePanelProps> = ({ tokenId, onBack }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
