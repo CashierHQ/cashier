@@ -1,4 +1,4 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use ic_mple_log::service::LogServiceSettings;
 use serde::Deserialize;
 
@@ -7,4 +7,6 @@ use serde::Deserialize;
 pub struct CashierBackendInitData {
     #[serde(default)]
     pub log_settings: Option<LogServiceSettings>,
+    /// Owner of the canister
+    pub owner: Principal,
 }

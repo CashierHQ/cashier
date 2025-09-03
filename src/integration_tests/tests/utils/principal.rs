@@ -6,6 +6,8 @@ pub enum TestUser {
     User2,
     User3,
     TokenDeployer,
+    CashierBackendAdmin,
+    TokenStorageAdmin,
 }
 
 impl TestUser {
@@ -28,6 +30,8 @@ impl TestUser {
                 "nqla3-ljk3n-sknde-kphey-dlq2i-j3hnx-a3p2b-upf4f-yhdns-f4wjr-5qe",
             )
             .unwrap(),
+            TestUser::CashierBackendAdmin => Principal::from_slice(&[1, 29]),
+            TestUser::TokenStorageAdmin => Principal::from_slice(&[2, 29]),
         }
     }
 }
