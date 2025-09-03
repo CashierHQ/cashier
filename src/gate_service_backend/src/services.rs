@@ -1,11 +1,11 @@
 use crate::{
     gates::{GateFactory, GateVerifier},
     repositories::{gate::GateRepository, Repositories},
-    utils::hashing::hash_password,
+    utils::{gate::redact_password_gate, hashing::hash_password},
 };
 use candid::Principal;
 use gate_service_types::{
-    error::GateServiceError, Gate, GateForUser, GateKey, GateType, GateUserStatus, NewGate,
+    error::GateServiceError, Gate, GateForUser, GateKey, GateUserStatus, NewGate,
     OpenGateSuccessResult, VerificationResult,
 };
 use std::rc::Rc;
@@ -39,7 +39,7 @@ impl<R: Repositories> GateService<R> {
             _ => new_gate.key.clone(),
         };
 
-        let mut gate = self
+        let gate = self
             .repository
             .create_gate(NewGate {
                 key: gate_key,
@@ -47,14 +47,7 @@ impl<R: Repositories> GateService<R> {
             })
             .map_err(GateServiceError::RepositoryError)?;
 
-        // redact password
-        match gate.gate_type {
-            GateType::Password => {
-                gate.key = GateKey::Password("".to_string());
-                Ok(gate)
-            }
-            _ => Ok(gate),
-        }
+        Ok(redact_password_gate(gate))
     }
 
     /// Retrieves a gate by its ID
@@ -65,16 +58,7 @@ impl<R: Repositories> GateService<R> {
     /// * `Ok(None)`: If no gate is found.
     /// * `Err(String)`: If there is an error during retrieval.
     pub fn get_gate(&self, gate_id: &str) -> Option<Gate> {
-        self.repository
-            .get_gate(gate_id)
-            .map(|mut g| match g.gate_type {
-                GateType::Password => {
-                    // redact password from gate info
-                    g.key = GateKey::Password("".to_string());
-                    g
-                }
-                _ => g,
-            })
+        self.repository.get_gate(gate_id).map(redact_password_gate)
     }
 
     /// Retrieves a gate by its subject's ID.
@@ -87,14 +71,7 @@ impl<R: Repositories> GateService<R> {
     pub fn get_gate_by_subject(&self, subject_id: &str) -> Option<Gate> {
         self.repository
             .get_gate_by_subject(subject_id)
-            .map(|mut g| match g.gate_type {
-                GateType::Password => {
-                    // redact password from gate info
-                    g.key = GateKey::Password("".to_string());
-                    g
-                }
-                _ => g,
-            })
+            .map(redact_password_gate)
     }
 
     /// Retrieves a gate that is currently being opened.
@@ -192,7 +169,7 @@ mod tests {
     use super::*;
     use crate::repositories::tests::TestRepositories;
     use cashier_common::test_utils::{random_id_string, random_principal_id};
-    use gate_service_types::GateStatus;
+    use gate_service_types::{GateStatus, GateType};
 
     /// Generate a fixture for the gate service using a stable gate repository.
     fn gate_service_fixture() -> GateService<TestRepositories> {
@@ -235,11 +212,7 @@ mod tests {
             assert_eq!(created_gate.subject_id, gate.subject_id);
             assert_eq!(created_gate.gate_type, gate.gate_type);
             if gate.gate_type == GateType::Password {
-                if let GateKey::Password(p) = created_gate.key {
-                    assert!(p.is_empty());
-                } else {
-                    panic!("Expected Password gate key");
-                }
+                assert_eq!(created_gate.key, GateKey::PasswordRedacted);
             } else {
                 assert_eq!(created_gate.key, gate.key);
             }
@@ -276,7 +249,7 @@ mod tests {
         assert!(gate.is_some());
         let gate = gate.unwrap();
         assert_eq!(gate.gate_type, GateType::Password);
-        assert_eq!(gate.key, GateKey::Password("".to_string()));
+        assert_eq!(gate.key, GateKey::PasswordRedacted);
     }
 
     #[test]
@@ -332,7 +305,7 @@ mod tests {
         assert!(gate.is_some());
         let gate = gate.unwrap();
         assert_eq!(gate.gate_type, GateType::Password);
-        assert_eq!(gate.key, GateKey::Password("".to_string()));
+        assert_eq!(gate.key, GateKey::PasswordRedacted);
     }
 
     #[test]
