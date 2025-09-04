@@ -1,10 +1,11 @@
-use core::panic;
-
 use crate::{
-    gate_service_backend::fixtures::add_password_gate_fixture,
+    gate_service_backend::fixtures::{
+        add_and_open_password_gate_fixture, add_password_gate_fixture,
+    },
     utils::{principal::TestUser, with_pocket_ic_context},
 };
 use cashier_common::test_utils::{random_id_string, random_principal_id};
+use core::panic;
 use gate_service_types::{
     GateKey, GateStatus, GateType, NewGate, auth::Permission, error::GateServiceError,
 };
@@ -274,6 +275,37 @@ async fn it_should_get_gate_for_user_for_authorized_gate_creator() {
         assert_eq!(result.gate.id, gate.id);
         assert_eq!(result.gate.subject_id, subject_id);
         assert!(result.gate_user_status.is_none());
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_get_gate_for_user_with_open_status_after_opening() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let creator = random_principal_id();
+        let subject_id = random_id_string();
+        let password = random_id_string();
+        let user = TestUser::User1.get_principal();
+        let (gate, _gate_user_status) =
+            add_and_open_password_gate_fixture(ctx, creator, &subject_id, &password, user).await;
+
+        // Act
+        let result = ctx
+            .new_gate_service_backend_client(user)
+            .get_gate_for_user(gate.id.clone(), user)
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Assert
+        assert_eq!(result.gate.id, gate.id);
+        assert_eq!(result.gate.subject_id, subject_id);
+        assert!(result.gate_user_status.is_some());
+        assert_eq!(result.gate_user_status.unwrap().status, GateStatus::Open);
 
         Ok(())
     })
