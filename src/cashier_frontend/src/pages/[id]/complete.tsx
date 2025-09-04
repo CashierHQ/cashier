@@ -16,71 +16,76 @@ import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
 
 export default function CompletePage() {
-    const { linkId } = useParams();
+  const { linkId } = useParams();
 
-    const { renderSkeleton } = useSkeletonLoading();
+  const { renderSkeleton } = useSkeletonLoading();
 
-    const identity = useIdentity();
-    const { updateTokenInit } = useTokensV2();
-    const { handleStateBasedNavigation, goToChooseWallet } = useLinkUseNavigation(linkId);
+  const identity = useIdentity();
+  const { updateTokenInit } = useTokensV2();
+  const { handleStateBasedNavigation, goToChooseWallet } =
+    useLinkUseNavigation(linkId);
 
-    // Data fetching hooks
-    const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE_LINK);
-    const linkData = linkDetailQuery.data?.link;
-    const isLoadingLinkData = linkDetailQuery.isLoading;
+  // Data fetching hooks
+  const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE);
+  const linkData = linkDetailQuery.data?.link;
+  const isLoadingLinkData = linkDetailQuery.isLoading;
 
-    const { data: linkUserState, isFetching: isUserStateLoading } = useLinkUserState(
-        {
-            action_type: ACTION_TYPE.USE_LINK,
-            link_id: linkId ?? "",
-            anonymous_wallet_address: "",
-        },
-        !!linkId && !!identity,
+  const { data: linkUserState, isFetching: isUserStateLoading } =
+    useLinkUserState(
+      {
+        action_type: ACTION_TYPE.USE,
+        link_id: linkId ?? "",
+        anonymous_wallet_address: "",
+      },
+      !!linkId && !!identity,
     );
 
-    // Initialize tokens when link data is available
-    useEffect(() => {
-        if (linkData) {
-            updateTokenInit();
-        }
-    }, [linkData, updateTokenInit]);
-
-    // Handle state-based navigation for logged-in users
-    useEffect(() => {
-        if (linkData && identity) {
-            handleStateBasedNavigation(linkUserState, true);
-        }
-    }, [linkData, linkUserState, identity, handleStateBasedNavigation]);
-
-    const handleClickClaim = useMemo(
-        () => () => {
-            goToChooseWallet();
-        },
-        [goToChooseWallet],
-    );
-
-    // Early return for inactive links
-    if (linkData?.state === LINK_STATE.INACTIVE || linkData?.state === LINK_STATE.INACTIVE_ENDED) {
-        return <LinkNotFound />;
+  // Initialize tokens when link data is available
+  useEffect(() => {
+    if (linkData) {
+      updateTokenInit();
     }
+  }, []);
 
-    return (
-        <MainAppLayout>
-            <SheetWrapper>
-                {isLoadingLinkData && !linkData ? (
-                    renderSkeleton()
-                ) : (
-                    <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] py-3">
-                        <DefaultPage
-                            linkData={linkData}
-                            onClickClaim={handleClickClaim}
-                            isUserStateLoading={isUserStateLoading}
-                            isLoggedIn={!!identity}
-                            isCompletePage={true}
-                        />
-                    </div>
-                )}
-            </SheetWrapper>
-        </MainAppLayout>
-    );
+  // Handle state-based navigation for logged-in users
+  useEffect(() => {
+    if (linkData && identity) {
+      handleStateBasedNavigation(linkUserState, true);
+    }
+  }, [linkData, linkUserState, identity, handleStateBasedNavigation]);
+
+  const handleClickClaim = useMemo(
+    () => () => {
+      goToChooseWallet();
+    },
+    [goToChooseWallet],
+  );
+
+  // Early return for inactive links
+  if (
+    linkData?.state === LINK_STATE.INACTIVE ||
+    linkData?.state === LINK_STATE.INACTIVE_ENDED
+  ) {
+    return <LinkNotFound />;
+  }
+
+  return (
+    <MainAppLayout>
+      <SheetWrapper>
+        {isLoadingLinkData && !linkData ? (
+          renderSkeleton()
+        ) : (
+          <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] py-3">
+            <DefaultPage
+              linkData={linkData}
+              onClickClaim={handleClickClaim}
+              isUserStateLoading={isUserStateLoading}
+              isLoggedIn={!!identity}
+              isCompletePage={true}
+            />
+          </div>
+        )}
+      </SheetWrapper>
+    </MainAppLayout>
+  );
 }

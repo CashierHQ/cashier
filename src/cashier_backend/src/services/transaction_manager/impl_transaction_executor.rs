@@ -1,11 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::{info, services::transaction_manager::traits::ActionUpdater};
-use async_trait::async_trait;
-use cashier_types::{
+use crate::{repositories::Repositories, services::transaction_manager::traits::ActionUpdater};
+use cashier_backend_types::{
     error::CanisterError,
     repository::{
+        common::Asset,
         intent::v2::IntentTask,
         transaction::v2::{
             FromCallType, IcTransaction, Icrc1Transfer, Icrc2TransferFrom, Transaction,
@@ -14,21 +14,22 @@ use cashier_types::{
     },
 };
 use icrc_ledger_types::{icrc1::transfer::TransferArg, icrc2::transfer_from::TransferFromArgs};
+use log::{error, info};
 
 use crate::{
-    error,
     services::transaction_manager::{
         service::TransactionManagerService, traits::TransactionExecutor,
     },
     utils::runtime::IcEnvironment,
 };
 
-#[async_trait(?Send)]
-impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerService<E> {
+impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> TransactionExecutor<E>
+    for TransactionManagerService<E, R>
+{
     /// Execute a transaction by ID
     ///
     /// Fetches transaction by ID and then executes it
-    async fn execute_tx_by_id(&self, tx_id: String) -> Result<(), CanisterError> {
+    async fn execute_tx_by_id(&mut self, tx_id: String) -> Result<(), CanisterError> {
         let mut tx = self.transaction_service.get_tx_by_id(&tx_id)?;
         self.execute_canister_tx(&mut tx).await
     }
@@ -36,7 +37,7 @@ impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerServ
     /// Execute a canister transaction
     ///
     /// This handles the actual execution of a canister-initiated transaction
-    async fn execute_canister_tx(&self, tx: &mut Transaction) -> Result<(), CanisterError> {
+    async fn execute_canister_tx(&mut self, tx: &mut Transaction) -> Result<(), CanisterError> {
         if tx.from_call_type == FromCallType::Canister {
             // Check if dependencies are met
             let is_all_dependencies_success = self.is_all_depdendency_success(tx, true)?;
@@ -91,18 +92,15 @@ impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerServ
                         }
                     }
                     Err(e) => {
-                        error!(
-                            "[execute_canister_tx] Error executing tx: {}",
-                            e.to_string()
-                        );
+                        error!("[execute_canister_tx] Error executing tx: {:?}", e);
                         self.update_tx_state(tx, &TransactionState::Fail)
                             .map_err(|e| {
                                 CanisterError::HandleLogicError(format!(
-                                    "Error updating tx state: {e}"
+                                    "Error updating tx state: {e:?}"
                                 ))
                             })?;
                         return Err(CanisterError::HandleLogicError(format!(
-                            "Error executing tx: {e}"
+                            "Error executing tx: {e:?}"
                         )));
                     }
                 };
@@ -121,10 +119,9 @@ impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerServ
             TransferArg::try_from(tx.clone()).map_err(CanisterError::HandleLogicError)?;
 
         // get asset
-        let asset = tx
-            .asset
-            .get_principal()
-            .map_err(|e| CanisterError::HandleLogicError(e.to_string()))?;
+        let asset = match tx.asset {
+            Asset::IC { address } => address,
+        };
 
         self.icrc_service.transfer(asset, args).await?;
 
@@ -139,10 +136,9 @@ impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerServ
             TransferFromArgs::try_from(tx.clone()).map_err(CanisterError::HandleLogicError)?;
 
         // get asset
-        let asset = tx
-            .asset
-            .get_principal()
-            .map_err(|e| CanisterError::HandleLogicError(e.to_string()))?;
+        let asset = match tx.asset {
+            Asset::IC { address } => address,
+        };
 
         self.icrc_service.transfer_from(asset, args).await?;
 
@@ -150,7 +146,9 @@ impl<E: IcEnvironment + Clone> TransactionExecutor<E> for TransactionManagerServ
     }
 }
 
-impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
+impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories>
+    TransactionManagerService<E, R>
+{
     /// Execute a transaction using the ICRC service
     ///
     /// Core logic for transaction execution

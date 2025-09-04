@@ -1,32 +1,34 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::repositories::Repositories;
 use crate::services::transaction_manager::traits::TransactionExecutor;
 use crate::services::transaction_manager::traits::TransactionValidator;
-use async_trait::async_trait;
-use cashier_types::error::CanisterError;
-use cashier_types::repository::transaction::v2::Transaction;
-use cashier_types::repository::transaction::v2::TransactionState;
+use cashier_backend_types::error::CanisterError;
+use cashier_backend_types::repository::transaction::v2::Transaction;
+use cashier_backend_types::repository::transaction::v2::TransactionState;
 
 use crate::{
     services::transaction_manager::{service::TransactionManagerService, traits::BatchExecutor},
     utils::runtime::IcEnvironment,
 };
 
-#[async_trait(?Send)]
-impl<E: IcEnvironment + Clone> BatchExecutor<E> for TransactionManagerService<E> {
+impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> BatchExecutor<E>
+    for TransactionManagerService<E, R>
+{
     /// Execute multiple canister transactions in parallel (batch)
     ///
     /// This method takes a mutable slice of transactions and executes them concurrently.
     /// Returns Ok(()) if all succeed, or Err(Vec<CanisterError>) with all errors.
     async fn execute_canister_txs_batch(
-        &self,
+        &mut self,
         txs: &mut [Transaction],
     ) -> Result<(), CanisterError> {
         use futures::future;
         let mut futures_vec = Vec::with_capacity(txs.len());
         for tx in txs.iter_mut() {
-            futures_vec.push(self.execute_canister_tx(tx));
+            let mut service = self.clone();
+            futures_vec.push(async move { service.execute_canister_tx(tx).await });
         }
         let results = future::join_all(futures_vec).await;
         let errors: Vec<CanisterError> = results

@@ -1,129 +1,124 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { convertNanoSecondsToDate } from "@/utils";
+// ...existing code...
 import {
-    AssetDto,
-    IntentDto,
-    MetadataValue,
+  IntentDto,
+  IntentState,
+  IntentTask,
+  IntentType,
+  TransferData,
+  TransferFromData,
 } from "../../../generated/cashier_backend/cashier_backend.did";
-import { CHAIN, INTENT_STATE, INTENT_TYPE, TASK } from "../enum";
-import { AssetModel, IntentModel, WalletModel } from "../intent.service.types";
+import { INTENT_STATE, INTENT_TYPE, TASK } from "../enum";
+import {
+  IntentModel,
+  TransferDataModel,
+  TransferFromDataModel,
+} from "../intent.service.types";
+import { mapChainToChainEnum } from ".";
+import { assertNever, getKeyVariant } from ".";
 
-enum METADATA_PROP_NAMES {
-    FROM = "from",
-    TO = "to",
-    ASSET = "asset",
-    AMOUNT = "amount",
-}
+// Mapper for Intent type (backend -> front-end INTENT_TYPE enum)
+const mapIntentTypeToEnum = (intentType: IntentType): INTENT_TYPE => {
+  const key = getKeyVariant(intentType);
+  switch (key) {
+    case "TransferFrom":
+      return INTENT_TYPE.TRANSFER_FROM;
+    case "Transfer":
+      return INTENT_TYPE.TRANSFER;
+    default:
+      return assertNever(key);
+  }
+};
+
+// Mapper for Intent task (backend -> front-end TASK enum)
+const mapIntentTaskToEnum = (task: IntentTask): TASK => {
+  const key = getKeyVariant(task);
+  switch (key) {
+    case "TransferWalletToLink":
+      return TASK.TRANSFER_WALLET_TO_LINK;
+    case "TransferWalletToTreasury":
+      return TASK.TRANSFER_WALLET_TO_TREASURY;
+    case "TransferLinkToWallet":
+      return TASK.TRANSFER_LINK_TO_WALLET;
+    default:
+      return assertNever(key);
+  }
+};
+
+// Mapper for Intent state (backend -> front-end INTENT_STATE enum)
+const mapIntentStateToEnum = (state: IntentState): INTENT_STATE => {
+  const key = getKeyVariant(state);
+  switch (key) {
+    case "Created":
+      return INTENT_STATE.CREATED;
+    case "Processing":
+      return INTENT_STATE.PROCESSING;
+    case "Success":
+      return INTENT_STATE.SUCCESS;
+    case "Fail":
+      return INTENT_STATE.FAIL;
+    default:
+      return assertNever(key);
+  }
+};
 
 // Map back-end Intent DTO to Front-end Intent model
 export const mapIntentDtoToIntentModel = (dto: IntentDto): IntentModel => {
-    return {
-        id: dto.id,
-        chain: Object.values(CHAIN).includes(dto.chain as CHAIN) ? (dto.chain as CHAIN) : CHAIN.IC,
-        task: Object.values(TASK).includes(dto.task as TASK)
-            ? (dto.task as TASK)
-            : TASK.TRANSFER_WALLET_TO_LINK,
-        type: Object.values(INTENT_TYPE).includes(dto.type as INTENT_TYPE)
-            ? (dto.type as INTENT_TYPE)
-            : INTENT_TYPE.TRANSFER_FROM,
-        createdAt: dto.created_at
-            ? convertNanoSecondsToDate(dto.created_at)
-            : new Date("2000-10-01"),
-        state: Object.values(INTENT_STATE).includes(dto.state as INTENT_STATE)
-            ? (dto.state as INTENT_STATE)
-            : INTENT_STATE.CREATED,
-        from: mapMetadataToWalletModel(dto.type_metadata, dto.type, METADATA_PROP_NAMES.FROM),
-        to: mapMetadataToWalletModel(dto.type_metadata, dto.type, METADATA_PROP_NAMES.TO),
-        asset: mapMetadataToAssetModel(dto.type_metadata, dto.type, METADATA_PROP_NAMES.ASSET),
-        amount: mapMetadataFromNatToAmount(dto.type_metadata, dto.type, METADATA_PROP_NAMES.AMOUNT),
-    };
+  const typeDetails = mapIntentTypeDtoToModel(dto.type) as
+    | TransferDataModel
+    | TransferFromDataModel;
+
+  return {
+    id: dto.id,
+    chain: mapChainToChainEnum(dto.chain),
+    task: mapIntentTaskToEnum(dto.task),
+    type: mapIntentTypeToEnum(dto.type),
+    typeDetails,
+    state: mapIntentStateToEnum(dto.state),
+  };
 };
 
-const mapMetadataToWalletModel = (
-    metadata: [string, MetadataValue][],
-    intentType: string,
-    propName: string,
-): WalletModel => {
-    if (Object.values(INTENT_TYPE).includes(intentType as INTENT_TYPE)) {
-        const item = metadata.find((item) => item[0].toLowerCase() === propName.toLowerCase());
-        return {
-            chain: (item?.[1] as { Wallet: AssetDto })?.Wallet?.chain ?? "",
-            address: (item?.[1] as { Wallet: AssetDto })?.Wallet?.address ?? "",
-        };
-    } else {
-        return {
-            address: "",
-            chain: "",
-        };
+// Convert backend IntentType variant into a normalized IntentTypeModel
+const mapIntentTypeDtoToModel = (
+  intentType: IntentType,
+): TransferDataModel | TransferFromDataModel => {
+  const key = getKeyVariant(intentType);
+  switch (key) {
+    case "TransferFrom": {
+      const data = (intentType as { TransferFrom: TransferFromData })
+        .TransferFrom;
+
+      const transferFrom: TransferFromDataModel = {
+        to: { chain: "IC", address: data.to.IC.address.toString() },
+        from: { chain: "IC", address: data.from.IC.address.toString() },
+        asset: { chain: "IC", address: data.asset.IC.address.toString() },
+        actual_amount: data.actual_amount?.[0] ?? undefined,
+        amount: data.amount,
+        approve_amount: data.approve_amount?.[0] ?? undefined,
+        spender: data.spender
+          ? { chain: "IC", address: data.spender.IC.address.toString() }
+          : undefined,
+      };
+
+      return transferFrom;
     }
-};
 
-const mapMetadataToAssetModel = (
-    metadata: [string, MetadataValue][],
-    intentType: string,
-    propName: string,
-): AssetModel => {
-    if (Object.values(INTENT_TYPE).includes(intentType as INTENT_TYPE)) {
-        const item = metadata.find((item) => item[0].toLowerCase() === propName.toLowerCase());
-        return {
-            chain: (item?.[1] as { Asset: AssetDto })?.Asset?.chain ?? "",
-            address: (item?.[1] as { Asset: AssetDto })?.Asset?.address ?? "",
-        };
-    } else {
-        return {
-            address: "",
-            chain: "",
-        };
+    case "Transfer": {
+      const data = (intentType as { Transfer: TransferData }).Transfer;
+
+      const transfer: TransferDataModel = {
+        to: { chain: "IC", address: data.to.IC.address.toString() },
+        from: { chain: "IC", address: data.from.IC.address.toString() },
+        asset: { chain: "IC", address: data.asset.IC.address.toString() },
+        amount: data.amount,
+      };
+
+      return transfer;
     }
-};
 
-// const mapMetadataToAmount = (
-//     metadata: [string, MetadataValue][],
-//     intentType: string,
-//     propName: string,
-// ): bigint => {
-//     if (Object.values(INTENT_TYPE).includes(intentType as INTENT_TYPE)) {
-//         const item = metadata.find((item) => item[0].toLowerCase() === propName.toLowerCase());
-//         return (item?.[1] as { U64: bigint })?.U64?.valueOf() ?? BigInt(0);
-//     } else {
-//         return BigInt(0);
-//     }
-// };
-
-const mapMetadataFromNatToAmount = (
-    metadata: [string, MetadataValue][],
-    intentType: string,
-    propName: string,
-): bigint => {
-    if (Object.values(INTENT_TYPE).includes(intentType as INTENT_TYPE)) {
-        const item = metadata.find((item) => item[0].toLowerCase() === propName.toLowerCase());
-
-        if (!item?.[1]) {
-            return BigInt(0);
-        }
-
-        const value = item[1];
-
-        // Handle Nat variant
-        if ("Nat" in value) {
-            return value.Nat;
-        }
-
-        // Handle MaybeNat variant
-        if ("MaybeNat" in value) {
-            // MaybeNat is [] | [bigint] - empty array means None, array with value means Some
-            return value.MaybeNat.length > 0 ? value.MaybeNat[0]! : BigInt(0);
-        }
-
-        // Handle existing U64 variant for backward compatibility
-        if ("U64" in value) {
-            return value.U64;
-        }
-
-        return BigInt(0);
-    } else {
-        return BigInt(0);
-    }
+    default:
+      return assertNever(key);
+  }
 };

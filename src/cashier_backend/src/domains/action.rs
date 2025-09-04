@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_types::repository::{
+use cashier_backend_types::repository::{
     action::v1::ActionState,
     intent::v2::{Intent, IntentState},
     transaction::v2::{Transaction, TransactionState},
@@ -9,13 +9,6 @@ use cashier_types::repository::{
 
 #[derive(Clone)]
 pub struct ActionDomainLogic {}
-
-// Domain logic for business rules related to actions
-impl Default for ActionDomainLogic {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 
 impl ActionDomainLogic {
     pub fn new() -> Self {

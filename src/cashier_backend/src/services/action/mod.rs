@@ -2,10 +2,11 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::domains::action::ActionDomainLogic;
-use crate::repositories;
-use cashier_types::error::CanisterError;
-use cashier_types::service::action::RollUpStateResp;
-use cashier_types::{
+use crate::repositories::{self, Repositories};
+use candid::Principal;
+use cashier_backend_types::error::CanisterError;
+use cashier_backend_types::service::action::RollUpStateResp;
+use cashier_backend_types::{
     repository::{
         action::v1::Action, action_intent::v1::ActionIntent, intent::v2::Intent,
         intent_transaction::v1::IntentTransaction, link_action::v1::LinkAction,
@@ -16,52 +17,37 @@ use cashier_types::{
 
 use std::collections::HashMap;
 
-pub struct ActionService {
+pub struct ActionService<R: Repositories> {
     // Concrete repository implementations
-    action_repository: repositories::action::ActionRepository,
-    intent_repository: repositories::intent::IntentRepository,
-    action_intent_repository: repositories::action_intent::ActionIntentRepository,
-    transaction_repository: repositories::transaction::TransactionRepository,
-    intent_transaction_repository: repositories::intent_transaction::IntentTransactionRepository,
-    link_action_repository: repositories::link_action::LinkActionRepository,
-    user_action_repository: repositories::user_action::UserActionRepository,
+    pub action_repository: repositories::action::ActionRepository<R::Action>,
+    pub action_intent_reposiroty:
+        repositories::action_intent::ActionIntentRepository<R::ActionIntent>,
+    pub intent_repository: repositories::intent::IntentRepository<R::Intent>,
+    pub action_intent_repository:
+        repositories::action_intent::ActionIntentRepository<R::ActionIntent>,
+    pub transaction_repository: repositories::transaction::TransactionRepository<R::Transaction>,
+    pub intent_transaction_repository:
+        repositories::intent_transaction::IntentTransactionRepository<R::IntentTransaction>,
+    pub link_action_repository: repositories::link_action::LinkActionRepository<R::LinkAction>,
+    pub user_action_repository: repositories::user_action::UserActionRepository<R::UserAction>,
 
     // Domain logic
     domain_logic: ActionDomainLogic,
 }
 
-impl ActionService {
-    pub fn new(
-        action_repository: repositories::action::ActionRepository,
-        intent_repository: repositories::intent::IntentRepository,
-        action_intent_repository: repositories::action_intent::ActionIntentRepository,
-        transaction_repository: repositories::transaction::TransactionRepository,
-        intent_transaction_repository: repositories::intent_transaction::IntentTransactionRepository,
-        link_action_repository: repositories::link_action::LinkActionRepository,
-        user_action_repository: repositories::user_action::UserActionRepository,
-    ) -> Self {
+impl<R: Repositories> ActionService<R> {
+    pub fn new(repo: &R) -> Self {
         Self {
-            action_repository,
-            intent_repository,
-            action_intent_repository,
-            transaction_repository,
-            intent_transaction_repository,
-            link_action_repository,
-            user_action_repository,
+            action_repository: repo.action(),
+            action_intent_reposiroty: repo.action_intent(),
+            intent_repository: repo.intent(),
+            action_intent_repository: repo.action_intent(),
+            transaction_repository: repo.transaction(),
+            intent_transaction_repository: repo.intent_transaction(),
+            link_action_repository: repo.link_action(),
+            user_action_repository: repo.user_action(),
             domain_logic: ActionDomainLogic::new(),
         }
-    }
-
-    pub fn get_instance() -> Self {
-        Self::new(
-            repositories::action::ActionRepository::new(),
-            repositories::intent::IntentRepository::new(),
-            repositories::action_intent::ActionIntentRepository::new(),
-            repositories::transaction::TransactionRepository::new(),
-            repositories::intent_transaction::IntentTransactionRepository::new(),
-            repositories::link_action::LinkActionRepository::new(),
-            repositories::user_action::UserActionRepository::new(),
-        )
     }
 
     pub fn get_action_data(&self, action_id: &str) -> Result<ActionData, String> {
@@ -148,7 +134,7 @@ impl ActionService {
     /// # State Changes
     /// - Updates intent states in the intent repository
     /// - Updates action state in the action repository
-    pub fn roll_up_state(&self, tx_id: &str) -> Result<RollUpStateResp, String> {
+    pub fn roll_up_state(&mut self, tx_id: &str) -> Result<RollUpStateResp, String> {
         let action_data = self
             .get_action_by_tx_id(tx_id)
             .map_err(|e| format!("get_action_by_tx_id failed: {e}"))?;
@@ -183,12 +169,12 @@ impl ActionService {
     }
 
     pub fn store_action_data(
-        &self,
+        &mut self,
         link_action: LinkAction,
         action: Action,
         intents: Vec<Intent>,
         intent_tx_map: HashMap<String, Vec<Transaction>>,
-        user_id: String,
+        user_id: Principal,
     ) -> Result<(), CanisterError> {
         let action_intents = intents
             .iter()
@@ -231,15 +217,13 @@ impl ActionService {
     }
 
     pub fn get_intents_by_action_id(&self, action_id: &str) -> Vec<Intent> {
-        let action_intent_reposiroty = repositories::action_intent::ActionIntentRepository::new();
-        let intent_repository = repositories::intent::IntentRepository::new();
-        let action_intents = action_intent_reposiroty.get_by_action_id(action_id);
+        let action_intents = self.action_intent_reposiroty.get_by_action_id(action_id);
 
         let intent_ids = action_intents
             .iter()
             .map(|action_intent| action_intent.intent_id.clone())
             .collect();
 
-        intent_repository.batch_get(intent_ids)
+        self.intent_repository.batch_get(intent_ids)
     }
 }

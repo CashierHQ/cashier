@@ -1,23 +1,26 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::{info, services::transaction_manager::traits::TransactionValidator};
-use async_trait::async_trait;
-use cashier_types::{error::CanisterError, repository::transaction::v2::TransactionState};
+use crate::{
+    repositories::Repositories, services::transaction_manager::traits::TransactionValidator,
+};
+use cashier_backend_types::{error::CanisterError, repository::transaction::v2::TransactionState};
+use log::{error, info};
 use std::time::Duration;
 
 use crate::{
     constant::{get_tx_timeout_nano_seconds, get_tx_timeout_seconds},
-    error,
     services::transaction_manager::{service::TransactionManagerService, traits::TimeoutHandler},
     utils::runtime::{IcEnvironment, RealIcEnvironment},
 };
 
-#[async_trait(?Send)]
-impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E> {
+impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> TimeoutHandler<E>
+    for TransactionManagerService<E, R>
+{
     fn spawn_tx_timeout_task(&self, tx_id: String) -> Result<(), String> {
         let timeout = get_tx_timeout_seconds();
 
+        let mut service = self.clone();
         // TODO: canister upgrade will remove the time_id, this should store in stable memory and re_triggered when the canister is upgraded
         let _time_id = self
             .ic_env
@@ -25,16 +28,12 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
                 let ic_env_in_future = RealIcEnvironment::new();
 
                 ic_env_in_future.spawn(async move {
-                    // Create a new instance of your service with the cloned dependencies
-                    let service: TransactionManagerService<RealIcEnvironment> =
-                        TransactionManagerService::get_instance();
-
                     // Now use the new service instance
                     let res = service.tx_timeout_task(tx_id).await;
                     match res {
                         Ok(_) => {}
                         Err(e) => {
-                            error!("Transaction timeout task executed with error: {}", e);
+                            error!("Transaction timeout task executed with error: {:?}", e);
                         }
                     }
                 });
@@ -42,7 +41,7 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
         Ok(())
     }
 
-    async fn tx_timeout_task(&self, tx_id: String) -> Result<(), CanisterError> {
+    async fn tx_timeout_task(&mut self, tx_id: String) -> Result<(), CanisterError> {
         let mut tx = self.transaction_service.get_tx_by_id(&tx_id)?;
 
         if tx.state == TransactionState::Success || tx.state == TransactionState::Fail {
@@ -70,7 +69,7 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
             match result {
                 Ok(_) => Ok(()),
                 Err(e) => {
-                    error!("Failed to roll up state for action: {}", e);
+                    error!("Failed to roll up state for action: {:?}", e);
                     // Respawn timeout task for retry in case of error
                     let retry_tx_id = tx_id.clone();
                     let _ = self
@@ -95,19 +94,17 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
             );
 
             let retry_tx_id = tx_id.clone();
+            let mut service = self.clone();
             let _time_id = self.ic_env.set_timer(retry_duration, move || {
                 let ic_env_in_future = RealIcEnvironment::new();
 
                 ic_env_in_future.spawn(async move {
-                    let service: TransactionManagerService<RealIcEnvironment> =
-                        TransactionManagerService::get_instance();
-
                     let res = service.tx_timeout_task(retry_tx_id).await;
                     match res {
                         Ok(_) => {}
                         Err(e) => {
                             error!(
-                                "Rescheduled transaction timeout task executed with error: {}",
+                                "Rescheduled transaction timeout task executed with error: {:?}",
                                 e
                             );
                         }
@@ -146,20 +143,17 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
 
             // Spawn timeout task with calculated duration
             let tx_id = processing_tx.transaction_id.clone();
+            let mut service = self.clone();
             let _time_id = self.ic_env.set_timer(duration, move || {
                 let ic_env_in_future = RealIcEnvironment::new();
 
                 ic_env_in_future.spawn(async move {
-                    // Create a new instance of your service with the cloned dependencies
-                    let service: TransactionManagerService<RealIcEnvironment> =
-                        TransactionManagerService::get_instance();
-
                     // Now use the new service instance
                     let res = service.tx_timeout_task(tx_id).await;
                     match res {
                         Ok(_) => {}
                         Err(e) => {
-                            error!("Transaction timeout task executed with error: {}", e);
+                            error!("Transaction timeout task executed with error: {:?}", e);
                         }
                     }
                 });
@@ -168,8 +162,8 @@ impl<E: IcEnvironment + Clone> TimeoutHandler<E> for TransactionManagerService<E
     }
 }
 
-impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
-    fn remove_record_in_processing_transaction(&self, tx_id: &str) {
+impl<E: IcEnvironment + Clone, R: Repositories> TransactionManagerService<E, R> {
+    fn remove_record_in_processing_transaction(&mut self, tx_id: &str) {
         if self.processing_transaction_repository.exists(tx_id) {
             self.processing_transaction_repository.delete(tx_id);
         }

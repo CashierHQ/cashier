@@ -1,64 +1,61 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import React from "react";
+import { FC } from "react";
 import { Form } from "@/components/ui/form";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import ClaimFormOptions from "./claim-form-options";
+import UseLinkOptions from "./use-link-options";
 import UseActionButton from "./use-action-button";
-import { UseSchema } from "./claim-form-options";
+import { UseSchema } from "./use-link-options";
 
 interface UsePageFormProps {
-    form: UseFormReturn<z.infer<typeof UseSchema>>;
-    formData: LinkDetailModel;
-    onSubmit: (address: string | undefined) => void;
-    onBack?: () => void;
-    isDisabled: boolean;
-    setDisabled: (disabled: boolean) => void;
-    buttonText: string;
-    walletAddress?: string;
-    onOpenWalletModal?: () => void;
+  form: UseFormReturn<z.infer<typeof UseSchema>>;
+  formData: LinkDetailModel;
+  onSubmit: (address: string | undefined) => void;
+  onBack?: () => void;
+  isDisabled: boolean;
+  setDisabled: (disabled: boolean) => void;
+  buttonText: string;
+  onOpenWalletModal?: () => void;
 }
 
-const UseLinkForm: React.FC<UsePageFormProps> = ({
-    form,
-    formData,
-    onSubmit,
-    isDisabled,
-    setDisabled,
-    buttonText,
-    walletAddress,
-    onOpenWalletModal,
+const UseLinkForm: FC<UsePageFormProps> = ({
+  form,
+  formData,
+  onSubmit,
+  isDisabled,
+  setDisabled,
+  buttonText,
+  onOpenWalletModal,
 }) => {
-    const handleSubmit = () => {
-        // Disable the button immediately on submission
-        setDisabled(true);
-        onSubmit(form.getValues("address"));
-    };
+  const handleSubmit = () => {
+    // Disable the button immediately on submission
+    setDisabled(true);
+    onSubmit(form.getValues("address"));
+  };
 
-    return (
-        <div className="w-full flex flex-col flex-grow relative">
-            <Form {...form}>
-                <form className="w-full flex flex-col gap-3 h-full">
-                    <ClaimFormOptions
-                        form={form}
-                        formData={formData}
-                        setDisabled={setDisabled}
-                        walletAddress={walletAddress}
-                        onOpenWalletModal={onOpenWalletModal}
-                    />
-                    <UseActionButton
-                        isDisabled={isDisabled}
-                        buttonText={buttonText}
-                        onSubmit={handleSubmit}
-                        setDisabled={setDisabled}
-                    />
-                </form>
-            </Form>
-        </div>
-    );
+  return (
+    <div className="w-full flex flex-col flex-grow relative">
+      <Form {...form}>
+        <form className="w-full flex flex-col gap-3 h-full">
+          <UseLinkOptions
+            form={form}
+            formData={formData}
+            setDisabled={setDisabled}
+            onOpenWalletModal={onOpenWalletModal}
+          />
+          <UseActionButton
+            isDisabled={isDisabled}
+            buttonText={buttonText}
+            onSubmit={handleSubmit}
+            setDisabled={setDisabled}
+          />
+        </form>
+      </Form>
+    </div>
+  );
 };
 
 export default UseLinkForm;

@@ -1,7 +1,7 @@
 // This is an experimental feature to generate Rust binding from Candid.
 // You may want to manually adjust some of the types.
 use candid::{self, CandidType, Deserialize, Principal};
-use cashier_types::error::CanisterError;
+use cashier_backend_types::error::CanisterError;
 use ic_cdk::call::{Call, CandidDecodeFailed};
 
 pub type SubAccount = serde_bytes::ByteBuf;
@@ -412,7 +412,7 @@ impl Service {
     }
 
     pub async fn icrc_1_balance_of(&self, arg0: &Account) -> Result<Icrc1Tokens, CanisterError> {
-        let res = Call::unbounded_wait(self.0, "icrc1_balance_of")
+        let res = Call::bounded_wait(self.0, "icrc1_balance_of")
             .with_arg(arg0)
             .await
             .map_err(CanisterError::from)?;
@@ -422,7 +422,7 @@ impl Service {
     }
 
     pub async fn icrc_1_fee(&self) -> Result<Icrc1Tokens, CanisterError> {
-        let res = Call::unbounded_wait(self.0, "icrc1_fee")
+        let res = Call::bounded_wait(self.0, "icrc1_fee")
             .await
             .map_err(CanisterError::from)?;
         let parsed_res: Result<Icrc1Tokens, CandidDecodeFailed> = res.candid();
@@ -432,7 +432,7 @@ impl Service {
         &self,
         arg0: &TransferArg,
     ) -> Result<Icrc1TransferResult, CanisterError> {
-        let res = Call::unbounded_wait(self.0, "icrc1_transfer")
+        let res = Call::bounded_wait(self.0, "icrc1_transfer")
             .with_arg(arg0)
             .await
             .map_err(CanisterError::from)?;
@@ -440,7 +440,7 @@ impl Service {
         parsed_res.map_err(CanisterError::from)
     }
     pub async fn icrc_2_allowance(&self, arg0: &AllowanceArgs) -> Result<Allowance, CanisterError> {
-        let res = Call::unbounded_wait(self.0, "icrc2_allowance")
+        let res = Call::bounded_wait(self.0, "icrc2_allowance")
             .with_arg(arg0)
             .await
             .map_err(CanisterError::from)?;
@@ -453,7 +453,7 @@ impl Service {
         &self,
         arg0: &TransferFromArgs,
     ) -> Result<TransferFromResult, CanisterError> {
-        let res = Call::unbounded_wait(self.0, "icrc2_transfer_from")
+        let res = Call::bounded_wait(self.0, "icrc2_transfer_from")
             .with_arg(arg0)
             .await
             .map_err(CanisterError::from)?;

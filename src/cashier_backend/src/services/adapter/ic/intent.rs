@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_types::{
+use cashier_backend_types::{
     error::CanisterError,
     repository::{
         intent::v2::{Intent, IntentTask, IntentType, TransferData, TransferFromData},
@@ -13,33 +13,22 @@ use cashier_types::{
 };
 use uuid::Uuid;
 
-use crate::{
-    services::adapter::IntentAdapter,
-    utils::{helper::to_memo, runtime::IcEnvironment},
-};
+use crate::{services::adapter::IntentAdapter, utils::helper::to_memo};
 
 #[derive(Clone)]
-pub struct IcIntentAdapter<E: IcEnvironment + Clone> {
-    pub ic_env: E,
-}
+pub struct IcIntentAdapter;
 
-impl<E: IcEnvironment + Clone> Default for IcIntentAdapter<E> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<E: IcEnvironment + Clone> IcIntentAdapter<E> {
+impl IcIntentAdapter {
     pub fn new() -> Self {
-        Self { ic_env: E::new() }
+        Self {}
     }
 
     fn assemble_icrc1_wallet_transfer(
         &self,
+        ts: u64,
         transfer_intent: TransferData,
     ) -> Result<Vec<Transaction>, CanisterError> {
         let id: Uuid = Uuid::new_v4();
-        let ts = self.ic_env.time();
 
         let memo = to_memo(&id.to_string())?;
 
@@ -70,9 +59,9 @@ impl<E: IcEnvironment + Clone> IcIntentAdapter<E> {
 
     fn assemble_icrc2_wallet_transfer(
         &self,
+        ts: u64,
         transfer_intent: TransferFromData,
     ) -> Result<Vec<Transaction>, CanisterError> {
-        let ts = self.ic_env.time();
         let approve_id = Uuid::new_v4();
 
         let approve_amount = transfer_intent
@@ -145,10 +134,10 @@ impl<E: IcEnvironment + Clone> IcIntentAdapter<E> {
 
     fn assemble_icrc1_canister_transfer(
         &self,
+        ts: u64,
         transfer_intent: TransferData,
     ) -> Result<Vec<Transaction>, CanisterError> {
         let id: Uuid = Uuid::new_v4();
-        let ts = self.ic_env.time();
 
         let memo = to_memo(&id.to_string())?;
 
@@ -177,17 +166,21 @@ impl<E: IcEnvironment + Clone> IcIntentAdapter<E> {
     }
 }
 
-impl<E: IcEnvironment + Clone> IntentAdapter for IcIntentAdapter<E> {
-    fn intent_to_transactions(&self, intent: &Intent) -> Result<Vec<Transaction>, CanisterError> {
+impl IntentAdapter for IcIntentAdapter {
+    fn intent_to_transactions(
+        &self,
+        ts: u64,
+        intent: &Intent,
+    ) -> Result<Vec<Transaction>, CanisterError> {
         match (intent.task.clone(), intent.r#type.clone()) {
             (IntentTask::TransferWalletToLink, IntentType::Transfer(transfer_intent)) => {
-                self.assemble_icrc1_wallet_transfer(transfer_intent)
+                self.assemble_icrc1_wallet_transfer(ts, transfer_intent)
             }
             (IntentTask::TransferWalletToTreasury, IntentType::TransferFrom(transfer_intent)) => {
-                self.assemble_icrc2_wallet_transfer(transfer_intent)
+                self.assemble_icrc2_wallet_transfer(ts, transfer_intent)
             }
             (IntentTask::TransferLinkToWallet, IntentType::Transfer(transfer_intent)) => {
-                self.assemble_icrc1_canister_transfer(transfer_intent)
+                self.assemble_icrc1_canister_transfer(ts, transfer_intent)
             }
             _ => Err(CanisterError::InvalidInput(
                 "Unsupported intent task or type".to_string(),

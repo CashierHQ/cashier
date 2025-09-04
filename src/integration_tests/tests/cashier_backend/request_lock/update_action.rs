@@ -1,36 +1,39 @@
-use cashier_types::{
+use cashier_backend_types::{
     dto::action::{ActionDto, UpdateActionInput},
     error::CanisterError,
+    repository::action::v1::ActionType,
 };
 
 use crate::cashier_backend::link::fixture::LinkTestFixture;
 use crate::utils::{
     icrc_112::execute_icrc112_request, principal::TestUser, with_pocket_ic_context,
 };
+use std::sync::Arc;
 
 #[tokio::test]
 async fn test_request_lock_for_update_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let mut fixture = LinkTestFixture::new(ctx, &caller).await;
+        let mut fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
         // Setup user and airdrop tokens
-        fixture.setup_user().await;
+        fixture.airdrop_icp(1_000_000_000_000_000, &caller).await;
         fixture
-            .airdrop_icp(ctx, 1_000_000_000_000_000, &caller)
+            .airdrop_icrc("ckBTC", 1_000_000_000_000_000, &caller)
             .await;
         fixture
-            .airdrop_icrc(ctx, "ckBTC", 1_000_000_000_000_000, &caller)
-            .await;
-        fixture
-            .airdrop_icrc(ctx, "ckUSDC", 1_000_000_000_000_000, &caller)
+            .airdrop_icrc("ckUSDC", 1_000_000_000_000_000, &caller)
             .await;
 
         // Create and process link to get ICRC-112 requests
-        let link = fixture.create_token_basket_link(ctx).await;
-        let action = fixture.create_action(&link.id, "CreateLink").await;
-        let processing_action = fixture.process_action(&link.id, &action.id).await;
+        let link = fixture.create_token_basket_link().await;
+        let action = fixture
+            .create_action(&link.id, ActionType::CreateLink)
+            .await;
+        let processing_action = fixture
+            .process_action(&link.id, &action.id, ActionType::CreateLink)
+            .await;
 
         // Execute all ICRC112 requests
         if let Some(reqs) = processing_action.icrc_112_requests.as_ref() {

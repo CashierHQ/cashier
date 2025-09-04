@@ -3,54 +3,60 @@
 
 import { IntentCreateModel } from "./intent.service.types";
 import { ActionModel } from "./action.service.types";
-import { ACTION_TYPE, CHAIN, LINK_INTENT_ASSET_LABEL } from "./enum";
+import {
+  ACTION_TYPE,
+  CHAIN,
+  LINK_STATE,
+  LINK_TYPE,
+  LINK_USER_STATE,
+} from "./enum";
 
 export enum Chain {
-    IC = "IC",
+  IC = "IC",
 }
 
 export type AssetInfoModel = {
-    address: string;
-    amountPerUse: bigint;
-    label?: LINK_INTENT_ASSET_LABEL | string;
-    chain?: CHAIN;
+  address: string;
+  amountPerUse: bigint;
+  label: string;
+  chain: CHAIN;
 };
 
 export type LinkDetailModel = {
-    id: string;
-    title: string;
-    description: string;
-    image: string;
-    linkType?: string;
-    state?: string;
-    template?: string;
-    creator?: string;
-    create_at: Date;
-    asset_info: AssetInfoModel[];
-    maxActionNumber: bigint;
-    useActionCounter: bigint;
+  id: string;
+  title: string;
+  description: string;
+  image: string;
+  linkType?: LINK_TYPE;
+  state?: LINK_STATE;
+  template?: string;
+  creator?: string;
+  create_at: number;
+  asset_info: AssetInfoModel[];
+  maxActionNumber: bigint;
+  useActionCounter: bigint;
 };
 
 export type LinkModel = {
-    link: LinkDetailModel;
-    action?: ActionModel;
-    intent_create?: IntentCreateModel;
+  link: LinkDetailModel;
+  action?: ActionModel;
+  intent_create?: IntentCreateModel;
 };
 
 export type LinkGetUserStateInputModel = {
-    link_id: string;
-    action_type: ACTION_TYPE;
-    anonymous_wallet_address?: string;
+  link_id: string;
+  action_type: ACTION_TYPE;
+  anonymous_wallet_address?: string;
 };
 
 export type LinkUpdateUserStateInputModel = {
-    link_id: string;
-    action_type: ACTION_TYPE;
-    isContinue: boolean;
-    anonymous_wallet_address?: string;
+  link_id: string;
+  action_type: ACTION_TYPE;
+  isContinue: boolean;
+  anonymous_wallet_address?: string;
 };
 
 export type LinkGetUserStateOutputModel = {
-    action: ActionModel | undefined;
-    link_user_state: string | undefined;
+  action?: ActionModel;
+  link_user_state?: LINK_USER_STATE;
 };

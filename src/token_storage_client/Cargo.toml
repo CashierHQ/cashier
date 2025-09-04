@@ -5,6 +5,8 @@ license.workspace = true
 version.workspace = true
 
 [dependencies]
-cashier-common = { workspace = true }
+candid = { workspace = true }
+cashier_common = { workspace = true }
 ic_mple_client = { workspace = true }
+token_storage_types = { workspace = true }
 

@@ -4,45 +4,49 @@
 use std::collections::{HashMap, HashSet, VecDeque};
 
 use crate::{
-    repositories::transaction::TransactionRepository,
+    repositories::{Repositories, transaction::TransactionRepository},
     utils::{helper::to_subaccount, runtime::IcEnvironment},
 };
-use base64::Engine;
-use candid::{Encode, Principal};
-use cashier_types::repository::transaction::v2::{
-    IcTransaction, Protocol, Transaction, TransactionState,
+use candid::Principal;
+use cashier_backend_types::repository::{
+    common::Asset,
+    transaction::v2::{IcTransaction, Protocol, Transaction, TransactionState},
 };
-use cashier_types::{
+use cashier_backend_types::{
     dto::action::{Icrc112Request, Icrc112Requests, TriggerTransactionInput},
     error::CanisterError,
 };
+use icrc_112_utils::build_canister_call;
 use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
     icrc2::approve::ApproveArgs,
 };
+use uuid::Uuid;
 
 #[derive(Clone)]
-pub struct TransactionService<E: IcEnvironment + Clone> {
-    transaction_repository: TransactionRepository,
+pub struct TransactionService<E: IcEnvironment + Clone, R: Repositories> {
+    transaction_repository: TransactionRepository<R::Transaction>,
     ic_env: E,
 }
 
-impl<E: IcEnvironment + Clone> TransactionService<E> {
-    pub fn new(transaction_repository: TransactionRepository, ic_env: E) -> Self {
+impl<E: IcEnvironment + Clone, R: Repositories> TransactionService<E, R> {
+    pub fn new(repo: &R, ic_env: E) -> Self {
         Self {
-            transaction_repository,
+            transaction_repository: repo.transaction(),
             ic_env,
         }
     }
 
-    pub fn get_instance() -> Self {
-        Self::new(TransactionRepository::new(), IcEnvironment::new())
+    pub fn nonce_from_tx_id(&self, tx_id: &str) -> Result<Vec<u8>, CanisterError> {
+        Uuid::parse_str(tx_id)
+            .map_err(|e| CanisterError::InvalidInput(format!("Invalid uuid: {e}")))
+            .map(|u| u.as_bytes().to_vec())
     }
 
     // This method update the state of the transaction only
     // This is not included roll up logic for intent and action
     pub fn update_tx_state(
-        &self,
+        &mut self,
         tx: &mut Transaction,
         state: &TransactionState,
     ) -> Result<(), CanisterError> {
@@ -94,7 +98,6 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
                     owner: *canister_id,
                     subaccount: Some(to_subaccount(link_id)?),
                 };
-
                 let arg = TransferArg {
                     to: account,
                     amount: tx_transfer.amount.clone(),
@@ -104,16 +107,18 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
                     from_subaccount: None,
                 };
 
-                let canister_call = ic_icrc_tx::builder::icrc1::build_icrc1_transfer(
-                    tx_transfer.asset.address.clone(),
-                    arg,
-                );
+                let canister_id = match tx_transfer.asset {
+                    Asset::IC { address } => address,
+                };
+
+                let canister_call = build_canister_call(&canister_id, "icrc1_transfer", &arg);
+                let nonce = self.nonce_from_tx_id(&tx.id)?;
 
                 Ok(Icrc112Request {
                     canister_id: canister_call.canister_id,
                     method: canister_call.method,
                     arg: canister_call.arg,
-                    nonce: Some(tx.id.clone()),
+                    nonce: Some(nonce),
                 })
             }
             Protocol::IC(IcTransaction::Icrc2Approve(tx_approve)) => {
@@ -121,7 +126,6 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
                     owner: *canister_id,
                     subaccount: None,
                 };
-
                 let arg = ApproveArgs {
                     from_subaccount: None,
                     spender,
@@ -133,16 +137,18 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
                     created_at_time: None,
                 };
 
-                let canister_call = ic_icrc_tx::builder::icrc2::build_icrc2_approve(
-                    tx_approve.asset.address.clone(),
-                    arg,
-                );
+                let canister_id = match tx_approve.asset {
+                    Asset::IC { address } => address,
+                };
+
+                let canister_call = build_canister_call(&canister_id, "icrc2_approve", &arg);
+                let nonce = self.nonce_from_tx_id(&tx.id)?;
 
                 Ok(Icrc112Request {
                     canister_id: canister_call.canister_id,
                     method: canister_call.method,
                     arg: canister_call.arg,
-                    nonce: Some(tx.id.clone()),
+                    nonce: Some(nonce),
                 })
             }
             Protocol::IC(IcTransaction::Icrc2TransferFrom(_tx_transfer_from)) => {
@@ -151,16 +157,15 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
                     action_id: action_id.to_string(),
                     transaction_id: tx.id.clone(),
                 };
-
                 let method = "trigger_transaction";
-
-                let arg = base64::engine::general_purpose::STANDARD.encode(Encode!(&input)?);
+                let canister_call = build_canister_call(canister_id, method, &input);
+                let nonce = self.nonce_from_tx_id(&tx.id)?;
 
                 Ok(Icrc112Request {
-                    canister_id: canister_id.to_text(),
-                    method: method.to_string(),
-                    arg,
-                    nonce: Some(tx.id.clone()),
+                    canister_id: canister_call.canister_id,
+                    method: canister_call.method,
+                    arg: canister_call.arg,
+                    nonce: Some(nonce),
                 })
             }
         }
@@ -255,5 +260,43 @@ impl<E: IcEnvironment + Clone> TransactionService<E> {
         }
 
         Ok(Some(icrc_112_requests))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::repositories::tests::TestRepositories;
+    use crate::utils::test_utils::runtime::MockIcEnvironment;
+
+    #[test]
+    fn nonce_from_tx_id_valid_uuid_returns_16_bytes() {
+        let repos = TestRepositories::new();
+        let env = MockIcEnvironment::new();
+        let service: TransactionService<MockIcEnvironment, TestRepositories> =
+            TransactionService::new(&repos, env);
+
+        let uuid = Uuid::new_v4().to_string();
+        let nonce = service.nonce_from_tx_id(&uuid).expect("should parse uuid");
+
+        assert_eq!(nonce.len(), 16);
+    }
+
+    #[test]
+    fn nonce_from_tx_id_invalid_uuid_returns_error() {
+        let repos = TestRepositories::new();
+        let env = MockIcEnvironment::new();
+        let service: TransactionService<MockIcEnvironment, TestRepositories> =
+            TransactionService::new(&repos, env);
+
+        let bad = "not-a-uuid";
+        let res = service.nonce_from_tx_id(bad);
+        assert!(res.is_err());
+        if let Err(e) = res {
+            match e {
+                CanisterError::InvalidInput(_) => {}
+                _ => panic!("expected InvalidInput error"),
+            }
+        }
     }
 }

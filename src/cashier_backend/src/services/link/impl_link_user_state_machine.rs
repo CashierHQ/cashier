@@ -1,11 +1,11 @@
 use crate::{
+    repositories::Repositories,
     services::link::{service::LinkService, traits::LinkUserStateMachine},
     utils::runtime::IcEnvironment,
 };
-use std::str::FromStr;
 
 use candid::Principal;
-use cashier_types::{
+use cashier_backend_types::{
     dto::{
         action::ActionDto,
         link::{
@@ -20,18 +20,18 @@ use cashier_types::{
     },
 };
 
-impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
+impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkService<E, R> {
     fn handle_user_link_state_machine(
-        &self,
+        &mut self,
         link_id: &str,
-        action_type: &str,
-        user_id: &str,
+        action_type: &ActionType,
+        user_id: Principal,
         goto: &UserStateMachineGoto,
     ) -> Result<LinkAction, CanisterError> {
         // check inputs that can be changed this state
         let action_list = self
             .link_action_repository
-            .get_by_prefix(link_id, action_type, user_id);
+            .get_by_prefix(link_id, action_type, &user_id);
 
         let Some(mut link_action) = action_list.first().cloned() else {
             return Err(CanisterError::NotFound("Link action not found".to_string()));
@@ -55,8 +55,9 @@ impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
         //
         // !Start of user state machine
         //
-        // Check for valid transition: ChooseWallet -> CompletedLink
-        else if current_user_state == LinkUserState::ChooseWallet
+        // Check for valid transition: Address -> CompletedLink
+        // TODO check gate, right now gate is not implemented
+        else if current_user_state == LinkUserState::Address
             && *goto == UserStateMachineGoto::Continue
         {
             // Validate the action exists and is successful
@@ -78,7 +79,7 @@ impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
         // Any other transition is invalid
         else {
             return Err(CanisterError::HandleLogicError(format!(
-                "current state {current_user_state:#?} is not allowed to transition: {goto:#?}"
+                "current state {current_user_state:?} is not allowed to transition: {goto:?}"
             )));
         }
 
@@ -94,38 +95,22 @@ impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
 
     fn link_get_user_state(
         &self,
-        caller: &Principal,
+        caller: Principal,
         input: &LinkGetUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
-        // only support claim action type
-        match ActionType::from_str(&input.action_type) {
-            Ok(action_type) => {
-                if action_type != ActionType::Use {
-                    return Err(CanisterError::ValidationErrors(
+        if input.action_type != ActionType::Use {
+            return Err(CanisterError::ValidationErrors(
+                "
+                        Invalid action type, only Claim or Use action type is allowed
                         "
-                                Invalid action type, only Claim or Use action type is allowed
-                                "
-                        .to_string(),
-                    ));
-                }
-            }
-            Err(_) => {
-                return Err(CanisterError::ValidationErrors(
-                    "
-                            Invalid action type
-                            "
-                    .to_string(),
-                ));
-            }
+                .to_string(),
+            ));
         }
 
-        let temp_user_id = if *caller != Principal::anonymous() {
-            self.user_service.get_user_id_by_wallet(caller)
+        let temp_user_id = if caller != Principal::anonymous() {
+            Some(caller)
         } else {
-            input
-                .anonymous_wallet_address
-                .as_ref()
-                .map(|addr| format!("ANON#{addr}"))
+            input.anonymous_wallet_address
         };
         // Check if temp_user_id is None and return error
         let temp_user_id = temp_user_id
@@ -136,7 +121,7 @@ impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
         // link_action type = input action type
         // link_action user_id = search_user_id
         let link_action =
-            self.get_link_action_user(&input.link_id, &input.action_type, &temp_user_id)?;
+            self.get_link_action_user(&input.link_id, &input.action_type, temp_user_id)?;
 
         if link_action.is_none() {
             return Ok(None);
@@ -163,57 +148,36 @@ impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
 
         Ok(Some(LinkGetUserStateOutput {
             action: ActionDto::from_with_tx(action.action, action.intents, &action.intent_txs),
-            link_user_state: link_user_state.to_string(),
+            link_user_state,
         }))
     }
 
     fn link_update_user_state(
-        &self,
-        caller: &Principal,
+        &mut self,
+        caller: Principal,
         input: &LinkUpdateUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
         // validate action type
-        match ActionType::from_str(&input.action_type) {
-            Ok(action_type) => {
-                if action_type != ActionType::Use {
-                    return Err(CanisterError::ValidationErrors(
-                        "
-                        Invalid action type, only Claim or Use  action type is allowed
-                        "
-                        .to_string(),
-                    ));
-                }
-            }
-            Err(_) => {
-                return Err(CanisterError::ValidationErrors(
-                    "
-                    Invalid action type
-                    "
-                    .to_string(),
-                ));
-            }
+        if input.action_type != ActionType::Use {
+            return Err(CanisterError::ValidationErrors(
+                "Invalid action type, only Claim or Use  action type is allowed".to_string(),
+            ));
         }
 
-        let temp_user_id = if *caller != Principal::anonymous() {
-            self.user_service.get_user_id_by_wallet(caller)
+        let temp_user_id = if caller != Principal::anonymous() {
+            Some(caller)
         } else {
-            input
-                .anonymous_wallet_address
-                .as_ref()
-                .map(|addr| format!("ANON#{addr}"))
+            input.anonymous_wallet_address
         };
         // Check if temp_user_id is None and return error
         let temp_user_id = temp_user_id
             .ok_or_else(|| CanisterError::ValidationErrors("User ID is required".to_string()))?;
 
-        let goto = UserStateMachineGoto::from_str(&input.goto)
-            .map_err(|e| CanisterError::ValidationErrors(format!("Invalid goto: {e}")))?;
-
         let link_action = self.handle_user_link_state_machine(
             &input.link_id,
             &input.action_type,
-            &temp_user_id,
-            &goto,
+            temp_user_id,
+            &input.goto,
         )?;
 
         // If not found
@@ -237,7 +201,505 @@ impl<E: IcEnvironment + Clone> LinkUserStateMachine for LinkService<E> {
 
         Ok(Some(LinkGetUserStateOutput {
             action: ActionDto::from_with_tx(action.action, action.intents, &action.intent_txs),
-            link_user_state: link_user_state.to_string(),
+            link_user_state,
         }))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::rc::Rc;
+
+    use super::*;
+    use crate::repositories::tests::TestRepositories;
+    use crate::services::link::test_fixtures::*;
+    use crate::utils::test_utils::{random_principal_id, runtime::MockIcEnvironment};
+    use cashier_backend_types::repository::action::v1::{Action, ActionState, ActionType};
+
+    #[test]
+    fn it_should_error_handle_user_link_state_machine_if_link_not_found() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+        let action_type = ActionType::Use;
+
+        // Act
+        let result = service.handle_user_link_state_machine(
+            &link.id,
+            &action_type,
+            creator_id,
+            &UserStateMachineGoto::Continue,
+        );
+
+        // Assert
+        assert!(result.is_err());
+
+        if let Err(CanisterError::NotFound(msg)) = result {
+            assert_eq!(msg, "Link action not found");
+        } else {
+            panic!("Expected NotFound error");
+        }
+    }
+
+    #[test]
+    fn it_should_error_handle_user_link_state_machine_if_link_state_empty() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+        let action_type = ActionType::Use;
+
+        let _link_action =
+            create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
+
+        // Act
+        let result = service.handle_user_link_state_machine(
+            &link.id,
+            &action_type,
+            creator_id,
+            &UserStateMachineGoto::Continue,
+        );
+
+        // Assert
+        assert!(result.is_err());
+
+        if let Err(CanisterError::HandleLogicError(msg)) = result {
+            assert_eq!(msg, "unknown state");
+        } else {
+            panic!("Expected HandleLogicError");
+        }
+    }
+
+    #[test]
+    fn it_should_error_handle_user_link_state_machine_if_link_uset_state_completed() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+        let action_type = ActionType::Use;
+
+        let link_action =
+            create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
+        let updated_link_action = LinkAction {
+            link_id: link_action.link_id.clone(),
+            action_type: link_action.action_type.clone(),
+            action_id: link_action.action_id.clone(),
+            user_id: link_action.user_id,
+            link_user_state: Some(LinkUserState::CompletedLink),
+        };
+        service.link_action_repository.update(updated_link_action);
+
+        // Act
+        let result = service.handle_user_link_state_machine(
+            &link.id,
+            &action_type,
+            creator_id,
+            &UserStateMachineGoto::Continue,
+        );
+
+        // Assert
+        assert!(result.is_err());
+
+        if let Err(CanisterError::HandleLogicError(msg)) = result {
+            assert_eq!(msg, "current state is final state");
+        } else {
+            panic!("Expected HandleLogicError");
+        }
+    }
+
+    #[test]
+    fn it_should_error_handle_user_link_state_machine_if_current_state_choose_wallet_and_goto_continue_and_action_state_notsuccess()
+     {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+        let action_type = ActionType::Use;
+
+        let link_action =
+            create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
+        let updated_link_action = LinkAction {
+            link_id: link_action.link_id.clone(),
+            action_type: link_action.action_type.clone(),
+            action_id: link_action.action_id.clone(),
+            user_id: link_action.user_id,
+            link_user_state: Some(LinkUserState::Address),
+        };
+        service.link_action_repository.update(updated_link_action);
+
+        // Act
+        let result = service.handle_user_link_state_machine(
+            &link.id,
+            &action_type,
+            creator_id,
+            &UserStateMachineGoto::Continue,
+        );
+
+        // Assert
+        assert!(result.is_err());
+
+        if let Err(CanisterError::HandleLogicError(msg)) = result {
+            assert_eq!(msg, "Action is not success");
+        } else {
+            panic!("Expected HandleLogicError");
+        }
+    }
+
+    #[test]
+    fn it_should_handle_user_link_state_machine_if_current_state_choose_wallet_and_goto_continue() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+        let action_type = ActionType::Use;
+
+        let link_action =
+            create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
+        let updated_link_action = LinkAction {
+            link_id: link_action.link_id.clone(),
+            action_type: link_action.action_type.clone(),
+            action_id: link_action.action_id.clone(),
+            user_id: link_action.user_id,
+            link_user_state: Some(LinkUserState::Address),
+        };
+        service.link_action_repository.update(updated_link_action);
+
+        let updated_action = Action {
+            id: link_action.action_id,
+            r#type: ActionType::Use,
+            state: ActionState::Success,
+            creator: creator_id,
+            link_id: link.id.clone(),
+        };
+        service.action_repository.update(updated_action);
+
+        // Act
+        let result = service.handle_user_link_state_machine(
+            &link.id,
+            &action_type,
+            creator_id,
+            &UserStateMachineGoto::Continue,
+        );
+
+        // Assert
+        assert!(result.is_ok());
+        let link_action = result.unwrap();
+        assert_eq!(
+            link_action.link_user_state,
+            Some(LinkUserState::CompletedLink)
+        );
+    }
+
+    #[test]
+    fn it_should_error_handle_user_link_state_machine_otherwise() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+        let action_type = ActionType::Use;
+
+        let link_action =
+            create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
+        let updated_link_action = LinkAction {
+            link_id: link_action.link_id.clone(),
+            action_type: link_action.action_type.clone(),
+            action_id: link_action.action_id.clone(),
+            user_id: link_action.user_id,
+            link_user_state: Some(LinkUserState::Address),
+        };
+        service.link_action_repository.update(updated_link_action);
+
+        // Act
+        let result = service.handle_user_link_state_machine(
+            &link.id,
+            &action_type,
+            creator_id,
+            &UserStateMachineGoto::Back,
+        );
+
+        // Assert
+        assert!(result.is_err());
+
+        if let Err(CanisterError::HandleLogicError(msg)) = result {
+            assert_eq!(
+                msg,
+                format!(
+                    "current state {:?} is not allowed to transition: {:?}",
+                    LinkUserState::Address,
+                    UserStateMachineGoto::Back
+                )
+            );
+        } else {
+            panic!("Expected HandleLogicError");
+        }
+    }
+
+    #[test]
+    fn it_should_error_link_get_user_state_if_action_type_invalid() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator = random_principal_id();
+        let link = create_link_fixture(&mut service, creator);
+
+        // Act
+        let result = service.link_get_user_state(
+            creator,
+            &LinkGetUserStateInput {
+                link_id: link.id,
+                action_type: ActionType::CreateLink,
+                anonymous_wallet_address: None,
+            },
+        );
+
+        // Assert
+        assert!(result.is_err());
+
+        if let Err(CanisterError::ValidationErrors(msg)) = result {
+            assert!(msg.contains("Invalid action type, only Claim or Use action type is allowed"));
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    #[test]
+    fn it_should_error_link_get_user_state_if_action_type_invalid_format() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator = random_principal_id();
+        let link = create_link_fixture(&mut service, creator);
+
+        // Act
+        let result = service.link_get_user_state(
+            creator,
+            &LinkGetUserStateInput {
+                link_id: link.id,
+                action_type: ActionType::CreateLink,
+                anonymous_wallet_address: None,
+            },
+        );
+
+        // Assert
+        assert!(result.is_err());
+
+        if let Err(CanisterError::ValidationErrors(msg)) = result {
+            assert!(msg.contains("Invalid action type"));
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    #[test]
+    fn it_should_link_get_user_state_if_link_action_not_found() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator = random_principal_id();
+        let link = create_link_fixture(&mut service, creator);
+
+        // Act
+        let result = service.link_get_user_state(
+            creator,
+            &LinkGetUserStateInput {
+                link_id: link.id,
+                action_type: ActionType::Use,
+                anonymous_wallet_address: None,
+            },
+        );
+
+        // Assert
+        assert!(result.is_ok());
+        let output = result.unwrap();
+        assert!(output.is_none());
+    }
+
+    #[test]
+    fn it_should_error_link_get_user_state_if_link_user_state_not_found() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator = random_principal_id();
+        let link = create_link_fixture(&mut service, creator);
+        let link_action =
+            create_link_action_fixture(&mut service, &link.id, ActionType::Use, creator);
+
+        let updated_link_action = LinkAction {
+            link_id: link_action.link_id.clone(),
+            action_type: link_action.action_type.clone(),
+            action_id: link_action.action_id.clone(),
+            user_id: link_action.user_id,
+            link_user_state: None,
+        };
+        service.link_action_repository.update(updated_link_action);
+
+        // Act
+        let result = service.link_get_user_state(
+            creator,
+            &LinkGetUserStateInput {
+                link_id: link.id,
+                action_type: ActionType::Use,
+                anonymous_wallet_address: None,
+            },
+        );
+
+        // Assert
+        assert!(result.is_err());
+
+        if let Err(CanisterError::HandleLogicError(msg)) = result {
+            assert_eq!(msg, "Link user state is not found");
+        } else {
+            panic!("Expected HandleLogicError");
+        }
+    }
+
+    #[test]
+    fn it_should_link_get_user_state_if_link_action_found() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+        let link_action =
+            create_link_action_fixture(&mut service, &link.id, ActionType::Use, creator_id);
+        let updated_link_action = LinkAction {
+            link_id: link_action.link_id.clone(),
+            action_type: link_action.action_type.clone(),
+            action_id: link_action.action_id.clone(),
+            user_id: link_action.user_id,
+            link_user_state: Some(LinkUserState::Address),
+        };
+        service.link_action_repository.update(updated_link_action);
+
+        // Act
+        let result = service.link_get_user_state(
+            creator_id,
+            &LinkGetUserStateInput {
+                link_id: link.id,
+                action_type: ActionType::Use,
+                anonymous_wallet_address: None,
+            },
+        );
+
+        // Assert
+        assert!(result.is_ok());
+        let output = result.unwrap();
+        assert!(output.is_some());
+        let output = output.unwrap();
+        assert_eq!(output.link_user_state, LinkUserState::Address);
+        assert_eq!(output.action.creator, creator_id);
+    }
+
+    #[test]
+    fn it_should_error_link_update_user_state_if_action_type_invalid() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+
+        // Act
+        let result = service.link_update_user_state(
+            creator_id,
+            &LinkUpdateUserStateInput {
+                link_id: link.id,
+                action_type: ActionType::CreateLink,
+                goto: UserStateMachineGoto::Continue,
+                anonymous_wallet_address: None,
+            },
+        );
+
+        // Assert
+        assert!(result.is_err());
+
+        if let Err(CanisterError::ValidationErrors(msg)) = result {
+            assert!(msg.contains("Invalid action type, only Claim or Use  action type is allowed"));
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    #[test]
+    fn it_should_error_link_update_user_state_if_action_type_invalid_format() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+
+        // Act
+        let result = service.link_update_user_state(
+            creator_id,
+            &LinkUpdateUserStateInput {
+                link_id: link.id,
+                action_type: ActionType::CreateLink,
+                goto: UserStateMachineGoto::Continue,
+                anonymous_wallet_address: None,
+            },
+        );
+
+        // Assert
+        assert!(result.is_err());
+
+        if let Err(CanisterError::ValidationErrors(msg)) = result {
+            assert!(msg.contains("Invalid action type"));
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    #[test]
+    fn it_should_link_update_user_state() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+        let link_action =
+            create_link_action_fixture(&mut service, &link.id, ActionType::Use, creator_id);
+
+        let updated_link_action = LinkAction {
+            link_id: link_action.link_id.clone(),
+            action_type: link_action.action_type.clone(),
+            action_id: link_action.action_id.clone(),
+            user_id: link_action.user_id,
+            link_user_state: Some(LinkUserState::Address),
+        };
+        service.link_action_repository.update(updated_link_action);
+
+        let updated_action = Action {
+            id: link_action.action_id,
+            r#type: ActionType::Use,
+            state: ActionState::Success,
+            creator: creator_id,
+            link_id: link.id.clone(),
+        };
+        service.action_repository.update(updated_action);
+
+        // Act
+        let result = service.link_update_user_state(
+            creator_id,
+            &LinkUpdateUserStateInput {
+                link_id: link.id,
+                action_type: ActionType::Use,
+                goto: UserStateMachineGoto::Continue,
+                anonymous_wallet_address: None,
+            },
+        );
+
+        // Assert
+        assert!(result.is_ok());
+        let output = result.unwrap();
+        assert!(output.is_some());
+        let output = output.unwrap();
+        assert_eq!(output.link_user_state, LinkUserState::CompletedLink);
+        assert_eq!(output.action.creator, creator_id);
     }
 }

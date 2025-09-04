@@ -3,11 +3,10 @@
 
 use crate::services::ext::icrc_token::Service;
 use candid::{Nat, Principal};
-use cashier_types::error::CanisterError;
-use cashier_types::repository::common::{Asset, Chain};
+use cashier_backend_types::error::CanisterError;
+use cashier_backend_types::repository::common::Asset;
 use futures::future::{self, BoxFuture};
 use std::collections::HashMap;
-use std::str::FromStr;
 
 // Define a type alias for the boxed future that returns Principal and CallResult
 type GetFeeTaskResponse = BoxFuture<'static, (Principal, Result<candid::Nat, CanisterError>)>;
@@ -19,10 +18,6 @@ impl IcrcBatchService {
     /// Creates a new instance of IcrcBatchService
     pub fn new() -> Self {
         Self
-    }
-
-    pub fn get_instance() -> Self {
-        Self::new()
     }
 
     /// Retrieves token fees for a collection of assets in parallel.
@@ -60,40 +55,24 @@ impl IcrcBatchService {
     pub async fn get_batch_tokens_fee(
         &self,
         assets: &Vec<Asset>,
-    ) -> Result<HashMap<String, Nat>, CanisterError> {
-        // right now make sure all token is IC assets
-        let is_all_ic_assets = assets.iter().all(|asset| asset.chain == Chain::IC);
-
-        if !is_all_ic_assets {
-            return Err(CanisterError::ValidationErrors(
-                "All assets must be IC assets".to_string(),
-            ));
-        }
-
+    ) -> Result<HashMap<Principal, Nat>, CanisterError> {
         // Create a vector to store the principal and corresponding fee call future
         let mut get_fee_calls: Vec<GetFeeTaskResponse> = Vec::new();
 
         // Create a HashMap to store the final results
-        let mut fee_map: HashMap<String, Nat> = HashMap::new();
+        let mut fee_map = HashMap::new();
 
         for asset in assets {
-            // Parse the asset address to Principal
-            match Principal::from_str(&asset.address) {
-                Ok(principal) => {
+            match asset {
+                Asset::IC { address, .. } => {
+                    let address = *address;
                     // Create a boxed async closure that returns a Future
                     get_fee_calls.push(Box::pin(async move {
-                        let service = Service::new(principal);
+                        let service = Service::new(address);
                         let fee_res = service.icrc_1_fee().await;
 
-                        (principal, fee_res)
+                        (address, fee_res)
                     }));
-                }
-                // If address is invalid, return an error, stop processing further
-                Err(_) => {
-                    return Err(CanisterError::ValidationErrors(format!(
-                        "Invalid asset address: {}",
-                        asset.address
-                    )));
                 }
             }
         }
@@ -107,7 +86,7 @@ impl IcrcBatchService {
                 Ok(fee) => {
                     // If call succeeds, convert fee to Nat and add to the HashMap
                     let fee_n = fee;
-                    fee_map.insert(principal.to_text(), fee_n);
+                    fee_map.insert(principal, fee_n);
                 }
                 Err(errr) => {
                     return Err(CanisterError::CallCanisterFailed(format!(

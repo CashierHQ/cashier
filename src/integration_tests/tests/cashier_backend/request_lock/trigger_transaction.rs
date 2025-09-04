@@ -1,6 +1,6 @@
-use base64::prelude::BASE64_STANDARD;
-use candid::{CandidType, Decode, Principal};
-use cashier_types::error::CanisterError;
+use candid::{CandidType, Decode};
+use cashier_backend_types::error::CanisterError;
+use cashier_backend_types::repository::action::v1::ActionType;
 use ic_mple_pocket_ic::pocket_ic::common::rest::RawMessageId;
 use serde::de::DeserializeOwned;
 
@@ -8,7 +8,7 @@ use crate::cashier_backend::link::fixture::LinkTestFixture;
 use crate::utils::PocketIcTestContext;
 use crate::utils::icrc_112::execute_icrc112_request;
 use crate::utils::{principal::TestUser, with_pocket_ic_context};
-use base64::Engine;
+use std::sync::Arc;
 
 async fn call_and_decode<T: DeserializeOwned + CandidType>(
     ctx: &PocketIcTestContext,
@@ -23,23 +23,24 @@ async fn test_request_lock_for_trigger_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let mut fixture = LinkTestFixture::new(ctx, &caller).await;
+        let mut fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
         // Setup user and airdrop tokens
-        fixture.setup_user().await;
+        fixture.airdrop_icp(1_000_000_000_000_000, &caller).await;
         fixture
-            .airdrop_icp(ctx, 1_000_000_000_000_000, &caller)
+            .airdrop_icrc("ckBTC", 1_000_000_000_000_000, &caller)
             .await;
         fixture
-            .airdrop_icrc(ctx, "ckBTC", 1_000_000_000_000_000, &caller)
-            .await;
-        fixture
-            .airdrop_icrc(ctx, "ckUSDC", 1_000_000_000_000_000, &caller)
+            .airdrop_icrc("ckUSDC", 1_000_000_000_000_000, &caller)
             .await;
 
-        let link = fixture.create_token_basket_link(ctx).await;
-        let action = fixture.create_action(&link.id, "CreateLink").await;
-        let processing_action = fixture.process_action(&link.id, &action.id).await;
+        let link = fixture.create_token_basket_link().await;
+        let action = fixture
+            .create_action(&link.id, ActionType::CreateLink)
+            .await;
+        let processing_action = fixture
+            .process_action(&link.id, &action.id, ActionType::CreateLink)
+            .await;
 
         // Execute all ICRC-112 requests except trigger_transaction
         if let Some(mut reqs) = processing_action.icrc_112_requests.clone() {
@@ -64,20 +65,15 @@ async fn test_request_lock_for_trigger_action() {
             })
             .expect("no trigger_transaction request found");
 
-        let payload = BASE64_STANDARD
-            .decode(&trigger_transaction_req.arg)
-            .map_err(|e| format!("Invalid base64 payload: {e}"))
-            .unwrap();
+        let payload = &trigger_transaction_req.arg.clone();
 
         // Act: submit 3 concurrent calls and collect results
-        let canister_id = Principal::from_text(&trigger_transaction_req.canister_id)
-            .expect("invalid canister ID");
         let mut msgs = Vec::with_capacity(3);
         for _ in 0..3 {
             msgs.push(
                 ctx.client
                     .submit_call(
-                        canister_id,
+                        trigger_transaction_req.canister_id,
                         caller,
                         &trigger_transaction_req.method,
                         payload.clone(),

@@ -1,29 +1,45 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-// File: src/token_storage/src/repository/balance_cache.rs
-use super::BALANCE_CACHE_STORE;
-use crate::types::{Candid, TokenBalance, TokenId};
+use std::{cell::RefCell, thread::LocalKey};
+
+use crate::{
+    repository::BalanceCache,
+    types::{Candid, TokenBalance},
+};
+use candid::Principal;
 use ic_cdk::api::time;
+use ic_mple_utils::store::Storage;
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
+use token_storage_types::TokenId;
 
-pub struct BalanceCacheRepository {}
+/// Store for balance cache repository
+pub type BalanceCacheRepositoryStorage =
+    StableBTreeMap<Principal, BalanceCache, VirtualMemory<DefaultMemoryImpl>>;
+pub type ThreadlocalBalanceCacheRepositoryStorage =
+    &'static LocalKey<RefCell<BalanceCacheRepositoryStorage>>;
 
-impl Default for BalanceCacheRepository {
-    fn default() -> Self {
-        Self::new()
-    }
+pub struct BalanceCacheRepository<S: Storage<BalanceCacheRepositoryStorage>> {
+    balance_store: S,
 }
 
-impl BalanceCacheRepository {
-    pub fn new() -> Self {
-        Self {}
+impl<S: Storage<BalanceCacheRepositoryStorage>> BalanceCacheRepository<S> {
+    /// Create a new BalanceCacheRepository
+    pub fn new(storage: S) -> Self {
+        Self {
+            balance_store: storage,
+        }
     }
 
-    pub fn update_bulk_balances(&self, user_id: &str, token_balances: Vec<(String, u128)>) {
-        BALANCE_CACHE_STORE.with_borrow_mut(|store| {
+    pub fn update_bulk_balances(
+        &mut self,
+        user_id: Principal,
+        token_balances: Vec<(TokenId, u128)>,
+    ) {
+        self.balance_store.with_borrow_mut(|store| {
             // Get existing balances or create new HashMap
             let mut balance_map = store
-                .get(&user_id.to_string())
+                .get(&user_id)
                 .map(|candid| candid.into_inner())
                 .unwrap_or_default();
 
@@ -40,14 +56,14 @@ impl BalanceCacheRepository {
             }
 
             // Store the updated map
-            store.insert(user_id.to_string(), Candid(balance_map));
+            store.insert(user_id, Candid(balance_map));
         });
     }
 
-    pub fn get_all_balances(&self, user_id: &str) -> Vec<(TokenId, u128)> {
-        BALANCE_CACHE_STORE.with_borrow(|store| {
+    pub fn get_all_balances(&self, user_id: &Principal) -> Vec<(TokenId, u128)> {
+        self.balance_store.with_borrow(|store| {
             store
-                .get(&user_id.to_string())
+                .get(user_id)
                 .map(|Candid(balances)| {
                     balances
                         .into_iter()

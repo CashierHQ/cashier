@@ -9,16 +9,21 @@ crate-type = ["cdylib"]
 
 [dependencies]
 candid = { workspace = true }
-cashier-common = { workspace = true }
-cashier-macros = { workspace = true }
+cashier_common = { workspace = true }
+cashier_macros = { workspace = true }
+ciborium = { workspace = true }
 futures = { workspace = true, features = ["async-await"] }
 ic-cdk = { workspace = true }
+ic_mple_auth = { workspace = true }
+ic_mple_log = { workspace = true }
+ic_mple_utils = { workspace = true }
 ic-stable-structures = { workspace = true }
+log = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-serde_cbor = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
+token_storage_types = { workspace = true }
 
 [dev-dependencies]
 ic_mple_pocket_ic = { workspace = true }

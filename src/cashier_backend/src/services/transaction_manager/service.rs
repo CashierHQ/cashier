@@ -1,10 +1,12 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use std::rc::Rc;
+
 use crate::{
     repositories::{
-        action::ActionRepository, processing_transaction::ProcessingTransactionRepository,
-        user_wallet::UserWalletRepository,
+        Repositories, action::ActionRepository,
+        processing_transaction::ProcessingTransactionRepository,
     },
     services::{
         action::ActionService, adapter::IntentAdapterImpl, transaction::TransactionService,
@@ -12,51 +14,36 @@ use crate::{
     utils::{icrc::IcrcService, runtime::IcEnvironment},
 };
 
-pub struct TransactionManagerService<E: IcEnvironment + Clone> {
-    pub transaction_service: TransactionService<E>,
-    pub action_service: ActionService,
+pub struct TransactionManagerService<E: IcEnvironment + Clone, R: Repositories> {
+    pub repo: Rc<R>,
+    pub transaction_service: TransactionService<E, R>,
+    pub action_service: ActionService<R>,
     pub ic_env: E,
     pub icrc_service: IcrcService,
-    pub intent_adapter: IntentAdapterImpl<E>,
-    pub user_wallet_repository: UserWalletRepository,
-    pub action_repository: ActionRepository,
-    pub processing_transaction_repository: ProcessingTransactionRepository,
+    pub intent_adapter: IntentAdapterImpl,
+    pub action_repository: ActionRepository<R::Action>,
+    pub processing_transaction_repository:
+        ProcessingTransactionRepository<R::ProcessingTransaction>,
+}
+
+impl<E: IcEnvironment + Clone, R: Repositories> Clone for TransactionManagerService<E, R> {
+    fn clone(&self) -> Self {
+        Self::new(self.repo.clone(), self.ic_env.clone())
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
-impl<E: IcEnvironment + Clone> TransactionManagerService<E> {
-    pub fn new(
-        transaction_service: TransactionService<E>,
-        action_service: ActionService,
-        ic_env: E,
-        icrc_service: IcrcService,
-        intent_adapter: IntentAdapterImpl<E>,
-        user_wallet_repository: UserWalletRepository,
-        action_repository: ActionRepository,
-        processing_transaction_repository: ProcessingTransactionRepository,
-    ) -> Self {
+impl<E: IcEnvironment + Clone, R: Repositories> TransactionManagerService<E, R> {
+    pub fn new(repo: Rc<R>, ic_env: E) -> Self {
         Self {
-            transaction_service,
-            action_service,
+            transaction_service: TransactionService::new(&repo, ic_env.clone()),
+            action_service: ActionService::new(&repo),
             ic_env,
-            icrc_service,
-            intent_adapter,
-            user_wallet_repository,
-            action_repository,
-            processing_transaction_repository,
+            icrc_service: IcrcService::new(),
+            intent_adapter: IntentAdapterImpl::new(),
+            action_repository: repo.action(),
+            processing_transaction_repository: repo.processing_transaction(),
+            repo,
         }
-    }
-
-    pub fn get_instance() -> Self {
-        Self::new(
-            TransactionService::get_instance(),
-            ActionService::get_instance(),
-            IcEnvironment::new(),
-            IcrcService::new(),
-            IntentAdapterImpl::new(),
-            UserWalletRepository::new(),
-            ActionRepository::new(),
-            ProcessingTransactionRepository::new(),
-        )
     }
 }

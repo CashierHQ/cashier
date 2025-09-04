@@ -1,12 +1,13 @@
-use cashier_common::build_data::BuildData;
-use cashier_types::{
+use candid::Principal;
+use cashier_backend_types::{
+    auth::Permission,
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
         link::{CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDto, UpdateLinkInput},
-        user::UserDto,
     },
     error::CanisterError,
 };
+use cashier_common::{build_data::BuildData, icrc::Icrc114ValidateArgs};
 use ic_mple_client::{CanisterClient, CanisterClientResult};
 
 /// An CashierBackend canister client.
@@ -28,19 +29,41 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         Self { client }
     }
 
+    /// Returns the permissions of a principal.
+    pub async fn admin_permissions_get(
+        &self,
+        principal: Principal,
+    ) -> CanisterClientResult<Vec<Permission>> {
+        self.client
+            .query("admin_permissions_get", (principal,))
+            .await
+    }
+
+    /// Adds permissions to a principal and returns the principal permissions.
+    pub async fn admin_permissions_add(
+        &self,
+        principal: Principal,
+        permissions: Vec<Permission>,
+    ) -> CanisterClientResult<Result<Vec<Permission>, CanisterError>> {
+        self.client
+            .update("admin_permissions_add", (principal, permissions))
+            .await
+    }
+
+    /// Removes permissions from a principal and returns the principal permissions.
+    pub async fn admin_permissions_remove(
+        &self,
+        principal: Principal,
+        permissions: Vec<Permission>,
+    ) -> CanisterClientResult<Result<Vec<Permission>, CanisterError>> {
+        self.client
+            .update("admin_permissions_remove", (principal, permissions))
+            .await
+    }
+
     /// Returns the build data of the canister.
     pub async fn get_canister_build_data(&self) -> CanisterClientResult<BuildData> {
         self.client.query("get_canister_build_data", ()).await
-    }
-
-    /// Creates a new user. User should be created before creating a link.
-    pub async fn create_user(&self) -> CanisterClientResult<Result<UserDto, String>> {
-        self.client.update("create_user", ()).await
-    }
-
-    /// Returns the user in backend.
-    pub async fn get_user(&self) -> CanisterClientResult<Result<UserDto, String>> {
-        self.client.query("get_user", ()).await
     }
 
     /// Creates a new link.
@@ -89,6 +112,10 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         options: Option<GetLinkOptions>,
     ) -> CanisterClientResult<Result<GetLinkResp, String>> {
         self.client.query("get_link", (id, options)).await
+    }
+
+    pub async fn icrc114_validate(&self, args: Icrc114ValidateArgs) -> CanisterClientResult<bool> {
+        self.client.update("icrc114_validate", (args,)).await
     }
 }
 

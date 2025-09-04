@@ -2,12 +2,13 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::constant::get_tx_timeout_nano_seconds;
+use crate::repositories::Repositories;
 use crate::services::transaction_manager::traits::{
     BatchExecutor, DependencyAnalyzer, TimeoutHandler,
 };
-use async_trait::async_trait;
-use cashier_types::error::CanisterError;
-use cashier_types::{
+use candid::Principal;
+use cashier_backend_types::error::CanisterError;
+use cashier_backend_types::{
     dto::action::{ActionDto, Icrc112Requests},
     repository::{
         processing_transaction::ProcessingTransaction,
@@ -16,9 +17,9 @@ use cashier_types::{
     service::{action::ActionData, tx_manager::UpdateActionArgs},
 };
 use icrc_ledger_types::icrc1::account::Account;
+use log::info;
 
 use crate::{
-    info,
     services::{
         link::service::LinkService,
         transaction_manager::{service::TransactionManagerService, traits::ActionUpdater},
@@ -26,8 +27,9 @@ use crate::{
     utils::{self, helper::to_subaccount, runtime::IcEnvironment},
 };
 
-#[async_trait(?Send)]
-impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E> {
+impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionUpdater<E>
+    for TransactionManagerService<E, R>
+{
     /// Updates an action with new state information and executes eligible transactions
     ///
     /// This method:
@@ -46,7 +48,11 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
     ///
     /// # Returns
     /// * `Result<ActionDto, CanisterError>` - The updated action data or an error
-    async fn update_action(&self, args: UpdateActionArgs) -> Result<ActionDto, CanisterError> {
+    async fn update_action(
+        &mut self,
+        caller: Principal,
+        args: UpdateActionArgs,
+    ) -> Result<ActionDto, CanisterError> {
         let action_data = self
             .action_service
             .get_action_data(&args.action_id)
@@ -92,7 +98,7 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
 
         // User wallet account
         let caller = Account {
-            owner: self.ic_env.caller(),
+            owner: caller,
             subaccount: None,
         };
 
@@ -124,10 +130,7 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
             }
 
             // Transaction is eligible, categorize it based on from_account
-            let from_account = match tx.try_get_from_account() {
-                Ok(account) => account,
-                Err(e) => return Err(CanisterError::InvalidDataError(e.to_string())),
-            };
+            let from_account = tx.get_from_account();
 
             if from_account == caller {
                 eligible_wallet_txs.push(tx.clone());
@@ -206,7 +209,7 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
     }
 
     fn update_tx_state(
-        &self,
+        &mut self,
         tx: &mut Transaction,
         state: &TransactionState,
     ) -> Result<(), CanisterError> {
@@ -219,7 +222,7 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
         })?;
 
         // Pass the action state info to link_handle_tx_update
-        LinkService::<E>::get_instance().link_handle_tx_update(
+        LinkService::new(self.repo.clone(), self.ic_env.clone()).link_handle_tx_update(
             &roll_up_resp.previous_state,
             &roll_up_resp.current_state,
             &roll_up_resp.link_id,
@@ -240,9 +243,7 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
         let mut tx_execute_from_user_wallet = vec![];
 
         for tx in txs {
-            let from_account = tx
-                .try_get_from_account()
-                .map_err(|e| CanisterError::InvalidDataError(e.to_string()))?;
+            let from_account = tx.get_from_account();
             // check from_account is caller or not
             if from_account == *caller {
                 tx_execute_from_user_wallet.push(tx.clone());
@@ -251,5 +252,210 @@ impl<E: IcEnvironment + Clone> ActionUpdater<E> for TransactionManagerService<E>
 
         self.transaction_service
             .create_icrc_112(action_id, link_id, &tx_execute_from_user_wallet)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::constant::ICP_CANISTER_PRINCIPAL;
+    use crate::repositories::tests::TestRepositories;
+    use crate::services::transaction_manager::test_fixtures::*;
+    use crate::utils::test_utils::{
+        random_id_string, random_principal_id, runtime::MockIcEnvironment,
+    };
+    use candid::{Nat, Principal};
+    use cashier_backend_types::repository::{
+        common::{Asset, Wallet},
+        transaction::v2::{FromCallType, IcTransaction, Icrc1Transfer, Protocol},
+    };
+    use std::rc::Rc;
+
+    #[test]
+    fn it_should_error_update_tx_state_if_tx_not_found() {
+        // Arrange
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
+
+        let mut dummy_tx = Transaction {
+            id: random_id_string(),
+            created_at: 1622547800,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0u16,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
+                amount: Nat::from(1000u64),
+                ts: None,
+                memo: None,
+            })),
+            start_ts: None,
+        };
+        let new_state = TransactionState::Processing;
+
+        // Act
+        let result = service.update_tx_state(&mut dummy_tx, &new_state);
+
+        // Assert
+        assert!(result.is_err());
+        if let Err(CanisterError::HandleLogicError(msg)) = result {
+            assert!(msg.contains("get_action_by_tx_id failed"));
+        } else {
+            panic!("Expected NotFound error, got {:?}", result);
+        }
+    }
+
+    #[test]
+    fn it_should_update_tx_state() {
+        // Arrange
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
+        let link_id = random_id_string();
+        let action = create_action_with_intents_fixture(&mut service, link_id);
+        assert!(!action.intents.is_empty());
+        assert_eq!(action.intents[0].transactions.len(), 1);
+        let tx_id1 = &action.intents[0].transactions[0].id;
+        assert_eq!(
+            action.intents[0].transactions[0].state,
+            TransactionState::Created
+        );
+
+        let mut tx = Transaction {
+            id: tx_id1.clone(),
+            created_at: 1622547800,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0u16,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
+                amount: Nat::from(1000u64),
+                ts: None,
+                memo: None,
+            })),
+            start_ts: None,
+        };
+
+        // Act
+        let result = service.update_tx_state(&mut tx, &TransactionState::Success);
+
+        // Assert
+        assert!(result.is_ok());
+        let updated_tx = service.transaction_service.get_tx_by_id(&tx.id).unwrap();
+        assert_eq!(updated_tx.id, tx.id);
+        assert_eq!(updated_tx.state, TransactionState::Success);
+    }
+
+    #[test]
+    fn it_should_return_none_create_icrc112_request_if_caller_is_not_from_account() {
+        // Arrange
+        let service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
+        let action_id = random_id_string();
+        let link_id = random_id_string();
+        let tx_id = random_id_string();
+        let from_principal_id = random_principal_id();
+
+        let tx = Transaction {
+            id: tx_id,
+            created_at: 1622547800,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0u16,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet::new(from_principal_id),
+                to: Wallet::default(),
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
+                amount: Nat::from(1000u64),
+                ts: None,
+                memo: None,
+            })),
+            start_ts: None,
+        };
+
+        let caller = Account {
+            owner: Principal::anonymous(),
+            subaccount: None,
+        };
+
+        // Act
+        let result = service
+            .create_icrc_112(&caller, &action_id, &link_id, &[tx])
+            .unwrap();
+
+        // Assert
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn it_should_create_icrc112() {
+        // Arrange
+        let mut service: TransactionManagerService<MockIcEnvironment, TestRepositories> =
+            TransactionManagerService::new(
+                Rc::new(TestRepositories::new()),
+                MockIcEnvironment::new(),
+            );
+        let link_id = random_id_string();
+        let action = create_action_with_intents_fixture(&mut service, link_id.clone());
+        assert!(!action.intents.is_empty());
+        assert_eq!(action.intents[0].transactions.len(), 1);
+        let tx_id1 = &action.intents[0].transactions[0].id;
+        let creator_id = action.creator;
+
+        let tx1 = Transaction {
+            id: tx_id1.clone(),
+            created_at: 1622547800,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0u16,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet::new(creator_id),
+                to: Wallet::default(),
+                asset: Asset::IC {
+                    address: ICP_CANISTER_PRINCIPAL,
+                },
+                amount: Nat::from(1000u64),
+                ts: None,
+                memo: None,
+            })),
+            start_ts: None,
+        };
+
+        let caller = Account {
+            owner: creator_id,
+            subaccount: None,
+        };
+
+        // Act
+        let result = service
+            .create_icrc_112(&caller, &action.id, &link_id, &[tx1])
+            .unwrap();
+
+        // Assert
+        assert!(result.is_some());
+        let icrc112_requests = result.unwrap();
+        assert_eq!(icrc112_requests.len(), 1);
     }
 }

@@ -3,9 +3,9 @@
 
 pub mod action;
 pub mod adapter;
+pub mod auth;
 pub mod ext;
 pub mod link;
 pub mod request_lock;
 pub mod transaction;
 pub mod transaction_manager;
-pub mod user;

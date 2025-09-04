@@ -1,6 +1,6 @@
 # Run all Rust and TypeScript tests for backend and frontend
 [group('test')]
-test_all: test test_ts_integration test_frontend
+test_all: test test_frontend
 
 
 # Run unit tests
@@ -22,15 +22,17 @@ test_unit_i686 test_name="":
   cargo test {{test_name}} --lib --bins --target i686-unknown-linux-gnu
 
 
-# Run TypeScript based integration tests
-[group('test')]
-test_ts_integration: download_artifacts build_canisters
-  npm install
-  npm run test:integration-backend
-
-
 # Run the frontend tests
 [group('test')]
 test_frontend:
   cd {{FRONTEND_DIR}} && npm install
   cd {{FRONTEND_DIR}} && npm run test
+
+
+# Execute the coverage report for the tests using the llvm-cov tool. This takes a long time to run.
+[group('test')]
+test_coverage:
+  # WARN: using tarpaulin for the coverage report is faster but not recommended because it is not reliable.
+  # To output the coverage report in the lcov format replace `--html` with `--lcov --output-path ./target/lcov.file`.
+  cargo llvm-cov --release --all-features --ignore-run-fail --workspace --html
+  

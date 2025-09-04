@@ -1,41 +1,39 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use async_trait::async_trait;
 use candid::Principal;
-use cashier_types::{
+use cashier_backend_types::{
     error::CanisterError,
-    repository::transaction::v2::{
-        IcTransaction, Icrc1Transfer, Icrc2Approve, Protocol, Transaction, TransactionState,
+    repository::{
+        common::Asset,
+        transaction::v2::{
+            IcTransaction, Icrc1Transfer, Icrc2Approve, Protocol, Transaction, TransactionState,
+        },
     },
 };
-use icrc_ledger_types::icrc1::account::Account;
-use std::str::FromStr;
+use log::{error, warn};
 
 use crate::{
-    error,
+    repositories::Repositories,
     services::transaction_manager::{
         service::TransactionManagerService, traits::TransactionValidator,
     },
     utils::runtime::IcEnvironment,
-    warn,
 };
 
-#[async_trait(?Send)]
-impl<E: IcEnvironment + Clone> TransactionValidator<E> for TransactionManagerService<E> {
+impl<E: IcEnvironment + Clone, R: Repositories> TransactionValidator<E>
+    for TransactionManagerService<E, R>
+{
     async fn validate_balance_transfer(
         &self,
         icrc1_transfer_info: &Icrc1Transfer,
     ) -> Result<bool, CanisterError> {
         let target = icrc1_transfer_info.to.clone();
+        let target_account = target.get_account();
 
-        let target_account = Account::from_str(&target.address)
-            .map_err(|e| CanisterError::ParseAccountError(e.to_string()))?;
-
-        let asset = icrc1_transfer_info
-            .asset
-            .get_principal()
-            .map_err(|e| CanisterError::ParsePrincipalError(e.to_string()))?;
+        let asset = match icrc1_transfer_info.asset {
+            Asset::IC { address } => address,
+        };
 
         let balance = self.icrc_service.balance_of(asset, target_account).await?;
 
@@ -50,22 +48,15 @@ impl<E: IcEnvironment + Clone> TransactionValidator<E> for TransactionManagerSer
         &self,
         icrc2_transfer_from_info: &Icrc2Approve,
     ) -> Result<bool, CanisterError> {
-        let from_wallet_account = icrc2_transfer_from_info
-            .from
-            .get_account()
-            .map_err(|e| CanisterError::ParseAccountError(e.to_string()))?;
+        let from_wallet_account = icrc2_transfer_from_info.from.get_account();
 
-        let spender_account = icrc2_transfer_from_info
-            .spender
-            .get_account()
-            .map_err(|e| CanisterError::ParseAccountError(format!("Error parsing spender: {e}")))?;
+        let spender_account = icrc2_transfer_from_info.spender.get_account();
 
         let allowance_amount = icrc2_transfer_from_info.amount.clone();
 
-        let asset = icrc2_transfer_from_info
-            .asset
-            .get_principal()
-            .map_err(|e| CanisterError::ParsePrincipalError(e.to_string()))?;
+        let asset = match icrc2_transfer_from_info.asset {
+            Asset::IC { address } => address,
+        };
 
         let allowance_fee = self
             .icrc_service
@@ -108,12 +99,9 @@ impl<E: IcEnvironment + Clone> TransactionValidator<E> for TransactionManagerSer
                         }
                     }
                     Err(e) => {
-                        error!("[manual_check_status] Icrc1Transfer error: {}", e);
                         error!(
-                            "[manual_check_status] Icrc1Transfer error tx: {:?}",
-                            transaction
+                            "[manual_check_status] Icrc1Transfer error tx: {transaction:?} - error: {e:?}"
                         );
-
                         TransactionState::Fail
                     }
                 }
@@ -171,15 +159,9 @@ impl<E: IcEnvironment + Clone> TransactionValidator<E> for TransactionManagerSer
     }
 
     fn is_action_creator(&self, caller: &Principal, action_id: &str) -> Result<bool, String> {
-        let user_wallet = match self.user_wallet_repository.get(&caller.to_text()) {
-            Some(user_id) => user_id,
-            None => {
-                return Err("User not found".to_string());
-            }
-        };
         let action = self.action_repository.get(action_id);
         match action {
-            Some(action) => Ok(action.creator == user_wallet.user_id),
+            Some(action) => Ok(&action.creator == caller),
             None => Err("Action not found".to_string()),
         }
     }

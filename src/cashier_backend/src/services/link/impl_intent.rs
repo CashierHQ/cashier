@@ -1,39 +1,37 @@
-use async_trait::async_trait;
 use candid::{Nat, Principal};
-use cashier_types::constant::{
+use cashier_backend_types::constant::{
     INTENT_LABEL_LINK_CREATION_FEE, INTENT_LABEL_RECEIVE_PAYMENT_ASSET,
     INTENT_LABEL_SEND_AIRDROP_ASSET, INTENT_LABEL_SEND_TIP_ASSET,
     INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
 };
-use cashier_types::error::CanisterError;
+use cashier_backend_types::error::CanisterError;
 use icrc_ledger_types::icrc1::account::Account;
+use log::error;
 use std::collections::HashMap;
-use std::str::FromStr;
 use uuid::Uuid;
 
-use crate::constant::{FEE_TREASURY_ADDRESS, ICP_CANISTER_ID};
+use crate::constant::{FEE_TREASURY_PRINCIPAL, ICP_CANISTER_PRINCIPAL};
 use crate::domains::fee::Fee;
-use crate::error;
+use crate::repositories::Repositories;
 use crate::services::link::service::LinkService;
 use crate::services::link::traits::IntentAssembler;
 use crate::utils::helper::{convert_nat_to_u64, to_subaccount};
 use crate::utils::runtime::IcEnvironment;
 
-use cashier_types::repository::{
+use cashier_backend_types::repository::{
     action::v1::ActionType,
-    common::{Asset, Chain, Wallet},
+    common::{Asset, Wallet},
     intent::v2::{Intent, IntentState, IntentTask, IntentType},
     link::v1::{Link, LinkType},
 };
 
-#[async_trait(?Send)]
-impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
+impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<E, R> {
     async fn assemble_intents(
         &self,
         link_id: &str,
         action_type: &ActionType,
-        user_wallet: &Principal,
-        fee_map: &HashMap<String, Nat>,
+        user_wallet: Principal,
+        fee_map: &HashMap<Principal, Nat>,
     ) -> Result<Vec<Intent>, CanisterError> {
         let link = self.get_link_by_id(link_id)?;
 
@@ -62,7 +60,7 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
                 (ActionType::CreateLink, IntentTask::TransferWalletToLink) => {
                     let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
                         error!(
-                    "[link_assemble_intents] find label for TransferWalletToLink not found {:#?}",
+                    "[link_assemble_intents] find label for TransferWalletToLink not found {:?}",
                     intent.label
                 );
                         CanisterError::HandleLogicError(
@@ -71,7 +69,11 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
                         )
                     })?;
 
-                    let fee_in_nat = fee_map.get(&asset_info.address).ok_or_else(|| {
+                    let address = match asset_info.asset {
+                        Asset::IC { address } => address,
+                    };
+
+                    let fee_in_nat = fee_map.get(&address).ok_or_else(|| {
                         CanisterError::HandleLogicError(
                             "Fee not found for link creation".to_string(),
                         )
@@ -81,76 +83,53 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
                     let amount = (asset_info.amount_per_link_use_action + fee_amount)
                         * link.link_use_action_max_count;
 
-                    let asset = Asset {
-                        address: asset_info.address.clone(),
-                        chain: asset_info.chain.clone(),
-                    };
-                    let from_wallet = Wallet {
-                        address: Account {
-                            owner: *user_wallet,
-                            subaccount: None,
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
-                    let to_wallet = Wallet {
-                        address: Account {
-                            owner: self.ic_env.id(),
-                            subaccount: Some(to_subaccount(&link.id)?),
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
+                    let from_wallet = Wallet::new(user_wallet);
+                    let to_wallet = Account {
+                        owner: self.ic_env.id(),
+                        subaccount: Some(to_subaccount(&link.id)?),
+                    }
+                    .into();
 
-                    (amount, None, None, asset, from_wallet, to_wallet, None)
+                    (
+                        amount,
+                        None,
+                        None,
+                        asset_info.asset,
+                        from_wallet,
+                        to_wallet,
+                        None,
+                    )
                 }
 
                 // for approve   create link fee + ledger_fee = (0.009 ICP)
                 (ActionType::CreateLink, IntentTask::TransferWalletToTreasury) => {
-                    let fee_in_nat =
-                        fee_map.get(&ICP_CANISTER_ID.to_string()).ok_or_else(|| {
-                            CanisterError::HandleLogicError(
-                                "Fee not found for link creation".to_string(),
-                            )
-                        })?;
+                    let fee_in_nat = fee_map.get(&ICP_CANISTER_PRINCIPAL).ok_or_else(|| {
+                        CanisterError::HandleLogicError(
+                            "Fee not found for link creation".to_string(),
+                        )
+                    })?;
                     let fee_amount = convert_nat_to_u64(fee_in_nat)?;
 
                     let amount = Fee::CreateTipLinkFeeIcp.as_u64();
                     let actual_amount = amount;
                     let approve_amount = amount + fee_amount;
 
-                    let asset = Asset {
-                        address: ICP_CANISTER_ID.to_string(),
-                        chain: Chain::IC,
+                    let asset = Asset::IC {
+                        address: ICP_CANISTER_PRINCIPAL,
                     };
-                    let from_wallet = Wallet {
-                        address: Account {
-                            owner: *user_wallet,
-                            subaccount: None,
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
-                    let to_wallet = Wallet {
-                        address: Account {
-                            owner: Principal::from_str(FEE_TREASURY_ADDRESS).map_err(|e| {
-                                CanisterError::HandleLogicError(format!(
-                                    "Error converting fee treasury address to principal: {e:?}"
-                                ))
-                            })?,
-                            subaccount: None,
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
-                    let spender_wallet = Wallet {
-                        address: Account {
-                            owner: self.ic_env.id(),
-                            subaccount: None,
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
+
+                    let from_wallet = Wallet::new(user_wallet);
+                    let to_wallet = Account {
+                        owner: FEE_TREASURY_PRINCIPAL,
+                        subaccount: None,
+                    }
+                    .into();
+
+                    let spender_wallet = Account {
+                        owner: self.ic_env.id(),
+                        subaccount: None,
+                    }
+                    .into();
 
                     (
                         amount,
@@ -174,22 +153,13 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
 
                     let amount = asset_info.amount_per_link_use_action;
 
-                    let asset = Asset {
-                        address: asset_info.address.clone(),
-                        chain: asset_info.chain.clone(),
-                    };
-                    let from_wallet = Wallet {
-                        address: Account {
-                            owner: self.ic_env.id(),
-                            subaccount: Some(to_subaccount(&link.id)?),
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
-                    let to_wallet = Wallet {
-                        address: user_wallet.to_string(),
-                        chain: Chain::IC,
-                    };
+                    let asset = asset_info.asset;
+                    let from_wallet = Account {
+                        owner: self.ic_env.id(),
+                        subaccount: Some(to_subaccount(&link.id)?),
+                    }
+                    .into();
+                    let to_wallet = Wallet::new(user_wallet);
 
                     (amount, None, None, asset, from_wallet, to_wallet, None)
                 }
@@ -205,26 +175,13 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
 
                     let amount = asset_info.amount_per_link_use_action;
 
-                    let asset = Asset {
-                        address: asset_info.address.clone(),
-                        chain: asset_info.chain.clone(),
-                    };
-                    let from_wallet = Wallet {
-                        address: Account {
-                            owner: *user_wallet,
-                            subaccount: None,
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
-                    let to_wallet = Wallet {
-                        address: Account {
-                            owner: self.ic_env.id(),
-                            subaccount: Some(to_subaccount(&link.id)?),
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
+                    let asset = asset_info.asset;
+                    let from_wallet = Wallet::new(user_wallet);
+                    let to_wallet = Account {
+                        owner: self.ic_env.id(),
+                        subaccount: Some(to_subaccount(&link.id)?),
+                    }
+                    .into();
 
                     (amount, None, None, asset, from_wallet, to_wallet, None)
                 }
@@ -238,14 +195,14 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
                         )
                     })?;
 
+                    let address = match asset_info.asset {
+                        Asset::IC { address } => address,
+                    };
+
                     let link_balance = self
                         .icrc_service
                         .balance_of(
-                            Principal::from_text(asset_info.address.clone()).map_err(|e| {
-                                CanisterError::HandleLogicError(format!(
-                                    "Error converting token address to principal: {e:?}"
-                                ))
-                            })?,
+                            address,
                             Account {
                                 owner: self.ic_env.id(),
                                 subaccount: Some(to_subaccount(&link.id)?),
@@ -253,7 +210,7 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
                         )
                         .await?;
 
-                    let fee_in_nat = fee_map.get(&asset_info.address).ok_or_else(|| {
+                    let fee_in_nat = fee_map.get(&address).ok_or_else(|| {
                         CanisterError::HandleLogicError(
                             "Fee not found for link creation".to_string(),
                         )
@@ -273,22 +230,13 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
                     }
 
                     let amount = link_balance - fee_amount;
-                    let asset = Asset {
-                        address: asset_info.address.clone(),
-                        chain: asset_info.chain.clone(),
-                    };
-                    let from_wallet = Wallet {
-                        address: Account {
-                            owner: self.ic_env.id(),
-                            subaccount: Some(to_subaccount(&link.id)?),
-                        }
-                        .to_string(),
-                        chain: Chain::IC,
-                    };
-                    let to_wallet = Wallet {
-                        address: user_wallet.to_string(),
-                        chain: Chain::IC,
-                    };
+                    let asset = asset_info.asset;
+                    let from_wallet = Account {
+                        owner: self.ic_env.id(),
+                        subaccount: Some(to_subaccount(&link.id)?),
+                    }
+                    .into();
+                    let to_wallet = Wallet::new(user_wallet);
 
                     let amount_64 = convert_nat_to_u64(&amount)?;
 
@@ -381,16 +329,12 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
                         )
                     })?;
 
-                    assets.push(Asset {
-                        address: asset_info.address.clone(),
-                        chain: asset_info.chain.clone(),
-                    });
+                    assets.push(asset_info.asset);
                 }
                 IntentTask::TransferWalletToTreasury => {
                     // Fee payment always uses ICP
-                    assets.push(Asset {
-                        address: ICP_CANISTER_ID.to_string(),
-                        chain: Chain::IC,
+                    assets.push(Asset::IC {
+                        address: ICP_CANISTER_PRINCIPAL,
                     });
                 }
                 IntentTask::TransferLinkToWallet => {
@@ -401,24 +345,21 @@ impl<E: IcEnvironment + Clone> IntentAssembler for LinkService<E> {
                         )
                     })?;
 
-                    assets.push(Asset {
-                        address: asset_info.address.clone(),
-                        chain: asset_info.chain.clone(),
-                    });
+                    assets.push(asset_info.asset);
                 }
             }
         }
 
         // Remove duplicates by converting to a set-like structure
-        assets.sort_by(|a, b| a.address.cmp(&b.address));
-        assets.dedup_by(|a, b| a.address == b.address && a.chain == b.chain);
+        assets.sort();
+        assets.dedup();
 
         Ok(assets)
     }
 }
 
 // --- helper method implementations ---
-impl<E: IcEnvironment + Clone> LinkService<E> {
+impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
     fn create_basic_intent(&self, task: IntentTask, label: String) -> Intent {
         let ts = self.ic_env.time();
         let mut intent = Intent::default();
@@ -506,12 +447,8 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
 
             // SendTokenBasket link type handlers
             (LinkType::SendTokenBasket, ActionType::CreateLink) => {
-                let asset_info = link.asset_info.clone().ok_or_else(|| {
-                    CanisterError::HandleLogicError("Asset info not found".to_string())
-                })?;
-
                 // Create intents for each asset in asset_info
-                for asset in asset_info.iter() {
+                for asset in link.asset_info.iter() {
                     if !asset
                         .label
                         .starts_with(INTENT_LABEL_SEND_TOKEN_BASKET_ASSET)
@@ -522,8 +459,11 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
                     }
 
                     // Create intent for transfer asset to link
-                    let label =
-                        format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, asset.address);
+                    let label = match asset.asset {
+                        Asset::IC { address } => {
+                            format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, address)
+                        }
+                    };
                     let transfer_asset_intent =
                         self.create_basic_intent(IntentTask::TransferWalletToLink, label);
 
@@ -536,15 +476,14 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
             }
             (LinkType::SendTokenBasket, ActionType::Use)
             | (LinkType::SendTokenBasket, ActionType::Withdraw) => {
-                let asset_info = link.asset_info.clone().ok_or_else(|| {
-                    CanisterError::HandleLogicError("Asset info not found".to_string())
-                })?;
-
                 // Create intents for each asset in asset_info
-                for asset in asset_info.iter() {
+                for asset in link.asset_info.iter() {
                     // Create intent for transfer asset from link to wallet
-                    let label =
-                        format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, asset.address);
+                    let label = match asset.asset {
+                        Asset::IC { address } => {
+                            format!("{}_{}", INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, address)
+                        }
+                    };
                     let transfer_asset_intent =
                         self.create_basic_intent(IntentTask::TransferLinkToWallet, label);
 
@@ -581,5 +520,626 @@ impl<E: IcEnvironment + Clone> LinkService<E> {
         }
 
         Ok(Some(intents))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::rc::Rc;
+
+    use super::*;
+    use crate::repositories::tests::TestRepositories;
+    use crate::services::link::test_fixtures::*;
+    use crate::utils::test_utils::{
+        random_id_string, random_principal_id, runtime::MockIcEnvironment,
+    };
+    use cashier_backend_types::repository::{
+        asset_info::AssetInfo,
+        link::v1::{Link, LinkState, LinkType},
+    };
+
+    #[test]
+    fn it_should_create_basic_intent() {
+        // Arrange
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+
+        // Act
+        let intent =
+            service.create_basic_intent(IntentTask::TransferWalletToLink, "Test Label".to_string());
+
+        // Assert
+        assert_eq!(intent.task, IntentTask::TransferWalletToLink);
+        assert_eq!(intent.label, "Test Label");
+    }
+
+    #[test]
+    fn it_should_create_fee_intent() {
+        // Arrange
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+
+        // Act
+        let intent = service.create_fee_intent();
+
+        // Assert
+        assert_eq!(intent.task, IntentTask::TransferWalletToTreasury);
+        assert_eq!(intent.label, INTENT_LABEL_LINK_CREATION_FEE);
+        assert!(intent.r#type.as_transfer_from().is_some());
+    }
+
+    #[test]
+    fn it_should_error_not_found_look_up_intent() {
+        // Arrange
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let link_id = random_id_string();
+        let action_type = ActionType::Use;
+
+        // Act
+        let result = service.look_up_intent(
+            &Link {
+                id: link_id,
+                state: LinkState::ChooseLinkType,
+                title: None,
+                description: None,
+                link_type: None,
+                asset_info: vec![],
+                template: None,
+                creator: random_principal_id(),
+                create_at: 0,
+                metadata: Default::default(),
+                link_use_action_counter: 0,
+                link_use_action_max_count: 10,
+            },
+            &action_type,
+        );
+
+        // Assert
+        assert!(result.is_err());
+
+        if let Err(CanisterError::HandleLogicError(msg)) = result {
+            assert!(msg.contains("link type not found"));
+        } else {
+            panic!("Expected HandleLogicError");
+        }
+    }
+
+    #[test]
+    fn it_should_look_up_intent_for_create_link_send_tip() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+        let action_type = ActionType::CreateLink;
+
+        // Act
+        let intents = service.look_up_intent(&link, &action_type).unwrap();
+
+        // Assert
+        assert!(intents.is_some());
+        let intents = intents.unwrap();
+        assert_eq!(intents.len(), 2); // One for asset transfer, one for fee transfer
+        assert_eq!(intents[0].task, IntentTask::TransferWalletToLink);
+        assert_eq!(intents[1].task, IntentTask::TransferWalletToTreasury);
+    }
+
+    #[test]
+    fn it_should_look_up_intent_for_use_link_send_tip() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+        let action_type = ActionType::Use;
+
+        // Act
+        let intents = service.look_up_intent(&link, &action_type).unwrap();
+
+        // Assert
+        assert!(intents.is_some());
+        let intents = intents.unwrap();
+        assert_eq!(intents.len(), 1); // One for asset transfer
+        assert_eq!(intents[0].task, IntentTask::TransferLinkToWallet);
+    }
+
+    #[test]
+    fn it_should_look_up_intent_for_withdraw_link_send_tip() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+        let action_type = ActionType::Withdraw;
+
+        // Act
+        let intents = service.look_up_intent(&link, &action_type).unwrap();
+
+        // Assert
+        assert!(intents.is_some());
+        let intents = intents.unwrap();
+        assert_eq!(intents.len(), 1); // One for asset transfer
+        assert_eq!(intents[0].task, IntentTask::TransferLinkToWallet);
+    }
+
+    #[test]
+    fn it_should_look_up_intent_for_create_link_send_airdrop() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+
+        let updated_link = Link {
+            link_type: Some(LinkType::SendAirdrop),
+            ..link
+        };
+        service.link_repository.update(updated_link.clone());
+        let action_type = ActionType::CreateLink;
+
+        // Act
+        let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
+
+        // Assert
+        assert!(intents.is_some());
+        let intents = intents.unwrap();
+        assert_eq!(intents.len(), 2); // One for asset transfer, one for fee transfer
+        assert_eq!(intents[0].task, IntentTask::TransferWalletToLink);
+        assert_eq!(intents[1].task, IntentTask::TransferWalletToTreasury);
+    }
+
+    #[test]
+    fn it_should_look_up_intent_for_use_link_send_airdrop() {
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+        let updated_link = Link {
+            link_type: Some(LinkType::SendAirdrop),
+            ..link
+        };
+        service.link_repository.update(updated_link.clone());
+
+        let action_type = ActionType::Use;
+
+        let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
+        assert!(intents.is_some());
+        let intents = intents.unwrap();
+        assert_eq!(intents.len(), 1); // One for asset transfer
+        assert_eq!(intents[0].task, IntentTask::TransferLinkToWallet);
+    }
+
+    #[test]
+    fn it_should_look_up_intent_for_withdraw_link_send_airdrop() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+        let updated_link = Link {
+            link_type: Some(LinkType::SendAirdrop),
+            ..link
+        };
+        service.link_repository.update(updated_link.clone());
+        let action_type = ActionType::Withdraw;
+
+        // Act
+        let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
+
+        // Assert
+        assert!(intents.is_some());
+        let intents = intents.unwrap();
+        assert_eq!(intents.len(), 1); // One for asset transfer
+        assert_eq!(intents[0].task, IntentTask::TransferLinkToWallet);
+    }
+
+    #[test]
+    fn it_should_error_look_up_intent_for_create_link_send_token_basket_with_invalid_asset_info_label()
+     {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+
+        let updated_link = Link {
+            link_type: Some(LinkType::SendTokenBasket),
+            asset_info: vec![AssetInfo {
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
+                amount_per_link_use_action: 100,
+                label: "invalid_label".to_string(), // Invalid label
+            }],
+            ..link
+        };
+        service.link_repository.update(updated_link.clone());
+        let action_type = ActionType::CreateLink;
+
+        // Act
+        let result = service.look_up_intent(&updated_link, &action_type);
+
+        // Assert
+        assert!(result.is_err());
+
+        if let Err(CanisterError::HandleLogicError(msg)) = result {
+            assert!(msg.contains("Asset label not match"));
+        } else {
+            panic!("Expected HandleLogicError");
+        }
+    }
+
+    #[test]
+    fn it_should_look_up_intent_for_create_link_send_token_basket() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+
+        let updated_link = Link {
+            link_type: Some(LinkType::SendTokenBasket),
+            asset_info: vec![AssetInfo {
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
+                amount_per_link_use_action: 100,
+                label: format!(
+                    "{}_{}",
+                    INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"
+                ),
+            }],
+            ..link
+        };
+        service.link_repository.update(updated_link.clone());
+        let action_type = ActionType::CreateLink;
+
+        // Act
+        let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
+
+        // Assert
+        assert!(intents.is_some());
+        let intents = intents.unwrap();
+        assert_eq!(intents.len(), 2); // One for asset transfer, one for fee transfer
+        assert_eq!(intents[0].task, IntentTask::TransferWalletToLink);
+        assert_eq!(intents[1].task, IntentTask::TransferWalletToTreasury);
+    }
+
+    #[test]
+    fn it_should_look_up_intent_for_use_link_send_token_basket() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+
+        let updated_link = Link {
+            link_type: Some(LinkType::SendTokenBasket),
+            asset_info: vec![AssetInfo {
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
+                amount_per_link_use_action: 100,
+                label: format!(
+                    "{}_{}",
+                    INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"
+                ),
+            }],
+            ..link
+        };
+        service.link_repository.update(updated_link.clone());
+        let action_type = ActionType::Use;
+
+        // Act
+        let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
+
+        // Assert
+        assert!(intents.is_some());
+        let intents = intents.unwrap();
+        assert_eq!(intents.len(), 1); // One for asset transfer
+        assert_eq!(intents[0].task, IntentTask::TransferLinkToWallet);
+    }
+
+    #[test]
+    fn it_should_look_up_intent_for_withdraw_link_send_token_basket() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+
+        let updated_link = Link {
+            link_type: Some(LinkType::SendTokenBasket),
+            asset_info: vec![AssetInfo {
+                asset: Asset::IC {
+                    address: random_principal_id(),
+                },
+                amount_per_link_use_action: 100,
+                label: format!(
+                    "{}_{}",
+                    INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"
+                ),
+            }],
+            ..link
+        };
+        service.link_repository.update(updated_link.clone());
+        let action_type = ActionType::Withdraw;
+
+        // Act
+        let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
+
+        // Assert
+        assert!(intents.is_some());
+        let intents = intents.unwrap();
+        assert_eq!(intents.len(), 1); // One for asset transfer
+        assert_eq!(intents[0].task, IntentTask::TransferLinkToWallet);
+    }
+
+    #[test]
+    fn it_should_look_up_intent_for_create_link_receive_payment() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+
+        let updated_link = Link {
+            link_type: Some(LinkType::ReceivePayment),
+            ..link
+        };
+        service.link_repository.update(updated_link.clone());
+        let action_type = ActionType::CreateLink;
+
+        // Act
+        let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
+
+        // Assert
+        assert!(intents.is_some());
+        let intents = intents.unwrap();
+        assert_eq!(intents.len(), 1); // One for fee transfer
+        assert_eq!(intents[0].task, IntentTask::TransferWalletToTreasury);
+    }
+
+    #[test]
+    fn it_should_look_up_intent_for_use_link_receive_payment() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+
+        let updated_link = Link {
+            link_type: Some(LinkType::ReceivePayment),
+            ..link
+        };
+        service.link_repository.update(updated_link.clone());
+        let action_type = ActionType::Use;
+
+        // Act
+        let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
+
+        // Assert
+        assert!(intents.is_some());
+        let intents = intents.unwrap();
+        assert_eq!(intents.len(), 1); // One for asset transfer to link
+        assert_eq!(intents[0].task, IntentTask::TransferWalletToLink);
+    }
+
+    #[test]
+    fn it_should_look_up_intent_for_withdraw_link_receive_payment() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+
+        let updated_link = Link {
+            link_type: Some(LinkType::ReceivePayment),
+            ..link
+        };
+        service.link_repository.update(updated_link.clone());
+        let action_type = ActionType::Withdraw;
+
+        // Act
+        let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
+
+        // Assert
+        assert!(intents.is_some());
+        let intents = intents.unwrap();
+        assert_eq!(intents.len(), 1); // One for asset transfer from link to wallet
+        assert_eq!(intents[0].task, IntentTask::TransferLinkToWallet);
+    }
+
+    #[test]
+    fn it_should_error_on_get_assets_for_action_with_invalid_link_id() {
+        // Arrange
+        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let link_id = random_id_string();
+        let action_type = ActionType::Use;
+
+        // Act
+        let result = service.get_assets_for_action(&link_id, &action_type);
+
+        // Assert
+        assert!(result.is_err());
+
+        if let Err(CanisterError::NotFound(msg)) = result {
+            assert!(msg.contains("link not found"));
+        } else {
+            panic!("Expected NotFound error");
+        }
+    }
+
+    #[test]
+    fn it_should_error_on_get_assets_for_action_with_empty_link_type() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let link = create_link_fixture(&mut service, random_principal_id());
+        let link = Link {
+            link_type: None,
+            ..link
+        };
+        service.link_repository.update(link.clone());
+
+        // Act
+        let result = service.get_assets_for_action(&link.id, &ActionType::Use);
+
+        // Assert
+        assert!(result.is_err());
+
+        if let Err(CanisterError::HandleLogicError(msg)) = result {
+            assert!(msg.contains("link type not found"));
+        } else {
+            panic!("Expected HandleLogicError");
+        }
+    }
+
+    #[test]
+    fn it_should_error_get_assets_for_action_with_intent_task_transfer_wallet_to_link_and_unmatched_link_assets_info_label()
+     {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let link = create_link_fixture(&mut service, random_principal_id());
+
+        // Act
+        let result = service.get_assets_for_action(&link.id, &ActionType::CreateLink);
+
+        // Assert
+        assert!(result.is_err());
+
+        if let Err(CanisterError::HandleLogicError(msg)) = result {
+            assert!(msg.contains("TransferWalletToLink Asset not found for label"));
+        } else {
+            panic!("Expected HandleLogicError");
+        }
+    }
+
+    #[test]
+    fn it_should_get_assets_for_action_with_intent_task_transfer_wallet_to_link() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let link = create_link_fixture(&mut service, random_principal_id());
+
+        let asset_address = random_principal_id();
+        let updated_link = Link {
+            asset_info: vec![AssetInfo {
+                asset: Asset::IC {
+                    address: asset_address,
+                },
+                amount_per_link_use_action: 100,
+                label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
+            }],
+            ..link
+        };
+        service.link_repository.update(updated_link.clone());
+
+        // Act
+        let assets = service
+            .get_assets_for_action(&updated_link.id, &ActionType::CreateLink)
+            .unwrap();
+
+        // Assert
+        assert_eq!(assets.len(), 2);
+        let asset_addresses = assets
+            .iter()
+            .map(|a| match a {
+                Asset::IC { address } => *address,
+            })
+            .collect::<Vec<_>>();
+        assert!(asset_addresses.contains(&asset_address));
+        assert!(asset_addresses.contains(&ICP_CANISTER_PRINCIPAL));
+    }
+
+    #[test]
+    fn it_should_get_assets_for_action_with_intent_task_transfer_wallet_to_treasury() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let link = create_link_fixture(&mut service, random_principal_id());
+        let asset_address = random_principal_id();
+        let updated_link = Link {
+            asset_info: vec![AssetInfo {
+                asset: Asset::IC {
+                    address: asset_address,
+                },
+                amount_per_link_use_action: 100,
+                label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
+            }],
+            ..link
+        };
+        service.link_repository.update(updated_link.clone());
+
+        // Act
+        let assets = service
+            .get_assets_for_action(&updated_link.id, &ActionType::CreateLink)
+            .unwrap();
+
+        // Assert
+        assert_eq!(assets.len(), 2);
+        let asset_addresses = assets
+            .iter()
+            .map(|a| match a {
+                Asset::IC { address } => *address,
+            })
+            .collect::<Vec<_>>();
+        assert!(asset_addresses.contains(&asset_address));
+        assert!(asset_addresses.contains(&ICP_CANISTER_PRINCIPAL));
+    }
+
+    #[test]
+    fn it_should_error_get_assets_for_action_with_intent_task_transfer_link_to_wallet_and_link_assets_info_empty()
+     {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let link = create_link_fixture(&mut service, random_principal_id());
+
+        // Act
+        let result = service.get_assets_for_action(&link.id, &ActionType::Use);
+
+        // Assert
+        assert!(result.is_err());
+
+        if let Err(CanisterError::HandleLogicError(msg)) = result {
+            assert!(msg.contains("TransferLinkToWallet Asset not found"));
+        } else {
+            panic!("Expected HandleLogicError");
+        }
+    }
+
+    #[test]
+    fn it_should_get_assets_for_action_with_intent_task_transfer_link_to_wallet() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let link = create_link_fixture(&mut service, random_principal_id());
+
+        let asset_address = random_principal_id();
+        let updated_link = Link {
+            asset_info: vec![AssetInfo {
+                asset: Asset::IC {
+                    address: asset_address,
+                },
+                amount_per_link_use_action: 100,
+                label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
+            }],
+            ..link
+        };
+        service.link_repository.update(updated_link.clone());
+
+        // Act
+        let assets = service
+            .get_assets_for_action(&updated_link.id, &ActionType::Use)
+            .unwrap();
+
+        // Assert
+        assert_eq!(assets.len(), 1);
+        assert_eq!(
+            assets[0],
+            Asset::IC {
+                address: asset_address
+            }
+        );
     }
 }

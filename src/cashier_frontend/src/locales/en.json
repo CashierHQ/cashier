@@ -1,514 +1,519 @@
 {
-    "create": {
-        "link": "Link",
-        "linkName": "Link name",
-        "linkNamePlaceholder": "Enter link name",
-        "linkTemplate": "Link template",
-        "chooseLinkType": "Choose link type",
-        "linkDetails": "Link details",
-        "linkPreview": "Create link",
-        "create": "Create",
-        "photo": "Photo",
-        "name": "Name",
-        "message": "Message",
-        "chain": "Chain",
-        "amount": "Amount",
-        "defaultTemplate": "Default template",
-        "asset": "Asset",
-        "linkType": "Link type",
-        "preview": "Preview",
-        "add_another_asset": "Add another asset",
-        "amount_error": "Amount Error",
-        "amount_error_message": "Amount must be greater than 0",
-        "errors": {
-            "no_name": "Please enter a name for your link.",
-            "not_enough_balance": "You don't have enough balance for the asset: ",
-            "not_enough_uses": "The number of uses must be at least 1."
-        },
-        "ReceivePayment": {
-            "link_detail_title": "Select assets"
-        },
-        "SendTip": {
-            "link_detail_title": "Add assets"
-        },
-        "SendAirdrop": {
-            "link_detail_title": "Add assets"
-        },
-        "SendTokenBasket": {
-            "link_detail_title": "Add assets"
-        }
+  "create": {
+    "link": "Link",
+    "linkName": "Link name",
+    "linkNamePlaceholder": "Enter link name",
+    "linkTemplate": "Link template",
+    "chooseLinkType": "Choose link type",
+    "linkDetails": "Link details",
+    "linkPreview": "Create link",
+    "create": "Create",
+    "photo": "Photo",
+    "name": "Name",
+    "message": "Message",
+    "chain": "Chain",
+    "amount": "Amount",
+    "defaultTemplate": "Default template",
+    "asset": "Asset",
+    "linkType": "Link type",
+    "preview": "Preview",
+    "add_another_asset": "Add another asset",
+    "amount_error": "Amount Error",
+    "amount_error_message": "Amount must be greater than 0",
+    "errors": {
+      "no_name": "Please enter a name for your link.",
+      "not_enough_balance": "You don't have enough balance for the asset: ",
+      "not_enough_uses": "The number of uses must be at least 1."
     },
+    "ReceivePayment": {
+      "link_detail_title": "Select assets"
+    },
+    "SendTip": {
+      "link_detail_title": "Add assets"
+    },
+    "SendAirdrop": {
+      "link_detail_title": "Add assets"
+    },
+    "SendTokenBasket": {
+      "link_detail_title": "Add assets"
+    }
+  },
+  "details": {
+    "linkInfo": "Link info",
+    "usageInfo": "Usage info",
+    "assetsInLink": "Assets in link",
+    "copyLink": "Copy link",
+    "withdrawAssets": "Withdraw assets"
+  },
+  "use": {
+    "use": "Use",
+    "useToken": "Use token",
+    "amount": "Amount",
+    "address": "Address",
+    "asset": "Receive asset",
+    "sendAsset": "Send asset",
+    "addressPlaceholder": "Type in address",
+    "addressPlaceholderComingSoon": "Coming soon",
+    "receive_options": "Receive options",
+    "send_options": "Send options",
+    "receive": "Receive",
+    "SendAirdrop": {
+      "title": "Airdrop",
+      "description": "Airdrop tokens to a recipient",
+      "button": "Airdrop"
+    }
+  },
+  "continue": "Continue",
+  "submit": "Submit",
+  "cashier": "Cashier",
+  "login": "Login",
+  "processing": "Processing...",
+  "retry": "Retry",
+  "optional": "Optional",
+  "home": {
+    "guide": {
+      "header": "Cashier links",
+      "body": "Start creating transaction links with Cashier: create & airdrop NFTs, and more features coming!",
+      "confirm": "Got it"
+    },
+    "noLinksFound": "No links found",
+    "noLinksFoundDescription": "You haven't created any links yet."
+  },
+  "transaction": {
+    "validation": {
+      "action_failed": "The validation failed",
+      "action_failed_message": "Your links is not valid. Please check again."
+    },
+    "create_intent": {
+      "action_failed": "Creating link failed."
+    },
+    "usd_conversion": {
+      "no_price_available": "Price unavailable"
+    },
+    "confirm_popup": {
+      "title": "Confirm transaction",
+      "link_creation_success_title": "Confirm transaction",
+      "link_creation_success_message": "Congratulations! Your transaction was successful.",
+      "receive_label": "You receive",
+      "cashier_link_label": "Cashier link",
+      "send_label": "You send",
+      "asset_label": "Asset to add to link",
+      "asset_withdraw_label": "Asset to withdraw",
+      "asset_claim_label": "Asset received",
+      "asset_payment_label": "Asset to pay",
+      "asset_use_label": "Asset",
+      "cashier_fee_label": "Cashier fee",
+      "network_fee_label": "Network fee",
+      "link_creation_fee_label": "Link creation fee",
+      "total_fee_label": "Total fee",
+      "total_cashier_fees_label": "Total Cashier fees",
+      "total_assets_received_label": "Total assets received",
+      "confirm_button": "Confirm",
+      "inprogress_button": "Transaction in progress...",
+      "retry_button": "Retry",
+      "transaction_failed": "Transaction failed",
+      "transaction_failed_message": "Retry failed transaction",
+      "transaction_success": "Transaction success",
+      "transaction_success_message": "Continue to active link",
+      "processing": "Processing...",
+      "legal_text": "By confirming you agree to execute the transaction above and agree to the terms of service",
+      "info": {
+        "button_text": "Close",
+        "close": "Close"
+      }
+    }
+  },
+  "common": {
+    "error": "Error",
+    "commonErrorMessage": "There was a error while creating the link. Please try again later.",
+    "creating": "Creating",
+    "creatingLink": "The link is being created. Please wait for seconds.",
+    "clear": "Clear",
+    "loading": "Loading",
+    "copied": "Copied successfully",
+    "cancel": "Cancel",
+    "success": {
+      "copied_address": "Address copied to clipboard",
+      "copied_account_id": "Account ID copied to clipboard"
+    },
+    "unknown_error": "An unknown error occurred"
+  },
+  "link": {
+    "preview": {
+      "fees": {
+        "label": "Cashier Fees",
+        "creationFee": "Link creation",
+        "totalFee": "Total Cashier fee"
+      }
+    }
+  },
+  "feeInfo": {
+    "title": "Info on fees",
+    "cashierFeeHeader": "Link creation fee",
+    "cashierFeeText": "Cashier charges a modest fee for creating links. The fees help us operate and improve Cashier.",
+    "networkFeeHeader": "Network fee",
+    "networkFeeText": [
+      "Network fees are charged by the blockchains, not by Cashier, as a payment to transfer assets on the blockchain. Cashier collects network fees to facilitate these transfer payments.",
+      "When an asset is sent to the link, network fee is charged. The amount may depends on the blockchain.",
+      "When an asset is received from the link, network fee is charged. Cashier preemptively collects these network fees from the link creator, so that the receiver does not have to pay a network fee to receive assets from the link."
+    ]
+  },
+  "wallet": {
+    "noToken": "You can add a token by clicking the + button above.",
     "details": {
-        "linkInfo": "Link info",
-        "usageInfo": "Usage info",
-        "assetsInLink": "Assets in link",
-        "copyLink": "Copy link",
-        "withdrawAssets": "Withdraw assets"
+      "header": "Wallet Balance",
+      "send": "Send",
+      "receive": "Receive",
+      "swap": "Swap"
     },
-    "use": {
-        "use": "Use",
-        "useToken": "Use token",
-        "amount": "Amount",
-        "address": "Address",
-        "asset": "Receive asset",
-        "sendAsset": "Send asset",
-        "addressPlaceholder": "Type in address",
-        "addressPlaceholderComingSoon": "Coming soon",
-        "receive_options": "Receive options",
-        "send_options": "Send options",
-        "receive": "Receive",
-        "SendAirdrop": {
-            "title": "Airdrop",
-            "description": "Airdrop tokens to a recipient",
-            "button": "Airdrop"
+    "tabs": {
+      "tokens": {
+        "header": "Tokens",
+        "manage": "Manage tokens"
+      },
+      "nfts": {
+        "header": "NFTs"
+      }
+    },
+    "banner": {
+      "title": "NFT Coming soon!",
+      "text": "Included in Release 3"
+    },
+    "receive": {
+      "header": "Receive",
+      "address": "Address",
+      "copy": "Copy",
+      "copySuccess": "Address copied to clipboard",
+      "copyError": "Failed to copy address",
+      "receiveToken": "Asset",
+      "useAccountId": "Use Account ID instead",
+      "receiveWarning1": "Send assets to this address to begin using Cashier.",
+      "receiveWarning2": "Ensure that you are only sending assets that are ",
+      "boldReceiveWarning": "meant for this address,",
+      "receiveWarning3": " otherwise you may lose them forever."
+    },
+    "send": {
+      "header": "Send",
+      "sendToken": "Send token",
+      "max": "Max",
+      "destinationAddress": "Destination address",
+      "button": "Send"
+    }
+  },
+  "manage": {
+    "syncingPreferences": "Syncing preferences",
+    "header": "Manage tokens",
+    "search": {
+      "placeholder": "Search a token",
+      "noResults": "No results found",
+      "missingToken": "Missing a token?"
+    },
+    "import": "Import manually",
+    "missing": "Missing a token?"
+  },
+  "import": {
+    "header": "Import token",
+    "form": {
+      "message1": "Ledger and Index canister IDs are on the project's website.",
+      "message2": "The Index canister ID is optional, but without it, Cashier can't display transactions.",
+      "chain": {
+        "label": "Network",
+        "placeholder": "Select a network",
+        "error": {
+          "required": "Network is required"
         }
-    },
-    "continue": "Continue",
-    "submit": "Submit",
-    "cashier": "Cashier",
-    "login": "Login",
-    "processing": "Processing...",
-    "retry": "Retry",
-    "optional": "Optional",
-    "home": {
-        "guide": {
-            "header": "Cashier links",
-            "body": "Start creating transaction links with Cashier: create & airdrop NFTs, and more features coming!",
-            "confirm": "Got it"
-        },
-        "noLinksFound": "No links found",
-        "noLinksFoundDescription": "You haven't created any links yet."
-    },
-    "transaction": {
-        "validation": {
-            "action_failed": "The validation failed",
-            "action_failed_message": "Your links is not valid. Please check again."
-        },
-        "create_intent": {
-            "action_failed": "Creating link failed."
-        },
-        "usd_conversion": {
-            "no_price_available": "Price unavailable"
-        },
-        "confirm_popup": {
-            "title": "Confirm transaction",
-            "link_creation_success_title": "Confirm transaction",
-            "link_creation_success_message": "Congratulations! Your transaction was successful.",
-            "receive_label": "You receive",
-            "cashier_link_label": "Cashier link",
-            "send_label": "You send",
-            "asset_label": "Asset to add to link",
-            "asset_withdraw_label": "Asset to withdraw",
-            "asset_claim_label": "Asset received",
-            "asset_payment_label": "Asset to pay",
-            "asset_use_label": "Asset",
-            "cashier_fee_label": "Cashier fee",
-            "network_fee_label": "Network fee",
-            "link_creation_fee_label": "Link creation fee",
-            "total_fee_label": "Total fee",
-            "total_cashier_fees_label": "Total Cashier fees",
-            "total_assets_received_label": "Total assets received",
-            "confirm_button": "Confirm",
-            "inprogress_button": "Transaction in progress...",
-            "retry_button": "Retry",
-            "transaction_failed": "Transaction failed",
-            "transaction_failed_message": "Retry failed transaction",
-            "transaction_success": "Transaction success",
-            "transaction_success_message": "Continue to active link",
-            "processing": "Processing...",
-            "legal_text": "By confirming you agree to execute the transaction above and agree to the terms of service",
-            "info": {
-                "button_text": "Close",
-                "close": "Close"
-            }
+      },
+      "ledgerCanisterId": {
+        "label": "Contract address",
+        "error": {
+          "required": "Contract address is required",
+          "format": "Invalid contract address"
         }
-    },
-    "common": {
-        "error": "Error",
-        "commonErrorMessage": "There was a error while creating the link. Please try again later.",
-        "creating": "Creating",
-        "creatingLink": "The link is being created. Please wait for seconds.",
-        "clear": "Clear",
-        "loading": "Loading",
-        "copied": "Copied successfully",
-        "cancel": "Cancel",
-        "success": {
-            "copied_address": "Address copied to clipboard",
-            "copied_account_id": "Account ID copied to clipboard"
-        },
-        "unknown_error": "An unknown error occurred"
-    },
-    "link": {
-        "preview": {
-            "fees": {
-                "label": "Cashier Fees",
-                "creationFee": "Link creation",
-                "totalFee": "Total Cashier fee"
-            }
+      },
+      "indexCanisterId": {
+        "label": "Index Canister ID",
+        "error": {
+          "format": "Invalid Index Canister ID"
         }
+      }
     },
-    "feeInfo": {
-        "title": "Info on fees",
-        "cashierFeeHeader": "Link creation fee",
-        "cashierFeeText": "Cashier charges a modest fee for creating links. The fees help us operate and improve Cashier.",
-        "networkFeeHeader": "Network fee",
-        "networkFeeText": [
-            "Network fees are charged by the blockchains, not by Cashier, as a payment to transfer assets on the blockchain. Cashier collects network fees to facilitate these transfer payments.",
-            "When an asset is sent to the link, network fee is charged. The amount may depends on the blockchain.",
-            "When an asset is received from the link, network fee is charged. Cashier preemptively collects these network fees from the link creator, so that the receiver does not have to pay a network fee to receive assets from the link."
-        ]
-    },
-    "wallet": {
-        "noToken": "You can add a token by clicking the + button above.",
-        "details": {
-            "header": "Wallet Balance",
-            "send": "Send",
-            "receive": "Receive",
-            "swap": "Swap"
-        },
-        "tabs": {
-            "tokens": {
-                "header": "Tokens",
-                "manage": "Manage tokens"
-            },
-            "nfts": {
-                "header": "NFTs"
-            }
-        },
-        "banner": {
-            "title": "NFT Coming soon!",
-            "text": "Included in Release 3"
-        },
-        "receive": {
-            "header": "Receive",
-            "address": "Address",
-            "copy": "Copy",
-            "copySuccess": "Address copied to clipboard",
-            "copyError": "Failed to copy address",
-            "receiveToken": "Asset",
-            "useAccountId": "Use Account ID instead",
-            "receiveWarning1": "Send assets to this address to begin using Cashier.",
-            "receiveWarning2": "Ensure that you are only sending assets that are ",
-            "boldReceiveWarning": "meant for this address,",
-            "receiveWarning3": " otherwise you may lose them forever."
-        },
-        "send": {
-            "header": "Send",
-            "sendToken": "Send token",
-            "max": "Max",
-            "destinationAddress": "Destination address",
-            "button": "Send"
-        }
-    },
-    "manage": {
-        "syncingPreferences": "Syncing preferences",
-        "header": "Manage tokens",
-        "search": {
-            "placeholder": "Search a token",
-            "noResults": "No results found",
-            "missingToken": "Missing a token?"
-        },
-        "import": "Import manually",
-        "missing": "Missing a token?"
+    "loading": {
+      "fetchMetdata": "Fetching metadata"
     },
     "import": {
-        "header": "Import token",
-        "form": {
-            "message1": "Ledger and Index canister IDs are on the project's website.",
-            "message2": "The Index canister ID is optional, but without it, Cashier can't display transactions.",
-            "chain": {
-                "label": "Network",
-                "placeholder": "Select a network",
-                "error": {
-                    "required": "Network is required"
-                }
-            },
-            "ledgerCanisterId": {
-                "label": "Contract address",
-                "error": {
-                    "required": "Contract address is required",
-                    "format": "Invalid contract address"
-                }
-            },
-            "indexCanisterId": {
-                "label": "Index Canister ID",
-                "error": {
-                    "format": "Invalid Index Canister ID"
-                }
-            }
-        },
-        "loading": {
-            "fetchMetdata": "Fetching metadata"
-        },
-        "import": {
-            "error": {
-                "token_already_existed": "Token \"{{tokenName}} ({{tokenSymbol}})\" is already in your wallet"
-            }
-        }
-    },
-    "review": {
-        "header": "Review",
-        "token": "Token",
-        "import": "Import",
-        "message": "Make sure you trust the token you are adding. If the token you are adding is controlled by a malicious party, they could try and scam you e.g., by making you believe you received a significant amount of tokens in order to trick you into sending them tokens in return or perform other undesired actions. Learn more about scams and security risks e.g. here."
-    },
-    "history": {
-        "hero": {
-            "about": "About",
-            "tokenName": "Token Name",
-            "chain": "Network",
-            "contract": "Contract"
-        },
-        "list": {
-            "noData": "Transaction will appear here",
-            "cannotFind": "Cannot find?",
-            "checkExplorer": "Check explorer"
-        },
-        "item": {
-            "receive": "Received",
-            "from": "From",
-            "send": "Sent",
-            "to": "To"
-        }
-    },
-    "confirmation_drawer": {
-        "total_fees": "Total fees",
-        "title": "Confirm transaction",
-        "link_creation_success_title": "Confirm transaction",
-        "link_creation_success_message": "Congratulations! Your transaction was successful.",
-        "receive_label": "You receive",
-        "cashier_link_label": "Cashier link",
-        "send_label": "You send",
-        "asset_label": "Asset to add to link",
-        "asset_use_label": "Asset",
-        "total_fee_label": "Total fees",
-        "confirm_button": "Confirm",
-        "inprogress_button": "Transaction in progress...",
-        "processing": "Processing...",
-        "legal_text": "By confirming you agree to execute the transaction above and agree to the terms of service",
-        "continue_button": "Continue",
-        "retry_button": "Retry",
-        "fee-breakdown": {
-            "title": "Total fees breakdown",
-            "close_button": "Close",
-            "link_creation_fee": "Link creation fee",
-            "network_fee": "Network Fee",
-            "total_fees": "Total fees",
-            "multiple_tokens": "Multiple tokens"
-        }
-    },
-    "main_page": {
-        "unauthenticated_content": {
-            "development_warning_1": "Disclaimer: This website is currently in development and provided for demonstration purposes only. It is not intended for public use. Any data entered or actions taken on this site may not be secure, saved, or processed correctly. Use is at your own risk.",
-            "big_title_1": "Cashier Links - ",
-            "big_title_2": "fast, easy, and ",
-            "big_title_3": "safe",
-            "description_1": "Start creating transaction links with Cashier",
-            "description_2": "create & airdrop NFTs, and more features coming!",
-            "get_started": "Get started",
-            "connect_wallet_title": "Connect your wallet"
-        }
-    },
-    "use_page": {
-        "SendTip": {
-            "transaction_success": "Congratulations! Your use was successful.",
-            "transaction_failed": "Your use failed. Please try again later.",
-            "use_link_button": "Use",
-            "use_link_message": "Congratulations, you received a tip!",
-            "complete_message": "Congratulations, you used a tip!",
-            "complete_button": "Used",
-            "choose_wallet": {
-                "use_asset": "Receive asset",
-                "wallet_options": "Receive options"
-            }
-        },
-        "SendAirdrop": {
-            "transaction_success": "Congratulations! Your use was successful.",
-            "transaction_failed": "Your use failed. Please try again later.",
-            "use_link_button": "Use",
-            "use_link_message": "Congratulations, you received an airdrop!",
-            "complete_message": "Congratulations, you used an airdrop!",
-            "complete_button": "Used",
-            "choose_wallet": {
-                "use_asset": "Receive asset",
-                "wallet_options": "Receive options"
-            }
-        },
-        "SendTokenBasket": {
-            "transaction_success": "Congratulations! Your use was successful.",
-            "transaction_failed": "Your use failed. Please try again later.",
-            "use_link_button": "Use",
-            "use_link_message": "Congratulations, you received a token basket!",
-            "complete_message": "Congratulations, you used a token basket!",
-            "complete_button": "Used",
-            "choose_wallet": {
-                "use_asset": "Receive asset",
-                "wallet_options": "Receive options"
-            }
-        },
-        "ReceivePayment": {
-            "transaction_success": "Congratulations! Your payment was successful.",
-            "transaction_failed": "Your payment failed. Please try again later.",
-            "use_link_button": "Pay",
-            "use_link_message": "Pay for the link",
-            "complete_message": "Congratulations, you paid successfully!",
-            "complete_button": "Paid",
-            "choose_wallet": {
-                "use_asset": "Send asset",
-                "wallet_options": "Send options"
-            }
-        }
-    },
-    "add_asset_form": {
-        "error": {
-            "default": {
-                "title": "Error",
-                "description": "There was an error while adding the asset. Please try again later."
-            },
-            "no_more_token": {
-                "description": "No more tokens available to add"
-            },
-            "validation": {
-                "title": "Validation Error"
-            }
-        }
-    },
-    "send_panel": {
-        "confirm_popup": {
-            "transaction": {
-                "success": {
-                    "title": "Transaction successful",
-                    "message": "Your transaction was successful"
-                },
-                "failed": {
-                    "title": "Transaction failed",
-                    "message": "Your transaction failed"
-                }
-            }
-        }
-    },
-    "link_template": {
-        "error": {
-            "title_missing": "Please enter a title",
-            "link_not_found": "Link not found",
-            "failed_to_call": "Failed to call the link state machine"
-        }
-    },
-    "link_detail": {
-        "error": {
-            "use_without_login_or_wallet": "You need to login or input your wallet",
-            "unknown_action_state": "Unknown action state"
-        }
-    },
-    "error": {
-        "generic": {
-            "unknown_error": "An unknown error occurred. Please try again later.",
-            "network_error": "Network connection failed. Please check your internet connection.",
-            "timeout_error": "Request timed out. Please try again."
-        },
-        "authentication": {
-            "unauthorized": "You are not authorized to perform this action.",
-            "anonymous_call": "Anonymous calls are not allowed. Please log in.",
-            "permission_denied": "Permission denied. You don't have access to this resource."
-        },
-        "validation": {
-            "required": "This field is required.",
-            "invalid_input": "Invalid input provided.",
-            "invalid_format": "Invalid format. Please check your input.",
-            "invalid_amount": "Amount must be greater than 0.",
-            "invalid_address": "Invalid address format.",
-            "invalid_chain": "Invalid or unsupported chain.",
-            "invalid_token_address": "Invalid token address.",
-            "invalid_max_actions": "Maximum actions must be greater than 0.",
-            "invalid_state_transition": "Invalid state transition from {{from}} to {{to}}."
-        },
-        "resource": {
-            "not_found": "Resource not found.",
-            "link_not_found": "Link not found.",
-            "action_not_found": "Action not found.",
-            "token_not_found": "Token not found for address {{address}}.",
-            "user_input_not_found": "User input not found."
-        },
-        "balance": {
-            "insufficient_balance": "Insufficient balance for {{tokenSymbol}}. Available: {{available}}, Required: {{required}}.",
-            "insufficient_balance_create": "Cannot create link: Need {{required}} {{tokenSymbol}}, but only have {{available}}.",
-            "no_uses_available": "No more uses available.",
-            "balance_check_failed": "Failed to check token balance."
-        },
-        "asset": {
-            "no_assets_found": "No assets found."
-        },
-        "link": {
-            "link_id_missing": "Link ID is missing.",
-            "link_type_unsupported": "This link type is not supported.",
-            "link_creation_failed": "Failed to create link."
-        },
-        "template": {
-            "template_coming_soon": "This feature is coming soon."
-        },
-        "transaction": {
-            "transaction_failed": "Transaction failed"
-        },
-        "form": {
-            "form_validation_failed": "Form validation failed. Please check your inputs."
-        }
-    },
-    "claim": {
-        "addressPlaceholder": "Enter your wallet address",
-        "choose_wallet_title": "Choose your wallet",
-        "choose_wallet_description": "Connect your wallet or enter your wallet address to claim this link.",
-        "wallet_options": "Wallet Options",
-        "manual_address": "Or enter wallet address",
-        "use_address": "Use this address"
-    },
-    "claim_page": {
-        "SendTip": {
-            "transaction_success": "Congratulations! Your claim was successful.",
-            "transaction_failed": "Your claim failed. Please try again later.",
-            "use_link_button": "Claim",
-            "use_link_message": "Congratulations, you received a tip!",
-            "complete_message": "Congratulations, you claimed a tip!",
-            "complete_button": "Claimed",
-            "choose_wallet": {
-                "use_asset": "Receive asset",
-                "wallet_options": "Receive options"
-            }
-        },
-        "SendAirdrop": {
-            "transaction_success": "Congratulations! Your claim was successful.",
-            "transaction_failed": "Your claim failed. Please try again later.",
-            "use_link_button": "Claim",
-            "use_link_message": "Congratulations, you received an airdrop!",
-            "complete_message": "Congratulations, you claimed an airdrop!",
-            "complete_button": "Claimed",
-            "choose_wallet": {
-                "use_asset": "Receive asset",
-                "wallet_options": "Receive options"
-            }
-        },
-        "SendTokenBasket": {
-            "transaction_success": "Congratulations! Your claim was successful.",
-            "transaction_failed": "Your claim failed. Please try again later.",
-            "use_link_button": "Claim",
-            "use_link_message": "Congratulations, you received a token basket!",
-            "complete_message": "Congratulations, you claimed a token basket!",
-            "complete_button": "Claimed",
-            "choose_wallet": {
-                "use_asset": "Receive asset",
-                "wallet_options": "Receive options"
-            }
-        },
-        "ReceivePayment": {
-            "transaction_success": "Congratulations! Your payment was successful.",
-            "transaction_failed": "Your payment failed. Please try again later.",
-            "use_link_button": "Pay",
-            "use_link_message": "Pay for the link",
-            "complete_message": "Congratulations, you paid successfully!",
-            "complete_button": "Paid",
-            "choose_wallet": {
-                "use_asset": "Send asset",
-                "wallet_options": "Send options"
-            }
-        }
+      "error": {
+        "token_already_existed": "Token \"{{tokenName}} ({{tokenSymbol}})\" is already in your wallet"
+      }
     }
+  },
+  "review": {
+    "header": "Review",
+    "token": "Token",
+    "import": "Import",
+    "message": "Make sure you trust the token you are adding. If the token you are adding is controlled by a malicious party, they could try and scam you e.g., by making you believe you received a significant amount of tokens in order to trick you into sending them tokens in return or perform other undesired actions. Learn more about scams and security risks e.g. here."
+  },
+  "history": {
+    "hero": {
+      "about": "About",
+      "tokenName": "Token Name",
+      "chain": "Network",
+      "contract": "Contract"
+    },
+    "list": {
+      "noData": "Transaction will appear here",
+      "cannotFind": "Cannot find?",
+      "checkExplorer": "Check explorer"
+    },
+    "item": {
+      "receive": "Received",
+      "from": "From",
+      "send": "Sent",
+      "to": "To"
+    }
+  },
+  "confirmation_drawer": {
+    "total_fees": "Total fees",
+    "title": "Confirm transaction",
+    "link_creation_success_title": "Confirm transaction",
+    "link_creation_success_message": "Congratulations! Your transaction was successful.",
+    "receive_label": "You receive",
+    "cashier_link_label": "Cashier link",
+    "send_label": "You send",
+    "asset_label": "Asset to add to link",
+    "asset_use_label": "Asset",
+    "total_fee_label": "Total fees",
+    "confirm_button": "Confirm",
+    "inprogress_button": "Transaction in progress...",
+    "processing": "Processing...",
+    "legal_text": "By confirming you agree to execute the transaction above and agree to the terms of service",
+    "continue_button": "Continue",
+    "retry_button": "Retry",
+    "fee-breakdown": {
+      "title": "Total fees breakdown",
+      "close_button": "Close",
+      "link_creation_fee": "Link creation fee",
+      "network_fee": "Network Fee",
+      "total_fees": "Total fees",
+      "multiple_tokens": "Multiple tokens"
+    }
+  },
+  "main_page": {
+    "unauthenticated_content": {
+      "development_warning_1": "Disclaimer: This website is currently in development and provided for demonstration purposes only. It is not intended for public use. Any data entered or actions taken on this site may not be secure, saved, or processed correctly. Use is at your own risk.",
+      "big_title_1": "Cashier Links - ",
+      "big_title_2": "fast, easy, and ",
+      "big_title_3": "safe",
+      "description_1": "Start creating transaction links with Cashier",
+      "description_2": "create & airdrop NFTs, and more features coming!",
+      "get_started": "Get started",
+      "connect_wallet_title": "Connect your wallet"
+    }
+  },
+  "use_page": {
+    "SendTip": {
+      "transaction_success": "Congratulations! Your use was successful.",
+      "transaction_failed": "Your use failed. Please try again later.",
+      "use_link_button": "Use",
+      "use_link_message": "Congratulations, you received a tip!",
+      "complete_message": "Congratulations, you used a tip!",
+      "complete_button": "Used",
+      "choose_wallet": {
+        "use_asset": "Receive asset",
+        "wallet_options": "Receive options"
+      }
+    },
+    "SendAirdrop": {
+      "transaction_success": "Congratulations! Your use was successful.",
+      "transaction_failed": "Your use failed. Please try again later.",
+      "use_link_button": "Use",
+      "use_link_message": "Congratulations, you received an airdrop!",
+      "complete_message": "Congratulations, you used an airdrop!",
+      "complete_button": "Used",
+      "choose_wallet": {
+        "use_asset": "Receive asset",
+        "wallet_options": "Receive options"
+      }
+    },
+    "SendTokenBasket": {
+      "transaction_success": "Congratulations! Your use was successful.",
+      "transaction_failed": "Your use failed. Please try again later.",
+      "use_link_button": "Use",
+      "use_link_message": "Congratulations, you received a token basket!",
+      "complete_message": "Congratulations, you used a token basket!",
+      "complete_button": "Used",
+      "choose_wallet": {
+        "use_asset": "Receive asset",
+        "wallet_options": "Receive options"
+      }
+    },
+    "ReceivePayment": {
+      "transaction_success": "Congratulations! Your payment was successful.",
+      "transaction_failed": "Your payment failed. Please try again later.",
+      "use_link_button": "Pay",
+      "use_link_message": "Pay for the link",
+      "complete_message": "Congratulations, you paid successfully!",
+      "complete_button": "Paid",
+      "choose_wallet": {
+        "use_asset": "Send asset",
+        "wallet_options": "Send options"
+      }
+    }
+  },
+  "add_asset_form": {
+    "error": {
+      "default": {
+        "title": "Error",
+        "description": "There was an error while adding the asset. Please try again later."
+      },
+      "no_more_token": {
+        "description": "No more tokens available to add"
+      },
+      "validation": {
+        "title": "Validation Error"
+      }
+    }
+  },
+  "send_panel": {
+    "confirm_popup": {
+      "transaction": {
+        "success": {
+          "title": "Transaction successful",
+          "message": "Your transaction was successful"
+        },
+        "failed": {
+          "title": "Transaction failed",
+          "message": "Your transaction failed"
+        }
+      }
+    }
+  },
+  "link_template": {
+    "error": {
+      "title_missing": "Please enter a title",
+      "link_not_found": "Link not found",
+      "failed_to_call": "Failed to call the link state machine"
+    }
+  },
+  "link_detail": {
+    "error": {
+      "use_without_login_or_wallet": "You need to login or input your wallet",
+      "unknown_action_state": "Unknown action state"
+    }
+  },
+  "error": {
+    "generic": {
+      "unknown_error": "An unknown error occurred. Please try again later.",
+      "network_error": "Network connection failed. Please check your internet connection.",
+      "timeout_error": "Request timed out. Please try again."
+    },
+    "authentication": {
+      "unauthorized": "You are not authorized to perform this action.",
+      "anonymous_call": "Anonymous calls are not allowed. Please log in.",
+      "permission_denied": "Permission denied. You don't have access to this resource."
+    },
+    "validation": {
+      "required": "This field is required.",
+      "invalid_input": "Invalid input provided.",
+      "invalid_format": "Invalid format. Please check your input.",
+      "invalid_amount": "Amount must be greater than 0.",
+      "invalid_address": "Invalid address format.",
+      "invalid_chain": "Invalid or unsupported chain.",
+      "invalid_token_address": "Invalid token address.",
+      "invalid_max_actions": "Maximum actions must be greater than 0.",
+      "invalid_state_transition": "Invalid state transition from {{from}} to {{to}}."
+    },
+    "resource": {
+      "not_found": "Resource not found.",
+      "link_not_found": "Link not found.",
+      "action_not_found": "Action not found.",
+      "token_not_found": "Token not found for address {{address}}.",
+      "user_input_not_found": "User input not found."
+    },
+    "balance": {
+      "insufficient_balance": "Insufficient balance for {{tokenSymbol}}. Available: {{available}}, Required: {{required}}.",
+      "insufficient_balance_create": "Cannot create link: Need {{required}} {{tokenSymbol}}, but only have {{available}}.",
+      "no_uses_available": "No more uses available.",
+      "balance_check_failed": "Failed to check token balance."
+    },
+    "asset": {
+      "no_assets_found": "No assets found."
+    },
+    "link": {
+      "link_id_missing": "Link ID is missing.",
+      "link_type_unsupported": "This link type is not supported.",
+      "link_creation_failed": "Failed to create link."
+    },
+    "template": {
+      "template_coming_soon": "This feature is coming soon."
+    },
+    "transaction": {
+      "transaction_failed": "Transaction failed"
+    },
+    "form": {
+      "form_validation_failed": "Form validation failed. Please check your inputs."
+    }
+  },
+  "claim": {
+    "addressPlaceholder": "Enter your wallet address",
+    "choose_wallet_title": "Choose your wallet",
+    "choose_wallet_description": "Connect your wallet or enter your wallet address to claim this link.",
+    "wallet_options": "Wallet Options",
+    "manual_address": "Or enter wallet address",
+    "use_address": "Use this address"
+  },
+  "claim_page": {
+    "SendTip": {
+      "transaction_success": "Congratulations! Your claim was successful.",
+      "transaction_failed": "Your claim failed. Please try again later.",
+      "use_link_button": "Claim",
+      "use_link_message": "Congratulations, you received a tip!",
+      "complete_message": "Congratulations, you claimed a tip!",
+      "complete_button": "Claimed",
+      "choose_wallet": {
+        "use_asset": "Receive asset",
+        "wallet_options": "Receive options"
+      }
+    },
+    "SendAirdrop": {
+      "transaction_success": "Congratulations! Your claim was successful.",
+      "transaction_failed": "Your claim failed. Please try again later.",
+      "use_link_button": "Claim",
+      "use_link_message": "Congratulations, you received an airdrop!",
+      "complete_message": "Congratulations, you claimed an airdrop!",
+      "complete_button": "Claimed",
+      "choose_wallet": {
+        "use_asset": "Receive asset",
+        "wallet_options": "Receive options"
+      }
+    },
+    "SendTokenBasket": {
+      "transaction_success": "Congratulations! Your claim was successful.",
+      "transaction_failed": "Your claim failed. Please try again later.",
+      "use_link_button": "Claim",
+      "use_link_message": "Congratulations, you received a token basket!",
+      "complete_message": "Congratulations, you claimed a token basket!",
+      "complete_button": "Claimed",
+      "choose_wallet": {
+        "use_asset": "Receive asset",
+        "wallet_options": "Receive options"
+      }
+    },
+    "ReceivePayment": {
+      "transaction_success": "Congratulations! Your payment was successful.",
+      "transaction_failed": "Your payment failed. Please try again later.",
+      "use_link_button": "Pay",
+      "use_link_message": "Pay for the link",
+      "complete_message": "Congratulations, you paid successfully!",
+      "complete_button": "Paid",
+      "choose_wallet": {
+        "use_asset": "Send asset",
+        "wallet_options": "Send options"
+      }
+    }
+  },
+  "wallet_connect_modal": {
+    "title": "Choose your wallet",
+    "logout_title": "Are you sure?",
+    "logout_description": "You are connected to another wallet. Would you like to disconnect and use this address instead?"
+  }
 }
