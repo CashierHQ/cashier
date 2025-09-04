@@ -29,6 +29,7 @@ impl GateTestFixture {
 pub async fn add_password_gate_fixture(
     ctx: &PocketIcTestContext,
     creator: Principal,
+    subject_id: &str,
     password: &str,
 ) -> Gate {
     // Arrange
@@ -42,7 +43,7 @@ pub async fn add_password_gate_fixture(
 
     let user_client = ctx.new_gate_service_backend_client(creator);
     let new_gate = NewGate {
-        subject_id: "subject1".to_string(),
+        subject_id: subject_id.to_string(),
         gate_type: GateType::Password,
         key: GateKey::Password(password.to_string()),
     };

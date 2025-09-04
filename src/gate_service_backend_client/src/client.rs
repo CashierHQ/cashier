@@ -1,6 +1,7 @@
 use candid::Principal;
 use gate_service_types::{
-    Gate, GateKey, NewGate, OpenGateSuccessResult, auth::Permission, error::GateServiceError,
+    Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult, auth::Permission,
+    error::GateServiceError,
 };
 use ic_mple_client::{CanisterClient, CanisterClientResult};
 
@@ -70,5 +71,31 @@ impl<C: CanisterClient> GateServiceBackendClient<C> {
         gate_key: GateKey,
     ) -> CanisterClientResult<Result<OpenGateSuccessResult, GateServiceError>> {
         self.client.update("open_gate", (gate_id, gate_key)).await
+    }
+
+    /// Gets a gate by its subject ID.
+    pub async fn get_gate_by_subject(
+        &self,
+        subject_id: String,
+    ) -> CanisterClientResult<Result<Option<Gate>, GateServiceError>> {
+        self.client
+            .query("get_gate_by_subject", (subject_id,))
+            .await
+    }
+
+    /// Gets a gate by its ID.
+    pub async fn get_gate(&self, gate_id: String) -> CanisterClientResult<Option<Gate>> {
+        self.client.query("get_gate", (gate_id,)).await
+    }
+
+    /// Gets a gate for a user.
+    pub async fn get_gate_for_user(
+        &self,
+        gate_id: String,
+        user: Principal,
+    ) -> CanisterClientResult<Result<GateForUser, GateServiceError>> {
+        self.client
+            .query("get_gate_for_user", (gate_id, user))
+            .await
     }
 }
