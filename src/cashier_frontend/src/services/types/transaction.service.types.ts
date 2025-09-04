@@ -1,17 +1,17 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { toBase64 } from "@slide-computer/signer";
+import { Principal } from "@dfinity/principal";
 
 export type Icrc112RequestModel = {
   arg: Uint8Array | number[];
   method: string;
-  canisterId: string;
+  canisterId: Principal;
   nonce?: Uint8Array | number[];
 };
 
 // Type-safe converter: returns ArrayBuffer representing only the bytes of the input
-const toArrayBuffer = (input: Uint8Array | number[]): ArrayBuffer => {
+export const toArrayBuffer = (input: Uint8Array | number[]): ArrayBuffer => {
   if (input instanceof Uint8Array) {
     // If the view covers the whole underlying ArrayBuffer and it's actually an ArrayBuffer,
     // we can return it without copying. Otherwise create a new ArrayBuffer to avoid
@@ -31,18 +31,3 @@ const toArrayBuffer = (input: Uint8Array | number[]): ArrayBuffer => {
 };
 // ...existing code.
 
-export const toRPCRequest = (
-  req: Icrc112RequestModel,
-): {
-  arg: string;
-  canisterId: string;
-  method: string;
-  nonce?: string;
-} => {
-  return {
-    arg: toBase64(toArrayBuffer(req.arg)),
-    method: req.method,
-    canisterId: req.canisterId,
-    nonce: req.nonce ? toBase64(toArrayBuffer(req.nonce)) : undefined, // default to empty nonce
-  };
-};

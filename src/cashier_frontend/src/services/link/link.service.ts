@@ -116,11 +116,11 @@ class LinkService {
     };
     responseModel.data = response.data
       ? response.data.map((link: LinkDto) => {
-          return {
-            link: mapPartialDtoToLinkDetailModel(link),
-            action_create: undefined,
-          };
-        })
+        return {
+          link: mapPartialDtoToLinkDetailModel(link),
+          action_create: undefined,
+        };
+      })
       : [];
     return responseModel;
   }
@@ -132,8 +132,8 @@ class LinkService {
         toNullable(
           actionType
             ? {
-                action_type: mapFrontendActionTypeToActionType(actionType),
-              }
+              action_type: mapFrontendActionTypeToActionType(actionType),
+            }
             : undefined,
         ),
       ),
@@ -173,7 +173,6 @@ class LinkService {
     const response = parseResultResponse(
       await this.actor.process_action(inputModel),
     );
-    console.log("🚀 ~ LinkService ~ processAction ~ response:", response);
     const action = mapActionModel(response);
     return action;
   }

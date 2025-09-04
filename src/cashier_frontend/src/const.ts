@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-export const BACKEND_CANISTER_ID = import.meta.env.VITE_BACKEND_CANISTER_ID;
+export const BACKEND_CANISTER_ID: string | undefined = import.meta.env.VITE_BACKEND_CANISTER_ID;
 export const TOKEN_STORAGE_CANISTER_ID = import.meta.env
   .VITE_TOKEN_STORAGE_CANISTER_ID;
 // const IC_EXPLORER_BASE_URL = import.meta.env.VITE_IC_EXPLORER_BASE_URL;
@@ -38,7 +38,7 @@ export const FEATURE_FLAGS = {
 
   ENABLE_LOCAL_IDENTITY_PROVIDER:
     import.meta.env.VITE_FEATURE_FLAGS_ENABLE_LOCAL_IDENTITY_PROVIDER ===
-      "true" || false,
+    "true" || false,
 
   ENABLE_ANONYMOUS_GOOGLE_LOGIN:
     import.meta.env.VITE_FATURE_FLAGS_ENABLE_GOOGLE_LOGIN === "true" || false,
