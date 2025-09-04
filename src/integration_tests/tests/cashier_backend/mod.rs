@@ -3,8 +3,10 @@ use candid::Principal;
 use crate::utils::with_pocket_ic_context;
 
 pub mod admin;
+pub mod icrc;
 pub mod link;
 pub mod request_lock;
+
 pub mod upgrade;
 
 /// Tests that the cashier backend canister can be deployed.

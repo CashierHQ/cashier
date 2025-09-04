@@ -7,7 +7,7 @@ use cashier_backend_types::{
     },
     error::CanisterError,
 };
-use cashier_common::build_data::BuildData;
+use cashier_common::{build_data::BuildData, icrc::Icrc114ValidateArgs};
 use ic_mple_client::{CanisterClient, CanisterClientResult};
 
 /// An CashierBackend canister client.
@@ -112,6 +112,10 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         options: Option<GetLinkOptions>,
     ) -> CanisterClientResult<Result<GetLinkResp, String>> {
         self.client.query("get_link", (id, options)).await
+    }
+
+    pub async fn icrc114_validate(&self, args: Icrc114ValidateArgs) -> CanisterClientResult<bool> {
+        self.client.update("icrc114_validate", (args,)).await
     }
 }
 

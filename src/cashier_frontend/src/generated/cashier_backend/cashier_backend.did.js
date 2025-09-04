@@ -61,10 +61,10 @@ export const idlFactory = ({ IDL }) => {
     'action_type' : ActionType,
   });
   const Icrc112Request = IDL.Record({
-    'arg' : IDL.Text,
+    'arg' : IDL.Vec(IDL.Nat8),
     'method' : IDL.Text,
     'canister_id' : IDL.Principal,
-    'nonce' : IDL.Opt(IDL.Text),
+    'nonce' : IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
   const Chain = IDL.Variant({ 'IC' : IDL.Null });
   const IntentTask = IDL.Variant({
@@ -269,6 +269,13 @@ export const idlFactory = ({ IDL }) => {
     'url' : IDL.Text,
     'name' : IDL.Text,
   });
+  const Icrc114ValidateArgs = IDL.Record({
+    'arg' : IDL.Vec(IDL.Nat8),
+    'res' : IDL.Vec(IDL.Nat8),
+    'method' : IDL.Text,
+    'canister_id' : IDL.Principal,
+    'nonce' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+  });
   const Icrc21ConsentMessageMetadata = IDL.Record({
     'utc_offset_minutes' : IDL.Opt(IDL.Int16),
     'language' : IDL.Text,
@@ -418,6 +425,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(Icrc21SupportedStandard)],
         ['query'],
       ),
+    'icrc114_validate' : IDL.Func([Icrc114ValidateArgs], [IDL.Bool], []),
     'icrc21_canister_call_consent_message' : IDL.Func(
         [Icrc21ConsentMessageRequest],
         [Result_5],

@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::Deserialize;
 
 /**
@@ -77,4 +77,13 @@ pub struct Icrc21SupportedStandard {
 #[derive(Clone, Debug, CandidType, Deserialize)]
 pub struct Icrc28TrustedOriginsResponse {
     pub trusted_origins: Vec<String>,
+}
+
+#[derive(Clone, Debug, CandidType, Deserialize)]
+pub struct Icrc114ValidateArgs {
+    pub canister_id: Principal,
+    pub method: String,
+    pub arg: Vec<u8>,
+    pub res: Vec<u8>,
+    pub nonce: Option<Vec<u8>>,
 }

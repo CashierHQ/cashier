@@ -241,7 +241,6 @@ name = "cashier_backend"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "base64 0.22.1",
  "candid",
  "cashier_backend_types",
  "cashier_common",
@@ -1224,7 +1223,6 @@ dependencies = [
 name = "icrc_112_utils"
 version = "0.1.0"
 dependencies = [
- "base64 0.22.1",
  "candid",
  "icrc-ledger-types",
  "serde",
@@ -1366,7 +1364,6 @@ dependencies = [
 name = "integration_tests"
 version = "0.1.0"
 dependencies = [
- "base64 0.22.1",
  "candid",
  "cashier_backend_client",
  "cashier_backend_types",
