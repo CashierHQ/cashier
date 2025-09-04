@@ -1,5 +1,6 @@
 pub mod auth;
 pub mod error;
+pub mod init;
 
 use candid::{self, CandidType, Deserialize, Principal};
 use cashier_macros::storable;
