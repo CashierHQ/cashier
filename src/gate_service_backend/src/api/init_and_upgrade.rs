@@ -8,6 +8,11 @@ fn init(init_data: GateServiceInitData) {
     init_ic_rand();
 
     let mut state = get_state();
+    let log_config = init_data.log_settings.unwrap_or_default();
+
+    if let Err(err) = state.log_service.init(Some(log_config)) {
+        ic_cdk::println!("error configuring the logger. Err: {err:?}")
+    }
     state
         .auth_service
         .add_permissions(init_data.owner, vec![Permission::Admin])

@@ -8,6 +8,7 @@ candid = { workspace = true }
 cashier_macros = { workspace = true }
 ciborium = { workspace = true }
 ic-cdk = { workspace = true }
+ic_mple_log = { workspace = true }
 ic-stable-structures = { workspace = true }
 serde = { workspace = true }
 thiserror = { workspace = true }
