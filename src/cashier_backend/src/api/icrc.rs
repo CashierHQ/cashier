@@ -29,6 +29,10 @@ fn icrc10_supported_standards() -> Vec<Icrc21SupportedStandard> {
             url: "https://github.com/dfinity/wg-identity-authentication/blob/main/topics/icrc_28_trusted_origins.md".to_string(),
             name: "ICRC-28".to_string(),
         },
+        Icrc21SupportedStandard {
+            url: "https://github.com/dfinity/wg-identity-authentication/blob/main/topics/icrc_114_validate_batch_call.md".to_string(),
+            name: "ICRC-114".to_string(),
+        },
     ]
 }
 

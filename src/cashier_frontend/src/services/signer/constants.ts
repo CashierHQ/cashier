@@ -42,37 +42,41 @@ export const supportedStandards: SupportedStandard[] = [
     name: "ICRC-112",
     url: "https://github.com/dfinity/wg-identity-authentication/blob/main/topics/icrc_112_batch_call_canister.md",
   },
+  {
+    name: "ICRC-114",
+    url: "https://github.com/dfinity/wg-identity-authentication/blob/main/topics/icrc_114_validate_batch_call.md",
+  },
 ];
 
 export const scopes: Array<{
   scope: PermissionScope;
   state: PermissionState;
 }> = [
-  {
-    scope: {
-      method: "icrc27_accounts",
+    {
+      scope: {
+        method: "icrc27_accounts",
+      },
+      state: "granted",
     },
-    state: "granted",
-  },
-  {
-    scope: {
-      method: "icrc34_delegation",
+    {
+      scope: {
+        method: "icrc34_delegation",
+      },
+      state: "granted",
     },
-    state: "granted",
-  },
-  {
-    scope: {
-      method: "icrc49_call_canister",
+    {
+      scope: {
+        method: "icrc49_call_canister",
+      },
+      state: "granted",
     },
-    state: "granted",
-  },
-  {
-    scope: {
-      method: "icrc112_batch_call_canister",
+    {
+      scope: {
+        method: "icrc112_batch_call_canister",
+      },
+      state: "granted",
     },
-    state: "granted",
-  },
-];
+  ];
 
 export const ICRC_114_METHOD_NAME = "icrc114_validate";
 
