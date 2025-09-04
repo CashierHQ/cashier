@@ -188,3 +188,95 @@ async fn it_should_get_gate_by_id() {
     .await
     .unwrap();
 }
+
+#[tokio::test]
+async fn it_should_error_get_gate_for_user_due_to_unauthorized_caller() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let creator = random_principal_id();
+        let subject_id = random_id_string();
+        let password = random_id_string();
+        let gate = add_password_gate_fixture(ctx, creator, &subject_id, &password).await;
+        let user = TestUser::User1.get_principal();
+        let caller = random_principal_id();
+        let caller_client = ctx.new_gate_service_backend_client(caller);
+
+        // Act
+        let result = caller_client
+            .get_gate_for_user(gate.id.clone(), user)
+            .await
+            .unwrap();
+
+        // Assert
+        assert!(result.is_err());
+
+        if let Err(GateServiceError::AuthError(e)) = result {
+            // Handle the error
+            assert!(e.contains("Only the user or a GateCreator can get the gate for a user"));
+        } else {
+            panic!("Expected AuthError error");
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_get_gate_for_user_for_authorized_user() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let creator = random_principal_id();
+        let subject_id = random_id_string();
+        let password = random_id_string();
+        let gate = add_password_gate_fixture(ctx, creator, &subject_id, &password).await;
+        let user = TestUser::User1.get_principal();
+        let user_client = ctx.new_gate_service_backend_client(user);
+
+        // Act
+        let result = user_client
+            .get_gate_for_user(gate.id.clone(), user)
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Assert
+        assert_eq!(result.gate.id, gate.id);
+        assert_eq!(result.gate.subject_id, subject_id);
+        assert!(result.gate_user_status.is_none());
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_get_gate_for_user_for_authorized_gate_creator() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let creator = random_principal_id();
+        let subject_id = random_id_string();
+        let password = random_id_string();
+        let gate = add_password_gate_fixture(ctx, creator, &subject_id, &password).await;
+        let user = TestUser::User1.get_principal();
+        let caller_client = ctx.new_gate_service_backend_client(creator);
+
+        // Act
+        let result = caller_client
+            .get_gate_for_user(gate.id.clone(), user)
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Assert
+        assert_eq!(result.gate.id, gate.id);
+        assert_eq!(result.gate.subject_id, subject_id);
+        assert!(result.gate_user_status.is_none());
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
