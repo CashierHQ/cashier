@@ -8,4 +8,10 @@ version.workspace = true
 cashier_backend_types = { workspace = true }
 cashier_common = { workspace = true }
 ic_mple_client = { workspace = true }
-candid = { workspace = true }
+ic_mple_pocket_ic = { workspace = true, optional = true }
+candid = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
+
+[features]
+default = []
+pocket_ic = ["dep:ic_mple_pocket_ic", "dep:candid", "dep:serde"]
