@@ -4,9 +4,12 @@ use crate::{
     repositories::gate::{GateRepository, GateStorage, GateUserStatusStorage, SubjectGateStorage},
     services::auth::AuthServiceStorage,
 };
-use ic_mple_log::service::Storage;
+use ic_mple_log::{
+    service::{LoggerServiceStorage, Storage},
+    LogSettings,
+};
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 use std::cell::RefCell;
 use std::thread::LocalKey;
 
@@ -40,6 +43,7 @@ const GATE_MEMORY_ID: MemoryId = MemoryId::new(0);
 const SUBJECT_GATE_MEMORY_ID: MemoryId = MemoryId::new(1);
 const GATE_USER_STATUS_MEMORY_ID: MemoryId = MemoryId::new(2);
 const AUTH_SERVICE_MEMORY_ID: MemoryId = MemoryId::new(3);
+const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(4);
 
 thread_local! {
     // The memory manager is used for simulating multiple memories. Given a `MemoryId` it can
@@ -54,6 +58,15 @@ thread_local! {
             MEMORY_MANAGER.with_borrow(|m| m.get(AUTH_SERVICE_MEMORY_ID)),
         )
     );
+
+    // Store for the logger settings
+    pub static LOGGER_SERVICE_STORE: RefCell<LoggerServiceStorage> =
+        RefCell::new(
+            StableCell::init(
+                MEMORY_MANAGER.with_borrow(|m| m.get(LOG_SETTINGS_MEMORY_ID)),
+                LogSettings::default(),
+            )
+        );
 
     // Initialized the stable structure memories
     static GATE_STORAGE: RefCell<GateStorage> = RefCell::new(StableBTreeMap::init(

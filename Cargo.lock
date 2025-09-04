@@ -809,6 +809,7 @@ dependencies = [
  "ciborium",
  "ic-cdk",
  "ic-stable-structures 0.7.0",
+ "ic_mple_log",
  "serde",
  "thiserror 2.0.16",
 ]
@@ -1434,6 +1435,7 @@ dependencies = [
  "cashier_backend_client",
  "cashier_backend_types",
  "cashier_common",
+ "gate_service_types",
  "ic-cdk",
  "ic-ledger-types",
  "ic_mple_client",
