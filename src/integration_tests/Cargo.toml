@@ -10,6 +10,7 @@ base64 = { workspace = true }
 candid = { workspace = true }
 cashier_backend_client = { workspace = true }
 cashier_backend_types = { workspace = true }
+gate_service_backend_client = { workspace = true }
 gate_service_types = { workspace = true }
 ic-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }

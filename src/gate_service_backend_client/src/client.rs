@@ -2,9 +2,9 @@ use candid::Principal;
 use gate_service_types::{auth::Permission, error::GateServiceError};
 use ic_mple_client::{CanisterClient, CanisterClientResult};
 
-/// An CashierBackend canister client.
+/// An GateServiceBackend canister client.
 #[derive(Debug, Clone)]
-pub struct CashierBackendClient<C>
+pub struct GateServiceBackendClient<C>
 where
     C: CanisterClient,
 {
@@ -12,8 +12,8 @@ where
     client: C,
 }
 
-impl<C: CanisterClient> CashierBackendClient<C> {
-    /// Create a new CashierBackendClient.
+impl<C: CanisterClient> GateServiceBackendClient<C> {
+    /// Create a new GateServiceBackendClient.
     ///
     /// # Arguments
     /// * `client` - The canister client.

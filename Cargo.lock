@@ -1443,6 +1443,7 @@ dependencies = [
  "cashier_backend_client",
  "cashier_backend_types",
  "cashier_common",
+ "gate_service_backend_client",
  "gate_service_types",
  "ic-cdk",
  "ic-ledger-types",
