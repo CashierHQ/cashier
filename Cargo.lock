@@ -303,8 +303,6 @@ dependencies = [
  "cashier_backend_types",
  "cashier_common",
  "ic_mple_client",
- "ic_mple_pocket_ic",
- "serde",
 ]
 
 [[package]]
@@ -798,6 +796,16 @@ dependencies = [
  "rand 0.8.5",
  "tokio",
  "uuid",
+]
+
+[[package]]
+name = "gate_service_backend_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "cashier_common",
+ "gate_service_types",
+ "ic_mple_client",
 ]
 
 [[package]]

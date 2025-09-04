@@ -1,11 +1,11 @@
 [package]
-name = "cashier_backend_client"
+name = "gate_service_backend_client"
 edition.workspace = true
 license.workspace = true
 version.workspace = true
 
 [dependencies]
-cashier_backend_types = { workspace = true }
-cashier_common = { workspace = true }
-ic_mple_client = { workspace = true }
 candid = { workspace = true }
+cashier_common = { workspace = true }
+gate_service_types = { workspace = true }
+ic_mple_client = { workspace = true }
