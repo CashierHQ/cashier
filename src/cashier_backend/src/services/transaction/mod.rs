@@ -274,7 +274,7 @@ mod tests {
         let repos = TestRepositories::new();
         let env = MockIcEnvironment::new();
         let service: TransactionService<MockIcEnvironment, TestRepositories> =
-            TransactionService::new(&repos, env.clone());
+            TransactionService::new(&repos, env);
 
         let uuid = Uuid::new_v4().to_string();
         let nonce = service.nonce_from_tx_id(&uuid).expect("should parse uuid");
@@ -287,7 +287,7 @@ mod tests {
         let repos = TestRepositories::new();
         let env = MockIcEnvironment::new();
         let service: TransactionService<MockIcEnvironment, TestRepositories> =
-            TransactionService::new(&repos, env.clone());
+            TransactionService::new(&repos, env);
 
         let bad = "not-a-uuid";
         let res = service.nonce_from_tx_id(bad);

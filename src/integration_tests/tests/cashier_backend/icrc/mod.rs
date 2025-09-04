@@ -222,5 +222,5 @@ async fn it_should_return_false_if_validate_icrc_112_response_failed() {
         .unwrap();
 
     // Assert
-    assert_eq!(icrc114_response, false);
+    assert!(!icrc114_response);
 }
