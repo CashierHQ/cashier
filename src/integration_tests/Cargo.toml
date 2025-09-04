@@ -6,7 +6,6 @@ license.workspace = true
 
 
 [dev-dependencies]
-base64 = { workspace = true }
 candid = { workspace = true }
 cashier_backend_client = { workspace = true, features = ["pocket_ic"] }
 cashier_backend_types = { workspace = true }

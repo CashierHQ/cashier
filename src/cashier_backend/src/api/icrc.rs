@@ -1,13 +1,15 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use candid::Decode;
+use cashier_backend_types::error::CanisterError;
 use ic_cdk::{query, update};
 use itertools::Itertools;
 
 use cashier_common::icrc::{
     Icrc21ConsentInfo, Icrc21ConsentMessage, Icrc21ConsentMessageMetadata,
     Icrc21ConsentMessageRequest, Icrc21DeviceSpec, Icrc21Error, Icrc21LineDisplayPage,
-    Icrc21SupportedStandard, Icrc28TrustedOriginsResponse,
+    Icrc21SupportedStandard, Icrc28TrustedOriginsResponse, Icrc114ValidateArgs,
 };
 use log::{debug, info};
 
@@ -26,6 +28,10 @@ fn icrc10_supported_standards() -> Vec<Icrc21SupportedStandard> {
         Icrc21SupportedStandard {
             url: "https://github.com/dfinity/wg-identity-authentication/blob/main/topics/icrc_28_trusted_origins.md".to_string(),
             name: "ICRC-28".to_string(),
+        },
+        Icrc21SupportedStandard {
+            url: "https://github.com/dfinity/wg-identity-authentication/blob/main/topics/icrc_114_validate_batch_call.md".to_string(),
+            name: "ICRC-114".to_string(),
         },
     ]
 }
@@ -150,4 +156,23 @@ fn consent_msg_text_pages(
             lines: page.collect(),
         })
         .collect()
+}
+
+#[update]
+// This method is canister exposed method there for we cannot pass by value
+#[allow(clippy::needless_pass_by_value)]
+// following the ICRC-114 standard for helping signer validate the canister call
+// Source: https://github.com/dfinity/wg-identity-authentication/blob/main/topics/icrc_114_validate_batch_call.md
+fn icrc114_validate(args: Icrc114ValidateArgs) -> bool {
+    if args.method == "trigger_transaction" {
+        match Decode!(args.res.as_slice(), Result<String, CanisterError>) {
+            Ok(Ok(_ok)) => return true,
+            Ok(Err(_err)) => return false,
+            Err(_decode_err) => {
+                return false;
+            }
+        }
+    }
+
+    false
 }
