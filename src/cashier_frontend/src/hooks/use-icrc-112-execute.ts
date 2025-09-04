@@ -3,7 +3,10 @@
 
 import { useMutation } from "@tanstack/react-query";
 import { useIdentity, useSigner } from "@nfid/identitykit/react";
-import { Icrc112RequestModel, toArrayBuffer } from "@/services/types/transaction.service.types";
+import {
+  Icrc112RequestModel,
+  toArrayBuffer,
+} from "@/services/types/transaction.service.types";
 import { AgentTransport } from "@/services/signer/agentTransport";
 import { getAgent } from "@/utils/agent";
 import { ICRC112_SUPPORTED_WALLETS } from "@/constants/wallet-options";
@@ -58,12 +61,12 @@ export function useIcrc112Execute() {
       }
 
       const batchInput = transactions.map((reqGroup) => {
-        return reqGroup.map(r => {
+        return reqGroup.map((r) => {
           return {
             canisterId: r.canisterId,
             method: r.method,
             arg: toArrayBuffer(r.arg),
-          }
+          };
         });
       });
       const request: {

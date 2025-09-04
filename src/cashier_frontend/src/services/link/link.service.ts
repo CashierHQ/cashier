@@ -116,11 +116,11 @@ class LinkService {
     };
     responseModel.data = response.data
       ? response.data.map((link: LinkDto) => {
-        return {
-          link: mapPartialDtoToLinkDetailModel(link),
-          action_create: undefined,
-        };
-      })
+          return {
+            link: mapPartialDtoToLinkDetailModel(link),
+            action_create: undefined,
+          };
+        })
       : [];
     return responseModel;
   }
@@ -132,8 +132,8 @@ class LinkService {
         toNullable(
           actionType
             ? {
-              action_type: mapFrontendActionTypeToActionType(actionType),
-            }
+                action_type: mapFrontendActionTypeToActionType(actionType),
+              }
             : undefined,
         ),
       ),

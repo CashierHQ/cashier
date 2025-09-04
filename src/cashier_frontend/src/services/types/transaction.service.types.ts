@@ -30,4 +30,3 @@ export const toArrayBuffer = (input: Uint8Array | number[]): ArrayBuffer => {
   return new Uint8Array(input).buffer;
 };
 // ...existing code.
-
