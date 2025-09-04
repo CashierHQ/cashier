@@ -55,12 +55,12 @@ export const getWalletIcon = (
 };
 
 // Default wallet signers
-export const defaultSigners = FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER
+export const DEFAULT_SIGNERS = FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER
   ? [LocalInternetIdentity]
   : [InternetIdentity];
 
 // All available wallet signers
-export const allWalletSigners = [
+export const ALL_WALLET_SIGNERS = [
   NFIDW,
   Stoic,
   GoogleSigner,
@@ -68,3 +68,8 @@ export const allWalletSigners = [
 ].concat(
   FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER ? [LocalInternetIdentity] : [],
 );
+
+export const ICRC112_SUPPORTED_WALLETS = [
+  InternetIdentity.id,
+  LocalInternetIdentity.id,
+];

@@ -91,10 +91,17 @@ export type IcTransaction = { 'Icrc2Approve' : Icrc2Approve } |
   { 'Icrc1Transfer' : Icrc1Transfer } |
   { 'Icrc2TransferFrom' : Icrc2TransferFrom };
 export interface Icrc112Request {
-  'arg' : string,
+  'arg' : Uint8Array | number[],
   'method' : string,
   'canister_id' : Principal,
-  'nonce' : [] | [string],
+  'nonce' : [] | [Uint8Array | number[]],
+}
+export interface Icrc114ValidateArgs {
+  'arg' : Uint8Array | number[],
+  'res' : Uint8Array | number[],
+  'method' : string,
+  'canister_id' : Principal,
+  'nonce' : [] | [Uint8Array | number[]],
 }
 export interface Icrc1Transfer {
   'to' : Wallet,
@@ -358,6 +365,7 @@ export interface _SERVICE {
     [],
     Array<Icrc21SupportedStandard>
   >,
+  'icrc114_validate' : ActorMethod<[Icrc114ValidateArgs], boolean>,
   'icrc21_canister_call_consent_message' : ActorMethod<
     [Icrc21ConsentMessageRequest],
     Result_5
