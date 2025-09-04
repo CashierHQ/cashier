@@ -72,8 +72,9 @@ async fn it_should_error_open_password_gate_dueto_invalid_key() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let creator = random_principal_id();
+        let subject_id = random_id_string();
         let password = random_id_string();
-        let gate = add_password_gate_fixture(ctx, creator, &password).await;
+        let gate = add_password_gate_fixture(ctx, creator, &subject_id, &password).await;
         let user = TestUser::User1.get_principal();
         let user_client = ctx.new_gate_service_backend_client(user);
 
@@ -104,8 +105,9 @@ async fn it_should_open_password_gate() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let creator = random_principal_id();
+        let subject_id = random_id_string();
         let password = random_id_string();
-        let gate = add_password_gate_fixture(ctx, creator, &password).await;
+        let gate = add_password_gate_fixture(ctx, creator, &subject_id, &password).await;
         let user = TestUser::User1.get_principal();
         let user_client = ctx.new_gate_service_backend_client(user);
 
@@ -121,6 +123,65 @@ async fn it_should_open_password_gate() {
         assert_eq!(result.gate_user_status.gate_id, gate.id);
         assert_eq!(result.gate_user_status.user_id, user);
         assert_eq!(result.gate_user_status.status, GateStatus::Open);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_get_gate_by_subject() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let creator = random_principal_id();
+        let subject_id = random_id_string();
+        let password = random_id_string();
+        let gate = add_password_gate_fixture(ctx, creator, &subject_id, &password).await;
+
+        // Act
+        let result = ctx
+            .new_gate_service_backend_client(TestUser::User1.get_principal())
+            .get_gate_by_subject(gate.subject_id.clone())
+            .await
+            .unwrap()
+            .unwrap()
+            .unwrap();
+
+        // Assert
+        assert_eq!(result.id, gate.id);
+        assert_eq!(result.subject_id, subject_id);
+        assert_eq!(result.gate_type, GateType::Password);
+        assert_eq!(result.key, GateKey::PasswordRedacted);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_get_gate_by_id() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let creator = random_principal_id();
+        let subject_id = random_id_string();
+        let password = random_id_string();
+        let gate = add_password_gate_fixture(ctx, creator, &subject_id, &password).await;
+
+        // Act
+        let result = ctx
+            .new_gate_service_backend_client(TestUser::User1.get_principal())
+            .get_gate(gate.id.clone())
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Assert
+        assert_eq!(result.id, gate.id);
+        assert_eq!(result.subject_id, subject_id);
+        assert_eq!(result.gate_type, GateType::Password);
+        assert_eq!(result.key, GateKey::PasswordRedacted);
 
         Ok(())
     })
