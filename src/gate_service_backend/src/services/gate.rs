@@ -425,7 +425,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn it_should_get_password_gate_user_status() {
+    async fn it_should_get_password_gate_for_user() {
         // Arrange
         let mut service = gate_service_fixture();
         let new_gate = NewGate {
@@ -439,13 +439,16 @@ mod tests {
         let _ = service.open_gate(&gate.id, gate_key, user).await;
 
         // Act
-        let result = service.get_gate_user_status(&gate.id, user);
+        let result = service.get_gate_for_user(&gate.id, user);
 
         // Assert
-        assert!(result.is_some());
+        assert!(result.is_ok());
         let result = result.unwrap();
-        assert_eq!(result.gate_id, gate.id);
-        assert_eq!(result.user_id, user);
-        assert_eq!(result.status, GateStatus::Open);
+        assert_eq!(result.gate.id, gate.id);
+        assert!(result.gate_user_status.is_some());
+        let gate_user_status = result.gate_user_status.unwrap();
+        assert_eq!(gate_user_status.gate_id, gate.id);
+        assert_eq!(gate_user_status.user_id, user);
+        assert_eq!(gate_user_status.status, GateStatus::Open);
     }
 }
