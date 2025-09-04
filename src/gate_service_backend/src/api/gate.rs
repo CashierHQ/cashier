@@ -2,7 +2,8 @@ use crate::api::state::get_state;
 use candid::Principal;
 use cashier_common::guard::is_not_anonymous;
 use gate_service_types::{
-    error::GateServiceError, Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult,
+    auth::Permission, error::GateServiceError, Gate, GateForUser, GateKey, NewGate,
+    OpenGateSuccessResult,
 };
 use ic_cdk::{api::msg_caller, query, update};
 
@@ -15,6 +16,12 @@ use ic_cdk::{api::msg_caller, query, update};
 /// * `Ok(Gate)`: If the gate is created successfully.
 /// * `Err(String)`: If there is an error during gate creation.
 fn add_gate(new_gate: NewGate) -> Result<Gate, GateServiceError> {
+    let state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::GateCreator);
+
     let mut gate_service = get_state().gate_service;
     let gate = gate_service.add_gate(new_gate)?;
 
@@ -58,6 +65,22 @@ fn get_gate(gate_id: String) -> Option<Gate> {
 /// * `Ok(GateForUser)`: If the gate is found.
 /// * `Err(String)`: If there is an error during retrieval.
 fn get_gate_for_user(gate_id: String, user: Principal) -> Result<GateForUser, GateServiceError> {
+    let state = get_state();
+    let caller = msg_caller();
+    match state
+        .auth_service
+        .check_has_permission(&caller, Permission::GateCreator)
+    {
+        Ok(()) => {}
+        Err(_) => {
+            if caller != user {
+                return Err(GateServiceError::AuthError(
+                    "Only the user or a GateCreator can get the gate for a user".to_string(),
+                ));
+            }
+        }
+    }
+
     let gate_service = get_state().gate_service;
     gate_service.get_gate_for_user(&gate_id, user)
 }

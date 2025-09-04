@@ -148,7 +148,6 @@ where
 
 pub struct PocketIcTestContextBuilder {
     has_cashier_backend: bool,
-    has_gate_service_backend: bool,
     has_token_storage: bool,
     has_icp_ledger: bool,
     icrc_tokens: Vec<String>,
@@ -164,7 +163,6 @@ impl PocketIcTestContextBuilder {
     pub fn new() -> Self {
         Self {
             has_cashier_backend: false,
-            has_gate_service_backend: false,
             has_token_storage: false,
             has_icp_ledger: false,
             icrc_tokens: Vec::new(),

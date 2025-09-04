@@ -1,5 +1,7 @@
 use candid::Principal;
-use gate_service_types::{auth::Permission, error::GateServiceError};
+use gate_service_types::{
+    Gate, GateKey, NewGate, OpenGateSuccessResult, auth::Permission, error::GateServiceError,
+};
 use ic_mple_client::{CanisterClient, CanisterClientResult};
 
 /// An GateServiceBackend canister client.
@@ -51,5 +53,22 @@ impl<C: CanisterClient> GateServiceBackendClient<C> {
         self.client
             .update("admin_permissions_remove", (principal, permissions))
             .await
+    }
+
+    /// Adds a new gate.
+    pub async fn add_gate(
+        &self,
+        new_gate: NewGate,
+    ) -> CanisterClientResult<Result<Gate, GateServiceError>> {
+        self.client.update("add_gate", (new_gate,)).await
+    }
+
+    /// Opens a gate.
+    pub async fn open_gate(
+        &self,
+        gate_id: String,
+        gate_key: GateKey,
+    ) -> CanisterClientResult<Result<OpenGateSuccessResult, GateServiceError>> {
+        self.client.update("open_gate", (gate_id, gate_key)).await
     }
 }

@@ -40,7 +40,7 @@ async fn should_not_allow_user_to_get_permissions() {
 }
 
 #[tokio::test]
-async fn should_allow_admin_to_set_and_remove_permissions() {
+async fn should_allow_admin_to_set_and_remove_admin_permissions() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let admin = TestUser::GateServiceBackendAdmin.get_principal();
@@ -67,6 +67,43 @@ async fn should_allow_admin_to_set_and_remove_permissions() {
         // Assert
         assert_eq!(vec![Permission::Admin], user_permissions_add);
         assert_eq!(vec![Permission::Admin], user_permissions_get_1);
+        assert!(user_permissions_remove.is_empty());
+        assert!(user_permissions_get_2.is_empty());
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn should_allow_admin_to_set_and_remove_gatecreator_permissions() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let admin = TestUser::GateServiceBackendAdmin.get_principal();
+        let user = TestUser::User1.get_principal();
+        let admin_client = ctx.new_gate_service_backend_client(admin);
+
+        // Act
+        let user_permissions_add = admin_client
+            .admin_permissions_add(user, vec![Permission::GateCreator])
+            .await
+            .unwrap()
+            .unwrap();
+
+        let user_permissions_get_1 = admin_client.admin_permissions_get(user).await.unwrap();
+
+        let user_permissions_remove = admin_client
+            .admin_permissions_remove(user, vec![Permission::GateCreator])
+            .await
+            .unwrap()
+            .unwrap();
+
+        let user_permissions_get_2 = admin_client.admin_permissions_get(user).await.unwrap();
+
+        // Assert
+        assert_eq!(vec![Permission::GateCreator], user_permissions_add);
+        assert_eq!(vec![Permission::GateCreator], user_permissions_get_1);
         assert!(user_permissions_remove.is_empty());
         assert!(user_permissions_get_2.is_empty());
 
