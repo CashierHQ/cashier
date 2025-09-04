@@ -236,8 +236,8 @@ impl From<Transaction> for TransactionDto {
 pub struct Icrc112Request {
     pub canister_id: Principal,
     pub method: String,
-    pub arg: String,
-    pub nonce: Option<String>,
+    pub arg: Vec<u8>,
+    pub nonce: Option<Vec<u8>>,
 }
 
 pub type ParallelRequests = Vec<Icrc112Request>;

@@ -7,5 +7,5 @@ use serde::{Deserialize, Serialize};
 pub struct CanisterCall {
     pub canister_id: Principal,
     pub method: String,
-    pub arg: String,
+    pub arg: Vec<u8>,
 }

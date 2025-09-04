@@ -5,8 +5,8 @@ import { create } from "zustand";
 import { IdentityKitSignerConfig } from "@nfid/identitykit";
 import {
   WALLET_OPTIONS,
-  defaultSigners,
-  allWalletSigners,
+  DEFAULT_SIGNERS,
+  ALL_WALLET_SIGNERS,
 } from "@/constants/wallet-options";
 
 interface SignerState {
@@ -18,13 +18,13 @@ interface SignerState {
 } // Re-export for backward compatibility
 
 export const useSignerStore = create<SignerState>((set) => ({
-  signers: allWalletSigners,
+  signers: ALL_WALLET_SIGNERS,
   currentConnectOption: WALLET_OPTIONS.INTERNET_IDENTITY,
   setSigners: (signers) => set({ signers }),
   setCurrentConnectOption: (option) => set({ currentConnectOption: option }),
   reset: () =>
     set({
-      signers: defaultSigners,
+      signers: DEFAULT_SIGNERS,
       currentConnectOption: WALLET_OPTIONS.INTERNET_IDENTITY,
     }),
 }));
