@@ -303,6 +303,8 @@ dependencies = [
  "cashier_backend_types",
  "cashier_common",
  "ic_mple_client",
+ "ic_mple_pocket_ic",
+ "serde",
 ]
 
 [[package]]
