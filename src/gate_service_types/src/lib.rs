@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod error;
 
 use candid::{self, CandidType, Deserialize, Principal};
