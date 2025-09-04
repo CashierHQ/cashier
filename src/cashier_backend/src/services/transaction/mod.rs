@@ -262,3 +262,41 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionService<E, R> {
         Ok(Some(icrc_112_requests))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::repositories::tests::TestRepositories;
+    use crate::utils::test_utils::runtime::MockIcEnvironment;
+
+    #[test]
+    fn nonce_from_tx_id_valid_uuid_returns_16_bytes() {
+        let repos = TestRepositories::new();
+        let env = MockIcEnvironment::new();
+        let service: TransactionService<MockIcEnvironment, TestRepositories> =
+            TransactionService::new(&repos, env.clone());
+
+        let uuid = Uuid::new_v4().to_string();
+        let nonce = service.nonce_from_tx_id(&uuid).expect("should parse uuid");
+
+        assert_eq!(nonce.len(), 16);
+    }
+
+    #[test]
+    fn nonce_from_tx_id_invalid_uuid_returns_error() {
+        let repos = TestRepositories::new();
+        let env = MockIcEnvironment::new();
+        let service: TransactionService<MockIcEnvironment, TestRepositories> =
+            TransactionService::new(&repos, env.clone());
+
+        let bad = "not-a-uuid";
+        let res = service.nonce_from_tx_id(bad);
+        assert!(res.is_err());
+        if let Err(e) = res {
+            match e {
+                CanisterError::InvalidInput(_) => {}
+                _ => panic!("expected InvalidInput error"),
+            }
+        }
+    }
+}
