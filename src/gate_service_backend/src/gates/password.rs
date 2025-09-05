@@ -1,5 +1,5 @@
 use crate::{gates::GateVerifier, utils::hashing::verify_password};
-use gate_service_types::{GateKey, VerificationResult, error::GateServiceError};
+use gate_service_types::{error::GateServiceError, GateKey, VerificationResult};
 use std::{fmt::Debug, future::Future, pin::Pin};
 
 pub struct PasswordGateVerifier {
