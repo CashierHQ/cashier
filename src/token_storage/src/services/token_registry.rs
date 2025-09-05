@@ -1,5 +1,8 @@
 use futures::try_join;
-use token_storage_types::{token::{ChainTokenDetails, RegistryToken}, IndexId, TokenId};
+use token_storage_types::{
+    IndexId, TokenId,
+    token::{ChainTokenDetails, RegistryToken},
+};
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 

@@ -12,8 +12,7 @@ use token_storage_types::{
 };
 
 use crate::{
-    api::state::get_state, build_data::canister_build_data,
-    services::auth::Permission,
+    api::state::get_state, build_data::canister_build_data, services::auth::Permission,
     types::TokenRegistryMetadata,
 };
 
