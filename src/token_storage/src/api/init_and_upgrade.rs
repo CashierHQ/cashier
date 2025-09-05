@@ -2,11 +2,11 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use ic_cdk::{init, post_upgrade, pre_upgrade};
-use log::{error, info};
+use log::{debug, error, info};
 use token_storage_types::init::TokenStorageInitData;
 
 use crate::{
-    api::state::get_state, constant::default_tokens::get_default_tokens, services::auth::Permission,
+    api::state::get_state, services::auth::Permission,
 };
 
 #[init]
@@ -20,26 +20,24 @@ fn init(init_data: TokenStorageInitData) {
 
     info!("[init] Starting Token Storage");
 
-    info!("Set {:?} as canister admin", init_data.owner);
+    info!("[init] Set {:?} as canister admin", init_data.owner);
     state
         .auth_service
         .add_permissions(init_data.owner, vec![Permission::Admin])
         .expect("Should be able to set the admin");
 
     if let Some(tokens) = init_data.tokens {
+        info!("[init] Set {} default tokens", tokens.len());
+        debug!("[init] Default tokens: {tokens:?}");
+
         match state.token_registry.add_bulk_tokens(tokens) {
             Ok(_) => {}
             Err(e) => {
                 error!("Error adding tokens: {e}");
             }
         }
-    }
-    
-    match state.token_registry.add_bulk_tokens(get_default_tokens()) {
-        Ok(_) => {}
-        Err(e) => {
-            error!("Error adding default tokens: {e}");
-        }
+    } else {
+        info!("[init] No default tokens provided");
     }
 }
 
