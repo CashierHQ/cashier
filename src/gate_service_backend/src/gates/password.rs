@@ -1,12 +1,12 @@
 use crate::{gates::GateVerifier, utils::hashing::verify_password};
-use gate_service_types::{error::GateServiceError, GateKey, VerificationResult};
+use gate_service_types::{GateKey, VerificationResult, error::GateServiceError};
 use std::{fmt::Debug, future::Future, pin::Pin};
 
-pub struct PasswordGate {
+pub struct PasswordGateVerifier {
     password_hash: String,
 }
 
-impl GateVerifier for PasswordGate {
+impl GateVerifier for PasswordGateVerifier {
     fn verify(
         &self,
         key: GateKey,
@@ -22,19 +22,21 @@ impl GateVerifier for PasswordGate {
                     ))),
                 }
             } else {
-                Err(GateServiceError::InvalidKeyType("PasswordGate".to_string()))
+                Err(GateServiceError::InvalidKeyType(
+                    "PasswordGateVerifier".to_string(),
+                ))
             }
         })
     }
 }
 
-impl Debug for PasswordGate {
+impl Debug for PasswordGateVerifier {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "PasswordGate")
+        write!(f, "PasswordGateVerifier")
     }
 }
 
-impl PasswordGate {
+impl PasswordGateVerifier {
     pub fn new(password_hash: String) -> Self {
         Self { password_hash }
     }
@@ -52,7 +54,7 @@ mod tests {
         let password = "password123";
         let wrong_password = "wrongpassword";
         let password_hash = hash_password(password).unwrap();
-        let password_gate = PasswordGate::new(password_hash);
+        let password_gate = PasswordGateVerifier::new(password_hash);
 
         // Act
         let result = password_gate
@@ -73,7 +75,7 @@ mod tests {
         // Arrange
         let password = "password123";
         let password_hash = hash_password(password).unwrap();
-        let password_gate = PasswordGate::new(password_hash);
+        let password_gate = PasswordGateVerifier::new(password_hash);
 
         // Act
         let result = password_gate
@@ -83,7 +85,7 @@ mod tests {
         // Assert
         assert!(result.is_err());
         if let Err(GateServiceError::InvalidKeyType(e)) = result {
-            assert!(e.contains("PasswordGate"));
+            assert!(e.contains("PasswordGateVerifier"));
         } else {
             panic!("Expected error but got success");
         }
@@ -94,7 +96,7 @@ mod tests {
         // Arrange
         let password = "password123";
         let password_hash = hash_password(password).unwrap();
-        let password_gate = PasswordGate::new(password_hash);
+        let password_gate = PasswordGateVerifier::new(password_hash);
 
         // Act
         let result = password_gate

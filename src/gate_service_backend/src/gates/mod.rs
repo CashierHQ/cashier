@@ -1,7 +1,7 @@
 pub mod password;
 
-use gate_service_types::{error::GateServiceError, GateKey, GateType, VerificationResult};
-use password::PasswordGate;
+use gate_service_types::{GateKey, GateType, VerificationResult, error::GateServiceError};
+use password::PasswordGateVerifier;
 use std::{fmt::Debug, future::Future, pin::Pin};
 
 pub trait GateVerifier: Debug {
@@ -36,9 +36,11 @@ impl GateFactory {
         match gate_type {
             GateType::Password => {
                 let GateKey::Password(gate_key) = gate_key else {
-                    return Err(GateServiceError::InvalidKeyType("PasswordGate".to_string()));
+                    return Err(GateServiceError::InvalidKeyType(
+                        "PasswordGateVerifier".to_string(),
+                    ));
                 };
-                let gate = PasswordGate::new(gate_key);
+                let gate = PasswordGateVerifier::new(gate_key);
                 Ok(Box::new(gate))
             }
             _ => Err(GateServiceError::UnsupportedGateType(format!(
@@ -85,7 +87,7 @@ mod tests {
         // Assert
         assert!(result.is_err());
         if let Err(GateServiceError::InvalidKeyType(e)) = result {
-            assert!(e.contains("PasswordGate"));
+            assert!(e.contains("PasswordGateVerifier"));
         } else {
             panic!("Expected error but got success");
         }
