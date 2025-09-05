@@ -3,7 +3,6 @@
 
 mod api;
 mod build_data;
-mod constant;
 mod ext;
 mod repository;
 mod services;
