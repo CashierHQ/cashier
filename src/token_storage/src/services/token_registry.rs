@@ -1,6 +1,5 @@
-use cashier_common::chain::Chain;
 use futures::try_join;
-use token_storage_types::{IndexId, TokenId, token::ChainTokenDetails};
+use token_storage_types::{token::{ChainTokenDetails, RegistryToken}, IndexId, TokenId};
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
@@ -9,7 +8,7 @@ use crate::{
         Repositories, token_registry::TokenRegistryRepository,
         token_registry_metadata::TokenRegistryMetadataRepository,
     },
-    types::{RegistryToken, TokenRegistryMetadata},
+    types::TokenRegistryMetadata,
 };
 
 pub struct TokenRegistryService<R: Repositories> {
@@ -48,7 +47,6 @@ impl<R: Repositories> TokenRegistryService<R> {
     ) -> Result<TokenId, String> {
         match input {
             TokenId::IC { ledger_id } => {
-                let chain = Chain::IC;
                 // Call ICRC service to get token info
                 use crate::ext::icrc::Service as IcrcService;
                 let icrc_service = IcrcService::new(ledger_id);
@@ -66,7 +64,6 @@ impl<R: Repositories> TokenRegistryService<R> {
                     symbol,
                     name,
                     decimals,
-                    chain,
                     details: ChainTokenDetails::IC {
                         ledger_id,
                         index_id,
@@ -76,10 +73,7 @@ impl<R: Repositories> TokenRegistryService<R> {
                 };
                 self.registry_repository
                     .register_token(registry_token, &mut self.metadata_repository)
-            } // _ => Err(format!(
-              //     "Registering tokens for chain '{}' is not supported yet",
-              //     chain_str
-              // )),
+            }
         }
     }
 
