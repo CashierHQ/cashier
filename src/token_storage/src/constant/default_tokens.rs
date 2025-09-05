@@ -3,15 +3,12 @@
 
 // Create a new constant file to store the default tokens
 use candid::{Nat, Principal};
-use cashier_common::chain::Chain;
-use token_storage_types::token::ChainTokenDetails;
+use token_storage_types::token::{ChainTokenDetails, RegistryToken};
 
-use crate::types::RegistryToken;
-
+#[deprecated]
 pub fn get_default_tokens() -> Vec<RegistryToken> {
     vec![
         RegistryToken {
-            chain: Chain::IC,
             details: ChainTokenDetails::IC {
                 ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
                 index_id: Some(Principal::from_text("qhbym-qaaaa-aaaaa-aaafq-cai").unwrap()),
@@ -23,7 +20,6 @@ pub fn get_default_tokens() -> Vec<RegistryToken> {
             enabled_by_default: true,
         },
         RegistryToken {
-            chain: Chain::IC,
             details: ChainTokenDetails::IC {
                 ledger_id: Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
                 index_id: Some(Principal::from_text("n5wcd-faaaa-aaaar-qaaea-cai").unwrap()),
@@ -35,7 +31,6 @@ pub fn get_default_tokens() -> Vec<RegistryToken> {
             enabled_by_default: true,
         },
         RegistryToken {
-            chain: Chain::IC,
             details: ChainTokenDetails::IC {
                 ledger_id: Principal::from_text("ss2fx-dyaaa-aaaar-qacoq-cai").unwrap(),
                 index_id: Some(Principal::from_text("s3zol-vqaaa-aaaar-qacpa-cai").unwrap()),
@@ -47,7 +42,6 @@ pub fn get_default_tokens() -> Vec<RegistryToken> {
             enabled_by_default: true,
         },
         RegistryToken {
-            chain: Chain::IC,
             details: ChainTokenDetails::IC {
                 ledger_id: Principal::from_text("xevnm-gaaaa-aaaar-qafnq-cai").unwrap(),
                 index_id: Some(Principal::from_text("xrs4b-hiaaa-aaaar-qafoa-cai").unwrap()),
@@ -59,7 +53,6 @@ pub fn get_default_tokens() -> Vec<RegistryToken> {
             enabled_by_default: true,
         },
         RegistryToken {
-            chain: Chain::IC,
             details: ChainTokenDetails::IC {
                 ledger_id: Principal::from_text("x5qut-viaaa-aaaar-qajda-cai").unwrap(),
                 index_id: None,

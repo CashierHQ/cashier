@@ -26,6 +26,15 @@ fn init(init_data: TokenStorageInitData) {
         .add_permissions(init_data.owner, vec![Permission::Admin])
         .expect("Should be able to set the admin");
 
+    if let Some(tokens) = init_data.tokens {
+        match state.token_registry.add_bulk_tokens(tokens) {
+            Ok(_) => {}
+            Err(e) => {
+                error!("Error adding tokens: {e}");
+            }
+        }
+    }
+    
     match state.token_registry.add_bulk_tokens(get_default_tokens()) {
         Ok(_) => {}
         Err(e) => {
