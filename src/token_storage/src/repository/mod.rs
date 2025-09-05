@@ -16,8 +16,8 @@ use ic_mple_log::service::LoggerServiceStorage;
 use ic_mple_utils::store::Storage;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
-use token_storage_types::token::RegistryToken;
 use token_storage_types::TokenId;
+use token_storage_types::token::RegistryToken;
 use token_storage_types::user::UserPreference;
 
 use crate::repository::balance_cache::{

@@ -3,9 +3,7 @@
 
 use candid::CandidType;
 use cashier_macros::storable;
-use token_storage_types::{
-    TokenId,
-};
+use token_storage_types::TokenId;
 
 // User's token preference
 #[storable]

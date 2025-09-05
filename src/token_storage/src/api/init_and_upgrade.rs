@@ -5,9 +5,7 @@ use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::{debug, error, info};
 use token_storage_types::init::TokenStorageInitData;
 
-use crate::{
-    api::state::get_state, services::auth::Permission,
-};
+use crate::{api::state::get_state, services::auth::Permission};
 
 #[init]
 fn init(init_data: TokenStorageInitData) {
