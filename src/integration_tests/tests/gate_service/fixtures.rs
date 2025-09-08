@@ -16,10 +16,10 @@ pub async fn add_password_gate_fixture(
     subject_id: &str,
     password: &str,
 ) -> Gate {
-    let admin = TestUser::GateServiceBackendAdmin.get_principal();
+    let admin = TestUser::GateServiceAdmin.get_principal();
     let admin_client = ctx.new_gate_service_client(admin);
     let _user_permissions_add = admin_client
-        .admin_permissions_add(creator, vec![Permission::GateCreator])
+        .admin_permissions_add(creator, vec![Permission::GateCreate])
         .await
         .unwrap()
         .unwrap();

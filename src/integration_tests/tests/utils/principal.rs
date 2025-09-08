@@ -8,7 +8,7 @@ pub enum TestUser {
     TokenDeployer,
     CashierBackendAdmin,
     TokenStorageAdmin,
-    GateServiceBackendAdmin,
+    GateServiceAdmin,
 }
 
 impl TestUser {
@@ -33,7 +33,7 @@ impl TestUser {
             .unwrap(),
             TestUser::CashierBackendAdmin => Principal::from_slice(&[1, 29]),
             TestUser::TokenStorageAdmin => Principal::from_slice(&[2, 29]),
-            TestUser::GateServiceBackendAdmin => Principal::from_slice(&[3, 29]),
+            TestUser::GateServiceAdmin => Principal::from_slice(&[3, 29]),
         }
     }
 }

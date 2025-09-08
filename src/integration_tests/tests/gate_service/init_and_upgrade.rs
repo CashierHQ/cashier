@@ -6,7 +6,7 @@ use crate::utils::{principal::TestUser, with_pocket_ic_context};
 async fn should_init_with_gate_creator_permissions_for_cashier_backend() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let admin = TestUser::GateServiceBackendAdmin.get_principal();
+        let admin = TestUser::GateServiceAdmin.get_principal();
         let admin_client = ctx.new_gate_service_client(admin);
 
         // Act
@@ -16,7 +16,7 @@ async fn should_init_with_gate_creator_permissions_for_cashier_backend() {
             .unwrap();
 
         // Assert
-        assert_eq!(vec![Permission::GateCreator], permissions);
+        assert_eq!(vec![Permission::GateCreate], permissions);
 
         Ok(())
     })
