@@ -70,6 +70,34 @@ impl ChainTokenDetails {
     }
 }
 
+// Central registry token definition
+#[storable]
+#[derive(CandidType, Clone, Eq, PartialEq, Debug)]
+pub struct RegistryToken {
+    pub symbol: String,
+    pub name: String,
+    pub decimals: u8,
+    pub details: ChainTokenDetails,
+    pub enabled_by_default: bool, // Indicates if the token is enabled by default
+}
+
+impl From<RegistryToken> for TokenDto {
+    fn from(token: RegistryToken) -> Self {
+        let token_id = token.details.token_id();
+        Self {
+            string_id: token_id.to_string(),
+            id: token_id,
+            symbol: token.symbol,
+            name: token.name,
+            decimals: token.decimals,
+            chain: token.details.chain(),
+            enabled: token.enabled_by_default,
+            balance: None,
+            details: token.details, // Directly use the enum
+        }
+    }
+}
+
 /// DTO for all tokens, flexible for all chains
 #[derive(CandidType, Deserialize, Serialize, Clone, Eq, PartialEq, Debug)]
 pub struct TokenDto {
