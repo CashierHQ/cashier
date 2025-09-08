@@ -316,6 +316,7 @@ dependencies = [
  "cashier_macros",
  "ciborium",
  "derive_more",
+ "gate_service_types",
  "ic-cdk",
  "ic-cdk-timers",
  "ic-stable-structures 0.7.0",

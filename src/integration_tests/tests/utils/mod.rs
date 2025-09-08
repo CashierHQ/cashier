@@ -200,7 +200,17 @@ impl PocketIcTestContextBuilder {
         };
 
         let mut icrc_token_map = HashMap::new();
-        let gate_service_backend_principal = Principal::anonymous();
+
+        let gate_service_backend_principal = deploy_canister(
+            &client,
+            None,
+            get_gate_service_backend_canister_bytecode(),
+            &(GateServiceInitData {
+                log_settings: Some(log.clone()),
+                owner: TestUser::GateServiceBackendAdmin.get_principal(),
+            }),
+        )
+        .await;
 
         let token_storage_principal = if self.has_token_storage {
             deploy_canister(
@@ -532,6 +542,32 @@ async fn deploy_canister_with_id<T: CandidType>(
         .install_canister(canister, bytecode, args, sender)
         .await;
     canister
+}
+
+/// Upgrade a canister with the given `bytecode` and `args`.
+///
+/// The `sender` is the principal of the caller of this function. If `sender` is `None`, the caller
+/// is the default anonymous principal.
+///
+/// Before installing the canister, this function adds the maximum amount of cycles
+/// to the canister.
+///
+/// The encoded `args` are passed to the canister's `install` method.
+///
+/// Returns the principal of the newly created canister.
+pub async fn upgrade_canister<T: CandidType>(
+    client: &PocketIc,
+    sender: Option<Principal>,
+    canister_id: CanisterId,
+    bytecode: Vec<u8>,
+    args: &T,
+) {
+    let args = encode(args);
+    client.add_cycles(canister_id, u128::MAX).await;
+    client
+        .upgrade_canister(canister_id, bytecode, args, sender)
+        .await
+        .unwrap();
 }
 
 /// Retrieves the bytecode for the token storage canister.

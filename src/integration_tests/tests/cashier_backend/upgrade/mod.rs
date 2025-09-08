@@ -9,11 +9,15 @@ use std::time::Duration;
 
 #[cfg(test)]
 mod test_canister_upgrade {
-    use crate::{cashier_backend::link::fixture::LinkTestFixture, utils::PocketIcTestContext};
+    use crate::{
+        cashier_backend::link::fixture::LinkTestFixture,
+        utils::{PocketIcTestContext, upgrade_canister},
+    };
 
     use super::*;
     use cashier_backend_types::{
         dto::{action::ActionDto, link::LinkDto},
+        init::CashierBackendUpgradeData,
         repository::action::v1::ActionType,
     };
 
@@ -73,8 +77,16 @@ mod test_canister_upgrade {
 
             // Act - Upgrade the canister
             let new_bytecode = crate::utils::get_cashier_backend_canister_bytecode();
-            ctx.upgrade_canister(ctx.cashier_backend_principal, None, new_bytecode, ())
-                .await;
+            upgrade_canister(
+                &ctx.client,
+                None,
+                ctx.cashier_backend_principal,
+                new_bytecode,
+                &(CashierBackendUpgradeData {
+                    gate_service_canister_id: ctx.gate_service_backend_principal,
+                }),
+            )
+            .await;
 
             // Wait a bit for post_upgrade to complete
             ctx.advance_time(Duration::from_secs(1)).await;
@@ -116,11 +128,14 @@ mod test_canister_upgrade {
 
             // Act - First upgrade
             let new_bytecode = crate::utils::get_cashier_backend_canister_bytecode();
-            ctx.upgrade_canister(
-                ctx.cashier_backend_principal,
+            upgrade_canister(
+                &ctx.client,
                 None,
-                new_bytecode.clone(),
-                (),
+                ctx.cashier_backend_principal,
+                new_bytecode,
+                &(CashierBackendUpgradeData {
+                    gate_service_canister_id: ctx.gate_service_backend_principal,
+                }),
             )
             .await;
 
@@ -132,9 +147,17 @@ mod test_canister_upgrade {
             assert_eq!(action_after_first_upgrade.state, ActionState::Processing);
 
             // Second upgrade
-            ctx.upgrade_canister(ctx.cashier_backend_principal, None, new_bytecode, ())
-                .await;
-
+            let new_bytecode = crate::utils::get_cashier_backend_canister_bytecode();
+            upgrade_canister(
+                &ctx.client,
+                None,
+                ctx.cashier_backend_principal,
+                new_bytecode,
+                &(CashierBackendUpgradeData {
+                    gate_service_canister_id: ctx.gate_service_backend_principal,
+                }),
+            )
+            .await;
             ctx.advance_time(Duration::from_secs(1)).await;
 
             // Verify still processing after second upgrade

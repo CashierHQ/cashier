@@ -19,3 +19,4 @@ serde = { workspace = true, features = ['derive'] }
 serde_json = { workspace = true }
 ic-cdk = { workspace = true }
 thiserror = { workspace = true }
+gate_service_types = { workspace = true }

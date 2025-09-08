@@ -53,11 +53,11 @@ async fn get_links(input: Option<PaginateInput>) -> Result<PaginateResult<LinkDt
 /// # Returns
 /// * `Ok(GetLinkResp)` - Link data with optional action information
 /// * `Err(String)` - Error message if link not found or access denied
-#[query]
+#[query(composite = true)]
 async fn get_link(id: String, options: Option<GetLinkOptions>) -> Result<GetLinkResp, String> {
     debug!("[get_link] id: {id}, options: {options:?}");
     let api = LinkApi::new(get_state());
-    api.get_link(msg_caller(), &id, options)
+    api.get_link(msg_caller(), &id, options).await
 }
 
 /// Creates a new link using the v2 API format with enhanced features.
@@ -344,7 +344,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// # Returns
     /// * `Ok(GetLinkResp)` - Link data with optional action information
     /// * `Err(String)` - Error if link not found or access denied
-    pub fn get_link(
+    pub async fn get_link(
         &self,
         caller: Principal,
         id: &str,
@@ -362,9 +362,24 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             ActionDto::from(action, intents)
         });
 
+        let get_gate_by_subject_res = self
+            .state
+            .gate_service_client
+            .get_gate_by_subject(id.to_string())
+            .await;
+
+        let gate = match get_gate_by_subject_res {
+            Ok(gate) => match gate {
+                Ok(gate) => gate,
+                Err(e) => Err(format!("Gate not found for link {id}: {}", e))?,
+            },
+            Err(e) => Err(format!("Failed to get gate for link {id}: {}", e))?,
+        };
+
         Ok(GetLinkResp {
             link: LinkDto::from(link),
             action: action_dto,
+            gate,
         })
     }
 

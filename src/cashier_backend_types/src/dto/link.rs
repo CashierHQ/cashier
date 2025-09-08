@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use candid::{CandidType, Principal};
 
 use derive_more::Display;
+use gate_service_types::Gate;
 use serde::{Deserialize, Serialize};
 
 use crate::dto::action::ActionDto;
@@ -106,6 +107,7 @@ pub struct AssetInfoDto {
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct GetLinkResp {
     pub link: LinkDto,
+    pub gate: Option<Gate>,
     pub action: Option<ActionDto>,
 }
 

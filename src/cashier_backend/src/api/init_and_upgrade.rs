@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::init::CashierBackendInitData;
+use cashier_backend_types::init::{CashierBackendInitData, CashierBackendUpgradeData};
 use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::info;
 
@@ -35,10 +35,12 @@ fn init(init_data: CashierBackendInitData) {
 fn pre_upgrade() {}
 
 #[post_upgrade]
-fn post_upgrade() {
+fn post_upgrade(upgrade_data: CashierBackendUpgradeData) {
     if let Err(err) = get_state().log_service.init(None) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
     }
+
+    update_setting(upgrade_data.gate_service_canister_id);
 
     info!("[post_upgrade] Starting Cashier Backend");
 
