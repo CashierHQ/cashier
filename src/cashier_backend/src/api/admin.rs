@@ -77,20 +77,13 @@ pub fn admin_permissions_remove(
     /// instead of IC rejection message. This makes it easy to work with the canister API but
     /// increases overhead in case of many invalid transactions.
     #[update]
-    pub fn admin_inspect_message_enable(value: bool) -> Result<(), CanisterError> {
+    pub fn admin_inspect_message_enable(inspect_message_enabled: bool) -> Result<(), CanisterError> {
         let mut state = get_state();
         let caller = msg_caller();
         state
             .auth_service
             .must_have_permission(&caller, Permission::Admin);
 
-        
-        EVM_STATE.with(|evm_state| {
-            evm_state.permissions.borrow().check_admin(&ic::caller())?;
-            evm_state
-                .evm_state
-                .borrow_mut()
-                .disable_inspect_message(value);
-            Ok(())
-        })
+        state.settings_service.set_inspect_message_enabled(inspect_message_enabled);
+        Ok(())
     }
