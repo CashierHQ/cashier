@@ -26,19 +26,33 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
 
   export OWNER=$(dfx identity get-principal)
 
+  dfx canister create token_storage
+  dfx canister create gate_service_backend
+  dfx canister create cashier_backend
+
+  cashier_backend_id=$(dfx canister id cashier_backend)
+  gate_service_backend_id=$(dfx canister id gate_service_backend)
+  token_storage_id=$(dfx canister id token_storage)
+  
+  echo "cashier_backend_id: $cashier_backend_id"
+  echo "gate_service_backend_id: $gate_service_backend_id"
+  echo "token_storage_id: $token_storage_id"
+
   dfx deploy token_storage --argument "(record {
       log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug,token_storage=debug\"; };
-      owner=principal \"${OWNER}\";
-  })"
-
-  dfx deploy cashier_backend --argument "(record {
-      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
       owner=principal \"${OWNER}\";
   })"
 
   dfx deploy gate_service_backend --argument "(record {
       log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
       owner=principal \"${OWNER}\";
+      permissions=opt (vec { record { principal \"${cashier_backend_id}\"; vec { variant { GateCreator } } } });
+  })"
+
+    dfx deploy cashier_backend --argument "(record {
+      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
+      owner=principal \"${OWNER}\";
+      gate_service_canister_id=principal \"${gate_service_backend_id}\";
   })"
 
   dfx deploy internet_identity

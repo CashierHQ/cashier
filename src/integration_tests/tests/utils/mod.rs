@@ -1,12 +1,13 @@
 use crate::{
-    constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL},
+    constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL, GATE_SERVICE_CANISTER_ID},
+    token_storage,
     utils::{principal::TestUser, token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
 };
 use candid::{CandidType, Decode, Encode, Principal, utils::ArgumentEncoder};
 use cashier_backend_client::client::CashierBackendClient;
 use cashier_backend_types::{constant, init::CashierBackendInitData};
 use gate_service_backend_client::client::GateServiceBackendClient;
-use gate_service_types::init::GateServiceInitData;
+use gate_service_types::{self, init::GateServiceInitData};
 use ic_cdk::management_canister::{CanisterId, CanisterSettings};
 use ic_mple_client::PocketIcClient;
 use ic_mple_log::service::LogServiceSettings;
@@ -46,8 +47,14 @@ where
     };
 
     let client = Arc::new(get_pocket_ic_client().await.build_async().await);
-    let token_storage_principal = deploy_canister(
+
+    let gate_service_backend_principal = create_canister(&client, None).await;
+    let token_storage_principal = create_canister(&client, None).await;
+    let cashier_backend_principal = create_canister(&client, None).await;
+
+    let _ = deploy_canister(
         &client,
+        token_storage_principal,
         None,
         get_token_storage_canister_bytecode(),
         &(TokenStorageInitData {
@@ -57,25 +64,31 @@ where
     )
     .await;
 
-    let gate_service_backend_principal = deploy_canister(
+    let _ = deploy_canister(
         &client,
-        None,
-        get_gate_service_backend_canister_bytecode(),
-        &(GateServiceInitData {
-            log_settings: Some(log.clone()),
-            owner: TestUser::GateServiceBackendAdmin.get_principal(),
-        }),
-    )
-    .await;
-
-    let cashier_backend_principal = deploy_canister(
-        &client,
+        cashier_backend_principal,
         None,
         get_cashier_backend_canister_bytecode(),
         &(CashierBackendInitData {
             log_settings: Some(log.clone()),
             owner: TestUser::CashierBackendAdmin.get_principal(),
             gate_service_canister_id: gate_service_backend_principal,
+        }),
+    )
+    .await;
+
+    let _ = deploy_canister(
+        &client,
+        gate_service_backend_principal,
+        None,
+        get_gate_service_backend_canister_bytecode(),
+        &(GateServiceInitData {
+            log_settings: Some(log),
+            owner: TestUser::GateServiceBackendAdmin.get_principal(),
+            permissions: Some(HashMap::from([(
+                cashier_backend_principal,
+                vec![gate_service_types::auth::Permission::GateCreator],
+            )])),
         }),
     )
     .await;
@@ -148,6 +161,7 @@ where
 }
 
 pub struct PocketIcTestContextBuilder {
+    has_gate_service: bool,
     has_cashier_backend: bool,
     has_token_storage: bool,
     has_icp_ledger: bool,
@@ -163,6 +177,7 @@ impl Default for PocketIcTestContextBuilder {
 impl PocketIcTestContextBuilder {
     pub fn new() -> Self {
         Self {
+            has_gate_service: false,
             has_cashier_backend: false,
             has_token_storage: false,
             has_icp_ledger: false,
@@ -170,8 +185,10 @@ impl PocketIcTestContextBuilder {
         }
     }
 
+    // gate and cashier backend have to be deployed together
     pub fn with_cashier_backend(mut self) -> Self {
         self.has_cashier_backend = true;
+        self.has_gate_service = true;
         self
     }
 
@@ -199,22 +216,15 @@ impl PocketIcTestContextBuilder {
             log_filter: Some("debug".to_string()),
         };
 
-        let mut icrc_token_map = HashMap::new();
+        let mut icrc_token_map: HashMap<String, Principal> = HashMap::new();
+        let gate_service_backend_principal = create_canister(&client, None).await;
+        let token_storage_principal = create_canister(&client, None).await;
+        let cashier_backend_principal = create_canister(&client, None).await;
 
-        let gate_service_backend_principal = deploy_canister(
-            &client,
-            None,
-            get_gate_service_backend_canister_bytecode(),
-            &(GateServiceInitData {
-                log_settings: Some(log.clone()),
-                owner: TestUser::GateServiceBackendAdmin.get_principal(),
-            }),
-        )
-        .await;
-
-        let token_storage_principal = if self.has_token_storage {
+        if self.has_token_storage {
             deploy_canister(
                 &client,
+                token_storage_principal,
                 None,
                 get_token_storage_canister_bytecode(),
                 &(TokenStorageInitData {
@@ -227,13 +237,14 @@ impl PocketIcTestContextBuilder {
             Principal::anonymous()
         };
 
-        let cashier_backend_principal = if self.has_cashier_backend {
+        if self.has_cashier_backend {
             deploy_canister(
                 &client,
+                cashier_backend_principal,
                 None,
                 get_cashier_backend_canister_bytecode(),
                 &(CashierBackendInitData {
-                    log_settings: Some(log),
+                    log_settings: Some(log.clone()),
                     owner: TestUser::CashierBackendAdmin.get_principal(),
                     gate_service_canister_id: gate_service_backend_principal,
                 }),
@@ -241,6 +252,24 @@ impl PocketIcTestContextBuilder {
             .await
         } else {
             Principal::anonymous()
+        };
+
+        if self.has_gate_service {
+            let _ = deploy_canister(
+                &client,
+                gate_service_backend_principal,
+                None,
+                get_gate_service_backend_canister_bytecode(),
+                &(GateServiceInitData {
+                    log_settings: Some(log),
+                    owner: TestUser::GateServiceBackendAdmin.get_principal(),
+                    permissions: Some(HashMap::from([(
+                        cashier_backend_principal,
+                        vec![gate_service_types::auth::Permission::GateCreator],
+                    )])),
+                }),
+            )
+            .await;
         };
 
         let icp_ledger_principal = if self.has_icp_ledger {
@@ -493,19 +522,35 @@ impl PocketIcTestContext {
 /// The encoded `args` are passed to the canister's `install` method.
 ///
 /// Returns the principal of the newly created canister.
+async fn create_canister(client: &PocketIc, sender: Option<Principal>) -> Principal {
+    let canister = client.create_canister_with_settings(sender, None).await;
+    client.add_cycles(canister, u128::MAX).await;
+    canister
+}
+
+/// Deploys a canister with the given `bytecode` and `args`.
+///
+/// The `sender` is the principal of the caller of this function. If `sender` is `None`, the caller
+/// is the default anonymous principal.
+///
+/// Before installing the canister, this function adds the maximum amount of cycles
+/// to the canister.
+///
+/// The encoded `args` are passed to the canister's `install` method.
+///
+/// Returns the principal of the newly created canister.
 async fn deploy_canister<T: CandidType>(
     client: &PocketIc,
+    canister_id: Principal,
     sender: Option<Principal>,
     bytecode: Vec<u8>,
     args: &T,
 ) -> Principal {
     let args = encode(args);
-    let canister = client.create_canister().await;
-    client.add_cycles(canister, u128::MAX).await;
     client
-        .install_canister(canister, bytecode, args, sender)
+        .install_canister(canister_id, bytecode, args, sender)
         .await;
-    canister
+    canister_id
 }
 
 async fn deploy_canister_with_settings<T: CandidType>(
@@ -554,7 +599,7 @@ async fn deploy_canister_with_id<T: CandidType>(
 ///
 /// The encoded `args` are passed to the canister's `install` method.
 ///
-/// Returns the principal of the newly created canister.
+/// Returns the principal of upgraded canister.
 pub async fn upgrade_canister<T: CandidType>(
     client: &PocketIc,
     sender: Option<Principal>,
