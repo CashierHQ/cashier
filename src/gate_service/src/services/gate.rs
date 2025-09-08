@@ -1,12 +1,12 @@
 use crate::{
     gates::{GateFactory, GateVerifier},
-    repositories::{gate::GateRepository, Repositories},
+    repositories::{Repositories, gate::GateRepository},
     utils::{gate::redact_password_gate, hashing::hash_password},
 };
 use candid::Principal;
 use gate_service_types::{
-    error::GateServiceError, Gate, GateForUser, GateKey, GateUserStatus, NewGate,
-    OpenGateSuccessResult, VerificationResult,
+    Gate, GateForUser, GateKey, GateUserStatus, NewGate, OpenGateSuccessResult, VerificationResult,
+    error::GateServiceError,
 };
 use std::rc::Rc;
 

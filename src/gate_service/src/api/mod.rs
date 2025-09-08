@@ -5,8 +5,8 @@ mod state;
 
 use candid::Principal;
 use gate_service_types::{
-    auth::Permission, error::GateServiceError, init::GateServiceInitData, Gate, GateForUser,
-    GateKey, NewGate, OpenGateSuccessResult,
+    Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult, auth::Permission,
+    error::GateServiceError, init::GateServiceInitData,
 };
 
 // Enable Candid export

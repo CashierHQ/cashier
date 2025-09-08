@@ -2,8 +2,8 @@ use crate::api::state::get_state;
 use candid::Principal;
 use cashier_common::guard::is_not_anonymous;
 use gate_service_types::{
-    auth::Permission, error::GateServiceError, Gate, GateForUser, GateKey, NewGate,
-    OpenGateSuccessResult,
+    Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult, auth::Permission,
+    error::GateServiceError,
 };
 use ic_cdk::{api::msg_caller, query, update};
 

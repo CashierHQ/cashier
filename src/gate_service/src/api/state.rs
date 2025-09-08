@@ -1,5 +1,5 @@
 use crate::{
-    repositories::{ThreadlocalRepositories, AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE},
+    repositories::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
     services::{
         auth::{AuthService, AuthServiceStorage},
         gate::GateService,
