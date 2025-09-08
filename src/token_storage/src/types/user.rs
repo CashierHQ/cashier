@@ -4,9 +4,7 @@
 use candid::CandidType;
 use cashier_macros::storable;
 use std::collections::HashSet;
-use token_storage_types::TokenId;
-
-use super::token::RegistryToken;
+use token_storage_types::{TokenId, token::RegistryToken};
 
 #[storable]
 #[derive(CandidType, Clone, Eq, PartialEq, Debug)]
