@@ -143,10 +143,10 @@ where
         get_gate_service_canister_bytecode(),
         &(GateServiceInitData {
             log_settings: Some(log),
-            owner: TestUser::GateServiceBackendAdmin.get_principal(),
+            owner: TestUser::GateServiceAdmin.get_principal(),
             permissions: Some(HashMap::from([(
                 cashier_backend_principal,
-                vec![gate_service_types::auth::Permission::GateCreator],
+                vec![gate_service_types::auth::Permission::GateCreate],
             )])),
         }),
     )
@@ -364,7 +364,7 @@ impl PocketIcTestContextBuilder {
                 None,
                 get_cashier_backend_canister_bytecode(),
                 &(CashierBackendInitData {
-                    log_settings: Some(log),
+                    log_settings: Some(log.clone()),
                     owner: TestUser::CashierBackendAdmin.get_principal(),
                 }),
             )
@@ -373,7 +373,20 @@ impl PocketIcTestContextBuilder {
             Principal::anonymous()
         };
 
-        let gate_service_principal = Principal::anonymous();
+        let gate_service_principal = deploy_canister(
+            &client,
+            None,
+            get_gate_service_canister_bytecode(),
+            &(GateServiceInitData {
+                log_settings: Some(log),
+                owner: TestUser::GateServiceAdmin.get_principal(),
+                permissions: Some(HashMap::from([(
+                    cashier_backend_principal,
+                    vec![gate_service_types::auth::Permission::GateCreate],
+                )])),
+            }),
+        )
+        .await;
 
         let icp_ledger_principal = if self.has_icp_ledger {
             token_icp::deploy_icp_ledger_canister(&client).await

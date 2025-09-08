@@ -36,11 +36,11 @@ async fn it_should_error_add_gate_due_to_unauthorized() {
 async fn it_should_add_gate() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let admin = TestUser::GateServiceBackendAdmin.get_principal();
+        let admin = TestUser::GateServiceAdmin.get_principal();
         let user = TestUser::User1.get_principal();
         let admin_client = ctx.new_gate_service_client(admin);
         let _user_permissions_add = admin_client
-            .admin_permissions_add(user, vec![Permission::GateCreator])
+            .admin_permissions_add(user, vec![Permission::GateCreate])
             .await
             .unwrap()
             .unwrap();
@@ -67,7 +67,7 @@ async fn it_should_add_gate() {
 }
 
 #[tokio::test]
-async fn it_should_error_open_password_gate_dueto_invalid_key() {
+async fn it_should_error_open_password_gate_due_to_invalid_key() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let creator = random_principal_id();

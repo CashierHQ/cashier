@@ -8,6 +8,6 @@ use serde::Deserialize;
 pub enum Permission {
     /// Admin of the canister
     Admin,
-    /// Entity can create gates
-    GateCreator,
+    /// Allow to create a new gate
+    GateCreate,
 }

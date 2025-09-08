@@ -20,7 +20,7 @@ fn add_gate(new_gate: NewGate) -> Result<Gate, GateServiceError> {
     let caller = msg_caller();
     state
         .auth_service
-        .must_have_permission(&caller, Permission::GateCreator);
+        .must_have_permission(&caller, Permission::GateCreate);
 
     let mut gate_service = get_state().gate_service;
     let gate = gate_service.add_gate(new_gate)?;
@@ -69,7 +69,7 @@ fn get_gate_for_user(gate_id: String, user: Principal) -> Result<GateForUser, Ga
     let caller = msg_caller();
     match state
         .auth_service
-        .check_has_permission(&caller, Permission::GateCreator)
+        .check_has_permission(&caller, Permission::GateCreate)
     {
         Ok(()) => {}
         Err(_) => {
