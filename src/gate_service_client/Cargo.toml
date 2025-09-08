@@ -1,5 +1,5 @@
 [package]
-name = "gate_service_backend_client"
+name = "gate_service_client"
 edition.workspace = true
 license.workspace = true
 version.workspace = true

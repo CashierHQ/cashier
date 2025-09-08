@@ -17,14 +17,14 @@ pub async fn add_password_gate_fixture(
     password: &str,
 ) -> Gate {
     let admin = TestUser::GateServiceBackendAdmin.get_principal();
-    let admin_client = ctx.new_gate_service_backend_client(admin);
+    let admin_client = ctx.new_gate_service_client(admin);
     let _user_permissions_add = admin_client
         .admin_permissions_add(creator, vec![Permission::GateCreator])
         .await
         .unwrap()
         .unwrap();
 
-    let user_client = ctx.new_gate_service_backend_client(creator);
+    let user_client = ctx.new_gate_service_client(creator);
     let new_gate = NewGate {
         subject_id: subject_id.to_string(),
         gate_type: GateType::Password,
@@ -50,7 +50,7 @@ pub async fn add_and_open_password_gate_fixture(
     user: Principal,
 ) -> (Gate, GateUserStatus) {
     let gate = add_password_gate_fixture(ctx, creator, subject_id, password).await;
-    let user_client = ctx.new_gate_service_backend_client(user);
+    let user_client = ctx.new_gate_service_client(user);
     let open_gate_result = user_client
         .open_gate(gate.id.clone(), GateKey::Password(password.to_string()))
         .await

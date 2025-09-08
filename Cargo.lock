@@ -780,7 +780,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "gate_service_backend"
+name = "gate_service"
 version = "0.1.0"
 dependencies = [
  "argon2",
@@ -800,7 +800,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "gate_service_backend_client"
+name = "gate_service_client"
 version = "0.1.0"
 dependencies = [
  "candid",
@@ -1442,7 +1442,7 @@ dependencies = [
  "cashier_backend_client",
  "cashier_backend_types",
  "cashier_common",
- "gate_service_backend_client",
+ "gate_service_client",
  "gate_service_types",
  "ic-cdk",
  "ic-ledger-types",
