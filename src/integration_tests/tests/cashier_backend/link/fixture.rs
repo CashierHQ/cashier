@@ -8,8 +8,8 @@ use cashier_backend_types::{
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
         link::{
-            CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto, LinkStateMachineGoto,
-            UpdateLinkInput,
+            CreateLinkInput, GetLinkResp, LinkDetailUpdateAssetInfoInput, LinkDto,
+            LinkStateMachineGoto, UpdateLinkInput,
         },
     },
     repository::{
@@ -18,6 +18,7 @@ use cashier_backend_types::{
         link::v1::{LinkType, Template},
     },
 };
+use gate_service_types::{Gate, GateKey, GateType, NewGate, error::GateServiceError};
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
 use std::{sync::Arc, time::Duration};
@@ -42,6 +43,29 @@ impl LinkTestFixture {
             ctx,
             caller: *caller,
             cashier_backend_client,
+        }
+    }
+
+    // This method is temporary for creating gate service canister for link. For testing purpose only.
+    // TODO: remove this if gate service fully intergrated with create link flow
+    pub async fn create_gate_for_link(&self, new_gate: NewGate) -> Result<Gate, String> {
+        // using cashier backend identity to call add gate
+        let gate_service_client = self
+            .ctx
+            .new_gate_service_backend_client(self.ctx.cashier_backend_principal);
+
+        let res = gate_service_client
+            .add_gate(new_gate)
+            .await
+            .map_err(|e| format!("Failed to add gate: {:?}", e))?;
+
+        // Verify the gate was created successfully
+        match res {
+            Ok(gate) => {
+                println!("Gate created successfully: {:?}", gate);
+                Ok(gate)
+            }
+            Err(e) => Err(format!("Failed to create gate: {:?}", e)),
         }
     }
 
@@ -474,6 +498,16 @@ impl LinkTestFixture {
             })
             .collect()
     }
+
+    pub async fn get_link(&self, link_id: &str) -> GetLinkResp {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .get_link(link_id.to_string(), None)
+            .await
+            .unwrap()
+            .unwrap()
+    }
 }
 
 /// Creates a fixture for a tip link.
@@ -521,6 +555,65 @@ pub async fn create_tip_link_fixture(token: &str, amount: u64) -> (LinkTestFixtu
     let update_link = creator_fixture.update_link(update_link_input).await;
 
     (creator_fixture, update_link)
+}
+
+pub async fn create_tip_link_with_gate_fixture(
+    token: &str,
+    amount: u64,
+    gate_type: GateType,
+    key: GateKey,
+) -> (LinkTestFixture, LinkDto, Gate) {
+    let mut builder = PocketIcTestContextBuilder::new()
+        .with_cashier_backend()
+        .with_icp_ledger();
+
+    if token != constant::ICP_TOKEN {
+        builder = builder.with_icrc_tokens(vec![token.to_string()]);
+    }
+
+    let ctx = builder.build_async().await;
+    let caller = TestUser::User1.get_principal();
+    let mut creator_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
+
+    let initial_balance = 1_000_000_000u64;
+    //let tip_amount = 1_000_000u64;
+
+    creator_fixture.airdrop_icp(initial_balance, &caller).await;
+    if token != constant::ICP_TOKEN {
+        creator_fixture
+            .airdrop_icrc(token, initial_balance, &caller)
+            .await;
+    }
+
+    let link = creator_fixture.create_tip_link(token, amount).await;
+    let gate = creator_fixture
+        .create_gate_for_link(NewGate {
+            subject_id: link.id.clone(),
+            gate_type,
+            key,
+        })
+        .await
+        .unwrap();
+    let create_action = creator_fixture
+        .create_action(&link.id, ActionType::CreateLink)
+        .await;
+    let processing_action = creator_fixture
+        .process_action(&link.id, &create_action.id, ActionType::CreateLink)
+        .await;
+    let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
+    let _icrc112_execution_result =
+        icrc_112::execute_icrc112_request(icrc_112_requests, caller, &ctx).await;
+    let _update_action = creator_fixture
+        .update_action(&link.id, &processing_action.id)
+        .await;
+    let update_link_input = UpdateLinkInput {
+        id: link.id.clone(),
+        goto: LinkStateMachineGoto::Continue,
+        params: None,
+    };
+    let update_link = creator_fixture.update_link(update_link_input).await;
+
+    (creator_fixture, update_link, gate)
 }
 
 /// Creates a fixture for a token basket link.
