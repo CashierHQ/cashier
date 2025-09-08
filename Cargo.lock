@@ -273,6 +273,7 @@ dependencies = [
  "cashier_common",
  "ciborium",
  "futures",
+ "gate_service_backend_client",
  "getrandom 0.2.16",
  "ic-cdk",
  "ic-cdk-timers",
@@ -1181,9 +1182,9 @@ checksum = "8877193e1921b5fd16accb0305eb46016868cd1935b05c05eca0ec007b943272"
 
 [[package]]
 name = "ic_mple_auth"
-version = "0.11.3"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84a49355bcc993d262ee3a85d8a30e1de1954507f441d925f9999d8a966a4f11"
+checksum = "286edc611e3a3c093b0ae63a29b42d5af1fd87b0e3cb2fa6df58ed2c3e766de2"
 dependencies = [
  "candid",
  "ic-cdk",
@@ -1196,9 +1197,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_client"
-version = "0.11.3"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f9b21f791873d087e5ab6deb13204ffd2de960ee9af199e8da5dfd2980fdc07"
+checksum = "1e1db0f1d181743bf2df66fa8fc3b03a259e386fdd0107e7ff639bf83a99d048"
 dependencies = [
  "candid",
  "ic-cdk",
@@ -1209,9 +1210,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_log"
-version = "0.11.3"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ae0b119aaa7c7be6fe705708f5a346e3f9b9b9cdcc580e5d61f4bce77bddf36"
+checksum = "55eb77f98a9ded84c8bccfd019d257ddd7e7f97c39244d36c6a4dbc7c3f071ef"
 dependencies = [
  "arc-swap",
  "candid",
@@ -1227,9 +1228,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_pocket_ic"
-version = "0.11.3"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65cc0a2826ab9b0e20f5a736ea76c3fceebd9420101d6a8b4fba1ba793563c23"
+checksum = "368bf5188bfbbac67e96e6b9df255b98533efa8d8ff1dd28ac74a0941ffade4e"
 dependencies = [
  "flate2",
  "log",
@@ -1240,9 +1241,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_utils"
-version = "0.11.3"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "142ca0b232f5d4a79e9451b6f0fcb41c284e1b3971481f1aa83ac5264e67cb2a"
+checksum = "5eaefa4897ab08f2525ec58a8d6eb739627ed1ed7e9f0f56b50b99be4a284a3b"
 
 [[package]]
 name = "ic_principal"

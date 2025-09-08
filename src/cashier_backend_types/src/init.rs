@@ -9,4 +9,6 @@ pub struct CashierBackendInitData {
     pub log_settings: Option<LogServiceSettings>,
     /// Owner of the canister
     pub owner: Principal,
+    /// The canister id of the gate service canister
+    pub gate_service_canister_id: Principal,
 }

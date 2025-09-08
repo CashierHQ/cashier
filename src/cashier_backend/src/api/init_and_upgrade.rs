@@ -5,7 +5,7 @@ use cashier_backend_types::init::CashierBackendInitData;
 use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::info;
 
-use crate::api::state::get_state;
+use crate::api::state::{get_state, update_setting};
 use crate::services::auth::Permission;
 use crate::services::transaction_manager::traits::TimeoutHandler;
 use cashier_common::random::init_ic_rand;
@@ -18,8 +18,10 @@ fn init(init_data: CashierBackendInitData) {
     if let Err(err) = state.log_service.init(Some(log_config)) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
     }
-    info!("[init] Starting Cashier Backend");
 
+    update_setting(init_data.gate_service_canister_id);
+
+    info!("[init] Starting Cashier Backend");
     info!("Set {:?} as canister admin", init_data.owner);
     state
         .auth_service

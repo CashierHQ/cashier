@@ -8,9 +8,15 @@ use crate::{
         transaction_manager::{service::TransactionManagerService, validate::ValidateService},
     },
 };
+use candid::Principal;
 use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
+use gate_service_backend_client::{IcCanisterClient, client::GateServiceBackendClient};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 use std::{cell::RefCell, rc::Rc, thread::LocalKey};
+
+thread_local! {
+    static GATE_SERVICE_CANISTER_ID: RefCell<Principal> = RefCell::new(Principal::anonymous());
+}
 
 /// The state of the canister
 pub struct CanisterState<E: IcEnvironment + Clone> {
@@ -21,6 +27,7 @@ pub struct CanisterState<E: IcEnvironment + Clone> {
     pub request_lock_service: RequestLockService<ThreadlocalRepositories>,
     pub transaction_manager_service: TransactionManagerService<E, ThreadlocalRepositories>,
     pub validate_service: ValidateService<ThreadlocalRepositories>,
+    pub gate_service_client: GateServiceBackendClient<IcCanisterClient>,
     pub env: E,
 }
 
@@ -36,6 +43,10 @@ impl<E: IcEnvironment + Clone> CanisterState<E> {
             request_lock_service: RequestLockService::new(&repo),
             validate_service: ValidateService::new(&repo),
             transaction_manager_service: TransactionManagerService::new(repo, env.clone()),
+            gate_service_client: GateServiceBackendClient::new(IcCanisterClient::new(
+                GATE_SERVICE_CANISTER_ID.with(|id| *id.borrow()),
+                Some(5 * 60), // 5 minutes timeout
+            )),
             env,
         }
     }
@@ -45,4 +56,10 @@ impl<E: IcEnvironment + Clone> CanisterState<E> {
 #[inline(always)]
 pub fn get_state() -> CanisterState<RealIcEnvironment> {
     CanisterState::new(RealIcEnvironment::new())
+}
+
+pub fn update_setting(gate_service_canister_id: Principal) {
+    GATE_SERVICE_CANISTER_ID.with_borrow_mut(|store| {
+        *store = gate_service_canister_id;
+    });
 }

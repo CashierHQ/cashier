@@ -57,6 +57,17 @@ where
     )
     .await;
 
+    let gate_service_backend_principal = deploy_canister(
+        &client,
+        None,
+        get_gate_service_backend_canister_bytecode(),
+        &(GateServiceInitData {
+            log_settings: Some(log.clone()),
+            owner: TestUser::GateServiceBackendAdmin.get_principal(),
+        }),
+    )
+    .await;
+
     let cashier_backend_principal = deploy_canister(
         &client,
         None,
@@ -64,17 +75,7 @@ where
         &(CashierBackendInitData {
             log_settings: Some(log.clone()),
             owner: TestUser::CashierBackendAdmin.get_principal(),
-        }),
-    )
-    .await;
-
-    let gate_service_backend_principal = deploy_canister(
-        &client,
-        None,
-        get_gate_service_backend_canister_bytecode(),
-        &(GateServiceInitData {
-            log_settings: Some(log),
-            owner: TestUser::GateServiceBackendAdmin.get_principal(),
+            gate_service_canister_id: gate_service_backend_principal,
         }),
     )
     .await;
@@ -199,6 +200,7 @@ impl PocketIcTestContextBuilder {
         };
 
         let mut icrc_token_map = HashMap::new();
+        let gate_service_backend_principal = Principal::anonymous();
 
         let token_storage_principal = if self.has_token_storage {
             deploy_canister(
@@ -223,14 +225,13 @@ impl PocketIcTestContextBuilder {
                 &(CashierBackendInitData {
                     log_settings: Some(log),
                     owner: TestUser::CashierBackendAdmin.get_principal(),
+                    gate_service_canister_id: gate_service_backend_principal,
                 }),
             )
             .await
         } else {
             Principal::anonymous()
         };
-
-        let gate_service_backend_principal = Principal::anonymous();
 
         let icp_ledger_principal = if self.has_icp_ledger {
             token_icp::deploy_icp_ledger_canister(&client).await
