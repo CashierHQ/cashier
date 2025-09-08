@@ -1,7 +1,5 @@
 use crate::{
-    gate_service::fixtures::{
-        add_and_open_password_gate_fixture, add_password_gate_fixture,
-    },
+    gate_service::fixtures::{add_and_open_password_gate_fixture, add_password_gate_fixture},
     utils::{principal::TestUser, with_pocket_ic_context},
 };
 use cashier_common::test_utils::{random_id_string, random_principal_id};

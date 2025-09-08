@@ -1,6 +1,6 @@
 pub mod password;
 
-use gate_service_types::{error::GateServiceError, GateKey, GateType, VerificationResult};
+use gate_service_types::{GateKey, GateType, VerificationResult, error::GateServiceError};
 use password::PasswordGateVerifier;
 use std::{fmt::Debug, future::Future, pin::Pin};
 

@@ -5,8 +5,8 @@ use crate::{
     services::auth::AuthServiceStorage,
 };
 use ic_mple_log::{
-    service::{LoggerServiceStorage, Storage},
     LogSettings,
+    service::{LoggerServiceStorage, Storage},
 };
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};

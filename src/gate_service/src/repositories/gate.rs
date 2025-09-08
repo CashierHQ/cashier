@@ -19,11 +19,8 @@ pub struct GateRepository<
     gate_user_map: U,
 }
 
-impl<
-        G: Storage<GateStorage>,
-        S: Storage<SubjectGateStorage>,
-        U: Storage<GateUserStatusStorage>,
-    > GateRepository<G, S, U>
+impl<G: Storage<GateStorage>, S: Storage<SubjectGateStorage>, U: Storage<GateUserStatusStorage>>
+    GateRepository<G, S, U>
 {
     pub fn new(gate_map: G, subject_gate_map: S, gate_user_map: U) -> Self {
         Self {
@@ -132,7 +129,7 @@ impl<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repositories::{tests::TestRepositories, Repositories};
+    use crate::repositories::{Repositories, tests::TestRepositories};
     use cashier_common::test_utils::{random_id_string, random_principal_id};
     use gate_service_types::{GateKey, GateType};
 
