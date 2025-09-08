@@ -6,7 +6,7 @@ use candid::{CandidType, Decode, Encode, Principal, utils::ArgumentEncoder};
 use cashier_backend_client::client::CashierBackendClient;
 use cashier_backend_types::{constant, init::CashierBackendInitData};
 use gate_service_backend_client::client::GateServiceBackendClient;
-use gate_service_types::init::GateServiceInitData;
+use gate_service_types::{self, init::GateServiceInitData};
 use ic_cdk::management_canister::{CanisterId, CanisterSettings};
 use ic_mple_client::PocketIcClient;
 use ic_mple_log::service::LogServiceSettings;
@@ -68,6 +68,7 @@ where
     )
     .await;
 
+    // Deploy gate_service_backend and set GateCreator permissions for cashier_backend
     let gate_service_backend_principal = deploy_canister(
         &client,
         None,
@@ -75,6 +76,10 @@ where
         &(GateServiceInitData {
             log_settings: Some(log),
             owner: TestUser::GateServiceBackendAdmin.get_principal(),
+            permissions: Some(HashMap::from([(
+                cashier_backend_principal,
+                vec![gate_service_types::auth::Permission::GateCreator],
+            )])),
         }),
     )
     .await;
