@@ -68,3 +68,29 @@ pub fn admin_permissions_remove(
         .map(|p| p.permissions.into_iter().collect())
         .map_err(|e| CanisterError::AuthError(format!("{e:?}")))
 }
+
+    /// Disable/enable the inspect message.
+    ///
+    /// If `inspect_message` is disabled, `send_raw_transaction` method will not attempt to early
+    /// reject the incomming update calls and will proceed to the canister consensus round. Invalid
+    /// transactions will still be rejected, but returned result will have expected `did` type
+    /// instead of IC rejection message. This makes it easy to work with the canister API but
+    /// increases overhead in case of many invalid transactions.
+    #[update]
+    pub fn admin_inspect_message_enable(value: bool) -> Result<(), CanisterError> {
+        let mut state = get_state();
+        let caller = msg_caller();
+        state
+            .auth_service
+            .must_have_permission(&caller, Permission::Admin);
+
+        
+        EVM_STATE.with(|evm_state| {
+            evm_state.permissions.borrow().check_admin(&ic::caller())?;
+            evm_state
+                .evm_state
+                .borrow_mut()
+                .disable_inspect_message(value);
+            Ok(())
+        })
+    }
