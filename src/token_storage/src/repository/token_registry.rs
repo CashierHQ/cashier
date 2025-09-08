@@ -5,12 +5,9 @@ use std::{cell::RefCell, thread::LocalKey};
 
 use ic_mple_utils::store::Storage;
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
-use token_storage_types::TokenId;
+use token_storage_types::{TokenId, token::RegistryToken};
 
-use crate::{
-    repository::token_registry_metadata::TokenRegistryMetadataRepositoryStorage,
-    types::RegistryToken,
-};
+use crate::repository::token_registry_metadata::TokenRegistryMetadataRepositoryStorage;
 
 use super::token_registry_metadata::TokenRegistryMetadataRepository;
 

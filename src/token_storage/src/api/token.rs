@@ -153,6 +153,7 @@ pub fn update_token_enable(input: UpdateTokenInput) -> Result<(), String> {
     Ok(())
 }
 
+/// Lists the tokens in the registry for the caller
 #[query]
 pub fn list_tokens() -> Result<TokenListResponse, String> {
     debug!("[list_tokens]");

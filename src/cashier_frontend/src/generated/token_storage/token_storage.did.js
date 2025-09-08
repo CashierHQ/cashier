@@ -1,4 +1,18 @@
 export const idlFactory = ({ IDL }) => {
+  const ChainTokenDetails = IDL.Variant({
+    'IC' : IDL.Record({
+      'fee' : IDL.Nat,
+      'ledger_id' : IDL.Principal,
+      'index_id' : IDL.Opt(IDL.Principal),
+    }),
+  });
+  const RegistryToken = IDL.Record({
+    'decimals' : IDL.Nat8,
+    'name' : IDL.Text,
+    'enabled_by_default' : IDL.Bool,
+    'details' : ChainTokenDetails,
+    'symbol' : IDL.Text,
+  });
   const LogServiceSettings = IDL.Record({
     'log_filter' : IDL.Opt(IDL.Text),
     'in_memory_records' : IDL.Opt(IDL.Nat64),
@@ -7,6 +21,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const TokenStorageInitData = IDL.Record({
     'owner' : IDL.Principal,
+    'tokens' : IDL.Opt(IDL.Vec(RegistryToken)),
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
   const TokenId = IDL.Variant({
@@ -23,13 +38,6 @@ export const idlFactory = ({ IDL }) => {
     'version' : IDL.Nat64,
   });
   const Chain = IDL.Variant({ 'IC' : IDL.Null });
-  const ChainTokenDetails = IDL.Variant({
-    'IC' : IDL.Record({
-      'fee' : IDL.Nat,
-      'ledger_id' : IDL.Principal,
-      'index_id' : IDL.Opt(IDL.Principal),
-    }),
-  });
   const TokenDto = IDL.Record({
     'id' : TokenId,
     'decimals' : IDL.Nat8,
@@ -144,6 +152,20 @@ export const idlFactory = ({ IDL }) => {
   });
 };
 export const init = ({ IDL }) => {
+  const ChainTokenDetails = IDL.Variant({
+    'IC' : IDL.Record({
+      'fee' : IDL.Nat,
+      'ledger_id' : IDL.Principal,
+      'index_id' : IDL.Opt(IDL.Principal),
+    }),
+  });
+  const RegistryToken = IDL.Record({
+    'decimals' : IDL.Nat8,
+    'name' : IDL.Text,
+    'enabled_by_default' : IDL.Bool,
+    'details' : ChainTokenDetails,
+    'symbol' : IDL.Text,
+  });
   const LogServiceSettings = IDL.Record({
     'log_filter' : IDL.Opt(IDL.Text),
     'in_memory_records' : IDL.Opt(IDL.Nat64),
@@ -152,6 +174,7 @@ export const init = ({ IDL }) => {
   });
   const TokenStorageInitData = IDL.Record({
     'owner' : IDL.Principal,
+    'tokens' : IDL.Opt(IDL.Vec(RegistryToken)),
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
   return [TokenStorageInitData];
