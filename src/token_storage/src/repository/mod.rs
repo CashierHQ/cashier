@@ -17,6 +17,7 @@ use ic_mple_utils::store::Storage;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 use token_storage_types::TokenId;
+use token_storage_types::token::RegistryToken;
 use token_storage_types::user::UserPreference;
 
 use crate::repository::balance_cache::{
@@ -38,7 +39,7 @@ use crate::repository::user_token::{
     ThreadlocalUserTokenRepositoryStorage, UserTokenRepository, UserTokenRepositoryStorage,
 };
 use crate::services::auth::AuthServiceStorage;
-use crate::types::{Candid, RegistryToken, TokenBalance, TokenRegistryMetadata, UserTokenList};
+use crate::types::{Candid, TokenBalance, TokenRegistryMetadata, UserTokenList};
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
