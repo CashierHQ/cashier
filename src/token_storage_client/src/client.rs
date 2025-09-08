@@ -1,7 +1,7 @@
 use candid::Principal;
 use cashier_common::build_data::BuildData;
 use ic_mple_client::{CanisterClient, CanisterClientResult};
-use token_storage_types::{auth::Permission, error::TokenStorageError};
+use token_storage_types::{auth::Permission, error::TokenStorageError, token::TokenListResponse};
 
 /// A TokenStorage canister client.
 #[derive(Debug, Clone)]
@@ -57,5 +57,10 @@ impl<C: CanisterClient> TokenStorageClient<C> {
     /// Returns the build data of the canister.
     pub async fn get_canister_build_data(&self) -> CanisterClientResult<BuildData> {
         self.client.query("get_canister_build_data", ()).await
+    }
+
+    /// Lists the tokens in the registry for the caller
+    pub async fn list_tokens(&self) -> CanisterClientResult<Result<TokenListResponse, String>> {
+        self.client.query("list_tokens", ()).await
     }
 }
