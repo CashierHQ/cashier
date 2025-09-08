@@ -1,5 +1,5 @@
 use crate::{
-    gate_service_backend::fixtures::{
+    gate_service::fixtures::{
         add_and_open_password_gate_fixture, add_password_gate_fixture,
     },
     utils::{principal::TestUser, with_pocket_ic_context},
@@ -15,7 +15,7 @@ async fn it_should_error_add_gate_due_to_unauthorized() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let user = TestUser::User1.get_principal();
-        let user_client = ctx.new_gate_service_backend_client(user);
+        let user_client = ctx.new_gate_service_client(user);
         let new_gate = NewGate {
             subject_id: "subject1".to_string(),
             gate_type: GateType::Password,
@@ -40,14 +40,14 @@ async fn it_should_add_gate() {
         // Arrange
         let admin = TestUser::GateServiceBackendAdmin.get_principal();
         let user = TestUser::User1.get_principal();
-        let admin_client = ctx.new_gate_service_backend_client(admin);
+        let admin_client = ctx.new_gate_service_client(admin);
         let _user_permissions_add = admin_client
             .admin_permissions_add(user, vec![Permission::GateCreator])
             .await
             .unwrap()
             .unwrap();
 
-        let user_client = ctx.new_gate_service_backend_client(user);
+        let user_client = ctx.new_gate_service_client(user);
         let new_gate = NewGate {
             subject_id: "subject1".to_string(),
             gate_type: GateType::Password,
@@ -77,7 +77,7 @@ async fn it_should_error_open_password_gate_dueto_invalid_key() {
         let password = random_id_string();
         let gate = add_password_gate_fixture(ctx, creator, &subject_id, &password).await;
         let user = TestUser::User1.get_principal();
-        let user_client = ctx.new_gate_service_backend_client(user);
+        let user_client = ctx.new_gate_service_client(user);
 
         // Act
         let result = user_client
@@ -110,7 +110,7 @@ async fn it_should_open_password_gate() {
         let password = random_id_string();
         let gate = add_password_gate_fixture(ctx, creator, &subject_id, &password).await;
         let user = TestUser::User1.get_principal();
-        let user_client = ctx.new_gate_service_backend_client(user);
+        let user_client = ctx.new_gate_service_client(user);
 
         // Act
         let result = user_client
@@ -142,7 +142,7 @@ async fn it_should_get_gate_by_subject() {
 
         // Act
         let result = ctx
-            .new_gate_service_backend_client(TestUser::User1.get_principal())
+            .new_gate_service_client(TestUser::User1.get_principal())
             .get_gate_by_subject(gate.subject_id.clone())
             .await
             .unwrap()
@@ -172,7 +172,7 @@ async fn it_should_get_gate_by_id() {
 
         // Act
         let result = ctx
-            .new_gate_service_backend_client(TestUser::User1.get_principal())
+            .new_gate_service_client(TestUser::User1.get_principal())
             .get_gate(gate.id.clone())
             .await
             .unwrap()
@@ -200,7 +200,7 @@ async fn it_should_error_get_gate_for_user_due_to_unauthorized_caller() {
         let gate = add_password_gate_fixture(ctx, creator, &subject_id, &password).await;
         let user = TestUser::User1.get_principal();
         let caller = random_principal_id();
-        let caller_client = ctx.new_gate_service_backend_client(caller);
+        let caller_client = ctx.new_gate_service_client(caller);
 
         // Act
         let result = caller_client
@@ -233,7 +233,7 @@ async fn it_should_get_gate_for_user_for_authorized_user() {
         let password = random_id_string();
         let gate = add_password_gate_fixture(ctx, creator, &subject_id, &password).await;
         let user = TestUser::User1.get_principal();
-        let user_client = ctx.new_gate_service_backend_client(user);
+        let user_client = ctx.new_gate_service_client(user);
 
         // Act
         let result = user_client
@@ -262,7 +262,7 @@ async fn it_should_get_gate_for_user_for_authorized_gate_creator() {
         let password = random_id_string();
         let gate = add_password_gate_fixture(ctx, creator, &subject_id, &password).await;
         let user = TestUser::User1.get_principal();
-        let caller_client = ctx.new_gate_service_backend_client(creator);
+        let caller_client = ctx.new_gate_service_client(creator);
 
         // Act
         let result = caller_client
@@ -295,7 +295,7 @@ async fn it_should_get_gate_for_user_with_open_status_after_opening() {
 
         // Act
         let result = ctx
-            .new_gate_service_backend_client(user)
+            .new_gate_service_client(user)
             .get_gate_for_user(gate.id.clone(), user)
             .await
             .unwrap()

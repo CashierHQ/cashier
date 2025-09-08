@@ -5,7 +5,7 @@ use crate::{
 use candid::{CandidType, Decode, Encode, Principal, utils::ArgumentEncoder};
 use cashier_backend_client::client::CashierBackendClient;
 use cashier_backend_types::{constant, init::CashierBackendInitData};
-use gate_service_backend_client::client::GateServiceBackendClient;
+use gate_service_client::client::GateServiceBackendClient;
 use gate_service_types::{self, init::GateServiceInitData};
 use ic_cdk::management_canister::{CanisterId, CanisterSettings};
 use ic_mple_client::PocketIcClient;
@@ -68,11 +68,11 @@ where
     )
     .await;
 
-    // Deploy gate_service_backend and set GateCreator permissions for cashier_backend
-    let gate_service_backend_principal = deploy_canister(
+    // Deploy gate_service and set GateCreator permissions for cashier_backend
+    let gate_service_principal = deploy_canister(
         &client,
         None,
-        get_gate_service_backend_canister_bytecode(),
+        get_gate_service_canister_bytecode(),
         &(GateServiceInitData {
             log_settings: Some(log),
             owner: TestUser::GateServiceBackendAdmin.get_principal(),
@@ -138,7 +138,7 @@ where
         client: client.clone(),
         token_storage_principal,
         cashier_backend_principal,
-        gate_service_backend_principal,
+        gate_service_principal,
         icp_ledger_principal,
         icrc_token_map,
     })
@@ -235,7 +235,7 @@ impl PocketIcTestContextBuilder {
             Principal::anonymous()
         };
 
-        let gate_service_backend_principal = Principal::anonymous();
+        let gate_service_principal = Principal::anonymous();
 
         let icp_ledger_principal = if self.has_icp_ledger {
             token_icp::deploy_icp_ledger_canister(&client).await
@@ -301,7 +301,7 @@ impl PocketIcTestContextBuilder {
             client,
             token_storage_principal,
             cashier_backend_principal,
-            gate_service_backend_principal,
+            gate_service_principal,
             icp_ledger_principal,
             icrc_token_map,
         }
@@ -314,7 +314,7 @@ pub struct PocketIcTestContext {
     pub client: Arc<PocketIc>,
     pub token_storage_principal: Principal,
     pub cashier_backend_principal: Principal,
-    pub gate_service_backend_principal: Principal,
+    pub gate_service_principal: Principal,
     pub icp_ledger_principal: Principal,
     pub icrc_token_map: HashMap<String, Principal>,
 }
@@ -336,12 +336,12 @@ impl PocketIcTestContext {
     }
 
     /// Creates a new `GateServiceBackendClient` from the `PocketIc` client of this context,
-    /// bound to the `gate_service_backend_principal` and the given `caller`.
-    pub fn new_gate_service_backend_client(
+    /// bound to the `gate_service_principal` and the given `caller`.
+    pub fn new_gate_service_client(
         &self,
         caller: Principal,
     ) -> GateServiceBackendClient<PocketIcClient> {
-        GateServiceBackendClient::new(self.new_client(self.gate_service_backend_principal, caller))
+        GateServiceBackendClient::new(self.new_client(self.gate_service_principal, caller))
     }
 
     /// Creates a new `TokenStorageClient` from the `PocketIc` client of this context,
@@ -569,11 +569,11 @@ pub fn get_cashier_backend_canister_bytecode() -> Vec<u8> {
 /// This function uses a `OnceLock` to ensure that the bytecode is loaded only once.
 /// The bytecode is loaded from the "token_storage.wasm" file located in the target artifacts directory.
 ///
-/// Returns a `Vec<u8>` containing the bytecode of the gate_service_backend canister.
-pub fn get_gate_service_backend_canister_bytecode() -> Vec<u8> {
+/// Returns a `Vec<u8>` containing the bytecode of the gate_service canister.
+pub fn get_gate_service_canister_bytecode() -> Vec<u8> {
     static CANISTER_BYTECODE: OnceLock<Vec<u8>> = OnceLock::new();
     CANISTER_BYTECODE
-        .get_or_init(|| load_canister_bytecode("gate_service_backend.wasm"))
+        .get_or_init(|| load_canister_bytecode("gate_service.wasm"))
         .to_owned()
 }
 

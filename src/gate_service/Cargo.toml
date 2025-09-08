@@ -1,15 +1,13 @@
 [package]
-name = "gate_service_backend"
-version = "0.1.0"
-edition = "2021"
+name = "gate_service"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
 crate-type = ["cdylib", "rlib"]
-
-[dev-dependencies]
-tokio = { workspace = true }
 
 [dependencies]
 argon2 = { workspace = true }
@@ -25,3 +23,6 @@ ic_mple_auth = { workspace = true }
 ic-stable-structures = { workspace = true }
 rand = { workspace = true, features = ["getrandom"] }
 uuid = { workspace = true, features = ["v4"] }
+
+[dev-dependencies]
+tokio = { workspace = true }
