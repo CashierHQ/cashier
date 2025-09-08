@@ -8,6 +8,7 @@ pub mod admin;
 pub mod guard;
 pub mod icrc;
 pub mod init_and_upgrade;
+mod inspect_message;
 pub mod link;
 mod state;
 
