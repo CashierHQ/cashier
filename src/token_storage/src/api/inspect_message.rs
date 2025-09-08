@@ -9,10 +9,10 @@ fn inspect_messages() {
 
     let state = get_state();
 
-    // if state.is_inspect_message_disabled() {
-    //     api::accept_message();
-    //     return;
-    // }
+    if !state.settings.is_inspect_message_enabled() {
+        api::accept_message();
+        return;
+    }
 
     let method = api::msg_method_name();
     let caller = api::msg_caller();

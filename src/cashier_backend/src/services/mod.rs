@@ -7,5 +7,6 @@ pub mod auth;
 pub mod ext;
 pub mod link;
 pub mod request_lock;
+pub mod settings;
 pub mod transaction;
 pub mod transaction_manager;
