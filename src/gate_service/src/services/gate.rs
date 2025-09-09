@@ -89,9 +89,7 @@ impl<R: Repositories> GateService<R> {
             .get_gate(gate_id)
             .ok_or(GateServiceError::NotFound)?;
 
-        let gate = self
-            .gate_factory
-            .create_gate(gate_info.gate_type.clone(), gate_info.key.clone())?;
+        let gate = self.gate_factory.get_gate_verifier(gate_info.key.clone())?;
 
         Ok(gate)
     }
@@ -362,7 +360,7 @@ mod tests {
 
         // Assert
         assert!(result.is_err());
-        if let Err(GateServiceError::UnsupportedGateType(e)) = result {
+        if let Err(GateServiceError::UnsupportedGateKey(e)) = result {
             assert!(e.contains("XFollowing"));
         } else {
             panic!("Expected error but got success");

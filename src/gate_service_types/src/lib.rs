@@ -96,8 +96,6 @@ pub enum GateType {
     XFollowing,
     TelegramGroup,
     DiscordServer,
-    Nft,
-    Composite,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Clone)]
@@ -108,26 +106,6 @@ pub enum GateKey {
     XFollowing(String),
     TelegramGroup(String),
     DiscordServer(String),
-    Nft(NftKey),
-    Composite(CompositeKey),
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Clone)]
-/// The data structure for an NFT key
-/// Fields:
-/// * `collection_id`: The ID of the NFT collection.
-/// * `token_id`: The ID of the specific NFT token.
-pub struct NftKey {
-    pub collection_id: String,
-    pub token_id: String,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Clone)]
-/// The data structure for a composite key (TBD)
-/// Fields:
-/// * `version`: The version of the composite key.
-pub struct CompositeKey {
-    pub version: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Clone)]
