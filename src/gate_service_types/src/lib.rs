@@ -21,8 +21,23 @@ pub struct Gate {
     pub key: GateKey,
 }
 
+#[derive(CandidType, Debug, Clone)]
+#[storable]
+/// The data structure for a Gate
+/// Fields:
+/// * `id`: The unique identifier for the gate.
+/// * `subject_id`: The ID of the object being gated (Links, Campaigns, MysteryBoxes, etc)
+/// * `key`: The key of the gate.
+pub struct GateV2 {
+    pub id: String,
+    pub creator: Principal,
+    pub subject_id: String,
+    pub key: GateKey,
+}
+
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 /// The data structure for creating a new Gate
+/// DEPRECATED: Use NewGateV2 instead.
 /// Fields:
 /// * `subject_id`: The ID of the object being gated (Links, Campaigns, MysteryBoxes, etc)
 /// * `gate_type`: The type of the gate.
@@ -34,17 +49,13 @@ pub struct NewGate {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-/// The data structure for updating an existing Gate
+/// The v2 of data structure for creating a new Gate
 /// Fields:
-/// * `id`: The unique identifier for the gate.
 /// * `subject_id`: The ID of the object being gated (Links, Campaigns, MysteryBoxes, etc)
-/// * `gate_type`: The type of the gate.
-/// * `key`: The key associated with the gate.
-pub struct UpdateGate {
-    pub id: String,
-    pub subject_id: Option<String>,
-    pub gate_type: Option<GateType>,
-    pub key: Option<GateKey>,
+/// * `key`: The key of the gate.
+pub struct NewGateV2 {
+    pub subject_id: String,
+    pub key: GateKey,
 }
 
 #[derive(CandidType, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -90,7 +101,7 @@ pub enum GateStatus {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Clone)]
-/// The gate type enum
+/// DEPRECATED: The gate type enum
 pub enum GateType {
     Password,
     XFollowing,
