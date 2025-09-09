@@ -55,7 +55,10 @@ impl<C: CanisterClient> TokenStorageClient<C> {
     }
 
     /// Enables/disables the inspect message.
-    pub async fn admin_inspect_message_enable(&self, inspect_message_enabled: bool) -> CanisterClientResult<Result<(), TokenStorageError>> {
+    pub async fn admin_inspect_message_enable(
+        &self,
+        inspect_message_enabled: bool,
+    ) -> CanisterClientResult<Result<(), TokenStorageError>> {
         self.client
             .update("admin_inspect_message_enable", (inspect_message_enabled,))
             .await

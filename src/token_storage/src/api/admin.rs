@@ -269,22 +269,26 @@ pub fn admin_get_user_balance(
     Ok(balances)
 }
 
-    /// Enables/disables the inspect message.
-    #[update]
-    pub fn admin_inspect_message_enable(inspect_message_enabled: bool) -> Result<(), TokenStorageError> {
-        let mut state = get_state();
-        let caller = msg_caller();
-        state
-            .auth_service
-            .must_have_permission(&caller, Permission::Admin);
+/// Enables/disables the inspect message.
+#[update]
+pub fn admin_inspect_message_enable(
+    inspect_message_enabled: bool,
+) -> Result<(), TokenStorageError> {
+    let mut state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
 
-        state.settings.set_inspect_message_enabled(inspect_message_enabled);
-        Ok(())
-    }
+    state
+        .settings
+        .set_inspect_message_enabled(inspect_message_enabled);
+    Ok(())
+}
 
-    /// Returns the inspect message status.
-    #[query]
-    pub fn is_inspect_message_enabled() -> bool {
-        let state = get_state();
-        state.settings.is_inspect_message_enabled()
-    }
+/// Returns the inspect message status.
+#[query]
+pub fn is_inspect_message_enabled() -> bool {
+    let state = get_state();
+    state.settings.is_inspect_message_enabled()
+}
