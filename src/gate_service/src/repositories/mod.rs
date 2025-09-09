@@ -1,7 +1,7 @@
 pub mod gate;
 
 use crate::{
-    repositories::gate::{GateRepository, GateStorage, GateUserStatusStorage, SubjectGateStorage},
+    repositories::gate::{GateRepository, GateStorage, GateUserStatusStorage},
     services::auth::AuthServiceStorage,
 };
 use ic_mple_log::{
@@ -16,10 +16,9 @@ use std::thread::LocalKey;
 /// A trait for accessing repositories
 pub trait Repositories {
     type Gate: Storage<GateStorage>;
-    type SubjectGate: Storage<SubjectGateStorage>;
     type GateUserStatus: Storage<GateUserStatusStorage>;
 
-    fn gate(&self) -> GateRepository<Self::Gate, Self::SubjectGate, Self::GateUserStatus>;
+    fn gate(&self) -> GateRepository<Self::Gate, Self::GateUserStatus>;
 }
 
 /// A factory for creating repositories backed by thread-local storage
@@ -27,23 +26,17 @@ pub struct ThreadlocalRepositories;
 
 impl Repositories for ThreadlocalRepositories {
     type Gate = &'static LocalKey<RefCell<GateStorage>>;
-    type SubjectGate = &'static LocalKey<RefCell<SubjectGateStorage>>;
     type GateUserStatus = &'static LocalKey<RefCell<GateUserStatusStorage>>;
 
-    fn gate(&self) -> GateRepository<Self::Gate, Self::SubjectGate, Self::GateUserStatus> {
-        GateRepository::new(
-            &GATE_STORAGE,
-            &SUBJECT_GATE_STORAGE,
-            &GATE_USER_STATUS_STORAGE,
-        )
+    fn gate(&self) -> GateRepository<Self::Gate, Self::GateUserStatus> {
+        GateRepository::new(&GATE_STORAGE, &GATE_USER_STATUS_STORAGE)
     }
 }
 
 const GATE_MEMORY_ID: MemoryId = MemoryId::new(0);
-const SUBJECT_GATE_MEMORY_ID: MemoryId = MemoryId::new(1);
-const GATE_USER_STATUS_MEMORY_ID: MemoryId = MemoryId::new(2);
-const AUTH_SERVICE_MEMORY_ID: MemoryId = MemoryId::new(3);
-const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(4);
+const GATE_USER_STATUS_MEMORY_ID: MemoryId = MemoryId::new(1);
+const AUTH_SERVICE_MEMORY_ID: MemoryId = MemoryId::new(2);
+const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(3);
 
 thread_local! {
     // The memory manager is used for simulating multiple memories. Given a `MemoryId` it can
@@ -73,10 +66,6 @@ thread_local! {
             MEMORY_MANAGER.with_borrow(|m| m.get(GATE_MEMORY_ID)),
         ));
 
-    static SUBJECT_GATE_STORAGE: RefCell<SubjectGateStorage> = RefCell::new(StableBTreeMap::init(
-        MEMORY_MANAGER.with_borrow(|m| m.get(SUBJECT_GATE_MEMORY_ID)),
-    ));
-
     static GATE_USER_STATUS_STORAGE: RefCell<GateUserStatusStorage> = RefCell::new(StableBTreeMap::init(
         MEMORY_MANAGER.with_borrow(|m| m.get(GATE_USER_STATUS_MEMORY_ID)),
     ));
@@ -90,7 +79,6 @@ pub mod tests {
     /// A struct for testing Repositories and services
     pub struct TestRepositories {
         gate: Rc<RefCell<GateStorage>>,
-        subject_gate: Rc<RefCell<SubjectGateStorage>>,
         gate_user_status: Rc<RefCell<GateUserStatusStorage>>,
     }
 
@@ -103,9 +91,6 @@ pub mod tests {
             let mm = MemoryManager::init(DefaultMemoryImpl::default());
             Self {
                 gate: Rc::new(RefCell::new(StableBTreeMap::init(mm.get(GATE_MEMORY_ID)))),
-                subject_gate: Rc::new(RefCell::new(StableBTreeMap::init(
-                    mm.get(SUBJECT_GATE_MEMORY_ID),
-                ))),
                 gate_user_status: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(GATE_USER_STATUS_MEMORY_ID),
                 ))),
@@ -115,15 +100,10 @@ pub mod tests {
 
     impl Repositories for TestRepositories {
         type Gate = Rc<RefCell<GateStorage>>;
-        type SubjectGate = Rc<RefCell<SubjectGateStorage>>;
         type GateUserStatus = Rc<RefCell<GateUserStatusStorage>>;
 
-        fn gate(&self) -> GateRepository<Self::Gate, Self::SubjectGate, Self::GateUserStatus> {
-            GateRepository::new(
-                self.gate.clone(),
-                self.subject_gate.clone(),
-                self.gate_user_status.clone(),
-            )
+        fn gate(&self) -> GateRepository<Self::Gate, Self::GateUserStatus> {
+            GateRepository::new(self.gate.clone(), self.gate_user_status.clone())
         }
     }
 }

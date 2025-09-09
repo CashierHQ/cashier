@@ -1,32 +1,23 @@
 use crate::utils::gate::generate_gate_id;
 use candid::Principal;
-use gate_service_types::{Gate, GateStatus, GateUser, GateUserStatus, GateV2, NewGate, NewGateV2};
+use gate_service_types::{Gate, GateStatus, GateUser, GateUserStatus, NewGate};
 use ic_mple_log::service::Storage;
 use ic_stable_structures::memory_manager::VirtualMemory;
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
 
 pub type GateStorage = StableBTreeMap<String, Gate, VirtualMemory<DefaultMemoryImpl>>;
-pub type SubjectGateStorage = StableBTreeMap<String, String, VirtualMemory<DefaultMemoryImpl>>;
 pub type GateUserStatusStorage =
     StableBTreeMap<GateUser, GateUserStatus, VirtualMemory<DefaultMemoryImpl>>;
 
-pub struct GateRepository<
-    G: Storage<GateStorage>,
-    S: Storage<SubjectGateStorage>,
-    U: Storage<GateUserStatusStorage>,
-> {
+pub struct GateRepository<G: Storage<GateStorage>, U: Storage<GateUserStatusStorage>> {
     gate_map: G,
-    subject_gate_map: S,
     gate_user_map: U,
 }
 
-impl<G: Storage<GateStorage>, S: Storage<SubjectGateStorage>, U: Storage<GateUserStatusStorage>>
-    GateRepository<G, S, U>
-{
-    pub fn new(gate_map: G, subject_gate_map: S, gate_user_map: U) -> Self {
+impl<G: Storage<GateStorage>, U: Storage<GateUserStatusStorage>> GateRepository<G, U> {
+    pub fn new(gate_map: G, gate_user_map: U) -> Self {
         Self {
             gate_map,
-            subject_gate_map,
             gate_user_map,
         }
     }
@@ -37,30 +28,12 @@ impl<G: Storage<GateStorage>, S: Storage<SubjectGateStorage>, U: Storage<GateUse
     /// # Returns
     /// * `Ok(Gate)`: If the gate is created successfully.
     /// * `Err(String)`: If there is an error during gate creation.
-    pub fn create_gate(&mut self, new_gate: NewGate) -> Result<Gate, String> {
-        let gate_id = uuid::Uuid::new_v4().to_string();
+    pub fn create_gate(&mut self, creator: Principal, new_gate: NewGate) -> Result<Gate, String> {
+        let gate_id = generate_gate_id(creator, &new_gate.subject_id);
 
         let gate = Gate {
             id: gate_id.clone(),
-            subject_id: new_gate.subject_id.clone(),
-            gate_type: new_gate.gate_type.clone(),
-            key: new_gate.key.clone(),
-        };
-
-        self.gate_map
-            .with_borrow_mut(|map| map.insert(gate_id.clone(), gate.clone()));
-
-        self.subject_gate_map
-            .with_borrow_mut(|map| map.insert(new_gate.subject_id.clone(), gate_id));
-
-        Ok(gate)
-    }
-
-    pub fn create_gate_v2(&mut self, new_gate: NewGateV2) -> Result<Gate, String> {
-        let gate_id = uuid::Uuid::new_v4().to_string();
-
-        let gate = GateV2 {
-            id: gate_id.clone(),
+            creator,
             subject_id: new_gate.subject_id.clone(),
             key: new_gate.key.clone(),
         };
@@ -90,10 +63,9 @@ impl<G: Storage<GateStorage>, S: Storage<SubjectGateStorage>, U: Storage<GateUse
     /// * `Ok(Some(Gate))`: If a gate is found.
     /// * `Ok(None)`: If no gate is found.
     /// * `Err(String)`: If there is an error during retrieval.
-    pub fn get_gate_by_subject(&self, subject_id: &str) -> Option<Gate> {
-        self.subject_gate_map
-            .with_borrow(|map| map.get(&subject_id.to_string()))
-            .and_then(|gate_id| self.get_gate(&gate_id))
+    pub fn get_gate_by_subject(&self, creator: Principal, subject_id: &str) -> Option<Gate> {
+        let gate_id = generate_gate_id(creator, subject_id);
+        self.get_gate(&gate_id)
     }
 
     /// Retrieves the user status of a gate for a specific user.
@@ -147,44 +119,41 @@ mod tests {
     use super::*;
     use crate::repositories::{Repositories, tests::TestRepositories};
     use cashier_common::test_utils::{random_id_string, random_principal_id};
-    use gate_service_types::{GateKey, GateType};
+    use gate_service_types::GateKey;
 
     #[test]
     fn it_should_success_create_password_gate() {
         // Arrange
         let mut repo = TestRepositories::new().gate();
+        let creator = random_principal_id();
 
         let gates = vec![
             NewGate {
                 subject_id: "subject1".to_string(),
-                gate_type: GateType::Password,
                 key: GateKey::Password("password123".to_string()),
             },
             NewGate {
                 subject_id: "subject2".to_string(),
-                gate_type: GateType::XFollowing,
                 key: GateKey::XFollowing("x_handle".to_string()),
             },
             NewGate {
                 subject_id: "subject3".to_string(),
-                gate_type: GateType::TelegramGroup,
                 key: GateKey::TelegramGroup("telegram_group_id".to_string()),
             },
             NewGate {
                 subject_id: "subject4".to_string(),
-                gate_type: GateType::DiscordServer,
                 key: GateKey::DiscordServer("discord_server_id".to_string()),
             },
         ];
 
         for gate in gates {
             // Act
-            let created_gate = repo.create_gate(gate.clone()).unwrap();
+            let created_gate = repo.create_gate(creator, gate.clone()).unwrap();
 
             // Assert
             assert!(!created_gate.id.is_empty());
+            assert_eq!(created_gate.creator, creator);
             assert_eq!(created_gate.subject_id, gate.subject_id);
-            assert_eq!(created_gate.gate_type, gate.gate_type);
             assert_eq!(created_gate.key, gate.key);
         }
     }
@@ -205,12 +174,12 @@ mod tests {
     fn it_should_get_gate_by_id() {
         // Arrange
         let mut repo = TestRepositories::new().gate();
+        let creator = random_principal_id();
         let new_gate = NewGate {
             subject_id: "subject1".to_string(),
-            gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
-        let gate = repo.create_gate(new_gate.clone()).unwrap();
+        let gate = repo.create_gate(creator, new_gate.clone()).unwrap();
 
         // Act
         let gate = repo.get_gate(&gate.id);
@@ -219,8 +188,8 @@ mod tests {
         assert!(gate.is_some());
         let gate = gate.unwrap();
         assert!(!gate.id.is_empty());
+        assert_eq!(gate.creator, creator);
         assert_eq!(gate.subject_id, new_gate.subject_id);
-        assert_eq!(gate.gate_type, new_gate.gate_type);
         assert_eq!(gate.key, new_gate.key);
     }
 
@@ -228,9 +197,10 @@ mod tests {
     fn it_should_none_get_gate_by_subject_id() {
         // Arrange
         let repo = TestRepositories::new().gate();
+        let creator = random_principal_id();
 
         // Act
-        let gate = repo.get_gate_by_subject("non_existent_subject");
+        let gate = repo.get_gate_by_subject(creator, "non_existent_subject");
 
         // Assert
         assert!(gate.is_none());
@@ -240,22 +210,22 @@ mod tests {
     fn it_should_get_gate_by_subject_id() {
         // Arrange
         let mut repo = TestRepositories::new().gate();
+        let creator = random_principal_id();
         let new_gate = NewGate {
             subject_id: "subject1".to_string(),
-            gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
-        let gate = repo.create_gate(new_gate.clone()).unwrap();
+        let gate = repo.create_gate(creator, new_gate.clone()).unwrap();
 
         // Act
-        let gate = repo.get_gate_by_subject(&gate.subject_id);
+        let gate = repo.get_gate_by_subject(creator, &gate.subject_id);
 
         // Assert
         assert!(gate.is_some());
         let gate = gate.unwrap();
         assert!(!gate.id.is_empty());
+        assert_eq!(gate.creator, creator);
         assert_eq!(gate.subject_id, new_gate.subject_id);
-        assert_eq!(gate.gate_type, new_gate.gate_type);
         assert_eq!(gate.key, new_gate.key);
     }
 
@@ -277,12 +247,12 @@ mod tests {
     fn it_should_open_gate_and_get_gate_user_status() {
         // Arrange
         let mut repo = TestRepositories::new().gate();
+        let creator = random_principal_id();
         let new_gate = NewGate {
             subject_id: "subject1".to_string(),
-            gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
-        let gate = repo.create_gate(new_gate.clone()).unwrap();
+        let gate = repo.create_gate(creator, new_gate.clone()).unwrap();
         let user = random_principal_id();
 
         // Act

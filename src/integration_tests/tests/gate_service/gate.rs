@@ -4,9 +4,7 @@ use crate::{
 };
 use cashier_common::test_utils::{random_id_string, random_principal_id};
 use core::panic;
-use gate_service_types::{
-    GateKey, GateStatus, GateType, NewGate, auth::Permission, error::GateServiceError,
-};
+use gate_service_types::{GateKey, GateStatus, NewGate, auth::Permission, error::GateServiceError};
 
 #[tokio::test]
 async fn it_should_error_add_gate_due_to_unauthorized() {
@@ -16,7 +14,6 @@ async fn it_should_error_add_gate_due_to_unauthorized() {
         let user_client = ctx.new_gate_service_client(user);
         let new_gate = NewGate {
             subject_id: "subject1".to_string(),
-            gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
 
@@ -48,7 +45,6 @@ async fn it_should_add_gate() {
         let user_client = ctx.new_gate_service_client(user);
         let new_gate = NewGate {
             subject_id: "subject1".to_string(),
-            gate_type: GateType::Password,
             key: GateKey::Password("password123".to_string()),
         };
 
@@ -57,7 +53,8 @@ async fn it_should_add_gate() {
 
         // Assert
         assert!(!result.id.is_empty());
-        assert_eq!(result.gate_type, GateType::Password);
+        assert_eq!(result.creator, user);
+        assert_eq!(result.subject_id, "subject1");
         assert_eq!(result.key, GateKey::PasswordRedacted);
 
         Ok(())
@@ -149,8 +146,8 @@ async fn it_should_get_gate_by_subject() {
 
         // Assert
         assert_eq!(result.id, gate.id);
+        assert_eq!(result.creator, creator);
         assert_eq!(result.subject_id, subject_id);
-        assert_eq!(result.gate_type, GateType::Password);
         assert_eq!(result.key, GateKey::PasswordRedacted);
 
         Ok(())
@@ -178,8 +175,8 @@ async fn it_should_get_gate_by_id() {
 
         // Assert
         assert_eq!(result.id, gate.id);
+        assert_eq!(result.creator, creator);
         assert_eq!(result.subject_id, subject_id);
-        assert_eq!(result.gate_type, GateType::Password);
         assert_eq!(result.key, GateKey::PasswordRedacted);
 
         Ok(())
