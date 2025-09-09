@@ -69,13 +69,7 @@ pub fn admin_permissions_remove(
         .map_err(|e| CanisterError::AuthError(format!("{e:?}")))
 }
 
-    /// Disable/enable the inspect message.
-    ///
-    /// If `inspect_message` is disabled, `send_raw_transaction` method will not attempt to early
-    /// reject the incomming update calls and will proceed to the canister consensus round. Invalid
-    /// transactions will still be rejected, but returned result will have expected `did` type
-    /// instead of IC rejection message. This makes it easy to work with the canister API but
-    /// increases overhead in case of many invalid transactions.
+    /// Enables/disables the inspect message.
     #[update]
     pub fn admin_inspect_message_enable(inspect_message_enabled: bool) -> Result<(), CanisterError> {
         let mut state = get_state();
@@ -84,6 +78,13 @@ pub fn admin_permissions_remove(
             .auth_service
             .must_have_permission(&caller, Permission::Admin);
 
-        state.settings_service.set_inspect_message_enabled(inspect_message_enabled);
+        state.settings.set_inspect_message_enabled(inspect_message_enabled);
         Ok(())
+    }
+
+        /// Returns the inspect message status.
+    #[query]
+    pub fn is_inspect_message_enabled() -> bool {
+        let state = get_state();
+        state.settings.is_inspect_message_enabled()
     }
