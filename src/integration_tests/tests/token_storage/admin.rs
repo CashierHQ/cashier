@@ -80,17 +80,26 @@ async fn should_allow_admin_to_set_and_remove_permissions() {
 async fn should_not_allow_user_to_set_and_remove_permissions() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
+        let admin = TestUser::TokenStorageAdmin.get_principal();
+        let admin_client = ctx.new_token_storage_client(admin);
         let user = TestUser::User1.get_principal();
         let user_client = ctx.new_token_storage_client(user);
+
+        // Disable the inspect message to test direct endpoint behavior
+        admin_client.admin_inspect_message_enable(false).await.unwrap().unwrap();
 
         // Act
         let user_permissions_add = user_client
             .admin_permissions_add(user, vec![Permission::Admin])
             .await;
 
+        println!("{:?}", user_permissions_add);
+
         let user_permissions_remove = user_client
             .admin_permissions_remove(user, vec![Permission::Admin])
             .await;
+
+        println!("{:?}", user_permissions_remove);
 
         // Assert
         assert!(

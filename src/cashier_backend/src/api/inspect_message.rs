@@ -9,7 +9,7 @@ fn inspect_messages() {
 
     let state = get_state();
 
-    if !state.settings_service.is_inspect_message_enabled() {
+    if !state.settings.is_inspect_message_enabled() {
         api::accept_message();
         return;
     }
