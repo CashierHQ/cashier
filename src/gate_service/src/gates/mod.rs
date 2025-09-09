@@ -30,7 +30,6 @@ impl GateFactory {
     /// * `Err(String)`: If there is an error during gate creation.
     pub fn get_gate_verifier(
         &self,
-        //gate_type: GateType,
         gate_key: GateKey,
     ) -> Result<Box<dyn GateVerifier + Send + Sync>, GateServiceError> {
         match gate_key {
