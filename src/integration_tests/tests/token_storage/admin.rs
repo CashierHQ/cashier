@@ -86,7 +86,11 @@ async fn should_not_allow_user_to_set_and_remove_permissions() {
         let user_client = ctx.new_token_storage_client(user);
 
         // Disable the inspect message to test direct endpoint behavior
-        admin_client.admin_inspect_message_enable(false).await.unwrap().unwrap();
+        admin_client
+            .admin_inspect_message_enable(false)
+            .await
+            .unwrap()
+            .unwrap();
 
         // Act
         let user_permissions_add = user_client

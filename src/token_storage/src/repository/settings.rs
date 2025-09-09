@@ -1,7 +1,7 @@
 use candid::CandidType;
-use ic_mple_log::service::Storage;
-use ic_stable_structures::{memory_manager::VirtualMemory, DefaultMemoryImpl, StableCell};
 use cashier_macros::storable;
+use ic_mple_log::service::Storage;
+use ic_stable_structures::{DefaultMemoryImpl, StableCell, memory_manager::VirtualMemory};
 
 /// The canister settings
 #[derive(Debug, CandidType, Clone, PartialEq, Eq)]
@@ -27,7 +27,6 @@ pub struct SettingsRepository<S: Storage<SettingsRepositoryStorage>> {
 }
 
 impl<S: Storage<SettingsRepositoryStorage>> SettingsRepository<S> {
-    
     /// Create a new SettingsRepository
     pub fn new(storage: S) -> Self {
         Self { storage }
@@ -45,7 +44,7 @@ impl<S: Storage<SettingsRepositoryStorage>> SettingsRepository<S> {
     where
         for<'a> F: FnOnce(&'a Settings) -> T,
     {
-        self.storage.with_borrow(|store| f(&store.get()))
+        self.storage.with_borrow(|store| f(store.get()))
     }
 
     /// Helper to update the settings

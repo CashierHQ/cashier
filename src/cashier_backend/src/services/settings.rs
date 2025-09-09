@@ -1,4 +1,4 @@
-use crate::repositories::{settings::SettingsRepository, Repositories};
+use crate::repositories::{Repositories, settings::SettingsRepository};
 
 /// The settings service
 pub struct SettingsService<R: Repositories> {
@@ -15,7 +15,8 @@ impl<R: Repositories> SettingsService<R> {
 
     /// Get the inspect message enabled setting
     pub fn is_inspect_message_enabled(&self) -> bool {
-        self.settings_repo.read(|settings| settings.inspect_message_enabled.clone())
+        self.settings_repo
+            .read(|settings| settings.inspect_message_enabled)
     }
 
     /// Set the inspect message enabled setting
@@ -24,5 +25,4 @@ impl<R: Repositories> SettingsService<R> {
             settings.inspect_message_enabled = inspect_message_enabled;
         });
     }
-
 }

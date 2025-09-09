@@ -1,7 +1,12 @@
 use crate::{
-    repositories::{ThreadlocalRepositories, AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE},
+    repositories::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
     services::{
-        action::ActionService, auth::{AuthService, AuthServiceStorage}, link::service::LinkService, request_lock::RequestLockService, settings::SettingsService, transaction_manager::{service::TransactionManagerService, validate::ValidateService}
+        action::ActionService,
+        auth::{AuthService, AuthServiceStorage},
+        link::service::LinkService,
+        request_lock::RequestLockService,
+        settings::SettingsService,
+        transaction_manager::{service::TransactionManagerService, validate::ValidateService},
     },
 };
 use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};

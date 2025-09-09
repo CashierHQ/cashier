@@ -9,7 +9,11 @@ async fn should_enable_and_disable_inspect_message() {
 
         // Act
         let before = admin_client.is_inspect_message_enabled().await.unwrap();
-        admin_client.admin_inspect_message_enable(false).await.unwrap().unwrap();
+        admin_client
+            .admin_inspect_message_enable(false)
+            .await
+            .unwrap()
+            .unwrap();
         let after = admin_client.is_inspect_message_enabled().await.unwrap();
 
         // Assert
@@ -17,7 +21,9 @@ async fn should_enable_and_disable_inspect_message() {
         assert!(!after);
 
         Ok(())
-    }).await.unwrap();
+    })
+    .await
+    .unwrap();
 }
 
 #[tokio::test]
