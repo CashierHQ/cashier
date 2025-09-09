@@ -2,12 +2,40 @@ use crate::{
     gate_service::fixtures::{add_and_open_password_gate_fixture, add_password_gate_fixture},
     utils::{principal::TestUser, with_pocket_ic_context},
 };
+use candid::Principal;
 use cashier_common::test_utils::{random_id_string, random_principal_id};
 use core::panic;
 use gate_service_types::{GateKey, GateStatus, NewGate, auth::Permission, error::GateServiceError};
 
 #[tokio::test]
-async fn it_should_error_add_gate_due_to_unauthorized() {
+async fn it_should_error_add_gate_due_to_anonymous_caller() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let user_client = ctx.new_gate_service_client(Principal::anonymous());
+        let new_gate = NewGate {
+            subject_id: "subject1".to_string(),
+            key: GateKey::Password("password123".to_string()),
+        };
+
+        // Act
+        let result = user_client.add_gate(new_gate).await;
+
+        // Assert
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Anonymous caller is not allowed")
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_error_add_gate_due_to_unauthorized_caller() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let user = TestUser::User1.get_principal();
@@ -56,6 +84,35 @@ async fn it_should_add_gate() {
         assert_eq!(result.creator, user);
         assert_eq!(result.subject_id, "subject1");
         assert_eq!(result.key, GateKey::PasswordRedacted);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_error_open_password_gate_due_to_anonymous_caller() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let creator = random_principal_id();
+        let subject_id = random_id_string();
+        let password = random_id_string();
+        let gate = add_password_gate_fixture(ctx, creator, &subject_id, &password).await;
+        let user_client = ctx.new_gate_service_client(Principal::anonymous());
+
+        // Act
+        let result = user_client
+            .open_gate(gate.id, GateKey::Password("wrong_password".to_string()))
+            .await;
+
+        // Assert
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Anonymous caller is not allowed")
+        );
 
         Ok(())
     })
@@ -127,7 +184,36 @@ async fn it_should_open_password_gate() {
 }
 
 #[tokio::test]
-async fn it_should_get_gate_by_subject() {
+async fn it_should_error_get_gate_by_subject_due_to_anonymous_caller() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let creator = random_principal_id();
+        let subject_id = random_id_string();
+        let password = random_id_string();
+        let gate = add_password_gate_fixture(ctx, creator, &subject_id, &password).await;
+
+        // Act
+        let result = ctx
+            .new_gate_service_client(Principal::anonymous())
+            .get_gate_by_subject(gate.subject_id.clone())
+            .await;
+
+        // Assert
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("Anonymous caller is not allowed")
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_error_get_gate_by_subject_due_to_unauthorized_caller() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let creator = random_principal_id();
@@ -138,6 +224,30 @@ async fn it_should_get_gate_by_subject() {
         // Act
         let result = ctx
             .new_gate_service_client(TestUser::User1.get_principal())
+            .get_gate_by_subject(gate.subject_id.clone())
+            .await;
+
+        // Assert
+        assert!(result.unwrap_err().to_string().contains("NotAuthorized"));
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_get_gate_by_subject() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let creator = random_principal_id();
+        let subject_id = random_id_string();
+        let password = random_id_string();
+        let gate = add_password_gate_fixture(ctx, creator, &subject_id, &password).await;
+
+        // Act
+        let result = ctx
+            .new_gate_service_client(creator)
             .get_gate_by_subject(gate.subject_id.clone())
             .await
             .unwrap()
