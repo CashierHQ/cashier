@@ -12,8 +12,7 @@ use token_storage_types::{
 };
 
 use crate::{
-    api::state::get_state, build_data::canister_build_data,
-    constant::default_tokens::get_default_tokens, services::auth::Permission,
+    api::state::get_state, build_data::canister_build_data, services::auth::Permission,
     types::TokenRegistryMetadata,
 };
 
@@ -131,9 +130,6 @@ pub fn admin_initialize_registry() -> Result<(), String> {
     registry
         .delete_all()
         .expect("Should be able to delete registry");
-    registry
-        .add_bulk_tokens(get_default_tokens())
-        .expect("Should be able to add default tokens");
 
     Ok(())
 }

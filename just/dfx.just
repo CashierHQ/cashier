@@ -26,10 +26,7 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
 
   export OWNER=$(dfx identity get-principal)
 
-  dfx deploy token_storage --argument "(record {
-      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug,token_storage=debug\"; };
-      owner=principal \"${OWNER}\";
-  })"
+  just dfx_local_deploy_token_storage "${OWNER}"
 
   dfx deploy cashier_backend --argument "(record {
       log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
@@ -39,10 +36,10 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
   dfx deploy internet_identity
 
   just dfx_local_deploy_icp_ledger
-  just dfx_local_deploy_icrc1_ledger "ckBTC" "Chain Key Bitcoin" "ckBTC" "mxzaz-hqaaa-aaaar-qaada-cai" 8 10
-  just dfx_local_deploy_icrc1_ledger "ckETH" "Chain Key Ethereum" "ckETH" "ss2fx-dyaaa-aaaar-qacoq-cai" 18 2000000000000000000
-  just dfx_local_deploy_icrc1_ledger "ckUSDC" "Chain Key USD Coin" "ckUSDC" "xevnm-gaaaa-aaaar-qafnq-cai" 8 10000
-  just dfx_local_deploy_icrc1_ledger "DOGE" "Test Token" "DOGE" "x5qut-viaaa-aaaar-qajda-cai" 8 10000
+  just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckBTC" "Chain Key Bitcoin" "ckBTC" "mxzaz-hqaaa-aaaar-qaada-cai" 8 10
+  just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckETH" "Chain Key Ethereum" "ckETH" "ss2fx-dyaaa-aaaar-qacoq-cai" 18 2000000000000000000
+  just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckUSDC" "Chain Key USD Coin" "ckUSDC" "xevnm-gaaaa-aaaar-qafnq-cai" 8 10000
+  just dfx_local_deploy_icrc1_ledger "${OWNER}" "DOGE" "Test Token" "DOGE" "x5qut-viaaa-aaaar-qajda-cai" 8 10000
 
 
 # Prints dfx info of the local deployment
@@ -105,11 +102,81 @@ create_canisters network cycles:
 
 
 [private]
-dfx_local_deploy_icrc1_ledger canister_name name symbol canister_id decimals transfer_fee:
+dfx_local_deploy_token_storage owner:
   #!/usr/bin/env bash
   set -e
 
-  export MINTER=$(dfx identity get-principal)
+  dfx deploy token_storage --argument "(record {
+      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug,token_storage=debug\"; };
+      owner=principal \"{{owner}}\";
+      tokens = opt vec {
+        record {
+          details = variant { IC = record {
+              ledger_id = principal \"ryjl3-tyaaa-aaaaa-aaaba-cai\";
+              index_id = opt principal \"qhbym-qaaaa-aaaaa-aaafq-cai\";
+              fee = 10000 : nat;
+            }
+          };
+          symbol = \"ICP\";
+          name = \"Internet Computer\";
+          decimals = 8;
+          enabled_by_default = true;
+        };
+        record {
+          details = variant { IC = record {
+              ledger_id = principal \"mxzaz-hqaaa-aaaar-qaada-cai\";
+              index_id = opt principal \"n5wcd-faaaa-aaaar-qaaea-cai\";
+              fee = 10 : nat;
+            }
+          };
+          symbol = \"ckBTC\";
+          name = \"Chain Key Bitcoin\";
+          decimals = 8;
+          enabled_by_default = true;
+        };
+        record {
+          details = variant { IC = record {
+              ledger_id = principal \"ss2fx-dyaaa-aaaar-qacoq-cai\";
+              index_id = opt principal \"s3zol-vqaaa-aaaar-qacpa-cai\";
+              fee = 2_000_000_000_000 : nat;
+            }
+          };
+          symbol = \"ckETH\";
+          name = \"Chain Key Ethereum\";
+          decimals = 18;
+          enabled_by_default = true;
+        };
+        record {
+          details = variant { IC = record {
+              ledger_id = principal \"xevnm-gaaaa-aaaar-qafnq-cai\";
+              index_id = opt principal \"xrs4b-hiaaa-aaaar-qafoa-cai\";
+              fee = 10_000 : nat;
+            }
+          };
+          symbol = \"ckUSDC\";
+          name = \"Chain Key USD Coin\";
+          decimals = 8;
+          enabled_by_default = true;
+        };
+        record {
+          details = variant { IC = record {
+              ledger_id = principal \"x5qut-viaaa-aaaar-qajda-cai\";
+              fee = 10_000 : nat;
+            }
+          };
+          symbol = \"tICP\";
+          name = \"Test Internet Computer\";
+          decimals = 8;
+          enabled_by_default = true;
+        };
+      };
+  })"
+
+
+[private]
+dfx_local_deploy_icrc1_ledger minter canister_name name symbol canister_id decimals transfer_fee:
+  #!/usr/bin/env bash
+  set -e
 
   dfx deploy {{canister_name}} --argument "
   (variant { 
@@ -118,14 +185,14 @@ dfx_local_deploy_icrc1_ledger canister_name name symbol canister_id decimals tra
       token_name = \"{{name}}\";
       decimals = opt {{decimals}} : opt nat8;
       transfer_fee = {{transfer_fee}} : nat;
-      minting_account = record { owner = principal \"$MINTER\"; }; 
+      minting_account = record { owner = principal \"{{minter}}\"; }; 
       metadata = vec {};
       feature_flags = opt record { icrc2 = true };
       initial_balances = vec {};
       archive_options = record { 
         num_blocks_to_archive = 1000 : nat64;
         trigger_threshold = 500 : nat64;
-        controller_id = principal \"$MINTER\"; 
+        controller_id = principal \"{{minter}}\"; 
         cycles_for_archive_creation = opt 10000000000000 : opt nat64; 
       } 
     }

@@ -38,6 +38,13 @@ export interface RegistryStats {
   'total_enabled_default' : bigint,
   'total_tokens' : bigint,
 }
+export interface RegistryToken {
+  'decimals' : number,
+  'name' : string,
+  'enabled_by_default' : boolean,
+  'details' : ChainTokenDetails,
+  'symbol' : string,
+}
 export type Result = { 'Ok' : null } |
   { 'Err' : string };
 export type Result_1 = { 'Ok' : RegistryStats } |
@@ -74,6 +81,7 @@ export interface TokenRegistryMetadata {
 export type TokenStorageError = { 'AuthError' : string };
 export interface TokenStorageInitData {
   'owner' : Principal,
+  'tokens' : [] | [Array<RegistryToken>],
   'log_settings' : [] | [LogServiceSettings],
 }
 export interface UpdateTokenBalanceInput {
