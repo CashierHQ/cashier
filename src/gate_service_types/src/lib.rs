@@ -11,24 +11,10 @@ use serde::Serialize;
 /// The data structure for a Gate
 /// Fields:
 /// * `id`: The unique identifier for the gate.
-/// * `subject_id`: The ID of the object being gated (Links, Campaigns, MysteryBoxes, etc)
-/// * `gate_type`: The type of the gate.
-/// * `key`: The key associated with the gate.
-pub struct Gate {
-    pub id: String,
-    pub subject_id: String,
-    pub gate_type: GateType,
-    pub key: GateKey,
-}
-
-#[derive(CandidType, Debug, Clone)]
-#[storable]
-/// The data structure for a Gate
-/// Fields:
-/// * `id`: The unique identifier for the gate.
+/// * `creator`: The creator of the gate.
 /// * `subject_id`: The ID of the object being gated (Links, Campaigns, MysteryBoxes, etc)
 /// * `key`: The key of the gate.
-pub struct GateV2 {
+pub struct Gate {
     pub id: String,
     pub creator: Principal,
     pub subject_id: String,
@@ -37,23 +23,10 @@ pub struct GateV2 {
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
 /// The data structure for creating a new Gate
-/// DEPRECATED: Use NewGateV2 instead.
-/// Fields:
-/// * `subject_id`: The ID of the object being gated (Links, Campaigns, MysteryBoxes, etc)
-/// * `gate_type`: The type of the gate.
-/// * `key`: The key associated with the gate.
-pub struct NewGate {
-    pub subject_id: String,
-    pub gate_type: GateType,
-    pub key: GateKey,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-/// The v2 of data structure for creating a new Gate
 /// Fields:
 /// * `subject_id`: The ID of the object being gated (Links, Campaigns, MysteryBoxes, etc)
 /// * `key`: The key of the gate.
-pub struct NewGateV2 {
+pub struct NewGate {
     pub subject_id: String,
     pub key: GateKey,
 }
@@ -98,15 +71,6 @@ pub struct GateForUser {
 pub enum GateStatus {
     Open,
     Closed,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Clone)]
-/// DEPRECATED: The gate type enum
-pub enum GateType {
-    Password,
-    XFollowing,
-    TelegramGroup,
-    DiscordServer,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Clone)]

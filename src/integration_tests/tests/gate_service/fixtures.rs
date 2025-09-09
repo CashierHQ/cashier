@@ -1,6 +1,6 @@
 use crate::utils::{PocketIcTestContext, principal::TestUser};
 use candid::Principal;
-use gate_service_types::{Gate, GateKey, GateType, GateUserStatus, NewGate, auth::Permission};
+use gate_service_types::{Gate, GateKey, GateUserStatus, NewGate, auth::Permission};
 
 /// Adds a password gate fixture for testing purposes.
 /// # Arguments
@@ -27,7 +27,6 @@ pub async fn add_password_gate_fixture(
     let user_client = ctx.new_gate_service_client(creator);
     let new_gate = NewGate {
         subject_id: subject_id.to_string(),
-        gate_type: GateType::Password,
         key: GateKey::Password(password.to_string()),
     };
 

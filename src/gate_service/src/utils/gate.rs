@@ -1,6 +1,5 @@
 use candid::Principal;
-use gate_service_types::{Gate, GateKey, GateType};
-use uuid::Uuid;
+use gate_service_types::{Gate, GateKey};
 
 /// Redacts the password field from a gate.
 /// # Arguments
@@ -8,8 +7,8 @@ use uuid::Uuid;
 /// # Returns
 /// The gate with the password redacted.
 pub fn redact_password_gate(gate: Gate) -> Gate {
-    match gate.gate_type {
-        GateType::Password => Gate {
+    match gate.key {
+        GateKey::Password(_) => Gate {
             key: GateKey::PasswordRedacted,
             ..gate
         },
@@ -17,28 +16,29 @@ pub fn redact_password_gate(gate: Gate) -> Gate {
     }
 }
 
-/// Generates a unique gate ID based on the creator's principal, subject ID, and a UUID.
+/// Generates a unique gate ID based on the creator's principal and subject ID.
 /// # Arguments
-/// * `creator`: The principal of the creator.
+/// * `creator`: The creator of the gate.
 /// * `subject_id`: The ID of the subject being gated.
 /// # Returns
 /// A unique gate ID.
 pub fn generate_gate_id(creator: Principal, subject_id: &str) -> String {
-    format!("{}_{}_{}", creator, subject_id, Uuid::new_v4())
+    format!("{}_{}", creator, subject_id)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use gate_service_types::{Gate, GateKey, GateType};
+    use cashier_common::test_utils::random_principal_id;
+    use gate_service_types::{Gate, GateKey};
 
     #[test]
     fn it_should_redact_password_gate() {
         // Arrange
         let gate = Gate {
             id: "test_gate_id".into(),
+            creator: random_principal_id(),
             subject_id: "test_subject".into(),
-            gate_type: GateType::Password,
             key: GateKey::Password("test_password".into()),
         };
 
@@ -59,7 +59,6 @@ mod tests {
         let gate_id = generate_gate_id(creator, subject_id);
 
         // Assert
-        assert!(gate_id.starts_with(&format!("{}_{}", creator, subject_id)));
-        assert!(gate_id.len() > format!("{}_{}", creator, subject_id).len());
+        assert_eq!(gate_id, format!("{}_{}", creator, subject_id));
     }
 }
