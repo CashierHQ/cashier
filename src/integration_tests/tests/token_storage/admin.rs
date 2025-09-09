@@ -97,13 +97,9 @@ async fn should_not_allow_user_to_set_and_remove_permissions() {
             .admin_permissions_add(user, vec![Permission::Admin])
             .await;
 
-        println!("{:?}", user_permissions_add);
-
         let user_permissions_remove = user_client
             .admin_permissions_remove(user, vec![Permission::Admin])
             .await;
-
-        println!("{:?}", user_permissions_remove);
 
         // Assert
         assert!(
