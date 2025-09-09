@@ -1,5 +1,6 @@
+use crate::utils::gate::generate_gate_id;
 use candid::Principal;
-use gate_service_types::{Gate, GateStatus, GateUser, GateUserStatus, NewGate};
+use gate_service_types::{Gate, GateStatus, GateUser, GateUserStatus, GateV2, NewGate, NewGateV2};
 use ic_mple_log::service::Storage;
 use ic_stable_structures::memory_manager::VirtualMemory;
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap};
@@ -51,6 +52,21 @@ impl<G: Storage<GateStorage>, S: Storage<SubjectGateStorage>, U: Storage<GateUse
 
         self.subject_gate_map
             .with_borrow_mut(|map| map.insert(new_gate.subject_id.clone(), gate_id));
+
+        Ok(gate)
+    }
+
+    pub fn create_gate_v2(&mut self, new_gate: NewGateV2) -> Result<Gate, String> {
+        let gate_id = uuid::Uuid::new_v4().to_string();
+
+        let gate = GateV2 {
+            id: gate_id.clone(),
+            subject_id: new_gate.subject_id.clone(),
+            key: new_gate.key.clone(),
+        };
+
+        self.gate_map
+            .with_borrow_mut(|map| map.insert(gate_id.clone(), gate.clone()));
 
         Ok(gate)
     }
