@@ -19,6 +19,7 @@ build: download_artifacts build_canisters generate_frontend_ts build_frontend
 build_canisters: pre_build
   just build_canister "cashier_backend" "" "cashier_backend"
   just build_canister "token_storage" "" "token_storage"
+  just build_canister "gate_service" "" "gate_service"
 
 
 # Builds the frontend

@@ -16,7 +16,7 @@ use crate::repositories::Repositories;
 use crate::services::link::service::LinkService;
 use crate::services::link::traits::IntentAssembler;
 use crate::utils::helper::{convert_nat_to_u64, to_subaccount};
-use crate::utils::runtime::IcEnvironment;
+use cashier_common::runtime::IcEnvironment;
 
 use cashier_backend_types::repository::{
     action::v1::ActionType,

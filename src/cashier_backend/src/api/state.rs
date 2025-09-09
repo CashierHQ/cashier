@@ -1,7 +1,3 @@
-use std::{cell::RefCell, rc::Rc, thread::LocalKey};
-
-use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
-
 use crate::{
     repositories::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
     services::{
@@ -11,8 +7,10 @@ use crate::{
         request_lock::RequestLockService,
         transaction_manager::{service::TransactionManagerService, validate::ValidateService},
     },
-    utils::runtime::{IcEnvironment, RealIcEnvironment},
 };
+use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
+use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
+use std::{cell::RefCell, rc::Rc, thread::LocalKey};
 
 /// The state of the canister
 pub struct CanisterState<E: IcEnvironment + Clone> {

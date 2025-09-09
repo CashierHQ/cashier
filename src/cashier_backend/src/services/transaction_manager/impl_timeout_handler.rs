@@ -2,17 +2,16 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::{
+    constant::{get_tx_timeout_nano_seconds, get_tx_timeout_seconds},
+    services::transaction_manager::{service::TransactionManagerService, traits::TimeoutHandler},
+};
+use crate::{
     repositories::Repositories, services::transaction_manager::traits::TransactionValidator,
 };
 use cashier_backend_types::{error::CanisterError, repository::transaction::v2::TransactionState};
+use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
 use log::{error, info};
 use std::time::Duration;
-
-use crate::{
-    constant::{get_tx_timeout_nano_seconds, get_tx_timeout_seconds},
-    services::transaction_manager::{service::TransactionManagerService, traits::TimeoutHandler},
-    utils::runtime::{IcEnvironment, RealIcEnvironment},
-};
 
 impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> TimeoutHandler<E>
     for TransactionManagerService<E, R>
