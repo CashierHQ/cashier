@@ -3,12 +3,15 @@ members = [
     "src/cashier_backend",
     "src/cashier_backend_client",
     "src/cashier_backend_types",
+    "src/gate_service",
+    "src/gate_service_client",
+    "src/gate_service_types",
     "src/integration_tests",
     "src/lib/cashier_common",
-    "src/lib/cashier_macros", 
+    "src/lib/cashier_macros",
     "src/lib/icrc_112_utils",
     "src/token_storage",
-    "src/token_storage_client", 
+    "src/token_storage_client",
     "src/token_storage_types",
 ]
 resolver = "2"
@@ -20,6 +23,7 @@ version = "0.1.0"
 
 [workspace.dependencies]
 anyhow = "1.0"
+argon2 = "0.5.3"
 candid = "0.10"
 cashier_backend_client = { path = "src/cashier_backend_client" }
 cashier_backend_types = { path = "src/cashier_backend_types" }
@@ -29,6 +33,8 @@ ciborium = "0.2"
 derive_more = { version = "2", features = ["display"] }
 futures = { version = "0.3", default-features = false }
 getrandom = { version = "0.2", features = ["custom"] }
+gate_service_client = { path = "src/gate_service_client" }
+gate_service_types = { path = "src/gate_service_types" }
 ic-cdk = "0.18"
 ic-cdk-timers = "0.12"
 ic-stable-structures = "0.7"

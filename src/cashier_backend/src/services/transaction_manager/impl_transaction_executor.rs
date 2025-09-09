@@ -1,6 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::services::transaction_manager::{
+    service::TransactionManagerService, traits::TransactionExecutor,
+};
 use crate::{repositories::Repositories, services::transaction_manager::traits::ActionUpdater};
 use cashier_backend_types::{
     error::CanisterError,
@@ -13,15 +16,9 @@ use cashier_backend_types::{
         },
     },
 };
+use cashier_common::runtime::IcEnvironment;
 use icrc_ledger_types::{icrc1::transfer::TransferArg, icrc2::transfer_from::TransferFromArgs};
 use log::{error, info};
-
-use crate::{
-    services::transaction_manager::{
-        service::TransactionManagerService, traits::TransactionExecutor,
-    },
-    utils::runtime::IcEnvironment,
-};
 
 impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> TransactionExecutor<E>
     for TransactionManagerService<E, R>
