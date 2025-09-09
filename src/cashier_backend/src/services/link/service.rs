@@ -1,6 +1,15 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::{repositories::Repositories, services::link::traits::LinkValidation};
+use crate::{
+    repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
+    services::{
+        action::ActionService, ext::icrc_batch::IcrcBatchService, request_lock::RequestLockService,
+        transaction_manager::service::TransactionManagerService,
+    },
+    utils::icrc::IcrcService,
+};
 use candid::Principal;
 use cashier_backend_types::{
     dto::link::GetLinkOptions,
@@ -12,18 +21,9 @@ use cashier_backend_types::{
     },
     service::link::{PaginateInput, PaginateResult},
 };
+use cashier_common::runtime::IcEnvironment;
 use log::error;
 use std::rc::Rc;
-
-use crate::{repositories::Repositories, services::link::traits::LinkValidation};
-use crate::{
-    repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
-    services::{
-        action::ActionService, ext::icrc_batch::IcrcBatchService, request_lock::RequestLockService,
-        transaction_manager::service::TransactionManagerService,
-    },
-    utils::{icrc::IcrcService, runtime::IcEnvironment},
-};
 
 pub struct LinkService<E: IcEnvironment + Clone, R: Repositories> {
     // LinkService fields go here

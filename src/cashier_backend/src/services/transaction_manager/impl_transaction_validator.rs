@@ -1,6 +1,12 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::{
+    repositories::Repositories,
+    services::transaction_manager::{
+        service::TransactionManagerService, traits::TransactionValidator,
+    },
+};
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
@@ -11,15 +17,8 @@ use cashier_backend_types::{
         },
     },
 };
+use cashier_common::runtime::IcEnvironment;
 use log::{error, warn};
-
-use crate::{
-    repositories::Repositories,
-    services::transaction_manager::{
-        service::TransactionManagerService, traits::TransactionValidator,
-    },
-    utils::runtime::IcEnvironment,
-};
 
 impl<E: IcEnvironment + Clone, R: Repositories> TransactionValidator<E>
     for TransactionManagerService<E, R>
