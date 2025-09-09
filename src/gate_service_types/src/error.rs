@@ -20,6 +20,8 @@ pub enum GateServiceError {
     InvalidKeyType(String),
     #[error("Unsupported gate type {0}")]
     UnsupportedGateType(String),
+    #[error("Unsupported gate key {0}")]
+    UnsupportedGateKey(String),
     #[error("Key verification failed {0}")]
     KeyVerificationFailed(String),
     #[error("Unauthorized access {0}")]

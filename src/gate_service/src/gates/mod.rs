@@ -1,6 +1,6 @@
 pub mod password;
 
-use gate_service_types::{GateKey, GateType, VerificationResult, error::GateServiceError};
+use gate_service_types::{GateKey, VerificationResult, error::GateServiceError};
 use password::PasswordGateVerifier;
 use std::{fmt::Debug, future::Future, pin::Pin};
 
@@ -20,7 +20,7 @@ pub trait GateVerifier: Debug {
 pub struct GateFactory {}
 
 impl GateFactory {
-    /// Creates a new gate instance of `GateVerifier` trait.
+    /// Creates a new GateVerifier instance.
     /// This gate instance will be used to verify the provided key.
     /// # Arguments
     /// * `gate_type`: The type of the gate to be created.
@@ -28,24 +28,19 @@ impl GateFactory {
     /// # Returns
     /// * `Ok(Box<dyn GateVerifier + Send + Sync>)`: If the gate is created successfully.
     /// * `Err(String)`: If there is an error during gate creation.
-    pub fn create_gate(
+    pub fn get_gate_verifier(
         &self,
-        gate_type: GateType,
+        //gate_type: GateType,
         gate_key: GateKey,
     ) -> Result<Box<dyn GateVerifier + Send + Sync>, GateServiceError> {
-        match gate_type {
-            GateType::Password => {
-                let GateKey::Password(gate_key) = gate_key else {
-                    return Err(GateServiceError::InvalidKeyType(
-                        "PasswordGateVerifier".to_string(),
-                    ));
-                };
-                let gate = PasswordGateVerifier::new(gate_key);
+        match gate_key {
+            GateKey::Password(password_hash) => {
+                let gate = PasswordGateVerifier::new(password_hash);
                 Ok(Box::new(gate))
             }
-            _ => Err(GateServiceError::UnsupportedGateType(format!(
+            _ => Err(GateServiceError::UnsupportedGateKey(format!(
                 "{:?}",
-                gate_type
+                gate_key
             ))),
         }
     }
@@ -56,18 +51,17 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_should_error_create_gate_due_to_unsupported_gate_type() {
+    fn it_should_error_get_gate_verifier_due_to_unsupported_gate_type() {
         // Arrange
         let factory = GateFactory {};
-        let gate_type = GateType::XFollowing;
         let gate_key = GateKey::XFollowing("elon_musk".to_string());
 
         // Act
-        let result = factory.create_gate(gate_type, gate_key);
+        let result = factory.get_gate_verifier(gate_key);
 
         // Assert
         assert!(result.is_err());
-        if let Err(GateServiceError::UnsupportedGateType(e)) = result {
+        if let Err(GateServiceError::UnsupportedGateKey(e)) = result {
             assert!(e.contains("XFollowing"));
         } else {
             panic!("Expected error but got success");
@@ -75,33 +69,13 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_create_gate_due_to_invalid_key_type() {
+    fn it_should_success_get_gate_verifier_password() {
         // Arrange
         let factory = GateFactory {};
-        let gate_type = GateType::Password;
-        let gate_key = GateKey::XFollowing("elon_musk".to_string());
+        let gate_key = GateKey::Password("0xabc".to_string());
 
         // Act
-        let result = factory.create_gate(gate_type, gate_key);
-
-        // Assert
-        assert!(result.is_err());
-        if let Err(GateServiceError::InvalidKeyType(e)) = result {
-            assert!(e.contains("PasswordGateVerifier"));
-        } else {
-            panic!("Expected error but got success");
-        }
-    }
-
-    #[test]
-    fn it_should_success_create_gate_password() {
-        // Arrange
-        let factory = GateFactory {};
-        let gate_type = GateType::Password;
-        let gate_key = GateKey::Password("password".to_string());
-
-        // Act
-        let result = factory.create_gate(gate_type, gate_key);
+        let result = factory.get_gate_verifier(gate_key);
 
         // Assert
         assert!(result.is_ok());
