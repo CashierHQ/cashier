@@ -71,6 +71,7 @@ impl<R: Repositories> GateService<R> {
 
     /// Retrieves a gate by its subject's ID.
     /// # Arguments
+    /// * `creator`: The creator of the gate.
     /// * `subject_id`: The ID of the subject whose gate is to be retrieved.
     /// # Returns
     /// * `Ok(Some(Gate))`: If a gate is found.
@@ -138,6 +139,7 @@ impl<R: Repositories> GateService<R> {
     /// # Arguments
     /// * `gate_id`: The ID of the gate to be opened.
     /// * `key`: The key to be used for opening the gate.
+    /// * `user`: The user who is opening the gate.
     /// # Returns
     /// * `Ok(OpenGateSuccessResult)`: If the gate is opened successfully.
     /// * `Err(String)`: If there is an error during gate opening.

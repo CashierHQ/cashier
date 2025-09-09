@@ -24,6 +24,7 @@ impl<G: Storage<GateStorage>, U: Storage<GateUserStatusStorage>> GateRepository<
 
     /// Creates a new gate in the repository.
     /// # Arguments
+    /// * `creator`: The creator of the gate.
     /// * `new_gate`: The details of the new gate to be created.
     /// # Returns
     /// * `Ok(Gate)`: If the gate is created successfully.
@@ -58,6 +59,7 @@ impl<G: Storage<GateStorage>, U: Storage<GateUserStatusStorage>> GateRepository<
 
     /// Retrieves a gate by its subject's ID.
     /// # Arguments
+    /// * `creator`: The creator of the gate.
     /// * `subject_id`: The ID of the subject whose gate is to be retrieved.
     /// # Returns
     /// * `Ok(Some(Gate))`: If a gate is found.
