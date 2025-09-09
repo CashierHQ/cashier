@@ -1,0 +1,28 @@
+[package]
+name = "gate_service"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+argon2 = { workspace = true }
+candid = { workspace = true }
+cashier_common = { workspace = true }
+cashier_macros = { workspace = true }
+getrandom = { workspace = true, features = ["custom"] }
+gate_service_types = { workspace = true }
+ic-cdk = { workspace = true }
+ic-cdk-timers = { workspace = true }
+ic_mple_log = { workspace = true }
+ic_mple_auth = { workspace = true }
+ic-stable-structures = { workspace = true }
+rand = { workspace = true, features = ["getrandom"] }
+uuid = { workspace = true, features = ["v4"] }
+
+[dev-dependencies]
+tokio = { workspace = true }
