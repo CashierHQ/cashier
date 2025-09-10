@@ -2,14 +2,15 @@ use crate::api::state::get_state;
 use candid::Principal;
 use cashier_common::guard::is_not_anonymous;
 use gate_service_types::{
-    auth::Permission, error::GateServiceError, Gate, GateForUser, GateKey, NewGate,
-    OpenGateSuccessResult,
+    Gate, GateForUser, GateKey, NewGate, OpenGateSuccessResult, auth::Permission,
+    error::GateServiceError,
 };
 use ic_cdk::{api::msg_caller, query, update};
 
 #[update(guard = "is_not_anonymous")]
 /// Adds a new gate
 /// This function facilitates the creation of a new gate and associates it with the subject.
+/// This API is guarded to ensure that only authenticated users with GateCreate permission can create gates.
 /// # Arguments
 /// * `new_gate`: The details of the new gate to be created.
 /// # Returns
@@ -20,16 +21,17 @@ fn add_gate(new_gate: NewGate) -> Result<Gate, GateServiceError> {
     let caller = msg_caller();
     state
         .auth_service
-        .must_have_permission(&caller, Permission::GateCreator);
+        .must_have_permission(&caller, Permission::GateCreate);
 
     let mut gate_service = get_state().gate_service;
-    let gate = gate_service.add_gate(new_gate)?;
+    let gate = gate_service.add_gate(caller, new_gate)?;
 
     Ok(gate)
 }
 
-#[query]
+#[query(guard = "is_not_anonymous")]
 /// Retrieves a gate by its subject's ID.
+/// This API is guarded to ensure that only authenticated users with GateCreate permission can access it.
 /// # Arguments
 /// * `subject_id`: The ID of the subject whose gate is to be retrieved.
 /// # Returns
@@ -37,8 +39,14 @@ fn add_gate(new_gate: NewGate) -> Result<Gate, GateServiceError> {
 /// * `Ok(None)`: If no gate is found.
 /// * `Err(String)`: If there is an error during retrieval.
 fn get_gate_by_subject(subject_id: String) -> Result<Option<Gate>, GateServiceError> {
+    let state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::GateCreate);
+
     let gate_service = get_state().gate_service;
-    let gate = gate_service.get_gate_by_subject(&subject_id);
+    let gate = gate_service.get_gate_by_subject(caller, &subject_id);
     Ok(gate)
 }
 
@@ -69,7 +77,7 @@ fn get_gate_for_user(gate_id: String, user: Principal) -> Result<GateForUser, Ga
     let caller = msg_caller();
     match state
         .auth_service
-        .check_has_permission(&caller, Permission::GateCreator)
+        .check_has_permission(&caller, Permission::GateCreate)
     {
         Ok(()) => {}
         Err(_) => {

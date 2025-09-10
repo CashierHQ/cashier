@@ -68,3 +68,25 @@ pub fn admin_permissions_remove(
         .map(|p| p.permissions.into_iter().collect())
         .map_err(|e| CanisterError::AuthError(format!("{e:?}")))
 }
+
+/// Enables/disables the inspect message.
+#[update]
+pub fn admin_inspect_message_enable(inspect_message_enabled: bool) -> Result<(), CanisterError> {
+    let mut state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
+
+    state
+        .settings
+        .set_inspect_message_enabled(inspect_message_enabled);
+    Ok(())
+}
+
+/// Returns the inspect message status.
+#[query]
+pub fn is_inspect_message_enabled() -> bool {
+    let state = get_state();
+    state.settings.is_inspect_message_enabled()
+}

@@ -40,10 +40,10 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
 
   just dfx_local_deploy_token_storage "${OWNER}"
 
-  dfx deploy gate_service_backend --argument "(record {
+  dfx deploy gate_service --argument "(record {
       log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
       owner=principal \"${OWNER}\";
-      permissions=opt (vec { record { principal \"${cashier_backend_id}\"; vec { variant { GateCreator } } } });
+      permissions=opt (vec { record { principal \"${cashier_backend_id}\"; vec { variant { GateCreate } } } });
   })"
 
     dfx deploy cashier_backend --argument "(record {
@@ -71,18 +71,18 @@ dfx_local_info:
   cashier_backend_id=$(dfx canister id cashier_backend)
   token_storage_id=$(dfx canister id token_storage)
   internet_identity_id=$(dfx canister id internet_identity)
-  gate_service_backend_id=$(dfx canister id gate_service_backend)
+  gate_service_id=$(dfx canister id gate_service)
 
   echo "webserver-port: $dfx_webserver_port"
   echo "cashier_backend id: $cashier_backend_id"
   echo "token_storage id: $token_storage_id"
   echo "internet_identity id: $internet_identity_id"
-  echo "gate_service_backend_id: $gate_service_backend_id"
+  echo "gate_service_id: $gate_service_id"
 
   echo "cashier_backend url: http://$cashier_backend_id.raw.localhost:$dfx_webserver_port"
   echo "token_storage url: http://$token_storage_id.raw.localhost:$dfx_webserver_port"
   echo "internet_identity url: http://$internet_identity_id.raw.localhost:$dfx_webserver_port"
-  echo "gate_service_backend url: http://$gate_service_backend_id.raw.localhost:$dfx_webserver_port"
+  echo "gate_service url: http://$gate_service_id.raw.localhost:$dfx_webserver_port"
 
 # Airdrop tokens to the target principal
 [group('dfx')]

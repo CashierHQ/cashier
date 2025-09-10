@@ -6,8 +6,8 @@ use crate::utils::{principal::TestUser, with_pocket_ic_context};
 async fn should_allow_admin_to_get_permissions() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let admin = TestUser::GateServiceBackendAdmin.get_principal();
-        let admin_client = ctx.new_gate_service_backend_client(admin);
+        let admin = TestUser::GateServiceAdmin.get_principal();
+        let admin_client = ctx.new_gate_service_client(admin);
 
         let permissions = admin_client.admin_permissions_get(admin).await.unwrap();
 
@@ -25,7 +25,7 @@ async fn should_not_allow_user_to_get_permissions() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let user = TestUser::User1.get_principal();
-        let user_client = ctx.new_gate_service_backend_client(user);
+        let user_client = ctx.new_gate_service_client(user);
 
         // Act
         let permissions = user_client.admin_permissions_get(user).await;
@@ -43,9 +43,9 @@ async fn should_not_allow_user_to_get_permissions() {
 async fn should_allow_admin_to_set_and_remove_admin_permissions() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let admin = TestUser::GateServiceBackendAdmin.get_principal();
+        let admin = TestUser::GateServiceAdmin.get_principal();
         let user = TestUser::User1.get_principal();
-        let admin_client = ctx.new_gate_service_backend_client(admin);
+        let admin_client = ctx.new_gate_service_client(admin);
 
         // Act
         let user_permissions_add = admin_client
@@ -80,13 +80,13 @@ async fn should_allow_admin_to_set_and_remove_admin_permissions() {
 async fn should_allow_admin_to_set_and_remove_gatecreator_permissions() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let admin = TestUser::GateServiceBackendAdmin.get_principal();
+        let admin = TestUser::GateServiceAdmin.get_principal();
         let user = TestUser::User1.get_principal();
-        let admin_client = ctx.new_gate_service_backend_client(admin);
+        let admin_client = ctx.new_gate_service_client(admin);
 
         // Act
         let user_permissions_add = admin_client
-            .admin_permissions_add(user, vec![Permission::GateCreator])
+            .admin_permissions_add(user, vec![Permission::GateCreate])
             .await
             .unwrap()
             .unwrap();
@@ -94,7 +94,7 @@ async fn should_allow_admin_to_set_and_remove_gatecreator_permissions() {
         let user_permissions_get_1 = admin_client.admin_permissions_get(user).await.unwrap();
 
         let user_permissions_remove = admin_client
-            .admin_permissions_remove(user, vec![Permission::GateCreator])
+            .admin_permissions_remove(user, vec![Permission::GateCreate])
             .await
             .unwrap()
             .unwrap();
@@ -102,8 +102,8 @@ async fn should_allow_admin_to_set_and_remove_gatecreator_permissions() {
         let user_permissions_get_2 = admin_client.admin_permissions_get(user).await.unwrap();
 
         // Assert
-        assert_eq!(vec![Permission::GateCreator], user_permissions_add);
-        assert_eq!(vec![Permission::GateCreator], user_permissions_get_1);
+        assert_eq!(vec![Permission::GateCreate], user_permissions_add);
+        assert_eq!(vec![Permission::GateCreate], user_permissions_get_1);
         assert!(user_permissions_remove.is_empty());
         assert!(user_permissions_get_2.is_empty());
 
@@ -118,7 +118,7 @@ async fn should_not_allow_user_to_set_and_remove_permissions() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let user = TestUser::User1.get_principal();
-        let user_client = ctx.new_gate_service_backend_client(user);
+        let user_client = ctx.new_gate_service_client(user);
 
         // Act
         let user_permissions_add = user_client

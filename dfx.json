@@ -15,10 +15,10 @@
             "type": "assets",
             "build": ""
         },
-        "gate_service_backend": {
+        "gate_service": {
             "type": "custom",
-            "candid": "./target/artifacts/gate_service_backend.did",
-            "wasm": "./target/artifacts/gate_service_backend.wasm.gz"
+            "candid": "./target/artifacts/gate_service.did",
+            "wasm": "./target/artifacts/gate_service.wasm.gz"
         },
         "icp_ledger_canister": {
             "type": "custom",

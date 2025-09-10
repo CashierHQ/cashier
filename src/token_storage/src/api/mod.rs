@@ -3,6 +3,7 @@
 
 pub mod admin;
 mod init_and_upgrade;
+mod inspect_message;
 mod state;
 pub mod token;
 

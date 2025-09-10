@@ -11,13 +11,13 @@ use serde::Serialize;
 /// The data structure for a Gate
 /// Fields:
 /// * `id`: The unique identifier for the gate.
+/// * `creator`: The creator of the gate.
 /// * `subject_id`: The ID of the object being gated (Links, Campaigns, MysteryBoxes, etc)
-/// * `gate_type`: The type of the gate.
-/// * `key`: The key associated with the gate.
+/// * `key`: The key of the gate.
 pub struct Gate {
     pub id: String,
+    pub creator: Principal,
     pub subject_id: String,
-    pub gate_type: GateType,
     pub key: GateKey,
 }
 
@@ -25,26 +25,10 @@ pub struct Gate {
 /// The data structure for creating a new Gate
 /// Fields:
 /// * `subject_id`: The ID of the object being gated (Links, Campaigns, MysteryBoxes, etc)
-/// * `gate_type`: The type of the gate.
-/// * `key`: The key associated with the gate.
+/// * `key`: The key of the gate.
 pub struct NewGate {
     pub subject_id: String,
-    pub gate_type: GateType,
     pub key: GateKey,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
-/// The data structure for updating an existing Gate
-/// Fields:
-/// * `id`: The unique identifier for the gate.
-/// * `subject_id`: The ID of the object being gated (Links, Campaigns, MysteryBoxes, etc)
-/// * `gate_type`: The type of the gate.
-/// * `key`: The key associated with the gate.
-pub struct UpdateGate {
-    pub id: String,
-    pub subject_id: Option<String>,
-    pub gate_type: Option<GateType>,
-    pub key: Option<GateKey>,
 }
 
 #[derive(CandidType, Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -90,17 +74,6 @@ pub enum GateStatus {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Clone)]
-/// The gate type enum
-pub enum GateType {
-    Password,
-    XFollowing,
-    TelegramGroup,
-    DiscordServer,
-    Nft,
-    Composite,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Clone)]
 /// The gate key enum
 pub enum GateKey {
     Password(String),
@@ -108,26 +81,6 @@ pub enum GateKey {
     XFollowing(String),
     TelegramGroup(String),
     DiscordServer(String),
-    Nft(NftKey),
-    Composite(CompositeKey),
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Clone)]
-/// The data structure for an NFT key
-/// Fields:
-/// * `collection_id`: The ID of the NFT collection.
-/// * `token_id`: The ID of the specific NFT token.
-pub struct NftKey {
-    pub collection_id: String,
-    pub token_id: String,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Clone)]
-/// The data structure for a composite key (TBD)
-/// Fields:
-/// * `version`: The version of the composite key.
-pub struct CompositeKey {
-    pub version: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, PartialEq, Clone)]
