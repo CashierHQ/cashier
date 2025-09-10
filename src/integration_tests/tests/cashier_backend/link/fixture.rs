@@ -18,7 +18,7 @@ use cashier_backend_types::{
         link::v1::{LinkType, Template},
     },
 };
-use gate_service_types::{Gate, GateKey, GateType, NewGate, error::GateServiceError};
+use gate_service_types::{Gate, GateKey, NewGate};
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
 use std::{sync::Arc, time::Duration};
@@ -52,7 +52,7 @@ impl LinkTestFixture {
         // using cashier backend identity to call add gate
         let gate_service_client = self
             .ctx
-            .new_gate_service_backend_client(self.ctx.cashier_backend_principal);
+            .new_gate_service_client(self.ctx.cashier_backend_principal);
 
         let res = gate_service_client
             .add_gate(new_gate)
@@ -560,7 +560,6 @@ pub async fn create_tip_link_fixture(token: &str, amount: u64) -> (LinkTestFixtu
 pub async fn create_tip_link_with_gate_fixture(
     token: &str,
     amount: u64,
-    gate_type: GateType,
     key: GateKey,
 ) -> (LinkTestFixture, LinkDto, Gate) {
     let mut builder = PocketIcTestContextBuilder::new()
@@ -589,7 +588,6 @@ pub async fn create_tip_link_with_gate_fixture(
     let gate = creator_fixture
         .create_gate_for_link(NewGate {
             subject_id: link.id.clone(),
-            gate_type,
             key,
         })
         .await

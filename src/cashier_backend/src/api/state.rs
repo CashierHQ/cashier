@@ -11,7 +11,7 @@ use crate::{
 };
 use candid::Principal;
 use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
-use gate_service_backend_client::{IcCanisterClient, client::GateServiceBackendClient};
+use gate_service_client::{IcCanisterClient, client::GateServiceBackendClient};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 use std::{cell::RefCell, rc::Rc, thread::LocalKey};
 

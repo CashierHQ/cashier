@@ -1,6 +1,4 @@
-use crate::cashier_backend::link::fixture::{
-    self, LinkTestFixture, create_tip_link_with_gate_fixture,
-};
+use crate::cashier_backend::link::fixture::{LinkTestFixture, create_tip_link_with_gate_fixture};
 use crate::utils::{
     PocketIcTestContextBuilder, icrc_112::execute_icrc112_request,
     link_id_to_account::link_id_to_account, principal::TestUser,
@@ -18,7 +16,7 @@ use cashier_backend_types::{
     },
 };
 use cashier_common::test_utils;
-use gate_service_types::{GateKey, GateType};
+use gate_service_types::GateKey;
 use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
 use std::sync::Arc;
@@ -331,7 +329,6 @@ async fn it_should_create_link_tip_icrc_token_with_gate_successfully() {
     let (fixture, link, _) = create_tip_link_with_gate_fixture(
         constant::CKBTC_ICRC_TOKEN,
         1_000_000u64,
-        GateType::Password,
         GateKey::Password("test_password".to_string()),
     )
     .await;

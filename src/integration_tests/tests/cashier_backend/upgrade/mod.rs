@@ -83,7 +83,7 @@ mod test_canister_upgrade {
                 ctx.cashier_backend_principal,
                 new_bytecode,
                 &(CashierBackendUpgradeData {
-                    gate_service_canister_id: ctx.gate_service_backend_principal,
+                    gate_service_canister_id: ctx.gate_service_principal,
                 }),
             )
             .await;
@@ -134,7 +134,7 @@ mod test_canister_upgrade {
                 ctx.cashier_backend_principal,
                 new_bytecode,
                 &(CashierBackendUpgradeData {
-                    gate_service_canister_id: ctx.gate_service_backend_principal,
+                    gate_service_canister_id: ctx.gate_service_principal,
                 }),
             )
             .await;
@@ -154,7 +154,7 @@ mod test_canister_upgrade {
                 ctx.cashier_backend_principal,
                 new_bytecode,
                 &(CashierBackendUpgradeData {
-                    gate_service_canister_id: ctx.gate_service_backend_principal,
+                    gate_service_canister_id: ctx.gate_service_principal,
                 }),
             )
             .await;
