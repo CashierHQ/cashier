@@ -1,4 +1,4 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use cashier_macros::storable;
 use ic_mple_log::service::Storage;
 use ic_stable_structures::{DefaultMemoryImpl, StableCell, memory_manager::VirtualMemory};
@@ -9,12 +9,14 @@ use ic_stable_structures::{DefaultMemoryImpl, StableCell, memory_manager::Virtua
 pub struct Settings {
     /// Whether the inspect message is enabled
     pub inspect_message_enabled: bool,
+    pub gate_canister_principal: Principal,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
             inspect_message_enabled: true,
+            gate_canister_principal: Principal::anonymous(),
         }
     }
 }

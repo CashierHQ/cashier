@@ -17,5 +17,5 @@ pub struct CashierBackendInitData {
 #[derive(Debug, Clone, CandidType, Deserialize)]
 pub struct CashierBackendUpgradeData {
     /// The canister id of the gate service canister
-    pub gate_service_canister_id: Principal,
+    pub gate_service_canister_id: Option<Principal>,
 }

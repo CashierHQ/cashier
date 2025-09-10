@@ -1,5 +1,7 @@
 use crate::{
-    repositories::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
+    repositories::{
+        AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, Repositories, ThreadlocalRepositories,
+    },
     services::{
         action::ActionService,
         auth::{AuthService, AuthServiceStorage},
@@ -9,15 +11,10 @@ use crate::{
         transaction_manager::{service::TransactionManagerService, validate::ValidateService},
     },
 };
-use candid::Principal;
 use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
 use gate_service_client::{IcCanisterClient, client::GateServiceBackendClient};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 use std::{cell::RefCell, rc::Rc, thread::LocalKey};
-
-thread_local! {
-    static GATE_SERVICE_CANISTER_ID: RefCell<Principal> = RefCell::new(Principal::anonymous());
-}
 
 /// The state of the canister
 pub struct CanisterState<E: IcEnvironment + Clone> {
@@ -37,6 +34,11 @@ impl<E: IcEnvironment + Clone> CanisterState<E> {
     /// Creates a new CanisterState
     pub fn new(env: E) -> Self {
         let repo = Rc::new(ThreadlocalRepositories);
+
+        let gate_service_principal = repo
+            .settings()
+            .read(|settings| settings.gate_canister_principal);
+
         CanisterState {
             action_service: ActionService::new(&repo),
             auth_service: AuthService::new(&AUTH_SERVICE_STORE),
@@ -47,7 +49,7 @@ impl<E: IcEnvironment + Clone> CanisterState<E> {
             validate_service: ValidateService::new(&repo),
             transaction_manager_service: TransactionManagerService::new(repo, env.clone()),
             gate_service_client: GateServiceBackendClient::new(IcCanisterClient::new(
-                GATE_SERVICE_CANISTER_ID.with(|id| *id.borrow()),
+                gate_service_principal,
                 Some(5 * 60), // 5 minutes timeout
             )),
             env,
@@ -59,10 +61,4 @@ impl<E: IcEnvironment + Clone> CanisterState<E> {
 #[inline(always)]
 pub fn get_state() -> CanisterState<RealIcEnvironment> {
     CanisterState::new(RealIcEnvironment::new())
-}
-
-pub fn update_setting(gate_service_canister_id: Principal) {
-    GATE_SERVICE_CANISTER_ID.with_borrow_mut(|store| {
-        *store = gate_service_canister_id;
-    });
 }
