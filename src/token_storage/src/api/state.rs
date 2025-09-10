@@ -6,6 +6,7 @@ use crate::{
     repository::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
     services::{
         auth::{AuthService, AuthServiceStorage},
+        settings::SettingsService,
         token_registry::TokenRegistryService,
         user_preference::UserPreferenceService,
         user_token::UserTokenService,
@@ -16,6 +17,7 @@ use crate::{
 pub struct CanisterState {
     pub auth_service: AuthService<&'static LocalKey<RefCell<AuthServiceStorage>>>,
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
+    pub settings: SettingsService<ThreadlocalRepositories>,
     pub token_registry: TokenRegistryService<ThreadlocalRepositories>,
     pub user_preference: UserPreferenceService<ThreadlocalRepositories>,
     pub user_token: UserTokenService<ThreadlocalRepositories>,
@@ -28,6 +30,7 @@ impl CanisterState {
         CanisterState {
             auth_service: AuthService::new(&AUTH_SERVICE_STORE),
             log_service: LoggerConfigService::new(&LOGGER_SERVICE_STORE),
+            settings: SettingsService::new(&repo),
             token_registry: TokenRegistryService::new(&repo),
             user_preference: UserPreferenceService::new(&repo),
             user_token: UserTokenService::new(&repo),

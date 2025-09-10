@@ -61,6 +61,21 @@ impl<C: CanisterClient> CashierBackendClient<C> {
             .await
     }
 
+    /// Enables/disables the inspect message.
+    pub async fn admin_inspect_message_enable(
+        &self,
+        inspect_message_enabled: bool,
+    ) -> CanisterClientResult<Result<(), CanisterError>> {
+        self.client
+            .update("admin_inspect_message_enable", (inspect_message_enabled,))
+            .await
+    }
+
+    /// Returns the inspect message status.
+    pub async fn is_inspect_message_enabled(&self) -> CanisterClientResult<bool> {
+        self.client.query("is_inspect_message_enabled", ()).await
+    }
+
     /// Returns the build data of the canister.
     pub async fn get_canister_build_data(&self) -> CanisterClientResult<BuildData> {
         self.client.query("get_canister_build_data", ()).await
