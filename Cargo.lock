@@ -274,7 +274,7 @@ dependencies = [
  "cashier_macros",
  "ciborium",
  "futures",
- "gate_service_backend_client",
+ "gate_service_client",
  "getrandom 0.2.16",
  "ic-cdk",
  "ic-cdk-timers",
