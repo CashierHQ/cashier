@@ -25,15 +25,19 @@ const mapStringToFrontendChain = (chain: BackendChain): Chain => {
   throw new Error(`Unsupported chain: ${chain}`);
 };
 
-const mapTokenIdToString = (tokenId: TokenId): string => {
+export const mapTokenIdToString = (tokenId: TokenId): string => {
   if ("IC" in tokenId) {
-    return tokenId.IC.ledger_id.toString();
+    return "IC:" + tokenId.IC.ledger_id.toString();
   }
 
   throw new Error(`Unsupported tokenId: ${tokenId}`);
 };
 
 export const mapStringToTokenId = (tokenId: string, chain: string): TokenId => {
+  const prefix = `${chain}:`;
+  if (tokenId.startsWith(prefix)) {
+    tokenId = tokenId.slice(prefix.length);
+  }
   if (chain === "IC") {
     return { IC: { ledger_id: Principal.fromText(tokenId) } };
   }
