@@ -8,6 +8,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CashierBackendInitData = IDL.Record({
     'owner' : IDL.Principal,
+    'gate_service_canister_id' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
   CanisterError.fill(
@@ -245,8 +246,22 @@ export const idlFactory = ({ IDL }) => {
     'git_commit_timestamp' : IDL.Text,
   });
   const GetLinkOptions = IDL.Record({ 'action_type' : ActionType });
+  const GateKey = IDL.Variant({
+    'Password' : IDL.Text,
+    'XFollowing' : IDL.Text,
+    'DiscordServer' : IDL.Text,
+    'PasswordRedacted' : IDL.Null,
+    'TelegramGroup' : IDL.Text,
+  });
+  const Gate = IDL.Record({
+    'id' : IDL.Text,
+    'key' : GateKey,
+    'creator' : IDL.Principal,
+    'subject_id' : IDL.Text,
+  });
   const GetLinkResp = IDL.Record({
     'action' : IDL.Opt(ActionDto),
+    'gate' : IDL.Opt(Gate),
     'link' : LinkDto,
   });
   const Result_4 = IDL.Variant({ 'Ok' : GetLinkResp, 'Err' : IDL.Text });
@@ -419,7 +434,7 @@ export const idlFactory = ({ IDL }) => {
     'get_link' : IDL.Func(
         [IDL.Text, IDL.Opt(GetLinkOptions)],
         [Result_4],
-        ['query'],
+        ['composite_query'],
       ),
     'get_links' : IDL.Func([IDL.Opt(PaginateInput)], [Result_5], ['query']),
     'icrc10_supported_standards' : IDL.Func(
@@ -461,6 +476,7 @@ export const init = ({ IDL }) => {
   });
   const CashierBackendInitData = IDL.Record({
     'owner' : IDL.Principal,
+    'gate_service_canister_id' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
   return [CashierBackendInitData];
