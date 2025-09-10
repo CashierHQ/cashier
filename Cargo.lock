@@ -271,6 +271,7 @@ dependencies = [
  "candid",
  "cashier_backend_types",
  "cashier_common",
+ "cashier_macros",
  "ciborium",
  "futures",
  "getrandom 0.2.16",
