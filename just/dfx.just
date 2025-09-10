@@ -37,7 +37,7 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
   dfx deploy gate_service --argument "(record {
       log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
       owner=principal \"${OWNER}\";
-      permissions=opt (vec { record { principal \"${cashier_backend_id}\"; vec { variant { GateCreator } } } });
+      permissions=opt (vec { record { principal \"${cashier_backend_id}\"; vec { variant { GateCreate } } } });
   })"
 
   dfx deploy internet_identity
