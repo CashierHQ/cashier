@@ -504,7 +504,7 @@ pub async fn create_tip_link_fixture(
         .await;
     let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
     let _icrc112_execution_result =
-        icrc_112::execute_icrc112_request(icrc_112_requests, caller, &ctx).await;
+        icrc_112::execute_icrc112_request(icrc_112_requests, caller, ctx).await;
     let _update_action = creator_fixture
         .update_action(&link.id, &processing_action.id)
         .await;
@@ -563,7 +563,7 @@ pub async fn create_token_basket_link_fixture(
         .await;
     let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
     let _icrc112_execution_result =
-        icrc_112::execute_icrc112_request(icrc_112_requests, caller, &ctx).await;
+        icrc_112::execute_icrc112_request(icrc_112_requests, caller, ctx).await;
     let _update_action = creator_fixture
         .update_action(&link.id, &processing_action.id)
         .await;
@@ -580,19 +580,11 @@ pub async fn create_token_basket_link_fixture(
 
 /// Creates a fixture for an airdrop link.
 pub async fn create_airdrop_link_fixture(
+    ctx: &PocketIcTestContext,
     token: &str,
     amount: u64,
     max_use_count: u64,
 ) -> (LinkTestFixture, LinkDto) {
-    let mut builder = PocketIcTestContextBuilder::new()
-        .with_cashier_backend()
-        .with_icp_ledger();
-
-    if token != constant::ICP_TOKEN {
-        builder = builder.with_icrc_tokens(vec![token.to_string()]);
-    }
-
-    let ctx = builder.build_async().await;
     let caller = TestUser::User1.get_principal();
     let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
