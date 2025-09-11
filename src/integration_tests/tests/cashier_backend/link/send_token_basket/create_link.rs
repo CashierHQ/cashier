@@ -165,7 +165,7 @@ async fn it_should_create_link_token_basket_successfully() {
 
         // Act
         let icrc112_execution_result =
-            icrc_112::execute_icrc112_request(icrc_112_requests, caller, &ctx).await;
+            icrc_112::execute_icrc112_request(icrc_112_requests, caller, ctx).await;
 
         // Assert
         assert!(icrc112_execution_result.is_ok());

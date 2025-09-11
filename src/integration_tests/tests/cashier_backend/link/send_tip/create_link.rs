@@ -128,7 +128,7 @@ async fn it_should_create_link_tip_icp_token_successfully() {
 
         // Act
         let _icrc112_execution_result =
-            execute_icrc112_request(icrc_112_requests, caller, &ctx).await;
+            execute_icrc112_request(icrc_112_requests, caller, ctx).await;
         let update_action = test_fixture
             .update_action(&link.id, &processing_action.id)
             .await;
@@ -155,7 +155,7 @@ async fn it_should_create_link_tip_icp_token_successfully() {
         // Assert
         assert_eq!(update_link.state, LinkState::Active);
 
-        let link_account = link_id_to_account(&ctx, &link.id);
+        let link_account = link_id_to_account(ctx, &link.id);
         let caller_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
         let icp_link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
         let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
@@ -272,7 +272,7 @@ async fn it_should_create_link_tip_icrc_token_successfully() {
 
         // Act
         let _icrc112_execution_result =
-            execute_icrc112_request(icrc_112_requests, caller, &ctx).await;
+            execute_icrc112_request(icrc_112_requests, caller, ctx).await;
         let update_action = test_fixture
             .update_action(&link.id, &processing_action.id)
             .await;
@@ -299,7 +299,7 @@ async fn it_should_create_link_tip_icrc_token_successfully() {
         // Assert
         assert_eq!(update_link.state, LinkState::Active);
 
-        let link_account = link_id_to_account(&ctx, &link.id);
+        let link_account = link_id_to_account(ctx, &link.id);
         let icp_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
         let ckbtc_balance_after = ckbtc_ledger_client
             .balance_of(&caller_account)
