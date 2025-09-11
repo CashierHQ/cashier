@@ -27,15 +27,15 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
   export OWNER=$(dfx identity get-principal)
 
   dfx canister create token_storage
-  dfx canister create gate_service_backend
+  dfx canister create gate_service
   dfx canister create cashier_backend
 
   cashier_backend_id=$(dfx canister id cashier_backend)
-  gate_service_backend_id=$(dfx canister id gate_service_backend)
+  gate_service_id=$(dfx canister id gate_service)
   token_storage_id=$(dfx canister id token_storage)
   
   echo "cashier_backend_id: $cashier_backend_id"
-  echo "gate_service_backend_id: $gate_service_backend_id"
+  echo "gate_service_id: $gate_service_id"
   echo "token_storage_id: $token_storage_id"
 
   just dfx_local_deploy_token_storage "${OWNER}"

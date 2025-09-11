@@ -1,3 +1,4 @@
+use crate::services::gate::GateServiceTrait;
 use crate::{
     repositories::Repositories,
     services::link::{service::LinkService, traits::LinkUserStateMachine},
@@ -19,8 +20,10 @@ use cashier_backend_types::{
 };
 use cashier_common::runtime::IcEnvironment;
 
-impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkService<E, R> {
-    fn handle_user_link_state_machine(
+impl<E: IcEnvironment + Clone, R: Repositories, GS: GateServiceTrait> LinkUserStateMachine
+    for LinkService<E, R, GS>
+{
+    async fn handle_user_link_state_machine(
         &mut self,
         link_id: &str,
         action_type: &ActionType,
@@ -45,33 +48,44 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
         // Flattened state transitions using if/else
         let new_state;
 
+        let gate = self
+            .gate_service
+            .get_gate_by_link_id(link_id)
+            .await
+            .map_err(|e| CanisterError::HandleLogicError(format!("Failed to get gate: {e}")))?
+            .map_err(|e| CanisterError::HandleLogicError(format!("Gate service error: {e}")))?;
+
+        //
+
         // Check if we're in final state (CompletedLink)
         if current_user_state == LinkUserState::CompletedLink {
             return Err(CanisterError::HandleLogicError(
                 "current state is final state".to_string(),
             ));
         }
-        //
         // !Start of user state machine
         //
         // Check for valid transition: Address -> CompletedLink
-        // TODO check gate, right now gate is not implemented
         else if current_user_state == LinkUserState::Address
             && *goto == UserStateMachineGoto::Continue
         {
-            // Validate the action exists and is successful
-            let action = self
-                .get_action_of_link(link_id, action_type, user_id)
-                .ok_or_else(|| CanisterError::NotFound("Action not found".to_string()))?;
+            // if gate is existed, transition to user_state_gate_closed
+            if gate.is_some() {
+                new_state = LinkUserState::GateClosed;
+            } else {
+                // if gate is not existed, then check the action state
+                let action = self
+                    .get_action_of_link(link_id, action_type, user_id)
+                    .ok_or_else(|| CanisterError::NotFound("Action not found".to_string()))?;
 
-            if action.state != ActionState::Success {
-                return Err(CanisterError::HandleLogicError(
-                    "Action is not success".to_string(),
-                ));
+                // Only allow transition if action state is Success
+                if action.state != ActionState::Success {
+                    return Err(CanisterError::HandleLogicError(
+                        "Action is not success".to_string(),
+                    ));
+                }
+                new_state = LinkUserState::CompletedLink;
             }
-
-            // Set the new state
-            new_state = LinkUserState::CompletedLink;
         }
         // !End of state machine logic
 
@@ -151,7 +165,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
         }))
     }
 
-    fn link_update_user_state(
+    async fn link_update_user_state(
         &mut self,
         caller: Principal,
         input: &LinkUpdateUserStateInput,
@@ -172,12 +186,14 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
         let temp_user_id = temp_user_id
             .ok_or_else(|| CanisterError::ValidationErrors("User ID is required".to_string()))?;
 
-        let link_action = self.handle_user_link_state_machine(
-            &input.link_id,
-            &input.action_type,
-            temp_user_id,
-            &input.goto,
-        )?;
+        let link_action = self
+            .handle_user_link_state_machine(
+                &input.link_id,
+                &input.action_type,
+                temp_user_id,
+                &input.goto,
+            )
+            .await?;
 
         // If not found
         // return action = null
@@ -212,25 +228,32 @@ mod tests {
     use super::*;
     use crate::repositories::tests::TestRepositories;
     use crate::services::link::test_fixtures::*;
-    use crate::utils::test_utils::{random_principal_id, runtime::MockIcEnvironment};
+    use crate::utils::test_utils::{
+        gate_service_mock::GateServiceMock, random_principal_id, runtime::MockIcEnvironment,
+    };
     use cashier_backend_types::repository::action::v1::{Action, ActionState, ActionType};
 
-    #[test]
-    fn it_should_error_handle_user_link_state_machine_if_link_not_found() {
+    #[tokio::test]
+    async fn it_should_error_handle_user_link_state_machine_if_link_not_found() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let action_type = ActionType::Use;
 
         // Act
-        let result = service.handle_user_link_state_machine(
-            &link.id,
-            &action_type,
-            creator_id,
-            &UserStateMachineGoto::Continue,
-        );
+        let result = service
+            .handle_user_link_state_machine(
+                &link.id,
+                &action_type,
+                creator_id,
+                &UserStateMachineGoto::Continue,
+            )
+            .await;
 
         // Assert
         assert!(result.is_err());
@@ -242,11 +265,14 @@ mod tests {
         }
     }
 
-    #[test]
-    fn it_should_error_handle_user_link_state_machine_if_link_state_empty() {
+    #[tokio::test]
+    async fn it_should_error_handle_user_link_state_machine_if_link_state_empty() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let action_type = ActionType::Use;
@@ -255,12 +281,14 @@ mod tests {
             create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
 
         // Act
-        let result = service.handle_user_link_state_machine(
-            &link.id,
-            &action_type,
-            creator_id,
-            &UserStateMachineGoto::Continue,
-        );
+        let result = service
+            .handle_user_link_state_machine(
+                &link.id,
+                &action_type,
+                creator_id,
+                &UserStateMachineGoto::Continue,
+            )
+            .await;
 
         // Assert
         assert!(result.is_err());
@@ -272,11 +300,14 @@ mod tests {
         }
     }
 
-    #[test]
-    fn it_should_error_handle_user_link_state_machine_if_link_uset_state_completed() {
+    #[tokio::test]
+    async fn it_should_error_handle_user_link_state_machine_if_link_uset_state_completed() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let action_type = ActionType::Use;
@@ -293,12 +324,14 @@ mod tests {
         service.link_action_repository.update(updated_link_action);
 
         // Act
-        let result = service.handle_user_link_state_machine(
-            &link.id,
-            &action_type,
-            creator_id,
-            &UserStateMachineGoto::Continue,
-        );
+        let result = service
+            .handle_user_link_state_machine(
+                &link.id,
+                &action_type,
+                creator_id,
+                &UserStateMachineGoto::Continue,
+            )
+            .await;
 
         // Assert
         assert!(result.is_err());
@@ -310,12 +343,15 @@ mod tests {
         }
     }
 
-    #[test]
-    fn it_should_error_handle_user_link_state_machine_if_current_state_choose_wallet_and_goto_continue_and_action_state_notsuccess()
+    #[tokio::test]
+    async fn it_should_error_handle_user_link_state_machine_if_current_state_choose_wallet_and_goto_continue_and_action_state_notsuccess()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let action_type = ActionType::Use;
@@ -332,12 +368,14 @@ mod tests {
         service.link_action_repository.update(updated_link_action);
 
         // Act
-        let result = service.handle_user_link_state_machine(
-            &link.id,
-            &action_type,
-            creator_id,
-            &UserStateMachineGoto::Continue,
-        );
+        let result = service
+            .handle_user_link_state_machine(
+                &link.id,
+                &action_type,
+                creator_id,
+                &UserStateMachineGoto::Continue,
+            )
+            .await;
 
         // Assert
         assert!(result.is_err());
@@ -349,11 +387,15 @@ mod tests {
         }
     }
 
-    #[test]
-    fn it_should_handle_user_link_state_machine_if_current_state_choose_wallet_and_goto_continue() {
+    #[tokio::test]
+    async fn it_should_handle_user_link_state_machine_if_current_state_choose_wallet_and_goto_continue()
+     {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let action_type = ActionType::Use;
@@ -378,13 +420,25 @@ mod tests {
         };
         service.action_repository.update(updated_action);
 
+        // let mock_gate_service = MockGateService::new();
+        // Seed a gate for this link so gate_service.get_gate_by_link_id returns Some(gate)
+        // gate::clear_test_gates();
+        // gate::add_test_gate(gate_service_types::Gate {
+        //     id: format!("gate_{}", link.id),
+        //     creator: creator_id,
+        //     subject_id: link.id.clone(),
+        //     key: gate_service_types::GateKey::PasswordRedacted,
+        // });
+
         // Act
-        let result = service.handle_user_link_state_machine(
-            &link.id,
-            &action_type,
-            creator_id,
-            &UserStateMachineGoto::Continue,
-        );
+        let result = service
+            .handle_user_link_state_machine(
+                &link.id,
+                &action_type,
+                creator_id,
+                &UserStateMachineGoto::Continue,
+            )
+            .await;
 
         // Assert
         assert!(result.is_ok());
@@ -395,11 +449,14 @@ mod tests {
         );
     }
 
-    #[test]
-    fn it_should_error_handle_user_link_state_machine_otherwise() {
+    #[tokio::test]
+    async fn it_should_error_handle_user_link_state_machine_otherwise() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let action_type = ActionType::Use;
@@ -416,12 +473,14 @@ mod tests {
         service.link_action_repository.update(updated_link_action);
 
         // Act
-        let result = service.handle_user_link_state_machine(
-            &link.id,
-            &action_type,
-            creator_id,
-            &UserStateMachineGoto::Back,
-        );
+        let result = service
+            .handle_user_link_state_machine(
+                &link.id,
+                &action_type,
+                creator_id,
+                &UserStateMachineGoto::Back,
+            )
+            .await;
 
         // Assert
         assert!(result.is_err());
@@ -443,8 +502,11 @@ mod tests {
     #[test]
     fn it_should_error_link_get_user_state_if_action_type_invalid() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator = random_principal_id();
         let link = create_link_fixture(&mut service, creator);
 
@@ -471,8 +533,11 @@ mod tests {
     #[test]
     fn it_should_error_link_get_user_state_if_action_type_invalid_format() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator = random_principal_id();
         let link = create_link_fixture(&mut service, creator);
 
@@ -499,8 +564,11 @@ mod tests {
     #[test]
     fn it_should_link_get_user_state_if_link_action_not_found() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator = random_principal_id();
         let link = create_link_fixture(&mut service, creator);
 
@@ -523,8 +591,11 @@ mod tests {
     #[test]
     fn it_should_error_link_get_user_state_if_link_user_state_not_found() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator = random_principal_id();
         let link = create_link_fixture(&mut service, creator);
         let link_action =
@@ -562,8 +633,11 @@ mod tests {
     #[test]
     fn it_should_link_get_user_state_if_link_action_found() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let link_action =
@@ -596,24 +670,29 @@ mod tests {
         assert_eq!(output.action.creator, creator_id);
     }
 
-    #[test]
-    fn it_should_error_link_update_user_state_if_action_type_invalid() {
+    #[tokio::test]
+    async fn it_should_error_link_update_user_state_if_action_type_invalid() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
 
         // Act
-        let result = service.link_update_user_state(
-            creator_id,
-            &LinkUpdateUserStateInput {
-                link_id: link.id,
-                action_type: ActionType::CreateLink,
-                goto: UserStateMachineGoto::Continue,
-                anonymous_wallet_address: None,
-            },
-        );
+        let result = service
+            .link_update_user_state(
+                creator_id,
+                &LinkUpdateUserStateInput {
+                    link_id: link.id,
+                    action_type: ActionType::CreateLink,
+                    goto: UserStateMachineGoto::Continue,
+                    anonymous_wallet_address: None,
+                },
+            )
+            .await;
 
         // Assert
         assert!(result.is_err());
@@ -625,24 +704,29 @@ mod tests {
         }
     }
 
-    #[test]
-    fn it_should_error_link_update_user_state_if_action_type_invalid_format() {
+    #[tokio::test]
+    async fn it_should_error_link_update_user_state_if_action_type_invalid_format() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
 
         // Act
-        let result = service.link_update_user_state(
-            creator_id,
-            &LinkUpdateUserStateInput {
-                link_id: link.id,
-                action_type: ActionType::CreateLink,
-                goto: UserStateMachineGoto::Continue,
-                anonymous_wallet_address: None,
-            },
-        );
+        let result = service
+            .link_update_user_state(
+                creator_id,
+                &LinkUpdateUserStateInput {
+                    link_id: link.id,
+                    action_type: ActionType::CreateLink,
+                    goto: UserStateMachineGoto::Continue,
+                    anonymous_wallet_address: None,
+                },
+            )
+            .await;
 
         // Assert
         assert!(result.is_err());
@@ -654,11 +738,14 @@ mod tests {
         }
     }
 
-    #[test]
-    fn it_should_link_update_user_state() {
+    #[tokio::test]
+    async fn it_should_link_update_user_state() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let link_action =
@@ -683,15 +770,17 @@ mod tests {
         service.action_repository.update(updated_action);
 
         // Act
-        let result = service.link_update_user_state(
-            creator_id,
-            &LinkUpdateUserStateInput {
-                link_id: link.id,
-                action_type: ActionType::Use,
-                goto: UserStateMachineGoto::Continue,
-                anonymous_wallet_address: None,
-            },
-        );
+        let result = service
+            .link_update_user_state(
+                creator_id,
+                &LinkUpdateUserStateInput {
+                    link_id: link.id,
+                    action_type: ActionType::Use,
+                    goto: UserStateMachineGoto::Continue,
+                    anonymous_wallet_address: None,
+                },
+            )
+            .await;
 
         // Assert
         assert!(result.is_ok());

@@ -1,10 +1,9 @@
 use crate::{
-    repositories::{
-        AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, Repositories, ThreadlocalRepositories,
-    },
+    repositories::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
     services::{
         action::ActionService,
         auth::{AuthService, AuthServiceStorage},
+        gate::GateService,
         link::service::LinkService,
         request_lock::RequestLockService,
         settings::SettingsService,
@@ -12,7 +11,6 @@ use crate::{
     },
 };
 use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
-use gate_service_client::{IcCanisterClient, client::GateServiceBackendClient};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 use std::{cell::RefCell, rc::Rc, thread::LocalKey};
 
@@ -20,13 +18,12 @@ use std::{cell::RefCell, rc::Rc, thread::LocalKey};
 pub struct CanisterState<E: IcEnvironment + Clone> {
     pub action_service: ActionService<ThreadlocalRepositories>,
     pub auth_service: AuthService<&'static LocalKey<RefCell<AuthServiceStorage>>>,
-    pub link_service: LinkService<E, ThreadlocalRepositories>,
+    pub link_service: LinkService<E, ThreadlocalRepositories, GateService<ThreadlocalRepositories>>,
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
     pub request_lock_service: RequestLockService<ThreadlocalRepositories>,
     pub settings: SettingsService<ThreadlocalRepositories>,
     pub transaction_manager_service: TransactionManagerService<E, ThreadlocalRepositories>,
     pub validate_service: ValidateService<ThreadlocalRepositories>,
-    pub gate_service_client: GateServiceBackendClient<IcCanisterClient>,
     pub env: E,
 }
 
@@ -35,23 +32,17 @@ impl<E: IcEnvironment + Clone> CanisterState<E> {
     pub fn new(env: E) -> Self {
         let repo = Rc::new(ThreadlocalRepositories);
 
-        let gate_service_principal = repo
-            .settings()
-            .read(|settings| settings.gate_canister_principal);
+        let gate_service = GateService::new(&*repo);
 
         CanisterState {
             action_service: ActionService::new(&repo),
             auth_service: AuthService::new(&AUTH_SERVICE_STORE),
-            link_service: LinkService::new(repo.clone(), env.clone()),
+            link_service: LinkService::new(repo.clone(), env.clone(), gate_service),
             log_service: LoggerConfigService::new(&LOGGER_SERVICE_STORE),
             request_lock_service: RequestLockService::new(&repo),
             settings: SettingsService::new(&repo),
             validate_service: ValidateService::new(&repo),
-            transaction_manager_service: TransactionManagerService::new(repo, env.clone()),
-            gate_service_client: GateServiceBackendClient::new(IcCanisterClient::new(
-                gate_service_principal,
-                Some(5 * 60), // 5 minutes timeout
-            )),
+            transaction_manager_service: TransactionManagerService::new(repo.clone(), env.clone()),
             env,
         }
     }

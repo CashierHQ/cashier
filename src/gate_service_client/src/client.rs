@@ -7,7 +7,7 @@ use ic_mple_client::{CanisterClient, CanisterClientResult};
 
 /// An GateServiceBackend canister client.
 #[derive(Debug, Clone)]
-pub struct GateServiceBackendClient<C>
+pub struct GateServiceClient<C>
 where
     C: CanisterClient,
 {
@@ -15,8 +15,8 @@ where
     client: C,
 }
 
-impl<C: CanisterClient> GateServiceBackendClient<C> {
-    /// Create a new GateServiceBackendClient.
+impl<C: CanisterClient> GateServiceClient<C> {
+    /// Create a new CanisterClient.
     ///
     /// # Arguments
     /// * `client` - The canister client.

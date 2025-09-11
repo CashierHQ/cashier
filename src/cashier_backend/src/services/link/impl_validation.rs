@@ -14,7 +14,9 @@ use cashier_backend_types::{
 use cashier_common::runtime::IcEnvironment;
 use icrc_ledger_types::icrc1::account::Account;
 
-impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E, R> {
+impl<E: IcEnvironment + Clone, R: Repositories, GS: crate::services::gate::GateServiceTrait>
+    LinkValidation for LinkService<E, R, GS>
+{
     // This method is a synchronous version that performs basic validation without async checks
     fn link_validate_user_create_action(
         &self,
@@ -263,13 +265,20 @@ mod tests {
     use crate::{
         repositories::tests::TestRepositories,
         services::link::test_fixtures::create_link_fixture,
-        utils::test_utils::{random_id_string, random_principal_id, runtime::MockIcEnvironment},
+        utils::test_utils::{
+            gate_service_mock::GateServiceMock, random_id_string, random_principal_id,
+            runtime::MockIcEnvironment,
+        },
     };
 
     #[test]
     fn it_should_error_link_validate_user_create_action_if_link_not_found() {
         // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let link_id = random_id_string();
         let action_type = ActionType::CreateLink;
         let user_id = random_principal_id();
@@ -290,8 +299,11 @@ mod tests {
     #[test]
     fn it_should_error_link_validate_user_create_action_if_user_is_not_creator() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let action_type = ActionType::CreateLink;
@@ -313,8 +325,11 @@ mod tests {
     #[test]
     fn it_should_link_validate_user_create_action_if_user_is_creator() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let action_type = ActionType::CreateLink;
@@ -330,8 +345,11 @@ mod tests {
     fn it_should_error_link_validate_user_create_action_if_action_withdraw_and_user_is_not_creator()
     {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let action_type = ActionType::Withdraw;
@@ -353,8 +371,11 @@ mod tests {
     #[test]
     fn it_should_link_validate_user_create_action_if_action_withdraw_and_user_is_creator() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let action_type = ActionType::Withdraw;
@@ -369,8 +390,11 @@ mod tests {
     #[test]
     fn it_should_error_link_validate_user_create_action_if_action_use_and_link_is_not_active() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let mut link = create_link_fixture(&mut service, creator_id);
         link.state = LinkState::Inactive; // Set link to inactive
@@ -394,8 +418,11 @@ mod tests {
     #[test]
     fn it_should_error_link_validate_user_create_action_if_action_use_counter_exceed_max() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let mut link = create_link_fixture(&mut service, creator_id);
         link.link_use_action_counter = 10; // Set counter to max
@@ -421,8 +448,11 @@ mod tests {
     #[test]
     fn it_should_link_validate_user_create_action_if_action_use_and_link_is_active() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let mut link = create_link_fixture(&mut service, creator_id);
         link.state = LinkState::Active; // Ensure link is active
@@ -439,7 +469,11 @@ mod tests {
     #[test]
     fn it_should_error_link_validate_user_update_action_if_action_type_create_and_link_not_found() {
         // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let action = Action {
             id: random_id_string(),
             r#type: ActionType::CreateLink,
@@ -466,8 +500,11 @@ mod tests {
     fn it_should_error_link_validate_user_update_action_if_action_type_create_and_user_is_not_creator()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let action = Action {
@@ -495,8 +532,11 @@ mod tests {
     #[test]
     fn it_should_link_validate_user_update_action_if_action_type_create_and_user_is_creator() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let action = Action {
@@ -518,7 +558,11 @@ mod tests {
     fn it_should_error_link_validate_user_update_action_if_action_type_withdraw_and_link_not_found()
     {
         // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let action = Action {
             id: random_id_string(),
             r#type: ActionType::Withdraw,
@@ -545,8 +589,11 @@ mod tests {
     fn it_should_error_link_validate_user_update_action_if_action_type_withdraw_and_user_is_not_creator()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let action = Action {
@@ -574,8 +621,11 @@ mod tests {
     #[test]
     fn it_should_link_validate_user_update_action_if_action_type_withdraw_and_user_is_creator() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let action = Action {
@@ -597,8 +647,11 @@ mod tests {
     fn it_should_error_link_validate_user_update_action_if_action_type_use_and_user_is_not_creator()
     {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let action = Action {
@@ -627,8 +680,11 @@ mod tests {
     fn it_should_error_link_validate_user_update_action_if_action_type_use_and_action_state_success()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let action = Action {
@@ -655,8 +711,11 @@ mod tests {
     #[test]
     fn it_should_link_validate_user_update_action_if_action_type_use_and_user_is_creator() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let action = Action {
@@ -677,7 +736,11 @@ mod tests {
     #[test]
     fn it_should_false_is_link_creator_if_user_wallet_not_found() {
         // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let link_id = random_id_string();
         let user_id = random_principal_id();
 
@@ -691,7 +754,11 @@ mod tests {
     #[test]
     fn it_should_false_is_link_creator_if_link_not_found() {
         // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let user_id = random_principal_id();
 
         let link_id = random_id_string();
@@ -706,8 +773,11 @@ mod tests {
     #[test]
     fn it_should_true_is_link_creator_if_user_is_creator() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
 
@@ -722,8 +792,11 @@ mod tests {
     fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_tip_and_asset_info_empty()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let link = create_link_fixture(&mut service, random_principal_id());
         let asset_infos: Vec<AssetInfo> = vec![];
 
@@ -738,8 +811,11 @@ mod tests {
     fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_tip_and_asset_info_length_greater_than_one()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let link = create_link_fixture(&mut service, random_principal_id());
         let asset_infos = vec![
             AssetInfo {
@@ -769,8 +845,11 @@ mod tests {
     fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_tip_and_asset_info_amount_per_link_use_action_zero()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let link = create_link_fixture(&mut service, random_principal_id());
         let asset_infos = vec![AssetInfo {
             asset: Asset::IC {
@@ -791,8 +870,11 @@ mod tests {
     fn it_should_true_validate_add_asset_with_link_type_if_link_type_send_tip_and_asset_info_amount_per_link_use_action_greater_than_zero()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let link = create_link_fixture(&mut service, random_principal_id());
         let asset_infos = vec![AssetInfo {
             asset: Asset::IC {
@@ -813,8 +895,11 @@ mod tests {
     fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_airdrop_and_asset_info_empty()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let mut link = create_link_fixture(&mut service, random_principal_id());
         link.link_type = Some(LinkType::SendAirdrop);
         service.link_repository.update(link.clone());
@@ -832,8 +917,11 @@ mod tests {
     fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_airdrop_and_asset_info_length_greater_than_one()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let mut link = create_link_fixture(&mut service, random_principal_id());
         link.link_type = Some(LinkType::SendAirdrop);
         service.link_repository.update(link.clone());
@@ -866,8 +954,11 @@ mod tests {
     fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_airdrop_and_asset_info_amount_per_link_use_action_zero()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let mut link = create_link_fixture(&mut service, random_principal_id());
         link.link_type = Some(LinkType::SendAirdrop);
         service.link_repository.update(link.clone());
@@ -891,8 +982,11 @@ mod tests {
     fn it_should_true_validate_add_asset_with_link_type_if_link_type_send_airdrop_and_asset_info_amount_per_link_use_action_greater_than_zero()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let mut link = create_link_fixture(&mut service, random_principal_id());
         link.link_type = Some(LinkType::SendAirdrop);
         service.link_repository.update(link.clone());
@@ -916,8 +1010,11 @@ mod tests {
     fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_token_basket_and_asset_info_empty()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let mut link = create_link_fixture(&mut service, random_principal_id());
         link.link_type = Some(LinkType::SendTokenBasket);
         service.link_repository.update(link.clone());
@@ -935,8 +1032,11 @@ mod tests {
     fn it_should_false_validate_add_asset_with_link_type_if_link_type_send_token_basket_and_amount_per_link_use_action_zero()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let mut link = create_link_fixture(&mut service, random_principal_id());
         link.link_type = Some(LinkType::SendTokenBasket);
         service.link_repository.update(link.clone());
@@ -960,8 +1060,11 @@ mod tests {
     fn it_should_true_validate_add_asset_with_link_type_if_link_type_send_token_basket_and_amount_per_link_use_action_greater_than_zero()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let mut link = create_link_fixture(&mut service, random_principal_id());
         link.link_type = Some(LinkType::SendTokenBasket);
         service.link_repository.update(link.clone());
@@ -985,8 +1088,11 @@ mod tests {
     fn it_should_false_validate_add_asset_with_link_type_if_link_type_receive_payment_and_asset_info_empty()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let mut link = create_link_fixture(&mut service, random_principal_id());
         link.link_type = Some(LinkType::ReceivePayment);
         service.link_repository.update(link.clone());
@@ -1004,8 +1110,11 @@ mod tests {
     fn it_should_false_validate_add_asset_with_link_type_if_link_type_receive_payment_and_asset_info_length_greater_than_one()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let mut link = create_link_fixture(&mut service, random_principal_id());
         link.link_type = Some(LinkType::ReceivePayment);
         service.link_repository.update(link.clone());
@@ -1038,8 +1147,11 @@ mod tests {
     fn it_should_false_validate_add_asset_with_link_type_if_link_type_receive_payment_and_asset_info_amount_per_link_use_action_one()
      {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let mut link = create_link_fixture(&mut service, random_principal_id());
         link.link_type = Some(LinkType::ReceivePayment);
         service.link_repository.update(link.clone());
@@ -1062,8 +1174,11 @@ mod tests {
     #[test]
     fn it_should_false_validate_add_asset_with_link_type_if_link_type_unsupported() {
         // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            GateServiceMock::new(),
+        );
         let mut link = create_link_fixture(&mut service, random_principal_id());
         link.link_type = Some(LinkType::SwapMultiAsset);
         service.link_repository.update(link.clone());

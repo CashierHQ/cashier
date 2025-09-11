@@ -1,8 +1,10 @@
+use candid::Principal;
+
 use crate::repositories::{Repositories, settings::SettingsRepository};
 
 /// The settings service
 pub struct SettingsService<R: Repositories> {
-    pub settings_repo: SettingsRepository<R::Settings>,
+    settings_repo: SettingsRepository<R::Settings>,
 }
 
 impl<R: Repositories> SettingsService<R> {
@@ -23,6 +25,12 @@ impl<R: Repositories> SettingsService<R> {
     pub fn set_inspect_message_enabled(&mut self, inspect_message_enabled: bool) {
         self.settings_repo.update(|settings| {
             settings.inspect_message_enabled = inspect_message_enabled;
+        });
+    }
+
+    pub fn set_gate_canister_principal(&mut self, principal: Principal) {
+        self.settings_repo.update(|settings| {
+            settings.gate_canister_principal = principal;
         });
     }
 }

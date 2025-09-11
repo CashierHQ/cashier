@@ -17,7 +17,6 @@ mod test_canister_upgrade {
     use super::*;
     use cashier_backend_types::{
         dto::{action::ActionDto, link::LinkDto},
-        init::CashierBackendUpgradeData,
         repository::action::v1::ActionType,
     };
 
@@ -82,9 +81,7 @@ mod test_canister_upgrade {
                 None,
                 ctx.cashier_backend_principal,
                 new_bytecode,
-                &(CashierBackendUpgradeData {
-                    gate_service_canister_id: Some(ctx.gate_service_principal),
-                }),
+                &(),
             )
             .await;
 
@@ -133,9 +130,7 @@ mod test_canister_upgrade {
                 None,
                 ctx.cashier_backend_principal,
                 new_bytecode,
-                &(CashierBackendUpgradeData {
-                    gate_service_canister_id: Some(ctx.gate_service_principal),
-                }),
+                &(),
             )
             .await;
 
@@ -153,9 +148,7 @@ mod test_canister_upgrade {
                 None,
                 ctx.cashier_backend_principal,
                 new_bytecode,
-                &(CashierBackendUpgradeData {
-                    gate_service_canister_id: Some(ctx.gate_service_principal),
-                }),
+                &(),
             )
             .await;
             ctx.advance_time(Duration::from_secs(1)).await;

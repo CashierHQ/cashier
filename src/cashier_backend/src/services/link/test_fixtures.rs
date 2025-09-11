@@ -19,8 +19,8 @@ use std::collections::HashSet;
 /// This function initializes a link with a random ID, sets its state, and associates it with a creator ID.
 /// It also creates a user link for the creator.
 /// Returns the created link.
-pub fn create_link_fixture(
-    service: &mut LinkService<MockIcEnvironment, TestRepositories>,
+pub fn create_link_fixture<GS: crate::services::gate::GateServiceTrait>(
+    service: &mut LinkService<MockIcEnvironment, TestRepositories, GS>,
     creator_id: Principal,
 ) -> Link {
     let link_id = random_id_string();
@@ -52,8 +52,8 @@ pub fn create_link_fixture(
 /// This function initializes a link action with a random ID, associates it with a link ID and
 /// an action type, and associates it with a user ID.
 /// Returns the created link action.
-pub fn create_link_action_fixture(
-    service: &mut LinkService<MockIcEnvironment, TestRepositories>,
+pub fn create_link_action_fixture<GS: crate::services::gate::GateServiceTrait>(
+    service: &mut LinkService<MockIcEnvironment, TestRepositories, GS>,
     link_id: &str,
     action_type: ActionType,
     user_id: Principal,

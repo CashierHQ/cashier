@@ -4,6 +4,7 @@ use uuid::Uuid;
 use crate::{
     repositories::Repositories,
     services::{
+        gate::GateServiceTrait,
         link::{
             service::LinkService,
             traits::{ActionFlow, IntentAssembler, LinkValidation},
@@ -25,8 +26,8 @@ use cashier_backend_types::{
 };
 use cashier_common::runtime::IcEnvironment;
 
-impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
-    for LinkService<E, R>
+impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories, GS: GateServiceTrait> ActionFlow
+    for LinkService<E, R, GS>
 {
     async fn create_action(
         &mut self,

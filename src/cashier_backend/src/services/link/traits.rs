@@ -64,7 +64,7 @@ pub trait LinkStateMachine {
 }
 
 pub trait LinkUserStateMachine {
-    fn handle_user_link_state_machine(
+    async fn handle_user_link_state_machine(
         &mut self,
         link_id: &str,
         action_type: &ActionType,
@@ -78,7 +78,7 @@ pub trait LinkUserStateMachine {
         input: &LinkGetUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError>;
 
-    fn link_update_user_state(
+    async fn link_update_user_state(
         &mut self,
         caller: Principal,
         input: &LinkUpdateUserStateInput,

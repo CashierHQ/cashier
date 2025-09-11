@@ -14,11 +14,12 @@ crate-type = ["cdylib"]
 candid = { workspace = true }
 cashier_backend_types = { workspace = true }
 cashier_common = { workspace = true }
-gate_service_client = { workspace = true }
 cashier_macros = { workspace = true }
 ciborium = { workspace = true }
 futures = { workspace = true }
 getrandom = { workspace = true, features = ["custom"] }
+gate_service_client = { workspace = true }
+gate_service_types = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic_mple_auth = { workspace = true }

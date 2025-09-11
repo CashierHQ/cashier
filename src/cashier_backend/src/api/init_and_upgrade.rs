@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::init::{CashierBackendInitData, CashierBackendUpgradeData};
+use cashier_backend_types::init::CashierBackendInitData;
 use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::info;
 
@@ -19,9 +19,9 @@ fn init(init_data: CashierBackendInitData) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
     }
 
-    state.settings.settings_repo.update(|settings| {
-        settings.gate_canister_principal = init_data.gate_service_canister_id;
-    });
+    state
+        .settings
+        .set_gate_canister_principal(init_data.gate_service_canister_id);
 
     info!("[init] Set {:?} as canister admin", init_data.owner);
     state
@@ -38,17 +38,9 @@ fn pre_upgrade() {}
 #[post_upgrade]
 // canister endpoint doesn't use reference to avoid clippy warning
 #[allow(clippy::needless_pass_by_value)]
-fn post_upgrade(upgrade_data: CashierBackendUpgradeData) {
+fn post_upgrade() {
     if let Err(err) = get_state().log_service.init(None) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
-    }
-
-    let mut state = get_state();
-
-    if upgrade_data.gate_service_canister_id.is_some() {
-        state.settings.settings_repo.update(|settings| {
-            settings.gate_canister_principal = upgrade_data.gate_service_canister_id.unwrap();
-        });
     }
 
     info!("[post_upgrade] Starting Cashier Backend");

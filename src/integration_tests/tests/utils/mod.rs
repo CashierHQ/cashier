@@ -5,7 +5,7 @@ use crate::{
 use candid::{CandidType, Decode, Encode, Nat, Principal, utils::ArgumentEncoder};
 use cashier_backend_client::client::CashierBackendClient;
 use cashier_backend_types::init::CashierBackendInitData;
-use gate_service_client::client::GateServiceBackendClient;
+use gate_service_client::client::GateServiceClient;
 use gate_service_types::{self, init::GateServiceInitData};
 use ic_cdk::management_canister::{CanisterId, CanisterSettings};
 use ic_mple_client::PocketIcClient;
@@ -255,13 +255,10 @@ impl PocketIcTestContext {
         CashierBackendClient::new(self.new_client(self.cashier_backend_principal, caller))
     }
 
-    /// Creates a new `GateServiceBackendClient` from the `PocketIc` client of this context,
+    /// Creates a new `CanisterClient` from the `PocketIc` client of this context,
     /// bound to the `gate_service_principal` and the given `caller`.
-    pub fn new_gate_service_client(
-        &self,
-        caller: Principal,
-    ) -> GateServiceBackendClient<PocketIcClient> {
-        GateServiceBackendClient::new(self.new_client(self.gate_service_principal, caller))
+    pub fn new_gate_service_client(&self, caller: Principal) -> GateServiceClient<PocketIcClient> {
+        GateServiceClient::new(self.new_client(self.gate_service_principal, caller))
     }
 
     /// Creates a new `TokenStorageClient` from the `PocketIc` client of this context,

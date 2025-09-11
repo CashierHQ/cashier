@@ -3,6 +3,7 @@
 
 use crate::constant::get_tx_timeout_nano_seconds;
 use crate::repositories::Repositories;
+use crate::services::gate::GateService;
 use crate::services::transaction_manager::traits::{
     BatchExecutor, DependencyAnalyzer, TimeoutHandler,
 };
@@ -222,7 +223,12 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionUpdate
         })?;
 
         // Pass the action state info to link_handle_tx_update
-        LinkService::new(self.repo.clone(), self.ic_env.clone()).link_handle_tx_update(
+        LinkService::new(
+            self.repo.clone(), // deref the Rc to &R
+            self.ic_env.clone(),
+            GateService::new(&*self.repo),
+        )
+        .link_handle_tx_update(
             &roll_up_resp.previous_state,
             &roll_up_resp.current_state,
             &roll_up_resp.link_id,

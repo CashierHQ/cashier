@@ -5,6 +5,7 @@ pub mod action;
 pub mod adapter;
 pub mod auth;
 pub mod ext;
+pub mod gate;
 pub mod link;
 pub mod request_lock;
 pub mod settings;

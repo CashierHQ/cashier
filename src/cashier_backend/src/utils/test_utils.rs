@@ -70,3 +70,40 @@ pub mod runtime {
         }
     }
 }
+
+pub mod gate_service_mock {
+    use gate_service_client::CanisterClientResult;
+    use gate_service_types::{Gate, error::GateServiceError};
+
+    use crate::services::gate::GateServiceTrait;
+
+    // Test-only mock for GateServiceTrait. Provides an in-memory list of gates
+    // that tests can seed and query without creating a real canister client.
+    pub struct GateServiceMock {
+        gates: std::sync::Mutex<Vec<Gate>>,
+    }
+
+    impl GateServiceMock {
+        pub fn new() -> Self {
+            Self {
+                gates: std::sync::Mutex::new(Vec::new()),
+            }
+        }
+
+        pub fn add_test_gate(&mut self, gate: Gate) {
+            let mut g = self.gates.lock().unwrap();
+            g.push(gate);
+        }
+    }
+
+    impl GateServiceTrait for GateServiceMock {
+        async fn get_gate_by_link_id(
+            &self,
+            link_id: &str,
+        ) -> CanisterClientResult<Result<Option<Gate>, GateServiceError>> {
+            let g = self.gates.lock().unwrap();
+            let found = g.iter().find(|gate| gate.subject_id == link_id).cloned();
+            Ok(Ok(found))
+        }
+    }
+}
