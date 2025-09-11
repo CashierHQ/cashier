@@ -477,16 +477,19 @@ impl LinkTestFixture {
 }
 
 /// Creates a fixture for a tip link.
-pub async fn create_tip_link_fixture(token: &str, amount: u64) -> (LinkTestFixture, LinkDto) {
-    let mut builder = PocketIcTestContextBuilder::new()
-        .with_cashier_backend()
-        .with_icp_ledger();
+pub async fn create_tip_link_fixture(
+    ctx: &PocketIcTestContext,
+    token: &str,
+    amount: u64,
+) -> (LinkTestFixture, LinkDto) {
+    // let mut builder = PocketIcTestContextBuilder::new()
+    //     .with_cashier_backend()
+    //     .with_icp_ledger();
+    // if token != constant::ICP_TOKEN {
+    //     builder = builder.with_icrc_tokens(vec![token.to_string()]);
+    // }
+    //let ctx = builder.build_async().await;
 
-    if token != constant::ICP_TOKEN {
-        builder = builder.with_icrc_tokens(vec![token.to_string()]);
-    }
-
-    let ctx = builder.build_async().await;
     let caller = TestUser::User1.get_principal();
     let mut creator_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
