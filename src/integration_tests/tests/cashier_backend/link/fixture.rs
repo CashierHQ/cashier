@@ -1,6 +1,4 @@
-use crate::utils::{
-    PocketIcTestContext, PocketIcTestContextBuilder, icrc_112, principal::TestUser,
-};
+use crate::utils::{PocketIcTestContext, icrc_112, principal::TestUser};
 use candid::Principal;
 use cashier_backend_client::client::CashierBackendClient;
 use cashier_backend_types::{
@@ -610,7 +608,7 @@ pub async fn create_airdrop_link_fixture(
         .await;
     let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
     let _icrc112_execution_result =
-        icrc_112::execute_icrc112_request(icrc_112_requests, caller, &ctx).await;
+        icrc_112::execute_icrc112_request(icrc_112_requests, caller, ctx).await;
 
     let _update_action = test_fixture
         .update_action(&link.id, &processing_action.id)
@@ -628,18 +626,10 @@ pub async fn create_airdrop_link_fixture(
 
 /// Create fixture for receive payment link
 pub async fn create_receive_payment_link_fixture(
+    ctx: &PocketIcTestContext,
     token: &str,
     amount: u64,
 ) -> (LinkTestFixture, LinkDto) {
-    let mut builder = PocketIcTestContextBuilder::new()
-        .with_cashier_backend()
-        .with_icp_ledger();
-
-    if token != constant::ICP_TOKEN {
-        builder = builder.with_icrc_tokens(vec![token.to_string()]);
-    }
-
-    let ctx = builder.build_async().await;
     let caller = TestUser::User1.get_principal();
     let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
@@ -663,7 +653,7 @@ pub async fn create_receive_payment_link_fixture(
     let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
 
     let _icrc112_execution_result =
-        icrc_112::execute_icrc112_request(icrc_112_requests, caller, &ctx).await;
+        icrc_112::execute_icrc112_request(icrc_112_requests, caller, ctx).await;
 
     let _update_action = test_fixture
         .update_action(&link.id, &processing_action.id)
@@ -681,10 +671,11 @@ pub async fn create_receive_payment_link_fixture(
 
 /// Create a fixture for receive payment which is already used
 pub async fn create_and_use_receive_payment_link_fixture(
+    ctx: &PocketIcTestContext,
     token: &str,
     amount: u64,
 ) -> (LinkTestFixture, LinkDto) {
-    let (creator_fixture, link) = create_receive_payment_link_fixture(token, amount).await;
+    let (creator_fixture, link) = create_receive_payment_link_fixture(ctx, token, amount).await;
 
     let claimer = TestUser::User2.get_principal();
     let mut claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
