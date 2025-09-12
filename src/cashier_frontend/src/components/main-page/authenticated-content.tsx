@@ -32,7 +32,7 @@ export const AuthenticatedContent = ({
   const responsive = useDeviceSize();
 
   const renderLinkList = (
-    links: Record<string, LinkDetailModel[]> | undefined
+    links: Record<string, LinkDetailModel[]> | undefined,
   ) => {
     if (links && Object.keys(links).length > 0) {
       return (

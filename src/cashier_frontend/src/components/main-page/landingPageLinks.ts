@@ -28,5 +28,5 @@ export const landingPageLinks: Record<string, LinkOrEmail> = {
   contactEmail: {
     label: "landing_page.link.contact_email",
     email: "contact@cashierapp.io",
-  }
+  },
 };
