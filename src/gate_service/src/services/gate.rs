@@ -466,3 +466,28 @@ mod tests {
         assert_eq!(gate_user_status.status, GateStatus::Open);
     }
 }
+
+#[cfg(feature = "canbench-rs")]
+mod benches {
+    use super::*;
+    use crate::repositories::tests::TestRepositories;
+    use canbench_rs::bench;
+    use candid::Principal;
+
+    /// Generate a fixture for the gate service using a stable gate repository.
+    fn gate_service_fixture() -> GateService<TestRepositories> {
+        GateService::new(Rc::new(TestRepositories::new()))
+    }
+
+    #[bench]
+    fn add_gate_password() {
+        let mut service = gate_service_fixture();
+        let creator = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap();
+        let new_gate = NewGate {
+            subject_id: "subject1".to_string(),
+            key: GateKey::Password("password123".to_string()),
+        };
+
+        canbench_rs::bench_fn(|| service.add_gate(creator, new_gate).unwrap());
+    }
+}
