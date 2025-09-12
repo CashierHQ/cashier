@@ -1,18 +1,19 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::{
-    repositories::Repositories,
-    services::transaction_manager::{service::TransactionManagerService, traits::ActionCreator},
-};
 use cashier_backend_types::{
     dto::action::ActionDto,
     error::CanisterError,
     repository::{link_action::v1::LinkAction, transaction::v2::Transaction},
     service::link::TemporaryAction,
 };
-use cashier_common::runtime::IcEnvironment;
 use std::collections::HashMap;
+
+use crate::{
+    repositories::Repositories,
+    services::transaction_manager::{service::TransactionManagerService, traits::ActionCreator},
+    utils::runtime::IcEnvironment,
+};
 
 impl<E: IcEnvironment + Clone, R: Repositories> ActionCreator<E>
     for TransactionManagerService<E, R>

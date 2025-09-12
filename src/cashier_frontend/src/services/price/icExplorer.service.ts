@@ -1,13 +1,14 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { IC_EXPLORER_BASE_URL } from "@/const";
 import axios from "axios";
 
 /**
  * Simple service for fetching token prices from IC Explorer
  */
 class PriceService {
+  private static readonly IC_EXPLORER_API = "https://api.icexplorer.io/api";
+
   /**
    * Fetch all token prices from IC Explorer
    * @returns Object mapping token IDs to their USD prices
@@ -15,7 +16,7 @@ class PriceService {
   public static async getAllPrices(): Promise<Record<string, number>> {
     try {
       const client = axios.create({
-        baseURL: IC_EXPLORER_BASE_URL,
+        baseURL: PriceService.IC_EXPLORER_API,
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",

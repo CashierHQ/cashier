@@ -1,12 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { IC_EXPLORER_BASE_URL } from "@/const";
 import axios from "axios";
 import queryString from "query-string";
 
 const icExplorerAxiosClient = axios.create({
-  baseURL: IC_EXPLORER_BASE_URL,
+  baseURL: import.meta.env.VITE_IC_EXPLORER_BASE_URL,
   headers: {
     accept: "application/json",
     "cache-control": "no-cache",

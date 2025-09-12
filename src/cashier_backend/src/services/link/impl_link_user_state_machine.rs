@@ -1,7 +1,9 @@
 use crate::{
     repositories::Repositories,
     services::link::{service::LinkService, traits::LinkUserStateMachine},
+    utils::runtime::IcEnvironment,
 };
+
 use candid::Principal;
 use cashier_backend_types::{
     dto::{
@@ -17,7 +19,6 @@ use cashier_backend_types::{
         link_action::v1::{LinkAction, LinkUserState},
     },
 };
-use cashier_common::runtime::IcEnvironment;
 
 impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkService<E, R> {
     fn handle_user_link_state_machine(

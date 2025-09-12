@@ -4,13 +4,14 @@
 use crate::repositories::Repositories;
 use crate::services::transaction_manager::traits::TransactionExecutor;
 use crate::services::transaction_manager::traits::TransactionValidator;
-use crate::services::transaction_manager::{
-    service::TransactionManagerService, traits::BatchExecutor,
-};
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::transaction::v2::Transaction;
 use cashier_backend_types::repository::transaction::v2::TransactionState;
-use cashier_common::runtime::IcEnvironment;
+
+use crate::{
+    services::transaction_manager::{service::TransactionManagerService, traits::BatchExecutor},
+    utils::runtime::IcEnvironment,
+};
 
 impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> BatchExecutor<E>
     for TransactionManagerService<E, R>

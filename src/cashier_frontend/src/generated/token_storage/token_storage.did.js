@@ -64,8 +64,6 @@ export const idlFactory = ({ IDL }) => {
     'enabled' : IDL.Nat64,
   });
   const Result_3 = IDL.Variant({ 'Ok' : UserTokens, 'Err' : IDL.Text });
-  const TokenStorageError = IDL.Variant({ 'AuthError' : IDL.Text });
-  const Result_4 = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : TokenStorageError });
   const UserPreference = IDL.Record({
     'hide_zero_balance' : IDL.Bool,
     'selected_chain' : IDL.Vec(Chain),
@@ -76,9 +74,10 @@ export const idlFactory = ({ IDL }) => {
     'tokens' : IDL.Vec(TokenDto),
     'perference' : IDL.Opt(UserPreference),
   });
-  const Result_5 = IDL.Variant({ 'Ok' : TokenListResponse, 'Err' : IDL.Text });
+  const Result_4 = IDL.Variant({ 'Ok' : TokenListResponse, 'Err' : IDL.Text });
   const Permission = IDL.Variant({ 'Admin' : IDL.Null });
-  const Result_6 = IDL.Variant({
+  const TokenStorageError = IDL.Variant({ 'AuthError' : IDL.Text });
+  const Result_5 = IDL.Variant({
     'Ok' : IDL.Vec(Permission),
     'Err' : TokenStorageError,
   });
@@ -119,15 +118,14 @@ export const idlFactory = ({ IDL }) => {
     'admin_get_user_balance' : IDL.Func([IDL.Principal], [Result_2], ['query']),
     'admin_get_user_tokens' : IDL.Func([IDL.Principal], [Result_3], ['query']),
     'admin_initialize_registry' : IDL.Func([], [Result], []),
-    'admin_inspect_message_enable' : IDL.Func([IDL.Bool], [Result_4], []),
     'admin_list_tokens_by_wallet' : IDL.Func(
         [IDL.Principal],
-        [Result_5],
+        [Result_4],
         ['query'],
       ),
     'admin_permissions_add' : IDL.Func(
         [IDL.Principal, IDL.Vec(Permission)],
-        [Result_6],
+        [Result_5],
         [],
       ),
     'admin_permissions_get' : IDL.Func(
@@ -137,12 +135,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'admin_permissions_remove' : IDL.Func(
         [IDL.Principal, IDL.Vec(Permission)],
-        [Result_6],
+        [Result_5],
         [],
       ),
     'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),
-    'is_inspect_message_enabled' : IDL.Func([], [IDL.Bool], ['query']),
-    'list_tokens' : IDL.Func([], [Result_5], ['query']),
+    'list_tokens' : IDL.Func([], [Result_4], ['query']),
     'sync_token_list' : IDL.Func([], [Result], []),
     'update_token_balance' : IDL.Func(
         [IDL.Vec(UpdateTokenBalanceInput)],

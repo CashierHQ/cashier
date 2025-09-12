@@ -30,12 +30,6 @@ impl RealIcEnvironment {
     }
 }
 
-impl Default for RealIcEnvironment {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl IcEnvironment for RealIcEnvironment {
     fn id(&self) -> Principal {
         canister_self()

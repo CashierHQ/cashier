@@ -13,8 +13,8 @@ pub fn random_principal_id() -> Principal {
 }
 
 pub mod runtime {
+    use super::super::runtime::IcEnvironment;
     use candid::Principal;
-    use cashier_common::runtime::IcEnvironment;
     use ic_cdk_timers::{self, TimerId};
     use std::{cell::RefCell, future::Future, time::Duration};
 

@@ -10,6 +10,7 @@ export const idlFactory = ({ IDL }) => {
     'owner' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
+  const Permission = IDL.Variant({ 'Admin' : IDL.Null });
   CanisterError.fill(
     IDL.Variant({
       'InvalidDataError' : IDL.Text,
@@ -46,9 +47,7 @@ export const idlFactory = ({ IDL }) => {
       'CallCanisterFailed' : IDL.Text,
     })
   );
-  const Result = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : CanisterError });
-  const Permission = IDL.Variant({ 'Admin' : IDL.Null });
-  const Result_1 = IDL.Variant({
+  const Result = IDL.Variant({
     'Ok' : IDL.Vec(Permission),
     'Err' : CanisterError,
   });
@@ -167,7 +166,7 @@ export const idlFactory = ({ IDL }) => {
     'type' : ActionType,
     'state' : IntentState,
   });
-  const Result_2 = IDL.Variant({ 'Ok' : ActionDto, 'Err' : CanisterError });
+  const Result_1 = IDL.Variant({ 'Ok' : ActionDto, 'Err' : CanisterError });
   const CreateActionAnonymousInput = IDL.Record({
     'link_id' : IDL.Text,
     'action_type' : ActionType,
@@ -231,7 +230,7 @@ export const idlFactory = ({ IDL }) => {
     'link_use_action_max_count' : IDL.Nat64,
     'link_use_action_counter' : IDL.Nat64,
   });
-  const Result_3 = IDL.Variant({ 'Ok' : LinkDto, 'Err' : CanisterError });
+  const Result_2 = IDL.Variant({ 'Ok' : LinkDto, 'Err' : CanisterError });
   const BuildData = IDL.Record({
     'rustc_semver' : IDL.Text,
     'git_branch' : IDL.Text,
@@ -249,7 +248,7 @@ export const idlFactory = ({ IDL }) => {
     'action' : IDL.Opt(ActionDto),
     'link' : LinkDto,
   });
-  const Result_4 = IDL.Variant({ 'Ok' : GetLinkResp, 'Err' : IDL.Text });
+  const Result_3 = IDL.Variant({ 'Ok' : GetLinkResp, 'Err' : IDL.Text });
   const PaginateInput = IDL.Record({
     'offset' : IDL.Nat64,
     'limit' : IDL.Nat64,
@@ -265,7 +264,7 @@ export const idlFactory = ({ IDL }) => {
     'metadata' : PaginateResultMetadata,
     'data' : IDL.Vec(LinkDto),
   });
-  const Result_5 = IDL.Variant({ 'Ok' : PaginateResult, 'Err' : IDL.Text });
+  const Result_4 = IDL.Variant({ 'Ok' : PaginateResult, 'Err' : IDL.Text });
   const Icrc21SupportedStandard = IDL.Record({
     'url' : IDL.Text,
     'name' : IDL.Text,
@@ -318,7 +317,7 @@ export const idlFactory = ({ IDL }) => {
     'UnsupportedCanisterCall' : Icrc21ErrorInfo,
     'ConsentMessageUnavailable' : Icrc21ErrorInfo,
   });
-  const Result_6 = IDL.Variant({
+  const Result_5 = IDL.Variant({
     'Ok' : Icrc21ConsentInfo,
     'Err' : Icrc21Error,
   });
@@ -340,7 +339,7 @@ export const idlFactory = ({ IDL }) => {
     'action' : ActionDto,
     'link_user_state' : LinkUserState,
   });
-  const Result_7 = IDL.Variant({
+  const Result_6 = IDL.Variant({
     'Ok' : IDL.Opt(LinkGetUserStateOutput),
     'Err' : CanisterError,
   });
@@ -370,7 +369,7 @@ export const idlFactory = ({ IDL }) => {
     'action_id' : IDL.Text,
     'link_id' : IDL.Text,
   });
-  const Result_8 = IDL.Variant({ 'Ok' : IDL.Text, 'Err' : CanisterError });
+  const Result_7 = IDL.Variant({ 'Ok' : IDL.Text, 'Err' : CanisterError });
   const UpdateActionInput = IDL.Record({
     'action_id' : IDL.Text,
     'link_id' : IDL.Text,
@@ -392,10 +391,9 @@ export const idlFactory = ({ IDL }) => {
     'params' : IDL.Opt(LinkDetailUpdateInput),
   });
   return IDL.Service({
-    'admin_inspect_message_enable' : IDL.Func([IDL.Bool], [Result], []),
     'admin_permissions_add' : IDL.Func(
         [IDL.Principal, IDL.Vec(Permission)],
-        [Result_1],
+        [Result],
         [],
       ),
     'admin_permissions_get' : IDL.Func(
@@ -405,23 +403,23 @@ export const idlFactory = ({ IDL }) => {
       ),
     'admin_permissions_remove' : IDL.Func(
         [IDL.Principal, IDL.Vec(Permission)],
+        [Result],
+        [],
+      ),
+    'create_action' : IDL.Func([CreateActionInput], [Result_1], []),
+    'create_action_anonymous' : IDL.Func(
+        [CreateActionAnonymousInput],
         [Result_1],
         [],
       ),
-    'create_action' : IDL.Func([CreateActionInput], [Result_2], []),
-    'create_action_anonymous' : IDL.Func(
-        [CreateActionAnonymousInput],
-        [Result_2],
-        [],
-      ),
-    'create_link' : IDL.Func([CreateLinkInput], [Result_3], []),
+    'create_link' : IDL.Func([CreateLinkInput], [Result_2], []),
     'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),
     'get_link' : IDL.Func(
         [IDL.Text, IDL.Opt(GetLinkOptions)],
-        [Result_4],
+        [Result_3],
         ['query'],
       ),
-    'get_links' : IDL.Func([IDL.Opt(PaginateInput)], [Result_5], ['query']),
+    'get_links' : IDL.Func([IDL.Opt(PaginateInput)], [Result_4], ['query']),
     'icrc10_supported_standards' : IDL.Func(
         [],
         [IDL.Vec(Icrc21SupportedStandard)],
@@ -430,26 +428,25 @@ export const idlFactory = ({ IDL }) => {
     'icrc114_validate' : IDL.Func([Icrc114ValidateArgs], [IDL.Bool], []),
     'icrc21_canister_call_consent_message' : IDL.Func(
         [Icrc21ConsentMessageRequest],
-        [Result_6],
+        [Result_5],
         [],
       ),
     'icrc28_trusted_origins' : IDL.Func([], [Icrc28TrustedOriginsResponse], []),
-    'is_inspect_message_enabled' : IDL.Func([], [IDL.Bool], ['query']),
-    'link_get_user_state' : IDL.Func([LinkGetUserStateInput], [Result_7], []),
+    'link_get_user_state' : IDL.Func([LinkGetUserStateInput], [Result_6], []),
     'link_update_user_state' : IDL.Func(
         [LinkUpdateUserStateInput],
-        [Result_7],
+        [Result_6],
         [],
       ),
-    'process_action' : IDL.Func([ProcessActionInput], [Result_2], []),
+    'process_action' : IDL.Func([ProcessActionInput], [Result_1], []),
     'process_action_anonymous' : IDL.Func(
         [ProcessActionAnonymousInput],
-        [Result_2],
+        [Result_1],
         [],
       ),
-    'trigger_transaction' : IDL.Func([TriggerTransactionInput], [Result_8], []),
-    'update_action' : IDL.Func([UpdateActionInput], [Result_2], []),
-    'update_link' : IDL.Func([UpdateLinkInput], [Result_3], []),
+    'trigger_transaction' : IDL.Func([TriggerTransactionInput], [Result_7], []),
+    'update_action' : IDL.Func([UpdateActionInput], [Result_1], []),
+    'update_link' : IDL.Func([UpdateLinkInput], [Result_2], []),
   });
 };
 export const init = ({ IDL }) => {

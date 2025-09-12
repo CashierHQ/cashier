@@ -53,11 +53,9 @@ export type Result_2 = { 'Ok' : Array<[TokenId, bigint]> } |
   { 'Err' : string };
 export type Result_3 = { 'Ok' : UserTokens } |
   { 'Err' : string };
-export type Result_4 = { 'Ok' : null } |
-  { 'Err' : TokenStorageError };
-export type Result_5 = { 'Ok' : TokenListResponse } |
+export type Result_4 = { 'Ok' : TokenListResponse } |
   { 'Err' : string };
-export type Result_6 = { 'Ok' : Array<Permission> } |
+export type Result_5 = { 'Ok' : Array<Permission> } |
   { 'Err' : TokenStorageError };
 export interface TokenDto {
   'id' : TokenId,
@@ -113,20 +111,18 @@ export interface _SERVICE {
   'admin_get_user_balance' : ActorMethod<[Principal], Result_2>,
   'admin_get_user_tokens' : ActorMethod<[Principal], Result_3>,
   'admin_initialize_registry' : ActorMethod<[], Result>,
-  'admin_inspect_message_enable' : ActorMethod<[boolean], Result_4>,
-  'admin_list_tokens_by_wallet' : ActorMethod<[Principal], Result_5>,
+  'admin_list_tokens_by_wallet' : ActorMethod<[Principal], Result_4>,
   'admin_permissions_add' : ActorMethod<
     [Principal, Array<Permission>],
-    Result_6
+    Result_5
   >,
   'admin_permissions_get' : ActorMethod<[Principal], Array<Permission>>,
   'admin_permissions_remove' : ActorMethod<
     [Principal, Array<Permission>],
-    Result_6
+    Result_5
   >,
   'get_canister_build_data' : ActorMethod<[], BuildData>,
-  'is_inspect_message_enabled' : ActorMethod<[], boolean>,
-  'list_tokens' : ActorMethod<[], Result_5>,
+  'list_tokens' : ActorMethod<[], Result_4>,
   'sync_token_list' : ActorMethod<[], Result>,
   'update_token_balance' : ActorMethod<
     [Array<UpdateTokenBalanceInput>],

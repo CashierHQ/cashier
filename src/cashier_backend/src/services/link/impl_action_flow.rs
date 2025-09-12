@@ -1,6 +1,7 @@
 use candid::Principal;
 use uuid::Uuid;
 
+use crate::utils::runtime::IcEnvironment;
 use crate::{
     repositories::Repositories,
     services::{
@@ -23,7 +24,6 @@ use cashier_backend_types::{
     },
     service::{link::TemporaryAction, tx_manager::UpdateActionArgs},
 };
-use cashier_common::runtime::IcEnvironment;
 
 impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
     for LinkService<E, R>

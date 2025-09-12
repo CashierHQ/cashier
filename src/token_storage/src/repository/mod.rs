@@ -2,7 +2,6 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 pub mod balance_cache;
-pub mod settings;
 pub mod token_registry;
 pub mod token_registry_metadata;
 pub mod user_preference;
@@ -10,7 +9,6 @@ pub mod user_token;
 
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::thread::LocalKey;
 
 use candid::Principal;
 use ic_mple_log::LogSettings;
@@ -25,7 +23,6 @@ use token_storage_types::user::UserPreference;
 use crate::repository::balance_cache::{
     BalanceCacheRepository, BalanceCacheRepositoryStorage, ThreadlocalBalanceCacheRepositoryStorage,
 };
-use crate::repository::settings::{Settings, SettingsRepository, SettingsRepositoryStorage};
 use crate::repository::token_registry::{
     ThreadlocalTokenRegistryRepositoryStorage, TokenRegistryRepository,
     TokenRegistryRepositoryStorage,
@@ -55,12 +52,10 @@ const TOKEN_REGISTRY_MEMORY_ID: MemoryId = MemoryId::new(3);
 const BALANCE_CACHE_MEMORY_ID: MemoryId = MemoryId::new(4);
 const TOKEN_REGISTRY_METADATA_ID: MemoryId = MemoryId::new(5);
 const AUTH_SERVICE_MEMORY_ID: MemoryId = MemoryId::new(6);
-const SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(7);
 
 /// A trait for accessing repositories
 pub trait Repositories {
     type BalanceCache: Storage<BalanceCacheRepositoryStorage>;
-    type Settings: Storage<SettingsRepositoryStorage>;
     type TokenRegistryMetadata: Storage<TokenRegistryMetadataRepositoryStorage>;
     type TokenRegistry: Storage<TokenRegistryRepositoryStorage>;
     type UserPreference: Storage<UserPreferenceRepositoryStorage>;
@@ -68,8 +63,6 @@ pub trait Repositories {
 
     /// Get the balance cache repository
     fn balance_cache(&self) -> BalanceCacheRepository<Self::BalanceCache>;
-    /// Get the settings repository
-    fn settings(&self) -> SettingsRepository<Self::Settings>;
     /// Get the token registry repository
     fn token_registry(&self) -> TokenRegistryRepository<Self::TokenRegistry>;
     /// Get the token registry metadata repository
@@ -87,7 +80,6 @@ pub struct ThreadlocalRepositories;
 
 impl Repositories for ThreadlocalRepositories {
     type BalanceCache = ThreadlocalBalanceCacheRepositoryStorage;
-    type Settings = &'static LocalKey<RefCell<SettingsRepositoryStorage>>;
     type TokenRegistryMetadata = ThreadlocalTokenRegistryMetadataRepositoryStorage;
     type TokenRegistry = ThreadlocalTokenRegistryRepositoryStorage;
     type UserPreference = ThreadlocalUserPreferenceRepositoryStorage;
@@ -95,10 +87,6 @@ impl Repositories for ThreadlocalRepositories {
 
     fn balance_cache(&self) -> BalanceCacheRepository<Self::BalanceCache> {
         BalanceCacheRepository::new(&BALANCE_CACHE_STORE)
-    }
-
-    fn settings(&self) -> SettingsRepository<Self::Settings> {
-        SettingsRepository::new(&SETTINGS_STORE)
     }
 
     fn token_registry(&self) -> TokenRegistryRepository<Self::TokenRegistry> {
@@ -183,16 +171,6 @@ thread_local! {
                 MEMORY_MANAGER.with_borrow(|m| m.get(BALANCE_CACHE_MEMORY_ID)),
             )
         );
-
-        static SETTINGS_STORE: RefCell<StableCell<
-        Settings,
-        Memory
-    >> = RefCell::new(
-        StableCell::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(SETTINGS_MEMORY_ID)),
-            Settings::default(),
-        )
-    );
 }
 
 #[cfg(test)]
@@ -205,7 +183,6 @@ pub mod tests {
     /// A struct for testing Repositories and services
     pub struct TestRepositories {
         balance_cache: Rc<RefCell<BalanceCacheRepositoryStorage>>,
-        settings: Rc<RefCell<SettingsRepositoryStorage>>,
         token_registry: Rc<RefCell<TokenRegistryRepositoryStorage>>,
         token_registry_metadata: Rc<RefCell<TokenRegistryMetadataRepositoryStorage>>,
         user_preference: Rc<RefCell<UserPreferenceRepositoryStorage>>,
@@ -222,10 +199,6 @@ pub mod tests {
             Self {
                 balance_cache: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(BALANCE_CACHE_MEMORY_ID),
-                ))),
-                settings: Rc::new(RefCell::new(StableCell::init(
-                    mm.get(SETTINGS_MEMORY_ID),
-                    Settings::default(),
                 ))),
                 token_registry: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(TOKEN_REGISTRY_MEMORY_ID),
@@ -244,7 +217,6 @@ pub mod tests {
 
     impl Repositories for TestRepositories {
         type BalanceCache = Rc<RefCell<StableBTreeMap<Principal, BalanceCache, Memory>>>;
-        type Settings = Rc<RefCell<StableCell<Settings, Memory>>>;
         type TokenRegistryMetadata = Rc<RefCell<StableCell<TokenRegistryMetadata, Memory>>>;
         type TokenRegistry = Rc<RefCell<StableBTreeMap<TokenId, RegistryToken, Memory>>>;
         type UserPreference = Rc<RefCell<StableBTreeMap<Principal, UserPreference, Memory>>>;
@@ -252,10 +224,6 @@ pub mod tests {
 
         fn balance_cache(&self) -> BalanceCacheRepository<Self::BalanceCache> {
             BalanceCacheRepository::new(self.balance_cache.clone())
-        }
-
-        fn settings(&self) -> SettingsRepository<Self::Settings> {
-            SettingsRepository::new(self.settings.clone())
         }
 
         fn token_registry_metadata(

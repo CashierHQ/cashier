@@ -1,3 +1,7 @@
+use std::{cell::RefCell, rc::Rc, thread::LocalKey};
+
+use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
+
 use crate::{
     repositories::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
     services::{
@@ -5,13 +9,10 @@ use crate::{
         auth::{AuthService, AuthServiceStorage},
         link::service::LinkService,
         request_lock::RequestLockService,
-        settings::SettingsService,
         transaction_manager::{service::TransactionManagerService, validate::ValidateService},
     },
+    utils::runtime::{IcEnvironment, RealIcEnvironment},
 };
-use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
-use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
-use std::{cell::RefCell, rc::Rc, thread::LocalKey};
 
 /// The state of the canister
 pub struct CanisterState<E: IcEnvironment + Clone> {
@@ -20,7 +21,6 @@ pub struct CanisterState<E: IcEnvironment + Clone> {
     pub link_service: LinkService<E, ThreadlocalRepositories>,
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
     pub request_lock_service: RequestLockService<ThreadlocalRepositories>,
-    pub settings: SettingsService<ThreadlocalRepositories>,
     pub transaction_manager_service: TransactionManagerService<E, ThreadlocalRepositories>,
     pub validate_service: ValidateService<ThreadlocalRepositories>,
     pub env: E,
@@ -36,7 +36,6 @@ impl<E: IcEnvironment + Clone> CanisterState<E> {
             link_service: LinkService::new(repo.clone(), env.clone()),
             log_service: LoggerConfigService::new(&LOGGER_SERVICE_STORE),
             request_lock_service: RequestLockService::new(&repo),
-            settings: SettingsService::new(&repo),
             validate_service: ValidateService::new(&repo),
             transaction_manager_service: TransactionManagerService::new(repo, env.clone()),
             env,

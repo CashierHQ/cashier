@@ -3,7 +3,6 @@ use candid::Principal;
 use crate::utils::with_pocket_ic_context;
 
 pub mod admin;
-pub mod inspect_message;
 pub mod token;
 
 /// Tests that the token storage canister can be deployed.

@@ -19,15 +19,17 @@ use std::collections::HashMap;
 
 pub struct ActionService<R: Repositories> {
     // Concrete repository implementations
-    action_repository: repositories::action::ActionRepository<R::Action>,
-    action_intent_reposiroty: repositories::action_intent::ActionIntentRepository<R::ActionIntent>,
-    intent_repository: repositories::intent::IntentRepository<R::Intent>,
-    action_intent_repository: repositories::action_intent::ActionIntentRepository<R::ActionIntent>,
-    transaction_repository: repositories::transaction::TransactionRepository<R::Transaction>,
-    intent_transaction_repository:
+    pub action_repository: repositories::action::ActionRepository<R::Action>,
+    pub action_intent_reposiroty:
+        repositories::action_intent::ActionIntentRepository<R::ActionIntent>,
+    pub intent_repository: repositories::intent::IntentRepository<R::Intent>,
+    pub action_intent_repository:
+        repositories::action_intent::ActionIntentRepository<R::ActionIntent>,
+    pub transaction_repository: repositories::transaction::TransactionRepository<R::Transaction>,
+    pub intent_transaction_repository:
         repositories::intent_transaction::IntentTransactionRepository<R::IntentTransaction>,
-    link_action_repository: repositories::link_action::LinkActionRepository<R::LinkAction>,
-    user_action_repository: repositories::user_action::UserActionRepository<R::UserAction>,
+    pub link_action_repository: repositories::link_action::LinkActionRepository<R::LinkAction>,
+    pub user_action_repository: repositories::user_action::UserActionRepository<R::UserAction>,
 
     // Domain logic
     domain_logic: ActionDomainLogic,

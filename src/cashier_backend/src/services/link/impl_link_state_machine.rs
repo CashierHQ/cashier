@@ -1,10 +1,3 @@
-use crate::{
-    repositories::Repositories,
-    services::link::{
-        service::LinkService,
-        traits::{LinkStateMachine, LinkValidation},
-    },
-};
 use candid::Principal;
 use cashier_backend_types::{
     dto::link::{
@@ -20,9 +13,17 @@ use cashier_backend_types::{
         user_link::v1::UserLink,
     },
 };
-use cashier_common::runtime::IcEnvironment;
 use log::error;
 use uuid::Uuid;
+
+use crate::{
+    repositories::Repositories,
+    services::link::{
+        service::LinkService,
+        traits::{LinkStateMachine, LinkValidation},
+    },
+    utils::runtime::IcEnvironment,
+};
 
 impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService<E, R> {
     // this method checking non-whitelist props are changed or not

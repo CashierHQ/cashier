@@ -1,6 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use std::rc::Rc;
+
 use crate::{
     repositories::{
         Repositories, action::ActionRepository,
@@ -9,10 +11,8 @@ use crate::{
     services::{
         action::ActionService, adapter::IntentAdapterImpl, transaction::TransactionService,
     },
-    utils::icrc::IcrcService,
+    utils::{icrc::IcrcService, runtime::IcEnvironment},
 };
-use cashier_common::runtime::IcEnvironment;
-use std::rc::Rc;
 
 pub struct TransactionManagerService<E: IcEnvironment + Clone, R: Repositories> {
     pub repo: Rc<R>,

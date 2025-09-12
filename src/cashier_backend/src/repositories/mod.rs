@@ -29,7 +29,6 @@ use crate::repositories::processing_transaction::{
     ProcessingTransactionRepository, ProcessingTransactionRepositoryStorage,
 };
 use crate::repositories::request_lock::{RequestLockRepository, RequestLockRepositoryStorage};
-use crate::repositories::settings::{Settings, SettingsRepository, SettingsRepositoryStorage};
 use crate::repositories::transaction::{TransactionRepository, TransactionRepositoryStorage};
 use crate::repositories::user_action::{UserActionRepository, UserActionRepositoryStorage};
 use crate::repositories::user_link::{UserLinkRepository, UserLinkRepositoryStorage};
@@ -43,7 +42,6 @@ pub mod link;
 pub mod link_action;
 pub mod processing_transaction;
 pub mod request_lock;
-pub mod settings;
 pub mod transaction;
 pub mod user_action;
 pub mod user_link;
@@ -61,7 +59,6 @@ const PROCESSING_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(9);
 const REQUEST_LOCK_MEMORY_ID: MemoryId = MemoryId::new(10);
 const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(11);
 const AUTH_SERVICE_MEMORY_ID: MemoryId = MemoryId::new(12);
-const SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(13);
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
@@ -75,7 +72,6 @@ pub trait Repositories {
     type LinkAction: Storage<LinkActionRepositoryStorage>;
     type ProcessingTransaction: Storage<ProcessingTransactionRepositoryStorage>;
     type RequestLock: Storage<RequestLockRepositoryStorage>;
-    type Settings: Storage<SettingsRepositoryStorage>;
     type Transaction: Storage<TransactionRepositoryStorage>;
     type UserAction: Storage<UserActionRepositoryStorage>;
     type UserLink: Storage<UserLinkRepositoryStorage>;
@@ -90,7 +86,6 @@ pub trait Repositories {
         &self,
     ) -> ProcessingTransactionRepository<Self::ProcessingTransaction>;
     fn request_lock(&self) -> RequestLockRepository<Self::RequestLock>;
-    fn settings(&self) -> SettingsRepository<Self::Settings>;
     fn transaction(&self) -> TransactionRepository<Self::Transaction>;
     fn user_action(&self) -> UserActionRepository<Self::UserAction>;
     fn user_link(&self) -> UserLinkRepository<Self::UserLink>;
@@ -108,7 +103,6 @@ impl Repositories for ThreadlocalRepositories {
     type LinkAction = &'static LocalKey<RefCell<LinkActionRepositoryStorage>>;
     type ProcessingTransaction = &'static LocalKey<RefCell<ProcessingTransactionRepositoryStorage>>;
     type RequestLock = &'static LocalKey<RefCell<RequestLockRepositoryStorage>>;
-    type Settings = &'static LocalKey<RefCell<SettingsRepositoryStorage>>;
     type Transaction = &'static LocalKey<RefCell<TransactionRepositoryStorage>>;
     type UserAction = &'static LocalKey<RefCell<UserActionRepositoryStorage>>;
     type UserLink = &'static LocalKey<RefCell<UserLinkRepositoryStorage>>;
@@ -145,10 +139,6 @@ impl Repositories for ThreadlocalRepositories {
 
     fn request_lock(&self) -> RequestLockRepository<Self::RequestLock> {
         RequestLockRepository::new(&REQUEST_LOCK_STORE)
-    }
-
-    fn settings(&self) -> SettingsRepository<Self::Settings> {
-        SettingsRepository::new(&SETTINGS_STORE)
     }
 
     fn transaction(&self) -> TransactionRepository<Self::Transaction> {
@@ -292,16 +282,6 @@ thread_local! {
     >> = RefCell::new(
         StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(REQUEST_LOCK_MEMORY_ID))),
     );
-
-    static SETTINGS_STORE: RefCell<StableCell<
-        Settings,
-        Memory
-    >> = RefCell::new(
-        StableCell::init(
-            MEMORY_MANAGER.with_borrow(|m| m.get(SETTINGS_MEMORY_ID)),
-            Settings::default(),
-        )
-    );
 }
 
 #[cfg(test)]
@@ -321,7 +301,6 @@ pub mod tests {
         link_action: Rc<RefCell<LinkActionRepositoryStorage>>,
         processing_transaction: Rc<RefCell<ProcessingTransactionRepositoryStorage>>,
         request_lock: Rc<RefCell<RequestLockRepositoryStorage>>,
-        settings: Rc<RefCell<SettingsRepositoryStorage>>,
         transaction: Rc<RefCell<TransactionRepositoryStorage>>,
         user_action: Rc<RefCell<UserActionRepositoryStorage>>,
         user_link: Rc<RefCell<UserLinkRepositoryStorage>>,
@@ -353,10 +332,6 @@ pub mod tests {
                 request_lock: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(REQUEST_LOCK_MEMORY_ID),
                 ))),
-                settings: Rc::new(RefCell::new(StableCell::init(
-                    mm.get(SETTINGS_MEMORY_ID),
-                    Default::default(),
-                ))),
                 transaction: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(TRANSACTION_MEMORY_ID),
                 ))),
@@ -379,7 +354,6 @@ pub mod tests {
         type LinkAction = Rc<RefCell<LinkActionRepositoryStorage>>;
         type ProcessingTransaction = Rc<RefCell<ProcessingTransactionRepositoryStorage>>;
         type RequestLock = Rc<RefCell<RequestLockRepositoryStorage>>;
-        type Settings = Rc<RefCell<SettingsRepositoryStorage>>;
         type Transaction = Rc<RefCell<TransactionRepositoryStorage>>;
         type UserAction = Rc<RefCell<UserActionRepositoryStorage>>;
         type UserLink = Rc<RefCell<UserLinkRepositoryStorage>>;
@@ -416,10 +390,6 @@ pub mod tests {
 
         fn request_lock(&self) -> RequestLockRepository<Self::RequestLock> {
             RequestLockRepository::new(self.request_lock.clone())
-        }
-
-        fn settings(&self) -> SettingsRepository<Self::Settings> {
-            SettingsRepository::new(self.settings.clone())
         }
 
         fn transaction(&self) -> TransactionRepository<Self::Transaction> {

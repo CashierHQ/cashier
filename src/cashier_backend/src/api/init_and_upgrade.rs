@@ -8,7 +8,7 @@ use log::info;
 use crate::api::state::get_state;
 use crate::services::auth::Permission;
 use crate::services::transaction_manager::traits::TimeoutHandler;
-use cashier_common::random::init_ic_rand;
+use crate::utils::random::init_ic_rand;
 
 #[init]
 fn init(init_data: CashierBackendInitData) {

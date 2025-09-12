@@ -15,8 +15,9 @@ use cashier_backend_types::{
     },
     service::{link::TemporaryAction, tx_manager::UpdateActionArgs},
 };
-use cashier_common::runtime::IcEnvironment;
 use icrc_ledger_types::icrc1::account::Account;
+
+use crate::utils::runtime::IcEnvironment;
 
 // ---------- 2. Action creation ----------
 /// Persists a TemporaryAction (and its transactions) into storage.
