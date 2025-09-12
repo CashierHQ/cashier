@@ -46,7 +46,7 @@ export const MainAppLayout = ({ children }: MainAppLayoutProps) => {
 
   if (!walletUser && pathname === "/") {
     return (
-      <div className="fixed inset-0 flex justify-center py-5 overflow-hidden bg-white">
+      <div className="fixed inset-0 flex justify-center pt-5 overflow-scroll bg-white">
         <div className="flex w-full flex-col items-center gap-4">
           <Header />
           {children}
