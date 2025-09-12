@@ -9,6 +9,8 @@ license.workspace = true
 candid = { workspace = true }
 cashier_backend_client = { workspace = true, features = ["pocket_ic"] }
 cashier_backend_types = { workspace = true }
+gate_service_client = { workspace = true }
+gate_service_types = { workspace = true }
 ic-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic_mple_client = { workspace = true, features = ["pocket-ic"] }

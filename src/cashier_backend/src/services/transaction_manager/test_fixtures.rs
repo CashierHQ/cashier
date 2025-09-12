@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::{
-    repositories::tests::TestRepositories,
+    repositories::{Repositories, tests::TestRepositories},
     services::transaction_manager::{service::TransactionManagerService, traits::ActionCreator},
     utils::test_utils::{random_id_string, random_principal_id, runtime::MockIcEnvironment},
 };
@@ -129,10 +129,8 @@ pub fn create_transaction_fixture(
         from_call_type: FromCallType::Canister,
         start_ts: None,
     };
-    service
-        .action_service
-        .transaction_repository
-        .batch_create(vec![transaction.clone()]);
+    let mut transaction_repo = service.repo.transaction();
+    transaction_repo.batch_create(vec![transaction.clone()]);
     transaction
 }
 
