@@ -26,6 +26,12 @@ pub fn hash_password(password: &str) -> Result<String, String> {
     Ok(password_hash)
 }
 
+/// Generates a salt for password hashing.
+/// In benchmarking mode, it returns a fixed salt for consistency.
+/// In production mode, it generates a random salt.
+/// # Returns
+/// * `Ok(SaltString)`: The generated salt.
+/// * `Err(String)`: If there is an error during salt generation.
 fn get_salt() -> Result<SaltString, String> {
     #[cfg(feature = "canbench-rs")]
     {
