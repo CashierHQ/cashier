@@ -4,7 +4,9 @@ use crate::{
 };
 use candid::{CandidType, Decode, Encode, Nat, Principal, utils::ArgumentEncoder};
 use cashier_backend_client::client::CashierBackendClient;
-use cashier_backend_types::{constant, init::CashierBackendInitData};
+use cashier_backend_types::init::CashierBackendInitData;
+use gate_service_client::client::GateServiceBackendClient;
+use gate_service_types::{self, init::GateServiceInitData};
 use ic_cdk::management_canister::{CanisterId, CanisterSettings};
 use ic_mple_client::PocketIcClient;
 use ic_mple_log::service::LogServiceSettings;
@@ -128,8 +130,24 @@ where
         None,
         get_cashier_backend_canister_bytecode(),
         &(CashierBackendInitData {
-            log_settings: Some(log),
+            log_settings: Some(log.clone()),
             owner: TestUser::CashierBackendAdmin.get_principal(),
+        }),
+    )
+    .await;
+
+    // Deploy gate_service and set GateCreator permissions for cashier_backend
+    let gate_service_principal = deploy_canister(
+        &client,
+        None,
+        get_gate_service_canister_bytecode(),
+        &(GateServiceInitData {
+            log_settings: Some(log),
+            owner: TestUser::GateServiceAdmin.get_principal(),
+            permissions: Some(HashMap::from([(
+                cashier_backend_principal,
+                vec![gate_service_types::auth::Permission::GateCreate],
+            )])),
         }),
     )
     .await;
@@ -188,6 +206,7 @@ where
         client: client.clone(),
         token_storage_principal,
         cashier_backend_principal,
+        gate_service_principal,
         icp_ledger_principal,
         icrc_token_map,
     })
@@ -200,236 +219,13 @@ where
     result
 }
 
-pub struct PocketIcTestContextBuilder {
-    has_cashier_backend: bool,
-    has_token_storage: bool,
-    has_icp_ledger: bool,
-    icrc_tokens: Vec<String>,
-}
-
-impl Default for PocketIcTestContextBuilder {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl PocketIcTestContextBuilder {
-    pub fn new() -> Self {
-        Self {
-            has_cashier_backend: false,
-            has_token_storage: false,
-            has_icp_ledger: false,
-            icrc_tokens: Vec::new(),
-        }
-    }
-
-    pub fn with_cashier_backend(mut self) -> Self {
-        self.has_cashier_backend = true;
-        self
-    }
-
-    pub fn with_token_storage(mut self) -> Self {
-        self.has_token_storage = true;
-        self
-    }
-
-    pub fn with_icp_ledger(mut self) -> Self {
-        self.has_icp_ledger = true;
-        self
-    }
-
-    pub fn with_icrc_tokens(mut self, tokens: Vec<String>) -> Self {
-        self.icrc_tokens = tokens;
-        self
-    }
-
-    pub async fn build_async(&self) -> PocketIcTestContext {
-        let client = Arc::new(get_pocket_ic_client().await.build_async().await);
-        let log = LogServiceSettings {
-            enable_console: Some(true),
-            in_memory_records: None,
-            max_record_length: None,
-            log_filter: Some("debug".to_string()),
-        };
-
-        let mut icrc_token_map = HashMap::new();
-
-        let token_storage_principal = if self.has_token_storage {
-            deploy_canister(
-                &client,
-                None,
-                get_token_storage_canister_bytecode(),
-                &(TokenStorageInitData {
-                    log_settings: Some(log.clone()),
-                    owner: TestUser::TokenStorageAdmin.get_principal(),
-                    tokens: Some(vec![
-                        RegistryToken {
-                            details: ChainTokenDetails::IC {
-                                ledger_id: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai")
-                                    .unwrap(),
-                                index_id: Some(
-                                    Principal::from_text("qhbym-qaaaa-aaaaa-aaafq-cai").unwrap(),
-                                ),
-                                fee: Nat::from(10_000u64),
-                            },
-                            symbol: "ICP".to_string(),
-                            name: "Internet Computer".to_string(),
-                            decimals: 8,
-                            enabled_by_default: true,
-                        },
-                        RegistryToken {
-                            details: ChainTokenDetails::IC {
-                                ledger_id: Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai")
-                                    .unwrap(),
-                                index_id: Some(
-                                    Principal::from_text("n5wcd-faaaa-aaaar-qaaea-cai").unwrap(),
-                                ),
-                                fee: Nat::from(10u64),
-                            },
-                            symbol: "ckBTC".to_string(),
-                            name: "Chain Key Bitcoin".to_string(),
-                            decimals: 8,
-                            enabled_by_default: true,
-                        },
-                        RegistryToken {
-                            details: ChainTokenDetails::IC {
-                                ledger_id: Principal::from_text("ss2fx-dyaaa-aaaar-qacoq-cai")
-                                    .unwrap(),
-                                index_id: Some(
-                                    Principal::from_text("s3zol-vqaaa-aaaar-qacpa-cai").unwrap(),
-                                ),
-                                fee: Nat::from(2_000_000_000_000u64),
-                            },
-                            symbol: "ckETH".to_string(),
-                            name: "Chain Key Ethereum".to_string(),
-                            decimals: 18,
-                            enabled_by_default: true,
-                        },
-                        RegistryToken {
-                            details: ChainTokenDetails::IC {
-                                ledger_id: Principal::from_text("xevnm-gaaaa-aaaar-qafnq-cai")
-                                    .unwrap(),
-                                index_id: Some(
-                                    Principal::from_text("xrs4b-hiaaa-aaaar-qafoa-cai").unwrap(),
-                                ),
-                                fee: Nat::from(10_000u64),
-                            },
-                            symbol: "ckUSDC".to_string(),
-                            name: "Chain Key USD Coin".to_string(),
-                            decimals: 8,
-                            enabled_by_default: true,
-                        },
-                        RegistryToken {
-                            details: ChainTokenDetails::IC {
-                                ledger_id: Principal::from_text("x5qut-viaaa-aaaar-qajda-cai")
-                                    .unwrap(),
-                                index_id: None,
-                                fee: Nat::from(10_000u64),
-                            },
-                            symbol: "tICP".to_string(),
-                            name: "Test Internet Computer".to_string(),
-                            decimals: 8,
-                            enabled_by_default: true,
-                        },
-                    ]),
-                }),
-            )
-            .await
-        } else {
-            Principal::anonymous()
-        };
-
-        let cashier_backend_principal = if self.has_cashier_backend {
-            deploy_canister(
-                &client,
-                None,
-                get_cashier_backend_canister_bytecode(),
-                &(CashierBackendInitData {
-                    log_settings: Some(log),
-                    owner: TestUser::CashierBackendAdmin.get_principal(),
-                }),
-            )
-            .await
-        } else {
-            Principal::anonymous()
-        };
-
-        let icp_ledger_principal = if self.has_icp_ledger {
-            token_icp::deploy_icp_ledger_canister(&client).await
-        } else {
-            Principal::anonymous()
-        };
-
-        for token_name in self.icrc_tokens.iter() {
-            let principal = match token_name.as_str() {
-                constant::CKBTC_ICRC_TOKEN => {
-                    token_icrc::deploy_single_icrc_ledger_canister(
-                        &client,
-                        format!("Chain Key {}", token_name),
-                        token_name.clone(),
-                        8,
-                        10,
-                        Some(Principal::from_text(CK_BTC_PRINCIPAL).unwrap()),
-                    )
-                    .await
-                }
-                constant::CKETH_ICRC_TOKEN => {
-                    token_icrc::deploy_single_icrc_ledger_canister(
-                        &client,
-                        format!("Chain Key {}", token_name),
-                        token_name.clone(),
-                        18,
-                        2000000000000000000,
-                        Some(Principal::from_text(CK_ETH_PRINCIPAL).unwrap()),
-                    )
-                    .await
-                }
-                constant::CKUSDC_ICRC_TOKEN => {
-                    token_icrc::deploy_single_icrc_ledger_canister(
-                        &client,
-                        format!("Chain Key {}", token_name),
-                        token_name.clone(),
-                        8,
-                        10000,
-                        Some(Principal::from_text(CK_USDC_PRINCIPAL).unwrap()),
-                    )
-                    .await
-                }
-                constant::DOGE_ICRC_TOKEN => {
-                    token_icrc::deploy_single_icrc_ledger_canister(
-                        &client,
-                        format!("Chain Key {}", token_name),
-                        token_name.clone(),
-                        8,
-                        10000,
-                        None,
-                    )
-                    .await
-                }
-                _ => {
-                    panic!("Unsupported ICRC token: {}", token_name);
-                }
-            };
-
-            icrc_token_map.insert(token_name.clone(), principal);
-        }
-
-        PocketIcTestContext {
-            client,
-            token_storage_principal,
-            cashier_backend_principal,
-            icp_ledger_principal,
-            icrc_token_map,
-        }
-    }
-}
-
 /// A test context that provides access to a `PocketIc` client and a deployed canister.
 #[derive(Clone)]
 pub struct PocketIcTestContext {
     pub client: Arc<PocketIc>,
     pub token_storage_principal: Principal,
     pub cashier_backend_principal: Principal,
+    pub gate_service_principal: Principal,
     pub icp_ledger_principal: Principal,
     pub icrc_token_map: HashMap<String, Principal>,
 }
@@ -448,6 +244,15 @@ impl PocketIcTestContext {
         caller: Principal,
     ) -> CashierBackendClient<PocketIcClient> {
         CashierBackendClient::new(self.new_client(self.cashier_backend_principal, caller))
+    }
+
+    /// Creates a new `GateServiceBackendClient` from the `PocketIc` client of this context,
+    /// bound to the `gate_service_principal` and the given `caller`.
+    pub fn new_gate_service_client(
+        &self,
+        caller: Principal,
+    ) -> GateServiceBackendClient<PocketIcClient> {
+        GateServiceBackendClient::new(self.new_client(self.gate_service_principal, caller))
     }
 
     /// Creates a new `TokenStorageClient` from the `PocketIc` client of this context,
@@ -669,6 +474,20 @@ pub fn get_cashier_backend_canister_bytecode() -> Vec<u8> {
         .get_or_init(|| load_canister_bytecode("cashier_backend.wasm"))
         .to_owned()
 }
+
+/// Retrieves the bytecode for the cashier_backend canister.
+///
+/// This function uses a `OnceLock` to ensure that the bytecode is loaded only once.
+/// The bytecode is loaded from the "token_storage.wasm" file located in the target artifacts directory.
+///
+/// Returns a `Vec<u8>` containing the bytecode of the gate_service canister.
+pub fn get_gate_service_canister_bytecode() -> Vec<u8> {
+    static CANISTER_BYTECODE: OnceLock<Vec<u8>> = OnceLock::new();
+    CANISTER_BYTECODE
+        .get_or_init(|| load_canister_bytecode("gate_service.wasm"))
+        .to_owned()
+}
+
 /// Retrieves the bytecode for the ICP ledger canister.
 ///
 /// This function uses a `OnceLock` to ensure that the bytecode is loaded only once.
