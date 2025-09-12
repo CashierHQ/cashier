@@ -72,10 +72,15 @@ pub mod runtime {
 }
 
 pub mod gate_service_mock {
-    use gate_service_client::CanisterClientResult;
-    use gate_service_types::{Gate, error::GateServiceError};
+    use gate_service_client::{CanisterClientError, CanisterClientResult};
+    use gate_service_types::{
+        Gate, GateForUser, GateStatus, GateUserStatus, error::GateServiceError,
+    };
 
-    use crate::services::gate::GateServiceTrait;
+    use crate::{
+        services::gate::GateServiceTrait,
+        utils::test_utils::{random_id_string, random_principal_id},
+    };
 
     // Test-only mock for GateServiceTrait. Provides an in-memory list of gates
     // that tests can seed and query without creating a real canister client.
@@ -104,6 +109,102 @@ pub mod gate_service_mock {
             let g = self.gates.lock().unwrap();
             let found = g.iter().find(|gate| gate.subject_id == link_id).cloned();
             Ok(Ok(found))
+        }
+
+        async fn get_gate_for_user(
+            &self,
+            link_id: &str,
+            user_id: candid::Principal,
+        ) -> CanisterClientResult<Result<GateForUser, GateServiceError>> {
+            let gate_id = random_id_string();
+            Ok(Ok(GateForUser {
+                gate: Gate {
+                    id: gate_id.clone(),
+                    creator: random_principal_id(),
+                    subject_id: link_id.to_string(),
+                    key: gate_service_types::GateKey::PasswordRedacted,
+                },
+                gate_user_status: Some(GateUserStatus {
+                    gate_id,
+                    user_id,
+                    status: GateStatus::Closed,
+                }),
+            }))
+        }
+    }
+
+    pub struct ErrorGateMock {
+        canister_err_builder: Option<Box<dyn Fn() -> CanisterClientError + Send + Sync>>,
+        service_err_builder: Option<Box<dyn Fn() -> GateServiceError + Send + Sync>>,
+    }
+
+    impl ErrorGateMock {
+        pub fn new() -> Self {
+            Self {
+                canister_err_builder: None,
+                service_err_builder: None,
+            }
+        }
+
+        pub fn with_service_error<F>(mut self, f: F) -> Self
+        where
+            F: Fn() -> GateServiceError + Send + Sync + 'static,
+        {
+            self.service_err_builder = Some(Box::new(f));
+            self
+        }
+
+        pub fn with_canister_error<F>(mut self, f: F) -> Self
+        where
+            F: Fn() -> CanisterClientError + Send + Sync + 'static,
+        {
+            self.canister_err_builder = Some(Box::new(f));
+            self
+        }
+    }
+
+    impl GateServiceTrait for ErrorGateMock {
+        async fn get_gate_by_link_id(
+            &self,
+            _link_id: &str,
+        ) -> gate_service_client::CanisterClientResult<Result<Option<Gate>, GateServiceError>>
+        {
+            if let Some(ref b) = self.canister_err_builder {
+                return Err((b)());
+            }
+            if let Some(ref b) = self.service_err_builder {
+                return Ok(Err((b)()));
+            }
+            Ok(Ok(None))
+        }
+
+        async fn get_gate_for_user(
+            &self,
+            _link_id: &str,
+            user_id: candid::Principal,
+        ) -> CanisterClientResult<Result<GateForUser, GateServiceError>> {
+            if let Some(ref b) = self.canister_err_builder {
+                return Err((b)());
+            }
+            if let Some(ref b) = self.service_err_builder {
+                return Ok(Err((b)()));
+            }
+
+            // default success response when no error builders are set
+            let gate_id = random_id_string();
+            Ok(Ok(GateForUser {
+                gate: Gate {
+                    id: gate_id.clone(),
+                    creator: random_principal_id(),
+                    subject_id: _link_id.to_string(),
+                    key: gate_service_types::GateKey::PasswordRedacted,
+                },
+                gate_user_status: Some(GateUserStatus {
+                    gate_id,
+                    user_id,
+                    status: GateStatus::Closed,
+                }),
+            }))
         }
     }
 }

@@ -85,6 +85,9 @@ pub enum CanisterError {
 
     #[error("Auth error: {0}")]
     AuthError(String),
+
+    #[error("Not implemented")]
+    NotImplemented,
 }
 
 impl CanisterError {

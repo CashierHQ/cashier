@@ -19,6 +19,7 @@ use cashier_backend_types::{
     },
 };
 use cashier_common::runtime::IcEnvironment;
+use gate_service_types::GateStatus;
 
 impl<E: IcEnvironment + Clone, R: Repositories, GS: GateServiceTrait> LinkUserStateMachine
     for LinkService<E, R, GS>
@@ -54,7 +55,6 @@ impl<E: IcEnvironment + Clone, R: Repositories, GS: GateServiceTrait> LinkUserSt
             .await
             .map_err(|e| CanisterError::HandleLogicError(format!("Failed to get gate: {e}")))?
             .map_err(|e| CanisterError::HandleLogicError(format!("Gate service error: {e}")))?;
-
         //
 
         // Check if we're in final state (CompletedLink)
@@ -71,8 +71,10 @@ impl<E: IcEnvironment + Clone, R: Repositories, GS: GateServiceTrait> LinkUserSt
         {
             // if gate is existed, transition to user_state_gate_closed
             if gate.is_some() {
+                // Address -> GateClosed
                 new_state = LinkUserState::GateClosed;
             } else {
+                // Address -> CompletedLink
                 // if gate is not existed, then check the action state
                 let action = self
                     .get_action_of_link(link_id, action_type, user_id)
@@ -86,15 +88,44 @@ impl<E: IcEnvironment + Clone, R: Repositories, GS: GateServiceTrait> LinkUserSt
                 }
                 new_state = LinkUserState::CompletedLink;
             }
-        }
-        // !End of state machine logic
+        } else if current_user_state == LinkUserState::GateClosed
+            && *goto == UserStateMachineGoto::Continue
+        {
+            if gate.is_none() {
+                return Err(CanisterError::HandleLogicError(
+                    "Gate is not existed on GateClosed".to_string(),
+                ));
+            }
+            let user_state = self
+                .gate_service
+                .get_gate_for_user(link_id, user_id)
+                .await
+                .map_err(|e| {
+                    CanisterError::HandleLogicError(format!("calling get_gate_for_user error: {e}"))
+                })?
+                .map_err(|e| CanisterError::HandleLogicError(format!("Gate service error: {e}")))?;
 
-        // Any other transition is invalid
-        else {
+            let Some(current_status) = user_state.gate_user_status else {
+                return Err(CanisterError::HandleLogicError(
+                    "Gate user status not found".to_string(),
+                ));
+            };
+
+            if current_status.status != GateStatus::Closed {
+                return Err(CanisterError::HandleLogicError(
+                    "Gate status is not Closed".to_string(),
+                ));
+            }
+
+            // TODO: open key logic here
+            // TODO: transition from GateClosed to GateOpened if success
+            return Err(CanisterError::NotImplemented);
+        } else {
             return Err(CanisterError::HandleLogicError(format!(
                 "current state {current_user_state:?} is not allowed to transition: {goto:?}"
             )));
         }
+        // !End of state machine logic
 
         // Only update the state field
         link_action.link_user_state = Some(new_state);
@@ -228,10 +259,15 @@ mod tests {
     use super::*;
     use crate::repositories::tests::TestRepositories;
     use crate::services::link::test_fixtures::*;
+    use crate::utils::test_utils::gate_service_mock::ErrorGateMock;
     use crate::utils::test_utils::{
         gate_service_mock::GateServiceMock, random_principal_id, runtime::MockIcEnvironment,
     };
     use cashier_backend_types::repository::action::v1::{Action, ActionState, ActionType};
+    use gate_service_client::{CanisterClientError, IcError};
+    use gate_service_types::error::GateServiceError;
+    use gate_service_types::{Gate, GateKey};
+    use ic_cdk::call::CallRejected;
 
     #[tokio::test]
     async fn it_should_error_handle_user_link_state_machine_if_link_not_found() {
@@ -344,7 +380,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn it_should_error_handle_user_link_state_machine_if_current_state_choose_wallet_and_goto_continue_and_action_state_notsuccess()
+    async fn it_should_error_handle_user_link_state_machine_if_current_state_address_and_goto_continue_and_action_state_notsuccess()
      {
         // Arrange
         let mut service = LinkService::new(
@@ -388,8 +424,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn it_should_handle_user_link_state_machine_if_current_state_choose_wallet_and_goto_continue()
-     {
+    async fn it_should_handle_user_link_state_machine_if_current_state_address_and_goto_continue() {
         // Arrange
         let mut service = LinkService::new(
             Rc::new(TestRepositories::new()),
@@ -420,16 +455,6 @@ mod tests {
         };
         service.action_repository.update(updated_action);
 
-        // let mock_gate_service = MockGateService::new();
-        // Seed a gate for this link so gate_service.get_gate_by_link_id returns Some(gate)
-        // gate::clear_test_gates();
-        // gate::add_test_gate(gate_service_types::Gate {
-        //     id: format!("gate_{}", link.id),
-        //     creator: creator_id,
-        //     subject_id: link.id.clone(),
-        //     key: gate_service_types::GateKey::PasswordRedacted,
-        // });
-
         // Act
         let result = service
             .handle_user_link_state_machine(
@@ -447,6 +472,158 @@ mod tests {
             link_action.link_user_state,
             Some(LinkUserState::CompletedLink)
         );
+    }
+
+    #[tokio::test]
+    async fn it_should_handle_user_link_state_machine_if_gate_exists_and_goto_continue() {
+        // Arrange
+        let gate_mock = GateServiceMock::new();
+
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            gate_mock,
+        );
+
+        // We need ownership of the gate mock to add a gate before constructing the service.
+        // Create a new gate and add it to the mock so get_gate_by_link_id will return Some(gate).
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+        let action_type = ActionType::Use;
+
+        let link_action =
+            create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
+        let updated_link_action = LinkAction {
+            link_id: link_action.link_id.clone(),
+            action_type: link_action.action_type.clone(),
+            action_id: link_action.action_id.clone(),
+            user_id: link_action.user_id,
+            link_user_state: Some(LinkUserState::Address),
+        };
+        service.link_action_repository.update(updated_link_action);
+
+        // Add gate matching the link id so gate_service returns Some(gate)
+        let gate = Gate {
+            id: "gate_1".to_string(),
+            creator: creator_id,
+            subject_id: link.id.clone(),
+            key: GateKey::PasswordRedacted,
+        };
+
+        // GateServiceMock was moved into the service; retrieve a mutable reference to it by
+        // replacing the gate_service in the service with a new mock that has the gate.
+        // Create a new mock, add the gate, and set it on the service.
+        let mut seeded_mock = crate::utils::test_utils::gate_service_mock::GateServiceMock::new();
+        seeded_mock.add_test_gate(gate);
+        service.gate_service = seeded_mock;
+
+        // Act
+        let result = service
+            .handle_user_link_state_machine(
+                &link.id,
+                &action_type,
+                creator_id,
+                &UserStateMachineGoto::Continue,
+            )
+            .await;
+
+        // Assert
+        assert!(result.is_ok());
+        let link_action = result.unwrap();
+        assert_eq!(link_action.link_user_state, Some(LinkUserState::GateClosed));
+    }
+
+    #[tokio::test]
+    async fn it_should_error_handle_user_link_state_machine_if_gate_service_errors() {
+        let error_gate_mock =
+            ErrorGateMock::new().with_service_error(|| GateServiceError::Unauthorized);
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            error_gate_mock,
+        );
+
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+        let action_type = ActionType::Use;
+
+        let link_action =
+            create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
+        let updated_link_action = LinkAction {
+            link_id: link_action.link_id.clone(),
+            action_type: link_action.action_type.clone(),
+            action_id: link_action.action_id.clone(),
+            user_id: link_action.user_id,
+            link_user_state: Some(LinkUserState::Address),
+        };
+        service.link_action_repository.update(updated_link_action);
+
+        // Act
+        let result = service
+            .handle_user_link_state_machine(
+                &link.id,
+                &action_type,
+                creator_id,
+                &UserStateMachineGoto::Continue,
+            )
+            .await;
+
+        // Assert
+        assert!(result.is_err());
+        if let Err(CanisterError::HandleLogicError(msg)) = result {
+            assert!(msg.contains("Unauthorized access"));
+        } else {
+            panic!("Expected HandleLogicError");
+        }
+    }
+
+    #[tokio::test]
+    async fn it_should_handle_canister_call_failed_from_gate_service() {
+        // Arrange
+        let error_gate_mock = ErrorGateMock::new().with_canister_error(|| {
+            CanisterClientError::CanisterError(IcError::CallRejected(CallRejected::with_rejection(
+                10,
+                "subnet is downed".to_string(),
+            )))
+        });
+        let mut service = LinkService::new(
+            Rc::new(TestRepositories::new()),
+            MockIcEnvironment::new(),
+            error_gate_mock,
+        );
+
+        let creator_id = random_principal_id();
+        let link = create_link_fixture(&mut service, creator_id);
+        let action_type = ActionType::Use;
+
+        let link_action =
+            create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
+        let updated_link_action = LinkAction {
+            link_id: link_action.link_id.clone(),
+            action_type: link_action.action_type.clone(),
+            action_id: link_action.action_id.clone(),
+            user_id: link_action.user_id,
+            link_user_state: Some(LinkUserState::Address),
+        };
+        service.link_action_repository.update(updated_link_action);
+
+        // Act
+        let result = service
+            .handle_user_link_state_machine(
+                &link.id,
+                &action_type,
+                creator_id,
+                &UserStateMachineGoto::Continue,
+            )
+            .await;
+
+        // Assert
+        assert!(result.is_err());
+        if let Err(CanisterError::HandleLogicError(msg)) = result {
+            assert!(msg.contains("subnet is downed"));
+        } else {
+            panic!("Expected HandleLogicError due to canister call failure");
+        }
     }
 
     #[tokio::test]

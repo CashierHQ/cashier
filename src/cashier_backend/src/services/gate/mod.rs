@@ -1,9 +1,10 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use candid::Principal;
 use cashier_common::constant::DEFAULT_TIMEOUT_BOUNDED_CALL_SECS;
 use gate_service_client::{CanisterClientResult, IcCanisterClient, client::GateServiceClient};
-use gate_service_types::{Gate, error::GateServiceError};
+use gate_service_types::{Gate, GateForUser, error::GateServiceError};
 
 use crate::repositories::{Repositories, settings::SettingsRepository};
 
@@ -16,6 +17,12 @@ pub trait GateServiceTrait {
         &self,
         link_id: &str,
     ) -> CanisterClientResult<Result<Option<Gate>, GateServiceError>>;
+
+    async fn get_gate_for_user(
+        &self,
+        link_id: &str,
+        user_id: Principal,
+    ) -> CanisterClientResult<Result<GateForUser, GateServiceError>>;
 }
 
 impl<R: Repositories> GateService<R> {
@@ -53,6 +60,22 @@ impl<R: Repositories> GateServiceTrait for GateService<R> {
     ) -> CanisterClientResult<Result<Option<Gate>, GateServiceError>> {
         let client = self.get_client();
         client.get_gate_by_subject(link_id.to_string()).await
+    }
+
+    /// Get the gate state for a user by link ID and user ID.
+    /// # Arguments
+    /// * `link_id` - The link ID of the gate.  
+    /// * `user_id` - The user ID to check the gate state for.
+    ///
+    /// # Returns
+    /// A result containing an optional GateForUser if found, or an error.
+    async fn get_gate_for_user(
+        &self,
+        link_id: &str,
+        user_id: candid::Principal,
+    ) -> CanisterClientResult<Result<GateForUser, GateServiceError>> {
+        let client = self.get_client();
+        client.get_gate_for_user(link_id.to_string(), user_id).await
     }
 }
 
