@@ -4,8 +4,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
-import { Feather, Lock, Zap, ChevronDown, ChevronUp } from "lucide-react";
+import { Feather, Lock, Zap, ChevronDown, ChevronUp, Mail } from "lucide-react";
 import { WalletSelectionModal } from "../wallet-connect/wallet-selection-modal";
+import { landingPageLinks } from "./landingPageLinks";
 
 export const UnauthenticatedContent = () => {
   const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
@@ -51,10 +52,10 @@ export const UnauthenticatedContent = () => {
   ];
 
   return (
-    <>
+    <div className="flex flex-col h-full">
       <div
         id="main-container"
-        className="flex flex-col lg:bg-[url('/LandingPageBackgroundPattern.svg')] lg:bg-cover lg:bg-center lg:w-full lg:h-full lg:pt-24"
+        className="lg:bg-[url('/LandingPageBackgroundPattern.svg')] lg:bg-cover lg:bg-center lg:w-full lg:pt-24 flex-1"
       >
         <div
           id="development-disclaimer"
@@ -100,7 +101,7 @@ export const UnauthenticatedContent = () => {
         </div>
         <div
           id="main-content"
-          className="flex flex-col lg:flex-row lg:w-full lg:justify-center lg:px-[200px] md:px-8"
+          className="flex flex-col lg:flex-row lg:w-full lg:justify-center lg:px-[200px] md:px-8 pb-8"
         >
           <div
             id="information"
@@ -174,31 +175,175 @@ export const UnauthenticatedContent = () => {
             <Button
               type="button"
               onClick={() => setIsWalletDialogOpen(true)}
-              className="fixed h-11 text-[1rem] bottom-[30px] w-[90%] max-w-[350px] rounded-full left-1/2 -translate-x-1/2 md:hidden"
+              className="h-11 text-[1rem] w-[90%] max-w-[350px] rounded-full mx-auto mt-6 mb-8 md:hidden"
             >
               {t("main_page.unauthenticated_content.get_started")}
             </Button>
           </div>
         </div>
+      </div>
+      <footer className="bg-gray-50 border-t border-gray-200 flex-shrink-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-3">
+          {/* Mobile Layout - Vertical */}
+          <div className="flex flex-col gap-6 lg:hidden">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-xs font-semibold text-gray-900 mb-2">
+                  Company
+                </h3>
+                <ul className="space-y-1">
+                  <li>
+                    <a
+                      href={landingPageLinks.about.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-gray-600 hover:text-[#35A18B] transition-colors"
+                    >
+                      {landingPageLinks.about.label}
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href={landingPageLinks.team.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-gray-600 hover:text-[#35A18B] transition-colors"
+                    >
+                      {landingPageLinks.team.label}
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href={landingPageLinks.faq.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-gray-600 hover:text-[#35A18B] transition-colors"
+                    >
+                      {landingPageLinks.faq.label}
+                    </a>
+                  </li>
+                </ul>
+              </div>
 
-        <div
-          id="powered-by-icp"
-          className="flex-col items-center gap-1 bg-white text-[8px] lg:text-[12px] font-light text-[#8D8D8D]/75 mt-8 lg:flex fixed bottom-1 lg:bottom-4 w-full justify-center"
-        >
-          <div className="flex gap-2 items-center justify-center">
-            <p>Powered by Internet Computer</p>
-            <img
-              src="/icpToken.png"
-              alt="Internet Computer"
-              className="w-4 h-4"
-            />
+              <div>
+                <h3 className="text-xs font-semibold text-gray-900 mb-2">
+                  Legal & Contact
+                </h3>
+                <ul className="space-y-1">
+                  <li>
+                    <a
+                      href={landingPageLinks.termsOfService.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-gray-600 hover:text-[#35A18B] transition-colors"
+                    >
+                      Terms
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href={landingPageLinks.privacyPolicy.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-gray-600 hover:text-[#35A18B] transition-colors"
+                    >
+                      Privacy
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href={`mailto:${landingPageLinks.contactEmail.email}`}
+                      className="text-xs text-gray-600 hover:text-[#35A18B] transition-colors inline-flex items-center gap-1"
+                    >
+                      <Mail className="w-3 h-3" />
+                      Contact
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="flex flex-col items-center gap-2 text-xs text-gray-500 border-t border-gray-200 pt-3">
+              <div className="flex items-center gap-2">
+                <span>Powered by</span>
+                <img src="/icpToken.png" alt="ICP" className="w-4 h-4" />
+                <span>Internet Computer</span>
+              </div>
+              <p>© {new Date().getFullYear()} Cashier Protocol Labs</p>
+            </div>
+          </div>
+
+          {/* Desktop Layout - Compact Horizontal */}
+          <div className="hidden lg:flex lg:items-center lg:justify-between">
+            <div className="flex items-center gap-6">
+              <p className="text-xs text-gray-500">
+                © {new Date().getFullYear()} Cashier Protocol Labs
+              </p>
+              <div className="flex items-center gap-4 text-xs">
+                <a
+                  href={landingPageLinks.about.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-600 hover:text-[#35A18B] transition-colors"
+                >
+                  About
+                </a>
+                <a
+                  href={landingPageLinks.team.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-600 hover:text-[#35A18B] transition-colors"
+                >
+                  Team
+                </a>
+                <a
+                  href={landingPageLinks.faq.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-600 hover:text-[#35A18B] transition-colors"
+                >
+                  FAQ
+                </a>
+                <span className="text-gray-400">|</span>
+                <a
+                  href={landingPageLinks.termsOfService.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-600 hover:text-[#35A18B] transition-colors"
+                >
+                  Terms
+                </a>
+                <a
+                  href={landingPageLinks.privacyPolicy.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-600 hover:text-[#35A18B] transition-colors"
+                >
+                  Privacy
+                </a>
+                <span className="text-gray-400">|</span>
+                <a
+                  href={`mailto:${landingPageLinks.contactEmail.email}`}
+                  className="text-gray-600 hover:text-[#35A18B] transition-colors inline-flex items-center gap-1"
+                >
+                  <Mail className="w-3 h-3" />
+                  Contact
+                </a>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <span>Powered by</span>
+              <img src="/icpToken.png" alt="ICP" className="w-4 h-4" />
+              <span>Internet Computer</span>
+            </div>
           </div>
         </div>
-      </div>
+      </footer>
       <WalletSelectionModal
         open={isWalletDialogOpen}
         onOpenChange={setIsWalletDialogOpen}
       />
-    </>
+    </div>
   );
 };
