@@ -515,5 +515,15 @@
     "title": "Choose your wallet",
     "logout_title": "Are you sure?",
     "logout_description": "You are connected to another wallet. Would you like to disconnect and use this address instead?"
+  },
+  "landing_page": {
+    "link": {
+      "term_of_service": "Terms of Service",
+      "privacy_policy": "Privacy Policy",
+      "team": "Team",
+      "about": "About Cashier",
+      "faq": "FAQ",
+      "contact_email": "Contact Email"
+    }
   }
 }

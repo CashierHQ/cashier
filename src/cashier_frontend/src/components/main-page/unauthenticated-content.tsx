@@ -182,7 +182,7 @@ export const UnauthenticatedContent = () => {
           </div>
         </div>
       </div>
-      <footer className="bg-gray-50 border-t border-gray-200 flex-shrink-0">
+      <footer className="w-screen left-0 relative bg-gray-50 border-t border-gray-200 flex-shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-3">
           {/* Mobile Layout - Vertical */}
           <div className="flex flex-col gap-6 lg:hidden">
@@ -199,7 +199,7 @@ export const UnauthenticatedContent = () => {
                       rel="noopener noreferrer"
                       className="text-xs text-gray-600 hover:text-[#35A18B] transition-colors"
                     >
-                      {landingPageLinks.about.label}
+                      {t(landingPageLinks.about.label)}
                     </a>
                   </li>
                   <li>
@@ -209,7 +209,7 @@ export const UnauthenticatedContent = () => {
                       rel="noopener noreferrer"
                       className="text-xs text-gray-600 hover:text-[#35A18B] transition-colors"
                     >
-                      {landingPageLinks.team.label}
+                      {t(landingPageLinks.team.label)}
                     </a>
                   </li>
                   <li>
@@ -219,7 +219,7 @@ export const UnauthenticatedContent = () => {
                       rel="noopener noreferrer"
                       className="text-xs text-gray-600 hover:text-[#35A18B] transition-colors"
                     >
-                      {landingPageLinks.faq.label}
+                      {t(landingPageLinks.faq.label)}
                     </a>
                   </li>
                 </ul>
@@ -237,7 +237,7 @@ export const UnauthenticatedContent = () => {
                       rel="noopener noreferrer"
                       className="text-xs text-gray-600 hover:text-[#35A18B] transition-colors"
                     >
-                      Terms
+                      {t(landingPageLinks.termsOfService.label)}
                     </a>
                   </li>
                   <li>
@@ -247,7 +247,7 @@ export const UnauthenticatedContent = () => {
                       rel="noopener noreferrer"
                       className="text-xs text-gray-600 hover:text-[#35A18B] transition-colors"
                     >
-                      Privacy
+                      {t(landingPageLinks.privacyPolicy.label)}
                     </a>
                   </li>
                   <li>
@@ -256,7 +256,7 @@ export const UnauthenticatedContent = () => {
                       className="text-xs text-gray-600 hover:text-[#35A18B] transition-colors inline-flex items-center gap-1"
                     >
                       <Mail className="w-3 h-3" />
-                      Contact
+                      {t(landingPageLinks.contactEmail.label)}
                     </a>
                   </li>
                 </ul>
@@ -286,7 +286,7 @@ export const UnauthenticatedContent = () => {
                   rel="noopener noreferrer"
                   className="text-gray-600 hover:text-[#35A18B] transition-colors"
                 >
-                  {landingPageLinks.about.label}
+                  {t(landingPageLinks.about.label)}
                 </a>
                 <a
                   href={landingPageLinks.team.url}
@@ -294,7 +294,7 @@ export const UnauthenticatedContent = () => {
                   rel="noopener noreferrer"
                   className="text-gray-600 hover:text-[#35A18B] transition-colors"
                 >
-                  {landingPageLinks.team.label}
+                  {t(landingPageLinks.team.label)}
                 </a>
                 <a
                   href={landingPageLinks.faq.url}
@@ -302,7 +302,7 @@ export const UnauthenticatedContent = () => {
                   rel="noopener noreferrer"
                   className="text-gray-600 hover:text-[#35A18B] transition-colors"
                 >
-                  {landingPageLinks.faq.label}
+                  {t(landingPageLinks.faq.label)}
                 </a>
                 <span className="text-gray-400">|</span>
                 <a
@@ -311,7 +311,7 @@ export const UnauthenticatedContent = () => {
                   rel="noopener noreferrer"
                   className="text-gray-600 hover:text-[#35A18B] transition-colors"
                 >
-                  {landingPageLinks.termsOfService.label}
+                  {t(landingPageLinks.termsOfService.label)}
                 </a>
                 <a
                   href={landingPageLinks.privacyPolicy.url}
@@ -319,7 +319,7 @@ export const UnauthenticatedContent = () => {
                   rel="noopener noreferrer"
                   className="text-gray-600 hover:text-[#35A18B] transition-colors"
                 >
-                  Privacy
+                  {t(landingPageLinks.privacyPolicy.label)}
                 </a>
                 <span className="text-gray-400">|</span>
                 <a
@@ -327,7 +327,7 @@ export const UnauthenticatedContent = () => {
                   className="text-gray-600 hover:text-[#35A18B] transition-colors inline-flex items-center gap-1"
                 >
                   <Mail className="w-3 h-3" />
-                  {landingPageLinks.contactEmail.label}
+                  {t(landingPageLinks.contactEmail.label)}
                 </a>
               </div>
             </div>
