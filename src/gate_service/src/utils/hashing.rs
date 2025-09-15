@@ -1,10 +1,7 @@
 use argon2::{
     Argon2,
-    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString, rand_core::OsRng},
 };
-
-#[cfg(not(feature = "canbench-rs"))]
-use argon2::password_hash::rand_core::OsRng;
 
 /// Hashes a password using Argon2.
 /// # Arguments
@@ -13,7 +10,7 @@ use argon2::password_hash::rand_core::OsRng;
 /// * `Ok(String)`: If the password is hashed successfully.
 /// * `Err(String)`: If there is an error during hashing.
 pub fn hash_password(password: &str) -> Result<String, String> {
-    let salt = get_salt()?;
+    let salt = SaltString::generate(&mut OsRng);
 
     // Argon2 with default params (Argon2id v19)
     let argon2 = Argon2::default();
@@ -24,24 +21,6 @@ pub fn hash_password(password: &str) -> Result<String, String> {
         .map_err(|e| e.to_string())?
         .to_string();
     Ok(password_hash)
-}
-
-/// Generates a salt for password hashing.
-/// In benchmarking mode, it returns a fixed salt for consistency.
-/// In production mode, it generates a random salt.
-/// # Returns
-/// * `Ok(SaltString)`: The generated salt.
-/// * `Err(String)`: If there is an error during salt generation.
-fn get_salt() -> Result<SaltString, String> {
-    #[cfg(feature = "canbench-rs")]
-    {
-        SaltString::from_b64("YWJjZGVmZ2hpamtsbW5vcA").map_err(|e| e.to_string())
-    }
-
-    #[cfg(not(feature = "canbench-rs"))]
-    {
-        Ok(SaltString::generate(&mut OsRng))
-    }
 }
 
 /// Verifies a password against a hashed password using Argon2.

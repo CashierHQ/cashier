@@ -206,29 +206,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "canbench-rs"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce6a55bed4e45003d254afc26e86cbc47a808d0db83f1a1c03f535a39f8b38ee"
-dependencies = [
- "canbench-rs-macros",
- "candid",
- "ic-cdk",
- "serde",
-]
-
-[[package]]
-name = "canbench-rs-macros"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5369e35db0ccebbf4a15b05533c23320f84ca1bee4179874eb28f18335ebff60"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 1.0.109",
-]
-
-[[package]]
 name = "candid"
 version = "0.10.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -808,7 +785,6 @@ name = "gate_service"
 version = "0.1.0"
 dependencies = [
  "argon2",
- "canbench-rs",
  "candid",
  "cashier_common",
  "cashier_macros",

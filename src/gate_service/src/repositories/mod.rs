@@ -71,7 +71,7 @@ thread_local! {
     ));
 }
 
-#[cfg(any(test, feature = "canbench-rs"))]
+#[cfg(test)]
 pub mod tests {
     use super::*;
     use std::rc::Rc;
