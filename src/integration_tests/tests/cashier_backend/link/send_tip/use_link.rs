@@ -113,6 +113,43 @@ async fn it_should_use_link_tip_icp_token_successfully() {
 }
 
 #[tokio::test]
+#[ignore = "benchmark"]
+async fn benchmark_use_link_tip_icp_token() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) =
+            create_tip_link_fixture(ctx, constant::ICP_TOKEN, 5_000_000u64).await;
+        let claimer = TestUser::User2.get_principal();
+        let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
+        let be_cycles_before = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+
+        // Act
+        let claim_action = claimer_fixture
+            .create_action(&link.id, ActionType::Use)
+            .await;
+        let _claim_result = claimer_fixture
+            .process_action(&link.id, &claim_action.id, ActionType::Use)
+            .await;
+
+        // Assert
+        let be_cycles_after = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+        let cycles_usage = be_cycles_before - be_cycles_after;
+        assert!(cycles_usage > 0);
+        println!("BE cycles usage for use link tip ICP: {}", cycles_usage);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
 async fn it_should_use_link_tip_icrc_token_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
@@ -174,6 +211,43 @@ async fn it_should_use_link_tip_icrc_token_successfully() {
         let link_account = link_id_to_account(&claimer_fixture.ctx, &link.id);
         let link_balance = icrc_ledger_client.balance_of(&link_account).await.unwrap();
         assert_eq!(link_balance, 0u64, "Link balance should be equal to zero");
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+#[ignore = "benchmark"]
+async fn benchmark_use_link_tip_icrc_token() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) =
+            create_tip_link_fixture(ctx, constant::CKBTC_ICRC_TOKEN, 1_000_000u64).await;
+        let claimer = TestUser::User2.get_principal();
+        let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
+        let be_cycles_before = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+
+        // Act
+        let claim_action = claimer_fixture
+            .create_action(&link.id, ActionType::Use)
+            .await;
+        let _claim_result = claimer_fixture
+            .process_action(&link.id, &claim_action.id, ActionType::Use)
+            .await;
+
+        // Assert
+        let be_cycles_after = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+        let cycles_usage = be_cycles_before - be_cycles_after;
+        assert!(cycles_usage > 0);
+        println!("BE cycles usage for use link tip ckBTC: {}", cycles_usage);
 
         Ok(())
     })
