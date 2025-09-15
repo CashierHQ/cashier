@@ -11,7 +11,6 @@ export default [
         ignores: [
             "dist/**",
             "node_modules/**",
-            "**/src/declarations/**",
             "**/*.config.js",
             "**/*.did.*",
             "**/src/example",
