@@ -148,6 +148,46 @@ async fn it_should_withdraw_link_payment_icp_token_successfully() {
 }
 
 #[tokio::test]
+#[ignore = "benchmark"]
+async fn benchmark_withdraw_link_payment_icp_token() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) =
+            create_and_use_receive_payment_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64)
+                .await;
+
+        let be_cycles_before = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+
+        // Act
+        let withdraw_action = creator_fixture
+            .create_action(&link.id, ActionType::Withdraw)
+            .await;
+        let _withdraw_result = creator_fixture
+            .process_action(&link.id, &withdraw_action.id, ActionType::Withdraw)
+            .await;
+
+        // Assert
+        let be_cycles_after = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+        let cycles_usage = be_cycles_before - be_cycles_after;
+        assert!(cycles_usage > 0);
+        println!(
+            "Cycles usage for withdraw ICP link payment: {}",
+            cycles_usage
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
 async fn it_should_withdraw_link_payment_icrc_token_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
@@ -212,6 +252,49 @@ async fn it_should_withdraw_link_payment_icrc_token_successfully() {
             ckusdc_balance_after,
             ckusdc_balance_before + link_amount - ckusdc_ledger_fee,
             "Caller balance after withdrawal is incorrect"
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+#[ignore = "benchmark"]
+async fn benchmark_withdraw_link_payment_icrc_token() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) = create_and_use_receive_payment_link_fixture(
+            ctx,
+            constant::CKUSDC_ICRC_TOKEN,
+            1_000_000u64,
+        )
+        .await;
+
+        let be_cycles_before = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+
+        // Act
+        let withdraw_action = creator_fixture
+            .create_action(&link.id, ActionType::Withdraw)
+            .await;
+        let _withdraw_result = creator_fixture
+            .process_action(&link.id, &withdraw_action.id, ActionType::Withdraw)
+            .await;
+
+        // Assert
+        let be_cycles_after = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+        let cycles_usage = be_cycles_before - be_cycles_after;
+        assert!(cycles_usage > 0);
+        println!(
+            "Cycles usage for withdraw ICRC link payment: {}",
+            cycles_usage
         );
 
         Ok(())

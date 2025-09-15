@@ -86,7 +86,7 @@ async fn it_should_error_withdraw_link_airdrop_if_caller_not_creator() {
 }
 
 #[tokio::test]
-async fn it_should_withdraw_link_airdrop_successfully() {
+async fn it_should_withdraw_link_airdrop_icp_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
@@ -137,6 +137,44 @@ async fn it_should_withdraw_link_airdrop_successfully() {
                 + link_amount * max_use_count
                 + (max_use_count - 1) * icp_ledger_fee,
             "Caller balance after withdrawal is incorrect"
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+#[ignore = "benchmark"]
+async fn benchmark_withdraw_link_airdrop_icp() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) =
+            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64, 5).await;
+        let be_cycles_before = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+
+        // Act
+        let withdraw_action = creator_fixture
+            .create_action(&link.id, ActionType::Withdraw)
+            .await;
+        let _withdraw_result = creator_fixture
+            .process_action(&link.id, &withdraw_action.id, ActionType::Withdraw)
+            .await;
+
+        // Assert
+        let be_cycles_after = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+        let cycles_usage = be_cycles_before - be_cycles_after;
+        assert!(cycles_usage > 0);
+        println!(
+            "Cycles usage for withdraw ICP link airdrop: {}",
+            cycles_usage
         );
 
         Ok(())
@@ -205,6 +243,45 @@ async fn it_should_withdraw_link_airdrop_icrc_token_successfully() {
                 + link_amount * max_use_count
                 + (max_use_count - 1) * ckusdc_ledger_fee,
             "Caller balance after withdrawal is incorrect"
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+#[ignore = "benchmark"]
+async fn benchmark_withdraw_link_airdrop_icrc_token() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) =
+            create_airdrop_link_fixture(ctx, constant::CKUSDC_ICRC_TOKEN, 1_000_000u64, 5).await;
+
+        let be_cycles_before = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+
+        // Act
+        let withdraw_action = creator_fixture
+            .create_action(&link.id, ActionType::Withdraw)
+            .await;
+        let _withdraw_result = creator_fixture
+            .process_action(&link.id, &withdraw_action.id, ActionType::Withdraw)
+            .await;
+
+        // Assert
+        let be_cycles_after = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+        let cycles_usage = be_cycles_before - be_cycles_after;
+        assert!(cycles_usage > 0);
+        println!(
+            "Cycles usage for withdraw ICRC token link airdrop: {}",
+            cycles_usage
         );
 
         Ok(())

@@ -4,11 +4,11 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 
-
 [dev-dependencies]
 candid = { workspace = true }
 cashier_backend_client = { workspace = true, features = ["pocket_ic"] }
 cashier_backend_types = { workspace = true }
+cashier_common = { workspace = true }
 gate_service_client = { workspace = true }
 gate_service_types = { workspace = true }
 ic-cdk = { workspace = true }
@@ -23,4 +23,3 @@ token_storage_client = { workspace = true }
 token_storage_types = { workspace = true }
 tokio = { workspace = true }
 uuid = { workspace = true }
-cashier_common = { workspace = true }
