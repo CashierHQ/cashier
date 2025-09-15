@@ -11,7 +11,7 @@ use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]
-async fn it_should_error_use_link_airdrop_if_caller_anonymous() {
+async fn it_should_error_use_link_airdrop_icp_if_caller_anonymous() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
@@ -47,7 +47,7 @@ async fn it_should_error_use_link_airdrop_if_caller_anonymous() {
 }
 
 #[tokio::test]
-async fn it_should_use_link_airdrop_successfully() {
+async fn it_should_use_link_airdrop_icp_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
@@ -107,12 +107,55 @@ async fn it_should_use_link_airdrop_successfully() {
         // Arrange
         let cashier_backend_client = claimer_fixture.ctx.new_cashier_backend_client(claimer);
 
+        // Act
         let link_info = cashier_backend_client
             .get_link(link.id, None)
             .await
             .unwrap()
             .unwrap();
+
+        // Assert
         assert_eq!(link_info.link.link_use_action_counter, 1);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+#[ignore = "benchmark"]
+async fn benchmark_use_link_airdrop_icp() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) =
+            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64, 5).await;
+
+        let claimer = TestUser::User2.get_principal();
+        let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
+
+        let be_cycles_before = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+
+        // Act
+        let claim_action = claimer_fixture
+            .create_action(&link.id, ActionType::Use)
+            .await;
+
+        let _claim_result = claimer_fixture
+            .process_action(&link.id, &claim_action.id, ActionType::Use)
+            .await;
+
+        // Assert
+        let be_cycles_after = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+        let cycles_usage = be_cycles_before - be_cycles_after;
+        assert!(cycles_usage > 0);
+        println!("BE cycles usage for use link airdrop ICP: {}", cycles_usage);
 
         Ok(())
     })
@@ -344,12 +387,58 @@ async fn it_should_use_link_airdrop_icrc_token_successfully() {
         // Arrange
         let cashier_backend_client = claimer_fixture.ctx.new_cashier_backend_client(claimer);
 
+        // Act
         let link_info = cashier_backend_client
             .get_link(link.id, None)
             .await
             .unwrap()
             .unwrap();
+
+        // Assert
         assert_eq!(link_info.link.link_use_action_counter, 1);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+#[ignore = "benchmark"]
+async fn benchmark_use_link_airdrop_icrc_token() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) =
+            create_airdrop_link_fixture(ctx, constant::CKUSDC_ICRC_TOKEN, 1_000_000u64, 5).await;
+
+        let claimer = TestUser::User2.get_principal();
+        let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
+
+        let be_cycles_before = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+
+        // Act
+        let claim_action = claimer_fixture
+            .create_action(&link.id, ActionType::Use)
+            .await;
+
+        let _claim_result = claimer_fixture
+            .process_action(&link.id, &claim_action.id, ActionType::Use)
+            .await;
+
+        // Assert
+        let be_cycles_after = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+        let cycles_usage = be_cycles_before - be_cycles_after;
+        assert!(cycles_usage > 0);
+        println!(
+            "BE cycles usage for use link airdrop cKUSDC: {}",
+            cycles_usage
+        );
 
         Ok(())
     })

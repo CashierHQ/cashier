@@ -151,14 +151,58 @@ async fn it_should_use_link_payment_icp_token_successfully() {
 }
 
 #[tokio::test]
+#[ignore = "benchmark"]
+async fn benchmark_use_link_payment_icp_token() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) =
+            create_receive_payment_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64).await;
+        let payer = TestUser::User2.get_principal();
+        let mut payer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &payer).await;
+        let initial_balance = 1_000_000_000u64;
+        payer_fixture.airdrop_icp(initial_balance, &payer).await;
+        let be_cycles_before = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+
+        // Act
+        let pay_action = payer_fixture.create_action(&link.id, ActionType::Use).await;
+        let processing_action = payer_fixture
+            .process_action(&link.id, &pay_action.id, ActionType::Use)
+            .await;
+        let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
+        let _icrc112_execution_result =
+            icrc_112::execute_icrc112_request(icrc_112_requests, payer, &payer_fixture.ctx).await;
+        let _update_action = payer_fixture
+            .update_action(&link.id, &processing_action.id)
+            .await;
+
+        // Assert
+        let be_cycles_after = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+        let cycles_usage = be_cycles_before - be_cycles_after;
+        assert!(cycles_usage > 0);
+        println!(
+            "BE cycles usage for use link payment ICP token: {}",
+            cycles_usage
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
 async fn it_should_use_link_payment_icrc_token_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
             create_receive_payment_link_fixture(ctx, constant::CKUSDC_ICRC_TOKEN, 1_000_000u64)
                 .await;
-
-        println!("Link {:?}", link);
 
         let payer = TestUser::User2.get_principal();
         let mut payer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &payer).await;
@@ -263,6 +307,56 @@ async fn it_should_use_link_payment_icrc_token_successfully() {
         assert_eq!(
             link_ckusdc_balance, payment_amount,
             "Link CKUSDC balance is incorrect"
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+#[ignore = "benchmark"]
+async fn benchmark_use_link_payment_icrc_token() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) =
+            create_receive_payment_link_fixture(ctx, constant::CKUSDC_ICRC_TOKEN, 1_000_000u64)
+                .await;
+        let payer = TestUser::User2.get_principal();
+        let mut payer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &payer).await;
+        let initial_balance = 1_000_000_000u64;
+        payer_fixture.airdrop_icp(initial_balance, &payer).await;
+        payer_fixture
+            .airdrop_icrc(constant::CKUSDC_ICRC_TOKEN, initial_balance, &payer)
+            .await;
+        let be_cycles_before = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+
+        // Act
+        let pay_action = payer_fixture.create_action(&link.id, ActionType::Use).await;
+        let processing_action = payer_fixture
+            .process_action(&link.id, &pay_action.id, ActionType::Use)
+            .await;
+        let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
+        let _icrc112_execution_result =
+            icrc_112::execute_icrc112_request(icrc_112_requests, payer, &payer_fixture.ctx).await;
+        let _update_action = payer_fixture
+            .update_action(&link.id, &processing_action.id)
+            .await;
+
+        // Assert
+        let be_cycles_after = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+        let cycles_usage = be_cycles_before - be_cycles_after;
+        assert!(cycles_usage > 0);
+        println!(
+            "BE cycles usage for use link payment ICRC token: {}",
+            cycles_usage
         );
 
         Ok(())
