@@ -269,7 +269,7 @@ export const UnauthenticatedContent = () => {
                 <img src="/icpToken.png" alt="ICP" className="w-4 h-4" />
                 <span>Internet Computer</span>
               </div>
-              <p>© {new Date().getFullYear()} Cashier Protocol Labs</p>
+              <p>CASHIERFI VENTURES LABS LTD</p>
             </div>
           </div>
 
@@ -277,7 +277,7 @@ export const UnauthenticatedContent = () => {
           <div className="hidden lg:flex lg:items-center lg:justify-between">
             <div className="flex items-center gap-6">
               <p className="text-xs text-gray-500">
-                © {new Date().getFullYear()} Cashier Protocol Labs
+                CASHIERFI VENTURES LABS LTD
               </p>
               <div className="flex items-center gap-4 text-xs">
                 <a
