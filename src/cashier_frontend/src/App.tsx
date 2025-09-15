@@ -11,7 +11,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useSignerStore } from "./stores/signerStore";
 import { ImageCacheProvider } from "@/contexts/image-cache-context";
-import { IdleTimeoutProvider } from "@/contexts/ilde-timeout-context";
+import { IdleTimeoutProvider } from "@/contexts/idle-timeout-context";
 import { BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID } from "./const";
 // useEffect removed - console logging now handled at build time
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";

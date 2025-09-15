@@ -1,22 +1,37 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import icExplorerAxiosClient from "@/axios/axiosClient";
+import { IC_EXPLORER_BASE_URL } from "@/const";
+import axios from "axios";
+import queryString from "query-string";
 
-// This interface is created based on the response from the icexplorer.io API
-interface DataSourceToken {
-  accountId: string;
-  amount: string;
-  ledgerId: string;
-  symbol: string;
-  valueUSD: string;
-  // Additional fields from the response
-  totalSupply?: string;
-  owner?: string;
-  subaccount?: string;
-  tokenDecimal?: number;
-  snapshotTime?: number;
-}
+const icExplorerAxiosClient = axios.create({
+  baseURL: IC_EXPLORER_BASE_URL,
+  headers: {
+    accept: "application/json",
+    "cache-control": "no-cache",
+    "content-type": "application/json",
+    pragma: "no-cache",
+    priority: "u=1, i",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+  },
+  paramsSerializer: {
+    serialize: (params) => queryString.stringify(params),
+  },
+});
+
+icExplorerAxiosClient.interceptors.response.use(
+  (response) => {
+    if (response && response.data) {
+      return response.data;
+    }
+
+    return response;
+  },
+  (err) => {
+    return Promise.reject(err.response);
+  },
+);
 
 /**
  * Detailed token information from IC Explorer
@@ -49,18 +64,6 @@ export interface IcExplorerTokenDetail {
 
 export class ICExplorerService {
   constructor() {}
-
-  async getUserTokens(principal: string): Promise<DataSourceToken[]> {
-    const url = "holder/user";
-    const response = await icExplorerAxiosClient.post(url, {
-      principal,
-      page: 1,
-      size: 300,
-      isDesc: true,
-    });
-
-    return response.data.list;
-  }
 
   async getListToken(): Promise<IcExplorerTokenDetail[]> {
     const url = "token/list";
