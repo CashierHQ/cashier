@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import "@radix-ui/themes/styles.css";
