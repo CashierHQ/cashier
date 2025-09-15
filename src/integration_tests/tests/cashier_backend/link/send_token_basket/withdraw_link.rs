@@ -182,3 +182,37 @@ async fn it_should_withdraw_link_token_basket_successfully() {
     .await
     .unwrap();
 }
+
+#[tokio::test]
+#[ignore = "benchmark"]
+async fn benchmark_withdraw_link_token_basket() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) = create_token_basket_link_fixture(ctx).await;
+        let be_cycles_before = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+
+        // Act
+        let withdraw_action = creator_fixture
+            .create_action(&link.id, ActionType::Withdraw)
+            .await;
+        let _withdraw_result = creator_fixture
+            .process_action(&link.id, &withdraw_action.id, ActionType::Withdraw)
+            .await;
+
+        // Assert
+        let be_cycles_after = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+        let cycles_usage = be_cycles_before - be_cycles_after;
+        assert!(cycles_usage > 0);
+        println!("BE cycles usage withdraw token basket: {}", cycles_usage);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}

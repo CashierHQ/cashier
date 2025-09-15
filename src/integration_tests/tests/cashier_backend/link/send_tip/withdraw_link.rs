@@ -146,6 +146,42 @@ async fn it_should_withdraw_link_tip_icp_token_successfully() {
 }
 
 #[tokio::test]
+#[ignore = "benchmark"]
+async fn benchmark_withdraw_link_tip_icp_token() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) =
+            create_tip_link_fixture(ctx, constant::ICP_TOKEN, 10_000u64).await;
+
+        let be_cycles_before = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+
+        // Act
+        let withdraw_action = creator_fixture
+            .create_action(&link.id, ActionType::Withdraw)
+            .await;
+        let _withdraw_result = creator_fixture
+            .process_action(&link.id, &withdraw_action.id, ActionType::Withdraw)
+            .await;
+
+        // Assert
+        let be_cycles_after = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+        let cycles_usage = be_cycles_before - be_cycles_after;
+        assert!(cycles_usage > 0);
+        println!("BE cycles usage withdraw ICP tip link: {}", cycles_usage);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
 async fn it_should_withdraw_link_tip_icrc_token_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
@@ -206,6 +242,42 @@ async fn it_should_withdraw_link_tip_icrc_token_successfully() {
             link_balance_after, 0u64,
             "Link balance after withdrawal is incorrect"
         );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+#[ignore = "benchmark"]
+async fn benchmark_withdraw_link_tip_icrc_token() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) =
+            create_tip_link_fixture(ctx, constant::CKBTC_ICRC_TOKEN, 1_000_000u64).await;
+
+        let be_cycles_before = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+
+        // Act
+        let withdraw_action = creator_fixture
+            .create_action(&link.id, ActionType::Withdraw)
+            .await;
+        let _withdraw_result = creator_fixture
+            .process_action(&link.id, &withdraw_action.id, ActionType::Withdraw)
+            .await;
+
+        // Assert
+        let be_cycles_after = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+        let cycles_usage = be_cycles_before - be_cycles_after;
+        assert!(cycles_usage > 0);
+        println!("BE cycles usage withdraw ICRC tip link: {}", cycles_usage);
 
         Ok(())
     })
