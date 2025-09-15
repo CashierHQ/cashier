@@ -185,6 +185,60 @@ async fn it_should_create_link_tip_icp_token_successfully() {
 }
 
 #[tokio::test]
+#[ignore = "benchmark"]
+async fn benchmark_create_link_tip_icp_token() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
+        let initial_balance = 1_000_000_000u64;
+        let tip_amount = 1_000_000u64;
+        test_fixture.airdrop_icp(initial_balance, &caller).await;
+
+        let be_cycles_before = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+
+        // Act
+        let link = test_fixture
+            .create_tip_link(constant::ICP_TOKEN, tip_amount)
+            .await;
+        let create_action = test_fixture
+            .create_action(&link.id, ActionType::CreateLink)
+            .await;
+        let processing_action = test_fixture
+            .process_action(&link.id, &create_action.id, ActionType::CreateLink)
+            .await;
+        let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
+        let _icrc112_execution_result =
+            execute_icrc112_request(icrc_112_requests, caller, ctx).await;
+        let _update_action = test_fixture
+            .update_action(&link.id, &processing_action.id)
+            .await;
+        let update_link_input = UpdateLinkInput {
+            id: link.id.clone(),
+            goto: LinkStateMachineGoto::Continue,
+            params: None,
+        };
+        let _update_link = test_fixture.update_link(update_link_input).await;
+
+        // Assert
+        let be_cycles_after = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+        let cycles_usage = be_cycles_before - be_cycles_after;
+        assert!(cycles_usage > 0);
+        println!("BE cycles usage for create link tip ICP: {}", cycles_usage);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
 async fn it_should_create_link_tip_icrc_token_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
@@ -327,6 +381,67 @@ async fn it_should_create_link_tip_icrc_token_successfully() {
             icp_balance_after,
             icp_balance_before - test_utils::calculate_amount_for_create_link(&icp_ledger_fee),
             "ICP caller balance is incorrect"
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+#[ignore = "benchmark"]
+async fn benchmark_create_link_tip_icrc_token() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
+        let icp_initial_balance = 1_000_000u64;
+        let ckbtc_initial_balance = 1_000_000_000u64;
+        let tip_amount = 5_000_000u64;
+        test_fixture.airdrop_icp(icp_initial_balance, &caller).await;
+        test_fixture
+            .airdrop_icrc(constant::CKBTC_ICRC_TOKEN, ckbtc_initial_balance, &caller)
+            .await;
+
+        let be_cycles_before = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+
+        // Act
+        let link = test_fixture
+            .create_tip_link(constant::CKBTC_ICRC_TOKEN, tip_amount)
+            .await;
+        let create_action = test_fixture
+            .create_action(&link.id, ActionType::CreateLink)
+            .await;
+        let processing_action = test_fixture
+            .process_action(&link.id, &create_action.id, ActionType::CreateLink)
+            .await;
+        let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
+        let _icrc112_execution_result =
+            execute_icrc112_request(icrc_112_requests, caller, ctx).await;
+        let _update_action = test_fixture
+            .update_action(&link.id, &processing_action.id)
+            .await;
+        let update_link_input = UpdateLinkInput {
+            id: link.id.clone(),
+            goto: LinkStateMachineGoto::Continue,
+            params: None,
+        };
+        let _update_link = test_fixture.update_link(update_link_input).await;
+
+        // Assert
+        let be_cycles_after = ctx
+            .client
+            .cycle_balance(ctx.cashier_backend_principal)
+            .await;
+        let cycles_usage = be_cycles_before - be_cycles_after;
+        assert!(cycles_usage > 0);
+        println!(
+            "BE cycles usage for create link tip ckBTC: {}",
+            cycles_usage
         );
 
         Ok(())
