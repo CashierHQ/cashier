@@ -58,7 +58,7 @@ async fn it_should_error_add_gate_due_to_unauthorized_caller() {
 }
 
 #[tokio::test]
-async fn it_should_add_gate() {
+async fn it_should_add_password_gate() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let admin = TestUser::GateServiceAdmin.get_principal();
@@ -84,6 +84,43 @@ async fn it_should_add_gate() {
         assert_eq!(result.creator, user);
         assert_eq!(result.subject_id, "subject1");
         assert_eq!(result.key, GateKey::PasswordRedacted);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+#[ignore = "benchmark"]
+async fn benchmark_add_password_gate() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let admin = TestUser::GateServiceAdmin.get_principal();
+        let user = TestUser::User1.get_principal();
+        let admin_client = ctx.new_gate_service_client(admin);
+        let _user_permissions_add = admin_client
+            .admin_permissions_add(user, vec![Permission::GateCreate])
+            .await
+            .unwrap()
+            .unwrap();
+
+        let user_client = ctx.new_gate_service_client(user);
+        let new_gate = NewGate {
+            subject_id: "subject1".to_string(),
+            key: GateKey::Password("password123".to_string()),
+        };
+
+        let be_cycles_before = ctx.client.cycle_balance(ctx.gate_service_principal).await;
+
+        // Act
+        let _result = user_client.add_gate(new_gate).await.unwrap().unwrap();
+
+        // Assert
+        let be_cycles_after = ctx.client.cycle_balance(ctx.gate_service_principal).await;
+        let cycles_usage = be_cycles_before - be_cycles_after;
+        assert!(cycles_usage > 0);
+        println!("BE cycles usage for add password gate: {}", cycles_usage);
 
         Ok(())
     })
@@ -176,6 +213,38 @@ async fn it_should_open_password_gate() {
         assert_eq!(result.gate_user_status.gate_id, gate.id);
         assert_eq!(result.gate_user_status.user_id, user);
         assert_eq!(result.gate_user_status.status, GateStatus::Open);
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+#[ignore = "benchmark"]
+async fn benchmark_open_password_gate() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let creator = random_principal_id();
+        let subject_id = random_id_string();
+        let password = random_id_string();
+        let gate = add_password_gate_fixture(ctx, creator, &subject_id, &password).await;
+        let user = TestUser::User1.get_principal();
+        let user_client = ctx.new_gate_service_client(user);
+        let be_cycles_before = ctx.client.cycle_balance(ctx.gate_service_principal).await;
+
+        // Act
+        let _result = user_client
+            .open_gate(gate.id.clone(), GateKey::Password(password.to_string()))
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Assert
+        let be_cycles_after = ctx.client.cycle_balance(ctx.gate_service_principal).await;
+        let cycles_usage = be_cycles_before - be_cycles_after;
+        assert!(cycles_usage > 0);
+        println!("BE cycles usage for open password gate: {}", cycles_usage);
 
         Ok(())
     })
