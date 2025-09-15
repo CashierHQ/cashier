@@ -11,7 +11,6 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 argon2 = { workspace = true }
-canbench-rs = { workspace = true, optional = true }
 candid = { workspace = true }
 cashier_common = { workspace = true }
 cashier_macros = { workspace = true }
