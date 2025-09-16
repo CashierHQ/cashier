@@ -2,8 +2,6 @@
   "project": ["src/**"],
   "ignore": [
     "src/workers/**", 
-    "src/generated/**",
-    "src/services/token_price/icpswap/**",
-    "src/services/token_price/kongswap/**"
+    "src/generated/**"
   ]
 }

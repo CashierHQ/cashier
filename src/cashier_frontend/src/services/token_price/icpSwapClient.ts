@@ -1,7 +1,8 @@
 import { Actor, Agent } from "@dfinity/agent";
 import { ICPSWAP_NODE_INDEX_CANISTER_ID } from "@/const";
-import { icpSwapIndexNode, TokenPriceClient } from ".";
+import { TokenPriceClient } from ".";
 import { Err, Ok, Result } from "ts-results";
+import icpSwapIndexNode from "../../generated/icpswap/icpswapNodeIndex";
 
 type IndexNodeActor = icpSwapIndexNode._SERVICE;
 
