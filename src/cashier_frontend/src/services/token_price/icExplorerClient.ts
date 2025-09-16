@@ -5,11 +5,12 @@ import { IC_EXPLORER_BASE_URL } from "@/const";
 import axios from "axios";
 import queryString from "query-string";
 import { Err, Ok, Result } from "ts-results";
+import { TokenPriceClient } from ".";
 
 /**
  * Simple service for fetching token prices from IC Explorer
  */
-class IcExplorerClient {
+export class IcExplorerClient  implements TokenPriceClient {
  
   /**
    * Fetch the list of tokens from IC Explorer
@@ -60,7 +61,7 @@ class IcExplorerClient {
    * Fetch all token prices from IC Explorer
    * @returns Object mapping token IDs to their USD prices
    */
-  public static async getTokenPrices(): Promise<Result<Record<string, number>, Error>> {
+  public async getTokenPrices(): Promise<Result<Record<string, number>, Error>> {
     try {
       const client = axios.create({
         baseURL: IC_EXPLORER_BASE_URL,
@@ -100,8 +101,6 @@ class IcExplorerClient {
     }
   }
 }
-
-export default IcExplorerClient;
 
 /**
  * Detailed token information from IC Explorer

@@ -1,23 +1,24 @@
 import { Actor, Agent } from "@dfinity/agent";
-import { kongBackend } from ".";
-import { parseResultResponse } from "@/utils";
+import { kongBackend, TokenPriceClient } from ".";
+import { parseResultResponse, responseToResult } from "@/utils";
 import { Token } from "./shared/token";
 import { Err, Ok, Result } from "ts-results";
+import { KONGSWAP_BACKEND_CANISTER_ID } from "@/const";
 
-// ToDo: move to const
-export const KONGSWAP_BACKEND_CANISTER = "2ipq2-uqaaa-aaaar-qailq-cai";
 const ckUSDT_ADDRESS = "cngnf-vqaaa-aaaar-qag4q-cai";
-const ckUSDC_ADDRESS = "xevnm-gaaaa-aaaar-qafnq-cai";
 
 type KongSwapActor = kongBackend._SERVICE;
 
-export class KongSwapClient {
+/**
+ * Service for fetching data from the KongSwap backend
+ */
+export class KongSwapClient implements TokenPriceClient {
     private actor: KongSwapActor;
 
     constructor({ agent }: { agent: Agent }) {
         this.actor = Actor.createActor(kongBackend.idlFactory, {
             agent,
-            canisterId: KONGSWAP_BACKEND_CANISTER,
+            canisterId: KONGSWAP_BACKEND_CANISTER_ID,
         });
     }
 
@@ -26,29 +27,22 @@ export class KongSwapClient {
    * @returns Object mapping token IDs to their USD prices
    */
     public async getTokenPrices(): Promise<Result<Record<string, number>, Error>> {
-        try {
-            const tokensRes = await this.actor.pools([ckUSDT_ADDRESS]);
-            const result = parseResultResponse(tokensRes);
 
-            // Map to a simple object of tokenId -> price
-            const priceMap: Record<string, number> = {};
-            for (const token of result) {
-                try {
-                    console.debug(`Processing pair: ${token.symbol_0}/${token.symbol_1} (${token.address_0})/(${token.address_1}) with price: ${token.price}`);
-                    priceMap[token.address_0] = Number(token.price.toFixed(7));
-                } catch (e) {
-                    console.warn(
-                        `Failed to parse price pair: ${token.symbol_0}/${token.symbol_1}`,
-                        e,
-                    );
-                }
-            }
+        const tokensRes = await this.actor.pools([ckUSDT_ADDRESS]);
+        const result = responseToResult(tokensRes);
 
-            return Ok(priceMap);
-        } catch (error) {
-            console.error("Error fetching prices:", error);
-            return Err(Error("Failed to fetch prices from KongSwap"));
+        if (result.err) {
+            return result;
         }
+
+        // Map to a simple object of tokenId -> price
+        const priceMap: Record<string, number> = {};
+        for (const token of result.val) {
+            console.debug(`Processing pair: ${token.symbol_0}/${token.symbol_1} (${token.address_0})/(${token.address_1}) with price: ${token.price}`);
+            priceMap[token.address_0] = Number(token.price.toFixed(7));
+        }
+
+        return Ok(priceMap);
 
     }
 
