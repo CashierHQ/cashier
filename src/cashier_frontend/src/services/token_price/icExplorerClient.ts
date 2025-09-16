@@ -10,8 +10,7 @@ import { TokenPriceClient } from ".";
 /**
  * Simple service for fetching token prices from IC Explorer
  */
-export class IcExplorerClient  implements TokenPriceClient {
- 
+export class IcExplorerClient implements TokenPriceClient {
   /**
    * Fetch the list of tokens from IC Explorer
    * @returns Promise resolving to an array of IcExplorerTokenDetail objects
@@ -61,7 +60,9 @@ export class IcExplorerClient  implements TokenPriceClient {
    * Fetch all token prices from IC Explorer
    * @returns Object mapping token IDs to their USD prices
    */
-  public async getTokenPrices(): Promise<Result<Record<string, number>, Error>> {
+  public async getTokenPrices(): Promise<
+    Result<Record<string, number>, Error>
+  > {
     try {
       const client = axios.create({
         baseURL: IC_EXPLORER_BASE_URL,

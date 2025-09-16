@@ -208,30 +208,33 @@ export function useTokenPricesQuery(identity: Identity | undefined) {
   return useQuery({
     queryKey: TOKEN_QUERY_KEYS.prices(),
     queryFn: async () => {
+      let prices: Record<string, number> = {};
+      const token_result = await new IcExplorerClient().getTokenPrices();
+      if (token_result.ok) {
+        prices = token_result.val;
+      } else {
+        console.warn(
+          "Error fetching prices from IC Explorer, falling back to IcpSwap",
+        );
+        const agent = getAgent(identity);
 
-        let prices: Record<string, number> = {};
-        let token_result = await new IcExplorerClient().getTokenPrices();
-        if (token_result.ok) {
-          prices = token_result.val;
+        const icpswap = new IcpSwapClient({ agent });
+        const result = await icpswap.getTokenPrices();
+
+        if (result.ok) {
+          prices = result.val;
         } else {
-          console.warn("Error fetching prices from IC Explorer, falling back to IcpSwap");
-          let agent = getAgent(identity);
-
-          let icpswap = new IcpSwapClient({ agent });
-          let result = await icpswap.getTokenPrices();
-
-          if (result.ok) {
-            prices = result.val;
-          } else {
-            console.warn("Error fetching prices from IcpSwap, falling back to KongSwap");
-            let kongswap = new KongSwapClient({ agent });
-            prices = (await kongswap.getTokenPrices()).expect("Failed to fetch prices from KongSwap");
-          }
-
+          console.warn(
+            "Error fetching prices from IcpSwap, falling back to KongSwap",
+          );
+          const kongswap = new KongSwapClient({ agent });
+          prices = (await kongswap.getTokenPrices()).expect(
+            "Failed to fetch prices from KongSwap",
+          );
         }
-        // Return null instead of empty object if no prices are fetched
-        return Object.keys(prices).length > 0 ? prices : {};
-
+      }
+      // Return null instead of empty object if no prices are fetched
+      return Object.keys(prices).length > 0 ? prices : {};
     },
     staleTime: TIME_CONSTANTS.THIRTY_SECONDS,
     refetchInterval: TIME_CONSTANTS.THIRTY_SECONDS,
