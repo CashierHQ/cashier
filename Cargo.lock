@@ -2656,7 +2656,6 @@ dependencies = [
  "ciborium",
  "futures",
  "ic-cdk",
- "ic-cdk-timers",
  "ic-stable-structures 0.7.0",
  "ic_mple_auth",
  "ic_mple_log",
