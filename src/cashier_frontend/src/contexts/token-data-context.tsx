@@ -31,7 +31,7 @@ import {
   BALANCE_CACHE_LAST_CACHED_BALANCES_KEY,
   BALANCE_CACHE_THRESHOLD_MS,
 } from "@/const";
-import IcExplorerClient, { IcExplorerTokenDetail } from "@/services/token_price/icExplorerClient";
+import { IcExplorerClient, IcExplorerTokenDetail } from "@/services/token_price/icExplorerClient";
 
 // Context for enriched token data and operations
 interface TokenContextValue {

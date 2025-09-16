@@ -16,7 +16,6 @@ import {
   TokenDto,
   UpdateTokenInput,
 } from "../generated/token_storage/token_storage.did";
-import tokenPriceService from "@/services/token_price/icExplorerClient";
 import { useIdentity } from "@nfid/identitykit/react";
 import {
   mapStringToTokenId,
@@ -28,6 +27,8 @@ import { useTokenMetadataWorker } from "./token/useTokenMetadataWorker";
 import { CHAIN } from "@/services/types/enum";
 import { getAgent } from "@/utils/agent";
 import { KongSwapClient } from "@/services/token_price/kongswapClient";
+import { IcExplorerClient } from "@/services/token_price/icExplorerClient";
+import { IcpSwapClient } from "@/services/token_price/icpSwapClient";
 
 /**
  * Response from tokenListQuery with combined token list data
@@ -209,17 +210,25 @@ export function useTokenPricesQuery(identity: Identity | undefined) {
     queryFn: async () => {
 
         let prices: Record<string, number> = {};
-        
-        let token_result = await tokenPriceService.getTokenPrices();
+        let token_result = await new IcExplorerClient().getTokenPrices();
         if (token_result.ok) {
           prices = token_result.val;
         } else {
-          console.warn("Error fetching prices from IC Explorer, falling back to KongSwap");
+          console.warn("Error fetching prices from IC Explorer, falling back to IcpSwap");
           let agent = getAgent(identity);
-          let kongswap = new KongSwapClient({ agent });
-          prices = (await kongswap.getTokenPrices()).expect("Failed to fetch prices from KongSwap");
-        }
 
+          let icpswap = new IcpSwapClient({ agent });
+          let result = await icpswap.getTokenPrices();
+
+          if (result.ok) {
+            prices = result.val;
+          } else {
+            console.warn("Error fetching prices from IcpSwap, falling back to KongSwap");
+            let kongswap = new KongSwapClient({ agent });
+            prices = (await kongswap.getTokenPrices()).expect("Failed to fetch prices from KongSwap");
+          }
+
+        }
         // Return null instead of empty object if no prices are fetched
         return Object.keys(prices).length > 0 ? prices : {};
 
