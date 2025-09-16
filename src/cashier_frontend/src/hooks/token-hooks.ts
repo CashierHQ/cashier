@@ -16,7 +16,7 @@ import {
   TokenDto,
   UpdateTokenInput,
 } from "../generated/token_storage/token_storage.did";
-import tokenPriceService from "@/services/price/icExplorer.service";
+import tokenPriceService from "@/services/token_price/icExplorerClient";
 import { useIdentity } from "@nfid/identitykit/react";
 import {
   mapStringToTokenId,
@@ -26,6 +26,8 @@ import {
 import { fromNullable, toNullable } from "@dfinity/utils";
 import { useTokenMetadataWorker } from "./token/useTokenMetadataWorker";
 import { CHAIN } from "@/services/types/enum";
+import { getAgent } from "@/utils/agent";
+import { KongSwapClient } from "@/services/token_price/kongswapClient";
 
 /**
  * Response from tokenListQuery with combined token list data
@@ -201,18 +203,26 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
   });
 }
 
-export function useTokenPricesQuery() {
+export function useTokenPricesQuery(identity: Identity | undefined) {
   return useQuery({
     queryKey: TOKEN_QUERY_KEYS.prices(),
     queryFn: async () => {
-      try {
-        const prices = await tokenPriceService.getAllPrices();
+
+        let prices: Record<string, number> = {};
+        
+        let token_result = await tokenPriceService.getTokenPrices();
+        if (token_result.ok) {
+          prices = token_result.val;
+        } else {
+          console.warn("Error fetching prices from IC Explorer, falling back to KongSwap");
+          let agent = getAgent(identity);
+          let kongswap = new KongSwapClient({ agent });
+          prices = (await kongswap.getTokenPrices()).expect("Failed to fetch prices from KongSwap");
+        }
+
         // Return null instead of empty object if no prices are fetched
         return Object.keys(prices).length > 0 ? prices : {};
-      } catch (error) {
-        console.error("Failed to fetch token prices:", error);
-        throw error;
-      }
+
     },
     staleTime: TIME_CONSTANTS.THIRTY_SECONDS,
     refetchInterval: TIME_CONSTANTS.THIRTY_SECONDS,

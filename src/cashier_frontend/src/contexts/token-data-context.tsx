@@ -22,10 +22,6 @@ import {
   useMultipleTokenMutation,
 } from "../hooks/token-hooks";
 import {
-  ICExplorerService,
-  IcExplorerTokenDetail,
-} from "@/services/icExplorer.service";
-import {
   FungibleToken,
   TokenBalanceMap,
 } from "@/types/fungible-token.speculative";
@@ -35,6 +31,7 @@ import {
   BALANCE_CACHE_LAST_CACHED_BALANCES_KEY,
   BALANCE_CACHE_THRESHOLD_MS,
 } from "@/const";
+import IcExplorerClient, { IcExplorerTokenDetail } from "@/services/token_price/icExplorerClient";
 
 // Context for enriched token data and operations
 interface TokenContextValue {
@@ -107,7 +104,7 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
   const tokenListQuery = useTokenListQuery();
   const tokenMetadataQuery = useTokenMetadataQuery(tokenListQuery.data?.tokens);
   const tokenBalancesQuery = useTokenBalancesQuery(tokenListQuery.data?.tokens);
-  const tokenPricesQuery = useTokenPricesQuery();
+  const tokenPricesQuery = useTokenPricesQuery(useIdentity());
 
   // Mutations - only created once at the provider level
   const addTokenMutation = useAddTokenMutation();
@@ -158,7 +155,7 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
   };
 
   const updateTokenExplorer = async () => {
-    const explorerService = new ICExplorerService();
+    const explorerService = new IcExplorerClient();
     if (!identity) {
       return;
     }
