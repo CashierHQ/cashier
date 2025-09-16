@@ -4,6 +4,7 @@
 import { IC_EXPLORER_IMAGES_PATH } from "@/const";
 import { LINK_TYPE } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
+import { Result, Err, Ok } from 'ts-results';
 
 export const safeParseJSON = (
   arg: Record<string, unknown | undefined>,
@@ -27,7 +28,7 @@ type Response<T, E> =
       Err: E;
     };
 
-export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
+export const esponse = <T, E>(response: Response<T, E>): T => {
   if ("ok" in response) {
     return response.ok;
   } else if ("Ok" in response) {
@@ -47,6 +48,32 @@ export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
   }
 
   throw new Error("Invalid response");
+};
+
+export const responseToResult = <T, E>(response: Response<T, E>): Result<T, Error> => {
+  if ("ok" in response) {
+    return Ok(response.ok);
+  } else if ("Ok" in response) {
+    for (const key in response.Ok) {
+      if (
+        (Array.isArray(response.Ok[key]) && response.Ok[key].length === 0) ||
+        !response.Ok[key]
+      ) {
+        delete response.Ok[key];
+      }
+    }
+    return Ok(response.Ok);
+  } else if ("err" in response) {
+    return Err(new Error(safeParseJSON(response.err as Record<string, unknown>)));
+  } else if ("Err" in response) {
+    return Err(new Error(safeParseJSON(response.Err as Record<string, unknown>)));
+  }
+
+  return Err(new Error("Invalid response"));
+};
+
+export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
+  return responseToResult(response).unwrap();
 };
 
 // Helper: normalize various timestamp inputs to BigInt nanoseconds
