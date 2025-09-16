@@ -8,29 +8,29 @@
  * @property {string} [chain] - The chain of the token (kongswap).
  */
 export type Token = {
-    /**
-     * The address of the token.
-     * @type {string}
-     */
-    address: string;
+  /**
+   * The address of the token.
+   * @type {string}
+   */
+  address: string;
 
-    /**
-     * The name of the token.
-     */
-    name: string;
+  /**
+   * The name of the token.
+   */
+  name: string;
 
-    /**
-     * The symbol of the token.
-     */
-    symbol: string;
+  /**
+   * The symbol of the token.
+   */
+  symbol: string;
 
-    /**
-     * The chain of the token.
-     */
-    chain: string;
+  /**
+   * The chain of the token.
+   */
+  chain: string;
 
-    fee: bigint;
-    decimals: number;
-    token_id: number;
-    canister_id: string;
+  fee: bigint;
+  decimals: number;
+  token_id: number;
+  canister_id: string;
 };
