@@ -1,0 +1,11 @@
+[package]
+name = "icpswap_client"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+candid = { workspace = true }
+ic_mple_client = { workspace = true }
+serde = { workspace = true }
+

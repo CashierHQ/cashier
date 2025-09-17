@@ -14,10 +14,14 @@ cashier_macros = { workspace = true }
 ciborium = { workspace = true }
 futures = { workspace = true, features = ["async-await"] }
 ic-cdk = { workspace = true }
+ic-cdk-timers = { workspace = true }
 ic_mple_auth = { workspace = true }
+ic_mple_client = { workspace = true }
 ic_mple_log = { workspace = true }
 ic_mple_utils = { workspace = true }
 ic-stable-structures = { workspace = true }
+icpswap_client = { workspace = true }
+kongswap_client = { workspace = true }
 log = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
@@ -28,6 +32,7 @@ token_storage_types = { workspace = true }
 [dev-dependencies]
 ic_mple_pocket_ic = { workspace = true }
 tokio = { workspace = true }
+ic_mple_client = { workspace = true, features = ["ic-agent"] }
 
 [build-dependencies]
 anyhow = { workspace = true }

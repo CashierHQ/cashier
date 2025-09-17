@@ -1,7 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use ic_cdk::{init, post_upgrade, pre_upgrade};
+use std::time::Duration;
+
+use ic_cdk::{api::instruction_counter, init, post_upgrade, pre_upgrade};
 use log::{debug, error, info};
 use token_storage_types::init::TokenStorageInitData;
 
@@ -37,6 +39,8 @@ fn init(init_data: TokenStorageInitData) {
     } else {
         info!("[init] No default tokens provided");
     }
+
+    set_token_price_timer();
 }
 
 #[pre_upgrade]
@@ -49,4 +53,28 @@ fn post_upgrade() {
     }
 
     info!("[post_upgrade] Starting Token Storage");
+    set_token_price_timer()
+}
+
+/// Set the token price timer
+fn set_token_price_timer() {
+    if cfg!(target_family = "wasm") {
+        info!("Setting token price timer");
+
+        ic_cdk_timers::set_timer_interval(Duration::from_secs(30), move || {
+            ic_cdk::futures::spawn(async {
+                debug!("[token_price_timer] - Start execution");
+
+                let instructions_before = instruction_counter();
+                
+                let mut state = get_state();
+                state.token_price.update_prices().await;
+                
+                let instructions_after = instruction_counter();
+    
+                let instructions = (instructions_after - instructions_before) / 1_000_000;
+                info!("[token_price_timer] - Execution finished - Instructions used: {instructions}");
+            })
+        });
+    }
 }
