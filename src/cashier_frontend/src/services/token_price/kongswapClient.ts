@@ -4,7 +4,7 @@ import { parseResultResponse, responseToResult } from "@/utils";
 import { Token } from "./shared/token";
 import { Err, Ok, Result } from "ts-results";
 import { KONGSWAP_BACKEND_CANISTER_ID } from "@/const";
-import kongBackend from "../../generated/kongswap/kongBackend";
+import * as kongBackend from "../../generated/kongswap/kongBackend";
 
 const ckUSDT_ADDRESS = "cngnf-vqaaa-aaaar-qag4q-cai";
 
