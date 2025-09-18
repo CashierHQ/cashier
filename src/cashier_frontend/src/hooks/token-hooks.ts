@@ -16,7 +16,6 @@ import {
   TokenDto,
   UpdateTokenInput,
 } from "../generated/token_storage/token_storage.did";
-import tokenPriceService from "@/services/price/icExplorer.service";
 import { useIdentity } from "@nfid/identitykit/react";
 import {
   mapStringToTokenId,
@@ -26,6 +25,10 @@ import {
 import { fromNullable, toNullable } from "@dfinity/utils";
 import { useTokenMetadataWorker } from "./token/useTokenMetadataWorker";
 import { CHAIN } from "@/services/types/enum";
+import { getAgent } from "@/utils/agent";
+import { KongSwapClient } from "@/services/token_price/kongswapClient";
+import { IcExplorerClient } from "@/services/token_price/icExplorerClient";
+import { IcpSwapClient } from "@/services/token_price/icpSwapClient";
 
 /**
  * Response from tokenListQuery with combined token list data
@@ -202,17 +205,36 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
 }
 
 export function useTokenPricesQuery() {
+  const agent = getAgent();
+  const icpswap = new IcpSwapClient({ agent });
+  const kongswap = new KongSwapClient({ agent });
+
   return useQuery({
     queryKey: TOKEN_QUERY_KEYS.prices(),
     queryFn: async () => {
-      try {
-        const prices = await tokenPriceService.getAllPrices();
-        // Return null instead of empty object if no prices are fetched
-        return Object.keys(prices).length > 0 ? prices : {};
-      } catch (error) {
-        console.error("Failed to fetch token prices:", error);
-        throw error;
+      let prices: Record<string, number> = {};
+      const token_result = await new IcExplorerClient().getTokenPrices();
+      if (token_result.ok) {
+        prices = token_result.val;
+      } else {
+        console.warn(
+          "Error fetching prices from IC Explorer, falling back to IcpSwap",
+        );
+        const result = await icpswap.getTokenPrices();
+
+        if (result.ok) {
+          prices = result.val;
+        } else {
+          console.warn(
+            "Error fetching prices from IcpSwap, falling back to KongSwap",
+          );
+          prices = (await kongswap.getTokenPrices()).expect(
+            "Failed to fetch prices from KongSwap",
+          );
+        }
       }
+      // Return null instead of empty object if no prices are fetched
+      return Object.keys(prices).length > 0 ? prices : {};
     },
     staleTime: TIME_CONSTANTS.THIRTY_SECONDS,
     refetchInterval: TIME_CONSTANTS.THIRTY_SECONDS,
