@@ -33,27 +33,14 @@ export class IcExplorerClient implements TokenPriceClient {
       },
     });
 
-    icExplorerAxiosClient.interceptors.response.use(
-      (response) => {
-        if (response && response.data) {
-          return response.data;
-        }
-
-        return response;
-      },
-      (err) => {
-        return Promise.reject(err.response);
-      },
-    );
-
     const response = await icExplorerAxiosClient.post(url, {
       page: 1,
       size: 300,
     });
 
-    console.log("getListToken response", response.data.list);
+    console.log("getListToken response", response.data.data.list);
 
-    return response.data.list;
+    return response.data.data.list;
   }
 
   /**
