@@ -1,8 +1,11 @@
 import { ActorSubclass, HttpAgent, Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { getScreenDimensions } from "@/utils";
-import { BaseAdapter } from "@windoge98/plug-n-play";
+import { BaseSignerAdapter } from "@windoge98/plug-n-play";
 import { IIAdapterConfig, isIIAdapterConfig, Status } from "./adapter";
+import { Signer } from "@slide-computer/signer";
+import { AuthClientTransport } from "./authClientTransport";
+import { FEATURE_FLAGS, IC_HOST } from "@/const";
 
 export interface Account {
     owner: string | null;
@@ -10,10 +13,13 @@ export interface Account {
 }
 
 
-export class IIAdapter extends BaseAdapter<IIAdapterConfig> {
+export class IIAdapter extends BaseSignerAdapter<IIAdapterConfig> {
+
     // II specific properties
     private authClient: AuthClient | null = null;
-    private agent: HttpAgent | null = null;
+    public identity: Identity | null = null;
+    // private agent: HttpAgent | null = null;
+    // public signer: Signer | null = null;
 
     constructor(args: { adapter: unknown; config: IIAdapterConfig } | IIAdapterConfig) {
         // Support simplified constructor in tests: new IIAdapter(config)
@@ -45,6 +51,10 @@ export class IIAdapter extends BaseAdapter<IIAdapterConfig> {
         // Initialize AuthClient immediately for Safari compatibility
         // This happens during app initialization, not during user interaction
         this.initializeAuthClientSync();
+    }
+
+    protected ensureTransportInitialized(): Promise<void> {
+        throw new Error("Method not implemented.");
     }
 
     private initializeAuthClientSync(): void {
@@ -87,10 +97,22 @@ export class IIAdapter extends BaseAdapter<IIAdapterConfig> {
     }
 
     // Use the resolved config for agent initialization
-    private async initAgent(identity: Identity): Promise<void> {
-        const agent = await this.buildHttpAgent({ identity });
+    private async initAgentAndSigner(identity: Identity): Promise<void> {
+        const agent = HttpAgent.createSync({
+            identity,
+            host: IC_HOST,
+            shouldFetchRootKey: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER,
+        });
+        const transport = await AuthClientTransport.create({
+            agent
+        });
+
         this.agent = agent;
+        this.signer = new Signer({
+            transport
+        });
     }
+
 
     async connect(): Promise<Account> {
         try {
@@ -111,6 +133,10 @@ export class IIAdapter extends BaseAdapter<IIAdapterConfig> {
                         owner: identity.getPrincipal().toText(),
                         subaccount: null
                     };
+                    // Initialize agent if not already done
+                    if (!this.agent) {
+                        await this.initAgentAndSigner(identity);
+                    }
                     this.setState(Status.CONNECTED);
                     return account;
                 }
@@ -141,7 +167,8 @@ export class IIAdapter extends BaseAdapter<IIAdapterConfig> {
                             owner: identity.getPrincipal().toText(),
                             subaccount: null
                         };
-                        await this.initAgent(identity);
+                        this.identity = identity;
+                        await this.initAgentAndSigner(identity);
 
                         this.setState(Status.CONNECTED);
                         resolve(account);
@@ -176,7 +203,7 @@ export class IIAdapter extends BaseAdapter<IIAdapterConfig> {
             throw new Error("Agent not initialized. Connect first.");
         }
 
-        return this.createActorWithAgent<T>(this.agent, canisterId, idl);
+        return this.createActorWithAgent<T>(this.agent as HttpAgent, canisterId, idl);
     }
 
     async getPrincipal(): Promise<string> {
@@ -225,5 +252,9 @@ export class IIAdapter extends BaseAdapter<IIAdapterConfig> {
             this.authClient = null;
         }
         this.agent = null;
+    }
+
+    public getSigner(): Signer | null {
+        return this.signer;
     }
 }
