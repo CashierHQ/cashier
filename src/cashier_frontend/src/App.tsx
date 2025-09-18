@@ -2,39 +2,20 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 import AppRouter from "./Router";
-import { IdentityKitProvider } from "@nfid/identitykit/react";
-import "@nfid/identitykit/react/styles.css";
 import "./locales/config";
 import "./index.css";
-import { IdentityKitAuthType } from "@nfid/identitykit";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { useSignerStore } from "./stores/signerStore";
 import { ImageCacheProvider } from "@/contexts/image-cache-context";
-import { IdleTimeoutProvider } from "@/contexts/idle-timeout-context";
-import { BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID } from "./const";
-// useEffect removed - console logging now handled at build time
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { TokenDataProvider } from "./contexts/token-data-context";
+import {
+  PnpBootstrap,
+  default as usePnpStore,
+} from "./stores/plugAndPlayStore";
+import { IdleTimeoutProvider } from "./contexts/idle-timeout-context";
+import { CONFIG } from "./config";
 
-const targets = [BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID];
-
-// nano second
-const TIMEOUT_NANO_SEC = 60n * 60n * 1_000_000_000n; // 1 hour
-
-// milli
-export const IDLE_TIMEOUT_MILLI_SEC = 15 * 60 * 1_000; // 15 minutes
-
-// only apply for production
-const getDerivationOrigin = () => {
-  if (import.meta.env.MODE === "production") {
-    return {
-      derivationOrigin: "https://cashierapp.io",
-    };
-  }
-
-  return {};
-};
 const logBuildInfo = () => {
   const buildInfo = {
     appVersion: __APP_VERSION__,
@@ -51,43 +32,17 @@ logBuildInfo();
 
 function App() {
   const queryClient = new QueryClient();
-  const { signers } = useSignerStore();
+  // Ensure PNP store is initialized synchronously so downstream providers
+  // that run on mount (e.g. TokenDataProvider) can access `pnp` immediately.
+  // Using the store's getState() avoids relying on a component mount ordering.
+  usePnpStore().initNew(CONFIG);
 
   // Console logging is now handled at build time via vite.config.js esbuild.pure option
   // No need for runtime console manipulation
 
   return (
-    <IdentityKitProvider
-      featuredSigner={false}
-      onConnectFailure={(e: Error) => {
-        console.log("Connect to Identity fail: " + e);
-      }}
-      onConnectSuccess={() => {}}
-      onDisconnect={() => {
-        queryClient.clear();
-        // Clear idle timeout keys for all users
-        const keysToRemove = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key && key.startsWith("cashier_lastActive_")) {
-            keysToRemove.push(key);
-          }
-        }
-        keysToRemove.forEach((key) => localStorage.removeItem(key));
-      }}
-      authType={IdentityKitAuthType.DELEGATION}
-      signers={signers}
-      signerClientOptions={{
-        targets,
-        maxTimeToLive: TIMEOUT_NANO_SEC,
-        idleOptions: {
-          idleTimeout: IDLE_TIMEOUT_MILLI_SEC * 2,
-        },
-        // if derivationOrigin is not null, it will be used to derive the signer
-        ...getDerivationOrigin(),
-      }}
-      discoverExtensionSigners={true}
-    >
+    <>
+      <PnpBootstrap />
       <QueryClientProvider client={queryClient}>
         <TokenDataProvider>
           <ImageCacheProvider>
@@ -113,7 +68,7 @@ function App() {
           <ReactQueryDevtools initialIsOpen={true} />
         </TokenDataProvider>
       </QueryClientProvider>
-    </IdentityKitProvider>
+    </>
   );
 }
 
