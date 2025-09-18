@@ -4,7 +4,7 @@
 use candid::{self, CandidType, Deserialize};
 
 #[allow(non_snake_case)]
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Default)]
 pub struct PublicTokenOverview {
   pub id: candid::Nat,
   pub volumeUSD1d: f64,

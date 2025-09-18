@@ -4,7 +4,7 @@
 use candid::CandidType;
 use serde::Deserialize;
 
-#[derive(CandidType, Deserialize)]
+#[derive(CandidType, Deserialize, Default)]
 pub struct PoolReply {
   pub lp_token_symbol: String,
   pub name: String,

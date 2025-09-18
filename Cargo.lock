@@ -1714,6 +1714,7 @@ dependencies = [
  "candid",
  "ic_mple_client",
  "serde",
+ "tokio",
 ]
 
 [[package]]
@@ -2008,6 +2009,7 @@ dependencies = [
  "candid",
  "ic_mple_client",
  "serde",
+ "tokio",
 ]
 
 [[package]]

@@ -9,3 +9,6 @@ candid = { workspace = true }
 ic_mple_client = { workspace = true }
 serde = { workspace = true }
 
+[dev-dependencies]
+ic_mple_client = { workspace = true, features = ["ic-agent"] }
+tokio = { workspace = true }
