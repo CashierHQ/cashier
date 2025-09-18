@@ -5,6 +5,12 @@ export const BACKEND_CANISTER_ID: string = import.meta.env
   .VITE_BACKEND_CANISTER_ID;
 export const TOKEN_STORAGE_CANISTER_ID = import.meta.env
   .VITE_TOKEN_STORAGE_CANISTER_ID;
+export const ICPSWAP_NODE_INDEX_CANISTER_ID =
+  import.meta.env.VITE_ICPSWAP_NODE_INDEX_CANISTER_ID ||
+  "ggzvv-5qaaa-aaaag-qck7a-cai";
+export const KONGSWAP_BACKEND_CANISTER_ID =
+  import.meta.env.VITE_KONGSWAP_BACKEND_CANISTER_ID ||
+  "2ipq2-uqaaa-aaaar-qailq-cai";
 export const IC_EXPLORER_BASE_URL = import.meta.env.VITE_IC_EXPLORER_BASE_URL;
 export const IC_EXPLORER_IMAGES_PATH =
   import.meta.env.VITE_IC_EXPLORER_IMAGES_PATH ||
