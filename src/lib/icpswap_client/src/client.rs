@@ -25,5 +25,4 @@ impl<C: CanisterClient> IcpSwapNodeIndexClient<C> {
     pub async fn get_all_tokens(&self) -> CanisterClientResult<Vec<PublicTokenOverview>> {
         self.client.query("getAllTokens", ()).await
     }
-
 }

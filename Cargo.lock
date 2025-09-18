@@ -1630,9 +1630,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_auth"
-version = "0.12.4"
+version = "0.12.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fbf0050299af32b4ac0e73a3f4fbf0692f260f2bd9ba78b7a9455cf499716eb7"
+checksum = "75257d3691f9eaab963451604e0289b61a7b1f4eca1a6121ba9a14b1394da17b"
 dependencies = [
  "candid",
  "ic-cdk",
@@ -1645,9 +1645,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_client"
-version = "0.12.4"
+version = "0.12.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "064dbde11c1ee999d524846d81a526dc20b5c9612c78514eb60e4c37b479b68e"
+checksum = "c2da805f11512dd004b9c4613c956184e75cbd24e9ba637499e98022eae3043a"
 dependencies = [
  "candid",
  "ic-agent",
@@ -1659,9 +1659,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_log"
-version = "0.12.4"
+version = "0.12.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3a09ee1267b31f50e85b8ef8f5e88b363db0da5cb258c2a935f349d5e384dc7"
+checksum = "9bdabdd10d3802799c5a9f8261be369bb16c2e8e00f8abd731a74547280d6cfb"
 dependencies = [
  "arc-swap",
  "candid",
@@ -1677,9 +1677,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_pocket_ic"
-version = "0.12.4"
+version = "0.12.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2735506a62f72f8e1d4fdcf527f81b098edc91262aa483727f4285a20ad5370"
+checksum = "c0d2d306e71860eb3c74f0a34492b2543d7f68b2a712bf80bb171428e2f3893c"
 dependencies = [
  "flate2",
  "log",
@@ -1690,9 +1690,9 @@ dependencies = [
 
 [[package]]
 name = "ic_mple_utils"
-version = "0.12.4"
+version = "0.12.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e154f24880d15a81675a01cd5abd7a27856db116fcf46d719d8d592de9d1585"
+checksum = "a09a200755806c769288e19d21c6db3b5a2fd4a515915db3919a4b93515a04f8"
 
 [[package]]
 name = "ic_principal"

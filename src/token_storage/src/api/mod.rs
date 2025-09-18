@@ -1,15 +1,17 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-pub mod admin;
+mod admin;
 mod init_and_upgrade;
 mod inspect_message;
+mod logging;
 mod state;
-pub mod token;
+mod token;
 
 use crate::types::*;
 use candid::Principal;
 use cashier_common::build_data::BuildData;
+use ic_mple_log::writer::*;
 use token_storage_types::auth::*;
 use token_storage_types::error::*;
 use token_storage_types::init::*;

@@ -19,7 +19,9 @@ mod tests {
 
     #[test]
     fn test_kongswap_principal() {
-        assert_eq!(KONGSWAP_PRINCIPAL, Principal::from_text("2ipq2-uqaaa-aaaar-qailq-cai").unwrap());
+        assert_eq!(
+            KONGSWAP_PRINCIPAL,
+            Principal::from_text("2ipq2-uqaaa-aaaar-qailq-cai").unwrap()
+        );
     }
-
 }

@@ -5,9 +5,14 @@ use ic_mple_client::IcCanisterClient;
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 
 use crate::{
-    repository::{ThreadlocalRepositories, AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE},
+    repository::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
     services::{
-        auth::{AuthService, AuthServiceStorage}, settings::SettingsService, token_price::{PriceMap, TokenPriceService}, token_registry::TokenRegistryService, user_preference::UserPreferenceService, user_token::UserTokenService
+        auth::{AuthService, AuthServiceStorage},
+        settings::SettingsService,
+        token_price::{PriceMap, TokenPriceService},
+        token_registry::TokenRegistryService,
+        user_preference::UserPreferenceService,
+        user_token::UserTokenService,
     },
 };
 
@@ -16,7 +21,8 @@ pub struct CanisterState {
     pub auth_service: AuthService<&'static LocalKey<RefCell<AuthServiceStorage>>>,
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
     pub settings: SettingsService<ThreadlocalRepositories>,
-    pub token_price: TokenPriceService<&'static LocalKey<RefCell<PriceMap>>, IcCanisterClient, IcCanisterClient>,
+    pub token_price:
+        TokenPriceService<&'static LocalKey<RefCell<PriceMap>>, IcCanisterClient, IcCanisterClient>,
     pub token_registry: TokenRegistryService<ThreadlocalRepositories>,
     pub user_preference: UserPreferenceService<ThreadlocalRepositories>,
     pub user_token: UserTokenService<ThreadlocalRepositories>,

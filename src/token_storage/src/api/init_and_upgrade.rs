@@ -66,14 +66,16 @@ fn set_token_price_timer() {
                 debug!("[token_price_timer] - Start execution");
 
                 let instructions_before = instruction_counter();
-                
+
                 let mut state = get_state();
                 state.token_price.update_prices().await;
-                
+
                 let instructions_after = instruction_counter();
-    
+
                 let instructions = (instructions_after - instructions_before) / 1_000_000;
-                info!("[token_price_timer] - Execution finished - Instructions used: {instructions}");
+                info!(
+                    "[token_price_timer] - Execution finished - Instructions used: {instructions}"
+                );
             })
         });
     }

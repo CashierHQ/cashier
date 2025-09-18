@@ -54,7 +54,6 @@ impl<S: Storage<PriceMap>, KONGSWAP: CanisterClient, ICPSWAP: CanisterClient>
     /// Fetch all token prices from kongswap.
     /// As the prices fetched from kongswap are in USDT, we convert them to USDC using the price of the ckUSDT/ckUSDC pair
     async fn fetch_prices_from_kongswap(&mut self) -> Result<HashMap<Principal, f64>, String> {
-
         // ToDo: The function should return Error instead of String
         let TO_DO = 1000;
 
@@ -104,7 +103,6 @@ impl<S: Storage<PriceMap>, KONGSWAP: CanisterClient, ICPSWAP: CanisterClient>
 
     /// Fetch all token prices from icpswap
     async fn fetch_prices_from_icpswap(&mut self) -> Result<HashMap<Principal, f64>, String> {
-
         // ToDo: The function should return Error instead of String
         let TO_DO = 1000;
 

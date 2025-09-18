@@ -13,7 +13,6 @@ where
 }
 
 impl<C: CanisterClient> KongSwapBackendClient<C> {
-
     /// Create a new KongSwapBackendClient.
     ///
     /// # Arguments
@@ -22,7 +21,6 @@ impl<C: CanisterClient> KongSwapBackendClient<C> {
         Self { client }
     }
 
-    
     /// Returns a list of pools with their respective liquidity.
     ///
     /// If `token_id` is `None`, it returns all pools.
@@ -30,5 +28,4 @@ impl<C: CanisterClient> KongSwapBackendClient<C> {
     pub async fn pools(&self, token_id: Option<&str>) -> CanisterClientResult<PoolsResult> {
         self.client.query("pools", (token_id,)).await
     }
-
 }
