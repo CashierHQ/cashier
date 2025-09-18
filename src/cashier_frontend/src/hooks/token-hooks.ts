@@ -205,6 +205,10 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
 }
 
 export function useTokenPricesQuery() {
+  const agent = getAgent();
+  const icpswap = new IcpSwapClient({ agent });
+  const kongswap = new KongSwapClient({ agent });
+
   return useQuery({
     queryKey: TOKEN_QUERY_KEYS.prices(),
     queryFn: async () => {
@@ -216,9 +220,6 @@ export function useTokenPricesQuery() {
         console.warn(
           "Error fetching prices from IC Explorer, falling back to IcpSwap",
         );
-        const agent = getAgent();
-
-        const icpswap = new IcpSwapClient({ agent });
         const result = await icpswap.getTokenPrices();
 
         if (result.ok) {
@@ -227,7 +228,6 @@ export function useTokenPricesQuery() {
           console.warn(
             "Error fetching prices from IcpSwap, falling back to KongSwap",
           );
-          const kongswap = new KongSwapClient({ agent });
           prices = (await kongswap.getTokenPrices()).expect(
             "Failed to fetch prices from KongSwap",
           );
