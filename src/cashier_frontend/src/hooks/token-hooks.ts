@@ -204,7 +204,7 @@ export function useTokenMetadataQuery(tokens: FungibleToken[] | undefined) {
   });
 }
 
-export function useTokenPricesQuery(identity: Identity | undefined) {
+export function useTokenPricesQuery() {
   return useQuery({
     queryKey: TOKEN_QUERY_KEYS.prices(),
     queryFn: async () => {
@@ -216,7 +216,7 @@ export function useTokenPricesQuery(identity: Identity | undefined) {
         console.warn(
           "Error fetching prices from IC Explorer, falling back to IcpSwap",
         );
-        const agent = getAgent(identity);
+        const agent = getAgent();
 
         const icpswap = new IcpSwapClient({ agent });
         const result = await icpswap.getTokenPrices();

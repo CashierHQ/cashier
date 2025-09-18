@@ -107,7 +107,7 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
   const tokenListQuery = useTokenListQuery();
   const tokenMetadataQuery = useTokenMetadataQuery(tokenListQuery.data?.tokens);
   const tokenBalancesQuery = useTokenBalancesQuery(tokenListQuery.data?.tokens);
-  const tokenPricesQuery = useTokenPricesQuery(useIdentity());
+  const tokenPricesQuery = useTokenPricesQuery();
 
   // Mutations - only created once at the provider level
   const addTokenMutation = useAddTokenMutation();
