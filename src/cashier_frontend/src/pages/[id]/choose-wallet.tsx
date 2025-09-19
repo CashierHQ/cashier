@@ -13,7 +13,10 @@ import {
   LINK_TYPE,
 } from "@/services/types/enum";
 import SheetWrapper from "@/components/sheet-wrapper";
-import { useLinkUserState, fetchLinkUserState } from "@/hooks/linkUserHooks";
+import {
+  useLinkUserStateQuery,
+  fetchLinkUserState,
+} from "@/hooks/linkUserHooks";
 import { isCashierError } from "@/services/errorProcess.service";
 import { ActionModel } from "@/services/types/action.service.types";
 import { LinkDetailModel } from "@/services/types/link.service.types";
@@ -23,7 +26,6 @@ import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import LinkNotFound from "@/components/link-not-found";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { toast } from "sonner";
-import { useIdentity } from "@nfid/identitykit/react";
 import { ConfirmationDrawerV2 } from "@/components/confirmation-drawer/confirmation-drawer-v2";
 import { FeeInfoDrawer } from "@/components/fee-info-drawer/fee-info-drawer";
 import { useLinkUsageValidation } from "@/hooks/form/useLinkUsageValidation";
@@ -35,16 +37,17 @@ import { useUseConfirmation } from "@/hooks/tx-cart/useUseConfirmation";
 import { UseSchema } from "@/components/use-page/use-link-options";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
 import { WalletSelectionModal } from "@/components/wallet-connect/wallet-selection-modal";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
 export default function ChooseWalletPage() {
   const { linkId } = useParams();
-  const identity = useIdentity();
   const { t } = useTranslation();
   const { renderSkeleton } = useSkeletonLoading();
   const { updateTokenInit } = useTokensV2();
   const { goToComplete, handleStateBasedNavigation, goToLinkDefault } =
     useLinkUseNavigation(linkId);
   const { validateAssetAndFees } = useLinkUsageValidation();
+  const { account } = usePnpStore();
 
   // Form setup
   const form = useForm<z.infer<typeof UseSchema>>({
@@ -52,39 +55,28 @@ export default function ChooseWalletPage() {
   });
 
   // Data fetching with new hooks
-  const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE);
-  const { createAction, createActionAnonymous } = useLinkMutations();
-
-  const link = linkDetailQuery.data?.link;
-  const isLoadingLinkData = linkDetailQuery.isLoading;
-
+  const {
+    data: linkDetailData,
+    isLoading: isLoadingLinkData,
+    refetch: refetchLinkDetailFn,
+  } = useLinkDetailQuery(linkId, ACTION_TYPE.USE);
   const {
     data: linkUserState,
     refetch: refetchLinkUserStateFn,
     isFetching: isUserStateLoading,
-  } = useLinkUserState(
+  } = useLinkUserStateQuery(
     {
       action_type: ACTION_TYPE.USE,
       link_id: linkId ?? "",
       anonymous_wallet_address: "",
     },
-    !!linkId && !!identity,
+    !!linkId && !!account,
   );
+  const { createAction, createActionAnonymous } = useLinkMutations();
 
-  const queryAction = linkUserState?.action;
+  const link = linkDetailData?.link;
 
-  // Internal action state that can be updated independently
-  const [internalAction, setInternalAction] = useState<ActionModel | undefined>(
-    queryAction,
-  );
   const [showWalletModal, setShowWalletModal] = useState(false);
-
-  // Sync internal action with query action when query action changes
-  useEffect(() => {
-    if (queryAction && !internalAction) {
-      setInternalAction(queryAction);
-    }
-  }, [queryAction, internalAction]);
 
   // Local state
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -94,14 +86,12 @@ export default function ChooseWalletPage() {
   // Use confirmation hook for all confirmation-related methods
   const { handleSuccessContinue, handleConfirmTransaction, onCashierError } =
     useUseConfirmation({
+      action: linkUserState?.action,
       linkId: linkId ?? "",
       link: link!,
-      internalAction,
-      setInternalAction,
       anonymousWalletAddress: undefined,
-      identity,
       refetchLinkUserStateFn,
-      linkDetailQuery,
+      refetchLinkDetailFn,
     });
 
   // Button state
@@ -122,17 +112,18 @@ export default function ChooseWalletPage() {
 
   // Handle state-based navigation for logged-in users
   useEffect(() => {
-    if (link && identity) {
+    if (link && account) {
       handleStateBasedNavigation(linkUserState, true);
     }
-  }, [link, linkUserState, identity, handleStateBasedNavigation]);
+  }, [link, account]);
 
   // Show confirmation drawer when action is available
   useEffect(() => {
-    if (internalAction && !manuallyClosedDrawer) {
+    if (!manuallyClosedDrawer && linkUserState?.action) {
+      console.log("Setting showConfirmation to true");
       setShowConfirmation(true);
     }
-  }, [internalAction, link, manuallyClosedDrawer]);
+  }, [manuallyClosedDrawer, linkUserState]);
 
   // Update button state based on loading state
   useEffect(() => {
@@ -146,16 +137,10 @@ export default function ChooseWalletPage() {
    * Creates an action for authenticated users
    */
   const handleCreateActionForUser = async (): Promise<ActionModel> => {
-    if (internalAction) {
-      return internalAction;
-    }
-
     const newAction = await createAction({
       linkId: linkId!,
       actionType: ACTION_TYPE.USE,
     });
-
-    setInternalAction(newAction);
     return newAction;
   };
 
@@ -170,13 +155,12 @@ export default function ChooseWalletPage() {
       walletAddress: walletAddress,
       actionType: ACTION_TYPE.USE,
     });
-
-    setInternalAction(newAction);
     return newAction;
   };
 
   /**
    * Initiates the process of using a link
+   * Accept wallet address for anonymous users
    */
   const initiateUseLinkAction = async (providedWalletAddress?: string) => {
     // Don't proceed if initial data is still loading
@@ -187,7 +171,7 @@ export default function ChooseWalletPage() {
     // Use provided address or the one already stored
     const addressToUse = providedWalletAddress;
 
-    if (!identity && !addressToUse) {
+    if (!account && !addressToUse) {
       toast.error(t("link_detail.error.use_without_login_or_wallet"));
       return;
     }
@@ -209,9 +193,9 @@ export default function ChooseWalletPage() {
         disabled: true,
       });
 
-      if (internalAction) {
+      if (linkUserState?.action) {
         setShowConfirmation(true);
-      } else if (identity) {
+      } else if (account) {
         // Authenticated user flow
         const action = await handleCreateActionForUser();
         if (action) {
@@ -220,14 +204,11 @@ export default function ChooseWalletPage() {
         }
       } else if (addressToUse) {
         // Anonymous user flow
-        const anonymousLinkUserState = await fetchLinkUserState(
-          {
-            action_type: ACTION_TYPE.USE,
-            link_id: linkId ?? "",
-            anonymous_wallet_address: addressToUse,
-          },
-          identity,
-        );
+        const anonymousLinkUserState = await fetchLinkUserState({
+          action_type: ACTION_TYPE.USE,
+          link_id: linkId ?? "",
+          anonymous_wallet_address: addressToUse,
+        });
 
         if (!anonymousLinkUserState) {
           toast.error(t("link_detail.error.use_without_login_or_wallet"));
@@ -236,14 +217,11 @@ export default function ChooseWalletPage() {
 
         if (!anonymousLinkUserState.link_user_state) {
           await handleCreateActionAnonymous(addressToUse);
-          await fetchLinkUserState(
-            {
-              action_type: ACTION_TYPE.USE,
-              link_id: linkId ?? "",
-              anonymous_wallet_address: addressToUse,
-            },
-            identity,
-          );
+          await fetchLinkUserState({
+            action_type: ACTION_TYPE.USE,
+            link_id: linkId ?? "",
+            anonymous_wallet_address: addressToUse,
+          });
           setShowConfirmation(true);
         } else if (
           anonymousLinkUserState.link_user_state === LINK_USER_STATE.COMPLETED
@@ -257,6 +235,7 @@ export default function ChooseWalletPage() {
         toast.error(t("link_detail.error.use_without_login_or_wallet"));
       }
     } catch (error) {
+      console.error("Error initiating use link action:", error);
       if (isCashierError(error)) {
         onCashierError(error as Error);
       }
@@ -317,7 +296,7 @@ export default function ChooseWalletPage() {
             </div>
 
             <WalletSelectionModal
-              open={showWalletModal}
+              isWalletModalOpen={showWalletModal}
               onOpenChange={setShowWalletModal}
               onWalletConnected={() => {}}
               allowChangeWallet={true}
@@ -326,9 +305,9 @@ export default function ChooseWalletPage() {
             <FeeInfoDrawer open={showInfo} onClose={() => setShowInfo(false)} />
 
             <ConfirmationDrawerV2
-              open={showConfirmation && !showInfo}
+              open={showConfirmation}
               link={link!}
-              action={internalAction}
+              action={linkUserState?.action}
               onClose={() => {
                 setShowConfirmation(false);
                 setManuallyClosedDrawer(true);

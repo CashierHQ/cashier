@@ -8,7 +8,7 @@ export default function LinkCardWithoutPhoneFrame({
   title,
   message,
   label,
-  onClaim,
+  onClickUse,
   disabled,
   isDataLoading = false,
   showHeader = false,
@@ -21,7 +21,7 @@ export default function LinkCardWithoutPhoneFrame({
   title: string;
   message: string;
   label: string;
-  onClaim?: () => void;
+  onClickUse?: () => void;
   isDataLoading?: boolean;
   disabled?: boolean;
   showHeader?: boolean;
@@ -32,11 +32,12 @@ export default function LinkCardWithoutPhoneFrame({
 }) {
   const getButton = () => {
     if (isDataLoading) {
+      console.log("isDataLoading");
       return (
         <div
           className={cn(
             "text-white bg-green rounded-full py-2 px-8 mt-3 w-[100%] text-center",
-            onClaim ? "cursor-not-allowed" : "",
+            onClickUse ? "cursor-not-allowed" : "",
           )}
         >
           {label}
@@ -45,11 +46,12 @@ export default function LinkCardWithoutPhoneFrame({
     }
 
     if (disabled) {
+      console.log("disabled");
       return (
         <div
           className={cn(
             "text-green bg-white rounded-full h-[44px] flex items-center justify-center px-8 mt-3 text-base w-[100%] text-center font-bold",
-            onClaim ? "cursor-not-allowed" : "",
+            onClickUse ? "cursor-not-allowed" : "",
           )}
         >
           {label}
@@ -57,13 +59,19 @@ export default function LinkCardWithoutPhoneFrame({
       );
     }
 
+    console.log("normal button");
+
     return (
       <div
         className={cn(
           "text-white bg-green rounded-full h-[44px] flex items-center justify-center px-8 mt-3 w-[100%] text-center",
-          onClaim ? "cursor-pointer" : "",
+          onClickUse ? "cursor-pointer" : "",
         )}
-        onClick={onClaim}
+        onClick={() => {
+          if (onClickUse) {
+            onClickUse();
+          }
+        }}
       >
         {label}
       </div>

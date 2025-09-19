@@ -3,7 +3,6 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import LinkService from "@/services/link/link.service";
-import { useIdentity } from "@nfid/identitykit/react";
 import { ACTION_TYPE } from "@/services/types/enum";
 import { UpdateLinkParams } from "./useLinkMutations";
 import { groupLinkListByDate } from "@/utils";
@@ -12,8 +11,8 @@ import { mapLinkDetailModelToCreateLinkInput } from "@/services/types/mapper/lin
 import LinkLocalStorageServiceV2, {
   LOCAL_lINK_ID_PREFIX,
 } from "@/services/link/link-local-storage.service.v2";
-import { Identity } from "@dfinity/agent";
 import { LinkDto } from "@/generated/cashier_backend/cashier_backend.did";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
 // Centralized query keys for consistent caching
 const LINK_QUERY_KEYS = {
@@ -25,16 +24,21 @@ const LINK_QUERY_KEYS = {
 
 // React Query for fetching the list of links
 export function useLinksListQuery() {
-  const identity = useIdentity();
+  const { pnp, account } = usePnpStore();
 
   return useQuery({
     queryKey: LINK_QUERY_KEYS.list(),
     queryFn: async () => {
-      if (!identity) throw new Error("Identity is required");
+      if (!pnp) throw new Error("pnp is required");
       try {
-        const linkService = new LinkService(identity);
+        const linkService = new LinkService(pnp);
+        if (!account?.owner) {
+          throw new Error(
+            "pnp account owner is required for fetching link list",
+          );
+        }
         const linkLocalStorageService = new LinkLocalStorageServiceV2(
-          identity.getPrincipal().toString(),
+          account?.owner,
         );
 
         const res = await linkService.getLinkList();
@@ -53,23 +57,28 @@ export function useLinksListQuery() {
         throw error;
       }
     },
-    enabled: !!identity,
+    enabled: !!account,
   });
 }
 
 // React Query for fetching link details
 export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
-  const identity = useIdentity();
+  const { pnp, account } = usePnpStore();
   const staleTime = 60 * 1000; // 1 minute
 
   return useQuery({
     queryKey: LINK_QUERY_KEYS.detail(linkId, actionType),
     queryFn: async (): Promise<LinkModel> => {
       if (!linkId) throw new Error("linkId are required");
+      if (!pnp) throw new Error("pnp is required");
 
-      if (linkId.startsWith(LOCAL_lINK_ID_PREFIX) && identity) {
+      // This is for creating link flow
+      if (linkId.startsWith(LOCAL_lINK_ID_PREFIX)) {
+        if (!pnp.account?.owner) {
+          throw new Error("pnp account owner is required for local links");
+        }
         const linkLocalStorageService = new LinkLocalStorageServiceV2(
-          identity.getPrincipal().toString(),
+          pnp.account?.owner,
         );
         const localLink = linkLocalStorageService.getLink(linkId);
         const linkModel: LinkModel = {
@@ -81,10 +90,14 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
         } else {
           throw new Error("Link not found in local storage");
         }
-
-        // this should support case identity is undefined = anonymous wallet
-      } else {
-        const linkService = new LinkService(identity);
+      }
+      // this is for using link flow
+      else {
+        const linkService = new LinkService(pnp, {
+          // anon mode is needed for create_linl flow and use link flow if they're login
+          // if anon = true, it only use for user landing at the page without login
+          anon: !!account ? false : true,
+        });
         const res = await linkService.getLink(linkId, actionType);
 
         return res;
@@ -95,26 +108,19 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
   });
 }
 
-export const getLinkDetailQuery = async (
-  linkId: string,
-  actionType: ACTION_TYPE,
-  identity: Identity | undefined,
-) => {
-  const linkService = new LinkService(identity);
-  const res = await linkService.getLink(linkId, actionType);
-  return res;
-};
-
 export function useUpdateLinkMutation() {
-  const identity = useIdentity();
+  const { pnp } = usePnpStore();
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: async (data: UpdateLinkParams): Promise<LinkDto> => {
-      if (!identity) throw new Error("Identity is required");
-      const linkService = new LinkService(identity);
+      if (!pnp) throw new Error("pnp is required");
+      const linkService = new LinkService(pnp);
+      if (!pnp.account?.owner) {
+        throw new Error("pnp account owner is required for updating link");
+      }
       const linkLocalStorageService = new LinkLocalStorageServiceV2(
-        identity.getPrincipal().toString(),
+        pnp.account?.owner,
       );
       const linkId = data.linkId;
 
@@ -123,7 +129,7 @@ export function useUpdateLinkMutation() {
           data.linkId,
           data.linkModel,
           data.isContinue,
-          identity.getPrincipal().toString(),
+          pnp.account?.owner,
         );
 
         return Promise.resolve(localStorageLink);
@@ -154,16 +160,21 @@ export function useUpdateLinkMutation() {
 
 // hook call backend create link
 export function useCreateNewLinkMutation() {
-  const identity = useIdentity();
+  const { pnp } = usePnpStore();
   const queryClient = useQueryClient();
+
+  if (!pnp) throw new Error("pnp is required");
 
   const mutation = useMutation({
     mutationFn: async (localLinkId: string) => {
-      if (!identity) throw new Error("Identity is required");
+      if (!pnp) throw new Error("pnp is required");
 
-      const linkService = new LinkService(identity);
+      const linkService = new LinkService(pnp);
+      if (!pnp.account?.owner) {
+        throw new Error("pnp account owner is required for creating link");
+      }
       const linkLocalStorageService = new LinkLocalStorageServiceV2(
-        identity.getPrincipal().toString(),
+        pnp.account?.owner,
       );
 
       const link = linkLocalStorageService.getLink(localLinkId);

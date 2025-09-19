@@ -11,11 +11,9 @@ import {
   UpdateTokenBalanceInput,
   UpdateTokenInput,
 } from "../../generated/token_storage/token_storage.did";
-import { Actor, Identity } from "@dfinity/agent";
-import { PartialIdentity } from "@dfinity/identity";
 import { TOKEN_STORAGE_CANISTER_ID } from "@/const";
-import { getAgent } from "@/utils/agent";
 import { mapStringToTokenId } from "@/types/token-store.type";
+import { PNP } from "@windoge98/plug-n-play";
 
 /**
  * Service for interacting with the token storage canister
@@ -24,11 +22,11 @@ import { mapStringToTokenId } from "@/types/token-store.type";
 class TokenStorageService {
   private actor: _SERVICE;
 
-  constructor(identity?: Identity | PartialIdentity | undefined) {
-    const agent = getAgent(identity);
-    this.actor = Actor.createActor(idlFactory, {
-      agent,
+  constructor(pnp: PNP, options?: { anon: boolean }) {
+    this.actor = pnp.getActor<_SERVICE>({
       canisterId: TOKEN_STORAGE_CANISTER_ID,
+      idl: idlFactory,
+      anon: options?.anon,
     });
   }
   async listTokens(): Promise<TokenListResponse> {

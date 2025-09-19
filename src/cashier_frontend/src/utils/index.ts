@@ -15,17 +15,17 @@ export const safeParseJSON = (
 
 type Response<T, E> =
   | {
-    ok: T;
-  }
+      ok: T;
+    }
   | {
-    err: E;
-  }
+      err: E;
+    }
   | {
-    Ok: T;
-  }
+      Ok: T;
+    }
   | {
-    Err: E;
-  };
+      Err: E;
+    };
 
 export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
   if ("ok" in response) {
@@ -197,12 +197,12 @@ export const getScreenDimensions = () => {
   if (window.screen) {
     return {
       width: window.screen.width,
-      height: window.screen.height
+      height: window.screen.height,
     };
   }
   // Default dimensions for SSR
   return {
     width: 1920,
-    height: 1080
+    height: 1080,
   };
 };

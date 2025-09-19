@@ -6,7 +6,6 @@ import ConfirmDialog from "@/components/confirm-dialog";
 import { useConfirmDialog } from "@/hooks/useDialog";
 import { transformShortAddress } from "@/utils";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
-import { useAuth } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
 import { ChevronLeft } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -21,6 +20,8 @@ import { useWalletContext } from "@/contexts/wallet-context";
 import { toast } from "sonner";
 import { ICP_ADDRESS } from "@/const";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
+import { Principal } from "@dfinity/principal";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
 function AccountIdContent({ accountId }: { accountId: string }) {
   const { t } = useTranslation();
@@ -69,7 +70,7 @@ interface ReceivePanelProps {
 
 const ReceivePanel: React.FC<ReceivePanelProps> = ({ tokenId, onBack }) => {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { account } = usePnpStore();
   const { open, options, showDialog, hideDialog } = useConfirmDialog();
   const [accountId, setAccountId] = useState<string>("");
   const [currentSelectedToken, setCurrentSelectedToken] = useState<
@@ -109,7 +110,7 @@ const ReceivePanel: React.FC<ReceivePanelProps> = ({ tokenId, onBack }) => {
   const handleCopy = (e: React.SyntheticEvent) => {
     try {
       e.stopPropagation();
-      copy(user?.principal.toString() ?? "");
+      copy(account ? (account.owner ?? "") : "");
       toast.success(t("common.success.copied_address"));
     } catch (err) {
       console.log("🚀 ~ handleCopyLink ~ err:", err);
@@ -117,15 +118,15 @@ const ReceivePanel: React.FC<ReceivePanelProps> = ({ tokenId, onBack }) => {
   };
 
   useEffect(() => {
-    if (user?.principal) {
-      const account = AccountIdentifier.fromPrincipal({
-        principal: user.principal,
+    if (account?.owner) {
+      const accountId = AccountIdentifier.fromPrincipal({
+        principal: Principal.fromText(account.owner),
       });
-      if (account) {
-        setAccountId(account.toHex());
+      if (accountId) {
+        setAccountId(accountId.toHex());
       }
     }
-  }, [user]);
+  }, [account]);
 
   useEffect(() => {
     if (selectedToken) {
@@ -166,7 +167,7 @@ const ReceivePanel: React.FC<ReceivePanelProps> = ({ tokenId, onBack }) => {
             isCurrencyInput={false}
             placeholder={t("claim.addressPlaceholder")}
             className="pl-3 py-5 text-md rounded-lg appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none shadow-xs border border-input"
-            value={transformShortAddress(user?.principal?.toString() ?? "")}
+            value={transformShortAddress(account ? (account.owner ?? "") : "")}
             disabled={true}
             rightIcon={<Copy color="#36A18B" size={18} />}
             onRightIconClick={handleCopy}

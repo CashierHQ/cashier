@@ -3,15 +3,13 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { LuWallet } from "react-icons/lu";
 
 interface WalletButtonProps {
   title: string;
   handleConnect: () => void;
   className?: string;
   disabled?: boolean;
-  image?: string;
-  icon?: React.ReactNode;
+  image: string;
   postfixText?: string;
 }
 
@@ -21,7 +19,6 @@ const WalletButton: React.FC<WalletButtonProps> = ({
   className,
   disabled,
   image,
-  icon,
   postfixText,
 }) => {
   return (
@@ -44,11 +41,7 @@ const WalletButton: React.FC<WalletButtonProps> = ({
       disabled={disabled}
     >
       <span className="flex items-center w-full text-[14px]">
-        {image ? (
-          <img src={image} alt={title} className="h-6 w-6 mr-2" />
-        ) : (
-          icon || <LuWallet className="mr-2 h-6 w-6" color="#359F89" />
-        )}
+        <img src={image} alt={title} className="h-6 w-6 mr-2" />
         <span className="flex-grow text-left">{title}</span>
         {postfixText && <span className="ml-auto">{postfixText}</span>}
       </span>

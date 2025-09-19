@@ -13,13 +13,13 @@ import { Button } from "@/components/ui/button";
 import { SendAssetConfirmationPopupAssetsSection } from "./send-asset-confirmation-drawer-assets-section";
 import { SendTransactionStatus } from "./send-transaction-status";
 import { ConfirmationPopupLegalSection } from "@/components/confirmation-drawer/confirmation-drawer-legal-section";
-import { useIdentity } from "@nfid/identitykit/react";
 import { useSendAssetStore } from "@/stores/sendAssetStore";
 import { TransactionStatus } from "@/services/types/wallet.types";
 import { TokenUtilService } from "@/services/tokenUtils.service";
 import { X } from "lucide-react";
 import { toast } from "sonner";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
 interface SendAssetConfirmationDrawerProps {
   onSuccessfulTransaction?: () => void;
@@ -29,7 +29,7 @@ export const SendAssetConfirmationDrawer: FC<
   SendAssetConfirmationDrawerProps
 > = ({ onSuccessfulTransaction }) => {
   const { t } = useTranslation();
-  const identity = useIdentity();
+  const { pnp } = usePnpStore();
 
   // Use the new sendAssetStore
   const {
@@ -72,7 +72,11 @@ export const SendAssetConfirmationDrawer: FC<
           throw new Error("Destination address is required");
         }
 
-        const canisterUtils = new TokenUtilService(identity);
+        if (!pnp) {
+          throw new Error("Pnp is not init");
+        }
+
+        const canisterUtils = new TokenUtilService(pnp);
 
         const block_id = await canisterUtils.transferTo(
           sendAssetInfo.destinationAddress,

@@ -9,15 +9,12 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
-import { usePollingLinkAndAction } from "@/hooks/polling/usePollingLinkAndAction";
-import { Identity } from "@dfinity/agent";
 
 interface UseWithdrawConfirmationProps {
   linkId: string;
   link: LinkDetailModel;
   currentAction: ActionModel | undefined;
   setCurrentAction: (action: ActionModel | undefined) => void;
-  identity: Identity | null | undefined;
   refetchLinkDetail: () => Promise<unknown>;
   setShowConfirmationDrawer: (show: boolean) => void;
 }
@@ -34,7 +31,6 @@ export const useWithdrawConfirmation = ({
   link,
   currentAction,
   setCurrentAction,
-  identity,
   refetchLinkDetail,
   setShowConfirmationDrawer,
 }: UseWithdrawConfirmationProps): UseWithdrawConfirmationReturn => {
@@ -45,16 +41,6 @@ export const useWithdrawConfirmation = ({
   const { mutateAsync: updateAction } = useUpdateAction();
   const { callLinkStateMachine } = useLinkMutations();
 
-  // Polling hook for tracking action state during withdrawal
-  const { startPollingLinkDetail, stopPolling } = usePollingLinkAndAction({
-    onUpdate: (action: ActionModel) => {
-      setCurrentAction(action);
-    },
-    onError: (error: Error) => {
-      console.error("Polling error:", error);
-    },
-  });
-
   /**
    * Processes the withdrawal transaction
    */
@@ -62,14 +48,6 @@ export const useWithdrawConfirmation = ({
     try {
       if (!link) throw new Error("Link is not defined");
       if (!currentAction) throw new Error("Action is not defined");
-
-      // Start polling to track action state changes
-      startPollingLinkDetail(
-        linkId,
-        ACTION_TYPE.WITHDRAW,
-        identity || undefined,
-      );
-
       await processAction({
         linkId: link.id,
         actionType: ACTION_TYPE.WITHDRAW,
@@ -78,20 +56,14 @@ export const useWithdrawConfirmation = ({
     } catch (error) {
       console.error("Error in withdrawal process:", error);
       throw error;
-    } finally {
-      // Stop polling when process is complete
-      stopPolling();
     }
   }, [
     link,
     currentAction,
     linkId,
-    identity,
     processAction,
     updateAction,
     setCurrentAction,
-    startPollingLinkDetail,
-    stopPolling,
   ]);
 
   /**

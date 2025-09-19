@@ -2,7 +2,6 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Identity } from "@dfinity/agent";
 import {
   FungibleToken,
   TokenBalanceMap,
@@ -17,7 +16,6 @@ import {
   UpdateTokenInput,
 } from "../generated/token_storage/token_storage.did";
 import tokenPriceService from "@/services/price/icExplorer.service";
-import { useIdentity } from "@nfid/identitykit/react";
 import {
   mapStringToTokenId,
   mapTokenDtoToTokenModel,
@@ -26,6 +24,7 @@ import {
 import { fromNullable, toNullable } from "@dfinity/utils";
 import { useTokenMetadataWorker } from "./token/useTokenMetadataWorker";
 import { CHAIN } from "@/services/types/enum";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
 /**
  * Response from tokenListQuery with combined token list data
@@ -54,7 +53,7 @@ const TIME_CONSTANTS = {
 
 // Centralized query keys for consistent caching
 const TOKEN_QUERY_KEYS = {
-  all: (principalId?: string) => ["tokens", principalId] as const,
+  all: (principalId?: string | null) => ["tokens", principalId] as const,
   metadata: () => [...TOKEN_QUERY_KEYS.all(), "metadata"] as const,
   balances: (principalId?: string) =>
     [...TOKEN_QUERY_KEYS.all(principalId), "balances", principalId] as const,
@@ -74,13 +73,15 @@ function chainToString(chain: Chain): string {
 }
 
 export function useTokenListQuery() {
-  const identity = useIdentity();
-  const principalId = identity?.getPrincipal().toString();
+  const { pnp } = usePnpStore();
+  if (!pnp) throw new Error("pnp is required");
 
   return useQuery({
-    queryKey: TOKEN_QUERY_KEYS.all(principalId),
+    queryKey: TOKEN_QUERY_KEYS.all(pnp.account ? pnp.account?.owner : ""),
     queryFn: async () => {
-      const tokenService = new TokenStorageService(identity);
+      const tokenService = new TokenStorageService(pnp, {
+        anon: true,
+      });
       let tokens: TokenDto[] = [];
 
       const res = await tokenService.listTokens();
@@ -119,7 +120,7 @@ export function useTokenListQuery() {
         perference: perference,
       };
     },
-    enabled: !!identity, // Only run query when identity exists
+    enabled: !!pnp && !!pnp.account?.owner, // Only run query when identity exists
     staleTime: TIME_CONSTANTS.FIVE_MINUTES,
     // Improved refetching behavior
     refetchInterval: TIME_CONSTANTS.FIVE_MINUTES,
@@ -228,8 +229,10 @@ function useTokenBalancesWorker({
 }: {
   onProgress?: (processed: number, total: number) => void;
 }) {
-  const fetchBalances = async (tokens: FungibleToken[], identity: Identity) => {
-    const tokenUtilService = new TokenUtilService(identity);
+  const { pnp } = usePnpStore();
+  if (!pnp) throw new Error("pnp is required");
+  const fetchBalances = async (tokens: FungibleToken[]) => {
+    const tokenUtilService = new TokenUtilService(pnp);
     const balanceMap: TokenBalanceMap = {};
 
     const tasks = tokens.map(async (token, index) => {
@@ -255,7 +258,8 @@ function useTokenBalancesWorker({
 
 // Hook 2: Fetch token balances
 export function useTokenBalancesQuery(tokens: FungibleToken[] | undefined) {
-  const identity = useIdentity();
+  const { pnp, account } = usePnpStore();
+  if (!pnp) throw new Error("pnp is required");
   const { fetchBalances } = useTokenBalancesWorker({
     onProgress: (processed, total) => {
       console.log(`Balance fetching progress: ${processed}/${total}`);
@@ -263,15 +267,15 @@ export function useTokenBalancesQuery(tokens: FungibleToken[] | undefined) {
   });
 
   return useQuery({
-    queryKey: TOKEN_QUERY_KEYS.balances(identity?.getPrincipal().toString()),
+    queryKey: TOKEN_QUERY_KEYS.balances(account?.owner ?? ""),
     queryFn: async () => {
-      if (!identity || !tokens) {
+      if (!tokens) {
         return [];
       }
 
       const enableToken = tokens.filter((token) => token.enabled);
 
-      const balanceMap = await fetchBalances(enableToken, identity);
+      const balanceMap = await fetchBalances(enableToken);
 
       // Return the balances as an array
       return Object.entries(balanceMap).map(([address, balance]) => ({
@@ -280,7 +284,7 @@ export function useTokenBalancesQuery(tokens: FungibleToken[] | undefined) {
         chain: CHAIN.IC,
       }));
     },
-    enabled: !!identity && !!tokens,
+    enabled: !!pnp.account && !!pnp.account.owner && !!tokens,
     staleTime: TIME_CONSTANTS.THIRTY_SECONDS,
     refetchInterval: TIME_CONSTANTS.THIRTY_SECONDS,
     retry: 3,
@@ -291,7 +295,9 @@ export function useTokenBalancesQuery(tokens: FungibleToken[] | undefined) {
 // Add token mutation
 export function useAddTokenMutation() {
   const queryClient = useQueryClient();
-  const identity = useIdentity();
+  const { pnp } = usePnpStore();
+
+  if (!pnp) throw new Error("pnp is required");
 
   return useMutation({
     mutationFn: async (input: {
@@ -299,11 +305,8 @@ export function useAddTokenMutation() {
       indexId: string | undefined;
       chain: string;
     }) => {
-      if (!identity) throw new Error("Not authenticated");
-
       const tokenId = mapStringToTokenId(input.tokenId, input.chain);
-
-      const tokenService = new TokenStorageService(identity);
+      const tokenService = new TokenStorageService(pnp);
       const res = await tokenService.addToken({
         token_id: tokenId,
         index_id: toNullable(input.indexId),
@@ -313,9 +316,8 @@ export function useAddTokenMutation() {
     },
     onSuccess: () => {
       // Properly invalidate token queries using centralized key
-      const principalId = identity?.getPrincipal().toString();
       queryClient.invalidateQueries({
-        queryKey: TOKEN_QUERY_KEYS.all(principalId),
+        queryKey: TOKEN_QUERY_KEYS.all(pnp?.account?.owner ?? ""),
       });
     },
   });
@@ -324,17 +326,16 @@ export function useAddTokenMutation() {
 // add mutliple tokens mutation
 export function useMultipleTokenMutation() {
   const queryClient = useQueryClient();
-  const identity = useIdentity();
+  const { pnp } = usePnpStore();
+  if (!pnp) throw new Error("pnp is required");
 
   return useMutation({
     mutationFn: async (input: { tokenIds: string[]; chain: string }) => {
-      if (!identity) throw new Error("Not authenticated");
-
       const tokenIds = input.tokenIds.map((tokenId) =>
         mapStringToTokenId(tokenId, input.chain),
       );
 
-      const tokenService = new TokenStorageService(identity);
+      const tokenService = new TokenStorageService(pnp);
       try {
         await tokenService.addTokens({ token_ids: tokenIds });
         return true;
@@ -345,9 +346,8 @@ export function useMultipleTokenMutation() {
     },
     onSuccess: () => {
       // Properly invalidate token queries using centralized key
-      const principalId = identity?.getPrincipal().toString();
       queryClient.invalidateQueries({
-        queryKey: TOKEN_QUERY_KEYS.all(principalId),
+        queryKey: TOKEN_QUERY_KEYS.all(pnp?.account?.owner ?? ""),
       });
     },
   });
@@ -356,7 +356,8 @@ export function useMultipleTokenMutation() {
 // Improved hook for toggling token visibility
 export function useUpdateTokenEnableMutation() {
   const queryClient = useQueryClient();
-  const identity = useIdentity();
+  const { pnp, account } = usePnpStore();
+  if (!pnp) throw new Error("pnp is required");
 
   return useMutation({
     mutationFn: async ({
@@ -368,9 +369,7 @@ export function useUpdateTokenEnableMutation() {
       enable: boolean;
       chain: string;
     }) => {
-      if (!identity) throw new Error("Not authenticated");
-
-      const tokenService = new TokenStorageService(identity);
+      const tokenService = new TokenStorageService(pnp);
       const input: UpdateTokenInput = {
         token_id: mapStringToTokenId(tokenId, chain),
         is_enabled: enable,
@@ -380,9 +379,8 @@ export function useUpdateTokenEnableMutation() {
     },
     onSuccess: () => {
       // Properly invalidate token queries using centralized key
-      const principalId = identity?.getPrincipal().toString();
       queryClient.invalidateQueries({
-        queryKey: TOKEN_QUERY_KEYS.all(principalId),
+        queryKey: TOKEN_QUERY_KEYS.all(account?.owner ?? ""),
       });
     },
   });

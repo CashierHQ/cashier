@@ -1,31 +1,21 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import WalletOptionButton from "../wallet-connect/wallet-option-button";
 import ConfirmDialog from "../confirm-dialog";
 import { useConfirmDialog } from "@/hooks/useDialog";
 import { Principal } from "@dfinity/principal";
-import { useSignerStore } from "@/stores/signerStore";
-import { useConnectToWallet } from "@/hooks/user-hook";
 import { useParams } from "react-router-dom";
 import { ACTION_TYPE } from "@/services/types/enum";
 import TokenItem from "./token-item";
-import { InternetIdentity } from "@nfid/identitykit";
-import {
-  WALLET_OPTIONS,
-  GoogleSigner,
-  LocalInternetIdentity,
-} from "@/constants/wallet-options";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
-import { FEATURE_FLAGS } from "@/const";
-import { WalletSelectionModal } from "../wallet-connect/wallet-selection-modal";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
 // This schema is used to validate the form input for the address field, only in case of anonymous user
 export const UseSchema = z.object({
@@ -45,13 +35,9 @@ const UseLinkOptions: React.FC<ClaimFormOptionsProps> = ({
   setDisabled,
 }) => {
   const { t } = useTranslation();
-  const { disconnect } = useAuth();
-  const identity = useIdentity();
   const { open, options, hideDialog, showDialog } = useConfirmDialog();
-  const { connectToWallet } = useConnectToWallet();
-  const { setCurrentConnectOption } = useSignerStore();
   const { linkId } = useParams();
-  const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
+  const { disconnect, account } = usePnpStore();
 
   const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE);
   const link = linkDetailQuery.data?.link;
@@ -78,7 +64,7 @@ const UseLinkOptions: React.FC<ClaimFormOptionsProps> = ({
 
   useEffect(() => {
     // If user is authenticated, enable the form
-    if (identity) {
+    if (account) {
       console.log("User is authenticated");
       setDisabled(false);
       return;
@@ -89,50 +75,7 @@ const UseLinkOptions: React.FC<ClaimFormOptionsProps> = ({
     // Otherwise, check if the address is valid
     const isValid = isAddressValid();
     setDisabled(!isValid);
-  }, [identity]);
-
-  const checkForExistingWallet = (): boolean => {
-    const hasAddress = (form.getValues("address") ?? "").trim().length > 0;
-    if (hasAddress || identity) {
-      showDialog({
-        title: "Are you sure?",
-        description:
-          "You are connected to another wallet. Would you like to disconnect and continue?",
-      });
-      return true;
-    }
-    return false;
-  };
-
-  const handleConnectWallet = (walletOption: WALLET_OPTIONS) => {
-    if (checkForExistingWallet()) {
-      return;
-    }
-
-    setCurrentConnectOption(walletOption);
-
-    switch (walletOption) {
-      case WALLET_OPTIONS.INTERNET_IDENTITY:
-        if (!identity) {
-          if (FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER) {
-            connectToWallet(LocalInternetIdentity.id);
-          } else {
-            connectToWallet(InternetIdentity.id);
-          }
-        }
-        break;
-      case WALLET_OPTIONS.OTHER:
-        if (!identity) {
-          setIsWalletDialogOpen(true);
-        }
-        break;
-      case WALLET_OPTIONS.GOOGLE:
-        if (!identity) {
-          connectToWallet(GoogleSigner.id);
-        }
-        break;
-    }
-  };
+  }, [account]);
 
   const firstTilte = t(`claim_page.${link?.linkType}.choose_wallet.use_asset`);
   const secondTitle = t(
@@ -166,30 +109,23 @@ const UseLinkOptions: React.FC<ClaimFormOptionsProps> = ({
         <h2 className="text-[16px] font-medium mb-2">{secondTitle}</h2>
         <div className="flex flex-col gap-2">
           <WalletOptionButton
-            walletOption={WALLET_OPTIONS.INTERNET_IDENTITY}
+            walletId={"iiSigner"}
             title="Internet Identity"
-            identity={identity}
-            handleConnect={handleConnectWallet}
+            // show disconnect dialog if user is already connected
+            onClickConnectedWallet={() =>
+              showDialog({
+                title: t("wallet_connect_modal.disconnect_title", {
+                  defaultValue: "Disconnect Wallet",
+                }),
+                description: t("wallet_connect_modal.disconnect_description", {
+                  defaultValue:
+                    "Are you sure you want to disconnect your wallet?",
+                }),
+              })
+            }
           />
-          {FEATURE_FLAGS.ENABLE_ANONYMOUS_GOOGLE_LOGIN && (
-            <WalletOptionButton
-              walletOption={WALLET_OPTIONS.GOOGLE}
-              title="Google"
-              identity={identity}
-              handleConnect={handleConnectWallet}
-              disabled={true}
-            />
-          )}
         </div>
       </div>
-
-      <WalletSelectionModal
-        open={isWalletDialogOpen}
-        onOpenChange={setIsWalletDialogOpen}
-        onWalletConnected={() => {
-          setIsWalletDialogOpen(false);
-        }}
-      />
 
       <ConfirmDialog
         open={open}
@@ -201,7 +137,6 @@ const UseLinkOptions: React.FC<ClaimFormOptionsProps> = ({
           disconnect();
           form.setValue("address", "");
           form.clearErrors();
-          setCurrentConnectOption(WALLET_OPTIONS.TYPING);
           hideDialog();
         }}
         onOpenChange={hideDialog}

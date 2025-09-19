@@ -1,24 +1,28 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { useAuth } from "@nfid/identitykit/react";
 import { useDeviceSize } from "@/hooks/responsive-hook";
-import Header from "@/components/header";
 import SheetWrapper from "@/components/sheet-wrapper";
 import WalletSheetWrapper from "@/components/wallet/wallet-sheet-wrapper";
 import { ReactNode, useMemo, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useWalletContext } from "@/contexts/wallet-context";
+import usePnpStore from "@/stores/plugAndPlayStore";
+import Header from "../header";
 
 type MainAppLayoutProps = {
   children: ReactNode;
+  openLoginModal?: () => void;
 };
 
-export const MainAppLayout = ({ children }: MainAppLayoutProps) => {
+export const MainAppLayout = ({
+  children,
+  openLoginModal,
+}: MainAppLayoutProps) => {
   const responsive = useDeviceSize();
   const { pathname } = useLocation();
-  const { user: walletUser } = useAuth();
   const { isWalletOpen, closeWallet } = useWalletContext();
+  const { account } = usePnpStore();
 
   // Prevent body scrolling on iOS
   useEffect(() => {
@@ -44,12 +48,14 @@ export const MainAppLayout = ({ children }: MainAppLayoutProps) => {
     );
   }, [pathname, responsive.isSmallDevice]);
 
-  if (!walletUser && pathname === "/") {
+  if (!account && pathname === "/") {
     return (
       <div className="fixed inset-0 flex justify-center pt-5 overflow-scroll bg-white">
         <div className="flex w-full flex-col items-center gap-4">
-          <Header />
-          {children}
+          <WalletSheetWrapper open={isWalletOpen} onOpenChange={closeWallet}>
+            <Header openLoginModal={openLoginModal ?? (() => {})} />
+            {children}
+          </WalletSheetWrapper>
         </div>
       </div>
     );
@@ -62,7 +68,9 @@ export const MainAppLayout = ({ children }: MainAppLayoutProps) => {
       <WalletSheetWrapper open={isWalletOpen} onOpenChange={closeWallet}>
         <SheetWrapper>
           <div className="flex w-full flex-col h-full overflow-hidden">
-            {!isHeaderHidden && <Header />}
+            {!isHeaderHidden && (
+              <Header openLoginModal={openLoginModal ?? (() => {})} />
+            )}
             <div
               className={`flex items-center justify-center flex-col ${
                 responsive.isSmallDevice

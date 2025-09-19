@@ -3,7 +3,7 @@
 
 import { ExternalLink } from "@/components/ui/link";
 import { TransactionStatus } from "@/services/types/wallet.types";
-import { useIdentity } from "@nfid/identitykit/react";
+import usePnpStore from "@/stores/plugAndPlayStore";
 import { FaCheck } from "react-icons/fa";
 import { FaClockRotateLeft } from "react-icons/fa6";
 
@@ -14,7 +14,7 @@ interface SendTransactionStatusProps {
 export const SendTransactionStatus = ({
   status,
 }: SendTransactionStatusProps) => {
-  const identity = useIdentity();
+  const { account } = usePnpStore();
 
   return (
     <div className="flex flex-col items-center justify-center px-4 text-center">
@@ -42,7 +42,7 @@ export const SendTransactionStatus = ({
       )}
 
       <ExternalLink
-        to={`https://www.icexplorer.io/address/details/${identity?.getPrincipal()}`}
+        to={`https://www.icexplorer.io/address/details/${account?.owner}`}
       >
         View transaction
       </ExternalLink>

@@ -196,7 +196,6 @@ export const ConfirmationDrawerV2: FC<ConfirmationDrawerV2Props> = ({
    * Clear the timeout when the component unmounts.
    */
   useEffect(() => {
-    console.log("Drawer open state changed:", open);
     if (open) {
       setButton((...pre) => {
         return { ...pre[0], disabled: true };

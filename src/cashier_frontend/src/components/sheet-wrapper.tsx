@@ -8,6 +8,7 @@ interface SheetWrapperProps {
   children: React.ReactNode;
 }
 
+// side bar wrapper to open/close sidebar
 const SheetWrapper: React.FC<SheetWrapperProps> = ({ children }) => {
   const [open, setOpen] = useState(false);
 

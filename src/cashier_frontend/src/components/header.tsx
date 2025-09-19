@@ -1,9 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { useAuth } from "@nfid/identitykit/react";
-import React, { useState } from "react";
-import LoginButton from "./login-button";
+import React from "react";
 import { ChevronLeft, Wallet, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { SheetTrigger } from "./ui/sheet";
@@ -11,13 +9,14 @@ import { RiMenu2Line } from "react-icons/ri";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDeviceSize, useHeader } from "@/hooks/responsive-hook";
 import { useWalletContext } from "@/contexts/wallet-context";
-import { WalletSelectionModal } from "./wallet-connect/wallet-selection-modal";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface HeaderProps {}
+interface HeaderProps {
+  openLoginModal: () => void;
+}
 
-const Header: React.FC<HeaderProps> = () => {
-  const { user } = useAuth();
+const Header: React.FC<HeaderProps> = ({ openLoginModal }) => {
+  const { account } = usePnpStore();
   const navigate = useNavigate();
   const location = useLocation();
   const { isSmallDevice } = useDeviceSize();
@@ -28,7 +27,6 @@ const Header: React.FC<HeaderProps> = () => {
   } = useHeader();
 
   const { openWallet } = useWalletContext();
-  const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
 
   const handleNavigate = (path: string) => {
     const backToHomePaths = ["/wallet"];
@@ -39,7 +37,7 @@ const Header: React.FC<HeaderProps> = () => {
     }
   };
 
-  if (!user) {
+  if (!account) {
     return (
       <div
         className={`w-full flex justify-between items-center ${isSmallDevice ? "px-4 pt-4" : `px-8 pb-3 mb-4 ${location.pathname === "/" ? "" : "bg-white"}`}`}
@@ -47,7 +45,7 @@ const Header: React.FC<HeaderProps> = () => {
         {showHeaderWithBackButtonAndWalletButton(
           location.pathname,
           location.search,
-          !user,
+          !account,
         ) ? (
           <ChevronLeft
             size={24}
@@ -67,19 +65,14 @@ const Header: React.FC<HeaderProps> = () => {
           />
         )}
 
-        <LoginButton
+        <Button
           onClick={() => {
-            setIsWalletDialogOpen(true);
+            openLoginModal();
           }}
+          className="min-w-[75px] min-h-[45px] font-500 bg-transparent light-borders-green text-green hover:bg-green/90 hover:text-white transition-all duration-300"
         >
           Login
-        </LoginButton>
-
-        <WalletSelectionModal
-          open={isWalletDialogOpen}
-          onOpenChange={setIsWalletDialogOpen}
-          isHeaderModal={true}
-        />
+        </Button>
       </div>
     );
   } else if (

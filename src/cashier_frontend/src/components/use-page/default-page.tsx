@@ -14,7 +14,7 @@ import { useTranslation } from "react-i18next";
 
 type LinkCardPageProps = {
   linkData?: LinkDetailModel;
-  onClickClaim?: () => void;
+  onClickUse: () => void;
   isUserStateLoading?: boolean;
   isLoggedIn?: boolean;
   isCompletePage?: boolean;
@@ -23,7 +23,7 @@ type LinkCardPageProps = {
 // page for no state or user is not logged in
 export const DefaultPage: FC<LinkCardPageProps> = ({
   linkData,
-  onClickClaim,
+  onClickUse,
   isUserStateLoading,
   isLoggedIn = false,
   isCompletePage = false,
@@ -73,7 +73,7 @@ export const DefaultPage: FC<LinkCardPageProps> = ({
       )}
       message={linkMessage}
       title={getTitleForLink(linkData, getToken)}
-      onClaim={onClickClaim}
+      onClickUse={onClickUse}
       isDataLoading={isDataLoading}
       disabled={isButtonDisabled}
       showHeader={true}

@@ -7,7 +7,6 @@ import "driver.js/dist/driver.css";
 import { Button } from "@/components/ui/button";
 import { LinkDetail } from "@/components/detail-page/link-detail";
 import { useParams, useNavigate } from "react-router-dom";
-import { useIdentity } from "@nfid/identitykit/react";
 import copy from "copy-to-clipboard";
 import { ChevronLeftIcon } from "@radix-ui/react-icons";
 import { ACTION_TYPE, LINK_TYPE } from "@/services/types/enum";
@@ -27,7 +26,6 @@ import { useWithdrawConfirmation } from "@/hooks/tx-cart/useWithdrawConfirmation
 
 export default function DetailPage() {
   const { linkId } = useParams();
-  const identity = useIdentity();
   const navigate = useNavigate();
   const { renderSkeleton } = useSkeletonLoading();
 
@@ -68,7 +66,6 @@ export default function DetailPage() {
       link: link!,
       currentAction,
       setCurrentAction,
-      identity,
       refetchLinkDetail,
       setShowConfirmationDrawer,
     });
@@ -144,7 +141,6 @@ export default function DetailPage() {
 
   React.useEffect(() => {
     if (!linkId) return;
-    if (!identity) return;
 
     const viewedLinks = JSON.parse(localStorage.getItem("viewedLinks") || "[]");
     const hasBeenViewed = viewedLinks.includes(linkId);
@@ -155,7 +151,7 @@ export default function DetailPage() {
       const updatedViewedLinks = [...viewedLinks, linkId];
       localStorage.setItem("viewedLinks", JSON.stringify(updatedViewedLinks));
     }
-  }, [linkId, identity]);
+  }, [linkId]);
 
   const setInactiveLink = async () => {
     try {

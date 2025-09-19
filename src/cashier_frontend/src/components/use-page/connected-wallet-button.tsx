@@ -10,19 +10,13 @@ interface CustomConnectedWalletButtonProps {
   connectedAccount?: string;
   postfixText?: string;
   postfixIcon?: React.ReactNode;
-  handleConnect: () => void;
   disabled?: boolean;
+  onClick?: () => void;
 }
 
 const CustomConnectedWalletButton: React.FC<
   CustomConnectedWalletButtonProps
-> = ({
-  connectedAccount,
-  postfixText,
-  postfixIcon,
-  handleConnect,
-  disabled,
-}) => {
+> = ({ connectedAccount, postfixText, postfixIcon, disabled, onClick }) => {
   return (
     <button
       className={cn(
@@ -41,8 +35,9 @@ const CustomConnectedWalletButton: React.FC<
         // Prevent form submission
         e.preventDefault();
         e.stopPropagation();
-        console.log("Connected account:", connectedAccount);
-        handleConnect();
+        if (onClick) {
+          onClick();
+        }
       }}
       disabled={disabled}
     >

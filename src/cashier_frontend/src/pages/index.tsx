@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -15,38 +14,33 @@ import {
 } from "@/components/main-page";
 import { toast } from "sonner";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
+import usePnpStore from "@/stores/plugAndPlayStore";
+import { LandingPageSelectionModal } from "@/components/wallet-connect/landing-page-wallet-connect";
 
 export default function HomePage() {
   const { t } = useTranslation();
-  const identity = useIdentity();
   const { userInputs, addUserInput } = useLinkCreationFormStore();
-  const { user: walletUser } = useAuth();
-  const {
-    data: linkData,
-    isLoading: isLinksLoading,
-    refetch,
-  } = useLinksListQuery();
+  const { data: linkData, isLoading: isLinksLoading } = useLinksListQuery();
 
   const [showGuide, setShowGuide] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [disableCreateButton, setDisableCreateButton] = useState(false);
   const navigate = useNavigate();
+  const { pnp, account } = usePnpStore();
+  const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
 
   const handleCreateLink = async () => {
-    if (!identity) {
-      toast.error(t("common.error"), {
-        description: t("common.commonErrorMessage"),
-      });
-      return;
-    }
     try {
       setDisableCreateButton(true);
-      const creator = identity.getPrincipal().toString();
 
-      console.log("create link with identity: ", creator);
+      if (!pnp || !pnp.account || !pnp.account.owner) {
+        toast.error(t("wallet.connect_wallet_to_continue"));
+        return;
+      }
 
-      //! mirror create local storage
-      const linkId = new LinkLocalStorageServiceV2(creator).createLink();
+      const linkId = new LinkLocalStorageServiceV2(
+        pnp.account.owner,
+      ).createLink();
 
       addUserInput(linkId, {
         linkId: linkId,
@@ -78,12 +72,6 @@ export default function HomePage() {
       setShowGuide(true);
     }
   }, []);
-
-  useEffect(() => {
-    if (identity) {
-      refetch();
-    }
-  }, [identity]);
 
   useEffect(() => {
     const draftLinkStates = [
@@ -130,10 +118,15 @@ export default function HomePage() {
     }
   }, [isLinksLoading]);
 
+  if (account) {
+  }
+
   return (
-    <MainAppLayout>
-      {!walletUser ? (
-        <UnauthenticatedContent />
+    <MainAppLayout openLoginModal={() => setIsWalletDialogOpen(true)}>
+      {!account ? (
+        <UnauthenticatedContent
+          onOpenWalletModal={() => setIsWalletDialogOpen(true)}
+        />
       ) : (
         <AuthenticatedContent
           showGuide={showGuide}
@@ -144,6 +137,11 @@ export default function HomePage() {
           linkData={linkData}
         />
       )}
+
+      <LandingPageSelectionModal
+        open={isWalletDialogOpen}
+        setOpen={setIsWalletDialogOpen}
+      />
     </MainAppLayout>
   );
 }

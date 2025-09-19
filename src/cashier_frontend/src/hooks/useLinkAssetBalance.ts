@@ -9,6 +9,7 @@ import { Principal } from "@dfinity/principal";
 import { parse as uuidParse } from "uuid";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
 const linkIdToSubaccount = (id: string) => {
   const uuidBytes = uuidParse(id);
@@ -40,6 +41,8 @@ const LINK_ASSET_BALANCE_QUERY_KEYS = {
 export const useLinkAssetBalance = (
   link: LinkDetailModel,
 ): UseLinkAssetBalanceReturn => {
+  const { pnp } = usePnpStore();
+  if (!pnp) throw new Error("pnp is required");
   // Memoize the account and ledgers to prevent unnecessary re-computations
   const account: IcrcAccount = useMemo(() => {
     const subaccount = linkIdToSubaccount(link.id);
@@ -71,7 +74,7 @@ export const useLinkAssetBalance = (
       }
 
       try {
-        const tokenUtilsService = new TokenUtilService();
+        const tokenUtilsService = new TokenUtilService(pnp);
 
         // Fix the account type issue by ensuring subaccount is Uint8Array
         const queryAccount = {

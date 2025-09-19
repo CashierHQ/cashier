@@ -5,22 +5,21 @@ import { useEffect, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { ACTION_TYPE, LINK_STATE } from "@/services/types/enum";
 import SheetWrapper from "@/components/sheet-wrapper";
-import { useLinkUserState } from "@/hooks/linkUserHooks";
+import { useLinkUserStateQuery } from "@/hooks/linkUserHooks";
 import { DefaultPage } from "@/components/use-page/default-page";
 import { useLinkUseNavigation } from "@/hooks/useLinkNavigation";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
 import LinkNotFound from "@/components/link-not-found";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
-import { useIdentity } from "@nfid/identitykit/react";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
 export default function CompletePage() {
   const { linkId } = useParams();
 
   const { renderSkeleton } = useSkeletonLoading();
 
-  const identity = useIdentity();
   const { updateTokenInit } = useTokensV2();
   const { handleStateBasedNavigation, goToChooseWallet } =
     useLinkUseNavigation(linkId);
@@ -29,15 +28,16 @@ export default function CompletePage() {
   const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE);
   const linkData = linkDetailQuery.data?.link;
   const isLoadingLinkData = linkDetailQuery.isLoading;
+  const { account } = usePnpStore();
 
   const { data: linkUserState, isFetching: isUserStateLoading } =
-    useLinkUserState(
+    useLinkUserStateQuery(
       {
         action_type: ACTION_TYPE.USE,
         link_id: linkId ?? "",
         anonymous_wallet_address: "",
       },
-      !!linkId && !!identity,
+      !!linkId && !!account,
     );
 
   // Initialize tokens when link data is available
@@ -49,10 +49,10 @@ export default function CompletePage() {
 
   // Handle state-based navigation for logged-in users
   useEffect(() => {
-    if (linkData && identity) {
+    if (linkData && account) {
       handleStateBasedNavigation(linkUserState, true);
     }
-  }, [linkData, linkUserState, identity, handleStateBasedNavigation]);
+  }, [linkData, linkUserState, account, handleStateBasedNavigation]);
 
   const handleClickClaim = useMemo(
     () => () => {
@@ -78,9 +78,9 @@ export default function CompletePage() {
           <div className="flex flex-col flex-grow w-full h-full sm:max-w-[400px] md:max-w-[100%] py-3">
             <DefaultPage
               linkData={linkData}
-              onClickClaim={handleClickClaim}
+              onClickUse={handleClickClaim}
               isUserStateLoading={isUserStateLoading}
-              isLoggedIn={!!identity}
+              isLoggedIn={!!account}
               isCompletePage={true}
             />
           </div>

@@ -2,22 +2,20 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 import { useMutation } from "@tanstack/react-query";
-import { useIdentity, useSigner } from "@nfid/identitykit/react";
 import {
   Icrc112RequestModel,
   toArrayBuffer,
 } from "@/services/types/transaction.service.types";
-import { AgentTransport } from "@/services/signer/agentTransport";
-import { getAgent } from "@/utils/agent";
-import { ICRC112_SUPPORTED_WALLETS } from "@/constants/wallet-options";
 import { BACKEND_CANISTER_ID } from "@/const";
-import { ICRC_114_METHOD_NAME } from "@/services/signer/constants";
 import { Principal } from "@dfinity/principal";
-import { Signer } from "@slide-computer/signer";
+import usePnpStore from "@/stores/plugAndPlayStore";
+import { IIAdapter } from "@/services/plugAndPlay";
+import { ICRC_114_METHOD_NAME } from "@/services/plugAndPlay/constants";
 
 export function useIcrc112Execute() {
-  const identity = useIdentity();
-  const signerConfig = useSigner();
+  const { pnp } = usePnpStore();
+
+  if (!pnp) throw new Error("pnp is required");
 
   const mutation = useMutation({
     mutationFn: async ({
@@ -26,29 +24,18 @@ export function useIcrc112Execute() {
       transactions: Icrc112RequestModel[][] | undefined;
     }) => {
       console.log("useIcrc112Execute called with transactions:", transactions);
-      if (!identity) {
-        throw new Error("Identity is not available");
-      }
 
       if (transactions === undefined || transactions.length == 0) {
         throw new Error("Transactions not provided");
       }
 
-      // TODO: fallback to normal call if signer does not support ICRC-112
-      console.log("Using signer:", signerConfig);
-      if (!ICRC112_SUPPORTED_WALLETS.includes(signerConfig?.id || "")) {
-        throw new Error(
-          "Only Internet Identity is supported for ICRC-112 execution",
-        );
+      // TODO: fallback to normal call if signer does ot support ICRC-112
+      const provider = pnp.provider as unknown as IIAdapter;
+      const signer = provider.getSigner();
+
+      if (!signer) {
+        throw new Error("Signer not initialized");
       }
-
-      const transport = await AgentTransport.create({
-        agent: getAgent(identity),
-      });
-
-      const signer = new Signer({
-        transport,
-      });
 
       const supportedStandards = await signer.supportedStandards();
       console.log("Supported standards:", supportedStandards);
@@ -81,7 +68,7 @@ export function useIcrc112Execute() {
           method: string;
         };
       } = {
-        sender: identity.getPrincipal(),
+        sender: Principal.anonymous(), // pnp.account?.owner is used by the signer
         requests: batchInput,
         // TODO: remove after @slide-computer/signer upgrade to new schema
         // This is outdated field, but still required by @slide-computer/signer

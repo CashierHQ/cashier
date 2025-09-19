@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { useTokenStore } from "@/stores/tokenStore";
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { useTokenData } from "@/contexts/token-data-context";
-import { useIdentity } from "@nfid/identitykit/react";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
 // Main hook that components should use - now much simpler!
 export function useTokensV2() {
@@ -25,8 +25,6 @@ export function useTokensV2() {
     setSearchQuery,
   } = useTokenStore();
 
-  const identity = useIdentity();
-
   // Get enriched data and operations from provider
   const {
     rawTokenList,
@@ -36,17 +34,21 @@ export function useTokensV2() {
     ...operations
   } = useTokenData();
 
+  const { pnp } = usePnpStore();
+
+  if (!pnp) throw new Error("pnp is required");
+
   // Create a stable key for memoization that accounts for identity changes
   const memoKey = useMemo(() => {
     return {
-      identityKey: identity ? identity.getPrincipal().toString() : "anonymous",
+      identityKey: pnp.account?.owner ?? "anonymous",
       rawTokenListLength: rawTokenList?.length || 0,
       rawTokenListHash:
         rawTokenList
           ?.map((t) => `${t.address}-${t.enabled}-${t.amount}`)
           .join(",") || "",
     };
-  }, [identity, rawTokenList]);
+  }, [pnp.account?.owner, rawTokenList]);
 
   // Data computation methods (memoized for performance)
   const getToken = useMemo(() => {

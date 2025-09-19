@@ -1,42 +1,47 @@
-import { FC, JSX } from "react";
+import { FC } from "react";
 import CustomConnectedWalletButton from "../use-page/connected-wallet-button";
 import WalletButton from "../use-page/connect-wallet-button";
-import { WALLET_OPTIONS, getWalletIcon } from "@/constants/wallet-options";
-import { Identity } from "@dfinity/agent";
-import { useIdentity, useSigner } from "@nfid/identitykit/react";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
 interface WalletOptionButtonProps {
-  walletOption: WALLET_OPTIONS;
+  walletId: string;
   title: string;
-  iconOrImage?: string | JSX.Element;
   disabled?: boolean;
-  identity?: Identity;
-  handleConnect: (walletOption: WALLET_OPTIONS) => void;
+  // Callback when clicking on connected wallet button
+  onClickConnectedWallet?: () => void;
 }
 
 const WalletOptionButton: FC<WalletOptionButtonProps> = ({
-  walletOption,
+  walletId,
   title,
-  iconOrImage,
   disabled = false,
-  handleConnect,
+  onClickConnectedWallet,
 }) => {
-  const signer = useSigner();
-  const identity = useIdentity();
-  const finalIconOrImage = iconOrImage || getWalletIcon(walletOption);
+  const { account, connect } = usePnpStore();
 
-  if (signer?.id) {
+  // Map walletId to image
+  let image = "";
+  if (walletId === "iiSigner") {
+    image = "/icpLogo.png";
+  }
+  // Add more walletId-image mappings as needed
+
+  if (account && account.owner) {
     return (
       <CustomConnectedWalletButton
-        connectedAccount={identity?.getPrincipal().toString()}
+        connectedAccount={account.owner || ""}
         postfixText="Connected"
         postfixIcon={
-          typeof finalIconOrImage === "string" ? (
-            <img src={finalIconOrImage} alt={title} className="w-6 h-6 mr-2" />
-          ) : null
+          image ? (
+            <img src={image} alt={title} className="w-6 h-6 mr-2" />
+          ) : undefined
         }
-        handleConnect={() => handleConnect(walletOption)}
         disabled={disabled}
+        onClick={() => {
+          if (onClickConnectedWallet) {
+            onClickConnectedWallet();
+          }
+        }}
       />
     );
   }
@@ -44,11 +49,8 @@ const WalletOptionButton: FC<WalletOptionButtonProps> = ({
   return (
     <WalletButton
       title={title}
-      handleConnect={() => handleConnect(walletOption)}
-      image={
-        typeof finalIconOrImage === "string" ? finalIconOrImage : undefined
-      }
-      icon={typeof finalIconOrImage !== "string" ? finalIconOrImage : undefined}
+      handleConnect={() => connect(walletId)}
+      image={image}
       disabled={disabled}
       postfixText={disabled ? "Coming Soon" : undefined}
     />

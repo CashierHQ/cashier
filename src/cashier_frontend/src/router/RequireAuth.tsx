@@ -1,9 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+import usePnpStore from "@/stores/plugAndPlayStore";
 import { JSX, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useIdentity } from "@nfid/identitykit/react";
 
 interface RequireAuthProps {
   children: JSX.Element;
@@ -11,15 +11,15 @@ interface RequireAuthProps {
 
 const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
   const navigate = useNavigate();
-  const identity = useIdentity();
+  const { account } = usePnpStore();
 
   useEffect(() => {
-    if (!identity) {
+    if (!account) {
       navigate("/");
     }
-  }, [identity, navigate]);
+  }, [account, navigate]);
 
-  return identity ? children : null;
+  return account ? children : null;
 };
 
 export default RequireAuth;

@@ -22,7 +22,6 @@ import { Avatar } from "@radix-ui/react-avatar";
 import { Info } from "lucide-react";
 import { InformationOnAssetDrawer } from "@/components/information-on-asset-drawer/information-on-asset-drawer";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
-import { useIdentity } from "@nfid/identitykit/react";
 import { mapLinkDtoToUserInputItem } from "@/services/types/mapper/link.service.mapper";
 import { AssetAvatarV2 } from "@/components/ui/asset-avatar";
 import LinkLocalStorageServiceV2, {
@@ -35,6 +34,7 @@ import { useLinkMutations } from "@/hooks/useLinkMutations";
 import { UseQueryResult } from "@tanstack/react-query";
 import { useCreateConfirmation } from "@/hooks/tx-cart/useCreateConfirmation";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
 interface LinkPreviewProps {
   onInvalidActon?: () => void;
@@ -86,7 +86,8 @@ function LinkPreview({
   const [isDisabled, setIsDisabled] = useState(false);
   const { getUserInput, addUserInput, setButtonState } =
     useLinkCreationFormStore();
-  const identity = useIdentity();
+
+  const { account } = usePnpStore();
 
   // State for enhanced asset info with logos
   const [enhancedAssets, setEnhancedAssets] = useState<EnhancedAsset[]>([]);
@@ -249,9 +250,9 @@ function LinkPreview({
           await handleCreateAction();
         }
 
-        if (oldIdParam && identity) {
+        if (oldIdParam && account) {
           const localStorageService = new LinkLocalStorageServiceV2(
-            identity.getPrincipal().toString(),
+            account?.owner ?? "",
           );
           localStorageService.deleteLink(oldIdParam);
         }
@@ -345,9 +346,9 @@ function LinkPreview({
         addUserInput(res.link.id, input);
 
         // Clean up old local storage entry
-        if (identity) {
+        if (account) {
           const localStorageService = new LinkLocalStorageServiceV2(
-            identity.getPrincipal().toString(),
+            account?.owner ?? "",
           );
           localStorageService.deleteLink(res.oldId);
         }

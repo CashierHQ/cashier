@@ -6,20 +6,20 @@ import {
   LinkUpdateUserStateInputModel,
   LinkGetUserStateInputModel,
 } from "@/services/types/link.service.types";
-import { Identity } from "@dfinity/agent";
-import { useIdentity } from "@nfid/identitykit/react";
+import usePnpStore from "@/stores/plugAndPlayStore";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 // Helper to generate the query key
-const getLinkUserStateQueryKey = (link_id: string, user_pid: string) =>
+export const LINK_USER_STATE_QUERY_KEYS = (link_id: string, user_pid: string) =>
   ["linkUserState", link_id, user_pid] as const;
 
 export function useUpdateLinkUserState() {
-  const identity = useIdentity();
+  const { pnp } = usePnpStore();
+  if (!pnp) throw new Error("pnp is required");
 
   const mutation = useMutation({
     mutationFn: async (vars: { input: LinkUpdateUserStateInputModel }) => {
-      const linkService = new LinkService(identity);
+      const linkService = new LinkService(pnp);
       const result = await linkService.updateLinkUserState(vars.input);
       return result;
     },
@@ -31,17 +31,20 @@ export function useUpdateLinkUserState() {
   return mutation;
 }
 
-export function useLinkUserState(
+export function useLinkUserStateQuery(
   input: LinkGetUserStateInputModel,
   isEnabled: boolean,
 ) {
-  const identity = useIdentity();
-  const user_pid = identity?.getPrincipal().toString() ?? "";
+  const { pnp } = usePnpStore();
+  if (!pnp) throw new Error("pnp is required");
 
   return useQuery({
-    queryKey: getLinkUserStateQueryKey(input.link_id, user_pid),
+    queryKey: LINK_USER_STATE_QUERY_KEYS(
+      input.link_id,
+      pnp.account?.owner ?? "",
+    ),
     queryFn: async () => {
-      const linkService = new LinkService(identity);
+      const linkService = new LinkService(pnp);
       const userState = await linkService.getLinkUserState(input);
       return userState;
     },
@@ -57,20 +60,9 @@ export function useLinkUserState(
   });
 }
 
-export async function getLinkUserState(
-  input: LinkGetUserStateInputModel,
-  identity: Identity | undefined,
-) {
-  const linkService = new LinkService(identity);
-  const userState = await linkService.getLinkUserState(input);
-  console.log("userState", userState);
-  return userState;
-}
-
-export async function fetchLinkUserState(
-  input: LinkGetUserStateInputModel,
-  identity: Identity | undefined,
-) {
-  const linkService = new LinkService(identity);
+export async function fetchLinkUserState(input: LinkGetUserStateInputModel) {
+  const { pnp } = usePnpStore();
+  if (!pnp) throw new Error("pnp is required");
+  const linkService = new LinkService(pnp);
   return await linkService.getLinkUserState(input);
 }

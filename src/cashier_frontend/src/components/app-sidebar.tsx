@@ -11,7 +11,6 @@ import {
 import { cn } from "@/lib/utils";
 import { LuWallet } from "react-icons/lu";
 import { BOTTOM_MENU_ITEMS, TOP_MENU_ITEMS } from "@/constants/otherConst";
-import { useAuth } from "@nfid/identitykit/react";
 import { transformShortAddress } from "@/utils";
 import copy from "copy-to-clipboard";
 import { Copy } from "lucide-react";
@@ -19,6 +18,7 @@ import { Separator } from "./ui/separator";
 import { MouseEventHandler } from "react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
 export interface SidebarMenuItem {
   title: string;
@@ -32,21 +32,16 @@ interface AppSidebarProps {
 
 const AppSidebar: React.FC<AppSidebarProps> = () => {
   const { t } = useTranslation();
-  const { user } = useAuth();
-  const { disconnect } = useAuth();
+  const { disconnect, account } = usePnpStore();
 
   const handleCopy = (e: React.SyntheticEvent) => {
     try {
       e.stopPropagation();
-      copy(user?.principal.toString() ?? "");
+      copy(account ? (account.owner ?? "") : "");
       toast.success(t("common.success.copied_address"));
     } catch (err) {
       console.log("🚀 ~ handleCopyLink ~ err:", err);
     }
-  };
-
-  const handleDisConnect = () => {
-    disconnect();
   };
 
   return (
@@ -83,7 +78,7 @@ const AppSidebar: React.FC<AppSidebarProps> = () => {
           <Separator className="mb-4 mt-2 max-w-[100%] mx-auto opacity-50" />
 
           <ListItem
-            title={transformShortAddress(user?.principal?.toString() || "")}
+            title={transformShortAddress(account ? (account.owner ?? "") : "")}
             onClick={() => {}}
             className="mt-1"
             icon={<LuWallet size={22} />}
@@ -94,7 +89,7 @@ const AppSidebar: React.FC<AppSidebarProps> = () => {
 
           <SheetClose asChild>
             <button
-              onClick={handleDisConnect}
+              onClick={() => disconnect()}
               className="w-[95%] border border-[#D26060] mx-auto text-[#D26060] flex items-center justify-center rounded-full font-semibold text-[14px] h-[44px] mt-4 hover:bg-[#D26060] hover:text-white transition-colors"
             >
               Disconnect

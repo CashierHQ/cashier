@@ -11,8 +11,7 @@ export const IC_EXPLORER_IMAGES_PATH =
   "https://api.icexplorer.io/images/";
 export const IC_HOST = import.meta.env.VITE_IC_HOST || "https://icp0.io";
 export const IC_INTERNET_IDENTITY_PROVIDER =
-  import.meta.env.VITE_IC_INTERNET_IDENTITY_PROVIDER ||
-  "https://identity.ic0.app";
+  import.meta.env.VITE_IC_INTERNET_IDENTITY_PROVIDER || "https://id.ai";
 export const ICP_ADDRESS = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 export const ICP_LOGO = "./icpLogo.png";
 
@@ -26,8 +25,6 @@ export const TIMEOUT_NANO_SEC = 60n * 60n * 1_000_000_000n; // 1 hour
 
 // Timeout for frontend idle, tracking by var stored in local storage
 export const IDLE_TIMEOUT_MILLI_SEC = 15 * 60 * 1_000; // 15 minutes
-
-
 
 /**
  * Feature flags configuration
@@ -47,7 +44,7 @@ export const FEATURE_FLAGS = {
 
   ENABLE_LOCAL_IDENTITY_PROVIDER:
     import.meta.env.VITE_FEATURE_FLAGS_ENABLE_LOCAL_IDENTITY_PROVIDER ===
-    "true" || false,
+      "true" || false,
 
   ENABLE_ANONYMOUS_GOOGLE_LOGIN:
     import.meta.env.VITE_FATURE_FLAGS_ENABLE_GOOGLE_LOGIN === "true" || false,

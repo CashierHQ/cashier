@@ -15,9 +15,7 @@ import {
   ProcessActionInput,
   UpdateActionInput,
 } from "../../generated/cashier_backend/cashier_backend.did";
-import { Actor, Identity } from "@dfinity/agent";
 import { BACKEND_CANISTER_ID } from "@/const";
-import { PartialIdentity } from "@dfinity/identity";
 import {
   LinkGetUserStateInputModel,
   LinkModel,
@@ -38,9 +36,9 @@ import {
 import { FeeModel } from "../types/intent.service.types";
 import { ACTION_TYPE, FEE_TYPE } from "../types/enum";
 import { UserInputItem } from "@/stores/linkCreationFormStore";
-import { getAgent } from "@/utils/agent";
 import { fromNullable, toNullable } from "@dfinity/utils";
 import { Principal } from "@dfinity/principal";
+import { PNP } from "@windoge98/plug-n-play";
 
 export interface ResponseLinksModel {
   data: LinkModel[];
@@ -92,11 +90,11 @@ interface AssetDto {
 class LinkService {
   private actor: _SERVICE;
 
-  constructor(identity?: Identity | PartialIdentity | undefined) {
-    const agent = getAgent(identity);
-    this.actor = Actor.createActor(idlFactory, {
-      agent,
+  constructor(pnp: PNP, options?: { anon?: boolean }) {
+    this.actor = pnp.getActor<_SERVICE>({
       canisterId: BACKEND_CANISTER_ID,
+      idl: idlFactory,
+      anon: options?.anon,
     });
   }
 

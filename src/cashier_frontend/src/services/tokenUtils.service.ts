@@ -3,19 +3,16 @@
 
 import { FungibleToken } from "@/types/fungible-token.speculative";
 import { getAgent } from "@/utils/agent";
-import { Agent, Identity } from "@dfinity/agent";
-import { PartialIdentity } from "@dfinity/identity";
 import { IcrcLedgerCanister, mapTokenMetadata } from "@dfinity/ledger-icrc";
 import { Principal } from "@dfinity/principal";
 import { Token, TokenAmountV2 } from "@dfinity/utils";
+import { PNP } from "@windoge98/plug-n-play";
 
 export class TokenUtilService {
-  private agent: Agent;
-  private identity: Identity | undefined;
+  private walletAddress: string | null;
 
-  constructor(identity?: Identity | PartialIdentity | undefined) {
-    this.agent = getAgent(identity);
-    this.identity = identity;
+  constructor(pnp: PNP) {
+    this.walletAddress = pnp.account?.owner;
   }
   public static async getTokenMetadata(tokenAddres: string) {
     const { metadata } = IcrcLedgerCanister.create({
@@ -58,15 +55,17 @@ export class TokenUtilService {
 
   async balanceOf(tokenAddress: string) {
     const ledgerCanister = IcrcLedgerCanister.create({
-      agent: this.agent,
+      agent: getAgent(),
       canisterId: Principal.fromText(tokenAddress),
     });
 
-    const pid = this.identity?.getPrincipal().toString() ?? "";
+    if (!this.walletAddress) {
+      throw new Error("Wallet address is not set");
+    }
 
     try {
       const balance = await ledgerCanister.balance({
-        owner: Principal.fromText(pid),
+        owner: Principal.fromText(this.walletAddress),
       });
       return balance;
     } catch (error) {
@@ -84,7 +83,7 @@ export class TokenUtilService {
   ) {
     const tasks = ledgers.map(async (ledgerCanisterId) => {
       const ledgerCanister = IcrcLedgerCanister.create({
-        agent: this.agent,
+        agent: getAgent(),
         canisterId: ledgerCanisterId,
       });
 
@@ -107,15 +106,17 @@ export class TokenUtilService {
   async batchBalanceOf(tokenAddresses: Principal[]) {
     const tasks = tokenAddresses.map(async (tokenAddress) => {
       const ledgerCanister = IcrcLedgerCanister.create({
-        agent: this.agent,
+        agent: getAgent(),
         canisterId: tokenAddress,
       });
 
-      const pid = this.identity?.getPrincipal().toString() ?? "";
+      if (!this.walletAddress) {
+        throw new Error("Wallet address is not set");
+      }
 
       try {
         const balance = await ledgerCanister.balance({
-          owner: Principal.fromText(pid),
+          owner: Principal.fromText(this.walletAddress),
         });
         return { tokenAddress, balance };
       } catch (error) {
@@ -153,7 +154,7 @@ export class TokenUtilService {
     amount: number,
   ) {
     const ledgerCanister = IcrcLedgerCanister.create({
-      agent: this.agent,
+      agent: getAgent(),
       canisterId: Principal.fromText(tokenAddress),
     });
 

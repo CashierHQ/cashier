@@ -6,11 +6,9 @@ import {
   useContext,
   useEffect,
   ReactNode,
-  useRef,
   useState,
   useCallback,
 } from "react";
-import { useIdentity } from "@nfid/identitykit/react";
 import { useTokenStore } from "@/stores/tokenStore";
 import {
   useAddTokenMutation,
@@ -35,6 +33,7 @@ import {
   BALANCE_CACHE_LAST_CACHED_BALANCES_KEY,
   BALANCE_CACHE_THRESHOLD_MS,
 } from "@/const";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
 // Context for enriched token data and operations
 interface TokenContextValue {
@@ -73,11 +72,10 @@ const TokenContext = createContext<TokenContextValue | null>(null);
 
 // Provider component that manages all React Query hooks and data enrichment
 export function TokenDataProvider({ children }: { children: ReactNode }) {
-  const identity = useIdentity();
+  const { pnp, account } = usePnpStore();
   const [enrichedTokens, setEnrichedTokens] = useState<FungibleToken[]>([]);
   const [isMetadataEnriched, setIsMetadataEnriched] = useState<boolean>(false);
   const [initialTokenHash, setInitialTokenHash] = useState<string>("");
-  const previousIdentityRef = useRef<typeof identity>(identity);
 
   // Simplified auto-upgrade state
   const [hasMetadataChanges, setHasMetadataChanges] = useState<boolean>(false);
@@ -159,10 +157,6 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
 
   const updateTokenExplorer = async () => {
     const explorerService = new ICExplorerService();
-    if (!identity) {
-      return;
-    }
-
     // Add retry logic for getting token list
     const MAX_RETRIES = 3;
     const RETRY_DELAY = 1000; // 1 second delay between retries
@@ -207,12 +201,14 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
   const updateTokensInRegistry = async (
     tokensToUpdate: { tokenId: string; chain: string }[],
   ): Promise<void> => {
-    if (!identity) {
-      return;
-    }
-
     try {
-      const tokenStorageService = new TokenStorageService(identity);
+      if (!pnp) {
+        console.warn(
+          "No authenticated user - cannot update tokens in registry",
+        );
+        return;
+      }
+      const tokenStorageService = new TokenStorageService(pnp);
       await tokenStorageService.updateTokenRegistryBatch(tokensToUpdate);
     } catch (error) {
       console.error("❌ Error updating tokens in registry:", error);
@@ -224,8 +220,6 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
     balanceMap: TokenBalanceMap,
     userWallet: string,
   ) => {
-    if (!identity) return;
-
     const currentTime = Date.now();
     const cacheKey = `${BALANCE_CACHE_LAST_CACHE_TIME_KEY}_${userWallet}`;
     const cacheTimeKey = `${BALANCE_CACHE_LAST_CACHED_BALANCES_KEY}_${userWallet}`;
@@ -289,8 +283,8 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
 
           localStorage.setItem(cacheKey, balanceMapJson);
 
-          if (balancesChanged) {
-            const tokenStorageService = new TokenStorageService(identity);
+          if (balancesChanged && pnp) {
+            const tokenStorageService = new TokenStorageService(pnp);
             await tokenStorageService.updateTokenBalances(balancesToCache);
           }
         }
@@ -451,7 +445,7 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
 
   // 5. Cache token balances when balance data changes
   useEffect(() => {
-    if (!identity || !tokenBalancesQuery.data) return;
+    if (!account || !tokenBalancesQuery.data) return;
 
     const balanceMap: TokenBalanceMap = {};
     tokenBalancesQuery.data.forEach((balance) => {
@@ -462,16 +456,12 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
     });
 
     if (Object.keys(balanceMap).length > 0) {
-      cacheTokenBalances(balanceMap, identity.getPrincipal().toString());
+      cacheTokenBalances(balanceMap, account?.owner ?? "");
     }
-  }, [tokenBalancesQuery.data, identity, cacheTokenBalances]);
+  }, [tokenBalancesQuery.data, cacheTokenBalances]);
 
   // 6. Auto-upgrade effect - Simplified approach using metadata change flags
   useEffect(() => {
-    if (!identity) {
-      return;
-    }
-
     if (!hasMetadataChanges || changedTokenIds.length === 0) {
       return;
     }
@@ -495,7 +485,7 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
     };
 
     updateChangedTokens();
-  }, [identity, hasMetadataChanges, changedTokenIds, isMetadataEnriched]);
+  }, [account, hasMetadataChanges, changedTokenIds, isMetadataEnriched]);
 
   // Loading state effects
   useEffect(() => {
@@ -539,15 +529,6 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
     tokenListQuery.data,
     setFilters,
   ]);
-
-  // Refetch token list when identity changes
-  useEffect(() => {
-    // Identity changes are now handled automatically by React Query
-    // through the query key that includes the principal ID
-    if (identity !== previousIdentityRef.current) {
-      previousIdentityRef.current = identity;
-    }
-  }, [identity]);
 
   // Fetch initial token list on mount
   useEffect(() => {

@@ -2,8 +2,8 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 import React, { createContext, useEffect, useRef } from "react";
-import { useAuth } from "@nfid/identitykit/react";
-import { IDLE_TIMEOUT_MILLI_SEC } from "@/App";
+import { IDLE_TIMEOUT_MILLI_SEC } from "@/const";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
 interface IdleTimeoutContextValue {
   updateActivity: () => void;
@@ -19,17 +19,18 @@ interface IdleTimeoutProviderProps {
 }
 
 export function IdleTimeoutProvider({ children }: IdleTimeoutProviderProps) {
-  const { disconnect, user } = useAuth();
+  const { pnp, disconnect, account } = usePnpStore();
   const intervalRef = useRef<number | null>(null);
 
   // Helper function to get user-specific key
   const getUserKey = () => {
-    if (!user) return null;
-    return LAST_ACTIVE_KEY + "_" + user.principal.toString();
+    if (!pnp) return null;
+    if (!pnp.isAuthenticated() || !pnp.account?.owner) return null;
+    return LAST_ACTIVE_KEY + "_" + pnp.account?.owner;
   };
 
   const checkAndUpdate = async () => {
-    if (!user) return;
+    if (!pnp || (!pnp.isAuthenticated() && !pnp.account?.owner)) return;
 
     const userKey = getUserKey();
     if (!userKey) return;
@@ -62,13 +63,13 @@ export function IdleTimeoutProvider({ children }: IdleTimeoutProviderProps) {
 
   // Check on app reload/mount - but only when user is available
   useEffect(() => {
-    if (user) {
+    if (account) {
       checkAndUpdate();
     }
-  }, [user]); // Depend on user so it runs when user loads
+  }, [account]); // Depend on user so it runs when user loads
 
   useEffect(() => {
-    if (user) {
+    if (account) {
       // Check immediately when user connects
       checkAndUpdate();
 
@@ -84,7 +85,7 @@ export function IdleTimeoutProvider({ children }: IdleTimeoutProviderProps) {
         }
       };
     }
-  }, [user, disconnect]);
+  }, [account]);
 
   const contextValue: IdleTimeoutContextValue = {
     updateActivity: () => {

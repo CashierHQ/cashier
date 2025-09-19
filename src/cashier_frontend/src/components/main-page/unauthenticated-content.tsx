@@ -5,17 +5,23 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { Feather, Lock, Zap, ChevronDown, ChevronUp, Mail } from "lucide-react";
-import { WalletSelectionModal } from "../wallet-connect/wallet-selection-modal";
 import { landingPageLinks } from "./landingPageLinks";
+// Modal is controlled by the parent page (HomePage)
 
-export const UnauthenticatedContent = () => {
-  const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
+interface UnauthenticatedContentProps {
+  onOpenWalletModal?: () => void;
+}
+
+const DEV_BANNER_STORAGE_KEY = "cashier_dev_banner_collapsed";
+
+export const UnauthenticatedContent = ({
+  onOpenWalletModal,
+}: UnauthenticatedContentProps) => {
   const [isDevelopmentBannerCollapsed, setIsDevelopmentBannerCollapsed] =
     useState(false);
   const { t } = useTranslation();
 
   // Local storage key for development banner state
-  const DEV_BANNER_STORAGE_KEY = "cashier_dev_banner_collapsed";
 
   // Load collapsed state from localStorage on component mount
   useEffect(() => {
@@ -157,7 +163,7 @@ export const UnauthenticatedContent = () => {
 
             <Button
               type="button"
-              onClick={() => setIsWalletDialogOpen(true)}
+              onClick={() => onOpenWalletModal && onOpenWalletModal()}
               className="hidden md:block lg:block h-[48px] text-[1rem] bottom-[30px] w-[248px] rounded-full mt-[48px] md:mt-8 lg:mt-[48px]"
             >
               {t("main_page.unauthenticated_content.get_started")}
@@ -174,7 +180,7 @@ export const UnauthenticatedContent = () => {
 
             <Button
               type="button"
-              onClick={() => setIsWalletDialogOpen(true)}
+              onClick={() => onOpenWalletModal && onOpenWalletModal()}
               className="h-11 text-[1rem] w-[90%] max-w-[350px] rounded-full mx-auto mt-6 mb-8 md:hidden"
             >
               {t("main_page.unauthenticated_content.get_started")}
@@ -340,10 +346,6 @@ export const UnauthenticatedContent = () => {
           </div>
         </div>
       </footer>
-      <WalletSelectionModal
-        open={isWalletDialogOpen}
-        onOpenChange={setIsWalletDialogOpen}
-      />
     </div>
   );
 };

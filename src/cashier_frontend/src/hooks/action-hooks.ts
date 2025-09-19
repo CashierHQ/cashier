@@ -2,12 +2,12 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useIdentity } from "@nfid/identitykit/react";
 import LinkService, {
   UpdateActionInputModel,
 } from "@/services/link/link.service";
 import { ACTION_TYPE } from "@/services/types/enum";
 import { Principal } from "@dfinity/principal";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
 // Base type for action parameters
 type BaseActionParams = {
@@ -25,12 +25,13 @@ type AnonymousActionParams = BaseActionParams & {
  * Hook for creating a new action with authenticated user
  */
 export function useCreateAction() {
-  const identity = useIdentity();
+  const { pnp } = usePnpStore();
   const queryClient = useQueryClient();
+  if (!pnp) throw new Error("pnp is required");
 
   const mutation = useMutation({
     mutationFn: (params: BaseActionParams) => {
-      const linkService = new LinkService(identity);
+      const linkService = new LinkService(pnp);
       return linkService.createAction(params);
     },
     onSuccess: (data, variables) => {
@@ -48,15 +49,17 @@ export function useCreateAction() {
  * Hook for processing an action with authenticated user
  */
 export function useProcessAction() {
-  const identity = useIdentity();
   const queryClient = useQueryClient();
+  const { pnp } = usePnpStore();
+
+  if (!pnp) throw new Error("pnp is required");
 
   const mutation = useMutation({
     mutationFn: (params: BaseActionParams) => {
       if (!params.actionId) {
         throw new Error("Action ID is required for processing");
       }
-      const linkService = new LinkService(identity);
+      const linkService = new LinkService(pnp);
       return linkService.processAction({
         linkId: params.linkId,
         actionType: params.actionType,
@@ -78,16 +81,18 @@ export function useProcessAction() {
  * Hook for creating a new action anonymously
  */
 export function useCreateActionAnonymous() {
-  const identity = useIdentity();
   const queryClient = useQueryClient();
+  const { pnp, account } = usePnpStore();
+
+  if (!pnp) throw new Error("pnp is required");
 
   const mutation = useMutation({
     mutationFn: (params: AnonymousActionParams) => {
-      if (identity && Principal.anonymous() !== identity.getPrincipal()) {
+      if (Principal.anonymous().toString() !== account?.owner) {
         throw new Error("Anonymous user cannot create action");
       }
 
-      const linkService = new LinkService(identity);
+      const linkService = new LinkService(pnp);
 
       return linkService.createActionAnonymous({
         linkId: params.linkId,
@@ -110,19 +115,21 @@ export function useCreateActionAnonymous() {
  * Hook for processing an existing action anonymously
  */
 export function useProcessActionAnonymous() {
-  const identity = useIdentity();
   const queryClient = useQueryClient();
+  const { pnp, account } = usePnpStore();
+
+  if (!pnp) throw new Error("pnp is required");
 
   const mutation = useMutation({
     mutationFn: (params: AnonymousActionParams) => {
-      if (identity && Principal.anonymous() !== identity.getPrincipal()) {
+      if (Principal.anonymous().toString() !== account?.owner) {
         throw new Error("Anonymous user cannot create action");
       }
       if (!params.actionId) {
         throw new Error("Action ID is required for processing");
       }
 
-      const linkService = new LinkService(identity);
+      const linkService = new LinkService(pnp);
 
       return linkService.processActionAnonymousV2({
         linkId: params.linkId,
@@ -143,12 +150,14 @@ export function useProcessActionAnonymous() {
 }
 
 export function useUpdateAction() {
-  const identity = useIdentity();
   const queryClient = useQueryClient();
+  const { pnp } = usePnpStore();
+
+  if (!pnp) throw new Error("pnp is required");
 
   const mutation = useMutation({
     mutationFn: (vars: UpdateActionInputModel) => {
-      const linkService = new LinkService(identity);
+      const linkService = new LinkService(pnp);
       return linkService.updateAction(vars);
     },
     onSuccess: (data, variables) => {

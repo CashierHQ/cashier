@@ -13,7 +13,7 @@ import { UseSchema } from "./use-link-options";
 interface UsePageFormProps {
   form: UseFormReturn<z.infer<typeof UseSchema>>;
   formData: LinkDetailModel;
-  onSubmit: (address: string | undefined) => void;
+  onSubmit: (address?: string) => void;
   onBack?: () => void;
   isDisabled: boolean;
   setDisabled: (disabled: boolean) => void;
@@ -24,16 +24,15 @@ interface UsePageFormProps {
 const UseLinkForm: FC<UsePageFormProps> = ({
   form,
   formData,
-  onSubmit,
   isDisabled,
   setDisabled,
   buttonText,
   onOpenWalletModal,
+  onSubmit,
 }) => {
   const handleSubmit = () => {
-    // Disable the button immediately on submission
     setDisabled(true);
-    onSubmit(form.getValues("address"));
+    onSubmit();
   };
 
   return (
