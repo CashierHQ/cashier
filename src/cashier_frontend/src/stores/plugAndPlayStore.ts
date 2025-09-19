@@ -10,7 +10,7 @@ const STORED_WALLET_KEY = "storedConnectWallet";
 type StoreState = {
   pnp: PNP | null;
   account: WalletAccount | null;
-  initNew: (config: GlobalPnpConfig) => void;
+  init: (config: GlobalPnpConfig) => void;
   connect: (walletId: string) => Promise<void>;
   disconnect: () => Promise<void>;
   reconnect: () => Promise<void>;

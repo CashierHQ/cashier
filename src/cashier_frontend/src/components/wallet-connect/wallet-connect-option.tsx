@@ -17,9 +17,22 @@ const WalletConnectOptionButton: FC<WalletOptionOptionProps> = ({
   onLoginSuccess,
 }) => {
   const { connect } = usePnpStore();
+  const { pnp } = usePnpStore();
+
+  const config: // partial infer config adapter
+  | {
+        id: string;
+        enabled: boolean;
+        logo: string;
+      }
+    | undefined = pnp?.config.adapters[walletId];
+
+  if (!config) {
+    return null;
+  }
 
   // Map walletId to image
-  let image = "";
+  let image = config.logo;
   if (walletId === "iiSigner") {
     image = "/icpLogo.png";
   }

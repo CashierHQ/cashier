@@ -35,7 +35,7 @@ function App() {
   // Ensure PNP store is initialized synchronously so downstream providers
   // that run on mount (e.g. TokenDataProvider) can access `pnp` immediately.
   // Using the store's getState() avoids relying on a component mount ordering.
-  usePnpStore().initNew(CONFIG);
+  usePnpStore().init(CONFIG);
 
   // Console logging is now handled at build time via vite.config.js esbuild.pure option
   // No need for runtime console manipulation

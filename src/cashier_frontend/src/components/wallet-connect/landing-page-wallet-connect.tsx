@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dialog";
 
 import WalletConnectOptionButton from "./wallet-connect-option";
+import usePnpStore from "@/stores/plugAndPlayStore";
+import { PNP } from "@windoge98/plug-n-play";
 
 interface WalletSelectionModalProps {
   // Modal visibility state
@@ -29,6 +31,7 @@ export const LandingPageSelectionModal: React.FC<WalletSelectionModalProps> = ({
   onWalletConnected,
 }) => {
   const { t } = useTranslation();
+  const { pnp } = usePnpStore();
 
   // Auto-proceed if user is already authenticated (only if not allowing wallet change)
   useEffect(() => {
@@ -54,6 +57,27 @@ export const LandingPageSelectionModal: React.FC<WalletSelectionModalProps> = ({
             <WalletConnectOptionButton
               walletId={"iiSigner"}
               title="Internet Identity"
+              onLoginSuccess={() => setOpen(false)}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <WalletConnectOptionButton
+              walletId={"oisy"}
+              title="Oisy wallet"
+              onLoginSuccess={() => setOpen(false)}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <WalletConnectOptionButton
+              walletId={"plug"}
+              title="Plug"
+              onLoginSuccess={() => setOpen(false)}
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <WalletConnectOptionButton
+              walletId={"stoic"}
+              title="Stoic"
               onLoginSuccess={() => setOpen(false)}
             />
           </div>
