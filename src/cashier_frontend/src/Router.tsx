@@ -9,7 +9,6 @@ import ClaimPage from "./pages/[id]";
 import ChooseWalletPage from "./pages/[id]/choose-wallet";
 import CompletePage from "./pages/[id]/complete";
 import DetailPage from "./pages/details/[id]";
-import TestPage from "./pages/test";
 import RequireAuth from "./router/RequireAuth";
 import { WalletProvider } from "./contexts/wallet-context";
 
@@ -45,10 +44,6 @@ const router = createHashRouter([
         <DetailPage />
       </RequireAuth>
     ),
-  },
-  {
-    path: "/test",
-    element: <TestPage />,
   },
 ]);
 

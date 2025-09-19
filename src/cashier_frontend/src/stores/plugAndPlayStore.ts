@@ -43,8 +43,8 @@ const usePnpStore = create<StoreState>()(
       const state = get() as StoreState;
       const { pnp } = state;
       localStorage.removeItem(STORED_WALLET_KEY);
-      set({ account: null });
       if (pnp) await pnp.disconnect();
+      set({ account: null });
     },
     reconnect: async () => {
       const state = get() as StoreState;

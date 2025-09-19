@@ -30,6 +30,18 @@
     "ignore": false
   },
   {
+    "match": "**/*.{png,jpg,svg}",
+    "headers": {
+      "Cache-Control": "public, max-age=31536000"
+    }
+  },
+  {
+    "match": "**/*.{js,css,html}",
+    "headers": {
+      "Cache-Control": "no-cache, no-store, must-revalidate"
+    }
+  },
+  {
     "match": ".well-known/ii-alternative-origins",
     "headers": {
       "Access-Control-Allow-Origin": "*",
