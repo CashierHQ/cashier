@@ -66,7 +66,10 @@ export const useLinkUseNavigation = (linkId?: string) => {
    * @param isAuthenticated Whether the user is authenticated
    */
   const handleStateBasedNavigation = useCallback(
-    (userState?: LinkGetUserStateOutputModel, isAuthenticated?: boolean) => {
+    (
+      userState?: LinkGetUserStateOutputModel | null,
+      isAuthenticated?: boolean,
+    ) => {
       if (!linkId) return;
 
       // For logged-in users with complete state, redirect to complete page

@@ -2,10 +2,14 @@ import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import React, { useEffect } from "react";
 import { PNP } from "@windoge98/plug-n-play";
-import { WalletAccount } from "node_modules/@windoge98/plug-n-play/dist/src/types/WalletTypes";
 import { GlobalPnpConfig } from "@/services/plugAndPlay/adapter";
 
 const STORED_WALLET_KEY = "storedConnectWallet";
+
+interface WalletAccount {
+  owner: string | null;
+  subaccount: string | null;
+}
 
 type StoreState = {
   pnp: PNP | null;
