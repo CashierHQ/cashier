@@ -36,7 +36,7 @@ import { useLinkMutations } from "@/hooks/useLinkMutations";
 import { useUseConfirmation } from "@/hooks/tx-cart/useUseConfirmation";
 import { UseSchema } from "@/components/use-page/use-link-options";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
-import { WalletSelectionModal } from "@/components/wallet-connect/wallet-selection-modal";
+import useWalletModalStore from "@/stores/walletModalStore";
 import usePnpStore from "@/stores/plugAndPlayStore";
 
 export default function ChooseWalletPage() {
@@ -70,11 +70,13 @@ export default function ChooseWalletPage() {
       link_id: linkId ?? "",
       anonymous_wallet_address: "",
     },
-    !!linkId && !!account,
+    !!linkId && !!account
   );
   const { createAction, createActionAnonymous } = useLinkMutations();
   const link = linkDetailData?.link;
-  const [showWalletModal, setShowWalletModal] = useState(false);
+  const { open: openWalletModal } = useWalletModalStore();
+  const setOnLoginSuccess = useWalletModalStore((s) => s.setOnLoginSuccess);
+  const setModalOpen = useWalletModalStore((s) => s.setOpen);
 
   // Local state
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -148,7 +150,7 @@ export default function ChooseWalletPage() {
    * Creates an action for anonymous users
    */
   const handleCreateActionAnonymous = async (
-    walletAddress: string,
+    walletAddress: string
   ): Promise<ActionModel> => {
     const newAction = await createActionAnonymous({
       linkId: linkId!,
@@ -248,14 +250,22 @@ export default function ChooseWalletPage() {
   };
 
   const handleOpenWalletModal = () => {
-    setShowWalletModal(true);
+    // Set a post-login callback to close modal and refetch user/link state
+    setOnLoginSuccess(() => {
+      setModalOpen(false);
+      // After login, refetch link detail and user state so UI updates accordingly
+      refetchLinkDetailFn();
+      refetchLinkUserStateFn();
+    });
+
+    openWalletModal();
   };
 
   const memoizedOnBack = useMemo(
     () => () => {
       goToLinkDefault();
     },
-    [goToLinkDefault],
+    [goToLinkDefault]
   );
 
   const setDisabled = useCallback((disabled: boolean) => {
@@ -294,13 +304,6 @@ export default function ChooseWalletPage() {
                 onOpenWalletModal={handleOpenWalletModal}
               />
             </div>
-
-            <WalletSelectionModal
-              isWalletModalOpen={showWalletModal}
-              onOpenChange={setShowWalletModal}
-              onWalletConnected={() => {}}
-              allowChangeWallet={true}
-            />
 
             <FeeInfoDrawer open={showInfo} onClose={() => setShowInfo(false)} />
 

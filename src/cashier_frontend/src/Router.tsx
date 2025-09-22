@@ -5,7 +5,7 @@ import { createHashRouter, RouterProvider } from "react-router-dom";
 import { useDeviceSize } from "./hooks/responsive-hook";
 import LinkPage from "./pages/edit/[id]";
 import HomePage from "@/pages";
-import ClaimPage from "./pages/[id]";
+import UsePage from "./pages/[id]";
 import ChooseWalletPage from "./pages/[id]/choose-wallet";
 import CompletePage from "./pages/[id]/complete";
 import DetailPage from "./pages/details/[id]";
@@ -27,7 +27,7 @@ const router = createHashRouter([
   },
   {
     path: "/:linkId",
-    element: <ClaimPage />,
+    element: <UsePage />,
   },
   {
     path: "/:linkId/choose-wallet",

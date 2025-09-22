@@ -15,7 +15,7 @@ import {
 import { toast } from "sonner";
 import LinkLocalStorageServiceV2 from "@/services/link/link-local-storage.service.v2";
 import usePnpStore from "@/stores/plugAndPlayStore";
-import { LandingPageSelectionModal } from "@/components/wallet-connect/landing-page-wallet-connect";
+import useWalletModalStore from "@/stores/walletModalStore";
 
 export default function HomePage() {
   const { t } = useTranslation();
@@ -27,7 +27,7 @@ export default function HomePage() {
   const [disableCreateButton, setDisableCreateButton] = useState(false);
   const navigate = useNavigate();
   const { pnp, account } = usePnpStore();
-  const [isWalletDialogOpen, setIsWalletDialogOpen] = useState(false);
+  const setIsWalletDialogOpen = useWalletModalStore((s) => s.setOpen);
 
   const handleCreateLink = async () => {
     try {
@@ -39,7 +39,7 @@ export default function HomePage() {
       }
 
       const linkId = new LinkLocalStorageServiceV2(
-        pnp.account.owner,
+        pnp.account.owner
       ).createLink();
 
       addUserInput(linkId, {
@@ -122,7 +122,7 @@ export default function HomePage() {
   }
 
   return (
-    <MainAppLayout openLoginModal={() => setIsWalletDialogOpen(true)}>
+    <MainAppLayout>
       {!account ? (
         <UnauthenticatedContent
           onOpenWalletModal={() => setIsWalletDialogOpen(true)}
@@ -137,11 +137,6 @@ export default function HomePage() {
           linkData={linkData}
         />
       )}
-
-      <LandingPageSelectionModal
-        open={isWalletDialogOpen}
-        setOpen={setIsWalletDialogOpen}
-      />
     </MainAppLayout>
   );
 }

@@ -15,6 +15,7 @@ import {
 } from "./stores/plugAndPlayStore";
 import { IdleTimeoutProvider } from "./contexts/idle-timeout-context";
 import { CONFIG } from "./config";
+import { WalletSelectionModal } from "./components/wallet-connect/wallet-selection-modal";
 
 const logBuildInfo = () => {
   const buildInfo = {
@@ -68,6 +69,7 @@ function App() {
           <ReactQueryDevtools initialIsOpen={true} />
         </TokenDataProvider>
       </QueryClientProvider>
+      <WalletSelectionModal />
     </>
   );
 }

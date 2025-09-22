@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { ACTION_TYPE, LINK_STATE } from "@/services/types/enum";
 import SheetWrapper from "@/components/sheet-wrapper";
@@ -10,25 +10,24 @@ import { DefaultPage } from "@/components/use-page/default-page";
 
 import { useLinkUseNavigation } from "@/hooks/useLinkNavigation";
 import { useSkeletonLoading } from "@/hooks/useSkeletonLoading";
+import useWalletModalStore from "@/stores/walletModalStore";
 import LinkNotFound from "@/components/link-not-found";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
-import { WalletSelectionModal } from "@/components/wallet-connect/wallet-selection-modal";
 import usePnpStore from "@/stores/plugAndPlayStore";
 
-export default function ClaimPage() {
+export default function UsePage() {
   const { linkId } = useParams();
-
+  const { open: openWalletModal } = useWalletModalStore();
+  const setOnLoginSuccess = useWalletModalStore((s) => s.setOnLoginSuccess);
+  const setModalOpen = useWalletModalStore((s) => s.setOpen);
   const { renderSkeleton } = useSkeletonLoading();
 
   const { updateTokenInit } = useTokensV2();
   const { goToChooseWallet, handleStateBasedNavigation } =
     useLinkUseNavigation(linkId);
-
-  // State for wallet selection modal
-  const [showWalletModal, setShowWalletModal] = useState(false);
 
   // Data fetching hooks
   const linkDetailQuery = useLinkDetailQuery(linkId, ACTION_TYPE.USE);
@@ -43,7 +42,7 @@ export default function ClaimPage() {
         link_id: linkId ?? "",
         anonymous_wallet_address: "",
       },
-      !!linkId,
+      !!linkId
     );
 
   // Fetch link data when linkId changes
@@ -69,24 +68,17 @@ export default function ClaimPage() {
 
   const handleClickUse = () => {
     if (account) {
-      // User is authenticated, go directly to choose-wallet page
       goToChooseWallet();
     } else {
-      // User is not authenticated, show wallet selection modal
-      setShowWalletModal(true);
+      // Set a post-login callback: close modal and then navigate to choose wallet
+      setOnLoginSuccess(() => {
+        setModalOpen(false);
+        goToChooseWallet();
+      });
+
+      openWalletModal();
     }
   };
-
-  const handleWalletConnected = () => {
-    setShowWalletModal(false);
-    if (account) {
-      goToChooseWallet();
-    }
-  };
-
-  useEffect(() => {
-    console.log("showWalletModal", showWalletModal);
-  }, [showWalletModal]);
 
   // Early return for inactive links
   if (
@@ -113,11 +105,7 @@ export default function ClaimPage() {
               />
             </div>
 
-            <WalletSelectionModal
-              isWalletModalOpen={showWalletModal}
-              onOpenChange={setShowWalletModal}
-              onWalletConnected={handleWalletConnected}
-            />
+            {/* Wallet modal is provided by MainAppLayout via WalletModalProvider */}
           </>
         )}
       </SheetWrapper>

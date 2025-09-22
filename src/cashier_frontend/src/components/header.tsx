@@ -2,20 +2,16 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 import React from "react";
-import { ChevronLeft, Wallet, X } from "lucide-react";
+import { ChevronLeft, X } from "lucide-react";
 import { Button } from "./ui/button";
 import { SheetTrigger } from "./ui/sheet";
 import { RiMenu2Line } from "react-icons/ri";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDeviceSize, useHeader } from "@/hooks/responsive-hook";
-import { useWalletContext } from "@/contexts/wallet-context";
 import usePnpStore from "@/stores/plugAndPlayStore";
+import useWalletModalStore from "@/stores/walletModalStore";
 
-interface HeaderProps {
-  openLoginModal: () => void;
-}
-
-const Header: React.FC<HeaderProps> = ({ openLoginModal }) => {
+const Header: React.FC = () => {
   const { account } = usePnpStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,7 +22,7 @@ const Header: React.FC<HeaderProps> = ({ openLoginModal }) => {
     hideHeader,
   } = useHeader();
 
-  const { openWallet } = useWalletContext();
+  const { open: openWalletModal } = useWalletModalStore();
 
   const handleNavigate = (path: string) => {
     const backToHomePaths = ["/wallet"];
@@ -45,7 +41,7 @@ const Header: React.FC<HeaderProps> = ({ openLoginModal }) => {
         {showHeaderWithBackButtonAndWalletButton(
           location.pathname,
           location.search,
-          !account,
+          !account
         ) ? (
           <ChevronLeft
             size={24}
@@ -67,7 +63,7 @@ const Header: React.FC<HeaderProps> = ({ openLoginModal }) => {
 
         <Button
           onClick={() => {
-            openLoginModal();
+            openWalletModal();
           }}
           className="min-w-[75px] min-h-[45px] font-500 bg-transparent light-borders-green text-green hover:bg-green/90 hover:text-white transition-all duration-300"
         >
@@ -86,7 +82,7 @@ const Header: React.FC<HeaderProps> = ({ openLoginModal }) => {
         >
           {showHeaderWithBackButtonAndWalletButton(
             location.pathname,
-            location.search,
+            location.search
           ) ? (
             <ChevronLeft
               size={24}
@@ -100,16 +96,6 @@ const Header: React.FC<HeaderProps> = ({ openLoginModal }) => {
               className="max-w-[130px] cursor-pointer"
               onClick={() => navigate("/")}
             />
-          )}
-
-          {!location.pathname.includes("/wallet") && (
-            <Button
-              variant="outline"
-              className="ml-auto light-borders p-0 w-9 h-9 mr-3 gap-2"
-              onClick={() => openWallet()}
-            >
-              <Wallet size={16} color={"#35A18A"} />
-            </Button>
           )}
 
           {hideHeader(location.pathname) && !isSmallDevice ? (

@@ -12,13 +12,9 @@ import Header from "../header";
 
 type MainAppLayoutProps = {
   children: ReactNode;
-  openLoginModal?: () => void;
 };
 
-export const MainAppLayout = ({
-  children,
-  openLoginModal,
-}: MainAppLayoutProps) => {
+export const MainAppLayout = ({ children }: MainAppLayoutProps) => {
   const responsive = useDeviceSize();
   const { pathname } = useLocation();
   const { isWalletOpen, closeWallet } = useWalletContext();
@@ -53,7 +49,7 @@ export const MainAppLayout = ({
       <div className="fixed inset-0 flex justify-center pt-5 overflow-scroll bg-white">
         <div className="flex w-full flex-col items-center gap-4">
           <WalletSheetWrapper open={isWalletOpen} onOpenChange={closeWallet}>
-            <Header openLoginModal={openLoginModal ?? (() => {})} />
+            <Header />
             {children}
           </WalletSheetWrapper>
         </div>
@@ -68,9 +64,7 @@ export const MainAppLayout = ({
       <WalletSheetWrapper open={isWalletOpen} onOpenChange={closeWallet}>
         <SheetWrapper>
           <div className="flex w-full flex-col h-full overflow-hidden">
-            {!isHeaderHidden && (
-              <Header openLoginModal={openLoginModal ?? (() => {})} />
-            )}
+            {!isHeaderHidden && <Header />}
             <div
               className={`flex items-center justify-center flex-col ${
                 responsive.isSmallDevice

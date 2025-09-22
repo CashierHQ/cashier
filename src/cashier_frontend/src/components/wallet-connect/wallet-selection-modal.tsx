@@ -22,6 +22,7 @@ import { useConfirmDialog } from "@/hooks/useDialog";
 import { FEATURE_FLAGS } from "@/const";
 import WalletOptionButton from "./wallet-option-button";
 import usePnpStore from "@/stores/plugAndPlayStore";
+import useWalletModalStore from "@/stores/walletModalStore";
 
 export const WalletSchema = z.object({
   address: z.string().optional(),
@@ -29,12 +30,6 @@ export const WalletSchema = z.object({
 });
 
 interface WalletSelectionModalProps {
-  // Modal visibility state
-  isWalletModalOpen: boolean;
-  // Callback to control modal visibility
-  onOpenChange: (open: boolean) => void;
-  // Callback when wallet is connected, with optional address if manually entered
-  onWalletConnected?: (address?: string) => void;
   // Allow changing wallet even when authenticated
   allowChangeWallet?: boolean;
   // Disable input wallet if belong to header
@@ -42,14 +37,13 @@ interface WalletSelectionModalProps {
 }
 
 export const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
-  isWalletModalOpen,
-  onOpenChange,
-  onWalletConnected,
   allowChangeWallet = false,
   isHeaderModal = false,
 }) => {
   const { t } = useTranslation();
   const { disconnect, account } = usePnpStore();
+  const { isOpen, setOpen, onLoginSuccess } = useWalletModalStore();
+  const setOnLoginSuccess = useWalletModalStore((s) => s.setOnLoginSuccess);
   const {
     open: confirmOpen,
     options,
@@ -78,13 +72,20 @@ export const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
 
   // Auto-proceed if user is already authenticated (only if not allowing wallet change)
   useEffect(() => {
-    if (account && isWalletModalOpen && !allowChangeWallet) {
-      if (onWalletConnected) {
-        onWalletConnected();
+    if (account && isOpen) {
+      // If a page registered a post-login callback, call it and clear it
+      if (onLoginSuccess) {
+        try {
+          onLoginSuccess();
+        } catch (e) {
+          console.error("onLoginSuccess in modal threw:", e);
+        }
+        setOnLoginSuccess(null);
       }
-      onOpenChange(false);
+
+      setOpen(false);
     }
-  }, [isWalletModalOpen]);
+  }, [account, isOpen, onLoginSuccess, setOnLoginSuccess, setOpen]);
 
   const handleManualAddressSubmit = () => {
     const address = form.getValues("address");
@@ -98,17 +99,14 @@ export const WalletSelectionModal: React.FC<WalletSelectionModalProps> = ({
         // Store the address for use after disconnect confirmation
         form.setValue("pendingAddress", address);
       } else {
-        if (onWalletConnected) {
-          onWalletConnected(address);
-        }
-        onOpenChange(false);
+        setOpen(false);
       }
     }
   };
 
   return (
     <>
-      <Dialog open={isWalletModalOpen} onOpenChange={onOpenChange}>
+      <Dialog open={isOpen} onOpenChange={setOpen}>
         <DialogContent className="max-w-sm !rounded-[2rem] border-none shadow-2xl overflow-hidden">
           <DialogHeader>
             <DialogTitle>

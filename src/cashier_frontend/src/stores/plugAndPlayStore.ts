@@ -1,8 +1,8 @@
 import { create } from "zustand";
-import { devtools } from "zustand/middleware";
 import React, { useEffect } from "react";
 import { PNP } from "@windoge98/plug-n-play";
 import { GlobalPnpConfig } from "@/services/plugAndPlay/adapter";
+import useWalletModalStore from "@/stores/walletModalStore";
 
 const STORED_WALLET_KEY = "storedConnectWallet";
 
@@ -21,7 +21,7 @@ type StoreState = {
 };
 
 const usePnpStore = create<StoreState>()(
-  devtools((set, get) => ({
+  (set, get) => ({
     pnp: null,
     account: null,
     init: (config: GlobalPnpConfig) => {
@@ -42,6 +42,17 @@ const usePnpStore = create<StoreState>()(
       const res = await pnp.connect(walletId);
       localStorage.setItem(STORED_WALLET_KEY, walletId);
       set({ account: res });
+      // If a page set a post-login callback on the wallet modal, call it and clear it
+      const onLogin = useWalletModalStore.getState().onLoginSuccess;
+      if (onLogin) {
+        try {
+          onLogin();
+        } catch (e) {
+          console.error("onLoginSuccess callback threw:", e);
+        }
+        // Clear the callback using the store API
+        useWalletModalStore.setState({ onLoginSuccess: null });
+      }
     },
     disconnect: async () => {
       const state = get() as StoreState;
@@ -60,12 +71,21 @@ const usePnpStore = create<StoreState>()(
         const res = await pnp.connect(stored);
         console.log("PNP reconnect successful", res);
         set({ account: res });
+        const onLogin = useWalletModalStore.getState().onLoginSuccess;
+        if (onLogin) {
+          try {
+            onLogin();
+          } catch (e) {
+            console.error("onLoginSuccess callback threw:", e);
+          }
+          useWalletModalStore.setState({ onLoginSuccess: null });
+        }
       } catch (e) {
         console.error("PNP reconnect failed", e);
         localStorage.removeItem(STORED_WALLET_KEY);
       }
     },
-  })),
+  }),
 );
 
 // Small bootstrap component that initializes PNP and attempts reconnect on mount.
