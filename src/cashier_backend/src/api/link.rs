@@ -201,7 +201,7 @@ pub async fn create_action_anonymous(
 /// * `Ok(Some(LinkGetUserStateOutput))` - Current user state and action data if found
 /// * `Ok(None)` - If no action exists for the user
 /// * `Err(CanisterError)` - Error if validation fails or invalid parameters
-#[update]
+#[query]
 pub async fn link_get_user_state(
     input: LinkGetUserStateInput,
 ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {

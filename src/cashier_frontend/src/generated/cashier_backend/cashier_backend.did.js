@@ -435,7 +435,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'icrc28_trusted_origins' : IDL.Func([], [Icrc28TrustedOriginsResponse], []),
     'is_inspect_message_enabled' : IDL.Func([], [IDL.Bool], ['query']),
-    'link_get_user_state' : IDL.Func([LinkGetUserStateInput], [Result_7], []),
+    'link_get_user_state' : IDL.Func(
+        [LinkGetUserStateInput],
+        [Result_7],
+        ['query'],
+      ),
     'link_update_user_state' : IDL.Func(
         [LinkUpdateUserStateInput],
         [Result_7],
