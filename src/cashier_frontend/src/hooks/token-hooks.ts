@@ -27,6 +27,7 @@ import { getAgent } from "@/utils/agent";
 import { KongSwapClient } from "@/services/token_price/kongswapClient";
 import { IcExplorerClient } from "@/services/token_price/icExplorerClient";
 import { IcpSwapClient } from "@/services/token_price/icpSwapClient";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
 /**
  * Response from tokenListQuery with combined token list data

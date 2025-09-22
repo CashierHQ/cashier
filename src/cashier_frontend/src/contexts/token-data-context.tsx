@@ -33,6 +33,7 @@ import {
   IcExplorerClient,
   IcExplorerTokenDetail,
 } from "@/services/token_price/icExplorerClient";
+import usePnpStore from "@/stores/plugAndPlayStore";
 
 // Context for enriched token data and operations
 interface TokenContextValue {
@@ -156,7 +157,7 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
 
   const updateTokenExplorer = async () => {
     const explorerService = new IcExplorerClient();
-    if (!identity) {
+    if (!account) {
       return;
     }
 
