@@ -70,7 +70,12 @@ export function useProcessAction() {
     },
     onMutate: (variables) => {
       console.log("[useProcessAction] onMutate", variables);
-      const queryKey: QueryKey = ["links", "detail", variables.linkId, variables.actionType];
+      const queryKey: QueryKey = [
+        "links",
+        "detail",
+        variables.linkId,
+        variables.actionType,
+      ];
       const userLinkStateQueryKey: QueryKey = LINK_USER_STATE_QUERY_KEYS(
         variables.linkId,
         pnp.account?.owner ?? "",
@@ -80,10 +85,14 @@ export function useProcessAction() {
       const shouldStop = () => {
         let cached = undefined;
         if (variables.actionType === ACTION_TYPE.USE) {
-          cached = queryClient.getQueryData(userLinkStateQueryKey) as { action?: ActionModel } | undefined;
+          cached = queryClient.getQueryData(userLinkStateQueryKey) as
+            | { action?: ActionModel }
+            | undefined;
           console.log("[useProcessAction] shouldStop cached", cached);
         } else {
-          cached = queryClient.getQueryData(queryKey) as { action?: ActionModel } | undefined;
+          cached = queryClient.getQueryData(queryKey) as
+            | { action?: ActionModel }
+            | undefined;
         }
         const latestAction = cached?.action;
         return (
@@ -101,17 +110,26 @@ export function useProcessAction() {
       const intervalId = setInterval(async () => {
         try {
           if (variables.actionType === ACTION_TYPE.USE) {
-            console.log("[useProcessAction] polling userLinkStateQueryKey", userLinkStateQueryKey);
-            await queryClient.invalidateQueries({ queryKey: userLinkStateQueryKey, refetchType: "all" });
+            console.log(
+              "[useProcessAction] polling userLinkStateQueryKey",
+              userLinkStateQueryKey,
+            );
+            await queryClient.invalidateQueries({
+              queryKey: userLinkStateQueryKey,
+              refetchType: "all",
+            });
           } else {
-            await queryClient.invalidateQueries({ queryKey, refetchType: "all" });
+            await queryClient.invalidateQueries({
+              queryKey,
+              refetchType: "all",
+            });
           }
 
           if (shouldStop()) {
             clearInterval(intervalId);
           }
         } catch (err) {
-          console.error('Error during processAction polling:', err);
+          console.error("Error during processAction polling:", err);
         }
 
         polls += 1;
@@ -123,14 +141,22 @@ export function useProcessAction() {
       // Return interval id so React Query lifecycle handlers can clear it if needed
       return { intervalId };
     },
-    onSettled: (_data, _error, _variables, context?: { intervalId?: ReturnType<typeof setInterval> }) => {
+    onSettled: (
+      _data,
+      _error,
+      _variables,
+      context?: { intervalId?: ReturnType<typeof setInterval> },
+    ) => {
       try {
         console.log("[useProcessAction] context", context);
         if (context?.intervalId) {
           clearInterval(context.intervalId);
         }
       } catch (err) {
-        console.error('Error clearing processAction poll interval onSettled:', err);
+        console.error(
+          "Error clearing processAction poll interval onSettled:",
+          err,
+        );
       }
     },
     onSuccess: (data, variables) => {

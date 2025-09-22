@@ -17,7 +17,7 @@ const OTHER_WALLET_COFNIG_ADAPTER = createPNPConfig({
     plug: { enabled: true },
     stoic: { enabled: true },
     oisy: { enabled: true },
-  }
+  },
 }).adapters;
 
 export const CONFIG: GlobalPnpConfig = {
@@ -48,7 +48,6 @@ export const CONFIG: GlobalPnpConfig = {
         }),
       },
     },
-    ...OTHER_WALLET_COFNIG_ADAPTER
+    ...OTHER_WALLET_COFNIG_ADAPTER,
   },
 };
-

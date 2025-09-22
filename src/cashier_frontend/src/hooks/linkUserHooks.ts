@@ -13,9 +13,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 export const LINK_USER_STATE_QUERY_KEYS = (link_id: string, user_pid: string) =>
   ["linkUserState", link_id, user_pid] as const;
 
-export function useUpdateLinkUserState(
-  link_id: string,
-) {
+export function useUpdateLinkUserState(link_id: string) {
   const { pnp } = usePnpStore();
   const queryClient = useQueryClient();
   if (!pnp) throw new Error("pnp is required");
@@ -33,8 +31,14 @@ export function useUpdateLinkUserState(
         variables.input.link_id,
         pnp.account?.owner ?? "",
       );
-      queryClient.invalidateQueries({ queryKey: userLinkStateQueryKey, refetchType: "all" });
-      queryClient.refetchQueries({ queryKey: userLinkStateQueryKey, exact: true });
+      queryClient.invalidateQueries({
+        queryKey: userLinkStateQueryKey,
+        refetchType: "all",
+      });
+      queryClient.refetchQueries({
+        queryKey: userLinkStateQueryKey,
+        exact: true,
+      });
       console.log("[useUpdateLinkUserState] refetch ", userLinkStateQueryKey);
     },
     onError: (e) => {
@@ -58,7 +62,11 @@ export function useLinkUserStateQuery(
       pnp.account?.owner ?? "",
     ),
     queryFn: async () => {
-      console.log("refetching link user state for ", input.link_id, pnp.account?.owner ?? "");
+      console.log(
+        "refetching link user state for ",
+        input.link_id,
+        pnp.account?.owner ?? "",
+      );
       const linkService = new LinkService(pnp);
       const userState = await linkService.getLinkUserState(input);
       // avoid returning undefined if result is not found

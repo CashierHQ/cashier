@@ -12,10 +12,7 @@ import {
 } from "@/services/types/enum";
 import { ActionModel } from "@/services/types/action.service.types";
 import { LinkDetailModel } from "@/services/types/link.service.types";
-import {
-  useProcessAction,
-  useUpdateAction,
-} from "@/hooks/action-hooks";
+import { useProcessAction, useUpdateAction } from "@/hooks/action-hooks";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import {
   LINK_USER_STATE_QUERY_KEYS,
@@ -123,13 +120,11 @@ export const useUseConfirmation = ({
           ),
         });
       }
-
-
     }
     if (processActionResult) {
       await enhancedRefresh();
     }
-  }
+  };
   /**
    * Starts the transaction process
    */

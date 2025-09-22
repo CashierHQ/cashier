@@ -70,7 +70,7 @@ export default function ChooseWalletPage() {
       link_id: linkId ?? "",
       anonymous_wallet_address: "",
     },
-    !!linkId && !!account
+    !!linkId && !!account,
   );
   const { createAction, createActionAnonymous } = useLinkMutations();
   const link = linkDetailData?.link;
@@ -148,7 +148,7 @@ export default function ChooseWalletPage() {
    * Creates an action for anonymous users
    */
   const handleCreateActionAnonymous = async (
-    walletAddress: string
+    walletAddress: string,
   ): Promise<ActionModel> => {
     const newAction = await createActionAnonymous({
       linkId: linkId!,
@@ -255,7 +255,7 @@ export default function ChooseWalletPage() {
     () => () => {
       goToLinkDefault();
     },
-    [goToLinkDefault]
+    [goToLinkDefault],
   );
 
   const setDisabled = useCallback((disabled: boolean) => {
