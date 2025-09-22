@@ -60,6 +60,7 @@ export const ConfirmationPopupFeesSection: FC<
     const initState = async () => {
       // Get the fee map for all intents
       const totalFeesMapArray = [];
+      console.log("intents", intents);
       // intent is already sorted, the transfer fee create link is the first one
       for (const intent of intents) {
         const token = getToken(intent.typeDetails.asset.address);
@@ -67,7 +68,7 @@ export const ConfirmationPopupFeesSection: FC<
           const final_amount = FeeHelpers.forecastIcrc2FeeEs8(
             token!,
             DEFAULT_CREATION_FEE,
-            1,
+            1
           );
 
           totalFeesMapArray.push({
@@ -155,19 +156,11 @@ export const ConfirmationPopupFeesSection: FC<
           continue;
         }
 
-        const tokenDecimals =
+        // if feeType is link_creation_fee, use the default creation fee
+        const networkFee =
           feeType === "link_creation_fee"
-            ? FeeHelpers.getLinkCreationFee().decimals
-            : tokenInfo.decimals;
-
-        const tokenAmount =
-          feeType === "link_creation_fee"
-            ? Number(FeeHelpers.getLinkCreationFee().amount) /
-              Math.pow(10, tokenDecimals)
+            ? Number(DEFAULT_CREATION_FEE) / 10 ** tokenInfo.decimals
             : FeeHelpers.calculateNetworkFees(tokenInfo!);
-
-        console.log("drawer section tokenAmount:", tokenAmount);
-        console.log("drawer section tokenDecimals:", tokenDecimals);
 
         let tokenPrice = getTokenPrice(tokenAddress!);
         if (tokenPrice === undefined) {
@@ -181,22 +174,17 @@ export const ConfirmationPopupFeesSection: FC<
             actionNum = Number(maxActionNumber);
           }
         }
-        const usdValue = tokenPrice * tokenAmount * Number(actionNum ?? 1);
+        const usdValue = tokenPrice * networkFee * Number(actionNum ?? 1);
         totalUsdValue += usdValue;
 
-        const feeAmount = (
-          tokenAmount *
-          (Number(maxActionNumber ?? 1) + 1)
-        ).toString();
-        console.log("drawer section feeAmount:", feeAmount);
-        console.log("drawer section feeAmount:", formatNumber(feeAmount));
+        const feeAmount: number = networkFee;
 
         const breakdownItem: FeeBreakdownItem = {
           name:
             feeType === "link_creation_fee"
               ? t("confirmation_drawer.fee-breakdown.link_creation_fee")
               : t("confirmation_drawer.fee-breakdown.network_fee"),
-          amount: formatNumber(feeAmount),
+          amount: formatNumber(feeAmount.toString()),
           tokenSymbol: token?.symbol || "Unknown",
           tokenAddress: tokenAddress!,
           usdAmount: usdValue.toString(),

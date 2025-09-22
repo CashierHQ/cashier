@@ -64,6 +64,8 @@ export const useIntentMetadata = (
       if (token.fee !== undefined) {
         setFeeAmount(Number(token.fee) / 10 ** token.decimals);
       }
+
+
     }
   }, [token, intent.typeDetails.amount]);
 

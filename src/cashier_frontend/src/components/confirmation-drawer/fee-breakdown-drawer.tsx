@@ -12,27 +12,7 @@ import {
 import { X } from "lucide-react";
 import { AssetAvatarV2 } from "../ui/asset-avatar";
 import { formatDollarAmount } from "@/utils/helpers/currency";
-import { FeeHelpers } from "@/services/fee.service";
-import { FungibleToken } from "@/types/fungible-token.speculative";
-import { DEFAULT_CREATION_FEE } from "@/services/fee.constants";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
-
-// Helper method to calculate the display amount for fees
-const calculateFeeDisplayAmount = (
-  token: FungibleToken,
-  feeName: string,
-  feeAmount: string,
-): string => {
-  if (feeName.toLowerCase().includes("link creation fee")) {
-    const linkCreationFee = FeeHelpers.forcastLinkCreationFee(
-      token,
-      BigInt(DEFAULT_CREATION_FEE),
-    );
-    console.log("linkCreationFee:", linkCreationFee);
-    return linkCreationFee.toString();
-  }
-  return feeAmount;
-};
 
 type FeeBreakdownDrawerProps = {
   open?: boolean;
@@ -92,12 +72,7 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                     <div className="flex items-center gap-2">
                       <div className="flex items-center gap-1">
                         <span className="text-[14px] font-normal">
-                          {calculateFeeDisplayAmount(
-                            token!,
-                            fee.name,
-                            fee.amount,
-                          )}{" "}
-                          {fee.tokenSymbol}
+                          {fee.amount} {fee.tokenSymbol}
                         </span>
                         <AssetAvatarV2
                           token={token}
@@ -125,7 +100,7 @@ export const FeeBreakdownDrawer: FC<FeeBreakdownDrawerProps> = ({
                 <span className="text-[14px] font-normal">
                   {(() => {
                     const uniqueTokens = new Set(
-                      feesBreakdown.map((fee) => fee.tokenSymbol),
+                      feesBreakdown.map((fee) => fee.tokenSymbol)
                     );
                     return uniqueTokens.size > 1
                       ? "Multiple tokens"

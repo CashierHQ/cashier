@@ -15,6 +15,7 @@ import { FeeHelpers } from "@/services/fee.service";
 import { ACTION_TYPE } from "@/services/types/enum";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import { useTokensV2 } from "@/hooks/token/useTokensV2";
+import { DEFAULT_CREATION_FEE } from "@/services/fee.constants";
 
 interface TransactionItemProps {
   actionType: ACTION_TYPE;
@@ -30,13 +31,9 @@ export const TransactionItem = memo(function TransactionItem({
   fees = [],
   link,
 }: TransactionItemProps) {
-  const {
-    assetAmount,
-    assetSymbol,
-    title: intentTitle,
-  } = useIntentMetadata(intent, actionType);
+  const { assetAmount, assetSymbol } = useIntentMetadata(intent, actionType);
   const [adjustedAmount, setAdjustedAmount] = useState<number | undefined>(
-    assetAmount,
+    assetAmount
   );
 
   const { getToken, getTokenPrice } = useTokensV2();
@@ -51,30 +48,27 @@ export const TransactionItem = memo(function TransactionItem({
     const networkFee = fees.find(
       (fee) =>
         fee.address === intent.typeDetails.asset.address &&
-        fee.type === "network_fee",
+        fee.type === "network_fee"
     );
 
     if (!link || !link.linkType) {
       console.error("Link or link type is undefined");
       return;
     }
-
-    if (networkFee && token.decimals !== undefined) {
+    if (intent.task === "transfer_wallet_to_treasury") {
+      const totalTokenAmount = FeeHelpers.forcastLinkCreationFee(
+        token,
+        DEFAULT_CREATION_FEE
+      );
+      setAdjustedAmount(totalTokenAmount);
+    } else if (networkFee && token.decimals !== undefined) {
       const totalTokenAmount = FeeHelpers.forecastIcrcFeeForIntent(
         link.linkType,
         actionType,
         intent,
-        token,
+        token
       );
 
-      setAdjustedAmount(totalTokenAmount);
-    } else {
-      // only for create link fee
-      const totalTokenAmount = FeeHelpers.forecastIcrc2Fee(
-        token,
-        intent.typeDetails.amount,
-        1,
-      );
       setAdjustedAmount(totalTokenAmount);
     }
   }, [assetAmount, fees, intent.typeDetails.asset.address, token]);
@@ -112,7 +106,7 @@ export const TransactionItem = memo(function TransactionItem({
           <p className="text-[14px] font-normal flex items-center gap-2">
             {assetSymbol}
             <span className="text-grey/60 text-[10px] font-normal">
-              {intentTitle.toLowerCase().includes("link creation fee")
+              {intent.task === "transfer_wallet_to_treasury"
                 ? "Link creation fee"
                 : ""}
             </span>
