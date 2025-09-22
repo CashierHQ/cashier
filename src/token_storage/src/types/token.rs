@@ -3,15 +3,6 @@
 
 use candid::CandidType;
 use cashier_macros::storable;
-use token_storage_types::TokenId;
-
-// User's token preference
-#[storable]
-#[derive(CandidType, Clone, Eq, PartialEq, Debug)]
-pub struct UserToken {
-    pub token_id: TokenId,
-    pub enabled: bool,
-}
 
 // Balance cache for a user's token
 #[storable]
