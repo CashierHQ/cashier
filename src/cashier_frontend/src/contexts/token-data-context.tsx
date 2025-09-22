@@ -20,10 +20,6 @@ import {
   useMultipleTokenMutation,
 } from "../hooks/token-hooks";
 import {
-  ICExplorerService,
-  IcExplorerTokenDetail,
-} from "@/services/icExplorer.service";
-import {
   FungibleToken,
   TokenBalanceMap,
 } from "@/types/fungible-token.speculative";
@@ -33,7 +29,10 @@ import {
   BALANCE_CACHE_LAST_CACHED_BALANCES_KEY,
   BALANCE_CACHE_THRESHOLD_MS,
 } from "@/const";
-import usePnpStore from "@/stores/plugAndPlayStore";
+import {
+  IcExplorerClient,
+  IcExplorerTokenDetail,
+} from "@/services/token_price/icExplorerClient";
 
 // Context for enriched token data and operations
 interface TokenContextValue {
@@ -56,7 +55,7 @@ interface TokenContextValue {
   toggleTokenEnable: (
     tokenId: string,
     enable: boolean,
-    chain: string,
+    chain: string
   ) => Promise<void>;
   updateTokenInit: () => Promise<void>;
   updateTokenExplorer: () => Promise<void>;
@@ -84,7 +83,7 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
     return tokens
       .map(
         (t) =>
-          `${t.id}-${t.symbol}-${t.name}-${t.decimals}-${t.enabled}-${t.fee || "no-fee"}-${t.logoFallback || "no-logo"}`,
+          `${t.id}-${t.symbol}-${t.name}-${t.decimals}-${t.enabled}-${t.fee || "no-fee"}-${t.logoFallback || "no-logo"}`
       )
       .join("|");
   };
@@ -133,7 +132,7 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
   const toggleTokenEnable = async (
     tokenId: string,
     enable: boolean,
-    chain: string,
+    chain: string
   ) => {
     setIsSyncPreferences(true);
     try {
@@ -156,13 +155,17 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
   };
 
   const updateTokenExplorer = async () => {
-    const explorerService = new ICExplorerService();
+    const explorerService = new IcExplorerClient();
+    if (!identity) {
+      return;
+    }
+
     // Add retry logic for getting token list
     const MAX_RETRIES = 3;
     const RETRY_DELAY = 1000; // 1 second delay between retries
 
     const getTokenListWithRetry = async (
-      retries: number = 0,
+      retries: number = 0
     ): Promise<IcExplorerTokenDetail[]> => {
       try {
         const result = await explorerService.getListToken();
@@ -199,12 +202,12 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
   };
 
   const updateTokensInRegistry = async (
-    tokensToUpdate: { tokenId: string; chain: string }[],
+    tokensToUpdate: { tokenId: string; chain: string }[]
   ): Promise<void> => {
     try {
       if (!pnp) {
         console.warn(
-          "No authenticated user - cannot update tokens in registry",
+          "No authenticated user - cannot update tokens in registry"
         );
         return;
       }
@@ -218,7 +221,7 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
   // Token balance caching logic (moved from TokenCacheService)
   const cacheTokenBalances = async (
     balanceMap: TokenBalanceMap,
-    userWallet: string,
+    userWallet: string
   ) => {
     const currentTime = Date.now();
     const cacheKey = `${BALANCE_CACHE_LAST_CACHE_TIME_KEY}_${userWallet}`;
@@ -438,7 +441,7 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
   // 4. Update hasBalances flag when enriched tokens change
   useEffect(() => {
     const hasBalances = enrichedTokens.some(
-      (token) => token.amount && token.amount > BigInt(0),
+      (token) => token.amount && token.amount > BigInt(0)
     );
     setHasBalances(hasBalances);
   }, [enrichedTokens, setHasBalances]);
@@ -473,7 +476,7 @@ export function TokenDataProvider({ children }: { children: ReactNode }) {
     const updateChangedTokens = async () => {
       try {
         await updateTokensInRegistry(
-          changedTokenIds.map((tokenId) => ({ tokenId, chain: "IC" })),
+          changedTokenIds.map((tokenId) => ({ tokenId, chain: "IC" }))
         );
 
         // Reset the flags after successful update
