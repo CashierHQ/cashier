@@ -70,12 +70,10 @@ export default function ChooseWalletPage() {
       link_id: linkId ?? "",
       anonymous_wallet_address: "",
     },
-    !!linkId && !!account,
+    !!linkId && !!account
   );
   const { createAction, createActionAnonymous } = useLinkMutations();
-
   const link = linkDetailData?.link;
-
   const [showWalletModal, setShowWalletModal] = useState(false);
 
   // Local state
@@ -112,7 +110,7 @@ export default function ChooseWalletPage() {
 
   // Handle state-based navigation for logged-in users
   useEffect(() => {
-    if (link && account) {
+    if (link && account && linkUserState) {
       handleStateBasedNavigation(linkUserState, true);
     }
   }, [link, account]);
@@ -123,6 +121,8 @@ export default function ChooseWalletPage() {
       console.log("Setting showConfirmation to true");
       setShowConfirmation(true);
     }
+
+    console.log("linkUserState", linkUserState);
   }, [manuallyClosedDrawer, linkUserState]);
 
   // Update button state based on loading state
@@ -148,7 +148,7 @@ export default function ChooseWalletPage() {
    * Creates an action for anonymous users
    */
   const handleCreateActionAnonymous = async (
-    walletAddress: string,
+    walletAddress: string
   ): Promise<ActionModel> => {
     const newAction = await createActionAnonymous({
       linkId: linkId!,
@@ -255,7 +255,7 @@ export default function ChooseWalletPage() {
     () => () => {
       goToLinkDefault();
     },
-    [goToLinkDefault],
+    [goToLinkDefault]
   );
 
   const setDisabled = useCallback((disabled: boolean) => {

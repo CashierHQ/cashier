@@ -14,7 +14,6 @@ import { ActionModel } from "@/services/types/action.service.types";
 import { LinkDetailModel } from "@/services/types/link.service.types";
 import {
   useProcessAction,
-  useProcessActionAnonymous,
   useUpdateAction,
 } from "@/hooks/action-hooks";
 import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
@@ -64,11 +63,10 @@ export const useUseConfirmation = ({
 
   // Mutation hooks
   const { mutateAsync: processAction } = useProcessAction();
-  const { mutateAsync: processActionAnonymous } = useProcessActionAnonymous();
   const { mutateAsync: updateAction } = useUpdateAction();
   const { mutateAsync: icrc112Execute } = useIcrc112Execute();
   const queryClient = useQueryClient();
-  const updateLinkUserState = useUpdateLinkUserState();
+  const updateLinkUserState = useUpdateLinkUserState(linkId);
 
   const enhancedRefresh = useCallback(async () => {
     try {
@@ -83,7 +81,7 @@ export const useUseConfirmation = ({
   /**
    * Processes the use action with the backend
    */
-  const handleProcessUseAction = useCallback(async () => {
+  const handleProcessUseAction = async () => {
     if (!link) throw new Error("Link is not defined");
     if (!action) {
       throw new Error("Action is not defined");
@@ -96,19 +94,11 @@ export const useUseConfirmation = ({
       throw new Error("Account is not defined");
     }
 
-    // Process action for authenticated user
     const processActionResult = await processAction({
       linkId: link.id,
-      actionType: action.type ?? ACTION_TYPE.USE,
+      actionType: action.type,
       actionId: action.id,
     });
-
-    // Invalidate link user state query to refresh data
-    if (pnp && pnp.account?.owner) {
-      queryClient.invalidateQueries({
-        queryKey: LINK_USER_STATE_QUERY_KEYS(linkId, pnp.account?.owner ?? ""),
-      });
-    }
 
     // Execute ICRC-1 transactions if needed
     if (
@@ -134,22 +124,12 @@ export const useUseConfirmation = ({
         });
       }
 
-      if (processActionResult) {
-        await refetchLinkUserStateFn();
-      }
-    }
-  }, [
-    link,
-    action,
-    linkId,
-    anonymousWalletAddress,
-    processAction,
-    processActionAnonymous,
-    updateAction,
-    icrc112Execute,
-    refetchLinkUserStateFn,
-  ]);
 
+    }
+    if (processActionResult) {
+      await enhancedRefresh();
+    }
+  }
   /**
    * Starts the transaction process
    */

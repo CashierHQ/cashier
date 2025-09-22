@@ -1,13 +1,15 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, QueryKey } from "@tanstack/react-query";
 import LinkService, {
   UpdateActionInputModel,
 } from "@/services/link/link.service";
-import { ACTION_TYPE } from "@/services/types/enum";
+import { ActionModel } from "@/services/types/action.service.types";
+import { ACTION_TYPE, ACTION_STATE } from "@/services/types/enum";
 import { Principal } from "@dfinity/principal";
 import usePnpStore from "@/stores/plugAndPlayStore";
+import { LINK_USER_STATE_QUERY_KEYS } from "./linkUserHooks";
 
 // Base type for action parameters
 type BaseActionParams = {
@@ -66,10 +68,75 @@ export function useProcessAction() {
         actionId: params.actionId,
       });
     },
+    onMutate: (variables) => {
+      console.log("[useProcessAction] onMutate", variables);
+      const queryKey: QueryKey = ["links", "detail", variables.linkId, variables.actionType];
+      const userLinkStateQueryKey: QueryKey = LINK_USER_STATE_QUERY_KEYS(
+        variables.linkId,
+        pnp.account?.owner ?? "",
+      );
+
+      // Shared helper to determine whether to stop polling based on the latest action state
+      const shouldStop = () => {
+        let cached = undefined;
+        if (variables.actionType === ACTION_TYPE.USE) {
+          cached = queryClient.getQueryData(userLinkStateQueryKey) as { action?: ActionModel } | undefined;
+          console.log("[useProcessAction] shouldStop cached", cached);
+        } else {
+          cached = queryClient.getQueryData(queryKey) as { action?: ActionModel } | undefined;
+        }
+        const latestAction = cached?.action;
+        return (
+          latestAction?.state === ACTION_STATE.PROCESSING ||
+          latestAction?.state === ACTION_STATE.SUCCESS ||
+          latestAction?.state === ACTION_STATE.FAIL
+        );
+      };
+
+      // Start polling to surface PROCESSING state while backend handles the action
+      const pollIntervalMs = 50;
+      const maxPolls = 12;
+      let polls = 0;
+
+      const intervalId = setInterval(async () => {
+        try {
+          if (variables.actionType === ACTION_TYPE.USE) {
+            console.log("[useProcessAction] polling userLinkStateQueryKey", userLinkStateQueryKey);
+            await queryClient.invalidateQueries({ queryKey: userLinkStateQueryKey, refetchType: "all" });
+          } else {
+            await queryClient.invalidateQueries({ queryKey, refetchType: "all" });
+          }
+
+          if (shouldStop()) {
+            clearInterval(intervalId);
+          }
+        } catch (err) {
+          console.error('Error during processAction polling:', err);
+        }
+
+        polls += 1;
+        if (polls >= maxPolls) {
+          clearInterval(intervalId);
+        }
+      }, pollIntervalMs);
+
+      // Return interval id so React Query lifecycle handlers can clear it if needed
+      return { intervalId };
+    },
+    onSettled: (_data, _error, _variables, context?: { intervalId?: ReturnType<typeof setInterval> }) => {
+      try {
+        console.log("[useProcessAction] context", context);
+        if (context?.intervalId) {
+          clearInterval(context.intervalId);
+        }
+      } catch (err) {
+        console.error('Error clearing processAction poll interval onSettled:', err);
+      }
+    },
     onSuccess: (data, variables) => {
       // Invalidate all link detail queries for this link after action processing
       queryClient.invalidateQueries({
-        queryKey: ["links", "detail", variables.linkId],
+        queryKey: ["links", "detail", variables.linkId, variables.actionType],
       });
     },
   });

@@ -7,21 +7,35 @@ import {
   LinkGetUserStateInputModel,
 } from "@/services/types/link.service.types";
 import usePnpStore from "@/stores/plugAndPlayStore";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 // Helper to generate the query key
 export const LINK_USER_STATE_QUERY_KEYS = (link_id: string, user_pid: string) =>
   ["linkUserState", link_id, user_pid] as const;
 
-export function useUpdateLinkUserState() {
+export function useUpdateLinkUserState(
+  link_id: string,
+) {
   const { pnp } = usePnpStore();
+  const queryClient = useQueryClient();
   if (!pnp) throw new Error("pnp is required");
 
   const mutation = useMutation({
+    mutationKey: LINK_USER_STATE_QUERY_KEYS(link_id, pnp.account?.owner ?? ""), // Add a static mutation key
     mutationFn: async (vars: { input: LinkUpdateUserStateInputModel }) => {
       const linkService = new LinkService(pnp);
       const result = await linkService.updateLinkUserState(vars.input);
       return result;
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate the specific link user state query to ensure fresh data
+      const userLinkStateQueryKey = LINK_USER_STATE_QUERY_KEYS(
+        variables.input.link_id,
+        pnp.account?.owner ?? "",
+      );
+      queryClient.invalidateQueries({ queryKey: userLinkStateQueryKey, refetchType: "all" });
+      queryClient.refetchQueries({ queryKey: userLinkStateQueryKey, exact: true });
+      console.log("[useUpdateLinkUserState] refetch ", userLinkStateQueryKey);
     },
     onError: (e) => {
       console.error("Error updating link user state ", e.message);
@@ -44,13 +58,13 @@ export function useLinkUserStateQuery(
       pnp.account?.owner ?? "",
     ),
     queryFn: async () => {
+      console.log("refetching link user state for ", input.link_id, pnp.account?.owner ?? "");
       const linkService = new LinkService(pnp);
       const userState = await linkService.getLinkUserState(input);
-      return userState;
+      // avoid returning undefined if result is not found
+      return userState ?? null;
     },
     enabled: isEnabled,
-    refetchOnWindowFocus: false,
-    staleTime: 1 * 1000, // 5 seconds
     retry: (failureCount, error) => {
       if (error.toString().includes("Identity is required")) {
         return false;
