@@ -273,6 +273,11 @@ export class FeeService {
     return totalBigInt;
   }
 
+  forecastLinkCreationFee(tokenInfo: FungibleToken, amount: bigint): number {
+    // Convert to number with proper decimal handling
+    return convertDecimalBigIntToNumber(amount, tokenInfo.decimals);
+  }
+
   /**
    * Calculates the total amount needed for a transaction based on link asset info.
    * This is used for direct token transfers where we need to account for:
@@ -468,6 +473,9 @@ export const FeeHelpers = {
     amount: bigint,
     maxActionNumber: number,
   ) => feeService.forecastIcrc2Fee(tokenInfo, amount, maxActionNumber),
+
+  forcastLinkCreationFee: (tokenInfo: FungibleToken, amount: bigint) =>
+    feeService.forecastLinkCreationFee(tokenInfo, amount),
 
   forecastIcrc2FeeEs8: (
     tokenInfo: FungibleToken,

@@ -22,16 +22,16 @@ const calculateFeeDisplayAmount = (
   token: FungibleToken,
   feeName: string,
   feeAmount: string,
-): number => {
+): string => {
   if (feeName.toLowerCase().includes("link creation fee")) {
-    const linkCreationFee = FeeHelpers.forecastIcrc2Fee(
+    const linkCreationFee = FeeHelpers.forcastLinkCreationFee(
       token,
-      DEFAULT_CREATION_FEE,
-      1,
+      BigInt(DEFAULT_CREATION_FEE),
     );
-    return linkCreationFee;
+    console.log("linkCreationFee:", linkCreationFee);
+    return linkCreationFee.toString();
   }
-  return Number(feeAmount);
+  return feeAmount;
 };
 
 type FeeBreakdownDrawerProps = {

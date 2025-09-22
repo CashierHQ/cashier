@@ -155,12 +155,6 @@ export const ConfirmationPopupFeesSection: FC<
           continue;
         }
 
-        // Safe conversion from bigint to number for calculation
-        // Use Number() for explicit conversion and provide defaults for undefined values
-        // const tokenFee =
-        //     feeType === "link_creation_fee"
-        //         ? FeeHelpers.getLinkCreationFee().amount
-        //         : tokenInfo.fee;
         const tokenDecimals =
           feeType === "link_creation_fee"
             ? FeeHelpers.getLinkCreationFee().decimals
@@ -171,6 +165,9 @@ export const ConfirmationPopupFeesSection: FC<
             ? Number(FeeHelpers.getLinkCreationFee().amount) /
               Math.pow(10, tokenDecimals)
             : FeeHelpers.calculateNetworkFees(tokenInfo!);
+
+        console.log("drawer section tokenAmount:", tokenAmount);
+        console.log("drawer section tokenDecimals:", tokenDecimals);
 
         let tokenPrice = getTokenPrice(tokenAddress!);
         if (tokenPrice === undefined) {
@@ -187,14 +184,19 @@ export const ConfirmationPopupFeesSection: FC<
         const usdValue = tokenPrice * tokenAmount * Number(actionNum ?? 1);
         totalUsdValue += usdValue;
 
+        const feeAmount = (
+          tokenAmount *
+          (Number(maxActionNumber ?? 1) + 1)
+        ).toString();
+        console.log("drawer section feeAmount:", feeAmount);
+        console.log("drawer section feeAmount:", formatNumber(feeAmount));
+
         const breakdownItem: FeeBreakdownItem = {
           name:
             feeType === "link_creation_fee"
               ? t("confirmation_drawer.fee-breakdown.link_creation_fee")
               : t("confirmation_drawer.fee-breakdown.network_fee"),
-          amount: formatNumber(
-            (tokenAmount * (Number(maxActionNumber ?? 1) + 1)).toString(),
-          ),
+          amount: formatNumber(feeAmount),
           tokenSymbol: token?.symbol || "Unknown",
           tokenAddress: tokenAddress!,
           usdAmount: usdValue.toString(),
