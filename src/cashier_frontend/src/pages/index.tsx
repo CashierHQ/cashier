@@ -39,7 +39,7 @@ export default function HomePage() {
       }
 
       const linkId = new LinkLocalStorageServiceV2(
-        pnp.account.owner
+        pnp.account.owner,
       ).createLink();
 
       addUserInput(linkId, {

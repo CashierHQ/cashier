@@ -41,7 +41,7 @@ const Header: React.FC = () => {
         {showHeaderWithBackButtonAndWalletButton(
           location.pathname,
           location.search,
-          !account
+          !account,
         ) ? (
           <ChevronLeft
             size={24}
@@ -82,7 +82,7 @@ const Header: React.FC = () => {
         >
           {showHeaderWithBackButtonAndWalletButton(
             location.pathname,
-            location.search
+            location.search,
           ) ? (
             <ChevronLeft
               size={24}

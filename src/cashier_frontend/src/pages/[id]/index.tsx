@@ -42,7 +42,7 @@ export default function UsePage() {
         link_id: linkId ?? "",
         anonymous_wallet_address: "",
       },
-      !!linkId
+      !!linkId,
     );
 
   // Fetch link data when linkId changes
