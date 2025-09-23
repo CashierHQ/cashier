@@ -36,6 +36,18 @@
     },
     "SendTokenBasket": {
       "link_detail_title": "Add assets"
+    },
+    "gate": {
+      "addGate": "Add gate",
+      "options": "Options to lock",
+      "gateOptions": {
+        "null": "Do not lock",
+        "password": "Password",
+        "x": "X handle",
+        "tg": "Telegram group",
+        "date": "Unlock date",
+        "nft": "NFT Ownership"
+      }
     }
   },
   "details": {
@@ -525,5 +537,16 @@
       "faq": "FAQ",
       "contact_email": "Contact Email"
     }
+  },
+  "password_gate_drawer": {
+    "title": "Activate key",
+    "password_label": "Password",
+    "password_placeholder": "Enter the password",
+    "confirm_password_label": "Confirm password",
+    "confirm_password_placeholder": "Enter the password",
+    "activate_button": "Activate",
+    "password_required": "Password is required",
+    "confirm_password_required": "Please confirm your password",
+    "passwords_dont_match": "The passwords are different"
   }
 }

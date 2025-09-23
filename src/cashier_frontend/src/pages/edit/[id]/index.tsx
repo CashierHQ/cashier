@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
 import { mapLinkStateToEnum } from "@/services/types/mapper/link.service.mapper";
+import LinkGate from "./LinkGate";
 
 export function stateToStepIndex(state: LINK_STATE | undefined): number {
   if (state === LINK_STATE.CHOOSE_TEMPLATE) {
@@ -250,6 +251,10 @@ export default function LinkPage() {
                   name={t(`create.${link?.linkType}.link_detail_title`)}
                 >
                   <LinkDetails link={link} isUpdating={isUpdating} />
+                </MultiStepForm.Item>
+
+                <MultiStepForm.Item name={t("create.gate.addGate")}>
+                  <LinkGate />
                 </MultiStepForm.Item>
 
                 <MultiStepForm.Item name={t("create.linkPreview")}>
