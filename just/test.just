@@ -1,6 +1,6 @@
 # Run all Rust and TypeScript tests for backend and frontend
 [group('test')]
-test_all: test test_frontend
+test_all: test test_frontend test_frontend_new
 
 
 # Run unit tests
@@ -27,6 +27,13 @@ test_unit_i686 test_name="":
 test_frontend:
   cd {{FRONTEND_DIR}} && npm install
   cd {{FRONTEND_DIR}} && npm run test
+
+
+# Run the frontend tests
+[group('test')]
+test_frontend_new:
+  cd {{FRONTEND_DIR_NEW}} && npm install
+  cd {{FRONTEND_DIR_NEW}} && npm run test
 
 
 # Execute the coverage report for the tests using the llvm-cov tool. This takes a long time to run.

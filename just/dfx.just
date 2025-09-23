@@ -40,6 +40,9 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
       permissions=opt (vec { record { principal \"${cashier_backend_id}\"; vec { variant { GateCreate } } } });
   })"
 
+  dfx deploy cashier_frontend
+  dfx deploy cashier_frontend_new 
+
   dfx deploy internet_identity
 
   just dfx_local_deploy_icp_ledger
