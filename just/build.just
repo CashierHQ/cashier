@@ -13,7 +13,7 @@ clean:
 
 # Builds and download all artifacts
 [group('build')]
-build: download_artifacts build_canisters generate_frontend_ts build_frontend
+build: download_artifacts build_canisters generate_frontend_ts build_frontend build_frontend_new
 
 
 # Builds the canisters
