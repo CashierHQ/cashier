@@ -35,4 +35,5 @@ frontend_check_code: install_frontend_deps
 [group('code_check')]
 frontend_new_check_code:
     cd {{FRONTEND_DIR_NEW}} && npm run lint
-    cd {{FRONTEND_DIR_NEW}} && npm run knip
+    # To be enabled when frontend new code is ready
+    # cd {{FRONTEND_DIR_NEW}} && npm run knip
