@@ -24,10 +24,10 @@ export default defineConfig([
   },
   {
     ignores: [
-      "./.svelte-kit/**/*", 
-      "./build/**/*", 
+      "./.svelte-kit/**/*",
+      "./build/**/*",
       "./src/lib/generated/**/*",
-      "./src/lib/paraglide/**/*"
+      "./src/lib/paraglide/**/*",
     ],
   },
   {
