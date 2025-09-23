@@ -6,6 +6,8 @@ clean:
   cargo clean
   rm -rf {{FRONTEND_DIR}}/node_modules
   rm -rf {{FRONTEND_DIR}}/dist
+  rm -rf {{FRONTEND_DIR_NEW}}/node_modules
+  rm -rf {{FRONTEND_DIR_NEW}}/build
   rm -rf ./node_modules
 
 
@@ -27,6 +29,11 @@ build_canisters: pre_build
 build_frontend mode="local_dev": install_frontend_deps
   cd "{{FRONTEND_DIR}}" && npm run build:{{mode}}
 
+# Builds the frontend_new
+[group('build')]
+build_frontend_new:
+  cd "{{FRONTEND_DIR_NEW}}" && npm install
+  cd "{{FRONTEND_DIR_NEW}}" && npm run build
 
 # Generates the ts files for the canister services 
 [group('build')]
@@ -48,6 +55,7 @@ generate_frontend_ts_for_canister canister:
   rm src/declarations/{{canister}}/index.d.ts
   rm src/declarations/{{canister}}/index.js
   cp -r src/declarations/* {{FRONTEND_DIR}}/src/generated
+  cp -r src/declarations/* {{FRONTEND_DIR_NEW}}/src/lib/generated
   rm -rf src/declarations
 
 
