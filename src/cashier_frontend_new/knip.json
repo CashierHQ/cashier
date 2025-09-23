@@ -1,0 +1,4 @@
+{
+  "project": ["src/**"],
+  "ignore": ["src/lib/generated/**", "src/lib/paraglide/**"]
+}
