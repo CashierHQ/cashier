@@ -23,7 +23,12 @@ export default defineConfig([
     },
   },
   {
-    ignores: ["./.svelte-kit/**/*", "./build/**/*", "./src/lib/generated/**/*"],
+    ignores: [
+      "./.svelte-kit/**/*", 
+      "./build/**/*", 
+      "./src/lib/generated/**/*",
+      "./src/lib/paraglide/**/*"
+    ],
   },
   {
     files: ["**/*.svelte", "**/*.svelte.ts", "**/*.svelte.js"],
