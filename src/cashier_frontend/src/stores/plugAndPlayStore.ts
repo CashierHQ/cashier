@@ -28,7 +28,6 @@ type StoreState = {
   reconnect: () => Promise<void>;
 };
 
-
 const usePnpStore = create<StoreState>()((set, get) => ({
   pnp: null,
   account: null,
