@@ -1,19 +1,27 @@
 // DEMO: no need for complex state management tool
 // This create a fully reactive global state object
-export const authState = $state({
-  user: "",
+const auth = $state ({
+    user: ''
+});
 
+export const authState = {
+
+  get user(): string {
+    return auth.user;
+  },
+ 
+  // DEMO: reactive computed property
   get isAuthenticated(): boolean {
-    return authState.user !== "";
+    return auth.user !== "";
   },
 
   login(user: string) {
     console.log("login: ", user);
-    this.user = user;
+    auth.user = user;
   },
 
   logout() {
     console.log("logout");
-    this.user = "";
+    auth.user = "";
   },
-});
+};
