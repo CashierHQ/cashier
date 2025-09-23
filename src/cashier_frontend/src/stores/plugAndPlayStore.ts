@@ -6,19 +6,28 @@ import useWalletModalStore from "@/stores/walletModalStore";
 
 const STORED_WALLET_KEY = "storedConnectWallet";
 
+// Wallet Account return from PNP
 interface WalletAccount {
   owner: string | null;
   subaccount: string | null;
 }
 
+// Store state and actions
 type StoreState = {
+  // The PNP instance, initialized once
   pnp: PNP | null;
+  // The connected wallet account, null if not connected
   account: WalletAccount | null;
+  // Initialize PNP with config
   init: (config: GlobalPnpConfig) => void;
+  // Connect to a wallet by its ID (e.g., "plug", "stoic")
   connect: (walletId: string) => Promise<void>;
+  // Disconnect the current wallet
   disconnect: () => Promise<void>;
+  // Attempt to reconnect to the last used wallet if any
   reconnect: () => Promise<void>;
 };
+
 
 const usePnpStore = create<StoreState>()((set, get) => ({
   pnp: null,

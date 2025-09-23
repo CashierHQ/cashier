@@ -1,7 +1,10 @@
 import { create } from "zustand";
 
+// Store state and actions for the wallet connection modal
 type WalletModalState = {
+  // Whether the modal is open
   isOpen: boolean;
+  // Functions to open/close the modal
   open: () => void;
   close: () => void;
   setOpen: (open: boolean) => void;
