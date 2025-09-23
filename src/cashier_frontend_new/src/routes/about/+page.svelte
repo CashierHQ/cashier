@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { resolve } from '$app/paths';
+  import About from './components/about.svelte';
+
+  let name = 'Cashier';
+  let version = 0.1;
+  let description = 'new frontend based on sveltekit';
+
 </script>
 
-<div class="hero bg-base-200 min-h-screen">
-  <div class="hero-content text-center">
-    <div class="max-w-md">
-      <h1 class="text-5xl font-bold">ABOUT MANY THINGS</h1>
-      <p class="py-6"><a class="link" href={resolve("/")}>home</a></p>
-    </div>
-  </div>
-</div>
+<!-- DEMO: component properties are type checked at compile time -->
+<About {name} {version} {description} />

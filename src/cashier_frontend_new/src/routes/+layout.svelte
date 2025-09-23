@@ -1,3 +1,5 @@
+<!-- DEMO: a layout automatically applied to all pages in this folder and all subfolders -->
+
 <script lang="ts">
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
