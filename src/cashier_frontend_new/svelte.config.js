@@ -7,6 +7,7 @@ const config = {
   kit: {
     adapter: adapter({
       fallback: "index.html",
+      "@/*": "./path/to/lib/*",
     }),
   },
 };

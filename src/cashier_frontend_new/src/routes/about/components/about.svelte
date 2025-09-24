@@ -1,20 +1,18 @@
 <!-- DEMO: this component is needed only by the about page, so it is declared here instead of the global scope -->
 
 <script lang="ts">
-  import { resolve } from '$app/paths';
+  import { resolve } from "$app/paths";
 
   // DEMO: component properties are type checked at compile time
   // You can make them optional if you want by make them nullable
   interface AboutProps {
-		name: string;
-		version: number;
-        description: string;
-	}
+    name: string;
+    version: number;
+    description: string;
+  }
 
-	let { name, version, description }: AboutProps = $props();
-
+  let { name, version, description }: AboutProps = $props();
 </script>
-
 
 <div class="hero bg-base-200 min-h-screen">
   <div class="hero-content text-center">
