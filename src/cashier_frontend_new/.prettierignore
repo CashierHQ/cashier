@@ -1,3 +1,5 @@
 .svelte-kit/**
 src/lib/generated/*
 src/lib/paraglide/**
+
+!.env**
