@@ -4,8 +4,8 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
-    "dev:dev": "vite dev --mode dev",
+    "dev": "vite dev --port 3000 --mode local_dev",
+    "dev:dev": "vite dev --port 3000 --mode dev",
     "build": "vite build",
     "build:dev": "vite build --mode dev",
     "build:staging": "vite build --mode staging",
@@ -54,5 +54,8 @@
     "vite": "^7.0.4",
     "vitest": "^3.2.3",
     "vitest-browser-svelte": "^0.1.0"
+  },
+  "dependencies": {
+    "@windoge98/plug-n-play": "^0.1.0-beta.20"
   }
 }
