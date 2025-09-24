@@ -7,7 +7,7 @@
   import { Button } from "$lib/components/ui/button";
 
   console.log("The answer is: " + THE_ANSWER);
-    // Define click handler function
+  // Define click handler function
   function handleClick() {
     console.log("Button clicked!");
   }
@@ -26,7 +26,7 @@
       </p>
 
       <p class="py-6"><a class="link" href={resolve("/about")}>About</a></p>
-    <Button onclick={handleClick}>Click me</Button>
+      <Button onclick={handleClick}>Click me</Button>
     </div>
   </div>
 </div>

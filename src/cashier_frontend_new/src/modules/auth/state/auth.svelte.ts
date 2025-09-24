@@ -1,0 +1,151 @@
+// DEMO: no need for complex state management tool
+
+import { createPNPConfig, PNP } from "@windoge98/plug-n-play";
+import {
+  FEATURE_FLAGS,
+  IC_HOST,
+  IC_INTERNET_IDENTITY_PROVIDER,
+  TARGETS,
+  TIMEOUT_NANO_SEC,
+} from "$lib/constants";
+import { IISignerAdapter } from "../signer/ii/IISignerAdapter";
+
+const OTHER_WALLET_COFNIG_ADAPTER = createPNPConfig({
+  ports: {
+    replica: 8000,
+    frontend: 3000
+  },
+  adapters: {
+    plug: { enabled: true },
+    stoic: { enabled: true },
+    oisy: { enabled: true },
+    ii: {
+      enabled: true,
+    }
+  },
+});
+
+
+export const CONFIG = {
+  dfxNetwork: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER ? "local" : "ic",
+  replicaPort: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER ? 8000 : undefined,
+  hostUrl: IC_HOST,
+  delegationTimeout: TIMEOUT_NANO_SEC,
+  delegationTargets: TARGETS,
+  fetchRootKey: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER,
+  verifyQuerySignatures: false,
+  adapters: {
+    iiSigner: {
+      enabled: true,
+      walletName: "Internet Identity",
+      logo: "123",
+      website: "https://internetcomputer.org",
+      chain: "ICP",
+      adapter: IISignerAdapter,
+      config: {
+        // url to the provider
+        iiProviderUrl: IC_INTERNET_IDENTITY_PROVIDER,
+        hostUrl: IC_HOST,
+        shouldFetchRootKey: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER,
+        // set derivationOrigin for production only
+        // this setting allow www.cashierapp.io have the same identity as cashierapp.io
+        ...(import.meta.env.MODE === "production" && {
+          derivationOrigin: "https://cashierapp.io",
+        }),
+      },
+    },
+  },
+};
+
+let pnp = $state<PNP | null>(null);
+let account = $state<{
+  owner: string | null;
+  subaccount: string | null;
+} | null>(null);
+// state to store connected wallet ID for reconnecting later
+let connectedWalletId = $state<string | null>(null);
+
+const initPnp = async () => {
+  if (pnp) {
+    return;
+  }
+  const newPnp = new PNP(CONFIG);
+  pnp = newPnp;
+
+  // Try to get stored wallet ID from localStorage
+  if (typeof window !== 'undefined') {
+    const storedWalletId = localStorage.getItem('connectedWalletId');
+    if (storedWalletId) {
+      connectedWalletId = storedWalletId;
+    }
+  }
+}
+
+export const authState = {
+  get account() {
+    return account;
+  },
+  get connectedWalletId() {
+    return connectedWalletId;
+  },
+  // Connect to wallet
+  async login(walletId: string) {
+    if (!pnp) {
+      throw new Error("PNP is not initialized");
+    }
+    try {
+      const res = await pnp.connect(walletId);
+      account = res;
+      connectedWalletId = walletId;
+      // Store wallet ID in localStorage for persistence
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('connectedWalletId', walletId);
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+      throw error;
+    }
+  },
+
+  // Disconnect from wallet
+  async logout() {
+    if (!pnp) {
+      throw new Error("PNP is not initialized");
+    }
+    try {
+      await pnp.disconnect();
+      account = null;
+      connectedWalletId = null;
+      // Remove wallet ID from localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('connectedWalletId');
+      }
+    } catch (error) {
+      console.error('Logout failed:', error);
+      throw error;
+    }
+  },
+
+  async reconnect() {
+    if (!pnp) {
+      throw new Error("PNP is not initialized");
+    }
+    if (connectedWalletId) {
+      try {
+        const res = await pnp.connect(connectedWalletId);
+        account = res;
+        console.log('Auto-reconnect successful');
+      } catch (error) {
+        console.error('Reconnect failed:', error);
+        // Clear stored wallet ID if reconnect fails
+        connectedWalletId = null;
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('connectedWalletId');
+        }
+        throw error;
+      }
+    }
+  }
+};
+
+initPnp();
