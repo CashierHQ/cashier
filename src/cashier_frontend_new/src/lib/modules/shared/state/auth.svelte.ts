@@ -25,15 +25,11 @@ export const authState = {
 
     login(user: string) {
         console.log("login: ", user);
-        auth.value = {
-            user
-        };
+        auth.value.user = user;
     },
 
     logout() {
         console.log("logout");
-        auth.value = {
-            user: ""
-        };
+        auth.value.user = "";
     },
 };

@@ -3,14 +3,17 @@ import { browser } from '$app/environment';
 // DEMO: A simple state wrapper that automatically syncs with local storage
 export class LocalStorageState<T> {
   #value;
+  #derived;
   #key = '';
 
   constructor(key: string, value: T) {
     this.#key = key;
     this.#value = $state(value);
 
-    if (browser) {
+    this.#derived = $derived(this.#value);
 
+    if (browser) {
+      
       const item = localStorage.getItem(key);
       try {
         if (item) this.#value = this.#deserialize(item);
@@ -20,7 +23,7 @@ export class LocalStorageState<T> {
 
       $effect.root(() => {
         $effect(() => {
-          localStorage.setItem(this.#key, this.#serialize(this.#value));
+          localStorage.setItem(this.#key, this.#serialize(this.#derived));
         })
       });
 
