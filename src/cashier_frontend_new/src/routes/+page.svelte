@@ -5,7 +5,6 @@
   // DEMO: `m` is a helper function that statically checks message validity at compile time
   import { m } from "$lib/paraglide/messages.js";
   import { Button } from "$lib/shadcn/components/ui/button";
-
   console.log("The answer is: " + THE_ANSWER);
   // Define click handler function
   function handleClick() {
@@ -27,6 +26,8 @@
 
       <p class="py-6"><a class="link" href={resolve("/about")}>About</a></p>
       <Button onclick={handleClick}>Click me</Button>
+
+      <p class="py-6"><a class="link" href={resolve('/token')}>Token Price</a></p>
     </div>
   </div>
 </div>
