@@ -9,8 +9,8 @@ const config = {
       fallback: "index.html",
     }),
     alias: {
-      $modules: './src/modules',
-    }
+      $modules: "./src/modules",
+    },
   },
 };
 
