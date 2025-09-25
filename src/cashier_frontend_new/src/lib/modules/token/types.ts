@@ -1,4 +1,7 @@
-export type TokenData = {
+/**
+ * Type definition for a token price data
+ */
+export type TokenPrice = {
   name: string;
   symbol: string;
   standard: string;

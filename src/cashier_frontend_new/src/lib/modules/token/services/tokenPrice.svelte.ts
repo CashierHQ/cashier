@@ -1,5 +1,5 @@
-import { ICPSWAP_NODE_INDEX_CANISTER_ID } from '$lib/constants';
-import type { TokenData } from '$lib/types';
+import { HOST_ICP, ICPSWAP_INDEX_CANISTER_ID } from '$lib/constants';
+import type { TokenPrice } from '$lib/modules/token/types';
 import { Actor, HttpAgent } from '@dfinity/agent';
 import * as icpSwapIndexNode from '../../../generated/icpswap/icpswapNodeIndex';
 
@@ -13,15 +13,19 @@ class TokenPriceService {
 
   constructor() {
     const agent = new HttpAgent({
-      host: 'https://ic0.app',
+      host: HOST_ICP,
     });
     this.actor = Actor.createActor(icpSwapIndexNode.idlFactory, {
       agent,
-      canisterId: ICPSWAP_NODE_INDEX_CANISTER_ID,
+      canisterId: ICPSWAP_INDEX_CANISTER_ID,
     });
   }
 
-  public async getTokens(): Promise<TokenData[]> {
+  /**
+   * Fetch all token prices from the ICPSwap index canister
+   * @returns Array of TokenPrice
+   */
+  public async getTokens(): Promise<TokenPrice[]> {
     let tokenRes: icpSwapIndexNode.PublicTokenOverview[];
     try {
       tokenRes = await this.actor.getAllTokens();
