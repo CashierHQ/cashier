@@ -1,8 +1,8 @@
 <!-- Navbar is a global component so it is declared in the global scope in the shared module -->
 
 <script lang="ts">
-  import { authState } from "../../../../modules/auth/state/auth.svelte";
-  import { Button } from "$lib/components/ui/button";
+  import { authState } from "$modules/auth/state/auth.svelte";
+  import { Button } from "$lib/shadcn/components/ui/button";
 
   let isReconnecting = $state(false);
 

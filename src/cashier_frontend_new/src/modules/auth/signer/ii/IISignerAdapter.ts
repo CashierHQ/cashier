@@ -4,7 +4,7 @@ import { BaseSignerAdapter } from "@windoge98/plug-n-play";
 import { type IIAdapterConfig, isIIAdapterConfig, Status } from "./type";
 import { Signer } from "@slide-computer/signer";
 import { IITransport } from "./IITransport";
-import { FEATURE_FLAGS, IC_HOST } from "$lib/constants";
+import { FEATURE_FLAGS, HOST_IC } from "$lib/constants";
 import { getScreenDimensions } from "../../utils";
 
 interface Account {
@@ -104,7 +104,7 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   private async initAgentAndSigner(identity: Identity): Promise<void> {
     const agent = HttpAgent.createSync({
       identity,
-      host: IC_HOST,
+      host: HOST_IC,
       shouldFetchRootKey: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER,
     });
     const transport = await IITransport.create({

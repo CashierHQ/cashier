@@ -8,6 +8,9 @@ const config = {
     adapter: adapter({
       fallback: "index.html",
     }),
+    alias: {
+      $modules: "src/modules",
+    },
   },
 };
 
