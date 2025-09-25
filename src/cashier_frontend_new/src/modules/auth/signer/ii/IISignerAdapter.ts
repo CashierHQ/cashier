@@ -2,7 +2,7 @@ import { HttpAgent, type ActorSubclass, type Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { BaseSignerAdapter } from "@windoge98/plug-n-play";
 import { type IIAdapterConfig, isIIAdapterConfig, Status } from "./type";
-import { Signer } from "@slide-computer/signer";
+import { Signer, type Transport } from "@slide-computer/signer";
 import { IITransport } from "./IITransport";
 import { FEATURE_FLAGS, HOST_ICP } from "$lib/constants";
 import { getScreenDimensions } from "../../utils";
@@ -16,8 +16,6 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   // II specific properties
   private authClient: AuthClient | null = null;
   public identity: Identity | null = null;
-  // private agent: HttpAgent | null = null;
-  // public signer: Signer | null = null;
 
   constructor(
     args: { adapter: unknown; config: IIAdapterConfig } | IIAdapterConfig,
@@ -113,8 +111,8 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
 
     this.agent = agent;
     this.signer = new Signer({
-      transport,
-    });
+      transport: transport,
+    }) as Signer<Transport>;
   }
 
   async connect(): Promise<Account> {
@@ -263,9 +261,5 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
       this.authClient = null;
     }
     this.agent = null;
-  }
-
-  public getSigner(): Signer | null {
-    return this.signer;
   }
 }

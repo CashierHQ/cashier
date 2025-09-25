@@ -28,6 +28,7 @@ export default defineConfig([
       "./build/**/*",
       "./src/lib/generated/**/*",
       "./src/lib/paraglide/**/*",
+      "./src/lib/shadcn/**/*",
     ],
   },
   {
