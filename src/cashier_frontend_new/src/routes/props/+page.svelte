@@ -5,9 +5,9 @@
     description: string;
   }
 
-  let { name, version, description }: Props = $props();
+  let data: Props = $props();
 </script>
 
 <p>
-  Project name <code>{name}</code>, version <code>{version}</code>is {description}.
+  Project name <code>{data.name}</code>, version <code>{data.version}</code>is {data.description}.
 </p>
