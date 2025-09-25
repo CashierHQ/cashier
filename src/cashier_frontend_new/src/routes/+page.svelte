@@ -1,7 +1,7 @@
 <script lang="ts">
   // DEMO: `resolve` is a helper function that statically checks link validity at compile time
   import { resolve } from "$app/paths";
-  import { THE_ANSWER } from "../modules/shared/constants";
+  import { THE_ANSWER } from "$modules/shared/constants";
   // DEMO: `m` is a helper function that statically checks message validity at compile time
   import { m } from "$lib/paraglide/messages.js";
   import { Button } from "$lib/shadcn/components/ui/button";
