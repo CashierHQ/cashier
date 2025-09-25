@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { tokenPriceService } from "$lib/modules/token/services/tokenPrice.svelte";
-  import type { TokenPrice } from "$lib/modules/token/types";
+  import { tokenPriceService } from "../../modules/token/services/tokenPrice.svelte";
+  import type { TokenPrice } from "../../modules/token/types";
   import { createQuery } from "@tanstack/svelte-query";
 
   // Create a query to fetch token prices using the TokenPriceService
