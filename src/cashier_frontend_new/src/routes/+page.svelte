@@ -10,7 +10,7 @@
   <div class="hero-content text-center">
     <div class="max-w-md">
       <!-- DEMO: a message is statically checked and, if possible, resolved at compile time -->
-      <h1 class="text-5xl font-bold">{m}</h1>
+      <h1 class="text-5xl font-bold">{m.welcome()}</h1>
 
       <!-- DEMO: a link to a page, the linked is statically checked at compile time. So all links are always correct -->
       <p class="py-6">
