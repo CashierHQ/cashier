@@ -3,6 +3,12 @@
   import { resolve } from "$app/paths";
   // DEMO: `m` is a helper function that statically checks message validity at compile time
   import { m } from "$lib/paraglide/messages.js";
+  import { Button } from "$lib/shadcn/components/ui/button";
+  console.log("The answer is: " + THE_ANSWER);
+  // Define click handler function
+  function handleClick() {
+    console.log("Button clicked!");
+  }
 </script>
 
 <!-- DEMO: no need for a dedicated tailwind configuration because this uses version 4 by default -->
@@ -17,7 +23,6 @@
         Blog: <a class="link" href={resolve("/blog/blog_title")}>Blog</a>
       </p>
 
-      <p class="py-6"><a class="link" href={resolve("/login")}>About</a></p>
+      <p class="py-6"><a class="link" href={resolve('/token')}>Token Price</a></p>
     </div>
   </div>
-</div>

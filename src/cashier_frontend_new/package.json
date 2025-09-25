@@ -60,6 +60,7 @@
     "@dfinity/auth-client": "2.4.1",
     "@dfinity/candid": "2.4.1",
     "@dfinity/identity": "2.4.1",
-    "@windoge98/plug-n-play": "^0.1.0-beta.20"
+    "@windoge98/plug-n-play": "^0.1.0-beta.20",
+    "@tanstack/svelte-query": "^5.90.2"
   }
 }
