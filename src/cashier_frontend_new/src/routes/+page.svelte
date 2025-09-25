@@ -27,7 +27,9 @@
       <p class="py-6"><a class="link" href={resolve("/about")}>About</a></p>
       <Button onclick={handleClick}>Click me</Button>
 
-      <p class="py-6"><a class="link" href={resolve('/token')}>Token Price</a></p>
+      <p class="py-6">
+        <a class="link" href={resolve("/token")}>Token Price</a>
+      </p>
     </div>
   </div>
 </div>
