@@ -21,4 +21,3 @@ export const TIMEOUT_NANO_SEC = BigInt(24 * 60 * 60 * 1000 * 1000 * 1000); // 24
 
 // Derived constants
 export const TARGETS = [BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID];
-console.log("TARGETS", TARGETS);
