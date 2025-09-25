@@ -24,4 +24,4 @@
       <p class="py-6"><a class="link" href={resolve('/token')}>Token Price</a></p>
     </div>
   </div>
-</div>  
+</div>
