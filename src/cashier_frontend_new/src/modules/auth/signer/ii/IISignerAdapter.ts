@@ -138,6 +138,7 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
           };
           // Initialize agent if not already done
           if (!this.agent) {
+            console.log("adapter already authenticated, initializing agent");
             await this.initAgentAndSigner(identity);
           }
           this.setState(Status.CONNECTED);

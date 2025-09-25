@@ -45,9 +45,7 @@ export class IITransport implements Transport {
    * - If `options.agent` is provided that agent is used.
    * - Otherwise an anonymous {@link HttpAgent} is created.
    */
-  static async create(
-    options?: AgentTransportOptions,
-  ): Promise<IITransport> {
+  static async create(options?: AgentTransportOptions): Promise<IITransport> {
     const agent = options?.agent ?? (await HttpAgent.create());
 
     IITransport.#isInternalConstructing = true;

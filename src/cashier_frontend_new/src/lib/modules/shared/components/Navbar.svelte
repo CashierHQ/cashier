@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import { authState } from "../../../../modules/auth/state/auth.svelte";
-  import {Button} from "$lib/components/ui/button";
+  import { Button } from "$lib/components/ui/button";
 
   let isReconnecting = $state(false);
 
@@ -14,10 +14,14 @@
   // Auto-reconnect effect - runs when connectedWalletId changes
   $effect(() => {
     if (authState.connectedWalletId && !authState.account && !isReconnecting) {
-      console.log("Found stored wallet ID, attempting to reconnect:", authState.connectedWalletId);
+      console.log(
+        "Found stored wallet ID, attempting to reconnect:",
+        authState.connectedWalletId,
+      );
       isReconnecting = true;
-      
-      authState.reconnect()
+
+      authState
+        .reconnect()
         .then(() => {
           console.log("Auto-reconnect successful");
         })

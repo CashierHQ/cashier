@@ -13,7 +13,7 @@ import { IISignerAdapter } from "../signer/ii/IISignerAdapter";
 const OTHER_WALLET_COFNIG_ADAPTER = createPNPConfig({
   ports: {
     replica: 8000,
-    frontend: 3000
+    frontend: 3000,
   },
   adapters: {
     plug: { enabled: true },
@@ -21,10 +21,9 @@ const OTHER_WALLET_COFNIG_ADAPTER = createPNPConfig({
     oisy: { enabled: true },
     ii: {
       enabled: true,
-    }
+    },
   },
 });
-
 
 export const CONFIG = {
   dfxNetwork: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER ? "local" : "ic",
@@ -73,13 +72,13 @@ const initPnp = async () => {
   pnp = newPnp;
 
   // Try to get stored wallet ID from localStorage
-  if (typeof window !== 'undefined') {
-    const storedWalletId = localStorage.getItem('connectedWalletId');
+  if (typeof window !== "undefined") {
+    const storedWalletId = localStorage.getItem("connectedWalletId");
     if (storedWalletId) {
       connectedWalletId = storedWalletId;
     }
   }
-}
+};
 
 export const authState = {
   get account() {
@@ -87,6 +86,9 @@ export const authState = {
   },
   get connectedWalletId() {
     return connectedWalletId;
+  },
+  get provider() {
+    return pnp?.provider;
   },
   // Connect to wallet
   async login(walletId: string) {
@@ -98,11 +100,11 @@ export const authState = {
       account = res;
       connectedWalletId = walletId;
       // Store wallet ID in localStorage for persistence
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('connectedWalletId', walletId);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("connectedWalletId", walletId);
       }
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
       throw error;
     }
   },
@@ -117,11 +119,11 @@ export const authState = {
       account = null;
       connectedWalletId = null;
       // Remove wallet ID from localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('connectedWalletId');
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("connectedWalletId");
       }
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
       throw error;
     }
   },
@@ -134,18 +136,18 @@ export const authState = {
       try {
         const res = await pnp.connect(connectedWalletId);
         account = res;
-        console.log('Auto-reconnect successful');
+        console.log("Auto-reconnect successful");
       } catch (error) {
-        console.error('Reconnect failed:', error);
+        console.error("Reconnect failed:", error);
         // Clear stored wallet ID if reconnect fails
         connectedWalletId = null;
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('connectedWalletId');
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("connectedWalletId");
         }
         throw error;
       }
     }
-  }
+  },
 };
 
 initPnp();

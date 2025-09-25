@@ -1,5 +1,3 @@
-import { PUBLIC_THE_ANSWER } from "$env/static/public";
-
 // Backend configuration
 export const BACKEND_CANISTER_ID = import.meta.env.VITE_BACKEND_CANISTER_ID;
 export const TOKEN_STORAGE_CANISTER_ID = import.meta.env
@@ -24,5 +22,3 @@ export const TIMEOUT_NANO_SEC = BigInt(24 * 60 * 60 * 1000 * 1000 * 1000); // 24
 // Derived constants
 export const TARGETS = [BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID];
 console.log("TARGETS", TARGETS);
-
-export const THE_ANSWER = PUBLIC_THE_ANSWER;
