@@ -1,7 +1,7 @@
 <!-- DEMO: a layout automatically applied to all pages in this folder and all subfolders -->
 <script lang="ts">
   import favicon from "$lib/assets/favicon.svg";
-  import Navbar from "../modules/shared/components/Navbar.svelte";
+  import Navbar from "$modules/shared/components/Navbar.svelte";
 
   import { QueryClient, QueryClientProvider } from "@tanstack/svelte-query";
   import "../app.css";
