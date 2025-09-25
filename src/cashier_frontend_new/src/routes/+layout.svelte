@@ -1,8 +1,8 @@
 <!-- DEMO: a layout automatically applied to all pages in this folder and all subfolders -->
-
 <script lang="ts">
-	import favicon from '$lib/assets/favicon.svg';
-	import Navbar from '$lib/modules/shared/components/Navbar.svelte';
+  import favicon from "$lib/assets/favicon.svg";
+  import Navbar from "$lib/modules/shared/components/Navbar.svelte";
+
 	import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query';
 	import '../app.css';
 	
@@ -12,7 +12,7 @@
 </script>
 
 <svelte:head>
-	<link rel="icon" href={favicon} />
+  <link rel="icon" href={favicon} />
 </svelte:head>
 
 <QueryClientProvider client={queryClient}>
