@@ -106,56 +106,26 @@ export interface UserTokens {
 }
 export interface _SERVICE {
   'add_token' : ActorMethod<[AddTokenInput], Result>,
-  /**
-   * Add multiple tokens to the user's list
-   * 
-   * ToDo: this function is not atomic can leave the state in an inconsistent state
-   */
   'add_token_batch' : ActorMethod<[AddTokensInput], Result>,
-  /**
-   * Gets the full metadata of the token registry
-   * Includes version number and last updated timestamp
-   */
   'admin_get_registry_metadata' : ActorMethod<[], TokenRegistryMetadata>,
   'admin_get_registry_tokens' : ActorMethod<[boolean], Array<TokenDto>>,
   'admin_get_stats' : ActorMethod<[], Result_1>,
   'admin_get_user_balance' : ActorMethod<[Principal], Result_2>,
   'admin_get_user_tokens' : ActorMethod<[Principal], Result_3>,
   'admin_initialize_registry' : ActorMethod<[], Result>,
-  /**
-   * Enables/disables the inspect message.
-   */
   'admin_inspect_message_enable' : ActorMethod<[boolean], Result_4>,
   'admin_list_tokens_by_wallet' : ActorMethod<[Principal], Result_5>,
-  /**
-   * Adds permissions to a principal and returns the principal permissions.
-   */
   'admin_permissions_add' : ActorMethod<
     [Principal, Array<Permission>],
     Result_6
   >,
-  /**
-   * Returns the permissions of a principal.
-   */
   'admin_permissions_get' : ActorMethod<[Principal], Array<Permission>>,
-  /**
-   * Removes permissions from a principal and returns the principal permissions.
-   */
   'admin_permissions_remove' : ActorMethod<
     [Principal, Array<Permission>],
     Result_6
   >,
-  /**
-   * Returns the build data of the canister.
-   */
   'get_canister_build_data' : ActorMethod<[], BuildData>,
-  /**
-   * Returns the inspect message status.
-   */
   'is_inspect_message_enabled' : ActorMethod<[], boolean>,
-  /**
-   * Lists the tokens in the registry for the caller
-   */
   'list_tokens' : ActorMethod<[], Result_5>,
   'sync_token_list' : ActorMethod<[], Result>,
   'update_token_balance' : ActorMethod<
@@ -164,11 +134,6 @@ export interface _SERVICE {
   >,
   'update_token_enable' : ActorMethod<[UpdateTokenInput], Result>,
   'update_token_registry' : ActorMethod<[AddTokenInput], Result>,
-  /**
-   * Update the metadata for multiple tokens
-   * 
-   * ToDo: this function is not atomic can leave the state in an inconsistent state
-   */
   'update_token_registry_batch' : ActorMethod<[AddTokensInput], Result>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;

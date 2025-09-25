@@ -2,7 +2,7 @@
   // DEMO: `resolve` is a helper function that statically checks link validity at compile time
   import { resolve } from '$app/paths';
   import { THE_ANSWER } from '$lib/constants';
-  // DEMO: `m` is a helper function that statically checks message validity at compile time
+// DEMO: `m` is a helper function that statically checks message validity at compile time
 	import { m } from '$lib/paraglide/messages.js';
 
   console.log("The answer is: " + THE_ANSWER);
@@ -20,6 +20,8 @@
       <p class="py-6">Blog: <a class="link" href={resolve('/blog/blog_title')}>Blog</a></p>
       
       <p class="py-6"><a class="link" href={resolve('/about')}>About</a></p>
+
+      <p class="py-6"><a class="link" href={resolve('/token')}>Token</a></p>
     </div>
   </div>
 </div>
