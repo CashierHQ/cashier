@@ -4,7 +4,7 @@
   import { THE_ANSWER } from "$lib/constants";
   // DEMO: `m` is a helper function that statically checks message validity at compile time
   import { m } from "$lib/paraglide/messages.js";
-  import { Button } from "$lib/components/ui/button";
+  import { Button } from "$lib/shadcn/components/ui/button";
 
   console.log("The answer is: " + THE_ANSWER);
   // Define click handler function
