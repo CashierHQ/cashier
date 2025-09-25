@@ -21,7 +21,7 @@
       
       <p class="py-6"><a class="link" href={resolve('/about')}>About</a></p>
 
-      <p class="py-6"><a class="link" href={resolve('/token')}>Token</a></p>
+      <p class="py-6"><a class="link" href={resolve('/token')}>Token Price</a></p>
     </div>
   </div>
 </div>
