@@ -39,7 +39,13 @@ You can preview the production build with `npm run preview`.
 
 ## Adding New Components
 
-To add new components to your project, use the shadcn-svelte CLI:
+To add new components to your project, use the npm script:
+
+```bash
+npm run add:ui <component-name>
+```
+
+Or use the shadcn-svelte CLI directly:
 
 ```bash
 npx shadcn-svelte@latest add <component-name>
@@ -49,13 +55,13 @@ npx shadcn-svelte@latest add <component-name>
 
 ```bash
 # Add a button component
-npx shadcn-svelte@latest add button
+npm run add:ui button
 
 # Add multiple components at once
-npx shadcn-svelte@latest add button input card
+npm run add:ui button input card
 
 # Add a component with specific options
-npx shadcn-svelte@latest add dialog --yes
+npm run add:ui dialog --yes
 ```
 
 ### Available Components
