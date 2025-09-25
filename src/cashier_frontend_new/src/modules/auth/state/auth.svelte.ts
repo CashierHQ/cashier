@@ -1,6 +1,6 @@
 // DEMO: no need for complex state management tool
 
-import { createPNPConfig, PNP } from "@windoge98/plug-n-play";
+import { PNP } from "@windoge98/plug-n-play";
 import {
   FEATURE_FLAGS,
   IC_HOST,
@@ -9,21 +9,6 @@ import {
   TIMEOUT_NANO_SEC,
 } from "$lib/constants";
 import { IISignerAdapter } from "../signer/ii/IISignerAdapter";
-
-const OTHER_WALLET_COFNIG_ADAPTER = createPNPConfig({
-  ports: {
-    replica: 8000,
-    frontend: 3000,
-  },
-  adapters: {
-    plug: { enabled: true },
-    stoic: { enabled: true },
-    oisy: { enabled: true },
-    ii: {
-      enabled: true,
-    },
-  },
-});
 
 export const CONFIG = {
   dfxNetwork: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER ? "local" : "ic",
