@@ -24,7 +24,7 @@
     <div>
       <h2>Token Prices</h2>
       <ul>
-        {#each $tokenQuery.data as token}
+        {#each $tokenQuery.data as token (token.address)}
           <li>
             {token.symbol} ({token.standard}): ${token.priceUSD.toFixed(5)}
           </li>

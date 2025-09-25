@@ -1,5 +1,5 @@
 <script lang="ts">
-    import BuildInfo from "$lib/modules/buildInfo/components/buildInfo.svelte";
+  import BuildInfo from "$lib/modules/dev/components/buildInfo.svelte";
 </script>
 
 <BuildInfo />
