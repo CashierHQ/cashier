@@ -8,7 +8,7 @@ type IndexNodeActor = icpSwapIndexNode._SERVICE;
 /**
  * Service for fetching data from the ICPSwap backend
  */
-export class TokenPriceService {
+class TokenPriceService {
   private actor: IndexNodeActor;
 
   constructor() {
@@ -38,3 +38,5 @@ export class TokenPriceService {
     }
   }
 }
+
+export const tokenPriceService = new TokenPriceService();

@@ -1,11 +1,9 @@
 <script lang="ts" >
-  import { TokenPriceService } from '$lib/modules/shared/services/tokenPrice.svelte';
+  import { tokenPriceService } from '$lib/modules/shared/services/tokenPrice.svelte';
   import type { TokenData } from '$lib/types';
   import { createQuery } from '@tanstack/svelte-query';
-  import { getContext } from 'svelte';
 
   // Create a query to fetch token prices using the TokenPriceService
-  const tokenPriceService = getContext<TokenPriceService>('tokenPriceService');
   const tokenQuery = createQuery<TokenData[]>({
     queryKey: ['tokenPrices'],
     queryFn: async () => {
