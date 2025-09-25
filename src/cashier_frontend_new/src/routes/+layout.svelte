@@ -3,12 +3,11 @@
   import favicon from "$lib/assets/favicon.svg";
   import Navbar from "$lib/modules/shared/components/Navbar.svelte";
 
-	import { QueryClient, QueryClientProvider } from '@tanstack/svelte-query';
-	import '../app.css';
-	
-	let { children } = $props();
-  const queryClient = new QueryClient();
+  import { QueryClient, QueryClientProvider } from "@tanstack/svelte-query";
+  import "../app.css";
 
+  let { children } = $props();
+  const queryClient = new QueryClient();
 </script>
 
 <svelte:head>

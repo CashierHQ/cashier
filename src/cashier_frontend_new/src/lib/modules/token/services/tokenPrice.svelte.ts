@@ -1,7 +1,7 @@
-import { HOST_IC, ICPSWAP_INDEX_CANISTER_ID } from '$lib/constants';
-import type { TokenPrice } from '$lib/modules/token/types';
-import { Actor, HttpAgent } from '@dfinity/agent';
-import * as icpSwapIndexNode from '../../../generated/icpswap/icpswapNodeIndex';
+import { HOST_IC, ICPSWAP_INDEX_CANISTER_ID } from "$lib/constants";
+import type { TokenPrice } from "$lib/modules/token/types";
+import { Actor, HttpAgent } from "@dfinity/agent";
+import * as icpSwapIndexNode from "../../../generated/icpswap/icpswapNodeIndex";
 
 type IndexNodeActor = icpSwapIndexNode._SERVICE;
 

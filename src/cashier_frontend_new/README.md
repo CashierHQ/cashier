@@ -30,9 +30,11 @@ npm run dev -- --open
 This project uses Vite for environment variable handling. To set up environment variables:
 
 1. Copy the local development environment file:
+
    ```sh
    cp .env.local_dev .env.<env>
    ```
+
    Replace `<env>` with your target environment (e.g., `dev`, `staging`, `production`).
 
 2. Edit the `.env.<env>` file with your specific environment variables.
