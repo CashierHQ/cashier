@@ -1,8 +1,9 @@
 {
-  "project": ["src/**"],
+  "project": [
+    "src/**"
+  ],
   "ignore": [
-    "src/lib/generated/**",
-    "src/lib/paraglide/**",
-    "src/lib/shadcn/**"
+    "src/workers/**",
+    "src/generated/**"
   ]
 }
