@@ -48,6 +48,7 @@ let account = $state<{
 } | null>(null);
 // state to store connected wallet ID for reconnecting later
 let connectedWalletId = $state<string | null>(null);
+let isReconnecting = $state(false);
 
 const initPnp = async () => {
   if (pnp) {
@@ -61,6 +62,13 @@ const initPnp = async () => {
     const storedWalletId = localStorage.getItem("connectedWalletId");
     if (storedWalletId) {
       connectedWalletId = storedWalletId;
+      // Auto-reconnect if we have a stored wallet ID
+      try {
+        await authState.reconnect();
+        console.log("Auto-reconnect successful");
+      } catch (error) {
+        console.error("Auto-reconnect failed:", error);
+      }
     }
   }
 };
@@ -71,6 +79,9 @@ export const authState = {
   },
   get connectedWalletId() {
     return connectedWalletId;
+  },
+  get isReconnecting() {
+    return isReconnecting;
   },
   get provider() {
     return pnp?.provider;
@@ -118,6 +129,7 @@ export const authState = {
       throw new Error("PNP is not initialized");
     }
     if (connectedWalletId) {
+      isReconnecting = true;
       try {
         const res = await pnp.connect(connectedWalletId);
         account = res;
@@ -130,6 +142,8 @@ export const authState = {
           localStorage.removeItem("connectedWalletId");
         }
         throw error;
+      } finally {
+        isReconnecting = false;
       }
     }
   },
