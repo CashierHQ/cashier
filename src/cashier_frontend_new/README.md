@@ -55,3 +55,34 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+
+## Adding New Components
+
+To add new components to your project, use the npm script:
+
+```bash
+npm run add:ui <component-name>
+```
+
+Or use the shadcn-svelte CLI directly:
+
+```bash
+npx shadcn-svelte@latest add <component-name>
+```
+
+### Examples
+
+```bash
+# Add a button component
+npm run add:ui button
+
+# Add multiple components at once
+npm run add:ui button input card
+
+# Add a component with specific options
+npm run add:ui dialog --yes
+```
+
+### Available Components
+
+Visit [shadcn-svelte components](https://shadcn-svelte.com/docs/components) to see all available components and their documentation.
