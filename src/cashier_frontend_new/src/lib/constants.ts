@@ -17,7 +17,7 @@ export const FEATURE_FLAGS = {
 } as const;
 
 // Network configuration
-export const HOST_IC = PUBLIC_HOST_ICP || "https://ic0.app";
+export const HOST_ICP = PUBLIC_HOST_ICP || "https://ic0.app";
 export const IC_INTERNET_IDENTITY_PROVIDER =
   PUBLIC_IC_INTERNET_IDENTITY_PROVIDER || "https://identity.ic0.app";
 
