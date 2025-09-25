@@ -8,28 +8,27 @@ import { localStorageState } from "../localStorage.svelte";
 // });
 
 // DEMO: This create a fully reactive state object that is automatically persisted with local storage
-const auth = localStorageState('auth', {
-    user: ''
+const auth = localStorageState("auth", {
+  user: "",
 });
 
 export const authState = {
+  get user(): string {
+    return auth.value.user;
+  },
 
-    get user(): string {
-        return auth.value.user;
-    },
+  // DEMO: reactive computed property
+  get isAuthenticated(): boolean {
+    return auth.value.user !== "";
+  },
 
-    // DEMO: reactive computed property
-    get isAuthenticated(): boolean {
-        return auth.value.user !== "";
-    },
+  login(user: string) {
+    console.log("login: ", user);
+    auth.value.user = user;
+  },
 
-    login(user: string) {
-        console.log("login: ", user);
-        auth.value.user = user;
-    },
-
-    logout() {
-        console.log("logout");
-        auth.value.user = "";
-    },
+  logout() {
+    console.log("logout");
+    auth.value.user = "";
+  },
 };
