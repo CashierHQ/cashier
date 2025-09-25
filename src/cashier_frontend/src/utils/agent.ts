@@ -1,5 +1,5 @@
 import { HttpAgent, Identity } from "@dfinity/agent";
-import { FEATURE_FLAGS, IC_HOST } from "@/const";
+import { FEATURE_FLAGS, HOST_IC } from "@/const";
 import { PartialIdentity } from "@dfinity/identity";
 
 /**
@@ -12,7 +12,7 @@ import { PartialIdentity } from "@dfinity/identity";
 export const getAgent = (identity?: Identity | PartialIdentity | undefined) => {
   const agent = HttpAgent.createSync({
     identity,
-    host: IC_HOST,
+    host: HOST_IC,
     shouldFetchRootKey: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER,
   });
   return agent;

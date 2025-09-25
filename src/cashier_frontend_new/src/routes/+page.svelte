@@ -3,8 +3,6 @@
   import { resolve } from "$app/paths";
   // DEMO: `m` is a helper function that statically checks message validity at compile time
   import { m } from "$lib/paraglide/messages.js";
-  import { Button } from "$lib/shadcn/components/ui/button";
-  console.log("The answer is: " + THE_ANSWER);
   // Define click handler function
   function handleClick() {
     console.log("Button clicked!");
@@ -26,3 +24,4 @@
       <p class="py-6"><a class="link" href={resolve('/token')}>Token Price</a></p>
     </div>
   </div>
+</div>  

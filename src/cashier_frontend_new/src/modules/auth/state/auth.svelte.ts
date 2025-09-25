@@ -3,7 +3,7 @@
 import { PNP } from "@windoge98/plug-n-play";
 import {
   FEATURE_FLAGS,
-  IC_HOST,
+  HOST_IC,
   IC_INTERNET_IDENTITY_PROVIDER,
   TARGETS,
   TIMEOUT_NANO_SEC,
@@ -13,7 +13,7 @@ import { IISignerAdapter } from "../signer/ii/IISignerAdapter";
 export const CONFIG = {
   dfxNetwork: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER ? "local" : "ic",
   replicaPort: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER ? 8000 : undefined,
-  hostUrl: IC_HOST,
+  hostUrl: HOST_IC,
   delegationTimeout: TIMEOUT_NANO_SEC,
   delegationTargets: TARGETS,
   fetchRootKey: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER,
@@ -29,7 +29,7 @@ export const CONFIG = {
       config: {
         // url to the provider
         iiProviderUrl: IC_INTERNET_IDENTITY_PROVIDER,
-        hostUrl: IC_HOST,
+        hostUrl: HOST_IC,
         shouldFetchRootKey: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER,
         // set derivationOrigin for production only
         // this setting allow www.cashierapp.io have the same identity as cashierapp.io
