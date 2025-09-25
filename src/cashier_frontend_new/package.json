@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev --port 3000",
+    "dev:local": "vite dev --port 3000 --mode local_dev",
     "dev:dev": "vite dev --port 3000 --mode dev",
     "build": "vite build",
     "build:dev": "vite build --mode dev",
