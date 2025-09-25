@@ -4,23 +4,7 @@
   import { createQuery } from '@tanstack/svelte-query';
   import { getContext } from 'svelte';
 
-  // Create a query to fetch random number from random.org
-  type Repo = {
-    full_name: string
-    description: string
-    subscribers_count: number
-    stargazers_count: number
-    forks_count: number
-  }
-
-  const query = createQuery<Repo>({
-    queryKey: ['repoData'],
-    queryFn: async () =>
-      await fetch('https://api.github.com/repos/TanStack/query').then((r) =>
-        r.json(),
-      ),
-  })
-
+  // Create a query to fetch token prices using the TokenPriceService
   const tokenPriceService = getContext<TokenPriceService>('tokenPriceService');
   const tokenQuery = createQuery<TokenData[]>({
     queryKey: ['tokenPrices'],
