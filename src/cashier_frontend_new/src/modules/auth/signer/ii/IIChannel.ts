@@ -252,9 +252,7 @@ export class IIChannel implements Channel {
           callCanisterRequest.params?.sender !==
           this.#agent.getPrincipal().toString()
         ) {
-          throw new IITransportError(
-            "Sender does not match Agent identity",
-          );
+          throw new IITransportError("Sender does not match Agent identity");
         }
         const agent = await HttpAgent.from(this.#agent);
         let contentMap: ArrayBuffer;
@@ -357,7 +355,7 @@ export class IIChannel implements Channel {
                 }
                 try {
                   const canisterId = Principal.fromText(request.canisterId);
-                  const agent = await HttpAgent.from(this.#agent);
+                  const agent = this.#agent;
                   let contentMap: ArrayBuffer =
                     undefined as unknown as ArrayBuffer;
                   agent.addTransform("update", async (agentRequest) => {
