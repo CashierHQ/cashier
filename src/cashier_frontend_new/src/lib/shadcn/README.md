@@ -2,31 +2,6 @@
 
 This directory contains shadcn-svelte UI components for your SvelteKit project. shadcn-svelte is a collection of reusable components built on top of Tailwind CSS and Radix UI primitives.
 
-## Adding New Components
-
-To add new components to your project, use the shadcn-svelte CLI:
-
-```bash
-npx shadcn-svelte@latest add <component-name>
-```
-
-### Examples
-
-```bash
-# Add a button component
-npx shadcn-svelte@latest add button
-
-# Add multiple components at once
-npx shadcn-svelte@latest add button input card
-
-# Add a component with specific options
-npx shadcn-svelte@latest add dialog --yes
-```
-
-### Available Components
-
-Visit [shadcn-svelte components](https://shadcn-svelte.com/docs/components) to see all available components and their documentation.
-
 ## Folder Structure
 
 ```
