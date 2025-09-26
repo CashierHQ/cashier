@@ -21,6 +21,13 @@ export default defineConfig({
       outdir: "./src/lib/paraglide",
     }),
   ],
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: "globalThis",
+      },
+    },
+  },
   test: {
     expect: { requireAssertions: true },
     projects: [
