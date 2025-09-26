@@ -5,14 +5,22 @@ import { IISignerAdapter } from "../signer/ii/IISignerAdapter";
 import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
 import { IC_INTERNET_IDENTITY_PROVIDER, TARGETS, TIMEOUT_NANO_SEC } from "../constants";
 
+// Config for PNP instance
 export const CONFIG = {
+  // Network settings
   dfxNetwork: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER ? "local" : "ic",
+  // If local dfx network, set replica port
   replicaPort: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER ? 8000 : undefined,
+  // Fetch root key for local network
+  fetchRootKey: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER,
+  // The host URL of the Internet Computer
   hostUrl: HOST_ICP,
+  // Delegation settings
   delegationTimeout: TIMEOUT_NANO_SEC,
   delegationTargets: TARGETS,
-  fetchRootKey: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER,
+  // Whether to verify query signatures
   verifyQuerySignatures: false,
+  // Supported wallet adapters
   adapters: {
     iiSigner: {
       enabled: true,
@@ -47,7 +55,7 @@ let connectedWalletId = $state<string | null>(null);
 // state to indicate if we are reconnecting
 let isReconnecting = $state(false);
 
-// Initialize PNP instance
+// Initialize PNP instance, and attempt auto-reconnect if possible
 const initPnp = async () => {
   if (pnp) {
     return;
@@ -71,6 +79,7 @@ const initPnp = async () => {
   }
 };
 
+// Exported auth state and actions
 export const authState = {
   // Getters account 
   get account() {
@@ -152,4 +161,5 @@ export const authState = {
   },
 };
 
+// Immediately initialize PNP instance on module load
 initPnp();
