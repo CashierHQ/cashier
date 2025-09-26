@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { tokenPriceService } from "$modules/token/services/tokenPrice.svelte";
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+import { tokenPriceService } from "$modules/token/services/tokenPrice.svelte";
   import type { TokenPrice } from "$modules/token/types";
   import { createQuery } from "@tanstack/svelte-query";
 
@@ -22,7 +23,19 @@
   {/if}
   {#if $tokenQuery.isSuccess}
     <div>
-      <h2>Token Prices</h2>
+      <div class="flex items-center gap-4 mb-4">
+        <h2>Token Prices</h2>
+        <Button
+     onclick={() => $tokenQuery.refetch()}
+          disabled={$tokenQuery.isFetching}
+        >
+          {#if $tokenQuery.isFetching}
+            Refetching...
+          {:else}
+            Refetch
+          {/if}
+        </Button>
+      </div>
       <ul>
         {#each $tokenQuery.data as token (token.address)}
           <li>
