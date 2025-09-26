@@ -1,18 +1,21 @@
-// DEMO: no need for complex state management tool
-
 import { createPNP, PNP } from "@windoge98/plug-n-play";
-import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
-import { IC_INTERNET_IDENTITY_PROVIDER, TARGETS, TIMEOUT_NANO_SEC } from "../constants";
-import { accountState } from "$modules/shared/state/account.svelte";
+import { BUILD_TYPE, HOST_ICP } from "$modules/shared/constants";
+import {
+  FEATURE_FLAGS,
+  IC_INTERNET_IDENTITY_PROVIDER,
+  TARGETS,
+  TIMEOUT_NANO_SEC,
+} from "../constants";
+import { accountState } from "$modules/shared/state/auth.svelte";
 
 // Config for PNP instance
 export const CONFIG = {
   // Network settings
-  dfxNetwork: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER ? "local" : "ic",
+  dfxNetwork: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED ? "local" : "ic",
   // If local dfx network, set replica port
-  replicaPort: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER ? 8000 : undefined,
+  replicaPort: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED ? 8000 : undefined,
   // Fetch root key for local network
-  fetchRootKey: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER,
+  fetchRootKey: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED,
   // The host URL of the Internet Computer
   hostUrl: HOST_ICP,
   // Delegation settings
@@ -28,10 +31,10 @@ export const CONFIG = {
         // url to the provider
         iiProviderUrl: IC_INTERNET_IDENTITY_PROVIDER,
         hostUrl: HOST_ICP,
-        shouldFetchRootKey: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER,
+        shouldFetchRootKey: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED,
         //   // set derivationOrigin for production only
         //   // this setting allow www.cashierapp.io have the same identity as cashierapp.io
-        ...(import.meta.env.MODE === "production" && {
+        ...(BUILD_TYPE === "production" && {
           derivationOrigin: "https://cashierapp.io",
         }),
       },
@@ -46,7 +49,7 @@ let connectedWalletId = $state<string | null>(null);
 // state to indicate if we are reconnecting
 let isReconnecting = $state(false);
 
-// Initialize PNP instance, 
+// Initialize PNP instance,
 const initPnp = async () => {
   if (pnp) {
     return;
