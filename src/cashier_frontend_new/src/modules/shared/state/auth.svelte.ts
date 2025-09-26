@@ -6,12 +6,12 @@ let account = $state<{
 
 // Exported account state with get/set
 export const accountState = {
+  // Return current account information, null if not logged in
   get account() {
     return account;
   },
-  set account(
-    value: { owner: string; subaccount: string | null } | null,
-  ) {
+  // Update account information, normally set after login/logout
+  set account(value: { owner: string; subaccount: string | null } | null) {
     account = value;
   },
 };
