@@ -1,8 +1,8 @@
-import { HOST_ICP } from "$modules/shared/constants";
 import type { TokenPrice } from "$modules/token/types";
-import { Actor, HttpAgent } from "@dfinity/agent";
+import { Actor } from "@dfinity/agent";
 import * as icpSwapIndexNode from "$lib/generated/icpswap/icpswapNodeIndex";
 import { ICPSWAP_INDEX_CANISTER_ID } from "../constants";
+import { accountState } from "$modules/shared/state/auth.svelte";
 
 type IndexNodeActor = icpSwapIndexNode._SERVICE;
 
@@ -13,9 +13,7 @@ class TokenPriceService {
   private actor: IndexNodeActor;
 
   constructor() {
-    const agent = new HttpAgent({
-      host: HOST_ICP,
-    });
+    const agent = accountState.agent;
     this.actor = Actor.createActor(icpSwapIndexNode.idlFactory, {
       agent,
       canisterId: ICPSWAP_INDEX_CANISTER_ID,
