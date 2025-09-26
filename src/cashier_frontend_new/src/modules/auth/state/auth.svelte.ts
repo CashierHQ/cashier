@@ -17,7 +17,6 @@ export const CONFIG = {
     iiSigner: {
       enabled: true,
       walletName: "Internet Identity",
-      logo: "123",
       website: "https://internetcomputer.org",
       chain: "ICP",
       adapter: IISignerAdapter,
