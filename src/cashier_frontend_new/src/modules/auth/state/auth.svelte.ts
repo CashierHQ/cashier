@@ -2,8 +2,8 @@
 
 import { PNP } from "@windoge98/plug-n-play";
 import { IISignerAdapter } from "../signer/ii/IISignerAdapter";
-import { HOST_ICP } from "$modules/shared/constants";
-import { FEATURE_FLAGS, IC_INTERNET_IDENTITY_PROVIDER, TARGETS, TIMEOUT_NANO_SEC } from "../constants";
+import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
+import { IC_INTERNET_IDENTITY_PROVIDER, TARGETS, TIMEOUT_NANO_SEC } from "../constants";
 
 export const CONFIG = {
   dfxNetwork: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER ? "local" : "ic",
