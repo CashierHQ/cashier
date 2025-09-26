@@ -24,6 +24,7 @@ export default defineConfig({
   optimizeDeps: {
     esbuildOptions: {
       define: {
+        // polyfill for esbuild, use for any nodejs standard library module used in the browser
         global: "globalThis",
       },
     },
