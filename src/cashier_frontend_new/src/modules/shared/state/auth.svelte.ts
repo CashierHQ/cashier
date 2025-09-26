@@ -1,6 +1,6 @@
 // Account state management
 let account = $state<{
-  owner: string | null;
+  owner: string;
   subaccount: string | null;
 } | null>(null);
 
@@ -10,7 +10,7 @@ export const accountState = {
     return account;
   },
   set account(
-    value: { owner: string | null; subaccount: string | null } | null,
+    value: { owner: string; subaccount: string | null } | null,
   ) {
     account = value;
   },

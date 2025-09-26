@@ -93,7 +93,13 @@ export const authState = {
     }
     try {
       const res = await pnp.connect(walletId);
-      accountState.account = res;
+      if (res.owner === null) {
+        throw new Error("Login failed: owner is null");
+      }
+      accountState.account = {
+        owner: res.owner,
+        subaccount: res.subaccount,
+      }
       connectedWalletId = walletId;
       // Store wallet ID in localStorage for persistence
       if (typeof window !== "undefined") {
@@ -133,7 +139,13 @@ export const authState = {
       isReconnecting = true;
       try {
         const res = await pnp.connect(connectedWalletId);
-        accountState.account = res;
+        if (res.owner === null) {
+          throw new Error("Login failed: owner is null");
+        }
+        accountState.account = {
+          owner: res.owner,
+          subaccount: res.subaccount,
+        }
         console.log("Auto-reconnect successful");
       } catch (error) {
         console.error("Reconnect failed:", error);
