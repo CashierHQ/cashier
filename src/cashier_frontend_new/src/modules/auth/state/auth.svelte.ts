@@ -1,7 +1,6 @@
 // DEMO: no need for complex state management tool
 
-import { PNP } from "@windoge98/plug-n-play";
-import { IISignerAdapter } from "../signer/ii/IISignerAdapter";
+import { createPNP, PNP } from "@windoge98/plug-n-play";
 import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
 import { IC_INTERNET_IDENTITY_PROVIDER, TARGETS, TIMEOUT_NANO_SEC } from "../constants";
 
@@ -22,19 +21,15 @@ export const CONFIG = {
   verifyQuerySignatures: false,
   // Supported wallet adapters
   adapters: {
-    iiSigner: {
+    ii: {
       enabled: true,
-      walletName: "Internet Identity",
-      website: "https://internetcomputer.org",
-      chain: "ICP",
-      adapter: IISignerAdapter,
       config: {
         // url to the provider
         iiProviderUrl: IC_INTERNET_IDENTITY_PROVIDER,
         hostUrl: HOST_ICP,
         shouldFetchRootKey: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER,
-        // set derivationOrigin for production only
-        // this setting allow www.cashierapp.io have the same identity as cashierapp.io
+        //   // set derivationOrigin for production only
+        //   // this setting allow www.cashierapp.io have the same identity as cashierapp.io
         ...(import.meta.env.MODE === "production" && {
           derivationOrigin: "https://cashierapp.io",
         }),
@@ -55,13 +50,12 @@ let connectedWalletId = $state<string | null>(null);
 // state to indicate if we are reconnecting
 let isReconnecting = $state(false);
 
-// Initialize PNP instance, and attempt auto-reconnect if possible
+// Initialize PNP instance, 
 const initPnp = async () => {
   if (pnp) {
     return;
   }
-  const newPnp = new PNP(CONFIG);
-  pnp = newPnp;
+  pnp = createPNP(CONFIG);
 
   // Try to get stored wallet ID from localStorage
   if (typeof window !== "undefined") {

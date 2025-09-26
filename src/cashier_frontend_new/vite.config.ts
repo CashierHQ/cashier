@@ -21,14 +21,6 @@ export default defineConfig({
       outdir: "./src/lib/paraglide",
     }),
   ],
-  optimizeDeps: {
-    esbuildOptions: {
-      define: {
-        // polyfill for esbuild, use for any nodejs standard library module used in the browser
-        global: "globalThis",
-      },
-    },
-  },
   test: {
     expect: { requireAssertions: true },
     projects: [
