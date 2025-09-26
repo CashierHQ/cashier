@@ -1,0 +1,9 @@
+{
+  "project": [
+    "src/**"
+  ],
+  "ignore": [
+    "src/workers/**",
+    "src/generated/**"
+  ]
+}

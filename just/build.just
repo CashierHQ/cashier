@@ -13,7 +13,7 @@ clean:
 
 # Builds and download all artifacts
 [group('build')]
-build: download_artifacts build_canisters generate_frontend_ts build_frontend build_frontend_new
+build: download_artifacts build_canisters generate_frontend_ts build_frontend
 
 
 # Builds the canisters
@@ -28,11 +28,6 @@ build_canisters: pre_build
 [group('build')]
 build_frontend mode="local_dev": install_frontend_deps
   cd "{{FRONTEND_DIR}}" && npm run build:{{mode}}
-
-# Builds the frontend_new
-[group('build')]
-build_frontend_new:
-  cd "{{FRONTEND_DIR_NEW}}" && npm install
   cd "{{FRONTEND_DIR_NEW}}" && npm run build
 
 # Generates the ts files for the canister services 
@@ -46,6 +41,7 @@ generate_frontend_ts:
 [private]
 install_frontend_deps:
   cd {{FRONTEND_DIR}} && npm install
+  cd "{{FRONTEND_DIR_NEW}}" && npm install
 
 [private]
 generate_frontend_ts_for_canister canister:
