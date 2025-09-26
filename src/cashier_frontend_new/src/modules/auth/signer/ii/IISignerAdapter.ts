@@ -7,11 +7,19 @@ import { IITransport } from "./IITransport";
 import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
 import { getScreenDimensions } from "$modules/shared/utils";
 
+/**
+ * Account interface representing the connected user's account details.
+ */
 interface Account {
   owner: string | null;
   subaccount: string | null;
 }
-
+/**
+ * IISignerAdapter integrates Internet Identity (II) with the Plug and Play (PNP).
+ * By default PNP support a IIAdapter from plug-n-play, but it doesn't use signer-js
+ * which is required for the new transaction flow in Cashier.
+ * This adapter implements II support using signer-js.
+ */
 export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   // II specific properties
   private authClient: AuthClient | null = null;

@@ -2,6 +2,11 @@ import { type Channel, type Transport } from "@slide-computer/signer";
 import { IIChannel } from "./IIChannel";
 import { HttpAgent } from "@dfinity/agent";
 
+
+// TODO: Remove this if all PRs resolve
+// - https://github.com/slide-computer/signer-js/pull/9
+// - https://github.com/slide-computer/signer-js/pull/10
+// - https://github.com/slide-computer/signer-js/pull/11
 /**
  * Error type used by the AgentTransport implementation.
  */
@@ -20,6 +25,10 @@ interface AgentTransportOptions {
   agent: HttpAgent;
 }
 
+// TODO: Remove this if all PRs resolve
+// - https://github.com/slide-computer/signer-js/pull/9
+// - https://github.com/slide-computer/signer-js/pull/10
+// - https://github.com/slide-computer/signer-js/pull/11
 /**
  * Transport implementation that wraps an {@link HttpAgent}
  * Transport for communication between relying party and signer

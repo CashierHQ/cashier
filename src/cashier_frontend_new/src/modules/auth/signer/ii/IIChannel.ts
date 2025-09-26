@@ -33,6 +33,11 @@ import { Principal } from "@dfinity/principal";
 import { IDL } from "@dfinity/candid";
 import type { Icrc114ValidateArgs } from "$lib/generated/cashier_backend/cashier_backend.did";
 
+
+// TODO: Remove this if all PRs resolve
+// - https://github.com/slide-computer/signer-js/pull/9
+// - https://github.com/slide-computer/signer-js/pull/10
+// - https://github.com/slide-computer/signer-js/pull/11
 /**
  * IIChannel implements the `Channel` contract used by the signer layer.
  *
