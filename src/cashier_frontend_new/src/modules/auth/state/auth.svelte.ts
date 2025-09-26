@@ -1,14 +1,9 @@
 // DEMO: no need for complex state management tool
 
 import { PNP } from "@windoge98/plug-n-play";
-import {
-  FEATURE_FLAGS,
-  HOST_ICP,
-  IC_INTERNET_IDENTITY_PROVIDER,
-  TARGETS,
-  TIMEOUT_NANO_SEC,
-} from "$lib/constants";
 import { IISignerAdapter } from "../signer/ii/IISignerAdapter";
+import { HOST_ICP } from "$modules/shared/constants";
+import { FEATURE_FLAGS, IC_INTERNET_IDENTITY_PROVIDER, TARGETS, TIMEOUT_NANO_SEC } from "../constants";
 
 export const CONFIG = {
   dfxNetwork: FEATURE_FLAGS.ENABLE_LOCAL_IDENTITY_PROVIDER ? "local" : "ic",
@@ -41,15 +36,19 @@ export const CONFIG = {
   },
 };
 
+// State variables
 let pnp = $state<PNP | null>(null);
+// current connected account info
 let account = $state<{
   owner: string | null;
   subaccount: string | null;
 } | null>(null);
 // state to store connected wallet ID for reconnecting later
 let connectedWalletId = $state<string | null>(null);
+// state to indicate if we are reconnecting
 let isReconnecting = $state(false);
 
+// Initialize PNP instance
 const initPnp = async () => {
   if (pnp) {
     return;
@@ -74,15 +73,19 @@ const initPnp = async () => {
 };
 
 export const authState = {
+  // Getters account 
   get account() {
     return account;
   },
+  // Getter connectedWalletId
   get connectedWalletId() {
     return connectedWalletId;
   },
+  // Getter isReconnecting
   get isReconnecting() {
     return isReconnecting;
   },
+  // Getter PNP instance
   get provider() {
     return pnp?.provider;
   },
@@ -124,6 +127,7 @@ export const authState = {
     }
   },
 
+  // Reconnect to previously connected wallet, if still possible
   async reconnect() {
     if (!pnp) {
       throw new Error("PNP is not initialized");
