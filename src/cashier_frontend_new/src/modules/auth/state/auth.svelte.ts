@@ -3,6 +3,7 @@
 import { createPNP, PNP } from "@windoge98/plug-n-play";
 import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
 import { IC_INTERNET_IDENTITY_PROVIDER, TARGETS, TIMEOUT_NANO_SEC } from "../constants";
+import { accountState } from "$modules/shared/state/account.svelte";
 
 // Config for PNP instance
 export const CONFIG = {
@@ -40,11 +41,6 @@ export const CONFIG = {
 
 // State variables
 let pnp = $state<PNP | null>(null);
-// current connected account info
-let account = $state<{
-  owner: string | null;
-  subaccount: string | null;
-} | null>(null);
 // state to store connected wallet ID for reconnecting later
 let connectedWalletId = $state<string | null>(null);
 // state to indicate if we are reconnecting
@@ -75,10 +71,6 @@ const initPnp = async () => {
 
 // Exported auth state and actions
 export const authState = {
-  // Getters account 
-  get account() {
-    return account;
-  },
   // Getter connectedWalletId
   get connectedWalletId() {
     return connectedWalletId;
@@ -98,7 +90,7 @@ export const authState = {
     }
     try {
       const res = await pnp.connect(walletId);
-      account = res;
+      accountState.account = res;
       connectedWalletId = walletId;
       // Store wallet ID in localStorage for persistence
       if (typeof window !== "undefined") {
@@ -117,7 +109,7 @@ export const authState = {
     }
     try {
       await pnp.disconnect();
-      account = null;
+      accountState.account = null;
       connectedWalletId = null;
       // Remove wallet ID from localStorage
       if (typeof window !== "undefined") {
@@ -138,7 +130,7 @@ export const authState = {
       isReconnecting = true;
       try {
         const res = await pnp.connect(connectedWalletId);
-        account = res;
+        accountState.account = res;
         console.log("Auto-reconnect successful");
       } catch (error) {
         console.error("Reconnect failed:", error);
