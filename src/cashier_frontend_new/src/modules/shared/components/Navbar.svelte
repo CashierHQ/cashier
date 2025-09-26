@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import { authState } from "$modules/auth/state/auth.svelte";
-  import {accountState} from "$modules/shared/state/account.svelte";
+  import { accountState } from "$modules/shared/state/auth.svelte";
   import { Button } from "$lib/shadcn/components/ui/button";
 
   async function handleLogin(walletId: string) {

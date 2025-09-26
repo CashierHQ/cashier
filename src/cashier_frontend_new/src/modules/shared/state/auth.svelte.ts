@@ -9,7 +9,9 @@ export const accountState = {
   get account() {
     return account;
   },
-  set account(value: { owner: string | null; subaccount: string | null; } | null) {
+  set account(
+    value: { owner: string | null; subaccount: string | null } | null,
+  ) {
     account = value;
   },
 };
