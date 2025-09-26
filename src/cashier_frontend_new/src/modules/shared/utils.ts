@@ -1,7 +1,7 @@
 /**
  * Gets the screen dimensions of the user's device.
- * Returns actual screen dimensions in browser environment,
- * or default HD dimensions for server-side rendering.
+ * Returns actual screen dimensions in browser environment.
+ * If window.screen is not available, returns default dimensions of 1920x1080.
  *
  * @returns {Object} Screen dimensions with width and height properties
  * @returns {number} return.width - Screen width in pixels
@@ -14,7 +14,8 @@ export const getScreenDimensions = () => {
       height: window.screen.height,
     };
   }
-  // Default dimensions for SSR
+
+  // Default dimensions 
   return {
     width: 1920,
     height: 1080,
