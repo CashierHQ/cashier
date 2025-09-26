@@ -82,9 +82,13 @@ export const authState = {
   get isReconnecting() {
     return isReconnecting;
   },
-  // Getter PNP instance
+  // Getter PNP provider
   get provider() {
     return pnp?.provider;
+  },
+  // Getter PNP
+  get pnp() {
+    return pnp;
   },
   // Connect to wallet
   async login(walletId: string) {
