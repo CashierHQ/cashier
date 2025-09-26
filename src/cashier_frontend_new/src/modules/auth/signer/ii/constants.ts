@@ -5,6 +5,10 @@ import type {
   SupportedStandard,
 } from "@slide-computer/signer";
 
+// TODO: Remove this if all PRs resolve
+// - https://github.com/slide-computer/signer-js/pull/9
+// - https://github.com/slide-computer/signer-js/pull/10
+// - https://github.com/slide-computer/signer-js/pull/11
 export const supportedStandards: SupportedStandard[] = [
   {
     name: "ICRC-1",
