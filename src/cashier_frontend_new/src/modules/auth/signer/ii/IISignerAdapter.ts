@@ -4,8 +4,7 @@ import { BaseSignerAdapter } from "@windoge98/plug-n-play";
 import { type IIAdapterConfig, isIIAdapterConfig, Status } from "./type";
 import { Signer, type Transport } from "@slide-computer/signer";
 import { IITransport } from "./IITransport";
-import { HOST_ICP } from "$modules/shared/constants";
-import { FEATURE_FLAGS } from "$modules/auth/constants";
+import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
 import { getScreenDimensions } from "$modules/shared/utils";
 
 interface Account {
