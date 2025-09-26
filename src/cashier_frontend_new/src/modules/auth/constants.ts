@@ -5,4 +5,4 @@ export const TIMEOUT_NANO_SEC = 60 * 60 * 1_000_000_000
 // The canister IDs that the identity can call
 export const TARGETS = [PUBLIC_BACKEND_CANISTER_ID, PUBLIC_TOKEN_STORAGE_CANISTER_ID];
 // The Internet Identity provider URL
-export const IC_INTERNET_IDENTITY_PROVIDER = PUBLIC_IC_INTERNET_IDENTITY_PROVIDER || "https://id.ai";
+export const IC_INTERNET_IDENTITY_PROVIDER = PUBLIC_IC_INTERNET_IDENTITY_PROVIDER;
