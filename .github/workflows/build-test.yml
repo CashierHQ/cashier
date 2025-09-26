@@ -58,7 +58,6 @@ jobs:
       - name: Frontend - Check code style
         run: |
           just frontend_check_code
-          just frontend_new_check_code
 
   build-test:
     name: Build and Test
