@@ -79,11 +79,12 @@ export class DataState<T> {
                 type: "state",
                 data
             }
-        }
-
-        if (this.data === undefined) {
+            console.log("call fetch from constructor");
             this.#fetch();
         }
+
+        // if (this.data === undefined) {
+        // }
 
         console.log("data state created: ", this.#data.type);
 
@@ -108,6 +109,9 @@ export class DataState<T> {
 
     get data(): T | undefined {
         const data = this.#data;
+
+        console.log("data: ", data);
+
         if (data === undefined) {
             return undefined;
         }
@@ -121,6 +125,7 @@ export class DataState<T> {
         }
 
         if (fetchedData === undefined) {
+            console.log("fetchedData is undefined");
             return undefined;
         }
 
@@ -148,6 +153,7 @@ export class DataState<T> {
     }
 
     #setData(data: Data<T> | undefined) {
+        console.log("setData: ", data);
         if (this.#data.type === "state") {
             this.#data.data = data;
         } else if (this.#data.type === "persisted") {
@@ -162,6 +168,7 @@ export class DataState<T> {
 
         this.#config.queryFn()
             .then((data) => {
+                console.log("fetched data: ", data);
                 this.#setData({
                     created_ts: Date.now(),
                     data

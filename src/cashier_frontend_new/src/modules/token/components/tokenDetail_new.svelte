@@ -17,7 +17,7 @@
     },
     // staleTime: 5_000,
     // refetchInterval: 10_000,
-    persistedKey: ["tokenMetadata", data.price.address],
+    // persistedKey: ["tokenMetadata", data.price.address],
   })
 
 
@@ -27,7 +27,7 @@
     {data.price.symbol} ({data.price.standard}): ${data.price.priceUSD.toFixed(5)} - metadata: 
 
     -- QUERY 1:
-     {#if tokenMetadataQuery.isPending}
+     {#if tokenMetadataQuery.isLoading}
       Loading...
     {/if}
 {#if tokenMetadataQuery.error}
