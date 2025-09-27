@@ -1,30 +1,26 @@
 <script lang="ts">
-    import TokenDetail from "$modules/token/components/tokenDetail.svelte";
-    import { tokenMetadataService } from "$modules/token/services/tokenMetadata";
+    import { resolve } from "$app/paths";
+
+    // import TokenDetail from "$modules/token/components/tokenDetail.svelte";
+    import TokenDetail from "$modules/token/components/tokenDetail_new.svelte";
   import { tokenPriceService } from "$modules/token/services/tokenPrice";
   import type { TokenPrice } from "$modules/token/types";
-    import type { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
   import { createQuery } from "@tanstack/svelte-query";
 
   // Create a query to fetch token prices using the TokenPriceService
   const tokenPriceQuery = createQuery<TokenPrice[]>({
     queryKey: ["tokenPrices"],
     queryFn: async () => {
+      console.log("fetching token prices from react-query");
       return tokenPriceService.getTokens();
     },
+    refetchInterval: 5_000,
   });
 
-  // Create a query to fetch token metadata
-  const tokenMetadataQuery = (tokenAddress: string) => createQuery<IcrcTokenMetadata | undefined>({
-    queryKey: ["tokenMetadata", tokenAddress],
-    queryFn: async () => {
-      return tokenMetadataService.getTokenMetadata(tokenAddress);
-    },
-  })
 
-  const tokenMetadata = tokenMetadataQuery("tokenAddress");
-  $tokenMetadata.isPending;
 </script>
+
+<p class="py-6"><a class="link" href={resolve("/")}>Go to Home</a></p>
 
 <div>
   {#if $tokenPriceQuery.isPending}
