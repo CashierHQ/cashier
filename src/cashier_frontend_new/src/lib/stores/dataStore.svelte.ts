@@ -72,31 +72,34 @@ export class DataState<T> {
             this.#data = {
                 type: "persisted",
                 data: persist,
-            }
+            };
+            if (get(persist) === undefined) {
+                this.#fetch();
+            };
         } else {
             let data = $state<Data<T> | undefined>();
             this.#data = {
                 type: "state",
                 data
             }
-            console.log("call fetch from constructor");
+            // console.log("call fetch from constructor");
             this.#fetch();
         }
 
         // if (this.data === undefined) {
         // }
 
-        console.log("data state created: ", this.#data.type);
+        // console.log("data state created: ", this.#data.type);
 
         if (config.refetchInterval) {
             const interval = setInterval(() => {
-                console.log("refetching data...");
+                // console.log("refetching data...");
                 this.#fetch();
             }, config.refetchInterval);
 
             try {
                 onDestroy(() => {
-                    console.log("clearing interval");
+                    // console.log("clearing interval");
                     clearInterval(interval)
                 })
             } catch (_e) {
@@ -110,12 +113,10 @@ export class DataState<T> {
     get data(): T | undefined {
         const data = this.#data;
 
-        console.log("data: ", data);
-
         if (data === undefined) {
             return undefined;
         }
-        
+
         let fetchedData;
 
         if (data.type === "state") {
@@ -125,7 +126,6 @@ export class DataState<T> {
         }
 
         if (fetchedData === undefined) {
-            console.log("fetchedData is undefined");
             return undefined;
         }
 
@@ -135,12 +135,9 @@ export class DataState<T> {
         } else {
             return fetchedData.data;
         }
-
     }
 
-
-
-    get isPending(): boolean {
+    get isLoading(): boolean {
         return this.#isLoading;
     }
 
@@ -153,7 +150,6 @@ export class DataState<T> {
     }
 
     #setData(data: Data<T> | undefined) {
-        console.log("setData: ", data);
         if (this.#data.type === "state") {
             this.#data.data = data;
         } else if (this.#data.type === "persisted") {
@@ -162,26 +158,35 @@ export class DataState<T> {
     }
 
     #fetch() {
+        // console.log("fetching data...");
         this.#isLoading = true;
         this.#isSuccess = false;
         this.#error = undefined;
 
-        this.#config.queryFn()
-            .then((data) => {
-                console.log("fetched data: ", data);
-                this.#setData({
-                    created_ts: Date.now(),
-                    data
+        try {
+            this.#config.queryFn()
+                .then((data) => {
+                    // console.log("fetched data: ");
+                    this.#setData({
+                        created_ts: Date.now(),
+                        data
+                    });
+                    this.#isLoading = false;
+                    this.#error = undefined;
+                    this.#isSuccess = true;
+                })
+                .catch((error) => {
+                    // console.log("error fetching data: ");
+                    this.#isLoading = false;
+                    this.#error = error;
+                    this.#isSuccess = false;
                 });
-                this.#isLoading = false;
-                this.#error = undefined;
-                this.#isSuccess = true;
-            })
-            .catch((error) => {
-                this.#isLoading = false;
-                this.#error = error;
-                this.#isSuccess = false;
-            });
+        } catch (e) {
+            this.#isLoading = false;
+            this.#error = e;
+            this.#isSuccess = false;
+            return;
+        }
     }
 
 }
