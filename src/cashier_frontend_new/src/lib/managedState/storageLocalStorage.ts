@@ -6,23 +6,22 @@ import * as devalue from "devalue";
  * Data is stored as devalue
  */
 export class LocalStorageStore<T> implements Storage<T> {
+  readonly key: string;
 
-    readonly key: string;
+  constructor(key: string | string[]) {
+    this.key = Array.isArray(key) ? key.join(".") : key;
+  }
 
-    constructor(key: string | string[]) {
-        this.key = Array.isArray(key) ? key.join(".") : key;
-    }
+  getItem(): T | null {
+    const item = localStorage.getItem(this.key);
+    return item ? devalue.parse(item) : null;
+  }
 
-    getItem(): T | null {
-        const item = localStorage.getItem(this.key);
-        return item ? devalue.parse(item) : null;
-    }
+  setItem(value: T): void {
+    localStorage.setItem(this.key, devalue.stringify(value));
+  }
 
-    setItem(value: T): void {
-        localStorage.setItem(this.key, devalue.stringify(value));
-    }
-    
-    removeItem(): void {
-        localStorage.removeItem(this.key);
-    }
+  removeItem(): void {
+    localStorage.removeItem(this.key);
+  }
 }

@@ -7,70 +7,70 @@ import * as devalue from "devalue";
 import { LocalStorageStore } from "./storageLocalStorage";
 
 describe("LocalStorageStore", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
 
-    beforeEach(() => {
-        localStorage.clear();
-    })
+  it("should get set and remove items", () => {
+    // Arrange
+    let store = new LocalStorageStore("test_key");
+    store.removeItem();
 
-    it('should get set and remove items', () => {
-        // Arrange
-        let store = new LocalStorageStore("test_key");
-        store.removeItem();
+    // Act
+    store.setItem("test");
 
-        // Act
-        store.setItem("test");
+    // Assert
+    expect(store.getItem()).toEqual("test");
+    expect(localStorage.getItem("test_key")).toEqual(devalue.stringify("test"));
 
-        // Assert
-        expect(store.getItem()).toEqual("test");
-        expect(localStorage.getItem("test_key")).toEqual(devalue.stringify("test"));
+    // Act
+    store.removeItem();
 
-        // Act
-        store.removeItem();
+    // Assert
+    expect(store.getItem()).toEqual(null);
+    expect(localStorage.getItem("test_key")).toEqual(null);
+  });
 
-        // Assert
-        expect(store.getItem()).toEqual(null);
-        expect(localStorage.getItem("test_key")).toEqual(null);
+  it("should overwrite items", () => {
+    // Arrange
+    let store = new LocalStorageStore("test_key");
+    store.removeItem();
 
-    })
+    // Act
+    store.setItem("test");
+    store.setItem("test2");
 
-    it('should overwrite items', () => {
-        // Arrange
-        let store = new LocalStorageStore("test_key");
-        store.removeItem();
+    // Assert
+    expect(store.getItem()).toEqual("test2");
+    expect(localStorage.getItem("test_key")).toEqual(
+      devalue.stringify("test2"),
+    );
+  });
 
-        // Act
-        store.setItem("test");
-        store.setItem("test2");
+  it("should get global initial value if present", () => {
+    // Arrange
+    let store = new LocalStorageStore("test_key");
+    store.removeItem();
+    store.setItem(123456);
 
-        // Assert
-        expect(store.getItem()).toEqual("test2");
-        expect(localStorage.getItem("test_key")).toEqual(devalue.stringify("test2"));
-    })
+    // Act
+    let store2 = new LocalStorageStore("test_key");
 
-    it('should get global initial value if present', () => {
-        // Arrange
-        let store = new LocalStorageStore("test_key")
-        store.removeItem();
-        store.setItem(123456);
+    // Assert
+    expect(store2.getItem()).toEqual(123456);
+  });
 
-        // Act
-        let store2 = new LocalStorageStore("test_key");
+  it("should use different keys", () => {
+    // Arrange
+    let store = new LocalStorageStore("test_key");
+    store.removeItem();
 
-        // Assert
-        expect(store2.getItem()).toEqual(123456);
-    })
+    // Act
+    let store2 = new LocalStorageStore("test_key2");
+    store2.setItem(123456);
 
-    it('should use different keys', () => {
-        // Arrange
-        let store = new LocalStorageStore("test_key");
-        store.removeItem();
-
-        // Act
-        let store2 = new LocalStorageStore("test_key2");
-        store2.setItem(123456);
-
-        // Assert
-        expect(store.getItem()).toEqual(null);
-        expect(store2.getItem()).toEqual(123456);
-    })
-})
+    // Assert
+    expect(store.getItem()).toEqual(null);
+    expect(store2.getItem()).toEqual(123456);
+  });
+});

@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { resolve } from "$app/paths";
+  import { resolve } from "$app/paths";
 
-    // import TokenDetail from "$modules/token/components/tokenDetail.svelte";
-    import TokenDetail from "$modules/token/components/tokenDetail_new.svelte";
+  // import TokenDetail from "$modules/token/components/tokenDetail.svelte";
+  import TokenDetail from "$modules/token/components/tokenDetail_new.svelte";
   import { tokenPriceService } from "$modules/token/services/tokenPrice";
   import type { TokenPrice } from "$modules/token/types";
   import { createQuery } from "@tanstack/svelte-query";
@@ -16,8 +16,6 @@
     },
     refetchInterval: 5_000,
   });
-
-
 </script>
 
 <p class="py-6"><a class="link" href={resolve("/")}>Go to Home</a></p>
