@@ -7,70 +7,72 @@ import * as devalue from "devalue";
 import { SessionStorageStore } from "./storageSessionStorage";
 
 describe("SessionStorageStore", () => {
+  beforeEach(() => {
+    sessionStorage.clear();
+  });
 
-    beforeEach(() => {
-        sessionStorage.clear();
-    })
+  it("should get set and remove items", () => {
+    // Arrange
+    let store = new SessionStorageStore("test_key");
+    store.removeItem();
 
-    it('should get set and remove items', () => {
-        // Arrange
-        let store = new SessionStorageStore("test_key");
-        store.removeItem();
+    // Act
+    store.setItem("test");
 
-        // Act
-        store.setItem("test");
+    // Assert
+    expect(store.getItem()).toEqual("test");
+    expect(sessionStorage.getItem("test_key")).toEqual(
+      devalue.stringify("test"),
+    );
 
-        // Assert
-        expect(store.getItem()).toEqual("test");
-        expect(sessionStorage.getItem("test_key")).toEqual(devalue.stringify("test"));
+    // Act
+    store.removeItem();
 
-        // Act
-        store.removeItem();
+    // Assert
+    expect(store.getItem()).toEqual(null);
+    expect(sessionStorage.getItem("test_key")).toEqual(null);
+  });
 
-        // Assert
-        expect(store.getItem()).toEqual(null);
-        expect(sessionStorage.getItem("test_key")).toEqual(null);
+  it("should overwrite items", () => {
+    // Arrange
+    let store = new SessionStorageStore("test_key");
+    store.removeItem();
 
-    })
+    // Act
+    store.setItem("test");
+    store.setItem("test2");
 
-    it('should overwrite items', () => {
-        // Arrange
-        let store = new SessionStorageStore("test_key");
-        store.removeItem();
+    // Assert
+    expect(store.getItem()).toEqual("test2");
+    expect(sessionStorage.getItem("test_key")).toEqual(
+      devalue.stringify("test2"),
+    );
+  });
 
-        // Act
-        store.setItem("test");
-        store.setItem("test2");
+  it("should get global initial value if present", () => {
+    // Arrange
+    let store = new SessionStorageStore("test_key");
+    store.removeItem();
+    store.setItem(123456);
 
-        // Assert
-        expect(store.getItem()).toEqual("test2");
-        expect(sessionStorage.getItem("test_key")).toEqual(devalue.stringify("test2"));
-    })
+    // Act
+    let store2 = new SessionStorageStore("test_key");
 
-    it('should get global initial value if present', () => {
-        // Arrange
-        let store = new SessionStorageStore("test_key")
-        store.removeItem();
-        store.setItem(123456);
+    // Assert
+    expect(store2.getItem()).toEqual(123456);
+  });
 
-        // Act
-        let store2 = new SessionStorageStore("test_key");
+  it("should use different keys", () => {
+    // Arrange
+    let store = new SessionStorageStore("test_key");
+    store.removeItem();
 
-        // Assert
-        expect(store2.getItem()).toEqual(123456);
-    })
+    // Act
+    let store2 = new SessionStorageStore("test_key2");
+    store2.setItem(123456);
 
-    it('should use different keys', () => {
-        // Arrange
-        let store = new SessionStorageStore("test_key");
-        store.removeItem();
-
-        // Act
-        let store2 = new SessionStorageStore("test_key2");
-        store2.setItem(123456);
-
-        // Assert
-        expect(store.getItem()).toEqual(null);
-        expect(store2.getItem()).toEqual(123456);
-    })
-})
+    // Assert
+    expect(store.getItem()).toEqual(null);
+    expect(store2.getItem()).toEqual(123456);
+  });
+});

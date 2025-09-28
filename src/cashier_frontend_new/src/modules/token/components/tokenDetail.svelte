@@ -17,21 +17,21 @@
       return tokenMetadataService.getTokenMetadata(data.price.address);
     },
   });
-
 </script>
 
-  <li>
-    {data.price.symbol} ({data.price.standard}): ${data.price.priceUSD.toFixed(5)} - metadata: 
+<li>
+  {data.price.symbol} ({data.price.standard}): ${data.price.priceUSD.toFixed(5)}
+  - metadata:
 
-     {#if $tokenMetadataQuery.isPending}
-      Loading...
-    {/if}
-{#if $tokenMetadataQuery.error}
+  {#if $tokenMetadataQuery.isPending}
+    Loading...
+  {/if}
+  {#if $tokenMetadataQuery.error}
     Cannot fetch token metadata
     <!-- {$tokenMetadataQuery.error.message} -->
   {/if}
   {#if $tokenMetadataQuery.isSuccess}
-    decimals: {$tokenMetadataQuery.data?.decimals} - fee: {$tokenMetadataQuery.data?.fee} 
+    decimals: {$tokenMetadataQuery.data?.decimals} - fee: {$tokenMetadataQuery
+      .data?.fee}
   {/if}
-
-  </li>
+</li>
