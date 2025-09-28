@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GlobalStore } from ".";
+import { GlobalStore } from "./storageGlobal";
 
 describe("GlobalStore", () => {
 

@@ -1,9 +1,10 @@
 import { onDestroy } from "svelte";
-import { persisted, type Persisted } from "svelte-persisted-store";
-import { get } from 'svelte/store'
-import * as devalue from "devalue";
+import type { Storage } from ".";
+import { GlobalStore } from "./storageGlobal";
+import { LocalStorageStore } from "./storageLocalStorage";
+import { NoOpsStore } from "./storageNoOps";
 
-export type DataStateConfig<T> = {
+export type StateConfig<T> = {
     queryFn: () => Promise<T>,
     /**
      * The time in milliseconds after data is considered stale.
@@ -17,8 +18,8 @@ export type DataStateConfig<T> = {
      */
     refetchInterval?: number,
     /**
-     * If provided, the data will be persisted in the browser's local storage.
-     * If undefined or empty, the data will not be persisted.
+     * If provided, the data will be persisted in a storage. The default storage is 'global', which stores the data in the 
+     * global window object.
      * Defaults to `undefined`
      */
     persistedKey?: string[]
@@ -26,13 +27,13 @@ export type DataStateConfig<T> = {
     /**
      * Only valid if `persisted_key` is provided. 
      * The type of storage to use for persisting the data.
-     * Defaults to 'local'.
+     * Defaults to `global`.
      * 
-     * 'session' for sessionStorage
-     * 'local' for localStorage
+     * - `global`: storage in the global window object
+     * - `localStorage`: storage in the localStorage
      * 
      */
-    storageType?: 'session' | 'local',
+    storageType?: 'global' | 'localStorage',
 }
 
 type Data<T> = {
@@ -41,53 +42,38 @@ type Data<T> = {
     data: T
 }
 
-type DataStorage<T> = {
-    type: "state",
-    data: Data<T> | undefined
-} | {
-    type: "persisted",
-    data: Persisted<Data<T> | undefined>
-}
-
-export class DataState<T> {
+// A svelte state that automatically manages fetching data from a queryFn
+export class ManagedState<T> {
     #isLoading = $state(false);
     #error = $state();
     #isSuccess = $state(true);
-    #data: DataStorage<T>;
-    #config: DataStateConfig<T>;
+    #data = $state<Data<T> | undefined>();
+    #storage: Storage<Data<T>>;
+    #config: StateConfig<T>;
 
-    constructor(config: DataStateConfig<T>) {
+    constructor(config: StateConfig<T>) {
         this.#config = config;
 
         if (config.persistedKey && config.persistedKey.length > 0) {
-            let persist: Persisted<Data<T> | undefined> = persisted(config.persistedKey.join("."), undefined, {
-                serializer: devalue, // defaults to `JSON`
-                storage: config.storageType || 'local',
-                // syncTabs: true, // choose whether to sync localStorage across tabs, default is true
-                // onWriteError: (error) => {/* handle or rethrow */}, // Defaults to console.error with the error object
-                // onParseError: (raw, error) => {/* handle or rethrow */}, // Defaults to console.error with the error object
-                // beforeRead: (value) => {/* change value after serialization but before setting store to return value*/},
-                // beforeWrite: (value) => {/* change value after writing to store, but before writing return value to local storage*/},
-            });
-            this.#data = {
-                type: "persisted",
-                data: persist,
-            };
-            if (get(persist) === undefined) {
-                this.#fetch();
+            switch (config.storageType) {
+                case "global":
+                case undefined:
+                    this.#storage = new GlobalStore(config.persistedKey);
+                    break;
+                case "localStorage":
+                    this.#storage = new LocalStorageStore(config.persistedKey);
+                    break;
             };
         } else {
-            let data = $state<Data<T> | undefined>();
-            this.#data = {
-                type: "state",
-                data
-            }
-            // console.log("call fetch from constructor");
-            this.#fetch();
+            this.#storage = new NoOpsStore();
         }
 
-        // if (this.data === undefined) {
-        // }
+        let initialData = this.#storage.getItem();
+        if (initialData !== null) {
+            this.#data = initialData;
+        } else {
+            this.#fetch();
+        }
 
         // console.log("data state created: ", this.#data.type);
 
@@ -110,6 +96,12 @@ export class DataState<T> {
         }
     }
 
+    /**
+     * Gets the current data state.
+     * If the data is stale (older than staleTime), it will refetch the data and return undefined.
+     * Otherwise, it will return the current data.
+     * @returns The current data state, or undefined if the data is stale.
+     */
     get data(): T | undefined {
         const data = this.#data;
 
@@ -117,46 +109,55 @@ export class DataState<T> {
             return undefined;
         }
 
-        let fetchedData;
-
-        if (data.type === "state") {
-            fetchedData = data.data;
-        } else if (data.type === "persisted" && data.data !== undefined) {
-            fetchedData = get(data.data);
-        }
-
-        if (fetchedData === undefined) {
-            return undefined;
-        }
-
-        if (this.#config.staleTime && (Date.now() - fetchedData.created_ts > this.#config.staleTime)) {
+        if (this.#config.staleTime && (Date.now() - data.created_ts > this.#config.staleTime)) {
             this.#fetch();
             return undefined;
         } else {
-            return fetchedData.data;
+            return data.data;
         }
     }
 
+    /**
+     * Gets whether the data is currently being refetched.
+     * @returns Whether the data is currently being refetched.
+     */
     get isLoading(): boolean {
         return this.#isLoading;
     }
 
+    /**
+     * Gets the last error that occurred while fetching the data.
+     * If no error occurred, it will return undefined.
+     * @returns The last error that occurred while fetching the data, or undefined if no error occurred.
+     */
     get error(): any | undefined {
         return this.#error;
     }
 
+    /**
+     * Gets whether the last data fetch was successful.
+     * @returns Whether the last data fetch was successful.
+     */
     get isSuccess(): boolean {
         return this.#isSuccess;
     }
 
+    /**
+     * Sets the data state and update the storage.
+     * @param data The data to set.
+     */
     #setData(data: Data<T> | undefined) {
-        if (this.#data.type === "state") {
-            this.#data.data = data;
-        } else if (this.#data.type === "persisted") {
-            this.#data.data.set(data);
+        this.#data = data;
+        if (data) {
+            this.#storage.setItem(data);
+        } else {
+            this.#storage.removeItem();
         }
     }
 
+    /**
+     * Refetches the data.
+     */
     #fetch() {
         // console.log("fetching data...");
         this.#isLoading = true;
@@ -191,6 +192,6 @@ export class DataState<T> {
 
 }
 
-export function dataState<T>(data: DataStateConfig<T>) {
-    return new DataState(data);
+export function managedState<T>(data: StateConfig<T>) {
+    return new ManagedState(data);
 }

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { DataState, dataState } from "$lib/stores/dataStore.svelte";
+    import { ManagedState, managedState } from "$lib/stores/managedState.svelte";
   import { tokenMetadataService } from "$modules/token/services/tokenMetadata";
   import type { TokenPrice } from "$modules/token/types";
   import type { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
@@ -11,7 +11,7 @@
 
   let data: Props = $props();
 
-  let tokenMetadataQuery = dataState<IcrcTokenMetadata | undefined>({
+  let tokenMetadataQuery = managedState<IcrcTokenMetadata | undefined>({
     queryFn: async () => {
       return tokenMetadataService.getTokenMetadata(data.price.address);
     },

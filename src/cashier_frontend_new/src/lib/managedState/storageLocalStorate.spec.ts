@@ -3,8 +3,8 @@
  */
 
 import { beforeEach, describe, expect, it } from "vitest";
-import { LocalStorageStore } from ".";
 import * as devalue from "devalue";
+import { LocalStorageStore } from "./storageLocalStorage";
 
 describe("LocalStorageStore", () => {
 
