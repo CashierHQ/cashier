@@ -3,6 +3,7 @@ import type { Storage } from ".";
 import { GlobalStore } from "./storageGlobal";
 import { LocalStorageStore } from "./storageLocalStorage";
 import { NoOpsStore } from "./storageNoOps";
+import { SessionStorageStore } from "./storageSessionStorage";
 
 export type StateConfig<T> = {
   queryFn: () => Promise<T>;
@@ -33,7 +34,7 @@ export type StateConfig<T> = {
    * - `localStorage`: storage in the localStorage
    *
    */
-  storageType?: "global" | "localStorage";
+  storageType?: "global" | "localStorage" | "sessionStorage";
 };
 
 type Data<T> = {
@@ -62,6 +63,9 @@ export class ManagedState<T> {
           break;
         case "localStorage":
           this.#storage = new LocalStorageStore(config.persistedKey);
+          break;
+        case "sessionStorage":
+          this.#storage = new SessionStorageStore(config.persistedKey);
           break;
       }
     } else {
