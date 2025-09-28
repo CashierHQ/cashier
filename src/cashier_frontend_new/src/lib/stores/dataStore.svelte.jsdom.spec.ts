@@ -2,19 +2,18 @@
  * @vitest-environment jsdom
  */
 
-import { beforeEach, describe, expect, it, test, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { dataState } from "./dataStore.svelte";
 import * as devalue from "devalue";
 
 
-beforeEach(() => {
-  localStorage.clear();
-  vi.clearAllMocks();
-  vi.clearAllTimers();
-})
-
-
 describe("In memory state", () => {
+
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    vi.clearAllTimers();
+  })
 
   it('should fetch data from queryFn', async () => {
     vi.useFakeTimers();
@@ -126,6 +125,12 @@ describe("In memory state", () => {
 });
 
 describe("Persisted state", () => {
+
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    vi.clearAllTimers();
+  })
 
   it('should fetch data from queryFn', async () => {
     vi.useFakeTimers();
