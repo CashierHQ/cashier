@@ -2,10 +2,10 @@ import type { Storage } from ".";
 import * as devalue from "devalue";
 
 /**
- * A Storage implementation that stores data in the localStorage.
- * Data is stored as JSON
+ * A Storage implementation that stores data in the sessionStorage.
+ * Data is stored as devalue
  */
-export class LocalStorageStore<T> implements Storage<T> {
+export class SessionStorageStore<T> implements Storage<T> {
 
     readonly key: string;
 
@@ -14,15 +14,15 @@ export class LocalStorageStore<T> implements Storage<T> {
     }
 
     getItem(): T | null {
-        const item = localStorage.getItem(this.key);
+        const item = sessionStorage.getItem(this.key);
         return item ? devalue.parse(item) : null;
     }
 
     setItem(value: T): void {
-        localStorage.setItem(this.key, devalue.stringify(value));
+        sessionStorage.setItem(this.key, devalue.stringify(value));
     }
     
     removeItem(): void {
-        localStorage.removeItem(this.key);
+        sessionStorage.removeItem(this.key);
     }
 }

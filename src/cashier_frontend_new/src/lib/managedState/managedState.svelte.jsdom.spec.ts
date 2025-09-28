@@ -3,14 +3,13 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { dataState } from "./dataStore.svelte";
+import { managedState } from "./managedState.svelte";
 import * as devalue from "devalue";
 
 
-describe("In memory state", () => {
+describe("ManagedState - Global storage", () => {
 
   beforeEach(() => {
-    localStorage.clear();
     vi.clearAllMocks();
     vi.clearAllTimers();
   })
@@ -18,7 +17,7 @@ describe("In memory state", () => {
   it('should fetch data from queryFn', async () => {
     vi.useFakeTimers();
 
-    const store = dataState<number>({
+    const store = managedState<number>({
       queryFn: () => Promise.resolve(426),
     });
 
@@ -33,7 +32,7 @@ describe("In memory state", () => {
     vi.useFakeTimers();
 
     let count = 10;
-    const store = dataState<number>({
+    const store = managedState<number>({
       queryFn: () => new Promise((resolve) => {
         resolve(count)
         count += 5;
@@ -59,7 +58,7 @@ describe("In memory state", () => {
     vi.useFakeTimers();
 
     let count = 10;
-    const store = dataState<number>({
+    const store = managedState<number>({
       queryFn: () => new Promise((resolve) => {
         resolve(count)
         count += 5;
@@ -81,7 +80,7 @@ describe("In memory state", () => {
   it('isLoading should be true while fetching', async () => {
     vi.useFakeTimers();
 
-    const store = dataState<number>({
+    const store = managedState<number>({
       queryFn: () => neverResolvingPromise(),
     });
 
@@ -95,7 +94,7 @@ describe("In memory state", () => {
   it('should handle errors', async () => {
     vi.useFakeTimers();
 
-    const store = dataState<number>({
+    const store = managedState<number>({
       queryFn: () => Promise.reject("error from promise"),
     });
 
@@ -109,7 +108,7 @@ describe("In memory state", () => {
   it('should catch thrown errors', async () => {
     vi.useFakeTimers();
 
-    const store = dataState<number>({
+    const store = managedState<number>({
       queryFn: () => {
         throw new Error("error from promise");
       },
@@ -124,7 +123,7 @@ describe("In memory state", () => {
 
 });
 
-describe("Persisted state", () => {
+describe("ManagedState - LocalStorage", () => {
 
   beforeEach(() => {
     localStorage.clear();
@@ -136,9 +135,10 @@ describe("Persisted state", () => {
     vi.useFakeTimers();
     vi.setSystemTime(1123);
 
-    const store = dataState<number>({
+    const store = managedState<number>({
       queryFn: () => Promise.resolve(426),
       persistedKey: ["test_key_1"],
+      storageType: "localStorage",
     });
 
     await vi.advanceTimersByTimeAsync(10);
@@ -157,9 +157,10 @@ describe("Persisted state", () => {
     vi.useFakeTimers();
     vi.setSystemTime(2000);
 
-    const store = dataState<number>({
+    const store = managedState<number>({
       queryFn: () => Promise.resolve(42),
       persistedKey: ["test_key_4"],
+      storageType: "localStorage",
     });
 
     await vi.advanceTimersByTimeAsync(10);
@@ -170,9 +171,10 @@ describe("Persisted state", () => {
       data: 42
     }));
 
-    const store2 = dataState<number>({
+    const store2 = managedState<number>({
       queryFn: () => Promise.resolve(45),
       persistedKey: ["test_key_4"],
+      storageType: "localStorage",
       staleTime: 100
     });
 
@@ -199,13 +201,14 @@ describe("Persisted state", () => {
     vi.setSystemTime(2123);
 
     let count = 10;
-    const store = dataState<number>({
+    const store = managedState<number>({
       queryFn: () => new Promise((resolve) => {
         resolve(count)
         count += 5;
       }),
       staleTime: 100,
       persistedKey: ["test_key_2"],
+      storageType: "localStorage",
     });
 
     await vi.advanceTimersByTimeAsync(10);
@@ -237,13 +240,14 @@ describe("Persisted state", () => {
     vi.setSystemTime(1000);
 
     let count = 10;
-    const store = dataState<number>({
+    const store = managedState<number>({
       queryFn: () => new Promise((resolve) => {
         resolve(count)
         count += 5;
       }),
       refetchInterval: 1000,
       persistedKey: ["test_key_3"],
+      storageType: "localStorage",
     });
 
     await vi.advanceTimersByTimeAsync(10);
@@ -273,6 +277,41 @@ describe("Persisted state", () => {
   })
 
 });
+
+describe("ManagedState - NoOps storage", () => {
+
+  it('should fetch data from queryFn', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1000);
+
+    const store = managedState<number>({
+      queryFn: () => Promise.resolve(42),
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.data).toEqual(42);
+  })
+
+  it('State should not be shared', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1000);
+
+    const store = managedState<number>({
+      queryFn: () => Promise.resolve(42),
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.data).toEqual(42);
+
+    const store2 = managedState<number>({
+      queryFn: () => Promise.resolve(45),
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store2.data).toEqual(45);
+  })
+
+})
 
 function neverResolvingPromise<T = never>(): Promise<T> {
   return new Promise<T>(() => { });
