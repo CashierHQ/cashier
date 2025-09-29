@@ -32,6 +32,7 @@ export type StateConfig<T> = {
    *
    * - `global`: storage in the global window object
    * - `localStorage`: storage in the localStorage
+   * - `sessionStorage`: storage in the sessionStorage
    *
    */
   storageType?: "global" | "localStorage" | "sessionStorage";
@@ -79,22 +80,18 @@ export class ManagedState<T> {
       this.#fetch();
     }
 
-    // console.log("data state created: ", this.#data.type);
-
     if (config.refetchInterval) {
       const interval = setInterval(() => {
-        // console.log("refetching data...");
         this.#fetch();
       }, config.refetchInterval);
 
       try {
         onDestroy(() => {
-          // console.log("clearing interval");
           clearInterval(interval);
         });
       } catch (_e) {
-        // This is ok, if the state is created on a global object
-        // then the onDestroy will not be called
+        // This is ok, if the state is created outside of a svelte component
+        // then the onDestroy will not be called and the interval will not be cleared
       }
     }
   }
@@ -112,10 +109,12 @@ export class ManagedState<T> {
       return undefined;
     }
 
+    // Check if the data is stale
     if (
       this.#config.staleTime &&
       Date.now() - data.created_ts > this.#config.staleTime
     ) {
+      this.#storage.removeItem();
       this.#fetch();
       return undefined;
     } else {
@@ -165,7 +164,6 @@ export class ManagedState<T> {
    * Refetches the data.
    */
   #fetch() {
-    // console.log("fetching data...");
     this.#isLoading = true;
     this.#isSuccess = false;
     this.#error = undefined;
@@ -174,7 +172,6 @@ export class ManagedState<T> {
       this.#config
         .queryFn()
         .then((data) => {
-          // console.log("fetched data: ");
           this.#setData({
             created_ts: Date.now(),
             data,
@@ -184,7 +181,6 @@ export class ManagedState<T> {
           this.#isSuccess = true;
         })
         .catch((error) => {
-          // console.log("error fetching data: ");
           this.#isLoading = false;
           this.#error = error;
           this.#isSuccess = false;

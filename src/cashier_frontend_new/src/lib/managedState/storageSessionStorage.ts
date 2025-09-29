@@ -18,7 +18,11 @@ export class SessionStorageStore<T> implements Storage<T> {
   }
 
   setItem(value: T): void {
-    sessionStorage.setItem(this.key, devalue.stringify(value));
+    if (value) {
+      sessionStorage.setItem(this.key, devalue.stringify(value));
+    } else {
+      this.removeItem();
+    }
   }
 
   removeItem(): void {

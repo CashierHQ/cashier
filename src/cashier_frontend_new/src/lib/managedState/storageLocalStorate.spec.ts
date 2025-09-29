@@ -73,4 +73,28 @@ describe("LocalStorageStore", () => {
     expect(store.getItem()).toEqual(null);
     expect(store2.getItem()).toEqual(123456);
   });
+
+  it("should handle null values", () => {
+    // Arrange
+    let store = new LocalStorageStore("test_key");
+    store.removeItem();
+
+    // Act
+    store.setItem(null);
+
+    // Assert
+    expect(store.getItem()).toEqual(null);
+  });
+
+  it("should handle undefined values", () => {
+    // Arrange
+    let store = new LocalStorageStore("test_key");
+    store.removeItem();
+
+    // Act
+    store.setItem(undefined);
+
+    // Assert
+    expect(store.getItem()).toEqual(null);    
+  });
 });
