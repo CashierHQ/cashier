@@ -1,5 +1,7 @@
 import type { Storage } from ".";
 
+// Global storage, the values type cannot be inferred at compile time as it depends on the key
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const storage: Record<string, any> = {};
 
 /**
@@ -13,7 +15,7 @@ export class GlobalStore<T> implements Storage<T> {
   }
 
   getItem(): T | null {
-    let value = storage[this.key];
+    const value = storage[this.key];
     return value === undefined ? null : value;
   }
 

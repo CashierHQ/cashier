@@ -4,7 +4,7 @@ import { GlobalStore } from "./storageGlobal";
 describe("GlobalStore", () => {
   it("should get set and remove items", () => {
     // Arrange
-    let store = new GlobalStore("test_key");
+    const store = new GlobalStore("test_key");
     store.removeItem();
 
     // Act
@@ -22,7 +22,7 @@ describe("GlobalStore", () => {
 
   it("should overwrite items", () => {
     // Arrange
-    let store = new GlobalStore("test_key");
+    const store = new GlobalStore("test_key");
     store.removeItem();
 
     // Act
@@ -35,12 +35,12 @@ describe("GlobalStore", () => {
 
   it("should get global initial value if present", () => {
     // Arrange
-    let store = new GlobalStore("test_key");
+    const store = new GlobalStore("test_key");
     store.removeItem();
     store.setItem(123456);
 
     // Act
-    let store2 = new GlobalStore("test_key");
+    const store2 = new GlobalStore("test_key");
 
     // Assert
     expect(store2.getItem()).toEqual(123456);
@@ -48,11 +48,11 @@ describe("GlobalStore", () => {
 
   it("should use different keys", () => {
     // Arrange
-    let store = new GlobalStore("test_key");
+    const store = new GlobalStore("test_key");
     store.removeItem();
 
     // Act
-    let store2 = new GlobalStore("test_key2");
+    const store2 = new GlobalStore("test_key2");
     store2.setItem(123456);
 
     // Assert
@@ -62,7 +62,7 @@ describe("GlobalStore", () => {
 
   it("should handle null values", () => {
     // Arrange
-    let store = new GlobalStore("test_key");
+    const store = new GlobalStore("test_key");
     store.removeItem();
 
     // Act
@@ -74,7 +74,7 @@ describe("GlobalStore", () => {
 
   it("should handle undefined values", () => {
     // Arrange
-    let store = new GlobalStore("test_key");
+    const store = new GlobalStore("test_key");
     store.removeItem();
 
     // Act
