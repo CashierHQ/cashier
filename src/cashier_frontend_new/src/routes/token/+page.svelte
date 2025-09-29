@@ -33,7 +33,7 @@
       <div class="flex items-center gap-4 mb-4">
         <h2>Token Prices</h2>
         <Button
-     onclick={() => $tokenQuery.refetch()}
+          onclick={() => $tokenQuery.refetch()}
           disabled={$tokenQuery.isFetching}
         >
           {#if $tokenQuery.isFetching}
