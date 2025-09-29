@@ -4,9 +4,9 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "vite dev --port 3000 --mode local_dev",
-    "dev:dev": "vite dev --port 3000 --mode dev",
-    "build": "vite build --mode local_dev",
+    "dev": "vite dev",
+    "dev:dev": "vite dev --mode dev",
+    "build": "vite build",
     "build:dev": "vite build --mode dev",
     "build:staging": "vite build --mode staging",
     "build:production": "vite build --mode production",
@@ -39,6 +39,7 @@
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-svelte": "^3.0.0",
     "globals": "^16.0.0",
+    "jsdom": "^27.0.0",
     "knip": "^5.64.0",
     "prettier": "^3.6.2",
     "prettier-plugin-svelte": "^3.4.0",
@@ -55,11 +56,10 @@
     "vitest": "^3.2.3"
   },
   "dependencies": {
-    "@dfinity/agent": "2.4.1",
-    "@dfinity/auth-client": "2.4.1",
-    "@dfinity/candid": "2.4.1",
-    "@dfinity/identity": "2.4.1",
-    "@windoge98/plug-n-play": "^0.1.0-beta.20",
-    "@tanstack/svelte-query": "^5.90.2"
+    "@dfinity/agent": "^3.2.6",
+    "@dfinity/ledger-icrc": "^4.0.1",
+    "@dfinity/principal": "^3.2.6",
+    "devalue": "^5.3.2",
+    "svelte-persisted-store": "^0.12.0"
   }
 }
