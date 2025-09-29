@@ -15,6 +15,11 @@
             "type": "assets",
             "build": ""
         },
+        "cashier_frontend_new": {
+            "source": ["./src/cashier_frontend_new/build"],
+            "type": "assets",
+            "build": ""
+        },
         "gate_service": {
             "type": "custom",
             "candid": "./target/artifacts/gate_service.did",

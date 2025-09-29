@@ -1,0 +1,11 @@
+{
+  "canisters": {
+    "cashier_frontend": {
+      "source": ["./build"],
+      "type": "assets",
+      "build": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
