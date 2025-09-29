@@ -1,34 +1,18 @@
-// DEMO: no need for complex state management tool
+// Account state management
+let account = $state<{
+  owner: string;
+  subaccount: string | null;
+} | null>(null);
 
-import { localStorageState } from "../localStorage.svelte";
-
-//DEMO: This create a fully reactive global state object
-// const auth = $state({
-//     user: ''
-// });
-
-// DEMO: This create a fully reactive state object that is automatically persisted with local storage
-const auth = localStorageState("auth", {
-  user: "",
-});
-
-export const authState = {
-  get user(): string {
-    return auth.value.user;
+// Exported account state with get/set
+export const accountState = {
+  // Return current account information, null if not logged in
+  get account() {
+    return account;
   },
 
-  // DEMO: reactive computed property
-  get isAuthenticated(): boolean {
-    return auth.value.user !== "";
-  },
-
-  login(user: string) {
-    console.log("login: ", user);
-    auth.value.user = user;
-  },
-
-  logout() {
-    console.log("logout");
-    auth.value.user = "";
+  // Update account information, normally set after login/logout
+  set account(value: { owner: string; subaccount: string | null } | null) {
+    account = value;
   },
 };

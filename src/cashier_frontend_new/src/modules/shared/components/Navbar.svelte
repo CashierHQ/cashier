@@ -1,15 +1,25 @@
 <!-- Navbar is a global component so it is declared in the global scope in the shared module -->
 
 <script lang="ts">
-  import { authState } from "../state/auth.svelte";
+  import { authState } from "$modules/auth/state/auth.svelte";
+  import { accountState } from "$modules/shared/state/auth.svelte";
+  import { Button } from "$lib/shadcn/components/ui/button";
 
-  // DEMO: effect is a reactive function, it does not require to declare which variables it depends on
-  $effect(() => {
-    console.log("authState.user: ", authState.user);
-  });
+  async function handleLogin(walletId: string) {
+    try {
+      await authState.login(walletId);
+    } catch (error) {
+      console.error("Login error:", error);
+    }
+  }
 
-  // DEMO: reactive local state
-  let username = $state("");
+  async function handleLogout() {
+    try {
+      await authState.logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  }
 </script>
 
 <div class="navbar bg-base-100 shadow-sm">
@@ -18,13 +28,15 @@
   </div>
   <div class="flex-none">
     <ul class="menu menu-horizontal px-1">
-      {#if authState.isAuthenticated}
-        <li><div>Welcome [{authState.user}]</div></li>
-        <li><button onclick={() => authState.logout()}>Logout</button></li>
+      {#if authState.isReconnecting}
+        <li><div class="loading loading-spinner loading-sm"></div></li>
+        <li><span>Reconnecting...</span></li>
+      {:else if accountState.account}
+        <li><div>Welcome [{accountState.account.owner}]</div></li>
+        <li><Button onclick={handleLogout}>Logout</Button></li>
       {:else}
-        <li>Username: <input bind:value={username} /></li>
         <li>
-          <button onclick={() => authState.login(username)}>Login</button>
+          <Button onclick={() => handleLogin("ii")}>Login II</Button>
         </li>
       {/if}
     </ul>
