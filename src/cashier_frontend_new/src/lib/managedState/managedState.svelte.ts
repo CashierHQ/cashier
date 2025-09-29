@@ -81,20 +81,7 @@ export class ManagedState<T> {
     }
 
     if (config.refetchInterval) {
-      const interval = setInterval(() => {
-        this.#fetch();
-      }, config.refetchInterval);
-
-      // Ignore the error. This should fail silently if the state is created outside of a svelte component.
-      try {
-        onDestroy(() => {
-          clearInterval(interval);
-        });
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (_e) {
-        // This is ok, if the state is created outside of a svelte component
-        // then the onDestroy will not be called and the interval will not be cleared
-      }
+      this.refresh(config.refetchInterval);
     }
   }
 
@@ -159,6 +146,36 @@ export class ManagedState<T> {
       this.#storage.setItem(data);
     } else {
       this.#storage.removeItem();
+    }
+  }
+
+  /**
+   * Refetches the data.
+   * If an interval is provided, it will refetch the data at that interval.
+   *
+   * If a refetch interval is provided within a svelte component, it will be cleared when the component is destroyed,
+   * this is useful to refresh data only when a component is visible.
+   *
+   * @param {number} [interval] The interval in milliseconds at which to refetch the data.
+   */
+  refresh(interval?: number) {
+    if (interval) {
+      const intervalHandler = setInterval(() => {
+        this.#fetch();
+      }, interval);
+
+      // Ignore the error. This should fail silently if the state is created outside of a svelte component.
+      try {
+        onDestroy(() => {
+          clearInterval(intervalHandler);
+        });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_e) {
+        // This is ok, if the state is created outside of a svelte component
+        // then the onDestroy will not be called and the interval will not be cleared
+      }
+    } else {
+      this.#fetch();
     }
   }
 
