@@ -1,35 +1,19 @@
-import { HOST_ICP } from "$modules/shared/constants";
 import type { TokenPrice } from "$modules/token/types";
-import { Actor, HttpAgent } from "@dfinity/agent";
-import * as icpSwapIndexNode from "$lib/generated/icpswap/icpswapNodeIndex";
-import { ICPSWAP_INDEX_CANISTER_ID } from "../constants";
-
-type IndexNodeActor = icpSwapIndexNode._SERVICE;
+import { actorState } from "$modules/shared/state/actor.svelte";
+import type { PublicTokenOverview } from "$lib/generated/icpswap/icpswapNodeIndex";
 
 /**
  * Service for fetching data from the ICPSwap backend
  */
 class TokenPriceService {
-  private actor: IndexNodeActor;
-
-  constructor() {
-    const agent = new HttpAgent({
-      host: HOST_ICP,
-    });
-    this.actor = Actor.createActor(icpSwapIndexNode.idlFactory, {
-      agent,
-      canisterId: ICPSWAP_INDEX_CANISTER_ID,
-    });
-  }
-
   /**
    * Fetch all token prices from the ICPSwap index canister
    * @returns Array of TokenPrice
    */
   public async getTokens(): Promise<TokenPrice[]> {
-    let tokenRes: icpSwapIndexNode.PublicTokenOverview[];
+    let tokenRes: PublicTokenOverview[];
     try {
-      tokenRes = await this.actor.getAllTokens();
+      tokenRes = await actorState.tokenIndexNodeActor.getAllTokens();
       return tokenRes.map((token) => ({
         name: token.name,
         symbol: token.symbol,

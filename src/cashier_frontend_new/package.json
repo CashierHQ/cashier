@@ -4,9 +4,9 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
-    "dev:dev": "vite dev --mode dev",
-    "build": "vite build",
+    "dev": "vite dev --port 3000 --mode local_dev",
+    "dev:dev": "vite dev --port 3000 --mode dev",
+    "build": "vite build --mode local_dev",
     "build:dev": "vite build --mode dev",
     "build:staging": "vite build --mode staging",
     "build:production": "vite build --mode production",
@@ -55,7 +55,11 @@
     "vitest": "^3.2.3"
   },
   "dependencies": {
-    "@dfinity/agent": "^3.2.6",
+    "@dfinity/agent": "2.4.1",
+    "@dfinity/auth-client": "2.4.1",
+    "@dfinity/candid": "2.4.1",
+    "@dfinity/identity": "2.4.1",
+    "@windoge98/plug-n-play": "^0.1.0-beta.20",
     "@tanstack/svelte-query": "^5.90.2"
   }
 }
