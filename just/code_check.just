@@ -29,3 +29,7 @@ frontend_check_code: install_frontend_deps
     cd {{FRONTEND_DIR}} && npm run format:ci
     cd {{FRONTEND_DIR}} && npm run lint
     cd {{FRONTEND_DIR}} && npm run knip
+
+    cd {{FRONTEND_DIR_NEW}} && npm run lint
+    # To be enabled when frontend new code is ready
+    # cd {{FRONTEND_DIR_NEW}} && npm run knip
