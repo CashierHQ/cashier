@@ -1,46 +1,25 @@
 <script lang="ts">
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { tokenPriceService } from "$modules/token/services/tokenPrice.svelte";
-  import type { TokenPrice } from "$modules/token/types";
-  import { createQuery } from "@tanstack/svelte-query";
-
-  // Create a query to fetch token prices using the TokenPriceService
-  const tokenQuery = createQuery<TokenPrice[]>({
-    queryKey: ["tokenPrices"],
-    queryFn: async () => {
-      return tokenPriceService.getTokens();
-    },
-  });
+  import { resolve } from "$app/paths";
+  import TokenDetail from "$modules/token/components/tokenDetail.svelte";
+  import { tokenPriceQuery } from "$modules/token/stores/token.svelte";
 </script>
 
+<p class="py-6"><a class="link" href={resolve("/")}>Go to Home</a></p>
+
 <div>
-  {#if $tokenQuery.isPending}
+  {#if tokenPriceQuery.isLoading}
     Loading...
   {/if}
-  {#if $tokenQuery.error}
+  {#if tokenPriceQuery.error}
     An error has occurred:
-    {$tokenQuery.error.message}
+    {tokenPriceQuery.error}
   {/if}
-  {#if $tokenQuery.isSuccess}
+  {#if tokenPriceQuery.isSuccess && tokenPriceQuery.data}
     <div>
-      <div class="flex items-center gap-4 mb-4">
-        <h2>Token Prices</h2>
-        <Button
-          onclick={() => $tokenQuery.refetch()}
-          disabled={$tokenQuery.isFetching}
-        >
-          {#if $tokenQuery.isFetching}
-            Refetching...
-          {:else}
-            Refetch
-          {/if}
-        </Button>
-      </div>
+      <h2>Token Prices</h2>
       <ul>
-        {#each $tokenQuery.data as token (token.address)}
-          <li>
-            {token.symbol} ({token.standard}): ${token.priceUSD.toFixed(5)}
-          </li>
+        {#each tokenPriceQuery.data.slice(0, 10) as token (token.address)}
+          <TokenDetail price={token} />
         {/each}
       </ul>
     </div>

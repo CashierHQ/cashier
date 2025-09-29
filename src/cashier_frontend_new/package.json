@@ -39,6 +39,7 @@
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-svelte": "^3.0.0",
     "globals": "^16.0.0",
+    "jsdom": "^27.0.0",
     "knip": "^5.64.0",
     "prettier": "^3.6.2",
     "prettier-plugin-svelte": "^3.4.0",
@@ -59,7 +60,11 @@
     "@dfinity/auth-client": "2.4.1",
     "@dfinity/candid": "2.4.1",
     "@dfinity/identity": "2.4.1",
+    "@dfinity/ledger-icp": "4.1.0",
+    "@dfinity/ledger-icrc": "^2.7.0",
+    "@dfinity/principal": "^2.4.1",
     "@windoge98/plug-n-play": "^0.1.0-beta.20",
-    "@tanstack/svelte-query": "^5.90.2"
+    "devalue": "^5.3.2",
+    "svelte-persisted-store": "^0.12.0"
   }
 }
