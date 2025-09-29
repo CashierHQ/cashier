@@ -30,11 +30,11 @@ export class LocalStorageStore<T> implements Storage<T> {
   }
 
   #localStorage(): globalThis.Storage | null {
-    if (typeof localStorage !== 'undefined') {
-      return localStorage
+    if (typeof localStorage !== "undefined") {
+      return localStorage;
     } else {
       console.warn("localStorage not available");
       return null;
     }
-  };
+  }
 }

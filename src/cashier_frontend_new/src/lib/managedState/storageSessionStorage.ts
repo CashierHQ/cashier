@@ -30,11 +30,11 @@ export class SessionStorageStore<T> implements Storage<T> {
   }
 
   #sessionStorage(): globalThis.Storage | null {
-    if (typeof sessionStorage !== 'undefined') {
-      return sessionStorage
+    if (typeof sessionStorage !== "undefined") {
+      return sessionStorage;
     } else {
       console.warn("sessionStorage not available");
       return null;
     }
-  };
+  }
 }
