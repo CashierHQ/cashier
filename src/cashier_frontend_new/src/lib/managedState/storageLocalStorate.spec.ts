@@ -95,6 +95,6 @@ describe("LocalStorageStore", () => {
     store.setItem(undefined);
 
     // Assert
-    expect(store.getItem()).toEqual(null);    
+    expect(store.getItem()).toEqual(null);
   });
 });
