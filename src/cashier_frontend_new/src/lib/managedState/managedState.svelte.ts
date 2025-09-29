@@ -73,7 +73,7 @@ export class ManagedState<T> {
       this.#storage = new NoOpsStore();
     }
 
-    let initialData = this.#storage.getItem();
+    const initialData = this.#storage.getItem();
     if (initialData !== null) {
       this.#data = initialData;
     } else {
@@ -85,10 +85,12 @@ export class ManagedState<T> {
         this.#fetch();
       }, config.refetchInterval);
 
+      // Ignore the error. This should fail silently if the state is created outside of a svelte component.
       try {
         onDestroy(() => {
           clearInterval(interval);
         });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (_e) {
         // This is ok, if the state is created outside of a svelte component
         // then the onDestroy will not be called and the interval will not be cleared
@@ -135,7 +137,7 @@ export class ManagedState<T> {
    * If no error occurred, it will return undefined.
    * @returns The last error that occurred while fetching the data, or undefined if no error occurred.
    */
-  get error(): any | undefined {
+  get error(): unknown | undefined {
     return this.#error;
   }
 

@@ -4,7 +4,7 @@ import { NoOpsStore } from "./storageNoOps";
 describe("NoOpsStore", () => {
   it("shuold get set and remove items", () => {
     // Arrange
-    let store = new NoOpsStore();
+    const store = new NoOpsStore();
 
     // Act
     store.setItem("test");

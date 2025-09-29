@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ManagedState, managedState } from "$lib/stores/managedState.svelte";
+  import { managedState } from "$lib/managedState/managedState.svelte";
   import { tokenMetadataService } from "$modules/token/services/tokenMetadata";
   import type { TokenPrice } from "$modules/token/types";
   import type { IcrcTokenMetadata } from "@dfinity/ledger-icrc";

@@ -13,7 +13,7 @@ describe("SessionStorageStore", () => {
 
   it("should get set and remove items", () => {
     // Arrange
-    let store = new SessionStorageStore("test_key");
+    const store = new SessionStorageStore("test_key");
     store.removeItem();
 
     // Act
@@ -35,7 +35,7 @@ describe("SessionStorageStore", () => {
 
   it("should overwrite items", () => {
     // Arrange
-    let store = new SessionStorageStore("test_key");
+    const store = new SessionStorageStore("test_key");
     store.removeItem();
 
     // Act
@@ -51,12 +51,12 @@ describe("SessionStorageStore", () => {
 
   it("should get global initial value if present", () => {
     // Arrange
-    let store = new SessionStorageStore("test_key");
+    const store = new SessionStorageStore("test_key");
     store.removeItem();
     store.setItem(123456);
 
     // Act
-    let store2 = new SessionStorageStore("test_key");
+    const store2 = new SessionStorageStore("test_key");
 
     // Assert
     expect(store2.getItem()).toEqual(123456);
@@ -64,11 +64,11 @@ describe("SessionStorageStore", () => {
 
   it("should use different keys", () => {
     // Arrange
-    let store = new SessionStorageStore("test_key");
+    const store = new SessionStorageStore("test_key");
     store.removeItem();
 
     // Act
-    let store2 = new SessionStorageStore("test_key2");
+    const store2 = new SessionStorageStore("test_key2");
     store2.setItem(123456);
 
     // Assert
@@ -78,7 +78,7 @@ describe("SessionStorageStore", () => {
 
   it("should handle null values", () => {
     // Arrange
-    let store = new SessionStorageStore("test_key");
+    const store = new SessionStorageStore("test_key");
     store.removeItem();
 
     // Act
@@ -90,7 +90,7 @@ describe("SessionStorageStore", () => {
 
   it("should handle undefined values", () => {
     // Arrange
-    let store = new SessionStorageStore("test_key");
+    const store = new SessionStorageStore("test_key");
     store.removeItem();
 
     // Act
