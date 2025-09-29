@@ -1,16 +1,16 @@
 import { managedState } from "$lib/managedState";
 import type { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
 import { tokenMetadataService } from "../services/tokenMetadata";
-import type { TokenPrice } from "../types";
 import { tokenPriceService } from "../services/tokenPrice";
+import type { TokenPrice } from "../types";
 
 // A state for token prices
 export const tokenPriceQuery = managedState<TokenPrice[]>({
   queryFn: async () => {
     // console.log("fetching token prices from react-query");
-    return tokenPriceService.getTokens();
+    return tokenPriceService.getTokenPrices();
   },
-  refetchInterval: 10_000, // demo timeout, to be adjusted
+  //refetchInterval: 10_000, // demo timeout, to be adjusted
   persistedKey: ["tokenPriceQuery"],
   storageType: "localStorage",
 });
@@ -22,8 +22,8 @@ export const tokenMetadataQuery = (tokenAddress: string) =>
     queryFn: async () => {
       return tokenMetadataService.getTokenMetadata(tokenAddress);
     },
-    staleTime: 5_000, // demo timeout, to be adjusted
-    refetchInterval: 10_000, // demo timeout, to be adjusted
+    //staleTime: 5_000, // demo timeout, to be adjusted
+    //refetchInterval: 10_000, // demo timeout, to be adjusted
     persistedKey: ["tokenMetadataQuery", tokenAddress],
     storageType: "localStorage",
   });
