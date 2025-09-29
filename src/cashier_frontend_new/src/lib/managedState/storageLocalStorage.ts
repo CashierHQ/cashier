@@ -13,19 +13,28 @@ export class LocalStorageStore<T> implements Storage<T> {
   }
 
   getItem(): T | null {
-    const item = localStorage.getItem(this.key);
+    const item = this.#localStorage()?.getItem(this.key);
     return item ? devalue.parse(item) : null;
   }
 
   setItem(value: T): void {
     if (value) {
-      localStorage.setItem(this.key, devalue.stringify(value));
+      this.#localStorage()?.setItem(this.key, devalue.stringify(value));
     } else {
       this.removeItem();
     }
   }
 
   removeItem(): void {
-    localStorage.removeItem(this.key);
+    this.#localStorage()?.removeItem(this.key);
+  }
+
+  #localStorage(): globalThis.Storage | null {
+    if (typeof localStorage !== "undefined") {
+      return localStorage;
+    } else {
+      console.warn("localStorage not available");
+      return null;
+    }
   }
 }

@@ -13,19 +13,28 @@ export class SessionStorageStore<T> implements Storage<T> {
   }
 
   getItem(): T | null {
-    const item = sessionStorage.getItem(this.key);
+    const item = this.#sessionStorage()?.getItem(this.key);
     return item ? devalue.parse(item) : null;
   }
 
   setItem(value: T): void {
     if (value) {
-      sessionStorage.setItem(this.key, devalue.stringify(value));
+      this.#sessionStorage()?.setItem(this.key, devalue.stringify(value));
     } else {
       this.removeItem();
     }
   }
 
   removeItem(): void {
-    sessionStorage.removeItem(this.key);
+    this.#sessionStorage()?.removeItem(this.key);
+  }
+
+  #sessionStorage(): globalThis.Storage | null {
+    if (typeof sessionStorage !== "undefined") {
+      return sessionStorage;
+    } else {
+      console.warn("sessionStorage not available");
+      return null;
+    }
   }
 }
