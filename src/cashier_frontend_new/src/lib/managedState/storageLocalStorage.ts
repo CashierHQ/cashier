@@ -18,7 +18,11 @@ export class LocalStorageStore<T> implements Storage<T> {
   }
 
   setItem(value: T): void {
-    localStorage.setItem(this.key, devalue.stringify(value));
+    if (value) {
+      localStorage.setItem(this.key, devalue.stringify(value));
+    } else {
+      this.removeItem();
+    }
   }
 
   removeItem(): void {
