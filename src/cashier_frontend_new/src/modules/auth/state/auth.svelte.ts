@@ -103,7 +103,7 @@ export const authState = {
       accountState.account = {
         owner: res.owner,
         subaccount: res.subaccount,
-      }
+      };
       connectedWalletId = walletId;
       // Store wallet ID in localStorage for persistence
       if (typeof window !== "undefined") {
@@ -149,7 +149,7 @@ export const authState = {
         accountState.account = {
           owner: res.owner,
           subaccount: res.subaccount,
-        }
+        };
         console.log("Auto-reconnect successful");
       } catch (error) {
         console.error("Reconnect failed:", error);
