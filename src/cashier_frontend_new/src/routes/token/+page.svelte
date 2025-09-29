@@ -1,6 +1,6 @@
 <script lang="ts">
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-import { tokenPriceService } from "$modules/token/services/tokenPrice.svelte";
+  import { tokenPriceService } from "$modules/token/services/tokenPrice.svelte";
   import type { TokenPrice } from "$modules/token/types";
   import { createQuery } from "@tanstack/svelte-query";
 
@@ -8,8 +8,15 @@ import { tokenPriceService } from "$modules/token/services/tokenPrice.svelte";
   const tokenQuery = createQuery<TokenPrice[]>({
     queryKey: ["tokenPrices"],
     queryFn: async () => {
-      return tokenPriceService.getTokens();
+      return tokenPriceService.getTokenPrices();
     },
+  });
+
+  $effect(() => {
+    const unsub = tokenQuery.subscribe((v) => {
+      console.log('Token Query State (sub):', v);
+    });
+    return () => unsub();
   });
 </script>
 
