@@ -17,5 +17,17 @@ describe("NoOpsStore", () => {
 
     // Assert
     expect(store.getItem()).toEqual(null);
+
+    // Act
+    store.setItem(null);
+
+    // Assert
+    expect(store.getItem()).toEqual(null);
+
+    // Act
+    store.setItem(undefined);
+
+    // Assert
+    expect(store.getItem()).toEqual(null);
   });
 });
