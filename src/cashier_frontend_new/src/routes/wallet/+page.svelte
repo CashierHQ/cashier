@@ -13,7 +13,6 @@
   });
 
   $effect(() => {
-    console.log("Token Query data:", $tokenQuery.data);
     tokenStore.tokenPrices = $tokenQuery.data ?? [];
   });
 </script>
