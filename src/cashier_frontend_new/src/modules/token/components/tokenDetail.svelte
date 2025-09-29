@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TokenPrice } from "$modules/token/types";
-    import { tokenMetadataQuery } from "../stores/token.svelte";
+  import { tokenMetadataQuery } from "../stores/token.svelte";
 
   // DEMO: how to use managedState recursively
 
@@ -11,7 +11,6 @@
   let data: Props = $props();
 
   const tokenMetadata = tokenMetadataQuery(data.price.address);
-
 </script>
 
 <li>
@@ -25,7 +24,6 @@
     <!-- {$tokenMetadataQuery.error.message} -->
   {/if}
   {#if tokenMetadata.isSuccess}
-    decimals: {tokenMetadata.data?.decimals} - fee: {tokenMetadata
-      .data?.fee}
+    decimals: {tokenMetadata.data?.decimals} - fee: {tokenMetadata.data?.fee}
   {/if}
 </li>

@@ -6,7 +6,6 @@
   import "../app.css";
 
   let { children } = $props();
-
 </script>
 
 <svelte:head>
@@ -16,4 +15,3 @@
 <!-- DEMO: add a Navbar to all pages -->
 <Navbar />
 {@render children?.()}
-
