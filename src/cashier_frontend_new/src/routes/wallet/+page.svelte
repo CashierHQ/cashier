@@ -1,7 +1,7 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import TokenDetail from "$modules/token/components/tokenDetail.svelte";
-  import { tokenPriceQuery } from "$modules/token/stores/token.svelte";
+  import { tokenPriceQuery } from "$modules/token/state/tokenStore.svelte";
 </script>
 
 <p class="py-6"><a class="link" href={resolve("/")}>Go to Home</a></p>
