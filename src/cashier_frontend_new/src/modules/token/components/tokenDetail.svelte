@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { TokenPrice } from "$modules/token/types";
-  import { tokenMetadataQuery } from "../stores/token.svelte";
+  import { tokenMetadataQuery } from "../state/tokenStore.svelte";
 
   // DEMO: how to use managedState recursively
 
