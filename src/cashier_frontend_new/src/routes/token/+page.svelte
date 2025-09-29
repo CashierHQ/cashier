@@ -1,19 +1,8 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { managedState } from "$lib/managedState/managedState.svelte";
   import TokenDetail from "$modules/token/components/tokenDetail.svelte";
-  import { tokenPriceService } from "$modules/token/services/tokenPrice";
-  import type { TokenPrice } from "$modules/token/types";
+  import { tokenPriceQuery } from "$modules/token/stores/token.svelte";
 
-  // Create a query to fetch token prices using the TokenPriceService
-  const tokenPriceQuery = managedState<TokenPrice[]>({
-    persistedKey: ["tokenPrices"],
-    queryFn: async () => {
-      console.log("fetching token prices from react-query");
-      return tokenPriceService.getTokens();
-    },
-    refetchInterval: 5_000,
-  });
 </script>
 
 <p class="py-6"><a class="link" href={resolve("/")}>Go to Home</a></p>
