@@ -21,13 +21,11 @@ export class LocalStorageStore<T> implements Storage<T> {
     if (value) {
       this.#localStorage()?.setItem(this.key, devalue.stringify(value));
     } else {
-      console.log("undefined value for: " + this.key);
       this.removeItem();
     }
   }
 
   removeItem(): void {
-    console.log("removing:" + this.key);
     this.#localStorage()?.removeItem(this.key);
   }
 
