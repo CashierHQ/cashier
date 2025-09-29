@@ -116,6 +116,7 @@ export class ManagedState<T> {
       this.#config.staleTime &&
       Date.now() - data.created_ts > this.#config.staleTime
     ) {
+      console.log("Data is stale, refetching");
       this.#storage.removeItem();
       this.#fetch();
       return undefined;
@@ -158,6 +159,7 @@ export class ManagedState<T> {
     if (data) {
       this.#storage.setItem(data);
     } else {
+      console.warn("data is undefined inside setData");
       this.#storage.removeItem();
     }
   }
