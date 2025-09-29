@@ -1,6 +1,6 @@
 <script lang="ts">
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-import { tokenPriceService } from "$modules/token/services/tokenPrice.svelte";
+  import { tokenPriceService } from "$modules/token/services/tokenPrice.svelte";
   import type { TokenPrice } from "$modules/token/types";
   import { createQuery } from "@tanstack/svelte-query";
 
@@ -26,7 +26,7 @@ import { tokenPriceService } from "$modules/token/services/tokenPrice.svelte";
       <div class="flex items-center gap-4 mb-4">
         <h2>Token Prices</h2>
         <Button
-     onclick={() => $tokenQuery.refetch()}
+          onclick={() => $tokenQuery.refetch()}
           disabled={$tokenQuery.isFetching}
         >
           {#if $tokenQuery.isFetching}
