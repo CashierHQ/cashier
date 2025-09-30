@@ -4,7 +4,7 @@
   import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
 
   let token = page.params.token || "empty";
-  let tokenDetails = walletTokensQuery.data?.find(t => t.address === token);
+  let tokenDetails = $derived(walletTokensQuery.data?.find(t => t.address === token));
 </script>
 
 <p class="py-6"><a class="link" href={resolve("/wallet")}>Go to Wallet</a></p>
@@ -21,7 +21,7 @@
       <p><strong>Value USD:</strong> ${(tokenDetails.balance * tokenDetails.priceUSD).toFixed(5)}</p>
     </div>
   {:else}
-    <p>No details found for this token.</p>
+    <p style="color: red">No details found for this token.</p>
   {/if}
 </div>
 

@@ -179,6 +179,10 @@ export class ManagedState<T> {
     }
   }
 
+  reset() {
+    this.#setData(undefined);
+  }
+
   /**
    * Refetches the data.
    */
