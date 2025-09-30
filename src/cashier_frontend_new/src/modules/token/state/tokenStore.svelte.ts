@@ -2,24 +2,13 @@ import { managedState } from "$lib/managedState";
 import type { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
 import { tokenMetadataService } from "../services/tokenMetadata";
 import { tokenPriceService } from "../services/tokenPrice";
-import { userTokenService } from "../services/userToken";
-import type { TokenPrice } from "../types";
+import type { TokenWithPrice } from "../types";
 
-let tokenPrices = $state<TokenPrice[]>([]);
+let tokenPrices = $state<TokenWithPrice[]>([]);
 let isLoading = $state<boolean>(false);
 
-export const userTokenQuery = managedState<any[]>({
-  queryFn: async () => {
-    return userTokenService.listTokens();
-  },
-  // Optionally, you can set a refetch interval
-  // refetchInterval: 60000, // Refetch every 60 seconds
-  persistedKey: ["userTokenQuery"],
-  storageType: "localStorage",
-});
-
 // A state for token prices
-export const tokenPriceQuery = managedState<TokenPrice[]>({
+export const tokenPriceQuery = managedState<TokenWithPrice[]>({
   queryFn: async () => {
     // console.log("fetching token prices from react-query");
     return tokenPriceService.getTokenPrices();
@@ -47,7 +36,7 @@ export const tokenStore = {
     return tokenPrices;
   },
 
-  set tokenPrices(value: TokenPrice[]) {
+  set tokenPrices(value: TokenWithPrice[]) {
     tokenPrices = value;
   },
 
