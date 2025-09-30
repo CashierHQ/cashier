@@ -7,7 +7,7 @@ export const listTokensQuery = managedState<TokenWithPriceAndBalance[]>({
   queryFn: async () => {
     const tokens = await tokenStorageService.listTokens();
     const balanceRequests = tokens.map((token) => {
-      const icpLedgerService = new IcpLedgerService(token.address);
+      const icpLedgerService = new IcpLedgerService(token);
       return icpLedgerService.getBalance();
     });
     const balances = await Promise.all(balanceRequests);

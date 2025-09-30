@@ -3,16 +3,14 @@ export type TokenMetadata = {
   symbol: string;
   standard: string;
   address: string;
+  decimals: number;
   iconUrl: string | null;
 };
 
-/**
- * Type definition for a token price data
- */
 export type TokenWithPrice = TokenMetadata & {
   priceUSD: number;
 };
 
 export type TokenWithPriceAndBalance = TokenWithPrice & {
-  balance: bigint;
+  balance: number;
 };
