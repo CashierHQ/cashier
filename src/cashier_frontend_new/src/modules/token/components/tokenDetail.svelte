@@ -1,16 +1,14 @@
 <script lang="ts">
-  import type { TokenMetadata } from "$modules/token/types";
   import { tokenMetadataQuery } from "../state/tokenStore.svelte";
 
   // DEMO: how to use managedState recursively
-
   interface Props {
-    metadata: TokenMetadata;
+    address: string;
   }
 
   let data: Props = $props();
 
-  const tokenMetadata = tokenMetadataQuery(data.metadata.address);
+  const tokenMetadata = tokenMetadataQuery(data.address);
 </script>
 
 <li>
