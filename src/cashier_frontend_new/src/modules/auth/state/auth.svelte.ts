@@ -7,6 +7,8 @@ import {
   TIMEOUT_NANO_SEC,
 } from "../constants";
 import { accountState } from "$modules/shared/state/auth.svelte";
+import { goto } from "$app/navigation";
+import { resolve } from "$app/paths";
 
 // Config for PNP instance
 export const CONFIG = {
@@ -255,6 +257,13 @@ export const authState = {
           } catch {
             // ignore
           }
+        }
+
+        // After logout, navigate to landing page (client-only)
+        try {
+          goto(resolve("/"), { replaceState: true });
+        } catch {
+          // ignore navigation errors (e.g. during SSR or if $app/navigation isn't available)
         }
       }
     } catch (error) {
