@@ -102,10 +102,13 @@ export const authState = {
    * @param shouldFetchRootKey  Optional flag to fetch root key, default based on feature flag
    * @returns  An anonymous HttpAgent instance
    */
-  buildAnonymousAgent(host: string = HOST_ICP, shouldFetchRootKey: boolean = FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED) {
+  buildAnonymousAgent(
+    host: string = HOST_ICP,
+    shouldFetchRootKey: boolean = FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED,
+  ) {
     return HttpAgent.createSync({
       host,
-      shouldFetchRootKey
+      shouldFetchRootKey,
     });
   },
 
@@ -114,7 +117,7 @@ export const authState = {
    * @param canisterId  Canister ID to connect to
    * @param idlFactory IDL factory for the canister
    * @param options Options to force anonymous actor
-   * @returns 
+   * @returns
    *  An ActorSubclass instance or null if user is not logged in
    *  null if account is not available
    */
@@ -130,12 +133,13 @@ export const authState = {
   ): ActorSubclass<T> | null {
     // return anonymous actor if no PNP, or option set to anonymous
     if (!pnp || options?.anonymous) {
-      return (Actor.createActor(idlFactory, {
+      return Actor.createActor(idlFactory, {
         agent: this.buildAnonymousAgent(
-          options?.host, options?.shouldFetchRootKey
+          options?.host,
+          options?.shouldFetchRootKey,
         ),
         canisterId: canisterId,
-      }));
+      });
     }
 
     if (!accountState.account) {
