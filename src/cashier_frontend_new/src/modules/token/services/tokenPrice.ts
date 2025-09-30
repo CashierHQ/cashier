@@ -37,6 +37,7 @@ class TokenPriceService {
         address: token.address,
         iconUrl: null,
         priceUSD: token.priceUSD,
+        decimals: 0,
       }));
     } catch (e) {
       console.error(`Failed to get all tokens`, e);

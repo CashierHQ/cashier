@@ -3,12 +3,16 @@ import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canist
 import { authState } from "$modules/auth/state/auth.svelte";
 import { accountState } from "$modules/shared/state/auth.svelte";
 import { Principal } from "@dfinity/principal";
+import type { TokenMetadata } from "../types";
+import { weiToEther } from "../utils/converter";
 
 export class IcpLedgerService {
   #canisterId: string;
+  #decimals: number = 8; // Default to 8 decimals if not set
 
-  constructor(canisterId: string) {
-    this.#canisterId = canisterId;
+  constructor(metadata: TokenMetadata) {
+    this.#canisterId = metadata.address;
+    this.#decimals = metadata.decimals;
   }
 
   #getActor(): icpLedger._SERVICE {
@@ -39,14 +43,14 @@ export class IcpLedgerService {
     }
   }
 
-  public async getBalance(): Promise<bigint> {
+  public async getBalance(): Promise<number> {
     try {
       let actor: icpLedger._SERVICE = this.#getActor();
       let account: Account = this.#getAccount();
       console.log("Account for balance:", account);
-      let balance = await actor.icrc1_balance_of(account);
+      let balance: bigint = await actor.icrc1_balance_of(account);
       console.log("Balance:", balance);
-      return balance;
+      return weiToEther(balance, this.#decimals);
     } catch (error) {
       console.error("Error listing tokens:", error);
       throw error;
