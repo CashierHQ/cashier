@@ -1,10 +1,13 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import { accountState } from "$modules/shared/state/auth.svelte";
-  import { walletTokensQuery } from '$modules/token/state/walletStore.svelte';
+  import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
 
   $effect(() => {
-    console.log("Account state changed, refreshing tokens...", $state.snapshot(accountState.account));
+    console.log(
+      "Account state changed, refreshing tokens...",
+      $state.snapshot(accountState.account),
+    );
     walletTokensQuery.refresh();
   });
 </script>
@@ -16,8 +19,10 @@
     Loading...
   {/if}
   {#if walletTokensQuery.error}
-    <p style="color: red;">An error has occurred:
-    {walletTokensQuery.error}</p>
+    <p style="color: red;">
+      An error has occurred:
+      {walletTokensQuery.error}
+    </p>
   {/if}
   {#if walletTokensQuery.isSuccess && walletTokensQuery.data}
     <div>
@@ -28,7 +33,9 @@
             <strong>{token.symbol}</strong> - {token.name} <br />
             Address: {token.address} <br />
             Decimals: {token.decimals} <br />
-            Balance: {token.balance.toString()} - Price: ${token.priceUSD.toFixed(5)} <br />
+            Balance: {token.balance.toString()} - Price: ${token.priceUSD.toFixed(
+              5,
+            )} <br />
             Value USD: ${(token.balance * token.priceUSD).toFixed(5)} <br />
           </li>
           <hr />
