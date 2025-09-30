@@ -1,8 +1,14 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
+  import { accountState } from "$modules/shared/state/auth.svelte";
   import { listTokensQuery } from '$modules/wallet/state/walletStore.svelte';
   
   $effect(() => {
+    listTokensQuery.refresh();
+  });
+
+  $effect(() => {
+    console.log("Account state changed:", accountState.account);
     listTokensQuery.refresh();
   });
 </script>
@@ -19,8 +25,17 @@
   {/if}
   {#if listTokensQuery.isSuccess && listTokensQuery.data}
     <div>
-      <h2>Token Prices</h2>
-    
+      <h2>Wallet Tokens</h2>
+      <ul>
+        {#each listTokensQuery.data as token (token.address)}
+          <li>
+            <strong>{token.symbol}</strong> - {token.name} <br />
+            Address: {token.address} <br />
+            Standard: {token.standard} <br />
+          </li>
+          <hr />
+        {/each}
+      </ul>
     </div>
   {/if}
 </div>
