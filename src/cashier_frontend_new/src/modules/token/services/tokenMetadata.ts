@@ -13,7 +13,7 @@ class TokenMetadataService {
   public async getTokenMetadata(
     tokenAddres: string,
   ): Promise<IcrcTokenMetadata | undefined> {
-    const agent = authState.anonAgent
+    const agent = authState.anonAgent;
     const ledger = IcrcLedgerCanister.create({
       agent,
       canisterId: Principal.fromText(tokenAddres),

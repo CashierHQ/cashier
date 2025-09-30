@@ -111,7 +111,7 @@ export const authState = {
     // options to force get anonymous actor
     options?: {
       anon?: boolean;
-    }
+    },
   ): ActorSubclass<T> {
     if (!pnp || options?.anon) {
       const anonymousAgent = HttpAgent.createSync({
@@ -122,13 +122,12 @@ export const authState = {
         agent: anonymousAgent,
         canisterId: canisterId,
       }) as ActorSubclass<T>;
-
     }
     if (accountState.account) {
       return pnp.getActor({
         canisterId: canisterId,
         idl: idlFactory,
-      })
+      });
     } else {
       return pnp.getActor({
         canisterId: canisterId,
@@ -212,7 +211,6 @@ export const authState = {
       }
     }
   },
-
 };
 
 // Immediately initialize PNP instance on module load
