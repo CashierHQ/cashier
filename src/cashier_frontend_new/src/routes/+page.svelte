@@ -20,7 +20,7 @@
       </p>
 
       <p class="py-6">
-        <a class="link" href={resolve("/token")}>Token Price</a>
+        <a class="link" href={resolve("/wallet")}>Wallet</a>
       </p>
     </div>
   </div>
