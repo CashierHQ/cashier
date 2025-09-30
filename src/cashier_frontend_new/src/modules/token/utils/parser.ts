@@ -1,5 +1,6 @@
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
 import type { TokenMetadata } from "$modules/token/types";
+import type { Principal } from "@dfinity/principal";
 
 /**
  * Parse the list of tokens from the Token Storage canister response.
@@ -10,22 +11,25 @@ export function parseListTokens(
   response: tokenStorage.Result_5,
 ): TokenMetadata[] {
   if ("Err" in response) {
-    console.error("Error fetching tokens:", response.Err);
     throw new Error(`Error fetching tokens: ${response.Err}`);
   }
 
   const result = response.Ok;
   if (result.tokens && result.tokens.length > 0) {
-    return result.tokens.map((token) => ({
-      address: token.string_id.replace("IC:", ""),
-      name: token.name,
-      symbol: token.symbol,
-      decimals: token.decimals,
-      iconUrl: null,
-      standard: "unknown",
-      enabled: token.enabled,
-    }));
+    return result.tokens.map((token) => {
+      if ("IC" in token.id) {
+        const ledgerId: Principal = token.id.IC.ledger_id;
+        return {
+          address: ledgerId.toText(),
+          name: token.name,
+          symbol: token.symbol,
+          decimals: token.decimals,
+        };
+      } else {
+        throw new Error("Unsupported token type");
+      }
+    });
   } else {
-    throw new Error("No tokens found in the response");
+    return [];
   }
 }
