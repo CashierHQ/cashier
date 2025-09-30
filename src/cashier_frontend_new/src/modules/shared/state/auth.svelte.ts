@@ -5,7 +5,13 @@ let account = $state<{
 } | null>(null);
 
 // Exported account state with get/set
-export const accountState = {
+export const authState = {
+
+  // Return true if the user is logged in
+  get isLoggedIn() {
+    return account !== null;
+  },
+
   // Return current account information, null if not logged in
   get account() {
     return account;
