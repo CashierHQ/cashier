@@ -1,4 +1,4 @@
-import { Err, Ok, type Result } from "ts-results";
+import { Err, Ok, type Result } from "ts-results-es";
 import * as devalue from "devalue";
 
 type Response<T, E> =

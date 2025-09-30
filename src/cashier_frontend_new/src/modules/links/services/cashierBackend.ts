@@ -2,8 +2,7 @@ import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.
 import { responseToResult } from "$lib/result";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
-import { Principal } from "@dfinity/principal";
-import type { Result } from "ts-results";
+import type { Result } from "ts-results-es";
 
 /**
  * Service for interacting with the Cashier Backend canister.
