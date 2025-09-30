@@ -1,5 +1,9 @@
 <script lang="ts">
     import { linkListQuery } from "../stores/links.svelte";
+
+    setTimeout(() => {
+        linkListQuery.refresh();
+    }, 2500)
 </script>
 
 <li>
@@ -7,12 +11,14 @@
     Loading...
   {/if}
   {#if linkListQuery.error}
-    Cannot fetch links list
+    Cannot fetch links list: {linkListQuery.error}
   {/if}
   {#if linkListQuery.data}
     <ul>
     {#each linkListQuery.data as link}
-      <li> - Link id: {link.id} - {link.link_type} - {link.title}</li>    
+      <li> - Link id: {link.id} - {link.link_type} - {link.title}</li>   
+      {:else}
+	   <li> <p>There are no links</p> </li>
     {/each}
     </ul>
   {/if}

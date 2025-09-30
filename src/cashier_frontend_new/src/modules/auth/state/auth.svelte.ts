@@ -6,7 +6,7 @@ import {
   TARGETS,
   TIMEOUT_NANO_SEC,
 } from "../constants";
-import { authState } from "$modules/shared/state/auth.svelte";
+import { accountState } from "$modules/shared/state/auth.svelte";
 
 // Config for PNP instance
 export const CONFIG = {
@@ -100,7 +100,7 @@ export const authState = {
       if (res.owner === null) {
         throw new Error("Login failed: owner is null");
       }
-      authState.account = {
+      accountState.account = {
         owner: res.owner,
         subaccount: res.subaccount,
       };
@@ -122,7 +122,7 @@ export const authState = {
     }
     try {
       await pnp.disconnect();
-      authState.account = null;
+      accountState.account = null;
       connectedWalletId = null;
       // Remove wallet ID from localStorage
       if (typeof window !== "undefined") {
@@ -146,7 +146,7 @@ export const authState = {
         if (res.owner === null) {
           throw new Error("Login failed: owner is null");
         }
-        authState.account = {
+        accountState.account = {
           owner: res.owner,
           subaccount: res.subaccount,
         };

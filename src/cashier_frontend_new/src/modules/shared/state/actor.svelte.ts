@@ -4,7 +4,7 @@ import { HOST_ICP } from "$modules/shared/constants";
 import { FEATURE_FLAGS } from "$modules/auth/constants";
 import * as icpSwapIndexNode from "$lib/generated/icpswap/icpswapNodeIndex";
 import { ICPSWAP_INDEX_CANISTER_ID } from "$modules/token/constants";
-import { authState } from "./auth.svelte";
+import { accountState } from "./auth.svelte";
 import { authState } from "$modules/auth/state/auth.svelte";
 
 // Exported actor state with get/set
@@ -12,7 +12,7 @@ export const actorState = {
   // Return token index node actor - automatically uses account if available
   get tokenIndexNodeActor(): ActorSubclass<icpSwapIndexNode._SERVICE> {
     if (authState.pnp) {
-      if (authState.account) {
+      if (accountState.account) {
         // Create actor with identity if account exists
         return authState.pnp.getActor({
           canisterId: ICPSWAP_INDEX_CANISTER_ID,
