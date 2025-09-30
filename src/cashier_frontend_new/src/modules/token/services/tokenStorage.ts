@@ -19,10 +19,7 @@ class TokenStorageService {
   public async listTokens(): Promise<TokenMetadata[]> {
     try {
       let actor = this.#getActor();
-      console.log("Actor created:", actor);
-      let res = await actor.list_tokens();
-      console.log("Listed tokens:", res);
-
+      let res: tokenStorage.Result_5 = await actor.list_tokens();
       return parseListTokens(res);
     } catch (error) {
       console.error("Error listing tokens:", error);

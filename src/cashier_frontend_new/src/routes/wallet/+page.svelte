@@ -32,6 +32,8 @@
             <strong>{token.symbol}</strong> - {token.name} <br />
             Address: {token.address} <br />
             Standard: {token.standard} <br />
+            Balance: {token.balance.toString()} <br />
+            Price USD: ${token.priceUSD} <br />
           </li>
           <hr />
         {/each}
