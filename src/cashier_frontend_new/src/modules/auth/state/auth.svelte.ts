@@ -80,61 +80,59 @@ export const authState = {
   get connectedWalletId() {
     return connectedWalletId;
   },
+
   // Getter isReconnecting
   get isReconnecting() {
     return isReconnecting;
   },
+
   // Getter PNP provider
   get provider() {
     return pnp?.provider;
   },
+
   // Getter PNP
   get pnp() {
     return pnp;
   },
+
   // Get anonymous agent
-  get anonAgent() {
-    if (!pnp) {
-      throw new Error("PNP is not initialized");
-    }
-    // create anonymous agent
+  get anonymousAgent() {
     return HttpAgent.createSync({
       host: HOST_ICP,
       shouldFetchRootKey: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED,
     });
   },
+
   // Generic method to get actor for any canister
-  // Using current identity if available, otherwise anonymous
+  // This will return anonymous actor if no PNP or user not logged in
+  // Otherwise, return actor with current identity
   getActor<T>(
     canisterId: string,
     idlFactory: IDL.InterfaceFactory,
     // options to force get anonymous actor
     options?: {
-      anon?: boolean;
+      anonymous?: boolean;
     },
   ): ActorSubclass<T> {
-    if (!pnp || options?.anon) {
-      const anonymousAgent = HttpAgent.createSync({
-        host: HOST_ICP,
-        shouldFetchRootKey: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED,
-      });
+    // return anonymous actor if no PNP, or option set to anonymous
+    if (!pnp || options?.anonymous) {
       return Actor.createActor(idlFactory, {
-        agent: anonymousAgent,
+        agent: this.anonymousAgent,
         canisterId: canisterId,
       }) as ActorSubclass<T>;
     }
-    if (accountState.account) {
-      return pnp.getActor({
-        canisterId: canisterId,
-        idl: idlFactory,
-      });
-    } else {
-      return pnp.getActor({
-        canisterId: canisterId,
-        idl: idlFactory,
-        anon: true,
-      });
+
+    //Pnp will return error if user not logged in or adding anonymous option for `getActor`
+    if (!accountState.account) {
+      throw new Error("User is not logged in");
     }
+
+    // pnp is initialized and user is logged in, return actor with current identity
+    return pnp.getActor({
+      canisterId: canisterId,
+      idl: idlFactory,
+    });
   },
 
   // Connect to wallet
