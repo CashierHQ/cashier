@@ -23,8 +23,8 @@ class TokenPriceService {
       {
         anonymous: true,
         host: ICP_MAINNET_HOST,
-        shouldFetchRootKey: false
-      }
+        shouldFetchRootKey: false,
+      },
     );
 
     if (!actor) {
