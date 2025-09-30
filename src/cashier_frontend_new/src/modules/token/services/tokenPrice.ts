@@ -30,17 +30,12 @@ class TokenPriceService {
    */
   public async getTokenPrices(): Promise<TokenPriceRecord> {
     let tokenRes: icpSwapIndexNode.PublicTokenOverview[];
-    try {
-      tokenRes = await this.actor.getAllTokens();
-      let record: TokenPriceRecord = {};
-      tokenRes.map((token) => {
-        record[token.address] = token.priceUSD;
-      });
-      return record;
-    } catch (e) {
-      console.error(`Failed to get all tokens`, e);
-      throw e;
-    }
+    tokenRes = await this.actor.getAllTokens();
+    const record: TokenPriceRecord = {};
+    tokenRes.map((token) => {
+      record[token.address] = token.priceUSD;
+    });
+    return record;
   }
 }
 

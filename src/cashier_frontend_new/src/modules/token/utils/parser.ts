@@ -14,7 +14,7 @@ export function parseListTokens(
     throw new Error(`Error fetching tokens: ${response.Err}`);
   }
 
-  let result = response.Ok;
+  const result = response.Ok;
   if (result.tokens && result.tokens.length > 0) {
     return result.tokens.map((token) => ({
       address: token.string_id.replace("IC:", ""),

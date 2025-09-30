@@ -61,14 +61,9 @@ export class IcpLedgerService {
    * @throws Error if the user is not authenticated or balance retrieval fails.
    */
   public async getBalance(): Promise<number> {
-    try {
-      let actor: icpLedger._SERVICE = this.#getActor();
-      let account: Account = this.#getAccount();
-      let balance: bigint = await actor.icrc1_balance_of(account);
-      return balanceToIcp(balance, this.#decimals);
-    } catch (error) {
-      console.error("Error get balance:", error);
-      throw error;
-    }
+    const actor: icpLedger._SERVICE = this.#getActor();
+    const account: Account = this.#getAccount();
+    const balance: bigint = await actor.icrc1_balance_of(account);
+    return balanceToIcp(balance, this.#decimals);
   }
 }

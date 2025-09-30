@@ -31,13 +31,9 @@ class TokenStorageService {
    * @throws Error if fetching fails.
    */
   public async listTokens(): Promise<TokenMetadata[]> {
-    try {
-      let actor = this.#getActor();
-      let res: tokenStorage.Result_5 = await actor.list_tokens();
-      return parseListTokens(res);
-    } catch (error) {
-      throw error;
-    }
+    const actor = this.#getActor();
+    const res: tokenStorage.Result_5 = await actor.list_tokens();
+    return parseListTokens(res);
   }
 }
 
