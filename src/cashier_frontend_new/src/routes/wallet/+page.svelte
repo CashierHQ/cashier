@@ -1,30 +1,29 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import { accountState } from "$modules/shared/state/auth.svelte";
-  import { listTokensQuery } from '$modules/wallet/state/walletStore.svelte';
+  import { walletTokensQuery } from '$modules/token/state/walletStore.svelte';
 
   $effect(() => {
-    if (accountState.account) {
-      listTokensQuery.refresh();
-    }
+    console.log("Account state changed, refreshing tokens...", accountState.account);
+    walletTokensQuery.refresh();
   });
 </script>
 
 <p class="py-6"><a class="link" href={resolve("/")}>Go to Home</a></p>
 
 <div>
-  {#if listTokensQuery.isLoading}
+  {#if walletTokensQuery.isLoading}
     Loading...
   {/if}
-  {#if listTokensQuery.error}
+  {#if walletTokensQuery.error}
     <p style="color: red;">An error has occurred:
-    {listTokensQuery.error}</p>
+    {walletTokensQuery.error}</p>
   {/if}
-  {#if listTokensQuery.isSuccess && listTokensQuery.data}
+  {#if walletTokensQuery.isSuccess && walletTokensQuery.data}
     <div>
       <h2>Wallet tokens</h2>
       <ul>
-        {#each listTokensQuery.data as token (token.address)}
+        {#each walletTokensQuery.data as token (token.address)}
           <li>
             <strong>{token.symbol}</strong> - {token.name} <br />
             Address: {token.address} <br />

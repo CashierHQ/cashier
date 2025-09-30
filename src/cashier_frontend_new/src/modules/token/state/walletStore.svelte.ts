@@ -4,7 +4,7 @@ import { tokenPriceService } from "$modules/token/services/tokenPrice";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 
-export const listTokensQuery = managedState<TokenWithPriceAndBalance[]>({
+export const walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
   queryFn: async () => {
     const tokens = await tokenStorageService.listTokens();
 
