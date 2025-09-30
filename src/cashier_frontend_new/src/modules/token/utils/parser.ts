@@ -1,6 +1,11 @@
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
 import type { TokenMetadata } from "$modules/token/types";
 
+/**
+ * Parse the list of tokens from the Token Storage canister response.
+ * @param response Response from the Token Storage canister
+ * @returns Array of TokenMetadata
+ */
 export function parseListTokens(
   response: tokenStorage.Result_5,
 ): TokenMetadata[] {
@@ -10,7 +15,6 @@ export function parseListTokens(
   }
 
   let result = response.Ok;
-  //console.log("Token list response:", result);
   if (result.tokens && result.tokens.length > 0) {
     return result.tokens.map((token) => ({
       address: token.string_id.replace("IC:", ""),
