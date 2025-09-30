@@ -1,19 +1,25 @@
 import type { TokenPrice } from "$modules/token/types";
-import { actorState } from "$modules/shared/state/actor.svelte";
-import type { PublicTokenOverview } from "$lib/generated/icpswap/icpswapNodeIndex";
-
+import { idlFactory, type _SERVICE, type PublicTokenOverview } from "$lib/generated/icpswap/icpswapNodeIndex";
+import { authState } from "$modules/auth/state/auth.svelte";
+import { ICPSWAP_INDEX_CANISTER_ID } from "../constants";
+import type { ActorSubclass } from "@dfinity/agent";
 /**
  * Service for fetching data from the ICPSwap backend
  */
 class TokenPriceService {
+
   /**
    * Fetch all token prices from the ICPSwap index canister
    * @returns Array of TokenPrice
    */
   public async getTokens(): Promise<TokenPrice[]> {
     let tokenRes: PublicTokenOverview[];
+    const actor: ActorSubclass<_SERVICE> = authState.getActor(
+      ICPSWAP_INDEX_CANISTER_ID,
+      idlFactory
+    );
     try {
-      tokenRes = await actorState.tokenIndexNodeActor.getAllTokens();
+      tokenRes = await actor.getAllTokens();
       return tokenRes.map((token) => ({
         name: token.name,
         symbol: token.symbol,
