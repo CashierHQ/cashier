@@ -1,11 +1,10 @@
-import { Actor, HttpAgent } from "@dfinity/agent";
-import type { ActorSubclass } from "@dfinity/agent";
-import { HOST_ICP } from "$modules/shared/constants";
-import { FEATURE_FLAGS } from "$modules/auth/constants";
 import * as icpSwapIndexNode from "$lib/generated/icpswap/icpswapNodeIndex";
-import { ICPSWAP_INDEX_CANISTER_ID } from "$modules/token/constants";
-import { accountState } from "./auth.svelte";
 import { authState } from "$modules/auth/state/auth.svelte";
+import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
+import { ICPSWAP_INDEX_CANISTER_ID } from "$modules/token/constants";
+import type { ActorSubclass } from "@dfinity/agent";
+import { Actor, HttpAgent } from "@dfinity/agent";
+import { accountState } from "./auth.svelte";
 
 // Exported actor state with get/set
 export const actorState = {

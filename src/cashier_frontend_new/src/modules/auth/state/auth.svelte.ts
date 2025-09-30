@@ -1,28 +1,25 @@
-import { createPNP, PNP } from "@windoge98/plug-n-play";
-import { BUILD_TYPE, HOST_ICP } from "$modules/shared/constants";
 import {
+  BUILD_TYPE,
   FEATURE_FLAGS,
+  HOST_ICP,
   IC_INTERNET_IDENTITY_PROVIDER,
-  TARGETS,
-  TIMEOUT_NANO_SEC,
-} from "../constants";
+} from "$modules/shared/constants";
 import { accountState } from "$modules/shared/state/auth.svelte";
+import type { CreatePnpArgs } from "@windoge98/plug-n-play";
+import { createPNP, PNP } from "@windoge98/plug-n-play";
 
 // Config for PNP instance
-export const CONFIG = {
+export const CONFIG: CreatePnpArgs = {
   // Network settings
-  dfxNetwork: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED ? "local" : "ic",
+  network: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED ? "local" : "ic",
   // If local dfx network, set replica port
-  replicaPort: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED ? 8000 : undefined,
+  ports: {
+    replica: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED ? 8000 : undefined,
+  },
   // Fetch root key for local network
-  fetchRootKey: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED,
-  // The host URL of the Internet Computer
-  hostUrl: HOST_ICP,
-  // Delegation settings
-  delegationTimeout: TIMEOUT_NANO_SEC,
-  delegationTargets: TARGETS,
-  // Whether to verify query signatures
-  verifyQuerySignatures: false,
+  security: {
+    fetchRootKey: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED,
+  },
   // Supported wallet adapters
   adapters: {
     ii: {

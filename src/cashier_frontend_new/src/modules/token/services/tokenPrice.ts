@@ -1,30 +1,41 @@
-import type { TokenPrice } from "$modules/token/types";
-import { actorState } from "$modules/shared/state/actor.svelte";
-import type { PublicTokenOverview } from "$lib/generated/icpswap/icpswapNodeIndex";
+import * as icpSwapIndexNode from "$lib/generated/icpswap/icpswapNodeIndex";
+import { HOST_ICP_MAINNET } from "$modules/shared/constants";
+import type { TokenPriceRecord } from "$modules/token/types";
+import { Actor, HttpAgent } from "@dfinity/agent";
+import { ICPSWAP_INDEX_CANISTER_ID } from "../constants";
+
+type IndexNodeActor = icpSwapIndexNode._SERVICE;
 
 /**
- * Service for fetching data from the ICPSwap backend
+ * Service for fetching token prices from the ICPSwap backend canister
  */
 class TokenPriceService {
+  private actor: IndexNodeActor;
+
+  constructor() {
+    const agent = HttpAgent.createSync({
+      host: HOST_ICP_MAINNET,
+    });
+    this.actor = Actor.createActor(icpSwapIndexNode.idlFactory, {
+      agent,
+      canisterId: ICPSWAP_INDEX_CANISTER_ID,
+    });
+  }
+
   /**
    * Fetch all token prices from the ICPSwap index canister
-   * @returns Array of TokenPrice
+   * The data is fetched using an anonymous actor
+   * @returns Record of TokenPrice
+   * @throws Error if fetching fails
    */
-  public async getTokens(): Promise<TokenPrice[]> {
-    let tokenRes: PublicTokenOverview[];
-    try {
-      tokenRes = await actorState.tokenIndexNodeActor.getAllTokens();
-      return tokenRes.map((token) => ({
-        name: token.name,
-        symbol: token.symbol,
-        standard: token.standard,
-        address: token.address,
-        priceUSD: token.priceUSD,
-      }));
-    } catch (e) {
-      console.error(`Failed to get all tokens`, e);
-      throw e;
-    }
+  public async getTokenPrices(): Promise<TokenPriceRecord> {
+    const tokenRes: icpSwapIndexNode.PublicTokenOverview[] =
+      await this.actor.getAllTokens();
+    const record: TokenPriceRecord = {};
+    tokenRes.map((token) => {
+      record[token.address] = token.priceUSD;
+    });
+    return record;
   }
 }
 

@@ -1,4 +1,4 @@
-import { HOST_ICP } from "$modules/shared/constants";
+import { HOST_ICP_MAINNET } from "$modules/shared/constants";
 import { HttpAgent } from "@dfinity/agent";
 import {
   IcrcLedgerCanister,
@@ -14,8 +14,8 @@ class TokenMetadataService {
   public async getTokenMetadata(
     tokenAddres: string,
   ): Promise<IcrcTokenMetadata | undefined> {
-    const agent = new HttpAgent({
-      host: HOST_ICP,
+    const agent = HttpAgent.createSync({
+      host: HOST_ICP_MAINNET,
     });
     const ledger = IcrcLedgerCanister.create({
       agent,
@@ -29,8 +29,8 @@ class TokenMetadataService {
   public async getTokenMetadataBatch(
     tokenAddresses: [string],
   ): Promise<Record<string, IcrcTokenMetadata | undefined>> {
-    const agent = new HttpAgent({
-      host: HOST_ICP,
+    const agent = HttpAgent.createSync({
+      host: HOST_ICP_MAINNET,
     });
 
     const requests = tokenAddresses.map((tokenAddress) => {
