@@ -13,6 +13,7 @@ export const walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
   queryFn: async () => {
     // fetch list user's tokens
     const tokens = await tokenStorageService.listTokens();
+    console.log("User tokens:", tokens);
 
     // fetch token balances
     const balanceRequests = tokens.map((token) => {
