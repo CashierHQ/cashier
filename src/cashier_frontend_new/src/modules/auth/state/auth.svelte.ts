@@ -77,7 +77,9 @@ function emitAuthEvent(event: { type: "login" | "logout" }) {
 }
 
 // Handle auth event from other tabs
-async function handleRemoteAuthEvent(payload: { type: "login" | "logout" } | null) {
+async function handleRemoteAuthEvent(
+  payload: { type: "login" | "logout" } | null,
+) {
   if (!payload) return;
   if (payload.type === "logout") {
     // Use the exported logout to centralize behavior. Pass options to avoid
@@ -111,7 +113,10 @@ async function handleRemoteAuthEvent(payload: { type: "login" | "logout" } | nul
     (async () => {
       try {
         if (accountState.account) return; // already logged in here
-        const stored = typeof window !== "undefined" ? localStorage.getItem("connectedWalletId") : null;
+        const stored =
+          typeof window !== "undefined"
+            ? localStorage.getItem("connectedWalletId")
+            : null;
         if (!stored) return;
         connectedWalletId = stored;
         if (!pnp) {

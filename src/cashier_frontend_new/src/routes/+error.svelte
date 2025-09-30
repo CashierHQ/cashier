@@ -4,7 +4,7 @@
 </script>
 
 <svelte:head>
-  <title>{status} — {error?.message ?? 'Error'}</title>
+  <title>{status} — {error?.message ?? "Error"}</title>
 </svelte:head>
 
 <div class="min-h-screen flex items-center justify-center">
@@ -16,8 +16,8 @@
     </div>
   {:else}
     <div>
-      <h1 class="text-2xl font-bold">{status ?? 'Error'}</h1>
-      <p class="mt-2">{error?.message ?? 'An unexpected error occurred.'}</p>
+      <h1 class="text-2xl font-bold">{status ?? "Error"}</h1>
+      <p class="mt-2">{error?.message ?? "An unexpected error occurred."}</p>
       <p class="mt-4"><a class="link" href="/">Go home</a></p>
     </div>
   {/if}
