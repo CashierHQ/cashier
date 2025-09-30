@@ -29,8 +29,8 @@ class TokenPriceService {
    * @throws Error if fetching fails
    */
   public async getTokenPrices(): Promise<TokenPriceRecord> {
-    let tokenRes: icpSwapIndexNode.PublicTokenOverview[];
-    tokenRes = await this.actor.getAllTokens();
+    const tokenRes: icpSwapIndexNode.PublicTokenOverview[] =
+      await this.actor.getAllTokens();
     const record: TokenPriceRecord = {};
     tokenRes.map((token) => {
       record[token.address] = token.priceUSD;
