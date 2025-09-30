@@ -30,13 +30,15 @@
       <ul>
         {#each walletTokensQuery.data as token (token.address)}
           <li>
-            <strong>{token.symbol}</strong> - {token.name} <br />
-            Address: {token.address} <br />
-            Decimals: {token.decimals} <br />
-            Balance: {token.balance.toString()} - Price: ${token.priceUSD.toFixed(
-              5,
-            )} <br />
-            Value USD: ${(token.balance * token.priceUSD).toFixed(5)} <br />
+            <a href={resolve(`/wallet/${token.address}`)}>
+              <strong>{token.symbol}</strong> - {token.name} <br />
+              Address: {token.address} <br />
+              Decimals: {token.decimals} <br />
+              Balance: {token.balance.toString()} - Price: ${token.priceUSD.toFixed(
+                5,
+              )} <br />
+              Value USD: ${(token.balance * token.priceUSD).toFixed(5)} <br />
+            </a>
           </li>
           <hr />
         {/each}
