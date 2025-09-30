@@ -12,7 +12,8 @@ export const BUILD_TYPE: BuildType = PUBLIC_SHARED_BUILD_TYPE as BuildType;
 export const HOST_ICP = PUBLIC_SHARED_HOST_ICP;
 
 // The backend_canister ID
-export const CASHIER_BACKEND_CANISTER_ID = PUBLIC_SHARED_CASHIER_BACKEND_CANISTER_ID;
+export const CASHIER_BACKEND_CANISTER_ID =
+  PUBLIC_SHARED_CASHIER_BACKEND_CANISTER_ID;
 
 // The token_storage canister ID
 export const TOKEN_STORAGE_CANISTER_ID =

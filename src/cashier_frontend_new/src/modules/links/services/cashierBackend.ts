@@ -1,31 +1,44 @@
-
-import type { Account } from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
-import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
+import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.did";
+import { responseToResult } from "$lib/result";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
-import { accountState } from "$modules/shared/state/auth.svelte";
 import { Principal } from "@dfinity/principal";
+import type { Result } from "ts-results";
 
 /**
  * Service for interacting with the Cashier Backend canister.
  */
-export class CanisterBackendService {
-
-
+class CanisterBackendService {
   /**
-   * Get the authenticated ICP Ledger actor for the current user.
-   * @returns Authenticated ICP Ledger actor
+   * Get the authenticated cashierBackend actor for the current user.
+   *
    * @throws Error if the user is not authenticated
    */
-  #getActor(): icpLedger._SERVICE {
+  #getActor(): cashierBackend._SERVICE {
     if (authState.pnp && authState.pnp.isAuthenticated()) {
       return authState.pnp.getActor({
         canisterId: CASHIER_BACKEND_CANISTER_ID,
-        idl: icpLedger.idlFactory,
+        idl: cashierBackend.idlFactory,
       });
     } else {
       throw new Error("User is not authenticated");
     }
   }
 
+  /**
+   * Returns a list of links for the current user.
+   */
+  async getLinks(): Promise<Result<cashierBackend.LinkDto[], Error>> {
+    const response = await this.#getActor().get_links([
+      {
+        offset: BigInt(0),
+        limit: BigInt(100),
+      },
+    ]);
+
+    return responseToResult(response).map((res) => res.data);
+  }
+
 }
+
+export const cashierBackendService = new CanisterBackendService();
