@@ -10,7 +10,7 @@ export function parseListTokens(
   }
 
   let result = response.Ok;
-  console.log("Token list response:", result);
+  //console.log("Token list response:", result);
   if (result.tokens && result.tokens.length > 0) {
     return result.tokens.map((token) => ({
       address: token.string_id.replace("IC:", ""),

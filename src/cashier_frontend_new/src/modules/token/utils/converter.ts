@@ -1,15 +1,15 @@
-export function weiToEther(wei: bigint, decimals: number): number {
+export function balanceToIcp(balance: bigint, decimals: number): number {
   if (decimals < 0) {
     throw new Error("Decimals cannot be negative");
   }
   const factor = 10 ** decimals;
-  return Number(wei) / factor;
+  return Number(balance) / factor;
 }
 
-export function etherToWei(ether: number, decimals: number): bigint {
+export function icpToBalance(icp: number, decimals: number): bigint {
   if (decimals < 0) {
     throw new Error("Decimals cannot be negative");
   }
   const factor = 10 ** decimals;
-  return BigInt(Math.floor(ether * factor));
+  return BigInt(Math.floor(icp * factor));
 }

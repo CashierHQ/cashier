@@ -22,7 +22,6 @@ class TokenStorageService {
       let res: tokenStorage.Result_5 = await actor.list_tokens();
       return parseListTokens(res);
     } catch (error) {
-      console.error("Error listing tokens:", error);
       throw error;
     }
   }

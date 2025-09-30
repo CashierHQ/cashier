@@ -1,6 +1,6 @@
 import * as icpSwapIndexNode from "$lib/generated/icpswap/icpswapNodeIndex";
 import { HOST_ICP_MAINNET } from "$modules/shared/constants";
-import type { TokenWithPrice } from "$modules/token/types";
+import type { TokenPriceRecord } from "$modules/token/types";
 import { Actor, HttpAgent } from "@dfinity/agent";
 import { ICPSWAP_INDEX_CANISTER_ID } from "../constants";
 
@@ -26,19 +26,15 @@ class TokenPriceService {
    * Fetch all token prices from the ICPSwap index canister
    * @returns Array of TokenPrice
    */
-  public async getTokenPrices(): Promise<TokenWithPrice[]> {
+  public async getTokenPrices(): Promise<TokenPriceRecord> {
     let tokenRes: icpSwapIndexNode.PublicTokenOverview[];
     try {
       tokenRes = await this.actor.getAllTokens();
-      return tokenRes.map((token) => ({
-        name: token.name,
-        symbol: token.symbol,
-        standard: token.standard,
-        address: token.address,
-        iconUrl: null,
-        priceUSD: token.priceUSD,
-        decimals: 0,
-      }));
+      let record: TokenPriceRecord = {};
+      tokenRes.map((token) => {
+        record[token.address] = token.priceUSD;
+      });
+      return record;
     } catch (e) {
       console.error(`Failed to get all tokens`, e);
       throw e;
