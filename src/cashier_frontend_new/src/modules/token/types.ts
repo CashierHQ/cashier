@@ -4,13 +4,19 @@ export type TokenMetadata = {
   standard: string;
   address: string;
   decimals: number;
-  iconUrl: string | null;
 };
 
-export type TokenWithPrice = TokenMetadata & {
+export type TokenPrice = {
+  name: string;
+  symbol: string;
+  standard: string;
+  address: string;
   priceUSD: number;
 };
 
-export type TokenWithPriceAndBalance = TokenWithPrice & {
+export type TokenPriceRecord = Record<string, number>;
+
+export type TokenWithPriceAndBalance = TokenMetadata & {
   balance: number;
+  priceUSD: number;
 };

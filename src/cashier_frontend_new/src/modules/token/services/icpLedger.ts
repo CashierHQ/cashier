@@ -4,7 +4,7 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { accountState } from "$modules/shared/state/auth.svelte";
 import { Principal } from "@dfinity/principal";
 import type { TokenMetadata } from "../types";
-import { weiToEther } from "../utils/converter";
+import { balanceToIcp } from "../utils/converter";
 
 export class IcpLedgerService {
   #canisterId: string;
@@ -32,7 +32,7 @@ export class IcpLedgerService {
       authState.pnp.isAuthenticated() &&
       accountState.account
     ) {
-      console.log("Account state:", accountState.account);
+      //console.log("Account state:", accountState.account);
       const encoder = new TextEncoder();
       return {
         owner: Principal.fromText(accountState.account.owner),
@@ -47,12 +47,12 @@ export class IcpLedgerService {
     try {
       let actor: icpLedger._SERVICE = this.#getActor();
       let account: Account = this.#getAccount();
-      console.log("Account for balance:", account);
+      //console.log("Account for balance:", account);
       let balance: bigint = await actor.icrc1_balance_of(account);
-      console.log("Balance:", balance);
-      return weiToEther(balance, this.#decimals);
+      //console.log("Balance:", balance);
+      return balanceToIcp(balance, this.#decimals);
     } catch (error) {
-      console.error("Error listing tokens:", error);
+      console.error("Error get balance:", error);
       throw error;
     }
   }
