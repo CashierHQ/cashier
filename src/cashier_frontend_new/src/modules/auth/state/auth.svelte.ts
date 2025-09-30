@@ -1,4 +1,4 @@
-import { createPNP, PNP } from "@windoge98/plug-n-play";
+import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
 import { BUILD_TYPE, HOST_ICP } from "$modules/shared/constants";
 import {
   FEATURE_FLAGS,
@@ -7,6 +7,8 @@ import {
   TIMEOUT_NANO_SEC,
 } from "../constants";
 import { accountState } from "$modules/shared/state/auth.svelte";
+import { Actor, HttpAgent } from "@dfinity/agent";
+import type { IDL } from "@dfinity/candid";
 
 // Config for PNP instance
 export const CONFIG = {
@@ -90,6 +92,52 @@ export const authState = {
   get pnp() {
     return pnp;
   },
+  // Get anonymous agent
+  get anonAgent() {
+    if (!pnp) {
+      throw new Error("PNP is not initialized");
+    }
+    // create anonymous agent
+    return HttpAgent.createSync({
+      host: HOST_ICP,
+      shouldFetchRootKey: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED,
+    });
+  },
+  // Generic method to get actor for any canister
+  // Using current identity if available, otherwise anonymous
+  getActor<T>(
+    canisterId: string,
+    idlFactory: IDL.InterfaceFactory,
+    // options to force get anonymous actor
+    options?: {
+      anon?: boolean;
+    }
+  ): ActorSubclass<T> {
+    if (!pnp || options?.anon) {
+      const anonymousAgent = HttpAgent.createSync({
+        host: HOST_ICP,
+        shouldFetchRootKey: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED,
+      });
+      return Actor.createActor(idlFactory, {
+        agent: anonymousAgent,
+        canisterId: canisterId,
+      }) as ActorSubclass<T>;
+
+    }
+    if (accountState.account) {
+      return pnp.getActor({
+        canisterId: canisterId,
+        idl: idlFactory,
+      })
+    } else {
+      return pnp.getActor({
+        canisterId: canisterId,
+        idl: idlFactory,
+        anon: true,
+      });
+    }
+  },
+
   // Connect to wallet
   async login(walletId: string) {
     if (!pnp) {
@@ -164,6 +212,7 @@ export const authState = {
       }
     }
   },
+
 };
 
 // Immediately initialize PNP instance on module load
