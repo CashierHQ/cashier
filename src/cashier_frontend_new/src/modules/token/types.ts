@@ -15,5 +15,4 @@ export type TokenWithPrice = TokenMetadata & {
 
 export type TokenWithPriceAndBalance = TokenWithPrice & {
   balance: bigint;
-  formattedBalance: string;
 };
