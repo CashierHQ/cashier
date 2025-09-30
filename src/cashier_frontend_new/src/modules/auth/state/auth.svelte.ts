@@ -96,36 +96,50 @@ export const authState = {
     return pnp;
   },
 
-  // Get anonymous agent
-  get anonymousAgent() {
+  /**
+   * Build an anonymous HttpAgent instance.
+   * @param host Optional host URL for the IC replica
+   * @param shouldFetchRootKey  Optional flag to fetch root key, default based on feature flag
+   * @returns  An anonymous HttpAgent instance
+   */
+  buildAnonymousAgent(host: string = HOST_ICP, shouldFetchRootKey: boolean = FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED) {
     return HttpAgent.createSync({
-      host: HOST_ICP,
-      shouldFetchRootKey: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED,
+      host,
+      shouldFetchRootKey
     });
   },
 
-  // Generic method to get actor for any canister
-  // This will return anonymous actor if no PNP or user not logged in
-  // Otherwise, return actor with current identity
-  getActor<T>(
+  /**
+   * Build an actor for a given canister ID and IDL factory.
+   * @param canisterId  Canister ID to connect to
+   * @param idlFactory IDL factory for the canister
+   * @param options Options to force anonymous actor
+   * @returns 
+   *  An ActorSubclass instance or null if user is not logged in
+   *  null if account is not available
+   */
+  buildActor<T>(
     canisterId: string,
     idlFactory: IDL.InterfaceFactory,
-    // options to force get anonymous actor
+    // options
     options?: {
       anonymous?: boolean;
+      host?: string;
+      shouldFetchRootKey?: boolean;
     },
-  ): ActorSubclass<T> {
+  ): ActorSubclass<T> | null {
     // return anonymous actor if no PNP, or option set to anonymous
     if (!pnp || options?.anonymous) {
-      return Actor.createActor(idlFactory, {
-        agent: this.anonymousAgent,
+      return (Actor.createActor(idlFactory, {
+        agent: this.buildAnonymousAgent(
+          options?.host, options?.shouldFetchRootKey
+        ),
         canisterId: canisterId,
-      }) as ActorSubclass<T>;
+      }));
     }
 
-    //Pnp will return error if user not logged in or adding anonymous option for `getActor`
     if (!accountState.account) {
-      throw new Error("User is not logged in");
+      return null;
     }
 
     // pnp is initialized and user is logged in, return actor with current identity
