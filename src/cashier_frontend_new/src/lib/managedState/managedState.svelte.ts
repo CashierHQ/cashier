@@ -180,6 +180,13 @@ export class ManagedState<T> {
   }
 
   /**
+   * Resets the data state and storage.
+   */
+  reset() {
+    this.#setData(undefined);
+  }
+
+  /**
    * Refetches the data.
    */
   #fetch() {

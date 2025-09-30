@@ -4,7 +4,6 @@
 export type TokenMetadata = {
   name: string;
   symbol: string;
-  standard: string;
   address: string;
   decimals: number;
 };
