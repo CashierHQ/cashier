@@ -4,7 +4,7 @@
   import { walletTokensQuery } from '$modules/token/state/walletStore.svelte';
 
   $effect(() => {
-    console.log("Account state changed, refreshing tokens...", accountState.account);
+    console.log("Account state changed, refreshing tokens...", $state.snapshot(accountState.account));
     walletTokensQuery.refresh();
   });
 </script>

@@ -7,7 +7,7 @@ import { ICPSWAP_INDEX_CANISTER_ID } from "../constants";
 type IndexNodeActor = icpSwapIndexNode._SERVICE;
 
 /**
- * Service for fetching data from the ICPSwap backend
+ * Service for fetching token prices from the ICPSwap backend canister
  */
 class TokenPriceService {
   private actor: IndexNodeActor;
@@ -24,7 +24,9 @@ class TokenPriceService {
 
   /**
    * Fetch all token prices from the ICPSwap index canister
-   * @returns Array of TokenPrice
+   * The data is fetched using an anonymous actor
+   * @returns Record of TokenPrice
+   * @throws Error if fetching fails
    */
   public async getTokenPrices(): Promise<TokenPriceRecord> {
     let tokenRes: icpSwapIndexNode.PublicTokenOverview[];

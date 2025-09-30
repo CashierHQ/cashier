@@ -6,15 +6,24 @@ import { Principal } from "@dfinity/principal";
 import type { TokenMetadata } from "../types";
 import { balanceToIcp } from "../utils/converter";
 
+/**
+ * Service for interacting with ICP Ledger canister for a specific token
+ * This service facilitates querying account balances and token metadata.
+ */
 export class IcpLedgerService {
   #canisterId: string;
-  #decimals: number = 8; // Default to 8 decimals if not set
+  #decimals: number;
 
   constructor(metadata: TokenMetadata) {
     this.#canisterId = metadata.address;
     this.#decimals = metadata.decimals;
   }
 
+  /**
+   * Get the authenticated ICP Ledger actor for the current user.
+   * @returns Authenticated ICP Ledger actor
+   * @throws Error if the user is not authenticated
+   */
   #getActor(): icpLedger._SERVICE {
     if (authState.pnp && authState.pnp.isAuthenticated()) {
       return authState.pnp.getActor({
@@ -26,14 +35,17 @@ export class IcpLedgerService {
     }
   }
 
+  /**
+   * Get the ledger account for the current authenticated user.
+   * @returns The ledger account for the current authenticated user.
+   * @throws Error if the user is not authenticated or no account is available.
+   */
   #getAccount(): Account {
     if (
       authState.pnp &&
       authState.pnp.isAuthenticated() &&
       accountState.account
     ) {
-      //console.log("Account state:", accountState.account);
-      const encoder = new TextEncoder();
       return {
         owner: Principal.fromText(accountState.account.owner),
         subaccount: [],
@@ -43,13 +55,16 @@ export class IcpLedgerService {
     }
   }
 
+  /**
+   * Get the account balance for the current user.
+   * @returns The balance of the current authenticated user's account in ICP.
+   * @throws Error if the user is not authenticated or balance retrieval fails.
+   */
   public async getBalance(): Promise<number> {
     try {
       let actor: icpLedger._SERVICE = this.#getActor();
       let account: Account = this.#getAccount();
-      //console.log("Account for balance:", account);
       let balance: bigint = await actor.icrc1_balance_of(account);
-      //console.log("Balance:", balance);
       return balanceToIcp(balance, this.#decimals);
     } catch (error) {
       console.error("Error get balance:", error);
