@@ -1,27 +1,26 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import TokenDetail from "$modules/token/components/tokenDetail.svelte";
-  import { tokenPriceQuery } from "$modules/token/state/tokenStore.svelte";
+  import { listTokensQuery } from '$modules/wallet/state/walletStore.svelte';
+  
+  $effect(() => {
+    listTokensQuery.refresh();
+  });
 </script>
 
 <p class="py-6"><a class="link" href={resolve("/")}>Go to Home</a></p>
 
 <div>
-  {#if tokenPriceQuery.isLoading}
+  {#if listTokensQuery.isLoading}
     Loading...
   {/if}
-  {#if tokenPriceQuery.error}
+  {#if listTokensQuery.error}
     An error has occurred:
-    {tokenPriceQuery.error}
+    {listTokensQuery.error}
   {/if}
-  {#if tokenPriceQuery.isSuccess && tokenPriceQuery.data}
+  {#if listTokensQuery.isSuccess && listTokensQuery.data}
     <div>
       <h2>Token Prices</h2>
-      <ul>
-        {#each tokenPriceQuery.data.slice(0, 10) as token (token.address)}
-          <TokenDetail price={token} />
-        {/each}
-      </ul>
+    
     </div>
   {/if}
 </div>
