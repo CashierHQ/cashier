@@ -179,6 +179,9 @@ export class ManagedState<T> {
     }
   }
 
+  /**
+   * Resets the data state and storage.
+   */
   reset() {
     this.#setData(undefined);
   }
