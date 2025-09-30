@@ -1,0 +1,27 @@
+<script lang="ts">
+  import { resolve } from "$app/paths";
+  import { page } from "$app/state";
+  import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
+
+  let token = page.params.token || "empty";
+  let tokenDetails = walletTokensQuery.data?.find(t => t.address === token);
+</script>
+
+<p class="py-6"><a class="link" href={resolve("/wallet")}>Go to Wallet</a></p>
+
+<div>
+  <h2>Token details</h2>
+  {#if tokenDetails}
+    <div>
+      <p><strong>Name:</strong> {tokenDetails.name} ({tokenDetails.symbol})</p>
+      <p><strong>Address:</strong> {tokenDetails.address}</p>
+      <p><strong>Decimals:</strong> {tokenDetails.decimals}</p>
+      <p><strong>Balance:</strong> {tokenDetails.balance.toString()}</p>
+      <p><strong>Price USD:</strong> ${tokenDetails.priceUSD.toFixed(5)}</p>
+      <p><strong>Value USD:</strong> ${(tokenDetails.balance * tokenDetails.priceUSD).toFixed(5)}</p>
+    </div>
+  {:else}
+    <p>No details found for this token.</p>
+  {/if}
+</div>
+
