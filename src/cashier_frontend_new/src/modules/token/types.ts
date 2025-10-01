@@ -1,10 +1,12 @@
+import { Principal } from "@dfinity/principal";
+
 /**
  * Type definitions for token metadata
  */
 export type TokenMetadata = {
   name: string;
   symbol: string;
-  address: string;
+  address: Principal;
   decimals: number;
 };
 
@@ -28,6 +30,6 @@ export type TokenPriceRecord = Record<string, number>;
  * Type definition for a token with additional price and balance information
  */
 export type TokenWithPriceAndBalance = TokenMetadata & {
-  balance: number;
+  balance: bigint;
   priceUSD: number;
 };
