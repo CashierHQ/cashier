@@ -4,6 +4,7 @@ import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { tokenPriceService } from "$modules/token/services/tokenPrice";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
+import { Principal } from "@dfinity/principal";
 
 /**
  * QueryState for fetching the user's wallet tokens along with their balances and prices.
@@ -17,7 +18,8 @@ export const walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
 
     // fetch token balances
     const balanceRequests = tokens.map((token) => {
-      const icpLedgerService = new IcpLedgerService(token.address);
+      const tokenPrincipal = Principal.fromText(token.address);
+      const icpLedgerService = new IcpLedgerService(tokenPrincipal);
       return icpLedgerService.getBalance();
     });
     const balances: bigint[] = await Promise.all(balanceRequests);
@@ -28,12 +30,12 @@ export const walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
     return tokens.map((token, index) => ({
       ...token,
       balance: balances[index],
-      priceUSD: prices[token.address.toText()] || 0,
+      priceUSD: prices[token.address] || 0,
     }));
   },
   refetchInterval: 15_000, // Refresh every 15 seconds to keep balances up-to-date
   persistedKey: ["walletTokensQuery"],
-  //storageType: "localStorage", // disable persisting to localStorage to avoid the error:DevalueError: Cannot stringify arbitrary non-POJOs
+  storageType: "localStorage",
 });
 
 $effect.root(() => {
