@@ -1,6 +1,7 @@
 import { createPNP, PNP } from "@windoge98/plug-n-play";
 import { BUILD_TYPE, HOST_ICP } from "$modules/shared/constants";
 import {
+  CONNECT_WALLET_ID_KEY,
   FEATURE_FLAGS,
   IC_INTERNET_IDENTITY_PROVIDER,
   TARGETS,
@@ -9,6 +10,7 @@ import {
 import { accountState } from "$modules/shared/state/auth.svelte";
 import { goto } from "$app/navigation";
 import { resolve } from "$app/paths";
+import { handleStorageChange } from "../services/crossTabAuth";
 
 // Config for PNP instance
 export const CONFIG = {
@@ -41,8 +43,12 @@ export const CONFIG = {
         }),
       },
     },
+    nfid: {
+      enabled: true,
+    }
   },
 };
+
 
 // State variables
 let pnp = $state<PNP | null>(null);
@@ -50,86 +56,9 @@ let pnp = $state<PNP | null>(null);
 let connectedWalletId = $state<string | null>(null);
 // state to indicate if we are reconnecting
 let isReconnecting = $state(false);
-
-// Cross-tab auth sync (logout-only)
-const AUTH_CHANNEL_NAME = "cashier-auth-event";
-let bc: BroadcastChannel | null = null;
-
-// Emit auth event to other tabs
-function emitAuthEvent(event: { type: "login" | "logout" }) {
-  if (typeof window === "undefined") return;
-
-  // Only send minimal events. For login we don't include wallet identifiers;
-  // other tabs will read `connectedWalletId` from localStorage if present.
-
-  // BroadcastChannel for modern browsers
-  if (typeof BroadcastChannel !== "undefined") {
-    try {
-      if (!bc) bc = new BroadcastChannel(AUTH_CHANNEL_NAME);
-      bc.postMessage({ type: event.type });
-    } catch {
-      localStorage.setItem(
-        "auth-event",
-        JSON.stringify({ type: event.type, ts: Date.now() }),
-      );
-    }
-  }
-}
-
-// Handle auth event from other tabs
-async function handleRemoteAuthEvent(
-  payload: { type: "login" | "logout" } | null,
-) {
-  if (!payload) return;
-  if (payload.type === "logout") {
-    // Use the exported logout to centralize behavior. Pass options to avoid
-    // broadcasting the event back to other tabs and to avoid calling PNP
-    // disconnect (the initiating tab already cleared identity storage).
-    try {
-      await authState.logout({ broadcast: false, disconnectPNP: false });
-    } catch {
-      // If logout via authState fails for any reason, fall back to clearing
-      // local state to ensure the tab is logged out.
-      accountState.account = null;
-      connectedWalletId = null;
-      isReconnecting = false;
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.removeItem("connectedWalletId");
-        } catch {
-          // ignore
-        }
-      }
-    }
-    console.log("[auth] remote logout received — cleared local auth state");
-    return;
-  }
-
-  // If another tab logged in, attempt a best-effort reconnect using the stored
-  // `connectedWalletId`. Do not broadcast wallet identifiers — read from localStorage instead.
-  if (payload.type === "login") {
-    // Best-effort reconnection: use the exported reconnect method which
-    // uses the stored `connectedWalletId` if available.
-    (async () => {
-      try {
-        if (accountState.account) return; // already logged in here
-        const stored =
-          typeof window !== "undefined"
-            ? localStorage.getItem("connectedWalletId")
-            : null;
-        if (!stored) return;
-        connectedWalletId = stored;
-        if (!pnp) {
-          await initPnp();
-        }
-        await authState.reconnect();
-        console.log("[auth] remote login: reconnect succeeded");
-      } catch {
-        console.warn("[auth] remote login: reconnect failed");
-      }
-    })();
-  }
-}
+// state to indicate if PNP is initialized
+// default to "mount", set to "initialized" after initPnp completes
+let initState = $state<"mount" | "initialized">("mount");
 
 // Initialize PNP instance,
 const initPnp = async () => {
@@ -137,52 +66,27 @@ const initPnp = async () => {
     return;
   }
   pnp = createPNP(CONFIG);
+  initState = "initialized"
 
-  // setup BroadcastChannel + storage listener for logout-only sync
   if (typeof window !== "undefined") {
-    try {
-      if (typeof BroadcastChannel !== "undefined") {
-        bc = new BroadcastChannel(AUTH_CHANNEL_NAME);
-        bc.onmessage = (ev) => {
-          try {
-            handleRemoteAuthEvent(ev.data ?? null);
-          } catch {
-            // ignore
-          }
-        };
-      }
-    } catch {
-      bc = null;
-    }
-
-    window.addEventListener("storage", (e) => {
-      try {
-        if (e.key === "auth-event" && e.newValue) {
-          const parsed = JSON.parse(e.newValue);
-          handleRemoteAuthEvent(parsed);
-        }
-        if (e.key === "connectedWalletId" && e.newValue === null) {
-          handleRemoteAuthEvent({ type: "logout" });
-        }
-      } catch {
-        // ignore
-      }
-    });
-
-    // Try to get stored wallet ID from localStorage
-    const storedWalletId = localStorage.getItem("connectedWalletId");
+    // Try to get stored wallet ID from localStorage (still used for reconnect persistence)
+    const storedWalletId = localStorage.getItem(CONNECT_WALLET_ID_KEY);
     if (storedWalletId) {
       connectedWalletId = storedWalletId;
-      // Auto-reconnect if we have a stored wallet ID
       try {
         await authState.reconnect();
-        console.log("Auto-reconnect successful");
       } catch (error) {
         console.error("Auto-reconnect failed:", error);
       }
     }
   }
 };
+
+// Listen for storage changes from other tabs/windows. We care about CONNECT_WALLET_ID_KEY
+// If the key is removed elsewhere, we should logout locally to keep state consistent.
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", handleStorageChange);
+}
 
 // Exported auth state and actions
 export const authState = {
@@ -202,6 +106,11 @@ export const authState = {
   get pnp() {
     return pnp;
   },
+  // Getter isInit
+  get initState() {
+    return initState;
+  },
+
   // Connect to wallet
   async login(walletId: string) {
     if (!pnp) {
@@ -217,16 +126,7 @@ export const authState = {
         subaccount: res.subaccount,
       };
       connectedWalletId = walletId;
-      // Store wallet ID in localStorage for persistence
-      if (typeof window !== "undefined") {
-        localStorage.setItem("connectedWalletId", walletId);
-        // notify other tabs of login (no walletId included)
-        try {
-          emitAuthEvent({ type: "login" });
-        } catch {
-          // ignore
-        }
-      }
+      localStorage.setItem(CONNECT_WALLET_ID_KEY, walletId);
     } catch (error) {
       console.error("Login failed:", error);
       throw error;
@@ -234,43 +134,16 @@ export const authState = {
   },
 
   // Disconnect from wallet
-  async logout(opts?: { broadcast?: boolean; disconnectPNP?: boolean }) {
-    const { broadcast = true, disconnectPNP = true } = opts || {};
-    if (!pnp && disconnectPNP) {
+  async logout() {
+    if (!pnp) {
       throw new Error("PNP is not initialized");
     }
     try {
-      if (disconnectPNP && pnp) {
-        await pnp.disconnect();
-      }
-
+      await pnp.disconnect();
       accountState.account = null;
       connectedWalletId = null;
-
-      // Remove wallet ID from localStorage
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.removeItem("connectedWalletId");
-        } catch {
-          // ignore
-        }
-
-        // notify other tabs about logout
-        if (broadcast) {
-          try {
-            emitAuthEvent({ type: "logout" });
-          } catch {
-            // ignore
-          }
-        }
-
-        // After logout, navigate to landing page (client-only)
-        try {
-          goto(resolve("/"), { replaceState: true });
-        } catch {
-          // ignore navigation errors (e.g. during SSR or if $app/navigation isn't available)
-        }
-      }
+      localStorage.removeItem(CONNECT_WALLET_ID_KEY);
+      goto(resolve("/"), { replaceState: true });
     } catch (error) {
       console.error("Logout failed:", error);
       throw error;
@@ -282,10 +155,20 @@ export const authState = {
     if (!pnp) {
       throw new Error("PNP is not initialized");
     }
-    if (connectedWalletId) {
+    // If we don't have an in-memory connectedWalletId (e.g. storage event), try reading from localStorage
+    let targetWalletId = connectedWalletId;
+    if (!targetWalletId && typeof window !== "undefined") {
+      targetWalletId = localStorage.getItem(CONNECT_WALLET_ID_KEY);
+      if (targetWalletId) {
+        connectedWalletId = targetWalletId;
+      }
+    }
+
+    if (targetWalletId) {
       isReconnecting = true;
       try {
-        const res = await pnp.connect(connectedWalletId);
+        const res = await pnp.connect(targetWalletId);
+        console.log("Reconnected to wallet:", targetWalletId);
         if (res.owner === null) {
           throw new Error("Login failed: owner is null");
         }
@@ -293,13 +176,11 @@ export const authState = {
           owner: res.owner,
           subaccount: res.subaccount,
         };
-        console.log("Auto-reconnect successful");
       } catch (error) {
-        console.error("Reconnect failed:", error);
         // Clear stored wallet ID if reconnect fails
         connectedWalletId = null;
         if (typeof window !== "undefined") {
-          localStorage.removeItem("connectedWalletId");
+          localStorage.removeItem(CONNECT_WALLET_ID_KEY);
         }
         throw error;
       } finally {

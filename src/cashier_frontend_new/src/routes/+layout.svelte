@@ -5,13 +5,13 @@
   import Navbar from "$modules/shared/components/Navbar.svelte";
   import { accountState } from "$modules/shared/state/auth.svelte";
   import "../app.css";
-    import { onMount } from "svelte";
     import { page } from "$app/state";
+    import { authState } from "$modules/auth/state/auth.svelte";
 
   let { children } = $props();
 
   // Define protected routes that require authentication
-  const protectedRoutes = ["/blog"];
+  const protectedRoutes = ["/blog", "/token"];
 
   const curentPath
    = page.url.pathname;
@@ -22,22 +22,21 @@
     return protectedRoutes.some((r) => path === r || path.startsWith(r + "/"));
   }
 
-  onMount(() => {
-    console.log("mount");
+  // effect to when accountState.account changes
+  $effect(() => {
+    // don't run login redirect logic until PNP / initialization completed
+    if (authState.initState === "mount") return;
+    if (authState.isReconnecting) return;
     if (isProtectedPath(curentPath) && !accountState.account) {
-      console.log("No account, redirecting to landing page");
-      // goto("/404");
+      goto("/404");
     }
   });
 
   // Listen for navigation events, and redirect if necessary
   beforeNavigate(({ to }) => {
-    console.log("before navigate");
     const targetPath = to?.url?.pathname ?? "";
-
     if (isProtectedPath(targetPath) && !accountState.account) {
-      console.log("No account, redirecting to landing page");
-      // goto("/404");
+      goto("/404");
     }
   });
 </script>
@@ -47,4 +46,19 @@
 </svelte:head>
 
 <Navbar />
+{#if authState.initState === "mount"}
+  <div class="min-h-screen flex items-center justify-center">
+    Initializing...
+  </div>
+{:else if authState.isReconnecting}
+  <div class="min-h-screen flex items-center justify-center">
+    Reconnecting...
+  </div>
+// Show checking only when not reconnecting
+{:else if isProtectedPath(curentPath) && !accountState.account}
+  <div class="min-h-screen flex items-center justify-center">
+    Checking...
+  </div>
+{:else}
   {@render children?.()}
+{/if}

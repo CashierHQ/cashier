@@ -36,7 +36,7 @@
         <li><Button onclick={handleLogout}>Logout</Button></li>
       {:else}
         <li>
-          <Button onclick={() => handleLogin("ii")}>Login II</Button>
+          <Button onclick={() => handleLogin("nfid")}>Login II</Button>
         </li>
       {/if}
     </ul>
