@@ -38,7 +38,7 @@ class TokenStorageService {
     return parseListTokens(res);
   }
 
-  public async toggleTokenEnabled(
+  public async toggleToken(
     address: Principal,
     is_enabled: boolean,
   ): Promise<void> {

@@ -23,17 +23,22 @@ export const walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
       return icpLedgerService.getBalance();
     });
     const balances: bigint[] = await Promise.all(balanceRequests);
-    console.log("Fetched balances", balances);
 
     // fetch token prices
     const prices = await tokenPriceService.getTokenPrices();
-    console.log("Fetched prices", prices);
 
-    return tokens.map((token, index) => ({
+    const enrichedTokens = tokens.map((token, index) => ({
       ...token,
       balance: balances[index],
       priceUSD: prices[token.address.toText()] || 0,
     }));
+
+    // sort by address
+    enrichedTokens.sort((a, b) =>
+      a.address.toText().localeCompare(b.address.toText()),
+    );
+
+    return enrichedTokens;
   },
   //refetchInterval: 15_000, // Refresh every 15 seconds to keep balances up-to-date
   persistedKey: ["walletTokensQuery"],
@@ -56,17 +61,13 @@ $effect.root(() => {
   });
 });
 
-export async function toggleTokenEnabled(
-  address: Principal,
-  isEnabled: boolean,
-) {
+export async function toggleToken(address: Principal, isEnabled: boolean) {
   try {
-    console.log("Toggling token enabled state:", address, isEnabled);
-    const toggleRes = await tokenStorageService.toggleTokenEnabled(
-      address,
-      isEnabled,
-    );
-    console.log("Toggled token enabled state:", toggleRes);
+    console.log("Toggling token:", address, "to", isEnabled);
+    const toggleRes = await tokenStorageService.toggleToken(address, isEnabled);
+    console.log("Toggled token response:", toggleRes);
+    // Refresh the wallet tokens data after toggling the token enabled state
+    walletTokensQuery.refresh();
   } catch (error) {
     console.error("Error toggling token enabled state:", error);
   }
