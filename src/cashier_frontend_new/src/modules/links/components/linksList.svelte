@@ -1,9 +1,15 @@
 <script lang="ts">
     import { linkListQuery } from "../stores/links.svelte";
 
-    setTimeout(() => {
-        linkListQuery.refresh();
-    }, 2500)
+//     const localList = export const linkListQuery = managedState<LinkDto[]>({
+//   queryFn: async () => {
+//     return (await cashierBackendService.getLinks()).unwrap();
+//   },
+// });
+    // setTimeout(() => {
+    //     linkListQuery.refresh();
+    // }, 2500)
+
 </script>
 
 <li>

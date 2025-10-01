@@ -36,6 +36,8 @@ export type StateConfig<T> = {
    *
    */
   storageType?: "global" | "localStorage" | "sessionStorage";
+
+  effect?: boolean;
 };
 
 type Data<T> = {
@@ -72,6 +74,26 @@ export class ManagedState<T> {
     } else {
       this.#storage = new NoOpsStore();
     }
+
+    if (config.effect) {
+      let cleanUp = $effect.root(() => {
+        $effect(() => {
+          this.refresh();
+        });
+      });
+      
+      // Ignore the error. This should fail silently if the state is created outside of a svelte component.
+      try {
+        onDestroy(() => {
+          cleanUp(); // cancel before component unmount
+        });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_e) {
+        // This is ok, if the state is created outside of a svelte component
+        // then the onDestroy will not be called and the interval will not be cleared
+      }
+
+    };
 
     const initialData = this.#storage.getItem();
     if (initialData !== null) {
