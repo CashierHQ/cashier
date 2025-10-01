@@ -7,7 +7,7 @@ import {
 import { authState } from "$modules/auth/state/auth.svelte";
 import { ICPSWAP_INDEX_CANISTER_ID } from "../constants";
 import type { ActorSubclass } from "@dfinity/agent";
-import { PUBLIC_SHARED_HOST_ICP_MAINNET } from "$env/static/public";
+import { HOST_ICP_MAINNET } from "$modules/shared/constants";
 /**
  * Service for fetching data from the ICPSwap backend
  */
@@ -23,7 +23,7 @@ class TokenPriceService {
       idlFactory,
       {
         anonymous: true,
-        host: PUBLIC_SHARED_HOST_ICP_MAINNET,
+        host: HOST_ICP_MAINNET,
       },
     );
 
