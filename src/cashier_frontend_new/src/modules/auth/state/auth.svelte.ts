@@ -7,6 +7,7 @@ import {
 import { accountState } from "$modules/shared/state/auth.svelte";
 import { Actor, HttpAgent } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
+import { Principal } from "@dfinity/principal";
 import type { CreatePnpArgs } from "@windoge98/plug-n-play";
 import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
 
@@ -41,12 +42,18 @@ export const CONFIG: CreatePnpArgs = {
   },
 };
 
-// State variables
-let pnp = $state<PNP | null>(null);
+// Plug-n-play global instance
+let pnp: PNP | null = null;
+
 // state to store connected wallet ID for reconnecting later
 let connectedWalletId = $state<string | null>(null);
 // state to indicate if we are reconnecting
 let isReconnecting = $state(false);
+// Account state
+let account = $state<{
+  owner: string;
+  subaccount: string | null;
+} | null>(null);
 
 // Initialize PNP instance,
 const initPnp = async () => {
@@ -73,6 +80,22 @@ const initPnp = async () => {
 
 // Exported auth state and actions
 export const authState = {
+
+    // Return true if the user is logged in
+  get isLoggedIn() {
+    return account !== null;
+  },
+
+  // Return current account information, null if not logged in
+  get account() {
+    return account;
+  },
+
+  // Update account information, normally set after login/logout
+  set account(value: { owner: string; subaccount: string | null } | null) {
+    account = value;
+  },
+
   // Getter connectedWalletId
   get connectedWalletId() {
     return connectedWalletId;
@@ -81,16 +104,6 @@ export const authState = {
   // Getter isReconnecting
   get isReconnecting() {
     return isReconnecting;
-  },
-
-  // Getter PNP provider
-  get provider() {
-    return pnp?.provider;
-  },
-
-  // Getter PNP
-  get pnp() {
-    return pnp;
   },
 
   /**
@@ -116,13 +129,10 @@ export const authState = {
    *  null if account is not available
    */
   buildActor<T>(
-    canisterId: string,
-    idlFactory: IDL.InterfaceFactory,
-    // options
-    options?: {
+    {canisterId, idlFactory, options}: {canisterId: string | Principal; idlFactory: IDL.InterfaceFactory; options?: {
       anonymous?: boolean;
       host?: string;
-    },
+    }},
   ): ActorSubclass<T> | null {
     // return anonymous actor if no PNP, or option set to anonymous
     if (!pnp || options?.anonymous) {
@@ -136,9 +146,14 @@ export const authState = {
       return null;
     }
 
+
+    if (canisterId instanceof Principal) {
+      canisterId = canisterId.toText();  
+    }
+
     // pnp is initialized and user is logged in, return actor with current identity
     return pnp.getActor({
-      canisterId: canisterId,
+      canisterId,
       idl: idlFactory,
     });
   },

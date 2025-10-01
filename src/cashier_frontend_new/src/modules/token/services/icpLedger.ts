@@ -20,15 +20,11 @@ export class IcpLedgerService {
    * @returns Authenticated ICP Ledger actor
    * @throws Error if the user is not authenticated
    */
-  #getActor(): icpLedger._SERVICE {
-    if (authState.pnp && authState.pnp.isAuthenticated()) {
-      return authState.pnp.getActor({
-        canisterId: this.#canisterId.toText(),
-        idl: icpLedger.idlFactory,
-      });
-    } else {
-      throw new Error("User is not authenticated");
-    }
+  #getActor(): icpLedger._SERVICE | null {
+    return authState.buildActor({
+      canisterId: this.#canisterId,
+      idlFactory: icpLedger.idlFactory,
+    });
   }
 
   /**
@@ -38,8 +34,6 @@ export class IcpLedgerService {
    */
   #getAccount(): Account {
     if (
-      authState.pnp &&
-      authState.pnp.isAuthenticated() &&
       accountState.account
     ) {
       return {
@@ -57,7 +51,10 @@ export class IcpLedgerService {
    * @throws Error if the user is not authenticated or balance retrieval fails.
    */
   public async getBalance(): Promise<bigint> {
-    const actor: icpLedger._SERVICE = this.#getActor();
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
     const account: Account = this.#getAccount();
     return await actor.icrc1_balance_of(account);
   }
