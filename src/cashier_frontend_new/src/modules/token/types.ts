@@ -8,6 +8,7 @@ export type TokenMetadata = {
   symbol: string;
   address: Principal;
   decimals: number;
+  enabled: boolean;
 };
 
 /**
