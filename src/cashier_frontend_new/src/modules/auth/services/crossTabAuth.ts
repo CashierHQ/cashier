@@ -14,7 +14,9 @@ export const handleStorageChange = async (event: StorageEvent) => {
       } else {
         // If key was set/changed in another tab, update local state and try reconnect.
         try {
-            console.log("Detected login in another tab, attempting to reconnect locally.");
+          console.log(
+            "Detected login in another tab, attempting to reconnect locally.",
+          );
           await authState.reconnect();
         } catch (err) {
           console.error("Reconnection after storage change failed:", err);

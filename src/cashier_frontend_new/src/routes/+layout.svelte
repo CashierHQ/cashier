@@ -5,16 +5,15 @@
   import Navbar from "$modules/shared/components/Navbar.svelte";
   import { accountState } from "$modules/shared/state/auth.svelte";
   import "../app.css";
-    import { page } from "$app/state";
-    import { authState } from "$modules/auth/state/auth.svelte";
+  import { page } from "$app/state";
+  import { authState } from "$modules/auth/state/auth.svelte";
 
   let { children } = $props();
 
   // Define protected routes that require authentication
-  const protectedRoutes = ["/blog", "/token"];
+  const protectedRoutes = ["/blog"];
 
-  const curentPath
-   = page.url.pathname;
+  const curentPath = page.url.pathname;
 
   // Check if the path is protected
   function isProtectedPath(path: string) {
@@ -24,9 +23,7 @@
 
   // effect to when accountState.account changes
   $effect(() => {
-    // don't run login redirect logic until PNP / initialization completed
-    if (authState.initState === "mount") return;
-    if (authState.isReconnecting) return;
+    if (authState.initState !== "initialized") return;
     if (isProtectedPath(curentPath) && !accountState.account) {
       goto("/404");
     }
@@ -50,15 +47,12 @@
   <div class="min-h-screen flex items-center justify-center">
     Initializing...
   </div>
-{:else if authState.isReconnecting}
+{:else if authState.initState === "reconnect"}
   <div class="min-h-screen flex items-center justify-center">
     Reconnecting...
   </div>
-// Show checking only when not reconnecting
 {:else if isProtectedPath(curentPath) && !accountState.account}
-  <div class="min-h-screen flex items-center justify-center">
-    Checking...
-  </div>
+  <div class="min-h-screen flex items-center justify-center">Checking...</div>
 {:else}
   {@render children?.()}
 {/if}
