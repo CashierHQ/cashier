@@ -99,14 +99,10 @@ export const authState = {
   /**
    * Build an anonymous HttpAgent instance.
    * @param host Optional host URL for the IC replica
-   * should fetch root true if connecting to localhost
    * @returns An anonymous HttpAgent instance
    */
   buildAnonymousAgent(host: string = HOST_ICP) {
-    let shouldFetchRootKey = false;
-    if (host.includes("localhost")) {
-      shouldFetchRootKey = true;
-    }
+    const shouldFetchRootKey = host.includes("localhost");
     return HttpAgent.createSync({
       host,
       shouldFetchRootKey,
