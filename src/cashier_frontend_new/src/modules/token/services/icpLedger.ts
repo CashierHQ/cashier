@@ -1,7 +1,6 @@
 import type { Account } from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { accountState } from "$modules/shared/state/auth.svelte";
 import { Principal } from "@dfinity/principal";
 
 /**
@@ -34,10 +33,10 @@ export class IcpLedgerService {
    */
   #getAccount(): Account {
     if (
-      accountState.account
+      authState.account
     ) {
       return {
-        owner: Principal.fromText(accountState.account.owner),
+        owner: Principal.fromText(authState.account.owner),
         subaccount: [],
       };
     } else {

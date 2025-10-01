@@ -3,8 +3,8 @@
   import { resolve } from "$app/paths";
   // DEMO: `m` is a helper function that statically checks message validity at compile time
   import { m } from "$lib/paraglide/messages.js";
+    import { authState } from "$modules/auth/state/auth.svelte";
     import LinksList from "$modules/links/components/linksList.svelte";
-    import { accountState } from "$modules/shared/state/auth.svelte";
 </script>
 
 <!-- DEMO: no need for a dedicated tailwind configuration because this uses version 4 by default -->
@@ -25,7 +25,7 @@
     </div>
   </div>
 
-  {#if accountState.isLoggedIn}
+  {#if authState.isLoggedIn}
     <div>You are logged in</div>
     <LinksList />
     {:else}

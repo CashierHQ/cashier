@@ -2,7 +2,6 @@ import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.
 import { responseToResult } from "$lib/result";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
-import { accountState } from "$modules/shared/state/auth.svelte";
 import { Err, type Result } from "ts-results-es";
 
 /**
