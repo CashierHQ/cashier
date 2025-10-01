@@ -28,7 +28,7 @@
   </div>
   <div class="flex-none">
     <ul class="menu menu-horizontal px-1">
-      {#if authState.isReconnecting}
+      {#if authState.isConnecting}
         <li><div class="loading loading-spinner loading-sm"></div></li>
         <li><span>Reconnecting...</span></li>
       {:else if accountState.account}
