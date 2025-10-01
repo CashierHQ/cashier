@@ -14,6 +14,8 @@
   <Button onclick={() => goto(resolve("/wallet/manage"))}>
     Manage Tokens
   </Button>
+  <Button onclick={() => goto(resolve("/wallet/send"))}>Send</Button>
+  <Button onclick={() => goto(resolve("/wallet/receive"))}>Receive</Button>
 </div>
 
 <div>

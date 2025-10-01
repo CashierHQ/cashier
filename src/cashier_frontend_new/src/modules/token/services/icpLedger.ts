@@ -61,4 +61,27 @@ export class IcpLedgerService {
     const account: Account = this.#getAccount();
     return await actor.icrc1_balance_of(account);
   }
+
+  public async transfer(to: Principal, amount: bigint): Promise<bigint> {
+    const actor: icpLedger._SERVICE = this.#getActor();
+    const toAccount: icpLedger.Account = {
+      owner: to,
+      subaccount: [],
+    };
+
+    const result = await actor.icrc1_transfer({
+      to: toAccount,
+      amount,
+      memo: [],
+      created_at_time: [],
+      fee: [],
+      from_subaccount: [],
+    });
+
+    if ("Err" in result) {
+      throw new Error(`Transfer failed: ${JSON.stringify(result.Err)}`);
+    }
+
+    return result.Ok;
+  }
 }
