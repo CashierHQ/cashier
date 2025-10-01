@@ -1,7 +1,13 @@
 import type { TokenPrice } from "$modules/token/types";
-import { actorState } from "$modules/shared/state/actor.svelte";
-import type { PublicTokenOverview } from "$lib/generated/icpswap/icpswapNodeIndex";
-
+import {
+  idlFactory,
+  type _SERVICE,
+  type PublicTokenOverview,
+} from "$lib/generated/icpswap/icpswapNodeIndex";
+import { authState } from "$modules/auth/state/auth.svelte";
+import { ICPSWAP_INDEX_CANISTER_ID } from "../constants";
+import type { ActorSubclass } from "@dfinity/agent";
+import { HOST_ICP_MAINNET } from "$modules/shared/constants";
 /**
  * Service for fetching data from the ICPSwap backend
  */
@@ -12,8 +18,21 @@ class TokenPriceService {
    */
   public async getTokens(): Promise<TokenPrice[]> {
     let tokenRes: PublicTokenOverview[];
+    const actor: ActorSubclass<_SERVICE> | null = authState.buildActor(
+      ICPSWAP_INDEX_CANISTER_ID,
+      idlFactory,
+      {
+        anonymous: true,
+        host: HOST_ICP_MAINNET,
+      },
+    );
+
+    if (!actor) {
+      throw new Error("Failed to build actor for ICPSwap index canister");
+    }
+
     try {
-      tokenRes = await actorState.tokenIndexNodeActor.getAllTokens();
+      tokenRes = await actor.getAllTokens();
       return tokenRes.map((token) => ({
         name: token.name,
         symbol: token.symbol,
