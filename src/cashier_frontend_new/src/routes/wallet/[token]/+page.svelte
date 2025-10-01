@@ -3,13 +3,13 @@
   import { page } from "$app/state";
   import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
   import {
-    balanceToIcp,
-    balanceToUSDValue,
+      balanceToIcp,
+      balanceToUSDValue,
   } from "$modules/token/utils/converter";
 
   let token = page.params.token || "empty";
   let tokenDetails = $derived(
-    walletTokensQuery.data?.find((t) => t.address.toText() === token),
+    walletTokensQuery.data?.find((t) => t.address === token),
   );
 </script>
 

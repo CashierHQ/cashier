@@ -1,12 +1,10 @@
-import { Principal } from "@dfinity/principal";
-
 /**
  * Type definitions for token metadata
  */
 export type TokenMetadata = {
   name: string;
   symbol: string;
-  address: Principal;
+  address: string;
   decimals: number;
 };
 
