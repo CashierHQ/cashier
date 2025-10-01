@@ -24,7 +24,7 @@ export class IcpLedgerService {
   #getActor(): icpLedger._SERVICE {
     if (authState.pnp && authState.pnp.isAuthenticated()) {
       return authState.pnp.getActor({
-        canisterId: this.#metadata.address,
+        canisterId: this.#metadata.address.toText(),
         idl: icpLedger.idlFactory,
       });
     } else {

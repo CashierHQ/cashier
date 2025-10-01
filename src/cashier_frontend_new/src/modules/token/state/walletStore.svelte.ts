@@ -1,4 +1,5 @@
 import { managedState } from "$lib/managedState";
+import { accountState } from "$modules/shared/state/auth.svelte";
 import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { tokenPriceService } from "$modules/token/services/tokenPrice";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
@@ -19,7 +20,7 @@ export const walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
       const icpLedgerService = new IcpLedgerService(token);
       return icpLedgerService.getBalance();
     });
-    const balances: number[] = await Promise.all(balanceRequests);
+    const balances: bigint[] = await Promise.all(balanceRequests);
 
     // fetch token prices
     const prices = await tokenPriceService.getTokenPrices();
@@ -27,9 +28,26 @@ export const walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
     return tokens.map((token, index) => ({
       ...token,
       balance: balances[index],
-      priceUSD: prices[token.address] || 0,
+      priceUSD: prices[token.address.toText()] || 0,
     }));
   },
+  refetchInterval: 15_000, // Refresh every 5 seconds to keep balances up-to-date
   persistedKey: ["walletTokensQuery"],
-  storageType: "localStorage",
+  //storageType: "localStorage", // disable persisting to localStorage to avoid the error:DevalueError: Cannot stringify arbitrary non-POJOs
+});
+
+$effect.root(() => {
+  $effect(() => {
+    console.log(
+      "Account state changed, refreshing tokens...",
+      $state.snapshot(accountState.account),
+    );
+    // Reset the wallet tokens data when user logs out
+    if (accountState.account == null) {
+      walletTokensQuery.reset();
+      return;
+    }
+    // Refresh the wallet tokens data when user logs in
+    walletTokensQuery.refresh();
+  });
 });

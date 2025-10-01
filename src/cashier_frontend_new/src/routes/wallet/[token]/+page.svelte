@@ -6,7 +6,7 @@
 
   let token = page.params.token || "empty";
   let tokenDetails = $derived(
-    walletTokensQuery.data?.find((t) => t.address === token),
+    walletTokensQuery.data?.find((t) => t.address.toText() === token),
   );
 </script>
 

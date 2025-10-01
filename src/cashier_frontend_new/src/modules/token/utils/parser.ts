@@ -20,7 +20,7 @@ export function parseListTokens(
       if ("IC" in token.id) {
         const ledgerId: Principal = token.id.IC.ledger_id;
         return {
-          address: ledgerId.toText(),
+          address: ledgerId,
           name: token.name,
           symbol: token.symbol,
           decimals: token.decimals,
