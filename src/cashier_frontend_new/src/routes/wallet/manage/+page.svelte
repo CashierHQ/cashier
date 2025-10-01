@@ -2,15 +2,18 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import Button from '$lib/shadcn/components/ui/button/button.svelte';
-  import { toggleTokenEnabled, walletTokensQuery } from "$modules/token/state/walletStore.svelte";
+  import { toggleToken, walletTokensQuery } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from '$modules/token/types';
 
-  async function handleToggle(token: TokenWithPriceAndBalance) {
-    // Here you would typically also update the backend or local storage
-    // to persist the enabled/disabled state of the token.
-    console.log(`Toggle Token ${token.symbol} to enabled: ${!token.enabled}`);
+  let errorMessage: string =  $state("");
 
-    await toggleTokenEnabled(token.address, false);
+  async function handleToggle(token: TokenWithPriceAndBalance) {
+    try {
+      await toggleToken(token.address, !token.enabled);
+      errorMessage = "";
+    } catch (error) {
+      errorMessage = "Failed to toggle token: " + error;
+    }
   }
 
 </script>
@@ -30,7 +33,7 @@
               <strong>{token.symbol}</strong> - {token.name} <br />
               Address: {token.address} <br />
               Decimals: {token.decimals} <br />
-              <input type="checkbox" bind:checked={token.enabled} onchange={() => handleToggle(token)} /> Enabled
+              <input type="checkbox" checked={token.enabled} onchange={() => handleToggle(token)} /> Enabled
               <br />
           </li>
           <hr />
@@ -46,6 +49,9 @@
     </p>
   {:else}
     Loading...
+  {/if}
+  {#if errorMessage}
+    <p style="color: red;">{errorMessage}</p>
   {/if}
 </div>
 

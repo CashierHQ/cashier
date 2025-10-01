@@ -22,6 +22,7 @@
       <h2>Wallet tokens</h2>
       <ul>
         {#each walletTokensQuery.data as token (token.address)}
+        {#if token.enabled}
           <li>
             <a href={resolve(`/wallet/${token.address}`)}>
               <strong>{token.symbol}</strong> - {token.name} <br />
@@ -37,7 +38,8 @@
             </a>
           </li>
           <hr />
-        {/each}
+        {/if}
+      {/each}
       </ul>
     </div>
   {:else if walletTokensQuery.isSuccess}

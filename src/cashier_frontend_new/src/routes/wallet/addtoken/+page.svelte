@@ -14,16 +14,12 @@
       return;
     }
 
-    // Here you would typically also update the backend or local storage
-    // to persist the added token.
-    console.log("Adding Token with Canister ID:", canisterId);
-
     try {
       const principal = Principal.fromText(canisterId);
       await addToken(principal);
+      errorMessage = "";
     } catch (error) {
-      errorMessage = "Invalid Canister ID";
-      return;
+      errorMessage = "Failed to add token: " + error;
     }
   }
 </script>
