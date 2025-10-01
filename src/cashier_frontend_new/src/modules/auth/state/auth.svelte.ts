@@ -56,8 +56,8 @@ let connectedWalletId = $state<string | null>(null);
 // state to indicate if we are reconnecting
 let isReconnecting = $state(false);
 // state to indicate if PNP is initialized
-// default to "mount", set to "initialized" after initPnp completes
-let initState = $state<"mount" | "initialized" | "reconnect">("mount");
+// default to "initializing", set to "initialized" after initPnp completes
+let initState = $state<"initializing" | "initialized">("initializing");
 
 // Initialize PNP instance,
 const initPnp = async () => {
@@ -65,9 +65,9 @@ const initPnp = async () => {
     return;
   }
   pnp = createPNP(CONFIG);
+  initState = "initialized";
 
   if (typeof window !== "undefined") {
-    initState = "reconnect";
     // Try to get stored wallet ID from localStorage (still used for reconnect persistence)
     const storedWalletId = localStorage.getItem(CONNECT_WALLET_ID_KEY);
     if (storedWalletId) {
@@ -80,7 +80,6 @@ const initPnp = async () => {
     }
   }
 
-  initState = "initialized";
 };
 
 // Listen for storage changes from other tabs/windows. We care about CONNECT_WALLET_ID_KEY
