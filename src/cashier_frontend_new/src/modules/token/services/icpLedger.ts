@@ -3,20 +3,16 @@ import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canist
 import { authState } from "$modules/auth/state/auth.svelte";
 import { accountState } from "$modules/shared/state/auth.svelte";
 import { Principal } from "@dfinity/principal";
-import type { TokenMetadata } from "../types";
-import { balanceToIcp } from "../utils/converter";
 
 /**
  * Service for interacting with ICP Ledger canister for a specific token
  * This service facilitates querying account balances and token metadata.
  */
 export class IcpLedgerService {
-  #canisterId: string;
-  #decimals: number;
+  #canisterId: Principal;
 
-  constructor(metadata: TokenMetadata) {
-    this.#canisterId = metadata.address;
-    this.#decimals = metadata.decimals;
+  constructor(canisterId: Principal) {
+    this.#canisterId = canisterId;
   }
 
   /**
@@ -27,7 +23,7 @@ export class IcpLedgerService {
   #getActor(): icpLedger._SERVICE {
     if (authState.pnp && authState.pnp.isAuthenticated()) {
       return authState.pnp.getActor({
-        canisterId: this.#canisterId,
+        canisterId: this.#canisterId.toText(),
         idl: icpLedger.idlFactory,
       });
     } else {
@@ -57,13 +53,12 @@ export class IcpLedgerService {
 
   /**
    * Get the account balance for the current user.
-   * @returns The balance of the current authenticated user's account in ICP.
+   * @returns The balance of the current account.
    * @throws Error if the user is not authenticated or balance retrieval fails.
    */
-  public async getBalance(): Promise<number> {
+  public async getBalance(): Promise<bigint> {
     const actor: icpLedger._SERVICE = this.#getActor();
     const account: Account = this.#getAccount();
-    const balance: bigint = await actor.icrc1_balance_of(account);
-    return balanceToIcp(balance, this.#decimals);
+    return await actor.icrc1_balance_of(account);
   }
 }
