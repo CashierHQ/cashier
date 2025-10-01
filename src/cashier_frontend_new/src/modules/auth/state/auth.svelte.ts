@@ -4,7 +4,6 @@ import {
   HOST_ICP,
   IC_INTERNET_IDENTITY_PROVIDER,
 } from "$modules/shared/constants";
-import { accountState } from "$modules/shared/state/auth.svelte";
 import { Actor, HttpAgent } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
@@ -135,7 +134,7 @@ export const authState = {
       });
     }
 
-    if (!accountState.account) {
+    if (!account) {
       return null;
     }
 
@@ -188,7 +187,7 @@ const inner_logout = async () => {
   }
   try {
     await pnp.disconnect();
-    accountState.account = null;
+    account = null;
     connectedWalletId.current.id = null;
   } catch (error) {
     console.error("Logout failed:", error);
@@ -206,7 +205,7 @@ const inner_login = async (walletId: string) => {
     if (res.owner === null) {
       throw new Error("Login failed: owner is null");
     }
-    accountState.account = {
+    account = {
       owner: res.owner,
       subaccount: res.subaccount,
     };
