@@ -62,25 +62,15 @@ $effect.root(() => {
 });
 
 export async function toggleToken(address: Principal, isEnabled: boolean) {
-  try {
-    console.log("Toggling token:", address, "to", isEnabled);
-    const toggleRes = await tokenStorageService.toggleToken(address, isEnabled);
-    console.log("Toggled token response:", toggleRes);
-    // Refresh the wallet tokens data after toggling the token enabled state
-    walletTokensQuery.refresh();
-  } catch (error) {
-    console.error("Error toggling token enabled state:", error);
-  }
+  const toggleRes = await tokenStorageService.toggleToken(address, isEnabled);
+  console.log("Toggle token response:", toggleRes);
+  // Refresh the wallet tokens data after toggling the token enabled state
+  walletTokensQuery.refresh();
 }
 
 export async function addToken(address: Principal) {
-  try {
-    console.log("Adding token:", address);
-    const addRes = await tokenStorageService.addToken(address);
-    console.log("Added token:", addRes);
-    // Refresh the wallet tokens data after adding a new token
-    walletTokensQuery.refresh();
-  } catch (error) {
-    console.error("Error adding token:", error);
-  }
+  const addRes = await tokenStorageService.addToken(address);
+  console.log("Add token response:", addRes);
+  // Refresh the wallet tokens data after adding a new token
+  walletTokensQuery.refresh();
 }
