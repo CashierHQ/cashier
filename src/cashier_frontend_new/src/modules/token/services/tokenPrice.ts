@@ -5,8 +5,9 @@ import {
   type PublicTokenOverview,
 } from "$lib/generated/icpswap/icpswapNodeIndex";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { ICP_MAINNET_HOST, ICPSWAP_INDEX_CANISTER_ID } from "../constants";
+import { ICPSWAP_INDEX_CANISTER_ID } from "../constants";
 import type { ActorSubclass } from "@dfinity/agent";
+import { PUBLIC_SHARED_HOST_ICP_MAINNET } from "$env/static/public";
 /**
  * Service for fetching data from the ICPSwap backend
  */
@@ -22,7 +23,7 @@ class TokenPriceService {
       idlFactory,
       {
         anonymous: true,
-        host: ICP_MAINNET_HOST,
+        host: PUBLIC_SHARED_HOST_ICP_MAINNET,
       },
     );
 
