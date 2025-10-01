@@ -102,9 +102,7 @@ export const authState = {
    * should fetch root true if connecting to localhost
    * @returns An anonymous HttpAgent instance
    */
-  buildAnonymousAgent(
-    host: string = HOST_ICP,
-  ) {
+  buildAnonymousAgent(host: string = HOST_ICP) {
     let shouldFetchRootKey = false;
     if (host.includes("localhost")) {
       shouldFetchRootKey = true;
@@ -136,9 +134,7 @@ export const authState = {
     // return anonymous actor if no PNP, or option set to anonymous
     if (!pnp || options?.anonymous) {
       return Actor.createActor(idlFactory, {
-        agent: this.buildAnonymousAgent(
-          options?.host,
-        ),
+        agent: this.buildAnonymousAgent(options?.host),
         canisterId: canisterId,
       });
     }
