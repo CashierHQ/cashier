@@ -2,7 +2,10 @@
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
   import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
-  import { balanceToIcp, balanceToUSDValue } from '$modules/token/utils/converter';
+  import {
+    balanceToIcp,
+    balanceToUSDValue,
+  } from "$modules/token/utils/converter";
 
   let token = page.params.token || "empty";
   let tokenDetails = $derived(
@@ -19,11 +22,16 @@
       <p><strong>Name:</strong> {tokenDetails.name} ({tokenDetails.symbol})</p>
       <p><strong>Address:</strong> {tokenDetails.address}</p>
       <p><strong>Decimals:</strong> {tokenDetails.decimals}</p>
-      <p><strong>Balance:</strong> {balanceToIcp(tokenDetails.balance, tokenDetails.decimals).toFixed(5)}</p>
+      <p>
+        <strong>Balance:</strong>
+        {balanceToIcp(tokenDetails.balance, tokenDetails.decimals).toFixed(5)}
+      </p>
       <p><strong>Price USD:</strong> ${tokenDetails.priceUSD.toFixed(5)}</p>
       <p>
-        <strong>Value USD:</strong> ${(
-          balanceToUSDValue(tokenDetails.balance, tokenDetails.decimals, tokenDetails.priceUSD)
+        <strong>Value USD:</strong> ${balanceToUSDValue(
+          tokenDetails.balance,
+          tokenDetails.decimals,
+          tokenDetails.priceUSD,
         ).toFixed(5)}
       </p>
     </div>
