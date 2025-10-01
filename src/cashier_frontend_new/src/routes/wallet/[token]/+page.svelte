@@ -3,8 +3,8 @@
   import { page } from "$app/state";
   import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
   import {
-      balanceToIcp,
-      balanceToUSDValue,
+    balanceToIcp,
+    balanceToUSDValue,
   } from "$modules/token/utils/converter";
 
   let token = page.params.token || "empty";
