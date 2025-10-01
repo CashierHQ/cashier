@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import Button from '$lib/shadcn/components/ui/button/button.svelte';
-  import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
+  import { walletTokensQuery } from "$modules/token/state/tokenStore.svelte";
   import {
       balanceToIcp,
       balanceToUSDValue,

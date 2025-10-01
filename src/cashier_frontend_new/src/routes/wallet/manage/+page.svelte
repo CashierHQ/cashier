@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import Button from '$lib/shadcn/components/ui/button/button.svelte';
-  import { toggleToken, walletTokensQuery } from "$modules/token/state/walletStore.svelte";
+  import { toggleToken, walletTokensQuery } from "$modules/token/state/tokenStore.svelte";
   import type { TokenWithPriceAndBalance } from '$modules/token/types';
 
   let errorMessage: string =  $state("");

@@ -4,7 +4,7 @@
   import { Button } from "$lib/shadcn/components/ui/button";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { accountState } from "$modules/shared/state/auth.svelte";
-  import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
+  import { walletTokensQuery } from "$modules/token/state/tokenStore.svelte";
 
   console.log("Wallet tokens:", $state.snapshot(walletTokensQuery.data));
 
