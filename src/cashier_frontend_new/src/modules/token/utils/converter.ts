@@ -13,6 +13,14 @@ export function balanceToIcp(balance: bigint, decimals: number): number {
   return Number(balance) / factor;
 }
 
+export function icpToBalance(icp: number, decimals: number): bigint {
+  if (decimals < 0) {
+    throw new Error("Decimals cannot be negative");
+  }
+  const factor = 10 ** decimals;
+  return BigInt(Math.round(icp * factor));
+}
+
 /**
  * Convert a balance from the smallest unit to USD.
  * This USD value is used for display purposes.

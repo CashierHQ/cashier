@@ -28,7 +28,6 @@ export const walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
   queryFn: async () => {
     // fetch list user's tokens
     const tokens = await tokenStorageService.listTokens();
-    console.log("Fetched tokens", tokens);
 
     // fetch token balances
     const balanceRequests = tokens.map((token) => {
@@ -85,5 +84,17 @@ export async function addToken(address: Principal) {
   const addRes = await tokenStorageService.addToken(address);
   console.log("Add token response:", addRes);
   // Refresh the wallet tokens data after adding a new token
+  walletTokensQuery.refresh();
+}
+
+export async function transferToken(
+  token: Principal,
+  to: Principal,
+  amount: bigint,
+) {
+  const icpLedgerService = new IcpLedgerService(token);
+  const transferRes = await icpLedgerService.transfer(to, amount);
+  console.log("Transfer token response:", transferRes);
+  // Refresh the wallet tokens data after sending tokens
   walletTokensQuery.refresh();
 }

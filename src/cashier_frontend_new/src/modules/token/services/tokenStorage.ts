@@ -34,7 +34,6 @@ class TokenStorageService {
   public async listTokens(): Promise<TokenMetadata[]> {
     const actor = this.#getActor();
     const res: tokenStorage.Result_5 = await actor.list_tokens();
-    console.log("list_tokens response", res);
     return parseListTokens(res);
   }
 
