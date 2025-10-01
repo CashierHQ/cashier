@@ -1,5 +1,4 @@
-import { HOST_ICP_MAINNET } from "$modules/shared/constants";
-import { HttpAgent } from "@dfinity/agent";
+import { authState } from "$modules/auth/state/auth.svelte";
 import {
   IcrcLedgerCanister,
   mapTokenMetadata,
@@ -14,9 +13,7 @@ class TokenMetadataService {
   public async getTokenMetadata(
     tokenAddres: string,
   ): Promise<IcrcTokenMetadata | undefined> {
-    const agent = HttpAgent.createSync({
-      host: HOST_ICP_MAINNET,
-    });
+    const agent = authState.buildAnonymousAgent();
     const ledger = IcrcLedgerCanister.create({
       agent,
       canisterId: Principal.fromText(tokenAddres),
@@ -29,10 +26,7 @@ class TokenMetadataService {
   public async getTokenMetadataBatch(
     tokenAddresses: [string],
   ): Promise<Record<string, IcrcTokenMetadata | undefined>> {
-    const agent = HttpAgent.createSync({
-      host: HOST_ICP_MAINNET,
-    });
-
+    const agent = authState.buildAnonymousAgent();
     const requests = tokenAddresses.map((tokenAddress) => {
       const ledger = IcrcLedgerCanister.create({
         agent,
