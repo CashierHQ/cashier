@@ -99,13 +99,16 @@ export const authState = {
   /**
    * Build an anonymous HttpAgent instance.
    * @param host Optional host URL for the IC replica
-   * @param shouldFetchRootKey  Optional flag to fetch root key, default based on feature flag
-   * @returns  An anonymous HttpAgent instance
+   * should fetch root true if connecting to localhost
+   * @returns An anonymous HttpAgent instance
    */
   buildAnonymousAgent(
     host: string = HOST_ICP,
-    shouldFetchRootKey: boolean = FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED,
   ) {
+    let shouldFetchRootKey = false;
+    if (host.includes("localhost")) {
+      shouldFetchRootKey = true;
+    }
     return HttpAgent.createSync({
       host,
       shouldFetchRootKey,
@@ -128,7 +131,6 @@ export const authState = {
     options?: {
       anonymous?: boolean;
       host?: string;
-      shouldFetchRootKey?: boolean;
     },
   ): ActorSubclass<T> | null {
     // return anonymous actor if no PNP, or option set to anonymous
@@ -136,7 +138,6 @@ export const authState = {
       return Actor.createActor(idlFactory, {
         agent: this.buildAnonymousAgent(
           options?.host,
-          options?.shouldFetchRootKey,
         ),
         canisterId: canisterId,
       });
