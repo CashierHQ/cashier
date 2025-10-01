@@ -1,6 +1,7 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
+  import { balanceToIcp, balanceToUSDValue } from '$modules/token/utils/converter';
 </script>
 
 <p class="py-6"><a class="link" href={resolve("/")}>Go to Home</a></p>
@@ -23,10 +24,10 @@
               <strong>{token.symbol}</strong> - {token.name} <br />
               Address: {token.address} <br />
               Decimals: {token.decimals} <br />
-              Balance: {token.balance.toString()} - Price: ${token.priceUSD.toFixed(
+              Balance: {balanceToIcp(token.balance, token.decimals).toFixed(5)} - Price: ${token.priceUSD.toFixed(
                 5,
               )} <br />
-              Value USD: ${(token.balance * token.priceUSD).toFixed(5)} <br />
+              Value USD: ${balanceToUSDValue(token.balance, token.decimals, token.priceUSD).toFixed(5)} <br />
             </a>
           </li>
           <hr />

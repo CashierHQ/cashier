@@ -28,6 +28,6 @@ export type TokenPriceRecord = Record<string, number>;
  * Type definition for a token with additional price and balance information
  */
 export type TokenWithPriceAndBalance = TokenMetadata & {
-  balance: number;
+  balance: bigint;
   priceUSD: number;
 };

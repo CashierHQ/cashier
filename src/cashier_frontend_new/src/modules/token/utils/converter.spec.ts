@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { balanceToIcp, icpToBalance } from "./converter";
+import { balanceToIcp, balanceToUSDValue } from "./converter";
 
 describe("balanceToIcp", () => {
   it("should throw an error for negative decimals", () => {
@@ -19,16 +19,20 @@ describe("balanceToIcp", () => {
   });
 });
 
-describe("icpToBalance", () => {
+describe("balanceToUSDValue", () => {
   it("should throw an error for negative decimals", () => {
-    expect(() => icpToBalance(1, -1)).toThrow("Decimals cannot be negative");
+    expect(() => balanceToUSDValue(100000000n, -1, 5)).toThrow(
+      "Decimals cannot be negative",
+    );
   });
 
-  it("should handle zero ICP", () => {
-    expect(icpToBalance(0, 8)).toBe(0n);
+  it("should handle zero balance", () => {
+    expect(balanceToUSDValue(0n, 8, 5)).toBe(0);
   });
 
-  it("should convert ICP to balance correctly", () => {
-    expect(icpToBalance(1, 8)).toBe(100000000n);
+  it("should convert balance to USD value correctly", () => {
+    expect(balanceToUSDValue(100000000n, 8, 5)).toBe(5);
+    expect(balanceToUSDValue(250000000n, 8, 2)).toBe(5);
+    expect(balanceToUSDValue(123456789n, 8, 3)).toBeCloseTo(3.70370367);
   });
 });
