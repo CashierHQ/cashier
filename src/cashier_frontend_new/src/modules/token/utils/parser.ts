@@ -24,6 +24,7 @@ export function parseListTokens(
           name: token.name,
           symbol: token.symbol,
           decimals: token.decimals,
+          enabled: token.enabled,
         };
       } else {
         throw new Error("Unsupported token type");
