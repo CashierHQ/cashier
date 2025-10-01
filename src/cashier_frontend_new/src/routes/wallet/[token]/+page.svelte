@@ -1,10 +1,12 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
+  import Button from '$lib/shadcn/components/ui/button/button.svelte';
   import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
   import {
-    balanceToIcp,
-    balanceToUSDValue,
+      balanceToIcp,
+      balanceToUSDValue,
   } from "$modules/token/utils/converter";
 
   let token = page.params.token || "empty";
@@ -13,7 +15,9 @@
   );
 </script>
 
-<p class="py-6"><a class="link" href={resolve("/wallet")}>Go to Wallet</a></p>
+<div class="py-6">
+  <Button onclick={() => goto(resolve("/wallet"))}>Back to Wallet</Button>
+</div>
 
 <div>
   <h2>Token details</h2>
