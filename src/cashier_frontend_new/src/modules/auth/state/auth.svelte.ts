@@ -1,4 +1,4 @@
-import { createPNP, PNP } from "@windoge98/plug-n-play";
+import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
 import { BUILD_TYPE, HOST_ICP } from "$modules/shared/constants";
 import {
   FEATURE_FLAGS,
@@ -7,6 +7,8 @@ import {
   TIMEOUT_NANO_SEC,
 } from "../constants";
 import { accountState } from "$modules/shared/state/auth.svelte";
+import { Actor, HttpAgent } from "@dfinity/agent";
+import type { IDL } from "@dfinity/candid";
 
 // Config for PNP instance
 export const CONFIG = {
@@ -78,18 +80,72 @@ export const authState = {
   get connectedWalletId() {
     return connectedWalletId;
   },
+
   // Getter isReconnecting
   get isReconnecting() {
     return isReconnecting;
   },
+
   // Getter PNP provider
   get provider() {
     return pnp?.provider;
   },
+
   // Getter PNP
   get pnp() {
     return pnp;
   },
+
+  /**
+   * Build an anonymous HttpAgent instance.
+   * @param host Optional host URL for the IC replica
+   * @returns An anonymous HttpAgent instance
+   */
+  buildAnonymousAgent(host: string = HOST_ICP) {
+    const shouldFetchRootKey = host.includes("localhost");
+    return HttpAgent.createSync({
+      host,
+      shouldFetchRootKey,
+    });
+  },
+
+  /**
+   * Build an actor for a given canister ID and IDL factory.
+   * @param canisterId  Canister ID to connect to
+   * @param idlFactory IDL factory for the canister
+   * @param options Options to force anonymous actor
+   * @returns
+   *  An ActorSubclass instance or null if user is not logged in
+   *  null if account is not available
+   */
+  buildActor<T>(
+    canisterId: string,
+    idlFactory: IDL.InterfaceFactory,
+    // options
+    options?: {
+      anonymous?: boolean;
+      host?: string;
+    },
+  ): ActorSubclass<T> | null {
+    // return anonymous actor if no PNP, or option set to anonymous
+    if (!pnp || options?.anonymous) {
+      return Actor.createActor(idlFactory, {
+        agent: this.buildAnonymousAgent(options?.host),
+        canisterId: canisterId,
+      });
+    }
+
+    if (!accountState.account) {
+      return null;
+    }
+
+    // pnp is initialized and user is logged in, return actor with current identity
+    return pnp.getActor({
+      canisterId: canisterId,
+      idl: idlFactory,
+    });
+  },
+
   // Connect to wallet
   async login(walletId: string) {
     if (!pnp) {
