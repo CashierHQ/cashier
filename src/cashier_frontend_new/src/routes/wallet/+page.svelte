@@ -10,7 +10,7 @@
 <p class="py-6"><a class="link" href={resolve("/")}>Go to Home</a></p>
 
 <div>
-  {#if walletTokensQuery.isSuccess && walletTokensQuery.data}
+  {#if walletTokensQuery.data}
     <div>
       <h2>Wallet tokens</h2>
       <ul>

@@ -3,17 +3,16 @@ import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canist
 import { authState } from "$modules/auth/state/auth.svelte";
 import { accountState } from "$modules/shared/state/auth.svelte";
 import { Principal } from "@dfinity/principal";
-import type { TokenMetadata } from "../types";
 
 /**
  * Service for interacting with ICP Ledger canister for a specific token
  * This service facilitates querying account balances and token metadata.
  */
 export class IcpLedgerService {
-  #metadata: TokenMetadata;
+  #canisterId: Principal;
 
-  constructor(metadata: TokenMetadata) {
-    this.#metadata = metadata;
+  constructor(canisterId: Principal) {
+    this.#canisterId = canisterId;
   }
 
   /**
@@ -24,7 +23,7 @@ export class IcpLedgerService {
   #getActor(): icpLedger._SERVICE {
     if (authState.pnp && authState.pnp.isAuthenticated()) {
       return authState.pnp.getActor({
-        canisterId: this.#metadata.address.toText(),
+        canisterId: this.#canisterId.toText(),
         idl: icpLedger.idlFactory,
       });
     } else {

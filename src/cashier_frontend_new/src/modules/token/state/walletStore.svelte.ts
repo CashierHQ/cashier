@@ -17,7 +17,7 @@ export const walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
 
     // fetch token balances
     const balanceRequests = tokens.map((token) => {
-      const icpLedgerService = new IcpLedgerService(token);
+      const icpLedgerService = new IcpLedgerService(token.address);
       return icpLedgerService.getBalance();
     });
     const balances: bigint[] = await Promise.all(balanceRequests);
@@ -31,7 +31,7 @@ export const walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
       priceUSD: prices[token.address.toText()] || 0,
     }));
   },
-  refetchInterval: 15_000, // Refresh every 5 seconds to keep balances up-to-date
+  refetchInterval: 15_000, // Refresh every 15 seconds to keep balances up-to-date
   persistedKey: ["walletTokensQuery"],
   //storageType: "localStorage", // disable persisting to localStorage to avoid the error:DevalueError: Cannot stringify arbitrary non-POJOs
 });
