@@ -4,20 +4,10 @@
   import { Button } from "$lib/shadcn/components/ui/button";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { accountState } from "$modules/shared/state/auth.svelte";
-  import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
+  import { walletTokensQuery } from '$modules/token/state/walletStore.svelte';
 
-  $effect(() => {
-    console.log(
-      "Account state changed, refreshing tokens...",
-      $state.snapshot(accountState.account),
-    );
-    if (accountState.account == null) {
-      walletTokensQuery.reset();
-      return;
-    }
-    walletTokensQuery.refresh();
-  });
-
+  console.log("Wallet tokens:", $state.snapshot(walletTokensQuery.data));
+  
   async function handleLogin(walletId: string) {
     try {
       await authState.login(walletId);
