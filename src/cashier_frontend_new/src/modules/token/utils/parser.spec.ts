@@ -66,7 +66,7 @@ describe("parseListTokens", () => {
     // Assert
     expect(result).toEqual([
       {
-        address: mockPrincipal,
+        address: mockPrincipal.toText(),
         name: "Internet Computer",
         symbol: "ICP",
         decimals: 8,
