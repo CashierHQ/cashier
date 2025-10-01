@@ -2,9 +2,9 @@
  * @vitest-environment jsdom
  */
 
+import * as devalue from "devalue";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { managedState } from "./managedState.svelte";
-import * as devalue from "devalue";
 
 describe("ManagedState - Global storage", () => {
   beforeEach(() => {
@@ -119,6 +119,23 @@ describe("ManagedState - Global storage", () => {
     expect(store.isLoading).toEqual(false);
     expect(store.error).toEqual(new Error("error from promise"));
     expect(store.isSuccess).toEqual(false);
+    expect(store.data).toEqual(undefined);
+  });
+
+  it("should reset the data correctly", async () => {
+    vi.useFakeTimers();
+
+    const store = managedState<number>({
+      queryFn: () => Promise.resolve(426),
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.isLoading).toEqual(false);
+    expect(store.error).toEqual(undefined);
+    expect(store.isSuccess).toEqual(true);
+    expect(store.data).toEqual(426);
+
+    store.reset();
     expect(store.data).toEqual(undefined);
   });
 });
@@ -292,6 +309,34 @@ describe("ManagedState - LocalStorage", () => {
       }),
     );
   });
+
+  it("should reset the data correctly", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1000);
+
+    const store = managedState<number>({
+      queryFn: () => Promise.resolve(42),
+      persistedKey: ["test_key_5"],
+      storageType: "localStorage",
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.isLoading).toEqual(false);
+    expect(store.error).toEqual(undefined);
+    expect(store.isSuccess).toEqual(true);
+    expect(store.data).toEqual(42);
+
+    expect(localStorage.getItem("test_key_5")).toEqual(
+      devalue.stringify({
+        created_ts: 1000,
+        data: 42,
+      }),
+    );
+
+    store.reset();
+    expect(store.data).toEqual(undefined);
+    expect(localStorage.getItem("test_key_5")).toEqual(null);
+  });
 });
 
 describe("ManagedState - SessionStorage", () => {
@@ -463,6 +508,34 @@ describe("ManagedState - SessionStorage", () => {
       }),
     );
   });
+
+  it("should reset the data correctly", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1000);
+
+    const store = managedState<number>({
+      queryFn: () => Promise.resolve(42),
+      persistedKey: ["test_key_5"],
+      storageType: "sessionStorage",
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.isLoading).toEqual(false);
+    expect(store.error).toEqual(undefined);
+    expect(store.isSuccess).toEqual(true);
+    expect(store.data).toEqual(42);
+
+    expect(sessionStorage.getItem("test_key_5")).toEqual(
+      devalue.stringify({
+        created_ts: 1000,
+        data: 42,
+      }),
+    );
+
+    store.reset();
+    expect(store.data).toEqual(undefined);
+    expect(sessionStorage.getItem("test_key_5")).toEqual(null);
+  });
 });
 
 describe("ManagedState - NoOps storage", () => {
@@ -495,6 +568,24 @@ describe("ManagedState - NoOps storage", () => {
 
     await vi.advanceTimersByTimeAsync(10);
     expect(store2.data).toEqual(45);
+  });
+
+  it("should reset the data correctly", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(1000);
+
+    const store = managedState<number>({
+      queryFn: () => Promise.resolve(42),
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.isLoading).toEqual(false);
+    expect(store.error).toEqual(undefined);
+    expect(store.isSuccess).toEqual(true);
+    expect(store.data).toEqual(42);
+
+    store.reset();
+    expect(store.data).toEqual(undefined);
   });
 });
 
