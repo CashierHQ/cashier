@@ -1,9 +1,9 @@
 <!-- Navbar is a global component so it is declared in the global scope in the shared module -->
 
 <script lang="ts">
+  import { Button } from "$lib/shadcn/components/ui/button";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { accountState } from "$modules/shared/state/auth.svelte";
-  import { Button } from "$lib/shadcn/components/ui/button";
 
   async function handleLogin(walletId: string) {
     try {

@@ -1,20 +1,17 @@
 <script lang="ts">
-  import type { TokenPrice } from "$modules/token/types";
-  import { tokenMetadataQuery } from "../stores/token.svelte";
+  import { tokenMetadataQuery } from "../state/tokenStore.svelte";
 
   // DEMO: how to use managedState recursively
-
   interface Props {
-    price: TokenPrice;
+    address: string;
   }
 
   let data: Props = $props();
 
-  const tokenMetadata = tokenMetadataQuery(data.price.address);
+  const tokenMetadata = tokenMetadataQuery(data.address);
 </script>
 
 <li>
-  {data.price.symbol} ({data.price.standard}): ${data.price.priceUSD.toFixed(5)}
   - metadata: -- QUERY 1:
   {#if tokenMetadata.isLoading}
     Loading...
