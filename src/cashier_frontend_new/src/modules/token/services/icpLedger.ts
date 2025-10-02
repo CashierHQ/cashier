@@ -32,9 +32,7 @@ export class IcpLedgerService {
    * @throws Error if the user is not authenticated or no account is available.
    */
   #getAccount(): Account {
-    if (
-      authState.account
-    ) {
+    if (authState.account) {
       return {
         owner: Principal.fromText(authState.account.owner),
         subaccount: [],

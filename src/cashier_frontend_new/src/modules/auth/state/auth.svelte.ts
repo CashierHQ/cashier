@@ -1,3 +1,5 @@
+import { TypedBroadcastChannel } from "$lib/broadcast";
+import { assertUnreachable } from "$lib/rsMatch";
 import {
   BUILD_TYPE,
   FEATURE_FLAGS,
@@ -46,7 +48,10 @@ export const CONFIG: CreatePnpArgs = {
 let pnp: PNP | null = null;
 
 // state to store connected wallet ID for reconnecting later
-let connectedWalletId = new PersistedState<{ id: string | null }>("connectedWallet", { id: null });
+let connectedWalletId = new PersistedState<{ id: string | null }>(
+  "connectedWallet",
+  { id: null },
+);
 
 // state to indicate if we are reconnecting
 let isConnecting = $state(false);
@@ -75,7 +80,6 @@ const initPnp = async () => {
 
 // Exported auth state and actions
 export const authState = {
-
   // Return true if the user is logged in
   get isLoggedIn() {
     return account !== null;
@@ -101,7 +105,7 @@ export const authState = {
    * @param host Optional host URL for the IC replica
    * @returns An anonymous HttpAgent instance
    */
-  buildAnonymousAgent(host: string = HOST_ICP) {
+  buildAnonymousAgent(host: string = HOST_ICP): HttpAgent {
     const shouldFetchRootKey = host.includes("localhost");
     return HttpAgent.createSync({
       host,
@@ -118,14 +122,18 @@ export const authState = {
    *  An ActorSubclass instance or null if user is not logged in
    *  null if account is not available
    */
-  buildActor<T>(
-    { canisterId, idlFactory, options }: {
-      canisterId: string | Principal; idlFactory: IDL.InterfaceFactory; options?: {
-        anonymous?: boolean;
-        host?: string;
-      }
-    },
-  ): ActorSubclass<T> | null {
+  buildActor<T>({
+    canisterId,
+    idlFactory,
+    options,
+  }: {
+    canisterId: string | Principal;
+    idlFactory: IDL.InterfaceFactory;
+    options?: {
+      anonymous?: boolean;
+      host?: string;
+    };
+  }): ActorSubclass<T> | null {
     // return anonymous actor if no PNP, or option set to anonymous
     if (!pnp || options?.anonymous) {
       return Actor.createActor(idlFactory, {
@@ -152,35 +160,46 @@ export const authState = {
   // Connect to wallet
   async login(walletId: string) {
     await inner_login(walletId);
-    broadcastChannel.postMessage(BroadcastMessageLogin);
+    broadcastChannel.post(BroadcastMessageLogin);
   },
 
   // Disconnect from wallet
   async logout() {
     await inner_logout();
-    broadcastChannel.postMessage(BroadcastMessageLogout);
+    broadcastChannel.post("Logout");
   },
-
 };
 
-
-// A channel to broadcast login/logout messages
-const broadcastChannel = new BroadcastChannel('authService');
+// ----------------------------------------------------------------------------
+// Broadcast channel start - A channel to broadcast login/logout messages
+// ---------------------------------------------------------------------------
+const broadcastChannel = new TypedBroadcastChannel<"Login" | "Logout">(
+  "authService",
+);
 const BroadcastMessageLogin = "Login";
 const BroadcastMessageLogout = "Logout";
 
-broadcastChannel.onmessage = function (event) {
-  if (event.data === BroadcastMessageLogout) {
-    console.log("Broadcast logout received");
-    inner_logout();
-  } else if (event.data === BroadcastMessageLogin) {
-    console.log("Broadcast login received");
-    if (connectedWalletId.current.id) {
-      inner_login(connectedWalletId.current.id)
-    }
+broadcastChannel.onMessage((message) => {
+  switch (message) {
+    case BroadcastMessageLogin:
+      console.log("Broadcast login received");
+      if (connectedWalletId.current.id) {
+        inner_login(connectedWalletId.current.id);
+      }
+      break;
+    case BroadcastMessageLogout:
+      console.log("Broadcast logout received");
+      inner_logout();
+      break;
+    default:
+      assertUnreachable(message);
   }
-};
+});
+// ---------------------------------------------------------------------------
+// Broadcast channel end
+// ---------------------------------------------------------------------------
 
+// Perform logout
 const inner_logout = async () => {
   if (!pnp) {
     throw new Error("PNP is not initialized");
@@ -193,8 +212,9 @@ const inner_logout = async () => {
     console.error("Logout failed:", error);
     throw error;
   }
-}
+};
 
+// Perform login
 const inner_login = async (walletId: string) => {
   if (!pnp) {
     throw new Error("PNP is not initialized");
@@ -209,14 +229,14 @@ const inner_login = async (walletId: string) => {
       owner: res.owner,
       subaccount: res.subaccount,
     };
-    connectedWalletId.current.id = walletId
+    connectedWalletId.current.id = walletId;
   } catch (error) {
     console.error("Login failed:", error);
     throw error;
   } finally {
     isConnecting = false;
   }
-}
+};
 
 // Immediately initialize PNP instance on module load
 initPnp();
