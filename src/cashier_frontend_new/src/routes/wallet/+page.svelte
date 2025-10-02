@@ -1,19 +1,17 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import Button from '$lib/shadcn/components/ui/button/button.svelte';
-  import { walletStore } from '$modules/token/state/walletStore.svelte';
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
-      balanceToIcp,
-      balanceToUSDValue,
+    balanceToIcp,
+    balanceToUSDValue,
   } from "$modules/token/utils/converter";
 </script>
 
 <div class="py-4">
   <Button onclick={() => goto(resolve("/"))}>Go to Home</Button>
-  <Button onclick={() => goto(resolve("/wallet/manage"))}>
-    Manage Tokens
-  </Button>
+  <Button onclick={() => goto(resolve("/wallet/manage"))}>Manage Tokens</Button>
   <Button onclick={() => goto(resolve("/wallet/send"))}>Send</Button>
   <Button onclick={() => goto(resolve("/wallet/receive"))}>Receive</Button>
 </div>
@@ -24,24 +22,25 @@
       <h2>Wallet</h2>
       <ul>
         {#each walletStore.query.data as token (token.address)}
-        {#if token.enabled}
-          <li>
-            <a href={resolve(`/wallet/${token.address}`)}>
-              <strong>{token.symbol}</strong> - {token.name} <br />
-              Address: {token.address} <br />
-              Decimals: {token.decimals} <br />
-              Balance: {balanceToIcp(token.balance, token.decimals).toFixed(5)} -
-              Price: ${token.priceUSD.toFixed(5)} <br />
-              Value USD: ${balanceToUSDValue(
-                token.balance,
-                token.decimals,
-                token.priceUSD,
-              ).toFixed(5)} <br />
-            </a>
-          </li>
-          <hr />
-        {/if}
-      {/each}
+          {#if token.enabled}
+            <li>
+              <a href={resolve(`/wallet/${token.address}`)}>
+                <strong>{token.symbol}</strong> - {token.name} <br />
+                Address: {token.address} <br />
+                Decimals: {token.decimals} <br />
+                Balance: {balanceToIcp(token.balance, token.decimals).toFixed(
+                  5,
+                )} - Price: ${token.priceUSD.toFixed(5)} <br />
+                Value USD: ${balanceToUSDValue(
+                  token.balance,
+                  token.decimals,
+                  token.priceUSD,
+                ).toFixed(5)} <br />
+              </a>
+            </li>
+            <hr />
+          {/if}
+        {/each}
       </ul>
     </div>
   {:else if walletStore.query.isSuccess}
