@@ -1,12 +1,6 @@
 import { AccountIdentifier } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
 
-// TODO: add Buffer polyfill to support AccountIdentifier in browser
-import { Buffer } from "buffer";
-if (typeof window !== "undefined") {
-  window.Buffer = Buffer;
-}
-
 // Account state management
 let account = $state<{
   owner: string;
