@@ -52,12 +52,14 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
   just dfx_local_deploy_icrc1_ledger "${OWNER}" "DOGE" "Test Token" "DOGE" "x5qut-viaaa-aaaar-qajda-cai" 8 10000
 
 [group('dfx')]
-dfx_local_deploy_token canister_name name symbol canister_id decimals:
+dfx_local_deploy_token canister_name name symbol canister_id decimals fee:
   #!/usr/bin/env bash
   set -e
 
   export OWNER=$(dfx identity get-principal)
-  just dfx_local_deploy_icrc1_ledger "${OWNER}" {{canister_name}} {{name}} {{symbol}} {{canister_id}} {{decimals}} 10000
+
+  echo "owner: $OWNER"
+  just dfx_local_deploy_icrc1_ledger "${OWNER}" {{canister_name}} {{name}} {{symbol}} {{canister_id}}  {{decimals}} {{fee}}
 
 # Prints dfx info of the local deployment
 [group('dfx')]

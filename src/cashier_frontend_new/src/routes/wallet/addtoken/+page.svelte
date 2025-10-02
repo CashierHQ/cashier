@@ -7,6 +7,7 @@
 
   let canisterId: string = $state("");
   let errorMessage: string = $state("");
+  let successMessage: string = $state("");
 
   async function handleAddToken(canisterId: string) {
     if (!canisterId) {
@@ -14,10 +15,13 @@
       return;
     }
 
+    errorMessage = "";
+    successMessage = "";
+
     try {
       const principal = Principal.fromText(canisterId);
       await addToken(principal);
-      errorMessage = "";
+      successMessage = "Token added successfully!";
     } catch (error) {
       errorMessage = "Failed to add token: " + error;
     }
@@ -30,10 +34,13 @@
 
 <div>
   <h2>Add Tokens</h2>
-  <span>CanisterID</span>
-  <input type="text" bind:value={canisterId} />
-  <Button onclick={() => handleAddToken(canisterId)}>Add Token</Button>
   {#if errorMessage}
     <p style="color: red;">{errorMessage}</p>
   {/if}
+  {#if successMessage}
+    <p style="color: green;">{successMessage}</p>
+  {/if}
+  <span>CanisterID</span>
+  <input type="text" bind:value={canisterId} style="border: 1px solid #ccc;" /><br />
+  <Button onclick={() => handleAddToken(canisterId)}>Add Token</Button>
 </div>
