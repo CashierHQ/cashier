@@ -14,6 +14,7 @@
  *
  * @template T - A union of object types, each with exactly one unique key.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export type Tags<T> = T extends Record<infer K, any> ? K : never;
 
 /**
@@ -38,6 +39,7 @@ export type Tags<T> = T extends Record<infer K, any> ? K : never;
  * @param value - One branch of the union type.
  * @returns The key of the branch, typed as the union of all tags.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export function getTag<T extends Record<string, any>>(value: T): Tags<T> {
   return Object.keys(value)[0] as Tags<T>;
 }
@@ -71,21 +73,7 @@ export function getTag<T extends Record<string, any>>(value: T): Tags<T> {
  * @param handlers - An object with one function per tag, returning `R`.
  * @returns The result of the matching handler.
  */
-// export function rsMatch<T extends Record<string, null>, R>(
-//   value: T,
-//   handlers: { [K in Tags<T> & string]: (v: Extract<T, Record<K, null>>) => R }
-// ): R {
-//   const key = Object.keys(value)[0] as Tags<T> & string;
-
-//   // defensive runtime guard (shouldn't happen if TypeScript checks passed)
-//   const fn = (handlers as Record<string, (v: any) => R>)[key];
-//   if (!fn) {
-//     throw new Error(`Non-exhaustive match, missing handler for "${key}"`);
-//   }
-
-//   return fn(value as any);
-// }
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export function rsMatch<T extends Record<string, any>, R>(
   value: T,
   handlers: {
@@ -99,6 +87,7 @@ export function rsMatch<T extends Record<string, any>, R>(
 /**
  * A helper function to assert unreachable code paths at compile time.
  */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 export function assertUnreachable(x: never): never {
   throw new Error("Didn't expect to get here");
 }

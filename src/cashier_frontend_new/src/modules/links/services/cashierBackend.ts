@@ -24,7 +24,7 @@ class CanisterBackendService {
    * Returns a list of links for the current user.
    */
   async getLinks(): Promise<Result<cashierBackend.LinkDto[], Error>> {
-    let actor = this.#getActor();
+    const actor = this.#getActor();
     if (!actor) {
       return Err(new Error("User not logged in"));
     }

@@ -13,7 +13,7 @@ export class TypedBroadcastChannel<T> {
 
   /** Subscribe to messages */
   onMessage(callback: (message: T) => void): () => void {
-    const handler = (event: MessageEvent) => {
+    const handler = (event: MessageEvent): void => {
       callback(event.data as T);
     };
     this.channel.addEventListener("message", handler);

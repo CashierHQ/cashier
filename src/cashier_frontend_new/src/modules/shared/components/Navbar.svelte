@@ -4,7 +4,7 @@
   import { Button } from "$lib/shadcn/components/ui/button";
   import { authState } from "$modules/auth/state/auth.svelte";
 
-  async function handleLogin(walletId: string) {
+  async function handleLogin(walletId: string): Promise<void> {
     try {
       await authState.login(walletId);
     } catch (error) {
@@ -12,7 +12,7 @@
     }
   }
 
-  async function handleLogout() {
+  async function handleLogout(): Promise<void> {
     try {
       await authState.logout();
     } catch (error) {
