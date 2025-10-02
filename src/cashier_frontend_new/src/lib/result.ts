@@ -1,5 +1,6 @@
 import { Err, Ok, type Result } from "ts-results-es";
 import * as devalue from "devalue";
+import { rsMatch } from "./rsMatch";
 
 type Response<T, E> =
   | {
@@ -24,23 +25,27 @@ type Response<T, E> =
 export const responseToResult = <T, E>(
   response: Response<T, E>,
 ): Result<T, Error> => {
-  if ("ok" in response) {
-    return Ok(response.ok);
-  } else if ("Ok" in response) {
-    // for (const key in response.Ok) {
-    //     if (
-    //         (Array.isArray(response.Ok[key]) && response.Ok[key].length === 0) ||
-    //         !response.Ok[key]
-    //     ) {
-    //         delete response.Ok[key];
-    //     }
-    // }
-    return Ok(response.Ok);
-  } else if ("err" in response) {
-    return Err(new Error(devalue.stringify(response.err)));
-  } else if ("Err" in response) {
-    return Err(new Error(devalue.stringify(response.Err)));
-  }
+  return rsMatch(response, {
+    Ok: (val) => Ok(val),
+    ok: (val) => Ok(val),
+    Err: (val) => Err(new Error(devalue.stringify(val))),
+    err: (val) => Err(new Error(devalue.stringify(val))),
+  })
+};
 
-  return Err(new Error("Invalid response"));
+/**
+ * Calls a callback and returns a Result object.
+ * If the callback throws an error, it will be caught and returned as Err.
+ *
+ * @param callback - The callback to be called
+ * @returns The result object
+ */
+export const catchError = <T>(
+  callback: () => T,
+):Result<T, unknown> => {
+  try {
+    return Ok(callback());
+  } catch (error) {
+    return Err(error);
+  }
 };
