@@ -78,7 +78,6 @@ const initPnp = async () => {
       }
     }
   }
-
 };
 
 // Listen for storage changes from other tabs/windows. We care about CONNECT_WALLET_ID_KEY

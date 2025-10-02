@@ -54,18 +54,20 @@
   <div class="min-h-screen flex items-center justify-center">
     Initializing...
   </div>
-<!--
+  <!--
   If this true, likely Pnp is reconnecting
 -->
 {:else if authState.isReconnecting}
-  <div class="min-h-screen flex items-center justify-center">Reconnecting...</div>
-<!--
+  <div class="min-h-screen flex items-center justify-center">
+    Reconnecting...
+  </div>
+  <!--
   If this true, likely Pnp is finished reconnect
   - $effect will redirect to /404 if user is not authenticated
 -->
 {:else if isProtectedPath(curentPath) && !accountState.account}
   <div class="min-h-screen flex items-center justify-center">Checking...</div>
-<!-- 
+  <!-- 
   There is 2 cases to render children:
   1. Not a protected route
   2. A protected route and user is authenticated
