@@ -36,6 +36,11 @@ export function parseListTokens(
   }
 }
 
+/**
+ * Parse the error from the ICP Ledger transfer operation.
+ * @param result Error result from ICP Ledger transfer operation
+ * @returns Parsed error
+ */
 export function parseTransferResultError(
   result: icpLedger.Icrc1TransferError,
 ): Error {

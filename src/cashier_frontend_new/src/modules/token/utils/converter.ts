@@ -1,6 +1,6 @@
 /**
- * Convert a balance from the smallest unit to ICP.
- * This ICP value is used for display purposes.
+ * Convert a balance to ICP.
+ * This value is aimed to be used in UI, not for calculations.
  * @param balance in smallest unit (e.g., e8s for ICP)
  * @param decimals
  * @returns balance in ICP
@@ -13,6 +13,13 @@ export function balanceToIcp(balance: bigint, decimals: number): number {
   return Number(balance) / factor;
 }
 
+/**
+ * Convert an ICP amount to the balance unit
+ * This value is aimed to be used in UI, such as sending token form.
+ * @param icp amount in ICP
+ * @param decimals
+ * @returns amount in balance
+ */
 export function icpToBalance(icp: number, decimals: number): bigint {
   if (decimals < 0) {
     throw new Error("Decimals cannot be negative");
