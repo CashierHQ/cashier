@@ -4,13 +4,19 @@
   import Button from '$lib/shadcn/components/ui/button/button.svelte';
   import { toggleToken, walletTokensQuery } from "$modules/token/state/tokenStore.svelte";
   import type { TokenWithPriceAndBalance } from '$modules/token/types';
+  import { Principal } from '@dfinity/principal';
 
   let errorMessage: string =  $state("");
+  let successMessage: string = $state("");
 
   async function handleToggle(token: TokenWithPriceAndBalance) {
+    errorMessage = "";
+    successMessage = "";
+
     try {
-      await toggleToken(token.address, !token.enabled);
-      errorMessage = "";
+      const tokenPrincipal = Principal.fromText(token.address);
+      await toggleToken(tokenPrincipal, !token.enabled);
+      successMessage = "Token toggled successfully!";
     } catch (error) {
       errorMessage = "Failed to toggle token: " + error;
     }
@@ -25,6 +31,12 @@
 
 <div>
   <h2>Manage Tokens</h2>
+  {#if errorMessage}
+    <p style="color: red;">{errorMessage}</p>
+  {/if}
+  {#if successMessage}
+    <p style="color: green;">{successMessage}</p>
+  {/if}
   {#if walletTokensQuery.data}
     <div>
       <ul>
@@ -50,8 +62,6 @@
   {:else}
     Loading...
   {/if}
-  {#if errorMessage}
-    <p style="color: red;">{errorMessage}</p>
-  {/if}
+  
 </div>
 

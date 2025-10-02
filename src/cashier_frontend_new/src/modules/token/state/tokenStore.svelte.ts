@@ -5,7 +5,7 @@ import { tokenPriceService } from "$modules/token/services/tokenPrice";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import type { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
-import type { Principal } from "@dfinity/principal";
+import { Principal } from "@dfinity/principal";
 import { tokenMetadataService } from "../services/tokenMetadata";
 
 // DEMO of using a shared state with data from server
@@ -28,10 +28,12 @@ export const walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
   queryFn: async () => {
     // fetch list user's tokens
     const tokens = await tokenStorageService.listTokens();
+    //console.log("fetched tokens from storage:", tokens);
 
     // fetch token balances
     const balanceRequests = tokens.map((token) => {
-      const icpLedgerService = new IcpLedgerService(token.address);
+      const tokenPrincipal = Principal.fromText(token.address);
+      const icpLedgerService = new IcpLedgerService(tokenPrincipal);
       return icpLedgerService.getBalance();
     });
     const balances: bigint[] = await Promise.all(balanceRequests);
@@ -42,19 +44,17 @@ export const walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
     const enrichedTokens = tokens.map((token, index) => ({
       ...token,
       balance: balances[index],
-      priceUSD: prices[token.address.toText()] || 0,
+      priceUSD: prices[token.address] || 0,
     }));
 
     // sort by address
-    enrichedTokens.sort((a, b) =>
-      a.address.toText().localeCompare(b.address.toText()),
-    );
+    enrichedTokens.sort((a, b) => a.address.localeCompare(b.address));
 
     return enrichedTokens;
   },
-  //refetchInterval: 15_000, // Refresh every 15 seconds to keep balances up-to-date
+  refetchInterval: 15_000, // Refresh every 15 seconds to keep balances up-to-date
   persistedKey: ["walletTokensQuery"],
-  //storageType: "localStorage", // disable persisting to localStorage to avoid the error:DevalueError: Cannot stringify arbitrary non-POJOs
+  storageType: "localStorage",
 });
 
 $effect.root(() => {
