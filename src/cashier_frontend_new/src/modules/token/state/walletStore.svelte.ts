@@ -35,5 +35,5 @@ export const walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
   refetchInterval: 15_000, // Refresh every 15 seconds to keep balances up-to-date
   persistedKey: ["walletTokensQuery"],
   storageType: "localStorage",
-  watchQuery: true,
+  watch: true,
 });

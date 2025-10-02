@@ -4,6 +4,12 @@ import { GlobalStore } from "./storageGlobal";
 import { LocalStorageStore } from "./storageLocalStorage";
 import { NoOpsStore } from "./storageNoOps";
 import { SessionStorageStore } from "./storageSessionStorage";
+import { watch as runedWatch } from "runed";
+import { assertUnreachable } from "$lib/rsMatch";
+
+// watch([() => age, () => name], ([age, name], [prevAge, prevName]) => {
+// 	// ...
+// })
 
 export type StateConfig<T> = {
   /**
@@ -41,14 +47,48 @@ export type StateConfig<T> = {
   storageType?: "global" | "localStorage" | "sessionStorage";
 
   /**
-   * If set to true, the query will run whenever its dependencies change, i.e. $state or $derived values.
+   * If set to true, the query will run whenever its dependencies change, i.e. $state or $derived values. E.g.:
+   *
+   * ```ts
+   * const count1 = $state(0);
+   * const count2 = $state(0);
+   * const count3 = $state(0);
+   * const store = managedState<number>({
+   *   queryFn: () => count1.get() + count2.get() + count3.get(),
+   *   watch: true, /// Runs whenever count1, count2, or count3 changes
+   * });
+   * ```
+   *
+   * If set to a function, query will run whenever one of the dependencies of the function changes. E.g.:
+   *
+   * ```ts
+   * const count1 = $state(0);
+   * const count2 = $state(0);
+   * const count3 = $state(0);
+   * const store = managedState<number>({
+   *   queryFn: () => count1.get() + count2.get() + count3.get(),
+   *   watch: () => count1, /// Runs whenever count1 changes
+   * });
+   * ```
+   *
+   * If set to an array of functions, query will run whenever one of the dependencies of the functions in the array changes. E.g.:
+   *
+   * ```ts
+   * const count1 = $state(0);
+   * const count2 = $state(0);
+   * const count3 = $state(0);
+   * const store = managedState<number>({
+   *   queryFn: () => count1.get() + count2.get() + count3.get(),
+   *   watch: [() => count1, () => count2], /// Runs whenever count1 or count2 changes
+   * });
+   * ```
    *
    * Warning: This can cause the query to run multiple times and can lead to performance issues, infinite loops, or other unexpected behavior.
    * Only use this use with caution.
    *
    * Defaults to `false`.
    */
-  watchQuery?: boolean;
+  watch?: boolean | (() => unknown) | (() => unknown)[];
 };
 
 type Data<T> = {
@@ -86,7 +126,7 @@ export class ManagedState<T> {
       this.#storage = new NoOpsStore();
     }
 
-    if (config.watchQuery) {
+    if (config.watch) {
       this.#watchQuery();
     }
 
@@ -170,11 +210,53 @@ export class ManagedState<T> {
    * Watches the query for state changes and refetches the data.
    */
   #watchQuery(): void {
-    if (this.#config.watchQuery) {
+    if (typeof this.#config.watch !== "undefined") {
+      const watchQuery = this.#config.watch;
+
       const cleanUp = $effect.root(() => {
-        $effect(() => {
-          this.refresh();
-        });
+        switch (true) {
+          case typeof watchQuery === "boolean":
+            if (watchQuery) {
+              $effect(() => {
+                this.refresh();
+              });
+            }
+            break;
+
+          case typeof watchQuery === "function":
+            runedWatch(
+              [watchQuery],
+              ([current], [prev]) => {
+                if (current !== prev) {
+                  this.refresh();
+                }
+              },
+              {
+                lazy: true,
+              },
+            );
+            break;
+
+          case Array.isArray(watchQuery):
+            console.log("watchQuery is an array");
+            runedWatch(
+              watchQuery,
+              (current, prev) => {
+                console.log("watchQuery is an array", current, prev);
+                if (!current.every((value, index) => value === prev[index])) {
+                  console.log("refresh");
+                  this.refresh();
+                }
+              },
+              {
+                lazy: true,
+              },
+            );
+            break;
+
+          default:
+            assertUnreachable(watchQuery);
+        }
       });
 
       // Ignore the error. This should fail silently if the state is created outside of a svelte component.
