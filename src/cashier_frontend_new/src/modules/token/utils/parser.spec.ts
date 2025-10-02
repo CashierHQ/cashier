@@ -2,7 +2,11 @@ import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canist
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
 import { Principal } from "@dfinity/principal";
 import { describe, expect, it } from "vitest";
-import { parseListTokens, parseTransferResultError } from "./parser";
+import {
+  parseIcrc1TransferResultError,
+  parseListTokens,
+  parseTransferResultError,
+} from "./parser";
 
 describe("parseListTokens", () => {
   it("should throw an error for Err response", () => {
@@ -51,7 +55,7 @@ describe("parseListTokens", () => {
             string_id: `IC:${mockPrincipal.toText()}`,
             details: {
               IC: {
-                fee: 0n,
+                fee: 10000n,
                 ledger_id: mockPrincipal,
                 index_id: [],
               },
@@ -72,12 +76,13 @@ describe("parseListTokens", () => {
         symbol: "ICP",
         decimals: 8,
         enabled: true,
+        fee: 10000n,
       },
     ]);
   });
 });
 
-describe("parseTransferResultError", () => {
+describe("parseIcrc1TransferResultError", () => {
   it("should parse GenericError correctly", () => {
     // Arrange
     const error: icpLedger.Icrc1TransferError = {
@@ -88,7 +93,7 @@ describe("parseTransferResultError", () => {
     };
 
     // Act
-    const result = parseTransferResultError(error);
+    const result = parseIcrc1TransferResultError(error);
 
     // Assert
     expect(result).toEqual(
@@ -105,7 +110,7 @@ describe("parseTransferResultError", () => {
     };
 
     // Act
-    const result = parseTransferResultError(error);
+    const result = parseIcrc1TransferResultError(error);
 
     // Assert
     expect(result).toEqual(new Error("Transfer failed: Insufficient funds"));
@@ -115,6 +120,38 @@ describe("parseTransferResultError", () => {
     // Arrange
     const error: icpLedger.Icrc1TransferError = {
       TemporarilyUnavailable: null,
+    };
+
+    // Act
+    const result = parseIcrc1TransferResultError(error);
+
+    // Assert
+    expect(result).toEqual(new Error("Transfer failed: Unknown error"));
+  });
+});
+
+describe("parseTransferResultError", () => {
+  it("should parse InsufficientFunds correctly", () => {
+    // Arrange
+    const error: icpLedger.TransferError = {
+      InsufficientFunds: {
+        balance: { e8s: BigInt(50) },
+      },
+    };
+
+    // Act
+    const result = parseTransferResultError(error);
+
+    // Assert
+    expect(result).toEqual(new Error("Transfer failed: Insufficient funds"));
+  });
+
+  it("should handle unknown error types", () => {
+    // Arrange
+    const error: icpLedger.TransferError = {
+      BadFee: {
+        expected_fee: { e8s: BigInt(100) },
+      },
     };
 
     // Act

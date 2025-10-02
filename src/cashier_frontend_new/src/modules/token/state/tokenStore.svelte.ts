@@ -4,6 +4,7 @@ import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { tokenPriceService } from "$modules/token/services/tokenPrice";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
+import type { AccountIdentifier } from "@dfinity/ledger-icp";
 import type { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
 import { Principal } from "@dfinity/principal";
 import { tokenMetadataService } from "../services/tokenMetadata";
@@ -28,12 +29,11 @@ export const walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
   queryFn: async () => {
     // fetch list user's tokens
     const tokens = await tokenStorageService.listTokens();
-    //console.log("fetched tokens from storage:", tokens);
+    console.log("fetched tokens:", tokens);
 
     // fetch token balances
     const balanceRequests = tokens.map((token) => {
-      const tokenPrincipal = Principal.fromText(token.address);
-      const icpLedgerService = new IcpLedgerService(tokenPrincipal);
+      const icpLedgerService = new IcpLedgerService(token);
       return icpLedgerService.getBalance();
     });
     const balances: bigint[] = await Promise.all(balanceRequests);
@@ -87,14 +87,40 @@ export async function addToken(address: Principal) {
   walletTokensQuery.refresh();
 }
 
-export async function transferToken(
-  token: Principal,
+export async function transferTokenByPrincipal(
+  token: string,
   to: Principal,
   amount: bigint,
 ) {
-  const icpLedgerService = new IcpLedgerService(token);
-  const transferRes = await icpLedgerService.transfer(to, amount);
+  const tokenData = findTokenByAddress(token);
+  const icpLedgerService = new IcpLedgerService(tokenData);
+  const transferRes = await icpLedgerService.transferByPrincipal(to, amount);
   console.log("Transfer token response:", transferRes);
   // Refresh the wallet tokens data after sending tokens
   walletTokensQuery.refresh();
+}
+
+export async function transferTokenByAccount(
+  token: string,
+  to: AccountIdentifier,
+  amount: bigint,
+) {
+  const tokenData = findTokenByAddress(token);
+  const icpLedgerService = new IcpLedgerService(tokenData);
+  const transferRes = await icpLedgerService.transferByAccount(to, amount);
+  console.log("Transfer token response:", transferRes);
+  // Refresh the wallet tokens data after sending tokens
+  walletTokensQuery.refresh();
+}
+
+export function findTokenByAddress(address: string): TokenWithPriceAndBalance {
+  if (!walletTokensQuery.data) {
+    throw new Error("Wallet tokens data is not loaded");
+  }
+
+  const tokenData = walletTokensQuery.data.find((t) => t.address === address);
+  if (!tokenData) {
+    throw new Error("Token not found in wallet");
+  }
+  return tokenData;
 }

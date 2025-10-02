@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import Button from '$lib/shadcn/components/ui/button/button.svelte';
-  import { toggleToken, walletTokensQuery } from "$modules/token/state/tokenStore.svelte";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from '$modules/token/types';
   import { Principal } from '@dfinity/principal';
 
@@ -15,7 +15,7 @@
 
     try {
       const tokenPrincipal = Principal.fromText(token.address);
-      await toggleToken(tokenPrincipal, !token.enabled);
+      await walletStore.toggleToken(tokenPrincipal, !token.enabled);
       successMessage = "Token toggled successfully!";
     } catch (error) {
       errorMessage = "Failed to toggle token: " + error;
@@ -38,10 +38,10 @@
     {#if successMessage}
       <p style="color: green;">{successMessage}</p>
     {/if}
-    {#if walletTokensQuery.data}
+    {#if walletStore.query.data}
       <div>
         <ul>
-          {#each walletTokensQuery.data as token (token.address)}
+          {#each walletStore.query.data as token (token.address)}
             <li>
                 <strong>{token.symbol}</strong> - {token.name} <br />
                 Address: {token.address} <br />
@@ -53,12 +53,12 @@
           {/each}
         </ul>
       </div>
-    {:else if walletTokensQuery.isSuccess}
+    {:else if walletStore.query.isSuccess}
       <p style="color: red">No tokens found in wallet.</p>
-    {:else if walletTokensQuery.error}
+    {:else if walletStore.query.error}
       <p style="color: red;">
         An error has occurred:
-        {walletTokensQuery.error}
+        {walletStore.query.error}
       </p>
     {:else}
       Loading...

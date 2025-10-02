@@ -2,11 +2,15 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import Button from '$lib/shadcn/components/ui/button/button.svelte';
-  import { transferToken, walletTokensQuery } from '$modules/token/state/tokenStore.svelte';
+  import { ACCOUNT_ID_TYPE, PRINCIPAL_TYPE } from '$modules/token/constants';
+  import { walletStore } from '$modules/token/state/walletStore.svelte';
   import { balanceToIcp, icpToBalance } from '$modules/token/utils/converter';
+  import { AccountIdentifier } from '@dfinity/ledger-icp';
   import { Principal } from '@dfinity/principal';
 
   let receiveAddress: string = $state("");
+  let receiveType: number = $state(PRINCIPAL_TYPE);
+
   let selectedToken: string = $state("");
   let errorMessage: string = $state("");
   let successMessage: string = $state("");
@@ -14,7 +18,7 @@
   let amount: number = $state(0);
 
   let maxAmount: number = $derived.by(() => {
-    const token = walletTokensQuery.data?.find(t => t.address === selectedToken);
+    const token = walletStore.query.data?.find(t => t.address === selectedToken);
     if (token) {
       return balanceToIcp(token.balance, token.decimals);
     }
@@ -29,18 +33,23 @@
       return;
     }
 
-    const token = walletTokensQuery.data?.find(t => t.address === selectedToken);
-    if (!token) {
-      errorMessage = "Selected token not found.";
-      return;
-    }
-
     try {
-      const tokenPrincipal = Principal.fromText(selectedToken);
-      const receivePrincipal = Principal.fromText(receiveAddress);
+      const token = walletStore.findTokenByAddress(selectedToken);
       const balanceAmount = icpToBalance(amount, token.decimals);
-      isSending = true;
-      await transferToken(tokenPrincipal, receivePrincipal, balanceAmount);
+
+      if (receiveType === PRINCIPAL_TYPE) {
+        const receivePrincipal = Principal.fromText(receiveAddress);
+        isSending = true;
+        await walletStore.transferTokenByPrincipal(selectedToken, receivePrincipal, balanceAmount);
+      } else if (receiveType === ACCOUNT_ID_TYPE) {
+        const accountId = AccountIdentifier.fromHex(receiveAddress);
+        isSending = true;
+        await walletStore.transferTokenByAccount(selectedToken, accountId, balanceAmount);
+      } else {
+        errorMessage = "Invalid receive type selected.";
+        return;
+      }
+
       isSending = false;
       successMessage = "Token sent successfully!";
     } catch (error) {
@@ -93,8 +102,8 @@
     {/if}
     <p>Select a token to send:</p>
     <select bind:value={selectedToken} style="border: 1px solid #ccc;">
-      {#if walletTokensQuery.data}
-        {#each walletTokensQuery.data as token (token.address)}
+      {#if walletStore.query.data}
+        {#each walletStore.query.data as token (token.address)}
           {#if token.enabled}
             <option value={token.address}>{token.symbol} - {token.name}</option>
           {/if}
@@ -109,6 +118,10 @@
     <br/>
 
     <p>Receive address:</p>
+    <select bind:value={receiveType} style="border: 1px solid #ccc; margin-bottom: 8px;">
+      <option value={0}>Principal</option>
+      <option value={1}>AccountID</option>
+    </select>
     <input type="text" bind:value={receiveAddress} style="border: 1px solid #ccc;" />
   </div>
   <Button onclick={() => handleSend()}>Send</Button>

@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import Button from '$lib/shadcn/components/ui/button/button.svelte';
-  import { walletTokensQuery } from "$modules/token/state/tokenStore.svelte";
+  import { walletStore } from '$modules/token/state/walletStore.svelte';
   import {
       balanceToIcp,
       balanceToUSDValue,
@@ -19,11 +19,11 @@
 </div>
 
 <div>
-  {#if walletTokensQuery.data}
+  {#if walletStore.query.data}
     <div>
       <h2>Wallet</h2>
       <ul>
-        {#each walletTokensQuery.data as token (token.address)}
+        {#each walletStore.query.data as token (token.address)}
         {#if token.enabled}
           <li>
             <a href={resolve(`/wallet/${token.address}`)}>
@@ -44,12 +44,12 @@
       {/each}
       </ul>
     </div>
-  {:else if walletTokensQuery.isSuccess}
+  {:else if walletStore.query.isSuccess}
     <p style="color: red">No tokens found in wallet.</p>
-  {:else if walletTokensQuery.error}
+  {:else if walletStore.query.error}
     <p style="color: red;">
       An error has occurred:
-      {walletTokensQuery.error}
+      {walletStore.query.error}
     </p>
   {:else}
     Loading...
