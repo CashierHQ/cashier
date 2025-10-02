@@ -7,8 +7,9 @@
   import { Principal } from '@dfinity/principal';
 
   let receiveAddress: string = $state("");
-  let selectedToken: Principal = $state(Principal.anonymous());
+  let selectedToken: string = $state("");
   let errorMessage: string = $state("");
+  let successMessage: string = $state("");
   let amount: number = $state(0);
 
   let maxAmount: number = $derived.by(() => {
@@ -20,7 +21,7 @@
   });
   
   async function handleSend() {
-    if (selectedToken === Principal.anonymous()) {
+    if (!selectedToken || selectedToken.trim() === "") {
       errorMessage = "Please select a token to send.";
       return;
     }
@@ -38,12 +39,17 @@
 
     console.log(`Send token ${token} to address ${receiveAddress} with amount ${amount}`);
 
+    errorMessage = "";
+    successMessage = "";
+
     try {
+      const tokenPrincipal = Principal.fromText(selectedToken);
       const receivePrincipal = Principal.fromText(receiveAddress);
       const balanceAmount = icpToBalance(amount, token.decimals);
-      await transferToken(selectedToken, receivePrincipal, balanceAmount);
+      await transferToken(tokenPrincipal, receivePrincipal, balanceAmount);
+      successMessage = "Token sent successfully!";
     } catch (error) {
-      errorMessage = "send token error: " + error;
+      errorMessage = "Send token error: " + error;
     }
   }
 
@@ -61,30 +67,34 @@
 
 <div>
   <h2>Send Tokens</h2>
-  <p>Select a token to send:</p>
-  <select bind:value={selectedToken}>
-    {#if walletTokensQuery.data}
-      {#each walletTokensQuery.data as token (token.address)}
-        {#if token.enabled}
-          <option value={token.address}>{token.symbol} - {token.name}</option>
-        {/if}
-      {/each}
-    {:else}
-      <option disabled>No tokens available</option>
-    {/if}
-  </select>
-
-  <p>Amount: (max {maxAmount})</p>
-  <input type="number" bind:value={amount} max={maxAmount} onchange={() => handleValidate()}/>
-  <br/>
-
-  <p>Receive address:</p>
-  <input type="text" bind:value={receiveAddress}/>
-  <br/>
-
-  <Button onclick={() => handleSend()}>Send</Button>
-
   {#if errorMessage}
     <p style="color: red;">{errorMessage}</p>
   {/if}
+  {#if successMessage}
+    <p style="color: green;">{successMessage}</p>
+  {/if}
+  <div class="py-2">
+    <p>Select a token to send:</p>
+    <select bind:value={selectedToken} style="border: 1px solid #ccc;">
+      {#if walletTokensQuery.data}
+        {#each walletTokensQuery.data as token (token.address)}
+          {#if token.enabled}
+            <option value={token.address}>{token.symbol} - {token.name}</option>
+          {/if}
+        {/each}
+      {:else}
+        <option disabled>No tokens available</option>
+      {/if}
+    </select>
+
+    <p>Amount: (max {maxAmount})</p>
+    <input type="number" bind:value={amount} max={maxAmount} onchange={() => handleValidate()} style="border: 1px solid #ccc;" />
+    <br/>
+
+    <p>Receive address:</p>
+    <input type="text" bind:value={receiveAddress} style="border: 1px solid #ccc;" />
+  </div>
+  <Button onclick={() => handleSend()}>Send</Button>
+
+  
 </div>
