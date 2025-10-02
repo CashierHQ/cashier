@@ -6,6 +6,9 @@ import { NoOpsStore } from "./storageNoOps";
 import { SessionStorageStore } from "./storageSessionStorage";
 
 export type StateConfig<T> = {
+  /**
+   * The function to fetch the data.
+   */
   queryFn: () => Promise<T>;
   /**
    * The time in milliseconds after data is considered stale.
@@ -154,7 +157,7 @@ export class ManagedState<T> {
    * Sets the data state and update the storage.
    * @param data The data to set.
    */
-  #setData(data: Data<T> | undefined) {
+  #setData(data: Data<T> | undefined): void {
     this.#data = data;
     if (data) {
       this.#storage.setItem(data);
@@ -166,9 +169,9 @@ export class ManagedState<T> {
   /**
    * Watches the query for state changes and refetches the data.
    */
-  #watchQuery() {
+  #watchQuery(): void {
     if (this.#config.watchQuery) {
-      let cleanUp = $effect.root(() => {
+      const cleanUp = $effect.root(() => {
         $effect(() => {
           this.refresh();
         });
@@ -196,7 +199,7 @@ export class ManagedState<T> {
    *
    * @param {number} [interval] The interval in milliseconds at which to refetch the data.
    */
-  refresh(interval?: number) {
+  refresh(interval?: number): void {
     if (interval) {
       const intervalHandler = setInterval(() => {
         this.#fetch();
@@ -220,14 +223,14 @@ export class ManagedState<T> {
   /**
    * Resets the data state and storage.
    */
-  reset() {
+  reset(): void {
     this.#setData(undefined);
   }
 
   /**
    * Refetches the data.
    */
-  #fetch() {
+  #fetch(): void {
     this.#isLoading = true;
     this.#isSuccess = false;
     this.#error = undefined;
@@ -258,6 +261,6 @@ export class ManagedState<T> {
   }
 }
 
-export function managedState<T>(data: StateConfig<T>) {
+export function managedState<T>(data: StateConfig<T>): ManagedState<T> {
   return new ManagedState(data);
 }

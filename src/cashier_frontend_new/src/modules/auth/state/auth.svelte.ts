@@ -48,7 +48,7 @@ export const CONFIG: CreatePnpArgs = {
 let pnp: PNP | null = null;
 
 // state to store connected wallet ID for reconnecting later
-let connectedWalletId = new PersistedState<{ id: string | null }>(
+const connectedWalletId = new PersistedState<{ id: string | null }>(
   "connectedWallet",
   { id: null },
 );
