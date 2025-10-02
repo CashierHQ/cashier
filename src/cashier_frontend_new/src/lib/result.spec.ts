@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { catchError, responseToResult } from "./result";
 import { Ok } from "ts-results-es";
-import * as devalue from "devalue";
 
-describe.only("Result", () => {
+describe("Result", () => {
   it("should convert a Response.ok to a Result", () => {
     // Arrange
     const response: { ok: string } = {
@@ -27,9 +26,7 @@ describe.only("Result", () => {
     const result = responseToResult(response);
 
     // Assert
-    expect(result.unwrapErr()).toEqual(
-      new Error(devalue.stringify("error_message")),
-    );
+    expect(result.unwrapErr()).toEqual("error_message");
   });
 
   it("should convert a Response.Ok to a Result", () => {
@@ -55,12 +52,11 @@ describe.only("Result", () => {
     const result = responseToResult(response);
 
     // Assert
-    expect(result.unwrapErr()).toEqual(
-      new Error(devalue.stringify("ErrorMessage")),
-    );
+    expect(result.unwrapErr()).toEqual("ErrorMessage");
   });
 
   it("should catch a valid response", () => {
+    // Act
     const result = catchError(() => {
       return "everything is ok";
     });
@@ -70,9 +66,11 @@ describe.only("Result", () => {
   });
 
   it("should catch an error", () => {
+    // Act
     const result = catchError(() => {
       throw new Error("something went wrong");
     });
+
     // Assert
     expect(result.unwrapErr()).toEqual(new Error("something went wrong"));
   });

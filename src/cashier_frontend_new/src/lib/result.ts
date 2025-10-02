@@ -1,5 +1,4 @@
 import { Err, Ok, type Result } from "ts-results-es";
-import * as devalue from "devalue";
 import { rsMatch } from "./rsMatch";
 
 type Response<T, E> =
@@ -24,12 +23,12 @@ type Response<T, E> =
  */
 export const responseToResult = <T, E>(
   response: Response<T, E>,
-): Result<T, Error> => {
+): Result<T, E> => {
   return rsMatch(response, {
     Ok: (val) => Ok(val),
     ok: (val) => Ok(val),
-    Err: (val) => Err(new Error(devalue.stringify(val))),
-    err: (val) => Err(new Error(devalue.stringify(val))),
+    Err: (val) => Err(val),
+    err: (val) => Err(val),
   });
 };
 
