@@ -1,11 +1,11 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import Button from '$lib/shadcn/components/ui/button/button.svelte';
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import type { TokenWithPriceAndBalance } from '$modules/token/types';
+  import type { TokenWithPriceAndBalance } from "$modules/token/types";
 
-  let errorMessage: string =  $state("");
+  let errorMessage: string = $state("");
   let successMessage: string = $state("");
 
   async function handleToggle(token: TokenWithPriceAndBalance) {
@@ -19,7 +19,6 @@
       errorMessage = "Failed to toggle token: " + error;
     }
   }
-
 </script>
 
 <div class="py-6">
@@ -41,11 +40,16 @@
         <ul>
           {#each walletStore.query.data as token (token.address)}
             <li>
-                <strong>{token.symbol}</strong> - {token.name} <br />
-                Address: {token.address} <br />
-                Decimals: {token.decimals} <br />
-                <input type="checkbox" checked={token.enabled} onchange={() => handleToggle(token)} /> Enabled
-                <br />
+              <strong>{token.symbol}</strong> - {token.name} <br />
+              Address: {token.address} <br />
+              Decimals: {token.decimals} <br />
+              <input
+                type="checkbox"
+                checked={token.enabled}
+                onchange={() => handleToggle(token)}
+              />
+              Enabled
+              <br />
             </li>
             <hr />
           {/each}
@@ -63,4 +67,3 @@
     Loading...
   {/if}
 </div>
-
