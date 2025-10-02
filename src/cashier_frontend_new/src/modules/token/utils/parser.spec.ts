@@ -1,7 +1,8 @@
+import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
 import { Principal } from "@dfinity/principal";
 import { describe, expect, it } from "vitest";
-import { parseListTokens } from "./parser";
+import { parseListTokens, parseTransferResultError } from "./parser";
 
 describe("parseListTokens", () => {
   it("should throw an error for Err response", () => {
@@ -70,7 +71,56 @@ describe("parseListTokens", () => {
         name: "Internet Computer",
         symbol: "ICP",
         decimals: 8,
+        enabled: true,
       },
     ]);
+  });
+});
+
+describe("parseTransferResultError", () => {
+  it("should parse GenericError correctly", () => {
+    // Arrange
+    const error: icpLedger.Icrc1TransferError = {
+      GenericError: {
+        message: "A generic error occurred",
+        error_code: BigInt(123),
+      },
+    };
+
+    // Act
+    const result = parseTransferResultError(error);
+
+    // Assert
+    expect(result).toEqual(
+      new Error("Transfer failed: A generic error occurred"),
+    );
+  });
+
+  it("should parse InsufficientFunds correctly", () => {
+    // Arrange
+    const error: icpLedger.Icrc1TransferError = {
+      InsufficientFunds: {
+        balance: BigInt(50),
+      },
+    };
+
+    // Act
+    const result = parseTransferResultError(error);
+
+    // Assert
+    expect(result).toEqual(new Error("Transfer failed: Insufficient funds"));
+  });
+
+  it("should handle unknown error types", () => {
+    // Arrange
+    const error: icpLedger.Icrc1TransferError = {
+      TemporarilyUnavailable: null,
+    };
+
+    // Act
+    const result = parseTransferResultError(error);
+
+    // Assert
+    expect(result).toEqual(new Error("Transfer failed: Unknown error"));
   });
 });

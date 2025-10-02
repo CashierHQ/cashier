@@ -33,14 +33,16 @@
 </div>
 
 <div>
-  <h2>Add Tokens</h2>
-  {#if errorMessage}
-    <p style="color: red;">{errorMessage}</p>
-  {/if}
-  {#if successMessage}
-    <p style="color: green;">{successMessage}</p>
-  {/if}
-  <span>CanisterID</span>
-  <input type="text" bind:value={canisterId} style="border: 1px solid #ccc;" /><br />
+  <h2>Add token</h2>
+  <div class="py-4">
+    {#if errorMessage}
+      <p style="color: red;">{errorMessage}</p>
+    {/if}
+    {#if successMessage}
+      <p style="color: green;">{successMessage}</p>
+    {/if}
+    <span>CanisterID</span>
+    <input type="text" bind:value={canisterId} style="border: 1px solid #ccc;" />
+  </div>
   <Button onclick={() => handleAddToken(canisterId)}>Add Token</Button>
 </div>
