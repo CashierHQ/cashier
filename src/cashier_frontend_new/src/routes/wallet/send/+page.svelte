@@ -10,6 +10,7 @@
   let selectedToken: string = $state("");
   let errorMessage: string = $state("");
   let successMessage: string = $state("");
+  let isSending: boolean = $state(false);
   let amount: number = $state(0);
 
   let maxAmount: number = $derived.by(() => {
@@ -37,7 +38,15 @@
       return;
     }
 
-    console.log(`Send token ${token} to address ${receiveAddress} with amount ${amount}`);
+    if (amount <= 0) {
+      errorMessage = "Amount must be greater than zero.";
+      return;
+    }
+
+    if (amount > maxAmount) {
+      errorMessage = `Amount exceeds maximum balance of ${maxAmount}`;
+      return;
+    }
 
     errorMessage = "";
     successMessage = "";
@@ -46,7 +55,10 @@
       const tokenPrincipal = Principal.fromText(selectedToken);
       const receivePrincipal = Principal.fromText(receiveAddress);
       const balanceAmount = icpToBalance(amount, token.decimals);
+      console.log("balanceAmount:", balanceAmount);
+      isSending = true;
       await transferToken(tokenPrincipal, receivePrincipal, balanceAmount);
+      isSending = false;
       successMessage = "Token sent successfully!";
     } catch (error) {
       errorMessage = "Send token error: " + error;
@@ -66,14 +78,17 @@
 </div>
 
 <div>
-  <h2>Send Tokens</h2>
-  {#if errorMessage}
-    <p style="color: red;">{errorMessage}</p>
-  {/if}
-  {#if successMessage}
-    <p style="color: green;">{successMessage}</p>
-  {/if}
-  <div class="py-2">
+  <h2>Send token</h2>
+  <div class="py-4">
+    {#if errorMessage}
+      <p style="color: red;">{errorMessage}</p>
+    {/if}
+    {#if successMessage}
+      <p style="color: green;">{successMessage}</p>
+    {/if}
+    {#if isSending}
+      <p>Sending...</p>
+    {/if}
     <p>Select a token to send:</p>
     <select bind:value={selectedToken} style="border: 1px solid #ccc;">
       {#if walletTokensQuery.data}

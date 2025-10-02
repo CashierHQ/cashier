@@ -3,6 +3,7 @@ import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canist
 import { authState } from "$modules/auth/state/auth.svelte";
 import { accountState } from "$modules/shared/state/auth.svelte";
 import { Principal } from "@dfinity/principal";
+import { parseTransferResultError } from "../utils/parser";
 
 /**
  * Service for interacting with ICP Ledger canister for a specific token
@@ -77,9 +78,10 @@ export class IcpLedgerService {
       fee: [],
       from_subaccount: [],
     });
+    console.log("Transfer result:", result);
 
     if ("Err" in result) {
-      throw new Error(`Transfer failed: ${JSON.stringify(result.Err)}`);
+      throw parseTransferResultError(result.Err);
     }
 
     return result.Ok;

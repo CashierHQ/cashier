@@ -14,7 +14,7 @@
 </div>
 
 <div>
-  <h2>Receive Tokens</h2>
+  <h2>Receive token</h2>
   <p>Select a token to receive:</p>
   <select bind:value={selectedToken} style="border: 1px solid #ccc;"> 
     {#if walletTokensQuery.data}

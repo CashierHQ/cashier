@@ -1,3 +1,4 @@
+import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
 import type { TokenMetadata } from "$modules/token/types";
 import type { Principal } from "@dfinity/principal";
@@ -33,4 +34,16 @@ export function parseListTokens(
   } else {
     return [];
   }
+}
+
+export function parseTransferResultError(
+  result: icpLedger.Icrc1TransferError,
+): Error {
+  if ("GenericError" in result) {
+    return new Error(`Transfer failed: ${result.GenericError.message}`);
+  } else if ("InsufficientFunds" in result) {
+    return new Error(`Transfer failed: Insufficient funds`);
+  }
+
+  return new Error("Transfer failed: Unknown error");
 }

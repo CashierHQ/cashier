@@ -21,7 +21,7 @@
 <div>
   {#if walletTokensQuery.data}
     <div>
-      <h2>Wallet tokens</h2>
+      <h2>Wallet</h2>
       <ul>
         {#each walletTokensQuery.data as token (token.address)}
         {#if token.enabled}

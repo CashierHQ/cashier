@@ -30,38 +30,39 @@
 </div>
 
 <div>
-  <h2>Manage Tokens</h2>
-  {#if errorMessage}
-    <p style="color: red;">{errorMessage}</p>
-  {/if}
-  {#if successMessage}
-    <p style="color: green;">{successMessage}</p>
-  {/if}
-  {#if walletTokensQuery.data}
-    <div>
-      <ul>
-        {#each walletTokensQuery.data as token (token.address)}
-          <li>
-              <strong>{token.symbol}</strong> - {token.name} <br />
-              Address: {token.address} <br />
-              Decimals: {token.decimals} <br />
-              <input type="checkbox" checked={token.enabled} onchange={() => handleToggle(token)} /> Enabled
-              <br />
-          </li>
-          <hr />
-        {/each}
-      </ul>
-    </div>
-  {:else if walletTokensQuery.isSuccess}
-    <p style="color: red">No tokens found in wallet.</p>
-  {:else if walletTokensQuery.error}
-    <p style="color: red;">
-      An error has occurred:
-      {walletTokensQuery.error}
-    </p>
-  {:else}
-    Loading...
-  {/if}
-  
+  <h2>Manage tokens</h2>
+  <div class="py-4">
+    {#if errorMessage}
+      <p style="color: red;">{errorMessage}</p>
+    {/if}
+    {#if successMessage}
+      <p style="color: green;">{successMessage}</p>
+    {/if}
+    {#if walletTokensQuery.data}
+      <div>
+        <ul>
+          {#each walletTokensQuery.data as token (token.address)}
+            <li>
+                <strong>{token.symbol}</strong> - {token.name} <br />
+                Address: {token.address} <br />
+                Decimals: {token.decimals} <br />
+                <input type="checkbox" checked={token.enabled} onchange={() => handleToggle(token)} /> Enabled
+                <br />
+            </li>
+            <hr />
+          {/each}
+        </ul>
+      </div>
+    {:else if walletTokensQuery.isSuccess}
+      <p style="color: red">No tokens found in wallet.</p>
+    {:else if walletTokensQuery.error}
+      <p style="color: red;">
+        An error has occurred:
+        {walletTokensQuery.error}
+      </p>
+    {:else}
+      Loading...
+    {/if}
+  </div> 
 </div>
 
