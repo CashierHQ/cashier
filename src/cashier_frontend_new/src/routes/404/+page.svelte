@@ -1,6 +1,5 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  export const prerender = true;
 </script>
 
 <svelte:head>

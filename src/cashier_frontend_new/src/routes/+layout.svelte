@@ -1,15 +1,13 @@
 <!-- DEMO: a layout automatically applied to all pages in this folder and all subfolders -->
 <script lang="ts">
   import favicon from "$lib/assets/favicon.svg";
-  import { afterNavigate, beforeNavigate, goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
+  import { beforeNavigate, goto } from "$app/navigation";
   import Navbar from "$modules/shared/components/Navbar.svelte";
   import { accountState } from "$modules/shared/state/auth.svelte";
   import "../app.css";
   import { page } from "$app/state";
   import { authState } from "$modules/auth/state/auth.svelte";
-
-  export const ssr = false;
+  import { resolve } from "$app/paths";
 
   let { children } = $props();
 
@@ -40,7 +38,7 @@
       !accountState.account &&
       current !== "/404"
     ) {
-      goto("/404");
+      goto(resolve("/404"));
     }
   });
 
@@ -54,7 +52,7 @@
       !accountState.account &&
       targetPath !== "/404"
     ) {
-      goto("/404");
+      goto(resolve("/404"));
     }
   });
 </script>
