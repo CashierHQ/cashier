@@ -124,6 +124,11 @@ export class WalletStore {
     this.#walletTokensQuery.refresh();
   }
 
+  /**
+   * Find a token by its address.
+   * @param address Token canister ID string
+   * @returns The token full data.
+   */
   findTokenByAddress(address: string): TokenWithPriceAndBalance {
     if (!this.#walletTokensQuery.data) {
       throw new Error("Wallet tokens data is not loaded");

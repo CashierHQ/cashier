@@ -37,6 +37,11 @@ class TokenStorageService {
     return parseListTokens(res);
   }
 
+  /**
+   * Toggle the enabled state of a token.
+   * @param address The principal address of the token to toggle.
+   * @param is_enabled The new enabled state of the token.
+   */
   public async toggleToken(
     address: Principal,
     is_enabled: boolean,
@@ -51,6 +56,10 @@ class TokenStorageService {
     }
   }
 
+  /**
+   * Add a new token to the user wallet
+   * @param address The principal address of the token to add.
+   */
   public async addToken(address: Principal): Promise<void> {
     const actor = this.#getActor();
     const res: tokenStorage.Result = await actor.add_token({
