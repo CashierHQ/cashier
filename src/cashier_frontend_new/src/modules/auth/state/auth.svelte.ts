@@ -77,14 +77,11 @@ const initPnp = async () => {
         console.error("Auto-reconnect failed:", error);
       }
     }
+    // Listen for storage changes from other tabs/windows. We care about CONNECT_WALLET_ID_KEY
+    // If the key is removed elsewhere, we should logout locally to keep state consistent.
+    window.addEventListener("storage", handleStorageChange);
   }
 };
-
-// Listen for storage changes from other tabs/windows. We care about CONNECT_WALLET_ID_KEY
-// If the key is removed elsewhere, we should logout locally to keep state consistent.
-if (typeof window !== "undefined") {
-  window.addEventListener("storage", handleStorageChange);
-}
 
 // Exported auth state and actions
 export const authState = {
