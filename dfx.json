@@ -91,6 +91,17 @@
         }
       }
     },
+    "BOB": {
+      "type": "custom",
+      "candid": "./target/artifacts/ledger-suite-icrc.did",
+      "wasm": "./target/artifacts/ledger-suite-icrc.wasm.gz",
+      "specified_id": "7pail-xaaaa-aaaas-aabmq-cai",
+      "remote": {
+        "id": {
+          "ic": "7pail-xaaaa-aaaas-aabmq-cai"
+        }
+      }
+    },
     "internet_identity": {
       "type": "custom",
       "candid": "./target/artifacts/internet_identity.did",
