@@ -22,13 +22,10 @@
   });
   
   async function handleSend() {
-    if (!selectedToken || selectedToken.trim() === "") {
-      errorMessage = "Please select a token to send.";
-      return;
-    }
+    errorMessage = "";
+    successMessage = "";
 
-    if (!receiveAddress || receiveAddress.trim() === "") {
-      errorMessage = "Please enter a valid receive address.";
+    if (!validate()) {
       return;
     }
 
@@ -38,24 +35,10 @@
       return;
     }
 
-    if (amount <= 0) {
-      errorMessage = "Amount must be greater than zero.";
-      return;
-    }
-
-    if (amount > maxAmount) {
-      errorMessage = `Amount exceeds maximum balance of ${maxAmount}`;
-      return;
-    }
-
-    errorMessage = "";
-    successMessage = "";
-
     try {
       const tokenPrincipal = Principal.fromText(selectedToken);
       const receivePrincipal = Principal.fromText(receiveAddress);
       const balanceAmount = icpToBalance(amount, token.decimals);
-      console.log("balanceAmount:", balanceAmount);
       isSending = true;
       await transferToken(tokenPrincipal, receivePrincipal, balanceAmount);
       isSending = false;
@@ -65,11 +48,30 @@
     }
   }
 
-  async function handleValidate() {
+  function validate(): boolean {
     errorMessage = "";
+
+    if (!selectedToken || selectedToken.trim() === "") {
+      errorMessage = "Please select a token to send.";
+      return false;
+    }
+
+    if (!receiveAddress || receiveAddress.trim() === "") {
+      errorMessage = "Please enter a valid receive address.";
+      return false;
+    }
+
+    if (amount <= 0) {
+      errorMessage = "Amount must be greater than zero.";
+      return false;
+    }
+
     if (amount > maxAmount) {
       errorMessage = `Amount exceeds maximum balance of ${maxAmount}`;
+      return false;
     }
+
+    return true;
   }
 </script>
 
@@ -103,7 +105,7 @@
     </select>
 
     <p>Amount: (max {maxAmount})</p>
-    <input type="number" bind:value={amount} max={maxAmount} onchange={() => handleValidate()} style="border: 1px solid #ccc;" />
+    <input type="number" bind:value={amount} max={maxAmount} style="border: 1px solid #ccc;" />
     <br/>
 
     <p>Receive address:</p>

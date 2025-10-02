@@ -4,9 +4,8 @@
   import Button from '$lib/shadcn/components/ui/button/button.svelte';
   import { accountState } from '$modules/shared/state/auth.svelte';
   import { walletTokensQuery } from "$modules/token/state/tokenStore.svelte";
-  import { Principal } from '@dfinity/principal';
 
-  let selectedToken: Principal = $state(Principal.anonymous());
+  let selectedToken: string = $state("");
 </script>
 
 <div class="py-6">
