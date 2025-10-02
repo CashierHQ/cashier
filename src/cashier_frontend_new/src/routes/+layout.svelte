@@ -1,20 +1,24 @@
 <!-- DEMO: a layout automatically applied to all pages in this folder and all subfolders -->
 <script lang="ts">
   import favicon from "$lib/assets/favicon.svg";
-  import { beforeNavigate, goto } from "$app/navigation";
+  import { afterNavigate, beforeNavigate, goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import Navbar from "$modules/shared/components/Navbar.svelte";
   import { accountState } from "$modules/shared/state/auth.svelte";
   import "../app.css";
   import { page } from "$app/state";
   import { authState } from "$modules/auth/state/auth.svelte";
 
+    export const ssr = false;
+
   let { children } = $props();
 
   // Define protected routes that require authentication
   const protectedRoutes = ["/blog", "/wallet"];
 
-  // Get the current path
-  const curentPath = page.url.pathname;
+  // NOTE: avoid capturing a one-time snapshot of the path here; use
+  // `page.url.pathname` at the time of checks so the layout reflects
+  // navigation changes (especially after redirect to /404).
 
   // Check if the path is protected
   function isProtectedPath(path: string) {
@@ -28,7 +32,10 @@
     if (authState.initState !== "initialized") return;
     if (authState.isReconnecting) return;
 
-    if (isProtectedPath(curentPath) && !accountState.account) {
+    const current = page.url.pathname;
+
+    // If the current path is protected and user is not authenticated, redirect to /404
+    if (isProtectedPath(current) && !accountState.account && current !== "/404") {
       goto("/404");
     }
   });
@@ -36,7 +43,9 @@
   // Handle navigation events to check authentication on route changes
   beforeNavigate(({ to }) => {
     const targetPath = to?.url?.pathname ?? "";
-    if (isProtectedPath(targetPath) && !accountState.account) {
+
+    // If the target path is protected and user is not authenticated, redirect to /404
+    if (isProtectedPath(targetPath) && !accountState.account && targetPath !== "/404") {
       goto("/404");
     }
   });
@@ -65,7 +74,7 @@
   If this true, likely Pnp is finished reconnect
   - $effect will redirect to /404 if user is not authenticated
 -->
-{:else if isProtectedPath(curentPath) && !accountState.account}
+{:else if isProtectedPath(page.url.pathname) && !accountState.account}
   <div class="min-h-screen flex items-center justify-center">Checking...</div>
   <!-- 
   There is 2 cases to render children:
@@ -75,3 +84,4 @@
 {:else}
   {@render children?.()}
 {/if}
+
