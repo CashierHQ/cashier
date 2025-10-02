@@ -9,7 +9,7 @@
   import { page } from "$app/state";
   import { authState } from "$modules/auth/state/auth.svelte";
 
-    export const ssr = false;
+  export const ssr = false;
 
   let { children } = $props();
 
@@ -35,7 +35,11 @@
     const current = page.url.pathname;
 
     // If the current path is protected and user is not authenticated, redirect to /404
-    if (isProtectedPath(current) && !accountState.account && current !== "/404") {
+    if (
+      isProtectedPath(current) &&
+      !accountState.account &&
+      current !== "/404"
+    ) {
       goto("/404");
     }
   });
@@ -45,7 +49,11 @@
     const targetPath = to?.url?.pathname ?? "";
 
     // If the target path is protected and user is not authenticated, redirect to /404
-    if (isProtectedPath(targetPath) && !accountState.account && targetPath !== "/404") {
+    if (
+      isProtectedPath(targetPath) &&
+      !accountState.account &&
+      targetPath !== "/404"
+    ) {
       goto("/404");
     }
   });
@@ -84,4 +92,3 @@
 {:else}
   {@render children?.()}
 {/if}
-
