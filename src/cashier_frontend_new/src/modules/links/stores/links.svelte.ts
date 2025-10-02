@@ -7,5 +7,5 @@ export const linkListQuery = managedState<LinkDto[]>({
   queryFn: async () => {
     return (await cashierBackendService.getLinks()).unwrap();
   },
-  watchQuery: true,
+  watch: true,
 });
