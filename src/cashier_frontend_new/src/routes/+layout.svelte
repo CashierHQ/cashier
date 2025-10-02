@@ -11,7 +11,7 @@
   let { children } = $props();
 
   // Define protected routes that require authentication
-  const protectedRoutes = ["/blog"];
+  const protectedRoutes = ["/blog", "/wallet"];
 
   // Get the current path
   const curentPath = page.url.pathname;
@@ -26,6 +26,8 @@
   // If user is not authenticated and tries to access a protected route, redirect to /404
   $effect(() => {
     if (authState.initState !== "initialized") return;
+    if (authState.isReconnecting) return;
+
     if (isProtectedPath(curentPath) && !accountState.account) {
       goto("/404");
     }
@@ -53,7 +55,12 @@
     Initializing...
   </div>
 <!--
-  If this true, likely Pnp is connecting
+  If this true, likely Pnp is reconnecting
+-->
+{:else if authState.isReconnecting}
+  <div class="min-h-screen flex items-center justify-center">Reconnecting...</div>
+<!--
+  If this true, likely Pnp is finished reconnect
   - $effect will redirect to /404 if user is not authenticated
 -->
 {:else if isProtectedPath(curentPath) && !accountState.account}

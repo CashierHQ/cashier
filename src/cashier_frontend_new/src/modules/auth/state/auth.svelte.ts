@@ -1,5 +1,4 @@
 import {
-  CONNECT_WALLET_ID_KEY,
   BUILD_TYPE,
   FEATURE_FLAGS,
   HOST_ICP,
@@ -13,6 +12,7 @@ import type { IDL } from "@dfinity/candid";
 import { Actor, HttpAgent } from "@dfinity/agent";
 import type { CreatePnpArgs } from "@windoge98/plug-n-play";
 import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
+import { CONNECT_WALLET_ID_KEY } from "../constants";
 
 // Config for PNP instance
 export const CONFIG: CreatePnpArgs = {
