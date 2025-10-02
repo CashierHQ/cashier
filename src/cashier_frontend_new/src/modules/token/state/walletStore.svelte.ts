@@ -7,6 +7,12 @@ import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import type { AccountIdentifier } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
 
+// TODO: add Buffer polyfill to support AccountIdentifier in browser
+import { Buffer } from "buffer";
+if (typeof window !== "undefined") {
+  window.Buffer = Buffer;
+}
+
 export class WalletStore {
   #walletTokensQuery;
 
@@ -15,7 +21,6 @@ export class WalletStore {
       queryFn: async () => {
         // fetch list user's tokens
         const tokens = await tokenStorageService.listTokens();
-        console.log("fetched tokens:", tokens);
 
         // fetch token balances
         const balanceRequests = tokens.map((token) => {
@@ -64,30 +69,50 @@ export class WalletStore {
     return this.#walletTokensQuery;
   }
 
-  async toggleToken(address: Principal, isEnabled: boolean) {
-    const toggleRes = await tokenStorageService.toggleToken(address, isEnabled);
-    console.log("Toggle token response:", toggleRes);
+  /**
+   * Toggle token enabled/disabled state
+   * @param address Token canister ID
+   * @param isEnabled
+   */
+  async toggleToken(address: string, isEnabled: boolean) {
+    const token = Principal.fromText(address);
+    const toggleRes = await tokenStorageService.toggleToken(token, isEnabled);
     // Refresh the wallet tokens data after toggling the token enabled state
     this.#walletTokensQuery.refresh();
   }
 
-  async addToken(address: Principal) {
-    const addRes = await tokenStorageService.addToken(address);
-    console.log("Add token response:", addRes);
+  /**
+   * Add a new token to the wallet
+   * @param address Token canister ID
+   */
+  async addToken(address: string) {
+    const token = Principal.fromText(address);
+    const addRes = await tokenStorageService.addToken(token);
     // Refresh the wallet tokens data after adding a new token
     this.#walletTokensQuery.refresh();
   }
 
-  async transferTokenByPrincipal(token: string, to: Principal, amount: bigint) {
+  /**
+   * Transfer tokens to another account
+   * @param token Token canister ID
+   * @param to Principal of recipient
+   * @param amount Amount of tokens to transfer
+   */
+  async transferTokenToPrincipal(token: string, to: Principal, amount: bigint) {
     const tokenData = this.findTokenByAddress(token);
     const icpLedgerService = new IcpLedgerService(tokenData);
     const transferRes = await icpLedgerService.transferByPrincipal(to, amount);
-    console.log("Transfer token response:", transferRes);
     // Refresh the wallet tokens data after sending tokens
     this.#walletTokensQuery.refresh();
   }
 
-  async transferTokenByAccount(
+  /**
+   * Transfer tokens to another account
+   * @param token Token canister ID
+   * @param to Account identifier of the recipient
+   * @param amount Amount of tokens to transfer
+   */
+  async transferTokenToAccount(
     token: string,
     to: AccountIdentifier,
     amount: bigint,
@@ -95,7 +120,6 @@ export class WalletStore {
     const tokenData = this.findTokenByAddress(token);
     const icpLedgerService = new IcpLedgerService(tokenData);
     const transferRes = await icpLedgerService.transferByAccount(to, amount);
-    console.log("Transfer token response:", transferRes);
     // Refresh the wallet tokens data after sending tokens
     this.#walletTokensQuery.refresh();
   }

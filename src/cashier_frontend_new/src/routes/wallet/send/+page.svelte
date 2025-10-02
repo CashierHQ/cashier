@@ -40,11 +40,11 @@
       if (receiveType === PRINCIPAL_TYPE) {
         const receivePrincipal = Principal.fromText(receiveAddress);
         isSending = true;
-        await walletStore.transferTokenByPrincipal(selectedToken, receivePrincipal, balanceAmount);
+        await walletStore.transferTokenToPrincipal(selectedToken, receivePrincipal, balanceAmount);
       } else if (receiveType === ACCOUNT_ID_TYPE) {
-        const accountId = AccountIdentifier.fromHex(receiveAddress);
+        const receiveAccount = AccountIdentifier.fromHex(receiveAddress);
         isSending = true;
-        await walletStore.transferTokenByAccount(selectedToken, accountId, balanceAmount);
+        await walletStore.transferTokenToAccount(selectedToken, receiveAccount, balanceAmount);
       } else {
         errorMessage = "Invalid receive type selected.";
         return;
@@ -89,42 +89,45 @@
 </div>
 
 <div>
-  <h2>Send token</h2>
-  <div class="py-4">
-    {#if errorMessage}
-      <p style="color: red;">{errorMessage}</p>
-    {/if}
-    {#if successMessage}
-      <p style="color: green;">{successMessage}</p>
-    {/if}
-    {#if isSending}
-      <p>Sending...</p>
-    {/if}
-    <p>Select a token to send:</p>
-    <select bind:value={selectedToken} style="border: 1px solid #ccc;">
-      {#if walletStore.query.data}
-        {#each walletStore.query.data as token (token.address)}
-          {#if token.enabled}
-            <option value={token.address}>{token.symbol} - {token.name}</option>
-          {/if}
-        {/each}
-      {:else}
-        <option disabled>No tokens available</option>
+  {#if walletStore.query.data}
+    <h2>Send token</h2>
+    <div class="py-4">
+      {#if errorMessage}
+        <p style="color: red;">{errorMessage}</p>
       {/if}
-    </select>
-
-    <p>Amount: (max {maxAmount})</p>
-    <input type="number" bind:value={amount} max={maxAmount} style="border: 1px solid #ccc;" />
-    <br/>
-
-    <p>Receive address:</p>
-    <select bind:value={receiveType} style="border: 1px solid #ccc; margin-bottom: 8px;">
-      <option value={0}>Principal</option>
-      <option value={1}>AccountID</option>
-    </select>
-    <input type="text" bind:value={receiveAddress} style="border: 1px solid #ccc;" />
-  </div>
-  <Button onclick={() => handleSend()}>Send</Button>
-
-  
+      {#if successMessage}
+        <p style="color: green;">{successMessage}</p>
+      {/if}
+      {#if isSending}
+        <p>Sending...</p>
+      {/if}
+      <p>Select a token to send:</p>
+      <select bind:value={selectedToken} style="border: 1px solid #ccc;">
+          {#each walletStore.query.data as token (token.address)}
+            {#if token.enabled}
+              <option value={token.address}>{token.symbol} - {token.name}</option>
+            {/if}
+          {/each}
+      </select>
+      <p>Amount: (max {maxAmount})</p>
+      <input type="number" bind:value={amount} max={maxAmount} style="border: 1px solid #ccc;" />
+      <br/>
+      <p>Receive address:</p>
+      <select bind:value={receiveType} style="border: 1px solid #ccc; margin-bottom: 8px;">
+        <option value={0}>Principal</option>
+        <option value={1}>AccountID</option>
+      </select>
+      <input type="text" bind:value={receiveAddress} style="border: 1px solid #ccc;" />
+    </div>
+    <Button onclick={() => handleSend()}>Send</Button>
+  {:else if walletStore.query.isSuccess}
+    <p style="color: red">No tokens found in wallet.</p>
+  {:else if walletStore.query.error}
+    <p style="color: red;">
+      An error has occurred:
+      {walletStore.query.error}
+    </p>
+  {:else}
+    Loading...
+  {/if}
 </div>
