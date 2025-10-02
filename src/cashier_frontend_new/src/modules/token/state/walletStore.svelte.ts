@@ -79,6 +79,7 @@ export class WalletStore {
     const toggleRes = await tokenStorageService.toggleToken(token, isEnabled);
     // Refresh the wallet tokens data after toggling the token enabled state
     this.#walletTokensQuery.refresh();
+    return toggleRes;
   }
 
   /**
@@ -90,6 +91,7 @@ export class WalletStore {
     const addRes = await tokenStorageService.addToken(token);
     // Refresh the wallet tokens data after adding a new token
     this.#walletTokensQuery.refresh();
+    return addRes;
   }
 
   /**
@@ -104,6 +106,7 @@ export class WalletStore {
     const transferRes = await icpLedgerService.transferByPrincipal(to, amount);
     // Refresh the wallet tokens data after sending tokens
     this.#walletTokensQuery.refresh();
+    return transferRes;
   }
 
   /**
@@ -122,6 +125,7 @@ export class WalletStore {
     const transferRes = await icpLedgerService.transferByAccount(to, amount);
     // Refresh the wallet tokens data after sending tokens
     this.#walletTokensQuery.refresh();
+    return transferRes;
   }
 
   /**
