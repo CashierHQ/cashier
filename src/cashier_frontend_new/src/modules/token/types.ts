@@ -7,6 +7,7 @@ export type TokenMetadata = {
   address: string;
   decimals: number;
   enabled: boolean;
+  fee: bigint;
 };
 
 /**

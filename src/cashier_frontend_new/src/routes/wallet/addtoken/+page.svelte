@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import Button from '$lib/shadcn/components/ui/button/button.svelte';
-  import { addToken } from '$modules/token/state/tokenStore.svelte';
+  import { walletStore } from '$modules/token/state/walletStore.svelte';
   import { Principal } from '@dfinity/principal';
 
   let canisterId: string = $state("");
@@ -10,8 +10,7 @@
   let successMessage: string = $state("");
 
   async function handleAddToken(canisterId: string) {
-    if (!canisterId) {
-      errorMessage = "Canister ID cannot be empty";
+    if (!validate()) {
       return;
     }
 
@@ -20,11 +19,19 @@
 
     try {
       const principal = Principal.fromText(canisterId);
-      await addToken(principal);
+      await walletStore.addToken(principal);
       successMessage = "Token added successfully!";
     } catch (error) {
       errorMessage = "Failed to add token: " + error;
     }
+  }
+
+  function validate(): boolean {
+    if (!canisterId) {
+      errorMessage = "Canister ID cannot be empty";
+      return false;
+    }
+    return true;
   }
 </script>
 

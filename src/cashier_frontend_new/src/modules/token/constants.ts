@@ -2,3 +2,7 @@ import { PUBLIC_TOKEN_ICPSWAP_INDEX_CANISTER_ID } from "$env/static/public";
 
 // The ICPSwap index canister id
 export const ICPSWAP_INDEX_CANISTER_ID = PUBLIC_TOKEN_ICPSWAP_INDEX_CANISTER_ID;
+
+// Address type
+export const PRINCIPAL_TYPE = 0;
+export const ACCOUNT_ID_TYPE = 1;

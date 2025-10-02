@@ -26,6 +26,7 @@ export function parseListTokens(
           symbol: token.symbol,
           decimals: token.decimals,
           enabled: token.enabled,
+          fee: token.details.IC.fee,
         };
       } else {
         throw new Error("Unsupported token type");
@@ -41,12 +42,22 @@ export function parseListTokens(
  * @param result Error result from ICP Ledger transfer operation
  * @returns Parsed error
  */
-export function parseTransferResultError(
+export function parseIcrc1TransferResultError(
   result: icpLedger.Icrc1TransferError,
 ): Error {
   if ("GenericError" in result) {
     return new Error(`Transfer failed: ${result.GenericError.message}`);
   } else if ("InsufficientFunds" in result) {
+    return new Error(`Transfer failed: Insufficient funds`);
+  }
+
+  return new Error("Transfer failed: Unknown error");
+}
+
+export function parseTransferResultError(
+  result: icpLedger.TransferError,
+): Error {
+  if ("InsufficientFunds" in result) {
     return new Error(`Transfer failed: Insufficient funds`);
   }
 
