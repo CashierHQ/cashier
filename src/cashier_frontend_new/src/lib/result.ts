@@ -30,7 +30,7 @@ export const responseToResult = <T, E>(
     ok: (val) => Ok(val),
     Err: (val) => Err(new Error(devalue.stringify(val))),
     err: (val) => Err(new Error(devalue.stringify(val))),
-  })
+  });
 };
 
 /**
@@ -40,9 +40,7 @@ export const responseToResult = <T, E>(
  * @param callback - The callback to be called
  * @returns The result object
  */
-export const catchError = <T>(
-  callback: () => T,
-):Result<T, unknown> => {
+export const catchError = <T>(callback: () => T): Result<T, unknown> => {
   try {
     return Ok(callback());
   } catch (error) {
