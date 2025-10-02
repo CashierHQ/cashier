@@ -14,10 +14,10 @@ class CanisterBackendService {
    * @throws Error if the user is not authenticated
    */
   #getActor(): cashierBackend._SERVICE | null {
-      return authState.buildActor({
-        canisterId: CASHIER_BACKEND_CANISTER_ID,
-        idlFactory: cashierBackend.idlFactory,
-      });
+    return authState.buildActor({
+      canisterId: CASHIER_BACKEND_CANISTER_ID,
+      idlFactory: cashierBackend.idlFactory,
+    });
   }
 
   /**
@@ -37,7 +37,6 @@ class CanisterBackendService {
 
     return responseToResult(response).map((res) => res.data);
   }
-
 }
 
 export const cashierBackendService = new CanisterBackendService();

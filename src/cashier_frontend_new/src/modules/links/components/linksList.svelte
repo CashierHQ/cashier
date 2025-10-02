@@ -1,15 +1,15 @@
 <script lang="ts">
-    import { linkListQuery } from "../stores/links.svelte";
+  // import { getTag } from "$lib/rsMatch";
+  import { linkListQuery } from "../stores/links.svelte";
 
-//     const localList = export const linkListQuery = managedState<LinkDto[]>({
-//   queryFn: async () => {
-//     return (await cashierBackendService.getLinks()).unwrap();
-//   },
-// });
-    // setTimeout(() => {
-    //     linkListQuery.refresh();
-    // }, 2500)
-
+  //     const localList = export const linkListQuery = managedState<LinkDto[]>({
+  //   queryFn: async () => {
+  //     return (await cashierBackendService.getLinks()).unwrap();
+  //   },
+  // });
+  // setTimeout(() => {
+  //     linkListQuery.refresh();
+  // }, 2500)
 </script>
 
 <li>
@@ -21,11 +21,13 @@
   {/if}
   {#if linkListQuery.data}
     <ul>
-    {#each linkListQuery.data as link}
-      <li> - Link id: {link.id} - {link.link_type} - {link.title}</li>   
+      {#each linkListQuery.data as link}
+        <li>
+          - Link id: {link.id} - {JSON.stringify(link.link_type)} - {link.title}
+        </li>
       {:else}
-	   <li> <p>There are no links</p> </li>
-    {/each}
+        <li><p>There are no links</p></li>
+      {/each}
     </ul>
   {/if}
 </li>

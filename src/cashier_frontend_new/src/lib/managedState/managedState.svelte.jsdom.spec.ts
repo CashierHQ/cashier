@@ -138,6 +138,23 @@ describe("ManagedState - Global storage", () => {
     store.reset();
     expect(store.data).toEqual(undefined);
   });
+
+  it("should watch the query for state changes", async () => {
+    vi.useFakeTimers();
+
+    let count = $state(0);
+    const store = managedState<number>({
+      queryFn: () => Promise.resolve(count),
+      watchQuery: true,
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.data).toEqual(count);
+
+    count = 10;
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.data).toEqual(count);
+  });
 });
 
 describe("ManagedState - LocalStorage", () => {

@@ -1,5 +1,3 @@
-
-
 /**
  * Extracts the union of tag names (keys) from a tagged-union type.
  *
@@ -92,8 +90,15 @@ export function rsMatch<T extends Record<string, any>, R>(
   value: T,
   handlers: {
     [K in Tags<T>]: (v: Extract<T, Record<K, any>>[K]) => R;
-  }
+  },
 ): R {
   const key = Object.keys(value)[0] as Tags<T>;
   return handlers[key](value[key] as any);
+}
+
+/**
+ * A helper function to assert unreachable code paths at compile time.
+ */
+export function assertUnreachable(x: never): never {
+  throw new Error("Didn't expect to get here");
 }

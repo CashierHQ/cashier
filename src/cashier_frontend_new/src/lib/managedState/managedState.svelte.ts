@@ -37,7 +37,15 @@ export type StateConfig<T> = {
    */
   storageType?: "global" | "localStorage" | "sessionStorage";
 
-  effect?: boolean;
+  /**
+   * If set to true, the query will run whenever its dependencies change, i.e. $state or $derived values.
+   *
+   * Warning: This can cause the query to run multiple times and can lead to performance issues, infinite loops, or other unexpected behavior.
+   * Only use this use with caution.
+   *
+   * Defaults to `false`.
+   */
+  watchQuery?: boolean;
 };
 
 type Data<T> = {
@@ -75,25 +83,9 @@ export class ManagedState<T> {
       this.#storage = new NoOpsStore();
     }
 
-    if (config.effect) {
-      let cleanUp = $effect.root(() => {
-        $effect(() => {
-          this.refresh();
-        });
-      });
-      
-      // Ignore the error. This should fail silently if the state is created outside of a svelte component.
-      try {
-        onDestroy(() => {
-          cleanUp(); // cancel before component unmount
-        });
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (_e) {
-        // This is ok, if the state is created outside of a svelte component
-        // then the onDestroy will not be called and the interval will not be cleared
-      }
-
-    };
+    if (config.watchQuery) {
+      this.#watchQuery();
+    }
 
     const initialData = this.#storage.getItem();
     if (initialData !== null) {
@@ -168,6 +160,30 @@ export class ManagedState<T> {
       this.#storage.setItem(data);
     } else {
       this.#storage.removeItem();
+    }
+  }
+
+  /**
+   * Watches the query for state changes and refetches the data.
+   */
+  #watchQuery() {
+    if (this.#config.watchQuery) {
+      let cleanUp = $effect.root(() => {
+        $effect(() => {
+          this.refresh();
+        });
+      });
+
+      // Ignore the error. This should fail silently if the state is created outside of a svelte component.
+      try {
+        onDestroy(() => {
+          cleanUp(); // cancel before component unmount
+        });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_e) {
+        // This is ok, if the state is created outside of a svelte component
+        // then the onDestroy will not be called and the interval will not be cleared
+      }
     }
   }
 
