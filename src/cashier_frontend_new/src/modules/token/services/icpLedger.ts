@@ -5,13 +5,8 @@ import { accountState } from "$modules/shared/state/auth.svelte";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
 import { ICP_LEDGER_CANISTER_ID, ICP_LEDGER_FEE } from "../constants";
+import { decodeIcpAccountID } from "../utils/converter";
 import { parseICPTransferResultError } from "../utils/parser";
-
-// TODO: add Buffer polyfill to support AccountIdentifier in browser
-import { Buffer } from "buffer";
-if (typeof window !== "undefined") {
-  window.Buffer = Buffer;
-}
 
 /**
  * Service for interacting with ICP Ledger canister for a specific token
@@ -80,7 +75,10 @@ class IcpLedgerService {
    */
   public async transferToAccount(to: string, amount: bigint): Promise<bigint> {
     const actor: icpLedger._SERVICE = this.#getActor();
-    const ledgerTo = AccountIdentifier.fromHex(to).toUint8Array();
+
+    // create the accountID using the utility function instead of native package
+    // because the native package depends on Buffer which does not work in browser
+    const ledgerTo = decodeIcpAccountID(to);
 
     const result = await actor.transfer({
       to: ledgerTo,
