@@ -6,6 +6,7 @@ import { tokenPriceService } from "$modules/token/services/tokenPrice";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Principal } from "@dfinity/principal";
+import { ICP_LEDGER_CANISTER_ID } from "../constants";
 
 export class WalletStore {
   #walletTokensQuery;
@@ -18,8 +19,12 @@ export class WalletStore {
 
         // fetch token balances
         const balanceRequests = tokens.map((token) => {
-          const icrcLedgerService = new IcrcLedgerService(token);
-          return icrcLedgerService.getBalance();
+          if (token.address === ICP_LEDGER_CANISTER_ID) {
+            return icpLedgerService.getBalance();
+          } else {
+            const icrcLedgerService = new IcrcLedgerService(token);
+            return icrcLedgerService.getBalance();
+          }
         });
         const balances: bigint[] = await Promise.all(balanceRequests);
 
@@ -109,6 +114,7 @@ export class WalletStore {
    * @param amount Amount of tokens to transfer
    */
   async transferICPToAccount(to: string, amount: bigint) {
+    console.log("Transferring ICP to account:", to, amount);
     const transferRes = await icpLedgerService.transferToAccount(to, amount);
     // Refresh the wallet tokens data after sending tokens
     this.#walletTokensQuery.refresh();
