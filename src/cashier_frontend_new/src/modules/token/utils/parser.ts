@@ -1,6 +1,6 @@
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
+import { rsMatch } from "$lib/rsMatch";
 import type { TokenMetadata } from "$modules/token/types";
-import type { Principal } from "@dfinity/principal";
 
 /**
  * Parse the list of tokens from the Token Storage canister response.
@@ -17,17 +17,16 @@ export function parseListTokens(
   const result = response.Ok;
   if (result.tokens && result.tokens.length > 0) {
     return result.tokens.map((token) => {
-      if ("IC" in token.id) {
-        const ledgerId: Principal = token.id.IC.ledger_id;
-        return {
-          address: ledgerId.toText(),
-          name: token.name,
-          symbol: token.symbol,
-          decimals: token.decimals,
-        };
-      } else {
-        throw new Error("Unsupported token type");
-      }
+      return rsMatch(token.id, {
+        IC: (data) => {
+          return {
+            address: data.ledger_id.toText(),
+            name: token.name,
+            symbol: token.symbol,
+            decimals: token.decimals,
+          };
+        },
+      });
     });
   } else {
     return [];
