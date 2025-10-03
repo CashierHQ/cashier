@@ -114,7 +114,6 @@ export class WalletStore {
    * @param amount Amount of tokens to transfer
    */
   async transferICPToAccount(to: string, amount: bigint) {
-    console.log("Transferring ICP to account:", to, amount);
     const transferRes = await icpLedgerService.transferToAccount(to, amount);
     // Refresh the wallet tokens data after sending tokens
     this.#walletTokensQuery.refresh();
