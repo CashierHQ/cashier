@@ -7,7 +7,8 @@ import { authState } from "$modules/auth/state/auth.svelte";
  * - The user id
  * - The user roles and permissions (not implemented yet)
  *
- * This service is used to customize the UI based on the user profile.
+ * This service is used to customize the UI based on the user profile
+ * and to protect routes.
  *
  */
 export const userProfile = {

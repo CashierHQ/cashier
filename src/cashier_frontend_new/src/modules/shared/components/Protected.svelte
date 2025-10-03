@@ -4,13 +4,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
-  /**
-   * Show/hide its children based on the userProfile.
-   *
-   * If needLogin is true, the component will show its children only if the userProfile is logged in.
-   *
-   *
-   */
+
   let {
     children,
     /**
