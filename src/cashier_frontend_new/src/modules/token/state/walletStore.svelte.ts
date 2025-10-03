@@ -1,18 +1,11 @@
 import { managedState } from "$lib/managedState";
 import { accountState } from "$modules/shared/state/auth.svelte";
-import { IcpLedgerService } from "$modules/token/services/icpLedger";
+import { icpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { tokenPriceService } from "$modules/token/services/tokenPrice";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
-import type { AccountIdentifier } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
-
-// TODO: add Buffer polyfill to support AccountIdentifier in browser
-import { Buffer } from "buffer";
-if (typeof window !== "undefined") {
-  window.Buffer = Buffer;
-}
 
 export class WalletStore {
   #walletTokensQuery;
@@ -22,7 +15,6 @@ export class WalletStore {
       queryFn: async () => {
         // fetch list user's tokens
         const tokens = await tokenStorageService.listTokens();
-        //console.log("fetched tokens", tokens);
 
         // fetch token balances
         const balanceRequests = tokens.map((token) => {
@@ -30,7 +22,6 @@ export class WalletStore {
           return icrcLedgerService.getBalance();
         });
         const balances: bigint[] = await Promise.all(balanceRequests);
-        console.log("fetched balances", balances);
 
         // fetch token prices
         const prices = await tokenPriceService.getTokenPrices();
@@ -98,7 +89,7 @@ export class WalletStore {
   }
 
   /**
-   * Transfer tokens to another account
+   * Transfer ICRC tokens to another principal
    * @param token Token canister ID
    * @param to Principal of recipient
    * @param amount Amount of tokens to transfer
@@ -113,18 +104,11 @@ export class WalletStore {
   }
 
   /**
-   * Transfer tokens to another account
-   * @param token Token canister ID
+   * Transfer ICP token to account
    * @param to Account identifier of the recipient
    * @param amount Amount of tokens to transfer
    */
-  async transferTokenToAccount(
-    token: string,
-    to: AccountIdentifier,
-    amount: bigint,
-  ) {
-    const tokenData = this.findTokenByAddress(token);
-    const icpLedgerService = new IcpLedgerService(tokenData);
+  async transferICPToAccount(to: string, amount: bigint) {
     const transferRes = await icpLedgerService.transferToAccount(to, amount);
     // Refresh the wallet tokens data after sending tokens
     this.#walletTokensQuery.refresh();
