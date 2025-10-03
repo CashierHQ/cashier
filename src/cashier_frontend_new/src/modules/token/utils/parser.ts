@@ -1,4 +1,5 @@
 import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
+import * as icrcLedger from "$lib/generated/icrc_ledger/icrc_ledger.did";
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
 import type { TokenMetadata } from "$modules/token/types";
 import type { Principal } from "@dfinity/principal";
@@ -44,6 +45,23 @@ export function parseListTokens(
  */
 export function parseIcrc1TransferResultError(
   result: icpLedger.Icrc1TransferError,
+): Error {
+  if ("GenericError" in result) {
+    return new Error(`Transfer failed: ${result.GenericError.message}`);
+  } else if ("InsufficientFunds" in result) {
+    return new Error(`Transfer failed: Insufficient funds`);
+  }
+
+  return new Error("Transfer failed: Unknown error");
+}
+
+/**
+ * Parse the error from the ICP Ledger icrc1_transfer operation.
+ * @param result Error result from ICP Ledger icrc1_transfer operation
+ * @returns Parsed error
+ */
+export function parseIcrcTransferResultError(
+  result: icrcLedger.TransferError,
 ): Error {
   if ("GenericError" in result) {
     return new Error(`Transfer failed: ${result.GenericError.message}`);
