@@ -29,7 +29,7 @@ export const accountState = {
       const principal = Principal.fromText(account.owner);
       return encodeAccountID(principal);
     } catch (error) {
-      console.error("Error generating ledger account:", error);
+      console.error("Error encoding ICP accountID:", error);
       return null;
     }
   },

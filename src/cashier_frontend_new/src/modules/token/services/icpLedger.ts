@@ -21,7 +21,6 @@ class IcpLedgerService {
   #fee: bigint;
 
   constructor() {
-    console.log("ICP Ledger Service initialized", ICP_LEDGER_CANISTER_ID);
     this.#canisterId = ICP_LEDGER_CANISTER_ID;
     this.#fee = ICP_LEDGER_FEE;
   }
@@ -81,8 +80,6 @@ class IcpLedgerService {
    */
   public async transferToAccount(to: string, amount: bigint): Promise<bigint> {
     const actor: icpLedger._SERVICE = this.#getActor();
-    console.log("icp actor:", actor);
-
     const ledgerTo = AccountIdentifier.fromHex(to).toUint8Array();
 
     const result = await actor.transfer({
