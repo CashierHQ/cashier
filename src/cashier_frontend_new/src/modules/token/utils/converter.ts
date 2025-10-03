@@ -1,3 +1,5 @@
+import { bigEndianCrc32, uint8ArrayToHexString } from "@dfinity/utils";
+
 /**
  * Convert a balance to ICP.
  * This value is aimed to be used in UI, not for calculations.
@@ -43,4 +45,40 @@ export function balanceToUSDValue(
 ): number {
   const icpValue = balanceToIcp(balance, decimals);
   return icpValue * priceUSD;
+}
+
+/**
+ * Decode an ICP account ID from hex string.
+ * This is temporarily used since the @dfinity/ledger-icp package
+ * does not work in browser due to Buffer dependency.
+ * It should be replaced with AccountIdentifier.fromHex when
+ * the package supports browser environment.
+ * @param account The ICP account ID in hex format string
+ * @returns AccountIdentifier as Uint8Array
+ * @throws Error if the account ID is invalid or checksum does not match
+ */
+export function decodeIcpAccountID(account: string): Uint8Array {
+  // Convert hex string to Uint8Array without Buffer
+  const bytes = new Uint8Array(
+    account.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) ?? [],
+  );
+
+  if (bytes.length !== 32) {
+    throw new Error(
+      `Invalid AccountIdentifier: expected 32 bytes, got ${bytes.length}.`,
+    );
+  }
+
+  const providedChecksum = uint8ArrayToHexString(bytes.slice(0, 4));
+
+  const hash = bytes.slice(4);
+  const expectedChecksum = uint8ArrayToHexString(bigEndianCrc32(hash));
+
+  if (providedChecksum !== expectedChecksum) {
+    throw Error(
+      `Checksum mismatch. Expected ${expectedChecksum}, but got ${providedChecksum}.`,
+    );
+  }
+
+  return bytes;
 }
