@@ -1,4 +1,4 @@
-import { AccountIdentifier } from "@dfinity/ledger-icp";
+import { getAccountID } from "$modules/token/services/icpLedger";
 import { Principal } from "@dfinity/principal";
 
 // Account state management
@@ -19,16 +19,15 @@ export const accountState = {
     account = value;
   },
 
-  // Get the Ledger Account for the current auth user
-  getLedgerAccount(): string | null {
+  // Get the ICP AccountID (legacy) for the current auth user
+  icpAccountID(): string | null {
     if (!account) {
       return null;
     }
 
     try {
       const principal = Principal.fromText(account.owner);
-      const identifier = AccountIdentifier.fromPrincipal({ principal });
-      return identifier.toHex();
+      return getAccountID(principal);
     } catch (error) {
       console.error("Error generating ledger account:", error);
       return null;

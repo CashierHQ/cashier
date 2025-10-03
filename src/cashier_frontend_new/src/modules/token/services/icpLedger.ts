@@ -2,7 +2,7 @@ import type { Account } from "$lib/generated/icp_ledger_canister/icp_ledger_cani
 import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { accountState } from "$modules/shared/state/auth.svelte";
-import type { AccountIdentifier } from "@dfinity/ledger-icp";
+import { AccountIdentifier } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
 import type { TokenMetadata } from "../types";
 import { parseTransferResultError } from "../utils/parser";
@@ -94,5 +94,15 @@ export class IcpLedgerService {
     }
 
     return result.Ok;
+  }
+}
+
+export function getAccountID(principal: Principal): string | null {
+  try {
+    const identifier = AccountIdentifier.fromPrincipal({ principal });
+    return identifier.toHex();
+  } catch (error) {
+    console.error("Error generating ledger account:", error);
+    return null;
   }
 }
