@@ -2,7 +2,11 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { ACCOUNT_ID_TYPE, ICP_LEDGER_CANISTER_ID, PRINCIPAL_TYPE } from "$modules/token/constants";
+  import {
+    ACCOUNT_ID_TYPE,
+    ICP_LEDGER_CANISTER_ID,
+    PRINCIPAL_TYPE,
+  } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { balanceToIcp, icpToBalance } from "$modules/token/utils/converter";
   import { Principal } from "@dfinity/principal";
@@ -12,15 +16,20 @@
   let receiveType: number = $state(PRINCIPAL_TYPE);
 
   // disable AccountID option if selectedToken is not ICP
-  let disabledAccount: boolean = $derived.by(() => selectedToken !== ICP_LEDGER_CANISTER_ID);
+  let disabledAccount: boolean = $derived.by(
+    () => selectedToken !== ICP_LEDGER_CANISTER_ID,
+  );
 
   // force receiveType to PRINCIPAL_TYPE if selectedToken is not ICP
   $effect(() => {
-    if (selectedToken !== ICP_LEDGER_CANISTER_ID && receiveType === ACCOUNT_ID_TYPE) {
+    if (
+      selectedToken !== ICP_LEDGER_CANISTER_ID &&
+      receiveType === ACCOUNT_ID_TYPE
+    ) {
       receiveType = PRINCIPAL_TYPE;
     }
   });
-  
+
   let amount: number = $state(0);
   let maxAmount: number = $derived.by(() => {
     const token = walletStore.query.data?.find(
@@ -35,7 +44,7 @@
   let errorMessage: string = $state("");
   let successMessage: string = $state("");
   let isSending: boolean = $state(false);
-  
+
   async function handleSend() {
     errorMessage = "";
     successMessage = "";
@@ -56,12 +65,12 @@
           receivePrincipal,
           balanceAmount,
         );
-      } else if (receiveType === ACCOUNT_ID_TYPE && selectedToken === ICP_LEDGER_CANISTER_ID) {
+      } else if (
+        receiveType === ACCOUNT_ID_TYPE &&
+        selectedToken === ICP_LEDGER_CANISTER_ID
+      ) {
         isSending = true;
-        await walletStore.transferICPToAccount(
-          receiveAddress,
-          balanceAmount,
-        );
+        await walletStore.transferICPToAccount(receiveAddress, balanceAmount);
       } else {
         errorMessage = "Invalid receive type selected.";
         return;
@@ -140,7 +149,9 @@
         style="border: 1px solid #ccc; margin-bottom: 8px;"
       >
         <option value={PRINCIPAL_TYPE}>PrincipalID</option>
-        <option value={ACCOUNT_ID_TYPE} disabled={disabledAccount}>AccountID</option>
+        <option value={ACCOUNT_ID_TYPE} disabled={disabledAccount}
+          >AccountID</option
+        >
       </select>
       <input
         type="text"
