@@ -1,6 +1,7 @@
 import { managedState } from "$lib/managedState";
 import { accountState } from "$modules/shared/state/auth.svelte";
 import { IcpLedgerService } from "$modules/token/services/icpLedger";
+import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { tokenPriceService } from "$modules/token/services/tokenPrice";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
@@ -21,13 +22,15 @@ export class WalletStore {
       queryFn: async () => {
         // fetch list user's tokens
         const tokens = await tokenStorageService.listTokens();
+        //console.log("fetched tokens", tokens);
 
         // fetch token balances
         const balanceRequests = tokens.map((token) => {
-          const icpLedgerService = new IcpLedgerService(token);
-          return icpLedgerService.getBalance();
+          const icrcLedgerService = new IcrcLedgerService(token);
+          return icrcLedgerService.getBalance();
         });
         const balances: bigint[] = await Promise.all(balanceRequests);
+        console.log("fetched balances", balances);
 
         // fetch token prices
         const prices = await tokenPriceService.getTokenPrices();
@@ -102,8 +105,8 @@ export class WalletStore {
    */
   async transferTokenToPrincipal(token: string, to: Principal, amount: bigint) {
     const tokenData = this.findTokenByAddress(token);
-    const icpLedgerService = new IcpLedgerService(tokenData);
-    const transferRes = await icpLedgerService.transferByPrincipal(to, amount);
+    const icrcLedgerService = new IcrcLedgerService(tokenData);
+    const transferRes = await icrcLedgerService.transferToPrincipal(to, amount);
     // Refresh the wallet tokens data after sending tokens
     this.#walletTokensQuery.refresh();
     return transferRes;
@@ -122,7 +125,7 @@ export class WalletStore {
   ) {
     const tokenData = this.findTokenByAddress(token);
     const icpLedgerService = new IcpLedgerService(tokenData);
-    const transferRes = await icpLedgerService.transferByAccount(to, amount);
+    const transferRes = await icpLedgerService.transferToAccount(to, amount);
     // Refresh the wallet tokens data after sending tokens
     this.#walletTokensQuery.refresh();
     return transferRes;

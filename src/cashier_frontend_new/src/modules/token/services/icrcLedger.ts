@@ -1,16 +1,15 @@
 import type { Account } from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
-import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
+import * as icrcLedger from "$lib/generated/icrc_ledger/icrc_ledger.did";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { accountState } from "$modules/shared/state/auth.svelte";
-import type { AccountIdentifier } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
 import type { TokenMetadata } from "../types";
-import { parseTransferResultError } from "../utils/parser";
+import { parseIcrcTransferResultError } from "../utils/parser";
 
 /**
- * Service for interacting with ICP Ledger canister for a specific token
+ * Service for interacting with Icrc Ledger canisters for a specific token
  */
-export class IcpLedgerService {
+export class IcrcLedgerService {
   #canisterId: string;
   #fee: bigint;
 
@@ -20,15 +19,15 @@ export class IcpLedgerService {
   }
 
   /**
-   * Get the authenticated ICP Ledger actor for the current user.
-   * @returns Authenticated ICP Ledger actor
+   * Get the authenticated Icrc Ledger actor for the current user.
+   * @returns Authenticated Icrc Ledger actor
    * @throws Error if the user is not authenticated
    */
-  #getActor(): icpLedger._SERVICE {
+  #getActor(): icrcLedger._SERVICE {
     if (authState.pnp && authState.pnp.isAuthenticated()) {
       return authState.pnp.getActor({
         canisterId: this.#canisterId,
-        idl: icpLedger.idlFactory,
+        idl: icrcLedger.idlFactory,
       });
     } else {
       throw new Error("User is not authenticated");
@@ -61,36 +60,39 @@ export class IcpLedgerService {
    * @throws Error if the user is not authenticated or balance retrieval fails.
    */
   public async getBalance(): Promise<bigint> {
-    const actor: icpLedger._SERVICE = this.#getActor();
+    const actor: icrcLedger._SERVICE = this.#getActor();
     const account: Account = this.#getAccount();
     return await actor.icrc1_balance_of(account);
   }
 
   /**
-   * Transfer tokens to another user by their ledger account.
-   * @param to The account identifier of the recipient.
+   * Transfer tokens to another user by their principal ID.
+   * @param to The principal ID of the recipient.
    * @param amount The amount of tokens to transfer.
    * @returns The result of the transfer operation.
    */
-  public async transferToAccount(
-    to: AccountIdentifier,
+  public async transferToPrincipal(
+    to: Principal,
     amount: bigint,
   ): Promise<bigint> {
-    const actor: icpLedger._SERVICE = this.#getActor();
-    const ledgerTo = to.toUint8Array();
+    const actor: icrcLedger._SERVICE = this.#getActor();
+    const toAccount: icrcLedger.Account = {
+      owner: to,
+      subaccount: [],
+    };
 
-    const result = await actor.transfer({
-      to: ledgerTo,
-      amount: { e8s: amount },
-      fee: { e8s: this.#fee },
-      memo: BigInt(0),
-      from_subaccount: [],
+    const result = await actor.icrc1_transfer({
+      to: toAccount,
+      amount,
+      memo: [],
       created_at_time: [],
+      fee: [],
+      from_subaccount: [],
     });
     console.log("Transfer result:", result);
 
     if ("Err" in result) {
-      throw parseTransferResultError(result.Err);
+      throw parseIcrcTransferResultError(result.Err);
     }
 
     return result.Ok;
