@@ -6,4 +6,3 @@
 <Protected>
   {@render children?.()}
 </Protected>
-

@@ -7,4 +7,3 @@
 <OnPathChange>
   {@render children?.()}
 </OnPathChange>
-

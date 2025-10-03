@@ -2,7 +2,7 @@
   import { resolve } from "$app/paths";
   import { m } from "$lib/paraglide/messages.js";
   import LinksList from "$modules/links/components/linksList.svelte";
-    import { userProfile } from "$modules/shared/services/userProfile.svelte";
+  import { userProfile } from "$modules/shared/services/userProfile.svelte";
 </script>
 
 <!-- DEMO: no need for a dedicated tailwind configuration because this uses version 4 by default -->
