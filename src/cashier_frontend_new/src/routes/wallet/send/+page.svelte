@@ -5,7 +5,6 @@
   import { ACCOUNT_ID_TYPE, ICP_LEDGER_CANISTER_ID, PRINCIPAL_TYPE } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { balanceToIcp, icpToBalance } from "$modules/token/utils/converter";
-  import { AccountIdentifier } from "@dfinity/ledger-icp";
   import { Principal } from "@dfinity/principal";
 
   let selectedToken: string = $state(ICP_LEDGER_CANISTER_ID);
@@ -58,11 +57,9 @@
           balanceAmount,
         );
       } else if (receiveType === ACCOUNT_ID_TYPE && selectedToken === ICP_LEDGER_CANISTER_ID) {
-        const receiveAccount = AccountIdentifier.fromHex(receiveAddress);
         isSending = true;
-        await walletStore.transferTokenToAccount(
-          selectedToken,
-          receiveAccount,
+        await walletStore.transferICPToAccount(
+          receiveAddress,
           balanceAmount,
         );
       } else {
@@ -142,8 +139,8 @@
         bind:value={receiveType}
         style="border: 1px solid #ccc; margin-bottom: 8px;"
       >
-        <option value={0}>Principal</option>
-        <option value={1} disabled={disabledAccount}>AccountID</option>
+        <option value={PRINCIPAL_TYPE}>PrincipalID</option>
+        <option value={ACCOUNT_ID_TYPE} disabled={disabledAccount}>AccountID</option>
       </select>
       <input
         type="text"
