@@ -1,7 +1,6 @@
 import type { Account } from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { accountState } from "$modules/shared/state/auth.svelte";
 import { Principal } from "@dfinity/principal";
 
 /**
@@ -20,15 +19,11 @@ export class IcpLedgerService {
    * @returns Authenticated ICP Ledger actor
    * @throws Error if the user is not authenticated
    */
-  #getActor(): icpLedger._SERVICE {
-    if (authState.pnp && authState.pnp.isAuthenticated()) {
-      return authState.pnp.getActor({
-        canisterId: this.#canisterId.toText(),
-        idl: icpLedger.idlFactory,
-      });
-    } else {
-      throw new Error("User is not authenticated");
-    }
+  #getActor(): icpLedger._SERVICE | null {
+    return authState.buildActor({
+      canisterId: this.#canisterId,
+      idlFactory: icpLedger.idlFactory,
+    });
   }
 
   /**
@@ -37,13 +32,9 @@ export class IcpLedgerService {
    * @throws Error if the user is not authenticated or no account is available.
    */
   #getAccount(): Account {
-    if (
-      authState.pnp &&
-      authState.pnp.isAuthenticated() &&
-      accountState.account
-    ) {
+    if (authState.account) {
       return {
-        owner: Principal.fromText(accountState.account.owner),
+        owner: Principal.fromText(authState.account.owner),
         subaccount: [],
       };
     } else {
@@ -57,7 +48,10 @@ export class IcpLedgerService {
    * @throws Error if the user is not authenticated or balance retrieval fails.
    */
   public async getBalance(): Promise<bigint> {
-    const actor: icpLedger._SERVICE = this.#getActor();
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
     const account: Account = this.#getAccount();
     return await actor.icrc1_balance_of(account);
   }

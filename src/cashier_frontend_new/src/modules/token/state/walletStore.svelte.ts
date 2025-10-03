@@ -1,5 +1,4 @@
 import { managedState } from "$lib/managedState";
-import { accountState } from "$modules/shared/state/auth.svelte";
 import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { tokenPriceService } from "$modules/token/services/tokenPrice";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
@@ -36,20 +35,5 @@ export const walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
   refetchInterval: 15_000, // Refresh every 15 seconds to keep balances up-to-date
   persistedKey: ["walletTokensQuery"],
   storageType: "localStorage",
-});
-
-$effect.root(() => {
-  $effect(() => {
-    console.log(
-      "Account state changed, refreshing tokens...",
-      $state.snapshot(accountState.account),
-    );
-    // Reset the wallet tokens data when user logs out
-    if (accountState.account == null) {
-      walletTokensQuery.reset();
-      return;
-    }
-    // Refresh the wallet tokens data when user logs in
-    walletTokensQuery.refresh();
-  });
+  watch: true,
 });

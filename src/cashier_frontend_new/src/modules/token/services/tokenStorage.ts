@@ -14,15 +14,11 @@ class TokenStorageService {
    * @returns The authenticated Token Storage actor.
    * @throws Error if the user is not authenticated
    */
-  #getActor(): tokenStorage._SERVICE {
-    if (authState.pnp && authState.pnp.isAuthenticated()) {
-      return authState.pnp.getActor({
-        canisterId: TOKEN_STORAGE_CANISTER_ID,
-        idl: tokenStorage.idlFactory,
-      });
-    } else {
-      throw new Error("User is not authenticated");
-    }
+  #getActor(): tokenStorage._SERVICE | null {
+    return authState.buildActor({
+      canisterId: TOKEN_STORAGE_CANISTER_ID,
+      idlFactory: tokenStorage.idlFactory,
+    });
   }
 
   /**
@@ -32,6 +28,9 @@ class TokenStorageService {
    */
   public async listTokens(): Promise<TokenMetadata[]> {
     const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
     const res: tokenStorage.Result_5 = await actor.list_tokens();
     return parseListTokens(res);
   }
