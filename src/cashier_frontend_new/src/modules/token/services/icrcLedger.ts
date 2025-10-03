@@ -1,7 +1,7 @@
-import type { Account } from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import * as icrcLedger from "$lib/generated/icrc_ledger/icrc_ledger.did";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { accountState } from "$modules/shared/state/auth.svelte";
+import { decodeIcrcAccount, encodeIcrcAccount } from "@dfinity/ledger-icrc";
 import { Principal } from "@dfinity/principal";
 import type { TokenMetadata } from "../types";
 import { parseIcrcTransferResultError } from "../utils/parser";
@@ -39,7 +39,7 @@ export class IcrcLedgerService {
    * @returns The ledger account for the current authenticated user.
    * @throws Error if the user is not authenticated or no account is available.
    */
-  #getAccount(): Account {
+  #getAccount(): icrcLedger.Account {
     if (
       authState.pnp &&
       authState.pnp.isAuthenticated() &&
@@ -54,6 +54,12 @@ export class IcrcLedgerService {
     }
   }
 
+  public encodeIcrcAccount(owner: Principal): string {
+    return encodeIcrcAccount({
+      owner,
+    });
+  }
+
   /**
    * Get the account balance for the current user.
    * @returns The balance of the current account.
@@ -61,7 +67,7 @@ export class IcrcLedgerService {
    */
   public async getBalance(): Promise<bigint> {
     const actor: icrcLedger._SERVICE = this.#getActor();
-    const account: Account = this.#getAccount();
+    const account: icrcLedger.Account = this.#getAccount();
     return await actor.icrc1_balance_of(account);
   }
 
@@ -75,14 +81,41 @@ export class IcrcLedgerService {
     to: Principal,
     amount: bigint,
   ): Promise<bigint> {
-    const actor: icrcLedger._SERVICE = this.#getActor();
     const toAccount: icrcLedger.Account = {
       owner: to,
       subaccount: [],
     };
 
+    return this.#callIcrc1Transfer(toAccount, amount);
+  }
+
+  public async transferToAccount(
+    account: string,
+    amount: bigint,
+  ): Promise<bigint> {
+    const icrcAccount = decodeIcrcAccount(account);
+    if (!icrcAccount) {
+      throw new Error("Invalid account identifier");
+    }
+
+    console.log("Decoded ICRC account:", icrcAccount);
+
+    const subaccount: [] | [icrcLedger.Subaccount] = icrcAccount.subaccount
+      ? [icrcAccount.subaccount]
+      : [];
+
+    const toAccount: icrcLedger.Account = {
+      owner: icrcAccount.owner,
+      subaccount,
+    };
+
+    return this.#callIcrc1Transfer(toAccount, amount);
+  }
+
+  async #callIcrc1Transfer(to: icrcLedger.Account, amount: bigint) {
+    const actor: icrcLedger._SERVICE = this.#getActor();
     const result = await actor.icrc1_transfer({
-      to: toAccount,
+      to,
       amount,
       memo: [],
       created_at_time: [],

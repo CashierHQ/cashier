@@ -3,19 +3,19 @@
   import { resolve } from "$app/paths";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { accountState } from "$modules/shared/state/auth.svelte";
-  import { ACCOUNT_ID_TYPE, PRINCIPAL_TYPE } from "$modules/token/constants";
+  import { ACCOUNT_ID_TYPE, ICP_LEDGER_CANISTER_ID, PRINCIPAL_TYPE } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
 
-  let selectedToken: string = $state("");
+  let selectedToken: string = $state(ICP_LEDGER_CANISTER_ID);
   let accountType: number = $state(PRINCIPAL_TYPE);
   let receiveAddress: string = $derived.by(() => {
     if (accountType === PRINCIPAL_TYPE) {
-      return accountState.account?.owner || "No account";
-    } else if (accountType === ACCOUNT_ID_TYPE) {
-      return accountState.getLedgerAccount() || "No account";
+      return accountState.account?.owner || "No principal";
+    } else if (accountType === ACCOUNT_ID_TYPE && selectedToken === ICP_LEDGER_CANISTER_ID) {
+      return accountState.icpAccountID() || "No ICP account";
+    } else {
+      return "AccountID only available for ICP";
     }
-
-    return "No account";
   });
 </script>
 
