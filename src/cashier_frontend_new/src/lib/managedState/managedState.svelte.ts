@@ -238,13 +238,10 @@ export class ManagedState<T> {
             break;
 
           case Array.isArray(watchQuery):
-            console.log("watchQuery is an array");
             runedWatch(
               watchQuery,
               (current, prev) => {
-                console.log("watchQuery is an array", current, prev);
                 if (!current.every((value, index) => value === prev[index])) {
-                  console.log("refresh");
                   this.refresh();
                 }
               },
