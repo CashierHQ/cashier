@@ -1,7 +1,6 @@
 import * as icrcLedger from "$lib/generated/icrc_ledger/icrc_ledger.did";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { accountState } from "$modules/shared/state/auth.svelte";
-import { decodeIcrcAccount, encodeIcrcAccount } from "@dfinity/ledger-icrc";
 import { Principal } from "@dfinity/principal";
 import type { TokenMetadata } from "../types";
 import { parseIcrcTransferResultError } from "../utils/parser";
@@ -54,12 +53,6 @@ export class IcrcLedgerService {
     }
   }
 
-  public encodeIcrcAccount(owner: Principal): string {
-    return encodeIcrcAccount({
-      owner,
-    });
-  }
-
   /**
    * Get the account balance for the current user.
    * @returns The balance of the current account.
@@ -86,40 +79,13 @@ export class IcrcLedgerService {
       subaccount: [],
     };
 
-    return this.#callIcrc1Transfer(toAccount, amount);
-  }
-
-  public async transferToAccount(
-    account: string,
-    amount: bigint,
-  ): Promise<bigint> {
-    const icrcAccount = decodeIcrcAccount(account);
-    if (!icrcAccount) {
-      throw new Error("Invalid account identifier");
-    }
-
-    console.log("Decoded ICRC account:", icrcAccount);
-
-    const subaccount: [] | [icrcLedger.Subaccount] = icrcAccount.subaccount
-      ? [icrcAccount.subaccount]
-      : [];
-
-    const toAccount: icrcLedger.Account = {
-      owner: icrcAccount.owner,
-      subaccount,
-    };
-
-    return this.#callIcrc1Transfer(toAccount, amount);
-  }
-
-  async #callIcrc1Transfer(to: icrcLedger.Account, amount: bigint) {
     const actor: icrcLedger._SERVICE = this.#getActor();
     const result = await actor.icrc1_transfer({
-      to,
+      to: toAccount,
       amount,
+      fee: [this.#fee],
       memo: [],
       created_at_time: [],
-      fee: [],
       from_subaccount: [],
     });
     console.log("Transfer result:", result);

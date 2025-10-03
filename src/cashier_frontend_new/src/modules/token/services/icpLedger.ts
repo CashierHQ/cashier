@@ -4,19 +4,25 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { accountState } from "$modules/shared/state/auth.svelte";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
-import type { TokenMetadata } from "../types";
-import { parseTransferResultError } from "../utils/parser";
+import { ICP_LEDGER_CANISTER_ID, ICP_LEDGER_FEE } from "../constants";
+import { parseICPTransferResultError } from "../utils/parser";
+
+// TODO: add Buffer polyfill to support AccountIdentifier in browser
+import { Buffer } from "buffer";
+if (typeof window !== "undefined") {
+  window.Buffer = Buffer;
+}
 
 /**
  * Service for interacting with ICP Ledger canister for a specific token
  */
-export class IcpLedgerService {
+class IcpLedgerService {
   #canisterId: string;
   #fee: bigint;
 
-  constructor(token: TokenMetadata) {
-    this.#canisterId = token.address;
-    this.#fee = token.fee;
+  constructor() {
+    this.#canisterId = ICP_LEDGER_CANISTER_ID;
+    this.#fee = ICP_LEDGER_FEE;
   }
 
   /**
@@ -67,17 +73,14 @@ export class IcpLedgerService {
   }
 
   /**
-   * Transfer tokens to another user by their ledger account.
-   * @param to The account identifier of the recipient.
+   * Transfer tokens to another user by their accountID.
+   * @param to The account ID of the recipient.
    * @param amount The amount of tokens to transfer.
    * @returns The result of the transfer operation.
    */
-  public async transferToAccount(
-    to: AccountIdentifier,
-    amount: bigint,
-  ): Promise<bigint> {
+  public async transferToAccount(to: string, amount: bigint): Promise<bigint> {
     const actor: icpLedger._SERVICE = this.#getActor();
-    const ledgerTo = to.toUint8Array();
+    const ledgerTo = AccountIdentifier.fromHex(to).toUint8Array();
 
     const result = await actor.transfer({
       to: ledgerTo,
@@ -90,14 +93,19 @@ export class IcpLedgerService {
     console.log("Transfer result:", result);
 
     if ("Err" in result) {
-      throw parseTransferResultError(result.Err);
+      throw parseICPTransferResultError(result.Err);
     }
 
     return result.Ok;
   }
 }
 
-export function getAccountID(principal: Principal): string | null {
+/**
+ * Encode an ICP account identifier from a principal.
+ * @param principal The principal to encode
+ * @returns The encoded account identifier or null if encoding fails
+ */
+export function encodeAccountID(principal: Principal): string | null {
   try {
     const identifier = AccountIdentifier.fromPrincipal({ principal });
     return identifier.toHex();
@@ -106,3 +114,5 @@ export function getAccountID(principal: Principal): string | null {
     return null;
   }
 }
+
+export const icpLedgerService = new IcpLedgerService();

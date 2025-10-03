@@ -1,4 +1,4 @@
-import { getAccountID } from "$modules/token/services/icpLedger";
+import { encodeAccountID } from "$modules/token/services/icpLedger";
 import { Principal } from "@dfinity/principal";
 
 // Account state management
@@ -27,7 +27,7 @@ export const accountState = {
 
     try {
       const principal = Principal.fromText(account.owner);
-      return getAccountID(principal);
+      return encodeAccountID(principal);
     } catch (error) {
       console.error("Error generating ledger account:", error);
       return null;
