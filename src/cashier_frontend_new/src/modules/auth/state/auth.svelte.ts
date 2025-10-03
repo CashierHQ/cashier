@@ -85,7 +85,6 @@ const initPnp = async () => {
 
 // Exported auth state and actions
 export const authState = {
-  
   // Return true if the user is logged in
   get isLoggedIn() {
     return isReady && account !== null;
