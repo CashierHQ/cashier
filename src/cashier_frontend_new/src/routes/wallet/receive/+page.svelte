@@ -8,13 +8,24 @@
 
   let selectedToken: string = $state(ICP_LEDGER_CANISTER_ID);
   let accountType: number = $state(PRINCIPAL_TYPE);
+
+  // disable AccountID option if selectedToken is not ICP
+  let disabledAccount: boolean = $derived.by(() => selectedToken !== ICP_LEDGER_CANISTER_ID);
+
+  // force accountType to PRINCIPAL_TYPE if selectedToken is not ICP
+  $effect(() => {
+    if (selectedToken !== ICP_LEDGER_CANISTER_ID && accountType === ACCOUNT_ID_TYPE) {
+      accountType = PRINCIPAL_TYPE;
+    }
+  });
+
   let receiveAddress: string = $derived.by(() => {
     if (accountType === PRINCIPAL_TYPE) {
       return accountState.account?.owner || "No principal";
     } else if (accountType === ACCOUNT_ID_TYPE && selectedToken === ICP_LEDGER_CANISTER_ID) {
       return accountState.icpAccountID() || "No ICP account";
     } else {
-      return "AccountID only available for ICP";
+      return "No account available";
     }
   });
 </script>
@@ -37,7 +48,7 @@
     <p>Receive address</p>
     <select bind:value={accountType} style="border: 1px solid #ccc;">
       <option value={PRINCIPAL_TYPE}>PrincipalID</option>
-      <option value={ACCOUNT_ID_TYPE}>AccountID</option>
+      <option value={ACCOUNT_ID_TYPE} disabled={disabledAccount}>AccountID</option>
     </select>
     <span><strong>{receiveAddress}</strong></span>
   {:else if walletStore.query.isSuccess}
