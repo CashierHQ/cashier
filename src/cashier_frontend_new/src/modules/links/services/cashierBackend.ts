@@ -3,6 +3,8 @@ import { responseToResult } from "$lib/result";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { Err, type Result } from "ts-results-es";
+import type { CreateLinkData } from "../types";
+import { mapCreateLinkDataToCreateLinkInput } from "../mapper";
 
 /**
  * Service for interacting with the Cashier Backend canister.
@@ -35,7 +37,30 @@ class CanisterBackendService {
       },
     ]);
 
-    return responseToResult(response).map((res) => res.data);
+    return responseToResult(response)
+      .map((res) => res.data)
+      .mapErr((err) => new Error(err));
+  }
+
+  async createLink(
+    input: CreateLinkData,
+  ): Promise<Result<cashierBackend.LinkDto, Error>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const request = mapCreateLinkDataToCreateLinkInput(input);
+
+    if (request.isErr()) {
+      return Err(request.unwrapErr());
+    }
+
+    const response = await actor.create_link(request.unwrap());
+
+    return responseToResult(response)
+      .map((res) => res)
+      .mapErr((err) => new Error(JSON.stringify(err)));
   }
 }
 
