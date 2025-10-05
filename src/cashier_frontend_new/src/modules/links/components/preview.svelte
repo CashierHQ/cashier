@@ -1,7 +1,5 @@
 <script lang="ts">
   import createLinkState from "../stores/create-link.svelte";
-  import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
-
   // local bindings to the shared state
   const data = createLinkState.createLinkData;
 </script>
