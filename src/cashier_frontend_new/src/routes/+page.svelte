@@ -3,6 +3,7 @@
   import { resolve } from "$app/paths";
   // DEMO: `m` is a helper function that statically checks message validity at compile time
   import { m } from "$lib/paraglide/messages.js";
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
   import LinksList from "$modules/links/components/linksList.svelte";
 </script>
@@ -22,6 +23,10 @@
       <p class="py-6">
         <a class="link" href={resolve("/wallet")}>Wallet</a>
       </p>
+
+      <Button onclick={() => (window.location.href = resolve("/edit"))}>
+        Create new link
+      </Button>
     </div>
   </div>
 
