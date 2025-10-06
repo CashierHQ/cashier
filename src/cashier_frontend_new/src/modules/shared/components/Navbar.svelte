@@ -3,9 +3,8 @@
 <script lang="ts">
   import { Button } from "$lib/shadcn/components/ui/button";
   import { authState } from "$modules/auth/state/auth.svelte";
-  import { accountState } from "$modules/shared/state/auth.svelte";
 
-  async function handleLogin(walletId: string) {
+  async function handleLogin(walletId: string): Promise<void> {
     try {
       await authState.login(walletId);
     } catch (error) {
@@ -13,7 +12,7 @@
     }
   }
 
-  async function handleLogout() {
+  async function handleLogout(): Promise<void> {
     try {
       await authState.logout();
     } catch (error) {
@@ -28,11 +27,11 @@
   </div>
   <div class="flex-none">
     <ul class="menu menu-horizontal px-1">
-      {#if authState.isReconnecting}
+      {#if authState.isConnecting}
         <li><div class="loading loading-spinner loading-sm"></div></li>
         <li><span>Reconnecting...</span></li>
-      {:else if accountState.account}
-        <li><div>Welcome [{accountState.account.owner}]</div></li>
+      {:else if authState.account}
+        <li><div>Welcome [{authState.account.owner}]</div></li>
         <li><Button onclick={handleLogout}>Logout</Button></li>
       {:else}
         <li>

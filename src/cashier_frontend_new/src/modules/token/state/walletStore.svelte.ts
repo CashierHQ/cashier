@@ -1,5 +1,5 @@
 import { managedState } from "$lib/managedState";
-import { accountState } from "$modules/shared/state/auth.svelte";
+import { authState } from "$modules/auth/state/auth.svelte";
 import { icpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { tokenPriceService } from "$modules/token/services/tokenPrice";
@@ -51,10 +51,10 @@ export class WalletStore {
       $effect(() => {
         console.log(
           "Account state changed, refreshing tokens...",
-          $state.snapshot(accountState.account),
+          $state.snapshot(authState.account),
         );
         // Reset the wallet tokens data when user logs out
-        if (accountState.account == null) {
+        if (authState.account == null) {
           this.#walletTokensQuery.reset();
           return;
         }

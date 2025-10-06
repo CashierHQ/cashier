@@ -1,7 +1,6 @@
 import type { Account } from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { accountState } from "$modules/shared/state/auth.svelte";
 import { AccountIdentifier } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
 import { ICP_LEDGER_CANISTER_ID, ICP_LEDGER_FEE } from "../constants";
@@ -25,15 +24,11 @@ class IcpLedgerService {
    * @returns Authenticated ICP Ledger actor
    * @throws Error if the user is not authenticated
    */
-  #getActor(): icpLedger._SERVICE {
-    if (authState.pnp && authState.pnp.isAuthenticated()) {
-      return authState.pnp.getActor({
-        canisterId: this.#canisterId,
-        idl: icpLedger.idlFactory,
-      });
-    } else {
-      throw new Error("User is not authenticated");
-    }
+  #getActor(): icpLedger._SERVICE | null {
+    return authState.buildActor({
+      canisterId: this.#canisterId,
+      idlFactory: icpLedger.idlFactory,
+    });
   }
 
   /**
@@ -42,13 +37,9 @@ class IcpLedgerService {
    * @throws Error if the user is not authenticated or no account is available.
    */
   #getAccount(): Account {
-    if (
-      authState.pnp &&
-      authState.pnp.isAuthenticated() &&
-      accountState.account
-    ) {
+    if (authState.account) {
       return {
-        owner: Principal.fromText(accountState.account.owner),
+        owner: Principal.fromText(authState.account.owner),
         subaccount: [],
       };
     } else {
@@ -62,7 +53,10 @@ class IcpLedgerService {
    * @throws Error if the user is not authenticated or balance retrieval fails.
    */
   public async getBalance(): Promise<bigint> {
-    const actor: icpLedger._SERVICE = this.#getActor();
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
     const account: Account = this.#getAccount();
     return await actor.icrc1_balance_of(account);
   }
@@ -74,7 +68,10 @@ class IcpLedgerService {
    * @returns The result of the transfer operation.
    */
   public async transferToAccount(to: string, amount: bigint): Promise<bigint> {
-    const actor: icpLedger._SERVICE = this.#getActor();
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
 
     // create the accountID using the utility function instead of native package
     // because the native package depends on Buffer which does not work in browser

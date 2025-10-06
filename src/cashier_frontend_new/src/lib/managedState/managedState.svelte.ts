@@ -4,8 +4,17 @@ import { GlobalStore } from "./storageGlobal";
 import { LocalStorageStore } from "./storageLocalStorage";
 import { NoOpsStore } from "./storageNoOps";
 import { SessionStorageStore } from "./storageSessionStorage";
+import { watch as runedWatch } from "runed";
+import { assertUnreachable } from "$lib/rsMatch";
+
+// watch([() => age, () => name], ([age, name], [prevAge, prevName]) => {
+// 	// ...
+// })
 
 export type StateConfig<T> = {
+  /**
+   * The function to fetch the data.
+   */
   queryFn: () => Promise<T>;
   /**
    * The time in milliseconds after data is considered stale.
@@ -36,6 +45,50 @@ export type StateConfig<T> = {
    *
    */
   storageType?: "global" | "localStorage" | "sessionStorage";
+
+  /**
+   * If set to true, the query will run whenever its dependencies change, i.e. $state or $derived values. E.g.:
+   *
+   * ```ts
+   * const count1 = $state(0);
+   * const count2 = $state(0);
+   * const count3 = $state(0);
+   * const store = managedState<number>({
+   *   queryFn: () => count1.get() + count2.get() + count3.get(),
+   *   watch: true, /// Runs whenever count1, count2, or count3 changes
+   * });
+   * ```
+   *
+   * If set to a function, query will run whenever one of the dependencies of the function changes. E.g.:
+   *
+   * ```ts
+   * const count1 = $state(0);
+   * const count2 = $state(0);
+   * const count3 = $state(0);
+   * const store = managedState<number>({
+   *   queryFn: () => count1.get() + count2.get() + count3.get(),
+   *   watch: () => count1, /// Runs whenever count1 changes
+   * });
+   * ```
+   *
+   * If set to an array of functions, query will run whenever one of the dependencies of the functions in the array changes. E.g.:
+   *
+   * ```ts
+   * const count1 = $state(0);
+   * const count2 = $state(0);
+   * const count3 = $state(0);
+   * const store = managedState<number>({
+   *   queryFn: () => count1.get() + count2.get() + count3.get(),
+   *   watch: [() => count1, () => count2], /// Runs whenever count1 or count2 changes
+   * });
+   * ```
+   *
+   * Warning: This can cause the query to run multiple times and can lead to performance issues, infinite loops, or other unexpected behavior.
+   * Only use this use with caution.
+   *
+   * Defaults to `false`.
+   */
+  watch?: boolean | (() => unknown) | (() => unknown)[];
 };
 
 type Data<T> = {
@@ -71,6 +124,10 @@ export class ManagedState<T> {
       }
     } else {
       this.#storage = new NoOpsStore();
+    }
+
+    if (config.watch) {
+      this.#watchQuery();
     }
 
     const initialData = this.#storage.getItem();
@@ -140,12 +197,75 @@ export class ManagedState<T> {
    * Sets the data state and update the storage.
    * @param data The data to set.
    */
-  #setData(data: Data<T> | undefined) {
+  #setData(data: Data<T> | undefined): void {
     this.#data = data;
     if (data) {
       this.#storage.setItem(data);
     } else {
       this.#storage.removeItem();
+    }
+  }
+
+  /**
+   * Watches the query for state changes and refetches the data.
+   */
+  #watchQuery(): void {
+    if (typeof this.#config.watch !== "undefined") {
+      const watchQuery = this.#config.watch;
+
+      const cleanUp = $effect.root(() => {
+        switch (true) {
+          case typeof watchQuery === "boolean":
+            if (watchQuery) {
+              $effect(() => {
+                this.refresh();
+              });
+            }
+            break;
+
+          case typeof watchQuery === "function":
+            runedWatch(
+              [watchQuery],
+              ([current], [prev]) => {
+                if (current !== prev) {
+                  this.refresh();
+                }
+              },
+              {
+                lazy: true,
+              },
+            );
+            break;
+
+          case Array.isArray(watchQuery):
+            runedWatch(
+              watchQuery,
+              (current, prev) => {
+                if (!current.every((value, index) => value === prev[index])) {
+                  this.refresh();
+                }
+              },
+              {
+                lazy: true,
+              },
+            );
+            break;
+
+          default:
+            assertUnreachable(watchQuery);
+        }
+      });
+
+      // Ignore the error. This should fail silently if the state is created outside of a svelte component.
+      try {
+        onDestroy(() => {
+          cleanUp(); // cancel before component unmount
+        });
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_e) {
+        // This is ok, if the state is created outside of a svelte component
+        // then the onDestroy will not be called and the interval will not be cleared
+      }
     }
   }
 
@@ -158,7 +278,7 @@ export class ManagedState<T> {
    *
    * @param {number} [interval] The interval in milliseconds at which to refetch the data.
    */
-  refresh(interval?: number) {
+  refresh(interval?: number): void {
     if (interval) {
       const intervalHandler = setInterval(() => {
         this.#fetch();
@@ -182,14 +302,14 @@ export class ManagedState<T> {
   /**
    * Resets the data state and storage.
    */
-  reset() {
+  reset(): void {
     this.#setData(undefined);
   }
 
   /**
    * Refetches the data.
    */
-  #fetch() {
+  #fetch(): void {
     this.#isLoading = true;
     this.#isSuccess = false;
     this.#error = undefined;
@@ -220,6 +340,6 @@ export class ManagedState<T> {
   }
 }
 
-export function managedState<T>(data: StateConfig<T>) {
+export function managedState<T>(data: StateConfig<T>): ManagedState<T> {
   return new ManagedState(data);
 }
