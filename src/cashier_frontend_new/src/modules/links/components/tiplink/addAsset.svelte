@@ -5,25 +5,22 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { balanceToIcp } from "$modules/token/utils/converter";
 
-  // local reference to shared create-link data (do not mutate until confirm)
-  const data = createLinkState.createLinkData;
-
-  // UI local state (use Svelte 5 runes for reactivity)
-  let selectedAddress: string | null = $state(data.tipLink?.asset ?? null);
-  let amountStr: string = $state(data.tipLink?.amount?.toString() ?? "");
+  // UI local state
+  let selectedAddress: string | null = $state(createLinkState.data.tipLink?.asset ?? null);
+  let amountStr: string = $state(createLinkState.data.tipLink?.amount?.toString() ?? "");
 
   // effect to update the store
   $effect(() => {
     if (selectedAddress && amountStr) {
       const n = Number(amountStr);
       if (!Number.isNaN(n) && n > 0) {
-        data.tipLink = { asset: selectedAddress, amount: n };
+       createLinkState.data.tipLink = { asset: selectedAddress, amount: n };
         return;
       }
     }
 
     // Clear tipLink when selection/amount is invalid or missing
-    data.tipLink = undefined;
+    createLinkState.data.tipLink = undefined;
   });
 </script>
 

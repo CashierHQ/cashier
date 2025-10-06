@@ -1,34 +1,26 @@
 <script lang="ts">
   import AddAsset from "$modules/links/components/tiplink/addAsset.svelte";
-  import createLinkState from "$modules/links/stores/create-link.svelte";
   import AddLinkDetail from "$modules/links/components/addLinkDetail.svelte";
   import Preview from "$modules/links/components/preview.svelte";
-  import { cashierBackendService } from "$modules/links/services/cashierBackend";
+  import createLinkState from "$modules/links/stores/create-link.svelte";
+    import { goto } from "$app/navigation";
+      import { resolve } from "$app/paths";
 
   // Local UI step state
   let step = $state(1); // 1: details, 2: asset, 3: preview
-
-  // Read-only view of the create link data from the shared store
-  const formData = createLinkState.createLinkData;
 
   function goPrev() {
     step = Math.max(1, step - 1);
   }
 
-  // Submit the current create-link data to the backend
+  // Submit via shared createLinkState
   async function submit() {
-    try {
-      const result = await cashierBackendService.createLink(formData);
-      if (result.isOk()) {
-        // creation succeeded — navigate or show success
-        console.log("Link created:", result.unwrap());
-        // advance or reset UI as appropriate
-        step = 1;
-      } else {
-        console.error("Failed to create link:", result.unwrapErr());
-      }
-    } catch (e) {
-      console.error("Unexpected error while creating link:", e);
+    const res = await createLinkState.submit();
+    if (res.ok) {
+      console.log("Link created:", res.value);
+      alert("Link created: " + res.value);
+    } else {
+      console.error("Failed to create link:", res.err);
     }
   }
 </script>
@@ -61,6 +53,8 @@
       </nav>
 
       {#if step === 1}
+        <button class="px-4 py-2 rounded" onclick={() => {goto(resolve("/"))}}>Back</button>
+
         <AddLinkDetail />
         <button
           class="px-4 py-2 rounded bg-primary text-white"

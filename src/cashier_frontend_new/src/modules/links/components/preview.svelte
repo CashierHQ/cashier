@@ -1,7 +1,7 @@
 <script lang="ts">
   import createLinkState from "../stores/create-link.svelte";
   // local bindings to the shared state
-  const data = createLinkState.createLinkData;
+  const data = createLinkState.data;
 </script>
 
 <h3 class="text-lg font-semibold">Preview</h3>
