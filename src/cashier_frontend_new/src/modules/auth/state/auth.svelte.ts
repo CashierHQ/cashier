@@ -95,11 +95,6 @@ export const authState = {
     return account;
   },
 
-  // Update account information, normally set after login/logout
-  set account(value: { owner: string; subaccount: string | null } | null) {
-    account = value;
-  },
-
   // Getter isConnecting
   get isConnecting() {
     return isConnecting;
