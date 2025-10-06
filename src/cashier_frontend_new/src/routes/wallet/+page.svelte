@@ -4,8 +4,8 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
-      balanceToUSDValue,
-      parseBalanceUnits,
+    balanceToUSDValue,
+    parseBalanceUnits,
   } from "$modules/token/utils/converter";
 </script>
 
@@ -28,10 +28,15 @@
                 <strong>{token.symbol}</strong> - {token.name} <br />
                 Address: {token.address} <br />
                 Decimals: {token.decimals} <br />
-                Balance: {parseBalanceUnits(token.balance, token.decimals).toFixed(
-                  5,
-                )} - Price: ${token.priceUSD.toFixed(5)} <br />
-                Value USD: ${balanceToUSDValue(token.balance, token.decimals, token.priceUSD).toFixed(5)} <br />
+                Balance: {parseBalanceUnits(
+                  token.balance,
+                  token.decimals,
+                ).toFixed(5)} - Price: ${token.priceUSD.toFixed(5)} <br />
+                Value USD: ${balanceToUSDValue(
+                  token.balance,
+                  token.decimals,
+                  token.priceUSD,
+                ).toFixed(5)} <br />
               </a>
             </li>
             <hr />
