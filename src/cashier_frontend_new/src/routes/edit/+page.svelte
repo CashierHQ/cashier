@@ -5,12 +5,18 @@
   import Preview from "$modules/links/components/preview.svelte";
   import AddAsset from "$modules/links/components/tiplink/addAsset.svelte";
   import createLinkState from "$modules/links/state/create-link.svelte";
+  import { Link, LinkStep } from "$modules/links/state/linkStore.svelte";
 
   // Local UI step state
   let step = $state(1); // 1: details, 2: asset, 3: preview
+  const newLink = new Link();
 
-  function goPrev() {
-    step = Math.max(1, step - 1);
+  function goBack() {
+    newLink.goBack();
+  }
+
+  function goNext() {
+    newLink.goNext();
   }
 
   // Submit via shared createLinkState
@@ -52,7 +58,7 @@
         </button>
       </nav>
 
-      {#if step === 1}
+      {#if newLink.getState().step === LinkStep.CHOOSE_TYPE}
         <button
           class="px-4 py-2 rounded"
           onclick={() => {
@@ -63,17 +69,17 @@
         <AddLinkDetail />
         <button
           class="px-4 py-2 rounded bg-primary text-white"
-          onclick={() => (step = 2)}
+          onclick={goNext}
         >
           Next
         </button>
-      {:else if step === 2}
-        <button class="px-4 py-2 rounded" onclick={goPrev}>Back</button>
+      {:else if newLink.getState().step === LinkStep.ADD_ASSET}
+        <button class="px-4 py-2 rounded" onclick={goBack}>Back</button>
 
         <AddAsset />
         <button
           class="px-4 py-2 rounded bg-primary text-white"
-          onclick={() => (step = 3)}
+          onclick={goNext}
         >
           Next
         </button>
@@ -81,7 +87,7 @@
         <Preview />
 
         <div class="flex gap-2 pt-4">
-          <button class="px-4 py-2 rounded" onclick={goPrev}>Back</button>
+          <button class="px-4 py-2 rounded" onclick={goBack}>Back</button>
           <button
             class="px-4 py-2 rounded bg-primary text-white"
             onclick={submit}

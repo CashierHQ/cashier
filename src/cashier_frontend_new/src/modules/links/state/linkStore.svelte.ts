@@ -1,9 +1,17 @@
 export interface LinkState {
+  readonly step: LinkStep;
   goNext(): void;
   goBack(): void;
 }
 
+export enum LinkStep {
+  CHOOSE_TYPE,
+  ADD_ASSET,
+  PREVIEW,
+}
+
 class ChooseLinkTypeState implements LinkState {
+  readonly step = LinkStep.CHOOSE_TYPE;
   #link: Link;
 
   constructor(link: Link) {
@@ -15,11 +23,12 @@ class ChooseLinkTypeState implements LinkState {
   }
 
   goBack(): void {
-    // No previous state from here
+    throw new Error("No previous state from ChooseLinkType");
   }
 }
 
 class AddAssetState implements LinkState {
+  readonly step = LinkStep.ADD_ASSET;
   #link: Link;
 
   constructor(link: Link) {
@@ -36,6 +45,7 @@ class AddAssetState implements LinkState {
 }
 
 class PreviewState implements LinkState {
+  readonly step = LinkStep.PREVIEW;
   #link: Link;
 
   constructor(link: Link) {
@@ -60,5 +70,17 @@ export class Link {
 
   setState(state: LinkState) {
     this.#state = state;
+  }
+
+  getState(): LinkState {
+    return this.#state;
+  }
+
+  goNext() {
+    this.#state.goNext();
+  }
+
+  goBack() {
+    this.#state.goBack();
   }
 }
