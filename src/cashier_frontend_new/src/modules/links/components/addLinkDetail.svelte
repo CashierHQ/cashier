@@ -5,7 +5,7 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
 
   // local bindings to the shared state
-  const data = createLinkState.createLinkData;
+  const data = createLinkState.data;
 </script>
 
 <div class="space-y-4">
