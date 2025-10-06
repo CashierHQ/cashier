@@ -42,6 +42,11 @@ class CanisterBackendService {
       .mapErr((err) => new Error(err));
   }
 
+  /**
+   * Creates a new link with the provided data.
+   * @param input Data to create a new link
+   * @returns
+   */
   async createLink(
     input: CreateLinkData,
   ): Promise<Result<cashierBackend.LinkDto, Error>> {
