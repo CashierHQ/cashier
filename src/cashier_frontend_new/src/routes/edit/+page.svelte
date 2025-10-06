@@ -3,8 +3,8 @@
   import AddLinkDetail from "$modules/links/components/addLinkDetail.svelte";
   import Preview from "$modules/links/components/preview.svelte";
   import createLinkState from "$modules/links/stores/create-link.svelte";
-    import { goto } from "$app/navigation";
-      import { resolve } from "$app/paths";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
 
   // Local UI step state
   let step = $state(1); // 1: details, 2: asset, 3: preview
@@ -15,12 +15,12 @@
 
   // Submit via shared createLinkState
   async function submit() {
-    const res = await createLinkState.submit();
-    if (res.ok) {
+    const res = await createLinkState.createLink();
+    if (res.isOk()) {
       console.log("Link created:", res.value);
-      alert("Link created: " + res.value);
+      alert("link created: " + res.value.id);
     } else {
-      console.error("Failed to create link:", res.err);
+      console.error("Failed to create link:", res.error);
     }
   }
 </script>
@@ -53,7 +53,12 @@
       </nav>
 
       {#if step === 1}
-        <button class="px-4 py-2 rounded" onclick={() => {goto(resolve("/"))}}>Back</button>
+        <button
+          class="px-4 py-2 rounded"
+          onclick={() => {
+            goto(resolve("/"));
+          }}>Back</button
+        >
 
         <AddLinkDetail />
         <button
