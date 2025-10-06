@@ -21,7 +21,7 @@
 
   {#if userProfile.isLoggedIn()}
     <div>You are logged in</div>
-    <Button onclick={() => (window.location.href = resolve("/edit"))}>
+    <Button onclick={() => (window.location.href = resolve("/link/edit"))}>
       Create new link
     </Button>
     <LinksList />
