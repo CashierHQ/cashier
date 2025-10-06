@@ -3,12 +3,15 @@
   import { resolve } from "$app/paths";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import {
-      ACCOUNT_ID_TYPE,
-      ICP_LEDGER_CANISTER_ID,
-      PRINCIPAL_TYPE,
+    ACCOUNT_ID_TYPE,
+    ICP_LEDGER_CANISTER_ID,
+    PRINCIPAL_TYPE,
   } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { formatBalanceUnits, parseBalanceUnits } from "$modules/token/utils/converter";
+  import {
+    formatBalanceUnits,
+    parseBalanceUnits,
+  } from "$modules/token/utils/converter";
   import { Principal } from "@dfinity/principal";
 
   let selectedToken: string = $state(ICP_LEDGER_CANISTER_ID);
