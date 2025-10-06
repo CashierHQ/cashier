@@ -22,12 +22,8 @@
   });
 
   // UI local state
-  let selectedAddress: string | null = $derived(
-    link.tipLink?.asset ?? null
-  );
-  let amountStr: string = $derived(
-    link.tipLink?.amount?.toString() ?? "",
-  );
+  let selectedAddress: string | null = $derived(link.tipLink?.asset ?? null);
+  let amountStr: string = $derived(link.tipLink?.amount?.toString() ?? "");
 
   // effect to update the store
   $effect(() => {
@@ -118,10 +114,7 @@
   {/if}
 
   <button class="px-4 py-2 rounded" onclick={goBack}>Back</button>
-  <button
-    class="px-4 py-2 rounded bg-primary text-white"
-    onclick={goNext}
-  >
+  <button class="px-4 py-2 rounded bg-primary text-white" onclick={goNext}>
     Next
   </button>
 </div>

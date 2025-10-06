@@ -1,6 +1,8 @@
 <script lang="ts">
   import { linkListQuery } from "../state/links.svelte";
-</script>../state/links.svelte
+</script>
+
+../state/links.svelte
 
 <li>
   {#if linkListQuery.isLoading}

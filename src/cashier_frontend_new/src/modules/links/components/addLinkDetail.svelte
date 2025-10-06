@@ -26,9 +26,9 @@
 
   async function goNext() {
     errorMessage = null;
-    try{
+    try {
       await link.goNext();
-    } catch(e) {
+    } catch (e) {
       errorMessage = "Failed to proceed to next step: " + e;
     }
   }
@@ -61,15 +61,9 @@
     <div class="text-red-600">{errorMessage}</div>
   {/if}
 
-  <button
-    class="px-4 py-2 rounded"
-    onclick={goBack}>Back</button
-  >
+  <button class="px-4 py-2 rounded" onclick={goBack}>Back</button>
 
-  <button
-    class="px-4 py-2 rounded bg-primary text-white"
-    onclick={goNext}
-  >
+  <button class="px-4 py-2 rounded bg-primary text-white" onclick={goNext}>
     Next
   </button>
 </div>
