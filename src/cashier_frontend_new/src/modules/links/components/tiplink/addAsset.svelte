@@ -18,6 +18,7 @@
     if (selectedAddress && amountStr) {
       const n = Number(amountStr);
       if (!Number.isNaN(n) && n > 0) {
+        // TODO: convert amount to e8s based on token decimals
         createLinkState.data.tipLink = { asset: selectedAddress, amount: n };
         return;
       }

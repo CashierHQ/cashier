@@ -14,6 +14,7 @@ const data: CreateLinkData = $state({
   linkType: LinkType.TIP,
 });
 
+// A shared state for the create link form
 export const createLinkState = {
   get data() {
     return data;
@@ -24,6 +25,7 @@ export const createLinkState = {
     data.linkType = v.linkType ?? data.linkType;
   },
 
+  // Method to call backend using the current data
   async createLink(): Promise<Result<LinkDto, Error>> {
     try {
       const result = await cashierBackendService.createLink(data);
