@@ -16,6 +16,7 @@ export class WalletStore {
       queryFn: async () => {
         // fetch list user's tokens
         const tokens = await tokenStorageService.listTokens();
+        console.log("fetched tokens", tokens);
 
         // fetch token balances
         const balanceRequests = tokens.map((token) => {
@@ -27,9 +28,11 @@ export class WalletStore {
           }
         });
         const balances: bigint[] = await Promise.all(balanceRequests);
+        console.log("fetched balances", balances);
 
         // fetch token prices
         const prices = await tokenPriceService.getTokenPrices();
+        console.log("fetched prices", prices);
 
         const enrichedTokens = tokens.map((token, index) => ({
           ...token,
@@ -39,6 +42,7 @@ export class WalletStore {
 
         // sort by address
         enrichedTokens.sort((a, b) => a.address.localeCompare(b.address));
+        console.log("sorted tokens", enrichedTokens);
 
         return enrichedTokens;
       },
