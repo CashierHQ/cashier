@@ -1,8 +1,8 @@
-import { LinkType, type CreateLinkData } from "../types";
-import { cashierBackendService } from "$modules/links/services/cashierBackend";
-import { linkListQuery } from "$modules/links/stores/links.svelte";
-import { Err, Ok, type Result } from "ts-results-es";
 import type { LinkDto } from "$lib/generated/cashier_backend/cashier_backend.did";
+import { cashierBackendService } from "$modules/links/services/cashierBackend";
+import { linkListQuery } from "$modules/links/state/links.svelte";
+import { Err, Ok, type Result } from "ts-results-es";
+import { LinkType, type CreateLinkData } from "../types";
 
 export type TipLink = {
   asset: string;
