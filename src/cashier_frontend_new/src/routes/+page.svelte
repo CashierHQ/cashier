@@ -16,15 +16,14 @@
       <p class="py-6">
         <a class="link" href={resolve("/wallet")}>Wallet</a>
       </p>
-      
     </div>
   </div>
 
   {#if userProfile.isLoggedIn()}
     <div>You are logged in</div>
     <Button onclick={() => (window.location.href = resolve("/edit"))}>
-        Create new link
-      </Button>
+      Create new link
+    </Button>
     <LinksList />
   {:else}
     <div>You are NOT logged in</div>
