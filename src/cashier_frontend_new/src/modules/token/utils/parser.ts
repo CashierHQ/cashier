@@ -49,6 +49,10 @@ export function parseIcrcTransferResultError(
     return new Error(`Transfer failed: ${result.GenericError.message}`);
   } else if ("InsufficientFunds" in result) {
     return new Error(`Transfer failed: Insufficient funds`);
+  } else if ("BadFee" in result) {
+    return new Error(
+      `Transfer failed: Bad fee, expected ${result.BadFee.expected_fee}`,
+    );
   }
 
   return new Error("Transfer failed: Unknown error");
