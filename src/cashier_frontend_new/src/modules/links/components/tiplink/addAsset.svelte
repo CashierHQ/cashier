@@ -6,15 +6,19 @@
   import { balanceToIcp } from "$modules/token/utils/converter";
 
   // UI local state
-  let selectedAddress: string | null = $state(createLinkState.data.tipLink?.asset ?? null);
-  let amountStr: string = $state(createLinkState.data.tipLink?.amount?.toString() ?? "");
+  let selectedAddress: string | null = $state(
+    createLinkState.data.tipLink?.asset ?? null,
+  );
+  let amountStr: string = $state(
+    createLinkState.data.tipLink?.amount?.toString() ?? "",
+  );
 
   // effect to update the store
   $effect(() => {
     if (selectedAddress && amountStr) {
       const n = Number(amountStr);
       if (!Number.isNaN(n) && n > 0) {
-       createLinkState.data.tipLink = { asset: selectedAddress, amount: n };
+        createLinkState.data.tipLink = { asset: selectedAddress, amount: n };
         return;
       }
     }
