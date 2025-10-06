@@ -1,9 +1,9 @@
 <!-- This layout is a workaround for https://github.com/sveltejs/kit/issues/4941 -->
 <script lang="ts">
-  import { page } from "$app/state";
+  import OnPathChange from "$modules/shared/components/OnPathChange.svelte";
   let { children } = $props();
 </script>
 
-{#key page.url.pathname}
+<OnPathChange>
   {@render children?.()}
-{/key}
+</OnPathChange>

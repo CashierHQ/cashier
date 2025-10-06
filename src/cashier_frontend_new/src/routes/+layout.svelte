@@ -12,6 +12,5 @@
   <link rel="icon" href={favicon} />
 </svelte:head>
 
-<!-- DEMO: add a Navbar to all pages -->
 <Navbar />
 {@render children?.()}
