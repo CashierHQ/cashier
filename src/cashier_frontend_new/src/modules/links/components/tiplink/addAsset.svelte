@@ -1,16 +1,32 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
+  import { Link } from "$modules/links/state/linkStore.svelte";
   import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
   import { balanceToIcp } from "$modules/token/utils/converter";
-  import createLinkState from "../../state/create-link.svelte";
+  import { LinkStep } from "../../types";
+
+  interface Props {
+    link: Link;
+  }
+
+  const { link }: Props = $props();
+  let errorMessage: string | null = $state(null);
+
+  $effect(() => {
+    if (link.state.step !== LinkStep.ADD_ASSET) {
+      goto(resolve("/"));
+    }
+  });
 
   // UI local state
-  let selectedAddress: string | null = $state(
-    createLinkState.data.tipLink?.asset ?? null,
+  let selectedAddress: string | null = $derived(
+    link.tipLink?.asset ?? null
   );
-  let amountStr: string = $state(
-    createLinkState.data.tipLink?.amount?.toString() ?? "",
+  let amountStr: string = $derived(
+    link.tipLink?.amount?.toString() ?? "",
   );
 
   // effect to update the store
@@ -19,14 +35,32 @@
       const n = Number(amountStr);
       if (!Number.isNaN(n) && n > 0) {
         // TODO: convert amount to e8s based on token decimals
-        createLinkState.data.tipLink = { asset: selectedAddress, amount: n };
+        link.tipLink = { asset: selectedAddress, amount: n };
         return;
       }
     }
 
     // Clear tipLink when selection/amount is invalid or missing
-    createLinkState.data.tipLink = undefined;
+    link.tipLink = undefined;
   });
+
+  async function goBack() {
+    errorMessage = null;
+    try {
+      await link.goBack();
+    } catch (error) {
+      errorMessage = "Failed to go back: " + error;
+    }
+  }
+
+  async function goNext() {
+    errorMessage = null;
+    try {
+      await link.goNext();
+    } catch (error) {
+      errorMessage = "Failed to proceed to next step: " + error;
+    }
+  }
 </script>
 
 <div class="space-y-4">
@@ -78,4 +112,16 @@
       placeholder="0.00"
     />
   </div>
+
+  {#if errorMessage}
+    <div class="text-red-600">{errorMessage}</div>
+  {/if}
+
+  <button class="px-4 py-2 rounded" onclick={goBack}>Back</button>
+  <button
+    class="px-4 py-2 rounded bg-primary text-white"
+    onclick={goNext}
+  >
+    Next
+  </button>
 </div>

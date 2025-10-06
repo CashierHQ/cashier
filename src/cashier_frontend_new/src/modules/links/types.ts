@@ -4,6 +4,13 @@ export enum LinkType {
   TOKEN_BASKET = "SendTokenBasket",
 }
 
+export enum LinkStep {
+  CHOOSE_TYPE,
+  ADD_ASSET,
+  PREVIEW,
+  CREATED,
+}
+
 export type TipLink = {
   asset: string;
   amount: number;

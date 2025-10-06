@@ -13,47 +13,25 @@
   let successMessage: string | null = $state(null);
 
   $effect(() => {
-    if (link.state.step !== LinkStep.PREVIEW) {
+    if (link.state.step !== LinkStep.CREATED) {
       goto(resolve("/"));
     }
   });
 
-  async function goBack() {
-    try {
-      await link.goBack();
-    } catch (error) {
-      console.error("Failed to go back: ", error);
-    }
-  }
-
-  // Submit via shared createLinkState
-  async function submit() {
-    errorMessage = null;
-    successMessage = null;
-
-    try {
-      await link.goNext();
-      successMessage = "Link created successfully: " + link.id;
-    } catch (error) {
-      errorMessage = "Failed to create link: " + error;
-      return;
-    }
+  async function goHome() {
+    goto(resolve("/"));
   }
 </script>
 
-<h3 class="text-lg font-semibold">Preview</h3>
+<h3 class="text-lg font-semibold">Details</h3>
 <div class="mt-2">
+  <div><strong>ID:</strong>{link.id}</div>
   <div><strong>Title:</strong> {link.title}</div>
   <div><strong>Link Type:</strong> {link.linkType}</div>
   {#if link.tipLink}
     <div><strong>Asset:</strong> {link.tipLink.asset}</div>
     <div><strong>Amount:</strong> {link.tipLink.amount}</div>
   {/if}
-
-  <br />
-
-  <div><strong>Link creation fee</strong></div>
-  <div><strong>Amount:</strong> {0.003}</div>
 
   {#if errorMessage}
     <div class="text-red-600">{errorMessage}</div>
@@ -63,12 +41,6 @@
   {/if}
 
   <div class="flex gap-2 pt-4">
-    <button class="px-4 py-2 rounded" onclick={goBack}>Back</button>
-    <button
-      class="px-4 py-2 rounded bg-primary text-white"
-      onclick={submit}
-    >
-      Submit
-    </button>
+    <button class="px-4 py-2 rounded" onclick={goHome}>Go Home</button>
   </div>
 </div>
