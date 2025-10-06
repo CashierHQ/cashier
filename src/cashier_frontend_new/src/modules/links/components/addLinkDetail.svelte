@@ -3,11 +3,11 @@
   import { resolve } from "$app/paths";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import { Link } from "$modules/links/state/linkStore.svelte";
+  import { LinkStore } from "$modules/links/state/linkStore.svelte";
   import { LinkStep, LinkType } from "../types";
 
   interface Props {
-    link: Link;
+    link: LinkStore;
   }
 
   const { link }: Props = $props();

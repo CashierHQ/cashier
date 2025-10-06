@@ -1,11 +1,11 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import { Link } from "$modules/links/state/linkStore.svelte";
+  import { LinkStore } from "$modules/links/state/linkStore.svelte";
   import { LinkStep } from "$modules/links/types";
 
   interface Props {
-    link: Link;
+    link: LinkStore;
   }
 
   const { link }: Props = $props();

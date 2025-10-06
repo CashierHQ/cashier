@@ -3,10 +3,10 @@
   import LinkDetails from "$modules/links/components/linkDetails.svelte";
   import Preview from "$modules/links/components/preview.svelte";
   import AddAsset from "$modules/links/components/tiplink/addAsset.svelte";
-  import { Link } from "$modules/links/state/linkStore.svelte";
+  import { LinkStore } from "$modules/links/state/linkStore.svelte";
   import { LinkStep } from "$modules/links/types";
 
-  const newLink = new Link();
+  const newLink = new LinkStore();
 </script>
 
 <div class="min-h-screen flex justify-center">

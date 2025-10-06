@@ -3,13 +3,13 @@
   import { resolve } from "$app/paths";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import { Link } from "$modules/links/state/linkStore.svelte";
+  import { LinkStore } from "$modules/links/state/linkStore.svelte";
   import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
   import { balanceToIcp } from "$modules/token/utils/converter";
   import { LinkStep } from "../../types";
 
   interface Props {
-    link: Link;
+    link: LinkStore;
   }
 
   const { link }: Props = $props();

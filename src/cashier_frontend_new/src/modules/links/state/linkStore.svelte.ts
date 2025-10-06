@@ -14,9 +14,9 @@ export interface LinkState {
 
 class ChooseLinkTypeState implements LinkState {
   readonly step = LinkStep.CHOOSE_TYPE;
-  #link: Link;
+  #link: LinkStore;
 
-  constructor(link: Link) {
+  constructor(link: LinkStore) {
     this.#link = link;
   }
 
@@ -39,9 +39,9 @@ class ChooseLinkTypeState implements LinkState {
 
 class AddAssetState implements LinkState {
   readonly step = LinkStep.ADD_ASSET;
-  #link: Link;
+  #link: LinkStore;
 
-  constructor(link: Link) {
+  constructor(link: LinkStore) {
     this.#link = link;
   }
 
@@ -66,9 +66,9 @@ class AddAssetState implements LinkState {
 
 class PreviewState implements LinkState {
   readonly step = LinkStep.PREVIEW;
-  #link: Link;
+  #link: LinkStore;
 
-  constructor(link: Link) {
+  constructor(link: LinkStore) {
     this.#link = link;
   }
 
@@ -94,9 +94,9 @@ class PreviewState implements LinkState {
 
 class CreatedState implements LinkState {
   readonly step = LinkStep.CREATED;
-  #link: Link;
+  #link: LinkStore;
 
-  constructor(link: Link) {
+  constructor(link: LinkStore) {
     this.#link = link;
   }
 
@@ -109,7 +109,7 @@ class CreatedState implements LinkState {
   }
 }
 
-export class Link {
+export class LinkStore {
   #state: LinkState;
   public title: string;
   public linkType: LinkType;
