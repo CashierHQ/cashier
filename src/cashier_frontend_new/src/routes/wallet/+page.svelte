@@ -4,11 +4,9 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
-      balanceToIcp,
-      balanceToUSDValue,
+    balanceToIcp,
+    balanceToUSDValue,
   } from "$modules/token/utils/converter";
-
-  console.log("walletStore", $state.snapshot(walletStore.query.data));
 </script>
 
 <div class="py-4">
