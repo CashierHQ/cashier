@@ -1,8 +1,13 @@
 <script lang="ts">
-  import { LinkType } from "../types";
-  import createLinkState from "../stores/create-link.svelte";
+  import { CreateLinkData, LinkType } from "../types";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
+
+  let {
+    data = $bindable(),
+  }: {
+    data: CreateLinkData;
+  } = $props();
 </script>
 
 <div class="space-y-4">
@@ -10,7 +15,7 @@
     <Label for="title">Link title</Label>
     <Input
       id="title"
-      bind:value={createLinkState.data.title}
+      bind:value={data.title}
       placeholder="Enter a title for your link"
     />
   </div>
@@ -20,7 +25,7 @@
     <select
       id="linkType"
       class="block w-full rounded-md border px-3 py-2 text-base"
-      bind:value={createLinkState.data.linkType}
+      bind:value={data.linkType}
     >
       <option value={LinkType.TIP}>Tip</option>
       <option value={LinkType.AIRDROP}>Airdrop</option>

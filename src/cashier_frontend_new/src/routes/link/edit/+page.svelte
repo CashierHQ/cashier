@@ -2,25 +2,40 @@
   import AddAsset from "$modules/links/components/tiplink/addAsset.svelte";
   import AddLinkDetail from "$modules/links/components/addLinkDetail.svelte";
   import Preview from "$modules/links/components/preview.svelte";
-  import createLinkState from "$modules/links/stores/create-link.svelte";
+  import { cashierBackendService } from "$modules/links/services/cashierBackend";
+  import { CreateStep, LinkType, CreateLinkData } from "$modules/links/types";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
 
   // Local UI step state
-  let step = $state(1); // 1: details, 2: asset, 3: preview
+  let step = $state<CreateStep>(CreateStep.ADD_DETAILS);
+
+  // Local link form state (replaces shared createLinkState)
+  let linkData = $state<CreateLinkData>(
+    new CreateLinkData({
+      title: "",
+      linkType: LinkType.TIP,
+      tipLink: undefined,
+    }),
+  );
 
   function goPrev() {
     step = Math.max(1, step - 1);
   }
 
-  // Submit via shared createLinkState
+  // Submit using local linkData
   async function submit() {
-    const res = await createLinkState.createLink();
-    if (res.isOk()) {
-      console.log("Link created:", res.value);
-      alert("link created: " + res.value.id);
-    } else {
-      console.error("Failed to create link:", res.error);
+    try {
+      const res = await cashierBackendService.createLink(linkData);
+      if (res.isOk()) {
+        const created = res.unwrap();
+        console.log("Link created:", created);
+        alert("link created: " + created.id);
+      } else {
+        console.error("Failed to create link:", res.error);
+      }
+    } catch (e) {
+      console.error(e);
     }
   }
 </script>
@@ -60,7 +75,7 @@
           }}>Back</button
         >
 
-        <AddLinkDetail />
+        <AddLinkDetail bind:data={linkData} />
         <button
           class="px-4 py-2 rounded bg-primary text-white"
           onclick={() => (step = 2)}
@@ -70,7 +85,7 @@
       {:else if step === 2}
         <button class="px-4 py-2 rounded" onclick={goPrev}>Back</button>
 
-        <AddAsset />
+        <AddAsset bind:data={linkData} />
         <button
           class="px-4 py-2 rounded bg-primary text-white"
           onclick={() => (step = 3)}
@@ -78,7 +93,7 @@
           Next
         </button>
       {:else}
-        <Preview />
+        <Preview data={linkData} />
 
         <div class="flex gap-2 pt-4">
           <button class="px-4 py-2 rounded" onclick={goPrev}>Back</button>

@@ -1,17 +1,19 @@
 <script lang="ts">
   import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
-  import createLinkState from "../../stores/create-link.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { balanceToIcp } from "$modules/token/utils/converter";
+  import type { CreateLinkData } from "$modules/links/types";
+
+  let {
+    data = $bindable(),
+  }: {
+    data: CreateLinkData;
+  } = $props();
 
   // UI local state
-  let selectedAddress: string | null = $state(
-    createLinkState.data.tipLink?.asset ?? null,
-  );
-  let amountStr: string = $state(
-    createLinkState.data.tipLink?.amount?.toString() ?? "",
-  );
+  let selectedAddress: string | null = $state(data.tipLink?.asset ?? null);
+  let amountStr: string = $state(data.tipLink?.amount?.toString() ?? "");
 
   // effect to update the store
   $effect(() => {
@@ -19,13 +21,13 @@
       const n = Number(amountStr);
       if (!Number.isNaN(n) && n > 0) {
         // TODO: convert amount to e8s based on token decimals
-        createLinkState.data.tipLink = { asset: selectedAddress, amount: n };
+        data.tipLink = { asset: selectedAddress, amount: n };
         return;
       }
     }
 
     // Clear tipLink when selection/amount is invalid or missing
-    createLinkState.data.tipLink = undefined;
+    data.tipLink = undefined;
   });
 </script>
 

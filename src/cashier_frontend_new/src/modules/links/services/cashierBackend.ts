@@ -4,7 +4,6 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { Err, type Result } from "ts-results-es";
 import type { CreateLinkData } from "../types";
-import { mapCreateLinkDataToCreateLinkInput } from "../mapper";
 
 /**
  * Service for interacting with the Cashier Backend canister.
@@ -55,7 +54,7 @@ class CanisterBackendService {
       return Err(new Error("User not logged in"));
     }
 
-    const request = mapCreateLinkDataToCreateLinkInput(input);
+    const request = input.toCreateLinkInput();
 
     if (request.isErr()) {
       return Err(request.unwrapErr());

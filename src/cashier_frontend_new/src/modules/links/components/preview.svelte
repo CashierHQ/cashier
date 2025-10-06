@@ -1,14 +1,16 @@
 <script lang="ts">
-  import createLinkState from "../stores/create-link.svelte";
+  import type { CreateLinkData } from "../types";
+
+  let { data }: { data: CreateLinkData } = $props();
 </script>
 
 <h3 class="text-lg font-semibold">Preview</h3>
 <div class="mt-2">
-  <div><strong>Title:</strong> {createLinkState.data.title}</div>
-  <div><strong>Link Type:</strong> {createLinkState.data.linkType}</div>
-  {#if createLinkState.data.tipLink}
-    <div><strong>Asset:</strong> {createLinkState.data.tipLink.asset}</div>
-    <div><strong>Amount:</strong> {createLinkState.data.tipLink.amount}</div>
+  <div><strong>Title:</strong> {data.title}</div>
+  <div><strong>Link Type:</strong> {data.linkType.id}</div>
+  {#if data.tipLink}
+    <div><strong>Asset:</strong> {data.tipLink.asset}</div>
+    <div><strong>Amount:</strong> {data.tipLink.amount}</div>
   {/if}
 
   <br />
