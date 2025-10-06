@@ -56,6 +56,9 @@ const connectedWalletId = new PersistedState<{ id: string | null }>(
 // state to indicate if we are reconnecting
 let isConnecting = $state(false);
 
+// state to indicate if the initialization is complete. This does not mean we are logged in.
+let isReady = $state(false);
+
 // Account state
 let account = $state<{
   owner: string;
@@ -76,13 +79,15 @@ const initPnp = async () => {
       console.error("Auto-reconnect failed:", error);
     }
   }
+
+  isReady = true;
 };
 
 // Exported auth state and actions
 export const authState = {
   // Return true if the user is logged in
   get isLoggedIn() {
-    return account !== null;
+    return isReady && account !== null;
   },
 
   // Return current account information, null if not logged in
@@ -90,14 +95,16 @@ export const authState = {
     return account;
   },
 
-  // Update account information, normally set after login/logout
-  set account(value: { owner: string; subaccount: string | null } | null) {
-    account = value;
-  },
-
   // Getter isConnecting
   get isConnecting() {
     return isConnecting;
+  },
+
+  /**
+   * True if the auth initialization is complete. This does not mean we are logged in.
+   */
+  get isReady() {
+    return isReady;
   },
 
   /**
