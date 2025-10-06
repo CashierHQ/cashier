@@ -138,6 +138,87 @@ describe("ManagedState - Global storage", () => {
     store.reset();
     expect(store.data).toEqual(undefined);
   });
+
+  it("should watch the query for any state change", async () => {
+    vi.useFakeTimers();
+
+    let count1 = $state(1);
+    let count2 = $state(10);
+    let count3 = $state(100);
+    const store = managedState<number>({
+      queryFn: () => Promise.resolve(count1 + count2 + count3),
+      watch: true,
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.data).toEqual(111);
+
+    count1 = 2;
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.data).toEqual(112);
+
+    count2 = 20;
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.data).toEqual(122);
+
+    count3 = 200;
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.data).toEqual(222);
+  });
+
+  it("should watch the query for a single state change", async () => {
+    vi.useFakeTimers();
+
+    let count1 = $state(1);
+    let count2 = $state(10);
+    let count3 = $state(100);
+    const store = managedState<number>({
+      queryFn: () => Promise.resolve(count1 + count2 + count3),
+      watch: () => count2,
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.data).toEqual(111);
+
+    count1 = 2;
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.data).toEqual(111);
+
+    count2 = 20;
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.data).toEqual(122);
+
+    count3 = 200;
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.data).toEqual(122);
+  });
+
+  it("should watch the query for changes to an array of functions that return states", async () => {
+    vi.useFakeTimers();
+
+    let count1 = $state(1);
+    let count2 = $state(10);
+    let count3 = $state(100);
+    const store = managedState<number>({
+      queryFn: () => Promise.resolve(count1 + count2 + count3),
+      watch: [() => count1, () => count3],
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.data).toEqual(111);
+
+    count1 = 2;
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.data).toEqual(112);
+
+    count2 = 20;
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.data).toEqual(112);
+
+    count3 = 200;
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.data).toEqual(222);
+  });
 });
 
 describe("ManagedState - LocalStorage", () => {

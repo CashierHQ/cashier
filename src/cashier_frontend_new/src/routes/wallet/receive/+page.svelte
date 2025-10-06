@@ -2,11 +2,11 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { accountState } from "$modules/shared/state/auth.svelte";
+  import { authState } from '$modules/auth/state/auth.svelte';
   import {
-    ACCOUNT_ID_TYPE,
-    ICP_LEDGER_CANISTER_ID,
-    PRINCIPAL_TYPE,
+      ACCOUNT_ID_TYPE,
+      ICP_LEDGER_CANISTER_ID,
+      PRINCIPAL_TYPE,
   } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
 
@@ -30,12 +30,12 @@
 
   let receiveAddress: string = $derived.by(() => {
     if (accountType === PRINCIPAL_TYPE) {
-      return accountState.account?.owner || "No principal";
+      return authState.account?.owner || "No principal";
     } else if (
       accountType === ACCOUNT_ID_TYPE &&
       selectedToken === ICP_LEDGER_CANISTER_ID
     ) {
-      return accountState.icpAccountID() || "No ICP account";
+      return authState.icpAccountID() || "No ICP account";
     } else {
       return "No account available";
     }

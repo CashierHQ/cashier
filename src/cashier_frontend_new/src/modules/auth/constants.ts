@@ -1,5 +1,5 @@
 import {
-  BACKEND_CANISTER_ID,
+  CASHIER_BACKEND_CANISTER_ID,
   TOKEN_STORAGE_CANISTER_ID,
 } from "$modules/shared/constants";
 
@@ -7,4 +7,4 @@ import {
 export const TIMEOUT_NANO_SEC = 60 * 60 * 1_000_000_000;
 
 // The canister IDs that the identity can call
-export const TARGETS = [BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID];
+export const TARGETS = [CASHIER_BACKEND_CANISTER_ID, TOKEN_STORAGE_CANISTER_ID];

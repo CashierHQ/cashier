@@ -1,6 +1,5 @@
 import * as icrcLedger from "$lib/generated/icrc_ledger/icrc_ledger.did";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { accountState } from "$modules/shared/state/auth.svelte";
 import { Principal } from "@dfinity/principal";
 import type { TokenMetadata } from "../types";
 import { parseIcrcTransferResultError } from "../utils/parser";
@@ -22,15 +21,11 @@ export class IcrcLedgerService {
    * @returns Authenticated Icrc Ledger actor
    * @throws Error if the user is not authenticated
    */
-  #getActor(): icrcLedger._SERVICE {
-    if (authState.pnp && authState.pnp.isAuthenticated()) {
-      return authState.pnp.getActor({
-        canisterId: this.#canisterId,
-        idl: icrcLedger.idlFactory,
-      });
-    } else {
-      throw new Error("User is not authenticated");
-    }
+  #getActor(): icrcLedger._SERVICE | null {
+    return authState.buildActor({
+      canisterId: this.#canisterId,
+      idlFactory: icrcLedger.idlFactory,
+    });
   }
 
   /**
@@ -39,13 +34,9 @@ export class IcrcLedgerService {
    * @throws Error if the user is not authenticated or no account is available.
    */
   #getAccount(): icrcLedger.Account {
-    if (
-      authState.pnp &&
-      authState.pnp.isAuthenticated() &&
-      accountState.account
-    ) {
+    if (authState.account) {
       return {
-        owner: Principal.fromText(accountState.account.owner),
+        owner: Principal.fromText(authState.account.owner),
         subaccount: [],
       };
     } else {
@@ -59,7 +50,10 @@ export class IcrcLedgerService {
    * @throws Error if the user is not authenticated or balance retrieval fails.
    */
   public async getBalance(): Promise<bigint> {
-    const actor: icrcLedger._SERVICE = this.#getActor();
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
     const account: icrcLedger.Account = this.#getAccount();
     return await actor.icrc1_balance_of(account);
   }
@@ -79,7 +73,10 @@ export class IcrcLedgerService {
       subaccount: [],
     };
 
-    const actor: icrcLedger._SERVICE = this.#getActor();
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
     const result = await actor.icrc1_transfer({
       to: toAccount,
       amount,
