@@ -3,7 +3,6 @@
   import createLinkState from "../stores/create-link.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-
 </script>
 
 <div class="space-y-4">
