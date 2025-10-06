@@ -1,15 +1,5 @@
 <script lang="ts">
-  // import { getTag } from "$lib/rsMatch";
   import { linkListQuery } from "../stores/links.svelte";
-
-  //     const localList = export const linkListQuery = managedState<LinkDto[]>({
-  //   queryFn: async () => {
-  //     return (await cashierBackendService.getLinks()).unwrap();
-  //   },
-  // });
-  // setTimeout(() => {
-  //     linkListQuery.refresh();
-  // }, 2500)
 </script>
 
 <li>
