@@ -7,7 +7,7 @@ import { bigEndianCrc32, uint8ArrayToHexString } from "@dfinity/utils";
  * @param decimals
  * @returns balance in ICP
  */
-export function balanceToIcp(balance: bigint, decimals: number): number {
+export function parseBalanceUnits(balance: bigint, decimals: number): number {
   if (decimals < 0) {
     throw new Error("Decimals cannot be negative");
   }
@@ -22,7 +22,7 @@ export function balanceToIcp(balance: bigint, decimals: number): number {
  * @param decimals
  * @returns amount in balance
  */
-export function icpToBalance(icp: number, decimals: number): bigint {
+export function formatBalanceUnits(icp: number, decimals: number): bigint {
   if (decimals < 0) {
     throw new Error("Decimals cannot be negative");
   }
@@ -43,7 +43,7 @@ export function balanceToUSDValue(
   decimals: number,
   priceUSD: number,
 ): number {
-  const icpValue = balanceToIcp(balance, decimals);
+  const icpValue = parseBalanceUnits(balance, decimals);
   return icpValue * priceUSD;
 }
 
