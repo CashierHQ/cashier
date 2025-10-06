@@ -1,5 +1,5 @@
 <script lang="ts">
-  import createLinkState from "../stores/create-link.svelte";
+  import createLinkState from "../state/create-link.svelte";
 </script>
 
 <h3 class="text-lg font-semibold">Preview</h3>

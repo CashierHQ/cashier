@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
-  import createLinkState from "../../stores/create-link.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
+  import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
   import { balanceToIcp } from "$modules/token/utils/converter";
+  import createLinkState from "../../state/create-link.svelte";
 
   // UI local state
   let selectedAddress: string | null = $state(

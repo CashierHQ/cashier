@@ -1,10 +1,10 @@
 <script lang="ts">
-  import AddAsset from "$modules/links/components/tiplink/addAsset.svelte";
-  import AddLinkDetail from "$modules/links/components/addLinkDetail.svelte";
-  import Preview from "$modules/links/components/preview.svelte";
-  import createLinkState from "$modules/links/stores/create-link.svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import AddLinkDetail from "$modules/links/components/addLinkDetail.svelte";
+  import Preview from "$modules/links/components/preview.svelte";
+  import AddAsset from "$modules/links/components/tiplink/addAsset.svelte";
+  import createLinkState from "$modules/links/state/create-link.svelte";
 
   // Local UI step state
   let step = $state(1); // 1: details, 2: asset, 3: preview
