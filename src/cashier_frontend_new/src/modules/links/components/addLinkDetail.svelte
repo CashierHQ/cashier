@@ -4,8 +4,6 @@
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
 
-  // local bindings to the shared state
-  const data = createLinkState.data;
 </script>
 
 <div class="space-y-4">
@@ -13,7 +11,7 @@
     <Label for="title">Link title</Label>
     <Input
       id="title"
-      bind:value={data.title}
+      bind:value={createLinkState.data.title}
       placeholder="Enter a title for your link"
     />
   </div>
@@ -23,7 +21,7 @@
     <select
       id="linkType"
       class="block w-full rounded-md border px-3 py-2 text-base"
-      bind:value={data.linkType}
+      bind:value={createLinkState.data.linkType}
     >
       <option value={LinkType.TIP}>Tip</option>
       <option value={LinkType.AIRDROP}>Airdrop</option>
