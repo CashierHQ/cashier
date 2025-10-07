@@ -1,5 +1,3 @@
-import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
-import * as icrcLedger from "$lib/generated/icrc_ledger/icrc_ledger.did";
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
 import { rsMatch } from "$lib/rsMatch";
 import type { TokenMetadata } from "$modules/token/types";
