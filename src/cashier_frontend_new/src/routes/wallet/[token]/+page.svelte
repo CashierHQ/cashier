@@ -1,12 +1,9 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
   import { page } from "$app/state";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
-    balanceToUSDValue,
-    parseBalanceUnits,
+      balanceToUSDValue,
+      parseBalanceUnits,
   } from "$modules/token/utils/converter";
 
   let token = page.params.token || "empty";
@@ -14,10 +11,6 @@
     walletStore.query.data?.find((t) => t.address === token),
   );
 </script>
-
-<div class="py-6">
-  <Button onclick={() => goto(resolve("/wallet"))}>Back to Wallet</Button>
-</div>
 
 <div>
   <h2>Token details</h2>

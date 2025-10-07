@@ -9,6 +9,7 @@ import { tokenPriceService } from "$modules/token/services/tokenPrice";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Principal } from "@dfinity/principal";
+import { Err, Ok, type Result } from "ts-results-es";
 import { ICP_LEDGER_CANISTER_ID } from "../constants";
 
 export class WalletStore {
@@ -103,7 +104,7 @@ export class WalletStore {
    * @param amount Amount of tokens to transfer
    */
   async transferTokenToPrincipal(token: string, to: Principal, amount: bigint) {
-    const tokenData = this.findTokenByAddress(token);
+    const tokenData = this.findTokenByAddress(token).unwrap();
     const icrcLedgerService = new IcrcLedgerService(tokenData);
     const transferRes = await icrcLedgerService.transferToPrincipal(to, amount);
     // Refresh the wallet tokens data after sending tokens
@@ -146,18 +147,17 @@ export class WalletStore {
    * @param address Token canister ID string
    * @returns The token full data.
    */
-  findTokenByAddress(address: string): TokenWithPriceAndBalance {
+  findTokenByAddress(address: string): Result<TokenWithPriceAndBalance, Error> {
     if (!this.#walletTokensQuery.data) {
-      throw new Error("Wallet tokens data is not loaded");
+      return Err(new Error("Wallet tokens data is not loaded"));
     }
-
     const tokenData = this.#walletTokensQuery.data.find(
       (t) => t.address === address,
     );
     if (!tokenData) {
-      throw new Error("Token not found in wallet");
+      return Err(new Error("Token not found"));
     }
-    return tokenData;
+    return Ok(tokenData);
   }
 }
 

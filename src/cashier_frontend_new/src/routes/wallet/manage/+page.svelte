@@ -1,7 +1,4 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
 
@@ -20,11 +17,6 @@
     }
   }
 </script>
-
-<div class="py-6">
-  <Button onclick={() => goto(resolve("/wallet"))}>Back to Wallet</Button>
-  <Button onclick={() => goto(resolve("/wallet/addtoken"))}>Add Token</Button>
-</div>
 
 <div>
   {#if walletStore.query.data}

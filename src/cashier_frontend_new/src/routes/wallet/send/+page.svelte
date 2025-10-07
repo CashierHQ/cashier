@@ -1,16 +1,14 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import {
-    ACCOUNT_ID_TYPE,
-    ICP_LEDGER_CANISTER_ID,
-    PRINCIPAL_TYPE,
+      ACCOUNT_ID_TYPE,
+      ICP_LEDGER_CANISTER_ID,
+      PRINCIPAL_TYPE,
   } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
-    formatBalanceUnits,
-    parseBalanceUnits,
+      formatBalanceUnits,
+      parseBalanceUnits,
   } from "$modules/token/utils/converter";
   import { Principal } from "@dfinity/principal";
 
@@ -57,7 +55,7 @@
     }
 
     try {
-      const token = walletStore.findTokenByAddress(selectedToken);
+      const token = walletStore.findTokenByAddress(selectedToken).unwrap();
       const balanceAmount = formatBalanceUnits(amount, token.decimals);
 
       if (receiveType === PRINCIPAL_TYPE) {
@@ -112,10 +110,6 @@
     return true;
   }
 </script>
-
-<div class="py-6">
-  <Button onclick={() => goto(resolve("/wallet"))}>Back to Wallet</Button>
-</div>
 
 <div>
   {#if walletStore.query.data}
