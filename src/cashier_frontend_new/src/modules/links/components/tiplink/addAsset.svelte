@@ -3,7 +3,7 @@
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { balanceToIcp } from "$modules/token/utils/converter";
-  import type { LinkStore } from "$modules/links/stores/linkStore.svelte";
+  import type { LinkStore } from "$modules/links/states/linkStore.svelte";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
