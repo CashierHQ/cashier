@@ -16,7 +16,7 @@ export class LinkType {
   toBackendType(): BackendLinkType {
     switch (this) {
       case LinkType.TIP:
-        return { SendAirdrop: null };
+        return { SendTip: null };
       case LinkType.AIRDROP:
         return { SendAirdrop: null };
       case LinkType.TOKEN_BASKET:
