@@ -8,20 +8,27 @@
   import type { LinkStore } from "../stores/linkStore.svelte";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
 
-  interface Props {
+  const {
+    link,
+  }: {
     link: LinkStore;
-  }
-  const { link }: Props = $props();
+  } = $props();
 
+  // Redirect if not in the correct step
   $effect(() => {
     if (link.state.step !== LinkStep.CHOOSE_TYPE) {
       goto(resolve("/"));
     }
   });
+
   let errorMessage: string | null = $state(null);
+
+  // Navigate back to home (cancel)
   function goBack() {
     goto(resolve("/"));
   }
+
+  // Proceed to the next step
   async function goNext() {
     errorMessage = null;
     try {

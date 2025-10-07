@@ -4,7 +4,7 @@
   import Preview from "$modules/links/components/preview.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { LinkStore } from "$modules/links/stores/linkStore.svelte";
-    import CreateLink from "$modules/links/components/createLink.svelte";
+  import CreateLink from "$modules/links/components/createLink.svelte";
 
   const newLink = new LinkStore();
 </script>
@@ -29,8 +29,10 @@
         </button>
         <button
           class="px-3 py-1 rounded"
-          class:font-semibold={newLink.state.step === LinkStep.PREVIEW || newLink.state.step === LinkStep.CREATED}
-          aria-pressed={newLink.state.step === LinkStep.PREVIEW || newLink.state.step === LinkStep.CREATED}
+          class:font-semibold={newLink.state.step === LinkStep.PREVIEW ||
+            newLink.state.step === LinkStep.CREATED}
+          aria-pressed={newLink.state.step === LinkStep.PREVIEW ||
+            newLink.state.step === LinkStep.CREATED}
         >
           Preview
         </button>
@@ -42,7 +44,7 @@
         <AddAsset link={newLink} />
       {:else if newLink.state.step === LinkStep.PREVIEW}
         <Preview link={newLink} />
-        {:else if newLink.state.step === LinkStep.CREATED}
+      {:else if newLink.state.step === LinkStep.CREATED}
         <CreateLink link={newLink} />
       {/if}
     </div>

@@ -7,16 +7,19 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-    import { LinkStep } from "$modules/links/types/linkStep";
-  interface Props {
+  import { LinkStep } from "$modules/links/types/linkStep";
+
+  const {
+    link,
+  }: {
     link: LinkStore;
-  }
-  const { link }: Props = $props();
+  } = $props();
 
   // UI local state
   let selectedAddress: string | null = $state(link.tipLink?.asset ?? null);
   let amountStr: string = $state(link.tipLink?.amount?.toString() ?? "");
 
+  // Redirect if not in the correct step
   $effect(() => {
     if (link.state.step !== LinkStep.ADD_ASSET) {
       goto(resolve("/"));
@@ -38,8 +41,10 @@
     link.tipLink = undefined;
   });
 
+  // Error message state
   let errorMessage: string | null = $state(null);
 
+  // Navigate back to previous step
   function goBack() {
     goto(resolve("/"));
   }

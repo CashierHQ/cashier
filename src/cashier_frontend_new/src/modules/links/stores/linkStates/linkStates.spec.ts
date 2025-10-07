@@ -8,7 +8,11 @@ import { LinkType } from "../../types/linkType";
 import { LinkStep } from "../../types/linkStep";
 import { cashierBackendService } from "../../services/cashierBackend";
 import { Ok, Err } from "ts-results-es";
-import type { LinkDto, AssetInfoDto, Template } from "$lib/generated/cashier_backend/cashier_backend.did";
+import type {
+  LinkDto,
+  AssetInfoDto,
+  Template,
+} from "$lib/generated/cashier_backend/cashier_backend.did";
 import { Principal } from "@dfinity/principal";
 
 // A reusable mock matching the generated LinkDto shape
@@ -90,7 +94,9 @@ describe("Link states", () => {
     store.tipLink = undefined;
 
     // Assert: attempting to continue throws
-    await expect(store.goNext()).rejects.toThrow("Tip link details are required to proceed");
+    await expect(store.goNext()).rejects.toThrow(
+      "Tip link details are required to proceed",
+    );
   });
 
   it("PreviewState.goNext calls backend and sets id on success", async () => {

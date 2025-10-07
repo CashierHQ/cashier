@@ -3,11 +3,15 @@ import { LinkType } from "../types/linkType";
 import type { LinkState } from "./linkStates";
 import { ChooseLinkTypeState } from "./linkStates/chooseLinkType";
 
+// Simple reactive state management
 export class LinkStore {
+  // Private state variables
   #state: LinkState;
+  // public state variables
   public title: string;
   public linkType: LinkType;
   public tipLink?: TipLink;
+  // ID of the created link (if any)
   #id?: string;
 
   constructor() {
@@ -33,10 +37,12 @@ export class LinkStore {
     this.#id = id;
   }
 
+  // Move to the next state
   async goNext(): Promise<void> {
     await this.#state.goNext();
   }
 
+  // Move to the previous state
   async goBack(): Promise<void> {
     await this.#state.goBack();
   }
