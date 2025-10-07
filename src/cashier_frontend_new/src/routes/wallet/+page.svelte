@@ -2,8 +2,8 @@
   import { resolve } from "$app/paths";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
-      balanceToUSDValue,
-      parseBalanceUnits,
+    balanceToUSDValue,
+    parseBalanceUnits,
   } from "$modules/token/utils/converter";
 </script>
 
