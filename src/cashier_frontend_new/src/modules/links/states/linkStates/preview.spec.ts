@@ -42,7 +42,7 @@ describe("PreviewState", () => {
     );
   });
 
-  it("goBack transitions to ADD_ASSET", async () => {
+  it("should transition back to ADD_ASSET successfully", async () => {
     // Arrange
     const store = new LinkStore();
     store.title = "My tip";
@@ -62,7 +62,7 @@ describe("PreviewState", () => {
     expect(store.state.step).toEqual(LinkStep.ADD_ASSET);
   });
 
-  it("goNext calls backend and on Ok sets id and CREATED", async () => {
+  it("should trainsition to CREATED successfully", async () => {
     // Arrange
     const store = new LinkStore();
     store.title = "My tip";
@@ -87,7 +87,7 @@ describe("PreviewState", () => {
     expect(store.state.step).toEqual(LinkStep.CREATED);
   });
 
-  it("goNext throws when backend returns Err", async () => {
+  it("should throws when backend returns Err", async () => {
     // Arrange
     const store = new LinkStore();
     store.title = "My tip";
