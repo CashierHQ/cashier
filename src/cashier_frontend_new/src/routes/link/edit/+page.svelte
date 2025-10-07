@@ -4,6 +4,7 @@
   import Preview from "$modules/links/components/preview.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { LinkStore } from "$modules/links/stores/linkStore.svelte";
+    import CreateLink from "$modules/links/components/createLink.svelte";
 
   const newLink = new LinkStore();
 </script>
@@ -42,7 +43,7 @@
       {:else if newLink.state.step === LinkStep.PREVIEW}
         <Preview link={newLink} />
         {:else if newLink.state.step === LinkStep.CREATED}
-        <Preview link={newLink} />
+        <CreateLink link={newLink} />
       {/if}
     </div>
   </div>

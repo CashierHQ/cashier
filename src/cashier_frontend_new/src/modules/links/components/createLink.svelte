@@ -11,28 +11,17 @@
   const { link }: Props = $props();
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
+
   $effect(() => {
-    if (link.state.step !== LinkStep.PREVIEW)  {
+    if (link.state.step !== LinkStep.CREATED)  {
       goto(resolve("/"));
     }
   });
   async function goBack() {
-    try {
-      await link.goBack();
-    } catch (error) {
-      console.error("Failed to go back: ", error);
-    }
+    goto(resolve("/"));
   }
   async function create() {
-    errorMessage = null;
-    successMessage = null;
-    try {
-      await link.goNext();
-      successMessage = "Link created successfully: " + link.id;
-    } catch (error) {
-      errorMessage = "Failed to create link: " + error;
-      return;
-    }
+    alert("WIP execute action " + link.id);
   }
 </script>
 
@@ -68,5 +57,7 @@
 
   <Button onclick={goBack}>Back</Button>
 
-  <Button onclick={create}>Create</Button>
+  <Button onclick={
+    create
+  }>Create</Button>
 </div>
