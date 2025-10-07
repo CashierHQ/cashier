@@ -33,7 +33,7 @@
   }
 </script>
 
-<h3 class="text-lg font-semibold">Preview</h3>
+<h3 class="text-lg font-semibold">Created</h3>
 <div class="mt-2">
   <LinkDetails {link} {errorMessage} {successMessage} />
 
