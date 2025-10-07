@@ -1,20 +1,11 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
-    balanceToUSDValue,
-    parseBalanceUnits,
+      balanceToUSDValue,
+      parseBalanceUnits,
   } from "$modules/token/utils/converter";
 </script>
-
-<div class="py-4">
-  <Button onclick={() => goto(resolve("/"))}>Go to Home</Button>
-  <Button onclick={() => goto(resolve("/wallet/manage"))}>Manage Tokens</Button>
-  <Button onclick={() => goto(resolve("/wallet/send"))}>Send</Button>
-  <Button onclick={() => goto(resolve("/wallet/receive"))}>Receive</Button>
-</div>
 
 <div>
   {#if walletStore.query.data}
