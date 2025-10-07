@@ -5,17 +5,23 @@
   import { LinkStep } from "../types/linkStep";
   import { resolve } from "$app/paths";
 
-  interface Props {
+  const {
+    link,
+  }: {
     link: LinkStore;
-  }
-  const { link }: Props = $props();
+  } = $props();
+
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
+
+  // Redirect if not in the correct step
   $effect(() => {
-    if (link.state.step !== LinkStep.PREVIEW)  {
+    if (link.state.step !== LinkStep.PREVIEW) {
       goto(resolve("/"));
     }
   });
+
+  // Navigate back to the previous step
   async function goBack() {
     try {
       await link.goBack();
@@ -23,6 +29,8 @@
       console.error("Failed to go back: ", error);
     }
   }
+
+  // Create the link
   async function create() {
     errorMessage = null;
     successMessage = null;
@@ -62,7 +70,7 @@
       <strong>Your link:</strong>
       <div class="break-all text-blue-600">
         {resolve("/link/")}{link.id}
-      </div>  
+      </div>
     </div>
   {/if}
 

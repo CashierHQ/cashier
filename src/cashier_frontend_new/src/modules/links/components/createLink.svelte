@@ -5,21 +5,28 @@
   import { LinkStep } from "../types/linkStep";
   import { resolve } from "$app/paths";
 
-  interface Props {
+  const {
+    link,
+  }: {
     link: LinkStore;
-  }
-  const { link }: Props = $props();
+  } = $props();
+
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
 
+  // Redirect if not in the correct step
   $effect(() => {
-    if (link.state.step !== LinkStep.CREATED)  {
+    if (link.state.step !== LinkStep.CREATED) {
       goto(resolve("/"));
     }
   });
+
+  // Navigate back to the previous step
   async function goBack() {
     goto(resolve("/"));
   }
+
+  // Create the link
   async function create() {
     alert("WIP execute action " + link.id);
   }
@@ -51,13 +58,11 @@
       <strong>Your link:</strong>
       <div class="break-all text-blue-600">
         {resolve("/link/")}{link.id}
-      </div>  
+      </div>
     </div>
   {/if}
 
   <Button onclick={goBack}>Back</Button>
 
-  <Button onclick={
-    create
-  }>Create</Button>
+  <Button onclick={create}>Create</Button>
 </div>
