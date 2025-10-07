@@ -15,7 +15,7 @@ export type TipLink = {
 /** Data required to create a new link */
 export class CreateLinkData {
   title: string;
-  linkType: LinkType; // kept generic here; the concrete LinkType lives in ../types.ts
+  linkType: LinkType;
   tipLink?: TipLink;
 
   constructor({
