@@ -1,11 +1,10 @@
 import type {
-  LinkType as BackendLinkType,
   CreateLinkInput,
   LinkDetailUpdateAssetInfoInput,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
-import { assertUnreachable } from "$lib/rsMatch";
 import { Principal } from "@dfinity/principal";
 import { Result, Ok, Err } from "ts-results-es";
+import type { LinkType } from "./linkType";
 
 // Tip link details
 export type TipLink = {
@@ -13,36 +12,10 @@ export type TipLink = {
   amount: number;
 };
 
-/** Frontend LinkType as a class with built-in mapping to backend union */
-export class LinkType {
-  private constructor(public readonly id: string) {}
-
-  static readonly TIP = new LinkType("TIP");
-  static readonly AIRDROP = new LinkType("AIRDROP");
-  static readonly TOKEN_BASKET = new LinkType("TOKEN_BASKET");
-
-  /**
-   * Convert frontend LinkType to corresponding backend LinkType
-   * @returns Corresponding BackendLinkType
-   */
-  toBackendType(): BackendLinkType {
-    switch (this) {
-      case LinkType.TIP:
-        return { SendAirdrop: null };
-      case LinkType.AIRDROP:
-        return { SendAirdrop: null };
-      case LinkType.TOKEN_BASKET:
-        return { SendTokenBasket: null };
-      default:
-        return assertUnreachable(this as never);
-    }
-  }
-}
-
 /** Data required to create a new link */
 export class CreateLinkData {
   title: string;
-  linkType: LinkType;
+  linkType: LinkType; // kept generic here; the concrete LinkType lives in ../types.ts
   tipLink?: TipLink;
 
   constructor({
@@ -68,7 +41,9 @@ export class CreateLinkData {
 
     const assetInfo: Array<LinkDetailUpdateAssetInfoInput> = [];
 
-    if (this.linkType === LinkType.TIP) {
+    // We can't directly compare LinkType here because it's imported elsewhere;
+    // consumers should pass the frontend LinkType instance. We check using id.
+    if (this.linkType?.id === "TIP") {
       if (!this.tipLink) {
         return Err(new Error("Tip link data is missing"));
       }
@@ -96,11 +71,4 @@ export class CreateLinkData {
 
     return Ok(input);
   }
-}
-
-// Steps in the create link multi-step form
-export enum CreateStep {
-  ADD_DETAILS = 1,
-  ADD_ASSET = 2,
-  PREVIEW = 3,
 }

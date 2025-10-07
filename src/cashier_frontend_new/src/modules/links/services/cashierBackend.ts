@@ -3,7 +3,7 @@ import { responseToResult } from "$lib/result";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { Err, type Result } from "ts-results-es";
-import type { CreateLinkData } from "../types";
+import type { CreateLinkData } from "../types/createLinkData";
 
 /**
  * Service for interacting with the Cashier Backend canister.

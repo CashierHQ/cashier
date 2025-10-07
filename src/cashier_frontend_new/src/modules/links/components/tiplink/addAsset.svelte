@@ -3,17 +3,25 @@
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { balanceToIcp } from "$modules/token/utils/converter";
-  import type { CreateLinkData } from "$modules/links/types";
-
-  let {
-    data = $bindable(),
-  }: {
-    data: CreateLinkData;
-  } = $props();
+  import type { LinkStore } from "$modules/links/stores/linkStore.svelte";
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+    import { LinkStep } from "$modules/links/types/linkStep";
+  interface Props {
+    link: LinkStore;
+  }
+  const { link }: Props = $props();
 
   // UI local state
-  let selectedAddress: string | null = $state(data.tipLink?.asset ?? null);
-  let amountStr: string = $state(data.tipLink?.amount?.toString() ?? "");
+  let selectedAddress: string | null = $state(link.tipLink?.asset ?? null);
+  let amountStr: string = $state(link.tipLink?.amount?.toString() ?? "");
+
+  $effect(() => {
+    if (link.state.step !== LinkStep.ADD_ASSET) {
+      goto(resolve("/"));
+    }
+  });
 
   // effect to update the store
   $effect(() => {
@@ -21,14 +29,28 @@
       const n = Number(amountStr);
       if (!Number.isNaN(n) && n > 0) {
         // TODO: convert amount to e8s based on token decimals
-        data.tipLink = { asset: selectedAddress, amount: n };
+        link.tipLink = { asset: selectedAddress, amount: n };
         return;
       }
     }
 
     // Clear tipLink when selection/amount is invalid or missing
-    data.tipLink = undefined;
+    link.tipLink = undefined;
   });
+
+  let errorMessage: string | null = $state(null);
+
+  function goBack() {
+    goto(resolve("/"));
+  }
+  async function goNext() {
+    errorMessage = null;
+    try {
+      await link.goNext();
+    } catch (e) {
+      errorMessage = "Failed to proceed to next step: " + e;
+    }
+  }
 </script>
 
 <div class="space-y-4">
@@ -80,4 +102,12 @@
       placeholder="0.00"
     />
   </div>
+
+  {#if errorMessage}
+    <div class="text-red-600">{errorMessage}</div>
+  {/if}
+
+  <Button onclick={goBack}>Back</Button>
+
+  <Button onclick={goNext}>Next</Button>
 </div>
