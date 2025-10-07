@@ -3,7 +3,7 @@ import { LinkStore } from "../linkStore.svelte";
 import { LinkStep } from "../../types/linkStep";
 
 describe("AddAssetState", () => {
-  it("advances to PREVIEW when tipLink has asset and positive amount", async () => {
+  it("should transition to PREVIEW successfully", async () => {
     // Arrange
     const store = new LinkStore();
     store.title = "My tip";
@@ -24,7 +24,7 @@ describe("AddAssetState", () => {
     expect(store.state.step).toEqual(LinkStep.PREVIEW);
   });
 
-  it("throws when tipLink is missing", async () => {
+  it("should throws when tipLink is missing", async () => {
     // Arrange
     const store = new LinkStore();
     store.title = "My tip";
@@ -39,7 +39,7 @@ describe("AddAssetState", () => {
     );
   });
 
-  it("throws when asset is empty", async () => {
+  it("should throws when asset is empty", async () => {
     // Arrange
     const store = new LinkStore();
     store.title = "My tip";
@@ -54,7 +54,7 @@ describe("AddAssetState", () => {
     );
   });
 
-  it("throws when amount is zero or negative", async () => {
+  it("should throws when amount is zero or negative", async () => {
     // Arrange
     const store = new LinkStore();
     store.title = "My tip";
