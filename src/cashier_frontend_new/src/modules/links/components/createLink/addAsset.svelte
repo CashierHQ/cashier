@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { LinkStore } from "$modules/links/stores/linkStore.svelte";
-  import { LinkType } from "../types/linkType";
+  import type { LinkStore } from "../../states/linkStore.svelte";
+  import { LinkType } from "../../types/linkType";
   import TipLinkAddAsset from "./tiplink/addAsset.svelte";
 
   const {
@@ -10,6 +10,6 @@
   } = $props();
 </script>
 
-{#if link.linkType === LinkType.TIP}
+{#if link.data.linkType === LinkType.TIP}
   <TipLinkAddAsset {link} />
 {/if}

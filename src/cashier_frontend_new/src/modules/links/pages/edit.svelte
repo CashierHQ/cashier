@@ -1,10 +1,10 @@
 <script lang="ts">
-  import ChooseLinkType from "$modules/links/components/chooseLinkType.svelte";
-  import Preview from "$modules/links/components/preview.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { LinkStore } from "$modules/links/states/linkStore.svelte";
-  import CreatedLink from "$modules/links/components/createdLink.svelte";
-  import AddAsset from "$modules/links/components/addAsset.svelte";
+  import AddAsset from "$modules/links/components/createLink/addAsset.svelte";
+  import ChooseLinkType from "$modules/links/components/createLink/chooseLinkType.svelte";
+  import Preview from "../components/createLink/preview.svelte";
+  import CreatedLink from "../components/createLink/createdLink.svelte";
 
   const newLink = new LinkStore();
 </script>
