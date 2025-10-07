@@ -1,4 +1,4 @@
-import { CreateLinkData } from "../types/createLinkData";
+import type { TipLink } from "../types/createLinkData";
 import { LinkType } from "../types/linkType";
 import type { LinkState } from "./linkStates";
 import { ChooseLinkTypeState } from "./linkStates/chooseLinkType";
@@ -8,19 +8,17 @@ export class LinkStore {
   // Private state variables
   #state: LinkState;
   // public state variables
-  public data: CreateLinkData;
+  public title: string;
+  public linkType: LinkType;
+  public tipLink?: TipLink;
   // ID of the created link (if any)
   #id?: string;
 
   constructor() {
     this.#state = $state<LinkState>(new ChooseLinkTypeState(this));
-    this.data = $state<CreateLinkData>(
-      new CreateLinkData({
-        title: "",
-        linkType: LinkType.TIP,
-        tipLink: undefined,
-      }),
-    );
+    this.title = $state<string>("");
+    this.linkType = $state<LinkType>(LinkType.TIP);
+    this.tipLink = $state<TipLink | undefined>(undefined);
   }
 
   get state(): LinkState {

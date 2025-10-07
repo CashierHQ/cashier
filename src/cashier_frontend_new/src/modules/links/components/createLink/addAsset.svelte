@@ -10,6 +10,6 @@
   } = $props();
 </script>
 
-{#if link.data.linkType === LinkType.TIP}
+{#if link.linkType === LinkType.TIP}
   <TipLinkAddAsset {link} />
 {/if}

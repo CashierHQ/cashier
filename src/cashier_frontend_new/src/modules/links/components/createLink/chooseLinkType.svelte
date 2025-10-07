@@ -44,7 +44,7 @@
     <Label for="title">Link title</Label>
     <Input
       id="title"
-      bind:value={link.data.tipLink}
+      bind:value={link.title}
       placeholder="Enter a title for your link"
     />
   </div>
@@ -54,7 +54,7 @@
     <select
       id="linkType"
       class="block w-full rounded-md border px-3 py-2 text-base"
-      bind:value={link.data.linkType}
+      bind:value={link.linkType}
     >
       <option value={LinkType.TIP}>Tip</option>
       <option value={LinkType.AIRDROP}>Airdrop</option>

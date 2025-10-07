@@ -14,19 +14,19 @@
 </script>
 
 <div>
-  <div><strong>Title:</strong> {link.data.title}</div>
+  <div><strong>Title:</strong> {link.title}</div>
   <div>
     <strong>Link Type:</strong>
-    {link.data.linkType.id}
+    {link.linkType.id}
   </div>
-  {#if link.data.tipLink}
+  {#if link.tipLink}
     <div>
       <strong>Asset:</strong>
-      {link.data.tipLink.asset}
+      {link.tipLink.asset}
     </div>
     <div>
       <strong>Amount:</strong>
-      {link.data.tipLink.amount}
+      {link.tipLink.amount}
     </div>
   {/if}
 

@@ -16,8 +16,8 @@
   } = $props();
 
   // UI local state
-  let selectedAddress: string | null = $state(link.data.tipLink?.asset ?? null);
-  let amountStr: string = $state(link.data.tipLink?.amount?.toString() ?? "");
+  let selectedAddress: string | null = $state(link.tipLink?.asset ?? null);
+  let amountStr: string = $state(link.tipLink?.amount?.toString() ?? "");
 
   // Redirect if not in the correct step
   $effect(() => {
@@ -32,13 +32,13 @@
       const n = Number(amountStr);
       if (!Number.isNaN(n) && n > 0) {
         // TODO: convert amount to e8s based on token decimals
-        link.data.tipLink = { asset: selectedAddress, amount: n };
+        link.tipLink = { asset: selectedAddress, amount: n };
         return;
       }
     }
 
     // Clear tipLink when selection/amount is invalid or missing
-    link.data.tipLink = undefined;
+    link.tipLink = undefined;
   });
 
   // Error message state
