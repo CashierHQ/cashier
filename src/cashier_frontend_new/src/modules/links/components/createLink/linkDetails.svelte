@@ -7,26 +7,26 @@
     errorMessage,
     successMessage,
   }: {
-    link: LinkStore | any;
+    link: LinkStore;
     errorMessage: string | null;
     successMessage: string | null;
   } = $props();
 </script>
 
 <div>
-  <div><strong>Title:</strong> {link?.data ? link.data.title : link.title}</div>
+  <div><strong>Title:</strong> {link.data.title}</div>
   <div>
     <strong>Link Type:</strong>
-    {link?.data ? link.data.linkType.id : link.linkType.id}
+    {link.data.linkType.id}
   </div>
-  {#if link?.data ? link.data.tipLink : link.tipLink}
+  {#if link.data.tipLink}
     <div>
       <strong>Asset:</strong>
-      {link?.data ? link.data.tipLink.asset : link.tipLink.asset}
+      {link.data.tipLink.asset}
     </div>
     <div>
       <strong>Amount:</strong>
-      {link?.data ? link.data.tipLink.amount : link.tipLink.amount}
+      {link.data.tipLink.amount}
     </div>
   {/if}
 
