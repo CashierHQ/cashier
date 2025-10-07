@@ -26,7 +26,7 @@
         </button>
         <button
           class="px-3 py-1 rounded"
-          data-active={newLink.state.step === LinkStep.PREVIEW}
+          data-active={newLink.state.step === LinkStep.PREVIEW || newLink.state.step === LinkStep.CREATED}
         >
           Preview
         </button>
