@@ -6,7 +6,11 @@ describe("CreateLinkData.toCreateLinkInput", () => {
   it("converts TIP CreateLinkData into CreateLinkInput Ok result", () => {
     // Arrange
     const tip: TipLink = { asset: "aaaaa-aa", amount: 42 };
-    const data = new CreateLinkData({ title: "My tip", linkType: LinkType.TIP, tipLink: tip });
+    const data = new CreateLinkData({
+      title: "My tip",
+      linkType: LinkType.TIP,
+      tipLink: tip,
+    });
 
     // Act
     const res = data.toCreateLinkInput();
@@ -21,7 +25,10 @@ describe("CreateLinkData.toCreateLinkInput", () => {
 
   it("returns Err when TIP link data missing", () => {
     // Arrange
-    const data = new CreateLinkData({ title: "No tip", linkType: LinkType.TIP });
+    const data = new CreateLinkData({
+      title: "No tip",
+      linkType: LinkType.TIP,
+    });
 
     // Act
     const res = data.toCreateLinkInput();

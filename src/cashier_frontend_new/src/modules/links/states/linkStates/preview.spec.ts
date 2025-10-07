@@ -3,7 +3,11 @@ import { LinkStore } from "../linkStore.svelte";
 import { LinkStep } from "../../types/linkStep";
 import { cashierBackendService } from "../../services/cashierBackend";
 import { Ok, Err } from "ts-results-es";
-import type { LinkDto, AssetInfoDto, Template } from "$lib/generated/cashier_backend/cashier_backend.did";
+import type {
+  LinkDto,
+  AssetInfoDto,
+  Template,
+} from "$lib/generated/cashier_backend/cashier_backend.did";
 import { Principal } from "@dfinity/principal";
 
 const mockLinkDto: LinkDto = {
@@ -32,7 +36,9 @@ describe("PreviewState", () => {
     vi.clearAllMocks();
 
     vi.spyOn(cashierBackendService, "createLink").mockResolvedValue(
-      Ok(mockLinkDto) as unknown as Awaited<ReturnType<typeof cashierBackendService.createLink>>,
+      Ok(mockLinkDto) as unknown as Awaited<
+        ReturnType<typeof cashierBackendService.createLink>
+      >,
     );
   });
 
@@ -68,7 +74,9 @@ describe("PreviewState", () => {
 
     // Ensure backend mock returns Ok
     vi.spyOn(cashierBackendService, "createLink").mockResolvedValue(
-      Ok(mockLinkDto) as unknown as Awaited<ReturnType<typeof cashierBackendService.createLink>>,
+      Ok(mockLinkDto) as unknown as Awaited<
+        ReturnType<typeof cashierBackendService.createLink>
+      >,
     );
 
     // Act: create the link
@@ -91,7 +99,9 @@ describe("PreviewState", () => {
 
     // Arrange: mock backend to return Err
     vi.spyOn(cashierBackendService, "createLink").mockResolvedValue(
-      Err(new Error("boom")) as unknown as Awaited<ReturnType<typeof cashierBackendService.createLink>>,
+      Err(new Error("boom")) as unknown as Awaited<
+        ReturnType<typeof cashierBackendService.createLink>
+      >,
     );
 
     // Act + Assert: goNext should throw with backend error message
