@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { linkListQuery } from "../states/links.svelte";
+  import { linkListQuery } from "../state/links.svelte";
 </script>
 
 <li>
