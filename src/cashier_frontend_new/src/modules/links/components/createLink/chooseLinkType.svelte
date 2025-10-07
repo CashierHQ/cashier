@@ -3,9 +3,9 @@
   import { goto } from "$app/navigation";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import { LinkStep } from "../types/linkStep";
-  import { LinkType } from "../types/linkType";
-  import type { LinkStore } from "../states/linkStore.svelte";
+  import { LinkStep } from "../../types/linkStep";
+  import { LinkType } from "../../types/linkType";
+  import type { LinkStore } from "../../states/linkStore.svelte";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
 
   const {
@@ -44,7 +44,7 @@
     <Label for="title">Link title</Label>
     <Input
       id="title"
-      bind:value={link.title}
+      bind:value={link.data.tipLink}
       placeholder="Enter a title for your link"
     />
   </div>
@@ -54,7 +54,7 @@
     <select
       id="linkType"
       class="block w-full rounded-md border px-3 py-2 text-base"
-      bind:value={link.linkType}
+      bind:value={link.data.linkType}
     >
       <option value={LinkType.TIP}>Tip</option>
       <option value={LinkType.AIRDROP}>Airdrop</option>
