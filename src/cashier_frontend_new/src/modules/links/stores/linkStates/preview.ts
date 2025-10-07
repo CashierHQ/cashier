@@ -26,6 +26,8 @@ export class PreviewState implements LinkState {
       // creation succeeded — reset the form and return the created link
       this.#link.state = new LinkCreatedState(this.#link);
       this.#link.id = result.value.id;
+    } else {
+      throw new Error(`Link creation failed: ${result.error.message}`);
     }
   }
 
