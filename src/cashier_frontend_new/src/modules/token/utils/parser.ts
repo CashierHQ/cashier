@@ -36,39 +36,3 @@ export function parseListTokens(
     return [];
   }
 }
-
-/**
- * Parse the error from ICRC Ledger icrc1_transfer operation.
- * @param result Error result from ICRC Ledger icrc1_transfer operation
- * @returns Parsed error
- */
-export function parseIcrcTransferResultError(
-  result: icrcLedger.TransferError,
-): Error {
-  if ("GenericError" in result) {
-    return new Error(`Transfer failed: ${result.GenericError.message}`);
-  } else if ("InsufficientFunds" in result) {
-    return new Error(`Transfer failed: Insufficient funds`);
-  } else if ("BadFee" in result) {
-    return new Error(
-      `Transfer failed: Bad fee, expected ${result.BadFee.expected_fee}`,
-    );
-  }
-
-  return new Error("Transfer failed: Unknown error");
-}
-
-/**
- * Parse the error from the ICP Ledger transfer operation (legacy).
- * @param result Error result from ICP Ledger transfer operation (legacy)
- * @returns Parsed error
- */
-export function parseICPTransferResultError(
-  result: icpLedger.TransferError,
-): Error {
-  if ("InsufficientFunds" in result) {
-    return new Error(`Transfer failed: Insufficient funds`);
-  }
-
-  return new Error("Transfer failed: Unknown error");
-}

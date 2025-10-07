@@ -2,7 +2,6 @@ import * as icrcLedger from "$lib/generated/icrc_ledger/icrc_ledger.did";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { Principal } from "@dfinity/principal";
 import type { TokenMetadata } from "../types";
-import { parseIcrcTransferResultError } from "../utils/parser";
 
 /**
  * Service for interacting with Icrc Ledger canisters for a specific token
@@ -93,4 +92,25 @@ export class IcrcLedgerService {
 
     return result.Ok;
   }
+}
+
+/**
+ * Parse the error from ICRC Ledger icrc1_transfer operation.
+ * @param result Error result from ICRC Ledger icrc1_transfer operation
+ * @returns Parsed error
+ */
+export function parseIcrcTransferResultError(
+  result: icrcLedger.TransferError,
+): Error {
+  if ("GenericError" in result) {
+    return new Error(`Transfer failed: ${result.GenericError.message}`);
+  } else if ("InsufficientFunds" in result) {
+    return new Error(`Transfer failed: Insufficient funds`);
+  } else if ("BadFee" in result) {
+    return new Error(
+      `Transfer failed: Bad fee, expected ${result.BadFee.expected_fee}`,
+    );
+  }
+
+  return new Error("Transfer failed: Unknown error");
 }
