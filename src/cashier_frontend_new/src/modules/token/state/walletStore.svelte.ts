@@ -1,6 +1,9 @@
 import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { icpLedgerService } from "$modules/token/services/icpLedger";
+import {
+  encodeAccountID,
+  icpLedgerService,
+} from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { tokenPriceService } from "$modules/token/services/tokenPrice";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
@@ -118,6 +121,24 @@ export class WalletStore {
     // Refresh the wallet tokens data after sending tokens
     this.#walletTokensQuery.refresh();
     return transferRes;
+  }
+
+  /**
+   * Get the ICP AccountID (legacy) for the current auth user
+   * @returns The ICP account ID of the current user, or null if not available.
+   */
+  icpAccountID(): string | null {
+    if (!authState.account) {
+      return null;
+    }
+
+    try {
+      const principal = Principal.fromText(authState.account.owner);
+      return encodeAccountID(principal);
+    } catch (error) {
+      console.error("Error encoding ICP accountID:", error);
+      return null;
+    }
   }
 
   /**

@@ -6,7 +6,6 @@ import {
   HOST_ICP,
   IC_INTERNET_IDENTITY_PROVIDER,
 } from "$modules/shared/constants";
-import { encodeAccountID } from "$modules/token/services/icpLedger";
 import { Actor, HttpAgent } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
@@ -163,21 +162,6 @@ export const authState = {
       canisterId,
       idl: idlFactory,
     });
-  },
-
-  // Get the ICP AccountID (legacy) for the current auth user
-  icpAccountID(): string | null {
-    if (!account) {
-      return null;
-    }
-
-    try {
-      const principal = Principal.fromText(account.owner);
-      return encodeAccountID(principal);
-    } catch (error) {
-      console.error("Error encoding ICP accountID:", error);
-      return null;
-    }
   },
 
   // Connect to wallet
