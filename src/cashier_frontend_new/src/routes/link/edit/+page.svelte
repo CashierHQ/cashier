@@ -14,19 +14,22 @@
       <nav class="flex gap-2">
         <button
           class="px-3 py-1 rounded"
-          data-active={newLink.state.step === LinkStep.CHOOSE_TYPE}
+          class:font-semibold={newLink.state.step === LinkStep.CHOOSE_TYPE}
+          aria-pressed={newLink.state.step === LinkStep.CHOOSE_TYPE}
         >
           Choose Type
         </button>
         <button
           class="px-3 py-1 rounded"
-          data-active={newLink.state.step === LinkStep.ADD_ASSET}
+          class:font-semibold={newLink.state.step === LinkStep.ADD_ASSET}
+          aria-pressed={newLink.state.step === LinkStep.ADD_ASSET}
         >
           Asset
         </button>
         <button
           class="px-3 py-1 rounded"
-          data-active={newLink.state.step === LinkStep.PREVIEW || newLink.state.step === LinkStep.CREATED}
+          class:font-semibold={newLink.state.step === LinkStep.PREVIEW || newLink.state.step === LinkStep.CREATED}
+          aria-pressed={newLink.state.step === LinkStep.PREVIEW || newLink.state.step === LinkStep.CREATED}
         >
           Preview
         </button>
