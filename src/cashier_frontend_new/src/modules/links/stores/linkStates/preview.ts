@@ -6,6 +6,7 @@ import type { LinkStore } from "../linkStore.svelte";
 import { AddAssetState } from "./addAsset";
 import { LinkCreatedState } from "./created";
 
+// State when the user is previewing the link before creation
 export class PreviewState implements LinkState {
   readonly step = LinkStep.PREVIEW;
   #link: LinkStore;
@@ -14,6 +15,7 @@ export class PreviewState implements LinkState {
     this.#link = link;
   }
 
+  // Create the link using the backend service and move to the created state
   async goNext(): Promise<void> {
     const data: CreateLinkData = new CreateLinkData({
       title: this.#link.title,
@@ -31,6 +33,7 @@ export class PreviewState implements LinkState {
     }
   }
 
+  // Go back to the add asset state
   async goBack(): Promise<void> {
     this.#link.state = new AddAssetState(this.#link);
   }
