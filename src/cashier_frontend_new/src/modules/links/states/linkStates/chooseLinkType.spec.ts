@@ -27,7 +27,9 @@ describe("ChooseLinkTypeState", () => {
     store.linkType = LinkType.TIP;
 
     // Act + Assert: goNext should reject due to empty title
-    await expect(store.goNext()).rejects.toThrow("Title is required to proceed");
+    await expect(store.goNext()).rejects.toThrow(
+      "Title is required to proceed",
+    );
   });
 
   it("throws when link type is not TIP", async () => {
@@ -38,6 +40,8 @@ describe("ChooseLinkTypeState", () => {
     store.linkType = LinkType.AIRDROP;
 
     // Assert: goNext rejects with unsupported type message
-    await expect(store.goNext()).rejects.toThrow("Only Tip link type is supported currently");
+    await expect(store.goNext()).rejects.toThrow(
+      "Only Tip link type is supported currently",
+    );
   });
 });

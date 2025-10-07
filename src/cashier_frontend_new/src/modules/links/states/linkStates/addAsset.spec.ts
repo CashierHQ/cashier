@@ -34,7 +34,9 @@ describe("AddAssetState", () => {
     store.tipLink = undefined;
 
     // Assert: goNext rejects with informative message
-    await expect(store.goNext()).rejects.toThrow("Tip link details are required to proceed");
+    await expect(store.goNext()).rejects.toThrow(
+      "Tip link details are required to proceed",
+    );
   });
 
   it("throws when asset is empty", async () => {
@@ -47,7 +49,9 @@ describe("AddAssetState", () => {
     store.tipLink = { asset: "", amount: 10 };
 
     // Assert
-    await expect(store.goNext()).rejects.toThrow("Asset is required to proceed");
+    await expect(store.goNext()).rejects.toThrow(
+      "Asset is required to proceed",
+    );
   });
 
   it("throws when amount is zero or negative", async () => {
@@ -60,6 +64,8 @@ describe("AddAssetState", () => {
     store.tipLink = { asset: "aaaaa-aa", amount: 0 };
 
     // Assert
-    await expect(store.goNext()).rejects.toThrow("Amount must be greater than zero to proceed");
+    await expect(store.goNext()).rejects.toThrow(
+      "Amount must be greater than zero to proceed",
+    );
   });
 });
