@@ -33,7 +33,6 @@ class TokenStorageService {
       throw new Error("User is not authenticated");
     }
     const res: tokenStorage.Result_5 = await actor.list_tokens();
-    console.log("listTokens response:", res);
     return parseListTokens(res);
   }
 

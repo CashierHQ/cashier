@@ -8,6 +8,7 @@ export type TokenMetadata = {
   decimals: number;
   enabled: boolean;
   fee: bigint;
+  is_default: boolean;
 };
 
 /**
