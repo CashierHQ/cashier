@@ -65,6 +65,7 @@ export interface TokenDto {
   'balance' : [] | [bigint],
   'chain' : Chain,
   'name' : string,
+  'is_default' : boolean,
   'enabled' : boolean,
   'details' : ChainTokenDetails,
   'string_id' : string,
