@@ -44,6 +44,7 @@ export const idlFactory = ({ IDL }) => {
     'balance' : IDL.Opt(IDL.Nat),
     'chain' : Chain,
     'name' : IDL.Text,
+    'is_default' : IDL.Bool,
     'enabled' : IDL.Bool,
     'details' : ChainTokenDetails,
     'string_id' : IDL.Text,

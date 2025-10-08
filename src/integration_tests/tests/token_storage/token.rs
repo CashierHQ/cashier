@@ -11,8 +11,8 @@ async fn should_register_tokens_at_startup() {
 
         // Assert
         assert!(!tokens.tokens.is_empty());
-
         assert!(tokens.tokens.iter().any(|token| { token.symbol == "ICP" }));
+        assert!(tokens.tokens.iter().all(|token| token.is_default));
 
         Ok(())
     })
