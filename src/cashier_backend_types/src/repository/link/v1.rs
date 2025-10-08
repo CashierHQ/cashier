@@ -14,10 +14,14 @@ use crate::repository::asset_info::AssetInfo;
 pub struct Link {
     pub id: String,
     pub state: LinkState,
+    #[deprecated(note = "This should be mandatory")]
     pub title: Option<String>,
+    #[deprecated(note = "This should be remove")]
     pub description: Option<String>,
+     #[deprecated(note = "This should be mandatory")]
     pub link_type: Option<LinkType>,
     pub asset_info: Vec<AssetInfo>,
+    #[deprecated(note = "This should be remove")]
     pub template: Option<Template>,
     pub creator: Principal,
     pub create_at: u64,
@@ -42,19 +46,26 @@ impl Link {
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, CandidType, Display)]
 pub enum LinkType {
     SendTip,
+    #[deprecated(note = "This should be remove")]
     NftCreateAndAirdrop,
     SendAirdrop,
     SendTokenBasket,
     ReceivePayment,
+    #[deprecated(note = "This should be remove")]
     ReceiveMutliPayment,
+    #[deprecated(note = "This should be remove")]
     SwapSingleAsset,
+    #[deprecated(note = "This should be remove")]
     SwapMultiAsset,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, CandidType, Display)]
 pub enum LinkState {
+    #[deprecated(note = "Frontend state should be removed")]
     ChooseLinkType,
+    #[deprecated(note = "Frontend state should be removed")]
     AddAssets,
+    #[deprecated(note = "Frontend state should be removed")]
     Preview,
     CreateLink,
     Active,
@@ -62,6 +73,7 @@ pub enum LinkState {
     InactiveEnded,
 }
 
+#[deprecated(note = "This should be remove")]
 #[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Display)]
 pub enum Template {
     Left,
