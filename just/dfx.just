@@ -47,10 +47,19 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
 
   just dfx_local_deploy_icp_ledger
   just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckBTC" "Chain Key Bitcoin" "ckBTC" "mxzaz-hqaaa-aaaar-qaada-cai" 8 10
-  just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckETH" "Chain Key Ethereum" "ckETH" "ss2fx-dyaaa-aaaar-qacoq-cai" 18 2000000000000000000
+  just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckETH" "Chain Key Ethereum" "ckETH" "ss2fx-dyaaa-aaaar-qacoq-cai" 18 2000000000000
   just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckUSDC" "Chain Key USD Coin" "ckUSDC" "xevnm-gaaaa-aaaar-qafnq-cai" 8 10000
   just dfx_local_deploy_icrc1_ledger "${OWNER}" "DOGE" "Test Token" "DOGE" "x5qut-viaaa-aaaar-qajda-cai" 8 10000
 
+[group('dfx')]
+dfx_local_deploy_token canister_name name symbol canister_id decimals fee:
+  #!/usr/bin/env bash
+  set -e
+
+  export OWNER=$(dfx identity get-principal)
+
+  echo "owner: $OWNER"
+  just dfx_local_deploy_icrc1_ledger "${OWNER}" {{canister_name}} {{name}} {{symbol}} {{canister_id}}  {{decimals}} {{fee}}
 
 # Prints dfx info of the local deployment
 [group('dfx')]
