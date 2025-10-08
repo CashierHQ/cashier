@@ -38,6 +38,7 @@
               <input
                 type="checkbox"
                 checked={token.enabled}
+                disabled={token.is_default}
                 onchange={() => handleToggle(token)}
               />
               Enabled

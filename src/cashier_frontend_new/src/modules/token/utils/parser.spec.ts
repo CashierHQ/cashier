@@ -55,6 +55,7 @@ describe("parseListTokens", () => {
                 index_id: [],
               },
             },
+            is_default: true,
           },
         ],
       },
@@ -72,6 +73,7 @@ describe("parseListTokens", () => {
         decimals: 8,
         enabled: true,
         fee: 10000n,
+        is_default: true,
       },
     ]);
   });
