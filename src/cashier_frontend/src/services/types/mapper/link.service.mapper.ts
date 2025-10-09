@@ -3,7 +3,6 @@
 
 // (convertNanoSecondsToDate not used here after switching to numeric create_at)
 import {
-  Asset,
   AssetInfoDto,
   CreateLinkInput,
   GetLinkResp,
@@ -37,26 +36,6 @@ import { Principal } from "@dfinity/principal";
 import { assertNever, getEnumKey, getKeyVariant } from ".";
 
 type LinkStateMachineGoto = UserStateMachineGoto;
-
-const mapFrontendAssetToAsset = ({ address, chain }: UserInputAsset): Asset => {
-  const key = getEnumKey(CHAIN, chain);
-  switch (key) {
-    case "IC":
-      return { IC: { address: Principal.fromText(address) } };
-    default:
-      return assertNever(key);
-  }
-};
-
-const mapFrontendAssetInfoToAssetInfo = (
-  asset: UserInputAsset,
-): AssetInfoDto => {
-  return {
-    asset: mapFrontendAssetToAsset(asset),
-    amount_per_link_use_action: asset.linkUseAmount,
-    label: asset.label,
-  };
-};
 
 const mapFrontendTemplateToTemplate = (template: TEMPLATE): Template => {
   const key = getEnumKey(TEMPLATE, template);
@@ -93,7 +72,7 @@ const mapFrontendLinkTypeToLinkType = (linkType: LINK_TYPE): LinkType => {
 };
 
 export const mapFrontendGotoToUserStateMachineGoto = (
-  goto: "Continue" | "Back",
+  goto: "Continue" | "Back"
 ): LinkStateMachineGoto => {
   const key = goto;
   switch (key) {
@@ -131,7 +110,7 @@ const mapLinkTypeToEnum = (linkType: LinkType): LINK_TYPE => {
 };
 
 export const mapLinkStateToEnum = (
-  linkState: LinkState,
+  linkState: LinkState
 ): LINK_STATE | undefined => {
   const key = getKeyVariant(linkState);
   switch (key) {
@@ -165,7 +144,7 @@ const mapTemplateToEnum = (template: Template): TEMPLATE | undefined => {
 };
 
 const mapAssetInfoToFrontendAssetInfo = (
-  assetInfo: AssetInfoDto,
+  assetInfo: AssetInfoDto
 ): AssetInfoModel => {
   const key = getKeyVariant(assetInfo.asset);
   console.log("[mapAssetInfoToFrontendAssetInfo] input:", assetInfo);
@@ -205,7 +184,7 @@ const mapFrontendLinkStateToLinkState = (state: LINK_STATE): LinkState => {
 };
 
 const mapFrontendAssetInfoModelToAssetInfo = (
-  asset: AssetInfoModel,
+  asset: AssetInfoModel
 ): AssetInfoDto => {
   switch (asset.chain) {
     case CHAIN.IC:
@@ -220,7 +199,7 @@ const mapFrontendAssetInfoModelToAssetInfo = (
 };
 
 const mapUserLinkStateToFrontendLinkUserState = (
-  state: LinkUserState,
+  state: LinkUserState
 ): LINK_USER_STATE => {
   const key = getKeyVariant(state);
   switch (key) {
@@ -241,31 +220,13 @@ const mapUserLinkStateToFrontendLinkUserState = (
 export const mapLinkDetailModelToUpdateLinkInputModel = (
   linkId: string,
   linkDetailModel: Partial<UserInputItem>,
-  isContinue: boolean,
+  isContinue: boolean
 ): UpdateLinkInput => {
   const updateLinkInput: UpdateLinkInput = {
     id: linkId,
     goto: mapFrontendGotoToUserStateMachineGoto(
-      isContinue ? "Continue" : "Back",
+      isContinue ? "Continue" : "Back"
     ),
-    params: [
-      {
-        title: toNullable(linkDetailModel.title),
-        asset_info: linkDetailModel.assets
-          ? linkDetailModel.assets.map((asset) =>
-              mapFrontendAssetInfoToAssetInfo(asset),
-            )
-          : [],
-        description: toNullable(linkDetailModel.description),
-        template: toNullable(mapFrontendTemplateToTemplate(TEMPLATE.CENTRAL)),
-        nft_image: [],
-        link_image_url: [],
-        link_type: linkDetailModel.linkType
-          ? toNullable(mapFrontendLinkTypeToLinkType(linkDetailModel.linkType))
-          : toNullable(),
-        link_use_action_max_count: toNullable(linkDetailModel.maxActionNumber),
-      },
-    ],
   };
 
   return updateLinkInput;
@@ -297,7 +258,7 @@ const mapDtoToLinkDetailModel = (link: LinkDto): LinkDetailModel => {
 };
 
 export const mapPartialDtoToLinkDetailModel = (
-  link: Partial<LinkDto>,
+  link: Partial<LinkDto>
 ): LinkDetailModel => {
   // Title and description come as [] | [string] in the candid types
 
@@ -353,7 +314,7 @@ export const mapPartialDtoToLinkDetailModel = (
 
 // This method mapping LinkDetailModel to LinkDto - using for frontend state machine
 export const mapLinkDetailModelToLinkDto = (
-  model: LinkDetailModel,
+  model: LinkDetailModel
 ): LinkDto => {
   if (!model.state) {
     throw new Error("Link state is undefined");
@@ -371,7 +332,7 @@ export const mapLinkDetailModelToLinkDto = (
       ? toNullable(mapFrontendLinkTypeToLinkType(model.linkType))
       : [],
     asset_info: model.asset_info.map((asset) =>
-      mapFrontendAssetInfoModelToAssetInfo(asset),
+      mapFrontendAssetInfoModelToAssetInfo(asset)
     ),
     template: toNullable(mapFrontendTemplateToTemplate(TEMPLATE.CENTRAL)),
     creator: Principal.fromText(model.creator),
@@ -388,7 +349,7 @@ export const mapLinkDetailModelToLinkDto = (
 
 // Map back-end link detail ('GetLinkResp') to Front-end model
 export const mapLinkDetailModel = async (
-  linkObj: GetLinkResp,
+  linkObj: GetLinkResp
 ): Promise<LinkModel> => {
   const { link: linkDto, action: linkObjAction } = linkObj;
   const actionDto = fromNullable(linkObjAction);
@@ -400,19 +361,19 @@ export const mapLinkDetailModel = async (
 
 // Map back-end link user state to front-end model
 export const mapLinkUserStateModel = (
-  model: LinkGetUserStateOutput,
+  model: LinkGetUserStateOutput
 ): LinkGetUserStateOutputModel => {
   return {
     action: model ? mapActionModel(model.action) : undefined,
     link_user_state: mapUserLinkStateToFrontendLinkUserState(
-      model.link_user_state,
+      model.link_user_state
     ),
   };
 };
 
 // Map from UserInputItem to LinkDetailModel
 export const mapUserInputItemToLinkDetailModel = (
-  model: Partial<UserInputItem>,
+  model: Partial<UserInputItem>
 ): {
   id: string;
   title: string;
@@ -433,7 +394,7 @@ export const mapUserInputItemToLinkDetailModel = (
         chain: asset.chain,
         label: asset.label,
         amountPerUse: asset.linkUseAmount,
-      }),
+      })
     ) || [];
 
   return {
@@ -453,7 +414,7 @@ export const mapUserInputItemToLinkDetailModel = (
 
 // Map front-end LinkDetailModel directly to CreateLinkInput (used when creating a link from local model)
 export const mapLinkDetailModelToCreateLinkInput = (
-  model: LinkDetailModel,
+  model: LinkDetailModel
 ): CreateLinkInput => {
   const assetInfo =
     model.asset_info && model.asset_info.length > 0
@@ -464,30 +425,12 @@ export const mapLinkDetailModelToCreateLinkInput = (
   const link_type: LinkType = model.linkType
     ? mapFrontendLinkTypeToLinkType(model.linkType)
     : ({ SendTip: null } as LinkType);
-  const description: [] | [string] = model.description
-    ? ([model.description] as [string])
-    : [];
-  let template: Template;
-  if (
-    model.template &&
-    (Object.values(TEMPLATE) as string[]).includes(model.template)
-  ) {
-    template = mapFrontendTemplateToTemplate(
-      model.template as unknown as TEMPLATE,
-    );
-  } else {
-    template = { Central: null } as Template;
-  }
 
   return {
     title,
     asset_info: assetInfo,
     link_type,
-    description,
-    link_image_url: [],
-    template,
     link_use_action_max_count: model.maxActionNumber ?? BigInt(0),
-    nft_image: [],
   };
 };
 
