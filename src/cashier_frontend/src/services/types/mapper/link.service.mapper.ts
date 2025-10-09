@@ -53,7 +53,7 @@ const mapFrontendLinkTypeToLinkType = (linkType: LINK_TYPE): LinkType => {
 };
 
 export const mapFrontendGotoToUserStateMachineGoto = (
-  goto: "Continue" | "Back"
+  goto: "Continue" | "Back",
 ): LinkStateMachineGoto => {
   const key = goto;
   switch (key) {
@@ -90,7 +90,7 @@ type TemporaryLinkState =
   | { AddAssets: null };
 
 export const mapLinkStateToEnum = (
-  linkState: TemporaryLinkState
+  linkState: TemporaryLinkState,
 ): LINK_STATE | FRONTEND_LINK_STATE => {
   const key = getKeyVariant(linkState);
   switch (key) {
@@ -113,8 +113,8 @@ export const mapLinkStateToEnum = (
   }
 };
 
-export const mapLinkStateToDto = (
-  linkState: LINK_STATE | FRONTEND_LINK_STATE
+const mapLinkStateToDto = (
+  linkState: LINK_STATE | FRONTEND_LINK_STATE,
 ): TemporaryLinkState => {
   switch (linkState) {
     case FRONTEND_LINK_STATE.CHOOSE_TEMPLATE:
@@ -137,7 +137,7 @@ export const mapLinkStateToDto = (
 };
 
 const mapAssetInfoToFrontendAssetInfo = (
-  assetInfo: AssetInfoDto
+  assetInfo: AssetInfoDto,
 ): AssetInfoModel => {
   const key = getKeyVariant(assetInfo.asset);
   console.log("[mapAssetInfoToFrontendAssetInfo] input:", assetInfo);
@@ -155,7 +155,7 @@ const mapAssetInfoToFrontendAssetInfo = (
 };
 
 const mapFrontendAssetInfoModelToAssetInfo = (
-  asset: AssetInfoModel
+  asset: AssetInfoModel,
 ): AssetInfoDto => {
   switch (asset.chain) {
     case CHAIN.IC:
@@ -170,7 +170,7 @@ const mapFrontendAssetInfoModelToAssetInfo = (
 };
 
 const mapUserLinkStateToFrontendLinkUserState = (
-  state: LinkUserState
+  state: LinkUserState,
 ): LINK_USER_STATE => {
   const key = getKeyVariant(state);
   switch (key) {
@@ -191,12 +191,12 @@ const mapUserLinkStateToFrontendLinkUserState = (
 export const mapLinkDetailModelToUpdateLinkInputModel = (
   linkId: string,
   linkDetailModel: Partial<UserInputItem>,
-  isContinue: boolean
+  isContinue: boolean,
 ): UpdateLinkInput => {
   const updateLinkInput: UpdateLinkInput = {
     id: linkId,
     goto: mapFrontendGotoToUserStateMachineGoto(
-      isContinue ? "Continue" : "Back"
+      isContinue ? "Continue" : "Back",
     ),
   };
 
@@ -241,7 +241,7 @@ export const mapLinkDetailModelToDto = (link: LinkDetailModel): LinkDto => {
 
 // Map back-end link detail ('GetLinkResp') to Front-end model
 export const mapLinkDetailModel = async (
-  linkObj: GetLinkResp
+  linkObj: GetLinkResp,
 ): Promise<LinkModel> => {
   const { link: linkDto, action: linkObjAction } = linkObj;
   const actionDto = fromNullable(linkObjAction);
@@ -253,19 +253,19 @@ export const mapLinkDetailModel = async (
 
 // Map back-end link user state to front-end model
 export const mapLinkUserStateModel = (
-  model: LinkGetUserStateOutput
+  model: LinkGetUserStateOutput,
 ): LinkGetUserStateOutputModel => {
   return {
     action: model ? mapActionModel(model.action) : undefined,
     link_user_state: mapUserLinkStateToFrontendLinkUserState(
-      model.link_user_state
+      model.link_user_state,
     ),
   };
 };
 
 // Map front-end LinkDetailModel directly to CreateLinkInput (used when creating a link from local model)
 export const mapLinkDetailModelToCreateLinkInput = (
-  model: LinkDetailModel
+  model: LinkDetailModel,
 ): CreateLinkInput => {
   const assetInfo =
     model.asset_info && model.asset_info.length > 0
@@ -308,7 +308,7 @@ export const mapLinkDtoToUserInputItem = (dto: LinkDto): UserInputItem => {
     linkId: dto.id,
     linkType: mapLinkTypeToEnum(dto.link_type),
     title: dto.title,
-    assets,
+    asset_info: assets,
     maxActionNumber: dto.link_use_action_max_count,
   };
 };

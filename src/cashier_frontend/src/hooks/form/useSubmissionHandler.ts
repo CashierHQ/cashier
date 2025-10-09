@@ -53,7 +53,7 @@ export interface TemplateSubmissionContext extends BaseSubmissionContext {
   carouselIndex: number;
   validateTemplate: (
     currentLink: Partial<UserInputItem> | undefined,
-    carouselIndex: number
+    carouselIndex: number,
   ) => ValidationResult;
   isLinkTypeSupported: (linkType: LINK_TYPE) => boolean;
   onUnsupportedType: () => void;
@@ -87,14 +87,14 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
           throw errorHandler.createError(
             ErrorCode.LINK_ID_MISSING,
             {},
-            "Link ID not found"
+            "Link ID not found",
           );
         }
         if (!formAssets || formAssets.length === 0) {
           throw errorHandler.createError(
             ErrorCode.NO_ASSETS_FOUND,
             {},
-            "No assets found"
+            "No assets found",
           );
         }
 
@@ -112,7 +112,7 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
               maxActionNumber: isAirdrop ? maxActionNumber : 1,
               includeLinkCreationFee: false,
               skipBalanceCheck: false,
-            }
+            },
           );
 
           // Check for validation errors and insufficient balance
@@ -138,14 +138,14 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
             // Handle insufficient balance specifically
             if (insufficientToken) {
               console.warn(
-                `Insufficient balance for token: ${insufficientToken}`
+                `Insufficient balance for token: ${insufficientToken}`,
               );
               throw errorHandler.createError(
                 ErrorCode.INSUFFICIENT_BALANCE,
                 {
                   tokenSymbol: insufficientToken,
                 },
-                `Insufficient balance for ${insufficientToken}`
+                `Insufficient balance for ${insufficientToken}`,
               );
             }
           }
@@ -156,7 +156,7 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
           throw errorHandler.createError(
             ErrorCode.NO_USES_AVAILABLE,
             {},
-            "No more uses available"
+            "No more uses available",
           );
         }
 
@@ -180,7 +180,7 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
         const linkForFormatting = { linkType, id: linkId };
         const formattedAssets = formatAssetsForSubmission(
           formAssets,
-          linkForFormatting as LinkDetailModel
+          linkForFormatting as LinkDetailModel,
         );
 
         // Update store with formatted assets
@@ -194,7 +194,7 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
         }));
 
         updateUserInput(linkId, {
-          assets: storeAssets,
+          asset_info: storeAssets,
           maxActionNumber: BigInt(maxActionNumber),
         });
 
@@ -203,7 +203,7 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
           throw errorHandler.createError(
             ErrorCode.USER_INPUT_NOT_FOUND,
             {},
-            "Input not found"
+            "Input not found",
           );
         }
 
@@ -223,7 +223,7 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
         // Use the context's error handler if provided, otherwise display the error
         if (context.errorHandler) {
           context.errorHandler(
-            error instanceof Error ? error : new Error(String(error))
+            error instanceof Error ? error : new Error(String(error)),
           );
         } else {
           errorHandler.displayError(error);
@@ -239,7 +239,7 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
       t,
       updateUserInput,
       errorHandler,
-    ]
+    ],
   );
 
   // Link creation submission logic
@@ -279,7 +279,7 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
         showConfirmation();
       }
     },
-    [link, createNewLink, addUserInput]
+    [link, createNewLink, addUserInput],
   );
 
   // Template submission logic
@@ -311,15 +311,15 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
         const supportMultiAsset = [LINK_TYPE.SEND_TOKEN_BASKET];
         if (
           !supportMultiAsset.includes(currentLink?.linkType as LINK_TYPE) &&
-          currentLink.assets &&
-          currentLink.assets.length > 1
+          currentLink.asset_info &&
+          currentLink.asset_info.length > 1
         ) {
-          const forceNewAsset = currentLink.assets[0];
+          const forceNewAsset = currentLink.asset_info[0];
           forceNewAsset.label = getAssetLabelForLinkType(
             currentLink.linkType as LINK_TYPE,
-            forceNewAsset.address
+            forceNewAsset.address,
           );
-          currentLink.assets = [forceNewAsset];
+          currentLink.asset_info = [forceNewAsset];
         }
 
         // Call state machine
@@ -335,7 +335,7 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
         onUnsupportedType();
       }
     },
-    [callLinkStateMachine, setStep]
+    [callLinkStateMachine, setStep],
   );
 
   return {

@@ -149,7 +149,7 @@ export const useCreateConfirmation = ({
     () => (action: ActionModel) => {
       updateInternalAction(action);
     },
-    [updateInternalAction]
+    [updateInternalAction],
   );
 
   /**
@@ -159,7 +159,7 @@ export const useCreateConfirmation = ({
     () => (error: Error) => {
       onCashierError(error);
     },
-    [onCashierError]
+    [onCashierError],
   );
 
   return {

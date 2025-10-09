@@ -30,7 +30,7 @@ import { useLinkMutations } from "@/hooks/useLinkMutations";
 import { mapLinkStateToEnum } from "@/services/types/mapper/link.service.mapper";
 
 export function stateToStepIndex(
-  state: LINK_STATE | FRONTEND_LINK_STATE | undefined
+  state: LINK_STATE | FRONTEND_LINK_STATE | undefined,
 ): number {
   if (state === FRONTEND_LINK_STATE.CHOOSE_TEMPLATE) {
     return 0;
@@ -114,7 +114,7 @@ export default function LinkPage() {
         linkId: link.id,
         title: link.title,
         linkType: mapStringToLinkType(link.linkType),
-        assets: link.asset_info.map((asset) => ({
+        asset_info: link.asset_info.map((asset) => ({
           address: asset.address,
           linkUseAmount: asset.amountPerUse,
           usdEquivalent: 0,

@@ -37,7 +37,7 @@ export function useLinksListQuery() {
       try {
         const linkService = new LinkService(identity);
         const linkLocalStorageService = new LinkLocalStorageServiceV2(
-          identity.getPrincipal().toString()
+          identity.getPrincipal().toString(),
         );
 
         const res = await linkService.getLinkList();
@@ -47,7 +47,7 @@ export function useLinksListQuery() {
         const links = res.data.concat(localRes.data);
 
         const result = groupLinkListByDate(
-          links.map((linkModel) => linkModel.link)
+          links.map((linkModel) => linkModel.link),
         );
 
         return result;
@@ -72,7 +72,7 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
 
       if (linkId.startsWith(LOCAL_lINK_ID_PREFIX) && identity) {
         const linkLocalStorageService = new LinkLocalStorageServiceV2(
-          identity.getPrincipal().toString()
+          identity.getPrincipal().toString(),
         );
         const localLink = linkLocalStorageService.getLink(linkId);
         const linkModel: LinkModel = {
@@ -101,7 +101,7 @@ export function useLinkDetailQuery(linkId?: string, actionType?: ACTION_TYPE) {
 export const getLinkDetailQuery = async (
   linkId: string,
   actionType: ACTION_TYPE,
-  identity: Identity | undefined
+  identity: Identity | undefined,
 ) => {
   const linkService = new LinkService(identity);
   const res = await linkService.getLink(linkId, actionType);
@@ -117,7 +117,7 @@ export function useUpdateLinkMutation() {
       if (!identity) throw new Error("Identity is required");
       const linkService = new LinkService(identity);
       const linkLocalStorageService = new LinkLocalStorageServiceV2(
-        identity.getPrincipal().toString()
+        identity.getPrincipal().toString(),
       );
       const linkId = data.linkId;
 
@@ -126,7 +126,7 @@ export function useUpdateLinkMutation() {
           data.linkId,
           data.linkModel,
           data.isContinue,
-          identity.getPrincipal().toString()
+          identity.getPrincipal().toString(),
         );
 
         return mapLinkDetailModelToDto(localStorageLink);
@@ -134,7 +134,7 @@ export function useUpdateLinkMutation() {
         const updated_link = await linkService.updateLink(
           data.linkId,
           data.linkModel,
-          data.isContinue
+          data.isContinue,
         );
 
         return updated_link;
@@ -170,6 +170,8 @@ export function useCreateNewLinkMutation() {
       );
 
       const link = linkLocalStorageService.getLink(localLinkId);
+
+      console.log("Creating link from local:", link);
 
       const input = mapLinkDetailModelToCreateLinkInput(link);
 

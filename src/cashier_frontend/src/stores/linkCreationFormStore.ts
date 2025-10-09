@@ -17,7 +17,7 @@ export interface UserInputItem {
   linkId: string;
   title: string;
   linkType: LINK_TYPE;
-  assets: UserInputAsset[];
+  asset_info: UserInputAsset[];
   maxActionNumber: bigint;
 }
 

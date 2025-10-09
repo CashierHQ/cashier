@@ -72,7 +72,7 @@ export default function LinkItem({ link }: { link: LinkDetailModel }) {
         <div className="flex items-center justify-center w-[32px] h-[32px] bg-[#E8F2EE] rounded-[6px]">
           <img
             src={getLinkDefaultAvatar(
-              (link.linkType as LINK_TYPE) ?? LINK_TYPE.SEND_TIP
+              (link.linkType as LINK_TYPE) ?? LINK_TYPE.SEND_TIP,
             )}
             alt="link"
             className="w-18 h-18 rounded-sm"
