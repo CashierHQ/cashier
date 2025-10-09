@@ -18,7 +18,7 @@ pub struct Link {
     pub title: Option<String>,
     #[deprecated(note = "This should be remove")]
     pub description: Option<String>,
-     #[deprecated(note = "This should be mandatory")]
+    #[deprecated(note = "This should be mandatory")]
     pub link_type: Option<LinkType>,
     pub asset_info: Vec<AssetInfo>,
     #[deprecated(note = "This should be remove")]

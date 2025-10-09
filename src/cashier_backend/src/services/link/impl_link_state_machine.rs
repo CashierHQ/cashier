@@ -7,15 +7,11 @@ use crate::{
 };
 use candid::Principal;
 use cashier_backend_types::{
-    dto::link::{
-        CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDetailUpdateInput,
-        LinkStateMachineGoto,
-    },
+    dto::link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkStateMachineGoto},
     error::CanisterError,
     repository::{
         action::v1::{Action, ActionState, ActionType},
-        asset_info::AssetInfo,
-        link::v1::{Link, LinkState, LinkType, Template},
+        link::v1::{Link, LinkState, Template},
         link_action::v1::LinkAction,
         user_link::v1::UserLink,
     },
@@ -25,130 +21,6 @@ use log::error;
 use uuid::Uuid;
 
 impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService<E, R> {
-    // this method checking non-whitelist props are changed or not
-    // if changed, return true
-    // if not changed, return false
-    fn is_props_changed(
-        &self,
-        whitelist_props: &[String],
-        params: &LinkDetailUpdateInput,
-        link: &Link,
-    ) -> bool {
-        let props_list = [
-            "title".to_string(),
-            "description".to_string(),
-            "asset_info".to_string(),
-            "template".to_string(),
-            "link_type".to_string(),
-            "link_image_url".to_string(),
-            "nft_image".to_string(),
-            "link_use_action_max_count".to_string(),
-        ];
-
-        let check_props = props_list
-            .iter()
-            .filter(|prop| !whitelist_props.contains(prop))
-            .collect::<Vec<_>>();
-
-        for prop in check_props.iter() {
-            match prop.as_str() {
-                "title" => {
-                    if params.title.is_none() {
-                        return false;
-                    }
-
-                    if params.title != link.title {
-                        return true;
-                    }
-                }
-                "description" => {
-                    if params.description.is_none() {
-                        return false;
-                    }
-
-                    if params.description != link.description {
-                        return true;
-                    }
-                }
-                "link_image_url" => {
-                    if params.link_image_url.is_none() {
-                        return false;
-                    }
-
-                    if params.link_image_url != link.get_metadata("link_image_url") {
-                        return true;
-                    }
-                }
-                "nft_image" => {
-                    if params.nft_image.is_none() {
-                        return false;
-                    }
-
-                    if params.nft_image != link.get_metadata("nft_image") {
-                        return true;
-                    }
-                }
-                "link_type" => {
-                    if params.link_type.is_none() {
-                        return false;
-                    }
-                    if params.link_type != link.link_type {
-                        return true;
-                    }
-                }
-                "template" => {
-                    if params.template.is_none() {
-                        return false;
-                    }
-                    if params.template != link.template {
-                        return true;
-                    }
-                }
-                "link_use_action_max_count" => {
-                    if let Some(max_count) = params.link_use_action_max_count {
-                        if max_count != link.link_use_action_max_count {
-                            return true;
-                        }
-                    } else {
-                        return false;
-                    }
-                }
-                "asset_info" => {
-                    // Compare IDs in both lists
-                    let link_ids: Vec<_> =
-                        link.asset_info.iter().map(|asset| &asset.label).collect();
-                    let params_ids: Vec<_> =
-                        params.asset_info.iter().map(|asset| &asset.label).collect();
-
-                    // asset info changed
-                    if link_ids.len() != params_ids.len()
-                        || !link_ids.iter().all(|id| params_ids.contains(id))
-                    {
-                        return true;
-                    }
-
-                    // Compare updated data
-                    for param_asset in &params.asset_info {
-                        if let Some(link_asset) = link
-                            .asset_info
-                            .iter()
-                            .find(|asset| asset.label == param_asset.label)
-                        {
-                            if param_asset.is_changed(link_asset) {
-                                return true;
-                            }
-                        } else {
-                            return true;
-                        }
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        false
-    }
-
     async fn create_link(
         &mut self,
         user_id: Principal,
@@ -160,17 +32,25 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
 
         let new_link = Link {
             id: link_id_str.clone(),
-            state: LinkState::ChooseLinkType,
-            title: None,
-            description: None,
+            state: LinkState::CreateLink,
+            // should be a mandatory field
+            title: Some(input.title),
+            // should be a mandatory field
             link_type: Some(input.link_type),
-            asset_info: vec![],
+            // should be removed
+            description: None,
+            // should be removed
             template: Some(Template::Central),
+            asset_info: input
+                .asset_info
+                .iter()
+                .map(LinkDetailUpdateAssetInfoInput::to_model)
+                .collect(),
             creator: user_id,
             create_at: ts,
             metadata: Default::default(),
             link_use_action_counter: 0,
-            link_use_action_max_count: 0,
+            link_use_action_max_count: input.link_use_action_max_count,
         };
         let new_user_link = UserLink {
             user_id,
@@ -178,239 +58,22 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         };
 
         // Create the initial link and user_link records
-        self.link_repository.create(new_link);
+        self.link_repository.create(new_link.clone());
         self.user_link_repository.create(new_user_link.clone());
 
-        // First transition: ChooseLinkType -> AddAssets
-        // For this transition, we only need title, template, and link_type
-        let choose_link_type_params = LinkDetailUpdateInput {
-            title: Some(input.title.clone()),
-            template: Some(input.template.clone()),
-            link_type: Some(input.link_type),
-            description: None,
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            link_use_action_max_count: None,
-        };
-
-        let result = self
-            .handle_link_state_transition(
-                &link_id_str,
-                LinkStateMachineGoto::Continue,
-                Some(choose_link_type_params),
-            )
-            .await;
-
-        if result.is_err() {
-            // Clean up on failure
-            self.link_repository.delete(&link_id_str);
-            self.user_link_repository.delete(&new_user_link);
-            return Err(CanisterError::HandleLogicError(format!(
-                "Create link failed: transition from ChooseLinkType to AddAssets {:?}",
-                result.err()
-            )));
-        }
-
-        // Second transition: AddAssets -> Preview
-        // For this transition, we only need asset_info and link_use_action_max_count
-        let add_assets_params = LinkDetailUpdateInput {
-            title: None,
-            template: None,
-            link_type: None,
-            description: input.description.clone(),
-            link_image_url: input.link_image_url.clone(),
-            nft_image: input.nft_image.clone(),
-            asset_info: input.asset_info.clone(),
-            link_use_action_max_count: Some(input.link_use_action_max_count),
-        };
-
-        let result = self
-            .handle_link_state_transition(
-                &link_id_str,
-                LinkStateMachineGoto::Continue,
-                Some(add_assets_params),
-            )
-            .await;
-
-        if result.is_err() {
-            // Clean up on failure
-            self.link_repository.delete(&link_id_str);
-            self.user_link_repository.delete(&new_user_link);
-            return Err(CanisterError::HandleLogicError(format!(
-                "Create link failed: transition from AddAssets to Preview {:?}",
-                result.err()
-            )));
-        }
-
-        // Second transition: Preview -> CreateLink
-        let add_assets_params = LinkDetailUpdateInput {
-            title: None,
-            template: None,
-            link_type: None,
-            description: None,
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            link_use_action_max_count: None,
-        };
-
-        let result = self
-            .handle_link_state_transition(
-                &link_id_str,
-                LinkStateMachineGoto::Continue,
-                Some(add_assets_params),
-            )
-            .await;
-
-        if result.is_err() {
-            // Clean up on failure
-            self.link_repository.delete(&link_id_str);
-            self.user_link_repository.delete(&new_user_link);
-            return Err(CanisterError::HandleLogicError(format!(
-                "Create link failed: transition from Preview to CreateLink {:?}",
-                result.err()
-            )));
-        }
-
-        // Successfully reached CreateLink state
-        result
+        Ok(new_link)
     }
 
     async fn handle_link_state_transition(
         &mut self,
         link_id: &str,
         link_state_goto: LinkStateMachineGoto,
-        params: Option<LinkDetailUpdateInput>,
     ) -> Result<Link, CanisterError> {
         let mut link = self.get_link_by_id(link_id)?;
 
-        // if params is None, all params are None
-        // some goto not required params like Back
-        let params = params.unwrap_or(LinkDetailUpdateInput {
-            title: None,
-            description: None,
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: None,
-            link_type: None,
-            link_use_action_max_count: None,
-        });
-
         // !Start of link state machine
         // CHOOSE LINK TYPE
-        if link.state == LinkState::ChooseLinkType {
-            let (template, link_type) = self.prefetch_template(&params)?;
-
-            if self.is_props_changed(
-                &[
-                    "title".to_string(),
-                    "template".to_string(),
-                    "link_type".to_string(),
-                ],
-                &params,
-                &link,
-            ) {
-                return Err(CanisterError::ValidationErrors(
-                    "[ChooseLinkType] Link properties are not allowed to change".to_string(),
-                ));
-            }
-
-            // ====== Continue Go to =====
-            if link_state_goto == LinkStateMachineGoto::Continue {
-                link.title = params.title.clone();
-                link.template = Some(template);
-                link.link_type = Some(link_type);
-                link.state = LinkState::AddAssets;
-                self.link_repository.update(link.clone());
-                Ok(link.clone())
-
-            // ====== Back Go to =====
-            } else if link_state_goto == LinkStateMachineGoto::Back {
-                link.title = params.title.clone();
-                link.template = Some(template);
-                link.link_type = Some(link_type);
-                self.link_repository.update(link.clone());
-                Ok(link.clone())
-            }
-            // ====== invalid state =====
-            else {
-                Err(CanisterError::ValidationErrors(
-                    "State transition failed for ChooseLinkType".to_string(),
-                ))
-            }
-        } else if link.state == LinkState::AddAssets {
-            let (link_use_action_max_count, asset_info) =
-                self.prefetch_params_add_asset(&params)?;
-
-            if self.is_props_changed(
-                &[
-                    "link_use_action_max_count".to_string(),
-                    "asset_info".to_string(),
-                ],
-                &params,
-                &link,
-            ) {
-                return Err(CanisterError::ValidationErrors(
-                    "[AddAssets] Link properties are not allowed to change".to_string(),
-                ));
-            }
-
-            // ====== Continue Go to =====
-            if link_state_goto == LinkStateMachineGoto::Continue {
-                if !self.validate_add_asset_with_link_type(&link, &asset_info) {
-                    return Err(CanisterError::ValidationErrors(
-                        "Link type add asset validate failed".to_string(),
-                    ));
-                }
-
-                link.asset_info = asset_info;
-                link.link_use_action_max_count = link_use_action_max_count;
-                link.state = LinkState::Preview;
-                self.link_repository.update(link.clone());
-                Ok(link.clone())
-            }
-            // ===== Back Go to =====
-            else if link_state_goto == LinkStateMachineGoto::Back {
-                link.state = LinkState::ChooseLinkType;
-                link.asset_info = asset_info;
-                link.link_use_action_max_count = link_use_action_max_count;
-                self.link_repository.update(link.clone());
-                Ok(link.clone())
-            }
-            // ===== invalid state =====
-            else {
-                Err(CanisterError::ValidationErrors(
-                    "State transition failed for AddAssets".to_string(),
-                ))
-            }
-        } else if link.state == LinkState::Preview {
-            if self.is_props_changed(&[], &params, &link) {
-                return Err(CanisterError::ValidationErrors(
-                    "[Preview] Link properties are not allowed to change".to_string(),
-                ));
-            }
-
-            // ===== Continue Go to =====
-            if link_state_goto == LinkStateMachineGoto::Continue {
-                link.state = LinkState::CreateLink;
-                self.link_repository.update(link.clone());
-                Ok(link.clone())
-            }
-            // ===== Back Go to =====
-            else if link_state_goto == LinkStateMachineGoto::Back {
-                link.state = LinkState::AddAssets;
-                self.link_repository.update(link.clone());
-                Ok(link.clone())
-            }
-            // ===== invalid state =====
-            else {
-                Err(CanisterError::ValidationErrors(
-                    "State transition failed for Preview".to_string(),
-                ))
-            }
-        } else if link.state == LinkState::CreateLink {
+        if link.state == LinkState::CreateLink {
             let create_action = self.prefetch_create_action(&link)?;
 
             // ===== Continue Go to =====
@@ -437,12 +100,6 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
                 ))
             }
         } else if link.state == LinkState::Active {
-            if self.is_props_changed(&[], &params, &link) {
-                return Err(CanisterError::ValidationErrors(
-                    "[Active] Link properties are not allowed to change".to_string(),
-                ));
-            }
-
             if link_state_goto == LinkStateMachineGoto::Continue {
                 if self.check_link_asset_left(&link).await? {
                     link.state = LinkState::Inactive;
@@ -457,12 +114,6 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
                 ))
             }
         } else if link.state == LinkState::Inactive {
-            if self.is_props_changed(&[], &params, &link) {
-                return Err(CanisterError::ValidationErrors(
-                    "[Inactive] Link properties are not allowed to change".to_string(),
-                ));
-            }
-
             let withdraw_action = self.prefetch_withdraw_action(&link)?;
             if link_state_goto == LinkStateMachineGoto::Continue {
                 if !self.check_link_asset_left(&link).await? {
@@ -499,41 +150,6 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
             Err(CanisterError::ValidationErrors("Invalid state".to_string()))
         }
         // !End of link state machine
-    }
-
-    fn prefetch_template(
-        &self,
-        params: &LinkDetailUpdateInput,
-    ) -> Result<(Template, LinkType), CanisterError> {
-        let template = params
-            .template
-            .clone()
-            .ok_or_else(|| CanisterError::ValidationErrors("Template is required".to_string()))?;
-
-        let link_type = params
-            .link_type
-            .ok_or_else(|| CanisterError::ValidationErrors("Link type is required".to_string()))?;
-
-        Ok((template, link_type))
-    }
-
-    fn prefetch_params_add_asset(
-        &self,
-        params: &LinkDetailUpdateInput,
-    ) -> Result<(u64, Vec<AssetInfo>), CanisterError> {
-        let link_use_action_max_count = params.link_use_action_max_count.ok_or_else(|| {
-            CanisterError::ValidationErrors("Link use action max count is required".to_string())
-        })?;
-
-        let asset_info_input = params.asset_info.clone();
-
-        Ok((
-            link_use_action_max_count,
-            asset_info_input
-                .iter()
-                .map(LinkDetailUpdateAssetInfoInput::to_model)
-                .collect(),
-        ))
     }
 
     fn prefetch_create_action(&self, link: &Link) -> Result<Option<Action>, CanisterError> {
@@ -575,843 +191,14 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
 
 #[cfg(test)]
 mod tests {
+    use cashier_backend_types::constant::INTENT_LABEL_SEND_TIP_ASSET;
+    use cashier_backend_types::repository::{common::Asset, link::v1::LinkType};
+
     use super::*;
     use crate::repositories::tests::TestRepositories;
     use crate::services::link::test_fixtures::*;
-    use crate::utils::test_utils::{
-        random_id_string, random_principal_id, runtime::MockIcEnvironment,
-    };
-    use cashier_backend_types::repository::common::Asset;
-    use cashier_backend_types::repository::{
-        asset_info::AssetInfo,
-        link::v1::{Link, LinkState, LinkType},
-    };
-    use std::collections::HashMap;
+    use crate::utils::test_utils::{random_principal_id, runtime::MockIcEnvironment};
     use std::rc::Rc;
-
-    #[test]
-    fn it_should_false_is_props_changed_if_title_unchanged() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link_id = random_id_string();
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Title".to_string()),
-            description: None,
-            link_type: None,
-            asset_info: vec![],
-            template: None,
-            creator: random_principal_id(),
-            create_at: 0,
-            metadata: Default::default(),
-            link_use_action_counter: 0,
-            link_use_action_max_count: 0,
-        };
-
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: None,
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: None,
-            link_type: None,
-            link_use_action_max_count: None,
-        };
-
-        let whitelist_props = create_whitelist_props("title");
-
-        // Act
-        let changed = service.is_props_changed(&whitelist_props, &params, &link);
-
-        // Assert
-        assert!(!changed);
-    }
-
-    #[test]
-    fn it_should_true_is_props_changed_if_title_changed() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link_id = random_id_string();
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Title".to_string()),
-            description: None,
-            link_type: None,
-            asset_info: vec![],
-            template: None,
-            creator: random_principal_id(),
-            create_at: 0,
-            metadata: Default::default(),
-            link_use_action_counter: 0,
-            link_use_action_max_count: 0,
-        };
-
-        let params = LinkDetailUpdateInput {
-            title: Some("New Title".to_string()),
-            description: None,
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: None,
-            link_type: None,
-            link_use_action_max_count: None,
-        };
-
-        let whitelist_props = create_whitelist_props("title");
-
-        // Act
-        let changed = service.is_props_changed(&whitelist_props, &params, &link);
-
-        // Assert
-        assert!(changed);
-    }
-
-    #[test]
-    fn it_should_false_is_props_changed_if_description_unchanged() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link_id = random_id_string();
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: None,
-            description: Some("Description".to_string()),
-            link_type: None,
-            asset_info: vec![],
-            template: None,
-            creator: random_principal_id(),
-            create_at: 0,
-            metadata: Default::default(),
-            link_use_action_counter: 0,
-            link_use_action_max_count: 0,
-        };
-
-        let params = LinkDetailUpdateInput {
-            title: None,
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: None,
-            link_type: None,
-            link_use_action_max_count: None,
-        };
-
-        let whitelist_props = create_whitelist_props("description");
-
-        // Act
-        let changed = service.is_props_changed(&whitelist_props, &params, &link);
-
-        // Assert
-        assert!(!changed);
-    }
-
-    #[test]
-    fn it_should_true_is_props_changed_if_description_changed() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link_id = random_id_string();
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_type: None,
-            asset_info: vec![],
-            template: None,
-            creator: random_principal_id(),
-            create_at: 0,
-            metadata: Default::default(),
-            link_use_action_counter: 0,
-            link_use_action_max_count: 0,
-        };
-
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("New Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: None,
-            link_type: None,
-            link_use_action_max_count: None,
-        };
-
-        let whitelist_props = create_whitelist_props("description");
-
-        // Act
-        let changed = service.is_props_changed(&whitelist_props, &params, &link);
-
-        // Assert
-        assert!(changed);
-    }
-
-    #[test]
-    fn it_should_false_is_props_changed_if_link_image_url_unchanged() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link_id = random_id_string();
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_type: None,
-            asset_info: vec![],
-            template: None,
-            creator: random_principal_id(),
-            create_at: 0,
-            metadata: Default::default(),
-            link_use_action_counter: 0,
-            link_use_action_max_count: 0,
-        };
-
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: None,
-            link_type: None,
-            link_use_action_max_count: None,
-        };
-        let whitelist_props = create_whitelist_props("link_image_url");
-
-        // Act
-        let changed = service.is_props_changed(&whitelist_props, &params, &link);
-
-        // Assert
-        assert!(!changed);
-    }
-
-    #[test]
-    fn it_should_true_is_props_changed_if_link_image_url_changed() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link_id = random_id_string();
-        let meta_data = HashMap::from([(
-            "link_image_url".to_string(),
-            "http://example.com/image.png".to_string(),
-        )]);
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_type: None,
-            asset_info: vec![],
-            template: None,
-            creator: random_principal_id(),
-            create_at: 0,
-            metadata: meta_data,
-            link_use_action_counter: 0,
-            link_use_action_max_count: 0,
-        };
-
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: Some("http://example.com/new_image.png".to_string()),
-            nft_image: None,
-            asset_info: vec![],
-            template: None,
-            link_type: None,
-            link_use_action_max_count: None,
-        };
-
-        let whitelist_props = create_whitelist_props("link_image_url");
-
-        // Act
-        let changed = service.is_props_changed(&whitelist_props, &params, &link);
-
-        // Assert
-        assert!(changed);
-    }
-
-    #[test]
-    fn it_should_false_is_props_changed_if_nft_image_unchanged() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link_id = random_id_string();
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_type: None,
-            asset_info: vec![],
-            template: None,
-            creator: random_principal_id(),
-            create_at: 0,
-            metadata: Default::default(),
-            link_use_action_counter: 0,
-            link_use_action_max_count: 0,
-        };
-
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: None,
-            link_type: None,
-            link_use_action_max_count: None,
-        };
-
-        let whitelist_props = create_whitelist_props("nft_image");
-
-        // Act
-        let changed = service.is_props_changed(&whitelist_props, &params, &link);
-
-        // Assert
-        assert!(!changed);
-    }
-
-    #[test]
-    fn it_should_true_is_props_changed_if_nft_image_changed() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link_id = random_id_string();
-        let meta_data = HashMap::from([(
-            "nft_image".to_string(),
-            "http://example.com/nft.png".to_string(),
-        )]);
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_type: None,
-            asset_info: vec![],
-            template: None,
-            creator: random_principal_id(),
-            create_at: 0,
-            metadata: meta_data,
-            link_use_action_counter: 0,
-            link_use_action_max_count: 0,
-        };
-
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: Some("http://example.com/new_nft.png".to_string()),
-            asset_info: vec![],
-            template: None,
-            link_type: None,
-            link_use_action_max_count: None,
-        };
-
-        let whitelist_props = create_whitelist_props("nft_image");
-
-        // Act
-        let changed = service.is_props_changed(&whitelist_props, &params, &link);
-
-        // Assert
-        assert!(changed);
-    }
-
-    #[test]
-    fn it_should_false_is_props_changed_if_link_type_unchanged() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link_id = random_id_string();
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_type: Some(LinkType::SendTip),
-            asset_info: vec![],
-            template: None,
-            creator: random_principal_id(),
-            create_at: 0,
-            metadata: Default::default(),
-            link_use_action_counter: 0,
-            link_use_action_max_count: 0,
-        };
-
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: None,
-            link_type: Some(LinkType::SendTip),
-            link_use_action_max_count: None,
-        };
-
-        let whitelist_props = create_whitelist_props("link_type");
-
-        // Act
-        let changed = service.is_props_changed(&whitelist_props, &params, &link);
-
-        // Assert
-        assert!(!changed);
-    }
-
-    #[test]
-    fn it_should_true_is_props_changed_if_link_type_changed() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link_id = random_id_string();
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_type: Some(LinkType::SendTip),
-            asset_info: vec![],
-            template: None,
-            creator: random_principal_id(),
-            create_at: 0,
-            metadata: Default::default(),
-            link_use_action_counter: 0,
-            link_use_action_max_count: 0,
-        };
-
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: None,
-            link_type: Some(LinkType::SendAirdrop),
-            link_use_action_max_count: None,
-        };
-
-        let whitelist_props = create_whitelist_props("link_type");
-
-        // Act
-        let changed = service.is_props_changed(&whitelist_props, &params, &link);
-
-        // Assert
-        assert!(changed);
-    }
-
-    #[test]
-    fn it_should_return_true_if_asset_info_has_changed() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link_id = random_id_string();
-        let asset_address = random_principal_id();
-
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_type: None,
-            asset_info: vec![AssetInfo {
-                asset: Asset::IC {
-                    address: asset_address,
-                },
-                amount_per_link_use_action: 100,
-                label: "some_label".to_string(),
-            }],
-            template: None,
-            creator: random_principal_id(),
-            create_at: 0,
-            metadata: Default::default(),
-            link_use_action_counter: 0,
-            link_use_action_max_count: 0,
-        };
-
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![LinkDetailUpdateAssetInfoInput {
-                asset: Asset::IC {
-                    address: asset_address,
-                },
-                amount_per_link_use_action: 101,
-                label: "some_label".to_string(),
-            }],
-            template: None,
-            link_type: None,
-            link_use_action_max_count: None,
-        };
-
-        let whitelist_props = create_whitelist_props("asset_info");
-
-        // Act
-        let changed = service.is_props_changed(&whitelist_props, &params, &link);
-
-        // Assert
-        assert!(changed);
-    }
-
-    #[test]
-    fn it_should_true_is_props_changed_if_asset_info_changed() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link_id = random_id_string();
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_type: None,
-            asset_info: vec![AssetInfo {
-                asset: Asset::IC {
-                    address: random_principal_id(),
-                },
-                amount_per_link_use_action: 100,
-                label: "some_label".to_string(),
-            }],
-            template: None,
-            creator: random_principal_id(),
-            create_at: 0,
-            metadata: Default::default(),
-            link_use_action_counter: 0,
-            link_use_action_max_count: 0,
-        };
-
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![LinkDetailUpdateAssetInfoInput {
-                asset: Asset::IC {
-                    address: random_principal_id(),
-                },
-                amount_per_link_use_action: 100,
-                label: "some_label".to_string(),
-            }],
-            template: None,
-            link_type: None,
-            link_use_action_max_count: None,
-        };
-
-        let whitelist_props = create_whitelist_props("asset_info");
-
-        // Act
-        let changed = service.is_props_changed(&whitelist_props, &params, &link);
-
-        // Assert
-        assert!(changed);
-    }
-
-    #[test]
-    fn it_should_false_is_props_changed_if_link_use_action_max_count_unchanged() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link_id = random_id_string();
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_type: None,
-            asset_info: vec![],
-            template: None,
-            creator: random_principal_id(),
-            create_at: 0,
-            metadata: Default::default(),
-            link_use_action_counter: 0,
-            link_use_action_max_count: 10,
-        };
-
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: None,
-            link_type: None,
-            link_use_action_max_count: Some(10),
-        };
-
-        let whitelist_props = create_whitelist_props("link_use_action_max_count");
-
-        // Act
-        let changed = service.is_props_changed(&whitelist_props, &params, &link);
-
-        // Assert
-        assert!(!changed);
-    }
-
-    #[test]
-    fn it_should_true_is_props_changed_if_link_use_action_max_count_changed() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link_id = random_id_string();
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_type: None,
-            asset_info: vec![],
-            template: None,
-            creator: random_principal_id(),
-            create_at: 0,
-            metadata: Default::default(),
-            link_use_action_counter: 0,
-            link_use_action_max_count: 10,
-        };
-
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: None,
-            link_type: None,
-            link_use_action_max_count: Some(20),
-        };
-
-        let whitelist_props = create_whitelist_props("link_use_action_max_count");
-
-        // Act
-        let changed = service.is_props_changed(&whitelist_props, &params, &link);
-
-        // Assert
-        assert!(changed);
-    }
-
-    #[test]
-    fn it_should_false_is_props_changed_if_template_unchanged() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link_id = random_id_string();
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_type: None,
-            asset_info: vec![],
-            template: Some(Template::Central),
-            creator: random_principal_id(),
-            create_at: 0,
-            metadata: Default::default(),
-            link_use_action_counter: 0,
-            link_use_action_max_count: 0,
-        };
-
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: Some(Template::Central),
-            link_type: None,
-            link_use_action_max_count: None,
-        };
-
-        let whitelist_props = create_whitelist_props("template");
-
-        // Act
-        let changed = service.is_props_changed(&whitelist_props, &params, &link);
-
-        // Assert
-        assert!(!changed);
-    }
-
-    #[test]
-    fn it_should_true_is_props_changed_if_template_changed() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link_id = random_id_string();
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_type: None,
-            asset_info: vec![],
-            template: Some(Template::Central),
-            creator: random_principal_id(),
-            create_at: 0,
-            metadata: Default::default(),
-            link_use_action_counter: 0,
-            link_use_action_max_count: 0,
-        };
-
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: Some(Template::Left),
-            link_type: None,
-            link_use_action_max_count: None,
-        };
-
-        let whitelist_props = create_whitelist_props("template");
-
-        // Act
-        let changed = service.is_props_changed(&whitelist_props, &params, &link);
-
-        // Assert
-        assert!(changed);
-    }
-
-    #[test]
-    fn it_should_error_prefetch_template_if_empty_template_in_params() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: None,
-            link_type: None,
-            link_use_action_max_count: None,
-        };
-
-        // Act
-        let result = service.prefetch_template(&params);
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::ValidationErrors(msg)) = result {
-            assert_eq!(msg, "Template is required");
-        } else {
-            panic!("Expected ValidationErrors");
-        }
-    }
-
-    #[test]
-    fn it_should_error_prefetch_template_if_empty_link_type_in_params() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: Some(Template::Central),
-            link_type: None,
-            link_use_action_max_count: None,
-        };
-
-        // Act
-        let result = service.prefetch_template(&params);
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::ValidationErrors(msg)) = result {
-            assert_eq!(msg, "Link type is required");
-        } else {
-            panic!("Expected ValidationErrors");
-        }
-    }
-
-    #[test]
-    fn it_should_prefetch_template() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: Some(Template::Central),
-            link_type: Some(LinkType::SendTip),
-            link_use_action_max_count: None,
-        };
-
-        // Act
-        let result = service.prefetch_template(&params);
-
-        // Assert
-        assert!(result.is_ok());
-
-        let (template, link_type) = result.unwrap();
-        assert_eq!(template, Template::Central);
-        assert_eq!(link_type, LinkType::SendTip);
-    }
-
-    #[test]
-    fn it_should_error_prefetch_params_add_asset_if_empty_link_use_action_max_count() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![],
-            template: Some(Template::Central),
-            link_type: Some(LinkType::SendTip),
-            link_use_action_max_count: None,
-        };
-
-        // Act
-        let result = service.prefetch_params_add_asset(&params);
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::ValidationErrors(msg)) = result {
-            assert_eq!(msg, "Link use action max count is required");
-        } else {
-            panic!("Expected ValidationErrors");
-        }
-    }
-
-    #[test]
-    fn it_should_prefetch_params_add_asset() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let address1 = random_principal_id();
-        let address2 = random_principal_id();
-        let params = LinkDetailUpdateInput {
-            title: Some("Title".to_string()),
-            description: Some("Description".to_string()),
-            link_image_url: None,
-            nft_image: None,
-            asset_info: vec![
-                LinkDetailUpdateAssetInfoInput {
-                    asset: Asset::IC { address: address1 },
-                    amount_per_link_use_action: 100,
-                    label: "some_label".to_string(),
-                },
-                LinkDetailUpdateAssetInfoInput {
-                    asset: Asset::IC { address: address2 },
-                    amount_per_link_use_action: 200,
-                    label: "another_label".to_string(),
-                },
-            ],
-            template: Some(Template::Central),
-            link_type: Some(LinkType::SendTip),
-            link_use_action_max_count: Some(10),
-        };
-
-        // Act
-        let result = service.prefetch_params_add_asset(&params);
-
-        // Assert
-        assert!(result.is_ok());
-
-        let (link_use_action_max_count, asset_info_input) = result.unwrap();
-        assert_eq!(link_use_action_max_count, 10);
-        assert_eq!(asset_info_input.len(), 2);
-        assert_eq!(asset_info_input[0].asset, Asset::IC { address: address1 });
-        assert_eq!(asset_info_input[1].asset, Asset::IC { address: address2 });
-    }
 
     #[test]
     fn it_should_return_empty_prefetch_create_action_if_link_not_found() {
@@ -1495,5 +282,42 @@ mod tests {
         assert_eq!(action.link_id, link.id);
         assert_eq!(action.r#type, ActionType::Withdraw);
         assert_eq!(action.creator, creator_id);
+    }
+
+    #[tokio::test]
+    #[allow(deprecated)]
+    async fn it_should_create_link_with_create_link_state() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let mock_asset_info = LinkDetailUpdateAssetInfoInput {
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
+            label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
+            amount_per_link_use_action: 1000000, // 0.01 ICP (8 decimals)
+        };
+        let input = CreateLinkInput {
+            title: "Test Link".to_string(),
+            link_type: LinkType::SendTip,
+            link_use_action_max_count: 100,
+            asset_info: vec![mock_asset_info.clone()],
+        };
+
+        // Act
+        let result = service.create_link(creator_id, input).await;
+
+        // Assert
+        assert!(result.is_ok());
+        let link = result.unwrap();
+        assert_eq!(link.state, LinkState::CreateLink);
+        assert_eq!(link.creator, creator_id);
+        assert_eq!(link.title, Some("Test Link".to_string()));
+        assert_eq!(link.link_type, Some(LinkType::SendTip));
+        assert_eq!(link.link_use_action_max_count, 100);
+        assert_eq!(link.asset_info.len(), 1);
+        assert_eq!(link.asset_info[0].label, INTENT_LABEL_SEND_TIP_ASSET.to_string());
+        assert_eq!(link.asset_info[0].amount_per_link_use_action, 1000000);
     }
 }

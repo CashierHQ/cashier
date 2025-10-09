@@ -190,7 +190,6 @@ async fn it_should_create_link_token_basket_successfully() {
         let update_link_input = UpdateLinkInput {
             id: link.id.clone(),
             goto: LinkStateMachineGoto::Continue,
-            params: None,
         };
         let update_link = test_fixture.update_link(update_link_input).await;
 
@@ -327,7 +326,6 @@ async fn benchmark_create_link_token_basket() {
         let update_link_input = UpdateLinkInput {
             id: link.id.clone(),
             goto: LinkStateMachineGoto::Continue,
-            params: None,
         };
         let _update_link = test_fixture.update_link(update_link_input).await;
 

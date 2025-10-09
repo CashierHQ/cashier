@@ -37,26 +37,7 @@ pub trait LinkStateMachine {
         &mut self,
         link_id: &str,
         goto: LinkStateMachineGoto,
-        params: Option<LinkDetailUpdateInput>,
     ) -> Result<Link, CanisterError>;
-
-    fn is_props_changed(
-        &self,
-        whitelist_props: &[String],
-        params: &LinkDetailUpdateInput,
-        link: &Link,
-    ) -> bool;
-
-    // ---- convenience helpers that operate on link metadata ----
-    fn prefetch_template(
-        &self,
-        params: &LinkDetailUpdateInput,
-    ) -> Result<(Template, LinkType), CanisterError>;
-
-    fn prefetch_params_add_asset(
-        &self,
-        params: &LinkDetailUpdateInput,
-    ) -> Result<(u64, Vec<AssetInfo>), CanisterError>;
 
     fn prefetch_create_action(&self, link: &Link) -> Result<Option<Action>, CanisterError>;
 
