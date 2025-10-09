@@ -188,15 +188,12 @@ export interface LinkDetailUpdateAssetInfoInput {
 }
 export interface LinkDto {
   'id' : string,
-  'title' : [] | [string],
+  'title' : string,
   'creator' : Principal,
   'asset_info' : Array<AssetInfoDto>,
-  'link_type' : [] | [LinkType],
-  'metadata' : Array<[string, string]>,
+  'link_type' : LinkType,
   'create_at' : bigint,
-  'description' : [] | [string],
   'state' : LinkState,
-  'template' : [] | [Template],
   'link_use_action_max_count' : bigint,
   'link_use_action_counter' : bigint,
 }
@@ -209,21 +206,14 @@ export interface LinkGetUserStateOutput {
   'action' : ActionDto,
   'link_user_state' : LinkUserState,
 }
-export type LinkState = { 'Preview' : null } |
-  { 'ChooseLinkType' : null } |
-  { 'Inactive' : null } |
+export type LinkState = { 'Inactive' : null } |
   { 'Active' : null } |
   { 'CreateLink' : null } |
-  { 'AddAssets' : null } |
   { 'InactiveEnded' : null };
 export type LinkType = { 'SendAirdrop' : null } |
-  { 'ReceiveMutliPayment' : null } |
   { 'SendTip' : null } |
   { 'ReceivePayment' : null } |
-  { 'SendTokenBasket' : null } |
-  { 'SwapMultiAsset' : null } |
-  { 'NftCreateAndAirdrop' : null } |
-  { 'SwapSingleAsset' : null };
+  { 'SendTokenBasket' : null };
 export interface LinkUpdateUserStateInput {
   'link_id' : string,
   'action_type' : ActionType,
@@ -283,9 +273,6 @@ export type Result_7 = { 'Ok' : [] | [LinkGetUserStateOutput] } |
   { 'Err' : CanisterError };
 export type Result_8 = { 'Ok' : string } |
   { 'Err' : CanisterError };
-export type Template = { 'Left' : null } |
-  { 'Right' : null } |
-  { 'Central' : null };
 export interface TransactionDto {
   'id' : string,
   'protocol' : Protocol,

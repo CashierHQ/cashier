@@ -11,8 +11,8 @@ import LinkPreview from "./LinkPreview";
 import {
   ACTION_STATE,
   ACTION_TYPE,
+  FRONTEND_LINK_STATE,
   LINK_STATE,
-  mapStringToLinkState,
   mapStringToLinkType,
 } from "@/services/types/enum";
 import { Spinner } from "@/components/ui/spinner";
@@ -29,16 +29,21 @@ import { useLinkDetailQuery } from "@/hooks/link-hooks";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
 import { mapLinkStateToEnum } from "@/services/types/mapper/link.service.mapper";
 
-export function stateToStepIndex(state: LINK_STATE | undefined): number {
-  if (state === LINK_STATE.CHOOSE_TEMPLATE) {
+export function stateToStepIndex(
+  state: LINK_STATE | FRONTEND_LINK_STATE | undefined
+): number {
+  if (state === FRONTEND_LINK_STATE.CHOOSE_TEMPLATE) {
     return 0;
   }
 
-  if (state === LINK_STATE.ADD_ASSET) {
+  if (state === FRONTEND_LINK_STATE.ADD_ASSET) {
     return 1;
   }
 
-  if (state === LINK_STATE.PREVIEW || state === LINK_STATE.CREATE_LINK) {
+  if (
+    state === FRONTEND_LINK_STATE.PREVIEW ||
+    state === LINK_STATE.CREATE_LINK
+  ) {
     return 2;
   }
 
@@ -96,7 +101,7 @@ export default function LinkPage() {
     if (link) {
       // not reset in Preview state, because it handled inside the component
       if (
-        link.state !== LINK_STATE.PREVIEW &&
+        link.state !== FRONTEND_LINK_STATE.PREVIEW &&
         link.state !== LINK_STATE.CREATE_LINK
       ) {
         resetButtonState();
@@ -104,11 +109,9 @@ export default function LinkPage() {
     }
 
     if (link) {
-      console.log("[link] ", link);
       if (!link.state) throw new Error("Link state is undefined");
       const userInput: Partial<UserInputItem> = {
         linkId: link.id,
-        state: mapStringToLinkState(link.state),
         title: link.title,
         linkType: mapStringToLinkType(link.linkType),
         assets: link.asset_info.map((asset) => ({
@@ -149,8 +152,9 @@ export default function LinkPage() {
             isContinue: false,
           });
 
-          const currentState = mapLinkStateToEnum(res.state);
-          const stepIndex = stateToStepIndex(currentState);
+          const state = mapLinkStateToEnum(res.state);
+
+          const stepIndex = stateToStepIndex(state);
           if (stepIndex === undefined) {
             throw new Error("Step index not found");
           }
@@ -206,11 +210,6 @@ export default function LinkPage() {
     // If we have link data, use its state
     if (link?.state) {
       return stateToStepIndex(link.state);
-    }
-
-    // If we have user input data (from oldId or current link), use its state
-    if (userInputData?.state) {
-      return stateToStepIndex(userInputData.state);
     }
 
     // Default to first step if we can't determine

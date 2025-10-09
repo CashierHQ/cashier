@@ -25,10 +25,10 @@ import {
 } from "../types/link.service.types";
 import {
   mapLinkDetailModelToUpdateLinkInputModel,
-  mapPartialDtoToLinkDetailModel,
   mapLinkUserStateModel,
   mapLinkDetailModel,
   mapFrontendGotoToUserStateMachineGoto,
+  mapDtoToLinkDetailModel,
 } from "../types/mapper/link.service.mapper";
 import { ActionModel } from "../types/action.service.types";
 import {
@@ -107,7 +107,7 @@ class LinkService {
           offset: BigInt(0),
           limit: BigInt(1000),
         },
-      ]),
+      ])
     );
 
     const responseModel: ResponseLinksModel = {
@@ -117,7 +117,7 @@ class LinkService {
     responseModel.data = response.data
       ? response.data.map((link: LinkDto) => {
           return {
-            link: mapPartialDtoToLinkDetailModel(link),
+            link: mapDtoToLinkDetailModel(link),
             action_create: undefined,
           };
         })
@@ -134,9 +134,9 @@ class LinkService {
             ? {
                 action_type: mapFrontendActionTypeToActionType(actionType),
               }
-            : undefined,
-        ),
-      ),
+            : undefined
+        )
+      )
     );
     const result = await mapLinkDetailModel(response);
     return result;
@@ -150,15 +150,15 @@ class LinkService {
   async updateLink(
     linkId: string,
     data: Partial<UserInputItem>,
-    isContinue: boolean,
+    isContinue: boolean
   ) {
     const completeData = mapLinkDetailModelToUpdateLinkInputModel(
       linkId,
       data,
-      isContinue,
+      isContinue
     );
     const response = parseResultResponse(
-      await this.actor.update_link(completeData),
+      await this.actor.update_link(completeData)
     );
 
     return response;
@@ -171,7 +171,7 @@ class LinkService {
       action_type: mapFrontendActionTypeToActionType(input.actionType),
     };
     const response = parseResultResponse(
-      await this.actor.process_action(inputModel),
+      await this.actor.process_action(inputModel)
     );
     const action = mapActionModel(response);
     return action;
@@ -183,14 +183,14 @@ class LinkService {
       action_type: mapFrontendActionTypeToActionType(input.actionType),
     };
     const response = parseResultResponse(
-      await this.actor.create_action(inputModel),
+      await this.actor.create_action(inputModel)
     );
     const action = mapActionModel(response);
     return action;
   }
 
   async processActionAnonymous(
-    input: UpdateActionAnonymousInputModel,
+    input: UpdateActionAnonymousInputModel
   ): Promise<ActionModel> {
     const inputModel: ProcessActionAnonymousInput = {
       action_id: input.actionId,
@@ -199,14 +199,14 @@ class LinkService {
       wallet_address: Principal.fromText(input.walletAddress),
     };
     const response = parseResultResponse(
-      await this.actor.process_action_anonymous(inputModel),
+      await this.actor.process_action_anonymous(inputModel)
     );
     const action = mapActionModel(response);
     return action;
   }
 
   async createActionAnonymous(
-    input: CreateActionAnonymousInputModel,
+    input: CreateActionAnonymousInputModel
   ): Promise<ActionModel> {
     const inputModel: CreateActionAnonymousInput = {
       link_id: input.linkId,
@@ -214,14 +214,14 @@ class LinkService {
       wallet_address: Principal.fromText(input.walletAddress),
     };
     const response = parseResultResponse(
-      await this.actor.create_action_anonymous(inputModel),
+      await this.actor.create_action_anonymous(inputModel)
     );
     const action = mapActionModel(response);
     return action;
   }
 
   async processActionAnonymousV2(
-    input: UpdateActionAnonymousInputModel,
+    input: UpdateActionAnonymousInputModel
   ): Promise<ActionModel> {
     const inputModel: ProcessActionAnonymousInput = {
       action_id: input.actionId,
@@ -230,7 +230,7 @@ class LinkService {
       wallet_address: Principal.fromText(input.walletAddress),
     };
     const response = parseResultResponse(
-      await this.actor.process_action_anonymous(inputModel),
+      await this.actor.process_action_anonymous(inputModel)
     );
     const action = mapActionModel(response);
     return action;
@@ -279,7 +279,7 @@ class LinkService {
         : [],
     };
     const response = parseResultResponse(
-      await this.actor.link_get_user_state(params),
+      await this.actor.link_get_user_state(params)
     );
     const parsedRes = fromNullable(response);
     return parsedRes ? mapLinkUserStateModel(parsedRes) : undefined;
@@ -290,14 +290,14 @@ class LinkService {
       link_id: input.link_id,
       action_type: mapFrontendActionTypeToActionType(input.action_type),
       goto: mapFrontendGotoToUserStateMachineGoto(
-        input.isContinue ? "Continue" : "Back",
+        input.isContinue ? "Continue" : "Back"
       ),
       anonymous_wallet_address: input.anonymous_wallet_address
         ? [Principal.fromText(input.anonymous_wallet_address)]
         : [],
     };
     const response = parseResultResponse(
-      await this.actor.link_update_user_state(params),
+      await this.actor.link_update_user_state(params)
     );
     const parsedRes = fromNullable(response);
     return parsedRes ? mapLinkUserStateModel(parsedRes) : undefined;

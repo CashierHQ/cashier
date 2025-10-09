@@ -11,6 +11,7 @@ import { useIcrc112Execute } from "@/hooks/use-icrc-112-execute";
 import { useLinkMutations } from "@/hooks/useLinkMutations";
 import { useInvalidateLinkDetailQueries } from "@/hooks/link-hooks";
 import { useLinkCreateValidation } from "@/hooks/form/useLinkCreateValidation";
+import { LinkDto } from "@/generated/cashier_backend/cashier_backend.did";
 import { mapLinkStateToEnum } from "@/services/types/mapper/link.service.mapper";
 
 interface UseCreateConfirmationProps {
@@ -116,11 +117,11 @@ export const useCreateConfirmation = ({
   const handleSetLinkToActive = useCallback(async () => {
     if (!link) throw new Error("Link is not defined");
 
-    const res = await callLinkStateMachine({
+    const res = (await callLinkStateMachine({
       linkId: link.id,
       linkModel: {},
       isContinue: true,
-    });
+    })) as LinkDto;
     const state = mapLinkStateToEnum(res.state);
     if (state === LINK_STATE.ACTIVE) {
       navigate(`/details/${link.id}`);
@@ -148,7 +149,7 @@ export const useCreateConfirmation = ({
     () => (action: ActionModel) => {
       updateInternalAction(action);
     },
-    [updateInternalAction],
+    [updateInternalAction]
   );
 
   /**
@@ -158,7 +159,7 @@ export const useCreateConfirmation = ({
     () => (error: Error) => {
       onCashierError(error);
     },
-    [onCashierError],
+    [onCashierError]
   );
 
   return {
