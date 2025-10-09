@@ -5,16 +5,11 @@
 import { UserInputItem } from "@/stores/linkCreationFormStore";
 import { v4 as uuidv4 } from "uuid";
 import { LinkDetailModel } from "../types/link.service.types";
-import { LINK_STATE, LINK_TYPE } from "../types/enum";
-import {
-  mapLinkDetailModelToLinkDto,
-  mapUserInputItemToLinkDetailModel,
-} from "../types/mapper/link.service.mapper";
+import { FRONTEND_LINK_STATE, LINK_TYPE } from "../types/enum";
 import { ResponseLinksModel } from "./link.service";
 import linkStateMachine from "./link-state-machine";
 import { LinkStateMachine } from "./link-state-machine";
 import { Principal } from "@dfinity/principal";
-import { LinkDto } from "@/generated/cashier_backend/cashier_backend.did";
 
 const LINK_STORAGE_KEY = "cashier_link_storage";
 export const LOCAL_lINK_ID_PREFIX = "local_link_";
@@ -57,7 +52,7 @@ class LinkLocalStorageServiceV2 {
 
   constructor(
     userPid: string,
-    stateMachine: LinkStateMachine = linkStateMachine,
+    stateMachine: LinkStateMachine = linkStateMachine
   ) {
     this.userPid = userPid;
     this.stateMachine = stateMachine;
@@ -72,14 +67,12 @@ class LinkLocalStorageServiceV2 {
       id: linkId,
       creator: this.userPid,
       create_at: new Date().getTime() * 1_000_000, // store as nanoseconds
-      state: LINK_STATE.CHOOSE_TEMPLATE,
+      state: FRONTEND_LINK_STATE.CHOOSE_TEMPLATE,
       title: "",
       linkType: LINK_TYPE.SEND_TIP,
       asset_info: [],
       maxActionNumber: BigInt(0),
       useActionCounter: BigInt(0),
-      description: "",
-      image: "",
     };
 
     links[linkId] = linkData;
@@ -107,17 +100,16 @@ class LinkLocalStorageServiceV2 {
   updateLink(
     linkId: string,
     data: Partial<UserInputItem>,
-    caller: string,
-  ): LinkDto {
+    caller: string
+  ): LinkDetailModel {
     const links = this.getLinks();
     if (!links[linkId]) throw new Error("Link not found");
 
-    const updatedlinkModelDetail = mapUserInputItemToLinkDetailModel(data);
     const existing = links[linkId];
 
     const composed: LinkDetailModel = {
       ...existing,
-      ...updatedlinkModelDetail,
+      ...data,
       creator: caller,
       id: linkId,
       create_at: existing.create_at || new Date().getTime() * 1_000_000, // store as nanoseconds
@@ -126,7 +118,7 @@ class LinkLocalStorageServiceV2 {
     links[linkId] = composed;
     this.saveLinks(links);
 
-    return mapLinkDetailModelToLinkDto(composed);
+    return composed;
   }
 
   /** Delete a link from local storage */
@@ -143,8 +135,8 @@ class LinkLocalStorageServiceV2 {
     linkId: string,
     data: Partial<UserInputItem>,
     isContinue: boolean,
-    caller: string,
-  ): LinkDto {
+    caller: string
+  ): LinkDetailModel {
     const link = this.getLink(linkId);
     if (!link) throw new Error("Link not found");
     if (!link.state) throw new Error("Link state is undefined");
@@ -152,14 +144,14 @@ class LinkLocalStorageServiceV2 {
     const currentState = link.state;
     const action = isContinue ? "Continue" : "Back";
     const isValid = this.stateMachine.validateStateTransition(
-      link as Partial<LinkDetailModel>,
+      link,
       action,
-      data,
+      data
     );
 
     if (!isValid) {
       throw new Error(
-        `Invalid state transition from ${currentState} with direction ${isContinue ? "continue" : "back"}`,
+        `Invalid state transition from ${currentState} with direction ${isContinue ? "continue" : "back"}`
       );
     }
 

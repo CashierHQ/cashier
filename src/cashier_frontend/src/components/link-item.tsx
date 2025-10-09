@@ -3,6 +3,7 @@
 
 import { useDeviceSize } from "@/hooks/responsive-hook";
 import {
+  FRONTEND_LINK_STATE,
   getLinkLabel,
   LINK_STATE,
   LINK_TYPE,
@@ -12,9 +13,9 @@ import { LinkDetailModel } from "@/services/types/link.service.types";
 import { getLinkDefaultAvatar } from "@/utils";
 
 const STATE_ORDER_ARRAY = [
-  LINK_STATE.ADD_ASSET,
-  LINK_STATE.CHOOSE_TEMPLATE,
-  LINK_STATE.PREVIEW,
+  FRONTEND_LINK_STATE.ADD_ASSET,
+  FRONTEND_LINK_STATE.CHOOSE_TEMPLATE,
+  FRONTEND_LINK_STATE.PREVIEW,
   LINK_STATE.CREATE_LINK,
   LINK_STATE.ACTIVE,
   LINK_STATE.INACTIVE,
@@ -68,19 +69,15 @@ export default function LinkItem({ link }: { link: LinkDetailModel }) {
       className={`w-full flex justify-between items-center my-3 ${responsive.isSmallDevice ? "" : "p-2 hover:bg-gray-50 rounded-2xl"}`}
     >
       <div className="flex gap-x-5 items-center">
-        {link.image ? (
-          <img src={link.image} alt="link" className="w-8 h-8 rounded-sm" />
-        ) : (
-          <div className="flex items-center justify-center w-[32px] h-[32px] bg-[#E8F2EE] rounded-[6px]">
-            <img
-              src={getLinkDefaultAvatar(
-                (link.linkType as LINK_TYPE) ?? LINK_TYPE.SEND_TIP,
-              )}
-              alt="link"
-              className="w-18 h-18 rounded-sm"
-            />
-          </div>
-        )}
+        <div className="flex items-center justify-center w-[32px] h-[32px] bg-[#E8F2EE] rounded-[6px]">
+          <img
+            src={getLinkDefaultAvatar(
+              (link.linkType as LINK_TYPE) ?? LINK_TYPE.SEND_TIP
+            )}
+            alt="link"
+            className="w-18 h-18 rounded-sm"
+          />
+        </div>
       </div>
       <div className="flex items-center justify-between grow ml-3">
         <div className="flex flex-col items-start justify-center">

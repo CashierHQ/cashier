@@ -2,10 +2,8 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 import { UserInputAsset, UserInputItem } from "@/stores/linkCreationFormStore";
-import { LINK_STATE, LINK_TYPE } from "../types/enum";
+import { FRONTEND_LINK_STATE, LINK_STATE, LINK_TYPE } from "../types/enum";
 import { AssetInfoModel, LinkDetailModel } from "../types/link.service.types";
-import { LinkDto } from "../../generated/cashier_backend/cashier_backend.did";
-import { mapPartialDtoToLinkDetailModel } from "../types/mapper/link.service.mapper";
 
 /**
  * Singleton class that handles the state machine logic for link creation flow
@@ -35,32 +33,36 @@ export class LinkStateMachine {
    * @returns The next state or undefined if no transition is available
    */
   public getNextState(
-    currentState: LINK_STATE,
-    isContinue: boolean,
-  ): LINK_STATE | undefined {
+    currentState: LINK_STATE | FRONTEND_LINK_STATE,
+    isContinue: boolean
+  ): LINK_STATE | FRONTEND_LINK_STATE | undefined {
     const stateTransitions: Record<
-      LINK_STATE,
-      { forward?: LINK_STATE; backward?: LINK_STATE }
+      FRONTEND_LINK_STATE | LINK_STATE,
+      {
+        forward?: FRONTEND_LINK_STATE | LINK_STATE;
+        backward?: FRONTEND_LINK_STATE | LINK_STATE;
+      }
     > = {
-      [LINK_STATE.CHOOSE_TEMPLATE]: {
-        forward: LINK_STATE.ADD_ASSET,
+      [FRONTEND_LINK_STATE.CHOOSE_TEMPLATE]: {
+        forward: FRONTEND_LINK_STATE.ADD_ASSET,
       },
-      [LINK_STATE.ADD_ASSET]: {
-        forward: LINK_STATE.PREVIEW,
-        backward: LINK_STATE.CHOOSE_TEMPLATE,
+      [FRONTEND_LINK_STATE.ADD_ASSET]: {
+        forward: FRONTEND_LINK_STATE.PREVIEW,
+        backward: FRONTEND_LINK_STATE.CHOOSE_TEMPLATE,
       },
-      [LINK_STATE.PREVIEW]: {
+      [FRONTEND_LINK_STATE.PREVIEW]: {
         forward: LINK_STATE.CREATE_LINK,
-        backward: LINK_STATE.ADD_ASSET,
-      },
-      [LINK_STATE.CREATE_LINK]: {
-        backward: LINK_STATE.PREVIEW,
+        backward: FRONTEND_LINK_STATE.ADD_ASSET,
       },
       // Add other states as needed
       [LINK_STATE.INACTIVE_ENDED]: {},
       // Default states
       [LINK_STATE.INACTIVE]: {},
       [LINK_STATE.ACTIVE]: {},
+      [LINK_STATE.CREATE_LINK]: {
+        forward: undefined,
+        backward: undefined,
+      },
     };
 
     const transitions = stateTransitions[currentState];
@@ -86,14 +88,14 @@ export class LinkStateMachine {
   public validateStateTransition(
     link: Partial<LinkDetailModel>,
     action: string,
-    updateLinkInput?: Partial<UserInputItem>,
+    updateLinkInput?: Partial<UserInputItem>
   ): boolean {
     if (!updateLinkInput) throw new Error("Missing update link input data");
 
     const state = link.state;
 
     // CHOOSE_TEMPLATE -> ADD_ASSET
-    if (state === LINK_STATE.CHOOSE_TEMPLATE) {
+    if (state === FRONTEND_LINK_STATE.CHOOSE_TEMPLATE) {
       if (action === "Continue") {
         if (!updateLinkInput?.title) {
           throw new Error("Title is required for this transition");
@@ -106,7 +108,7 @@ export class LinkStateMachine {
         const whitelist = ["title", "linkType", "assets"];
         if (this.checkPropsChanged(whitelist, updateLinkInput, link)) {
           throw new Error(
-            "Cannot modify non-whitelisted properties in this state",
+            "Cannot modify non-whitelisted properties in this state"
           );
         }
 
@@ -117,7 +119,7 @@ export class LinkStateMachine {
     }
 
     // ADD_ASSET -> PREVIEW
-    if (state === LINK_STATE.ADD_ASSET) {
+    if (state === FRONTEND_LINK_STATE.ADD_ASSET) {
       if (action === "Continue") {
         // Validate required fields for this transition
         if (!updateLinkInput?.assets || updateLinkInput.assets.length === 0) {
@@ -136,14 +138,14 @@ export class LinkStateMachine {
           this.validateLinkTypeSpecificRequirements(
             updateLinkInput.linkType,
             updateLinkInput.assets,
-            updateLinkInput.maxActionNumber,
+            updateLinkInput.maxActionNumber
           );
         }
         // For ADD_ASSET state, assets and maxActionNumber can change
         const whitelist = ["assets", "maxActionNumber"];
         if (this.checkPropsChanged(whitelist, updateLinkInput, link)) {
           throw new Error(
-            "Cannot modify non-whitelisted properties in this state",
+            "Cannot modify non-whitelisted properties in this state"
           );
         }
 
@@ -153,7 +155,7 @@ export class LinkStateMachine {
         const whitelist = ["assets", "maxActionNumber"];
         if (this.checkPropsChanged(whitelist, updateLinkInput, link)) {
           throw new Error(
-            "Cannot modify non-whitelisted properties when going back",
+            "Cannot modify non-whitelisted properties when going back"
           );
         }
 
@@ -163,7 +165,7 @@ export class LinkStateMachine {
       throw new Error(`Invalid action ${action} for state ${link.state}`);
     }
 
-    if (state === LINK_STATE.PREVIEW) {
+    if (state === FRONTEND_LINK_STATE.PREVIEW) {
       if (action === "Continue") {
         // When going to CREATE_LINK, no property changes are allowed
         const whitelist: string[] = [];
@@ -198,7 +200,7 @@ export class LinkStateMachine {
   public validateLinkTypeSpecificRequirements(
     linkType: string,
     assets?: UserInputAsset[],
-    maxActionNumber?: bigint,
+    maxActionNumber?: bigint
   ): void {
     if (!assets || assets.length === 0) {
       throw new Error("Assets are required for link creation");
@@ -240,7 +242,7 @@ export class LinkStateMachine {
         // - exactly 1 asset
         if (maxActionNumber !== undefined && maxActionNumber < BigInt(1)) {
           throw new Error(
-            "SendAirdrop links must have at least 1 action count",
+            "SendAirdrop links must have at least 1 action count"
           );
         }
         if (assets.length !== 1) {
@@ -254,7 +256,7 @@ export class LinkStateMachine {
         // - multiple assets (at least 1)
         if (maxActionNumber !== undefined && maxActionNumber !== BigInt(1)) {
           throw new Error(
-            "SendTokenBasket links must have exactly 1 action count",
+            "SendTokenBasket links must have exactly 1 action count"
           );
         }
         if (assets.length < 1) {
@@ -268,7 +270,7 @@ export class LinkStateMachine {
         // - exactly 1 asset
         if (maxActionNumber !== undefined && maxActionNumber <= BigInt(0)) {
           throw new Error(
-            "ReceivePayment links must have at least 1 action count",
+            "ReceivePayment links must have at least 1 action count"
           );
         }
         if (assets.length !== 1) {
@@ -297,41 +299,21 @@ export class LinkStateMachine {
   public checkPropsChanged(
     whitelistProps: string[],
     userInput: Partial<UserInputItem>,
-    linkDto: Partial<LinkDetailModel> | Partial<LinkDto>,
+    linkDto: Partial<LinkDetailModel>
   ): boolean {
     const propsToCheck = [
       "title",
-      "description",
       "assets", // maps to asset_info
       "linkType", // maps to link_type
-      "image", // maps to link_image_url
       "maxActionNumber", // maps to link_use_action_max_count
     ].filter((prop) => !whitelistProps.includes(prop));
-
-    // If already a LinkDetailModel use it directly, otherwise map from DTO
-    let linkDetailModel: LinkDetailModel;
-    if ((linkDto as LinkDetailModel).asset_info !== undefined) {
-      linkDetailModel = linkDto as LinkDetailModel;
-    } else {
-      linkDetailModel = mapPartialDtoToLinkDetailModel(
-        linkDto as Partial<LinkDto>,
-      );
-    }
 
     for (const prop of propsToCheck) {
       switch (prop) {
         case "title":
           if (
             userInput.title !== undefined &&
-            userInput.title !== linkDetailModel.title
-          ) {
-            return true;
-          }
-          break;
-        case "description":
-          if (
-            userInput.description !== undefined &&
-            userInput.description !== linkDetailModel.description
+            userInput.title !== linkDto.title
           ) {
             return true;
           }
@@ -340,7 +322,7 @@ export class LinkStateMachine {
           // Check if assets have changed using custom comparison for BigInt values
           if (
             userInput.assets !== undefined &&
-            !this.compareAssets(userInput.assets, linkDetailModel.asset_info)
+            !this.compareAssets(userInput.assets, linkDto.asset_info)
           ) {
             return true;
           }
@@ -348,15 +330,7 @@ export class LinkStateMachine {
         case "linkType":
           if (
             userInput.linkType !== undefined &&
-            userInput.linkType !== linkDetailModel.linkType
-          ) {
-            return true;
-          }
-          break;
-        case "image":
-          if (
-            userInput.image !== undefined &&
-            userInput.image !== linkDetailModel.image
+            userInput.linkType !== linkDto.linkType
           ) {
             return true;
           }
@@ -364,7 +338,7 @@ export class LinkStateMachine {
         case "maxActionNumber":
           if (
             userInput.maxActionNumber !== undefined &&
-            userInput.maxActionNumber !== linkDetailModel.maxActionNumber
+            userInput.maxActionNumber !== linkDto.maxActionNumber
           ) {
             return true;
           }
@@ -383,7 +357,7 @@ export class LinkStateMachine {
    */
   private compareAssets(
     userInputAssets: UserInputAsset[] | undefined,
-    assetInfoModels: AssetInfoModel[] | undefined,
+    assetInfoModels: AssetInfoModel[] | undefined
   ): boolean {
     // Handle undefined cases
     if (!userInputAssets && !assetInfoModels) return true;
@@ -395,10 +369,10 @@ export class LinkStateMachine {
     // Sort both arrays to ensure consistent comparison
     // We'll sort by address (string) which should be safe to compare
     const sortedUserInputAssets = [...userInputAssets].sort((a, b) =>
-      a.address.localeCompare(b.address),
+      a.address.localeCompare(b.address)
     );
     const sortedAssetInfoModels = [...assetInfoModels].sort((a, b) =>
-      a.address.localeCompare(b.address),
+      a.address.localeCompare(b.address)
     );
 
     // Compare each asset

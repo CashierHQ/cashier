@@ -180,13 +180,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const LinkType = IDL.Variant({
     'SendAirdrop' : IDL.Null,
-    'ReceiveMutliPayment' : IDL.Null,
     'SendTip' : IDL.Null,
     'ReceivePayment' : IDL.Null,
     'SendTokenBasket' : IDL.Null,
-    'SwapMultiAsset' : IDL.Null,
-    'NftCreateAndAirdrop' : IDL.Null,
-    'SwapSingleAsset' : IDL.Null,
   });
   const CreateLinkInput = IDL.Record({
     'title' : IDL.Text,
@@ -200,30 +196,19 @@ export const idlFactory = ({ IDL }) => {
     'label' : IDL.Text,
   });
   const LinkState = IDL.Variant({
-    'Preview' : IDL.Null,
-    'ChooseLinkType' : IDL.Null,
     'Inactive' : IDL.Null,
     'Active' : IDL.Null,
     'CreateLink' : IDL.Null,
-    'AddAssets' : IDL.Null,
     'InactiveEnded' : IDL.Null,
-  });
-  const Template = IDL.Variant({
-    'Left' : IDL.Null,
-    'Right' : IDL.Null,
-    'Central' : IDL.Null,
   });
   const LinkDto = IDL.Record({
     'id' : IDL.Text,
-    'title' : IDL.Opt(IDL.Text),
+    'title' : IDL.Text,
     'creator' : IDL.Principal,
     'asset_info' : IDL.Vec(AssetInfoDto),
-    'link_type' : IDL.Opt(LinkType),
-    'metadata' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text)),
+    'link_type' : LinkType,
     'create_at' : IDL.Nat64,
-    'description' : IDL.Opt(IDL.Text),
     'state' : LinkState,
-    'template' : IDL.Opt(Template),
     'link_use_action_max_count' : IDL.Nat64,
     'link_use_action_counter' : IDL.Nat64,
   });
