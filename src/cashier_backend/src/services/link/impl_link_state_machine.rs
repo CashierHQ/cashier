@@ -50,7 +50,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         };
         let new_user_link = UserLink {
             user_id,
-            link_id: link_id_str.clone(),
+            link_id: link_id_str,
         };
 
         if !self.validate_add_asset_with_link_type(&new_link, &asset_info) {
@@ -61,7 +61,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
 
         // Create the initial link and user_link records
         self.link_repository.create(new_link.clone());
-        self.user_link_repository.create(new_user_link.clone());
+        self.user_link_repository.create(new_user_link);
 
         Ok(new_link)
     }
@@ -306,7 +306,7 @@ mod tests {
             title: "Test Link".to_string(),
             link_type: LinkType::SendTip,
             link_use_action_max_count: 100,
-            asset_info: vec![mock_asset_info.clone()],
+            asset_info: vec![mock_asset_info],
         };
 
         // Act
