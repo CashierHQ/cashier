@@ -11,7 +11,7 @@ describe("sortWalletTokens", () => {
         name: "Alice coin",
         symbol: "ALICE",
         priceUSD: 0.00001,
-        balance: 0n,
+        balance: 1000n,
         decimals: 18,
         enabled: true,
         fee: 10000n,
@@ -22,7 +22,7 @@ describe("sortWalletTokens", () => {
         name: "Chainkey Bitcoin",
         symbol: "ckBTC",
         priceUSD: 100000.01,
-        balance: 0n,
+        balance: 1000n,
         decimals: 8,
         enabled: true,
         fee: 10n,
@@ -33,7 +33,7 @@ describe("sortWalletTokens", () => {
         name: "Internet Computer",
         symbol: "ICP",
         priceUSD: 5.01,
-        balance: 0n,
+        balance: 1000n,
         decimals: 8,
         enabled: true,
         fee: 10000n,
@@ -67,11 +67,11 @@ describe("sortWalletTokens", () => {
     const sortedAddresses = sortedTokens.map((t) => t.address);
 
     expect(sortedAddresses).toEqual([
-      ICP_LEDGER_CANISTER_ID, // ICP first
-      "mxzaz-hqaaa-aaaar-qaada-cai", // then default tokens sorted by address
-      "xevnm-gaaaa-aaaar-qafnq-cai",
-      "oj6if-riaaa-aaaaq-aaeha-cai", // then non-default tokens sorted by address
-      "ss2fx-dyaaa-aaaar-qacoq-cai",
+      "mxzaz-hqaaa-aaaar-qaada-cai", // ckBTC (highest USD value)
+      ICP_LEDGER_CANISTER_ID, // ICP (next highest USD value)
+      "oj6if-riaaa-aaaaq-aaeha-cai", // ALICE (lowest USD value)
+      "xevnm-gaaaa-aaaar-qafnq-cai", // ckUSDC (zero USD value, default)
+      "ss2fx-dyaaa-aaaar-qacoq-cai", // ckETH (zero USD value, non-default)
     ]);
   });
 });
