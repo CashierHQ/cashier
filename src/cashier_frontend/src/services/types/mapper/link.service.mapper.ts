@@ -82,8 +82,15 @@ const mapLinkTypeToEnum = (linkType: LinkType): LINK_TYPE => {
   }
 };
 
+// Temporary type to assist in mapping LinkState (which is a union type) to our enum
+type TemporaryLinkState =
+  | LinkState
+  | { Preview: null }
+  | { ChooseLinkType: null }
+  | { AddAssets: null };
+
 export const mapLinkStateToEnum = (
-  linkState: LinkState
+  linkState: TemporaryLinkState
 ): LINK_STATE | FRONTEND_LINK_STATE => {
   const key = getKeyVariant(linkState);
   switch (key) {
@@ -108,7 +115,7 @@ export const mapLinkStateToEnum = (
 
 export const mapLinkStateToDto = (
   linkState: LINK_STATE | FRONTEND_LINK_STATE
-): LinkState => {
+): TemporaryLinkState => {
   switch (linkState) {
     case FRONTEND_LINK_STATE.CHOOSE_TEMPLATE:
       return { ChooseLinkType: null };
@@ -220,7 +227,7 @@ export const mapLinkDetailModelToDto = (link: LinkDetailModel): LinkDto => {
     id: link.id,
     title: link.title,
     link_type: mapFrontendLinkTypeToLinkType(link.linkType),
-    state: mapLinkStateToDto(link.state),
+    state: mapLinkStateToDto(link.state) as LinkState,
     creator: Principal.fromText(link.creator || ""),
     create_at: BigInt(link.create_at * 1_000_000), // convert milliseconds to nanoseconds
     asset_info: link.asset_info.map((a) => {
