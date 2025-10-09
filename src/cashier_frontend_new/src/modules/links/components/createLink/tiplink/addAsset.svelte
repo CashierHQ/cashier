@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { walletTokensQuery } from "$modules/token/state/walletStore.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import { balanceToIcp } from "$modules/token/utils/converter";
   import type { LinkStore } from "$modules/links/state/linkStore.svelte";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { LinkStep } from "$modules/links/types/linkStep";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { parseBalanceUnits } from "$modules/token/utils/converter";
 
   const {
     link,
@@ -59,11 +59,11 @@
 </script>
 
 <div class="space-y-4">
-  {#if walletTokensQuery.data}
+  {#if walletStore.query.data}
     <div>
       <Label>Choose asset</Label>
       <ul class="space-y-2">
-        {#each walletTokensQuery.data as token (token.address)}
+        {#each walletStore.query.data as token (token.address)}
           <li>
             <button
               type="button"
@@ -75,7 +75,7 @@
                 <div>
                   <strong>{token.symbol}</strong> — {token.name}
                   <div class="text-sm">
-                    Balance: {balanceToIcp(
+                    Balance: {parseBalanceUnits(
                       token.balance,
                       token.decimals,
                     ).toFixed(5)}
@@ -90,10 +90,10 @@
         {/each}
       </ul>
     </div>
-  {:else if walletTokensQuery.isSuccess}
+  {:else if walletStore.query.isSuccess}
     <p>No tokens found.</p>
-  {:else if walletTokensQuery.error}
-    <p class="text-red-600">Error: {walletTokensQuery.error}</p>
+  {:else if walletStore.query.error}
+    <p class="text-red-600">Error: {walletStore.query.error}</p>
   {:else}
     <p>Loading tokens…</p>
   {/if}
