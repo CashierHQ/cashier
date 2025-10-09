@@ -188,20 +188,11 @@ export const idlFactory = ({ IDL }) => {
     'NftCreateAndAirdrop' : IDL.Null,
     'SwapSingleAsset' : IDL.Null,
   });
-  const Template = IDL.Variant({
-    'Left' : IDL.Null,
-    'Right' : IDL.Null,
-    'Central' : IDL.Null,
-  });
   const CreateLinkInput = IDL.Record({
     'title' : IDL.Text,
     'asset_info' : IDL.Vec(LinkDetailUpdateAssetInfoInput),
     'link_type' : LinkType,
-    'description' : IDL.Opt(IDL.Text),
-    'link_image_url' : IDL.Opt(IDL.Text),
-    'template' : Template,
     'link_use_action_max_count' : IDL.Nat64,
-    'nft_image' : IDL.Opt(IDL.Text),
   });
   const AssetInfoDto = IDL.Record({
     'asset' : Asset,
@@ -216,6 +207,11 @@ export const idlFactory = ({ IDL }) => {
     'CreateLink' : IDL.Null,
     'AddAssets' : IDL.Null,
     'InactiveEnded' : IDL.Null,
+  });
+  const Template = IDL.Variant({
+    'Left' : IDL.Null,
+    'Right' : IDL.Null,
+    'Central' : IDL.Null,
   });
   const LinkDto = IDL.Record({
     'id' : IDL.Text,
@@ -376,20 +372,9 @@ export const idlFactory = ({ IDL }) => {
     'link_id' : IDL.Text,
     'external' : IDL.Bool,
   });
-  const LinkDetailUpdateInput = IDL.Record({
-    'title' : IDL.Opt(IDL.Text),
-    'asset_info' : IDL.Vec(AssetInfoDto),
-    'link_type' : IDL.Opt(LinkType),
-    'description' : IDL.Opt(IDL.Text),
-    'link_image_url' : IDL.Opt(IDL.Text),
-    'template' : IDL.Opt(Template),
-    'link_use_action_max_count' : IDL.Opt(IDL.Nat64),
-    'nft_image' : IDL.Opt(IDL.Text),
-  });
   const UpdateLinkInput = IDL.Record({
     'id' : IDL.Text,
     'goto' : UserStateMachineGoto,
-    'params' : IDL.Opt(LinkDetailUpdateInput),
   });
   return IDL.Service({
     'admin_inspect_message_enable' : IDL.Func([IDL.Bool], [Result], []),
