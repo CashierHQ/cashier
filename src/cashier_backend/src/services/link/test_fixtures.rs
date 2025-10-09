@@ -13,7 +13,6 @@ use cashier_backend_types::repository::{
     link_action::v1::LinkAction,
     user_link::v1::UserLink,
 };
-use std::collections::HashSet;
 
 /// Creates a link fixture for testing purposes.
 /// This function initializes a link with a random ID, sets its state, and associates it with a creator ID.
@@ -26,15 +25,12 @@ pub fn create_link_fixture(
     let link_id = random_id_string();
     let link = Link {
         id: link_id,
-        state: LinkState::ChooseLinkType,
-        title: Some("Test Link".to_string()),
-        description: Some("This is a test link".to_string()),
-        link_type: Some(LinkType::SendTip),
+        state: LinkState::CreateLink,
+        title: "Test Link".to_string(),
+        link_type: LinkType::SendTip,
         asset_info: vec![],
-        template: None,
         creator: creator_id,
         create_at: 1622547800,
-        metadata: Default::default(),
         link_use_action_counter: 0,
         link_use_action_max_count: 10,
     };
@@ -77,26 +73,4 @@ pub fn create_link_action_fixture(
     };
     service.action_repository.create(action);
     link_action
-}
-
-/// Creates a whitelist of properties for testing purposes.
-/// This function generates a list of properties excluding the specified property name.
-/// Returns a vector of whitelisted properties.
-pub fn create_whitelist_props(prop_name: &str) -> Vec<String> {
-    let props_list = vec![
-        "title".to_string(),
-        "description".to_string(),
-        "asset_info".to_string(),
-        "template".to_string(),
-        "link_type".to_string(),
-        "link_image_url".to_string(),
-        "nft_image".to_string(),
-        "link_use_action_max_count".to_string(),
-    ];
-    let excluded: HashSet<String> = HashSet::from([prop_name.to_string()]);
-    let whitelist_props: Vec<String> = props_list
-        .into_iter()
-        .filter(|prop| !excluded.contains(prop))
-        .collect();
-    whitelist_props
 }

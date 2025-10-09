@@ -392,11 +392,8 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
         action_type: &ActionType,
     ) -> Result<Option<Vec<Intent>>, CanisterError> {
         let mut intents: Vec<Intent> = vec![];
-        let link_type = link
-            .link_type
-            .ok_or_else(|| CanisterError::HandleLogicError("link type not found".to_string()))?;
 
-        match (link_type, action_type) {
+        match (link.link_type, action_type) {
             // SendTip link type handlers
             (LinkType::SendTip, ActionType::CreateLink) => {
                 // Create intent for transfer asset to link
@@ -515,8 +512,6 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
 
                 intents.push(intent);
             }
-
-            _ => return Ok(None),
         }
 
         Ok(Some(intents))
@@ -535,7 +530,7 @@ mod tests {
     };
     use cashier_backend_types::repository::{
         asset_info::AssetInfo,
-        link::v1::{Link, LinkState, LinkType},
+        link::v1::{Link, LinkType},
     };
 
     #[test]
@@ -564,42 +559,6 @@ mod tests {
         assert_eq!(intent.task, IntentTask::TransferWalletToTreasury);
         assert_eq!(intent.label, INTENT_LABEL_LINK_CREATION_FEE);
         assert!(intent.r#type.as_transfer_from().is_some());
-    }
-
-    #[test]
-    fn it_should_error_not_found_look_up_intent() {
-        // Arrange
-        let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link_id = random_id_string();
-        let action_type = ActionType::Use;
-
-        // Act
-        let result = service.look_up_intent(
-            &Link {
-                id: link_id,
-                state: LinkState::ChooseLinkType,
-                title: None,
-                description: None,
-                link_type: None,
-                asset_info: vec![],
-                template: None,
-                creator: random_principal_id(),
-                create_at: 0,
-                metadata: Default::default(),
-                link_use_action_counter: 0,
-                link_use_action_max_count: 10,
-            },
-            &action_type,
-        );
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::HandleLogicError(msg)) = result {
-            assert!(msg.contains("link type not found"));
-        } else {
-            panic!("Expected HandleLogicError");
-        }
     }
 
     #[test]
@@ -669,7 +628,7 @@ mod tests {
         let link = create_link_fixture(&mut service, creator_id);
 
         let updated_link = Link {
-            link_type: Some(LinkType::SendAirdrop),
+            link_type: LinkType::SendAirdrop,
             ..link
         };
         service.link_repository.update(updated_link.clone());
@@ -693,7 +652,7 @@ mod tests {
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let updated_link = Link {
-            link_type: Some(LinkType::SendAirdrop),
+            link_type: LinkType::SendAirdrop,
             ..link
         };
         service.link_repository.update(updated_link.clone());
@@ -715,7 +674,7 @@ mod tests {
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let updated_link = Link {
-            link_type: Some(LinkType::SendAirdrop),
+            link_type: LinkType::SendAirdrop,
             ..link
         };
         service.link_repository.update(updated_link.clone());
@@ -741,7 +700,7 @@ mod tests {
         let link = create_link_fixture(&mut service, creator_id);
 
         let updated_link = Link {
-            link_type: Some(LinkType::SendTokenBasket),
+            link_type: LinkType::SendTokenBasket,
             asset_info: vec![AssetInfo {
                 asset: Asset::IC {
                     address: random_principal_id(),
@@ -776,7 +735,7 @@ mod tests {
         let link = create_link_fixture(&mut service, creator_id);
 
         let updated_link = Link {
-            link_type: Some(LinkType::SendTokenBasket),
+            link_type: LinkType::SendTokenBasket,
             asset_info: vec![AssetInfo {
                 asset: Asset::IC {
                     address: random_principal_id(),
@@ -812,7 +771,7 @@ mod tests {
         let link = create_link_fixture(&mut service, creator_id);
 
         let updated_link = Link {
-            link_type: Some(LinkType::SendTokenBasket),
+            link_type: LinkType::SendTokenBasket,
             asset_info: vec![AssetInfo {
                 asset: Asset::IC {
                     address: random_principal_id(),
@@ -847,7 +806,7 @@ mod tests {
         let link = create_link_fixture(&mut service, creator_id);
 
         let updated_link = Link {
-            link_type: Some(LinkType::SendTokenBasket),
+            link_type: LinkType::SendTokenBasket,
             asset_info: vec![AssetInfo {
                 asset: Asset::IC {
                     address: random_principal_id(),
@@ -882,7 +841,7 @@ mod tests {
         let link = create_link_fixture(&mut service, creator_id);
 
         let updated_link = Link {
-            link_type: Some(LinkType::ReceivePayment),
+            link_type: LinkType::ReceivePayment,
             ..link
         };
         service.link_repository.update(updated_link.clone());
@@ -907,7 +866,7 @@ mod tests {
         let link = create_link_fixture(&mut service, creator_id);
 
         let updated_link = Link {
-            link_type: Some(LinkType::ReceivePayment),
+            link_type: LinkType::ReceivePayment,
             ..link
         };
         service.link_repository.update(updated_link.clone());
@@ -932,7 +891,7 @@ mod tests {
         let link = create_link_fixture(&mut service, creator_id);
 
         let updated_link = Link {
-            link_type: Some(LinkType::ReceivePayment),
+            link_type: LinkType::ReceivePayment,
             ..link
         };
         service.link_repository.update(updated_link.clone());
@@ -965,31 +924,6 @@ mod tests {
             assert!(msg.contains("link not found"));
         } else {
             panic!("Expected NotFound error");
-        }
-    }
-
-    #[test]
-    fn it_should_error_on_get_assets_for_action_with_empty_link_type() {
-        // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let link = create_link_fixture(&mut service, random_principal_id());
-        let link = Link {
-            link_type: None,
-            ..link
-        };
-        service.link_repository.update(link.clone());
-
-        // Act
-        let result = service.get_assets_for_action(&link.id, &ActionType::Use);
-
-        // Assert
-        assert!(result.is_err());
-
-        if let Err(CanisterError::HandleLogicError(msg)) = result {
-            assert!(msg.contains("link type not found"));
-        } else {
-            panic!("Expected HandleLogicError");
         }
     }
 

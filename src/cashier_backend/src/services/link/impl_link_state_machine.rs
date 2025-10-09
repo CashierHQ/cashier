@@ -11,7 +11,8 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::{
         action::v1::{Action, ActionState, ActionType},
-        link::v1::{Link, LinkState, Template},
+        asset_info::AssetInfo,
+        link::v1::{Link, LinkState},
         link_action::v1::LinkAction,
         user_link::v1::UserLink,
     },
@@ -21,7 +22,7 @@ use log::error;
 use uuid::Uuid;
 
 impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService<E, R> {
-    async fn create_link(
+    fn create_link(
         &mut self,
         user_id: Principal,
         input: CreateLinkInput,
@@ -30,25 +31,20 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
         let id = Uuid::new_v4();
         let link_id_str = id.to_string();
 
+        let asset_info: Vec<AssetInfo> = input
+            .asset_info
+            .iter()
+            .map(LinkDetailUpdateAssetInfoInput::to_model)
+            .collect();
+
         let new_link = Link {
             id: link_id_str.clone(),
             state: LinkState::CreateLink,
-            // should be a mandatory field
-            title: Some(input.title),
-            // should be a mandatory field
-            link_type: Some(input.link_type),
-            // should be removed
-            description: None,
-            // should be removed
-            template: Some(Template::Central),
-            asset_info: input
-                .asset_info
-                .iter()
-                .map(LinkDetailUpdateAssetInfoInput::to_model)
-                .collect(),
+            title: input.title,
+            link_type: input.link_type,
+            asset_info: asset_info.clone(),
             creator: user_id,
             create_at: ts,
-            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: input.link_use_action_max_count,
         };
@@ -56,6 +52,12 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
             user_id,
             link_id: link_id_str.clone(),
         };
+
+        if !self.validate_add_asset_with_link_type(&new_link, &asset_info) {
+            return Err(CanisterError::ValidationErrors(
+                "Link type add asset validate failed".to_string(),
+            ));
+        }
 
         // Create the initial link and user_link records
         self.link_repository.create(new_link.clone());
@@ -191,7 +193,10 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
 
 #[cfg(test)]
 mod tests {
-    use cashier_backend_types::constant::INTENT_LABEL_SEND_TIP_ASSET;
+    use cashier_backend_types::constant::{
+        INTENT_LABEL_RECEIVE_PAYMENT_ASSET, INTENT_LABEL_SEND_AIRDROP_ASSET,
+        INTENT_LABEL_SEND_TIP_ASSET, INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
+    };
     use cashier_backend_types::repository::{common::Asset, link::v1::LinkType};
 
     use super::*;
@@ -284,9 +289,8 @@ mod tests {
         assert_eq!(action.creator, creator_id);
     }
 
-    #[tokio::test]
-    #[allow(deprecated)]
-    async fn it_should_create_link_with_create_link_state() {
+    #[test]
+    fn it_should_create_link_with_create_link_state() {
         // Arrange
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
@@ -306,15 +310,15 @@ mod tests {
         };
 
         // Act
-        let result = service.create_link(creator_id, input).await;
+        let result = service.create_link(creator_id, input);
 
         // Assert
         assert!(result.is_ok());
         let link = result.unwrap();
         assert_eq!(link.state, LinkState::CreateLink);
         assert_eq!(link.creator, creator_id);
-        assert_eq!(link.title, Some("Test Link".to_string()));
-        assert_eq!(link.link_type, Some(LinkType::SendTip));
+        assert_eq!(link.title, "Test Link".to_string());
+        assert_eq!(link.link_type, LinkType::SendTip);
         assert_eq!(link.link_use_action_max_count, 100);
         assert_eq!(link.asset_info.len(), 1);
         assert_eq!(
@@ -322,5 +326,361 @@ mod tests {
             INTENT_LABEL_SEND_TIP_ASSET.to_string()
         );
         assert_eq!(link.asset_info[0].amount_per_link_use_action, 1000000);
+    }
+
+    // SendTip failure test cases
+    #[test]
+    fn it_should_fail_create_link_send_tip_with_empty_asset_info() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let input = CreateLinkInput {
+            title: "Test Link".to_string(),
+            link_type: LinkType::SendTip,
+            link_use_action_max_count: 1,
+            asset_info: vec![], // Empty asset info
+        };
+
+        // Act
+        let result = service.create_link(creator_id, input);
+
+        // Assert
+        assert!(result.is_err());
+        if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
+            assert_eq!(msg, "Link type add asset validate failed");
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    #[test]
+    fn it_should_fail_create_link_send_tip_with_multiple_assets() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let mock_asset_info1 = LinkDetailUpdateAssetInfoInput {
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
+            label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
+            amount_per_link_use_action: 1000000,
+        };
+        let mock_asset_info2 = LinkDetailUpdateAssetInfoInput {
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
+            label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
+            amount_per_link_use_action: 2000000,
+        };
+        let input = CreateLinkInput {
+            title: "Test Link".to_string(),
+            link_type: LinkType::SendTip,
+            link_use_action_max_count: 1,
+            asset_info: vec![mock_asset_info1, mock_asset_info2], // Multiple assets not allowed for SendTip
+        };
+
+        // Act
+        let result = service.create_link(creator_id, input);
+
+        // Assert
+        assert!(result.is_err());
+        if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
+            assert_eq!(msg, "Link type add asset validate failed");
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    #[test]
+    fn it_should_fail_create_link_send_tip_with_zero_amount() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let mock_asset_info = LinkDetailUpdateAssetInfoInput {
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
+            label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
+            amount_per_link_use_action: 0, // Zero amount not allowed
+        };
+        let input = CreateLinkInput {
+            title: "Test Link".to_string(),
+            link_type: LinkType::SendTip,
+            link_use_action_max_count: 1,
+            asset_info: vec![mock_asset_info],
+        };
+
+        // Act
+        let result = service.create_link(creator_id, input);
+
+        // Assert
+        assert!(result.is_err());
+        if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
+            assert_eq!(msg, "Link type add asset validate failed");
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    // SendAirdrop failure test cases
+    #[test]
+    fn it_should_fail_create_link_send_airdrop_with_empty_asset_info() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let input = CreateLinkInput {
+            title: "Test Airdrop Link".to_string(),
+            link_type: LinkType::SendAirdrop,
+            link_use_action_max_count: 10,
+            asset_info: vec![], // Empty asset info
+        };
+
+        // Act
+        let result = service.create_link(creator_id, input);
+
+        // Assert
+        assert!(result.is_err());
+        if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
+            assert_eq!(msg, "Link type add asset validate failed");
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    #[test]
+    fn it_should_fail_create_link_send_airdrop_with_multiple_assets() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let mock_asset_info1 = LinkDetailUpdateAssetInfoInput {
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
+            label: INTENT_LABEL_SEND_AIRDROP_ASSET.to_string(),
+            amount_per_link_use_action: 1000000,
+        };
+        let mock_asset_info2 = LinkDetailUpdateAssetInfoInput {
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
+            label: INTENT_LABEL_SEND_AIRDROP_ASSET.to_string(),
+            amount_per_link_use_action: 2000000,
+        };
+        let input = CreateLinkInput {
+            title: "Test Airdrop Link".to_string(),
+            link_type: LinkType::SendAirdrop,
+            link_use_action_max_count: 10,
+            asset_info: vec![mock_asset_info1, mock_asset_info2], // Multiple assets not allowed for SendAirdrop
+        };
+
+        // Act
+        let result = service.create_link(creator_id, input);
+
+        // Assert
+        assert!(result.is_err());
+        if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
+            assert_eq!(msg, "Link type add asset validate failed");
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    #[test]
+    fn it_should_fail_create_link_send_airdrop_with_zero_amount() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let mock_asset_info = LinkDetailUpdateAssetInfoInput {
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
+            label: INTENT_LABEL_SEND_AIRDROP_ASSET.to_string(),
+            amount_per_link_use_action: 0, // Zero amount not allowed
+        };
+        let input = CreateLinkInput {
+            title: "Test Airdrop Link".to_string(),
+            link_type: LinkType::SendAirdrop,
+            link_use_action_max_count: 10,
+            asset_info: vec![mock_asset_info],
+        };
+
+        // Act
+        let result = service.create_link(creator_id, input);
+
+        // Assert
+        assert!(result.is_err());
+        if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
+            assert_eq!(msg, "Link type add asset validate failed");
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    // SendTokenBasket failure test cases
+    #[test]
+    fn it_should_fail_create_link_send_token_basket_with_empty_asset_info() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let input = CreateLinkInput {
+            title: "Test Token Basket Link".to_string(),
+            link_type: LinkType::SendTokenBasket,
+            link_use_action_max_count: 1,
+            asset_info: vec![], // Empty asset info
+        };
+
+        // Act
+        let result = service.create_link(creator_id, input);
+
+        // Assert
+        assert!(result.is_err());
+        if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
+            assert_eq!(msg, "Link type add asset validate failed");
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    #[test]
+    fn it_should_fail_create_link_send_token_basket_with_zero_amount() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let mock_asset_info1 = LinkDetailUpdateAssetInfoInput {
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
+            label: INTENT_LABEL_SEND_TOKEN_BASKET_ASSET.to_string(),
+            amount_per_link_use_action: 1000000,
+        };
+        let mock_asset_info2 = LinkDetailUpdateAssetInfoInput {
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
+            label: INTENT_LABEL_SEND_TOKEN_BASKET_ASSET.to_string(),
+            amount_per_link_use_action: 0, // Zero amount not allowed
+        };
+        let input = CreateLinkInput {
+            title: "Test Token Basket Link".to_string(),
+            link_type: LinkType::SendTokenBasket,
+            link_use_action_max_count: 1,
+            asset_info: vec![mock_asset_info1, mock_asset_info2],
+        };
+
+        // Act
+        let result = service.create_link(creator_id, input);
+
+        // Assert
+        assert!(result.is_err());
+        if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
+            assert_eq!(msg, "Link type add asset validate failed");
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    // ReceivePayment failure test cases
+    #[test]
+    fn it_should_fail_create_link_receive_payment_with_empty_asset_info() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let input = CreateLinkInput {
+            title: "Test Payment Link".to_string(),
+            link_type: LinkType::ReceivePayment,
+            link_use_action_max_count: 1,
+            asset_info: vec![], // Empty asset info
+        };
+
+        // Act
+        let result = service.create_link(creator_id, input);
+
+        // Assert
+        assert!(result.is_err());
+        if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
+            assert_eq!(msg, "Link type add asset validate failed");
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    #[test]
+    fn it_should_fail_create_link_receive_payment_with_multiple_assets() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let mock_asset_info1 = LinkDetailUpdateAssetInfoInput {
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
+            label: INTENT_LABEL_RECEIVE_PAYMENT_ASSET.to_string(),
+            amount_per_link_use_action: 1000000,
+        };
+        let mock_asset_info2 = LinkDetailUpdateAssetInfoInput {
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
+            label: INTENT_LABEL_RECEIVE_PAYMENT_ASSET.to_string(),
+            amount_per_link_use_action: 2000000,
+        };
+        let input = CreateLinkInput {
+            title: "Test Payment Link".to_string(),
+            link_type: LinkType::ReceivePayment,
+            link_use_action_max_count: 1,
+            asset_info: vec![mock_asset_info1, mock_asset_info2], // Multiple assets not allowed for ReceivePayment
+        };
+
+        // Act
+        let result = service.create_link(creator_id, input);
+
+        // Assert
+        assert!(result.is_err());
+        if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
+            assert_eq!(msg, "Link type add asset validate failed");
+        } else {
+            panic!("Expected ValidationErrors");
+        }
+    }
+
+    #[test]
+    fn it_should_fail_create_link_receive_payment_with_amount_equals_one() {
+        // Arrange
+        let mut service =
+            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
+        let creator_id = random_principal_id();
+        let mock_asset_info = LinkDetailUpdateAssetInfoInput {
+            asset: Asset::IC {
+                address: random_principal_id(),
+            },
+            label: INTENT_LABEL_RECEIVE_PAYMENT_ASSET.to_string(),
+            amount_per_link_use_action: 1, // Amount of 1 not allowed for ReceivePayment
+        };
+        let input = CreateLinkInput {
+            title: "Test Payment Link".to_string(),
+            link_type: LinkType::ReceivePayment,
+            link_use_action_max_count: 1,
+            asset_info: vec![mock_asset_info],
+        };
+
+        // Act
+        let result = service.create_link(creator_id, input);
+
+        // Assert
+        assert!(result.is_err());
+        if let CanisterError::ValidationErrors(msg) = result.err().unwrap() {
+            assert_eq!(msg, "Link type add asset validate failed");
+        } else {
+            panic!("Expected ValidationErrors");
+        }
     }
 }

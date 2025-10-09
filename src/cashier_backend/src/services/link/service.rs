@@ -328,7 +328,6 @@ mod tests {
         // Assert
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
-        assert_eq!(fetched_link.description, created_link.description);
         assert_eq!(fetched_link.link_type, created_link.link_type);
     }
 
@@ -348,7 +347,6 @@ mod tests {
         // Assert
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
-        assert_eq!(fetched_link.description, created_link.description);
         assert_eq!(fetched_link.link_type, created_link.link_type);
     }
 
@@ -408,7 +406,6 @@ mod tests {
         // Assert
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
-        assert_eq!(fetched_link.description, created_link.description);
         assert_eq!(fetched_link.link_type, created_link.link_type);
         assert!(action.is_some()); // Action should be returned for CreateLink type
         let action = action.unwrap();
@@ -512,7 +509,6 @@ mod tests {
         // Assert
         assert_eq!(fetched_link.id, created_link.id);
         assert_eq!(fetched_link.title, created_link.title);
-        assert_eq!(fetched_link.description, created_link.description);
         assert_eq!(fetched_link.link_type, created_link.link_type);
         assert!(action.is_none()); // No action returned for Use type
     }
@@ -642,13 +638,10 @@ mod tests {
             id: created_link.id.clone(),
             state: created_link.state,
             title: created_link.title.clone(),
-            description: created_link.description.clone(),
             link_type: created_link.link_type,
             asset_info: created_link.asset_info.clone(),
-            template: created_link.template.clone(),
             creator: created_link.creator,
             create_at: created_link.create_at,
-            metadata: created_link.metadata.clone(),
             link_use_action_counter: 10, // Set to max count
             link_use_action_max_count: 10,
         };
@@ -860,13 +853,10 @@ mod tests {
             id: created_link.id.clone(),
             state: created_link.state,
             title: created_link.title.clone(),
-            description: created_link.description.clone(),
             link_type: created_link.link_type,
             asset_info: created_link.asset_info.clone(),
-            template: created_link.template.clone(),
             creator: created_link.creator,
             create_at: created_link.create_at,
-            metadata: created_link.metadata.clone(),
             link_use_action_counter: 10, // Set to max count
             link_use_action_max_count: 10,
         };

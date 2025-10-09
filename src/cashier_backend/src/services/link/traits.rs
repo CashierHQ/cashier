@@ -10,8 +10,8 @@ use cashier_backend_types::dto::action::{
     UpdateActionInput,
 };
 use cashier_backend_types::dto::link::{
-    CreateLinkInput, LinkDetailUpdateInput, LinkGetUserStateInput, LinkGetUserStateOutput,
-    LinkStateMachineGoto, LinkUpdateUserStateInput, UserStateMachineGoto,
+    CreateLinkInput, LinkGetUserStateInput, LinkGetUserStateOutput, LinkStateMachineGoto,
+    LinkUpdateUserStateInput, UserStateMachineGoto,
 };
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::action::v1::Action;
@@ -19,7 +19,7 @@ use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::repository::asset_info::AssetInfo;
 use cashier_backend_types::repository::common::Asset;
 use cashier_backend_types::repository::intent::v2::Intent;
-use cashier_backend_types::repository::link::v1::{Link, LinkType, Template};
+use cashier_backend_types::repository::link::v1::Link;
 use cashier_backend_types::repository::link_action::v1::LinkAction;
 
 use std::collections::HashMap;
@@ -28,7 +28,7 @@ use candid::Nat;
 
 // ---------- 1. Link lifecycle ----------
 pub trait LinkStateMachine {
-    async fn create_link(
+    fn create_link(
         &mut self,
         caller: Principal,
         input: CreateLinkInput,
