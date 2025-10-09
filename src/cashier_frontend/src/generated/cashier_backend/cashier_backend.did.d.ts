@@ -187,39 +187,33 @@ export interface LinkDetailUpdateAssetInfoInput {
   'label' : string,
 }
 export interface LinkDto {
-  id: string;
-  title: string;
-  creator: Principal;
-  asset_info: Array<AssetInfoDto>;
-  link_type: LinkType;
-  create_at: bigint;
-  state: LinkState;
-  link_use_action_max_count: bigint;
-  link_use_action_counter: bigint;
+  'id' : string,
+  'title' : string,
+  'creator' : Principal,
+  'asset_info' : Array<AssetInfoDto>,
+  'link_type' : LinkType,
+  'create_at' : bigint,
+  'state' : LinkState,
+  'link_use_action_max_count' : bigint,
+  'link_use_action_counter' : bigint,
 }
 export interface LinkGetUserStateInput {
-  link_id: string;
-  action_type: ActionType;
-  anonymous_wallet_address: [] | [Principal];
+  'link_id' : string,
+  'action_type' : ActionType,
+  'anonymous_wallet_address' : [] | [Principal],
 }
 export interface LinkGetUserStateOutput {
-  action: ActionDto;
-  link_user_state: LinkUserState;
+  'action' : ActionDto,
+  'link_user_state' : LinkUserState,
 }
-export type LinkState =
-  | { Preview: null }
-  | { ChooseLinkType: null }
-  | { Inactive: null }
-  | { Active: null }
-  | { CreateLink: null }
-  | { AddAssets: null }
-  | { InactiveEnded: null };
-
-export type LinkType =
-  | { SendAirdrop: null }
-  | { SendTip: null }
-  | { ReceivePayment: null }
-  | { SendTokenBasket: null };
+export type LinkState = { 'Inactive' : null } |
+  { 'Active' : null } |
+  { 'CreateLink' : null } |
+  { 'InactiveEnded' : null };
+export type LinkType = { 'SendAirdrop' : null } |
+  { 'SendTip' : null } |
+  { 'ReceivePayment' : null } |
+  { 'SendTokenBasket' : null };
 export interface LinkUpdateUserStateInput {
   'link_id' : string,
   'action_type' : ActionType,
@@ -277,7 +271,8 @@ export type Result_6 = { 'Ok' : Icrc21ConsentInfo } |
   { 'Err' : Icrc21Error };
 export type Result_7 = { 'Ok' : [] | [LinkGetUserStateOutput] } |
   { 'Err' : CanisterError };
-export type Result_8 = { Ok: string } | { Err: CanisterError };
+export type Result_8 = { 'Ok' : string } |
+  { 'Err' : CanisterError };
 export interface TransactionDto {
   'id' : string,
   'protocol' : Protocol,
