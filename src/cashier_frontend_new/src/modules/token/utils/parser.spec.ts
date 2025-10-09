@@ -50,7 +50,7 @@ describe("parseListTokens", () => {
             string_id: `IC:${mockPrincipal.toText()}`,
             details: {
               IC: {
-                fee: 0n,
+                fee: 10000n,
                 ledger_id: mockPrincipal,
                 index_id: [],
               },
@@ -70,6 +70,8 @@ describe("parseListTokens", () => {
         name: "Internet Computer",
         symbol: "ICP",
         decimals: 8,
+        enabled: true,
+        fee: 10000n,
       },
     ]);
   });
