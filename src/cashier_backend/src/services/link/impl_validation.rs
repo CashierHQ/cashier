@@ -57,7 +57,10 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
                 }
 
                 // Check usage limits for link types that have them
-                if matches!(link.link_type, LinkType::SendTip | LinkType::SendAirdrop | LinkType::SendTokenBasket) {
+                if matches!(
+                    link.link_type,
+                    LinkType::SendTip | LinkType::SendAirdrop | LinkType::SendTokenBasket
+                ) {
                     if link.link_use_action_counter >= link.link_use_action_max_count {
                         return Err(CanisterError::ValidationErrors(format!(
                             "Link maximum usage count reached: {}",
@@ -65,7 +68,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
                         )));
                     }
                 }
-                
+
                 Ok(())
             }
         }
