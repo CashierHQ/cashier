@@ -1,10 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-export enum TEMPLATE {
-  CENTRAL = "Central",
-}
-
 export enum FRONTEND_LINK_STATE {
   CHOOSE_TEMPLATE = "Link_state_choose_link_type",
   ADD_ASSET = "Link_state_add_assets",
@@ -65,7 +61,7 @@ export function getLinkLabel(state: LINK_STATE | FRONTEND_LINK_STATE): string {
 }
 
 export function mapStringToLinkState(
-  state: string
+  state: string,
 ): LINK_STATE | FRONTEND_LINK_STATE {
   switch (state) {
     case "Link_state_choose_link_type":
@@ -109,7 +105,9 @@ export function getLinkTypeString(type: string): string {
   }
 }
 
-export function mapStringToLinkType(type: string | undefined): LINK_TYPE | undefined {
+export function mapStringToLinkType(
+  type: string | undefined,
+): LINK_TYPE | undefined {
   switch (type) {
     case "SendTip":
       return LINK_TYPE.SEND_TIP;

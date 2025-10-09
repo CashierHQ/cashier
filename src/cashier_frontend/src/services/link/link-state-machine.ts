@@ -34,7 +34,7 @@ export class LinkStateMachine {
    */
   public getNextState(
     currentState: LINK_STATE | FRONTEND_LINK_STATE,
-    isContinue: boolean
+    isContinue: boolean,
   ): LINK_STATE | FRONTEND_LINK_STATE | undefined {
     const stateTransitions: Record<
       FRONTEND_LINK_STATE | LINK_STATE,
@@ -88,7 +88,7 @@ export class LinkStateMachine {
   public validateStateTransition(
     link: Partial<LinkDetailModel>,
     action: string,
-    updateLinkInput?: Partial<UserInputItem>
+    updateLinkInput?: Partial<UserInputItem>,
   ): boolean {
     if (!updateLinkInput) throw new Error("Missing update link input data");
 
@@ -108,7 +108,7 @@ export class LinkStateMachine {
         const whitelist = ["title", "linkType", "assets"];
         if (this.checkPropsChanged(whitelist, updateLinkInput, link)) {
           throw new Error(
-            "Cannot modify non-whitelisted properties in this state"
+            "Cannot modify non-whitelisted properties in this state",
           );
         }
 
@@ -122,7 +122,10 @@ export class LinkStateMachine {
     if (state === FRONTEND_LINK_STATE.ADD_ASSET) {
       if (action === "Continue") {
         // Validate required fields for this transition
-        if (!updateLinkInput?.assets || updateLinkInput.assets.length === 0) {
+        if (
+          !updateLinkInput?.asset_info ||
+          updateLinkInput.asset_info.length === 0
+        ) {
           throw new Error("At least one asset is required for this transition");
         }
 
@@ -137,15 +140,15 @@ export class LinkStateMachine {
         if (updateLinkInput.linkType) {
           this.validateLinkTypeSpecificRequirements(
             updateLinkInput.linkType,
-            updateLinkInput.assets,
-            updateLinkInput.maxActionNumber
+            updateLinkInput.asset_info,
+            updateLinkInput.maxActionNumber,
           );
         }
         // For ADD_ASSET state, assets and maxActionNumber can change
         const whitelist = ["assets", "maxActionNumber"];
         if (this.checkPropsChanged(whitelist, updateLinkInput, link)) {
           throw new Error(
-            "Cannot modify non-whitelisted properties in this state"
+            "Cannot modify non-whitelisted properties in this state",
           );
         }
 
@@ -155,7 +158,7 @@ export class LinkStateMachine {
         const whitelist = ["assets", "maxActionNumber"];
         if (this.checkPropsChanged(whitelist, updateLinkInput, link)) {
           throw new Error(
-            "Cannot modify non-whitelisted properties when going back"
+            "Cannot modify non-whitelisted properties when going back",
           );
         }
 
@@ -200,7 +203,7 @@ export class LinkStateMachine {
   public validateLinkTypeSpecificRequirements(
     linkType: string,
     assets?: UserInputAsset[],
-    maxActionNumber?: bigint
+    maxActionNumber?: bigint,
   ): void {
     if (!assets || assets.length === 0) {
       throw new Error("Assets are required for link creation");
@@ -242,7 +245,7 @@ export class LinkStateMachine {
         // - exactly 1 asset
         if (maxActionNumber !== undefined && maxActionNumber < BigInt(1)) {
           throw new Error(
-            "SendAirdrop links must have at least 1 action count"
+            "SendAirdrop links must have at least 1 action count",
           );
         }
         if (assets.length !== 1) {
@@ -256,7 +259,7 @@ export class LinkStateMachine {
         // - multiple assets (at least 1)
         if (maxActionNumber !== undefined && maxActionNumber !== BigInt(1)) {
           throw new Error(
-            "SendTokenBasket links must have exactly 1 action count"
+            "SendTokenBasket links must have exactly 1 action count",
           );
         }
         if (assets.length < 1) {
@@ -270,7 +273,7 @@ export class LinkStateMachine {
         // - exactly 1 asset
         if (maxActionNumber !== undefined && maxActionNumber <= BigInt(0)) {
           throw new Error(
-            "ReceivePayment links must have at least 1 action count"
+            "ReceivePayment links must have at least 1 action count",
           );
         }
         if (assets.length !== 1) {
@@ -299,7 +302,7 @@ export class LinkStateMachine {
   public checkPropsChanged(
     whitelistProps: string[],
     userInput: Partial<UserInputItem>,
-    linkDto: Partial<LinkDetailModel>
+    linkDto: Partial<LinkDetailModel>,
   ): boolean {
     const propsToCheck = [
       "title",
@@ -321,8 +324,8 @@ export class LinkStateMachine {
         case "assets":
           // Check if assets have changed using custom comparison for BigInt values
           if (
-            userInput.assets !== undefined &&
-            !this.compareAssets(userInput.assets, linkDto.asset_info)
+            userInput.asset_info !== undefined &&
+            !this.compareAssets(userInput.asset_info, linkDto.asset_info)
           ) {
             return true;
           }
@@ -357,7 +360,7 @@ export class LinkStateMachine {
    */
   private compareAssets(
     userInputAssets: UserInputAsset[] | undefined,
-    assetInfoModels: AssetInfoModel[] | undefined
+    assetInfoModels: AssetInfoModel[] | undefined,
   ): boolean {
     // Handle undefined cases
     if (!userInputAssets && !assetInfoModels) return true;
@@ -369,10 +372,10 @@ export class LinkStateMachine {
     // Sort both arrays to ensure consistent comparison
     // We'll sort by address (string) which should be safe to compare
     const sortedUserInputAssets = [...userInputAssets].sort((a, b) =>
-      a.address.localeCompare(b.address)
+      a.address.localeCompare(b.address),
     );
     const sortedAssetInfoModels = [...assetInfoModels].sort((a, b) =>
-      a.address.localeCompare(b.address)
+      a.address.localeCompare(b.address),
     );
 
     // Compare each asset

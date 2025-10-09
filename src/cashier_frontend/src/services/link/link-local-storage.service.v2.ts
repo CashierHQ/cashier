@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { UserInputItem } from "@/stores/linkCreationFormStore";
 import { v4 as uuidv4 } from "uuid";
-import { LinkDetailModel } from "../types/link.service.types";
+import { AssetInfoModel, LinkDetailModel } from "../types/link.service.types";
 import { FRONTEND_LINK_STATE, LINK_TYPE } from "../types/enum";
 import { ResponseLinksModel } from "./link.service";
 import linkStateMachine from "./link-state-machine";
@@ -52,7 +52,7 @@ class LinkLocalStorageServiceV2 {
 
   constructor(
     userPid: string,
-    stateMachine: LinkStateMachine = linkStateMachine
+    stateMachine: LinkStateMachine = linkStateMachine,
   ) {
     this.userPid = userPid;
     this.stateMachine = stateMachine;
@@ -100,20 +100,34 @@ class LinkLocalStorageServiceV2 {
   updateLink(
     linkId: string,
     data: Partial<UserInputItem>,
-    caller: string
+    caller: string,
   ): LinkDetailModel {
     const links = this.getLinks();
     if (!links[linkId]) throw new Error("Link not found");
 
     const existing = links[linkId];
+    let assets: AssetInfoModel[] = [];
+    if (data.asset_info) {
+      assets = data.asset_info.map((a) => ({
+        address: a.address,
+        amountPerUse: BigInt(a.linkUseAmount || 0),
+        label: a.label,
+        chain: a.chain,
+      }));
+    }
+
+    console.log("Updating link:", linkId, data, assets);
 
     const composed: LinkDetailModel = {
       ...existing,
       ...data,
+      asset_info: assets,
       creator: caller,
       id: linkId,
       create_at: existing.create_at || new Date().getTime() * 1_000_000, // store as nanoseconds
     };
+
+    console.log("Composed link data:", composed);
 
     links[linkId] = composed;
     this.saveLinks(links);
@@ -135,7 +149,7 @@ class LinkLocalStorageServiceV2 {
     linkId: string,
     data: Partial<UserInputItem>,
     isContinue: boolean,
-    caller: string
+    caller: string,
   ): LinkDetailModel {
     const link = this.getLink(linkId);
     if (!link) throw new Error("Link not found");
@@ -146,12 +160,12 @@ class LinkLocalStorageServiceV2 {
     const isValid = this.stateMachine.validateStateTransition(
       link,
       action,
-      data
+      data,
     );
 
     if (!isValid) {
       throw new Error(
-        `Invalid state transition from ${currentState} with direction ${isContinue ? "continue" : "back"}`
+        `Invalid state transition from ${currentState} with direction ${isContinue ? "continue" : "back"}`,
       );
     }
 

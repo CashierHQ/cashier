@@ -193,8 +193,8 @@ function LinkPreview({
         };
       });
       setEnhancedAssets(enhanced);
-    } else if (userInputData && userInputData.assets && tokenMap) {
-      const enhanced = userInputData.assets.map((asset) => {
+    } else if (userInputData && userInputData.asset_info && tokenMap) {
+      const enhanced = userInputData.asset_info.map((asset) => {
         const matchingToken = tokenMap[asset.address];
         return {
           address: asset.address,

@@ -56,7 +56,7 @@ export default function HomePage() {
         linkId: linkId,
         title: "",
         linkType: LINK_TYPE.SEND_TIP,
-        assets: [],
+        asset_info: [],
       });
 
       navigate(`/edit/${linkId}`);
@@ -115,7 +115,7 @@ export default function HomePage() {
                 linkId: link.id,
                 title: link.title,
                 linkType: link.linkType,
-                assets: processedAssets,
+                asset_info: processedAssets,
               });
             }
           }
