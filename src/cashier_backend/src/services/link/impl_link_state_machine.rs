@@ -317,7 +317,10 @@ mod tests {
         assert_eq!(link.link_type, Some(LinkType::SendTip));
         assert_eq!(link.link_use_action_max_count, 100);
         assert_eq!(link.asset_info.len(), 1);
-        assert_eq!(link.asset_info[0].label, INTENT_LABEL_SEND_TIP_ASSET.to_string());
+        assert_eq!(
+            link.asset_info[0].label,
+            INTENT_LABEL_SEND_TIP_ASSET.to_string()
+        );
         assert_eq!(link.asset_info[0].amount_per_link_use_action, 1000000);
     }
 }
