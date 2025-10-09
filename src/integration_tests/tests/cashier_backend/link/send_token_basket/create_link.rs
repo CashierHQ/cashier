@@ -121,7 +121,7 @@ async fn it_should_create_link_token_basket_successfully() {
 
         // Assert
         assert!(!link.id.is_empty());
-        assert_eq!(link.link_type, Some(LinkType::SendTokenBasket));
+        assert_eq!(link.link_type, LinkType::SendTokenBasket);
         assert_eq!(link.asset_info.len(), 3);
 
         // Act

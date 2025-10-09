@@ -13,7 +13,7 @@ use cashier_backend_types::{
     repository::{
         action::v1::ActionType,
         common::Asset,
-        link::v1::{LinkType, Template},
+        link::v1::{LinkType},
     },
 };
 use ic_mple_client::PocketIcClient;
