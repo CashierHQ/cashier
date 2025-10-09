@@ -600,11 +600,10 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
             ));
         }
 
-        let params = input.params.clone();
         let updated_link = self
             .state
             .link_service
-            .handle_link_state_transition(&input.id, input.goto, params)
+            .handle_link_state_transition(&input.id, input.goto)
             .await?;
 
         Ok(LinkDto::from(updated_link))

@@ -23,14 +23,6 @@ pub struct CreateLinkInput {
     pub link_use_action_max_count: u64,
     pub asset_info: Vec<LinkDetailUpdateAssetInfoInput>,
     pub link_type: LinkType,
-    #[deprecated(note = "This should be remove")]
-    pub template: Template,
-    #[deprecated(note = "This should be remove")]
-    pub nft_image: Option<String>,
-    #[deprecated(note = "This should be remove")]
-    pub link_image_url: Option<String>,
-    #[deprecated(note = "This should be remove")]
-    pub description: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -54,7 +46,9 @@ impl LinkDetailUpdateAssetInfoInput {
     }
 }
 
-#[deprecated(note = "Link only need update for inactive and ended state, therefore this should removed")]
+#[deprecated(
+    note = "Link only need update for inactive and ended state, therefore this should removed"
+)]
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct LinkDetailUpdateInput {
     pub title: Option<String>,
@@ -77,8 +71,6 @@ pub enum LinkStateMachineGoto {
 pub struct UpdateLinkInput {
     pub id: String,
     pub goto: LinkStateMachineGoto,
-    #[deprecated(note = "Link only need update for inactive and ended state, therefore params should removed")]
-    pub params: Option<LinkDetailUpdateInput>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
