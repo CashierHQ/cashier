@@ -10,11 +10,7 @@ use cashier_backend_types::{
             UpdateLinkInput,
         },
     },
-    repository::{
-        action::v1::ActionType,
-        common::Asset,
-        link::v1::{LinkType},
-    },
+    repository::{action::v1::ActionType, common::Asset, link::v1::LinkType},
 };
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
