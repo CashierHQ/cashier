@@ -6,6 +6,7 @@ import { ActionModel } from "./action.service.types";
 import {
   ACTION_TYPE,
   CHAIN,
+  FRONTEND_LINK_STATE,
   LINK_STATE,
   LINK_TYPE,
   LINK_USER_STATE,
@@ -25,11 +26,8 @@ export type AssetInfoModel = {
 export type LinkDetailModel = {
   id: string;
   title: string;
-  description: string;
-  image: string;
-  linkType?: LINK_TYPE;
-  state?: LINK_STATE;
-  template?: string;
+  linkType: LINK_TYPE;
+  state: LINK_STATE | FRONTEND_LINK_STATE;
   creator?: string;
   create_at: number;
   asset_info: AssetInfoModel[];

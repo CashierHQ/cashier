@@ -10,11 +10,7 @@ use cashier_backend_types::{
             UpdateLinkInput,
         },
     },
-    repository::{
-        action::v1::ActionType,
-        common::Asset,
-        link::v1::{LinkType, Template},
-    },
+    repository::{action::v1::ActionType, common::Asset, link::v1::LinkType},
 };
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
@@ -102,11 +98,7 @@ impl LinkTestFixture {
                     amount_per_link_use_action: 10_000_000,
                 },
             ],
-            template: Template::Central,
             link_type: LinkType::SendTokenBasket,
-            nft_image: None,
-            link_image_url: None,
-            description: Some("Test link for integration testing".to_string()),
         };
         self.create_link(input).await
     }
@@ -260,11 +252,7 @@ impl LinkTestFixture {
             title: "Test Tip Link".to_string(),
             link_use_action_max_count: 1,
             asset_info,
-            template: Template::Central,
             link_type: LinkType::SendTip,
-            nft_image: None,
-            link_image_url: None,
-            description: Some("Test tip-link for integration testing".to_string()),
         })
     }
 
@@ -302,11 +290,7 @@ impl LinkTestFixture {
             title: "Test Token Basket Link".to_string(),
             link_use_action_max_count: 1,
             asset_info,
-            template: Template::Central,
             link_type: LinkType::SendTokenBasket,
-            nft_image: None,
-            link_image_url: None,
-            description: Some("Test token basket link for integration testing".to_string()),
         })
     }
 
@@ -346,11 +330,7 @@ impl LinkTestFixture {
             title: "Test Airdrop Link".to_string(),
             link_use_action_max_count: max_count,
             asset_info,
-            template: Template::Central,
             link_type: LinkType::SendAirdrop,
-            nft_image: None,
-            link_image_url: None,
-            description: Some("Test airdrop link for integration testing".to_string()),
         })
     }
 
@@ -388,11 +368,7 @@ impl LinkTestFixture {
             title: "Test Receive Payment Link".to_string(),
             link_use_action_max_count: 1,
             asset_info,
-            template: Template::Central,
             link_type: LinkType::ReceivePayment,
-            nft_image: None,
-            link_image_url: None,
-            description: Some("Test receive payment link for integration testing".to_string()),
         })
     }
 
@@ -509,7 +485,6 @@ pub async fn create_tip_link_fixture(
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
         goto: LinkStateMachineGoto::Continue,
-        params: None,
     };
     let update_link = creator_fixture.update_link(update_link_input).await;
 
@@ -569,7 +544,6 @@ pub async fn create_token_basket_link_fixture(
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
         goto: LinkStateMachineGoto::Continue,
-        params: None,
     };
     let update_link = creator_fixture.update_link(update_link_input).await;
 
@@ -617,7 +591,6 @@ pub async fn create_airdrop_link_fixture(
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
         goto: LinkStateMachineGoto::Continue,
-        params: None,
     };
     let update_link = test_fixture.update_link(update_link_input).await;
 
@@ -662,7 +635,6 @@ pub async fn create_receive_payment_link_fixture(
     let update_link_input = UpdateLinkInput {
         id: link.id.clone(),
         goto: LinkStateMachineGoto::Continue,
-        params: None,
     };
     let update_link = test_fixture.update_link(update_link_input).await;
 

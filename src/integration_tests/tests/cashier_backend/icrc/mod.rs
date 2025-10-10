@@ -42,7 +42,7 @@ async fn it_should_call_icrc_114_validate_success() {
 
         // Assert
         assert!(!link.id.is_empty());
-        assert_eq!(link.link_type, Some(LinkType::SendTip));
+        assert_eq!(link.link_type, LinkType::SendTip);
         assert_eq!(link.asset_info.len(), 1);
         assert_eq!(link.asset_info[0].amount_per_link_use_action, tip_amount);
 
@@ -149,7 +149,7 @@ async fn it_should_return_false_if_validate_icrc_112_response_failed() {
 
         // Assert
         assert!(!link.id.is_empty());
-        assert_eq!(link.link_type, Some(LinkType::SendTip));
+        assert_eq!(link.link_type, LinkType::SendTip);
         assert_eq!(link.asset_info.len(), 1);
         assert_eq!(link.asset_info[0].amount_per_link_use_action, tip_amount);
 

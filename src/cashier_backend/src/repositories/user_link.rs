@@ -43,15 +43,6 @@ impl<S: Storage<UserLinkRepositoryStorage>> UserLinkRepository<S> {
         });
     }
 
-    pub fn delete(&mut self, id: &UserLink) {
-        let id = UserLinkKey {
-            user_id: &id.user_id,
-            link_id: &id.link_id,
-        };
-        self.storage
-            .with_borrow_mut(|store| store.remove(&id.to_str()));
-    }
-
     pub fn get_links_by_user_id(
         &self,
         user_id: &Principal,
@@ -134,25 +125,6 @@ mod tests {
         assert_eq!(links.data.len(), 1);
         assert_eq!(links.data.first().unwrap().link_id, link_id);
         assert_eq!(links.data.first().unwrap().user_id, user_id);
-    }
-
-    #[test]
-    fn it_should_delete_a_user_link() {
-        // Arrange
-        let mut repo = TestRepositories::new().user_link();
-        let user_id = random_principal_id();
-        let link_id = random_id_string();
-
-        let user_link = UserLink { user_id, link_id };
-
-        repo.create(user_link.clone());
-
-        // Act
-        repo.delete(&user_link);
-
-        // Assert
-        let links = repo.get_links_by_user_id(&user_id, &PaginateInput::default());
-        assert!(links.data.is_empty());
     }
 
     #[test]

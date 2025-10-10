@@ -17,13 +17,9 @@ const getLinkTypeTag = (linkType?: LINK_TYPE): LinkTag | undefined => {
     LINK_TYPE.SEND_TIP,
     LINK_TYPE.SEND_AIRDROP,
     LINK_TYPE.SEND_TOKEN_BASKET,
-    LINK_TYPE.NFT_CREATE_AND_AIRDROP,
   ];
 
-  const receiveTypes = [
-    LINK_TYPE.RECEIVE_PAYMENT,
-    LINK_TYPE.RECEIVE_MULTI_PAYMENT,
-  ];
+  const receiveTypes = [LINK_TYPE.RECEIVE_PAYMENT];
 
   if (sendTypes.includes(linkType)) {
     return "send";
