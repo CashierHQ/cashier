@@ -1,8 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use std::collections::HashMap;
-
 use candid::{CandidType, Principal};
 
 use derive_more::Display;
@@ -12,7 +10,7 @@ use crate::dto::action::ActionDto;
 use crate::repository::action::v1::ActionType;
 use crate::repository::asset_info::AssetInfo;
 use crate::repository::common::Asset;
-use crate::repository::link::v1::{Link, LinkState, LinkType, Template};
+use crate::repository::link::v1::{Link, LinkState, LinkType};
 use crate::repository::link_action::v1::LinkUserState;
 
 // Structs and Enums
@@ -22,11 +20,7 @@ pub struct CreateLinkInput {
     pub title: String,
     pub link_use_action_max_count: u64,
     pub asset_info: Vec<LinkDetailUpdateAssetInfoInput>,
-    pub template: Template,
     pub link_type: LinkType,
-    pub nft_image: Option<String>,
-    pub link_image_url: Option<String>,
-    pub description: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -50,18 +44,6 @@ impl LinkDetailUpdateAssetInfoInput {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
-pub struct LinkDetailUpdateInput {
-    pub title: Option<String>,
-    pub description: Option<String>,
-    pub link_image_url: Option<String>,
-    pub nft_image: Option<String>,
-    pub asset_info: Vec<LinkDetailUpdateAssetInfoInput>,
-    pub template: Option<Template>,
-    pub link_type: Option<LinkType>,
-    pub link_use_action_max_count: Option<u64>,
-}
-
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, Eq, Display)]
 pub enum LinkStateMachineGoto {
     Continue,
@@ -72,7 +54,6 @@ pub enum LinkStateMachineGoto {
 pub struct UpdateLinkInput {
     pub id: String,
     pub goto: LinkStateMachineGoto,
-    pub params: Option<LinkDetailUpdateInput>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -84,14 +65,11 @@ pub struct GetLinkOptions {
 pub struct LinkDto {
     pub id: String,
     pub state: LinkState,
-    pub title: Option<String>,
-    pub description: Option<String>,
-    pub link_type: Option<LinkType>,
+    pub title: String,
+    pub link_type: LinkType,
     pub asset_info: Vec<AssetInfoDto>,
-    pub template: Option<Template>,
     pub creator: Principal,
     pub create_at: u64,
-    pub metadata: HashMap<String, String>,
     pub link_use_action_counter: u64,
     pub link_use_action_max_count: u64,
 }
@@ -131,13 +109,10 @@ impl From<Link> for LinkDto {
             id: link.id,
             state: link.state,
             title: link.title,
-            description: link.description,
             link_type: link.link_type,
             asset_info: link.asset_info.iter().map(AssetInfoDto::from).collect(),
-            template: link.template,
             creator: link.creator,
             create_at: link.create_at,
-            metadata: link.metadata,
             link_use_action_counter: link.link_use_action_counter,
             link_use_action_max_count: link.link_use_action_max_count,
         }
@@ -156,18 +131,11 @@ impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfoDto {
     }
 }
 
-impl LinkDetailUpdateInput {
-    pub fn validate(&self) -> Result<(), String> {
-        Ok(())
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
 pub struct LinkGetUserStateInput {
     pub link_id: String,
     pub action_type: ActionType,
     pub anonymous_wallet_address: Option<Principal>,
-    // pub create_if_not_exist: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]

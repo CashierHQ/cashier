@@ -77,7 +77,7 @@ async fn create_link(input: CreateLinkInput) -> Result<LinkDto, CanisterError> {
     debug!("[create_link] input: {input:?}");
 
     let mut api = LinkApi::new(get_state());
-    api.create_link(msg_caller(), input).await
+    api.create_link(msg_caller(), input)
 }
 
 /// Updates an existing link's configuration or state.
@@ -380,12 +380,12 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
     /// # Returns
     /// * `Ok(LinkDto)` - Complete data of the newly created link
     /// * `Err(CanisterError)` - Error if link creation fails or validation errors occur
-    pub async fn create_link(
+    pub fn create_link(
         &mut self,
         caller: Principal,
         input: CreateLinkInput,
     ) -> Result<LinkDto, CanisterError> {
-        match self.state.link_service.create_link(caller, input).await {
+        match self.state.link_service.create_link(caller, input) {
             Ok(link) => Ok(LinkDto::from(link)),
             Err(e) => {
                 error!("Failed to create link: {e:?}");
@@ -576,15 +576,6 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         caller: &Principal,
         input: UpdateLinkInput,
     ) -> Result<LinkDto, CanisterError> {
-        // Get link
-        let link = match self.state.link_service.get_link_by_id(&input.id) {
-            Ok(rsp) => rsp,
-            Err(e) => {
-                error!("Failed to get link: {e:?}");
-                return Err(e);
-            }
-        };
-
         // Verify creator
         if !self.state.link_service.is_link_creator(caller, &input.id) {
             return Err(CanisterError::Unauthorized(
@@ -593,18 +584,10 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         }
 
         // Validate link type
-        let link_type = link.link_type;
-        if link_type.is_none() {
-            return Err(CanisterError::ValidationErrors(
-                "Link type is missing".to_string(),
-            ));
-        }
-
-        let params = input.params.clone();
         let updated_link = self
             .state
             .link_service
-            .handle_link_state_transition(&input.id, input.goto, params)
+            .handle_link_state_transition(&input.id, input.goto)
             .await?;
 
         Ok(LinkDto::from(updated_link))
