@@ -11,6 +11,7 @@ import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Principal } from "@dfinity/principal";
 import { Err, Ok, type Result } from "ts-results-es";
 import { ICP_LEDGER_CANISTER_ID } from "../constants";
+import { sortWalletTokens } from "../utils/sorter";
 
 export class WalletStore {
   #walletTokensQuery;
@@ -41,10 +42,7 @@ export class WalletStore {
           priceUSD: prices[token.address] || 0,
         }));
 
-        // sort by address
-        enrichedTokens.sort((a, b) => a.address.localeCompare(b.address));
-
-        return enrichedTokens;
+        return sortWalletTokens(enrichedTokens);
       },
       refetchInterval: 15_000, // Refresh every 15 seconds to keep balances up-to-date
       persistedKey: ["walletTokensQuery"],

@@ -26,6 +26,7 @@ export function parseListTokens(
             decimals: token.decimals,
             enabled: token.enabled,
             fee: token.details.IC.fee,
+            is_default: token.is_default,
           };
         },
       });
