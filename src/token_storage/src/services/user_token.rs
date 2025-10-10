@@ -110,6 +110,24 @@ impl<R: Repositories> UserTokenService<R> {
         token_id: TokenId,
         is_enabled: bool,
     ) -> Result<(), String> {
+        // Check if the updating token is a default token in the registry
+        // if so, return an error as default tokens cannot be toggled
+        let registry_token = self.registry_repository.get_token(&token_id);
+        match registry_token {
+            None => {
+                return Err(format!(
+                    "Token with id '{token_id:?}' not found in registry"
+                ));
+            }
+            Some(token) => {
+                if token.enabled_by_default {
+                    return Err(format!(
+                        "Token with id '{token_id:?}' is default and cannot be toggled"
+                    ));
+                }
+            }
+        }
+
         // Ensure user has a token list initialized
         self.ensure_token_list_initialized(user_id)?;
 

@@ -136,7 +136,7 @@ pub struct UpdateTokenInput {
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct TokenListResponse {
     pub tokens: Vec<TokenDto>,
     pub need_update_version: bool,
