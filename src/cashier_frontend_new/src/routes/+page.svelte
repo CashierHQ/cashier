@@ -1,6 +1,7 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import { m } from "$lib/paraglide/messages.js";
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import LinksList from "$modules/links/components/linksList.svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
 </script>
@@ -20,6 +21,9 @@
 
   {#if userProfile.isLoggedIn()}
     <div>You are logged in</div>
+    <Button onclick={() => (window.location.href = resolve("/link/edit"))}>
+      Create new link
+    </Button>
     <LinksList />
   {:else}
     <div>You are NOT logged in</div>
