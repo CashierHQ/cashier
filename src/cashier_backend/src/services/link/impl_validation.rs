@@ -56,9 +56,11 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
                     ));
                 }
 
-                // For send-type links, check usage counter against max allowed
-                if let Some(_link_type) = &link.link_type
-                    && link.link_use_action_counter >= link.link_use_action_max_count
+                // Check usage limits for link types that have them
+                if matches!(
+                    link.link_type,
+                    LinkType::SendTip | LinkType::SendAirdrop | LinkType::SendTokenBasket
+                ) && link.link_use_action_counter >= link.link_use_action_max_count
                 {
                     return Err(CanisterError::ValidationErrors(format!(
                         "Link maximum usage count reached: {}",
@@ -66,7 +68,6 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
                     )));
                 }
 
-                // Synchronous validation passes
                 Ok(())
             }
         }
@@ -126,7 +127,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
     // if the link and asset info meet the requirement return true
     // else return false
     fn validate_add_asset_with_link_type(&self, link: &Link, asset_infos: &[AssetInfo]) -> bool {
-        if link.link_type == Some(LinkType::SendTip) {
+        if link.link_type == LinkType::SendTip {
             // Send tip only use one time with one asset
             // check amount_per_link_use_action for asset > 0
             // check link_use_action_max_count == 1
@@ -151,7 +152,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
             }
 
             true
-        } else if link.link_type == Some(LinkType::SendAirdrop) {
+        } else if link.link_type == LinkType::SendAirdrop {
             // Send airdrop use multiple time with one asset
             // check amount_per_link_use_action for asset > 0
             // check link_use_action_max_count >= 1
@@ -176,7 +177,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
             }
 
             true
-        } else if link.link_type == Some(LinkType::SendTokenBasket) {
+        } else if link.link_type == LinkType::SendTokenBasket {
             // Send token basket use one time with multiple asset
             // check amount_per_link_use_action for asset > 0
             // check link_use_action_max_count == 1
@@ -192,7 +193,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
                 }
             }
             true
-        } else if link.link_type == Some(LinkType::ReceivePayment) {
+        } else if link.link_type == LinkType::ReceivePayment {
             // Receive payment use one time with one asset
             // check amount_per_link_use_action for asset > 0
             // check link_use_action_max_count == 1
@@ -816,7 +817,7 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let mut link = create_link_fixture(&mut service, random_principal_id());
-        link.link_type = Some(LinkType::SendAirdrop);
+        link.link_type = LinkType::SendAirdrop;
         service.link_repository.update(link.clone());
 
         let asset_infos: Vec<AssetInfo> = vec![];
@@ -835,7 +836,7 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let mut link = create_link_fixture(&mut service, random_principal_id());
-        link.link_type = Some(LinkType::SendAirdrop);
+        link.link_type = LinkType::SendAirdrop;
         service.link_repository.update(link.clone());
 
         let asset_infos = vec![
@@ -869,7 +870,7 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let mut link = create_link_fixture(&mut service, random_principal_id());
-        link.link_type = Some(LinkType::SendAirdrop);
+        link.link_type = LinkType::SendAirdrop;
         service.link_repository.update(link.clone());
 
         let asset_infos = vec![AssetInfo {
@@ -894,7 +895,7 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let mut link = create_link_fixture(&mut service, random_principal_id());
-        link.link_type = Some(LinkType::SendAirdrop);
+        link.link_type = LinkType::SendAirdrop;
         service.link_repository.update(link.clone());
 
         let asset_infos = vec![AssetInfo {
@@ -919,7 +920,7 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let mut link = create_link_fixture(&mut service, random_principal_id());
-        link.link_type = Some(LinkType::SendTokenBasket);
+        link.link_type = LinkType::SendTokenBasket;
         service.link_repository.update(link.clone());
 
         let asset_infos: Vec<AssetInfo> = vec![];
@@ -938,7 +939,7 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let mut link = create_link_fixture(&mut service, random_principal_id());
-        link.link_type = Some(LinkType::SendTokenBasket);
+        link.link_type = LinkType::SendTokenBasket;
         service.link_repository.update(link.clone());
 
         let asset_infos = vec![AssetInfo {
@@ -963,7 +964,7 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let mut link = create_link_fixture(&mut service, random_principal_id());
-        link.link_type = Some(LinkType::SendTokenBasket);
+        link.link_type = LinkType::SendTokenBasket;
         service.link_repository.update(link.clone());
 
         let asset_infos = vec![AssetInfo {
@@ -988,7 +989,7 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let mut link = create_link_fixture(&mut service, random_principal_id());
-        link.link_type = Some(LinkType::ReceivePayment);
+        link.link_type = LinkType::ReceivePayment;
         service.link_repository.update(link.clone());
 
         let asset_infos: Vec<AssetInfo> = vec![];
@@ -1007,7 +1008,7 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let mut link = create_link_fixture(&mut service, random_principal_id());
-        link.link_type = Some(LinkType::ReceivePayment);
+        link.link_type = LinkType::ReceivePayment;
         service.link_repository.update(link.clone());
 
         let asset_infos = vec![
@@ -1041,7 +1042,7 @@ mod tests {
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let mut link = create_link_fixture(&mut service, random_principal_id());
-        link.link_type = Some(LinkType::ReceivePayment);
+        link.link_type = LinkType::ReceivePayment;
         service.link_repository.update(link.clone());
 
         let asset_infos = vec![AssetInfo {
@@ -1049,30 +1050,6 @@ mod tests {
                 address: random_principal_id(),
             },
             amount_per_link_use_action: 1,
-            label: "some_label".to_string(),
-        }];
-
-        // Act
-        let result = service.validate_add_asset_with_link_type(&link, &asset_infos);
-
-        // Assert
-        assert!(!result);
-    }
-
-    #[test]
-    fn it_should_false_validate_add_asset_with_link_type_if_link_type_unsupported() {
-        // Arrange
-        let mut service =
-            LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
-        let mut link = create_link_fixture(&mut service, random_principal_id());
-        link.link_type = Some(LinkType::SwapMultiAsset);
-        service.link_repository.update(link.clone());
-
-        let asset_infos = vec![AssetInfo {
-            asset: Asset::IC {
-                address: random_principal_id(),
-            },
-            amount_per_link_use_action: 100,
             label: "some_label".to_string(),
         }];
 
