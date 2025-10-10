@@ -1,10 +1,12 @@
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
+import { ActionType } from "$modules/links/types/action/actionType";
 import { CreateLinkData } from "$modules/links/types/createLinkData";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkState } from ".";
 import type { LinkStore } from "../linkStore.svelte";
 import { AddAssetState } from "./addAsset";
 import { LinkCreatedState } from "./created";
+import { Action } from "../../types/action/action";
 
 // State when the user is previewing the link before creation
 export class PreviewState implements LinkState {
@@ -24,13 +26,26 @@ export class PreviewState implements LinkState {
     });
 
     const result = await cashierBackendService.createLink(data);
-    if (result.isOk()) {
-      // creation succeeded — reset the form and return the created link
-      this.#link.state = new LinkCreatedState(this.#link);
-      this.#link.id = result.value.id;
-    } else {
+
+    if (result.isErr()) {
       throw new Error(`Link creation failed: ${result.error.message}`);
     }
+
+    this.#link.state = new LinkCreatedState(this.#link);
+    this.#link.id = result.value.id;
+
+    const actionDto = await cashierBackendService.createAction(
+      this.#link.id,
+      ActionType.CreateLink,
+    );
+
+    console.log("actionDto", actionDto);
+
+    if (actionDto.isErr()) {
+      throw new Error(`Action creation failed: ${actionDto.error.message}`);
+    }
+
+    this.#link.action = Action.fromBackendType(actionDto.value);
   }
 
   // Go back to the add asset state

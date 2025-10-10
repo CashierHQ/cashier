@@ -17,7 +17,6 @@ export class CreateLinkData {
   title: string;
   linkType: LinkType;
   tipLink?: TipLink;
-
   constructor({
     title,
     linkType,
