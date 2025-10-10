@@ -1,0 +1,35 @@
+import { LinkStep } from "$modules/links/types/linkStep";
+import type { LinkState } from ".";
+import type { LinkStore } from "../linkStore.svelte";
+import { ChooseLinkTypeState } from "./chooseLinkType";
+import { PreviewState } from "./preview";
+
+// State when the user is adding asset details for the tip link
+export class AddAssetState implements LinkState {
+  readonly step = LinkStep.ADD_ASSET;
+  #link: LinkStore;
+
+  constructor(link: LinkStore) {
+    this.#link = link;
+  }
+
+  // Validate the asset details and move to the preview state
+  async goNext(): Promise<void> {
+    if (!this.#link.tipLink) {
+      throw new Error("Tip link details are required to proceed");
+    }
+    if (this.#link.tipLink.asset.trim() === "") {
+      throw new Error("Asset is required to proceed");
+    }
+    if (this.#link.tipLink.amount <= 0) {
+      throw new Error("Amount must be greater than zero to proceed");
+    }
+
+    this.#link.state = new PreviewState(this.#link);
+  }
+
+  // Go back to the link type selection state
+  async goBack(): Promise<void> {
+    this.#link.state = new ChooseLinkTypeState(this.#link);
+  }
+}
