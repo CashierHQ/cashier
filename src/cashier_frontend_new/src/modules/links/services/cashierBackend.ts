@@ -4,6 +4,7 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { Err, type Result } from "ts-results-es";
 import type { CreateLinkData } from "../types/createLinkData";
+import type { ActionType } from "../types/action/actionType";
 
 /**
  * Service for interacting with the Cashier Backend canister.
@@ -65,6 +66,59 @@ class CanisterBackendService {
     return responseToResult(response)
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
+  }
+
+  /**
+   * Creates an action for a given link.
+   * @param linkId ID of the link
+   * @param actionType Type of action to create
+   * @returns ActionDto on success, Error on failure
+   */
+  async createAction(
+    linkId: string,
+    actionType: ActionType,
+  ): Promise<Result<cashierBackend.ActionDto, Error>> {
+    const actor = this.#getActor();
+
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const response = await actor.create_action({
+      link_id: linkId,
+      action_type: actionType.toBackendType(),
+    });
+
+    return responseToResult(response).mapErr(
+      (err) => new Error(JSON.stringify(err)),
+    );
+  }
+
+  /**
+   * Process an action by its ID.
+   * @param actionId ID of the action to process
+   * @returns Result indicating success or failure
+   */
+  async processAction(
+    linkId: string,
+    actionId: string,
+    actionType: ActionType,
+  ): Promise<Result<cashierBackend.ActionDto, Error>> {
+    const actor = this.#getActor();
+
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const response = await actor.process_action({
+      link_id: linkId,
+      action_id: actionId,
+      action_type: actionType.toBackendType(),
+    });
+
+    return responseToResult(response).mapErr(
+      (err) => new Error(JSON.stringify(err)),
+    );
   }
 }
 
