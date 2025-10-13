@@ -15,10 +15,7 @@ use cashier_backend_types::{
         link::v1::{Link, LinkState},
     },
 };
-use states::{
-    active::ActiveState, created::CreatedState, inactive::InactiveState,
-    inactive_ended::InactiveEndedState,
-};
+use states::created::CreatedState;
 use std::{future::Future, pin::Pin};
 use uuid::Uuid;
 
@@ -57,12 +54,10 @@ impl TipLink {
         Self::new(new_link)
     }
 
-    pub fn create_state(link: &Link) -> Box<dyn LinkV2State> {
+    pub fn get_state_handler(link: &Link) -> Result<Box<dyn LinkV2State>, CanisterError> {
         match link.state {
-            LinkState::CreateLink => Box::new(CreatedState::new(link)),
-            LinkState::Active => Box::new(ActiveState::new(link)),
-            LinkState::Inactive => Box::new(InactiveState::new(link)),
-            LinkState::InactiveEnded => Box::new(InactiveEndedState::new(link)),
+            LinkState::CreateLink => Ok(Box::new(CreatedState::new(link))),
+            _ => Err(CanisterError::from("Unsupported link state")),
         }
     }
 }
@@ -84,29 +79,8 @@ impl LinkV2 for TipLink {
         let link = self.link.clone();
 
         Box::pin(async move {
-            let state = TipLink::create_state(&link);
+            let state = TipLink::get_state_handler(&link)?;
             state.publish().await
-        })
-    }
-    fn unpublish(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        let link = self.link.clone();
-        Box::pin(async move {
-            let state = TipLink::create_state(&link);
-            state.unpublish().await
-        })
-    }
-    fn claim(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        let link = self.link.clone();
-        Box::pin(async move {
-            let state = TipLink::create_state(&link);
-            state.claim().await
-        })
-    }
-    fn withdraw(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        let link = self.link.clone();
-        Box::pin(async move {
-            let state = TipLink::create_state(&link);
-            state.withdraw().await
         })
     }
 }

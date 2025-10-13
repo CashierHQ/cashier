@@ -1,4 +1,4 @@
-use crate::link_v2::{tip_link::states::active::ActiveState, traits::LinkV2State};
+use crate::link_v2::traits::LinkV2State;
 use cashier_backend_types::{
     error::CanisterError,
     repository::link::v1::{Link, LinkState},
