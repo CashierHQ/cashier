@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::services::link::traits::{ActionFlow, LinkStateMachine};
 use crate::{repositories::Repositories, services::link::traits::LinkValidation};
 use crate::{
     repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
@@ -12,7 +13,10 @@ use crate::{
 };
 use candid::Principal;
 use cashier_backend_types::{
-    dto::link::GetLinkOptions,
+    dto::{
+        action::CreateActionInput,
+        link::{CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDto},
+    },
     error::CanisterError,
     repository::{
         action::v1::{Action, ActionState, ActionType},
