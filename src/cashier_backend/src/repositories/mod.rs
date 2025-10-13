@@ -4,8 +4,10 @@
 use std::cell::RefCell;
 use std::thread::LocalKey;
 
+use cashier_backend_types::repository::user_link::v1::UserLinkCodec;
 use ic_mple_log::LogSettings;
 use ic_mple_log::service::{LoggerServiceStorage, Storage};
+use ic_mple_structures::VersionedBTreeMap;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 
@@ -185,12 +187,13 @@ thread_local! {
         );
 
 
-    static USER_LINK_STORE: RefCell<StableBTreeMap<
+    static USER_LINK_STORE: RefCell<VersionedBTreeMap<
         String,
         UserLink,
+        UserLinkCodec,
         Memory
     >> = RefCell::new(
-        StableBTreeMap::init(
+        VersionedBTreeMap::init(
             MEMORY_MANAGER.with_borrow(|m| m.get(USER_LINK_MEMORY_ID)),
         )
     );
@@ -363,7 +366,7 @@ pub mod tests {
                 user_action: Rc::new(RefCell::new(StableBTreeMap::init(
                     mm.get(USER_ACTION_MEMORY_ID),
                 ))),
-                user_link: Rc::new(RefCell::new(StableBTreeMap::init(
+                user_link: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(USER_LINK_MEMORY_ID),
                 ))),
             }

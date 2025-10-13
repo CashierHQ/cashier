@@ -3,14 +3,15 @@
 
 use candid::Principal;
 use cashier_backend_types::{
-    repository::user_link::v1::UserLink,
+    repository::user_link::v1::{UserLink, UserLinkCodec},
     service::link::{PaginateInput, PaginateResult, PaginateResultMetadata},
 };
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
+use ic_mple_structures::{BTreeMapIteratorStructure, BTreeMapStructure, VersionedBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
 pub type UserLinkRepositoryStorage =
-    StableBTreeMap<String, UserLink, VirtualMemory<DefaultMemoryImpl>>;
+    VersionedBTreeMap<String, UserLink, UserLinkCodec, VirtualMemory<DefaultMemoryImpl>>;
 
 struct UserLinkKey<'a> {
     pub user_id: &'a Principal,
@@ -57,8 +58,8 @@ impl<S: Storage<UserLinkRepositoryStorage>> UserLinkRepository<S> {
             let prefix = user_link_key.to_str();
             let all_links: Vec<UserLink> = store
                 .range(prefix.to_string()..)
-                .take_while(|entry| entry.key().starts_with(&prefix))
-                .map(|entry| entry.value())
+                .take_while(|(key, _value)| key.starts_with(&prefix))
+                .map(|(_key, value)| value)
                 .collect();
 
             let total = all_links.len();

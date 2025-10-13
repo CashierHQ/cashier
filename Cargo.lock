@@ -280,6 +280,7 @@ dependencies = [
  "ic-stable-structures 0.7.2",
  "ic_mple_auth",
  "ic_mple_log",
+ "ic_mple_structures",
  "icrc-ledger-types",
  "icrc_112_utils",
  "itertools 0.14.0",
@@ -320,6 +321,7 @@ dependencies = [
  "ic-cdk-timers",
  "ic-stable-structures 0.7.2",
  "ic_mple_log",
+ "ic_mple_structures",
  "icrc-ledger-types",
  "serde",
  "serde_json",
@@ -1238,6 +1240,16 @@ dependencies = [
  "pocket-ic",
  "reqwest",
  "tokio",
+]
+
+[[package]]
+name = "ic_mple_structures"
+version = "0.16.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89b107e0f52a226125b1f2a03536b030da61f161c3ad3271893761729ece3cde"
+dependencies = [
+ "candid",
+ "ic-stable-structures 0.7.2",
 ]
 
 [[package]]
