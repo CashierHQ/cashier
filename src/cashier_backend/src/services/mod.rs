@@ -6,6 +6,7 @@ pub mod adapter;
 pub mod auth;
 pub mod ext;
 pub mod link;
+pub mod link_v2;
 pub mod request_lock;
 pub mod settings;
 pub mod transaction;
