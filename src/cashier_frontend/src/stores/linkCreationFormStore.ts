@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-import { CHAIN, LINK_STATE, LINK_TYPE } from "@/services/types/enum";
+import { CHAIN, LINK_TYPE } from "@/services/types/enum";
 import { create } from "zustand";
 
 export interface UserInputAsset {
@@ -15,12 +15,9 @@ export interface UserInputAsset {
 
 export interface UserInputItem {
   linkId: string;
-  state: LINK_STATE;
   title: string;
   linkType: LINK_TYPE;
-  assets: UserInputAsset[];
-  description?: string;
-  image?: string;
+  asset_info: UserInputAsset[];
   maxActionNumber: bigint;
 }
 
