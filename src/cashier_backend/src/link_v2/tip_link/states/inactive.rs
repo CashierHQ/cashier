@@ -1,5 +1,8 @@
 use crate::link_v2::traits::LinkV2State;
-use cashier_backend_types::repository::link::v1::Link;
+use cashier_backend_types::{
+    error::CanisterError,
+    repository::link::v1::{Link, LinkState},
+};
 use std::{fmt::Debug, future::Future, pin::Pin};
 
 #[derive(Debug)]
@@ -14,7 +17,11 @@ impl InactiveState {
 }
 
 impl LinkV2State for InactiveState {
-    fn go_next(&self) -> Pin<Box<dyn Future<Output = Result<Box<dyn LinkV2State>, String>>>> {
-        Box::pin(async move { Err("go_next not implemented".to_string()) })
+    fn withdraw(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+        let mut link_clone = self.link.clone();
+        Box::pin(async move {
+            link_clone.state = LinkState::InactiveEnded;
+            Ok(link_clone)
+        })
     }
 }
