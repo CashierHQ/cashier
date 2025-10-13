@@ -80,6 +80,24 @@ async fn create_link(input: CreateLinkInput) -> Result<LinkDto, CanisterError> {
     api.create_link(msg_caller(), input)
 }
 
+/// Creates a new link using the v2 state machine implementation.
+/// The link will be in CREATED state if validation passes, else it will return an error.
+///
+/// # Arguments
+/// * `input` - Link creation data
+///
+/// # Returns
+/// * `Ok(GetLinkResp)` - The created link data
+/// * `Err(CanisterError)` - If link creation fails or validation errors occur
+#[update(guard = "is_not_anonymous")]
+async fn create_link_v2(input: CreateLinkInput) -> Result<GetLinkResp, CanisterError> {
+    info!("[create_link_v2]");
+    debug!("[create_link_v2] input: {input:?}");
+
+    let mut api = LinkApi::new(get_state());
+    api.create_link_v2(msg_caller(), input)
+}
+
 /// Updates an existing link's configuration or state.
 ///
 /// This endpoint requires authentication and allows the link creator to modify
@@ -392,6 +410,26 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
                 Err(e)
             }
         }
+    }
+
+    /// Create link V2
+    ///
+    /// This method creates a link v2 with new state implementation.
+    /// The link will be in CREATED state if validation passes, else it will return an error.
+    ///
+    /// # Arguments
+    /// * `caller` - The principal creating the link
+    /// * `input` - Link creation data
+    ///
+    /// # Returns
+    /// * `Ok(GetLinkResp)` - The created link data
+    /// * `Err(CanisterError)` - If link creation fails or validation errors occur
+    pub fn create_link_v2(
+        &mut self,
+        caller: Principal,
+        input: CreateLinkInput,
+    ) -> Result<GetLinkResp, CanisterError> {
+        self.state.link_v2_service.create_link(caller, input)
     }
 
     /// Processes an existing action for anonymous users using wallet address authentication.
