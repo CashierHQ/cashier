@@ -86,7 +86,7 @@ async fn it_should_create_link_payment_icp_token_successfully() {
 
         // Assert
         assert!(!link.id.is_empty());
-        assert_eq!(link.link_type, Some(LinkType::ReceivePayment));
+        assert_eq!(link.link_type, LinkType::ReceivePayment);
         assert_eq!(link.asset_info.len(), 1);
         assert_eq!(link.asset_info[0].amount_per_link_use_action, link_amount);
 
@@ -159,7 +159,6 @@ async fn it_should_create_link_payment_icp_token_successfully() {
         let update_link_input = UpdateLinkInput {
             id: link.id.clone(),
             goto: LinkStateMachineGoto::Continue,
-            params: None,
         };
         let update_link = test_fixture.update_link(update_link_input).await;
 
@@ -219,7 +218,6 @@ async fn benchmark_create_link_payment_icp_token() {
         let update_link_input = UpdateLinkInput {
             id: link.id.clone(),
             goto: LinkStateMachineGoto::Continue,
-            params: None,
         };
         let _update_link = test_fixture.update_link(update_link_input).await;
 
@@ -279,7 +277,7 @@ async fn it_should_create_link_payment_icrc_token_successfully() {
 
         // Assert
         assert!(!link.id.is_empty());
-        assert_eq!(link.link_type, Some(LinkType::ReceivePayment));
+        assert_eq!(link.link_type, LinkType::ReceivePayment);
         assert_eq!(link.asset_info.len(), 1);
         assert_eq!(link.asset_info[0].amount_per_link_use_action, link_amount);
 
@@ -352,7 +350,6 @@ async fn it_should_create_link_payment_icrc_token_successfully() {
         let update_link_input = UpdateLinkInput {
             id: link.id.clone(),
             goto: LinkStateMachineGoto::Continue,
-            params: None,
         };
         let update_link = test_fixture.update_link(update_link_input).await;
 
@@ -417,7 +414,6 @@ async fn benchmark_create_link_payment_icrc_token() {
         let update_link_input = UpdateLinkInput {
             id: link.id.clone(),
             goto: LinkStateMachineGoto::Continue,
-            params: None,
         };
         let _update_link = test_fixture.update_link(update_link_input).await;
 

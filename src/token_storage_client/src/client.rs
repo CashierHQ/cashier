@@ -1,7 +1,11 @@
 use candid::Principal;
 use cashier_common::build_data::BuildData;
 use ic_mple_client::{CanisterClient, CanisterClientResult};
-use token_storage_types::{auth::Permission, error::TokenStorageError, token::TokenListResponse};
+use token_storage_types::{
+    auth::Permission,
+    error::TokenStorageError,
+    token::{AddTokenInput, TokenListResponse, UpdateTokenInput},
+};
 
 /// A TokenStorage canister client.
 #[derive(Debug, Clone)]
@@ -77,5 +81,21 @@ impl<C: CanisterClient> TokenStorageClient<C> {
     /// Lists the tokens in the registry for the caller
     pub async fn list_tokens(&self) -> CanisterClientResult<Result<TokenListResponse, String>> {
         self.client.query("list_tokens", ()).await
+    }
+
+    /// Update token enable/disable status for the caller
+    pub async fn update_token_enable(
+        &self,
+        input: UpdateTokenInput,
+    ) -> CanisterClientResult<Result<(), String>> {
+        self.client.update("update_token_enable", (input,)).await
+    }
+
+    /// Adds a single token to the caller's list
+    pub async fn add_token(
+        &self,
+        input: AddTokenInput,
+    ) -> CanisterClientResult<Result<(), String>> {
+        self.client.update("add_token", (input,)).await
     }
 }

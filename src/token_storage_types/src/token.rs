@@ -94,6 +94,7 @@ impl From<RegistryToken> for TokenDto {
             enabled: token.enabled_by_default,
             balance: None,
             details: token.details, // Directly use the enum
+            is_default: token.enabled_by_default,
         }
     }
 }
@@ -112,6 +113,7 @@ pub struct TokenDto {
     pub enabled: bool,
     pub balance: Option<u128>,
     pub details: ChainTokenDetails, // Use the enum for chain-specific details
+    pub is_default: bool,
 }
 
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
@@ -134,7 +136,7 @@ pub struct UpdateTokenInput {
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct TokenListResponse {
     pub tokens: Vec<TokenDto>,
     pub need_update_version: bool,

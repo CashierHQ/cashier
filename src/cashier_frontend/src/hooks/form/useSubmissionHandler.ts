@@ -194,7 +194,7 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
         }));
 
         updateUserInput(linkId, {
-          assets: storeAssets,
+          asset_info: storeAssets,
           maxActionNumber: BigInt(maxActionNumber),
         });
 
@@ -311,15 +311,15 @@ export const useSubmissionHandler = (link: LinkDetailModel) => {
         const supportMultiAsset = [LINK_TYPE.SEND_TOKEN_BASKET];
         if (
           !supportMultiAsset.includes(currentLink?.linkType as LINK_TYPE) &&
-          currentLink.assets &&
-          currentLink.assets.length > 1
+          currentLink.asset_info &&
+          currentLink.asset_info.length > 1
         ) {
-          const forceNewAsset = currentLink.assets[0];
+          const forceNewAsset = currentLink.asset_info[0];
           forceNewAsset.label = getAssetLabelForLinkType(
             currentLink.linkType as LINK_TYPE,
             forceNewAsset.address,
           );
-          currentLink.assets = [forceNewAsset];
+          currentLink.asset_info = [forceNewAsset];
         }
 
         // Call state machine

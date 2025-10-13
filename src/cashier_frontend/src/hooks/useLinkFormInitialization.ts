@@ -124,7 +124,7 @@ function getInitialFormValues(
   input: Partial<UserInputItem> | undefined,
   link: LinkDetailModel | null | undefined,
 ): InitialFormValues | undefined {
-  if (!input?.assets || input.assets.length === 0) {
+  if (!input?.asset_info || input.asset_info.length === 0) {
     // If link has assets but no user input, check if we have link data directly
     if (link?.asset_info && link.asset_info.length > 0) {
       return {
@@ -147,7 +147,7 @@ function getInitialFormValues(
   }
 
   return {
-    assets: input.assets.map((asset) => ({
+    assets: input.asset_info.map((asset) => ({
       tokenAddress: asset.address,
       amount: asset.linkUseAmount,
       label: asset.label,
