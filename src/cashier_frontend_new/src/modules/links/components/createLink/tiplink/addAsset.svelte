@@ -17,7 +17,38 @@
 
   // UI local state
   let selectedAddress: string | null = $state(link.tipLink?.asset ?? null);
-  let amountStr: string = $state(link.tipLink?.amount?.toString() ?? "");
+  let amountStr: string = $state("");
+  
+  // Initialize amountStr from stored data if available
+  $effect(() => {
+    if (link.tipLink?.amount && selectedAddress) {
+      const selectedToken = getSelectedToken();
+      if (selectedToken) {
+        const userAmount = link.tipLink.amount / Math.pow(10, selectedToken.decimals);
+        amountStr = userAmount.toString();
+      } else {
+        amountStr = link.tipLink.amount.toString();
+      }
+    } else {
+      amountStr = "";
+    }
+  });
+
+  // Get selected token metadata
+  function getSelectedToken() {
+    if (!selectedAddress || !walletStore.query.data) return null;
+    return walletStore.query.data.find(token => token.address === selectedAddress) || null;
+  }
+
+  // Convert amount string to number (base units) using token decimals
+  function convertAmountToBaseUnits(amountStr: string, decimals: number): number {
+    const amount = Number(amountStr);
+    if (Number.isNaN(amount) || amount <= 0) return 0;
+    
+    // Convert to base units (e.g., ICP to e8s)
+    const multiplier = Math.pow(10, decimals);
+    return Math.round(amount * multiplier);
+  }
 
   // Redirect if not in the correct step
   $effect(() => {
@@ -29,11 +60,13 @@
   // effect to update the store
   $effect(() => {
     if (selectedAddress && amountStr) {
-      const n = Number(amountStr);
-      if (!Number.isNaN(n) && n > 0) {
-        // TODO: convert amount to e8s based on token decimals
-        link.tipLink = { asset: selectedAddress, amount: n };
-        return;
+      const selectedToken = getSelectedToken();
+      if (selectedToken) {
+        const amountBaseUnits = convertAmountToBaseUnits(amountStr, selectedToken.decimals);
+        if (amountBaseUnits > 0) {
+          link.tipLink = { asset: selectedAddress, amount: amountBaseUnits };
+          return;
+        }
       }
     }
 

@@ -5,6 +5,7 @@
   import { LinkStep } from "../../types/linkStep";
   import { resolve } from "$app/paths";
   import LinkDetails from "./linkDetails.svelte";
+  import { actionDrawerState } from "$modules/shared/state/actionDrawerState.svelte";
 
   const {
     link,
@@ -31,28 +32,27 @@
   async function create() {
     alert("WIP execute action " + link.id);
   }
+
+  // Show action details in drawer
+  function showActionDetails() {
+    if (link.action) {
+      actionDrawerState.open(link.action);
+    }
+  }
 </script>
 
 <h3 class="text-lg font-semibold">Created</h3>
 <div class="mt-2">
   <LinkDetails {link} {errorMessage} {successMessage} />
 
-  <Button onclick={goBack}>Back</Button>
+  <div class="flex gap-2 mt-4">
+    <Button onclick={goBack}>Back</Button>
+    <Button onclick={create}>Create</Button>
 
-  <Button onclick={create}>Create</Button>
-</div>
-
-{#if link.action}
-  <div class="mt-4 p-4 border rounded bg-gray-50">
-    <h4 class="font-semibold mb-2">Action Details</h4>
-    <pre class="whitespace-pre-wrap break-all">{link.action.id}</pre>
-
-    {#each link.action.intents as intent}
-      <div class="mt-2 p-2 border rounded bg-white">
-        <h5 class="font-semibold">Intent: {intent.id}</h5>
-        <h5 class="font-semibold">Task: {intent.task.id}</h5>
-        <h5 class="font-semibold">Status: {intent.state.id}</h5>
-      </div>
-    {/each}
+    {#if link.action}
+      <Button variant="outline" onclick={showActionDetails}>
+        View Action Details
+      </Button>
+    {/if}
   </div>
-{/if}
+</div>
