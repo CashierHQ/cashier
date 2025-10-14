@@ -18,7 +18,7 @@ pub trait LinkV2: Debug {
         caller: Principal,
         action: ActionType,
         created_at_ts: u64,
-    ) -> Result<Box<dyn LinkV2Action>, CanisterError>;
+    ) -> Result<(Action, Vec<Intent>, HashMap<String, Vec<Transaction>>), CanisterError>;
 
     fn publish(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
         Box::pin(async move { Err(CanisterError::from("publish not implemented")) })
@@ -47,10 +47,4 @@ pub trait LinkV2State: Debug {
     fn withdraw(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
         Box::pin(async move { Err(CanisterError::from("withdraw not implemented")) })
     }
-}
-
-pub trait LinkV2Action: Debug {
-    fn get_action(&self) -> Action;
-    fn get_intents(&self) -> Vec<Intent>;
-    fn get_intent_txs_map(&self) -> HashMap<String, Vec<Transaction>>;
 }

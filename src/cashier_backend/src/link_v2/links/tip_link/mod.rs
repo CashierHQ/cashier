@@ -2,8 +2,8 @@ pub mod actions;
 pub mod states;
 
 use crate::link_v2::{
-    links::tip_link::{actions::create::CreateAction, states::created},
-    traits::{LinkV2, LinkV2Action, LinkV2State},
+    links::tip_link::actions::create::CreateAction,
+    traits::{LinkV2, LinkV2State},
 };
 use candid::Principal;
 use cashier_backend_types::{
@@ -11,11 +11,13 @@ use cashier_backend_types::{
     repository::{
         action::v1::{Action, ActionType},
         asset_info::AssetInfo,
+        intent::v2::Intent,
         link::v1::{Link, LinkState, LinkType},
+        transaction::v2::Transaction,
     },
 };
 use states::created::CreatedState;
-use std::{future::Future, pin::Pin};
+use std::{collections::HashMap, future::Future, pin::Pin};
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -68,13 +70,17 @@ impl LinkV2 for TipLink {
         caller: candid::Principal,
         action_type: ActionType,
         created_at_ts: u64,
-    ) -> Result<Box<dyn LinkV2Action>, CanisterError> {
+    ) -> Result<(Action, Vec<Intent>, HashMap<String, Vec<Transaction>>), CanisterError> {
         match action_type {
-            ActionType::CreateLink => Ok(Box::new(CreateAction::create(
-                self.link.id.clone(),
-                caller,
-                created_at_ts,
-            )?)),
+            ActionType::CreateLink => {
+                let create_action =
+                    CreateAction::create(self.link.id.clone(), caller, created_at_ts)?;
+                Ok((
+                    create_action.action,
+                    create_action.intents,
+                    create_action.intent_txs_map,
+                ))
+            }
             _ => Err(CanisterError::from("Unsupported action type")),
         }
     }

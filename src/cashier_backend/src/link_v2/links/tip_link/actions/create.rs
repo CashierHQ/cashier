@@ -1,9 +1,6 @@
-use crate::link_v2::{
-    intents::{
-        transfer_wallet_to_link::TransferWalletToLinkIntent,
-        transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
-    },
-    traits::LinkV2Action,
+use crate::link_v2::intents::{
+    transfer_wallet_to_link::TransferWalletToLinkIntent,
+    transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
 };
 use candid::Principal;
 use cashier_backend_types::{
@@ -74,19 +71,5 @@ impl CreateAction {
         intent_txs_map.insert(fintent_id, fee_intent.transactions);
 
         Ok(Self::new(link_id, action, intents, intent_txs_map))
-    }
-}
-
-impl LinkV2Action for CreateAction {
-    fn get_action(&self) -> Action {
-        self.action.clone()
-    }
-
-    fn get_intents(&self) -> Vec<Intent> {
-        self.intents.clone()
-    }
-
-    fn get_intent_txs_map(&self) -> HashMap<String, Vec<Transaction>> {
-        self.intent_txs_map.clone()
     }
 }
