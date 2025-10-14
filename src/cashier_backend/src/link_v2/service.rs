@@ -3,10 +3,7 @@
 
 use crate::repositories::Repositories;
 use crate::services::action::ActionService;
-use crate::{
-    link_v2::links::factory,
-    repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
-};
+use crate::{link_v2::links::factory, repositories};
 use candid::Principal;
 use cashier_backend_types::dto::action::ActionDto;
 use cashier_backend_types::repository::link_action::v1::LinkAction;
@@ -20,8 +17,6 @@ use cashier_backend_types::{
 pub struct LinkV2Service<R: Repositories> {
     pub link_repository: repositories::link::LinkRepository<R::Link>,
     pub user_link_repository: repositories::user_link::UserLinkRepository<R::UserLink>,
-    pub action_repository: ActionRepository<R::Action>,
-    pub link_action_repository: LinkActionRepository<R::LinkAction>,
     pub action_service: ActionService<R>,
 }
 
@@ -30,8 +25,6 @@ impl<R: Repositories> LinkV2Service<R> {
     pub fn new(repo: &R) -> Self {
         Self {
             link_repository: repo.link(),
-            link_action_repository: repo.link_action(),
-            action_repository: repo.action(),
             user_link_repository: repo.user_link(),
             action_service: ActionService::new(repo),
         }
@@ -44,7 +37,7 @@ impl<R: Repositories> LinkV2Service<R> {
         created_at_ts: u64,
     ) -> Result<GetLinkResp, CanisterError> {
         let link = factory::create_link(creator, input, created_at_ts)?;
-        let (create_action, intents, intent_txs_map) =
+        let create_action_result =
             link.create_action(creator, ActionType::CreateLink, created_at_ts)?;
 
         // save link & user_link to db
@@ -60,26 +53,26 @@ impl<R: Repositories> LinkV2Service<R> {
         // save action to DB
         let link_action = LinkAction {
             link_id: link_model.id.clone(),
-            action_type: create_action.r#type.clone(),
-            action_id: create_action.id.clone(),
-            user_id: create_action.creator,
+            action_type: create_action_result.action.r#type.clone(),
+            action_id: create_action_result.action.id.clone(),
+            user_id: create_action_result.action.creator,
             link_user_state: None,
         };
 
         let _ = self.action_service.store_action_data(
             link_action,
-            create_action.clone(),
-            intents.clone(),
-            intent_txs_map.clone(),
-            create_action.creator,
+            create_action_result.action.clone(),
+            create_action_result.intents.clone(),
+            create_action_result.intent_txs_map.clone(),
+            create_action_result.action.creator,
         );
 
         Ok(GetLinkResp {
             link: LinkDto::from(link_model),
             action: Some(ActionDto::from_with_tx(
-                create_action,
-                intents,
-                &intent_txs_map,
+                create_action_result.action.clone(),
+                create_action_result.intents.clone(),
+                &create_action_result.intent_txs_map,
             )),
         })
     }
