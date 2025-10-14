@@ -1,18 +1,17 @@
 pub mod actions;
 pub mod states;
 
-use crate::link_v2::traits::{LinkV2, LinkV2State};
+use crate::link_v2::{
+    links::tip_link::{actions::create::CreateAction, states::created},
+    traits::{LinkV2, LinkV2Action, LinkV2State},
+};
 use candid::Principal;
 use cashier_backend_types::{
-    dto::{
-        action::ActionDto,
-        link::{CreateLinkInput, LinkDetailUpdateAssetInfoInput},
-    },
     error::CanisterError,
     repository::{
-        action::v1::ActionType,
+        action::v1::{Action, ActionType},
         asset_info::AssetInfo,
-        link::v1::{Link, LinkState},
+        link::v1::{Link, LinkState, LinkType},
     },
 };
 use states::created::CreatedState;
@@ -29,26 +28,23 @@ impl TipLink {
         Self { link }
     }
 
-    pub fn create(creator: Principal, input: CreateLinkInput, created_at_ts: u64) -> Self {
-        let id = Uuid::new_v4();
-        let link_id_str = id.to_string();
-
-        let asset_info: Vec<AssetInfo> = input
-            .asset_info
-            .iter()
-            .map(LinkDetailUpdateAssetInfoInput::to_model)
-            .collect();
-
+    pub fn create(
+        creator: Principal,
+        title: String,
+        asset_info: Vec<AssetInfo>,
+        max_use: u64,
+        created_at_ts: u64,
+    ) -> Self {
         let new_link = Link {
-            id: link_id_str,
-            state: LinkState::CreateLink,
-            title: input.title,
-            link_type: input.link_type,
+            id: Uuid::new_v4().to_string(),
+            link_type: LinkType::SendTip,
+            title,
             asset_info,
-            creator,
-            create_at: created_at_ts,
             link_use_action_counter: 0,
-            link_use_action_max_count: input.link_use_action_max_count,
+            link_use_action_max_count: max_use,
+            creator,
+            state: LinkState::CreateLink,
+            create_at: created_at_ts,
         };
 
         Self::new(new_link)
@@ -63,16 +59,24 @@ impl TipLink {
 }
 
 impl LinkV2 for TipLink {
-    fn get_link_data(&self) -> Link {
+    fn get_link_model(&self) -> Link {
         self.link.clone()
     }
 
     fn create_action(
         &self,
         caller: candid::Principal,
-        action_input: ActionType,
-    ) -> Result<ActionDto, CanisterError> {
-        Err(CanisterError::from("create_action not implemented"))
+        action_type: ActionType,
+        created_at_ts: u64,
+    ) -> Result<Box<dyn LinkV2Action>, CanisterError> {
+        match action_type {
+            ActionType::CreateLink => Ok(Box::new(CreateAction::create(
+                self.link.id.clone(),
+                caller,
+                created_at_ts,
+            )?)),
+            _ => Err(CanisterError::from("Unsupported action type")),
+        }
     }
 
     fn publish(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {

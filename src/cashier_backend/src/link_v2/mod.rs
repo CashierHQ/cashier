@@ -1,4 +1,4 @@
-pub mod factory;
-pub mod tip_link;
+pub mod intents;
+pub mod links;
+pub mod service;
 pub mod traits;
-pub mod validation;
