@@ -49,25 +49,20 @@ export class TransferFromData {
   }
 }
 
-export type IntentPayload = TransferData | TransferFromData | undefined;
+export type IntentPayload = TransferData | TransferFromData;
 
 export class IntentType {
-  static readonly Transfer = new IntentType("Transfer");
-  static readonly TransferFrom = new IntentType("TransferFrom");
-  private constructor(
-    public readonly id: string,
-    public readonly payload?: IntentPayload,
-  ) {}
+  private constructor(public readonly payload: IntentPayload) {}
 
   static fromBackendType(type: BackendIntentType): IntentType {
     return rsMatch(type, {
       Transfer: (data) => {
         const transferData = TransferData.fromBackendType(data);
-        return new IntentType("Transfer", transferData);
+        return new IntentType(transferData);
       },
       TransferFrom: (data) => {
         const transferFromData = TransferFromData.fromBackendType(data);
-        return new IntentType("TransferFrom", transferFromData);
+        return new IntentType(transferFromData);
       },
     });
   }
