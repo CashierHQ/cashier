@@ -12,13 +12,10 @@ use cashier_backend_types::repository::user_link::v1::UserLink;
 use cashier_backend_types::{
     dto::link::{CreateLinkInput, GetLinkResp, LinkDto},
     error::CanisterError,
-    repository::{action::v1::ActionType, link::v1::Link, link_action::v1::LinkAction},
-    service::link::{PaginateInput, PaginateResult},
+    repository::action::v1::ActionType,
 };
-use std::rc::Rc;
 
 pub struct LinkV2Service<R: Repositories> {
-    // LinkService fields go here
     pub link_repository: repositories::link::LinkRepository<R::Link>,
     pub user_link_repository: repositories::user_link::UserLinkRepository<R::UserLink>,
     pub action_repository: ActionRepository<R::Action>,
@@ -43,7 +40,8 @@ impl<R: Repositories> LinkV2Service<R> {
         created_at_ts: u64,
     ) -> Result<GetLinkResp, CanisterError> {
         let link = factory::create_link(creator, input, created_at_ts)?;
-        let create_action = link.create_action(creator, ActionType::CreateLink, created_at_ts)?;
+        let (create_action, intents, intent_txs_map) =
+            link.create_action(creator, ActionType::CreateLink, created_at_ts)?;
 
         // save to db
         let link_model = link.get_link_model();
@@ -58,9 +56,9 @@ impl<R: Repositories> LinkV2Service<R> {
         Ok(GetLinkResp {
             link: LinkDto::from(link_model),
             action: Some(ActionDto::from_with_tx(
-                create_action.get_action(),
-                create_action.get_intents(),
-                &create_action.get_intent_txs_map(),
+                create_action,
+                intents,
+                &intent_txs_map,
             )),
         })
     }
@@ -68,11 +66,11 @@ impl<R: Repositories> LinkV2Service<R> {
     pub async fn publish_link(
         &mut self,
         caller: Principal,
-        link_id: String,
+        link_id: &str,
     ) -> Result<LinkDto, CanisterError> {
         let link = self
             .link_repository
-            .get(&link_id)
+            .get(&link_id.to_string())
             .ok_or_else(|| CanisterError::from("Link not found"))?;
 
         if link.creator != caller {

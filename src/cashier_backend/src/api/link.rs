@@ -90,12 +90,30 @@ async fn create_link(input: CreateLinkInput) -> Result<LinkDto, CanisterError> {
 /// * `Ok(GetLinkResp)` - The created link data
 /// * `Err(CanisterError)` - If link creation fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
-async fn create_link_v2(input: CreateLinkInput) -> Result<GetLinkResp, CanisterError> {
+fn create_link_v2(input: CreateLinkInput) -> Result<GetLinkResp, CanisterError> {
     info!("[create_link_v2]");
     debug!("[create_link_v2] input: {input:?}");
 
     let mut api = LinkApi::new(get_state());
     api.create_link_v2(msg_caller(), input)
+}
+
+/// Publishes a link v2, transitioning it from CREATED to ACTIVE state.
+/// Only the link creator can publish the link.
+///
+/// # Arguments
+/// * `link_id` - The ID of the link to publish
+///
+/// # Returns
+/// * `Ok(LinkDto)` - The published link data
+/// * `Err(CanisterError)` - If publishing fails or unauthorized
+#[update(guard = "is_not_anonymous")]
+async fn publish_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
+    info!("[publish_link_v2]");
+    debug!("[publish_link_v2] link_id: {link_id}");
+
+    let mut api = LinkApi::new(get_state());
+    api.publish_link_v2(msg_caller(), link_id).await
 }
 
 /// Updates an existing link's configuration or state.
@@ -433,6 +451,29 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         self.state
             .link_v2_service
             .create_link(caller, input, created_at_ts)
+    }
+
+    /// Publish a link v2
+    ///
+    /// This method publishes a link v2, transitioning it from CREATED to ACTIVE state.
+    /// Only the link creator can publish the link.
+    ///
+    /// # Arguments
+    /// * `caller` - The principal publishing the link
+    /// * `link_id` - The ID of the link to publish
+    ///
+    /// # Returns
+    /// * `Ok(LinkDto)` - The published link data
+    /// * `Err(CanisterError)` - If publishing fails or unauthorized
+    pub async fn publish_link_v2(
+        &mut self,
+        caller: Principal,
+        link_id: &str,
+    ) -> Result<LinkDto, CanisterError> {
+        self.state
+            .link_v2_service
+            .publish_link(caller, link_id)
+            .await
     }
 
     /// Processes an existing action for anonymous users using wallet address authentication.
