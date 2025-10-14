@@ -42,6 +42,7 @@
         errorMessage = `Failed to process action: ${result.unwrapErr().message}`;
       }
     } catch (error) {
+        console.error("Error processing action:", error);
       errorMessage = `Error processing action: ${error instanceof Error ? error.message : String(error)}`;
     } finally {
       isProcessing = false;
