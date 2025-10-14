@@ -2,12 +2,14 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::repositories::Repositories;
+use crate::services::action::ActionService;
 use crate::{
     link_v2::links::factory,
     repositories::{self, action::ActionRepository, link_action::LinkActionRepository},
 };
 use candid::Principal;
 use cashier_backend_types::dto::action::ActionDto;
+use cashier_backend_types::repository::link_action::v1::LinkAction;
 use cashier_backend_types::repository::user_link::v1::UserLink;
 use cashier_backend_types::{
     dto::link::{CreateLinkInput, GetLinkResp, LinkDto},
@@ -20,6 +22,7 @@ pub struct LinkV2Service<R: Repositories> {
     pub user_link_repository: repositories::user_link::UserLinkRepository<R::UserLink>,
     pub action_repository: ActionRepository<R::Action>,
     pub link_action_repository: LinkActionRepository<R::LinkAction>,
+    pub action_service: ActionService<R>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -30,6 +33,7 @@ impl<R: Repositories> LinkV2Service<R> {
             link_action_repository: repo.link_action(),
             action_repository: repo.action(),
             user_link_repository: repo.user_link(),
+            action_service: ActionService::new(repo),
         }
     }
 
@@ -43,7 +47,7 @@ impl<R: Repositories> LinkV2Service<R> {
         let (create_action, intents, intent_txs_map) =
             link.create_action(creator, ActionType::CreateLink, created_at_ts)?;
 
-        // save to db
+        // save link & user_link to db
         let link_model = link.get_link_model();
         self.link_repository.create(link_model.clone());
 
@@ -52,6 +56,23 @@ impl<R: Repositories> LinkV2Service<R> {
             link_id: link_model.id.clone(),
         };
         self.user_link_repository.create(new_user_link);
+
+        // save action to DB
+        let link_action = LinkAction {
+            link_id: link_model.id.clone(),
+            action_type: create_action.r#type.clone(),
+            action_id: create_action.id.clone(),
+            user_id: create_action.creator,
+            link_user_state: None,
+        };
+
+        let _ = self.action_service.store_action_data(
+            link_action,
+            create_action.clone(),
+            intents.clone(),
+            intent_txs_map.clone(),
+            create_action.creator,
+        );
 
         Ok(GetLinkResp {
             link: LinkDto::from(link_model),
