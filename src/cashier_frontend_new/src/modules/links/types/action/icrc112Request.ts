@@ -11,7 +11,7 @@ export class Icrc112Request {
 
   static fromBackendType(b: BackendIcrc112Request): Icrc112Request {
     const nonce = b.nonce && b.nonce.length === 1 ? b.nonce[0] : undefined;
-    return new Icrc112Request(arg, b.method, b.canister_id, nonce);
+    return new Icrc112Request(b.arg, b.method, b.canister_id, nonce);
   }
 }
 
