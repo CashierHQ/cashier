@@ -38,9 +38,6 @@ export class PreviewState implements LinkState {
       this.#link.id,
       ActionType.CreateLink,
     );
-
-    console.log("actionDto", actionDto);
-
     if (actionDto.isErr()) {
       throw new Error(`Action creation failed: ${actionDto.error.message}`);
     }

@@ -16,7 +16,6 @@ export class Intent {
     const task = IntentTask.fromBackendType(dto.task);
     const type = IntentType.fromBackendType(dto.type);
     const state = IntentState.fromBackendType(dto.state);
-    console.log("intennt", task, type, state);
     return new Intent(dto.id, task, type, dto.created_at, state);
   }
 }
