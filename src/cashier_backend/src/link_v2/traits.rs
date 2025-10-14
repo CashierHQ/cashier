@@ -1,24 +1,24 @@
 use candid::Principal;
 use cashier_backend_types::{
-    dto::{
-        action::{ActionDto, CreateActionInput},
-        link::LinkDto,
-    },
     error::CanisterError,
-    repository::{action::v1::ActionType, link::v1::Link},
+    repository::{
+        action::v1::{Action, ActionType},
+        intent::v2::Intent,
+        link::v1::Link,
+        transaction::v2::Transaction,
+    },
 };
-use std::{fmt::Debug, future::Future, pin::Pin};
+use std::{collections::HashMap, fmt::Debug, future::Future, pin::Pin};
 
 pub trait LinkV2: Debug {
-    fn get_link_data(&self) -> Link;
-    fn get_link_dto(&self) -> LinkDto {
-        LinkDto::from(self.get_link_data())
-    }
+    fn get_link_model(&self) -> Link;
+
     fn create_action(
         &self,
         caller: Principal,
         action: ActionType,
-    ) -> Result<ActionDto, CanisterError>;
+        created_at_ts: u64,
+    ) -> Result<Box<dyn LinkV2Action>, CanisterError>;
 
     fn publish(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
         Box::pin(async move { Err(CanisterError::from("publish not implemented")) })
@@ -50,5 +50,7 @@ pub trait LinkV2State: Debug {
 }
 
 pub trait LinkV2Action: Debug {
-    fn get_action_data(&self) -> Result<ActionDto, CanisterError>;
+    fn get_action(&self) -> Action;
+    fn get_intents(&self) -> Vec<Intent>;
+    fn get_intent_txs_map(&self) -> HashMap<String, Vec<Transaction>>;
 }

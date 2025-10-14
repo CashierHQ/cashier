@@ -429,7 +429,10 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         caller: Principal,
         input: CreateLinkInput,
     ) -> Result<GetLinkResp, CanisterError> {
-        self.state.link_v2_service.create_link(caller, input)
+        let created_at_ts = self.state.env.time();
+        self.state
+            .link_v2_service
+            .create_link(caller, input, created_at_ts)
     }
 
     /// Processes an existing action for anonymous users using wallet address authentication.
