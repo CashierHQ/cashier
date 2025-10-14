@@ -29,6 +29,15 @@ impl TipLink {
         Self { link }
     }
 
+    /// Create a new TipLink instance
+    /// # Arguments
+    /// * `creator` - The principal of the user creating the link
+    /// * `title` - The title of the link
+    /// * `asset_info` - The asset information associated with the link
+    /// * `max_use` - The maximum number of times the link can be used
+    /// * `created_at_ts` - The timestamp when the link is created
+    /// # Returns
+    /// * `TipLink` - The newly created TipLink instance
     pub fn create(
         creator: Principal,
         title: String,
