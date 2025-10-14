@@ -5,7 +5,7 @@
   import { LinkStep } from "../../types/linkStep";
   import { resolve } from "$app/paths";
   import LinkDetails from "./linkDetails.svelte";
-  import { actionDrawerState } from "$modules/shared/state/actionDrawerState.svelte";
+  import TxCart from "./tx-cart.svelte";
 
   const {
     link,
@@ -32,13 +32,6 @@
   async function create() {
     alert("WIP execute action " + link.id);
   }
-
-  // Show action details in drawer
-  function showActionDetails() {
-    if (link.action) {
-      actionDrawerState.open(link.action);
-    }
-  }
 </script>
 
 <h3 class="text-lg font-semibold">Created</h3>
@@ -48,11 +41,7 @@
   <div class="flex gap-2 mt-4">
     <Button onclick={goBack}>Back</Button>
     <Button onclick={create}>Create</Button>
-
-    {#if link.action}
-      <Button variant="outline" onclick={showActionDetails}>
-        View Action Details
-      </Button>
-    {/if}
   </div>
+
+  <TxCart {link} />
 </div>

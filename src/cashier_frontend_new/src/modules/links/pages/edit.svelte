@@ -5,21 +5,8 @@
   import ChooseLinkType from "$modules/links/components/createLink/chooseLinkType.svelte";
   import Preview from "../components/createLink/preview.svelte";
   import CreatedLink from "../components/createLink/createdLink.svelte";
-  import ActionDrawer from "$modules/shared/components/ActionDrawer.svelte";
-  import { actionDrawerState } from "$modules/shared/state/actionDrawerState.svelte";
 
   const newLink = new LinkStore();
-
-  // Watch for link action changes and show drawer
-  $effect(() => {
-    if (newLink.action) {
-      actionDrawerState.open(newLink.action);
-    }
-  });
-
-  function handleDrawerClose() {
-    actionDrawerState.close();
-  }
 </script>
 
 <div class="min-h-screen flex justify-center">
@@ -63,6 +50,3 @@
     </div>
   </div>
 </div>
-
-<!-- Action Drawer -->
-<!-- ActionDrawer is mounted globally in layout -->
