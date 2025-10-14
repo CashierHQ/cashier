@@ -8,16 +8,15 @@ use crate::link_v2::{
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
+    link_v2::CreateActionResult,
     repository::{
-        action::v1::{Action, ActionType},
+        action::v1::ActionType,
         asset_info::AssetInfo,
-        intent::v2::Intent,
         link::v1::{Link, LinkState, LinkType},
-        transaction::v2::Transaction,
     },
 };
 use states::created::CreatedState;
-use std::{collections::HashMap, future::Future, pin::Pin};
+use std::{future::Future, pin::Pin};
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -70,16 +69,16 @@ impl LinkV2 for TipLink {
         caller: candid::Principal,
         action_type: ActionType,
         created_at_ts: u64,
-    ) -> Result<(Action, Vec<Intent>, HashMap<String, Vec<Transaction>>), CanisterError> {
+    ) -> Result<CreateActionResult, CanisterError> {
         match action_type {
             ActionType::CreateLink => {
                 let create_action =
                     CreateAction::create(self.link.id.clone(), caller, created_at_ts)?;
-                Ok((
-                    create_action.action,
-                    create_action.intents,
-                    create_action.intent_txs_map,
-                ))
+                Ok(CreateActionResult {
+                    action: create_action.action,
+                    intents: create_action.intents,
+                    intent_txs_map: create_action.intent_txs_map,
+                })
             }
             _ => Err(CanisterError::from("Unsupported action type")),
         }
