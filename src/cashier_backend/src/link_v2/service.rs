@@ -30,6 +30,16 @@ impl<R: Repositories> LinkV2Service<R> {
         }
     }
 
+    /// Create a new link and the corresponding createAction
+    ///
+    /// # Arguments
+    /// * `creator` - The principal of the user creating the link
+    /// * `input` - The input data for creating the link
+    /// * `created_at_ts` - The timestamp when the link is created
+    /// # Returns
+    /// * `GetLinkResp` - The response containing the created link and action details
+    /// # Errors
+    /// * `CanisterError` - If there is an error during link creation or action creation
     pub fn create_link(
         &mut self,
         creator: Principal,
@@ -77,6 +87,16 @@ impl<R: Repositories> LinkV2Service<R> {
         })
     }
 
+    /// Publish a link, changing its state to ACTIVE
+    /// Only the creator of the link can publish it
+    ///
+    /// # Arguments
+    /// * `caller` - The principal of the user attempting to publish the link
+    /// * `link_id` - The ID of the link to be published
+    /// # Returns
+    /// * `LinkDto` - The DTO of the published link
+    /// # Errors
+    /// * `CanisterError` - If the link is not found, the caller is not the creator, or if there is an error during publishing
     pub async fn publish_link(
         &mut self,
         caller: Principal,
