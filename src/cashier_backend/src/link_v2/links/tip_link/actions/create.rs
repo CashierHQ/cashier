@@ -4,6 +4,7 @@ use crate::link_v2::intents::{
 };
 use candid::Principal;
 use cashier_backend_types::{
+    constant::{INTENT_LABEL_LINK_CREATION_FEE, INTENT_LABEL_SEND_TIP_ASSET},
     error::CanisterError,
     repository::{
         action::v1::{Action, ActionState, ActionType},
@@ -45,21 +46,21 @@ impl CreateAction {
         let action = Action {
             id: Uuid::new_v4().to_string(),
             r#type: ActionType::CreateLink,
-            state: ActionState::Created,
-            creator,
             link_id: link_id.clone(),
+            creator,
+            state: ActionState::Created,
         };
 
         let deposit_intent = TransferWalletToLinkIntent::create(
             action.id.clone(),
-            "Transfer from wallet to link".to_string(),
+            INTENT_LABEL_SEND_TIP_ASSET.to_string(),
             created_at_ts,
         )?;
         let dintent_id = deposit_intent.intent.id.clone();
 
         let fee_intent = TransferWalletToTreasuryIntent::create(
             action.id.clone(),
-            "Transfer from wallet to treasury".to_string(),
+            INTENT_LABEL_LINK_CREATION_FEE.to_string(),
             created_at_ts,
         )?;
         let fintent_id = fee_intent.intent.id.clone();
