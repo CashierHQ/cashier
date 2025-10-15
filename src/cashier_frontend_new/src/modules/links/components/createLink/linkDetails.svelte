@@ -32,7 +32,8 @@
         {parseBalanceUnits(
           BigInt(link.tipLink.amount),
           tokenMetadataQuery(link.tipLink.asset).data?.decimals ?? 8,
-        ).toFixed(5)} {tokenMetadataQuery(link.tipLink.asset).data?.symbol ?? ""}
+        ).toFixed(5)}
+        {tokenMetadataQuery(link.tipLink.asset).data?.symbol ?? ""}
       {/if}
     </div>
   {/if}
