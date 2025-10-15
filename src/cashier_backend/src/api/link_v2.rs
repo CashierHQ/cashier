@@ -17,13 +17,16 @@ use log::{debug, info};
 /// * `Ok(GetLinkResp)` - The created link data
 /// * `Err(CanisterError)` - If link creation fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
-fn create_link_v2(input: CreateLinkInput) -> Result<GetLinkResp, CanisterError> {
+async fn create_link_v2(input: CreateLinkInput) -> Result<GetLinkResp, CanisterError> {
     info!("[create_link_v2]");
     debug!("[create_link_v2] input: {input:?}");
 
     let mut link_v2_service = get_state().link_v2_service;
-    let created_at_ts = get_state().env.time();
-    link_v2_service.create_link(msg_caller(), input, created_at_ts)
+    let created_at = get_state().env.time();
+    let canister_id = get_state().env.id();
+    link_v2_service
+        .create_link(msg_caller(), canister_id, input, created_at)
+        .await
 }
 
 /// Publishes a link v2, transitioning it from CREATED to ACTIVE state.

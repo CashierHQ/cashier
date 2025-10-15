@@ -1,12 +1,8 @@
-use crate::{
-    services::adapter::IntentAdapterImpl,
-    utils::helper::{convert_nat_to_u64, to_subaccount},
-};
+use crate::services::adapter::IntentAdapterImpl;
 use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,
     repository::{
-        asset_info::AssetInfo,
         common::{Asset, Chain, Wallet},
         intent::v2::{Intent, IntentState, IntentTask, IntentType},
         transaction::v2::Transaction,

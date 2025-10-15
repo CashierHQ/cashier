@@ -23,10 +23,9 @@ pub trait LinkV2: Debug {
     /// * `CanisterError` - If there is an error during action creation
     fn create_action(
         &self,
-        caller: Principal,
+        canister_id: Principal,
         action: ActionType,
-        created_at_ts: u64,
-    ) -> Result<CreateActionResult, CanisterError>;
+    ) -> Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>>;
 
     /// Publish the link, changing its state to ACTIVE
     /// # Returns
