@@ -13,6 +13,7 @@ ciborium = { workspace = true }
 derive_more = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic_mple_log = { workspace = true }
+ic_mple_structures = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc-ledger-types = { workspace = true }
 serde = { workspace = true, features = ['derive'] }
