@@ -1,4 +1,5 @@
 <script lang="ts">
+  import * as Drawer from "$lib/shadcn/components/ui/drawer";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import type { LinkStore } from "../state/linkStore.svelte";
   import { cashierBackendService } from "../services/cashierBackend";
@@ -15,6 +16,12 @@
   let successMessage: string | null = $state(null);
 
   let isProcessing: boolean = $state(false);
+  let isOpen: boolean = $state(false);
+
+  // Automatically open the drawer when an action is present (Svelte 5 $effect rune)
+  $effect(() => {
+    isOpen = !!link.action;
+  });
 
   // Confirm and process the action
   async function confirmAction() {
@@ -93,66 +100,75 @@
 </script>
 
 {#if link.action}
-  <div class="mt-6 p-4 border rounded-lg bg-muted/50">
-    <h4 class="text-md font-medium mb-3">Transaction Cart</h4>
+  <Drawer.Root bind:open={isOpen}>
+    <Drawer.Content>
+      <Drawer.Header>
+        <Drawer.Title>Transaction Cart</Drawer.Title>
+        <Drawer.Description>Review and confirm the transaction intents for this action.</Drawer.Description>
+      </Drawer.Header>
 
-    {#if errorMessage}
-      <div
-        class="mb-3 p-2 bg-red-100 border border-red-300 text-red-700 rounded text-sm"
-      >
-        {errorMessage}
-      </div>
-    {/if}
+      <div class="p-4">
+        {#if errorMessage}
+          <div class="mb-3 p-2 bg-red-100 border border-red-300 text-red-700 rounded text-sm">
+            {errorMessage}
+          </div>
+        {/if}
 
-    {#if successMessage}
-      <div
-        class="mb-3 p-2 bg-green-100 border border-green-300 text-green-700 rounded text-sm"
-      >
-        {successMessage}
-      </div>
-    {/if}
+        {#if successMessage}
+          <div class="mb-3 p-2 bg-green-100 border border-green-300 text-green-700 rounded text-sm">
+            {successMessage}
+          </div>
+        {/if}
 
-    <div class="space-y-2 text-sm">
-      <div>
-        <span class="font-medium">Action ID:</span>
-        {link.action.id}
-      </div>
-      <div>
-        <span class="font-medium">Total Intents:</span>
-        {link.action.intents.length}
-      </div>
-    </div>
-
-    {#if link.action.intents.length > 0}
-      <div class="mt-4">
-        <h5 class="text-sm font-medium mb-2">Intents:</h5>
-        <div class="space-y-3">
-          {#each link.getIntentProperties() as intent (intent.id)}
-            <div class="p-3 border rounded bg-background">
-              <div class="grid grid-cols-2 gap-2 text-xs">
-                <div>
-                  <span class="font-medium">State:</span>
-                  {intent.state.id}
-                </div>
-                <div>
-                  <span class="font-medium">task:</span>
-                  {intent.task.id}
-                </div>
-                <div>
-                  <span class="font-medium">Amount:</span>
-                  {intent.type.payload.amount}
-                </div>
-              </div>
-            </div>
-          {/each}
+        <div class="space-y-2 text-sm">
+          <div>
+            <span class="font-medium">Action ID:</span>
+            {link.action.id}
+          </div>
+          <div>
+            <span class="font-medium">Total Intents:</span>
+            {link.action.intents.length}
+          </div>
         </div>
-      </div>
-    {/if}
 
-    <div class="flex gap-2 mt-4">
-      <Button onclick={confirmAction} disabled={isProcessing} variant="default">
-        {isProcessing ? "Processing..." : "Confirm Action"}
-      </Button>
-    </div>
-  </div>
+        {#if link.action.intents.length > 0}
+          <div class="mt-4">
+            <h5 class="text-sm font-medium mb-2">Intents:</h5>
+            <div class="space-y-3">
+              {#each link.getIntentProperties() as intent (intent.id)}
+                <div class="p-3 border rounded bg-background">
+                  <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span class="font-medium">State:</span>
+                      {intent.state.id}
+                    </div>
+                    <div>
+                      <span class="font-medium">task:</span>
+                      {intent.task.id}
+                    </div>
+                    <div>
+                      <span class="font-medium">Amount:</span>
+                      {intent.type.payload.amount}
+                    </div>
+                  </div>
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
+      </div>
+
+      <Drawer.Footer>
+        <div class="flex gap-2 w-full">
+          <Button onclick={confirmAction} disabled={isProcessing} variant="default">
+            {isProcessing ? "Processing..." : "Confirm Action"}
+          </Button>
+
+          <Drawer.Close>
+            <Button variant="ghost">Cancel</Button>
+          </Drawer.Close>
+        </div>
+      </Drawer.Footer>
+    </Drawer.Content>
+  </Drawer.Root>
 {/if}
