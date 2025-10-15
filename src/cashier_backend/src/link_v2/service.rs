@@ -97,7 +97,7 @@ impl<R: Repositories> LinkV2Service<R> {
     /// * `LinkDto` - The DTO of the published link
     /// # Errors
     /// * `CanisterError` - If the link is not found, the caller is not the creator, or if there is an error during publishing
-    pub async fn publish_link(
+    pub async fn activate_link(
         &mut self,
         caller: Principal,
         link_id: &str,
@@ -112,7 +112,7 @@ impl<R: Repositories> LinkV2Service<R> {
         }
 
         let link = factory::from_link(link)?;
-        let published_link = link.publish().await?;
+        let published_link = link.activate().await?;
         self.link_repository.update(published_link.clone());
 
         Ok(LinkDto::from(published_link))

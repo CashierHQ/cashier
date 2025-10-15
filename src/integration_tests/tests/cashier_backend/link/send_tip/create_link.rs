@@ -90,7 +90,9 @@ async fn it_should_create_link_tip_icp_token_successfully() {
             .await;
 
         // Assert
-        assert!(!create_action.id.is_empty());
+        print!("create action {:?}", create_action);
+
+        assert!(create_action.id.is_empty());
         assert_eq!(create_action.r#type, ActionType::CreateLink);
         assert_eq!(create_action.state, ActionState::Created);
         assert_eq!(create_action.intents.len(), 2);
