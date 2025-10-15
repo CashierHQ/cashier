@@ -93,12 +93,12 @@ impl LinkV2 for TipLink {
         }
     }
 
-    fn publish(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+    fn activate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
         let link = self.link.clone();
 
         Box::pin(async move {
             let state = TipLink::get_state_handler(&link)?;
-            state.publish().await
+            state.activate().await
         })
     }
 }

@@ -17,7 +17,7 @@ impl CreatedState {
 }
 
 impl LinkV2State for CreatedState {
-    fn publish(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+    fn activate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
         let mut link_clone = self.link.clone();
         Box::pin(async move {
             link_clone.state = LinkState::Active;

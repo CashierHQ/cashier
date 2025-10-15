@@ -33,8 +33,8 @@ pub trait LinkV2: Debug {
     /// * `Link` - The updated link model after publishing
     /// # Errors
     /// * `CanisterError` - If there is an error during publishing
-    fn publish(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("publish not implemented")) })
+    fn activate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("activate not implemented")) })
     }
 }
 
@@ -44,7 +44,7 @@ pub trait LinkV2State: Debug {
     /// * `Link` - The updated link model after publishing
     /// # Errors
     /// * `CanisterError` - If there is an error during publishing
-    fn publish(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("publish not implemented")) })
+    fn activate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("activate not implemented")) })
     }
 }

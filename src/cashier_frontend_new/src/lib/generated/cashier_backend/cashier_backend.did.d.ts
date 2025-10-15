@@ -75,7 +75,7 @@ export interface CreateActionInput {
 }
 export interface CreateLinkInput {
   'title' : string,
-  'asset_info' : Array<LinkDetailUpdateAssetInfoInput>,
+  'asset_info' : Array<AssetInfoDto>,
   'link_type' : LinkType,
   'link_use_action_max_count' : bigint,
 }
@@ -264,14 +264,16 @@ export type Result_2 = { 'Ok' : ActionDto } |
 export type Result_3 = { 'Ok' : LinkDto } |
   { 'Err' : CanisterError };
 export type Result_4 = { 'Ok' : GetLinkResp } |
-  { 'Err' : string };
-export type Result_5 = { 'Ok' : PaginateResult } |
-  { 'Err' : string };
-export type Result_6 = { 'Ok' : Icrc21ConsentInfo } |
-  { 'Err' : Icrc21Error };
-export type Result_7 = { 'Ok' : [] | [LinkGetUserStateOutput] } |
   { 'Err' : CanisterError };
-export type Result_8 = { 'Ok' : string } |
+export type Result_5 = { 'Ok' : GetLinkResp } |
+  { 'Err' : string };
+export type Result_6 = { 'Ok' : PaginateResult } |
+  { 'Err' : string };
+export type Result_7 = { 'Ok' : Icrc21ConsentInfo } |
+  { 'Err' : Icrc21Error };
+export type Result_8 = { 'Ok' : [] | [LinkGetUserStateOutput] } |
+  { 'Err' : CanisterError };
+export type Result_9 = { 'Ok' : string } |
   { 'Err' : CanisterError };
 export interface TransactionDto {
   'id' : string,
@@ -336,9 +338,10 @@ export interface _SERVICE {
     Result_2
   >,
   'create_link' : ActorMethod<[CreateLinkInput], Result_3>,
+  'create_link_v2' : ActorMethod<[CreateLinkInput], Result_4>,
   'get_canister_build_data' : ActorMethod<[], BuildData>,
-  'get_link' : ActorMethod<[string, [] | [GetLinkOptions]], Result_4>,
-  'get_links' : ActorMethod<[[] | [PaginateInput]], Result_5>,
+  'get_link' : ActorMethod<[string, [] | [GetLinkOptions]], Result_5>,
+  'get_links' : ActorMethod<[[] | [PaginateInput]], Result_6>,
   'icrc10_supported_standards' : ActorMethod<
     [],
     Array<Icrc21SupportedStandard>
@@ -346,18 +349,19 @@ export interface _SERVICE {
   'icrc114_validate' : ActorMethod<[Icrc114ValidateArgs], boolean>,
   'icrc21_canister_call_consent_message' : ActorMethod<
     [Icrc21ConsentMessageRequest],
-    Result_6
+    Result_7
   >,
   'icrc28_trusted_origins' : ActorMethod<[], Icrc28TrustedOriginsResponse>,
   'is_inspect_message_enabled' : ActorMethod<[], boolean>,
-  'link_get_user_state' : ActorMethod<[LinkGetUserStateInput], Result_7>,
-  'link_update_user_state' : ActorMethod<[LinkUpdateUserStateInput], Result_7>,
+  'link_get_user_state' : ActorMethod<[LinkGetUserStateInput], Result_8>,
+  'link_update_user_state' : ActorMethod<[LinkUpdateUserStateInput], Result_8>,
   'process_action' : ActorMethod<[ProcessActionInput], Result_2>,
   'process_action_anonymous' : ActorMethod<
     [ProcessActionAnonymousInput],
     Result_2
   >,
-  'trigger_transaction' : ActorMethod<[TriggerTransactionInput], Result_8>,
+  'publish_link_v2' : ActorMethod<[string], Result_3>,
+  'trigger_transaction' : ActorMethod<[TriggerTransactionInput], Result_9>,
   'update_action' : ActorMethod<[UpdateActionInput], Result_2>,
   'update_link' : ActorMethod<[UpdateLinkInput], Result_3>,
 }
