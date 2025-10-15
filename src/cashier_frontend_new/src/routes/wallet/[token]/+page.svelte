@@ -4,7 +4,7 @@
   import {
     balanceToUSDValue,
     parseBalanceUnits,
-  } from "$modules/token/utils/converter";
+  } from "$modules/shared/utils/converter";
 
   let token = page.params.token || "empty";
   let tokenDetails = $derived(

@@ -18,12 +18,7 @@
   let successMessage: string | null = $state(null);
 
   let isProcessing: boolean = $state(false);
-  let isOpen: boolean = $state(false);
-
-  // Automatically open the drawer when an action is present (Svelte 5 $effect rune)
-  $effect(() => {
-    isOpen = !!link.action;
-  });
+  let isOpen: boolean = $derived(!!link.action);
 
   // Confirm and process the action
   async function confirmAction() {
@@ -162,7 +157,6 @@
                           intent.type.payload.asset.address.toText(),
                         ).data?.decimals ?? 8,
                       ).toFixed(5)}
-                      {" "}
                       {tokenMetadataQuery(
                         intent.type.payload.asset.address.toText(),
                       ).data?.symbol ?? ""}
