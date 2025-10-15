@@ -106,18 +106,24 @@
     <Drawer.Content>
       <Drawer.Header>
         <Drawer.Title>Transaction Cart</Drawer.Title>
-        <Drawer.Description>Review and confirm the transaction intents for this action.</Drawer.Description>
+        <Drawer.Description
+          >Review and confirm the transaction intents for this action.</Drawer.Description
+        >
       </Drawer.Header>
 
       <div class="p-4">
         {#if errorMessage}
-          <div class="mb-3 p-2 bg-red-100 border border-red-300 text-red-700 rounded text-sm">
+          <div
+            class="mb-3 p-2 bg-red-100 border border-red-300 text-red-700 rounded text-sm"
+          >
             {errorMessage}
           </div>
         {/if}
 
         {#if successMessage}
-          <div class="mb-3 p-2 bg-green-100 border border-green-300 text-green-700 rounded text-sm">
+          <div
+            class="mb-3 p-2 bg-green-100 border border-green-300 text-green-700 rounded text-sm"
+          >
             {successMessage}
           </div>
         {/if}
@@ -152,10 +158,14 @@
                       <span class="font-medium">Amount:</span>
                       {parseBalanceUnits(
                         intent.type.payload.amount,
-                        tokenMetadataQuery(intent.type.payload.asset.address.toText()).data?.decimals ?? 8,
+                        tokenMetadataQuery(
+                          intent.type.payload.asset.address.toText(),
+                        ).data?.decimals ?? 8,
                       ).toFixed(5)}
                       {" "}
-                      {tokenMetadataQuery(intent.type.payload.asset.address.toText()).data?.symbol ?? ""}
+                      {tokenMetadataQuery(
+                        intent.type.payload.asset.address.toText(),
+                      ).data?.symbol ?? ""}
                     </div>
                   </div>
                 </div>
@@ -167,7 +177,11 @@
 
       <Drawer.Footer>
         <div class="flex gap-2 w-full">
-          <Button onclick={confirmAction} disabled={isProcessing} variant="default">
+          <Button
+            onclick={confirmAction}
+            disabled={isProcessing}
+            variant="default"
+          >
             {isProcessing ? "Processing..." : "Confirm Action"}
           </Button>
 
