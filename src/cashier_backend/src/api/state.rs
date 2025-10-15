@@ -1,4 +1,5 @@
 use crate::{
+    link_v2::service::LinkV2Service,
     repositories::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
     services::{
         action::ActionService,
@@ -18,6 +19,7 @@ pub struct CanisterState<E: IcEnvironment + Clone> {
     pub action_service: ActionService<ThreadlocalRepositories>,
     pub auth_service: AuthService<&'static LocalKey<RefCell<AuthServiceStorage>>>,
     pub link_service: LinkService<E, ThreadlocalRepositories>,
+    pub link_v2_service: LinkV2Service<ThreadlocalRepositories>,
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
     pub request_lock_service: RequestLockService<ThreadlocalRepositories>,
     pub settings: SettingsService<ThreadlocalRepositories>,
@@ -34,6 +36,7 @@ impl<E: IcEnvironment + Clone> CanisterState<E> {
             action_service: ActionService::new(&repo),
             auth_service: AuthService::new(&AUTH_SERVICE_STORE),
             link_service: LinkService::new(repo.clone(), env.clone()),
+            link_v2_service: LinkV2Service::new(&repo),
             log_service: LoggerConfigService::new(&LOGGER_SERVICE_STORE),
             request_lock_service: RequestLockService::new(&repo),
             settings: SettingsService::new(&repo),
