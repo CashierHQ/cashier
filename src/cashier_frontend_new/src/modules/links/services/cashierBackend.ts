@@ -120,6 +120,7 @@ class CanisterBackendService {
       (err) => new Error(JSON.stringify(err)),
     );
   }
+
 }
 
 export const cashierBackendService = new CanisterBackendService();
