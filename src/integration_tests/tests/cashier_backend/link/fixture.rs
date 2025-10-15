@@ -6,8 +6,8 @@ use cashier_backend_types::{
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
         link::{
-            CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto, LinkStateMachineGoto,
-            UpdateLinkInput,
+            CreateLinkInput, GetLinkResp, LinkDetailUpdateAssetInfoInput, LinkDto,
+            LinkStateMachineGoto, UpdateLinkInput,
         },
     },
     repository::{action::v1::ActionType, common::Asset, link::v1::LinkType},
@@ -50,12 +50,31 @@ impl LinkTestFixture {
             .unwrap()
     }
 
+    // This is generic function to create a link.
+    pub async fn create_link_v2(&self, input: CreateLinkInput) -> GetLinkResp {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .create_link_v2(input)
+            .await
+            .unwrap()
+            .unwrap()
+    }
+
     // Pre-defined input for creating tip link.
     pub async fn create_tip_link(&self, token: &str, amount: u64) -> LinkDto {
         let link_input = self
             .tip_link_input(vec![token.to_string()], vec![amount])
             .unwrap();
         self.create_link(link_input).await
+    }
+
+    // Pre-defined input for creating tip link.
+    pub async fn create_tip_link_v2(&self, token: &str, amount: u64) -> GetLinkResp {
+        let link_input = self
+            .tip_link_input(vec![token.to_string()], vec![amount])
+            .unwrap();
+        self.create_link_v2(link_input).await
     }
 
     // Pre-defined input for creating token basket link.
