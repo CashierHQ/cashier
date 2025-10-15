@@ -9,6 +9,7 @@ pub mod icrc;
 pub mod init_and_upgrade;
 mod inspect_message;
 pub mod link;
+pub mod link_v2;
 mod state;
 
 use candid::Principal;
