@@ -1,6 +1,8 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import type { LinkStore } from "../../state/linkStore.svelte";
+  import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
+  import { parseBalanceUnits } from "$modules/shared/utils/converter";
 
   const {
     link,
@@ -26,7 +28,12 @@
     </div>
     <div>
       <strong>Amount:</strong>
-      {link.tipLink.amount}
+      {#if link.tipLink}
+        {parseBalanceUnits(
+          BigInt(link.tipLink.amount),
+          tokenMetadataQuery(link.tipLink.asset).data?.decimals ?? 8,
+        ).toFixed(5)} {tokenMetadataQuery(link.tipLink.asset).data?.symbol ?? ""}
+      {/if}
     </div>
   {/if}
 

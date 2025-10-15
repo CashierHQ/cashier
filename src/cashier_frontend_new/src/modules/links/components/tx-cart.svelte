@@ -1,6 +1,8 @@
 <script lang="ts">
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
+  import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import type { LinkStore } from "../state/linkStore.svelte";
   import { cashierBackendService } from "../services/cashierBackend";
   import Action from "../types/action/action";
@@ -148,7 +150,12 @@
                     </div>
                     <div>
                       <span class="font-medium">Amount:</span>
-                      {intent.type.payload.amount}
+                      {parseBalanceUnits(
+                        intent.type.payload.amount,
+                        tokenMetadataQuery(intent.type.payload.asset.address.toText()).data?.decimals ?? 8,
+                      ).toFixed(5)}
+                      {" "}
+                      {tokenMetadataQuery(intent.type.payload.asset.address.toText()).data?.symbol ?? ""}
                     </div>
                   </div>
                 </div>
