@@ -7,7 +7,7 @@
   import { resolve } from "$app/paths";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { parseBalanceUnits } from "$modules/token/utils/converter";
+  import { parseBalanceUnits } from "$modules/shared/utils/converter";
 
   const {
     link,
