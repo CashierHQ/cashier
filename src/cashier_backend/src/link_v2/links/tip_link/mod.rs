@@ -95,7 +95,7 @@ impl LinkV2 for TipLink {
             let fee_map = icrc_batch_service.get_batch_tokens_fee(&assets).await?;
             match action_type {
                 ActionType::CreateLink => {
-                    let create_action = CreateAction::create(link, fee_map, canister_id)?;
+                    let create_action = CreateAction::create(&link, &fee_map, canister_id)?;
                     Ok(CreateActionResult {
                         action: create_action.action,
                         intents: create_action.intents,
