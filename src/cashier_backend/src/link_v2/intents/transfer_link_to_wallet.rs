@@ -15,12 +15,12 @@ use cashier_backend_types::{
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
 
-pub struct TransferWalletToLinkIntent {
+pub struct TransferLinkToWalletIntent {
     pub intent: Intent,
     pub transactions: Vec<Transaction>,
 }
 
-impl TransferWalletToLinkIntent {
+impl TransferLinkToWalletIntent {
     pub fn new(intent: Intent, transactions: Vec<Transaction>) -> Self {
         Self {
             intent,
@@ -32,7 +32,7 @@ impl TransferWalletToLinkIntent {
         label: String,
         asset: Asset,
         sending_amount: u64,
-        sender_id: Principal,
+        receiver_id: Principal,
         link_account: Account,
         created_at_ts: u64,
     ) -> Result<Self, CanisterError> {
@@ -48,8 +48,8 @@ impl TransferWalletToLinkIntent {
         };
 
         // enrich the intent with asset info
-        let from_wallet = Wallet::new(sender_id);
-        let to_wallet: Wallet = link_account.into();
+        let to_wallet = Wallet::new(receiver_id);
+        let from_wallet: Wallet = link_account.into();
 
         let mut transfer_data = intent.r#type.as_transfer().ok_or_else(|| {
             CanisterError::HandleLogicError("Transfer data not found".to_string())
