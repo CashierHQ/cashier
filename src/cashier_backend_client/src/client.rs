@@ -89,6 +89,14 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         self.client.update("create_link", ((input),)).await
     }
 
+    /// Creates a new link.
+    pub async fn create_link_v2(
+        &self,
+        input: CreateLinkInput,
+    ) -> CanisterClientResult<Result<GetLinkResp, CanisterError>> {
+        self.client.update("create_link_v2", ((input),)).await
+    }
+
     /// Creates a new action.
     pub async fn create_action(
         &self,

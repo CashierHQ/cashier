@@ -10,6 +10,37 @@ export const idlFactory = ({ IDL }) => {
     'owner' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
+  const Asset = IDL.Variant({
+    'IC' : IDL.Record({ 'address' : IDL.Principal }),
+  });
+  const AssetInfoDto = IDL.Record({
+    'asset' : Asset,
+    'amount_per_link_use_action' : IDL.Nat64,
+    'label' : IDL.Text,
+  });
+  const LinkType = IDL.Variant({
+    'SendAirdrop' : IDL.Null,
+    'SendTip' : IDL.Null,
+    'ReceivePayment' : IDL.Null,
+    'SendTokenBasket' : IDL.Null,
+  });
+  const LinkState = IDL.Variant({
+    'Inactive' : IDL.Null,
+    'Active' : IDL.Null,
+    'CreateLink' : IDL.Null,
+    'InactiveEnded' : IDL.Null,
+  });
+  const LinkDto = IDL.Record({
+    'id' : IDL.Text,
+    'title' : IDL.Text,
+    'creator' : IDL.Principal,
+    'asset_info' : IDL.Vec(AssetInfoDto),
+    'link_type' : LinkType,
+    'create_at' : IDL.Nat64,
+    'state' : LinkState,
+    'link_use_action_max_count' : IDL.Nat64,
+    'link_use_action_counter' : IDL.Nat64,
+  });
   CanisterError.fill(
     IDL.Variant({
       'InvalidDataError' : IDL.Text,
@@ -46,9 +77,10 @@ export const idlFactory = ({ IDL }) => {
       'CallCanisterFailed' : IDL.Text,
     })
   );
-  const Result = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : CanisterError });
+  const Result = IDL.Variant({ 'Ok' : LinkDto, 'Err' : CanisterError });
+  const Result_1 = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : CanisterError });
   const Permission = IDL.Variant({ 'Admin' : IDL.Null });
-  const Result_1 = IDL.Variant({
+  const Result_2 = IDL.Variant({
     'Ok' : IDL.Vec(Permission),
     'Err' : CanisterError,
   });
@@ -78,9 +110,6 @@ export const idlFactory = ({ IDL }) => {
       'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
       'address' : IDL.Principal,
     }),
-  });
-  const Asset = IDL.Variant({
-    'IC' : IDL.Record({ 'address' : IDL.Principal }),
   });
   const TransferData = IDL.Record({
     'to' : Wallet,
@@ -167,22 +196,11 @@ export const idlFactory = ({ IDL }) => {
     'type' : ActionType,
     'state' : IntentState,
   });
-  const Result_2 = IDL.Variant({ 'Ok' : ActionDto, 'Err' : CanisterError });
+  const Result_3 = IDL.Variant({ 'Ok' : ActionDto, 'Err' : CanisterError });
   const CreateActionAnonymousInput = IDL.Record({
     'link_id' : IDL.Text,
     'action_type' : ActionType,
     'wallet_address' : IDL.Principal,
-  });
-  const AssetInfoDto = IDL.Record({
-    'asset' : Asset,
-    'amount_per_link_use_action' : IDL.Nat64,
-    'label' : IDL.Text,
-  });
-  const LinkType = IDL.Variant({
-    'SendAirdrop' : IDL.Null,
-    'SendTip' : IDL.Null,
-    'ReceivePayment' : IDL.Null,
-    'SendTokenBasket' : IDL.Null,
   });
   const CreateLinkInput = IDL.Record({
     'title' : IDL.Text,
@@ -190,24 +208,6 @@ export const idlFactory = ({ IDL }) => {
     'link_type' : LinkType,
     'link_use_action_max_count' : IDL.Nat64,
   });
-  const LinkState = IDL.Variant({
-    'Inactive' : IDL.Null,
-    'Active' : IDL.Null,
-    'CreateLink' : IDL.Null,
-    'InactiveEnded' : IDL.Null,
-  });
-  const LinkDto = IDL.Record({
-    'id' : IDL.Text,
-    'title' : IDL.Text,
-    'creator' : IDL.Principal,
-    'asset_info' : IDL.Vec(AssetInfoDto),
-    'link_type' : LinkType,
-    'create_at' : IDL.Nat64,
-    'state' : LinkState,
-    'link_use_action_max_count' : IDL.Nat64,
-    'link_use_action_counter' : IDL.Nat64,
-  });
-  const Result_3 = IDL.Variant({ 'Ok' : LinkDto, 'Err' : CanisterError });
   const GetLinkResp = IDL.Record({
     'action' : IDL.Opt(ActionDto),
     'link' : LinkDto,
@@ -358,10 +358,11 @@ export const idlFactory = ({ IDL }) => {
     'goto' : UserStateMachineGoto,
   });
   return IDL.Service({
-    'admin_inspect_message_enable' : IDL.Func([IDL.Bool], [Result], []),
+    'activate_link_v2' : IDL.Func([IDL.Text], [Result], []),
+    'admin_inspect_message_enable' : IDL.Func([IDL.Bool], [Result_1], []),
     'admin_permissions_add' : IDL.Func(
         [IDL.Principal, IDL.Vec(Permission)],
-        [Result_1],
+        [Result_2],
         [],
       ),
     'admin_permissions_get' : IDL.Func(
@@ -371,16 +372,16 @@ export const idlFactory = ({ IDL }) => {
       ),
     'admin_permissions_remove' : IDL.Func(
         [IDL.Principal, IDL.Vec(Permission)],
-        [Result_1],
-        [],
-      ),
-    'create_action' : IDL.Func([CreateActionInput], [Result_2], []),
-    'create_action_anonymous' : IDL.Func(
-        [CreateActionAnonymousInput],
         [Result_2],
         [],
       ),
-    'create_link' : IDL.Func([CreateLinkInput], [Result_3], []),
+    'create_action' : IDL.Func([CreateActionInput], [Result_3], []),
+    'create_action_anonymous' : IDL.Func(
+        [CreateActionAnonymousInput],
+        [Result_3],
+        [],
+      ),
+    'create_link' : IDL.Func([CreateLinkInput], [Result], []),
     'create_link_v2' : IDL.Func([CreateLinkInput], [Result_4], []),
     'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),
     'get_link' : IDL.Func(
@@ -408,16 +409,15 @@ export const idlFactory = ({ IDL }) => {
         [Result_8],
         [],
       ),
-    'process_action' : IDL.Func([ProcessActionInput], [Result_2], []),
+    'process_action' : IDL.Func([ProcessActionInput], [Result_3], []),
     'process_action_anonymous' : IDL.Func(
         [ProcessActionAnonymousInput],
-        [Result_2],
+        [Result_3],
         [],
       ),
-    'publish_link_v2' : IDL.Func([IDL.Text], [Result_3], []),
     'trigger_transaction' : IDL.Func([TriggerTransactionInput], [Result_9], []),
-    'update_action' : IDL.Func([UpdateActionInput], [Result_2], []),
-    'update_link' : IDL.Func([UpdateLinkInput], [Result_3], []),
+    'update_action' : IDL.Func([UpdateActionInput], [Result_3], []),
+    'update_link' : IDL.Func([UpdateLinkInput], [Result], []),
   });
 };
 export const init = ({ IDL }) => {
