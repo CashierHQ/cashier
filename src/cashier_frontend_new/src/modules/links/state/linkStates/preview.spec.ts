@@ -41,9 +41,9 @@ describe("PreviewState", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    vi.spyOn(cashierBackendService, "createLink").mockResolvedValue(
-      Ok(mockLinkDto) as unknown as Awaited<
-        ReturnType<typeof cashierBackendService.createLink>
+    vi.spyOn(cashierBackendService, "createLinkV2").mockResolvedValue(
+      Ok({ link: mockLinkDto, action: mockActionDto }) as unknown as Awaited<
+        ReturnType<typeof cashierBackendService.createLinkV2>
       >,
     );
 
@@ -85,9 +85,9 @@ describe("PreviewState", () => {
     await store.goNext();
 
     // Ensure backend mock returns Ok
-    vi.spyOn(cashierBackendService, "createLink").mockResolvedValue(
-      Ok(mockLinkDto) as unknown as Awaited<
-        ReturnType<typeof cashierBackendService.createLink>
+    vi.spyOn(cashierBackendService, "createLinkV2").mockResolvedValue(
+      Ok({ link: mockLinkDto, action: mockActionDto }) as unknown as Awaited<
+        ReturnType<typeof cashierBackendService.createLinkV2>
       >,
     );
 
@@ -110,9 +110,9 @@ describe("PreviewState", () => {
     await store.goNext();
 
     // Arrange: mock backend to return Err
-    vi.spyOn(cashierBackendService, "createLink").mockResolvedValue(
+    vi.spyOn(cashierBackendService, "createLinkV2").mockResolvedValue(
       Err(new Error("boom")) as unknown as Awaited<
-        ReturnType<typeof cashierBackendService.createLink>
+        ReturnType<typeof cashierBackendService.createLinkV2>
       >,
     );
 
