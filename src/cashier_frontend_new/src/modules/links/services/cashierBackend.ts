@@ -69,6 +69,31 @@ class CanisterBackendService {
   }
 
   /**
+   * Creates a new link using the v2 API format with enhanced features.
+   * Validates the input and returns the full GetLinkResp on success.
+   */
+  async createLinkV2(
+    input: CreateLinkData,
+  ): Promise<Result<cashierBackend.GetLinkResp, Error>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const request = input.toCreateLinkInput();
+
+    if (request.isErr()) {
+      return Err(request.unwrapErr());
+    }
+
+    const response = await actor.create_link_v2(request.unwrap());
+
+    return responseToResult(response)
+      .map((res) => res)
+      .mapErr((err) => new Error(JSON.stringify(err)));
+  }
+
+  /**
    * Creates an action for a given link.
    * @param linkId ID of the link
    * @param actionType Type of action to create
