@@ -5,7 +5,7 @@
   import { LinkStep } from "../../types/linkStep";
   import { resolve } from "$app/paths";
   import LinkDetails from "./linkDetails.svelte";
-  import TxCart from "./tx-cart.svelte";
+  import TxCart from "../tx-cart.svelte";
 
   const {
     link,
