@@ -40,22 +40,24 @@ impl<R: Repositories> LinkV2Service<R> {
     /// * `GetLinkResp` - The response containing the created link and action details
     /// # Errors
     /// * `CanisterError` - If there is an error during link creation or action creation
-    pub fn create_link(
+    pub async fn create_link(
         &mut self,
-        creator: Principal,
+        creator_id: Principal,
+        canister_id: Principal,
         input: CreateLinkInput,
         created_at_ts: u64,
     ) -> Result<GetLinkResp, CanisterError> {
-        let link = factory::create_link(creator, input, created_at_ts)?;
-        let create_action_result =
-            link.create_action(creator, ActionType::CreateLink, created_at_ts)?;
+        let link = factory::create_link(creator_id, input, created_at_ts)?;
+        let create_action_result = link
+            .create_action(canister_id, ActionType::CreateLink)
+            .await?;
 
         // save link & user_link to db
         let link_model = link.get_link_model();
         self.link_repository.create(link_model.clone());
 
         let new_user_link = UserLink {
-            user_id: creator,
+            user_id: creator_id,
             link_id: link_model.id.clone(),
         };
         self.user_link_repository.create(new_user_link);

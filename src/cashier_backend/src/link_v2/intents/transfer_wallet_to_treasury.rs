@@ -1,10 +1,9 @@
-use crate::constant::{FEE_TREASURY_PRINCIPAL, ICP_CANISTER_PRINCIPAL};
+use crate::constant::FEE_TREASURY_PRINCIPAL;
 use crate::services::adapter::IntentAdapterImpl;
 use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,
     repository::{
-        asset_info::AssetInfo,
         common::{Asset, Chain, Wallet},
         intent::v2::{Intent, IntentState, IntentTask, IntentType},
         transaction::v2::Transaction,

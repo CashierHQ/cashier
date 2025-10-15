@@ -1,9 +1,12 @@
 pub mod actions;
 pub mod states;
 
-use crate::link_v2::{
-    links::tip_link::actions::create::CreateAction,
-    traits::{LinkV2, LinkV2State},
+use crate::{
+    link_v2::{
+        links::tip_link::actions::create::CreateAction,
+        traits::{LinkV2, LinkV2State},
+    },
+    services::ext::icrc_batch::IcrcBatchService,
 };
 use candid::Principal;
 use cashier_backend_types::{
@@ -12,6 +15,7 @@ use cashier_backend_types::{
     repository::{
         action::v1::ActionType,
         asset_info::AssetInfo,
+        common::Asset,
         link::v1::{Link, LinkState, LinkType},
     },
 };
@@ -75,22 +79,32 @@ impl LinkV2 for TipLink {
 
     fn create_action(
         &self,
-        caller: candid::Principal,
+        canister_id: Principal,
         action_type: ActionType,
-        created_at_ts: u64,
-    ) -> Result<CreateActionResult, CanisterError> {
-        match action_type {
-            ActionType::CreateLink => {
-                let create_action =
-                    CreateAction::create(self.link.id.clone(), caller, created_at_ts)?;
-                Ok(CreateActionResult {
-                    action: create_action.action,
-                    intents: create_action.intents,
-                    intent_txs_map: create_action.intent_txs_map,
-                })
+    ) -> Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>> {
+        let assets: Vec<Asset> = self
+            .link
+            .asset_info
+            .iter()
+            .map(|info| info.asset.clone())
+            .collect();
+        let link = self.link.clone();
+
+        Box::pin(async move {
+            let icrc_batch_service = IcrcBatchService::new();
+            let fee_map = icrc_batch_service.get_batch_tokens_fee(&assets).await?;
+            match action_type {
+                ActionType::CreateLink => {
+                    let create_action = CreateAction::create(link, fee_map, canister_id)?;
+                    Ok(CreateActionResult {
+                        action: create_action.action,
+                        intents: create_action.intents,
+                        intent_txs_map: create_action.intent_txs_map,
+                    })
+                }
+                _ => Err(CanisterError::from("Unsupported action type")),
             }
-            _ => Err(CanisterError::from("Unsupported action type")),
-        }
+        })
     }
 
     fn activate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
