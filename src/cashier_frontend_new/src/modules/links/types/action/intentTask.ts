@@ -2,6 +2,7 @@ import type { IntentTask as BackendIntentTask } from "$lib/generated/cashier_bac
 import { rsMatch } from "$lib/rsMatch";
 import { assertUnreachable } from "$lib/rsMatch";
 
+// Frontend representation of an IntentTask
 export class IntentTask {
   private constructor(public readonly id: string) {}
   static readonly TransferWalletToLink = new IntentTask("TransferWalletToLink");
@@ -10,6 +11,10 @@ export class IntentTask {
     "TransferWalletToTreasury",
   );
 
+  /**
+   * @param b BackendIntentTask from backend
+   * @returns IntentTask instance
+   */
   static fromBackendType(b: BackendIntentTask): IntentTask {
     return rsMatch(b, {
       TransferWalletToLink: () => IntentTask.TransferWalletToLink,

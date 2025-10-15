@@ -3,6 +3,7 @@ import IntentState from "./intentState";
 import IntentTask from "./intentTask";
 import IntentType from "./intentType";
 
+// Frontend representation of an Intent
 export class Intent {
   constructor(
     public id: string,
@@ -12,6 +13,11 @@ export class Intent {
     public state: IntentState,
   ) {}
 
+  /**
+   * Convert from backend IntentDto to frontend Intent
+   * @param dto IntentDto from backend
+   * @returns Intent instance
+   */
   static fromBackendType(dto: IntentDto) {
     const task = IntentTask.fromBackendType(dto.task);
     const type = IntentType.fromBackendType(dto.type);

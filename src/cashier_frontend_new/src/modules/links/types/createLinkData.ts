@@ -61,11 +61,7 @@ export class CreateLinkData {
       title: this.title,
       asset_info: assetInfo,
       link_type: link_type,
-      description: [],
-      link_image_url: [],
-      template: { Central: null },
       link_use_action_max_count: 1n,
-      nft_image: [],
     };
 
     return Ok(input);
