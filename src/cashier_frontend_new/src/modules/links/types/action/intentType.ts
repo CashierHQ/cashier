@@ -7,6 +7,7 @@ import { rsMatch } from "$lib/rsMatch";
 import { Wallet } from "../wallet";
 import { Asset } from "../asset";
 
+// Frontend representation of TransferData for IntentType
 export class TransferData {
   constructor(
     public to: Wallet,
@@ -15,6 +16,7 @@ export class TransferData {
     public amount: bigint,
   ) {}
 
+  // Convert from backend TransferData to frontend TransferData
   static fromBackendType(data: BackendTransferData): TransferData {
     return new TransferData(
       Wallet.fromBackendType(data.to),
@@ -25,6 +27,7 @@ export class TransferData {
   }
 }
 
+// Frontend representation of TransferFromData for IntentType
 export class TransferFromData {
   constructor(
     public to: Wallet,
@@ -36,6 +39,7 @@ export class TransferFromData {
     public spender: Wallet,
   ) {}
 
+  // Convert from backend TransferFromData to frontend TransferFromData
   static fromBackendType(data: BackendTransferFromData): TransferFromData {
     return new TransferFromData(
       Wallet.fromBackendType(data.to),
@@ -49,11 +53,14 @@ export class TransferFromData {
   }
 }
 
+// Union type for IntentType payloads
 export type IntentPayload = TransferData | TransferFromData;
 
+// Frontend representation of an IntentType
 export class IntentType {
   private constructor(public readonly payload: IntentPayload) {}
 
+  // Static instances for each IntentType
   static fromBackendType(type: BackendIntentType): IntentType {
     return rsMatch(type, {
       Transfer: (data) => {

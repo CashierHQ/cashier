@@ -2,12 +2,17 @@ import type { Wallet as BackendWallet } from "$lib/generated/cashier_backend/cas
 import type { Principal } from "@dfinity/principal";
 import { rsMatch } from "$lib/rsMatch";
 
+// Frontend representation of a Wallet
 export class Wallet {
   constructor(
     public subaccount: Uint8Array | number[] | null,
     public address: Principal,
   ) {}
 
+  /**
+   * @param wallet BackendWallet from backend
+   * @returns Wallet instance
+   */
   static fromBackendType(wallet: BackendWallet): Wallet {
     return rsMatch(wallet, {
       IC: (data) => {

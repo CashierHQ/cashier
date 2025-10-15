@@ -9,6 +9,7 @@ import type {
   IntentState as BackendIntentState,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 
+// Frontend Action class representing an action entity
 export class Action {
   constructor(
     public id: string,
@@ -19,11 +20,14 @@ export class Action {
     public icrc_112_requests?: Icrc112Request[][],
   ) {}
 
+  /**
+   * Create an Action instance from backend ActionDto
+   * @param action : ActionDto from backend
+   * @returns  Action instance
+   */
   static fromBackendType(action: ActionDto): Action {
-    // map ActionType (backend union) to frontend ActionType class
     const type = ActionType.fromBackendType(action.type);
 
-    // map Action state (backend IntentState union) to frontend ActionState class
     const state = ActionState.fromBackendType(
       action.state as BackendIntentState,
     );
@@ -32,7 +36,6 @@ export class Action {
       Intent.fromBackendType(intentDto),
     );
 
-    // map optional icrc_112_requests: [] | [Array<Array<Icrc112Request>>]
     let icrc: Icrc112Request[][] | undefined = undefined;
     if (action.icrc_112_requests && action.icrc_112_requests.length === 1) {
       const outer = action.icrc_112_requests[0];

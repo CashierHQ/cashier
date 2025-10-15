@@ -2,6 +2,7 @@ import type { Principal } from "@dfinity/principal";
 import type { Icrc112Request as BackendIcrc112Request } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { fromNullable } from "@dfinity/utils";
 
+// Frontend representation of an ICRC-112 request
 export class Icrc112Request {
   constructor(
     public arg: ArrayBuffer,
@@ -10,6 +11,11 @@ export class Icrc112Request {
     public nonce?: ArrayBuffer,
   ) {}
 
+  /**
+   * Convert from backend Icrc112Request to frontend Icrc112Request
+   * @param b BackendIcrc112Request from backend
+   * @returns Icrc112Request instance
+   */
   static fromBackendType(b: BackendIcrc112Request): Icrc112Request {
     const nonce = fromNullable(b.nonce);
     const arg = Array.isArray(b.arg)
