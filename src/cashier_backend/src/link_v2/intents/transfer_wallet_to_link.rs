@@ -61,9 +61,6 @@ impl TransferWalletToLinkIntent {
         let transactions =
             intent_adapter.intent_to_transactions(&intent.chain, created_at_ts, &intent)?;
 
-        Ok(Self {
-            intent,
-            transactions,
-        })
+        Ok(Self::new(intent, transactions))
     }
 }

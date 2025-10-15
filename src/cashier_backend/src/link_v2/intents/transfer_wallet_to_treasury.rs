@@ -64,7 +64,7 @@ impl TransferWalletToTreasuryIntent {
         transfer_from_data.asset = asset;
         transfer_from_data.from = from_wallet;
         transfer_from_data.to = to_wallet;
-        transfer_from_data.spender = spender_wallet.clone();
+        transfer_from_data.spender = spender_wallet;
         intent.r#type = IntentType::TransferFrom(transfer_from_data);
 
         // generate the blockchain transactions
@@ -72,9 +72,6 @@ impl TransferWalletToTreasuryIntent {
         let transactions =
             intent_adapter.intent_to_transactions(&intent.chain, created_at_ts, &intent)?;
 
-        Ok(Self {
-            intent,
-            transactions,
-        })
+        Ok(Self::new(intent, transactions))
     }
 }

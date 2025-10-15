@@ -44,8 +44,8 @@ impl CreateAction {
     }
 
     pub fn create(
-        link: Link,
-        fee_map: HashMap<Principal, Nat>,
+        link: &Link,
+        fee_map: &HashMap<Principal, Nat>,
         canister_id: Principal,
     ) -> Result<Self, CanisterError> {
         let action = Action {
