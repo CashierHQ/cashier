@@ -1,11 +1,9 @@
 <script lang="ts">
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import type { LinkStore } from "../../state/linkStore.svelte";
-  import { cashierBackendService } from "../../services/cashierBackend";
-  import Action from "../../types/action/action";
+  import type { LinkStore } from "../state/linkStore.svelte";
+  import { cashierBackendService } from "../services/cashierBackend";
+  import Action from "../types/action/action";
   import { authState } from "$modules/auth/state/auth.svelte";
-  import { Principal } from "@dfinity/principal";
-
 
   const {
     link,
@@ -47,12 +45,33 @@
         link.action = Action.fromBackendType(actionDto);
 
         // Send ICRC-112 batch request using auth service
-        if (link.action.icrc_112_requests && link.action.icrc_112_requests.length > 0) {
-          const batchResult = await authState.sendBatchRequest(link.action.icrc_112_requests);
-          
+        if (
+          link.action.icrc_112_requests &&
+          link.action.icrc_112_requests.length > 0
+        ) {
+          const batchResult = await authState.sendBatchRequest(
+            link.action.icrc_112_requests,
+          );
+
           if (batchResult.isOk()) {
-            successMessage = "ICRC-112 batch request sent successfully";
-            console.log("Batch request completed successfully");
+            const res = await cashierBackendService.updateAction({
+              action_id: link.action.id,
+              link_id: link.id,
+            });
+
+            if (res.isOk()) {
+              const updatedActionDto = res.unwrap();
+              link.action = Action.fromBackendType(updatedActionDto);
+              successMessage = "ICRC-112 batch request sent successfully";
+            } else {
+              const error = res.unwrapErr();
+              console.error(
+                "Failed to update action after batch request:",
+                error,
+              );
+              errorMessage = `Failed to update action: ${error.message}`;
+              return;
+            }
           } else {
             const error = batchResult.unwrapErr();
             console.error("Batch request failed:", error);
@@ -61,8 +80,6 @@
         } else {
           errorMessage = "No ICRC-112 requests available in this action";
         }
-
-    
       } else {
         errorMessage = `Failed to process action: ${result.unwrapErr().message}`;
       }
@@ -113,25 +130,18 @@
           {#each link.getIntentProperties() as intent (intent.id)}
             <div class="p-3 border rounded bg-background">
               <div class="grid grid-cols-2 gap-2 text-xs">
-                <div><span class="font-medium">ID:</span> {intent.id}</div>
                 <div>
                   <span class="font-medium">State:</span>
                   {intent.state.id}
                 </div>
                 <div>
-                  <span class="font-medium">Created:</span>
-                  {intent.createdAt}
-                </div>
-                <div>
                   <span class="font-medium">task:</span>
                   {intent.task.id}
                 </div>
-              </div>
-              <div class="mt-2 text-xs">
-                <span class="font-medium">Type:</span>
-                <pre
-                  class="mt-1 p-2 bg-muted rounded text-xs overflow-x-auto">{intent
-                    .type.payload.amount}</pre>
+                <div>
+                  <span class="font-medium">Amount:</span>
+                  {intent.type.payload.amount}
+                </div>
               </div>
             </div>
           {/each}

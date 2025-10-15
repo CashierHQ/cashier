@@ -121,6 +121,31 @@ class CanisterBackendService {
     );
   }
 
+  /**
+   * Update an existing action (execute post-ICRC operations).
+   * @param input UpdateActionInput shape
+   */
+  async updateAction(input: {
+    action_id: string;
+    link_id: string;
+  }): Promise<Result<cashierBackend.ActionDto, Error>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const request: cashierBackend.UpdateActionInput = {
+      action_id: input.action_id,
+      link_id: input.link_id,
+      external: true,
+    };
+
+    const response = await actor.update_action(request);
+
+    return responseToResult(response)
+      .map((res) => res)
+      .mapErr((err) => new Error(JSON.stringify(err)));
+  }
 }
 
 export const cashierBackendService = new CanisterBackendService();
