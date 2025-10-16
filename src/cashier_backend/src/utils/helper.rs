@@ -58,3 +58,9 @@ pub fn convert_nat_to_u64(nat_value: &Nat) -> Result<u64, CanisterError> {
         .try_into()
         .map_err(|_| CanisterError::ValidationErrors("Value too large to fit in u64".to_string()))
 }
+
+pub fn nonce_from_tx_id(tx_id: &str) -> Result<Vec<u8>, CanisterError> {
+    Uuid::parse_str(tx_id)
+        .map_err(|e| CanisterError::InvalidInput(format!("Invalid uuid: {e}")))
+        .map(|u| u.as_bytes().to_vec())
+}
