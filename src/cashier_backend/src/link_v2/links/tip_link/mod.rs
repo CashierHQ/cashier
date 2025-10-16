@@ -77,6 +77,12 @@ impl LinkV2 for TipLink {
         self.link.clone()
     }
 
+    /// Creates an action for the TipLink.
+    /// # Arguments
+    /// * `canister_id` - The canister ID of the token contract.
+    /// * `action_type` - The type of action to be created.
+    /// # Returns
+    /// * `Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>>` - A future that resolves to the resulting action or an error if the creation fails.
     fn create_action(
         &self,
         canister_id: Principal,
@@ -108,6 +114,9 @@ impl LinkV2 for TipLink {
         })
     }
 
+    /// Activates the TipLink.
+    /// # Returns
+    /// * `Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>>` - A future that resolves to the activated link or an error if the activation fails.
     fn activate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
         let link = self.link.clone();
 
