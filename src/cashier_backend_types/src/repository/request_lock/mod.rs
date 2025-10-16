@@ -27,7 +27,6 @@ impl Codec<RequestLock> for RequestLockCodec {
     }
 }
 
-
 impl RequestLock {
     /// Create a new RequestLock with the given key and current timestamp
     pub fn new(key: RequestLockKey, timestamp: u64) -> Self {

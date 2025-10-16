@@ -39,7 +39,8 @@ impl Default for Settings {
     }
 }
 
-pub type SettingsRepositoryStorage = VersionedStableCell<Settings, SettingsCodec, VirtualMemory<DefaultMemoryImpl>>;
+pub type SettingsRepositoryStorage =
+    VersionedStableCell<Settings, SettingsCodec, VirtualMemory<DefaultMemoryImpl>>;
 
 /// The settings repository
 pub struct SettingsRepository<S: Storage<SettingsRepositoryStorage>> {

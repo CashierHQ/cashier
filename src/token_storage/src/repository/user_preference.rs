@@ -10,8 +10,12 @@ use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 use token_storage_types::user::{UserPreference, UserPreferenceCodec};
 
 /// Store for UserPreferenceRepository
-pub type UserPreferenceRepositoryStorage =
-    VersionedBTreeMap<Principal, UserPreference, UserPreferenceCodec, VirtualMemory<DefaultMemoryImpl>>;
+pub type UserPreferenceRepositoryStorage = VersionedBTreeMap<
+    Principal,
+    UserPreference,
+    UserPreferenceCodec,
+    VirtualMemory<DefaultMemoryImpl>,
+>;
 pub type ThreadlocalUserPreferenceRepositoryStorage =
     &'static LocalKey<RefCell<UserPreferenceRepositoryStorage>>;
 

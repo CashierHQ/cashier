@@ -39,7 +39,6 @@ impl Codec<Intent> for IntentCodec {
     }
 }
 
-
 impl Default for Intent {
     fn default() -> Self {
         Self {

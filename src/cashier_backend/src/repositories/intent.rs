@@ -6,7 +6,8 @@ use ic_mple_log::service::Storage;
 use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
-pub type IntentRepositoryStorage = VersionedBTreeMap<String, Intent, IntentCodec, VirtualMemory<DefaultMemoryImpl>>;
+pub type IntentRepositoryStorage =
+    VersionedBTreeMap<String, Intent, IntentCodec, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
 pub struct IntentRepository<S: Storage<IntentRepositoryStorage>> {

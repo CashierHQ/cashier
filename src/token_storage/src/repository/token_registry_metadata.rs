@@ -11,8 +11,11 @@ use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 use crate::types::{TokenRegistryMetadata, TokenRegistryMetadataCodec};
 
 /// Store for TokenRegistryMetadataRepository
-pub type TokenRegistryMetadataRepositoryStorage =
-    VersionedStableCell<TokenRegistryMetadata, TokenRegistryMetadataCodec, VirtualMemory<DefaultMemoryImpl>>;
+pub type TokenRegistryMetadataRepositoryStorage = VersionedStableCell<
+    TokenRegistryMetadata,
+    TokenRegistryMetadataCodec,
+    VirtualMemory<DefaultMemoryImpl>,
+>;
 pub type ThreadlocalTokenRegistryMetadataRepositoryStorage =
     &'static LocalKey<RefCell<TokenRegistryMetadataRepositoryStorage>>;
 
@@ -29,7 +32,8 @@ impl<S: Storage<TokenRegistryMetadataRepositoryStorage>> TokenRegistryMetadataRe
     }
 
     pub fn get(&self) -> TokenRegistryMetadata {
-        self.token_store.with_borrow(|store| store.get().into_owned())
+        self.token_store
+            .with_borrow(|store| store.get().into_owned())
     }
 
     pub fn increase_version(&mut self) -> u64 {
@@ -37,7 +41,7 @@ impl<S: Storage<TokenRegistryMetadataRepositoryStorage>> TokenRegistryMetadataRe
             let mut metadata = store.get().into_owned();
             metadata.version += 1;
             metadata.last_updated = time();
-            let _ = store.set(metadata);
+            store.set(metadata);
 
             let updated_metadata = store.get().clone();
             updated_metadata.version
