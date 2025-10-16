@@ -24,6 +24,16 @@ impl TransferWalletToLinkIntent {
         }
     }
 
+    /// Creates a new TransferWalletToLinkIntent.
+    /// # Arguments
+    /// * `label` - A label for the intent.
+    /// * `asset` - The asset to be transferred.
+    /// * `sending_amount` - The amount to be sent.
+    /// * `sender_id` - The Principal ID of the sender's wallet.
+    /// * `link_account` - The account to which the tokens will be transferred.
+    /// * `created_at_ts` - The timestamp when the intent is created.
+    /// # Returns
+    /// * `Result<TransferWalletToLinkIntent, CanisterError>` - The resulting intent or an error if the creation fails.
     pub fn create(
         label: String,
         asset: Asset,
