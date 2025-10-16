@@ -5,7 +5,7 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::{
         intent::v2::{Intent, IntentTask, IntentType, TransferData, TransferFromData},
-        transaction::v2::{
+        transaction::v1::{
             FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Protocol,
             Transaction, TransactionState,
         },

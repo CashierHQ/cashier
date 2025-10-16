@@ -4,7 +4,7 @@
 use cashier_backend_types::repository::{
     action::v1::ActionState,
     intent::v2::{Intent, IntentState},
-    transaction::v2::{Transaction, TransactionState},
+    transaction::v1::{Transaction, TransactionState},
 };
 
 #[derive(Clone)]

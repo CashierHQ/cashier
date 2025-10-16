@@ -3,7 +3,7 @@
 
 use cashier_backend_types::{
     error::CanisterError,
-    repository::{common::Chain, intent::v2::Intent, transaction::v2::Transaction},
+    repository::{common::Chain, intent::v2::Intent, transaction::v1::Transaction},
 };
 use ic::intent::IcIntentAdapter;
 

@@ -8,7 +8,7 @@ use crate::{
 use cashier_backend_types::{
     dto::action::ActionDto,
     error::CanisterError,
-    repository::{link_action::v1::LinkAction, transaction::v2::Transaction},
+    repository::{link_action::v1::LinkAction, transaction::v1::Transaction},
     service::link::TemporaryAction,
 };
 use cashier_common::runtime::IcEnvironment;

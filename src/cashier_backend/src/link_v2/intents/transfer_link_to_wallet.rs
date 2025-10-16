@@ -5,7 +5,7 @@ use cashier_backend_types::{
     repository::{
         common::{Asset, Chain, Wallet},
         intent::v2::{Intent, IntentState, IntentTask, IntentType},
-        transaction::v2::Transaction,
+        transaction::v1::Transaction,
     },
 };
 use icrc_ledger_types::icrc1::account::Account;
