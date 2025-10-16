@@ -4,15 +4,16 @@
 use std::{cell::RefCell, thread::LocalKey};
 
 use candid::Principal;
+use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
 use ic_mple_utils::store::Storage;
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
+use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 use token_storage_types::TokenId;
 
-use crate::types::UserTokenList;
+use crate::types::{UserTokenList, UserTokenListCodec};
 
 /// Store for UserTokenRepository
 pub type UserTokenRepositoryStorage =
-    StableBTreeMap<Principal, UserTokenList, VirtualMemory<DefaultMemoryImpl>>;
+    VersionedBTreeMap<Principal, UserTokenList, UserTokenListCodec, VirtualMemory<DefaultMemoryImpl>>;
 pub type ThreadlocalUserTokenRepositoryStorage =
     &'static LocalKey<RefCell<UserTokenRepositoryStorage>>;
 
