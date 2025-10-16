@@ -3,9 +3,12 @@ use crate::utils::{
     icrc_112::execute_icrc112_request, link_id_to_account::link_id_to_account, principal::TestUser,
     with_pocket_ic_context,
 };
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_backend_types::dto::link::LinkStateMachineGoto;
 use cashier_backend_types::repository::action::v1::ActionType;
+use cashier_backend_types::repository::common::Wallet;
+use cashier_backend_types::repository::intent::v2::{IntentTask, IntentType};
+use cashier_backend_types::repository::transaction::v2::{IcTransaction, Protocol};
 use cashier_backend_types::{
     constant,
     dto::link::UpdateLinkInput,
@@ -15,7 +18,7 @@ use cashier_backend_types::{
         link::v1::{LinkState, LinkType},
     },
 };
-use cashier_common::test_utils;
+use cashier_common::{constant::CREATE_LINK_FEE, test_utils};
 use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
 use std::sync::Arc;
@@ -176,6 +179,137 @@ async fn it_should_create_link_tip_icp_token_successfully() {
                 - test_utils::calculate_amount_for_create_link(&icp_ledger_fee),
             "ICP Caller balance is incorrect"
         );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_create_linkv2_tip_icp_token_successfully() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
+
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+
+        let initial_balance = 1_000_000_000u64;
+        let tip_amount = 1_000_000u64;
+        let caller_account = Account {
+            owner: caller,
+            subaccount: None,
+        };
+        let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
+
+        // Act
+        test_fixture.airdrop_icp(initial_balance, &caller).await;
+
+        // Assert
+        let caller_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
+        assert_eq!(caller_balance_before, initial_balance);
+
+        // Act
+        let result = test_fixture
+            .create_tip_link_v2(constant::ICP_TOKEN, tip_amount)
+            .await;
+
+        // Assert
+        let link = result.link;
+        let action = result.action;
+
+        assert!(!link.id.is_empty());
+        assert_eq!(link.link_type, LinkType::SendTip);
+        assert_eq!(link.asset_info.len(), 1);
+        assert_eq!(link.asset_info[0].amount_per_link_use_action, tip_amount);
+
+        assert!(action.is_some());
+        let action = action.unwrap();
+        assert_eq!(action.intents.len(), 2);
+        let intent1 = &action.intents[0];
+        let intent2 = &action.intents[1];
+        assert_eq!(intent1.task, IntentTask::TransferWalletToLink);
+        match intent1.r#type {
+            IntentType::Transfer(ref transfer) => {
+                assert_eq!(transfer.from, Wallet::new(caller));
+                assert_eq!(transfer.to, link_id_to_account(ctx, &link.id).into());
+                assert_eq!(
+                    transfer.amount,
+                    Nat::from(test_utils::calculate_amount_for_wallet_to_link_transfer(
+                        tip_amount,
+                        &icp_ledger_fee,
+                        1
+                    ))
+                );
+            }
+            _ => panic!("Expected Transfer intent type"),
+        }
+        assert_eq!(intent1.transactions.len(), 1);
+        let tx0 = &intent1.transactions[0];
+        match tx0.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(ref data)) => {
+                assert_eq!(data.from, Wallet::new(caller));
+                assert_eq!(data.to, link_id_to_account(ctx, &link.id).into());
+                assert_eq!(
+                    data.amount,
+                    Nat::from(test_utils::calculate_amount_for_wallet_to_link_transfer(
+                        tip_amount,
+                        &icp_ledger_fee,
+                        1
+                    ))
+                );
+            }
+            _ => panic!("Expected Icrc1Transfer transaction"),
+        }
+
+        assert_eq!(intent2.task, IntentTask::TransferWalletToTreasury);
+        match intent2.r#type {
+            IntentType::TransferFrom(ref transfer_from) => {
+                assert_eq!(transfer_from.from, Wallet::new(caller));
+                assert_eq!(
+                    transfer_from.to,
+                    Wallet::new(constant::FEE_TREASURY_PRINCIPAL)
+                );
+                assert_eq!(
+                    transfer_from.spender,
+                    Wallet::new(ctx.cashier_backend_principal)
+                );
+                assert_eq!(
+                    transfer_from.approve_amount,
+                    Some(
+                        test_utils::calculate_approval_amount_for_create_link(&icp_ledger_fee)
+                            .into()
+                    )
+                );
+            }
+            _ => panic!("Expected TransferFrom intent type"),
+        }
+        assert_eq!(intent2.transactions.len(), 2);
+        let tx1 = &intent2.transactions[0];
+        match tx1.protocol {
+            Protocol::IC(IcTransaction::Icrc2Approve(ref data)) => {
+                assert_eq!(data.from, Wallet::new(caller));
+                assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
+                assert_eq!(
+                    data.amount,
+                    Nat::from(test_utils::calculate_approval_amount_for_create_link(
+                        &icp_ledger_fee
+                    ))
+                );
+            }
+            _ => panic!("Expected Icrc2Approve transaction"),
+        }
+        let tx2 = &intent2.transactions[1];
+        match tx2.protocol {
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(ref data)) => {
+                assert_eq!(data.from, Wallet::new(caller));
+                assert_eq!(data.to, Wallet::new(constant::FEE_TREASURY_PRINCIPAL));
+                assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
+                assert_eq!(data.amount, Nat::from(CREATE_LINK_FEE));
+            }
+            _ => panic!("Expected Icrc2TransferFrom transaction"),
+        }
 
         Ok(())
     })
