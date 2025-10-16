@@ -100,6 +100,7 @@ impl LinkV2 for TipLink {
                         action: create_action.action,
                         intents: create_action.intents,
                         intent_txs_map: create_action.intent_txs_map,
+                        icrc112_requests: create_action.icrc112_requests,
                     })
                 }
                 _ => Err(CanisterError::from("Unsupported action type")),

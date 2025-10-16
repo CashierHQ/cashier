@@ -1,13 +1,17 @@
 use crate::constant::ICP_CANISTER_PRINCIPAL;
 use crate::domains::fee::Fee;
 use crate::{
-    link_v2::intents::{
-        transfer_wallet_to_link::TransferWalletToLinkIntent,
-        transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
+    link_v2::{
+        icrc112::convert_tx_to_icrc_112_request,
+        intents::{
+            transfer_wallet_to_link::TransferWalletToLinkIntent,
+            transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
+        },
     },
     utils::helper::{convert_nat_to_u64, to_subaccount},
 };
 use candid::{Nat, Principal};
+use cashier_backend_types::dto::action::{Icrc112Request, Icrc112Requests};
 use cashier_backend_types::{
     constant::{INTENT_LABEL_LINK_CREATION_FEE, INTENT_LABEL_SEND_TIP_ASSET},
     error::CanisterError,
@@ -28,6 +32,7 @@ pub struct CreateAction {
     pub action: Action,
     pub intents: Vec<Intent>,
     pub intent_txs_map: HashMap<String, Vec<Transaction>>,
+    pub icrc112_requests: Option<Icrc112Requests>,
 }
 
 impl CreateAction {
@@ -35,11 +40,13 @@ impl CreateAction {
         action: Action,
         intents: Vec<Intent>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
+        icrc112_requests: Option<Icrc112Requests>,
     ) -> Self {
         Self {
             action,
             intents,
             intent_txs_map,
+            icrc112_requests,
         }
     }
 
@@ -61,6 +68,7 @@ impl CreateAction {
             subaccount: Some(to_subaccount(&link.id)?),
         };
 
+        // intents
         let deposit_intents = link
             .asset_info
             .iter()
@@ -119,13 +127,42 @@ impl CreateAction {
         });
         intents.push(fee_intent.intent.clone());
 
+        // intent_txs_map
         let mut intent_txs_map = HashMap::<String, Vec<Transaction>>::new();
-        for deposit_intent in deposit_intents {
-            let dintent_id = deposit_intent.intent.id.clone();
-            intent_txs_map.insert(dintent_id, deposit_intent.transactions);
-        }
-        intent_txs_map.insert(fintent_id, fee_intent.transactions);
 
-        Ok(Self::new(action, intents, intent_txs_map))
+        for deposit_intent in deposit_intents.iter() {
+            let dintent_id = deposit_intent.intent.id.clone();
+            intent_txs_map.insert(dintent_id, deposit_intent.transactions.clone());
+        }
+        intent_txs_map.insert(fintent_id, fee_intent.transactions.clone());
+
+        // icrc112_requests
+        let mut icrc112_requests = Vec::<Icrc112Request>::new();
+
+        for deposit_intent in deposit_intents.iter() {
+            let icrc1_transfer_tx = deposit_intent.transactions.first().ok_or_else(|| {
+                CanisterError::HandleLogicError(
+                    "No transaction found for deposit intent".to_string(),
+                )
+            })?;
+
+            let icrc112_request =
+                convert_tx_to_icrc_112_request(icrc1_transfer_tx, link_account, &canister_id)?;
+            icrc112_requests.push(icrc112_request);
+        }
+
+        let icrc2_approve_tx = fee_intent.transactions.first().ok_or_else(|| {
+            CanisterError::HandleLogicError("No transaction found for fee intent".to_string())
+        })?;
+        let icrc112_request =
+            convert_tx_to_icrc_112_request(icrc2_approve_tx, spender_account, &canister_id)?;
+        icrc112_requests.push(icrc112_request);
+
+        Ok(Self::new(
+            action,
+            intents,
+            intent_txs_map,
+            Some(vec![icrc112_requests]),
+        ))
     }
 }
