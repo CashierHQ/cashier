@@ -4,18 +4,20 @@
 use std::{cell::RefCell, thread::LocalKey};
 
 use crate::{
-    repository::BalanceCache,
-    types::{Candid, TokenBalance},
+    repository::{BalanceCache, BalanceCacheCodec},
+    types::TokenBalance,
 };
 use candid::Principal;
 use ic_cdk::api::time;
+use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
 use ic_mple_utils::store::Storage;
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
+use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 use token_storage_types::TokenId;
 
 /// Store for balance cache repository
 pub type BalanceCacheRepositoryStorage =
-    StableBTreeMap<Principal, BalanceCache, VirtualMemory<DefaultMemoryImpl>>;
+    VersionedBTreeMap<Principal, BalanceCache, BalanceCacheCodec, VirtualMemory<DefaultMemoryImpl>>;
+
 pub type ThreadlocalBalanceCacheRepositoryStorage =
     &'static LocalKey<RefCell<BalanceCacheRepositoryStorage>>;
 
@@ -40,7 +42,7 @@ impl<S: Storage<BalanceCacheRepositoryStorage>> BalanceCacheRepository<S> {
             // Get existing balances or create new HashMap
             let mut balance_map = store
                 .get(&user_id)
-                .map(|candid| candid.into_inner())
+                .map(|candid| candid.0)
                 .unwrap_or_default();
 
             // Update or add new balances
@@ -56,7 +58,7 @@ impl<S: Storage<BalanceCacheRepositoryStorage>> BalanceCacheRepository<S> {
             }
 
             // Store the updated map
-            store.insert(user_id, Candid(balance_map));
+            store.insert(user_id, BalanceCache(balance_map));
         });
     }
 
@@ -64,7 +66,7 @@ impl<S: Storage<BalanceCacheRepositoryStorage>> BalanceCacheRepository<S> {
         self.balance_store.with_borrow(|store| {
             store
                 .get(user_id)
-                .map(|Candid(balances)| {
+                .map(|BalanceCache(balances)| {
                     balances
                         .into_iter()
                         .map(|(token_id, balance)| (token_id, balance.balance))

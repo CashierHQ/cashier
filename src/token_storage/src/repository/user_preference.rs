@@ -4,13 +4,14 @@
 use std::{cell::RefCell, thread::LocalKey};
 
 use candid::Principal;
+use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
 use ic_mple_utils::store::Storage;
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
-use token_storage_types::user::UserPreference;
+use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
+use token_storage_types::user::{UserPreference, UserPreferenceCodec};
 
 /// Store for UserPreferenceRepository
 pub type UserPreferenceRepositoryStorage =
-    StableBTreeMap<Principal, UserPreference, VirtualMemory<DefaultMemoryImpl>>;
+    VersionedBTreeMap<Principal, UserPreference, UserPreferenceCodec, VirtualMemory<DefaultMemoryImpl>>;
 pub type ThreadlocalUserPreferenceRepositoryStorage =
     &'static LocalKey<RefCell<UserPreferenceRepositoryStorage>>;
 
