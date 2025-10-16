@@ -89,16 +89,16 @@ impl<R: Repositories> LinkV2Service<R> {
         })
     }
 
-    /// Publish a link, changing its state to ACTIVE
-    /// Only the creator of the link can publish it
+    /// Activate a link, changing its state to ACTIVE
+    /// Only the creator of the link can activate it
     ///
     /// # Arguments
-    /// * `caller` - The principal of the user attempting to publish the link
-    /// * `link_id` - The ID of the link to be published
+    /// * `caller` - The principal of the user attempting to activate the link
+    /// * `link_id` - The ID of the link to be activated
     /// # Returns
-    /// * `LinkDto` - The DTO of the published link
+    /// * `LinkDto` - The DTO of the activated link
     /// # Errors
-    /// * `CanisterError` - If the link is not found, the caller is not the creator, or if there is an error during publishing
+    /// * `CanisterError` - If the link is not found, the caller is not the creator, or if there is an error during activation
     pub async fn activate_link(
         &mut self,
         caller: Principal,
