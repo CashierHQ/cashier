@@ -9,6 +9,13 @@ use cashier_backend_types::{
     },
 };
 
+/// Creates a new LinkV2 instance based on the provided input.
+/// # Arguments
+/// * `creator` - The principal of the user creating the link
+/// * `input` - The input data for creating the link.
+/// * `created_at_ts` - The timestamp when the link is created
+/// # Returns
+/// * `Result<Box<dyn LinkV2>, CanisterError>` - The resulting LinkV2 instance or an error if the creation fails.
 pub fn create_link(
     creator: Principal,
     input: CreateLinkInput,
@@ -34,6 +41,11 @@ pub fn create_link(
     }
 }
 
+/// Converts a Link model to a corresponding LinkV2 instance.
+/// # Arguments
+/// * `link` - The Link model to convert.
+/// # Returns
+/// * `Result<Box<dyn LinkV2>, CanisterError>` - The resulting LinkV2 instance or an error if the conversion fails.
 pub fn from_link(link: Link) -> Result<Box<dyn LinkV2>, CanisterError> {
     match link.link_type {
         LinkType::SendTip => Ok(Box::new(TipLink::new(link))),

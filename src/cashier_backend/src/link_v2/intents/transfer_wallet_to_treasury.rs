@@ -25,6 +25,17 @@ impl TransferWalletToTreasuryIntent {
         }
     }
 
+    /// Creates a new TransferWalletToTreasuryIntent.
+    /// # Arguments
+    /// * `label` - A label for the intent.
+    /// * `asset` - The asset to be transferred.
+    /// * `actual_amount` - The actual amount to be sent.
+    /// * `approval_amount` - The amount to be approved for transfer.
+    /// * `sender_id` - The Principal ID of the sender's wallet.
+    /// * `spender_account` - The account which is approved to spend the tokens.
+    /// * `created_at_ts` - The timestamp when the intent is created.
+    /// # Returns
+    /// * `Result<TransferWalletToTreasuryIntent, CanisterError>` - The resulting intent or an error if the creation fails.
     pub fn create(
         label: String,
         asset: Asset,

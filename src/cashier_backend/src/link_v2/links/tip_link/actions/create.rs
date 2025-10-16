@@ -50,6 +50,13 @@ impl CreateAction {
         }
     }
 
+    /// Creates a new CreateAction for a given Link.
+    /// # Arguments
+    /// * `link` - The Link for which the action is created.
+    /// * `fee_map` - A map of canister principals to their corresponding fees.
+    /// * `canister_id` - The canister ID of the token contract.
+    /// # Returns
+    /// * `Result<CreateAction, CanisterError>` - The resulting action or an error if the creation fails.
     pub fn create(
         link: &Link,
         fee_map: &HashMap<Principal, Nat>,

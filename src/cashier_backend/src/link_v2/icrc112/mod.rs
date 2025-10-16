@@ -14,6 +14,13 @@ use icrc_ledger_types::{
     icrc2::approve::ApproveArgs,
 };
 
+/// Converts a Transaction to an Icrc112Request for ICRC-1 or ICRC-2 token transfers.
+/// # Arguments
+/// * `tx` - The transaction to convert.
+/// * `link_account` - The account to which the tokens will be transferred.
+/// * `canister_id` - The canister ID of the token contract.
+/// # Returns
+/// * `Result<Icrc112Request, CanisterError>` - The resulting Icrc112Request or an error if the conversion fails.
 pub fn convert_tx_to_icrc_112_request(
     tx: &Transaction,
     link_account: Account,
