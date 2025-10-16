@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::repository::{
     action::v1::{Action, ActionState, ActionType},
-    intent::v2::Intent,
+    intent::v1::Intent,
     transaction::v1::Transaction,
 };
 

@@ -9,7 +9,7 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::{
         common::Asset,
-        intent::v2::IntentTask,
+        intent::v1::IntentTask,
         transaction::v1::{
             FromCallType, IcTransaction, Icrc1Transfer, Icrc2TransferFrom, Transaction,
             TransactionState,

@@ -3,7 +3,7 @@
 
 use cashier_backend_types::repository::{
     action::v1::ActionState,
-    intent::v2::{Intent, IntentState},
+    intent::v1::{Intent, IntentState},
     transaction::v1::{Transaction, TransactionState},
 };
 

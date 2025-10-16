@@ -132,7 +132,7 @@ mod tests {
     use cashier_backend_types::repository::{
         action::v1::{ActionState, ActionType},
         common::{Asset, Chain, Wallet},
-        intent::v2::{Intent, IntentState, IntentTask, IntentType, TransferData},
+        intent::v1::{Intent, IntentState, IntentTask, IntentType, TransferData},
     };
     use std::rc::Rc;
 

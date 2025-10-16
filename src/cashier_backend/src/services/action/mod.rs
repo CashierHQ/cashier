@@ -8,7 +8,7 @@ use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::service::action::RollUpStateResp;
 use cashier_backend_types::{
     repository::{
-        action::v1::Action, action_intent::v1::ActionIntent, intent::v2::Intent,
+        action::v1::Action, action_intent::v1::ActionIntent, intent::v1::Intent,
         intent_transaction::v1::IntentTransaction, link_action::v1::LinkAction,
         transaction::v1::Transaction, user_action::v1::UserAction,
     },

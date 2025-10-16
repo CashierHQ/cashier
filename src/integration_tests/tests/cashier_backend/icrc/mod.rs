@@ -6,7 +6,7 @@ use crate::utils::{
 use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::{
     constant,
-    repository::{action::v1::ActionState, intent::v2::IntentState, link::v1::LinkType},
+    repository::{action::v1::ActionState, intent::v1::IntentState, link::v1::LinkType},
 };
 use cashier_common::icrc::Icrc114ValidateArgs;
 use icrc_ledger_types::icrc1::account::Account;

@@ -6,7 +6,7 @@ use cashier_backend_types::{
     dto::action::CreateActionInput,
     repository::{
         action::v1::{ActionState, ActionType},
-        intent::v2::IntentState,
+        intent::v1::IntentState,
     },
 };
 use ic_mple_client::CanisterClientError;
