@@ -1,7 +1,10 @@
 use crate::cashier_backend::link::fixture::LinkTestFixture;
-use crate::utils::{
-    icrc_112::execute_icrc112_request, link_id_to_account::link_id_to_account, principal::TestUser,
-    with_pocket_ic_context,
+use crate::{
+    constant::ICP_PRINCIPAL,
+    utils::{
+        icrc_112::execute_icrc112_request, link_id_to_account::link_id_to_account,
+        principal::TestUser, with_pocket_ic_context,
+    },
 };
 use candid::{Nat, Principal};
 use cashier_backend_types::dto::link::LinkStateMachineGoto;
@@ -310,6 +313,26 @@ async fn it_should_create_linkv2_tip_icp_token_successfully() {
             }
             _ => panic!("Expected Icrc2TransferFrom transaction"),
         }
+
+        assert!(action.icrc_112_requests.is_some());
+        let icrc112_requests = action.icrc_112_requests.unwrap();
+        assert_eq!(icrc112_requests.len(), 1);
+        let requests = &icrc112_requests[0];
+
+        assert_eq!(requests.len(), 2);
+        let req0 = &requests[0];
+        assert_eq!(req0.method, "icrc1_transfer");
+        assert_eq!(
+            req0.canister_id,
+            Principal::from_text(ICP_PRINCIPAL).unwrap()
+        );
+
+        let req1 = &requests[1];
+        assert_eq!(req1.method, "icrc2_approve");
+        assert_eq!(
+            req1.canister_id,
+            Principal::from_text(ICP_PRINCIPAL).unwrap()
+        );
 
         Ok(())
     })

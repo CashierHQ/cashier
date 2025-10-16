@@ -20,6 +20,8 @@ impl LinkV2State for CreatedState {
     fn activate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
         let mut link_clone = self.link.clone();
         Box::pin(async move {
+            // check if the link balance is sufficient before activating
+
             link_clone.state = LinkState::Active;
             Ok(link_clone)
         })
