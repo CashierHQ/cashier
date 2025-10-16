@@ -48,7 +48,7 @@ impl<R: Repositories> LinkV2Service<R> {
         input: CreateLinkInput,
         created_at_ts: u64,
     ) -> Result<GetLinkResp, CanisterError> {
-        let link = factory::create_link(creator_id, input, created_at_ts)?;
+        let link = factory::create_link(creator_id, input, created_at_ts, canister_id)?;
         let create_action_result = link
             .create_action(canister_id, ActionType::CreateLink)
             .await?;
@@ -109,6 +109,7 @@ impl<R: Repositories> LinkV2Service<R> {
         &mut self,
         caller: Principal,
         link_id: &str,
+        canister_id: Principal,
     ) -> Result<LinkDto, CanisterError> {
         let link = self
             .link_repository
@@ -119,7 +120,7 @@ impl<R: Repositories> LinkV2Service<R> {
             return Err(CanisterError::from("Only the creator can publish the link"));
         }
 
-        let link = factory::from_link(link)?;
+        let link = factory::from_link(link, canister_id)?;
         let published_link = link.activate().await?;
         self.link_repository.update(published_link.clone());
 

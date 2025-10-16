@@ -44,5 +44,8 @@ async fn activate_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
     debug!("[activate_link_v2] link_id: {link_id}");
 
     let mut link_v2_service = get_state().link_v2_service;
-    link_v2_service.activate_link(msg_caller(), link_id).await
+    let canister_id = get_state().env.id();
+    link_v2_service
+        .activate_link(msg_caller(), link_id, canister_id)
+        .await
 }

@@ -20,6 +20,7 @@ pub fn create_link(
     creator: Principal,
     input: CreateLinkInput,
     created_at_ts: u64,
+    canister_id: Principal,
 ) -> Result<Box<dyn LinkV2>, CanisterError> {
     let asset_info: Vec<AssetInfo> = input
         .asset_info
@@ -34,6 +35,7 @@ pub fn create_link(
             asset_info,
             input.link_use_action_max_count,
             created_at_ts,
+            canister_id,
         ))),
         _ => Err(CanisterError::InvalidInput(
             "Unsupported link type".to_string(),
@@ -46,9 +48,9 @@ pub fn create_link(
 /// * `link` - The Link model to convert.
 /// # Returns
 /// * `Result<Box<dyn LinkV2>, CanisterError>` - The resulting LinkV2 instance or an error if the conversion fails.
-pub fn from_link(link: Link) -> Result<Box<dyn LinkV2>, CanisterError> {
+pub fn from_link(link: Link, canister_id: Principal) -> Result<Box<dyn LinkV2>, CanisterError> {
     match link.link_type {
-        LinkType::SendTip => Ok(Box::new(TipLink::new(link))),
+        LinkType::SendTip => Ok(Box::new(TipLink::new(link, canister_id))),
         _ => Err(CanisterError::InvalidInput(
             "Unsupported link type".to_string(),
         )),

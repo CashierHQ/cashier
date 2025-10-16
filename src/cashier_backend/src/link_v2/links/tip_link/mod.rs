@@ -26,11 +26,12 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub struct TipLink {
     pub link: Link,
+    pub canister_id: Principal,
 }
 
 impl TipLink {
-    pub fn new(link: Link) -> Self {
-        Self { link }
+    pub fn new(link: Link, canister_id: Principal) -> Self {
+        Self { link, canister_id }
     }
 
     /// Create a new TipLink instance
@@ -48,6 +49,7 @@ impl TipLink {
         asset_info: Vec<AssetInfo>,
         max_use: u64,
         created_at_ts: u64,
+        canister_id: Principal,
     ) -> Self {
         let new_link = Link {
             id: Uuid::new_v4().to_string(),
@@ -61,12 +63,15 @@ impl TipLink {
             create_at: created_at_ts,
         };
 
-        Self::new(new_link)
+        Self::new(new_link, canister_id)
     }
 
-    pub fn get_state_handler(link: &Link) -> Result<Box<dyn LinkV2State>, CanisterError> {
+    pub fn get_state_handler(
+        link: &Link,
+        canister_id: Principal,
+    ) -> Result<Box<dyn LinkV2State>, CanisterError> {
         match link.state {
-            LinkState::CreateLink => Ok(Box::new(CreatedState::new(link))),
+            LinkState::CreateLink => Ok(Box::new(CreatedState::new(link, canister_id))),
             _ => Err(CanisterError::from("Unsupported link state")),
         }
     }
@@ -119,9 +124,10 @@ impl LinkV2 for TipLink {
     /// * `Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>>` - A future that resolves to the activated link or an error if the activation fails.
     fn activate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
         let link = self.link.clone();
+        let canister_id = self.canister_id;
 
         Box::pin(async move {
-            let state = TipLink::get_state_handler(&link)?;
+            let state = TipLink::get_state_handler(&link, canister_id)?;
             state.activate().await
         })
     }
