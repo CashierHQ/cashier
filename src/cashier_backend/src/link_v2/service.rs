@@ -8,6 +8,7 @@ use candid::Principal;
 use cashier_backend_types::dto::action::ActionDto;
 use cashier_backend_types::repository::link_action::v1::LinkAction;
 use cashier_backend_types::repository::user_link::v1::UserLink;
+use cashier_backend_types::service::action::ActionData;
 use cashier_backend_types::{
     dto::link::{CreateLinkInput, GetLinkResp, LinkDto},
     error::CanisterError,
@@ -79,26 +80,31 @@ impl<R: Repositories> LinkV2Service<R> {
             create_action_result.action.creator,
         );
 
+        let action_dto = ActionDto::build(
+            &ActionData {
+                action: create_action_result.action.clone(),
+                intents: create_action_result.intents.clone(),
+                intent_txs: create_action_result.intent_txs_map.clone(),
+            },
+            create_action_result.icrc112_requests,
+        );
+
         Ok(GetLinkResp {
             link: LinkDto::from(link_model),
-            action: Some(ActionDto::from_with_tx(
-                create_action_result.action.clone(),
-                create_action_result.intents.clone(),
-                &create_action_result.intent_txs_map,
-            )),
+            action: Some(action_dto),
         })
     }
 
-    /// Publish a link, changing its state to ACTIVE
-    /// Only the creator of the link can publish it
+    /// Activate a link, changing its state to ACTIVE
+    /// Only the creator of the link can activate it
     ///
     /// # Arguments
-    /// * `caller` - The principal of the user attempting to publish the link
-    /// * `link_id` - The ID of the link to be published
+    /// * `caller` - The principal of the user attempting to activate the link
+    /// * `link_id` - The ID of the link to be activated
     /// # Returns
-    /// * `LinkDto` - The DTO of the published link
+    /// * `LinkDto` - The DTO of the activated link
     /// # Errors
-    /// * `CanisterError` - If the link is not found, the caller is not the creator, or if there is an error during publishing
+    /// * `CanisterError` - If the link is not found, the caller is not the creator, or if there is an error during activation
     pub async fn activate_link(
         &mut self,
         caller: Principal,
