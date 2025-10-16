@@ -29,19 +29,19 @@ async fn create_link_v2(input: CreateLinkInput) -> Result<GetLinkResp, CanisterE
         .await
 }
 
-/// Publishes a link v2, transitioning it from CREATED to ACTIVE state.
-/// Only the link creator can publish the link.
+/// Activate a link v2, transitioning it from CREATED to ACTIVE state.
+/// Only the link creator can activate the link.
 ///
 /// # Arguments
-/// * `link_id` - The ID of the link to publish
+/// * `link_id` - The ID of the link to activate
 ///
 /// # Returns
-/// * `Ok(LinkDto)` - The published link data
-/// * `Err(CanisterError)` - If publishing fails or unauthorized
+/// * `Ok(LinkDto)` - The activated link data
+/// * `Err(CanisterError)` - If activation fails or unauthorized
 #[update(guard = "is_not_anonymous")]
 async fn activate_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
-    info!("[publish_link_v2]");
-    debug!("[publish_link_v2] link_id: {link_id}");
+    info!("[activate_link_v2]");
+    debug!("[activate_link_v2] link_id: {link_id}");
 
     let mut link_v2_service = get_state().link_v2_service;
     link_v2_service.activate_link(msg_caller(), link_id).await

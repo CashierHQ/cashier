@@ -51,10 +51,27 @@ pub fn to_memo(id: &str) -> Result<Memo, String> {
     Ok(Memo(ByteBuf::from(memo.to_vec())))
 }
 
+/// Converts a Nat value to u64, returning an error if the value is too large
+/// # Arguments
+/// * `nat_value` - The Nat value to convert
+/// # Returns
+/// * `Result<u64, CanisterError>` - The resulting u64 value or an error if the conversion fails
 pub fn convert_nat_to_u64(nat_value: &Nat) -> Result<u64, CanisterError> {
     nat_value
         .0
         .clone()
         .try_into()
         .map_err(|_| CanisterError::ValidationErrors("Value too large to fit in u64".to_string()))
+}
+
+/// Converts a transaction ID string (UUID format) to a nonce byte vector
+/// This is used for setting the nonce in ICRC-1 and ICRC-2 token transfers
+/// # Arguments
+/// * `tx_id` - The transaction ID in string format
+/// # Returns
+/// * `Result<Vec<u8>, CanisterError>` - The resulting nonce as a byte vector or an error if the conversion fails
+pub fn nonce_from_tx_id(tx_id: &str) -> Result<Vec<u8>, CanisterError> {
+    Uuid::parse_str(tx_id)
+        .map_err(|e| CanisterError::InvalidInput(format!("Invalid uuid: {e}")))
+        .map(|u| u.as_bytes().to_vec())
 }
