@@ -1,5 +1,5 @@
 use crate::constant::ICP_CANISTER_PRINCIPAL;
-use crate::domains::fee::Fee;
+use crate::link_v2::utils::calculator::{calculate_create_link_fee, calculate_link_balance_map};
 use crate::{
     link_v2::{
         icrc112::convert_tx_to_icrc_112_request,
@@ -75,6 +75,9 @@ impl CreateAction {
             subaccount: Some(to_subaccount(&link.id)?),
         };
 
+        let link_token_balance_map =
+            calculate_link_balance_map(&link.asset_info, fee_map, link.link_use_action_max_count);
+
         // intents
         let deposit_intents = link
             .asset_info
@@ -84,13 +87,13 @@ impl CreateAction {
                     Asset::IC { address } => address,
                 };
 
-                let fee_in_nat = fee_map.get(&address).ok_or_else(|| {
-                    CanisterError::HandleLogicError("Fee not found for link creation".to_string())
+                let sending_amount = link_token_balance_map.get(&address).ok_or_else(|| {
+                    CanisterError::HandleLogicError(
+                        "Failed to get sending amount from balance map".to_string(),
+                    )
                 })?;
-                let fee_amount = convert_nat_to_u64(fee_in_nat)?;
 
-                let sending_amount = (asset_info.amount_per_link_use_action + fee_amount)
-                    * link.link_use_action_max_count;
+                let sending_amount = convert_nat_to_u64(sending_amount)?;
 
                 TransferWalletToLinkIntent::create(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
@@ -106,12 +109,9 @@ impl CreateAction {
         let fee_asset = Asset::IC {
             address: ICP_CANISTER_PRINCIPAL,
         };
-        let actual_amount = Fee::CreateTipLinkFeeIcp.as_u64();
-        let fee_in_nat = fee_map.get(&ICP_CANISTER_PRINCIPAL).ok_or_else(|| {
-            CanisterError::HandleLogicError("Fee not found for link creation".to_string())
-        })?;
-        let fee_amount = convert_nat_to_u64(fee_in_nat)?;
-        let approval_amount = fee_amount + actual_amount;
+        let (actual_amount, approval_amount) = calculate_create_link_fee(fee_map);
+        let actual_amount = convert_nat_to_u64(&actual_amount)?;
+        let approval_amount = convert_nat_to_u64(&approval_amount)?;
         let spender_account = Account {
             owner: canister_id,
             subaccount: None,

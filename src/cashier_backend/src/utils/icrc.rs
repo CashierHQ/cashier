@@ -1,6 +1,10 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::services::ext::icrc_token::{
+    Account as ExtAccount, Allowance, AllowanceArgs, IcrcTokenService, Service,
+    TransferArg as ExtTransferArg, TransferFromArgs as ExtTransferFromArgs, TransferFromError,
+};
 use candid::{Nat, Principal};
 use cashier_backend_types::error::CanisterError;
 use icrc_ledger_types::{
@@ -9,11 +13,6 @@ use icrc_ledger_types::{
 };
 use serde_bytes::ByteBuf;
 use std::fmt;
-
-use crate::services::ext::icrc_token::{
-    Account as ExtAccount, Allowance, AllowanceArgs, Service, TransferArg as ExtTransferArg,
-    TransferFromArgs as ExtTransferFromArgs, TransferFromError,
-};
 
 #[derive(Clone)]
 pub struct IcrcService {}
