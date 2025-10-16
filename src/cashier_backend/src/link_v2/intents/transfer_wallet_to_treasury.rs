@@ -5,7 +5,7 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::{
         common::{Asset, Chain, Wallet},
-        intent::v2::{Intent, IntentState, IntentTask, IntentType},
+        intent::v1::{Intent, IntentState, IntentTask, IntentType},
         transaction::v1::Transaction,
     },
 };

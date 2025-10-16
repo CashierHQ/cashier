@@ -9,7 +9,7 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::{
         action::v1::{ActionState, ActionType},
-        intent::v2::IntentState,
+        intent::v1::IntentState,
     },
 };
 use ic_mple_client::CanisterClientError;

@@ -18,7 +18,7 @@ use cashier_backend_types::repository::action::v1::Action;
 use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::repository::asset_info::AssetInfo;
 use cashier_backend_types::repository::common::Asset;
-use cashier_backend_types::repository::intent::v2::Intent;
+use cashier_backend_types::repository::intent::v1::Intent;
 use cashier_backend_types::repository::link::v1::Link;
 use cashier_backend_types::repository::link_action::v1::LinkAction;
 

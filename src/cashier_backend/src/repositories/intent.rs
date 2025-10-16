@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::repository::intent::v2::{Intent, IntentCodec};
+use cashier_backend_types::repository::intent::v1::{Intent, IntentCodec};
 use ic_mple_log::service::Storage;
 use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
@@ -56,7 +56,7 @@ mod tests {
     use candid::Nat;
     use cashier_backend_types::repository::{
         common::{Asset, Chain, Wallet},
-        intent::v2::{IntentState, IntentTask, IntentType, TransferData},
+        intent::v1::{IntentState, IntentTask, IntentType, TransferData},
     };
     use cashier_common::test_utils::random_principal_id;
     use std::str::FromStr;

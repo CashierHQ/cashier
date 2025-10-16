@@ -21,7 +21,7 @@ use cashier_common::runtime::IcEnvironment;
 use cashier_backend_types::repository::{
     action::v1::ActionType,
     common::{Asset, Wallet},
-    intent::v2::{Intent, IntentState, IntentTask, IntentType},
+    intent::v1::{Intent, IntentState, IntentTask, IntentType},
     link::v1::{Link, LinkType},
 };
 
