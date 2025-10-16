@@ -15,7 +15,7 @@ use cashier_backend_types::repository::{
     action::v1::Action, action_intent::v1::ActionIntent, intent::v2::Intent as IntentV2,
     intent_transaction::v1::IntentTransaction, keys::*, link::v1::Link,
     link_action::v1::LinkAction, processing_transaction::ProcessingTransaction,
-    request_lock::RequestLock, transaction::v2::Transaction as TransactionV2,
+    request_lock::RequestLock, transaction::v1::Transaction as TransactionV2,
     user_action::v1::UserAction, user_link::v1::UserLink,
 };
 

@@ -19,7 +19,7 @@ use cashier_backend_types::{
     dto::action::{ActionDto, Icrc112Requests},
     repository::{
         processing_transaction::ProcessingTransaction,
-        transaction::v2::{Transaction, TransactionState},
+        transaction::v1::{Transaction, TransactionState},
     },
     service::{action::ActionData, tx_manager::UpdateActionArgs},
 };
@@ -267,7 +267,7 @@ mod tests {
     use candid::{Nat, Principal};
     use cashier_backend_types::repository::{
         common::{Asset, Wallet},
-        transaction::v2::{FromCallType, IcTransaction, Icrc1Transfer, Protocol},
+        transaction::v1::{FromCallType, IcTransaction, Icrc1Transfer, Protocol},
     };
     use std::rc::Rc;
 

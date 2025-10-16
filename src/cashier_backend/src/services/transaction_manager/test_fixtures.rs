@@ -14,7 +14,7 @@ use cashier_backend_types::{
         common::{Asset, Chain, Wallet},
         intent::v2::{Intent, IntentState, IntentTask, IntentType, TransferData},
         link_action::v1::LinkAction,
-        transaction::v2::{
+        transaction::v1::{
             FromCallType, IcTransaction, Icrc1Transfer, Protocol, Transaction, TransactionState,
         },
     },

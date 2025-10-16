@@ -13,7 +13,7 @@ use crate::{
         action::v1::{Action, ActionState, ActionType},
         common::{Asset, Chain, Wallet},
         intent::v2::{Intent, IntentState, IntentTask, IntentType},
-        transaction::v2::{FromCallType, Protocol, Transaction, TransactionState},
+        transaction::v1::{FromCallType, Protocol, Transaction, TransactionState},
     },
     service::action::ActionData,
 };

@@ -10,7 +10,7 @@ use cashier_backend_types::{
     repository::{
         common::Asset,
         intent::v2::IntentTask,
-        transaction::v2::{
+        transaction::v1::{
             FromCallType, IcTransaction, Icrc1Transfer, Icrc2TransferFrom, Transaction,
             TransactionState,
         },

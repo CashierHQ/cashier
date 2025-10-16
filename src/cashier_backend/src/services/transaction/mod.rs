@@ -8,7 +8,7 @@ use crate::{
 use candid::Principal;
 use cashier_backend_types::repository::{
     common::Asset,
-    transaction::v2::{IcTransaction, Protocol, Transaction, TransactionState},
+    transaction::v1::{IcTransaction, Protocol, Transaction, TransactionState},
 };
 use cashier_backend_types::{
     dto::action::{Icrc112Request, Icrc112Requests, TriggerTransactionInput},
