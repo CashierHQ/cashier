@@ -1,7 +1,10 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::repository::{action::v1::{Action, ActionCodec}, keys::ActionKey};
+use cashier_backend_types::repository::{
+    action::v1::{Action, ActionCodec},
+    keys::ActionKey,
+};
 use ic_mple_log::service::Storage;
 use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};

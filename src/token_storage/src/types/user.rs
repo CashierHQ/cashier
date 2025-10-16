@@ -32,7 +32,6 @@ impl Codec<UserTokenList> for UserTokenListCodec {
     }
 }
 
-
 impl Default for UserTokenList {
     fn default() -> Self {
         Self {

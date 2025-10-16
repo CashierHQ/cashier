@@ -1,13 +1,19 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::repository::intent_transaction::v1::{IntentTransaction, IntentTransactionCodec};
+use cashier_backend_types::repository::intent_transaction::v1::{
+    IntentTransaction, IntentTransactionCodec,
+};
 use ic_mple_log::service::Storage;
 use ic_mple_structures::{BTreeMapIteratorStructure, BTreeMapStructure, VersionedBTreeMap};
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
-pub type IntentTransactionRepositoryStorage =
-    VersionedBTreeMap<String, IntentTransaction, IntentTransactionCodec, VirtualMemory<DefaultMemoryImpl>>;
+pub type IntentTransactionRepositoryStorage = VersionedBTreeMap<
+    String,
+    IntentTransaction,
+    IntentTransactionCodec,
+    VirtualMemory<DefaultMemoryImpl>,
+>;
 
 struct IntentTransactionKey<'a> {
     pub intent_id: &'a str,

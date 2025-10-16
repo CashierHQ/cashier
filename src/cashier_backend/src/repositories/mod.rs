@@ -25,8 +25,8 @@ use cashier_backend_types::repository::{
     action::v1::Action, action_intent::v1::ActionIntent, intent::v1::Intent,
     intent_transaction::v1::IntentTransaction, keys::*, link::v1::Link,
     link_action::v1::LinkAction, processing_transaction::ProcessingTransaction,
-    request_lock::RequestLock, transaction::v1::Transaction,
-    user_action::v1::UserAction, user_link::v1::UserLink,
+    request_lock::RequestLock, transaction::v1::Transaction, user_action::v1::UserAction,
+    user_link::v1::UserLink,
 };
 
 use crate::repositories::action::{ActionRepository, ActionRepositoryStorage};
@@ -41,7 +41,9 @@ use crate::repositories::processing_transaction::{
     ProcessingTransactionRepository, ProcessingTransactionRepositoryStorage,
 };
 use crate::repositories::request_lock::{RequestLockRepository, RequestLockRepositoryStorage};
-use crate::repositories::settings::{Settings, SettingsCodec, SettingsRepository, SettingsRepositoryStorage};
+use crate::repositories::settings::{
+    Settings, SettingsCodec, SettingsRepository, SettingsRepositoryStorage,
+};
 use crate::repositories::transaction::{TransactionRepository, TransactionRepositoryStorage};
 use crate::repositories::user_action::{UserActionRepository, UserActionRepositoryStorage};
 use crate::repositories::user_link::{UserLinkRepository, UserLinkRepositoryStorage};
@@ -362,12 +364,18 @@ pub mod tests {
                 action_intent: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(ACTION_INTENT_MEMORY_ID),
                 ))),
-                action: Rc::new(RefCell::new(VersionedBTreeMap::init(mm.get(ACTION_MEMORY_ID)))),
-                intent: Rc::new(RefCell::new(VersionedBTreeMap::init(mm.get(INTENT_MEMORY_ID)))),
+                action: Rc::new(RefCell::new(VersionedBTreeMap::init(
+                    mm.get(ACTION_MEMORY_ID),
+                ))),
+                intent: Rc::new(RefCell::new(VersionedBTreeMap::init(
+                    mm.get(INTENT_MEMORY_ID),
+                ))),
                 intent_transaction: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(INTENT_TRANSACTION_MEMORY_ID),
                 ))),
-                link: Rc::new(RefCell::new(VersionedBTreeMap::init(mm.get(LINK_MEMORY_ID)))),
+                link: Rc::new(RefCell::new(VersionedBTreeMap::init(
+                    mm.get(LINK_MEMORY_ID),
+                ))),
                 link_action: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(LINK_ACTION_MEMORY_ID),
                 ))),

@@ -40,7 +40,6 @@ impl Codec<Link> for LinkCodec {
     }
 }
 
-
 impl Link {
     pub fn get_asset_by_label(&self, label: &str) -> Option<AssetInfo> {
         self.asset_info

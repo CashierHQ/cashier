@@ -12,8 +12,12 @@ use token_storage_types::TokenId;
 use crate::types::{UserTokenList, UserTokenListCodec};
 
 /// Store for UserTokenRepository
-pub type UserTokenRepositoryStorage =
-    VersionedBTreeMap<Principal, UserTokenList, UserTokenListCodec, VirtualMemory<DefaultMemoryImpl>>;
+pub type UserTokenRepositoryStorage = VersionedBTreeMap<
+    Principal,
+    UserTokenList,
+    UserTokenListCodec,
+    VirtualMemory<DefaultMemoryImpl>,
+>;
 pub type ThreadlocalUserTokenRepositoryStorage =
     &'static LocalKey<RefCell<UserTokenRepositoryStorage>>;
 

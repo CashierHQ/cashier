@@ -2,12 +2,16 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Principal;
-use cashier_backend_types::repository::{action::v1::ActionType, link_action::v1::{LinkAction, LinkActionCodec}};
+use cashier_backend_types::repository::{
+    action::v1::ActionType,
+    link_action::v1::{LinkAction, LinkActionCodec},
+};
 use ic_mple_log::service::Storage;
 use ic_mple_structures::{BTreeMapIteratorStructure, BTreeMapStructure, VersionedBTreeMap};
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
-pub type LinkActionRepositoryStorage =VersionedBTreeMap<String, LinkAction, LinkActionCodec, VirtualMemory<DefaultMemoryImpl>>;
+pub type LinkActionRepositoryStorage =
+    VersionedBTreeMap<String, LinkAction, LinkActionCodec, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Debug, Clone)]
 struct LinkActionKey<'a> {

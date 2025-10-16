@@ -36,7 +36,6 @@ impl Codec<LinkAction> for LinkActionCodec {
     }
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Display)]
 pub enum LinkUserState {
     // user_state_address

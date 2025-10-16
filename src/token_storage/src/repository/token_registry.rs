@@ -6,7 +6,10 @@ use std::{cell::RefCell, thread::LocalKey};
 use ic_mple_structures::{BTreeMapIteratorStructure, BTreeMapStructure, VersionedBTreeMap};
 use ic_mple_utils::store::Storage;
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
-use token_storage_types::{token::{RegistryToken, RegistryTokenCodec}, TokenId};
+use token_storage_types::{
+    TokenId,
+    token::{RegistryToken, RegistryTokenCodec},
+};
 
 use crate::repository::token_registry_metadata::TokenRegistryMetadataRepositoryStorage;
 
