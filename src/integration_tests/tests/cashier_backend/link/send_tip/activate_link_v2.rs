@@ -1,9 +1,10 @@
 use crate::cashier_backend::link::fixture::{LinkTestFixture, create_tip_linkv2_fixture};
+use crate::constant::{CK_BTC_PRINCIPAL, ICP_PRINCIPAL};
 use crate::utils::icrc_112::execute_icrc112_request;
 use crate::utils::principal::TestUser;
 use crate::utils::with_pocket_ic_context;
 use candid::Principal;
-use cashier_backend_types::constant::ICP_TOKEN;
+use cashier_backend_types::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use cashier_backend_types::dto::action::Icrc112Request;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::link::v1::LinkState;
@@ -131,7 +132,7 @@ async fn it_should_error_activate_icp_token_tip_linkv2_if_insufficient_token_bal
             match err {
                 CanisterError::ValidationErrors(err) => {
                     assert!(err.contains(
-                        format!("Insufficient balance for asset {}", ICP_TOKEN).as_str()
+                        format!("Insufficient balance for asset {}", ICP_PRINCIPAL).as_str()
                     ));
                 }
                 _ => {
@@ -205,6 +206,41 @@ async fn it_should_error_activate_icp_token_tip_linkv2_if_insufficient_icp_allow
 }
 
 #[tokio::test]
+async fn it_should_error_activate_icrc_token_tip_linkv2_if_insufficient_token_balance_in_link() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (test_fixture, create_link_result) =
+            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, 1_000_000u64).await;
+
+        // Act: Activate the link
+        let link_id = create_link_result.link.id.clone();
+        let activate_link_result = test_fixture.activate_link_v2(&link_id).await;
+
+        // Assert: Activated link result
+        assert!(activate_link_result.is_err());
+
+        if let Err(err) = activate_link_result {
+            match err {
+                CanisterError::ValidationErrors(err) => {
+                    assert!(err.contains(
+                        format!("Insufficient balance for asset {}", CK_BTC_PRINCIPAL).as_str()
+                    ));
+                }
+                _ => {
+                    panic!("Expected ValidationErrors, got different error: {:?}", err);
+                }
+            }
+        } else {
+            panic!("Expected error, got success");
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
 async fn it_should_activate_icp_token_tip_linkv2_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
@@ -243,7 +279,7 @@ async fn it_should_activate_icrc_token_tip_linkv2_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, ICP_TOKEN, 5_000_000u64).await;
+            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, 5_000_000u64).await;
 
         // Act: Execute ICRC112 requests (simulate FE behavior)
         let icrc_112_requests = create_link_result
