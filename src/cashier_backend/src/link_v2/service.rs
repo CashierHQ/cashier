@@ -5,14 +5,14 @@ use crate::repositories::Repositories;
 use crate::services::action::ActionService;
 use crate::{link_v2::links::factory, repositories};
 use candid::Principal;
-use cashier_backend_types::dto::action::ActionDto;
-use cashier_backend_types::repository::link_action::v1::LinkAction;
-use cashier_backend_types::repository::user_link::v1::UserLink;
-use cashier_backend_types::service::action::ActionData;
 use cashier_backend_types::{
-    dto::link::{CreateLinkInput, GetLinkResp, LinkDto},
+    dto::{
+        action::ActionDto,
+        link::{CreateLinkInput, GetLinkResp, LinkDto},
+    },
     error::CanisterError,
-    repository::action::v1::ActionType,
+    repository::{action::v1::ActionType, link_action::v1::LinkAction, user_link::v1::UserLink},
+    service::action::ActionData,
 };
 
 pub struct LinkV2Service<R: Repositories> {

@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use crate::link_v2::{links::tip_link::TipLink, traits::LinkV2};
 use candid::Principal;
 use cashier_backend_types::{

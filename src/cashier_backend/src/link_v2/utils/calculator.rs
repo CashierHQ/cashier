@@ -1,8 +1,10 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
+use crate::{constant::ICP_CANISTER_PRINCIPAL, domains::fee::Fee};
 use candid::{Nat, Principal};
 use cashier_backend_types::repository::{asset_info::AssetInfo, common::Asset};
 use std::collections::HashMap;
-
-use crate::{constant::ICP_CANISTER_PRINCIPAL, domains::fee::Fee};
 
 /// Calculate the token balance required for the link
 /// # Arguments
