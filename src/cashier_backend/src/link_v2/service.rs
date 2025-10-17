@@ -122,6 +122,8 @@ impl<R: Repositories> LinkV2Service<R> {
 
         let link = factory::from_link(link, canister_id)?;
         let published_link = link.activate().await?;
+
+        // update link in db
         self.link_repository.update(published_link.clone());
 
         Ok(LinkDto::from(published_link))
