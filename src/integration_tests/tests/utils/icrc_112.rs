@@ -4,6 +4,7 @@ use cashier_backend_types::dto::action::Icrc112Request;
 use cashier_common::test_utils::random_principal_id;
 
 // Response from a canister call
+#[derive(Debug)]
 pub struct CanisterCallResponse {
     pub canister_id: Principal,
     pub method: String,
