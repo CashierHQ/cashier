@@ -1,6 +1,6 @@
 import type {
+  AssetInfoDto,
   CreateLinkInput,
-  LinkDetailUpdateAssetInfoInput,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { Principal } from "@dfinity/principal";
 import { Result, Ok, Err } from "ts-results-es";
@@ -8,8 +8,10 @@ import type { LinkType } from "./linkType";
 
 // Tip link details
 export type TipLink = {
+  // Asset canister ID
   asset: string;
-  amount: number;
+  // Amount to tip per use
+  useAmount: number;
 };
 
 /** Data required to create a new link */
@@ -38,7 +40,7 @@ export class CreateLinkData {
   toCreateLinkInput(): Result<CreateLinkInput, Error> {
     const link_type = this.linkType.toBackendType();
 
-    const assetInfo: Array<LinkDetailUpdateAssetInfoInput> = [];
+    const assetInfo: Array<AssetInfoDto> = [];
 
     // We can't directly compare LinkType here because it's imported elsewhere;
     // consumers should pass the frontend LinkType instance. We check using id.
@@ -52,7 +54,7 @@ export class CreateLinkData {
             address: Principal.fromText(this.tipLink.asset),
           },
         },
-        amount_per_link_use_action: BigInt(this.tipLink.amount),
+        amount_per_link_use_action: BigInt(this.tipLink.useAmount),
         label: "SEND_TIP_ASSET",
       });
     }

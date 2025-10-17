@@ -21,7 +21,7 @@ export class AddAssetState implements LinkState {
     if (this.#link.tipLink.asset.trim() === "") {
       throw new Error("Asset is required to proceed");
     }
-    if (this.#link.tipLink.amount <= 0) {
+    if (this.#link.tipLink.useAmount <= 0) {
       throw new Error("Amount must be greater than zero to proceed");
     }
 
