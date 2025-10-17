@@ -525,6 +525,34 @@ pub async fn create_tip_link_fixture(
     (creator_fixture, update_link)
 }
 
+/// Creates a fixture for a tip link v2.
+/// # Arguments
+/// * `ctx` - The Pocket IC test context
+/// * `token` - The token identifier (e.g., "ICP")
+/// * `amount` - The tip amount
+/// # Returns
+/// * `(LinkTestFixture, GetLinkResp)` - The link test fixture and the GetLinkResp
+pub async fn create_tip_linkv2_fixture(
+    ctx: &PocketIcTestContext,
+    token: &str,
+    amount: u64,
+) -> (LinkTestFixture, GetLinkResp) {
+    let caller = TestUser::User1.get_principal();
+    let mut creator_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
+
+    let initial_balance = 1_000_000_000u64;
+
+    creator_fixture.airdrop_icp(initial_balance, &caller).await;
+    if token != constant::ICP_TOKEN {
+        creator_fixture
+            .airdrop_icrc(token, initial_balance, &caller)
+            .await;
+    }
+
+    let link_response = creator_fixture.create_tip_link_v2(token, amount).await;
+    (creator_fixture, link_response)
+}
+
 /// Creates a fixture for a token basket link.
 pub async fn create_token_basket_link_fixture(
     ctx: &PocketIcTestContext,

@@ -114,10 +114,12 @@ impl<R: Repositories> LinkV2Service<R> {
         let link = self
             .link_repository
             .get(&link_id.to_string())
-            .ok_or_else(|| CanisterError::from("Link not found"))?;
+            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
         if link.creator != caller {
-            return Err(CanisterError::from("Only the creator can publish the link"));
+            return Err(CanisterError::Unauthorized(
+                "Only the creator can publish the link".to_string(),
+            ));
         }
 
         let link = factory::from_link(link, canister_id)?;
