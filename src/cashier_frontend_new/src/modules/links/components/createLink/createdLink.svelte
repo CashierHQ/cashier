@@ -5,7 +5,7 @@
   import { LinkStep } from "../../types/linkStep";
   import { resolve } from "$app/paths";
   import LinkDetails from "./linkDetails.svelte";
-  import TxCart from "../tx-cart.svelte";
+  import TxCart from "../tx-cart/tx-cart.svelte";
 
   const {
     link,
@@ -27,6 +27,18 @@
   async function goBack() {
     goto(resolve("/"));
   }
+  async function goNext() {
+    try {
+      if (!link.id) {
+        console.error("Missing link.id, cannot navigate");
+        return;
+      }
+      await link.goNext();
+      goto(resolve(`/link/${link.id}`));
+    } catch (error) {
+      console.error("Failed to go next: ", error);
+    }
+  }
 
   // Create the link
   async function create() {
@@ -43,5 +55,5 @@
     <Button onclick={create}>Create</Button>
   </div>
 
-  <TxCart {link} />
+  <TxCart {link} {goNext} />
 </div>
