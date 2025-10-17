@@ -50,26 +50,6 @@ export class LinkStore {
     await this.#state.goBack();
   }
 
-  // Loop through all intents in the action and show their properties
-  showAllIntentProperties(): void {
-    if (!this.action) {
-      console.log("No action available");
-      return;
-    }
-
-    console.log(`Action ID: ${this.action.id}`);
-    console.log(`Total intents: ${this.action.intents.length}`);
-
-    this.action.intents.forEach((intent, index) => {
-      console.log(`\n--- Intent ${index + 1} ---`);
-      console.log(`ID: ${intent.id}`);
-      console.log(`Task:`, intent.task);
-      console.log(`Type:`, intent.type);
-      console.log(`Created At: ${intent.created_at}`);
-      console.log(`State:`, intent.state);
-    });
-  }
-
   // Get intent properties as an array of objects (for reactive display)
   getIntentProperties() {
     if (!this.action) return [];

@@ -46,12 +46,6 @@ describe("PreviewState", () => {
         ReturnType<typeof cashierBackendService.createLinkV2>
       >,
     );
-
-    vi.spyOn(cashierBackendService, "createAction").mockResolvedValue(
-      Ok(mockActionDto) as unknown as Awaited<
-        ReturnType<typeof cashierBackendService.createAction>
-      >,
-    );
   });
 
   it("should transition back to ADD_ASSET successfully", async () => {
@@ -61,7 +55,7 @@ describe("PreviewState", () => {
 
     // Act: move to ADD_ASSET then set tip and move to PREVIEW
     await store.goNext();
-    store.tipLink = { asset: "aaaaa-aa", amount: 10 };
+    store.tipLink = { asset: "aaaaa-aa", useAmount: 10 };
     await store.goNext();
 
     // Assert precondition
@@ -81,7 +75,7 @@ describe("PreviewState", () => {
 
     // Act: get to PREVIEW
     await store.goNext();
-    store.tipLink = { asset: "aaaaa-aa", amount: 10 };
+    store.tipLink = { asset: "aaaaa-aa", useAmount: 10 };
     await store.goNext();
 
     // Ensure backend mock returns Ok
@@ -106,7 +100,7 @@ describe("PreviewState", () => {
 
     // Act: move to PREVIEW
     await store.goNext();
-    store.tipLink = { asset: "aaaaa-aa", amount: 10 };
+    store.tipLink = { asset: "aaaaa-aa", useAmount: 10 };
     await store.goNext();
 
     // Arrange: mock backend to return Err

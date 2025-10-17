@@ -4,4 +4,5 @@ export enum LinkStep {
   ADD_ASSET,
   PREVIEW,
   CREATED,
+  ACTIVE,
 }
