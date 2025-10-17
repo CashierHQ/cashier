@@ -83,7 +83,7 @@ impl LinkV2State for CreatedState {
             }
 
             // check if ICP allowance is sufficient for fees
-            let (_required_fee_amount, required_approval_amount) =
+            let (required_fee_amount, required_approval_amount) =
                 calculate_create_link_fee(&token_fee_map);
             let link_creator_ext_account = get_link_creator_ext_account(&link);
             let canister_ext_account = get_canister_ext_account(canister_id);
@@ -117,7 +117,7 @@ impl LinkV2State for CreatedState {
                 .unwrap_or_else(|| Nat::from(0u64));
             let _transfer_from_result = transfer_fee_from_link_creator_to_treasury(
                 &link,
-                required_approval_amount,
+                required_fee_amount,
                 icp_token_fee,
             )
             .await?;
