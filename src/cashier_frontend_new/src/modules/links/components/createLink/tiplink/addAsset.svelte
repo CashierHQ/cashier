@@ -21,21 +21,21 @@
 
   // Initialize amountStr from stored data if available
   $effect(() => {
-    if (link.tipLink?.amount && selectedAddress) {
+    if (link.tipLink?.useAmount && selectedAddress) {
       const selectedToken = getSelectedToken();
       if (selectedToken) {
         const userAmount =
-          link.tipLink.amount / Math.pow(10, selectedToken.decimals);
+          link.tipLink.useAmount / Math.pow(10, selectedToken.decimals);
         amountStr = userAmount.toString();
       } else {
-        amountStr = link.tipLink.amount.toString();
+        amountStr = link.tipLink.useAmount.toString();
       }
     } else {
       amountStr = "";
     }
   });
 
-  // Get selected token metadata
+  // useAmount selected token metadata
   function getSelectedToken() {
     if (!selectedAddress || !walletStore.query.data) return null;
     return (
@@ -75,7 +75,7 @@
           selectedToken.decimals,
         );
         if (amountBaseUnits > 0) {
-          link.tipLink = { asset: selectedAddress, amount: amountBaseUnits };
+          link.tipLink = { asset: selectedAddress, useAmount: amountBaseUnits };
           return;
         }
       }
@@ -85,7 +85,7 @@
     link.tipLink = undefined;
   });
 
-  // Error message state
+  // ErruseAmountsage state
   let errorMessage: string | null = $state(null);
 
   // Navigate back to previous step

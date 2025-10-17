@@ -318,15 +318,13 @@ export type Wallet = {
   };
 export interface _SERVICE {
   /**
-   * Publishes a link v2, transitioning it from CREATED to ACTIVE state.
-   * Only the link creator can publish the link.
-   * 
+   * Activate a link v2, transitioning it from CREATED to ACTIVE state.
+   * Only the link creator can activate the link.
    * # Arguments
-   * * `link_id` - The ID of the link to publish
-   * 
+   * * `link_id` - The ID of the link to activate
    * # Returns
-   * * `Ok(LinkDto)` - The published link data
-   * * `Err(CanisterError)` - If publishing fails or unauthorized
+   * * `Ok(LinkDto)` - The activated link data
+   * * `Err(CanisterError)` - If activation fails or unauthorized
    */
   'activate_link_v2' : ActorMethod<[string], Result>,
   /**
@@ -399,12 +397,9 @@ export interface _SERVICE {
    */
   'create_link' : ActorMethod<[CreateLinkInput], Result>,
   /**
-   * Creates a new link using the v2 state machine implementation.
-   * The link will be in CREATED state if validation passes, else it will return an error.
-   * 
+   * Creates a new link V2
    * # Arguments
    * * `input` - Link creation data
-   * 
    * # Returns
    * * `Ok(GetLinkResp)` - The created link data
    * * `Err(CanisterError)` - If link creation fails or validation errors occur

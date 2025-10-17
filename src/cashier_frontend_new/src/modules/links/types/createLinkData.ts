@@ -8,9 +8,7 @@ import type { LinkType } from "./linkType";
 
 // Tip link details
 export type TipLink = {
-  // Asset canister ID
   asset: string;
-  // Amount to tip per use
   useAmount: number;
 };
 
