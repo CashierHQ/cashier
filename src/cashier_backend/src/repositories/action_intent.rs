@@ -1,12 +1,13 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::repository::action_intent::v1::ActionIntent;
+use cashier_backend_types::repository::action_intent::v1::{ActionIntent, ActionIntentCodec};
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
+use ic_mple_structures::{BTreeMapIteratorStructure, BTreeMapStructure, VersionedBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
 pub type ActionIntentRepositoryStorage =
-    StableBTreeMap<String, ActionIntent, VirtualMemory<DefaultMemoryImpl>>;
+    VersionedBTreeMap<String, ActionIntent, ActionIntentCodec, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
 pub struct ActionIntentRepository<S: Storage<ActionIntentRepositoryStorage>> {
@@ -59,8 +60,8 @@ impl<S: Storage<ActionIntentRepositoryStorage>> ActionIntentRepository<S> {
 
             store
                 .range(prefix.clone()..)
-                .filter(|entry| entry.key().starts_with(&prefix))
-                .map(|entry| entry.value())
+                .filter(|entry| entry.0.starts_with(&prefix))
+                .map(|entry| entry.1)
                 .collect()
         })
     }
@@ -76,8 +77,8 @@ impl<S: Storage<ActionIntentRepositoryStorage>> ActionIntentRepository<S> {
 
             store
                 .range(prefix.clone()..)
-                .filter(|entry| entry.key().starts_with(&prefix))
-                .map(|entry| entry.value())
+                .filter(|entry| entry.0.starts_with(&prefix))
+                .map(|entry| entry.1)
                 .collect()
         })
     }

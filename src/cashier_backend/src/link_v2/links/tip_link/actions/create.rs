@@ -18,9 +18,9 @@ use cashier_backend_types::{
     repository::{
         action::v1::{Action, ActionState, ActionType},
         common::Asset,
-        intent::v2::Intent,
+        intent::v1::Intent,
         link::v1::Link,
-        transaction::v2::Transaction,
+        transaction::v1::Transaction,
     },
 };
 use icrc_ledger_types::icrc1::account::Account;

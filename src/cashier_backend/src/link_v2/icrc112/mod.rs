@@ -5,7 +5,7 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::{
         common::Asset,
-        transaction::v2::{IcTransaction, Protocol, Transaction},
+        transaction::v1::{IcTransaction, Protocol, Transaction},
     },
 };
 use icrc_112_utils::build_canister_call;

@@ -9,7 +9,7 @@ use crate::{
 };
 use cashier_backend_types::{
     error::CanisterError,
-    repository::transaction::v2::{Transaction, TransactionState},
+    repository::transaction::v1::{Transaction, TransactionState},
 };
 use cashier_common::runtime::IcEnvironment;
 
@@ -122,7 +122,7 @@ mod tests {
     use candid::{Nat, Principal};
     use cashier_backend_types::repository::{
         common::{Asset, Wallet},
-        transaction::v2::{FromCallType, IcTransaction, Icrc1Transfer, Protocol},
+        transaction::v1::{FromCallType, IcTransaction, Icrc1Transfer, Protocol},
     };
     use std::rc::Rc;
 

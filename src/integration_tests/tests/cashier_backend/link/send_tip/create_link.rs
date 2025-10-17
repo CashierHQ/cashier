@@ -10,14 +10,14 @@ use candid::{Nat, Principal};
 use cashier_backend_types::dto::link::LinkStateMachineGoto;
 use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::repository::common::Wallet;
-use cashier_backend_types::repository::intent::v2::{IntentTask, IntentType};
-use cashier_backend_types::repository::transaction::v2::{IcTransaction, Protocol};
+use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType};
+use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
 use cashier_backend_types::{
     constant,
     dto::link::UpdateLinkInput,
     repository::{
         action::v1::ActionState,
-        intent::v2::IntentState,
+        intent::v1::IntentState,
         link::v1::{LinkState, LinkType},
     },
 };
