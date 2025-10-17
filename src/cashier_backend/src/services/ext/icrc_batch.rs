@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::services::ext::icrc_token::{Account as ExtAccount, Service};
+use crate::services::ext::icrc_token::Service;
 use candid::{Nat, Principal};
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::common::Asset;
@@ -99,48 +99,6 @@ impl IcrcBatchService {
         }
 
         Ok(fee_map)
-    }
-
-    pub async fn get_batch_tokens_balance(
-        &self,
-        assets: &[Asset],
-        account: &ExtAccount,
-    ) -> Result<HashMap<Principal, Nat>, CanisterError> {
-        let mut balance_map = HashMap::new();
-        let get_balance_tasks = assets
-            .iter()
-            .map(|asset| {
-                let address = match asset {
-                    Asset::IC { address, .. } => *address,
-                };
-                let account = account.clone();
-                async move {
-                    let service = Service::new(address);
-                    let balance_res = service.icrc_1_balance_of(&account).await;
-
-                    (address, balance_res)
-                }
-            })
-            .collect::<Vec<_>>();
-
-        let results = future::join_all(get_balance_tasks).await;
-
-        for (address, result) in results {
-            match result {
-                Ok(balance) => {
-                    balance_map.insert(address, balance);
-                }
-                Err(errr) => {
-                    return Err(CanisterError::CallCanisterFailed(format!(
-                        "Failed to get balance for asset {}: {:?}",
-                        address.to_text(),
-                        errr,
-                    )));
-                }
-            }
-        }
-
-        Ok(balance_map)
     }
 }
 
