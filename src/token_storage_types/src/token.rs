@@ -3,6 +3,7 @@ use std::fmt::Display;
 use candid::CandidType;
 use cashier_common::chain::Chain;
 use cashier_macros::storable;
+use ic_mple_structures::Codec;
 use serde::{Deserialize, Serialize};
 
 use crate::{IndexId, LedgerId, user::UserPreference};
@@ -79,6 +80,23 @@ pub struct RegistryToken {
     pub decimals: u8,
     pub details: ChainTokenDetails,
     pub enabled_by_default: bool, // Indicates if the token is enabled by default
+}
+
+#[storable]
+pub enum RegistryTokenCodec {
+    V1(RegistryToken),
+}
+
+impl Codec<RegistryToken> for RegistryTokenCodec {
+    fn decode(source: Self) -> RegistryToken {
+        match source {
+            RegistryTokenCodec::V1(link) => link,
+        }
+    }
+
+    fn encode(dest: RegistryToken) -> Self {
+        RegistryTokenCodec::V1(dest)
+    }
 }
 
 impl From<RegistryToken> for TokenDto {
