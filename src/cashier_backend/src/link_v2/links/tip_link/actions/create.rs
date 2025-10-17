@@ -1,5 +1,6 @@
 use crate::constant::ICP_CANISTER_PRINCIPAL;
 use crate::link_v2::utils::calculator::{calculate_create_link_fee, calculate_link_balance_map};
+use crate::link_v2::utils::icrc_token::{get_batch_tokens_fee_for_link, get_link_account};
 use crate::{
     link_v2::{
         icrc112::convert_tx_to_icrc_112_request,
@@ -8,9 +9,9 @@ use crate::{
             transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
         },
     },
-    utils::helper::{convert_nat_to_u64, to_subaccount},
+    utils::helper::convert_nat_to_u64,
 };
-use candid::{Nat, Principal};
+use candid::Principal;
 use cashier_backend_types::dto::action::{Icrc112Request, Icrc112Requests};
 use cashier_backend_types::{
     constant::{INTENT_LABEL_LINK_CREATION_FEE, INTENT_LABEL_SEND_TIP_ASSET},
@@ -53,15 +54,10 @@ impl CreateAction {
     /// Creates a new CreateAction for a given Link.
     /// # Arguments
     /// * `link` - The Link for which the action is created.
-    /// * `fee_map` - A map of canister principals to their corresponding fees.
     /// * `canister_id` - The canister ID of the token contract.
     /// # Returns
     /// * `Result<CreateAction, CanisterError>` - The resulting action or an error if the creation fails.
-    pub fn create(
-        link: &Link,
-        fee_map: &HashMap<Principal, Nat>,
-        canister_id: Principal,
-    ) -> Result<Self, CanisterError> {
+    pub async fn create(link: &Link, canister_id: Principal) -> Result<Self, CanisterError> {
         let action = Action {
             id: Uuid::new_v4().to_string(),
             r#type: ActionType::CreateLink,
@@ -70,13 +66,16 @@ impl CreateAction {
             state: ActionState::Created,
         };
 
-        let link_account = Account {
-            owner: canister_id,
-            subaccount: Some(to_subaccount(&link.id)?),
-        };
+        let link_account = get_link_account(&link.id, canister_id)?;
 
-        let link_token_balance_map =
-            calculate_link_balance_map(&link.asset_info, fee_map, link.link_use_action_max_count);
+        // token_fee_map
+        let token_fee_map = get_batch_tokens_fee_for_link(link).await?;
+
+        let link_token_balance_map = calculate_link_balance_map(
+            &link.asset_info,
+            &token_fee_map,
+            link.link_use_action_max_count,
+        );
 
         // intents
         let deposit_intents = link
@@ -109,7 +108,7 @@ impl CreateAction {
         let fee_asset = Asset::IC {
             address: ICP_CANISTER_PRINCIPAL,
         };
-        let (actual_amount, approval_amount) = calculate_create_link_fee(fee_map);
+        let (actual_amount, approval_amount) = calculate_create_link_fee(&token_fee_map);
         let actual_amount = convert_nat_to_u64(&actual_amount)?;
         let approval_amount = convert_nat_to_u64(&approval_amount)?;
         let spender_account = Account {

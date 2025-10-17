@@ -6,7 +6,7 @@ use ic_cdk::call::{Call, CandidDecodeFailed};
 
 pub type SubAccount = serde_bytes::ByteBuf;
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct Account {
     pub owner: Principal,
     pub subaccount: Option<SubAccount>,
@@ -103,20 +103,6 @@ pub enum TransferFromError {
 }
 pub type TransferFromResult = std::result::Result<Icrc1BlockIndex, TransferFromError>;
 
-pub trait IcrcTokenService {
-    async fn icrc_1_balance_of(&self, account: &Account) -> Result<Icrc1Tokens, CanisterError>;
-    async fn icrc_1_fee(&self) -> Result<Icrc1Tokens, CanisterError>;
-    async fn icrc_1_transfer(
-        &self,
-        arg: &TransferArg,
-    ) -> Result<Icrc1TransferResult, CanisterError>;
-    async fn icrc_2_allowance(&self, arg: &AllowanceArgs) -> Result<Allowance, CanisterError>;
-    async fn icrc_2_transfer_from(
-        &self,
-        arg: &TransferFromArgs,
-    ) -> Result<TransferFromResult, CanisterError>;
-}
-
 pub struct Service(pub Principal);
 
 impl Service {
@@ -127,10 +113,8 @@ impl Service {
     pub fn get_canister_id(&self) -> Principal {
         self.0
     }
-}
 
-impl IcrcTokenService for Service {
-    async fn icrc_1_balance_of(&self, arg0: &Account) -> Result<Icrc1Tokens, CanisterError> {
+    pub async fn icrc_1_balance_of(&self, arg0: &Account) -> Result<Icrc1Tokens, CanisterError> {
         let res = Call::bounded_wait(self.0, "icrc1_balance_of")
             .with_arg(arg0)
             .await
@@ -140,7 +124,7 @@ impl IcrcTokenService for Service {
         parsed_res.map_err(CanisterError::from)
     }
 
-    async fn icrc_1_fee(&self) -> Result<Icrc1Tokens, CanisterError> {
+    pub async fn icrc_1_fee(&self) -> Result<Icrc1Tokens, CanisterError> {
         let res = Call::bounded_wait(self.0, "icrc1_fee")
             .await
             .map_err(CanisterError::from)?;
@@ -148,7 +132,7 @@ impl IcrcTokenService for Service {
         parsed_res.map_err(CanisterError::from)
     }
 
-    async fn icrc_1_transfer(
+    pub async fn icrc_1_transfer(
         &self,
         arg0: &TransferArg,
     ) -> Result<Icrc1TransferResult, CanisterError> {
@@ -160,7 +144,7 @@ impl IcrcTokenService for Service {
         parsed_res.map_err(CanisterError::from)
     }
 
-    async fn icrc_2_allowance(&self, arg0: &AllowanceArgs) -> Result<Allowance, CanisterError> {
+    pub async fn icrc_2_allowance(&self, arg0: &AllowanceArgs) -> Result<Allowance, CanisterError> {
         let res = Call::bounded_wait(self.0, "icrc2_allowance")
             .with_arg(arg0)
             .await
@@ -170,7 +154,7 @@ impl IcrcTokenService for Service {
         parsed_res.map_err(CanisterError::from)
     }
 
-    async fn icrc_2_transfer_from(
+    pub async fn icrc_2_transfer_from(
         &self,
         arg0: &TransferFromArgs,
     ) -> Result<TransferFromResult, CanisterError> {

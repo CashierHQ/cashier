@@ -2,8 +2,8 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::services::ext::icrc_token::{
-    Account as ExtAccount, Allowance, AllowanceArgs, IcrcTokenService, Service,
-    TransferArg as ExtTransferArg, TransferFromArgs as ExtTransferFromArgs, TransferFromError,
+    Account as ExtAccount, Allowance, AllowanceArgs, Service, TransferArg as ExtTransferArg,
+    TransferFromArgs as ExtTransferFromArgs, TransferFromError,
 };
 use candid::{Nat, Principal};
 use cashier_backend_types::error::CanisterError;

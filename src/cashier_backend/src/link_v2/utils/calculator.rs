@@ -39,7 +39,7 @@ pub fn calculate_link_balance_map(
 /// # Arguments
 /// * `fee_map` - A map of token principal to its corresponding fee
 /// # Returns
-/// * `(Nat, Nat)` - A tuple containing the base create link fee and the total create link fee including ICP fee
+/// * `(actual_amount: Nat, approved_amount: Nat)` - A tuple containing the actual fee amount and the approved fee amount
 pub fn calculate_create_link_fee(fee_map: &HashMap<Principal, Nat>) -> (Nat, Nat) {
     let create_link_fee = Nat::from(Fee::CreateTipLinkFeeIcp.as_u64());
     let default_fee = Nat::from(0u64);
