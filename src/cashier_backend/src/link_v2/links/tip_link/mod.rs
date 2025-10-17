@@ -1,12 +1,9 @@
 pub mod actions;
 pub mod states;
 
-use crate::{
-    link_v2::{
-        links::tip_link::actions::create::CreateAction,
-        traits::{LinkV2, LinkV2State},
-    },
-    services::ext::icrc_batch::IcrcBatchService,
+use crate::link_v2::{
+    links::tip_link::actions::create::CreateAction,
+    traits::{LinkV2, LinkV2State},
 };
 use candid::Principal;
 use cashier_backend_types::{
@@ -15,7 +12,6 @@ use cashier_backend_types::{
     repository::{
         action::v1::ActionType,
         asset_info::AssetInfo,
-        common::Asset,
         link::v1::{Link, LinkState, LinkType},
     },
 };
@@ -66,6 +62,13 @@ impl TipLink {
         Self::new(new_link, canister_id)
     }
 
+    /// Get the appropriate state handler for the current link state
+    /// # Arguments
+    /// * `link` - The Link model
+    /// * `canister_id` - The canister ID of the token contract
+    /// * `fee_map` - A map of canister principals to their corresponding fees
+    /// # Returns
+    /// * `Result<Box<dyn LinkV2State>, CanisterError>` - The resulting state handler or an error if the state is unsupported
     pub fn get_state_handler(
         link: &Link,
         canister_id: Principal,
@@ -93,20 +96,12 @@ impl LinkV2 for TipLink {
         canister_id: Principal,
         action_type: ActionType,
     ) -> Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>> {
-        let assets: Vec<Asset> = self
-            .link
-            .asset_info
-            .iter()
-            .map(|info| info.asset.clone())
-            .collect();
         let link = self.link.clone();
 
         Box::pin(async move {
-            let icrc_batch_service = IcrcBatchService::new();
-            let fee_map = icrc_batch_service.get_batch_tokens_fee(&assets).await?;
             match action_type {
                 ActionType::CreateLink => {
-                    let create_action = CreateAction::create(&link, &fee_map, canister_id)?;
+                    let create_action = CreateAction::create(&link, canister_id).await?;
                     Ok(CreateActionResult {
                         action: create_action.action,
                         intents: create_action.intents,
