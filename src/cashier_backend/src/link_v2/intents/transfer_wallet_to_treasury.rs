@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use crate::constant::FEE_TREASURY_PRINCIPAL;
 use crate::services::adapter::IntentAdapterImpl;
 use candid::{Nat, Principal};

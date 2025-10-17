@@ -1,12 +1,12 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 pub mod actions;
 pub mod states;
 
-use crate::{
-    link_v2::{
-        links::tip_link::actions::create::CreateAction,
-        traits::{LinkV2, LinkV2State},
-    },
-    services::ext::icrc_batch::IcrcBatchService,
+use crate::link_v2::{
+    links::tip_link::actions::create::CreateAction,
+    traits::{LinkV2, LinkV2State},
 };
 use candid::Principal;
 use cashier_backend_types::{
@@ -15,7 +15,6 @@ use cashier_backend_types::{
     repository::{
         action::v1::ActionType,
         asset_info::AssetInfo,
-        common::Asset,
         link::v1::{Link, LinkState, LinkType},
     },
 };
@@ -26,11 +25,12 @@ use uuid::Uuid;
 #[derive(Debug)]
 pub struct TipLink {
     pub link: Link,
+    pub canister_id: Principal,
 }
 
 impl TipLink {
-    pub fn new(link: Link) -> Self {
-        Self { link }
+    pub fn new(link: Link, canister_id: Principal) -> Self {
+        Self { link, canister_id }
     }
 
     /// Create a new TipLink instance
@@ -48,6 +48,7 @@ impl TipLink {
         asset_info: Vec<AssetInfo>,
         max_use: u64,
         created_at_ts: u64,
+        canister_id: Principal,
     ) -> Self {
         let new_link = Link {
             id: Uuid::new_v4().to_string(),
@@ -61,12 +62,22 @@ impl TipLink {
             create_at: created_at_ts,
         };
 
-        Self::new(new_link)
+        Self::new(new_link, canister_id)
     }
 
-    pub fn get_state_handler(link: &Link) -> Result<Box<dyn LinkV2State>, CanisterError> {
+    /// Get the appropriate state handler for the current link state
+    /// # Arguments
+    /// * `link` - The Link model
+    /// * `canister_id` - The canister ID of the token contract
+    /// * `fee_map` - A map of canister principals to their corresponding fees
+    /// # Returns
+    /// * `Result<Box<dyn LinkV2State>, CanisterError>` - The resulting state handler or an error if the state is unsupported
+    pub fn get_state_handler(
+        link: &Link,
+        canister_id: Principal,
+    ) -> Result<Box<dyn LinkV2State>, CanisterError> {
         match link.state {
-            LinkState::CreateLink => Ok(Box::new(CreatedState::new(link))),
+            LinkState::CreateLink => Ok(Box::new(CreatedState::new(link, canister_id))),
             _ => Err(CanisterError::from("Unsupported link state")),
         }
     }
@@ -88,20 +99,12 @@ impl LinkV2 for TipLink {
         canister_id: Principal,
         action_type: ActionType,
     ) -> Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>> {
-        let assets: Vec<Asset> = self
-            .link
-            .asset_info
-            .iter()
-            .map(|info| info.asset.clone())
-            .collect();
         let link = self.link.clone();
 
         Box::pin(async move {
-            let icrc_batch_service = IcrcBatchService::new();
-            let fee_map = icrc_batch_service.get_batch_tokens_fee(&assets).await?;
             match action_type {
                 ActionType::CreateLink => {
-                    let create_action = CreateAction::create(&link, &fee_map, canister_id)?;
+                    let create_action = CreateAction::create(&link, canister_id).await?;
                     Ok(CreateActionResult {
                         action: create_action.action,
                         intents: create_action.intents,
@@ -119,9 +122,10 @@ impl LinkV2 for TipLink {
     /// * `Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>>` - A future that resolves to the activated link or an error if the activation fails.
     fn activate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
         let link = self.link.clone();
+        let canister_id = self.canister_id;
 
         Box::pin(async move {
-            let state = TipLink::get_state_handler(&link)?;
+            let state = TipLink::get_state_handler(&link, canister_id)?;
             state.activate().await
         })
     }

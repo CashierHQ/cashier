@@ -10,6 +10,7 @@ use cashier_backend_types::{
             LinkStateMachineGoto, UpdateLinkInput,
         },
     },
+    error::CanisterError,
     repository::{action::v1::ActionType, common::Asset, link::v1::LinkType},
 };
 use ic_mple_client::PocketIcClient;
@@ -61,6 +62,20 @@ impl LinkTestFixture {
             .unwrap()
     }
 
+    /// Activate link v2
+    /// # Arguments
+    /// * `link_id` - The ID of the link to activate
+    /// # Returns
+    /// * `LinkDto` - The activated link data
+    pub async fn activate_link_v2(&self, link_id: &str) -> Result<LinkDto, CanisterError> {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .activate_link_v2(link_id)
+            .await
+            .unwrap()
+    }
+
     // Pre-defined input for creating tip link.
     pub async fn create_tip_link(&self, token: &str, amount: u64) -> LinkDto {
         let link_input = self
@@ -69,7 +84,7 @@ impl LinkTestFixture {
         self.create_link(link_input).await
     }
 
-    // Pre-defined input for creating tip link.
+    // Pre-defined input for creating tip link V2.
     pub async fn create_tip_link_v2(&self, token: &str, amount: u64) -> GetLinkResp {
         let link_input = self
             .tip_link_input(vec![token.to_string()], vec![amount])
@@ -508,6 +523,34 @@ pub async fn create_tip_link_fixture(
     let update_link = creator_fixture.update_link(update_link_input).await;
 
     (creator_fixture, update_link)
+}
+
+/// Creates a fixture for a tip link v2.
+/// # Arguments
+/// * `ctx` - The Pocket IC test context
+/// * `token` - The token identifier (e.g., "ICP")
+/// * `amount` - The tip amount
+/// # Returns
+/// * `(LinkTestFixture, GetLinkResp)` - The link test fixture and the GetLinkResp
+pub async fn create_tip_linkv2_fixture(
+    ctx: &PocketIcTestContext,
+    token: &str,
+    amount: u64,
+) -> (LinkTestFixture, GetLinkResp) {
+    let caller = TestUser::User1.get_principal();
+    let mut creator_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
+
+    let initial_balance = 1_000_000_000u64;
+
+    creator_fixture.airdrop_icp(initial_balance, &caller).await;
+    if token != constant::ICP_TOKEN {
+        creator_fixture
+            .airdrop_icrc(token, initial_balance, &caller)
+            .await;
+    }
+
+    let link_response = creator_fixture.create_tip_link_v2(token, amount).await;
+    (creator_fixture, link_response)
 }
 
 /// Creates a fixture for a token basket link.
