@@ -10,8 +10,40 @@ use cashier_backend_types::repository::intent::v2::{IntentTask, IntentType};
 use cashier_backend_types::repository::transaction::v2::{IcTransaction, Protocol};
 use cashier_backend_types::{constant, repository::link::v1::LinkType};
 use cashier_common::{constant::CREATE_LINK_FEE, test_utils};
+use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
 use std::sync::Arc;
+
+#[tokio::test]
+async fn it_should_error_create_icp_token_tip_linkv2_if_caller_anonymous() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let be_client = ctx.new_cashier_backend_client(Principal::anonymous());
+        let test_fixture =
+            LinkTestFixture::new(Arc::new(ctx.clone()), &Principal::anonymous()).await;
+        let input = test_fixture
+            .tip_link_input(vec![constant::ICP_TOKEN.to_string()], vec![1_000_000u64])
+            .unwrap();
+
+        // Act
+        let result = be_client.create_link_v2(input).await;
+
+        // Assert
+        assert!(result.is_err());
+        if let Err(CanisterClientError::PocketIcTestError(err)) = result {
+            assert!(
+                err.reject_message
+                    .contains("Anonymous caller is not allowed")
+            );
+        } else {
+            panic!("Expected PocketIcTestError, got {:?}", result);
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
 
 #[tokio::test]
 async fn it_should_create_icp_token_tip_linkv2_successfully() {
