@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use crate::cashier_backend::link::fixture::LinkTestFixture;
 use crate::constant::CK_BTC_PRINCIPAL;
 use crate::{
