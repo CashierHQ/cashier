@@ -1,8 +1,14 @@
-use crate::constant::ICP_CANISTER_PRINCIPAL;
-use crate::services::ext::icrc_token::{
-    Account as ExtAccount, AllowanceArgs, Service, TransferFromArgs,
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
+use crate::{
+    constant::{FEE_TREASURY_PRINCIPAL, ICP_CANISTER_PRINCIPAL},
+    services::ext::{
+        self,
+        icrc_token::{Account as ExtAccount, AllowanceArgs, Service, TransferFromArgs},
+    },
+    utils::helper::to_subaccount,
 };
-use crate::{constant::FEE_TREASURY_PRINCIPAL, services::ext, utils::helper::to_subaccount};
 use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,

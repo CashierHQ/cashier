@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use crate::api::state::get_state;
 use cashier_backend_types::{
     dto::link::{CreateLinkInput, GetLinkResp, LinkDto},
@@ -7,12 +10,9 @@ use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
 use ic_cdk::{api::msg_caller, update};
 use log::{debug, info};
 
-/// Creates a new link using the v2 state machine implementation.
-/// The link will be in CREATED state if validation passes, else it will return an error.
-///
+/// Creates a new link V2
 /// # Arguments
 /// * `input` - Link creation data
-///
 /// # Returns
 /// * `Ok(GetLinkResp)` - The created link data
 /// * `Err(CanisterError)` - If link creation fails or validation errors occur
@@ -31,10 +31,8 @@ async fn create_link_v2(input: CreateLinkInput) -> Result<GetLinkResp, CanisterE
 
 /// Activate a link v2, transitioning it from CREATED to ACTIVE state.
 /// Only the link creator can activate the link.
-///
 /// # Arguments
 /// * `link_id` - The ID of the link to activate
-///
 /// # Returns
 /// * `Ok(LinkDto)` - The activated link data
 /// * `Err(CanisterError)` - If activation fails or unauthorized
