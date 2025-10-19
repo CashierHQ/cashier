@@ -11,19 +11,19 @@ export class LinkState {
 
   toBackend(): BackendLinkState {
     return rsMatch(this as unknown as BackendLinkState, {
-      Inactive: () => ({ Inactive: null } as BackendLinkState),
-      Active: () => ({ Active: null } as BackendLinkState),
-      CreateLink: () => ({ CreateLink: null } as BackendLinkState),
-      InactiveEnded: () => ({ InactiveEnded: null } as BackendLinkState),
+      Inactive: () => ({ Inactive: null }) as BackendLinkState,
+      Active: () => ({ Active: null }) as BackendLinkState,
+      CreateLink: () => ({ CreateLink: null }) as BackendLinkState,
+      InactiveEnded: () => ({ InactiveEnded: null }) as BackendLinkState,
     });
   }
 
   static fromBackend(b: BackendLinkState): LinkState {
     return rsMatch(b, {
-        Inactive: () => LinkState.INACTIVE,
-        Active: () => LinkState.ACTIVE,
-        CreateLink: () => LinkState.CREATE_LINK,
-        InactiveEnded: () => LinkState.INACTIVE_ENDED,
-    })
+      Inactive: () => LinkState.INACTIVE,
+      Active: () => LinkState.ACTIVE,
+      CreateLink: () => LinkState.CREATE_LINK,
+      InactiveEnded: () => LinkState.INACTIVE_ENDED,
+    });
   }
 }

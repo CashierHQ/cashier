@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { goto } from "$app/navigation";
+  import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { m } from "$lib/paraglide/messages.js";
-    import Button from "$lib/shadcn/components/ui/button/button.svelte";
-    import LinksList from "$modules/links/components/linksList.svelte";
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import LinksList from "$modules/links/components/linksList.svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
-  import { Plus } from 'lucide-svelte';
+  import { Plus } from "lucide-svelte";
 </script>
 
 <!-- DEMO: no need for a dedicated tailwind configuration because this uses version 4 by default -->
@@ -26,7 +26,9 @@
     </div>
     <!-- Fixed floating plus button placed at page level so it stays on screen -->
     <Button
-  onclick={() => { goto(resolve("/link/edit")) }}
+      onclick={() => {
+        goto(resolve("/link/edit"));
+      }}
       class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg hover:bg-emerald-700 transition-colors z-50"
       aria-label="Create link"
     >

@@ -4,6 +4,6 @@
   const id = page.params.id;
 </script>
 
-  {#if id}
-    <Detail {id} />
-  {/if}
+{#if id}
+  <Detail {id} />
+{/if}
