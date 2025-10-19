@@ -1,11 +1,13 @@
-import type { LinkDto } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { managedState } from "$lib/managedState";
 import { cashierBackendService } from "../services/cashierBackend";
+import { Link } from "../types/link/link";
 
 // A state for the user tokens list
-export const linkListQuery = managedState<LinkDto[]>({
+export const linkListQuery = managedState<Link[]>({
   queryFn: async () => {
-    return (await cashierBackendService.getLinks()).unwrap();
+    const backendLinks = (await cashierBackendService.getLinks()).unwrap();
+    const links = backendLinks.map((b) => Link.fromBackend(b));
+    return links;
   },
   watch: true,
 });
