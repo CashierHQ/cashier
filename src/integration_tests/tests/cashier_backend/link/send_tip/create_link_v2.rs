@@ -9,8 +9,8 @@ use crate::{
 };
 use candid::{Nat, Principal};
 use cashier_backend_types::repository::common::Wallet;
-use cashier_backend_types::repository::intent::v2::{IntentTask, IntentType};
-use cashier_backend_types::repository::transaction::v2::{IcTransaction, Protocol};
+use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType};
+use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
 use cashier_backend_types::{constant, repository::link::v1::LinkType};
 use cashier_common::{constant::CREATE_LINK_FEE, test_utils};
 use ic_mple_client::CanisterClientError;
