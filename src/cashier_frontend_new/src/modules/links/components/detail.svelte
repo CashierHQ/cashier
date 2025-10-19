@@ -3,11 +3,12 @@
   import { ActionType } from "../types/action/actionType";
   import { cashierBackendService } from "../services/cashierBackend";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-
-  // use the project's reactive primitive so updates trigger reactivity
-  let showCopied: boolean = $state(false);
-
+  import { ChevronLeft } from 'lucide-svelte';
   import { statusBadge } from "../utils/statusBadge";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+
+  let showCopied: boolean = $state(false);
 
   const {
     id,
@@ -40,7 +41,6 @@
   };
 </script>
 
-<li>
   {#if link.isLoading}
     Loading...
   {/if}
@@ -50,11 +50,8 @@
   {#if link?.data?.link}
     <div class="px-4 py-4">
       <div class="flex items-center gap-3 mb-4">
-        <button onclick={() => history.back()} class="p-2 cursor-pointer w-8 h-8 flex items-center justify-center">
-          <!-- back chevron -->
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
+        <button onclick={() => {goto(resolve("/"))}} class="p-2 cursor-pointer w-8 h-8 flex items-center justify-center">
+          <ChevronLeft />
         </button>
 
         <h3 class="text-lg font-semibold flex-1 text-center">{link.data.link.title}</h3>
@@ -70,7 +67,7 @@
           <div class="flex items-center justify-between">
             <div class="text-xs text-muted-foreground">Status</div>
             <div class="font-medium">
-              <span class={`text-xs px-3 py-1 rounded-full ${statusBadge(link.data.link.state).classes}`}>
+              <span class={`${statusBadge(link.data.link.state).classes}`}>
                 {statusBadge(link.data.link.state).text}
               </span>
             </div>
@@ -146,4 +143,3 @@
       </div>
     </div>
   {/if}
-</li>
