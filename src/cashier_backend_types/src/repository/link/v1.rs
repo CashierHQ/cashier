@@ -4,6 +4,7 @@
 use candid::{CandidType, Principal};
 use cashier_macros::storable;
 use derive_more::Display;
+use ic_mple_structures::Codec;
 use serde::{Deserialize, Serialize};
 
 use crate::repository::asset_info::AssetInfo;
@@ -20,6 +21,23 @@ pub struct Link {
     pub create_at: u64,
     pub link_use_action_counter: u64,
     pub link_use_action_max_count: u64,
+}
+
+#[storable]
+pub enum LinkCodec {
+    V1(Link),
+}
+
+impl Codec<Link> for LinkCodec {
+    fn decode(source: Self) -> Link {
+        match source {
+            LinkCodec::V1(link) => link,
+        }
+    }
+
+    fn encode(dest: Link) -> Self {
+        LinkCodec::V1(dest)
+    }
 }
 
 impl Link {

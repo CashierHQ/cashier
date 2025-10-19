@@ -1,4 +1,5 @@
 use cashier_macros::storable;
+use ic_mple_structures::Codec;
 
 use crate::repository::keys::RequestLockKey;
 
@@ -7,6 +8,23 @@ use crate::repository::keys::RequestLockKey;
 pub struct RequestLock {
     pub key: RequestLockKey,
     pub timestamp: u64,
+}
+
+#[storable]
+pub enum RequestLockCodec {
+    V1(RequestLock),
+}
+
+impl Codec<RequestLock> for RequestLockCodec {
+    fn decode(source: Self) -> RequestLock {
+        match source {
+            RequestLockCodec::V1(link) => link,
+        }
+    }
+
+    fn encode(dest: RequestLock) -> Self {
+        RequestLockCodec::V1(dest)
+    }
 }
 
 impl RequestLock {

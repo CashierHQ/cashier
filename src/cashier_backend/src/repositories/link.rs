@@ -1,11 +1,16 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::repository::{keys::LinkKey, link::v1::Link};
+use cashier_backend_types::repository::{
+    keys::LinkKey,
+    link::v1::{Link, LinkCodec},
+};
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
+use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
-pub type LinkRepositoryStorage = StableBTreeMap<LinkKey, Link, VirtualMemory<DefaultMemoryImpl>>;
+pub type LinkRepositoryStorage =
+    VersionedBTreeMap<String, Link, LinkCodec, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
 pub struct LinkRepository<S: Storage<LinkRepositoryStorage>> {

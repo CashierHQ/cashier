@@ -8,8 +8,8 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::{
         common::{Asset, Chain, Wallet},
-        intent::v2::{Intent, IntentState, IntentTask, IntentType},
-        transaction::v2::Transaction,
+        intent::v1::{Intent, IntentState, IntentTask, IntentType},
+        transaction::v1::Transaction,
     },
 };
 use icrc_ledger_types::icrc1::account::Account;

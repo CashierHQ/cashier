@@ -4,6 +4,7 @@
 use candid::{CandidType, Nat};
 use cashier_macros::storable;
 use derive_more::Display;
+use ic_mple_structures::Codec;
 use icrc_ledger_types::{
     icrc1::{
         account::Account,
@@ -26,6 +27,23 @@ pub struct Transaction {
     pub from_call_type: FromCallType,
     pub protocol: Protocol,
     pub start_ts: Option<u64>,
+}
+
+#[storable]
+pub enum TransactionCodec {
+    V1(Transaction),
+}
+
+impl Codec<Transaction> for TransactionCodec {
+    fn decode(source: Self) -> Transaction {
+        match source {
+            TransactionCodec::V1(link) => link,
+        }
+    }
+
+    fn encode(dest: Transaction) -> Self {
+        TransactionCodec::V1(dest)
+    }
 }
 
 impl Transaction {

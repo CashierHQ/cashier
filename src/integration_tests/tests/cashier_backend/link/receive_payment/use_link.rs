@@ -7,7 +7,7 @@ use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::{
     constant,
     dto::action::CreateActionInput,
-    repository::{action::v1::ActionState, intent::v2::IntentState},
+    repository::{action::v1::ActionState, intent::v1::IntentState},
 };
 use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;

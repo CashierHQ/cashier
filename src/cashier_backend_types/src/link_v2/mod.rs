@@ -1,6 +1,6 @@
 use crate::{
     dto::action::Icrc112Requests,
-    repository::{action::v1::Action, intent::v2::Intent, transaction::v2::Transaction},
+    repository::{action::v1::Action, intent::v1::Intent, transaction::v1::Transaction},
 };
 use std::collections::HashMap;
 

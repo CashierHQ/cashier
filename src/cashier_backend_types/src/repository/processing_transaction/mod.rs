@@ -1,9 +1,10 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::repository::transaction::v2::Transaction;
+use crate::repository::transaction::v1::Transaction;
 use candid::CandidType;
 use cashier_macros::storable;
+use ic_mple_structures::Codec;
 
 #[derive(Debug, Clone, PartialEq, Eq, CandidType)]
 #[storable]
@@ -16,6 +17,23 @@ pub struct ProcessingTransaction {
 
     /// When the transaction will timeout in nanoseconds
     pub timeout_at: u64,
+}
+
+#[storable]
+pub enum ProcessingTransactionCodec {
+    V1(ProcessingTransaction),
+}
+
+impl Codec<ProcessingTransaction> for ProcessingTransactionCodec {
+    fn decode(source: Self) -> ProcessingTransaction {
+        match source {
+            ProcessingTransactionCodec::V1(link) => link,
+        }
+    }
+
+    fn encode(dest: ProcessingTransaction) -> Self {
+        ProcessingTransactionCodec::V1(dest)
+    }
 }
 
 impl ProcessingTransaction {

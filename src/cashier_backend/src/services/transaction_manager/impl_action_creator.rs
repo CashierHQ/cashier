@@ -8,7 +8,7 @@ use crate::{
 use cashier_backend_types::{
     dto::action::ActionDto,
     error::CanisterError,
-    repository::{link_action::v1::LinkAction, transaction::v2::Transaction},
+    repository::{link_action::v1::LinkAction, transaction::v1::Transaction},
     service::link::TemporaryAction,
 };
 use cashier_common::runtime::IcEnvironment;
@@ -132,7 +132,7 @@ mod tests {
     use cashier_backend_types::repository::{
         action::v1::{ActionState, ActionType},
         common::{Asset, Chain, Wallet},
-        intent::v2::{Intent, IntentState, IntentTask, IntentType, TransferData},
+        intent::v1::{Intent, IntentState, IntentTask, IntentType, TransferData},
     };
     use std::rc::Rc;
 
