@@ -8,8 +8,8 @@ use crate::services::transaction_manager::{
     service::TransactionManagerService, traits::BatchExecutor,
 };
 use cashier_backend_types::error::CanisterError;
-use cashier_backend_types::repository::transaction::v2::Transaction;
-use cashier_backend_types::repository::transaction::v2::TransactionState;
+use cashier_backend_types::repository::transaction::v1::Transaction;
+use cashier_backend_types::repository::transaction::v1::TransactionState;
 use cashier_common::runtime::IcEnvironment;
 
 impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> BatchExecutor<E>
