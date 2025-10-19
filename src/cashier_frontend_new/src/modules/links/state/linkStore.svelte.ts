@@ -1,6 +1,6 @@
 import type Action from "../types/action/action";
 import type { TipLink } from "../types/createLinkData";
-import { LinkType } from "../types/linkType";
+import { LinkType } from "../types/link/linkType";
 import type { LinkState } from "./linkStates";
 import { ChooseLinkTypeState } from "./linkStates/chooseLinkType";
 

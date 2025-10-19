@@ -97,9 +97,9 @@
 
               <div class="flex items-center gap-3">
               {#if link.state}
-                <span class={`text-xs px-3 py-1 rounded-full ${statusBadge(link.state).classes}`}>{statusBadge(link.state).text}</span>
+                <span class={`${statusBadge(link.state).classes}`}>{statusBadge(link.state).text}</span>
               {:else}
-                <span class="text-xs px-3 py-1 rounded-full bg-gray-50 text-gray-700">Unknown</span>
+                <span class="text-xs font-xs rounded-full px-2 py-1 bg-gray-50 text-gray-700">Unknown</span>
               {/if}
               </div>
             </a>

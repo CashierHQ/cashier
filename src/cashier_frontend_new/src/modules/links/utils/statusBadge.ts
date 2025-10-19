@@ -1,17 +1,17 @@
-export type LinkStateLike = { id: string } | undefined;
+import { LinkState } from "../types/link/linkState";
 
-export function statusBadge(state: LinkStateLike) {
-  const id = state?.id;
-  switch (id) {
-    case "ACTIVE":
-      return { text: "Active", classes: "bg-emerald-50 text-emerald-700" };
-    case "INACTIVE":
-      return { text: "Inactive", classes: "bg-gray-100 text-gray-700" };
-    case "CREATE_LINK":
-      return { text: "Draft", classes: "bg-blue-50 text-blue-700" };
-    case "INACTIVE_ENDED":
-      return { text: "Ended", classes: "bg-red-50 text-red-700" };
+export function statusBadge(state: LinkState) {
+  const base = "text-xs font-xs rounded-full px-2 py-1";
+  switch (state) {
+    case LinkState.ACTIVE:
+      return { text: "Active", classes: `${base} bg-emerald-600 text-white` };
+    case LinkState.INACTIVE:
+      return { text: "Inactive", classes: `${base} bg-gray-200 text-gray-700` };
+    case LinkState.CREATE_LINK:
+      return { text: "Draft", classes: `${base} bg-yellow-200 text-yellow` };
+    case LinkState.INACTIVE_ENDED:
+      return { text: "Ended", classes: `${base} bg-red-50 text-red-700` };
     default:
-      return { text: "Unknown", classes: "bg-gray-50 text-gray-700" };
+      return { text: "Unknown", classes: `${base} bg-gray-50 text-gray-700` };
   }
 }

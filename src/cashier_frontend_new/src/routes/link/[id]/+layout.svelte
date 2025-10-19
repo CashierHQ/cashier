@@ -5,5 +5,7 @@
 </script>
 
 <OnPathChange>
-  {@render children?.()}
+  <div class="w-full lg:w-1/3 mx-auto mt-4">
+    {@render children?.()}
+  </div>
 </OnPathChange>
