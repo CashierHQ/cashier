@@ -105,6 +105,24 @@ class CanisterBackendService {
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
   }
+
+  /**
+   * Update a link (used for state transitions like ending a link)
+   */
+  async updateLink(
+    input: cashierBackend.UpdateLinkInput,
+  ): Promise<Result<cashierBackend.LinkDto, Error>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const response = await actor.update_link(input);
+
+    return responseToResult(response)
+      .map((res) => res)
+      .mapErr((err) => new Error(JSON.stringify(err)));
+  }
 }
 
 export const cashierBackendService = new CanisterBackendService();
