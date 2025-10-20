@@ -40,7 +40,7 @@ impl TransferWalletToLinkIntent {
     pub fn create(
         label: String,
         asset: Asset,
-        sending_amount: u64,
+        sending_amount: Nat,
         sender_id: Principal,
         link_account: Account,
         created_at_ts: u64,
@@ -63,7 +63,7 @@ impl TransferWalletToLinkIntent {
         let mut transfer_data = intent.r#type.as_transfer().ok_or_else(|| {
             CanisterError::HandleLogicError("Transfer data not found".to_string())
         })?;
-        transfer_data.amount = Nat::from(sending_amount);
+        transfer_data.amount = sending_amount;
         transfer_data.asset = asset;
         transfer_data.from = from_wallet;
         transfer_data.to = to_wallet;

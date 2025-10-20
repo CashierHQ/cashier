@@ -38,6 +38,18 @@ pub trait LinkV2: Debug {
     fn activate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
         Box::pin(async move { Err(CanisterError::from("activate not implemented")) })
     }
+
+    fn deactivate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("deactivate not implemented")) })
+    }
+
+    fn withdraw(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("withdraw not implemented")) })
+    }
+
+    fn claim(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("claim not implemented")) })
+    }
 }
 
 pub trait LinkV2State: Debug {
@@ -48,5 +60,25 @@ pub trait LinkV2State: Debug {
     /// * `CanisterError` - If there is an error during publishing
     fn activate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
         Box::pin(async move { Err(CanisterError::from("activate not implemented")) })
+    }
+
+    fn deactivate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("deactivate not implemented")) })
+    }
+
+    fn withdraw(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("withdraw not implemented")) })
+    }
+
+    fn claim(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("claim not implemented")) })
+    }
+
+    fn create_action(
+        &self,
+        _canister_id: Principal,
+        _action_type: ActionType,
+    ) -> Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("create_action not implemented")) })
     }
 }

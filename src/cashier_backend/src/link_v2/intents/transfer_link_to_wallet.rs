@@ -14,14 +14,12 @@ use cashier_backend_types::{
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
 
-#[allow(dead_code)]
 pub struct TransferLinkToWalletIntent {
     pub intent: Intent,
     pub transactions: Vec<Transaction>,
 }
 
 impl TransferLinkToWalletIntent {
-    #[allow(dead_code)]
     pub fn new(intent: Intent, transactions: Vec<Transaction>) -> Self {
         Self {
             intent,
@@ -29,11 +27,10 @@ impl TransferLinkToWalletIntent {
         }
     }
 
-    #[allow(dead_code)]
     pub fn create(
         label: String,
         asset: Asset,
-        sending_amount: u64,
+        sending_amount: Nat,
         receiver_id: Principal,
         link_account: Account,
         created_at_ts: u64,
@@ -45,7 +42,7 @@ impl TransferLinkToWalletIntent {
             created_at: created_at_ts,
             dependency: vec![],
             chain: Chain::IC,
-            task: IntentTask::TransferWalletToLink,
+            task: IntentTask::TransferLinkToWallet,
             r#type: IntentType::default_transfer(),
         };
 
