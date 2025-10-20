@@ -5,8 +5,9 @@ pub mod actions;
 pub mod states;
 
 use crate::link_v2::{
-    links::tip_link::actions::{
-        claim::ClaimAction, create::CreateAction, withdraw::WithdrawAction,
+    links::tip_link::{
+        actions::{claim::ClaimAction, create::CreateAction, withdraw::WithdrawAction},
+        states::{active::ActiveState, ended::EndedState, inactive::InactiveState},
     },
     traits::{LinkV2, LinkV2State},
 };
@@ -80,7 +81,9 @@ impl TipLink {
     ) -> Result<Box<dyn LinkV2State>, CanisterError> {
         match link.state {
             LinkState::CreateLink => Ok(Box::new(CreatedState::new(link, canister_id))),
-            _ => Err(CanisterError::from("Unsupported link state")),
+            LinkState::Active => Ok(Box::new(ActiveState::new(link))),
+            LinkState::Inactive => Ok(Box::new(InactiveState::new(link))),
+            LinkState::InactiveEnded => Ok(Box::new(EndedState::new(link))),
         }
     }
 }
