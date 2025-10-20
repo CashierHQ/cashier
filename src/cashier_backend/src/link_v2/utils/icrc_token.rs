@@ -151,6 +151,28 @@ pub async fn get_batch_tokens_fee(
     Ok(fee_map)
 }
 
+/// Retrieves token balances for a link's assets.
+/// # Arguments
+/// * `link` - The Link for which to retrieve token balances
+/// * `canister_id` - The canister ID of the token contract.
+/// # Returns
+/// * `Result<HashMap<Principal, Nat>, CanisterError>` - A mapping from token principal IDs (as strings)
+///   to their corresponding balances as Nat values, or an error if the operation failed
+pub async fn get_batch_tokens_balance_for_link(
+    link: &Link,
+    canister_id: Principal,
+) -> Result<HashMap<Principal, Nat>, CanisterError> {
+    let assets: Vec<Asset> = link
+        .asset_info
+        .iter()
+        .map(|info| info.asset.clone())
+        .collect();
+
+    let link_account = get_link_ext_account(&link.id, canister_id)?;
+
+    get_batch_tokens_balance(&assets, &link_account).await
+}
+
 /// Retrieves token balances for a collection of assets in parallel.
 /// # Arguments
 /// * `assets` - A slice of Asset objects representing the tokens to query

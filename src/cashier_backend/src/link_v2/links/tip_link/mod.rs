@@ -5,7 +5,9 @@ pub mod actions;
 pub mod states;
 
 use crate::link_v2::{
-    links::tip_link::actions::create::CreateAction,
+    links::tip_link::actions::{
+        claim::ClaimAction, create::CreateAction, withdraw::WithdrawAction,
+    },
     traits::{LinkV2, LinkV2State},
 };
 use candid::Principal;
@@ -96,6 +98,7 @@ impl LinkV2 for TipLink {
     /// * `Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>>` - A future that resolves to the resulting action or an error if the creation fails.
     fn create_action(
         &self,
+        _caller: Principal,
         canister_id: Principal,
         action_type: ActionType,
     ) -> Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>> {
@@ -110,6 +113,24 @@ impl LinkV2 for TipLink {
                         intents: create_action.intents,
                         intent_txs_map: create_action.intent_txs_map,
                         icrc112_requests: create_action.icrc112_requests,
+                    })
+                }
+                ActionType::Withdraw => {
+                    let withdraw_action = WithdrawAction::create(&link, canister_id).await?;
+                    Ok(CreateActionResult {
+                        action: withdraw_action.action,
+                        intents: withdraw_action.intents,
+                        intent_txs_map: withdraw_action.intent_txs_map,
+                        icrc112_requests: withdraw_action.icrc112_requests,
+                    })
+                }
+                ActionType::Claim => {
+                    let claim_action = ClaimAction::create(&link, canister_id).await?;
+                    Ok(CreateActionResult {
+                        action: claim_action.action,
+                        intents: claim_action.intents,
+                        intent_txs_map: claim_action.intent_txs_map,
+                        icrc112_requests: claim_action.icrc112_requests,
                     })
                 }
                 _ => Err(CanisterError::from("Unsupported action type")),

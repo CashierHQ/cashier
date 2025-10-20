@@ -49,9 +49,6 @@ impl<R: Repositories> LinkV2Service<R> {
         created_at_ts: u64,
     ) -> Result<GetLinkResp, CanisterError> {
         let link = factory::create_link(creator_id, input, created_at_ts, canister_id)?;
-        let create_action_result = link
-            .create_action(canister_id, ActionType::CreateLink)
-            .await?;
 
         // save link & user_link to db
         let link_model = link.get_link_model();
@@ -63,31 +60,14 @@ impl<R: Repositories> LinkV2Service<R> {
         };
         self.user_link_repository.create(new_user_link);
 
-        // save action to DB
-        let link_action = LinkAction {
-            link_id: link_model.id.clone(),
-            action_type: create_action_result.action.r#type.clone(),
-            action_id: create_action_result.action.id.clone(),
-            user_id: create_action_result.action.creator,
-            link_user_state: None,
-        };
-
-        let _ = self.action_service.store_action_data(
-            link_action,
-            create_action_result.action.clone(),
-            create_action_result.intents.clone(),
-            create_action_result.intent_txs_map.clone(),
-            create_action_result.action.creator,
-        );
-
-        let action_dto = ActionDto::build(
-            &ActionData {
-                action: create_action_result.action.clone(),
-                intents: create_action_result.intents.clone(),
-                intent_txs: create_action_result.intent_txs_map.clone(),
-            },
-            create_action_result.icrc112_requests,
-        );
+        let action_dto = self
+            .create_action(
+                creator_id,
+                &link_model.id,
+                canister_id,
+                ActionType::CreateLink,
+            )
+            .await?;
 
         Ok(GetLinkResp {
             link: LinkDto::from(link_model),
@@ -196,7 +176,7 @@ impl<R: Repositories> LinkV2Service<R> {
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
         let link = factory::from_link(link, canister_id)?;
-        let create_action_result = link.create_action(canister_id, action_type).await?;
+        let create_action_result = link.create_action(caller, canister_id, action_type).await?;
 
         // save action to DB
         let link_action = LinkAction {
@@ -217,9 +197,9 @@ impl<R: Repositories> LinkV2Service<R> {
 
         let action_dto = ActionDto::build(
             &ActionData {
-                action: create_action_result.action,
-                intents: create_action_result.intents,
-                intent_txs: create_action_result.intent_txs_map,
+                action: create_action_result.action.clone(),
+                intents: create_action_result.intents.clone(),
+                intent_txs: create_action_result.intent_txs_map.clone(),
             },
             create_action_result.icrc112_requests,
         );
