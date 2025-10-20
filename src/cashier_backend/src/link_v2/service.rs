@@ -130,4 +130,100 @@ impl<R: Repositories> LinkV2Service<R> {
 
         Ok(LinkDto::from(published_link))
     }
+
+    pub async fn deactivate_link(
+        &mut self,
+        caller: Principal,
+        link_id: &str,
+        canister_id: Principal,
+    ) -> Result<LinkDto, CanisterError> {
+        let link = self
+            .link_repository
+            .get(&link_id.to_string())
+            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+
+        if link.creator != caller {
+            return Err(CanisterError::Unauthorized(
+                "Only the creator can deactivate the link".to_string(),
+            ));
+        }
+
+        let link = factory::from_link(link, canister_id)?;
+        let deactivated_link = link.deactivate().await?;
+
+        // update link in db
+        self.link_repository.update(deactivated_link.clone());
+
+        Ok(LinkDto::from(deactivated_link))
+    }
+
+    pub async fn withdraw_link(
+        &mut self,
+        caller: Principal,
+        link_id: &str,
+        canister_id: Principal,
+    ) -> Result<LinkDto, CanisterError> {
+        let link = self
+            .link_repository
+            .get(&link_id.to_string())
+            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+
+        if link.creator != caller {
+            return Err(CanisterError::Unauthorized(
+                "Only the creator can withdraw from the link".to_string(),
+            ));
+        }
+
+        let link = factory::from_link(link, canister_id)?;
+        let withdrawn_link = link.withdraw().await?;
+
+        // update link in db
+        self.link_repository.update(withdrawn_link.clone());
+
+        Ok(LinkDto::from(withdrawn_link))
+    }
+
+    pub async fn create_action(
+        &mut self,
+        caller: Principal,
+        link_id: &str,
+        canister_id: Principal,
+        action_type: ActionType,
+    ) -> Result<ActionDto, CanisterError> {
+        let link = self
+            .link_repository
+            .get(&link_id.to_string())
+            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+
+        let link = factory::from_link(link, canister_id)?;
+        let create_action_result = link.create_action(canister_id, action_type).await?;
+
+        // save action to DB
+        let link_action = LinkAction {
+            link_id: link_id.to_string(),
+            action_type: create_action_result.action.r#type.clone(),
+            action_id: create_action_result.action.id.clone(),
+            user_id: create_action_result.action.creator,
+            link_user_state: None,
+        };
+
+        let _ = self.action_service.store_action_data(
+            link_action,
+            create_action_result.action.clone(),
+            create_action_result.intents.clone(),
+            create_action_result.intent_txs_map.clone(),
+            create_action_result.action.creator,
+        );
+
+        let action_dto = ActionDto::build(
+            &ActionData {
+                action: create_action_result.action,
+                intents: create_action_result.intents,
+                intent_txs: create_action_result.intent_txs_map,
+            },
+            create_action_result.icrc112_requests,
+        );
+
+        Ok(action_dto)
+    }
 }

@@ -97,12 +97,10 @@ impl CreateAction {
                     )
                 })?;
 
-                let sending_amount = convert_nat_to_u64(sending_amount)?;
-
                 TransferWalletToLinkIntent::create(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                     asset_info.asset.clone(),
-                    sending_amount,
+                    sending_amount.clone(),
                     link.creator,
                     link_account,
                     link.create_at,

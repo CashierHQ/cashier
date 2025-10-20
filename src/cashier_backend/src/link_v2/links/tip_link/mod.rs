@@ -129,4 +129,14 @@ impl LinkV2 for TipLink {
             state.activate().await
         })
     }
+
+    fn deactivate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+        let link = self.link.clone();
+        let canister_id = self.canister_id;
+
+        Box::pin(async move {
+            let state = TipLink::get_state_handler(&link, canister_id)?;
+            state.deactivate().await
+        })
+    }
 }

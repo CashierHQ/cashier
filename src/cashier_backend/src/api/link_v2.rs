@@ -3,7 +3,10 @@
 
 use crate::api::state::get_state;
 use cashier_backend_types::{
-    dto::link::{CreateLinkInput, GetLinkResp, LinkDto},
+    dto::{
+        action::{ActionDto, CreateActionInput},
+        link::{CreateLinkInput, GetLinkResp, LinkDto},
+    },
     error::CanisterError,
 };
 use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
@@ -45,5 +48,34 @@ async fn activate_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
     let canister_id = get_state().env.id();
     link_v2_service
         .activate_link(msg_caller(), link_id, canister_id)
+        .await
+}
+
+/// Deactivate a link v2, transitioning it from ACTIVE to INACTIVE state.
+/// Only the link creator can deactivate the link.
+/// # Arguments
+/// * `link_id` - The ID of the link to deactivate
+/// # Returns
+/// * `Ok(LinkDto)` - The deactivated link data
+/// * `Err(CanisterError)` - If deactivation fails or unauthorized
+#[update(guard = "is_not_anonymous")]
+async fn deactivate_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
+    info!("[deactivate_link_v2]");
+    debug!("[deactivate_link_v2] link_id: {link_id}");
+    let mut link_v2_service = get_state().link_v2_service;
+    let canister_id = get_state().env.id();
+    link_v2_service
+        .deactivate_link(msg_caller(), link_id, canister_id)
+        .await
+}
+
+async fn create_action_v2(input: CreateActionInput) -> Result<ActionDto, CanisterError> {
+    info!("[create_action_v2]");
+    debug!("[create_action_v2] input: {input:?}");
+
+    let mut link_v2_service = get_state().link_v2_service;
+    let canister_id = get_state().env.id();
+    link_v2_service
+        .create_action(msg_caller(), input.link_id, canister_id, input.action_type)
         .await
 }
