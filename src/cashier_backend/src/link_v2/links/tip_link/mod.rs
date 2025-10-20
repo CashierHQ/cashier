@@ -14,9 +14,9 @@ use crate::link_v2::{
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::CreateActionResult,
+    link_v2::{CreateActionResult, ProcessActionResult},
     repository::{
-        action::v1::ActionType,
+        action::v1::{Action, ActionType},
         asset_info::AssetInfo,
         link::v1::{Link, LinkState, LinkType},
     },
@@ -138,6 +138,36 @@ impl LinkV2 for TipLink {
                 }
                 _ => Err(CanisterError::from("Unsupported action type")),
             }
+        })
+    }
+
+    fn process_action(
+        &self,
+        caller: Principal,
+        action: &Action,
+    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
+        let link = self.link.clone();
+        let canister_id = self.canister_id;
+        let action = action.clone();
+
+        Box::pin(async move {
+            let state = TipLink::get_state_handler(&link, canister_id)?;
+
+            match action.r#type {
+                ActionType::CreateLink => {
+                    state.activate().await?;
+                }
+                ActionType::Withdraw => {
+                    state.withdraw().await?;
+                }
+                ActionType::Use => {
+                    state.use_link().await?;
+                }
+            }
+
+            Err(CanisterError::from(
+                "process_action not implemented for TipLink",
+            ))
         })
     }
 

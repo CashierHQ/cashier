@@ -19,7 +19,9 @@ use crate::{
 use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,
+    link_v2::ProcessActionResult,
     repository::{
+        action::v1::Action,
         common::Asset,
         link::v1::{Link, LinkState},
     },

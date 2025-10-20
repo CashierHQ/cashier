@@ -50,7 +50,7 @@ impl UseAction {
     pub async fn create(link: &Link, canister_id: Principal) -> Result<Self, CanisterError> {
         let action = Action {
             id: Uuid::new_v4().to_string(),
-            r#type: ActionType::Claim,
+            r#type: ActionType::Use,
             link_id: link.id.clone(),
             creator: link.creator,
             state: ActionState::Created,
