@@ -6,7 +6,7 @@ pub mod states;
 
 use crate::link_v2::{
     links::tip_link::{
-        actions::{claim::ClaimAction, create::CreateAction, withdraw::WithdrawAction},
+        actions::{create::CreateAction, use_link::UseAction, withdraw::WithdrawAction},
         states::{active::ActiveState, ended::EndedState, inactive::InactiveState},
     },
     traits::{LinkV2, LinkV2State},
@@ -127,13 +127,13 @@ impl LinkV2 for TipLink {
                         icrc112_requests: withdraw_action.icrc112_requests,
                     })
                 }
-                ActionType::Claim => {
-                    let claim_action = ClaimAction::create(&link, canister_id).await?;
+                ActionType::Use => {
+                    let use_action = UseAction::create(&link, canister_id).await?;
                     Ok(CreateActionResult {
-                        action: claim_action.action,
-                        intents: claim_action.intents,
-                        intent_txs_map: claim_action.intent_txs_map,
-                        icrc112_requests: claim_action.icrc112_requests,
+                        action: use_action.action,
+                        intents: use_action.intents,
+                        intent_txs_map: use_action.intent_txs_map,
+                        icrc112_requests: use_action.icrc112_requests,
                     })
                 }
                 _ => Err(CanisterError::from("Unsupported action type")),
