@@ -3,9 +3,13 @@
 
 use std::{cell::RefCell, thread::LocalKey};
 
+use ic_mple_structures::{BTreeMapIteratorStructure, BTreeMapStructure, VersionedBTreeMap};
 use ic_mple_utils::store::Storage;
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
-use token_storage_types::{TokenId, token::RegistryToken};
+use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
+use token_storage_types::{
+    TokenId,
+    token::{RegistryToken, RegistryTokenCodec},
+};
 
 use crate::repository::token_registry_metadata::TokenRegistryMetadataRepositoryStorage;
 
@@ -13,7 +17,7 @@ use super::token_registry_metadata::TokenRegistryMetadataRepository;
 
 /// Store for TokenRegistryRepository
 pub type TokenRegistryRepositoryStorage =
-    StableBTreeMap<TokenId, RegistryToken, VirtualMemory<DefaultMemoryImpl>>;
+    VersionedBTreeMap<TokenId, RegistryToken, RegistryTokenCodec, VirtualMemory<DefaultMemoryImpl>>;
 pub type ThreadlocalTokenRegistryRepositoryStorage =
     &'static LocalKey<RefCell<TokenRegistryRepositoryStorage>>;
 
@@ -64,12 +68,12 @@ impl<S: Storage<TokenRegistryRepositoryStorage>> TokenRegistryRepository<S> {
 
     pub fn list_tokens(&self) -> Vec<RegistryToken> {
         self.token_reg_repo
-            .with_borrow(|store| store.iter().map(|entry| entry.value()).collect())
+            .with_borrow(|store| store.iter().map(|entry| entry.1).collect())
     }
 
     pub fn delete_all(&mut self) -> Result<(), String> {
         self.token_reg_repo.with_borrow_mut(|store| {
-            store.clear_new();
+            store.clear();
             Ok(())
         })
     }

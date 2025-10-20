@@ -1,7 +1,7 @@
 use crate::utils::{principal::TestUser, with_pocket_ic_context};
 use cashier_backend_types::{
     constant,
-    repository::{action::v1::ActionState, intent::v2::IntentState},
+    repository::{action::v1::ActionState, intent::v1::IntentState},
 };
 use icrc_ledger_types::icrc1::account::Account;
 use std::sync::Arc;

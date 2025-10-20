@@ -10,7 +10,7 @@ use candid::Principal;
 use cashier_backend_types::{
     dto::action::{ActionDto, Icrc112Requests},
     error::CanisterError,
-    repository::transaction::v2::{
+    repository::transaction::v1::{
         Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Transaction, TransactionState,
     },
     service::{link::TemporaryAction, tx_manager::UpdateActionArgs},

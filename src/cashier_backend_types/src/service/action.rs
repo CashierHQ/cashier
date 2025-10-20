@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use crate::repository::{
     action::v1::{Action, ActionState, ActionType},
-    intent::v2::Intent,
-    transaction::v2::Transaction,
+    intent::v1::Intent,
+    transaction::v1::Transaction,
 };
 
 #[derive(Debug, Clone)]

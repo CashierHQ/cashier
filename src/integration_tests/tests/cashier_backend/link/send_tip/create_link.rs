@@ -4,14 +4,12 @@ use crate::utils::{
     with_pocket_ic_context,
 };
 use candid::Principal;
-use cashier_backend_types::dto::link::LinkStateMachineGoto;
-use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::{
     constant,
-    dto::link::UpdateLinkInput,
+    dto::link::{LinkStateMachineGoto, UpdateLinkInput},
     repository::{
-        action::v1::ActionState,
-        intent::v2::IntentState,
+        action::v1::{ActionState, ActionType},
+        intent::v1::IntentState,
         link::v1::{LinkState, LinkType},
     },
 };

@@ -4,19 +4,29 @@
 use std::cell::RefCell;
 use std::thread::LocalKey;
 
+use cashier_backend_types::repository::action::v1::ActionCodec;
+use cashier_backend_types::repository::action_intent::v1::ActionIntentCodec;
+use cashier_backend_types::repository::intent::v1::IntentCodec;
+use cashier_backend_types::repository::intent_transaction::v1::IntentTransactionCodec;
+use cashier_backend_types::repository::link::v1::LinkCodec;
+use cashier_backend_types::repository::link_action::v1::LinkActionCodec;
+use cashier_backend_types::repository::processing_transaction::ProcessingTransactionCodec;
+use cashier_backend_types::repository::request_lock::RequestLockCodec;
+use cashier_backend_types::repository::transaction::v1::TransactionCodec;
+use cashier_backend_types::repository::user_action::v1::UserActionCodec;
 use cashier_backend_types::repository::user_link::v1::UserLinkCodec;
 use ic_mple_log::LogSettings;
 use ic_mple_log::service::{LoggerServiceStorage, Storage};
-use ic_mple_structures::VersionedBTreeMap;
+use ic_mple_structures::{VersionedBTreeMap, VersionedStableCell};
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 
 use cashier_backend_types::repository::{
-    action::v1::Action, action_intent::v1::ActionIntent, intent::v2::Intent as IntentV2,
+    action::v1::Action, action_intent::v1::ActionIntent, intent::v1::Intent,
     intent_transaction::v1::IntentTransaction, keys::*, link::v1::Link,
     link_action::v1::LinkAction, processing_transaction::ProcessingTransaction,
-    request_lock::RequestLock, transaction::v2::Transaction as TransactionV2,
-    user_action::v1::UserAction, user_link::v1::UserLink,
+    request_lock::RequestLock, transaction::v1::Transaction, user_action::v1::UserAction,
+    user_link::v1::UserLink,
 };
 
 use crate::repositories::action::{ActionRepository, ActionRepositoryStorage};
@@ -31,7 +41,9 @@ use crate::repositories::processing_transaction::{
     ProcessingTransactionRepository, ProcessingTransactionRepositoryStorage,
 };
 use crate::repositories::request_lock::{RequestLockRepository, RequestLockRepositoryStorage};
-use crate::repositories::settings::{Settings, SettingsRepository, SettingsRepositoryStorage};
+use crate::repositories::settings::{
+    Settings, SettingsCodec, SettingsRepository, SettingsRepositoryStorage,
+};
 use crate::repositories::transaction::{TransactionRepository, TransactionRepositoryStorage};
 use crate::repositories::user_action::{UserActionRepository, UserActionRepositoryStorage};
 use crate::repositories::user_link::{UserLinkRepository, UserLinkRepositoryStorage};
@@ -198,109 +210,120 @@ thread_local! {
         )
     );
 
-    static USER_ACTION_STORE: RefCell<StableBTreeMap<
+    static USER_ACTION_STORE: RefCell<VersionedBTreeMap<
         String,
         UserAction,
+        UserActionCodec,
         Memory
     >> = RefCell::new(
-        StableBTreeMap::init(
+        VersionedBTreeMap::init(
             MEMORY_MANAGER.with_borrow(|m| m.get(USER_ACTION_MEMORY_ID)),
         )
     );
 
-    static LINK_STORE: RefCell<StableBTreeMap<
+    static LINK_STORE: RefCell<VersionedBTreeMap<
         LinkKey,
         Link,
+        LinkCodec,
         Memory
     >> = RefCell::new(
-        StableBTreeMap::init(
+        VersionedBTreeMap::init(
             MEMORY_MANAGER.with_borrow(|m| m.get(LINK_MEMORY_ID)),
         )
     );
 
-    static LINK_ACTION_STORE: RefCell<StableBTreeMap<
+    static LINK_ACTION_STORE: RefCell<VersionedBTreeMap<
         String,
         LinkAction,
+        LinkActionCodec,
         Memory
     >> = RefCell::new(
-        StableBTreeMap::init(
+        VersionedBTreeMap::init(
             MEMORY_MANAGER.with_borrow(|m| m.get(LINK_ACTION_MEMORY_ID)),
         )
     );
 
-    static ACTION_STORE: RefCell<StableBTreeMap<
+    static ACTION_STORE: RefCell<VersionedBTreeMap<
         ActionKey,
         Action,
+        ActionCodec,
         Memory
     >> = RefCell::new(
-        StableBTreeMap::init(
+        VersionedBTreeMap::init(
             MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_MEMORY_ID)),
         )
     );
 
-    static ACTION_INTENT_STORE: RefCell<StableBTreeMap<
+    static ACTION_INTENT_STORE: RefCell<VersionedBTreeMap<
         String,
         ActionIntent,
+        ActionIntentCodec,
         Memory
     >> = RefCell::new(
-        StableBTreeMap::init(
+        VersionedBTreeMap::init(
             MEMORY_MANAGER.with_borrow(|m| m.get(ACTION_INTENT_MEMORY_ID)),
         )
     );
 
-    static INTENT_STORE: RefCell<StableBTreeMap<
+    static INTENT_STORE: RefCell<VersionedBTreeMap<
         String,
-        IntentV2,
+        Intent,
+        IntentCodec,
         Memory
     >> = RefCell::new(
-        StableBTreeMap::init(
+        VersionedBTreeMap::init(
             MEMORY_MANAGER.with_borrow(|m| m.get(INTENT_MEMORY_ID)),
         )
     );
 
-    static INTENT_TRANSACTION_STORE: RefCell<StableBTreeMap<
+    static INTENT_TRANSACTION_STORE: RefCell<VersionedBTreeMap<
         String,
         IntentTransaction,
+        IntentTransactionCodec,
         Memory
     >> = RefCell::new(
-        StableBTreeMap::init(
+        VersionedBTreeMap::init(
             MEMORY_MANAGER.with_borrow(|m| m.get(INTENT_TRANSACTION_MEMORY_ID)),
         )
     );
 
-    static TRANSACTION_STORE: RefCell<StableBTreeMap<
+    static TRANSACTION_STORE: RefCell<VersionedBTreeMap<
         TransactionKey,
-        TransactionV2,
-        Memory
+        Transaction,
+        TransactionCodec,
+                Memory
     >> = RefCell::new(
-        StableBTreeMap::init(
+        VersionedBTreeMap::init(
             MEMORY_MANAGER.with_borrow(|m| m.get(TRANSACTION_MEMORY_ID)),
         )
     );
 
-    static PROCESSING_TRANSACTION_STORE: RefCell<StableBTreeMap<
+    static PROCESSING_TRANSACTION_STORE: RefCell<VersionedBTreeMap<
         String,
         ProcessingTransaction,
+        ProcessingTransactionCodec,
         Memory
     >> = RefCell::new(
-        StableBTreeMap::init(
+        VersionedBTreeMap::init(
             MEMORY_MANAGER.with_borrow(|m| m.get(PROCESSING_TRANSACTION_MEMORY_ID)),
         )
     );
 
-    static REQUEST_LOCK_STORE: RefCell<StableBTreeMap<
+    static REQUEST_LOCK_STORE: RefCell<VersionedBTreeMap<
         RequestLockKey,
         RequestLock,
+        RequestLockCodec,
         Memory
     >> = RefCell::new(
-        StableBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(REQUEST_LOCK_MEMORY_ID))),
+        VersionedBTreeMap::init(MEMORY_MANAGER.with_borrow(|m| m.get(REQUEST_LOCK_MEMORY_ID))),
     );
 
-    static SETTINGS_STORE: RefCell<StableCell<
+    static SETTINGS_STORE: RefCell<VersionedStableCell<
         Settings,
+        SettingsCodec,
         Memory
     >> = RefCell::new(
-        StableCell::init(
+        VersionedStableCell::init(
             MEMORY_MANAGER.with_borrow(|m| m.get(SETTINGS_MEMORY_ID)),
             Settings::default(),
         )
@@ -338,32 +361,38 @@ pub mod tests {
         pub fn new() -> Self {
             let mm = MemoryManager::init(DefaultMemoryImpl::default());
             Self {
-                action_intent: Rc::new(RefCell::new(StableBTreeMap::init(
+                action_intent: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(ACTION_INTENT_MEMORY_ID),
                 ))),
-                action: Rc::new(RefCell::new(StableBTreeMap::init(mm.get(ACTION_MEMORY_ID)))),
-                intent: Rc::new(RefCell::new(StableBTreeMap::init(mm.get(INTENT_MEMORY_ID)))),
-                intent_transaction: Rc::new(RefCell::new(StableBTreeMap::init(
+                action: Rc::new(RefCell::new(VersionedBTreeMap::init(
+                    mm.get(ACTION_MEMORY_ID),
+                ))),
+                intent: Rc::new(RefCell::new(VersionedBTreeMap::init(
+                    mm.get(INTENT_MEMORY_ID),
+                ))),
+                intent_transaction: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(INTENT_TRANSACTION_MEMORY_ID),
                 ))),
-                link: Rc::new(RefCell::new(StableBTreeMap::init(mm.get(LINK_MEMORY_ID)))),
-                link_action: Rc::new(RefCell::new(StableBTreeMap::init(
+                link: Rc::new(RefCell::new(VersionedBTreeMap::init(
+                    mm.get(LINK_MEMORY_ID),
+                ))),
+                link_action: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(LINK_ACTION_MEMORY_ID),
                 ))),
-                processing_transaction: Rc::new(RefCell::new(StableBTreeMap::init(
+                processing_transaction: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(PROCESSING_TRANSACTION_MEMORY_ID),
                 ))),
-                request_lock: Rc::new(RefCell::new(StableBTreeMap::init(
+                request_lock: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(REQUEST_LOCK_MEMORY_ID),
                 ))),
-                settings: Rc::new(RefCell::new(StableCell::init(
+                settings: Rc::new(RefCell::new(VersionedStableCell::init(
                     mm.get(SETTINGS_MEMORY_ID),
                     Default::default(),
                 ))),
-                transaction: Rc::new(RefCell::new(StableBTreeMap::init(
+                transaction: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(TRANSACTION_MEMORY_ID),
                 ))),
-                user_action: Rc::new(RefCell::new(StableBTreeMap::init(
+                user_action: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(USER_ACTION_MEMORY_ID),
                 ))),
                 user_link: Rc::new(RefCell::new(VersionedBTreeMap::init(
