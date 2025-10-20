@@ -6,7 +6,7 @@ use ic_cdk::call::{Call, CandidDecodeFailed};
 
 pub type SubAccount = serde_bytes::ByteBuf;
 
-#[derive(CandidType, Deserialize, Debug)]
+#[derive(CandidType, Deserialize, Debug, Clone)]
 pub struct Account {
     pub owner: Principal,
     pub subaccount: Option<SubAccount>,
@@ -104,6 +104,7 @@ pub enum TransferFromError {
 pub type TransferFromResult = std::result::Result<Icrc1BlockIndex, TransferFromError>;
 
 pub struct Service(pub Principal);
+
 impl Service {
     pub fn new(principal: Principal) -> Self {
         Service(principal)
@@ -130,6 +131,7 @@ impl Service {
         let parsed_res: Result<Icrc1Tokens, CandidDecodeFailed> = res.candid();
         parsed_res.map_err(CanisterError::from)
     }
+
     pub async fn icrc_1_transfer(
         &self,
         arg0: &TransferArg,
@@ -141,6 +143,7 @@ impl Service {
         let parsed_res: Result<Icrc1TransferResult, CandidDecodeFailed> = res.candid();
         parsed_res.map_err(CanisterError::from)
     }
+
     pub async fn icrc_2_allowance(&self, arg0: &AllowanceArgs) -> Result<Allowance, CanisterError> {
         let res = Call::bounded_wait(self.0, "icrc2_allowance")
             .with_arg(arg0)

@@ -5,14 +5,14 @@ use crate::repositories::Repositories;
 use crate::services::action::ActionService;
 use crate::{link_v2::links::factory, repositories};
 use candid::Principal;
-use cashier_backend_types::dto::action::ActionDto;
-use cashier_backend_types::repository::link_action::v1::LinkAction;
-use cashier_backend_types::repository::user_link::v1::UserLink;
-use cashier_backend_types::service::action::ActionData;
 use cashier_backend_types::{
-    dto::link::{CreateLinkInput, GetLinkResp, LinkDto},
+    dto::{
+        action::ActionDto,
+        link::{CreateLinkInput, GetLinkResp, LinkDto},
+    },
     error::CanisterError,
-    repository::action::v1::ActionType,
+    repository::{action::v1::ActionType, link_action::v1::LinkAction, user_link::v1::UserLink},
+    service::action::ActionData,
 };
 
 pub struct LinkV2Service<R: Repositories> {
@@ -48,7 +48,7 @@ impl<R: Repositories> LinkV2Service<R> {
         input: CreateLinkInput,
         created_at_ts: u64,
     ) -> Result<GetLinkResp, CanisterError> {
-        let link = factory::create_link(creator_id, input, created_at_ts)?;
+        let link = factory::create_link(creator_id, input, created_at_ts, canister_id)?;
         let create_action_result = link
             .create_action(canister_id, ActionType::CreateLink)
             .await?;
@@ -109,18 +109,23 @@ impl<R: Repositories> LinkV2Service<R> {
         &mut self,
         caller: Principal,
         link_id: &str,
+        canister_id: Principal,
     ) -> Result<LinkDto, CanisterError> {
         let link = self
             .link_repository
             .get(&link_id.to_string())
-            .ok_or_else(|| CanisterError::from("Link not found"))?;
+            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
         if link.creator != caller {
-            return Err(CanisterError::from("Only the creator can publish the link"));
+            return Err(CanisterError::Unauthorized(
+                "Only the creator can publish the link".to_string(),
+            ));
         }
 
-        let link = factory::from_link(link)?;
+        let link = factory::from_link(link, canister_id)?;
         let published_link = link.activate().await?;
+
+        // update link in db
         self.link_repository.update(published_link.clone());
 
         Ok(LinkDto::from(published_link))

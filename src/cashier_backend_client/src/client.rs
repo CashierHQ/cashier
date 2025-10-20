@@ -89,12 +89,30 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         self.client.update("create_link", ((input),)).await
     }
 
-    /// Creates a new link.
+    /// Creates a new link V2.
+    /// # Arguments
+    /// * `input` - Link creation data
+    /// # Returns
+    /// * `Ok(GetLinkResp)` - The created link data
+    /// * `Err(CanisterError)` - If link creation fails or validation errors occur
     pub async fn create_link_v2(
         &self,
         input: CreateLinkInput,
     ) -> CanisterClientResult<Result<GetLinkResp, CanisterError>> {
         self.client.update("create_link_v2", ((input),)).await
+    }
+
+    /// Activates a link V2.
+    /// # Arguments
+    /// * `link_id` - The ID of the link to activate
+    /// # Returns
+    /// * `Ok(LinkDto)` - The activated link data
+    /// * `Err(CanisterError)` - If activation fails or unauthorized
+    pub async fn activate_link_v2(
+        &self,
+        link_id: &str,
+    ) -> CanisterClientResult<Result<LinkDto, CanisterError>> {
+        self.client.update("activate_link_v2", (link_id,)).await
     }
 
     /// Creates a new action.

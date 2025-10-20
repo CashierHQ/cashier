@@ -1,19 +1,25 @@
-use crate::constant::ICP_CANISTER_PRINCIPAL;
-use crate::domains::fee::Fee;
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
+use crate::utils::helper::convert_nat_to_u64;
 use crate::{
+    constant::ICP_CANISTER_PRINCIPAL,
     link_v2::{
         icrc112::convert_tx_to_icrc_112_request,
         intents::{
             transfer_wallet_to_link::TransferWalletToLinkIntent,
             transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
         },
+        utils::{
+            calculator::{calculate_create_link_fee, calculate_link_balance_map},
+            icrc_token::{get_batch_tokens_fee_for_link, get_link_account},
+        },
     },
-    utils::helper::{convert_nat_to_u64, to_subaccount},
 };
-use candid::{Nat, Principal};
-use cashier_backend_types::dto::action::{Icrc112Request, Icrc112Requests};
+use candid::Principal;
 use cashier_backend_types::{
     constant::{INTENT_LABEL_LINK_CREATION_FEE, INTENT_LABEL_SEND_TIP_ASSET},
+    dto::action::{Icrc112Request, Icrc112Requests},
     error::CanisterError,
     repository::{
         action::v1::{Action, ActionState, ActionType},
@@ -53,15 +59,10 @@ impl CreateAction {
     /// Creates a new CreateAction for a given Link.
     /// # Arguments
     /// * `link` - The Link for which the action is created.
-    /// * `fee_map` - A map of canister principals to their corresponding fees.
     /// * `canister_id` - The canister ID of the token contract.
     /// # Returns
     /// * `Result<CreateAction, CanisterError>` - The resulting action or an error if the creation fails.
-    pub fn create(
-        link: &Link,
-        fee_map: &HashMap<Principal, Nat>,
-        canister_id: Principal,
-    ) -> Result<Self, CanisterError> {
+    pub async fn create(link: &Link, canister_id: Principal) -> Result<Self, CanisterError> {
         let action = Action {
             id: Uuid::new_v4().to_string(),
             r#type: ActionType::CreateLink,
@@ -70,10 +71,16 @@ impl CreateAction {
             state: ActionState::Created,
         };
 
-        let link_account = Account {
-            owner: canister_id,
-            subaccount: Some(to_subaccount(&link.id)?),
-        };
+        let link_account = get_link_account(&link.id, canister_id)?;
+
+        // token_fee_map
+        let token_fee_map = get_batch_tokens_fee_for_link(link).await?;
+
+        let link_token_balance_map = calculate_link_balance_map(
+            &link.asset_info,
+            &token_fee_map,
+            link.link_use_action_max_count,
+        );
 
         // intents
         let deposit_intents = link
@@ -84,13 +91,13 @@ impl CreateAction {
                     Asset::IC { address } => address,
                 };
 
-                let fee_in_nat = fee_map.get(&address).ok_or_else(|| {
-                    CanisterError::HandleLogicError("Fee not found for link creation".to_string())
+                let sending_amount = link_token_balance_map.get(&address).ok_or_else(|| {
+                    CanisterError::HandleLogicError(
+                        "Failed to get sending amount from balance map".to_string(),
+                    )
                 })?;
-                let fee_amount = convert_nat_to_u64(fee_in_nat)?;
 
-                let sending_amount = (asset_info.amount_per_link_use_action + fee_amount)
-                    * link.link_use_action_max_count;
+                let sending_amount = convert_nat_to_u64(sending_amount)?;
 
                 TransferWalletToLinkIntent::create(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
@@ -106,12 +113,9 @@ impl CreateAction {
         let fee_asset = Asset::IC {
             address: ICP_CANISTER_PRINCIPAL,
         };
-        let actual_amount = Fee::CreateTipLinkFeeIcp.as_u64();
-        let fee_in_nat = fee_map.get(&ICP_CANISTER_PRINCIPAL).ok_or_else(|| {
-            CanisterError::HandleLogicError("Fee not found for link creation".to_string())
-        })?;
-        let fee_amount = convert_nat_to_u64(fee_in_nat)?;
-        let approval_amount = fee_amount + actual_amount;
+        let (actual_amount, approval_amount) = calculate_create_link_fee(&token_fee_map);
+        let actual_amount = convert_nat_to_u64(&actual_amount)?;
+        let approval_amount = convert_nat_to_u64(&approval_amount)?;
         let spender_account = Account {
             owner: canister_id,
             subaccount: None,
