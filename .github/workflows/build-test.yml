@@ -79,11 +79,11 @@ jobs:
       - name: Install dfx
         uses: dfinity/setup-dfx@main
         with: 
-          dfx-version: "0.28.0"
+          dfx-version: "0.29.2"
 
       - name: Install ic-wasm
         run: |
-          wget https://github.com/dfinity/ic-wasm/releases/download/0.9.3/ic-wasm-linux64 -O /usr/local/bin/ic-wasm
+          wget https://github.com/dfinity/ic-wasm/releases/download/0.9.8/ic-wasm-linux64 -O /usr/local/bin/ic-wasm
           chmod +x /usr/local/bin/ic-wasm
 
       - name: Install candid-extractor

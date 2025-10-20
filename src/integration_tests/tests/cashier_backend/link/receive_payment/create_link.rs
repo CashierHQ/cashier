@@ -11,7 +11,7 @@ use cashier_backend_types::{
     dto::link::UpdateLinkInput,
     repository::{
         action::v1::ActionState,
-        intent::v2::IntentState,
+        intent::v1::IntentState,
         link::v1::{LinkState, LinkType},
     },
 };

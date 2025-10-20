@@ -1,9 +1,16 @@
-use cashier_backend_types::repository::processing_transaction::ProcessingTransaction;
+use cashier_backend_types::repository::processing_transaction::{
+    ProcessingTransaction, ProcessingTransactionCodec,
+};
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
+use ic_mple_structures::{BTreeMapIteratorStructure, BTreeMapStructure, VersionedBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
-pub type ProcessingTransactionRepositoryStorage =
-    StableBTreeMap<String, ProcessingTransaction, VirtualMemory<DefaultMemoryImpl>>;
+pub type ProcessingTransactionRepositoryStorage = VersionedBTreeMap<
+    String,
+    ProcessingTransaction,
+    ProcessingTransactionCodec,
+    VirtualMemory<DefaultMemoryImpl>,
+>;
 
 pub struct ProcessingTransactionRepository<S: Storage<ProcessingTransactionRepositoryStorage>> {
     storage: S,
@@ -32,7 +39,8 @@ impl<S: Storage<ProcessingTransactionRepositoryStorage>> ProcessingTransactionRe
     }
 
     pub fn get_all(&self) -> Vec<ProcessingTransaction> {
-        self.storage.with_borrow(|store| store.values().collect())
+        self.storage
+            .with_borrow(|store| store.iter().map(|(_, v)| v).collect::<Vec<_>>())
     }
 }
 

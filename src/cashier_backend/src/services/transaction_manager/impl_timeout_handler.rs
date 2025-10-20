@@ -8,7 +8,7 @@ use crate::{
 use crate::{
     repositories::Repositories, services::transaction_manager::traits::TransactionValidator,
 };
-use cashier_backend_types::{error::CanisterError, repository::transaction::v2::TransactionState};
+use cashier_backend_types::{error::CanisterError, repository::transaction::v1::TransactionState};
 use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
 use log::{error, info};
 use std::time::Duration;

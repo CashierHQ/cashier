@@ -12,7 +12,7 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::{
         common::Asset,
-        transaction::v2::{
+        transaction::v1::{
             IcTransaction, Icrc1Transfer, Icrc2Approve, Protocol, Transaction, TransactionState,
         },
     },
