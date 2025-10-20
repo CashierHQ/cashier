@@ -5,6 +5,8 @@ use crate::repositories::Repositories;
 use crate::services::action::ActionService;
 use crate::{link_v2::links::factory, repositories};
 use candid::Principal;
+use cashier_backend_types::link_v2::ProcessActionResult;
+use cashier_backend_types::repository::action::v1::Action;
 use cashier_backend_types::{
     dto::{
         action::ActionDto,
@@ -202,6 +204,32 @@ impl<R: Repositories> LinkV2Service<R> {
                 intent_txs: create_action_result.intent_txs_map.clone(),
             },
             create_action_result.icrc112_requests,
+        );
+
+        Ok(action_dto)
+    }
+
+    pub async fn process_action(
+        &mut self,
+        caller: Principal,
+        action: &Action,
+        canister_id: Principal,
+    ) -> Result<ActionDto, CanisterError> {
+        let link = self
+            .link_repository
+            .get(&action.link_id)
+            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+
+        let link = factory::from_link(link, canister_id)?;
+        let process_action_result = link.process_action(caller, action).await?;
+
+        let action_dto = ActionDto::build(
+            &ActionData {
+                action: process_action_result.action.clone(),
+                intents: process_action_result.intents.clone(),
+                intent_txs: process_action_result.intent_txs_map,
+            },
+            None,
         );
 
         Ok(action_dto)

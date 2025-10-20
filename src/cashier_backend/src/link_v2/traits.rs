@@ -4,8 +4,11 @@
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::CreateActionResult,
-    repository::{action::v1::ActionType, link::v1::Link},
+    link_v2::{CreateActionResult, ProcessActionResult},
+    repository::{
+        action::v1::{Action, ActionType},
+        link::v1::Link,
+    },
 };
 use std::{fmt::Debug, future::Future, pin::Pin};
 
@@ -31,6 +34,14 @@ pub trait LinkV2: Debug {
         action: ActionType,
     ) -> Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>>;
 
+    fn process_action(
+        &self,
+        caller: Principal,
+        action: &Action,
+    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("process_action not implemented")) })
+    }
+
     /// Publish the link, changing its state to ACTIVE
     /// # Returns
     /// * `Link` - The updated link model after publishing
@@ -48,8 +59,8 @@ pub trait LinkV2: Debug {
         Box::pin(async move { Err(CanisterError::from("withdraw not implemented")) })
     }
 
-    fn claim(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("claim not implemented")) })
+    fn use_link(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("use_link not implemented")) })
     }
 }
 
@@ -71,15 +82,7 @@ pub trait LinkV2State: Debug {
         Box::pin(async move { Err(CanisterError::from("withdraw not implemented")) })
     }
 
-    fn claim(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("claim not implemented")) })
-    }
-
-    fn create_action(
-        &self,
-        _canister_id: Principal,
-        _action_type: ActionType,
-    ) -> Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("create_action not implemented")) })
+    fn use_link(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("use_link not implemented")) })
     }
 }

@@ -11,3 +11,10 @@ pub struct CreateActionResult {
     pub intent_txs_map: HashMap<String, Vec<Transaction>>,
     pub icrc112_requests: Option<Icrc112Requests>,
 }
+
+#[derive(Debug, Clone)]
+pub struct ProcessActionResult {
+    pub action: Action,
+    pub intents: Vec<Intent>,
+    pub intent_txs_map: HashMap<String, Vec<Transaction>>,
+}
