@@ -5,7 +5,7 @@ import type { LinkState } from ".";
 import type { LinkStore } from "../linkStore.svelte";
 import { AddAssetState } from "./addAsset";
 import { LinkCreatedState } from "./created";
-import { Action } from "../../types/action/action";
+import Action from "../../types/action/action";
 import { fromNullable } from "@dfinity/utils";
 
 // State when the user is previewing the link before creation
