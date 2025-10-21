@@ -155,10 +155,11 @@ pub async fn user_create_action(input: CreateActionInput) -> Result<ActionDto, C
 /// * `Ok(ActionDto)` - Updated action data after processing
 /// * `Err(CanisterError)` - Error if processing fails or invalid action type
 #[update]
+#[allow(deprecated)]
+#[deprecated = "Do not use. Use user_process_action instead. To be removed when new frontend is ready"]
 pub async fn process_action_anonymous(
     input: ProcessActionAnonymousInput,
 ) -> Result<ActionDto, CanisterError> {
-    let TODO = "TODO";
     info!("[process_action_anonymous]");
     debug!("[process_action_anonymous] input: {input:?}");
 
@@ -179,6 +180,8 @@ pub async fn process_action_anonymous(
 /// * `Ok(ActionDto)` - Created action data with associated intents
 /// * `Err(CanisterError)` - Error if creation fails or action already exists
 #[update]
+#[allow(deprecated)]
+#[deprecated = "Do not use. Use create_action_anonymous instead. To be removed when new frontend is ready"]
 pub async fn create_action_anonymous(
     input: CreateActionAnonymousInput,
 ) -> Result<ActionDto, CanisterError> {
@@ -203,12 +206,10 @@ pub async fn create_action_anonymous(
 /// * `Ok(Some(LinkGetUserStateOutput))` - Current user state and action data if found
 /// * `Ok(None)` - If no action exists for the user
 /// * `Err(CanisterError)` - Error if validation fails or invalid parameters
-#[update]
+#[query]
 pub async fn link_get_user_state(
     input: LinkGetUserStateInput,
 ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
-
-    let TODO = "TODO";
 
     info!("[link_get_user_state]");
     debug!("[link_get_user_state] input: {input:?}");
