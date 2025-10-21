@@ -99,5 +99,5 @@ jobs:
           echo "Deploying to DFX network: ${DFX_NETWORK} (environment: ${ENVIRONMENT})"
 
           # Build frontend for the environment, then deploy all canisters using the DFX network name
-          just build_frontend "${ENVIRONMENT}"
+          just build "${ENVIRONMENT}"
           just deploy-all ${DFX_NETWORK}
