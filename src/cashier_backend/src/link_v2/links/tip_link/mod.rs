@@ -153,17 +153,11 @@ impl LinkV2 for TipLink {
         Box::pin(async move {
             let state = TipLink::get_state_handler(&link, canister_id)?;
 
-            match action.r#type {
-                ActionType::CreateLink => {
-                    state.activate().await?;
-                }
-                ActionType::Use => {
-                    state.use_link(caller).await?;
-                }
-                ActionType::Withdraw => {
-                    state.withdraw().await?;
-                }
-            }
+            let updated_link = match action.r#type {
+                ActionType::CreateLink => state.activate().await?,
+                ActionType::Use => state.use_link(caller).await?,
+                ActionType::Withdraw => state.withdraw().await?,
+            };
 
             Err(CanisterError::from(
                 "process_action not implemented for TipLink",
