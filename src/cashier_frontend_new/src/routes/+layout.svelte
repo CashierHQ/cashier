@@ -2,7 +2,6 @@
 <script lang="ts">
   import favicon from "$lib/assets/favicon.svg";
   import Navbar from "$modules/shared/components/Navbar.svelte";
-
   import "../app.css";
 
   let { children } = $props();

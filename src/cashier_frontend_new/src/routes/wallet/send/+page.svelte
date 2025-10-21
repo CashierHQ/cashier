@@ -9,7 +9,7 @@
   import {
     formatBalanceUnits,
     parseBalanceUnits,
-  } from "$modules/token/utils/converter";
+  } from "$modules/shared/utils/converter";
   import { Principal } from "@dfinity/principal";
 
   let selectedToken: string = $state(ICP_LEDGER_CANISTER_ID);

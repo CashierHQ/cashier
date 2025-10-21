@@ -1,6 +1,7 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import type { LinkStore } from "../../state/linkStore.svelte";
+  import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
 
   const {
     link,
@@ -26,7 +27,9 @@
     </div>
     <div>
       <strong>Amount:</strong>
-      {link.tipLink.amount}
+      {#if link.tipLink}
+        {tokenMetadataQuery(link.tipLink.asset).data?.symbol ?? ""}
+      {/if}
     </div>
   {/if}
 
