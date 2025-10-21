@@ -4,7 +4,7 @@
   import {
     balanceToUSDValue,
     parseBalanceUnits,
-  } from "$modules/token/utils/converter";
+  } from "$modules/shared/utils/converter";
 </script>
 
 <div>

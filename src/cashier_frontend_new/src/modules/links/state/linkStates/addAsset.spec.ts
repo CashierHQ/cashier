@@ -15,7 +15,7 @@ describe("AddAssetState", () => {
     expect(store.state.step).toEqual(LinkStep.ADD_ASSET);
 
     // Arrange: provide tip link details
-    store.tipLink = { asset: "aaaaa-aa", amount: 10 };
+    store.tipLink = { asset: "aaaaa-aa", useAmount: 10 };
 
     // Act: attempt to go next
     await store.goNext();
@@ -46,7 +46,7 @@ describe("AddAssetState", () => {
     await store.goNext(); // to ADD_ASSET
 
     // Act: set empty asset
-    store.tipLink = { asset: "", amount: 10 };
+    store.tipLink = { asset: "", useAmount: 10 };
 
     // Assert
     await expect(store.goNext()).rejects.toThrow(
@@ -61,7 +61,7 @@ describe("AddAssetState", () => {
     await store.goNext(); // to ADD_ASSET
 
     // Act: set invalid amount
-    store.tipLink = { asset: "aaaaa-aa", amount: 0 };
+    store.tipLink = { asset: "aaaaa-aa", useAmount: 0 };
 
     // Assert
     await expect(store.goNext()).rejects.toThrow(

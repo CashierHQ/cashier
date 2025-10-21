@@ -5,7 +5,7 @@ import { LinkType } from "./linkType";
 describe("CreateLinkData.toCreateLinkInput", () => {
   it("converts TIP CreateLinkData into CreateLinkInput Ok result", () => {
     // Arrange
-    const tip: TipLink = { asset: "aaaaa-aa", amount: 42 };
+    const tip: TipLink = { asset: "aaaaa-aa", useAmount: 42 };
     const data = new CreateLinkData({
       title: "My tip",
       linkType: LinkType.TIP,

@@ -5,6 +5,8 @@ import type { LinkState } from ".";
 import type { LinkStore } from "../linkStore.svelte";
 import { AddAssetState } from "./addAsset";
 import { LinkCreatedState } from "./created";
+import Action from "../../types/action/action";
+import { fromNullable } from "@dfinity/utils";
 
 // State when the user is previewing the link before creation
 export class PreviewState implements LinkState {
@@ -23,13 +25,18 @@ export class PreviewState implements LinkState {
       tipLink: this.#link.tipLink,
     });
 
-    const result = await cashierBackendService.createLink(data);
-    if (result.isOk()) {
-      // creation succeeded — reset the form and return the created link
-      this.#link.state = new LinkCreatedState(this.#link);
-      this.#link.id = result.value.id;
-    } else {
+    const result = await cashierBackendService.createLinkV2(data);
+
+    if (result.isErr()) {
       throw new Error(`Link creation failed: ${result.error.message}`);
+    }
+
+    this.#link.state = new LinkCreatedState(this.#link);
+    this.#link.id = result.value.link.id;
+
+    const action = fromNullable(result.value.action);
+    if (action) {
+      this.#link.action = Action.fromBackendType(action);
     }
   }
 
