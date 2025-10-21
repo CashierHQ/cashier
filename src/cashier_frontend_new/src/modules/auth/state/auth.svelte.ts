@@ -10,7 +10,7 @@ import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
 import { Actor, HttpAgent } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
-import type { CreatePnpArgs } from "@windoge98/plug-n-play";
+import type { BaseSignerAdapter, CreatePnpArgs } from "@windoge98/plug-n-play";
 import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
 import { PersistedState } from "runed";
 
@@ -127,7 +127,7 @@ export const authState = {
       throw new Error("No adapter is initialized");
     }
 
-    const provider = pnp.provider as IISignerAdapter;
+    const provider = pnp.provider as BaseSignerAdapter;
 
     return provider.getSigner();
   },
