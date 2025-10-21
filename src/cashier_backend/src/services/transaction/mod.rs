@@ -2,14 +2,13 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::{
-    repositories::{Repositories, transaction::TransactionRepository},
-    utils::helper::to_subaccount,
+    repositories::{transaction::TransactionRepository, Repositories}, utils::helper::to_subaccount
 };
 use candid::Principal;
-use cashier_backend_types::repository::{
+use cashier_backend_types::{constant::TRIGGER_TRANSACTION_METHOD_NAME, repository::{
     common::Asset,
     transaction::v1::{IcTransaction, Protocol, Transaction, TransactionState},
-};
+}};
 use cashier_backend_types::{
     dto::action::{Icrc112Request, Icrc112Requests, TriggerTransactionInput},
     error::CanisterError,
@@ -157,7 +156,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionService<E, R> {
                     action_id: action_id.to_string(),
                     transaction_id: tx.id.clone(),
                 };
-                let method = "trigger_transaction";
+                let method = TRIGGER_TRANSACTION_METHOD_NAME;
                 let canister_call = build_canister_call(canister_id, method, &input);
                 let nonce = self.nonce_from_tx_id(&tx.id)?;
 

@@ -25,7 +25,7 @@ async fn it_should_error_add_gate_due_to_anonymous_caller() {
             result
                 .unwrap_err()
                 .to_string()
-                .contains("Anonymous caller is not allowed")
+                .contains("AnonimousUserNotAllowed")
         );
 
         Ok(())
@@ -148,7 +148,7 @@ async fn it_should_error_open_password_gate_due_to_anonymous_caller() {
             result
                 .unwrap_err()
                 .to_string()
-                .contains("Anonymous caller is not allowed")
+                .contains("AnonimousUserNotAllowed")
         );
 
         Ok(())
@@ -272,7 +272,7 @@ async fn it_should_error_get_gate_by_subject_due_to_anonymous_caller() {
             result
                 .unwrap_err()
                 .to_string()
-                .contains("Anonymous caller is not allowed")
+                .contains("AnonimousUserNotAllowed")
         );
 
         Ok(())

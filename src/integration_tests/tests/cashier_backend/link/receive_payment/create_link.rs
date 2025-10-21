@@ -39,9 +39,10 @@ async fn it_should_error_create_link_payment_if_caller_anonymous() {
         // Assert
         assert!(result.is_err());
         if let Err(CanisterClientError::PocketIcTestError(err)) = result {
+            println!("Reject message: {}", err.reject_message);
             assert!(
                 err.reject_message
-                    .contains("Anonymous caller is not allowed")
+                    .contains("AnonimousUserNotAllowed")
             );
         } else {
             panic!("Expected PocketIcTestError, got {:?}", result);

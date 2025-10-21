@@ -38,7 +38,7 @@ async fn it_should_error_withdraw_link_token_basket_if_caller_anonymous() {
         if let Err(CanisterClientError::PocketIcTestError(err)) = result {
             assert!(
                 err.reject_message
-                    .contains("Anonymous caller is not allowed")
+                    .contains("AnonimousUserNotAllowed")
             );
         } else {
             panic!("Expected PocketIcTestError, got {:?}", result);

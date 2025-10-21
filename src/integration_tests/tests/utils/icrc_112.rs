@@ -1,6 +1,6 @@
 use candid::Principal;
 
-use cashier_backend_types::dto::action::Icrc112Request;
+use cashier_backend_types::{constant::TRIGGER_TRANSACTION_METHOD_NAME, dto::action::Icrc112Request};
 use cashier_common::test_utils::random_principal_id;
 
 // Response from a canister call
@@ -55,7 +55,7 @@ pub async fn execute_icrc112_request(
 }
 
 // this function is similar to execute_icrc112_request
-// but we filter out the "trigger_transaction" and use a random caller to call it
+// but we filter out the TRIGGER_TRANSACTION_METHOD_NAME and use a random caller to call it
 // it purpose is to try trigger error for method trigger_transaction
 pub async fn execute_icrc112_request_malformed(
     icrc_112_requests: &Vec<Vec<Icrc112Request>>,
@@ -67,7 +67,7 @@ pub async fn execute_icrc112_request_malformed(
         let mut parallel_responses: Vec<CanisterCallResponse> = Vec::new();
         // Execute parallel requests sequentially for now (can be made parallel later)
         for (i, request) in parallel_requests.iter().enumerate() {
-            let res = if request.method == "trigger_transaction" {
+            let res = if request.method == TRIGGER_TRANSACTION_METHOD_NAME {
                 let random_caller = random_principal_id();
                 ctx.client
                     .update_call(

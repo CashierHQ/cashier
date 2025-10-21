@@ -3,6 +3,7 @@ use crate::utils::icrc_112::execute_icrc112_request_malformed;
 use crate::utils::{
     icrc_112::execute_icrc112_request, principal::TestUser, with_pocket_ic_context,
 };
+use cashier_backend_types::constant::TRIGGER_TRANSACTION_METHOD_NAME;
 use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::{
     constant,
@@ -85,7 +86,7 @@ async fn it_should_call_icrc_114_validate_success() {
                 .all(|intent| intent.state == IntentState::Processing)
         );
 
-        // Arrange - execute_icrc112_request and select the "trigger_transaction" action
+        // Arrange - execute_icrc112_request and select the TRIGGER_TRANSACTION_METHOD_NAME action
         let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
         let icrc112_execution_result = execute_icrc112_request(icrc_112_requests, caller, ctx)
             .await
@@ -93,7 +94,7 @@ async fn it_should_call_icrc_114_validate_success() {
         let trigger_transaction_response = icrc112_execution_result
             .into_iter()
             .flatten()
-            .find(|r| r.method == "trigger_transaction")
+            .find(|r| r.method == TRIGGER_TRANSACTION_METHOD_NAME)
             .expect("trigger_transaction response not found");
         let trigger_transaction_result = Icrc114ValidateArgs {
             canister_id: trigger_transaction_response.canister_id,
@@ -192,7 +193,7 @@ async fn it_should_return_false_if_validate_icrc_112_response_failed() {
                 .all(|intent| intent.state == IntentState::Processing)
         );
 
-        // Arrange - execute_icrc112_request and select the "trigger_transaction" action
+        // Arrange - execute_icrc112_request and select the TRIGGER_TRANSACTION_METHOD_NAME action
         let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
         let icrc112_execution_result =
             execute_icrc112_request_malformed(icrc_112_requests, caller, ctx)
@@ -201,7 +202,7 @@ async fn it_should_return_false_if_validate_icrc_112_response_failed() {
         let trigger_transaction_response = icrc112_execution_result
             .into_iter()
             .flatten()
-            .find(|r| r.method == "trigger_transaction")
+            .find(|r| r.method == TRIGGER_TRANSACTION_METHOD_NAME)
             .expect("trigger_transaction response not found");
         let trigger_transaction_result = Icrc114ValidateArgs {
             canister_id: trigger_transaction_response.canister_id,

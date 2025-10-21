@@ -19,7 +19,7 @@ use token_storage_types::token::{
 fn not_anonymous_caller() -> Principal {
     let caller = msg_caller();
     if caller == Principal::anonymous() {
-        panic!("Anonymous caller is not allowed");
+        panic!("AnonimousUserNotAllowed");
     }
     caller
 }

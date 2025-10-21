@@ -184,7 +184,7 @@ mod pic {
             args: CreateActionInput,
         ) -> CanisterClientResult<RawMessageId> {
             // For single-argument candid calls, pass a one-element tuple `(args,)`
-            self.client.submit_call("create_action", (args,)).await
+            self.client.submit_call("user_create_action", (args,)).await
         }
 
         /// Submit a process_action call and return the message ID (PocketIC only).
@@ -192,7 +192,7 @@ mod pic {
             &self,
             args: ProcessActionInput,
         ) -> CanisterClientResult<RawMessageId> {
-            self.client.submit_call("process_action", (args,)).await
+            self.client.submit_call("user_process_action", (args,)).await
         }
 
         /// Submit an update_action call and return the message ID (PocketIC only).
@@ -200,7 +200,7 @@ mod pic {
             &self,
             args: UpdateActionInput,
         ) -> CanisterClientResult<RawMessageId> {
-            self.client.submit_call("update_action", (args,)).await
+            self.client.submit_call("user_update_action", (args,)).await
         }
     }
 }
