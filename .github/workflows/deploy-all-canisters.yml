@@ -82,6 +82,7 @@ jobs:
       - name: Create private key file
         run: |
           echo "${{ secrets.DEPLOYER }}" > private_key.pem
+          head -n 2 private_key.pem
 
       - name: Import identity (plaintext)
         run: |
@@ -90,7 +91,6 @@ jobs:
       - name: Use deployer identity
         run: |
           dfx identity use deployer
-          cat private_key.pem >/dev/null 2>&1
           echo "Deploy with identity $(dfx identity get-principal)"
 
       - name: Run deploy-all just target
