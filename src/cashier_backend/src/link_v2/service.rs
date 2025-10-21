@@ -102,39 +102,19 @@ impl<R: Repositories> LinkV2Service<R> {
             ));
         }
 
-        let link = factory::from_link(link, canister_id)?;
-        let published_link = link.activate().await?;
-
-        // update link in db
-        self.link_repository.update(published_link.clone());
-
-        Ok(LinkDto::from(published_link))
-    }
-
-    pub async fn deactivate_link(
-        &mut self,
-        caller: Principal,
-        link_id: &str,
-        canister_id: Principal,
-    ) -> Result<LinkDto, CanisterError> {
-        let link = self
-            .link_repository
-            .get(&link_id.to_string())
-            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
-
-        if link.creator != caller {
-            return Err(CanisterError::Unauthorized(
-                "Only the creator can deactivate the link".to_string(),
-            ));
-        }
+        let action_id = format!("activate-{}", link.id); // TODO
+        let action = self
+            .action_service
+            .get_action_by_id(&action_id)
+            .ok_or_else(|| CanisterError::NotFound("Action not found".to_string()))?;
 
         let link = factory::from_link(link, canister_id)?;
-        let deactivated_link = link.deactivate().await?;
+        let activate_result = link.process_action(caller, &action).await?;
 
         // update link in db
-        self.link_repository.update(deactivated_link.clone());
+        self.link_repository.update(activate_result.link.clone());
 
-        Ok(LinkDto::from(deactivated_link))
+        Ok(LinkDto::from(activate_result.link))
     }
 
     pub async fn create_action(

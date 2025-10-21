@@ -11,11 +11,15 @@ use crate::{
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    repository::link::v1::{Link, LinkState},
+    link_v2::ProcessActionResult,
+    repository::{
+        action::v1::{Action, ActionType},
+        link::v1::{Link, LinkState},
+    },
 };
-use std::{fmt::Debug, future::Future, pin::Pin};
+use std::{collections::HashMap, fmt::Debug, future::Future, pin::Pin};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ActiveState {
     pub link: Link,
     pub canister_id: Principal,
@@ -28,9 +32,7 @@ impl ActiveState {
             canister_id,
         }
     }
-}
 
-impl LinkV2State for ActiveState {
     fn deactivate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
         let mut link = self.link.clone();
 
@@ -40,7 +42,7 @@ impl LinkV2State for ActiveState {
         })
     }
 
-    fn use_link(
+    fn claim(
         &self,
         caller: Principal,
     ) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
@@ -67,6 +69,43 @@ impl LinkV2State for ActiveState {
             }
 
             Ok(link)
+        })
+    }
+}
+
+impl LinkV2State for ActiveState {
+    fn process_action(
+        &self,
+        caller: Principal,
+        action: &Action,
+    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
+        let state = self.clone();
+        let action = action.clone();
+
+        Box::pin(async move {
+            match action.r#type {
+                ActionType::Deactivate => {
+                    let updated_link = state.deactivate().await?;
+                    Ok(ProcessActionResult {
+                        link: updated_link,
+                        action,
+                        intents: vec![],
+                        intent_txs_map: HashMap::new(),
+                    })
+                }
+                ActionType::Claim => {
+                    let updated_link = state.claim(caller).await?;
+                    Ok(ProcessActionResult {
+                        link: updated_link,
+                        action,
+                        intents: vec![],
+                        intent_txs_map: HashMap::new(),
+                    })
+                }
+                _ => Err(CanisterError::from(
+                    "Unsupported action type for ActiveState",
+                )),
+            }
         })
     }
 }
