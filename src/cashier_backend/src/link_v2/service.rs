@@ -5,8 +5,6 @@ use crate::repositories::Repositories;
 use crate::services::action::ActionService;
 use crate::{link_v2::links::factory, repositories};
 use candid::Principal;
-use cashier_backend_types::link_v2::ProcessActionResult;
-use cashier_backend_types::repository::action::v1::Action;
 use cashier_backend_types::{
     dto::{
         action::ActionDto,
@@ -139,32 +137,6 @@ impl<R: Repositories> LinkV2Service<R> {
         Ok(LinkDto::from(deactivated_link))
     }
 
-    pub async fn withdraw_link(
-        &mut self,
-        caller: Principal,
-        link_id: &str,
-        canister_id: Principal,
-    ) -> Result<LinkDto, CanisterError> {
-        let link = self
-            .link_repository
-            .get(&link_id.to_string())
-            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
-
-        if link.creator != caller {
-            return Err(CanisterError::Unauthorized(
-                "Only the creator can withdraw from the link".to_string(),
-            ));
-        }
-
-        let link = factory::from_link(link, canister_id)?;
-        let withdrawn_link = link.withdraw().await?;
-
-        // update link in db
-        self.link_repository.update(withdrawn_link.clone());
-
-        Ok(LinkDto::from(withdrawn_link))
-    }
-
     pub async fn create_action(
         &mut self,
         caller: Principal,
@@ -212,16 +184,21 @@ impl<R: Repositories> LinkV2Service<R> {
     pub async fn process_action(
         &mut self,
         caller: Principal,
-        action: &Action,
+        action_id: &str,
         canister_id: Principal,
     ) -> Result<ActionDto, CanisterError> {
+        let action = self
+            .action_service
+            .get_action_by_id(action_id)
+            .ok_or_else(|| CanisterError::NotFound("Action not found".to_string()))?;
+
         let link = self
             .link_repository
             .get(&action.link_id)
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
         let link = factory::from_link(link, canister_id)?;
-        let process_action_result = link.process_action(caller, action).await?;
+        let process_action_result = link.process_action(caller, &action).await?;
 
         let action_dto = ActionDto::build(
             &ActionData {
