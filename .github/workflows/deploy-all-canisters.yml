@@ -85,7 +85,7 @@ jobs:
 
       - name: Import identity (plaintext)
         run: |
-          dfx identity import deployer private_key.pem --storage-mode=plaintext || true
+          dfx identity import deployer private_key.pem --storage-mode=plaintext
 
       - name: Use deployer identity
         run: |
