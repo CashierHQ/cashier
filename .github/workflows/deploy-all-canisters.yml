@@ -1,115 +1,120 @@
-name: "Deploy All Canisters"
-
+name: Frontend Deployment
 on:
-  pull_request:
-    types: [closed]
-    branches:
-      - main
-      - staging
-      - dev
-    # Only run when PRs to these branches are merged
-  push:
-    branches:
-      - feature/deployment
+    # For main and staging branches, only trigger on closed PRs
+    pull_request:
+        paths:
+            - "src/cashier_frontend/**"
+        branches:
+            - main
+            - staging
+            - dev
+        types:
+            - closed
+    push:
+        paths:
+            - "src/cashier_frontend/**"
+        branches-ignore:
+            - main
+            - staging
+
+# Permissions needed for the GITHUB_TOKEN
+permissions:
+    actions: write # This allows the workflow to delete workflow runs
+    contents: read # Default permission to read the repository contents
 
 jobs:
-  setup_environment:
-    name: Determine environment
-    runs-on: ubuntu-latest
-    outputs:
-      environment: ${{ steps.set-env.outputs.environment }}
-      dfx_network: ${{ steps.set-env.outputs.dfx_network }}
-    steps:
-      - name: Set deployment environment
-        id: set-env
-        run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            BRANCH_NAME="${{ github.event.pull_request.base.ref }}"
-          else
-            BRANCH_NAME="${{ github.ref_name }}"
-          fi
+    setup_environment:
+        runs-on: ubuntu-latest
+        outputs:
+            environment: ${{ steps.set-env.outputs.environment }}
+        steps:
+            - name: Set deployment environment
+              id: set-env
+              run: |
+                  # For pull requests, use base_ref, for pushes use ref_name
+                  if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+                    TARGET_BRANCH="${{ github.base_ref }}"
+                  else
+                    TARGET_BRANCH="${{ github.ref_name }}"
+                  fi
 
-          echo "Detected branch: ${BRANCH_NAME}"
+                  echo "Detected branch: $TARGET_BRANCH"
 
-          # Map branch to logical environment
-          if [[ "${BRANCH_NAME}" == "main" ]]; then
-            ENVIRONMENT=production
-            DFX_NETWORK=ic
-          elif [[ "${BRANCH_NAME}" == "staging" ]]; then
-            ENVIRONMENT=staging
-            DFX_NETWORK=staging
-          elif [[ "${BRANCH_NAME}" == "dev" ]]; then
-            ENVIRONMENT=dev
-            DFX_NETWORK=dev
-          else
-            ENVIRONMENT=dev
-            DFX_NETWORK=dev
-          fi
+                  if [[ "$TARGET_BRANCH" == "main" ]]; then
+                    echo "environment=production" >> $GITHUB_OUTPUT
+                  elif [[ "$TARGET_BRANCH" == "staging" ]]; then
+                    echo "environment=staging" >> $GITHUB_OUTPUT
+                  else
+                    # Any other branch will deploy to dev environment
+                    echo "environment=dev" >> $GITHUB_OUTPUT
+                  fi
 
-          echo "environment=${ENVIRONMENT}" >> $GITHUB_OUTPUT
-          echo "dfx_network=${DFX_NETWORK}" >> $GITHUB_OUTPUT
+    build_and_deploy:
+        runs-on: ubuntu-latest
+        needs: setup_environment
+        environment: ${{ needs.setup_environment.outputs.environment }}
 
-  deploy_all:
-    name: Deploy all canisters
-    needs: setup_environment
-    permissions:
-      contents: read
-      actions: write
-    runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true)
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
-          targets: wasm32-unknown-unknown
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "22"
 
-      - name: Install Just command runner
-        uses: extractions/setup-just@v1
+            - name: Install dfx
+              uses: dfinity/setup-dfx@main
 
-      - name: Install dfx
-        uses: dfinity/setup-dfx@main
-        with:
-          dfx-version: "0.29.2"
-      
-      - name: Create private key file
-        run: echo "${{ secrets.DEPLOYER }}" > private_key.pem
+            - name: Confirm successful installation
+              run: dfx --version
 
-      # DANGEROUS: This is a plaintext identity import
-      - name: Import identity
-        run: dfx identity import deployer private_key.pem --storage-mode=plaintext
+            - name: Install Just command runner
+              uses: extractions/setup-just@v1
 
-      - name: Use deployer identity
-        run: |
-          dfx identity use deployer
-          dfx identity get-principal
+            - name: Create private key file
+              run: |
+                  echo "${{ secrets.DEPLOYER }}" > private_key.pem
 
+            # DANGEROUS: This is a plaintext identity import
+            - name: Import identity
+              run: dfx identity import deployer private_key.pem --storage-mode=plaintext
+            # DANGEROUS: Do not echo the private key to the console
 
-      - name: Install ic-wasm
-        run: |
-          wget https://github.com/dfinity/ic-wasm/releases/download/0.9.8/ic-wasm-linux64 -O /usr/local/bin/ic-wasm
-          chmod +x /usr/local/bin/ic-wasm
+            - name: Get cashier dev address
+              run: |
+                  dfx identity use deployer
+                  dfx identity get-principal
 
-      - name: Install candid-extractor
-        run: |
-          wget https://github.com/dfinity/candid-extractor/releases/download/0.1.6/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -O /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz
-          tar -xvf /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -C /usr/local/bin
-          chmod +x /usr/local/bin/candid-extractor
+            - name: Deploy to ${{ needs.setup_environment.outputs.environment }} environment
+              env:
+                  VITE_IC_EXPLORER_BASE_URL: ${{ vars.VITE_IC_EXPLORER_BASE_URL }}
+                  VITE_BACKEND_CANISTER_ID: ${{ vars.VITE_BACKEND_CANISTER_ID }}
+                  VITE_TOKEN_STORAGE_CANISTER_ID: ${{ vars.VITE_TOKEN_STORAGE_CANISTER_ID }}
+                  DFX_WARNING: -mainnet_plaintext_identity
+                  ENVIRONMENT: ${{ needs.setup_environment.outputs.environment }}
+              run: |
+                  # Set environment-specific network
+                  if [[ "$ENVIRONMENT" == "production" ]]; then
+                    NETWORK="ic"
+                    ENV_FILE=".env.production"
+                  elif [[ "$ENVIRONMENT" == "staging" ]]; then
+                    NETWORK="staging"
+                    ENV_FILE=".env.staging"
+                  else
+                    NETWORK="dev"
+                    ENV_FILE=".env.dev"
+                  fi
 
+                  # Create environment file with the correct values
+                  echo "VITE_IC_EXPLORER_BASE_URL=${VITE_IC_EXPLORER_BASE_URL}" > src/cashier_frontend/${ENV_FILE}
+                  echo "VITE_BACKEND_CANISTER_ID=${VITE_BACKEND_CANISTER_ID}" >> src/cashier_frontend/${ENV_FILE}
+                  echo "VITE_TOKEN_STORAGE_CANISTER_ID=${VITE_TOKEN_STORAGE_CANISTER_ID}" >> src/cashier_frontend/${ENV_FILE}
+                  echo "VITE_FEATURE_FLAGS_ENABLE_SWAP=true" >> src/cashier_frontend/${ENV_FILE}
+                  echo "VITE_ENV=${ENVIRONMENT}" >> src/cashier_frontend/${ENV_FILE}
 
-      - name: Run deploy-all just target
-        env:
-          ENVIRONMENT: ${{ needs.setup_environment.outputs.environment }}
-          DFX_NETWORK: ${{ needs.setup_environment.outputs.dfx_network }}
-          DFX_WARNING: -mainnet_plaintext_identity
-        run: |
-          echo "Deploying to DFX network: ${DFX_NETWORK} (environment: ${ENVIRONMENT})"
+                  echo "Created ${ENV_FILE} with values:"
+                  cat src/cashier_frontend/${ENV_FILE}
 
-          # Build frontend for the environment, then deploy all canisters using the DFX network name
-          echo "Deploy with identity $(dfx identity get-principal)"
-          just build ${ENVIRONMENT}
-          just deploy-all ${DFX_NETWORK}
+                  just build_frontend "$ENVIRONMENT"
+                  dfx deploy cashier_frontend --network ${NETWORK}
