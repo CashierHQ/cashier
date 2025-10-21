@@ -92,7 +92,10 @@ async fn test_request_lock_for_trigger_action() {
         let failed_count = results.len() - success_count;
 
         // Assert
-        assert_eq!(trigger_transaction_req.method, TRIGGER_TRANSACTION_METHOD_NAME);
+        assert_eq!(
+            trigger_transaction_req.method,
+            TRIGGER_TRANSACTION_METHOD_NAME
+        );
         assert_eq!(success_count, 1);
         assert_eq!(failed_count, 2);
 

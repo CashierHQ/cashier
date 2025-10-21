@@ -27,7 +27,7 @@ fn inspect_messages() {
             } else {
                 Ok(())
             }
-        },
+        }
         _ => Ok(()),
     };
 

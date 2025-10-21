@@ -88,7 +88,9 @@ impl<C: CanisterClient> TokenStorageClient<C> {
         &self,
         input: UpdateTokenInput,
     ) -> CanisterClientResult<Result<(), String>> {
-        self.client.update("user_update_token_enable", (input,)).await
+        self.client
+            .update("user_update_token_enable", (input,))
+            .await
     }
 
     /// Adds a single token to the caller's list
