@@ -19,8 +19,6 @@ on:
       - "src/cashier_frontend_new/**"
       - "src/cashier_frontend/package.json"
       - "src/cashier_frontend_new/package.json"
-    tags:
-      - "v*"
     paths-ignore:
       - "**/README.md"
 
