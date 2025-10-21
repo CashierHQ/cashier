@@ -94,6 +94,7 @@ jobs:
         env:
           ENVIRONMENT: ${{ steps.set-env.outputs.environment }}
           DFX_NETWORK: ${{ steps.set-env.outputs.dfx_network }}
+          DFX_WARNING: -mainnet_plaintext_identity
         run: |
           echo "Deploying to DFX network: ${DFX_NETWORK} (environment: ${ENVIRONMENT})"
 
