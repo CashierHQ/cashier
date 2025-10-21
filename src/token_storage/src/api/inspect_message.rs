@@ -1,4 +1,6 @@
+use candid::Principal;
 use ic_cdk::{self, api, inspect_message, trap};
+use ic_mple_auth::error::AuthError;
 use token_storage_types::auth::Permission;
 
 use crate::api::state::get_state;
@@ -19,6 +21,13 @@ fn inspect_messages() {
         method if method.starts_with("admin_") => state
             .auth_service
             .check_has_permission(&caller, Permission::Admin),
+        method if method.starts_with("user_") => {
+            if caller == Principal::anonymous() {
+                Err(AuthError::AnonimousUserNotAllowed)
+            } else {
+                Ok(())
+            }
+        },
         _ => Ok(()),
     };
 

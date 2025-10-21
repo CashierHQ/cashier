@@ -24,18 +24,12 @@ export const idlFactory = ({ IDL }) => {
     'tokens' : IDL.Opt(IDL.Vec(RegistryToken)),
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
-  const TokenId = IDL.Variant({
-    'IC' : IDL.Record({ 'ledger_id' : IDL.Principal }),
-  });
-  const AddTokenInput = IDL.Record({
-    'token_id' : TokenId,
-    'index_id' : IDL.Opt(IDL.Text),
-  });
-  const Result = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text });
-  const AddTokensInput = IDL.Record({ 'token_ids' : IDL.Vec(TokenId) });
   const TokenRegistryMetadata = IDL.Record({
     'last_updated' : IDL.Nat64,
     'version' : IDL.Nat64,
+  });
+  const TokenId = IDL.Variant({
+    'IC' : IDL.Record({ 'ledger_id' : IDL.Principal }),
   });
   const Chain = IDL.Variant({ 'IC' : IDL.Null });
   const TokenDto = IDL.Record({
@@ -54,8 +48,8 @@ export const idlFactory = ({ IDL }) => {
     'total_enabled_default' : IDL.Nat64,
     'total_tokens' : IDL.Nat64,
   });
-  const Result_1 = IDL.Variant({ 'Ok' : RegistryStats, 'Err' : IDL.Text });
-  const Result_2 = IDL.Variant({
+  const Result = IDL.Variant({ 'Ok' : RegistryStats, 'Err' : IDL.Text });
+  const Result_1 = IDL.Variant({
     'Ok' : IDL.Vec(IDL.Tuple(TokenId, IDL.Nat)),
     'Err' : IDL.Text,
   });
@@ -64,7 +58,8 @@ export const idlFactory = ({ IDL }) => {
     'version' : IDL.Nat64,
     'enabled' : IDL.Nat64,
   });
-  const Result_3 = IDL.Variant({ 'Ok' : UserTokens, 'Err' : IDL.Text });
+  const Result_2 = IDL.Variant({ 'Ok' : UserTokens, 'Err' : IDL.Text });
+  const Result_3 = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text });
   const TokenStorageError = IDL.Variant({ 'AuthError' : IDL.Text });
   const Result_4 = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : TokenStorageError });
   const UserPreference = IDL.Record({
@@ -95,6 +90,11 @@ export const idlFactory = ({ IDL }) => {
     'git_sha' : IDL.Text,
     'git_commit_timestamp' : IDL.Text,
   });
+  const AddTokenInput = IDL.Record({
+    'token_id' : TokenId,
+    'index_id' : IDL.Opt(IDL.Text),
+  });
+  const AddTokensInput = IDL.Record({ 'token_ids' : IDL.Vec(TokenId) });
   const UpdateTokenBalanceInput = IDL.Record({
     'balance' : IDL.Nat,
     'token_id' : TokenId,
@@ -104,8 +104,6 @@ export const idlFactory = ({ IDL }) => {
     'is_enabled' : IDL.Bool,
   });
   return IDL.Service({
-    'add_token' : IDL.Func([AddTokenInput], [Result], []),
-    'add_token_batch' : IDL.Func([AddTokensInput], [Result], []),
     'admin_get_registry_metadata' : IDL.Func(
         [],
         [TokenRegistryMetadata],
@@ -116,10 +114,10 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(TokenDto)],
         ['query'],
       ),
-    'admin_get_stats' : IDL.Func([], [Result_1], ['query']),
-    'admin_get_user_balance' : IDL.Func([IDL.Principal], [Result_2], ['query']),
-    'admin_get_user_tokens' : IDL.Func([IDL.Principal], [Result_3], ['query']),
-    'admin_initialize_registry' : IDL.Func([], [Result], []),
+    'admin_get_stats' : IDL.Func([], [Result], ['query']),
+    'admin_get_user_balance' : IDL.Func([IDL.Principal], [Result_1], ['query']),
+    'admin_get_user_tokens' : IDL.Func([IDL.Principal], [Result_2], ['query']),
+    'admin_initialize_registry' : IDL.Func([], [Result_3], []),
     'admin_inspect_message_enable' : IDL.Func([IDL.Bool], [Result_4], []),
     'admin_list_tokens_by_wallet' : IDL.Func(
         [IDL.Principal],
@@ -144,15 +142,21 @@ export const idlFactory = ({ IDL }) => {
     'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),
     'is_inspect_message_enabled' : IDL.Func([], [IDL.Bool], ['query']),
     'list_tokens' : IDL.Func([], [Result_5], ['query']),
-    'sync_token_list' : IDL.Func([], [Result], []),
-    'update_token_balance' : IDL.Func(
+    'user_add_token' : IDL.Func([AddTokenInput], [Result_3], []),
+    'user_add_token_batch' : IDL.Func([AddTokensInput], [Result_3], []),
+    'user_sync_token_list' : IDL.Func([], [Result_3], []),
+    'user_update_token_balance' : IDL.Func(
         [IDL.Vec(UpdateTokenBalanceInput)],
-        [Result],
+        [Result_3],
         [],
       ),
-    'update_token_enable' : IDL.Func([UpdateTokenInput], [Result], []),
-    'update_token_registry' : IDL.Func([AddTokenInput], [Result], []),
-    'update_token_registry_batch' : IDL.Func([AddTokensInput], [Result], []),
+    'user_update_token_enable' : IDL.Func([UpdateTokenInput], [Result_3], []),
+    'user_update_token_registry' : IDL.Func([AddTokenInput], [Result_3], []),
+    'user_update_token_registry_batch' : IDL.Func(
+        [AddTokensInput],
+        [Result_3],
+        [],
+      ),
   });
 };
 export const init = ({ IDL }) => {

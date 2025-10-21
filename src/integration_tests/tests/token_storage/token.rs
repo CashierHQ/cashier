@@ -44,7 +44,7 @@ async fn should_error_update_token_enable_for_default_token() {
         };
 
         // Act
-        let result = client.update_token_enable(update_input).await;
+        let result = client.user_update_token_enable(update_input).await;
 
         // Assert
         assert!(result.is_err());
@@ -78,7 +78,7 @@ async fn should_success_update_token_enable_for_non_default_token() {
             },
             index_id: None,
         };
-        let add_result = client.add_token(add_input).await;
+        let add_result = client.user_add_token(add_input).await;
 
         // Assert : add DOGE token
         assert!(add_result.is_ok());
@@ -97,7 +97,7 @@ async fn should_success_update_token_enable_for_non_default_token() {
             },
             is_enabled: false,
         };
-        let update_result = client.update_token_enable(update_input).await;
+        let update_result = client.user_update_token_enable(update_input).await;
 
         // Assert : disable DOGE token
         assert!(update_result.is_ok());

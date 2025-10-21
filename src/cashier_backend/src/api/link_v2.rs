@@ -17,9 +17,9 @@ use log::{debug, info};
 /// * `Ok(GetLinkResp)` - The created link data
 /// * `Err(CanisterError)` - If link creation fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
-async fn create_link_v2(input: CreateLinkInput) -> Result<GetLinkResp, CanisterError> {
-    info!("[create_link_v2]");
-    debug!("[create_link_v2] input: {input:?}");
+async fn user_create_link_v2(input: CreateLinkInput) -> Result<GetLinkResp, CanisterError> {
+    info!("[user_create_link_v2]");
+    debug!("[user_create_link_v2] input: {input:?}");
 
     let mut link_v2_service = get_state().link_v2_service;
     let created_at = get_state().env.time();
@@ -37,9 +37,9 @@ async fn create_link_v2(input: CreateLinkInput) -> Result<GetLinkResp, CanisterE
 /// * `Ok(LinkDto)` - The activated link data
 /// * `Err(CanisterError)` - If activation fails or unauthorized
 #[update(guard = "is_not_anonymous")]
-async fn activate_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
-    info!("[activate_link_v2]");
-    debug!("[activate_link_v2] link_id: {link_id}");
+async fn user_activate_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
+    info!("[user_activate_link_v2]");
+    debug!("[user_activate_link_v2] link_id: {link_id}");
 
     let mut link_v2_service = get_state().link_v2_service;
     let canister_id = get_state().env.id();

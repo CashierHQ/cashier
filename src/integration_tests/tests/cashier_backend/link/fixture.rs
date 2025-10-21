@@ -45,7 +45,7 @@ impl LinkTestFixture {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .create_link(input)
+            .user_create_link(input)
             .await
             .unwrap()
             .unwrap()
@@ -56,7 +56,7 @@ impl LinkTestFixture {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .create_link_v2(input)
+            .user_create_link_v2(input)
             .await
             .unwrap()
             .unwrap()
@@ -71,7 +71,7 @@ impl LinkTestFixture {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .activate_link_v2(link_id)
+            .user_activate_link_v2(link_id)
             .await
             .unwrap()
     }
@@ -142,7 +142,7 @@ impl LinkTestFixture {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .create_action(CreateActionInput {
+            .user_create_action(CreateActionInput {
                 link_id: link_id.to_string(),
                 action_type,
             })
@@ -162,7 +162,7 @@ impl LinkTestFixture {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .process_action(ProcessActionInput {
+            .user_process_action(ProcessActionInput {
                 action_id: action_id.to_string(),
                 action_type,
                 link_id: link_id.to_string(),
@@ -177,7 +177,7 @@ impl LinkTestFixture {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .update_action(UpdateActionInput {
+            .user_update_action(UpdateActionInput {
                 action_id: action_id.to_string(),
                 link_id: link_id.to_string(),
                 external: true,
@@ -212,7 +212,7 @@ impl LinkTestFixture {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .update_link(input)
+            .user_update_link(input)
             .await
             .unwrap()
             .unwrap()

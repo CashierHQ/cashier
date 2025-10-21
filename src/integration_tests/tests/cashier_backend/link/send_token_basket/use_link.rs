@@ -24,7 +24,7 @@ async fn it_should_error_use_link_token_basket_if_caller_anonymous() {
 
         // Act
         let result = cashier_backend_client
-            .create_action(CreateActionInput {
+            .user_create_action(CreateActionInput {
                 link_id: link.id.clone(),
                 action_type: ActionType::Use,
             })

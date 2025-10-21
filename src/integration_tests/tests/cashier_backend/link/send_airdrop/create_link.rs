@@ -37,7 +37,7 @@ async fn it_should_error_create_link_airdrop_if_caller_anonymous() {
             .unwrap();
 
         // Act
-        let result = be_client.create_link(link_input).await;
+        let result = be_client.user_create_link(link_input).await;
 
         // Assert
         assert!(result.is_err());
@@ -149,7 +149,8 @@ async fn it_should_create_link_airdrop_icp_token_successfully() {
             execute_icrc112_request(icrc_112_requests, caller, ctx).await;
 
         // Assert
-        assert!(icrc112_execution_result.is_ok());
+        icrc112_execution_result.unwrap();
+        // assert!(icrc112_execution_result.is_ok());
 
         // Act
         let update_action = test_fixture
