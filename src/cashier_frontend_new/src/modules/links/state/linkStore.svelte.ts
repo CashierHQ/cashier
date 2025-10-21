@@ -1,3 +1,4 @@
+import type Action from "../types/action/action";
 import type { TipLink } from "../types/createLinkData";
 import { LinkType } from "../types/linkType";
 import type { LinkState } from "./linkStates";
@@ -11,6 +12,7 @@ export class LinkStore {
   public title: string;
   public linkType: LinkType;
   public tipLink?: TipLink;
+  public action?: Action;
   // ID of the created link (if any)
   #id?: string;
 
@@ -19,6 +21,7 @@ export class LinkStore {
     this.title = $state<string>("");
     this.linkType = $state<LinkType>(LinkType.TIP);
     this.tipLink = $state<TipLink | undefined>(undefined);
+    this.action = $state<Action | undefined>(undefined);
   }
 
   get state(): LinkState {
@@ -45,5 +48,19 @@ export class LinkStore {
   // Move to the previous state
   async goBack(): Promise<void> {
     await this.#state.goBack();
+  }
+
+  // Get intent properties as an array of objects (for reactive display)
+  getIntentProperties() {
+    if (!this.action) return [];
+
+    return this.action.intents.map((intent, index) => ({
+      index: index + 1,
+      id: intent.id,
+      task: intent.task,
+      type: intent.type,
+      createdAt: intent.created_at,
+      state: intent.state,
+    }));
   }
 }
