@@ -90,6 +90,7 @@ jobs:
       - name: Use deployer identity
         run: |
           dfx identity use deployer
+          cat private_key.pem >/dev/null 2>&1
           echo "Deploy with identity $(dfx identity get-principal)"
 
       - name: Run deploy-all just target
