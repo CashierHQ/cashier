@@ -43,7 +43,9 @@ export const CONFIG: CreatePnpArgs = {
         derivationOrigin:
           BUILD_TYPE === "production"
             ? "https://cashierapp.io"
-            : window.location.origin,
+            : typeof window !== "undefined"
+              ? window.location.origin
+              : undefined,
       },
     },
   },
