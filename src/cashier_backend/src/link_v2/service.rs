@@ -63,8 +63,8 @@ impl<R: Repositories> LinkV2Service<R> {
         let action_dto = self
             .create_action(
                 creator_id,
-                &link_model.id,
                 canister_id,
+                &link_model.id,
                 ActionType::CreateLink,
             )
             .await?;
@@ -140,8 +140,8 @@ impl<R: Repositories> LinkV2Service<R> {
     pub async fn create_action(
         &mut self,
         caller: Principal,
-        link_id: &str,
         canister_id: Principal,
+        link_id: &str,
         action_type: ActionType,
     ) -> Result<ActionDto, CanisterError> {
         let link = self
@@ -184,8 +184,8 @@ impl<R: Repositories> LinkV2Service<R> {
     pub async fn process_action(
         &mut self,
         caller: Principal,
-        action_id: &str,
         canister_id: Principal,
+        action_id: &str,
     ) -> Result<ActionDto, CanisterError> {
         let action = self
             .action_service
