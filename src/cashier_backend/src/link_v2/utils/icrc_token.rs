@@ -316,56 +316,106 @@ pub async fn transfer_fee_from_link_creator_to_treasury(
     Ok(block_id)
 }
 
-pub async fn transfer_token_from_link_to_account(
-    link_id: &str,
-    canister_id: Principal,
-    assets: &[Asset],
+pub async fn transfer_single_asset_from_link_to_account(
+    link_account: &ExtAccount,
     to: &ExtAccount,
+    asset: &Asset,
     amount: Nat,
     fee: Nat,
+) -> Result<Nat, CanisterError> {
+    let transfer_arg = TransferArg {
+        from_subaccount: link_account.subaccount.clone(),
+        to: to.clone(),
+        amount,
+        fee: Some(fee),
+        memo: None,            // TODO
+        created_at_time: None, // TODO
+    };
+
+    let address = match asset {
+        Asset::IC { address, .. } => *address,
+    };
+    let token_service = Service::new(address);
+    let result = token_service.icrc_1_transfer(&transfer_arg).await;
+
+    match result {
+        Ok(block_id) => {
+            let block_id = block_id.map_err(|e| {
+                CanisterError::CallCanisterFailed(format!(
+                    "Failed to transfer token for asset {}: {:?}",
+                    address.to_text(),
+                    e
+                ))
+            })?;
+            Ok(block_id)
+        }
+        Err(errr) => Err(CanisterError::CallCanisterFailed(format!(
+            "Failed to transfer token for asset {}: {:?}",
+            address.to_text(),
+            errr,
+        ))),
+    }
+}
+
+pub async fn transfer_assets_from_link_to_account(
+    link: &Link,
+    canister_id: Principal,
+    to: &ExtAccount,
+    token_fee_map: HashMap<Principal, Nat>,
+    is_use: bool,
 ) -> Result<HashMap<Principal, Nat>, CanisterError> {
-    let from_account = get_link_ext_account(link_id, canister_id)?;
+    let link_account = get_link_ext_account(&link.id, canister_id)?;
+    let token_balance_map = if is_use {
+        HashMap::<Principal, Nat>::new()
+    } else {
+        get_batch_tokens_balance_for_link(link, canister_id).await?
+    };
 
-    let transfer_tasks = assets
+    let transfer_tasks = link
+        .asset_info
         .iter()
-        .map(|asset| {
-            let from_account = from_account.clone();
+        .map(|asset_info| {
+            let asset = asset_info.asset.clone();
+            let link_account = link_account.clone();
             let to = to.clone();
-            let amount = amount.clone();
-            let fee = fee.clone();
-            async move {
-                let transfer_arg = TransferArg {
-                    from_subaccount: from_account.subaccount,
-                    to: to.clone(),
-                    amount,
-                    fee: Some(fee),
-                    memo: None,            // TODO
-                    created_at_time: None, // TODO
-                };
+            let address = match &asset {
+                Asset::IC { address, .. } => *address,
+            };
+            let fee = token_fee_map
+                .get(&address)
+                .cloned()
+                .unwrap_or(Nat::from(0u64));
 
-                let address = match asset {
-                    Asset::IC { address, .. } => *address,
-                };
-                let token_service = Service::new(address);
-                let result = token_service.icrc_1_transfer(&transfer_arg).await;
+            let sending_amount = if is_use {
+                Nat::from(asset_info.amount_per_link_use_action)
+            } else {
+                token_balance_map
+                    .get(&address)
+                    .cloned()
+                    .unwrap_or(Nat::from(0u64))
+            };
+
+            async move {
+                let result = transfer_single_asset_from_link_to_account(
+                    &link_account,
+                    &to,
+                    &asset,
+                    sending_amount,
+                    fee,
+                )
+                .await;
+
                 (address, result)
             }
         })
         .collect::<Vec<_>>();
 
     let transfer_results = future::join_all(transfer_tasks).await;
-    let mut transfer_map = HashMap::new();
+    let mut transfer_result_map = HashMap::new();
     for (address, result) in transfer_results {
         match result {
             Ok(block_id) => {
-                let block_id = block_id.map_err(|e| {
-                    CanisterError::CallCanisterFailed(format!(
-                        "Failed to transfer token for asset {}: {:?}",
-                        address.to_text(),
-                        e
-                    ))
-                })?;
-                transfer_map.insert(address, block_id);
+                transfer_result_map.insert(address, block_id);
             }
             Err(errr) => {
                 return Err(CanisterError::CallCanisterFailed(format!(
@@ -377,5 +427,5 @@ pub async fn transfer_token_from_link_to_account(
         }
     }
 
-    Ok(transfer_map)
+    Ok(transfer_result_map)
 }
