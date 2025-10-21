@@ -7,6 +7,10 @@
   import { authState } from "$modules/auth/state/auth.svelte";
   import loadingGif from "$lib/assets/loading.gif";
   import { Check, X } from "lucide-svelte";
+  import Icrc112Service from "$modules/auth/services/icrc112Service";
+  import type { Signer } from "@slide-computer/signer";
+  import type { IITransport } from "$modules/auth/signer/ii/IITransport";
+    import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 
   let {
     link,
@@ -29,6 +33,12 @@
       return;
     }
 
+    const signer = authState.getSigner() as Signer<IITransport> | null;
+    if (!signer) {
+      errorMessage = "No signer available for authentication.";
+      return;
+    }
+
     try {
       isProcessing = true;
       errorMessage = null;
@@ -42,9 +52,13 @@
         link.action.icrc_112_requests &&
         link.action.icrc_112_requests.length > 0
       ) {
-        // TODO: call validator to check the response really success
-        const batchResult = await authState.sendBatchRequest(
+        const icrc112Service = new Icrc112Service(
+          signer,
+        );
+        const batchResult = await icrc112Service.sendBatchRequest(
           link.action.icrc_112_requests,
+          authState.account.owner,
+          CASHIER_BACKEND_CANISTER_ID
         );
 
         if (batchResult.isOk()) {
