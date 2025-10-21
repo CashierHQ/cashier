@@ -29,6 +29,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
+          targets: wasm32-unknown-unknown
 
       - name: Install Just command runner
         uses: extractions/setup-just@v1
