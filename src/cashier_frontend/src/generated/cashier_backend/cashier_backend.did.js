@@ -309,16 +309,6 @@ export const idlFactory = ({ IDL }) => {
     'Ok' : IDL.Opt(LinkGetUserStateOutput),
     'Err' : CanisterError,
   });
-  const UserStateMachineGoto = IDL.Variant({
-    'Continue' : IDL.Null,
-    'Back' : IDL.Null,
-  });
-  const LinkUpdateUserStateInput = IDL.Record({
-    'link_id' : IDL.Text,
-    'action_type' : ActionType,
-    'goto' : UserStateMachineGoto,
-    'anonymous_wallet_address' : IDL.Opt(IDL.Principal),
-  });
   const ProcessActionAnonymousInput = IDL.Record({
     'action_id' : IDL.Text,
     'link_id' : IDL.Text,
@@ -337,6 +327,16 @@ export const idlFactory = ({ IDL }) => {
     'link_use_action_max_count' : IDL.Nat64,
   });
   const Result_8 = IDL.Variant({ 'Ok' : GetLinkResp, 'Err' : CanisterError });
+  const UserStateMachineGoto = IDL.Variant({
+    'Continue' : IDL.Null,
+    'Back' : IDL.Null,
+  });
+  const LinkUpdateUserStateInput = IDL.Record({
+    'link_id' : IDL.Text,
+    'action_type' : ActionType,
+    'goto' : UserStateMachineGoto,
+    'anonymous_wallet_address' : IDL.Opt(IDL.Principal),
+  });
   const ProcessActionInput = IDL.Record({
     'action_id' : IDL.Text,
     'link_id' : IDL.Text,
@@ -404,11 +404,6 @@ export const idlFactory = ({ IDL }) => {
         [Result_6],
         ['query'],
       ),
-    'link_update_user_state' : IDL.Func(
-        [LinkUpdateUserStateInput],
-        [Result_6],
-        [],
-      ),
     'process_action_anonymous' : IDL.Func(
         [ProcessActionAnonymousInput],
         [Result_2],
@@ -418,6 +413,11 @@ export const idlFactory = ({ IDL }) => {
     'user_create_action' : IDL.Func([CreateActionInput], [Result_2], []),
     'user_create_link' : IDL.Func([CreateLinkInput], [Result_7], []),
     'user_create_link_v2' : IDL.Func([CreateLinkInput], [Result_8], []),
+    'user_link_update_user_state' : IDL.Func(
+        [LinkUpdateUserStateInput],
+        [Result_6],
+        [],
+      ),
     'user_process_action' : IDL.Func([ProcessActionInput], [Result_2], []),
     'user_trigger_transaction' : IDL.Func(
         [TriggerTransactionInput],

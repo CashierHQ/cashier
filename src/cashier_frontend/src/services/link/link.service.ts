@@ -297,7 +297,7 @@ class LinkService {
         : [],
     };
     const response = parseResultResponse(
-      await this.actor.link_update_user_state(params),
+      await this.actor.user_link_update_user_state(params),
     );
     const parsedRes = fromNullable(response);
     return parsedRes ? mapLinkUserStateModel(parsedRes) : undefined;
