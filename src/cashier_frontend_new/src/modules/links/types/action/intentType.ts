@@ -4,8 +4,8 @@ import type {
   TransferFromData as BackendTransferFromData,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { rsMatch } from "$lib/rsMatch";
-import { Wallet } from "../wallet";
-import { Asset } from "../asset";
+import Wallet from "../wallet";
+import Asset from "../asset";
 
 // Frontend representation of TransferData for IntentType
 export class TransferData {
