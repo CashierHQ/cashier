@@ -81,11 +81,23 @@ jobs:
 
       - name: Create private key file
         run: |
-            echo "${{ secrets.DEPLOYER }}" > private_key.pem
+          set -euo pipefail
+          # Write the secret to a file. Use printf '%b' so any literal "\n" sequences
+          # in the secret are converted to real newlines (fixes PEM missing data errors).
+          printf '%b' "${{ secrets.DEPLOYER }}" > private_key.pem
+          chmod 600 private_key.pem
 
       # DANGEROUS: This is a plaintext identity import
       - name: Import identity
-        run: dfx identity import deployer private_key.pem --storage-mode=plaintext
+        run: |
+          set -euo pipefail
+          dfx identity import deployer private_key.pem --storage-mode=plaintext
+          # Remove the private key file as soon as possible. Prefer shred when available.
+          if command -v shred >/dev/null 2>&1; then
+            shred -u private_key.pem
+          else
+            rm -f private_key.pem
+          fi
 
       - name: Use deployer identity
         run: |
