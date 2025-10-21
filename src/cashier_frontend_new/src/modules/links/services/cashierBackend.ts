@@ -23,16 +23,27 @@ class CanisterBackendService {
 
   /**
    * Returns a list of links for the current user.
+   * @param offset The offset for pagination.
+   * @param limit The maximum number of links to return.
+   * @returns A Result containing an array of LinkDto or an Error.
    */
-  async getLinks(): Promise<Result<cashierBackend.LinkDto[], Error>> {
+  async getLinks(
+    params: {
+      offset: number;
+      limit: number;
+    } = {
+      offset: 0,
+      limit: 100,
+    },
+  ): Promise<Result<cashierBackend.LinkDto[], Error>> {
     const actor = this.#getActor();
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
     const response = await actor.get_links([
       {
-        offset: BigInt(0),
-        limit: BigInt(100),
+        offset: BigInt(params.limit),
+        limit: BigInt(params.offset),
       },
     ]);
 
