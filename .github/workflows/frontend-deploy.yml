@@ -118,5 +118,5 @@ jobs:
                   echo "Created ${ENV_FILE} with values:"
                   cat src/cashier_frontend/${ENV_FILE}
 
-                  just build_frontend "$ENVIRONMENT"
-                  dfx deploy cashier_frontend --network ${NETWORK}
+                  just build "$ENVIRONMENT"
+                  just deploy-all "$ENVIRONMENT"
