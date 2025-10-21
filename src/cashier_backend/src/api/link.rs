@@ -158,6 +158,7 @@ pub async fn user_create_action(input: CreateActionInput) -> Result<ActionDto, C
 pub async fn process_action_anonymous(
     input: ProcessActionAnonymousInput,
 ) -> Result<ActionDto, CanisterError> {
+    let TODO = "TODO";
     info!("[process_action_anonymous]");
     debug!("[process_action_anonymous] input: {input:?}");
 
@@ -181,6 +182,7 @@ pub async fn process_action_anonymous(
 pub async fn create_action_anonymous(
     input: CreateActionAnonymousInput,
 ) -> Result<ActionDto, CanisterError> {
+    let TODO = "TODO";
     info!("[create_action_anonymous]");
     debug!("[create_action_anonymous] input: {input:?}");
 
@@ -205,6 +207,9 @@ pub async fn create_action_anonymous(
 pub async fn link_get_user_state(
     input: LinkGetUserStateInput,
 ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
+
+    let TODO = "TODO";
+
     info!("[link_get_user_state]");
     debug!("[link_get_user_state] input: {input:?}");
 
