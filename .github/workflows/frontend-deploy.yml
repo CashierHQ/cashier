@@ -65,6 +65,23 @@ jobs:
               with:
                   node-version: "22"
 
+            - name: Install Rust toolchain
+              uses: dtolnay/rust-toolchain@stable
+              with:
+                components: clippy, rustfmt
+                targets: wasm32-unknown-unknown
+
+            - name: Configure Rust Cache
+              uses: swatinem/rust-cache@v2
+              if: ${{ (github.event.pull_request.base.ref != 'main') && (github.ref_name != 'main') }}
+              with:
+                shared-key: ${{ github.repository }}
+                save-if: ${{ github.ref_type != 'tag' }}
+
+            - name: Setup environment
+              run: |
+                export RUST_BACKTRACE="full"
+
             - name: Install dfx
               uses: dfinity/setup-dfx@main
 
