@@ -308,4 +308,3 @@ The service layer implements comprehensive error handling:
 -   **Not Found Errors** - Missing entity handling
 -   **Validation Errors** - Input validation failures
 -   **External Service Errors** - Blockchain interaction failures
-

@@ -7,8 +7,6 @@ on:
     paths:
       - "src/cashier_frontend/**"
       - "src/cashier_frontend_new/**"
-      - "src/cashier_frontend/package.json"
-      - "src/cashier_frontend_new/package.json"
     # Note: 'paths' is defined above. Avoid using 'paths-ignore' together with 'paths'.
   push:
     branches: [main, dev, staging, feature/deployment]
@@ -16,8 +14,6 @@ on:
     paths:
       - "src/cashier_frontend/**"
       - "src/cashier_frontend_new/**"
-      - "src/cashier_frontend/package.json"
-      - "src/cashier_frontend_new/package.json"
     # Note: 'paths' is defined above. Avoid using 'paths-ignore' together with 'paths'.
 
 concurrency:
