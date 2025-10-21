@@ -8,6 +8,7 @@ export class LinkType {
   static readonly TIP = new LinkType("TIP");
   static readonly AIRDROP = new LinkType("AIRDROP");
   static readonly TOKEN_BASKET = new LinkType("TOKEN_BASKET");
+  static readonly RECEIVE_PAYMENT = new LinkType("RECEIVE_PAYMENT");
 
   /**
    * Convert frontend LinkType to corresponding backend LinkType
@@ -21,6 +22,8 @@ export class LinkType {
         return { SendAirdrop: null };
       case LinkType.TOKEN_BASKET:
         return { SendTokenBasket: null };
+      case LinkType.RECEIVE_PAYMENT:
+        return { ReceivePayment: null };
       default:
         return assertUnreachable(this as never);
     }

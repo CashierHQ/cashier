@@ -6,10 +6,11 @@ import {
   HOST_ICP,
   IC_INTERNET_IDENTITY_PROVIDER,
 } from "$modules/shared/constants";
+import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
 import { Actor, HttpAgent } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
-import type { CreatePnpArgs } from "@windoge98/plug-n-play";
+import type { BaseSignerAdapter, CreatePnpArgs } from "@windoge98/plug-n-play";
 import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
 import { PersistedState } from "runed";
 
@@ -27,18 +28,24 @@ export const CONFIG: CreatePnpArgs = {
   },
   // Supported wallet adapters
   adapters: {
-    ii: {
+    iiSigner: {
+      id: "iiSigner",
       enabled: true,
+      adapter: IISignerAdapter,
       config: {
         // url to the provider
         iiProviderUrl: IC_INTERNET_IDENTITY_PROVIDER,
         hostUrl: HOST_ICP,
         shouldFetchRootKey: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED,
-        //   // set derivationOrigin for production only
-        //   // this setting allow www.cashierapp.io have the same identity as cashierapp.io
-        ...(BUILD_TYPE === "production" && {
-          derivationOrigin: "https://cashierapp.io",
-        }),
+        // set derivationOrigin
+        // if production: allow www.cashierapp.io have the same identity as cashierapp.io
+        // if other: use current origin
+        derivationOrigin:
+          BUILD_TYPE === "production"
+            ? "https://cashierapp.io"
+            : typeof window !== "undefined"
+              ? window.location.origin
+              : undefined,
       },
     },
   },
@@ -105,6 +112,24 @@ export const authState = {
    */
   get isReady() {
     return isReady;
+  },
+
+  /**
+   * Get the current signer instance from the connected wallet.
+   * @throws Error if PNP is not initialized or no adapter is connected
+   * @returns The Signer instance from the connected wallet
+   */
+  getSigner() {
+    if (!pnp) {
+      throw new Error("PNP is not initialized");
+    }
+    if (!pnp.adapter) {
+      throw new Error("No adapter is initialized");
+    }
+
+    const provider = pnp.provider as BaseSignerAdapter;
+
+    return provider.getSigner();
   },
 
   /**
