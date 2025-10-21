@@ -2,7 +2,7 @@ name: "Build & Test (backend)"
 
 on:
   pull_request:
-    branches: [main, dev, staging, feature/deployment]
+    branches: [main, dev, staging]
     # Only trigger this workflow when backend/canister files change
     paths:
       - src/cashier_backend/**
@@ -11,7 +11,7 @@ on:
       - src/lib/**
     # Note: 'paths' is defined above. Avoid using 'paths-ignore' together with 'paths'.
   push:
-    branches: [main, dev, staging, feature/deployment]
+    branches: [main, dev, staging]
     # Only trigger this workflow on pushes that affect the backend
     paths:
       - src/cashier_backend/**
