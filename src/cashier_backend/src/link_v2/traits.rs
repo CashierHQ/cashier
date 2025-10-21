@@ -41,51 +41,23 @@ pub trait LinkV2: Debug {
     ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
         Box::pin(async move { Err(CanisterError::from("process_action not implemented")) })
     }
-
-    /// Publish the link, changing its state to ACTIVE
-    /// # Returns
-    /// * `Link` - The updated link model after publishing
-    /// # Errors
-    /// * `CanisterError` - If there is an error during publishing
-    fn activate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("activate not implemented")) })
-    }
-
-    fn deactivate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("deactivate not implemented")) })
-    }
-
-    fn withdraw(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("withdraw not implemented")) })
-    }
-
-    fn use_link(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("use_link not implemented")) })
-    }
 }
 
 pub trait LinkV2State: Debug {
-    /// Publish the link, changing its state to ACTIVE
-    /// # Returns
-    /// * `Link` - The updated link model after publishing
-    /// # Errors
-    /// * `CanisterError` - If there is an error during publishing
-    fn activate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("activate not implemented")) })
-    }
-
-    fn deactivate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("deactivate not implemented")) })
-    }
-
-    fn use_link(
+    fn create_action(
         &self,
-        _caller: Principal,
-    ) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("use_link not implemented")) })
+        caller: Principal,
+        canister_id: Principal,
+        action: ActionType,
+    ) -> Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("create_action not implemented")) })
     }
 
-    fn withdraw(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("withdraw not implemented")) })
+    fn process_action(
+        &self,
+        caller: Principal,
+        action: &Action,
+    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("process_action not implemented")) })
     }
 }

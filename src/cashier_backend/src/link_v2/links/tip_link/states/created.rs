@@ -21,14 +21,14 @@ use cashier_backend_types::{
     error::CanisterError,
     link_v2::ProcessActionResult,
     repository::{
-        action::v1::Action,
+        action::v1::{Action, ActionType},
         common::Asset,
         link::v1::{Link, LinkState},
     },
 };
-use std::{fmt::Debug, future::Future, pin::Pin};
+use std::{collections::HashMap, fmt::Debug, future::Future, pin::Pin};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CreatedState {
     pub link: Link,
     pub canister_id: Principal,
@@ -41,9 +41,7 @@ impl CreatedState {
             canister_id,
         }
     }
-}
 
-impl LinkV2State for CreatedState {
     fn activate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
         let mut link = self.link.clone();
         let canister_id = self.canister_id;
@@ -130,6 +128,34 @@ impl LinkV2State for CreatedState {
             // if all preconditions are met, activate the link
             link.state = LinkState::Active;
             Ok(link)
+        })
+    }
+}
+
+impl LinkV2State for CreatedState {
+    fn process_action(
+        &self,
+        caller: Principal,
+        action: &Action,
+    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
+        let state = self.clone();
+        let action = action.clone();
+
+        Box::pin(async move {
+            match action.r#type {
+                ActionType::Activate => {
+                    let updated_link = state.activate().await?;
+                    Ok(ProcessActionResult {
+                        link: updated_link,
+                        action,
+                        intents: vec![],
+                        intent_txs_map: HashMap::new(),
+                    })
+                }
+                _ => Err(CanisterError::from(
+                    "Unsupported action type in Created state",
+                )),
+            }
         })
     }
 }

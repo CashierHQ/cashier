@@ -152,44 +152,8 @@ impl LinkV2 for TipLink {
 
         Box::pin(async move {
             let state = TipLink::get_state_handler(&link, canister_id)?;
-
-            let updated_link = match action.r#type {
-                ActionType::Activate => state.activate().await?,
-                ActionType::Use => state.use_link(caller).await?,
-                ActionType::Withdraw => state.withdraw().await?,
-                _ => {
-                    return Err(CanisterError::from(
-                        "process_action not implemented for this action type",
-                    ));
-                }
-            };
-
-            Err(CanisterError::from(
-                "process_action not implemented for TipLink",
-            ))
-        })
-    }
-
-    /// Activates the TipLink.
-    /// # Returns
-    /// * `Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>>` - A future that resolves to the activated link or an error if the activation fails.
-    fn activate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        let link = self.link.clone();
-        let canister_id = self.canister_id;
-
-        Box::pin(async move {
-            let state = TipLink::get_state_handler(&link, canister_id)?;
-            state.activate().await
-        })
-    }
-
-    fn deactivate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        let link = self.link.clone();
-        let canister_id = self.canister_id;
-
-        Box::pin(async move {
-            let state = TipLink::get_state_handler(&link, canister_id)?;
-            state.deactivate().await
+            let process_action_result = state.process_action(caller, &action).await?;
+            Ok(process_action_result)
         })
     }
 }

@@ -11,11 +11,15 @@ use crate::{
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    repository::link::v1::{Link, LinkState},
+    link_v2::ProcessActionResult,
+    repository::{
+        action::v1::{Action, ActionType},
+        link::v1::{Link, LinkState},
+    },
 };
 use std::{fmt::Debug, future::Future, pin::Pin};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct InactiveState {
     pub link: Link,
     pub canister_id: Principal,
@@ -28,9 +32,7 @@ impl InactiveState {
             canister_id,
         }
     }
-}
 
-impl LinkV2State for InactiveState {
     fn withdraw(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
         let mut link = self.link.clone();
         let canister_id = self.canister_id;
@@ -51,6 +53,34 @@ impl LinkV2State for InactiveState {
             // Update link state to INACTIVE_ENDED after withdrawal
             link.state = LinkState::InactiveEnded;
             Ok(link)
+        })
+    }
+}
+
+impl LinkV2State for InactiveState {
+    fn process_action(
+        &self,
+        _caller: Principal,
+        action: &Action,
+    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
+        let state = self.clone();
+        let action = action.clone();
+
+        Box::pin(async move {
+            match action.r#type {
+                ActionType::Withdraw => {
+                    let updated_link = state.withdraw().await?;
+                    Ok(ProcessActionResult {
+                        link: updated_link,
+                        action,
+                        intents: vec![],
+                        intent_txs_map: std::collections::HashMap::new(),
+                    })
+                }
+                _ => Err(CanisterError::from(
+                    "Unsupported action type for InactiveState",
+                )),
+            }
         })
     }
 }
