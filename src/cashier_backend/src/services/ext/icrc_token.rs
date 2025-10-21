@@ -11,6 +11,16 @@ pub struct Account {
     pub owner: Principal,
     pub subaccount: Option<SubAccount>,
 }
+
+impl From<Principal> for Account {
+    fn from(owner: Principal) -> Self {
+        Account {
+            owner,
+            subaccount: None,
+        }
+    }
+}
+
 pub type Icrc1Tokens = candid::Nat;
 
 pub type Icrc1Timestamp = u64;

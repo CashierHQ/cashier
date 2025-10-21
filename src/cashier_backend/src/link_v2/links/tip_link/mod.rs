@@ -7,7 +7,7 @@ pub mod states;
 use crate::link_v2::{
     links::tip_link::{
         actions::{create::CreateAction, use_link::UseAction, withdraw::WithdrawAction},
-        states::{active::ActiveState, ended::EndedState, inactive::InactiveState},
+        states::{active::ActiveState, inactive::InactiveState},
     },
     traits::{LinkV2, LinkV2State},
 };
@@ -81,9 +81,9 @@ impl TipLink {
     ) -> Result<Box<dyn LinkV2State>, CanisterError> {
         match link.state {
             LinkState::CreateLink => Ok(Box::new(CreatedState::new(link, canister_id))),
-            LinkState::Active => Ok(Box::new(ActiveState::new(link))),
-            LinkState::Inactive => Ok(Box::new(InactiveState::new(link))),
-            LinkState::InactiveEnded => Ok(Box::new(EndedState::new(link))),
+            LinkState::Active => Ok(Box::new(ActiveState::new(link, canister_id))),
+            LinkState::Inactive => Ok(Box::new(InactiveState::new(link, canister_id))),
+            _ => Err(CanisterError::from("Unsupported link state")),
         }
     }
 }
@@ -157,11 +157,11 @@ impl LinkV2 for TipLink {
                 ActionType::CreateLink => {
                     state.activate().await?;
                 }
+                ActionType::Use => {
+                    state.use_link(caller).await?;
+                }
                 ActionType::Withdraw => {
                     state.withdraw().await?;
-                }
-                ActionType::Use => {
-                    state.use_link().await?;
                 }
             }
 

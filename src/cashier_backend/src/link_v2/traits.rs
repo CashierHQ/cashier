@@ -78,11 +78,14 @@ pub trait LinkV2State: Debug {
         Box::pin(async move { Err(CanisterError::from("deactivate not implemented")) })
     }
 
-    fn withdraw(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("withdraw not implemented")) })
+    fn use_link(
+        &self,
+        _caller: Principal,
+    ) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("use_link not implemented")) })
     }
 
-    fn use_link(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("use_link not implemented")) })
+    fn withdraw(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("withdraw not implemented")) })
     }
 }
