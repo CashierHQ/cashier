@@ -44,7 +44,7 @@ async fn it_should_error_create_link_airdrop_if_caller_anonymous() {
         if let Err(CanisterClientError::PocketIcTestError(err)) = result {
             assert!(
                 err.reject_message
-                    .contains("Anonymous caller is not allowed")
+                    .contains("AnonimousUserNotAllowed")
             );
         } else {
             panic!("Expected PocketIcTestError, got {:?}", result);
@@ -149,8 +149,7 @@ async fn it_should_create_link_airdrop_icp_token_successfully() {
             execute_icrc112_request(icrc_112_requests, caller, ctx).await;
 
         // Assert
-        icrc112_execution_result.unwrap();
-        // assert!(icrc112_execution_result.is_ok());
+        assert!(icrc112_execution_result.is_ok());
 
         // Act
         let update_action = test_fixture

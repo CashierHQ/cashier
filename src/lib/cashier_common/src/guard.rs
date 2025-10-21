@@ -8,7 +8,7 @@ static ANONYMOUS: Principal = Principal::anonymous();
 
 pub fn is_not_anonymous() -> Result<(), String> {
     if msg_caller() == ANONYMOUS {
-        return Err("Anonymous caller is not allowed".to_string());
+        return Err("AnonimousUserNotAllowed".to_string());
     }
     Ok(())
 }
