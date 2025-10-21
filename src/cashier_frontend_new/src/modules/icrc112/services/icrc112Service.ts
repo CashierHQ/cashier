@@ -8,6 +8,8 @@ import type {
 } from "@slide-computer/signer";
 import { Err, Ok, type Result } from "ts-results-es";
 
+// Class of service handler for ICRC-112 requests
+// T is the Transport type used by the Signer
 class Icrc112Service<T extends Transport> {
   private readonly signer: Signer<T>;
 
