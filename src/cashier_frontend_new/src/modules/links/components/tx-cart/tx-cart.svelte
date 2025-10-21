@@ -3,7 +3,7 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import type { LinkStore } from "../../state/linkStore.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
-  import Icrc112Service from "$modules/auth/services/icrc112Service";
+  import Icrc112Service from "$modules/icrc112/services/icrc112Service";
   import type { Signer } from "@slide-computer/signer";
   import type { IITransport } from "$modules/auth/signer/ii/IITransport";
   import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
