@@ -2,5 +2,5 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 pub mod create;
-pub mod use_link;
+pub mod claim;
 pub mod withdraw;
