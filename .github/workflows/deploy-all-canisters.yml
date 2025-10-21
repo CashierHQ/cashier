@@ -1,0 +1,102 @@
+name: "Deploy All Canisters"
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+      - staging
+      - dev
+    # Only run when PRs to these branches are merged
+  push:
+    branches:
+      - feature/deployment
+
+jobs:
+  setup-and-deploy:
+    name: Deploy all canisters
+    permissions:
+      contents: read
+      actions: write
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Install Just command runner
+        uses: extractions/setup-just@v1
+
+      - name: Install dfx
+        uses: dfinity/setup-dfx@main
+        with:
+          dfx-version: "0.29.2"
+
+      - name: Install ic-wasm
+        run: |
+          wget https://github.com/dfinity/ic-wasm/releases/download/0.9.8/ic-wasm-linux64 -O /usr/local/bin/ic-wasm
+          chmod +x /usr/local/bin/ic-wasm
+
+      - name: Install candid-extractor
+        run: |
+          wget https://github.com/dfinity/candid-extractor/releases/download/0.1.6/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -O /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz
+          tar -xvf /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -C /usr/local/bin
+          chmod +x /usr/local/bin/candid-extractor
+
+      - name: Setup environment variables
+        id: set-env
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BRANCH_NAME="${{ github.event.pull_request.base.ref }}"
+          else
+            BRANCH_NAME="${{ github.ref_name }}"
+          fi
+
+          echo "Detected branch: ${BRANCH_NAME}"
+
+          # Map branch to logical environment
+          if [[ "${BRANCH_NAME}" == "main" ]]; then
+            ENVIRONMENT=production
+            DFX_NETWORK=ic
+          elif [[ "${BRANCH_NAME}" == "staging" ]]; then
+            ENVIRONMENT=staging
+            DFX_NETWORK=staging
+          elif [[ "${BRANCH_NAME}" == "dev" ]]; then
+            ENVIRONMENT=dev
+            DFX_NETWORK=dev
+          else
+            ENVIRONMENT=dev
+            DFX_NETWORK=dev
+          fi
+
+          echo "environment=${ENVIRONMENT}" >> $GITHUB_OUTPUT
+          echo "dfx_network=${DFX_NETWORK}" >> $GITHUB_OUTPUT
+
+      - name: Create private key file
+        run: |
+          echo "${{ secrets.DEPLOYER }}" > private_key.pem
+
+      - name: Import identity (plaintext)
+        run: |
+          dfx identity import deployer private_key.pem --storage-mode=plaintext || true
+
+      - name: Use deployer identity
+        run: |
+          dfx identity use deployer || true
+
+      - name: Run deploy-all just target
+        env:
+          ENVIRONMENT: ${{ steps.set-env.outputs.environment }}
+          DFX_NETWORK: ${{ steps.set-env.outputs.dfx_network }}
+        run: |
+          echo "Deploying to DFX network: ${DFX_NETWORK} (environment: ${ENVIRONMENT})"
+
+          # Build frontend for the environment, then deploy all canisters using the DFX network name
+          just build_frontend "${ENVIRONMENT}"
+          just deploy-all ${DFX_NETWORK}
