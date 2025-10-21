@@ -209,7 +209,6 @@ pub async fn create_action_anonymous(
 pub async fn link_get_user_state(
     input: LinkGetUserStateInput,
 ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
-
     info!("[link_get_user_state]");
     debug!("[link_get_user_state] input: {input:?}");
 
