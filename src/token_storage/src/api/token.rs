@@ -25,9 +25,9 @@ fn not_anonymous_caller() -> Principal {
 }
 
 #[update]
-pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
-    info!("[add_token]");
-    debug!("[add_token] input: {input:?}");
+pub async fn user_add_token(input: AddTokenInput) -> Result<(), String> {
+    info!("[user_add_token]");
+    debug!("[user_add_token] input: {input:?}");
 
     let user_id = not_anonymous_caller();
 
@@ -63,11 +63,11 @@ pub async fn add_token(input: AddTokenInput) -> Result<(), String> {
 ///
 /// ToDo: this function is not atomic can leave the state in an inconsistent state
 #[update]
-pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
-    info!("[add_token_batch]");
+pub async fn user_add_token_batch(input: AddTokensInput) -> Result<(), String> {
+    info!("[user_add_token_batch]");
     let user_id = not_anonymous_caller();
 
-    debug!("[add_token_batch] user: {user_id}, input: {input:?}");
+    debug!("[user_add_token_batch] user: {user_id}, input: {input:?}");
 
     let state = get_state();
     let mut token_registry_service = state.token_registry;
@@ -97,9 +97,9 @@ pub async fn add_token_batch(input: AddTokensInput) -> Result<(), String> {
 }
 
 #[update]
-pub async fn update_token_registry(input: AddTokenInput) -> Result<(), String> {
-    info!("[update_token_registry]");
-    debug!("[update_token_registry] input: {input:?}");
+pub async fn user_update_token_registry(input: AddTokenInput) -> Result<(), String> {
+    info!("[user_update_token_registry]");
+    debug!("[user_update_token_registry] input: {input:?}");
 
     let _user_id = not_anonymous_caller();
     let state = get_state();
@@ -118,9 +118,9 @@ pub async fn update_token_registry(input: AddTokenInput) -> Result<(), String> {
 ///
 /// ToDo: this function is not atomic can leave the state in an inconsistent state
 #[update]
-pub async fn update_token_registry_batch(input: AddTokensInput) -> Result<(), String> {
-    info!("[update_token_registry_batch]");
-    debug!("[update_token_registry_batch] input: {input:?}");
+pub async fn user_update_token_registry_batch(input: AddTokensInput) -> Result<(), String> {
+    info!("[user_update_token_registry_batch]");
+    debug!("[user_update_token_registry_batch] input: {input:?}");
 
     let _user_id = not_anonymous_caller();
 
@@ -139,9 +139,9 @@ pub async fn update_token_registry_batch(input: AddTokensInput) -> Result<(), St
 }
 
 #[update]
-pub fn update_token_enable(input: UpdateTokenInput) -> Result<(), String> {
-    info!("[update_token_enable]");
-    debug!("[update_token_enable] input: {input:?}");
+pub fn user_update_token_enable(input: UpdateTokenInput) -> Result<(), String> {
+    info!("[user_update_token_enable]");
+    debug!("[user_update_token_enable] input: {input:?}");
 
     let user_id = not_anonymous_caller();
 
@@ -276,8 +276,8 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
 }
 
 #[update]
-pub fn sync_token_list() -> Result<(), String> {
-    info!("[sync_token_list]");
+pub fn user_sync_token_list() -> Result<(), String> {
+    info!("[user_sync_token_list]");
 
     let caller = msg_caller();
 
@@ -295,9 +295,9 @@ pub fn sync_token_list() -> Result<(), String> {
 }
 
 #[update]
-pub fn update_token_balance(input: Vec<UpdateTokenBalanceInput>) -> Result<(), String> {
-    info!("[update_token_balance]");
-    debug!("[update_token_balance] input: {input:?}");
+pub fn user_update_token_balance(input: Vec<UpdateTokenBalanceInput>) -> Result<(), String> {
+    info!("[user_update_token_balance]");
+    debug!("[user_update_token_balance] input: {input:?}");
 
     let user_id = not_anonymous_caller();
 

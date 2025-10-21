@@ -84,18 +84,18 @@ impl<C: CanisterClient> TokenStorageClient<C> {
     }
 
     /// Update token enable/disable status for the caller
-    pub async fn update_token_enable(
+    pub async fn user_update_token_enable(
         &self,
         input: UpdateTokenInput,
     ) -> CanisterClientResult<Result<(), String>> {
-        self.client.update("update_token_enable", (input,)).await
+        self.client.update("user_update_token_enable", (input,)).await
     }
 
     /// Adds a single token to the caller's list
-    pub async fn add_token(
+    pub async fn user_add_token(
         &self,
         input: AddTokenInput,
     ) -> CanisterClientResult<Result<(), String>> {
-        self.client.update("add_token", (input,)).await
+        self.client.update("user_add_token", (input,)).await
     }
 }

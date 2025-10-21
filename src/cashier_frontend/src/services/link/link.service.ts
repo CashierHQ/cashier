@@ -144,7 +144,7 @@ class LinkService {
 
   async createLink(input: CreateLinkInput) {
     console.log("Creating link with input:", input);
-    return parseResultResponse(await this.actor.create_link(input));
+    return parseResultResponse(await this.actor.user_create_link(input));
   }
 
   async updateLink(
@@ -158,7 +158,7 @@ class LinkService {
       isContinue,
     );
     const response = parseResultResponse(
-      await this.actor.update_link(completeData),
+      await this.actor.user_update_link(completeData),
     );
 
     return response;
@@ -171,7 +171,7 @@ class LinkService {
       action_type: mapFrontendActionTypeToActionType(input.actionType),
     };
     const response = parseResultResponse(
-      await this.actor.process_action(inputModel),
+      await this.actor.user_process_action(inputModel),
     );
     const action = mapActionModel(response);
     return action;
@@ -183,7 +183,7 @@ class LinkService {
       action_type: mapFrontendActionTypeToActionType(input.actionType),
     };
     const response = parseResultResponse(
-      await this.actor.create_action(inputModel),
+      await this.actor.user_create_action(inputModel),
     );
     const action = mapActionModel(response);
     return action;
@@ -242,7 +242,7 @@ class LinkService {
       link_id: inputModel.linkId,
       external: inputModel.external ?? true,
     };
-    const response = parseResultResponse(await this.actor.update_action(input));
+    const response = parseResultResponse(await this.actor.user_update_action(input));
     const action = mapActionModel(response);
     return action;
   }
