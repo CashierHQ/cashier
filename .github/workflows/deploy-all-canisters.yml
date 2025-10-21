@@ -81,7 +81,7 @@ jobs:
 
       # DANGEROUS: This is a plaintext identity import
       - name: Import identity
-        run: dfx identity import deployer private_key.pem --storage-mode=plaintext
+        run: dfx identity import deployer private_key.pem --storage-mode=plaintext --log
 
       - name: Use deployer identity
         run: |
