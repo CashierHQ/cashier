@@ -55,6 +55,8 @@ class CanisterBackendService {
   /**
    * Creates a new link using the v2 API format with enhanced features.
    * Validates the input and returns the full GetLinkResp on success.
+   * @param input The CreateLinkData containing link creation details.
+   * @returns A Result containing GetLinkResp or an Error.
    */
   async createLinkV2(
     input: CreateLinkData,
