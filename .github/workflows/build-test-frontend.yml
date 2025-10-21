@@ -1,0 +1,68 @@
+name: "Build & Test (frontend)"
+
+on:
+  pull_request:
+    branches: [main, dev, staging, feature/deployment]
+    # Only trigger this workflow when frontend files change
+    paths:
+      - "src/cashier_frontend/**"
+      - "src/cashier_frontend_new/**"
+      - "src/cashier_frontend/package.json"
+      - "src/cashier_frontend_new/package.json"
+    paths-ignore:
+      - "**/README.md"
+  push:
+    branches: [main, dev, staging, feature/deployment]
+    # Only trigger this workflow on pushes that affect the frontend
+    paths:
+      - "src/cashier_frontend/**"
+      - "src/cashier_frontend_new/**"
+      - "src/cashier_frontend/package.json"
+      - "src/cashier_frontend_new/package.json"
+    tags:
+      - "v*"
+    paths-ignore:
+      - "**/README.md"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend CI (check → build → test)
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+            node-version: "22.x"
+
+      - name: Install Just command runner
+        uses: extractions/setup-just@v1
+
+      - name: Configure cache for node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            src/cashier_frontend/node_modules
+            src/cashier_frontend_new/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Frontend - Check code style
+        run: |
+          just frontend_check_code
+
+      - name: Frontend - Build
+        run: |
+          just build_frontend dev
+
+      - name: Frontend - Test
+        run: |
+          just test_frontend
