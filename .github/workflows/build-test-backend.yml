@@ -5,10 +5,9 @@ on:
     branches: [main, dev, staging, feature/deployment]
     # Only trigger this workflow when backend/canister files change
     paths:
-      - "src/**"
-      - "lib/**"
-      - "Cargo.toml"
-      - "**/Cargo.toml"
+      - src/cashier_backend/**
+      - src/gate_service/**
+      - src/token_storage/**
     paths-ignore:
       - "**/README.md"
       # Ignore frontend-only changes so backend CI doesn't run for them
@@ -24,8 +23,6 @@ on:
       - "lib/**"
       - "Cargo.toml"
       - "**/Cargo.toml"
-    tags:
-      - "v*"
     paths-ignore:
       - "**/README.md"
       # Ignore frontend-only changes so backend CI doesn't run for them
