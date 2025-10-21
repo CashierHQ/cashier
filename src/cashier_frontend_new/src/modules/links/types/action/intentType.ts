@@ -57,7 +57,7 @@ export class TransferFromData {
 export type IntentPayload = TransferData | TransferFromData;
 
 // Frontend representation of an IntentType
-export class IntentType {
+class IntentType {
   private constructor(public readonly payload: IntentPayload) {}
 
   // Static instances for each IntentType

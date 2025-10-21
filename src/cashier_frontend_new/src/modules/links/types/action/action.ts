@@ -10,7 +10,7 @@ import type {
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 
 // Frontend Action class representing an action entity
-export class Action {
+class Action {
   constructor(
     public id: string,
     public creator: Principal,

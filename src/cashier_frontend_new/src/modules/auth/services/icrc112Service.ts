@@ -8,7 +8,7 @@ import type {
 } from "@slide-computer/signer";
 import { Err, Ok, type Result } from "ts-results-es";
 
-export class Icrc112Service<T extends Transport> {
+class Icrc112Service<T extends Transport> {
   private readonly signer: Signer<T>;
 
   constructor(signer: Signer<T>) {
