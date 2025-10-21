@@ -6,7 +6,7 @@ pub mod states;
 
 use crate::link_v2::{
     links::tip_link::{
-        actions::{create::CreateAction, use_link::UseAction, withdraw::WithdrawAction},
+        actions::{claim::ClaimAction, create::CreateAction, withdraw::WithdrawAction},
         states::{active::ActiveState, inactive::InactiveState},
     },
     traits::{LinkV2, LinkV2State},
@@ -109,7 +109,7 @@ impl LinkV2 for TipLink {
 
         Box::pin(async move {
             match action_type {
-                ActionType::CreateLink => {
+                ActionType::Activate => {
                     let create_action = CreateAction::create(&link, canister_id).await?;
                     Ok(CreateActionResult {
                         action: create_action.action,
@@ -127,13 +127,13 @@ impl LinkV2 for TipLink {
                         icrc112_requests: withdraw_action.icrc112_requests,
                     })
                 }
-                ActionType::Use => {
-                    let use_action = UseAction::create(&link, canister_id).await?;
+                ActionType::Claim => {
+                    let claim_action = ClaimAction::create(&link, canister_id).await?;
                     Ok(CreateActionResult {
-                        action: use_action.action,
-                        intents: use_action.intents,
-                        intent_txs_map: use_action.intent_txs_map,
-                        icrc112_requests: use_action.icrc112_requests,
+                        action: claim_action.action,
+                        intents: claim_action.intents,
+                        intent_txs_map: claim_action.intent_txs_map,
+                        icrc112_requests: claim_action.icrc112_requests,
                     })
                 }
                 _ => Err(CanisterError::from("Unsupported action type")),
@@ -154,9 +154,14 @@ impl LinkV2 for TipLink {
             let state = TipLink::get_state_handler(&link, canister_id)?;
 
             let updated_link = match action.r#type {
-                ActionType::CreateLink => state.activate().await?,
+                ActionType::Activate => state.activate().await?,
                 ActionType::Use => state.use_link(caller).await?,
                 ActionType::Withdraw => state.withdraw().await?,
+                _ => {
+                    return Err(CanisterError::from(
+                        "process_action not implemented for this action type",
+                    ));
+                }
             };
 
             Err(CanisterError::from(

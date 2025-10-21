@@ -19,14 +19,14 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 #[derive(Debug)]
-pub struct UseAction {
+pub struct ClaimAction {
     pub action: Action,
     pub intents: Vec<Intent>,
     pub intent_txs_map: HashMap<String, Vec<Transaction>>,
     pub icrc112_requests: Option<Icrc112Requests>,
 }
 
-impl UseAction {
+impl ClaimAction {
     pub fn new(
         action: Action,
         intents: Vec<Intent>,
