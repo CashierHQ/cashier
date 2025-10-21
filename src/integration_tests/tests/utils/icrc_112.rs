@@ -1,6 +1,8 @@
 use candid::Principal;
 
-use cashier_backend_types::{constant::TRIGGER_TRANSACTION_METHOD_NAME, dto::action::Icrc112Request};
+use cashier_backend_types::{
+    constant::TRIGGER_TRANSACTION_METHOD_NAME, dto::action::Icrc112Request,
+};
 use cashier_common::test_utils::random_principal_id;
 
 // Response from a canister call

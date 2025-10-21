@@ -37,10 +37,7 @@ async fn it_should_error_withdraw_link_airdrop_if_caller_anonymous() {
         // Assert
         assert!(result.is_err());
         if let Err(CanisterClientError::PocketIcTestError(err)) = result {
-            assert!(
-                err.reject_message
-                    .contains("AnonimousUserNotAllowed")
-            );
+            assert!(err.reject_message.contains("AnonimousUserNotAllowed"));
         } else {
             panic!("Expected PocketIcTestError, got {:?}", result);
         }

@@ -112,7 +112,9 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         &self,
         link_id: &str,
     ) -> CanisterClientResult<Result<LinkDto, CanisterError>> {
-        self.client.update("user_activate_link_v2", (link_id,)).await
+        self.client
+            .update("user_activate_link_v2", (link_id,))
+            .await
     }
 
     /// Creates a new action.
@@ -192,7 +194,9 @@ mod pic {
             &self,
             args: ProcessActionInput,
         ) -> CanisterClientResult<RawMessageId> {
-            self.client.submit_call("user_process_action", (args,)).await
+            self.client
+                .submit_call("user_process_action", (args,))
+                .await
         }
 
         /// Submit an update_action call and return the message ID (PocketIC only).

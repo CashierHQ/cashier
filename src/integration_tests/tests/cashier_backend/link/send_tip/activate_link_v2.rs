@@ -31,10 +31,7 @@ async fn it_should_error_activate_icp_token_tip_linkv2_if_caller_anonymous() {
         // Assert: Activated link result
         assert!(activate_link_result.is_err());
         if let Err(CanisterClientError::PocketIcTestError(err)) = activate_link_result {
-            assert!(
-                err.reject_message
-                    .contains("AnonimousUserNotAllowed")
-            );
+            assert!(err.reject_message.contains("AnonimousUserNotAllowed"));
         } else {
             panic!("Expected PocketIcTestError, got {:?}", activate_link_result);
         }

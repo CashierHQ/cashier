@@ -14,7 +14,9 @@ use ic_cdk::update;
 use log::{debug, info};
 
 #[update(guard = "is_not_anonymous")]
-pub async fn user_trigger_transaction(input: TriggerTransactionInput) -> Result<String, CanisterError> {
+pub async fn user_trigger_transaction(
+    input: TriggerTransactionInput,
+) -> Result<String, CanisterError> {
     info!("[user_trigger_transaction]");
     debug!("[user_trigger_transaction] Input: {:?}", input);
 
