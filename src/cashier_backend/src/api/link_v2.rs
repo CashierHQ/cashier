@@ -76,7 +76,7 @@ async fn create_action_v2(input: CreateActionInput) -> Result<ActionDto, Caniste
     let mut link_v2_service = get_state().link_v2_service;
     let canister_id = get_state().env.id();
     link_v2_service
-        .create_action(msg_caller(), &input.link_id, canister_id, input.action_type)
+        .create_action(msg_caller(), canister_id, &input.link_id, input.action_type)
         .await
 }
 
@@ -87,6 +87,6 @@ async fn process_action_v2(input: ProcessActionInput) -> Result<ActionDto, Canis
     let mut link_v2_service = get_state().link_v2_service;
     let canister_id = get_state().env.id();
     link_v2_service
-        .process_action(msg_caller(), &input.action_id, canister_id)
+        .process_action(msg_caller(), canister_id, &input.action_id)
         .await
 }
