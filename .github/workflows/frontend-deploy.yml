@@ -11,11 +11,13 @@ on:
         types:
             - closed
     push:
-        paths:
-            - "src/cashier_frontend/**"
-        branches-ignore:
-            - main
-            - staging
+      branches:
+      - feature/deployment
+        # paths:
+        #     - "src/cashier_frontend/**"
+        # branches-ignore:
+        #     - main
+        #     - staging
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
