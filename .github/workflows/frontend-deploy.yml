@@ -11,8 +11,8 @@ on:
         types:
             - closed
     push:
-        paths:
-            - "src/cashier_frontend/**"
+        # paths:
+            # - "src/cashier_frontend/**"
         # branches-ignore:
         #     - main
         #     - staging
