@@ -81,6 +81,8 @@ class CanisterBackendService {
 
   /**
    * Activate a link v2 by id. Only the link owner may call this via an authenticated actor.
+   * @param id The ID of the link to activate.
+   * @returns A Result containing LinkDto or an Error.
    */
   async activateLinkV2(
     id: string,
@@ -100,6 +102,9 @@ class CanisterBackendService {
   /**
    * Retrieve a single link by id. This method calls the canister's `get_link` query
    * and returns the GetLinkResp on success.
+   * @param id The ID of the link to retrieve.
+   * @param options Optional GetLinkOptions to add action type if needed
+   * @returns A Result containing GetLinkResp or an Error.
    */
   async getLink(
     id: string,

@@ -8,6 +8,8 @@ import type {
 } from "@slide-computer/signer";
 import { Err, Ok, type Result } from "ts-results-es";
 
+// Class of service handler for ICRC-112 requests
+// T is the Transport type used by the Signer
 class Icrc112Service<T extends Transport> {
   private readonly signer: Signer<T>;
 
@@ -18,7 +20,7 @@ class Icrc112Service<T extends Transport> {
   /**
    * Send ICRC-112 batch call request using the connected signer
    * @param icrc112Requests - 2D array of ICRC-112 requests (sequences of parallel requests)
-   * @returns Promise that resolves when the batch request
+   * @returns Result containing BatchCallCanisterResponse or Error
    */
   async sendBatchRequest(
     icrc112Requests: Array<
@@ -31,7 +33,7 @@ class Icrc112Service<T extends Transport> {
     >,
     sender: string,
     cashierBackendCanisterId: string,
-  ): Promise<Result<void, Error>> {
+  ): Promise<Result<BatchCallCanisterResponse, Error>> {
     const requests = icrc112Requests.map((parallelRequests) =>
       parallelRequests.map((request) => ({
         canisterId: request.canister_id.toString(),
@@ -119,7 +121,7 @@ class Icrc112Service<T extends Transport> {
           },
         );
 
-        return Ok(undefined);
+        return Ok(res);
       }
 
       return Err(
