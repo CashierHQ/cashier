@@ -13,8 +13,45 @@ on:
       - feature/deployment
 
 jobs:
-  setup-and-deploy:
+  setup_environment:
+    name: Determine environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+      dfx_network: ${{ steps.set-env.outputs.dfx_network }}
+    steps:
+      - name: Set deployment environment
+        id: set-env
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BRANCH_NAME="${{ github.event.pull_request.base.ref }}"
+          else
+            BRANCH_NAME="${{ github.ref_name }}"
+          fi
+
+          echo "Detected branch: ${BRANCH_NAME}"
+
+          # Map branch to logical environment
+          if [[ "${BRANCH_NAME}" == "main" ]]; then
+            ENVIRONMENT=production
+            DFX_NETWORK=ic
+          elif [[ "${BRANCH_NAME}" == "staging" ]]; then
+            ENVIRONMENT=staging
+            DFX_NETWORK=staging
+          elif [[ "${BRANCH_NAME}" == "dev" ]]; then
+            ENVIRONMENT=dev
+            DFX_NETWORK=dev
+          else
+            ENVIRONMENT=dev
+            DFX_NETWORK=dev
+          fi
+
+          echo "environment=${ENVIRONMENT}" >> $GITHUB_OUTPUT
+          echo "dfx_network=${DFX_NETWORK}" >> $GITHUB_OUTPUT
+
+  deploy_all:
     name: Deploy all canisters
+    needs: setup_environment
     permissions:
       contents: read
       actions: write
@@ -50,35 +87,6 @@ jobs:
           tar -xvf /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -C /usr/local/bin
           chmod +x /usr/local/bin/candid-extractor
 
-      - name: Setup environment variables
-        id: set-env
-        run: |
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            BRANCH_NAME="${{ github.event.pull_request.base.ref }}"
-          else
-            BRANCH_NAME="${{ github.ref_name }}"
-          fi
-
-          echo "Detected branch: ${BRANCH_NAME}"
-
-          # Map branch to logical environment
-          if [[ "${BRANCH_NAME}" == "main" ]]; then
-            ENVIRONMENT=production
-            DFX_NETWORK=ic
-          elif [[ "${BRANCH_NAME}" == "staging" ]]; then
-            ENVIRONMENT=staging
-            DFX_NETWORK=staging
-          elif [[ "${BRANCH_NAME}" == "dev" ]]; then
-            ENVIRONMENT=dev
-            DFX_NETWORK=dev
-          else
-            ENVIRONMENT=dev
-            DFX_NETWORK=dev
-          fi
-
-          echo "environment=${ENVIRONMENT}" >> $GITHUB_OUTPUT
-          echo "dfx_network=${DFX_NETWORK}" >> $GITHUB_OUTPUT
-
       - name: Create private key file
         run: echo "${{ secrets.DEPLOYER }}" > private_key.pem
 
@@ -93,8 +101,8 @@ jobs:
 
       - name: Run deploy-all just target
         env:
-          ENVIRONMENT: ${{ steps.set-env.outputs.environment }}
-          DFX_NETWORK: ${{ steps.set-env.outputs.dfx_network }}
+          ENVIRONMENT: ${{ needs.setup_environment.outputs.environment }}
+          DFX_NETWORK: ${{ needs.setup_environment.outputs.dfx_network }}
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
           echo "Deploying to DFX network: ${DFX_NETWORK} (environment: ${ENVIRONMENT})"
