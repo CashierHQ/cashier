@@ -13,9 +13,11 @@ on:
     push:
         paths:
             - "src/cashier_frontend/**"
-        branches-ignore:
-            - main
-            - staging
+        # branches-ignore:
+        #     - main
+        #     - staging
+        branches:
+          - feature/deployment
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
