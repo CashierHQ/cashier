@@ -8,28 +8,17 @@ on:
       - src/cashier_backend/**
       - src/gate_service/**
       - src/token_storage/**
-    paths-ignore:
-      - "**/README.md"
-      # Ignore frontend-only changes so backend CI doesn't run for them
-      - "src/cashier_frontend/**"
-      - "src/cashier_frontend_new/**"
-      - "src/cashier_frontend/package.json"
-      - "src/cashier_frontend_new/package.json"
+      - src/lib/**
+    # Note: 'paths' is defined above. Avoid using 'paths-ignore' together with 'paths'.
   push:
     branches: [main, dev, staging, feature/deployment]
     # Only trigger this workflow on pushes that affect the backend
     paths:
-      - "src/**"
-      - "lib/**"
-      - "Cargo.toml"
-      - "**/Cargo.toml"
-    paths-ignore:
-      - "**/README.md"
-      # Ignore frontend-only changes so backend CI doesn't run for them
-      - "src/cashier_frontend/**"
-      - "src/cashier_frontend_new/**"
-      - "src/cashier_frontend/package.json"
-      - "src/cashier_frontend_new/package.json"
+      - src/cashier_backend/**
+      - src/gate_service/**
+      - src/token_storage/**
+      - src/lib/**
+    # Note: 'paths' is defined above. Avoid using 'paths-ignore' together with 'paths'.
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
