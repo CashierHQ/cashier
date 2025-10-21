@@ -80,11 +80,9 @@ async fn create_action_v2(input: CreateActionInput) -> Result<ActionDto, Caniste
         .await
 }
 
-async fn process_action_v2(
-    link_id: &str,
-    input: ProcessActionInput,
-) -> Result<ActionDto, CanisterError> {
+async fn process_action_v2(input: ProcessActionInput) -> Result<ActionDto, CanisterError> {
     info!("[process_action_v2]");
+    debug!("[process_action_v2] input: {input:?}");
 
     let mut link_v2_service = get_state().link_v2_service;
     let canister_id = get_state().env.id();
