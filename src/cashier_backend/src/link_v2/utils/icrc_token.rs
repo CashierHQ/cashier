@@ -5,7 +5,9 @@ use crate::{
     constant::{FEE_TREASURY_PRINCIPAL, ICP_CANISTER_PRINCIPAL},
     services::ext::{
         self,
-        icrc_token::{Account as ExtAccount, Allowance, AllowanceArgs, Service, TransferFromArgs},
+        icrc_token::{
+            Account as ExtAccount, Allowance, AllowanceArgs, Service, TransferArg, TransferFromArgs,
+        },
     },
     utils::helper::to_subaccount,
 };
@@ -324,32 +326,56 @@ pub async fn transfer_token_from_link_to_account(
 ) -> Result<HashMap<Principal, Nat>, CanisterError> {
     let from_account = get_link_ext_account(link_id, canister_id)?;
 
-    // let transfer_tasks = assets
-    //     .iter()
-    //     .map(|asset| {
-    //         let from_account = from_account.clone();
-    //         let to = to.clone();
-    //         let amount = amount.clone();
-    //         let fee = fee.clone();
-    //         async move {
-    //             let transfer_arg = TransferArg {
-    //                 from_subaccount: from_account.subaccount,
-    //                 to: to.clone(),
-    //                 amount,
-    //                 fee: Some(fee),
-    //                 memo: None,            // TODO
-    //                 created_at_time: None, // TODO
-    //             };
+    let transfer_tasks = assets
+        .iter()
+        .map(|asset| {
+            let from_account = from_account.clone();
+            let to = to.clone();
+            let amount = amount.clone();
+            let fee = fee.clone();
+            async move {
+                let transfer_arg = TransferArg {
+                    from_subaccount: from_account.subaccount,
+                    to: to.clone(),
+                    amount,
+                    fee: Some(fee),
+                    memo: None,            // TODO
+                    created_at_time: None, // TODO
+                };
 
-    //             let address = match asset {
-    //                 Asset::IC { address, .. } => *address,
-    //             };
-    //             let token_service = Service::new(address);
-    //             let result = token_service.icrc_1_transfer(&transfer_arg).await;
-    //             (address, result)
-    //         }
-    //     })
-    //     .collect::<Vec<_>>();
+                let address = match asset {
+                    Asset::IC { address, .. } => *address,
+                };
+                let token_service = Service::new(address);
+                let result = token_service.icrc_1_transfer(&transfer_arg).await;
+                (address, result)
+            }
+        })
+        .collect::<Vec<_>>();
 
-    Err(CanisterError::from("Not implemented"))
+    let transfer_results = future::join_all(transfer_tasks).await;
+    let mut transfer_map = HashMap::new();
+    for (address, result) in transfer_results {
+        match result {
+            Ok(block_id) => {
+                let block_id = block_id.map_err(|e| {
+                    CanisterError::CallCanisterFailed(format!(
+                        "Failed to transfer token for asset {}: {:?}",
+                        address.to_text(),
+                        e
+                    ))
+                })?;
+                transfer_map.insert(address, block_id);
+            }
+            Err(errr) => {
+                return Err(CanisterError::CallCanisterFailed(format!(
+                    "Failed to transfer token for asset {}: {:?}",
+                    address.to_text(),
+                    errr,
+                )));
+            }
+        }
+    }
+
+    Ok(transfer_map)
 }
