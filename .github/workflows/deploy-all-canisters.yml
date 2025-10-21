@@ -89,7 +89,7 @@ jobs:
 
       - name: Use deployer identity
         run: |
-          dfx identity use deployer || true
+          dfx identity use deployer
           echo "Deploy with identity $(dfx identity get-principal)"
 
       - name: Run deploy-all just target
