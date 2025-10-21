@@ -3,7 +3,7 @@ import type { Icrc112Request as BackendIcrc112Request } from "$lib/generated/cas
 import { fromNullable } from "@dfinity/utils";
 
 // Frontend representation of an ICRC-112 request
-export class Icrc112Request {
+class Icrc112Request {
   constructor(
     public arg: ArrayBuffer,
     public method: string,

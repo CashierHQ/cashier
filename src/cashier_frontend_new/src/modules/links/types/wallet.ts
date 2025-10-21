@@ -3,7 +3,7 @@ import type { Principal } from "@dfinity/principal";
 import { rsMatch } from "$lib/rsMatch";
 
 // Frontend representation of a Wallet
-export class Wallet {
+class Wallet {
   constructor(
     public subaccount: Uint8Array | number[] | null,
     public address: Principal,
