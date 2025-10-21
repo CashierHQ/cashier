@@ -68,17 +68,6 @@ dfx_deploy_token_storage owner network:
           decimals = 8;
           enabled_by_default = true;
         };
-        record {
-          details = variant { IC = record {
-              ledger_id = principal \"x5qut-viaaa-aaaar-qajda-cai\";
-              fee = 10_000 : nat;
-            }
-          };
-          symbol = \"tICP\";
-          name = \"Test Internet Computer\";
-          decimals = 8;
-          enabled_by_default = true;
-        };
       };
   })" --network {{network}}
 

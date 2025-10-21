@@ -1,4 +1,4 @@
-name: Frontend Deployment
+name: Deploy all canisters
 on:
     # For main and staging branches, only trigger on closed PRs
     pull_request:
@@ -147,4 +147,4 @@ jobs:
                   cat src/cashier_frontend/${ENV_FILE}
 
                   just build "$ENVIRONMENT"
-                  just deploy-all "$ENVIRONMENT"
+                  just deploy-all "$ENVIRONMENT
