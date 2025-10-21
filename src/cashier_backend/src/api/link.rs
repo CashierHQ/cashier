@@ -185,7 +185,6 @@ pub async fn process_action_anonymous(
 pub async fn create_action_anonymous(
     input: CreateActionAnonymousInput,
 ) -> Result<ActionDto, CanisterError> {
-    let TODO = "TODO";
     info!("[create_action_anonymous]");
     debug!("[create_action_anonymous] input: {input:?}");
 
@@ -231,12 +230,12 @@ pub async fn link_get_user_state(
 /// * `Ok(Some(LinkGetUserStateOutput))` - Updated user state and action data
 /// * `Ok(None)` - If state transition is not valid
 /// * `Err(CanisterError)` - Error if validation fails or transition not allowed
-#[update]
-pub async fn link_update_user_state(
+#[update(guard = "is_not_anonymous")]
+pub async fn user_link_update_user_state(
     input: LinkUpdateUserStateInput,
 ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
-    info!("[link_update_user_state]");
-    debug!("[link_update_user_state] input: {input:?}");
+    info!("[user_link_update_user_state]");
+    debug!("[user_link_update_user_state] input: {input:?}");
 
     let mut api = LinkApi::new(get_state());
     api.link_update_user_state(msg_caller(), &input)

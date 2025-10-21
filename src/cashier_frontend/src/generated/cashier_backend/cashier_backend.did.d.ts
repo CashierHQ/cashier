@@ -422,22 +422,6 @@ export interface _SERVICE {
    */
   'link_get_user_state' : ActorMethod<[LinkGetUserStateInput], Result_6>,
   /**
-   * Updates the user state for a specific link action.
-   * 
-   * This endpoint transitions the user through different states in a link's action flow
-   * (e.g., from wallet selection to transaction signing). It implements a state machine
-   * to guide users through the complete action process.
-   * 
-   * # Arguments
-   * * `input` - Parameters including link ID, action type, target state, and optional wallet address
-   * 
-   * # Returns
-   * * `Ok(Some(LinkGetUserStateOutput))` - Updated user state and action data
-   * * `Ok(None)` - If state transition is not valid
-   * * `Err(CanisterError)` - Error if validation fails or transition not allowed
-   */
-  'link_update_user_state' : ActorMethod<[LinkUpdateUserStateInput], Result_6>,
-  /**
    * Processes an existing action for anonymous users with wallet address.
    * 
    * This endpoint allows anonymous users to execute blockchain actions (typically claims)
@@ -503,6 +487,25 @@ export interface _SERVICE {
    * * `Err(CanisterError)` - If link creation fails or validation errors occur
    */
   'user_create_link_v2' : ActorMethod<[CreateLinkInput], Result_8>,
+  /**
+   * Updates the user state for a specific link action.
+   * 
+   * This endpoint transitions the user through different states in a link's action flow
+   * (e.g., from wallet selection to transaction signing). It implements a state machine
+   * to guide users through the complete action process.
+   * 
+   * # Arguments
+   * * `input` - Parameters including link ID, action type, target state, and optional wallet address
+   * 
+   * # Returns
+   * * `Ok(Some(LinkGetUserStateOutput))` - Updated user state and action data
+   * * `Ok(None)` - If state transition is not valid
+   * * `Err(CanisterError)` - Error if validation fails or transition not allowed
+   */
+  'user_link_update_user_state' : ActorMethod<
+    [LinkUpdateUserStateInput],
+    Result_6
+  >,
   /**
    * Processes an existing action for authenticated users.
    * 
