@@ -5,7 +5,7 @@ use crate::{
     constant::{FEE_TREASURY_PRINCIPAL, ICP_CANISTER_PRINCIPAL},
     services::ext::{
         self,
-        icrc_token::{Account as ExtAccount, AllowanceArgs, Service, TransferFromArgs},
+        icrc_token::{Account as ExtAccount, Allowance, AllowanceArgs, Service, TransferFromArgs},
     },
     utils::helper::to_subaccount,
 };
@@ -312,4 +312,44 @@ pub async fn transfer_fee_from_link_creator_to_treasury(
     })?;
 
     Ok(block_id)
+}
+
+pub async fn transfer_token_from_link_to_account(
+    link_id: &str,
+    canister_id: Principal,
+    assets: &[Asset],
+    to: &ExtAccount,
+    amount: Nat,
+    fee: Nat,
+) -> Result<HashMap<Principal, Nat>, CanisterError> {
+    let from_account = get_link_ext_account(link_id, canister_id)?;
+
+    // let transfer_tasks = assets
+    //     .iter()
+    //     .map(|asset| {
+    //         let from_account = from_account.clone();
+    //         let to = to.clone();
+    //         let amount = amount.clone();
+    //         let fee = fee.clone();
+    //         async move {
+    //             let transfer_arg = TransferArg {
+    //                 from_subaccount: from_account.subaccount,
+    //                 to: to.clone(),
+    //                 amount,
+    //                 fee: Some(fee),
+    //                 memo: None,            // TODO
+    //                 created_at_time: None, // TODO
+    //             };
+
+    //             let address = match asset {
+    //                 Asset::IC { address, .. } => *address,
+    //             };
+    //             let token_service = Service::new(address);
+    //             let result = token_service.icrc_1_transfer(&transfer_arg).await;
+    //             (address, result)
+    //         }
+    //     })
+    //     .collect::<Vec<_>>();
+
+    Err(CanisterError::from("Not implemented"))
 }
