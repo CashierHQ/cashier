@@ -4,7 +4,7 @@ deploy-all NETWORK:
   set -e
   export OWNER=$(dfx identity get-principal)
   dfx deploy cashier_backend --network {{NETWORK}}
-  dfx deploy token_storage --network {{network}}
+  dfx deploy token_storage --network {{NETWORK}}
   dfx deploy cashier_frontend_new --network {{NETWORK}}
   dfx deploy cashier_frontend --network {{NETWORK}}
 
