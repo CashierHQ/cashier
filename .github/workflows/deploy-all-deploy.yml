@@ -42,14 +42,16 @@ jobs:
 
                   echo "Detected branch: $TARGET_BRANCH"
 
-                  if [[ "$TARGET_BRANCH" == "main" ]]; then
-                    echo "environment=production" >> $GITHUB_OUTPUT
-                  elif [[ "$TARGET_BRANCH" == "staging" ]]; then
-                    echo "environment=staging" >> $GITHUB_OUTPUT
-                  else
-                    # Any other branch will deploy to dev environment
-                    echo "environment=dev" >> $GITHUB_OUTPUT
-                  fi
+                  # if [[ "$TARGET_BRANCH" == "main" ]]; then
+                  #   echo "environment=production" >> $GITHUB_OUTPUT
+                  # elif [[ "$TARGET_BRANCH" == "staging" ]]; then
+                  #   echo "environment=staging" >> $GITHUB_OUTPUT
+                  # else
+                  #   # Any other branch will deploy to dev environment
+                  #   echo "environment=dev" >> $GITHUB_OUTPUT
+                  # fi
+
+                  echo "environment=staging" >> $GITHUB_OUTPUT
 
     build_and_deploy:
         runs-on: ubuntu-latest
