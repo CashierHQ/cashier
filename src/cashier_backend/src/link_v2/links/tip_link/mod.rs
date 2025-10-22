@@ -109,7 +109,7 @@ impl LinkV2 for TipLink {
 
         Box::pin(async move {
             match action_type {
-                ActionType::Activate => {
+                ActionType::CreateLink => {
                     let create_action = CreateAction::create(&link, canister_id).await?;
                     Ok(CreateActionResult {
                         action: create_action.action,

@@ -143,7 +143,7 @@ impl LinkV2State for CreatedState {
 
         Box::pin(async move {
             match action.r#type {
-                ActionType::Activate => {
+                ActionType::CreateLink => {
                     let updated_link = state.activate().await?;
                     Ok(ProcessActionResult {
                         link: updated_link,
