@@ -10,6 +10,14 @@ on:
             - dev
         types:
             - closed
+    push:
+      branches:
+      - feature/deployment
+        # paths:
+        #     - "src/cashier_frontend/**"
+        # branches-ignore:
+        #     - main
+        #     - staging
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
@@ -139,5 +147,5 @@ jobs:
                   echo "Created ${ENV_FILE} with values:"
                   cat src/cashier_frontend/${ENV_FILE}
 
-                  just build "$ENVIRONMENT"
-                  just deploy-all "$ENVIRONMENT"
+                  # just build "$ENVIRONMENT"
+                  # just deploy-all "$ENVIRONMENT"
