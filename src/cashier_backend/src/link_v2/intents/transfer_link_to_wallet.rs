@@ -53,12 +53,14 @@ impl TransferLinkToWalletIntent {
         let mut transfer_data = intent.r#type.as_transfer().ok_or_else(|| {
             CanisterError::HandleLogicError("Transfer data not found".to_string())
         })?;
-        transfer_data.amount = Nat::from(sending_amount);
+        transfer_data.amount = sending_amount;
         transfer_data.asset = asset;
         transfer_data.from = from_wallet;
         transfer_data.to = to_wallet;
+
         intent.r#type = IntentType::Transfer(transfer_data);
 
+        // TODO: use TxManager to create transactions
         // generate the blockchain transactions
         let intent_adapter = IntentAdapterImpl::new();
         let transactions =

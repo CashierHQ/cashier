@@ -4,7 +4,7 @@
 use crate::api::state::get_state;
 use cashier_backend_types::{
     dto::{
-        action::{ActionDto, CreateActionInput, ProcessActionInput},
+        action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
         link::{CreateLinkInput, GetLinkResp, LinkDto},
     },
     error::CanisterError,
@@ -75,13 +75,13 @@ async fn create_action_v2(input: CreateActionInput) -> Result<ActionDto, Caniste
         .await
 }
 
-async fn process_action_v2(input: ProcessActionInput) -> Result<ActionDto, CanisterError> {
-    info!("[process_action_v2]");
-    debug!("[process_action_v2] input: {input:?}");
+async fn update_action_v2(input: UpdateActionInput) -> Result<ActionDto, CanisterError> {
+    info!("[update_action_v2]");
+    debug!("[update_action_v2] input: {input:?}");
 
     let mut link_v2_service = get_state().link_v2_service;
     let canister_id = get_state().env.id();
     link_v2_service
-        .process_action(msg_caller(), canister_id, &input.action_id)
+        .update_action(msg_caller(), canister_id, &input.action_id)
         .await
 }
