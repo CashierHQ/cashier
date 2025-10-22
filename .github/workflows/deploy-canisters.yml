@@ -10,6 +10,10 @@ on:
             - dev
         types:
             - closed
+    push:
+        branches:
+            feature/deployment
+
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
@@ -21,6 +25,7 @@ jobs:
         runs-on: ubuntu-latest
         outputs:
             environment: ${{ steps.set-env.outputs.environment }}
+            env_file: ${{ steps.set-env.outputs.env_file }}
         steps:
             - name: Set deployment environment
               id: set-env
@@ -36,11 +41,14 @@ jobs:
 
                   if [[ "$TARGET_BRANCH" == "main" ]]; then
                     echo "environment=production" >> $GITHUB_OUTPUT
+                    echo "env_file=.env.production" >> $GITHUB_OUTPUT
                   elif [[ "$TARGET_BRANCH" == "staging" ]]; then
                     echo "environment=staging" >> $GITHUB_OUTPUT
+                    echo "env_file=.env.staging" >> $GITHUB_OUTPUT
                   else
                     # Any other branch will deploy to dev environment
                     echo "environment=dev" >> $GITHUB_OUTPUT
+                    echo "env_file=.env.dev" >> $GITHUB_OUTPUT
                   fi
 
 
@@ -63,13 +71,6 @@ jobs:
               with:
                 components: clippy, rustfmt
                 targets: wasm32-unknown-unknown
-
-            - name: Configure Rust Cache
-              uses: swatinem/rust-cache@v2
-              if: ${{ (github.event.pull_request.base.ref != 'main') && (github.ref_name != 'main') }}
-              with:
-                shared-key: ${{ github.repository }}
-                save-if: ${{ github.ref_type != 'tag' }}
 
             - name: Setup environment
               run: |
@@ -116,18 +117,9 @@ jobs:
                   VITE_TOKEN_STORAGE_CANISTER_ID: ${{ vars.VITE_TOKEN_STORAGE_CANISTER_ID }}
                   DFX_WARNING: -mainnet_plaintext_identity
                   ENVIRONMENT: ${{ needs.setup_environment.outputs.environment }}
+                  ENV_FILE: ${{ needs.setup_environment.outputs.env_file }}
               run: |
-                  # Set environment-specific network
-                  if [[ "$ENVIRONMENT" == "production" ]]; then
-                    NETWORK="ic"
-                    ENV_FILE=".env.production"
-                  elif [[ "$ENVIRONMENT" == "staging" ]]; then
-                    NETWORK="staging"
-                    ENV_FILE=".env.staging"
-                  else
-                    NETWORK="dev"
-                    ENV_FILE=".env.dev"
-                  fi
+                  # NETWORK and ENV_FILE are provided by the setup_environment job
 
                   # Create environment file with the correct values
                   

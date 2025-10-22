@@ -121,7 +121,7 @@
     }
   },
   "networks": {
-    "ic": {
+    "production": {
       "type": "persistent",
       "providers": ["https://icp0.io"]
     },
