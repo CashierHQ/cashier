@@ -10,9 +10,6 @@ on:
             - dev
         types:
             - closed
-    push:
-        branches:
-            feature/deployment
 
 
 # Permissions needed for the GITHUB_TOKEN
@@ -119,8 +116,6 @@ jobs:
                   ENVIRONMENT: ${{ needs.setup_environment.outputs.environment }}
                   ENV_FILE: ${{ needs.setup_environment.outputs.env_file }}
               run: |
-                  # NETWORK and ENV_FILE are provided by the setup_environment job
-
                   # Create environment file with the correct values
                   
                   echo "VITE_IC_EXPLORER_BASE_URL=${VITE_IC_EXPLORER_BASE_URL}" > src/cashier_frontend/${ENV_FILE}
