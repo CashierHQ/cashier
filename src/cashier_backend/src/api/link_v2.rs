@@ -32,8 +32,21 @@ async fn create_link_v2(input: CreateLinkInput) -> Result<GetLinkResp, CanisterE
         .await
 }
 
+#[update(guard = "is_not_anonymous")]
+async fn disable_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
+    info!("[disable_link_v2]");
+    debug!("[disable_link_v2] link_id: {link_id}");
+
+    let mut link_v2_service = get_state().link_v2_service;
+    link_v2_service.disable_link(msg_caller(), link_id).await
+}
+
 /// Activate a link v2, transitioning it from CREATED to ACTIVE state.
 /// Only the link creator can activate the link.
+///
+/// # Deprecated:
+/// This function is deprecated and will be replaced by the `process_action_v2` function with a CREATE_LINK action.
+///
 /// # Arguments
 /// * `link_id` - The ID of the link to activate
 /// # Returns

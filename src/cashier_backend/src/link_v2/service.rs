@@ -5,6 +5,7 @@ use crate::repositories::Repositories;
 use crate::services::action::ActionService;
 use crate::{link_v2::links::factory, repositories};
 use candid::Principal;
+use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::{
     dto::{
         action::ActionDto,
@@ -115,6 +116,29 @@ impl<R: Repositories> LinkV2Service<R> {
         self.link_repository.update(activate_result.link.clone());
 
         Ok(LinkDto::from(activate_result.link))
+    }
+
+    pub async fn disable_link(
+        &mut self,
+        caller: Principal,
+        link_id: &str,
+    ) -> Result<LinkDto, CanisterError> {
+        let mut link = self
+            .link_repository
+            .get(&link_id.to_string())
+            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+
+        if link.creator != caller {
+            return Err(CanisterError::Unauthorized(
+                "Only the creator can disable the link".to_string(),
+            ));
+        }
+
+        link.state = LinkState::Inactive;
+        // update link in db
+        self.link_repository.update(link.clone());
+
+        Ok(LinkDto::from(link))
     }
 
     pub async fn create_action(

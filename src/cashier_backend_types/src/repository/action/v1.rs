@@ -39,8 +39,6 @@ pub enum ActionType {
     CreateLink,
     Withdraw,
     Use,
-    Activate,
-    Deactivate,
     Claim,
     Pay,
 }

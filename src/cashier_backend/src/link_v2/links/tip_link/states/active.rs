@@ -33,15 +33,6 @@ impl ActiveState {
         }
     }
 
-    fn deactivate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
-        let mut link = self.link.clone();
-
-        Box::pin(async move {
-            link.state = LinkState::Inactive;
-            Ok(link)
-        })
-    }
-
     fn claim(
         &self,
         caller: Principal,
@@ -84,15 +75,6 @@ impl LinkV2State for ActiveState {
 
         Box::pin(async move {
             match action.r#type {
-                ActionType::Deactivate => {
-                    let updated_link = state.deactivate().await?;
-                    Ok(ProcessActionResult {
-                        link: updated_link,
-                        action,
-                        intents: vec![],
-                        intent_txs_map: HashMap::new(),
-                    })
-                }
                 ActionType::Claim => {
                     let updated_link = state.claim(caller).await?;
                     Ok(ProcessActionResult {
