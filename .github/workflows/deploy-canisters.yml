@@ -10,6 +10,9 @@ on:
             - dev
         types:
             - closed
+    push:
+        branches:
+            feature/deployment
 
 
 # Permissions needed for the GITHUB_TOKEN
