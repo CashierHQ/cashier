@@ -4,7 +4,7 @@
 pub mod actions;
 pub mod states;
 
-use crate::link_v2::{
+use crate::v2::{
     links::tip_link::{
         actions::{claim::ClaimAction, create::CreateAction, withdraw::WithdrawAction},
         states::{active::ActiveState, inactive::InactiveState},
