@@ -4,7 +4,7 @@
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::{CreateActionResult, ProcessActionResult},
+    link_v2::{CreateActionResult, UpdateActionResult},
     repository::{
         action::v1::{Action, ActionType},
         link::v1::Link,
@@ -13,11 +13,6 @@ use cashier_backend_types::{
 use std::{fmt::Debug, future::Future, pin::Pin};
 
 pub trait LinkV2: Debug {
-    /// Get the underlying link model
-    /// # Returns
-    /// * `Link` - The link model
-    fn get_link_model(&self) -> Link;
-
     /// Create an action associated with the link
     /// # Arguments
     /// * `caller` - The principal of the user creating the action
@@ -34,12 +29,12 @@ pub trait LinkV2: Debug {
         action: ActionType,
     ) -> Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>>;
 
-    fn process_action(
+    fn update_action(
         &self,
         caller: Principal,
         action: &Action,
-    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("process_action not implemented")) })
+    ) -> Pin<Box<dyn Future<Output = Result<UpdateActionResult, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("update_action not implemented")) })
     }
 }
 
@@ -53,11 +48,11 @@ pub trait LinkV2State: Debug {
         Box::pin(async move { Err(CanisterError::from("create_action not implemented")) })
     }
 
-    fn process_action(
+    fn update_action(
         &self,
         caller: Principal,
         action: &Action,
-    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("process_action not implemented")) })
+    ) -> Pin<Box<dyn Future<Output = Result<UpdateActionResult, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("update_action not implemented")) })
     }
 }

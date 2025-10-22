@@ -49,10 +49,9 @@ impl<R: Repositories> LinkV2Service<R> {
         input: CreateLinkInput,
         created_at_ts: u64,
     ) -> Result<GetLinkResp, CanisterError> {
-        let link = factory::create_link(creator_id, input, created_at_ts, canister_id)?;
+        let link_model = factory::create_link(creator_id, input, created_at_ts, canister_id)?;
 
         // save link & user_link to db
-        let link_model = link.get_link_model();
         self.link_repository.create(link_model.clone());
 
         let new_user_link = UserLink {
@@ -76,8 +75,33 @@ impl<R: Repositories> LinkV2Service<R> {
         })
     }
 
+    pub async fn disable_link(
+        &mut self,
+        caller: Principal,
+        link_id: &str,
+    ) -> Result<LinkDto, CanisterError> {
+        let mut link = self
+            .link_repository
+            .get(&link_id.to_string())
+            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+
+        if link.creator != caller {
+            return Err(CanisterError::Unauthorized(
+                "Only the creator can disable the link".to_string(),
+            ));
+        }
+
+        link.state = LinkState::Inactive;
+        // update link in db
+        self.link_repository.update(link.clone());
+
+        Ok(LinkDto::from(link))
+    }
+
     /// Activate a link, changing its state to ACTIVE
     /// Only the creator of the link can activate it
+    /// # Deprecated:
+    /// This function is deprecated and will be replaced by the `process_action_v2` function with a CREATE_LINK action.
     ///
     /// # Arguments
     /// * `caller` - The principal of the user attempting to activate the link
@@ -110,35 +134,12 @@ impl<R: Repositories> LinkV2Service<R> {
             .ok_or_else(|| CanisterError::NotFound("Action not found".to_string()))?;
 
         let link = factory::from_link(link, canister_id)?;
-        let activate_result = link.process_action(caller, &action).await?;
+        let activate_result = link.update_action(caller, &action).await?;
 
         // update link in db
         self.link_repository.update(activate_result.link.clone());
 
         Ok(LinkDto::from(activate_result.link))
-    }
-
-    pub async fn disable_link(
-        &mut self,
-        caller: Principal,
-        link_id: &str,
-    ) -> Result<LinkDto, CanisterError> {
-        let mut link = self
-            .link_repository
-            .get(&link_id.to_string())
-            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
-
-        if link.creator != caller {
-            return Err(CanisterError::Unauthorized(
-                "Only the creator can disable the link".to_string(),
-            ));
-        }
-
-        link.state = LinkState::Inactive;
-        // update link in db
-        self.link_repository.update(link.clone());
-
-        Ok(LinkDto::from(link))
     }
 
     pub async fn create_action(
@@ -155,6 +156,8 @@ impl<R: Repositories> LinkV2Service<R> {
 
         let link = factory::from_link(link, canister_id)?;
         let create_action_result = link.create_action(caller, canister_id, action_type).await?;
+
+        // TODO assemble txs from action and intents
 
         // save action to DB
         let link_action = LinkAction {
@@ -185,7 +188,7 @@ impl<R: Repositories> LinkV2Service<R> {
         Ok(action_dto)
     }
 
-    pub async fn process_action(
+    pub async fn update_action(
         &mut self,
         caller: Principal,
         canister_id: Principal,
@@ -202,13 +205,13 @@ impl<R: Repositories> LinkV2Service<R> {
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
         let link = factory::from_link(link, canister_id)?;
-        let process_action_result = link.process_action(caller, &action).await?;
+        let update_action_result = link.update_action(caller, &action).await?;
 
         let action_dto = ActionDto::build(
             &ActionData {
-                action: process_action_result.action.clone(),
-                intents: process_action_result.intents.clone(),
-                intent_txs: process_action_result.intent_txs_map,
+                action: update_action_result.action.clone(),
+                intents: update_action_result.intents.clone(),
+                intent_txs: update_action_result.intent_txs_map,
             },
             None,
         );

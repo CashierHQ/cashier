@@ -24,7 +24,7 @@ pub fn create_link(
     input: CreateLinkInput,
     created_at_ts: u64,
     canister_id: Principal,
-) -> Result<Box<dyn LinkV2>, CanisterError> {
+) -> Result<Link, CanisterError> {
     let asset_info: Vec<AssetInfo> = input
         .asset_info
         .iter()
@@ -32,14 +32,15 @@ pub fn create_link(
         .collect();
 
     match input.link_type {
-        LinkType::SendTip => Ok(Box::new(TipLink::create(
+        LinkType::SendTip => Ok(TipLink::create(
             creator,
             input.title,
             asset_info,
             input.link_use_action_max_count,
             created_at_ts,
             canister_id,
-        ))),
+        )
+        .link),
         _ => Err(CanisterError::InvalidInput(
             "Unsupported link type".to_string(),
         )),

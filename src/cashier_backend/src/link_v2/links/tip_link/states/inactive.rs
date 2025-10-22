@@ -11,7 +11,7 @@ use crate::{
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::ProcessActionResult,
+    link_v2::UpdateActionResult,
     repository::{
         action::v1::{Action, ActionType},
         link::v1::{Link, LinkState},
@@ -58,11 +58,11 @@ impl InactiveState {
 }
 
 impl LinkV2State for InactiveState {
-    fn process_action(
+    fn update_action(
         &self,
         _caller: Principal,
         action: &Action,
-    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
+    ) -> Pin<Box<dyn Future<Output = Result<UpdateActionResult, CanisterError>>>> {
         let state = self.clone();
         let action = action.clone();
 
@@ -70,7 +70,7 @@ impl LinkV2State for InactiveState {
             match action.r#type {
                 ActionType::Withdraw => {
                     let updated_link = state.withdraw().await?;
-                    Ok(ProcessActionResult {
+                    Ok(UpdateActionResult {
                         link: updated_link,
                         action,
                         intents: vec![],
