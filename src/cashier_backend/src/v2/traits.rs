@@ -4,7 +4,7 @@
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::{CreateActionResult, UpdateActionResult},
+    link_v2::{CreateActionResult, ProcessActionResult},
     repository::{
         action::v1::{Action, ActionType},
         link::v1::Link,
@@ -29,12 +29,12 @@ pub trait LinkV2: Debug {
         action: ActionType,
     ) -> Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>>;
 
-    fn update_action(
+    fn process_action(
         &self,
         caller: Principal,
         action: &Action,
-    ) -> Pin<Box<dyn Future<Output = Result<UpdateActionResult, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("update_action not implemented")) })
+    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("process_action not implemented")) })
     }
 }
 
@@ -48,11 +48,11 @@ pub trait LinkV2State: Debug {
         Box::pin(async move { Err(CanisterError::from("create_action not implemented")) })
     }
 
-    fn update_action(
+    fn process_action(
         &self,
         caller: Principal,
         action: &Action,
-    ) -> Pin<Box<dyn Future<Output = Result<UpdateActionResult, CanisterError>>>> {
-        Box::pin(async move { Err(CanisterError::from("update_action not implemented")) })
+    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
+        Box::pin(async move { Err(CanisterError::from("process_action not implemented")) })
     }
 }

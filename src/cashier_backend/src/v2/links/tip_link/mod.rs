@@ -14,7 +14,7 @@ use crate::v2::{
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::{CreateActionResult, UpdateActionResult},
+    link_v2::{CreateActionResult, ProcessActionResult},
     repository::{
         action::v1::{Action, ActionType},
         asset_info::AssetInfo,
@@ -137,19 +137,19 @@ impl LinkV2 for TipLink {
         })
     }
 
-    fn update_action(
+    fn process_action(
         &self,
         caller: Principal,
         action: &Action,
-    ) -> Pin<Box<dyn Future<Output = Result<UpdateActionResult, CanisterError>>>> {
+    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
         let link = self.link.clone();
         let canister_id = self.canister_id;
         let action = action.clone();
 
         Box::pin(async move {
             let state = TipLink::get_state_handler(&link, canister_id)?;
-            let update_action_result = state.update_action(caller, &action).await?;
-            Ok(update_action_result)
+            let process_action_result = state.process_action(caller, &action).await?;
+            Ok(process_action_result)
         })
     }
 }

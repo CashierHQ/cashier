@@ -134,7 +134,7 @@ impl<R: Repositories> LinkV2Service<R> {
             .ok_or_else(|| CanisterError::NotFound("Action not found".to_string()))?;
 
         let link = factory::from_link(link, canister_id)?;
-        let activate_result = link.update_action(caller, &action).await?;
+        let activate_result = link.process_action(caller, &action).await?;
 
         // update link in db
         self.link_repository.update(activate_result.link.clone());
@@ -188,7 +188,7 @@ impl<R: Repositories> LinkV2Service<R> {
         Ok(action_dto)
     }
 
-    pub async fn update_action(
+    pub async fn process_action(
         &mut self,
         caller: Principal,
         canister_id: Principal,
@@ -205,13 +205,13 @@ impl<R: Repositories> LinkV2Service<R> {
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
         let link = factory::from_link(link, canister_id)?;
-        let update_action_result = link.update_action(caller, &action).await?;
+        let process_action_result = link.process_action(caller, &action).await?;
 
         let action_dto = ActionDto::build(
             &ActionData {
-                action: update_action_result.action.clone(),
-                intents: update_action_result.intents.clone(),
-                intent_txs: update_action_result.intent_txs_map,
+                action: process_action_result.action.clone(),
+                intents: process_action_result.intents.clone(),
+                intent_txs: process_action_result.intent_txs_map,
             },
             None,
         );
