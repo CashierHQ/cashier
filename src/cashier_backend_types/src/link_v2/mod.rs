@@ -15,7 +15,7 @@ pub struct CreateActionResult {
 }
 
 #[derive(Debug, Clone)]
-pub struct UpdateActionResult {
+pub struct ProcessActionResult {
     pub link: Link,
     pub action: Action,
     pub intents: Vec<Intent>,
