@@ -24,7 +24,7 @@ mod api;
 mod build_data;
 mod constant;
 mod domains;
-mod link_v2;
 mod repositories;
 mod services;
 mod utils;
+mod v2;

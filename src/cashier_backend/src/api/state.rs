@@ -1,5 +1,4 @@
 use crate::{
-    link_v2::service::LinkV2Service,
     repositories::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
     services::{
         action::ActionService,
@@ -9,6 +8,7 @@ use crate::{
         settings::SettingsService,
         transaction_manager::{service::TransactionManagerService, validate::ValidateService},
     },
+    v2::service::LinkV2Service,
 };
 use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};

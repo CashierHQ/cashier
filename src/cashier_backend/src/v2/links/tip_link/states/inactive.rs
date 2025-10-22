@@ -2,11 +2,11 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::{
-    link_v2::{
+    services::ext::icrc_token::Account,
+    v2::{
         traits::LinkV2State,
         utils::icrc_token::{get_batch_tokens_fee_for_link, transfer_assets_from_link_to_account},
     },
-    services::ext::icrc_token::Account,
 };
 use candid::Principal;
 use cashier_backend_types::{
@@ -17,15 +17,15 @@ use cashier_backend_types::{
         link::v1::{Link, LinkState},
     },
 };
-use std::{collections::HashMap, fmt::Debug, future::Future, pin::Pin};
+use std::{fmt::Debug, future::Future, pin::Pin};
 
 #[derive(Debug, Clone)]
-pub struct ActiveState {
+pub struct InactiveState {
     pub link: Link,
     pub canister_id: Principal,
 }
 
-impl ActiveState {
+impl InactiveState {
     pub fn new(link: &Link, canister_id: Principal) -> Self {
         Self {
             link: link.clone(),
@@ -33,13 +33,10 @@ impl ActiveState {
         }
     }
 
-    fn claim(
-        &self,
-        caller: Principal,
-    ) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+    fn withdraw(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
         let mut link = self.link.clone();
         let canister_id = self.canister_id;
-        let to_account = Account::from(caller);
+        let to_account = Account::from(link.creator);
 
         Box::pin(async move {
             let token_fee_map = get_batch_tokens_fee_for_link(&link).await?;
@@ -53,21 +50,17 @@ impl ActiveState {
             )
             .await?;
 
-            // Increment the use action counter and check if it has reached the max count
-            link.link_use_action_counter += 1;
-            if link.link_use_action_counter >= link.link_use_action_max_count {
-                link.state = LinkState::InactiveEnded;
-            }
-
+            // Update link state to INACTIVE_ENDED after withdrawal
+            link.state = LinkState::InactiveEnded;
             Ok(link)
         })
     }
 }
 
-impl LinkV2State for ActiveState {
+impl LinkV2State for InactiveState {
     fn update_action(
         &self,
-        caller: Principal,
+        _caller: Principal,
         action: &Action,
     ) -> Pin<Box<dyn Future<Output = Result<UpdateActionResult, CanisterError>>>> {
         let state = self.clone();
@@ -75,17 +68,17 @@ impl LinkV2State for ActiveState {
 
         Box::pin(async move {
             match action.r#type {
-                ActionType::Claim => {
-                    let updated_link = state.claim(caller).await?;
+                ActionType::Withdraw => {
+                    let updated_link = state.withdraw().await?;
                     Ok(UpdateActionResult {
                         link: updated_link,
                         action,
                         intents: vec![],
-                        intent_txs_map: HashMap::new(),
+                        intent_txs_map: std::collections::HashMap::new(),
                     })
                 }
                 _ => Err(CanisterError::from(
-                    "Unsupported action type for ActiveState",
+                    "Unsupported action type for InactiveState",
                 )),
             }
         })

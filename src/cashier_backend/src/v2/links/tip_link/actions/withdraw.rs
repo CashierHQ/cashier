@@ -1,9 +1,13 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::link_v2::intents::transfer_link_to_wallet::TransferLinkToWalletIntent;
-use crate::link_v2::utils::icrc_token::get_link_account;
+use crate::v2::utils::icrc_token::get_link_account;
+use crate::v2::{
+    intents::transfer_link_to_wallet::TransferLinkToWalletIntent,
+    utils::icrc_token::get_batch_tokens_balance_for_link,
+};
 use candid::{Nat, Principal};
+use cashier_backend_types::repository::common::Asset;
 use cashier_backend_types::{
     constant::INTENT_LABEL_SEND_TIP_ASSET,
     dto::action::Icrc112Requests,
@@ -19,14 +23,14 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 #[derive(Debug)]
-pub struct ClaimAction {
+pub struct WithdrawAction {
     pub action: Action,
     pub intents: Vec<Intent>,
     pub intent_txs_map: HashMap<String, Vec<Transaction>>,
     pub icrc112_requests: Option<Icrc112Requests>,
 }
 
-impl ClaimAction {
+impl WithdrawAction {
     pub fn new(
         action: Action,
         intents: Vec<Intent>,
@@ -41,29 +45,36 @@ impl ClaimAction {
         }
     }
 
-    /// Creates a new ClaimAction for a given Link.
+    /// Creates a new WithdrawAction for a given Link.
     /// # Arguments
     /// * `link` - The Link for which the action is created.
     /// * `canister_id` - The canister ID of the token contract.
     /// # Returns
-    /// * `Result<ClaimAction, CanisterError>` - The resulting action or an error if the creation fails.
+    /// * `Result<WithdrawAction, CanisterError>` - The resulting action or an error if the creation fails.
     pub async fn create(link: &Link, canister_id: Principal) -> Result<Self, CanisterError> {
         let action = Action {
             id: Uuid::new_v4().to_string(),
-            r#type: ActionType::Use,
+            r#type: ActionType::Withdraw,
             link_id: link.id.clone(),
             creator: link.creator,
             state: ActionState::Created,
         };
 
         let link_account = get_link_account(&link.id, canister_id)?;
+        let actual_token_balance_map = get_batch_tokens_balance_for_link(link, canister_id).await?;
 
         // intents
         let link_to_wallet_intents = link
             .asset_info
             .iter()
             .map(|asset_info| {
-                let sending_amount = Nat::from(asset_info.amount_per_link_use_action);
+                let address = match asset_info.asset {
+                    Asset::IC { address } => address,
+                };
+                let sending_amount = actual_token_balance_map
+                    .get(&address)
+                    .cloned()
+                    .unwrap_or(Nat::from(0u64));
 
                 TransferLinkToWalletIntent::create(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
