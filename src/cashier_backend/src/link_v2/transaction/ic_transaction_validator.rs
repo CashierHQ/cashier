@@ -13,6 +13,11 @@ use std::pin::Pin;
 pub struct IcTransactionValidator;
 
 impl IcTransactionValidator {
+    /// Validate ICRC-1 Transfer transaction
+    /// # Arguments
+    /// * `transaction` - The ICRC-1 Transfer transaction to be validated
+    /// # Returns
+    /// * `Result<(), String>` - Ok if valid, Err with message otherwise
     pub async fn validate_icrc1_transfer(transaction: Icrc1Transfer) -> Result<(), String> {
         let address = match transaction.asset {
             Asset::IC { address, .. } => address,
@@ -32,6 +37,11 @@ impl IcTransactionValidator {
         Ok(())
     }
 
+    /// Validate ICRC-2 Approve transaction
+    /// # Arguments
+    /// * `transaction` - The ICRC-2 Approve transaction to be validated
+    /// # Returns
+    /// * `Result<(), String>` - Ok if valid, Err with message otherwise
     pub async fn validate_icrc2_approve(transaction: Icrc2Approve) -> Result<(), String> {
         let address = match transaction.asset {
             Asset::IC { address, .. } => address,
