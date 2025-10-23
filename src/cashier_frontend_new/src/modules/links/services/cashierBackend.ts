@@ -23,16 +23,27 @@ class CanisterBackendService {
 
   /**
    * Returns a list of links for the current user.
+   * @param offset The offset for pagination.
+   * @param limit The maximum number of links to return.
+   * @returns A Result containing an array of LinkDto or an Error.
    */
-  async getLinks(): Promise<Result<cashierBackend.LinkDto[], Error>> {
+  async getLinks(
+    params: {
+      offset: number;
+      limit: number;
+    } = {
+      offset: 0,
+      limit: 100,
+    },
+  ): Promise<Result<cashierBackend.LinkDto[], Error>> {
     const actor = this.#getActor();
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
     const response = await actor.get_links([
       {
-        offset: BigInt(0),
-        limit: BigInt(100),
+        offset: BigInt(params.limit),
+        limit: BigInt(params.offset),
       },
     ]);
 
@@ -44,6 +55,8 @@ class CanisterBackendService {
   /**
    * Creates a new link using the v2 API format with enhanced features.
    * Validates the input and returns the full GetLinkResp on success.
+   * @param input The CreateLinkData containing link creation details.
+   * @returns A Result containing GetLinkResp or an Error.
    */
   async createLinkV2(
     input: CreateLinkData,
@@ -68,6 +81,8 @@ class CanisterBackendService {
 
   /**
    * Activate a link v2 by id. Only the link owner may call this via an authenticated actor.
+   * @param id The ID of the link to activate.
+   * @returns A Result containing LinkDto or an Error.
    */
   async activateLinkV2(
     id: string,
@@ -87,6 +102,9 @@ class CanisterBackendService {
   /**
    * Retrieve a single link by id. This method calls the canister's `get_link` query
    * and returns the GetLinkResp on success.
+   * @param id The ID of the link to retrieve.
+   * @param options Optional GetLinkOptions to add action type if needed
+   * @returns A Result containing GetLinkResp or an Error.
    */
   async getLink(
     id: string,

@@ -13,12 +13,15 @@ export class LinkCreatedState implements LinkState {
     this.#link = link;
   }
 
-  // No next state from the created state
   async goNext(): Promise<void> {
     if (!this.#link.id) {
       throw new Error("Link ID is missing");
     }
-    await cashierBackendService.activateLinkV2(this.#link.id);
+    const result = await cashierBackendService.activateLinkV2(this.#link.id);
+    if (result.isErr()) {
+      throw new Error(`Failed to activate link: ${result.error}`);
+    }
+
     this.#link.state = new LinkActiveState(this.#link);
   }
 

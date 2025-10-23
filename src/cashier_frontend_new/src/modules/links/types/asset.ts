@@ -3,7 +3,7 @@ import type { Principal } from "@dfinity/principal";
 import { rsMatch } from "$lib/rsMatch";
 
 // Frontend representation of an Asset
-export class Asset {
+class Asset {
   constructor(public address: Principal) {}
 
   // Convert from backend Asset to frontend Asset

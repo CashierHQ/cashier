@@ -4,7 +4,7 @@ import IntentTask from "./intentTask";
 import IntentType from "./intentType";
 
 // Frontend representation of an Intent
-export class Intent {
+class Intent {
   constructor(
     public id: string,
     public task: IntentTask,
