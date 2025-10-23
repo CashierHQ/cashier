@@ -198,8 +198,14 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             )
             .await?;
 
-        // save action to DB
+        // save data to DB
+        self.link_repository.update(result.link.clone());
+        self.action_service.update_action_data(
+            result.process_action_result.action.clone(),
+            result.process_action_result.intents.clone(),
+        )?;
 
+        // response dto
         let action_dto = ActionDto::build(
             &ActionData {
                 action: result.process_action_result.action.clone(),
@@ -208,7 +214,6 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             },
             None,
         );
-
         let link_dto = LinkDto::from(result.link);
 
         Ok(ProcessActionDto {

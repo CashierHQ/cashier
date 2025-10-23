@@ -113,6 +113,17 @@ impl<R: Repositories> ActionService<R> {
         self.get_action_data(&action_intent.action_id)
     }
 
+    pub fn get_intents_by_action_id(&self, action_id: &str) -> Vec<Intent> {
+        let action_intents = self.action_intent_reposiroty.get_by_action_id(action_id);
+
+        let intent_ids = action_intents
+            .iter()
+            .map(|action_intent| action_intent.intent_id.clone())
+            .collect();
+
+        self.intent_repository.batch_get(intent_ids)
+    }
+
     /// Rolls up and updates the state of an action and its associated intents based on a given transaction ID.
     ///
     /// This method:
@@ -214,14 +225,21 @@ impl<R: Repositories> ActionService<R> {
         Ok(())
     }
 
-    pub fn get_intents_by_action_id(&self, action_id: &str) -> Vec<Intent> {
-        let action_intents = self.action_intent_reposiroty.get_by_action_id(action_id);
+    /// Updates the action and associated intents in the database.
+    /// # Arguments
+    /// * `action` - The action to be updated
+    /// * `intents` - The list of intents associated with the action to be updated
+    /// # Returns
+    /// * `Ok(())` - If the update is successful
+    /// * `Err(CanisterError)` - If the update fails
+    pub fn update_action_data(
+        &mut self,
+        action: Action,
+        intents: Vec<Intent>,
+    ) -> Result<(), CanisterError> {
+        self.action_repository.update(action);
+        self.intent_repository.batch_update(intents);
 
-        let intent_ids = action_intents
-            .iter()
-            .map(|action_intent| action_intent.intent_id.clone())
-            .collect();
-
-        self.intent_repository.batch_get(intent_ids)
+        Ok(())
     }
 }

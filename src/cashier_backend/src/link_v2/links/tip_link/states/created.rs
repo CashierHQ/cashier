@@ -93,7 +93,9 @@ impl<M: TransactionManager + 'static> LinkV2State for CreatedState<M> {
                         create_action_result,
                     })
                 }
-                _ => Err(CanisterError::from("Unsupported action type")),
+                _ => Err(CanisterError::from(
+                    "Unsupported action type for Created state",
+                )),
             }
         })
     }
@@ -123,7 +125,7 @@ impl<M: TransactionManager + 'static> LinkV2State for CreatedState<M> {
                     Ok(activate_link_result)
                 }
                 _ => Err(CanisterError::from(
-                    "Unsupported action type in Created state",
+                    "Unsupported action type for Created state",
                 )),
             }
         })

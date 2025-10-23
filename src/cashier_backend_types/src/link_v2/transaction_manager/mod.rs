@@ -16,3 +16,9 @@ pub struct RollupActionStateResult {
     pub intents: Vec<Intent>,
     pub intent_txs_map: HashMap<String, Vec<Transaction>>,
 }
+
+#[derive(Debug, Clone)]
+pub struct ExecuteTransactionsResult {
+    pub transactions: Vec<Transaction>,
+    pub errors: Vec<String>,
+}

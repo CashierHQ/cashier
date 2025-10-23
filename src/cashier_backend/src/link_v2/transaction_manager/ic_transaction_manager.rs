@@ -122,6 +122,7 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
         // extract all transactions from intent_txs_map, these transactions are fulfilled with dependencies
         let mut transactions = Vec::<Transaction>::new();
         let mut processed_transactions = Vec::<Transaction>::new();
+        let mut errors = Vec::<String>::new();
         for intent in intents.iter() {
             if let Some(intent_transactions) = intent_txs_map.get(&intent.id) {
                 transactions.extend(intent_transactions.clone());
@@ -135,6 +136,7 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
             .validator_service
             .validate_action_transactions(&transactions)
             .await?;
+        errors.extend(validate_transactions_result.errors.clone());
 
         debug!("Validated transactions {:?}", validate_transactions_result);
 
@@ -142,14 +144,18 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
 
         // execute canister transactions if all dependencies are resolved
         if validate_transactions_result.is_dependencies_resolved {
-            let executed_transactions = self
+            let executed_transactions_result = self
                 .executor_service
                 .execute_transactions(&validate_transactions_result.canister_transactions)
                 .await?;
 
-            debug!("Executed canister transactions {:?}", executed_transactions);
+            debug!(
+                "Executed canister transactions {:?}",
+                executed_transactions_result
+            );
 
-            processed_transactions.extend(executed_transactions);
+            processed_transactions.extend(executed_transactions_result.transactions);
+            errors.extend(executed_transactions_result.errors);
         } else {
             processed_transactions.extend(validate_transactions_result.canister_transactions);
         }
@@ -191,7 +197,7 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
             intents: rollup_action_state_result.intents,
             intent_txs_map: updated_intent_txs_map,
             is_success: validate_transactions_result.is_dependencies_resolved,
-            errors: validate_transactions_result.errors,
+            errors,
         })
     }
 }
