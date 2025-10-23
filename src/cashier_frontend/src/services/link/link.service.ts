@@ -242,7 +242,9 @@ class LinkService {
       link_id: inputModel.linkId,
       external: inputModel.external ?? true,
     };
-    const response = parseResultResponse(await this.actor.user_update_action(input));
+    const response = parseResultResponse(
+      await this.actor.user_update_action(input),
+    );
     const action = mapActionModel(response);
     return action;
   }
