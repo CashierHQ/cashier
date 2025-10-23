@@ -2,15 +2,15 @@ import type { Principal } from "@dfinity/principal";
 import { ActionType } from "./actionType";
 import { ActionState } from "./actionState";
 import Intent from "./intent";
-import Icrc112Request from "./icrc112Request";
 import type {
   ActionDto,
   Icrc112Request as BackendIcrc112Request,
   IntentState as BackendIntentState,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
+import Icrc112Request from "$modules/icrc112/types/icrc112Request";
 
 // Frontend Action class representing an action entity
-export class Action {
+class Action {
   constructor(
     public id: string,
     public creator: Principal,
