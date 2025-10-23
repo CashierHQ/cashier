@@ -17,6 +17,21 @@ dfx_local_start: dfx_prepare_env dfx_local_stop
 dfx_local_stop:
   dfx stop
   
+# Deploys the canisters to the specified network - eg: just dfx_deploy --network=dev
+[group('dfx')]
+dfx_deploy owner network="": 
+  #!/usr/bin/env bash
+
+  just dfx_local_deploy_token_storage "${OWNER}" {{network}}
+
+  dfx deploy cashier_backend --argument "(record {
+      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
+      owner=principal \"${OWNER}\";
+  })" {{network}}
+
+  dfx deploy cashier_frontend {{network}}
+
+  dfx deploy cashier_frontend_new {{network}}
 
 # Starts the local dfx server and deploys the canisters
 [group('dfx')]
@@ -26,12 +41,7 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
 
   export OWNER=$(dfx identity get-principal)
 
-  just dfx_local_deploy_token_storage "${OWNER}"
-
-  dfx deploy cashier_backend --argument "(record {
-      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
-      owner=principal \"${OWNER}\";
-  })"
+  just dfx_deploy "${OWNER}"
 
   cashier_backend_id=$(dfx canister id cashier_backend)
   dfx deploy gate_service --argument "(record {
@@ -39,9 +49,6 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
       owner=principal \"${OWNER}\";
       permissions=opt (vec { record { principal \"${cashier_backend_id}\"; vec { variant { GateCreate } } } });
   })"
-
-  dfx deploy cashier_frontend
-  dfx deploy cashier_frontend_new 
 
   dfx deploy internet_identity
 
@@ -124,7 +131,7 @@ create_canisters network cycles:
 
 
 [private]
-dfx_local_deploy_token_storage owner:
+dfx_local_deploy_token_storage owner network="":
   #!/usr/bin/env bash
   set -e
 
@@ -192,7 +199,7 @@ dfx_local_deploy_token_storage owner:
           enabled_by_default = true;
         };
       };
-  })"
+  })" {{network}}
 
 
 [private]
