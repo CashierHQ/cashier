@@ -1,11 +1,15 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::utils::helper::nonce_from_tx_id;
+use crate::{
+    link_v2::transaction_manager::topological_sort::kahn_topological_sort,
+    utils::helper::nonce_from_tx_id,
+};
 use candid::Principal;
 use cashier_backend_types::{
-    dto::action::Icrc112Request,
+    dto::action::{Icrc112Request, Icrc112Requests},
     error::CanisterError,
+    link_v2::graph::Graph,
     repository::{
         common::Asset,
         transaction::v1::{IcTransaction, Protocol, Transaction},
@@ -16,6 +20,45 @@ use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
     icrc2::approve::ApproveArgs,
 };
+use std::collections::HashMap;
+
+/// Creates ICRC-112 requests from a list of transactions
+/// The input transactions are topologically sorted based on their dependencies,
+/// then converted to ICRC-112 requests.
+/// # Arguments
+/// * `transactions` - A reference to a vector of Transactions
+/// * `link_account` - The account to which the tokens will be transferred
+/// * `canister_id` - The canister ID of the token contract
+/// # Returns
+/// * `Result<Icrc112Requests, CanisterError>` - The resulting Icrc112Requests or an error
+pub fn create_icrc_112_requests(
+    transactions: &Vec<Transaction>,
+    link_account: Account,
+    canister_id: Principal,
+) -> Result<Icrc112Requests, CanisterError> {
+    let tx_graph: Graph = transactions.clone().into();
+    let sorted_txs = kahn_topological_sort(&tx_graph)?;
+
+    let tx_map: HashMap<String, &Transaction> =
+        transactions.iter().map(|tx| (tx.id.clone(), tx)).collect();
+
+    let mut icrc_112_requests = Vec::<Vec<Icrc112Request>>::new();
+    for tx_group in sorted_txs.iter() {
+        let mut group_requests = Vec::<Icrc112Request>::new();
+        for tx_id in tx_group.iter() {
+            if let Some(tx) = tx_map.get(tx_id) {
+                let icrc_112_request =
+                    convert_tx_to_icrc_112_request(tx, link_account.clone(), canister_id)?;
+                group_requests.push(icrc_112_request);
+            }
+        }
+        if !group_requests.is_empty() {
+            icrc_112_requests.push(group_requests);
+        }
+    }
+
+    Ok(icrc_112_requests)
+}
 
 /// Converts a Transaction to an Icrc112Request for ICRC-1 or ICRC-2 token transfers.
 /// # Arguments
@@ -27,7 +70,7 @@ use icrc_ledger_types::{
 pub fn convert_tx_to_icrc_112_request(
     tx: &Transaction,
     link_account: Account,
-    canister_id: &Principal,
+    canister_id: Principal,
 ) -> Result<Icrc112Request, CanisterError> {
     match &tx.protocol {
         Protocol::IC(IcTransaction::Icrc1Transfer(tx_transfer)) => {
@@ -56,7 +99,7 @@ pub fn convert_tx_to_icrc_112_request(
         }
         Protocol::IC(IcTransaction::Icrc2Approve(tx_approve)) => {
             let spender = Account {
-                owner: *canister_id,
+                owner: canister_id,
                 subaccount: None,
             };
             let arg = ApproveArgs {

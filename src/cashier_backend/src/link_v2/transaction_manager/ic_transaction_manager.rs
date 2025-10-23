@@ -70,9 +70,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionManager for IcTransac
             intent_txs_map.insert(intent.id.clone(), intent_transactions);
         }
 
-        // analyze transaction dependencies
-        // fill in dependency info
-        // if intent A has dependency on intent B, all tx in A will have dependency on txs in B
+        // transaction with dependencies filled
         let transactions = analyze_and_fill_transaction_dependencies(&intents, &intent_txs_map)?;
 
         Err(CanisterError::from(
