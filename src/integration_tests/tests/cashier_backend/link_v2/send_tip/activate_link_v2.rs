@@ -4,14 +4,17 @@
 use crate::cashier_backend::link::fixture::{LinkTestFixture, create_tip_linkv2_fixture};
 use crate::constant::{CK_BTC_PRINCIPAL, ICP_PRINCIPAL};
 use crate::utils::icrc_112::execute_icrc112_request;
+use crate::utils::link_id_to_account::fee_treasury_account;
 use crate::utils::principal::TestUser;
-use crate::utils::with_pocket_ic_context;
-use candid::Principal;
+use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
+use candid::{Nat, Principal};
 use cashier_backend_types::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use cashier_backend_types::dto::action::Icrc112Request;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::link_v2::dto::ProcessActionV2Input;
 use cashier_backend_types::repository::link::v1::LinkState;
+use cashier_common::constant::CREATE_LINK_FEE;
+use cashier_common::test_utils;
 use ic_mple_client::CanisterClientError;
 
 #[tokio::test]
@@ -256,8 +259,11 @@ async fn it_should_error_activate_icrc_token_tip_linkv2_if_insufficient_token_ba
 async fn it_should_activate_icp_token_tip_linkv2_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
+        let caller = TestUser::User1.get_principal();
+        let tip_amount = 1_000_000u64;
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, ICP_TOKEN, 1_000_000u64).await;
+            create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
 
         // Act: Execute ICRC112 requests (simulate FE behavior)
         let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
@@ -268,6 +274,7 @@ async fn it_should_activate_icp_token_tip_linkv2_successfully() {
         assert!(icrc112_execution_result.is_ok());
 
         // Act: Activate the link
+        let link_id = create_link_result.link.id.clone();
         let action_id = create_link_result.action.id.clone();
         let activate_link_result = test_fixture.activate_link_v2(&action_id).await;
 
@@ -275,6 +282,35 @@ async fn it_should_activate_icp_token_tip_linkv2_successfully() {
         assert!(activate_link_result.is_ok());
         let result = activate_link_result.unwrap();
         assert_eq!(result.link.state, LinkState::Active);
+
+        // Assert: Link balance after activation
+        let link_account = link_id_to_account(ctx, &link_id);
+        let icp_link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
+        let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
+
+        assert_eq!(
+            icp_link_balance,
+            test_utils::calculate_amount_for_wallet_to_link_transfer(
+                tip_amount,
+                &icp_ledger_fee,
+                1
+            ),
+            "Link balance is incorrect"
+        );
+
+        // Assert: Fee treasury balance after activation
+        let fee_treasury_account = fee_treasury_account();
+        let icp_fee_treasury_balance = icp_ledger_client
+            .balance_of(&fee_treasury_account)
+            .await
+            .unwrap();
+        let _icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
+
+        assert_eq!(
+            icp_fee_treasury_balance,
+            Nat::from(CREATE_LINK_FEE),
+            "Fee treasury balance is incorrect"
+        );
 
         Ok(())
     })
@@ -286,8 +322,13 @@ async fn it_should_activate_icp_token_tip_linkv2_successfully() {
 async fn it_should_activate_icrc_token_tip_linkv2_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
+        let caller = TestUser::User1.get_principal();
+        let tip_amount = 5_000_000u64;
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, 5_000_000u64).await;
+            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount).await;
+
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
 
         // Act: Execute ICRC112 requests (simulate FE behavior)
         let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
@@ -298,6 +339,7 @@ async fn it_should_activate_icrc_token_tip_linkv2_successfully() {
         assert!(icrc112_execution_result.is_ok());
 
         // Act: Activate the link
+        let link_id = create_link_result.link.id.clone();
         let action_id = create_link_result.action.id.clone();
         let activate_link_result = test_fixture.activate_link_v2(&action_id).await;
 
@@ -305,6 +347,35 @@ async fn it_should_activate_icrc_token_tip_linkv2_successfully() {
         assert!(activate_link_result.is_ok());
         let result = activate_link_result.unwrap();
         assert_eq!(result.link.state, LinkState::Active);
+
+        // Assert: Link balance after activation
+        let link_account = link_id_to_account(ctx, &link_id);
+        let ckbtc_link_balance = ckbtc_ledger_client.balance_of(&link_account).await.unwrap();
+        let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
+
+        assert_eq!(
+            ckbtc_link_balance,
+            test_utils::calculate_amount_for_wallet_to_link_transfer(
+                tip_amount,
+                &ckbtc_ledger_fee,
+                1,
+            ),
+            "Link balance is incorrect"
+        );
+
+        // Assert: Fee treasury balance after activation
+        let fee_treasury_account = fee_treasury_account();
+        let icp_fee_treasury_balance = icp_ledger_client
+            .balance_of(&fee_treasury_account)
+            .await
+            .unwrap();
+        let _icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
+
+        assert_eq!(
+            icp_fee_treasury_balance,
+            Nat::from(CREATE_LINK_FEE),
+            "Fee treasury balance is incorrect"
+        );
 
         Ok(())
     })

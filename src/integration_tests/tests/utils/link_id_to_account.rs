@@ -1,7 +1,8 @@
+use candid::Principal;
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
 
-use crate::utils::PocketIcTestContext;
+use crate::{constant::FEE_TREASURY_PRINCIPAL, utils::PocketIcTestContext};
 
 // convert link id to account of current backend canister
 pub fn link_id_to_account(ctx: &PocketIcTestContext, link_id: &str) -> Account {
@@ -15,5 +16,12 @@ pub fn link_id_to_account(ctx: &PocketIcTestContext, link_id: &str) -> Account {
     Account {
         owner: ctx.cashier_backend_principal,
         subaccount: Some(link_bytes.try_into().unwrap()),
+    }
+}
+
+pub fn fee_treasury_account() -> Account {
+    Account {
+        owner: Principal::from_text(FEE_TREASURY_PRINCIPAL).unwrap(),
+        subaccount: None,
     }
 }
