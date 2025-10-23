@@ -10,6 +10,9 @@ on:
             - dev
         types:
             - closed
+    pushes:
+        branches:
+            - feature/deployment
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
@@ -127,4 +130,4 @@ jobs:
                   cat src/cashier_frontend/${ENV_FILE}
 
                   just build "$ENVIRONMENT"
-                  just deploy-all "$ENVIRONMENT"
+                  just dfx_deploy "$ENVIRONMENT"
