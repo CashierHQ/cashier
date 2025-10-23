@@ -123,6 +123,7 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
         let mut transactions = Vec::<Transaction>::new();
         let mut processed_transactions = Vec::<Transaction>::new();
         let mut errors = Vec::<String>::new();
+        let mut is_success = true;
         for intent in intents.iter() {
             if let Some(intent_transactions) = intent_txs_map.get(&intent.id) {
                 transactions.extend(intent_transactions.clone());
@@ -141,9 +142,10 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
         debug!("Validated transactions {:?}", validate_transactions_result);
 
         processed_transactions.extend(validate_transactions_result.wallet_transactions);
+        is_success &= validate_transactions_result.is_success;
 
         // execute canister transactions if all dependencies are resolved
-        if validate_transactions_result.is_dependencies_resolved {
+        if validate_transactions_result.is_success {
             let executed_transactions_result = self
                 .executor_service
                 .execute_transactions(&validate_transactions_result.canister_transactions)
@@ -156,6 +158,7 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
 
             processed_transactions.extend(executed_transactions_result.transactions);
             errors.extend(executed_transactions_result.errors);
+            is_success &= executed_transactions_result.is_success;
         } else {
             processed_transactions.extend(validate_transactions_result.canister_transactions);
         }
@@ -196,7 +199,7 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
             action: rollup_action_state_result.action,
             intents: rollup_action_state_result.intents,
             intent_txs_map: updated_intent_txs_map,
-            is_success: validate_transactions_result.is_dependencies_resolved,
+            is_success,
             errors,
         })
     }

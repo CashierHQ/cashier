@@ -46,13 +46,19 @@ impl<M: TransactionManager + 'static> InactiveState<M> {
             .process_action(action, intents, intent_txs_map)
             .await?;
 
-        // if process action succeeds, transition link state to InactiveEnded
-        link.state = LinkState::InactiveEnded;
+        if process_action_result.is_success {
+            link.state = LinkState::InactiveEnded;
 
-        Ok(LinkProcessActionResult {
-            link,
-            process_action_result,
-        })
+            Ok(LinkProcessActionResult {
+                link,
+                process_action_result,
+            })
+        } else {
+            Err(CanisterError::ValidationErrors(format!(
+                "Failed to withdraw link {}",
+                process_action_result.errors.join(", ")
+            )))
+        }
     }
 }
 

@@ -6,8 +6,8 @@ use cashier_backend_types::{
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
         link::{
-            CreateLinkInput, GetLinkResp, LinkDetailUpdateAssetInfoInput, LinkDto,
-            LinkStateMachineGoto, UpdateLinkInput,
+            CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto, LinkStateMachineGoto,
+            UpdateLinkInput,
         },
     },
     error::CanisterError,
@@ -52,7 +52,11 @@ impl LinkTestFixture {
             .unwrap()
     }
 
-    // This is generic function to create a link.
+    /// Create link v2
+    /// # Arguments
+    /// * `input` - The input data for creating the link
+    /// # Returns
+    /// * `CreateLinkDto` - The created link data
     pub async fn create_link_v2(&self, input: CreateLinkInput) -> CreateLinkDto {
         self.cashier_backend_client
             .as_ref()
@@ -81,6 +85,21 @@ impl LinkTestFixture {
             .unwrap()
             .process_action_v2(process_action_input)
             .await
+            .unwrap()
+    }
+
+    /// Disable link v2
+    /// # Arguments
+    /// * `link_id` - The ID of the link to disable
+    /// # Returns
+    /// * `LinkDto` - The disabled link data
+    pub async fn disable_link_v2(&self, link_id: &str) -> LinkDto {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .disable_link_v2(link_id)
+            .await
+            .unwrap()
             .unwrap()
     }
 
