@@ -279,11 +279,7 @@ pub fn list_tokens() -> Result<TokenListResponse, String> {
 pub fn user_sync_token_list() -> Result<(), String> {
     info!("[user_sync_token_list]");
 
-    let caller = msg_caller();
-
-    if caller == Principal::anonymous() {
-        return Err("Not allowed for anonymous calls".to_string());
-    }
+    let caller = not_anonymous_caller();
 
     let state = get_state();
     let mut user_token_service = state.user_token;
