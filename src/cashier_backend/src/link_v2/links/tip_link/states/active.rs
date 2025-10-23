@@ -11,7 +11,7 @@ use crate::{
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::ProcessActionResult,
+    link_v2::{action_result::ProcessActionResult, link_result::LinkProcessActionResult},
     repository::{
         action::v1::{Action, ActionType},
         link::v1::{Link, LinkState},
@@ -36,7 +36,8 @@ impl ActiveState {
     fn claim(
         &self,
         caller: Principal,
-    ) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+        action: Action,
+    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
         let mut link = self.link.clone();
         let canister_id = self.canister_id;
         let to_account = Account::from(caller);
@@ -59,7 +60,14 @@ impl ActiveState {
                 link.state = LinkState::InactiveEnded;
             }
 
-            Ok(link)
+            Ok(LinkProcessActionResult {
+                link,
+                process_action_result: ProcessActionResult {
+                    action,
+                    intents: vec![],
+                    intent_txs_map: HashMap::new(),
+                },
+            })
         })
     }
 }
@@ -68,21 +76,16 @@ impl LinkV2State for ActiveState {
     fn process_action(
         &self,
         caller: Principal,
-        action: &Action,
-    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
+        action: Action,
+    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
         let state = self.clone();
         let action = action.clone();
 
         Box::pin(async move {
             match action.r#type {
                 ActionType::Claim => {
-                    let updated_link = state.claim(caller).await?;
-                    Ok(ProcessActionResult {
-                        link: updated_link,
-                        action,
-                        intents: vec![],
-                        intent_txs_map: HashMap::new(),
-                    })
+                    let claim_result = state.claim(caller, action).await?;
+                    Ok(claim_result)
                 }
                 _ => Err(CanisterError::from(
                     "Unsupported action type for ActiveState",

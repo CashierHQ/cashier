@@ -2,8 +2,13 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::{
-    link_v2::transaction_manager::{
-        dependency_analyzer::analyze_and_fill_transaction_dependencies, traits::TransactionManager,
+    link_v2::{
+        icrc112::create_icrc_112_requests,
+        transaction_manager::{
+            dependency_analyzer::analyze_and_fill_transaction_dependencies,
+            traits::TransactionManager,
+        },
+        utils::icrc_token::{get_link_account, get_link_ext_account},
     },
     repositories::{
         Repositories, action::ActionRepository,
@@ -55,8 +60,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionManager for IcTransac
         &self,
         action: Action,
         intents: Vec<Intent>,
-        created_at: u64,
     ) -> Result<CreateActionResult, CanisterError> {
+        let created_at = self.ic_env.time();
+
         // assemble intent transactions
         let mut transactions = Vec::<Transaction>::new();
         let mut intent_txs_map = HashMap::<String, Vec<Transaction>>::new();
@@ -73,9 +79,17 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionManager for IcTransac
         // transaction with dependencies filled
         let transactions = analyze_and_fill_transaction_dependencies(&intents, &intent_txs_map)?;
 
-        Err(CanisterError::from(
-            "IcTransactionManager create_action not implemented",
-        ))
+        // create ICRC112 requests from transactions
+        let canister_id = self.ic_env.id();
+        let link_account = get_link_account(&action.link_id, canister_id)?;
+        let icrc112_requests = create_icrc_112_requests(&transactions, link_account, canister_id)?;
+
+        Ok(CreateActionResult {
+            action,
+            intents,
+            intent_txs_map,
+            icrc112_requests: Some(icrc112_requests),
+        })
     }
 
     fn process_action(

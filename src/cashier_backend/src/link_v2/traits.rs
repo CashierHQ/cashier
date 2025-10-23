@@ -4,11 +4,8 @@
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::action_result::{CreateActionResult, ProcessActionResult},
-    repository::{
-        action::v1::{Action, ActionType},
-        link::v1::Link,
-    },
+    link_v2::link_result::{LinkCreateActionResult, LinkProcessActionResult},
+    repository::action::v1::{Action, ActionType},
 };
 use std::{fmt::Debug, future::Future, pin::Pin};
 
@@ -25,15 +22,14 @@ pub trait LinkV2: Debug {
     fn create_action(
         &self,
         caller: Principal,
-        canister_id: Principal,
         action: ActionType,
-    ) -> Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>>;
+    ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>>;
 
     fn process_action(
         &self,
         caller: Principal,
-        action: &Action,
-    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
+        action: Action,
+    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
         Box::pin(async move { Err(CanisterError::from("process_action not implemented")) })
     }
 }
@@ -42,17 +38,16 @@ pub trait LinkV2State: Debug {
     fn create_action(
         &self,
         caller: Principal,
-        canister_id: Principal,
         action: ActionType,
-    ) -> Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>> {
+    ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
         Box::pin(async move { Err(CanisterError::from("create_action not implemented")) })
     }
 
     fn process_action(
         &self,
         caller: Principal,
-        action: &Action,
-    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
+        action: Action,
+    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
         Box::pin(async move { Err(CanisterError::from("process_action not implemented")) })
     }
 }

@@ -5,16 +5,13 @@ pub mod actions;
 pub mod states;
 
 use crate::link_v2::{
-    links::tip_link::{
-        actions::{claim::ClaimAction, create::CreateAction, withdraw::WithdrawAction},
-        states::{active::ActiveState, inactive::InactiveState},
-    },
+    links::tip_link::states::{active::ActiveState, inactive::InactiveState},
     traits::{LinkV2, LinkV2State},
 };
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::{CreateActionResult, ProcessActionResult},
+    link_v2::link_result::{LinkCreateActionResult, LinkProcessActionResult},
     repository::{
         action::v1::{Action, ActionType},
         asset_info::AssetInfo,
@@ -97,58 +94,66 @@ impl LinkV2 for TipLink {
     /// * `Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>>` - A future that resolves to the resulting action or an error if the creation fails.
     fn create_action(
         &self,
-        _caller: Principal,
-        canister_id: Principal,
+        caller: Principal,
         action_type: ActionType,
-    ) -> Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>> {
+    ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
+        // let link = self.link.clone();
+
+        // Box::pin(async move {
+        //     match action_type {
+        //         ActionType::CreateLink => {
+        //             let create_action = CreateAction::create(&link, canister_id).await?;
+        //             Ok(CreateActionResult {
+        //                 action: create_action.action,
+        //                 intents: create_action.intents,
+        //                 intent_txs_map: create_action.intent_txs_map,
+        //                 icrc112_requests: create_action.icrc112_requests,
+        //             })
+        //         }
+        //         ActionType::Withdraw => {
+        //             let withdraw_action = WithdrawAction::create(&link, canister_id).await?;
+        //             Ok(CreateActionResult {
+        //                 action: withdraw_action.action,
+        //                 intents: withdraw_action.intents,
+        //                 intent_txs_map: withdraw_action.intent_txs_map,
+        //                 icrc112_requests: withdraw_action.icrc112_requests,
+        //             })
+        //         }
+        //         ActionType::Claim => {
+        //             let claim_action = ClaimAction::create(&link, canister_id).await?;
+        //             Ok(CreateActionResult {
+        //                 action: claim_action.action,
+        //                 intents: claim_action.intents,
+        //                 intent_txs_map: claim_action.intent_txs_map,
+        //                 icrc112_requests: claim_action.icrc112_requests,
+        //             })
+        //         }
+        //         _ => Err(CanisterError::from("Unsupported action type")),
+        //     }
+        // })
+
         let link = self.link.clone();
+        let canister_id = self.canister_id;
 
         Box::pin(async move {
-            match action_type {
-                ActionType::CreateLink => {
-                    let create_action = CreateAction::create(&link, canister_id).await?;
-                    Ok(CreateActionResult {
-                        action: create_action.action,
-                        intents: create_action.intents,
-                        intent_txs_map: create_action.intent_txs_map,
-                        icrc112_requests: create_action.icrc112_requests,
-                    })
-                }
-                ActionType::Withdraw => {
-                    let withdraw_action = WithdrawAction::create(&link, canister_id).await?;
-                    Ok(CreateActionResult {
-                        action: withdraw_action.action,
-                        intents: withdraw_action.intents,
-                        intent_txs_map: withdraw_action.intent_txs_map,
-                        icrc112_requests: withdraw_action.icrc112_requests,
-                    })
-                }
-                ActionType::Claim => {
-                    let claim_action = ClaimAction::create(&link, canister_id).await?;
-                    Ok(CreateActionResult {
-                        action: claim_action.action,
-                        intents: claim_action.intents,
-                        intent_txs_map: claim_action.intent_txs_map,
-                        icrc112_requests: claim_action.icrc112_requests,
-                    })
-                }
-                _ => Err(CanisterError::from("Unsupported action type")),
-            }
+            let state = TipLink::get_state_handler(&link, canister_id)?;
+            let create_action_result = state.create_action(caller, action_type).await?;
+            Ok(create_action_result)
         })
     }
 
     fn process_action(
         &self,
         caller: Principal,
-        action: &Action,
-    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
+        action: Action,
+    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
         let link = self.link.clone();
         let canister_id = self.canister_id;
         let action = action.clone();
 
         Box::pin(async move {
             let state = TipLink::get_state_handler(&link, canister_id)?;
-            let process_action_result = state.process_action(caller, &action).await?;
+            let process_action_result = state.process_action(caller, action).await?;
             Ok(process_action_result)
         })
     }

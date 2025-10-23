@@ -9,7 +9,6 @@ pub trait TransactionManager {
         &self,
         action: Action,
         intents: Vec<Intent>,
-        created_at: u64,
     ) -> Result<CreateActionResult, CanisterError>;
 
     fn process_action(
