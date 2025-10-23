@@ -135,6 +135,23 @@ dfx_local_deploy_token_storage owner network="":
   #!/usr/bin/env bash
   set -e
 
+  # If network is empty (local), include the test tICP token entry. Otherwise leave empty.
+  if [ -z "{{network}}" ]; then
+    EXTRA_TOKENS='        record {
+          details = variant { IC = record {
+              ledger_id = principal "x5qut-viaaa-aaaar-qajda-cai";
+              fee = 10_000 : nat;
+            }
+          };
+          symbol = "tICP";
+          name = "Test Internet Computer";
+          decimals = 8;
+          enabled_by_default = true;
+        };'
+  else
+    EXTRA_TOKENS=''
+  fi
+
   dfx deploy token_storage --argument "(record {
       log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug,token_storage=debug\"; };
       owner=principal \"{{owner}}\";
@@ -187,17 +204,7 @@ dfx_local_deploy_token_storage owner network="":
           decimals = 8;
           enabled_by_default = true;
         };
-        record {
-          details = variant { IC = record {
-              ledger_id = principal \"x5qut-viaaa-aaaar-qajda-cai\";
-              fee = 10_000 : nat;
-            }
-          };
-          symbol = \"tICP\";
-          name = \"Test Internet Computer\";
-          decimals = 8;
-          enabled_by_default = true;
-        };
+        $EXTRA_TOKENS
       };
   })" {{network}}
 
