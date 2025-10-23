@@ -129,5 +129,7 @@ jobs:
                   echo "Created ${ENV_FILE} with values:"
                   cat src/cashier_frontend/${ENV_FILE}
 
+                  owner=$(dfx identity get-principal)
+
                   just build "$ENVIRONMENT"
-                  just dfx_deploy "$ENVIRONMENT"
+                  just dfx_deploy "$owner" "$ENVIRONMENT"
