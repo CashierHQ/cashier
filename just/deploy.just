@@ -1,4 +1,5 @@
 # deploy all canister to the specified network
+[group('deploy')]
 deploy-all NETWORK:
   #!/usr/bin/env bash
   set -e
