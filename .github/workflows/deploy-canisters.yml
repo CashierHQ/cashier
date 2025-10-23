@@ -135,6 +135,7 @@ jobs:
                     backend_log_filter="global,cashier=debug"
                     token_storage_log_filter="global,cashier=debug,token_storage=debug"
                   fi
+                  
 
                   just build "$NETWORK"
                   # pass log filters to just dfx_deploy so canisters pick the appropriate level
