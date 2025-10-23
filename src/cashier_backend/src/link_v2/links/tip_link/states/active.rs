@@ -2,11 +2,11 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::{
-    services::ext::icrc_token::Account,
-    v2::{
+    link_v2::{
         traits::LinkV2State,
         utils::icrc_token::{get_batch_tokens_fee_for_link, transfer_assets_from_link_to_account},
     },
+    services::ext::icrc_token::Account,
 };
 use candid::Principal;
 use cashier_backend_types::{

@@ -4,7 +4,7 @@
 use crate::utils::helper::convert_nat_to_u64;
 use crate::{
     constant::ICP_CANISTER_PRINCIPAL,
-    v2::{
+    link_v2::{
         icrc112::convert_tx_to_icrc_112_request,
         intents::{
             transfer_wallet_to_link::TransferWalletToLinkIntent,
