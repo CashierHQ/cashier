@@ -9,7 +9,7 @@ import type { LinkType } from "./linkType";
 // Tip link details
 export type TipLink = {
   asset: string;
-  useAmount: bigint;
+  useAmount: number;
 };
 
 /** Data required to create a new link */
