@@ -26,9 +26,9 @@ dfx_local_stop:
 [group('dfx')]
 dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="": 
   #!/usr/bin/env bash
-  just dfx_deploy_token_storage "${owner}" {{network}} {{token_storage_log_filter}}
+  just dfx_deploy_token_storage {{owner}} {{network}} {{token_storage_log_filter}}
 
-  just dfx_deploy_backend "${owner}" {{network}} {{backend_log_filter}}
+  just dfx_deploy_backend {{owner}} {{network}} {{backend_log_filter}}
 
   dfx deploy cashier_frontend {{network}}
 
