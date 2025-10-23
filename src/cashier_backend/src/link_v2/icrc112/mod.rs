@@ -12,7 +12,7 @@ use cashier_backend_types::{
     link_v2::graph::Graph,
     repository::{
         common::Asset,
-        transaction::v1::{IcTransaction, Protocol, Transaction},
+        transaction::v1::{FromCallType, IcTransaction, Protocol, Transaction},
     },
 };
 use icrc_112_utils::build_canister_call;
@@ -20,6 +20,7 @@ use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
     icrc2::approve::ApproveArgs,
 };
+use log::debug;
 use std::collections::HashMap;
 
 /// Creates ICRC-112 requests from a list of transactions
@@ -36,11 +37,20 @@ pub fn create_icrc_112_requests(
     link_account: Account,
     canister_id: Principal,
 ) -> Result<Icrc112Requests, CanisterError> {
-    let tx_graph: Graph = transactions.to_vec().into();
+    // filter only wallet transactions
+    let wallet_transactions: Vec<Transaction> = transactions
+        .iter()
+        .filter(|tx| tx.from_call_type == FromCallType::Wallet)
+        .cloned()
+        .collect();
+
+    let tx_graph: Graph = wallet_transactions.clone().into();
     let sorted_txs = kahn_topological_sort(&tx_graph)?;
 
-    let tx_map: HashMap<String, &Transaction> =
-        transactions.iter().map(|tx| (tx.id.clone(), tx)).collect();
+    let tx_map: HashMap<String, &Transaction> = wallet_transactions
+        .iter()
+        .map(|tx| (tx.id.clone(), tx))
+        .collect();
 
     let mut icrc_112_requests = Vec::<Vec<Icrc112Request>>::new();
     for tx_group in sorted_txs.iter() {
