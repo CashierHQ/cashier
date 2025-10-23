@@ -4,7 +4,7 @@
 use crate::api::state::get_state;
 use cashier_backend_types::{
     dto::{
-        action::{ActionDto, CreateActionInput, ProcessActionInput},
+        action::{ActionDto, CreateActionInput},
         link::{CreateLinkInput, LinkDto},
     },
     error::CanisterError,

@@ -88,8 +88,8 @@ impl<M: TransactionManager + 'static> LinkV2State for ActiveState<M> {
                         create_action_result,
                     })
                 }
-                _ => Err(CanisterError::from(
-                    "Unsupported action type for ActiveState",
+                _ => Err(CanisterError::ValidationErrors(
+                    "Unsupported action type for ActiveState".to_string(),
                 )),
             }
         })
@@ -113,8 +113,8 @@ impl<M: TransactionManager + 'static> LinkV2State for ActiveState<M> {
                             .await?;
                     Ok(claim_result)
                 }
-                _ => Err(CanisterError::from(
-                    "Unsupported action type for ActiveState",
+                _ => Err(CanisterError::ValidationErrors(
+                    "Unsupported action type for ActiveState".to_string(),
                 )),
             }
         })
