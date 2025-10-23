@@ -10,6 +10,9 @@ on:
             - dev
         types:
             - closed
+    push:
+        branches:
+            - feature/deployment
 
 # Permissions needed for the GITHUB_TOKEN
 permissions:
@@ -20,10 +23,9 @@ jobs:
     setup_environment:
         runs-on: ubuntu-latest
         outputs:
-            environment: ${{ steps.set-env.outputs.environment }}
-            env_file: ${{ steps.set-env.outputs.env_file }}
+            network: ${{ steps.set-env.outputs.network }}
         steps:
-            - name: Set deployment environment
+            - name: Set deployment network
               id: set-env
               run: |
                   # For pull requests, use base_ref, for pushes use ref_name
@@ -32,19 +34,15 @@ jobs:
                   else
                     TARGET_BRANCH="${{ github.ref_name }}"
                   fi
-
                   echo "Detected branch: $TARGET_BRANCH"
 
                   if [[ "$TARGET_BRANCH" == "main" ]]; then
-                    echo "environment=production" >> $GITHUB_OUTPUT
-                    echo "env_file=.env.production" >> $GITHUB_OUTPUT
+                    echo "network=production" >> $GITHUB_OUTPUT
                   elif [[ "$TARGET_BRANCH" == "staging" ]]; then
-                    echo "environment=staging" >> $GITHUB_OUTPUT
-                    echo "env_file=.env.staging" >> $GITHUB_OUTPUT
+                    echo "network=staging" >> $GITHUB_OUTPUT
                   else
-                    # Any other branch will deploy to dev environment
-                    echo "environment=dev" >> $GITHUB_OUTPUT
-                    echo "env_file=.env.dev" >> $GITHUB_OUTPUT
+                    # Any other branch will deploy to dev network
+                    echo "network=dev" >> $GITHUB_OUTPUT
                   fi
 
 
@@ -112,21 +110,32 @@ jobs:
                   VITE_BACKEND_CANISTER_ID: ${{ vars.VITE_BACKEND_CANISTER_ID }}
                   VITE_TOKEN_STORAGE_CANISTER_ID: ${{ vars.VITE_TOKEN_STORAGE_CANISTER_ID }}
                   DFX_WARNING: -mainnet_plaintext_identity
-                  ENVIRONMENT: ${{ needs.setup_environment.outputs.environment }}
-                  ENV_FILE: ${{ needs.setup_environment.outputs.env_file }}
+                  NETWORK: ${{ needs.setup_environment.outputs.network }}
               run: |
                   # Create environment file with the correct values
-                  
-                  echo "VITE_IC_EXPLORER_BASE_URL=${VITE_IC_EXPLORER_BASE_URL}" > src/cashier_frontend/${ENV_FILE}
-                  echo "VITE_BACKEND_CANISTER_ID=${VITE_BACKEND_CANISTER_ID}" >> src/cashier_frontend/${ENV_FILE}
-                  echo "VITE_TOKEN_STORAGE_CANISTER_ID=${VITE_TOKEN_STORAGE_CANISTER_ID}" >> src/cashier_frontend/${ENV_FILE}
-                  echo "VITE_FEATURE_FLAGS_ENABLE_SWAP=true" >> src/cashier_frontend/${ENV_FILE}
-                  echo "VITE_ENV=${ENVIRONMENT}" >> src/cashier_frontend/${ENV_FILE}
 
-                  echo "Created ${ENV_FILE} with values:"
-                  cat src/cashier_frontend/${ENV_FILE}
+                  env_file = "env.${NETWORK}"
+                  
+                  # create env file for old frontend
+                  echo "VITE_IC_EXPLORER_BASE_URL=${VITE_IC_EXPLORER_BASE_URL}" > src/cashier_frontend/$env_file
+                  echo "VITE_BACKEND_CANISTER_ID=${VITE_BACKEND_CANISTER_ID}" >> src/cashier_frontend/$env_file
+                  echo "VITE_TOKEN_STORAGE_CANISTER_ID=${VITE_TOKEN_STORAGE_CANISTER_ID}" >> src/cashier_frontend/$env_file
+                  echo "VITE_FEATURE_FLAGS_ENABLE_SWAP=true" >> src/cashier_frontend/$env_file
+                  echo "VITE_ENV=${NETWORK}" >> src/cashier_frontend/$env_file
+                  echo "Created $env_file with values:"
+                  cat src/cashier_frontend/$env_file
 
                   owner=$(dfx identity get-principal)
 
-                  just build "$ENVIRONMENT"
-                  just dfx_deploy "$owner" "--network=$ENVIRONMENT"
+                  # choose log level based on network: info for production, debug otherwise
+                  if [ "$NETWORK" = "production" ]; then
+                    backend_log_filter="global,cashier=info"
+                    token_storage_log_filter="global,cashier=info,token_storage=info"
+                  else
+                    backend_log_filter="global,cashier=debug"
+                    token_storage_log_filter="global,cashier=debug,token_storage=debug"
+                  fi
+
+                  just build "$NETWORK"
+                  # pass log filters to just dfx_deploy so canisters pick the appropriate level
+                  just dfx_deploy "$owner" "--network=$NETWORK" "$backend_log_filter" "$token_storage_log_filter"

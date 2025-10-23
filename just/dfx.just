@@ -16,18 +16,19 @@ dfx_local_start: dfx_prepare_env dfx_local_stop
 [group('dfx')]
 dfx_local_stop:
   dfx stop
-  
+
+
 # Deploys the canisters to the specified network - eg: just dfx_deploy --network=dev
+# params owner: principal id of the owner, for canister initialization
+# network: dfx network flag, e.g. --network=dev
+# backend_log_filter: log filter string for the backend canister
+# token_storage_log_filter: log filter string for the token_storage canister
 [group('dfx')]
-dfx_deploy owner network="": 
+dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="": 
   #!/usr/bin/env bash
+  just dfx_local_deploy_token_storage "${OWNER}" {{network}} {{token_storage_log_filter}}
 
-  just dfx_local_deploy_token_storage "${OWNER}" {{network}}
-
-  dfx deploy cashier_backend --argument "(record {
-      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
-      owner=principal \"${OWNER}\";
-  })" {{network}}
+  just dfx_deploy_backend "${OWNER}" {{network}} {{backend_log_filter}}
 
   dfx deploy cashier_frontend {{network}}
 
@@ -130,30 +131,29 @@ create_canisters network cycles:
   dfx canister --network={{network}} create --with-cycles={{cycles}} --all
 
 
+# Deploys the backend canister
+# params owner: principal id of the owner
+# network: dfx network flag, e.g. --network=dev
+# log_filter: log filter string (default for local and dev)
 [private]
-dfx_local_deploy_token_storage owner network="":
+dfx_deploy_backend owner network="" log_filter="global,cashier=debug":
+  #!/usr/bin/env bash
+  dfx deploy cashier_backend --argument "(record {
+      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"{{log_filter}}\"; };
+      owner=principal \"{{owner}}\";
+  })" {{network}}
+
+# Deploys the token_storage canister
+# params owner: principal id of the owner
+# network: dfx network flag, e.g. --network=dev
+# log_filter: log filter string (default for local and dev)
+[private]
+dfx_local_deploy_token_storage owner network="" log_filter="global,cashier=debug,token_storage=debug":
   #!/usr/bin/env bash
   set -e
 
-  # If network is empty (local), include the test tICP token entry. Otherwise leave empty.
-  if [ -z "{{network}}" ]; then
-    EXTRA_TOKENS='        record {
-          details = variant { IC = record {
-              ledger_id = principal "x5qut-viaaa-aaaar-qajda-cai";
-              fee = 10_000 : nat;
-            }
-          };
-          symbol = "tICP";
-          name = "Test Internet Computer";
-          decimals = 8;
-          enabled_by_default = true;
-        };'
-  else
-    EXTRA_TOKENS=''
-  fi
-
   dfx deploy token_storage --argument "(record {
-      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug,token_storage=debug\"; };
+      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"{{log_filter}}\"; };
       owner=principal \"{{owner}}\";
       tokens = opt vec {
         record {
