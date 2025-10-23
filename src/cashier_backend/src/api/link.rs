@@ -155,8 +155,6 @@ pub async fn user_create_action(input: CreateActionInput) -> Result<ActionDto, C
 /// * `Ok(ActionDto)` - Updated action data after processing
 /// * `Err(CanisterError)` - Error if processing fails or invalid action type
 #[update]
-#[allow(deprecated)]
-#[deprecated = "Do not use. Use user_process_action instead. To be removed when new frontend is ready"]
 pub async fn process_action_anonymous(
     input: ProcessActionAnonymousInput,
 ) -> Result<ActionDto, CanisterError> {
@@ -180,8 +178,6 @@ pub async fn process_action_anonymous(
 /// * `Ok(ActionDto)` - Created action data with associated intents
 /// * `Err(CanisterError)` - Error if creation fails or action already exists
 #[update]
-#[allow(deprecated)]
-#[deprecated = "Do not use. Use create_action_anonymous instead. To be removed when new frontend is ready"]
 pub async fn create_action_anonymous(
     input: CreateActionAnonymousInput,
 ) -> Result<ActionDto, CanisterError> {
