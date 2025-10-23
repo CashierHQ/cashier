@@ -20,7 +20,6 @@ use icrc_ledger_types::{
     icrc1::{account::Account, transfer::TransferArg},
     icrc2::approve::ApproveArgs,
 };
-use log::debug;
 use std::collections::HashMap;
 
 /// Creates ICRC-112 requests from a list of transactions

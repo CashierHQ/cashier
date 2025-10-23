@@ -1,12 +1,15 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link::fixture::activate_tip_link_v2_fixture;
+use crate::cashier_backend::link::fixture::{
+    activate_tip_link_v2_fixture, create_tip_linkv2_fixture,
+};
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
 use cashier_backend_types::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use cashier_backend_types::dto::action::CreateActionInput;
+use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::link_v2::dto::ProcessActionV2Input;
 use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
 use cashier_backend_types::repository::common::Wallet;
@@ -14,6 +17,85 @@ use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, Int
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
 use icrc_ledger_types::icrc1::account::Account;
+
+#[tokio::test]
+async fn it_should_claim_icp_token_tip_linkv2_error_if_link_not_active() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let tip_amount = 1_000_000u64;
+        let (test_fixture, create_link_result) =
+            create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+
+        // Act: create CLAIM action
+        let link_id = create_link_result.link.id.clone();
+        let create_action_input = CreateActionInput {
+            link_id: link_id.clone(),
+            action_type: ActionType::Claim,
+        };
+        let create_action_result = test_fixture.create_action_v2(create_action_input).await;
+
+        // Assert: action created successfully
+        assert!(create_action_result.is_err());
+
+        if let Err(CanisterError::ValidationErrors(msg)) = create_action_result {
+            assert_eq!(
+                msg, "Unsupported action type for Created state",
+                "Error message mismatch"
+            );
+        } else {
+            panic!("Expected ValidationErrors error");
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_claim_icp_token_tip_linkv2_error_if_more_than_once() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let tip_amount = 1_000_000u64;
+        let (test_fixture, create_link_result) =
+            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+
+        // Act: create CLAIM action
+        let link_id = create_link_result.link.id.clone();
+        let create_action_input = CreateActionInput {
+            link_id: link_id.clone(),
+            action_type: ActionType::Claim,
+        };
+        let create_action_result = test_fixture.create_action_v2(create_action_input).await;
+
+        // Act: process CLAIM action
+        let action_dto = create_action_result.unwrap();
+        let action_id = action_dto.id.clone();
+        let process_action_input = ProcessActionV2Input { action_id };
+        let _process_action_result = test_fixture.process_action_v2(process_action_input).await;
+
+        // Act: create CLAIM action again
+        let link_id = create_link_result.link.id.clone();
+        let create_action_input = CreateActionInput {
+            link_id: link_id.clone(),
+            action_type: ActionType::Claim,
+        };
+        let create_action_result = test_fixture.create_action_v2(create_action_input).await;
+
+        // Assert: action creation failed
+        assert!(create_action_result.is_err());
+
+        if let Err(CanisterError::ValidationErrors(msg)) = create_action_result {
+            assert_eq!(msg, "Unsupported link state", "Error message mismatch");
+        } else {
+            panic!("Expected ValidationErrors error");
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
 
 #[tokio::test]
 async fn it_should_claim_icp_token_tip_linkv2_successfully() {

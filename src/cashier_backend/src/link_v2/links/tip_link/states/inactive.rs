@@ -85,8 +85,8 @@ impl<M: TransactionManager + 'static> LinkV2State for InactiveState<M> {
                         create_action_result,
                     })
                 }
-                _ => Err(CanisterError::from(
-                    "Unsupported action type for InactiveState",
+                _ => Err(CanisterError::ValidationErrors(
+                    "Unsupported action type for InactiveState".to_string(),
                 )),
             }
         })
@@ -110,8 +110,8 @@ impl<M: TransactionManager + 'static> LinkV2State for InactiveState<M> {
                             .await?;
                     Ok(withdraw_result)
                 }
-                _ => Err(CanisterError::from(
-                    "Unsupported action type for InactiveState",
+                _ => Err(CanisterError::ValidationErrors(
+                    "Unsupported action type for InactiveState".to_string(),
                 )),
             }
         })
