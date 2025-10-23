@@ -129,7 +129,6 @@ async fn it_should_claim_icrc_token_tip_linkv2_successfully() {
         let (test_fixture, create_link_result) =
             activate_tip_link_v2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount).await;
 
-        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
 
         let caller_account = Account {
@@ -193,8 +192,6 @@ async fn it_should_claim_icrc_token_tip_linkv2_successfully() {
         let process_action_result = test_fixture.process_action_v2(process_action_input).await;
 
         // Assert: action processed successfully
-        println!("process_action_result: {:?}", process_action_result);
-
         assert!(process_action_result.is_ok());
         let process_action_result = process_action_result.unwrap();
         let link_dto = process_action_result.link;
