@@ -10,7 +10,7 @@ on:
             - dev
         types:
             - closed
-    pushes:
+    push:
         branches:
             - feature/deployment
 
