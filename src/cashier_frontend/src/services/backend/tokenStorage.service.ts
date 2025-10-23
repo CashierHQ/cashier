@@ -42,7 +42,9 @@ class TokenStorageService {
     return res;
   }
   async addTokens(input: AddTokensInput): Promise<null> {
-    const res = parseResultResponse(await this.actor.user_add_token_batch(input));
+    const res = parseResultResponse(
+      await this.actor.user_add_token_batch(input),
+    );
     return res;
   }
 
@@ -53,7 +55,9 @@ class TokenStorageService {
       mapStringToTokenId(id.tokenId, id.chain),
     );
     const res = parseResultResponse(
-      await this.actor.user_update_token_registry_batch({ token_ids: ids_update }),
+      await this.actor.user_update_token_registry_batch({
+        token_ids: ids_update,
+      }),
     );
     return res;
   }
