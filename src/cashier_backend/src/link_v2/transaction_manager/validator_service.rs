@@ -27,6 +27,11 @@ impl<V: TransactionValidator> ValidatorService<V> {
         Self { validator }
     }
 
+    /// Validate a list of transactions and update their states accordingly
+    /// # Arguments
+    /// * `transactions` - A slice of transactions to be validated
+    /// # Returns
+    /// * `Result<ValidateActionTransactionsResult, CanisterError>` - The result of validating the transactions
     pub async fn validate_action_transactions(
         &self,
         transactions: &[Transaction],
@@ -74,6 +79,13 @@ impl<V: TransactionValidator> ValidatorService<V> {
         })
     }
 
+    /// Rollup the state of an action based on its intents and their transactions
+    /// # Arguments
+    /// * `action` - The action whose state is to be rolled up
+    /// * `intents` - A slice of intents associated with the action
+    /// * `intent_txs_map` - A mapping of intent IDs to their associated transactions
+    /// # Returns
+    /// * `Result<RollupActionStateResult, CanisterError>` - The result of rolling up the action state
     pub fn rollup_action_state(
         &self,
         action: Action,

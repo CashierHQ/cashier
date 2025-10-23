@@ -33,7 +33,16 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
         }
     }
 
-    async fn claim(
+    /// Process a CLAIM action on the active tip link
+    /// # Arguments
+    /// * `link` - The tip link being claimed
+    /// * `action` - The claim action to be processed
+    /// * `intents` - The intents associated with the action
+    /// * `intent_txs_map` - A mapping of intent IDs to their associated transactions
+    /// * `transaction_manager` - The transaction manager to handle the action processing
+    /// # Returns
+    /// * `Result<LinkProcessActionResult, CanisterError>` - The result of processing the claim action
+    pub async fn claim(
         link: &Link,
         action: Action,
         intents: Vec<Intent>,

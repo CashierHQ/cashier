@@ -21,6 +21,16 @@ impl TransferLinkToWalletIntent {
         Self { intent }
     }
 
+    /// Creates a new TransferLinkToWalletIntent
+    /// # Arguments
+    /// * `label` - A label for the intent
+    /// * `asset` - The asset to be transferred
+    /// * `sending_amount` - The amount to be sent
+    /// * `receiver_id` - The principal of the receiver's wallet
+    /// * `link_account` - The account associated with the link
+    /// * `created_at_ts` - The timestamp when the intent is created
+    /// # Returns
+    /// * `Result<TransferLinkToWalletIntent, CanisterError>` - The resulting TransferLinkToWalletIntent or an error
     pub fn create(
         label: String,
         asset: Asset,
