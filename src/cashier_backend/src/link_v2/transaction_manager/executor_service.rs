@@ -17,6 +17,11 @@ impl<E: TransactionExecutor> ExecutorService<E> {
         Self { executor }
     }
 
+    /// Executes a list of transactions using the underlying executor.
+    /// # Arguments
+    /// * `transactions` - A slice of transactions to be executed
+    /// # Returns
+    /// * `Result<ExecuteTransactionsResult, CanisterError>` - The result of executing the transactions
     pub async fn execute_transactions(
         &self,
         transactions: &[Transaction],

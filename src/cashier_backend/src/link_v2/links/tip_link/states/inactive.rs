@@ -33,7 +33,16 @@ impl<M: TransactionManager + 'static> InactiveState<M> {
         }
     }
 
-    async fn withdraw(
+    /// Process a WITHDRAW action on the inactive tip link
+    /// # Arguments
+    /// * `link` - The tip link being withdrawn
+    /// * `action` - The withdraw action to be processed
+    /// * `intents` - The intents associated with the action
+    /// * `intent_txs_map` - A mapping of intent IDs to their associated transactions
+    /// * `transaction_manager` - The transaction manager to handle the action processing
+    /// # Returns
+    /// * `Result<LinkProcessActionResult, CanisterError>` - The result of processing the withdraw action
+    pub async fn withdraw(
         link: &Link,
         action: Action,
         intents: Vec<Intent>,

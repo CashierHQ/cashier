@@ -83,6 +83,11 @@ pub fn kahn_topological_sort(graph: &Graph) -> Result<Vec<Vec<String>>, Canister
     Ok(sorted_list)
 }
 
+/// Flattens a sorted list of levels into a single list of vertex IDs
+/// # Arguments
+/// * `sorted_levels` - A reference to a vector of levels, where each level is a vector of vertex IDs
+/// # Returns
+/// * `Vec<String>` - A flattened vector of vertex IDs
 pub fn flatten_sorted_list(sorted_levels: &[Vec<String>]) -> Vec<String> {
     let mut flat_list = Vec::<String>::new();
     for level in sorted_levels.iter() {
@@ -93,6 +98,12 @@ pub fn flatten_sorted_list(sorted_levels: &[Vec<String>]) -> Vec<String> {
     flat_list
 }
 
+/// Perform Kahn's topological sort and return a flat list of vertex IDs
+/// # Arguments
+/// * `graph` - A reference to the Graph to be sorted
+/// # Returns
+/// * `Result<Vec<String>, CanisterError>` - A result containing the sorted vertex IDs
+///   or an error if the graph has cycles
 pub fn kahn_topological_sort_flat(graph: &Graph) -> Result<Vec<String>, CanisterError> {
     let sorted_levels = kahn_topological_sort(graph)?;
     Ok(flatten_sorted_list(&sorted_levels))

@@ -33,7 +33,17 @@ impl<M: TransactionManager + 'static> CreatedState<M> {
         }
     }
 
-    async fn activate(
+    /// Process CREATE action to activate the tip link
+    /// # Arguments
+    /// * `caller` - The principal of the user activating the link
+    /// * `link` - The tip link being activated
+    /// * `action` - The create action to be processed
+    /// * `intents` - The intents associated with the action
+    /// * `intent_txs_map` - A mapping of intent IDs to their associated transactions
+    /// * `transaction_manager` - The transaction manager to handle the action processing
+    /// # Returns
+    /// * `Result<LinkProcessActionResult, CanisterError>` - The result of processing the create action
+    pub async fn activate(
         caller: Principal,
         link: Link,
         action: Action,

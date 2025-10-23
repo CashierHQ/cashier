@@ -22,7 +22,6 @@ use cashier_backend_types::{
     repository::{action::v1::Action, intent::v1::Intent, transaction::v1::Transaction},
 };
 use cashier_common::runtime::IcEnvironment;
-use log::debug;
 use std::{
     collections::{HashMap, HashSet},
     rc::Rc,
@@ -130,16 +129,12 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
             }
         }
 
-        debug!("Action transactions {:?}", transactions);
-
         // validate and update transactions dependencies and states
         let validate_transactions_result = self
             .validator_service
             .validate_action_transactions(&transactions)
             .await?;
         errors.extend(validate_transactions_result.errors.clone());
-
-        debug!("Validated transactions {:?}", validate_transactions_result);
 
         processed_transactions.extend(validate_transactions_result.wallet_transactions);
         is_success &= validate_transactions_result.is_success;
@@ -150,11 +145,6 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
                 .executor_service
                 .execute_transactions(&validate_transactions_result.canister_transactions)
                 .await?;
-
-            debug!(
-                "Executed canister transactions {:?}",
-                executed_transactions_result
-            );
 
             processed_transactions.extend(executed_transactions_result.transactions);
             errors.extend(executed_transactions_result.errors);
@@ -188,12 +178,6 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
             &intents,
             updated_intent_txs_map.clone(),
         )?;
-
-        debug!(
-            "Rolled up action state {:?}",
-            rollup_action_state_result.action
-        );
-        debug!("Rolled up intents {:?}", rollup_action_state_result.intents);
 
         Ok(ProcessActionResult {
             action: rollup_action_state_result.action,
