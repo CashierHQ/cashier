@@ -2,7 +2,9 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::{
-    link_v2::transaction_manager::traits::TransactionManager,
+    link_v2::transaction_manager::{
+        dependency_analyzer::analyze_and_fill_transaction_dependencies, traits::TransactionManager,
+    },
     repositories::{
         Repositories, action::ActionRepository,
         processing_transaction::ProcessingTransactionRepository,
@@ -14,11 +16,11 @@ use crate::{
 };
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::{CreateActionResult, ProcessActionResult},
-    repository::{action::v1::Action, intent::v1::Intent},
+    link_v2::action_result::{CreateActionResult, ProcessActionResult},
+    repository::{action::v1::Action, intent::v1::Intent, transaction::v1::Transaction},
 };
 use cashier_common::runtime::IcEnvironment;
-use std::rc::Rc;
+use std::{collections::HashMap, rc::Rc};
 
 pub struct IcTransactionManager<E: IcEnvironment + Clone, R: Repositories> {
     pub repo: Rc<R>,
@@ -53,7 +55,26 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionManager for IcTransac
         &self,
         action: Action,
         intents: Vec<Intent>,
+        created_at: u64,
     ) -> Result<CreateActionResult, CanisterError> {
+        // assemble intent transactions
+        let mut transactions = Vec::<Transaction>::new();
+        let mut intent_txs_map = HashMap::<String, Vec<Transaction>>::new();
+
+        for intent in intents.iter() {
+            let chain = intent.chain.clone();
+            let intent_transactions = self
+                .intent_adapter
+                .intent_to_transactions(&chain, created_at, intent)?;
+            transactions.extend(intent_transactions.clone());
+            intent_txs_map.insert(intent.id.clone(), intent_transactions);
+        }
+
+        // analyze transaction dependencies
+        // fill in dependency info
+        // if intent A has dependency on intent B, all tx in A will have dependency on txs in B
+        let transactions = analyze_and_fill_transaction_dependencies(&intents, &intent_txs_map)?;
+
         Err(CanisterError::from(
             "IcTransactionManager create_action not implemented",
         ))

@@ -4,7 +4,7 @@
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::{CreateActionResult, ProcessActionResult},
+    link_v2::action_result::{CreateActionResult, ProcessActionResult},
     repository::{
         action::v1::{Action, ActionType},
         link::v1::Link,

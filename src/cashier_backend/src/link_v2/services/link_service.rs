@@ -5,6 +5,7 @@ use crate::repositories::Repositories;
 use crate::services::action::ActionService;
 use crate::{link_v2::links::factory, repositories};
 use candid::Principal;
+use cashier_backend_types::dto::action::IntentDto;
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::{
     dto::{
@@ -157,8 +158,6 @@ impl<R: Repositories> LinkV2Service<R> {
         let link = factory::from_link(link, canister_id)?;
         let create_action_result = link.create_action(caller, canister_id, action_type).await?;
 
-        // TODO assemble txs from action and intents
-
         // save action to DB
         let link_action = LinkAction {
             link_id: link_id.to_string(),
@@ -176,14 +175,7 @@ impl<R: Repositories> LinkV2Service<R> {
             create_action_result.action.creator,
         );
 
-        let action_dto = ActionDto::build(
-            &ActionData {
-                action: create_action_result.action.clone(),
-                intents: create_action_result.intents.clone(),
-                intent_txs: create_action_result.intent_txs_map.clone(),
-            },
-            create_action_result.icrc112_requests,
-        );
+        let action_dto: ActionDto = create_action_result.into();
 
         Ok(action_dto)
     }
