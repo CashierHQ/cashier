@@ -38,18 +38,18 @@ options: {
 ```typescript
 // Form submission validation
 const result = ValidationService.validateAssetsWithFees(formAssets, tokenMap, {
-    useCase: "create",
-    linkType: LINK_TYPE.SEND_TIP,
-    maxActionNumber: 1,
-    includeLinkCreationFee: false,
+  useCase: "create",
+  linkType: LINK_TYPE.SEND_TIP,
+  maxActionNumber: 1,
+  includeLinkCreationFee: false,
 });
 
 // Link creation validation
 const result = ValidationService.validateAssetsWithFees(formAssets, tokenMap, {
-    useCase: "create",
-    linkType: LINK_TYPE.SEND_AIRDROP,
-    maxActionNumber: 10,
-    includeLinkCreationFee: true,
+  useCase: "create",
+  linkType: LINK_TYPE.SEND_AIRDROP,
+  maxActionNumber: 10,
+  includeLinkCreationFee: true,
 });
 ```
 
@@ -164,11 +164,11 @@ await submitReceivePaymentForm(
 
 ```typescript
 const {
-    validateLinkPreview,
-    validateActionCreation,
-    validateBalanceWithCreationFee,
-    validateLinkPreviewWithBalance,
-    showValidationErrorToast,
+  validateLinkPreview,
+  validateActionCreation,
+  validateBalanceWithCreationFee,
+  validateLinkPreviewWithBalance,
+  showValidationErrorToast,
 } = useLinkCreateValidation();
 ```
 
@@ -176,37 +176,37 @@ const {
 
 **`validateLinkPreview(link)`**
 
--   Validates basic link existence and type
--   Returns: `ValidationResult`
+- Validates basic link existence and type
+- Returns: `ValidationResult`
 
 **`validateBalanceWithCreationFee(link, maxActionNumber?, includeLinkCreationFee)`**
 
--   Validates balance with configurable creation fee
--   Returns: `ValidationResult`
+- Validates balance with configurable creation fee
+- Returns: `ValidationResult`
 
 **`validateLinkPreviewWithBalance(link, options)`**
 
--   Combined validation with balance checking
--   Options: `{ maxActionNumber?: bigint, includeLinkCreationFee?: boolean }`
--   Returns: `ValidationResult`
+- Combined validation with balance checking
+- Options: `{ maxActionNumber?: bigint, includeLinkCreationFee?: boolean }`
+- Returns: `ValidationResult`
 
 **`validateActionCreation(link)`**
 
--   Simplified action creation validation
--   Returns: `ValidationResult`
+- Simplified action creation validation
+- Returns: `ValidationResult`
 
 ### useLinkTemplateValidation
 
 ```typescript
 const {
-    validationState,
-    validateLinkTemplate,
-    clearValidationErrors,
-    clearValidationError,
-    isLinkTypeSupported,
-    showValidationErrorToast,
-    getValidationMessage,
-    hasValidationErrors,
+  validationState,
+  validateLinkTemplate,
+  clearValidationErrors,
+  clearValidationError,
+  isLinkTypeSupported,
+  showValidationErrorToast,
+  getValidationMessage,
+  hasValidationErrors,
 } = useLinkTemplateValidation();
 ```
 
@@ -214,23 +214,23 @@ const {
 
 **`validateLinkTemplate(currentLink, carouselIndex)`**
 
--   Validates template form submission
--   Returns: `ValidationResult`
+- Validates template form submission
+- Returns: `ValidationResult`
 
 **`isLinkTypeSupported(linkType)`**
 
--   Checks if link type is supported
--   Returns: `boolean`
+- Checks if link type is supported
+- Returns: `boolean`
 
 **`clearValidationErrors()`**
 
--   Clears all validation state
--   Returns: `void`
+- Clears all validation state
+- Returns: `void`
 
 **`showValidationError(errorType)`**
 
--   Shows specific validation error
--   Returns: `void`
+- Shows specific validation error
+- Returns: `void`
 
 ## Core Submission Handler API
 
@@ -238,7 +238,7 @@ const {
 
 ```typescript
 const { handleFormSubmission, handleLinkCreation, handleTemplateSubmission } =
-    useSubmissionHandler();
+  useSubmissionHandler();
 ```
 
 #### Context Types:
@@ -288,12 +288,12 @@ const { handleFormSubmission, handleLinkCreation, handleTemplateSubmission } =
 
 ```typescript
 interface FormAsset {
-    tokenAddress: string;
-    amount: bigint;
-    chain?: CHAIN;
-    label?: string;
-    usdEquivalent?: number;
-    usdConversionRate?: number;
+  tokenAddress: string;
+  amount: bigint;
+  chain?: CHAIN;
+  label?: string;
+  usdEquivalent?: number;
+  usdConversionRate?: number;
 }
 ```
 
@@ -301,8 +301,8 @@ interface FormAsset {
 
 ```typescript
 interface ValidationResult {
-    isValid: boolean;
-    errors: ValidationError[];
+  isValid: boolean;
+  errors: ValidationError[];
 }
 ```
 
@@ -310,10 +310,10 @@ interface ValidationResult {
 
 ```typescript
 interface ValidationError {
-    field: string;
-    code: ErrorCode;
-    message: string;
-    metadata?: Record<string, unknown>;
+  field: string;
+  code: ErrorCode;
+  message: string;
+  metadata?: Record<string, unknown>;
 }
 ```
 
@@ -321,19 +321,19 @@ interface ValidationError {
 
 ```typescript
 enum ErrorCode {
-    INSUFFICIENT_BALANCE = "INSUFFICIENT_BALANCE",
-    INSUFFICIENT_BALANCE_CREATE = "INSUFFICIENT_BALANCE_CREATE",
-    TOKEN_NOT_FOUND = "TOKEN_NOT_FOUND",
-    NO_ASSETS_FOUND = "NO_ASSETS_FOUND",
-    LINK_NOT_FOUND = "LINK_NOT_FOUND",
-    ACTION_NOT_FOUND = "ACTION_NOT_FOUND",
-    FORM_VALIDATION_FAILED = "FORM_VALIDATION_FAILED",
-    LINK_CREATION_FAILED = "LINK_CREATION_FAILED",
-    TRANSACTION_FAILED = "TRANSACTION_FAILED",
-    BALANCE_CHECK_FAILED = "BALANCE_CHECK_FAILED",
-    LINK_ID_MISSING = "LINK_ID_MISSING",
-    USER_INPUT_NOT_FOUND = "USER_INPUT_NOT_FOUND",
-    NO_CLAIMS_AVAILABLE = "NO_CLAIMS_AVAILABLE",
+  INSUFFICIENT_BALANCE = "INSUFFICIENT_BALANCE",
+  INSUFFICIENT_BALANCE_CREATE = "INSUFFICIENT_BALANCE_CREATE",
+  TOKEN_NOT_FOUND = "TOKEN_NOT_FOUND",
+  NO_ASSETS_FOUND = "NO_ASSETS_FOUND",
+  LINK_NOT_FOUND = "LINK_NOT_FOUND",
+  ACTION_NOT_FOUND = "ACTION_NOT_FOUND",
+  FORM_VALIDATION_FAILED = "FORM_VALIDATION_FAILED",
+  LINK_CREATION_FAILED = "LINK_CREATION_FAILED",
+  TRANSACTION_FAILED = "TRANSACTION_FAILED",
+  BALANCE_CHECK_FAILED = "BALANCE_CHECK_FAILED",
+  LINK_ID_MISSING = "LINK_ID_MISSING",
+  USER_INPUT_NOT_FOUND = "USER_INPUT_NOT_FOUND",
+  NO_CLAIMS_AVAILABLE = "NO_CLAIMS_AVAILABLE",
 }
 ```
 
@@ -367,34 +367,34 @@ import { LINK_TYPE } from "@/services/types/enum";
 ```typescript
 // Base hook pattern
 const useMyHook = () => {
-    const { t } = useTranslation();
-    const { createTokenMap } = useTokens();
+  const { t } = useTranslation();
+  const { createTokenMap } = useTokens();
 
-    const myFunction = useCallback(
-        (params) => {
-            const tokenMap = createTokenMap();
+  const myFunction = useCallback(
+    (params) => {
+      const tokenMap = createTokenMap();
 
-            const result = ValidationService.validateAssetsWithFees(
-                params.assets,
-                tokenMap,
-                params.options,
-            );
+      const result = ValidationService.validateAssetsWithFees(
+        params.assets,
+        tokenMap,
+        params.options,
+      );
 
-            if (!result.isValid) {
-                result.errors.forEach((error) => {
-                    if (error.metadata && error.message.startsWith("error.")) {
-                        const message = t(error.message, error.metadata);
-                        toast.error(message);
-                    }
-                });
-            }
+      if (!result.isValid) {
+        result.errors.forEach((error) => {
+          if (error.metadata && error.message.startsWith("error.")) {
+            const message = t(error.message, error.metadata);
+            toast.error(message);
+          }
+        });
+      }
 
-            return result;
-        },
-        [createTokenMap, t],
-    );
+      return result;
+    },
+    [createTokenMap, t],
+  );
 
-    return { myFunction };
+  return { myFunction };
 };
 ```
 
@@ -404,16 +404,16 @@ const useMyHook = () => {
 
 ```typescript
 const handleTemplateErrors = (errors: ValidationError[], t: Function) => {
-    errors.forEach((error) => {
-        if (error.metadata && error.message.startsWith("error.")) {
-            // Template-based error with variables
-            const message = t(error.message, error.metadata);
-            toast.error(message);
-        } else {
-            // Plain text error
-            toast.error(error.message);
-        }
-    });
+  errors.forEach((error) => {
+    if (error.metadata && error.message.startsWith("error.")) {
+      // Template-based error with variables
+      const message = t(error.message, error.metadata);
+      toast.error(message);
+    } else {
+      // Plain text error
+      toast.error(error.message);
+    }
+  });
 };
 ```
 
@@ -421,26 +421,26 @@ const handleTemplateErrors = (errors: ValidationError[], t: Function) => {
 
 ```typescript
 const handleValidationErrors = (result: ValidationResult) => {
-    if (!result.isValid && result.errors.length > 0) {
-        // Group errors by type
-        const balanceErrors = result.errors.filter(
-            (e) =>
-                e.code === ErrorCode.INSUFFICIENT_BALANCE ||
-                e.code === ErrorCode.INSUFFICIENT_BALANCE_CREATE,
-        );
+  if (!result.isValid && result.errors.length > 0) {
+    // Group errors by type
+    const balanceErrors = result.errors.filter(
+      (e) =>
+        e.code === ErrorCode.INSUFFICIENT_BALANCE ||
+        e.code === ErrorCode.INSUFFICIENT_BALANCE_CREATE,
+    );
 
-        const otherErrors = result.errors.filter((e) => !balanceErrors.includes(e));
+    const otherErrors = result.errors.filter((e) => !balanceErrors.includes(e));
 
-        // Handle balance errors specially
-        if (balanceErrors.length > 0) {
-            showBalanceErrorDialog(balanceErrors);
-        }
-
-        // Handle other errors as toast
-        otherErrors.forEach((error) => {
-            toast.error(error.message);
-        });
+    // Handle balance errors specially
+    if (balanceErrors.length > 0) {
+      showBalanceErrorDialog(balanceErrors);
     }
+
+    // Handle other errors as toast
+    otherErrors.forEach((error) => {
+      toast.error(error.message);
+    });
+  }
 };
 ```
 
@@ -455,8 +455,8 @@ const tokenMap = useMemo(() => createTokenMap(), [createTokenMap]);
 
 // ❌ Bad: Create on every validation
 const validate = (assets) => {
-    const tokenMap = createTokenMap(); // Creates new map each time
-    return ValidationService.validateAssetsWithFees(assets, tokenMap, options);
+  const tokenMap = createTokenMap(); // Creates new map each time
+  return ValidationService.validateAssetsWithFees(assets, tokenMap, options);
 };
 ```
 
@@ -467,19 +467,23 @@ const validate = (assets) => {
 const validationCache = useRef(new Map());
 
 const validateWithCache = useCallback(
-    (assets, options) => {
-        const cacheKey = JSON.stringify({ assets, options });
+  (assets, options) => {
+    const cacheKey = JSON.stringify({ assets, options });
 
-        if (validationCache.current.has(cacheKey)) {
-            return validationCache.current.get(cacheKey);
-        }
+    if (validationCache.current.has(cacheKey)) {
+      return validationCache.current.get(cacheKey);
+    }
 
-        const result = ValidationService.validateAssetsWithFees(assets, tokenMap, options);
-        validationCache.current.set(cacheKey, result);
+    const result = ValidationService.validateAssetsWithFees(
+      assets,
+      tokenMap,
+      options,
+    );
+    validationCache.current.set(cacheKey, result);
 
-        return result;
-    },
-    [tokenMap],
+    return result;
+  },
+  [tokenMap],
 );
 ```
 
@@ -488,16 +492,20 @@ const validateWithCache = useCallback(
 ```typescript
 // ✅ Good: Debounce real-time validation
 const debouncedValidate = useMemo(
-    () =>
-        debounce((assets) => {
-            const result = ValidationService.validateLinkDetailsAssets(assets, undefined, {
-                skipCheckingBalance: false,
-            });
+  () =>
+    debounce((assets) => {
+      const result = ValidationService.validateLinkDetailsAssets(
+        assets,
+        undefined,
+        {
+          skipCheckingBalance: false,
+        },
+      );
 
-            if (!result.isValid) {
-                setValidationErrors(result.errors);
-            }
-        }, 300),
-    [],
+      if (!result.isValid) {
+        setValidationErrors(result.errors);
+      }
+    }, 300),
+  [],
 );
 ```
