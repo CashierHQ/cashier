@@ -345,6 +345,7 @@ export const idlFactory = ({ IDL }) => {
     'action_type' : ActionType,
     'wallet_address' : IDL.Principal,
   });
+  const ProcessActionV2Input = IDL.Record({ 'action_id' : IDL.Text });
   const TriggerTransactionInput = IDL.Record({
     'transaction_id' : IDL.Text,
     'action_id' : IDL.Text,
@@ -419,7 +420,7 @@ export const idlFactory = ({ IDL }) => {
         [Result_2],
         [],
       ),
-    'process_action_v2' : IDL.Func([ProcessActionInput], [Result_4], []),
+    'process_action_v2' : IDL.Func([ProcessActionV2Input], [Result_4], []),
     'trigger_transaction' : IDL.Func([TriggerTransactionInput], [Result_9], []),
     'update_action' : IDL.Func([UpdateActionInput], [Result_2], []),
     'update_link' : IDL.Func([UpdateLinkInput], [Result_3], []),

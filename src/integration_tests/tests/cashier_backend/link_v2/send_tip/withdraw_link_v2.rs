@@ -34,7 +34,7 @@ async fn it_should_withdraw_icp_token_tip_linkv2_error_if_link_active() {
 
         // Assert: action created successfully
         assert!(create_action_result.is_err());
-        if let Err(CanisterError::UnknownError(msg)) = create_action_result {
+        if let Err(CanisterError::ValidationErrors(msg)) = create_action_result {
             assert!(
                 msg.contains("Unsupported action type for ActiveState"),
                 "Unexpected error message: {}",
@@ -42,7 +42,7 @@ async fn it_should_withdraw_icp_token_tip_linkv2_error_if_link_active() {
             );
         } else {
             panic!(
-                "Expected CanisterError::UnknownError, got {:?}",
+                "Expected CanisterError::ValidationErrors, got {:?}",
                 create_action_result
             );
         }
@@ -91,7 +91,7 @@ async fn it_should_withdraw_icp_token_tip_linkv2_error_if_more_than_once() {
         // Assert: action creation failed
         assert!(create_action_result.is_err());
 
-        if let Err(CanisterError::UnknownError(msg)) = create_action_result {
+        if let Err(CanisterError::ValidationErrors(msg)) = create_action_result {
             assert!(
                 msg.contains("Unsupported link state"),
                 "Unexpected error message: {}",
@@ -99,7 +99,7 @@ async fn it_should_withdraw_icp_token_tip_linkv2_error_if_more_than_once() {
             );
         } else {
             panic!(
-                "Expected CanisterError::UnknownError, got {:?}",
+                "Expected CanisterError::ValidationErrors, got {:?}",
                 create_action_result
             );
         }

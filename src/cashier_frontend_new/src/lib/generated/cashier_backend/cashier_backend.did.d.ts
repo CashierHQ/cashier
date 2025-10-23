@@ -257,6 +257,7 @@ export interface ProcessActionInput {
   'link_id' : string,
   'action_type' : ActionType,
 }
+export interface ProcessActionV2Input { 'action_id' : string }
 export type Protocol = { 'IC' : IcTransaction };
 export type Result = { 'Ok' : null } |
   { 'Err' : CanisterError };
@@ -365,7 +366,7 @@ export interface _SERVICE {
     [ProcessActionAnonymousInput],
     Result_2
   >,
-  'process_action_v2' : ActorMethod<[ProcessActionInput], Result_4>,
+  'process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_4>,
   'trigger_transaction' : ActorMethod<[TriggerTransactionInput], Result_9>,
   'update_action' : ActorMethod<[UpdateActionInput], Result_2>,
   'update_link' : ActorMethod<[UpdateLinkInput], Result_3>,
