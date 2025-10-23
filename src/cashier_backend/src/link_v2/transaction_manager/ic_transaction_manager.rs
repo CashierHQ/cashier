@@ -4,9 +4,9 @@
 use crate::{
     link_v2::{
         icrc112::create_icrc_112_requests,
+        transaction::traits::{TransactionExecutor, TransactionValidator},
         transaction_manager::{
-            dependency_analyzer::analyze_and_fill_transaction_dependencies,
-            traits::TransactionManager,
+            dependency_analyzer::DependencyAnalyzer, traits::TransactionManager,
         },
         utils::icrc_token::{get_link_account, get_link_ext_account},
     },
@@ -25,37 +25,37 @@ use cashier_backend_types::{
     repository::{action::v1::Action, intent::v1::Intent, transaction::v1::Transaction},
 };
 use cashier_common::runtime::IcEnvironment;
-use std::{collections::HashMap, rc::Rc};
+use std::{
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
-pub struct IcTransactionManager<E: IcEnvironment + Clone, R: Repositories> {
-    pub repo: Rc<R>,
-    pub transaction_service: TransactionService<E, R>,
-    pub action_service: ActionService<R>,
+pub struct IcTransactionManager<E: IcEnvironment, V: TransactionValidator, T: TransactionExecutor> {
     pub ic_env: E,
-    pub icrc_service: IcrcService,
     pub intent_adapter: IntentAdapterImpl,
-    pub action_repository: ActionRepository<R::Action>,
-    pub processing_transaction_repository:
-        ProcessingTransactionRepository<R::ProcessingTransaction>,
+    pub dependency_analyzer: DependencyAnalyzer<V, T>,
 }
 
 #[allow(clippy::too_many_arguments)]
-impl<E: IcEnvironment + Clone, R: Repositories> IcTransactionManager<E, R> {
-    pub fn new(repo: Rc<R>, ic_env: E) -> Self {
+impl<E: IcEnvironment, V: TransactionValidator, T: TransactionExecutor>
+    IcTransactionManager<E, V, T>
+{
+    pub fn new(ic_env: E, transaction_validator: V, transaction_executor: T) -> Self {
+        let intent_adapter = IntentAdapterImpl::new();
+        let dependency_analyzer =
+            DependencyAnalyzer::new(transaction_validator, transaction_executor);
+
         Self {
-            transaction_service: TransactionService::new(&repo, ic_env.clone()),
-            action_service: ActionService::new(&repo),
             ic_env,
-            icrc_service: IcrcService::new(),
-            intent_adapter: IntentAdapterImpl::new(),
-            action_repository: repo.action(),
-            processing_transaction_repository: repo.processing_transaction(),
-            repo,
+            intent_adapter,
+            dependency_analyzer,
         }
     }
 }
 
-impl<E: IcEnvironment + Clone, R: Repositories> TransactionManager for IcTransactionManager<E, R> {
+impl<E: IcEnvironment, V: TransactionValidator, T: TransactionExecutor> TransactionManager
+    for IcTransactionManager<E, V, T>
+{
     fn create_action(
         &self,
         action: Action,
@@ -77,7 +77,27 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionManager for IcTransac
         }
 
         // transaction with dependencies filled
-        let transactions = analyze_and_fill_transaction_dependencies(&intents, &intent_txs_map)?;
+        let transactions = self
+            .dependency_analyzer
+            .analyze_and_fill_transaction_dependencies(&intents, &intent_txs_map)?;
+
+        // update intent_txs_map with updated transactions
+        for intent in intents.iter() {
+            let tx_ids = intent_txs_map
+                .get(&intent.id)
+                .unwrap()
+                .iter()
+                .map(|tx| tx.id.clone())
+                .collect::<HashSet<String>>();
+
+            let updated_txs = transactions
+                .iter()
+                .filter(|tx| tx_ids.contains(&tx.id))
+                .cloned()
+                .collect::<Vec<Transaction>>();
+
+            intent_txs_map.insert(intent.id.clone(), updated_txs);
+        }
 
         // create ICRC112 requests from transactions
         let canister_id = self.ic_env.id();
@@ -98,6 +118,19 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionManager for IcTransac
         intents: Vec<Intent>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
     ) -> Result<ProcessActionResult, CanisterError> {
+        let created_at = self.ic_env.time();
+
+        // extract all transactions from intent_txs_map
+        // these transactions are fulfilled with dependencies
+        let mut transactions = Vec::<Transaction>::new();
+        for intent in intents.iter() {
+            if let Some(intent_transactions) = intent_txs_map.get(&intent.id) {
+                transactions.extend(intent_transactions.clone());
+            }
+        }
+
+        // validate and update transactions dependencies and states
+
         Err(CanisterError::from(
             "IcTransactionManager process_action not implemented",
         ))

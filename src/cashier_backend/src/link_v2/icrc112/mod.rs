@@ -32,11 +32,11 @@ use std::collections::HashMap;
 /// # Returns
 /// * `Result<Icrc112Requests, CanisterError>` - The resulting Icrc112Requests or an error
 pub fn create_icrc_112_requests(
-    transactions: &Vec<Transaction>,
+    transactions: &[Transaction],
     link_account: Account,
     canister_id: Principal,
 ) -> Result<Icrc112Requests, CanisterError> {
-    let tx_graph: Graph = transactions.clone().into();
+    let tx_graph: Graph = transactions.to_vec().into();
     let sorted_txs = kahn_topological_sort(&tx_graph)?;
 
     let tx_map: HashMap<String, &Transaction> =
@@ -48,7 +48,7 @@ pub fn create_icrc_112_requests(
         for tx_id in tx_group.iter() {
             if let Some(tx) = tx_map.get(tx_id) {
                 let icrc_112_request =
-                    convert_tx_to_icrc_112_request(tx, link_account.clone(), canister_id)?;
+                    convert_tx_to_icrc_112_request(tx, link_account, canister_id)?;
                 group_requests.push(icrc_112_request);
             }
         }
