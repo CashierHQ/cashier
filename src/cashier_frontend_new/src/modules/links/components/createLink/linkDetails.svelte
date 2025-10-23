@@ -2,6 +2,7 @@
   import { resolve } from "$app/paths";
   import type { LinkStore } from "../../state/linkStore.svelte";
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
+    import { formatNumber } from "$modules/shared/utils/formatNumber";
 
   const {
     link,
@@ -12,6 +13,17 @@
     errorMessage: string | null;
     successMessage: string | null;
   } = $props();
+
+  const amount = $derived(() => {
+    if (link.tipLink) {
+      const metadata = tokenMetadataQuery(link.tipLink.asset).data;
+      if (metadata) {
+        return Number(link.tipLink.useAmount) / Math.pow(10, metadata.decimals);
+      }
+    }
+    return 0;
+  });
+
 </script>
 
 <div>
@@ -28,6 +40,7 @@
     <div>
       <strong>Amount:</strong>
       {#if link.tipLink}
+        {formatNumber(amount())}
         {tokenMetadataQuery(link.tipLink.asset).data?.symbol ?? ""}
       {/if}
     </div>
