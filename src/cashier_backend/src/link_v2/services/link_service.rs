@@ -3,7 +3,7 @@
 
 use crate::repositories::Repositories;
 use crate::services::action::ActionService;
-use crate::{repositories, v2::links::factory};
+use crate::{link_v2::links::factory, repositories};
 use candid::Principal;
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::{

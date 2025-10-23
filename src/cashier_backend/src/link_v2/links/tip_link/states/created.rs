@@ -3,7 +3,7 @@
 
 use crate::{
     constant::ICP_CANISTER_PRINCIPAL,
-    v2::{
+    link_v2::{
         traits::LinkV2State,
         utils::{
             calculator::{calculate_create_link_fee, calculate_link_balance_map},
