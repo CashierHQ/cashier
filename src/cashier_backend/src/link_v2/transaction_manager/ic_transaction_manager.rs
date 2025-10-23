@@ -128,11 +128,16 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
             }
         }
 
+        debug!("Action transactions {:?}", transactions);
+
         // validate and update transactions dependencies and states
         let validate_transactions_result = self
             .validator_service
             .validate_action_transactions(&transactions)
             .await?;
+
+        debug!("Validated transactions {:?}", validate_transactions_result);
+
         processed_transactions.extend(validate_transactions_result.wallet_transactions);
 
         // execute canister transactions if all dependencies are resolved
@@ -141,6 +146,9 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
                 .executor_service
                 .execute_transactions(&validate_transactions_result.canister_transactions)
                 .await?;
+
+            debug!("Executed canister transactions {:?}", executed_transactions);
+
             processed_transactions.extend(executed_transactions);
         } else {
             processed_transactions.extend(validate_transactions_result.canister_transactions);
@@ -172,10 +180,18 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
             updated_intent_txs_map.clone(),
         )?;
 
+        debug!(
+            "Rolled up action state {:?}",
+            rollup_action_state_result.action
+        );
+        debug!("Rolled up intents {:?}", rollup_action_state_result.intents);
+
         Ok(ProcessActionResult {
             action: rollup_action_state_result.action,
             intents: rollup_action_state_result.intents,
-            intent_txs_map: rollup_action_state_result.intent_txs_map,
+            intent_txs_map: updated_intent_txs_map,
+            is_success: validate_transactions_result.is_dependencies_resolved,
+            errors: validate_transactions_result.errors,
         })
     }
 }

@@ -51,6 +51,8 @@ pub struct ProcessActionResult {
     pub action: Action,
     pub intents: Vec<Intent>,
     pub intent_txs_map: HashMap<String, Vec<Transaction>>,
+    pub is_success: bool,
+    pub errors: Vec<String>,
 }
 
 impl From<ProcessActionResult> for ActionDto {

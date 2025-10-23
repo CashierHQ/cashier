@@ -34,12 +34,19 @@ impl<M: TransactionManager + 'static> CreatedState<M> {
     }
 
     async fn activate(
-        link: &Link,
+        caller: Principal,
+        link: Link,
         action: Action,
         intents: Vec<Intent>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
         transaction_manager: Rc<M>,
     ) -> Result<LinkProcessActionResult, CanisterError> {
+        if caller != link.creator {
+            return Err(CanisterError::Unauthorized(
+                "Only the creator can publish the link".to_string(),
+            ));
+        }
+
         let mut link = link.clone();
 
         let process_action_result = transaction_manager
@@ -47,11 +54,19 @@ impl<M: TransactionManager + 'static> CreatedState<M> {
             .await?;
 
         // if process action succeeds, activate the link
-        link.state = LinkState::Active;
-        Ok(LinkProcessActionResult {
-            link,
-            process_action_result,
-        })
+        if process_action_result.is_success {
+            link.state = LinkState::Active;
+
+            Ok(LinkProcessActionResult {
+                link,
+                process_action_result,
+            })
+        } else {
+            Err(CanisterError::ValidationErrors(format!(
+                "Failed to activate link: {}",
+                process_action_result.errors.join(", ")
+            )))
+        }
     }
 }
 
@@ -85,7 +100,7 @@ impl<M: TransactionManager + 'static> LinkV2State for CreatedState<M> {
 
     fn process_action(
         &self,
-        _caller: Principal,
+        caller: Principal,
         action: Action,
         intents: Vec<Intent>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
@@ -96,9 +111,15 @@ impl<M: TransactionManager + 'static> LinkV2State for CreatedState<M> {
         Box::pin(async move {
             match action.r#type {
                 ActionType::CreateLink => {
-                    let activate_link_result =
-                        Self::activate(&link, action, intents, intent_txs_map, transaction_manager)
-                            .await?;
+                    let activate_link_result = Self::activate(
+                        caller,
+                        link,
+                        action,
+                        intents,
+                        intent_txs_map,
+                        transaction_manager,
+                    )
+                    .await?;
                     Ok(activate_link_result)
                 }
                 _ => Err(CanisterError::from(
