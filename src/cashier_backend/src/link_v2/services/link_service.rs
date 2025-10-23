@@ -109,6 +109,12 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             ));
         }
 
+        if link.state != LinkState::Active {
+            return Err(CanisterError::ValidationErrors(
+                "Only active links can be disabled".to_string(),
+            ));
+        }
+
         link.state = LinkState::Inactive;
         // update link in db
         self.link_repository.update(link.clone());
