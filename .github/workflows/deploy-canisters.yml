@@ -132,4 +132,4 @@ jobs:
                   owner=$(dfx identity get-principal)
 
                   just build "$ENVIRONMENT"
-                  just dfx_deploy "$owner" "$ENVIRONMENT"
+                  just dfx_deploy "$owner" "--network=$ENVIRONMENT"
