@@ -156,7 +156,7 @@ impl CreateAction {
             })?;
 
             let icrc112_request =
-                convert_tx_to_icrc_112_request(icrc1_transfer_tx, link_account, &canister_id)?;
+                convert_tx_to_icrc_112_request(icrc1_transfer_tx, link_account, canister_id)?;
             icrc112_requests.push(icrc112_request);
         }
 
@@ -164,7 +164,7 @@ impl CreateAction {
             CanisterError::HandleLogicError("No transaction found for fee intent".to_string())
         })?;
         let icrc112_request =
-            convert_tx_to_icrc_112_request(icrc2_approve_tx, spender_account, &canister_id)?;
+            convert_tx_to_icrc_112_request(icrc2_approve_tx, spender_account, canister_id)?;
         icrc112_requests.push(icrc112_request);
 
         Ok(Self::new(

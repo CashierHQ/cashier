@@ -11,7 +11,7 @@ use crate::{
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::ProcessActionResult,
+    link_v2::{action_result::ProcessActionResult, link_result::LinkProcessActionResult},
     repository::{
         action::v1::{Action, ActionType},
         link::v1::{Link, LinkState},
@@ -33,7 +33,11 @@ impl InactiveState {
         }
     }
 
-    fn withdraw(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+    fn withdraw(
+        &self,
+        caller: Principal,
+        action: Action,
+    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
         let mut link = self.link.clone();
         let canister_id = self.canister_id;
         let to_account = Account::from(link.creator);
@@ -52,7 +56,15 @@ impl InactiveState {
 
             // Update link state to INACTIVE_ENDED after withdrawal
             link.state = LinkState::InactiveEnded;
-            Ok(link)
+
+            Ok(LinkProcessActionResult {
+                link,
+                process_action_result: ProcessActionResult {
+                    action,
+                    intents: vec![],
+                    intent_txs_map: std::collections::HashMap::new(),
+                },
+            })
         })
     }
 }
@@ -60,22 +72,17 @@ impl InactiveState {
 impl LinkV2State for InactiveState {
     fn process_action(
         &self,
-        _caller: Principal,
-        action: &Action,
-    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
+        caller: Principal,
+        action: Action,
+    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
         let state = self.clone();
         let action = action.clone();
 
         Box::pin(async move {
             match action.r#type {
                 ActionType::Withdraw => {
-                    let updated_link = state.withdraw().await?;
-                    Ok(ProcessActionResult {
-                        link: updated_link,
-                        action,
-                        intents: vec![],
-                        intent_txs_map: std::collections::HashMap::new(),
-                    })
+                    let withdraw_result = state.withdraw(caller, action).await?;
+                    Ok(withdraw_result)
                 }
                 _ => Err(CanisterError::from(
                     "Unsupported action type for InactiveState",

@@ -19,7 +19,7 @@ use crate::{
 use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::ProcessActionResult,
+    link_v2::{action_result::ProcessActionResult, link_result::LinkProcessActionResult},
     repository::{
         action::v1::{Action, ActionType},
         common::Asset,
@@ -42,7 +42,11 @@ impl CreatedState {
         }
     }
 
-    fn activate(&self) -> Pin<Box<dyn Future<Output = Result<Link, CanisterError>>>> {
+    fn activate(
+        &self,
+        caller: Principal,
+        action: Action,
+    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
         let mut link = self.link.clone();
         let canister_id = self.canister_id;
 
@@ -127,7 +131,14 @@ impl CreatedState {
 
             // if all preconditions are met, activate the link
             link.state = LinkState::Active;
-            Ok(link)
+            Ok(LinkProcessActionResult {
+                link,
+                process_action_result: ProcessActionResult {
+                    action,
+                    intents: vec![],
+                    intent_txs_map: HashMap::new(),
+                },
+            })
         })
     }
 }
@@ -136,21 +147,16 @@ impl LinkV2State for CreatedState {
     fn process_action(
         &self,
         caller: Principal,
-        action: &Action,
-    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
+        action: Action,
+    ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
         let state = self.clone();
         let action = action.clone();
 
         Box::pin(async move {
             match action.r#type {
                 ActionType::CreateLink => {
-                    let updated_link = state.activate().await?;
-                    Ok(ProcessActionResult {
-                        link: updated_link,
-                        action,
-                        intents: vec![],
-                        intent_txs_map: HashMap::new(),
-                    })
+                    let activate_link_result = state.activate(caller, action).await?;
+                    Ok(activate_link_result)
                 }
                 _ => Err(CanisterError::from(
                     "Unsupported action type in Created state",

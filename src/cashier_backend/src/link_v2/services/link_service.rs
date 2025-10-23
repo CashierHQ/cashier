@@ -135,7 +135,7 @@ impl<R: Repositories> LinkV2Service<R> {
             .ok_or_else(|| CanisterError::NotFound("Action not found".to_string()))?;
 
         let link = factory::from_link(link, canister_id)?;
-        let activate_result = link.process_action(caller, &action).await?;
+        let activate_result = link.process_action(caller, action).await?;
 
         // update link in db
         self.link_repository.update(activate_result.link.clone());
@@ -156,26 +156,26 @@ impl<R: Repositories> LinkV2Service<R> {
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
         let link = factory::from_link(link, canister_id)?;
-        let create_action_result = link.create_action(caller, canister_id, action_type).await?;
+        let result = link.create_action(caller, action_type).await?;
 
         // save action to DB
         let link_action = LinkAction {
             link_id: link_id.to_string(),
-            action_type: create_action_result.action.r#type.clone(),
-            action_id: create_action_result.action.id.clone(),
-            user_id: create_action_result.action.creator,
+            action_type: result.create_action_result.action.r#type.clone(),
+            action_id: result.create_action_result.action.id.clone(),
+            user_id: result.create_action_result.action.creator,
             link_user_state: None,
         };
 
         let _ = self.action_service.store_action_data(
             link_action,
-            create_action_result.action.clone(),
-            create_action_result.intents.clone(),
-            create_action_result.intent_txs_map.clone(),
-            create_action_result.action.creator,
+            result.create_action_result.action.clone(),
+            result.create_action_result.intents.clone(),
+            result.create_action_result.intent_txs_map.clone(),
+            result.create_action_result.action.creator,
         );
 
-        let action_dto: ActionDto = create_action_result.into();
+        let action_dto: ActionDto = result.create_action_result.into();
 
         Ok(action_dto)
     }
@@ -197,13 +197,13 @@ impl<R: Repositories> LinkV2Service<R> {
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
         let link = factory::from_link(link, canister_id)?;
-        let process_action_result = link.process_action(caller, &action).await?;
+        let result = link.process_action(caller, action).await?;
 
         let action_dto = ActionDto::build(
             &ActionData {
-                action: process_action_result.action.clone(),
-                intents: process_action_result.intents.clone(),
-                intent_txs: process_action_result.intent_txs_map,
+                action: result.process_action_result.action.clone(),
+                intents: result.process_action_result.intents.clone(),
+                intent_txs: result.process_action_result.intent_txs_map,
             },
             None,
         );
