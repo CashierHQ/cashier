@@ -86,8 +86,6 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
         assert_eq!(link.asset_info.len(), 1);
         assert_eq!(link.asset_info[0].amount_per_link_use_action, tip_amount);
 
-        assert!(action.is_some());
-        let action = action.unwrap();
         assert_eq!(action.intents.len(), 2);
 
         // Assert Intent 1: TransferWalletToLink
@@ -256,8 +254,6 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
         assert_eq!(link.asset_info.len(), 1);
         assert_eq!(link.asset_info[0].amount_per_link_use_action, tip_amount);
 
-        assert!(action.is_some());
-        let action = action.unwrap();
         assert_eq!(action.intents.len(), 2);
 
         // Assert Intent 1: TransferWalletToLink

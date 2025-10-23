@@ -8,7 +8,7 @@ use cashier_backend_types::{
         link::{CreateLinkInput, LinkDto},
     },
     error::CanisterError,
-    link_v2::dto::{CreateLinkDto, ProcessActionDto},
+    link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
 };
 use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
 use ic_cdk::{api::msg_caller, update};
@@ -33,6 +33,12 @@ async fn create_link_v2(input: CreateLinkInput) -> Result<CreateLinkDto, Caniste
         .await
 }
 
+/// Disables an existing link V2
+/// # Arguments
+/// * `link_id` - The ID of the link to disable
+/// # Returns
+/// * `Ok(LinkDto)` - The disabled link data
+/// * `Err(CanisterError)` - If disabling fails or unauthorized
 #[update(guard = "is_not_anonymous")]
 async fn disable_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
     info!("[disable_link_v2]");
@@ -42,6 +48,12 @@ async fn disable_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
     link_v2_service.disable_link(msg_caller(), link_id).await
 }
 
+/// Creates a new action V2.
+/// # Arguments
+/// * `input` - Action creation data
+/// # Returns
+/// * `Ok(ActionDto)` - The created action data
+/// * `Err(CanisterError)` - If action creation fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
 async fn create_action_v2(input: CreateActionInput) -> Result<ActionDto, CanisterError> {
     info!("[create_action_v2]");
@@ -54,8 +66,14 @@ async fn create_action_v2(input: CreateActionInput) -> Result<ActionDto, Caniste
         .await
 }
 
+/// Processes a created action V2.
+/// # Arguments
+/// * `input` - Action processing data
+/// # Returns
+/// * `Ok(ProcessActionDto)` - The processed action data
+/// * `Err(CanisterError)` - If action processing fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
-async fn process_action_v2(input: ProcessActionInput) -> Result<ProcessActionDto, CanisterError> {
+async fn process_action_v2(input: ProcessActionV2Input) -> Result<ProcessActionDto, CanisterError> {
     info!("[process_action_v2]");
     debug!("[process_action_v2] input: {input:?}");
 

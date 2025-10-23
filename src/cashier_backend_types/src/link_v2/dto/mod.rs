@@ -13,3 +13,8 @@ pub struct ProcessActionDto {
     pub link: LinkDto,
     pub action: ActionDto,
 }
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct ProcessActionV2Input {
+    pub action_id: String,
+}

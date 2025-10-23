@@ -6,6 +6,7 @@ use cashier_backend_types::{
         link::{CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDto, UpdateLinkInput},
     },
     error::CanisterError,
+    link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
 };
 use cashier_common::{build_data::BuildData, icrc::Icrc114ValidateArgs};
 use ic_mple_client::{CanisterClient, CanisterClientResult};
@@ -93,12 +94,12 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     /// # Arguments
     /// * `input` - Link creation data
     /// # Returns
-    /// * `Ok(GetLinkResp)` - The created link data
+    /// * `Ok(CreateLinkDto)` - The created link data
     /// * `Err(CanisterError)` - If link creation fails or validation errors occur
     pub async fn create_link_v2(
         &self,
         input: CreateLinkInput,
-    ) -> CanisterClientResult<Result<GetLinkResp, CanisterError>> {
+    ) -> CanisterClientResult<Result<CreateLinkDto, CanisterError>> {
         self.client.update("create_link_v2", ((input),)).await
     }
 
@@ -113,6 +114,32 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         link_id: &str,
     ) -> CanisterClientResult<Result<LinkDto, CanisterError>> {
         self.client.update("activate_link_v2", (link_id,)).await
+    }
+
+    /// Creates a new action V2.
+    /// # Arguments
+    /// * `input` - Action creation data
+    /// # Returns
+    /// * `Ok(ActionDto)` - The created action data
+    /// * `Err(CanisterError)` - If action creation fails or validation errors occur
+    pub async fn create_action_v2(
+        &self,
+        input: CreateActionInput,
+    ) -> CanisterClientResult<Result<ActionDto, CanisterError>> {
+        self.client.update("create_action_v2", ((input),)).await
+    }
+
+    /// Processes a created action V2.
+    /// # Arguments
+    /// * `input` - Action processing data
+    /// # Returns
+    /// * `Ok(ProcessActionDto)` - The processed action data
+    /// * `Err(CanisterError)` - If action processing fails or validation errors occur
+    pub async fn process_action_v2(
+        &self,
+        input: ProcessActionV2Input,
+    ) -> CanisterClientResult<Result<ProcessActionDto, CanisterError>> {
+        self.client.update("process_action_v2", ((input),)).await
     }
 
     /// Creates a new action.

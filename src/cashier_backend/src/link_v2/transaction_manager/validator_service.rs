@@ -33,6 +33,7 @@ impl<V: TransactionValidator> ValidatorService<V> {
     ) -> Result<ValidateActionTransactionsResult, CanisterError> {
         let mut wallet_transactions = Vec::<Transaction>::new();
         let mut canister_transactions = Vec::<Transaction>::new();
+        let mut errors = Vec::<String>::new();
 
         let mut txs_map: HashMap<String, Transaction> = transactions
             .iter()
@@ -53,11 +54,13 @@ impl<V: TransactionValidator> ValidatorService<V> {
                     continue;
                 }
 
-                if let Ok(_tx_success) = self.validator.validate_success(tx.clone()).await {
-                    tx.state = TransactionState::Success;
-                } else {
-                    tx.state = TransactionState::Fail;
-                    is_dependencies_resolved = false;
+                match self.validator.validate_success(tx.clone()).await {
+                    Ok(_) => tx.state = TransactionState::Success,
+                    Err(e) => {
+                        tx.state = TransactionState::Fail;
+                        errors.push(e);
+                        is_dependencies_resolved = false;
+                    }
                 }
                 wallet_transactions.push(tx.clone());
             }
@@ -67,6 +70,7 @@ impl<V: TransactionValidator> ValidatorService<V> {
             wallet_transactions,
             canister_transactions,
             is_dependencies_resolved,
+            errors,
         })
     }
 

@@ -86,6 +86,13 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         })
     }
 
+    /// Disables an existing link V2
+    /// # Arguments
+    /// * `caller` - The principal of the user disabling the link
+    /// * `link_id` - The ID of the link to disable
+    /// # Returns
+    /// * `Ok(LinkDto)` - The disabled link data
+    /// * `Err(CanisterError)` - If disabling fails or unauthorized
     pub async fn disable_link(
         &mut self,
         caller: Principal,
@@ -109,6 +116,15 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         Ok(LinkDto::from(link))
     }
 
+    /// Creates a new action V2.
+    /// # Arguments
+    /// * `caller` - The principal of the user creating the action
+    /// * `canister_id` - The canister ID of the token contract
+    /// * `link_id` - The ID of the link for which the action is created
+    /// * `action_type` - The type of action to be created
+    /// # Returns
+    /// * `Ok(ActionDto)` - The created action data
+    /// * `Err(CanisterError)` - If action creation fails or validation errors occur
     pub async fn create_action(
         &mut self,
         caller: Principal,
@@ -147,6 +163,14 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         Ok(action_dto)
     }
 
+    /// Processes a created action V2.
+    /// # Arguments
+    /// * `caller` - The principal of the user processing the action
+    /// * `canister_id` - The canister ID of the token contract
+    /// * `action_id` - The ID of the action to be processed
+    /// # Returns
+    /// * `Ok(ProcessActionDto)` - The processed action data
+    /// * `Err(CanisterError)` - If action processing fails or validation errors occur
     pub async fn process_action(
         &mut self,
         caller: Principal,
@@ -156,12 +180,7 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         let action_data = self
             .action_service
             .get_action_data(action_id)
-            .map_err(|e| {
-                CanisterError::from(format!(
-                    "Failed to get action data for action_id {}: {}",
-                    action_id, e
-                ))
-            })?;
+            .map_err(|_e| CanisterError::NotFound("Action not found".to_string()))?;
 
         let link_model = self
             .link_repository
@@ -178,6 +197,8 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
                 action_data.intent_txs,
             )
             .await?;
+
+        // save action to DB
 
         let action_dto = ActionDto::build(
             &ActionData {

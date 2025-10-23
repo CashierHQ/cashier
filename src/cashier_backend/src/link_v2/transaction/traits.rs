@@ -10,7 +10,7 @@ pub trait TransactionValidator {
     fn validate_success(
         &self,
         transaction: Transaction,
-    ) -> Pin<Box<dyn Future<Output = Result<(), CanisterError>>>>;
+    ) -> Pin<Box<dyn Future<Output = Result<(), String>>>>;
 }
 
 pub trait TransactionExecutor {
