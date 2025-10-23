@@ -96,6 +96,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionManager for IcTransac
         &self,
         action: Action,
         intents: Vec<Intent>,
+        intent_txs_map: HashMap<String, Vec<Transaction>>,
     ) -> Result<ProcessActionResult, CanisterError> {
         Err(CanisterError::from(
             "IcTransactionManager process_action not implemented",
