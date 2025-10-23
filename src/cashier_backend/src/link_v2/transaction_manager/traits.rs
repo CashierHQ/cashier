@@ -20,7 +20,7 @@ pub trait TransactionManager {
         intents: Vec<Intent>,
     ) -> Result<CreateActionResult, CanisterError>;
 
-    fn process_action(
+    async fn process_action(
         &self,
         action: Action,
         intents: Vec<Intent>,

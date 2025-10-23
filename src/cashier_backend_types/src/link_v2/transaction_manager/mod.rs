@@ -1,6 +1,15 @@
-use crate::repository::transaction::v1::Transaction;
+use std::collections::HashMap;
+
+use crate::repository::{action::v1::Action, intent::v1::Intent, transaction::v1::Transaction};
 
 pub struct ValidateActionTransactionsResult {
-    pub transactions: Vec<Transaction>,
+    pub wallet_transactions: Vec<Transaction>,
+    pub canister_transactions: Vec<Transaction>,
     pub is_dependencies_resolved: bool,
+}
+
+pub struct RollupActionStateResult {
+    pub action: Action,
+    pub intents: Vec<Intent>,
+    pub intent_txs_map: HashMap<String, Vec<Transaction>>,
 }

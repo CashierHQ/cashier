@@ -6,7 +6,8 @@ use crate::{
         icrc112::create_icrc_112_requests,
         transaction::traits::{TransactionExecutor, TransactionValidator},
         transaction_manager::{
-            dependency_analyzer::DependencyAnalyzer, traits::TransactionManager,
+            dependency_analyzer::DependencyAnalyzer, executor_service::ExecutorService,
+            traits::TransactionManager, validator_service::ValidatorService,
         },
         utils::icrc_token::{get_link_account, get_link_ext_account},
     },
@@ -34,21 +35,29 @@ pub struct IcTransactionManager<E: IcEnvironment, V: TransactionValidator, T: Tr
     pub ic_env: E,
     pub intent_adapter: IntentAdapterImpl,
     pub dependency_analyzer: DependencyAnalyzer<V, T>,
+    pub validator_service: ValidatorService<V>,
+    pub executor_service: ExecutorService<T>,
 }
 
 #[allow(clippy::too_many_arguments)]
 impl<E: IcEnvironment, V: TransactionValidator, T: TransactionExecutor>
     IcTransactionManager<E, V, T>
 {
-    pub fn new(ic_env: E, transaction_validator: V, transaction_executor: T) -> Self {
+    pub fn new(ic_env: E, transaction_validator: Rc<V>, transaction_executor: Rc<T>) -> Self {
         let intent_adapter = IntentAdapterImpl::new();
-        let dependency_analyzer =
-            DependencyAnalyzer::new(transaction_validator, transaction_executor);
+        let dependency_analyzer = DependencyAnalyzer::new(
+            Rc::clone(&transaction_validator),
+            Rc::clone(&transaction_executor),
+        );
+        let validator_service = ValidatorService::new(Rc::clone(&transaction_validator));
+        let executor_service = ExecutorService::new(Rc::clone(&transaction_executor));
 
         Self {
             ic_env,
             intent_adapter,
             dependency_analyzer,
+            validator_service,
+            executor_service,
         }
     }
 }
@@ -112,17 +121,15 @@ impl<E: IcEnvironment, V: TransactionValidator, T: TransactionExecutor> Transact
         })
     }
 
-    fn process_action(
+    async fn process_action(
         &self,
         action: Action,
         intents: Vec<Intent>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
     ) -> Result<ProcessActionResult, CanisterError> {
-        let created_at = self.ic_env.time();
-
-        // extract all transactions from intent_txs_map
-        // these transactions are fulfilled with dependencies
+        // extract all transactions from intent_txs_map, these transactions are fulfilled with dependencies
         let mut transactions = Vec::<Transaction>::new();
+        let mut processed_transactions = Vec::<Transaction>::new();
         for intent in intents.iter() {
             if let Some(intent_transactions) = intent_txs_map.get(&intent.id) {
                 transactions.extend(intent_transactions.clone());
@@ -130,9 +137,53 @@ impl<E: IcEnvironment, V: TransactionValidator, T: TransactionExecutor> Transact
         }
 
         // validate and update transactions dependencies and states
+        let validate_transactions_result = self
+            .validator_service
+            .validate_action_transactions(&transactions)
+            .await?;
+        processed_transactions.extend(validate_transactions_result.wallet_transactions);
 
-        Err(CanisterError::from(
-            "IcTransactionManager process_action not implemented",
-        ))
+        // execute canister transactions if all dependencies are resolved
+        if validate_transactions_result.is_dependencies_resolved {
+            let executed_transactions = self
+                .executor_service
+                .execute_transactions(&validate_transactions_result.canister_transactions)
+                .await?;
+            processed_transactions.extend(executed_transactions);
+        } else {
+            processed_transactions.extend(validate_transactions_result.canister_transactions);
+        }
+
+        // update intent_txs_map with processed transactions
+        let mut updated_intent_txs_map = HashMap::<String, Vec<Transaction>>::new();
+        for intent in intents.iter() {
+            let tx_ids = intent_txs_map
+                .get(&intent.id)
+                .unwrap()
+                .iter()
+                .map(|tx| tx.id.clone())
+                .collect::<HashSet<String>>();
+
+            let updated_txs = processed_transactions
+                .iter()
+                .filter(|tx| tx_ids.contains(&tx.id))
+                .cloned()
+                .collect::<Vec<Transaction>>();
+
+            updated_intent_txs_map.insert(intent.id.clone(), updated_txs);
+        }
+
+        // rollup action and intents states from processed transactions
+        let rollup_action_state_result = self.validator_service.rollup_action_state(
+            action,
+            &intents,
+            updated_intent_txs_map.clone(),
+        )?;
+
+        Ok(ProcessActionResult {
+            action: rollup_action_state_result.action,
+            intents: rollup_action_state_result.intents,
+            intent_txs_map: rollup_action_state_result.intent_txs_map,
+        })
     }
 }
