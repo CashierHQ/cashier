@@ -26,9 +26,9 @@ dfx_local_stop:
 [group('dfx')]
 dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="": 
   #!/usr/bin/env bash
-  just dfx_local_deploy_token_storage "${OWNER}" {{network}} {{token_storage_log_filter}}
+  just dfx_deploy_token_storage "${owner}" {{network}} {{token_storage_log_filter}}
 
-  just dfx_deploy_backend "${OWNER}" {{network}} {{backend_log_filter}}
+  just dfx_deploy_backend "${owner}" {{network}} {{backend_log_filter}}
 
   dfx deploy cashier_frontend {{network}}
 
@@ -148,7 +148,7 @@ dfx_deploy_backend owner network="" log_filter="global,cashier=debug":
 # network: dfx network flag, e.g. --network=dev
 # log_filter: log filter string (default for local and dev)
 [private]
-dfx_local_deploy_token_storage owner network="" log_filter="global,cashier=debug,token_storage=debug":
+dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token_storage=debug":
   #!/usr/bin/env bash
   set -e
 
@@ -204,7 +204,6 @@ dfx_local_deploy_token_storage owner network="" log_filter="global,cashier=debug
           decimals = 8;
           enabled_by_default = true;
         };
-        $EXTRA_TOKENS
       };
   })" {{network}}
 
