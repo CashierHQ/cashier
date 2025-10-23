@@ -45,7 +45,7 @@ impl<V: TransactionValidator> ValidatorService<V> {
         let sorted_transactions = kahn_topological_sort_flat(&graph)?;
 
         // validate transactions in topological order and update their status
-        let mut is_dependencies_resolved = true;
+        let mut is_success = true;
         for tx_id in sorted_transactions.iter() {
             if let Some(tx) = txs_map.get_mut(tx_id) {
                 if tx.from_call_type == FromCallType::Canister {
@@ -59,7 +59,7 @@ impl<V: TransactionValidator> ValidatorService<V> {
                     Err(e) => {
                         tx.state = TransactionState::Fail;
                         errors.push(e);
-                        is_dependencies_resolved = false;
+                        is_success = false;
                     }
                 }
                 wallet_transactions.push(tx.clone());
@@ -69,7 +69,7 @@ impl<V: TransactionValidator> ValidatorService<V> {
         Ok(ValidateActionTransactionsResult {
             wallet_transactions,
             canister_transactions,
-            is_dependencies_resolved,
+            is_success,
             errors,
         })
     }

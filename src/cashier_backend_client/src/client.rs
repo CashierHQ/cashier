@@ -103,6 +103,13 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         self.client.update("create_link_v2", ((input),)).await
     }
 
+    pub async fn disable_link_v2(
+        &self,
+        link_id: &str,
+    ) -> CanisterClientResult<Result<LinkDto, CanisterError>> {
+        self.client.update("disable_link_v2", (link_id,)).await
+    }
+
     /// Activates a link V2.
     /// # Arguments
     /// * `link_id` - The ID of the link to activate

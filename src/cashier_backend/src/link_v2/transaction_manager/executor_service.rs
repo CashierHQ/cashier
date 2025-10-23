@@ -23,6 +23,7 @@ impl<E: TransactionExecutor> ExecutorService<E> {
     ) -> Result<ExecuteTransactionsResult, CanisterError> {
         let mut executed_transactions = Vec::<Transaction>::new();
         let mut errors = Vec::<String>::new();
+        let mut is_success = true;
         for transaction in transactions.iter() {
             match self.executor.execute(transaction.clone()).await {
                 Ok(_executed_tx) => {
@@ -42,11 +43,13 @@ impl<E: TransactionExecutor> ExecutorService<E> {
                         "Transaction {} failed to execute: {}",
                         transaction.id, err
                     ));
+                    is_success = false;
                 }
             }
         }
         Ok(ExecuteTransactionsResult {
             transactions: executed_transactions,
+            is_success,
             errors,
         })
     }

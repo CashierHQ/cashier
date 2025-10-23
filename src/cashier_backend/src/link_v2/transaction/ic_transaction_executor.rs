@@ -1,3 +1,4 @@
+use crate::link_v2::utils::icrc_token::get_batch_tokens_fee;
 use crate::services::ext::icrc_token::{Service as IcrcService, TransferArg};
 use crate::{
     link_v2::transaction::traits::TransactionExecutor,
@@ -20,13 +21,15 @@ impl IcTransactionExecutor {
     async fn execute_icrc2_transfer_from(
         transaction: Icrc2TransferFrom,
     ) -> Result<(), CanisterError> {
+        let token_fee_map = get_batch_tokens_fee(std::slice::from_ref(&transaction.asset)).await?;
+
         let address = match transaction.asset {
             Asset::IC { address, .. } => address,
         };
         let from_account: Account = transaction.from.into();
         let to_account: Account = transaction.to.into();
 
-        let fee_amount = Nat::from(10_000u64); // TODO
+        let fee_amount = token_fee_map.get(&address).cloned().unwrap_or_default();
 
         let transfer_arg = TransferFromArgs {
             from: from_account,
@@ -74,7 +77,7 @@ impl IcTransactionExecutor {
 
         let _block_id = result.map_err(|e| {
             CanisterError::CallCanisterFailed(format!(
-                "Failed to transfer fee from link creator to treasury: {:?}",
+                "Failed to transfer fee from link to wallet: {:?}",
                 e
             ))
         })?;

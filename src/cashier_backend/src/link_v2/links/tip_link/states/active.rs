@@ -46,15 +46,22 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
             .process_action(action, intents, intent_txs_map)
             .await?;
 
-        link.link_use_action_counter += 1;
-        if link.link_use_action_counter >= link.link_use_action_max_count {
-            link.state = LinkState::InactiveEnded;
-        }
+        if process_action_result.is_success {
+            link.link_use_action_counter += 1;
+            if link.link_use_action_counter >= link.link_use_action_max_count {
+                link.state = LinkState::InactiveEnded;
+            }
 
-        Ok(LinkProcessActionResult {
-            link,
-            process_action_result,
-        })
+            Ok(LinkProcessActionResult {
+                link,
+                process_action_result,
+            })
+        } else {
+            Err(CanisterError::ValidationErrors(format!(
+                "Failed to claim link: {}",
+                process_action_result.errors.join(", ")
+            )))
+        }
     }
 }
 
