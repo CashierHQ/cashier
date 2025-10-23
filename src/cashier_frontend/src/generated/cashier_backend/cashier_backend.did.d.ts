@@ -10,9 +10,11 @@ export interface ActionDto {
   'type' : ActionType,
   'state' : IntentState,
 }
-export type ActionType = { 'Use' : null } |
+export type ActionType = { 'Pay' : null } |
+  { 'Use' : null } |
   { 'Withdraw' : null } |
-  { 'CreateLink' : null };
+  { 'CreateLink' : null } |
+  { 'Claim' : null };
 export type Asset = { 'IC' : { 'address' : Principal } };
 export interface AssetInfoDto {
   'asset' : Asset,
@@ -73,6 +75,7 @@ export interface CreateActionInput {
   'link_id' : string,
   'action_type' : ActionType,
 }
+export interface CreateLinkDto { 'action' : ActionDto, 'link' : LinkDto }
 export interface CreateLinkInput {
   'title' : string,
   'asset_info' : Array<AssetInfoDto>,
@@ -181,6 +184,11 @@ export type IntentTask = { 'TransferWalletToLink' : null } |
   { 'TransferWalletToTreasury' : null };
 export type IntentType = { 'Transfer' : TransferData } |
   { 'TransferFrom' : TransferFromData };
+export interface LinkDetailUpdateAssetInfoInput {
+  'asset' : Asset,
+  'amount_per_link_use_action' : bigint,
+  'label' : string,
+}
 export interface LinkDto {
   'id' : string,
   'title' : string,
@@ -250,15 +258,15 @@ export interface ProcessActionInput {
   'action_type' : ActionType,
 }
 export type Protocol = { 'IC' : IcTransaction };
-export type Result = { 'Ok' : LinkDto } |
+export type Result = { 'Ok' : null } |
   { 'Err' : CanisterError };
-export type Result_1 = { 'Ok' : null } |
+export type Result_1 = { 'Ok' : Array<Permission> } |
   { 'Err' : CanisterError };
-export type Result_2 = { 'Ok' : Array<Permission> } |
+export type Result_2 = { 'Ok' : ActionDto } |
   { 'Err' : CanisterError };
-export type Result_3 = { 'Ok' : ActionDto } |
+export type Result_3 = { 'Ok' : LinkDto } |
   { 'Err' : CanisterError };
-export type Result_4 = { 'Ok' : GetLinkResp } |
+export type Result_4 = { 'Ok' : CreateLinkDto } |
   { 'Err' : CanisterError };
 export type Result_5 = { 'Ok' : GetLinkResp } |
   { 'Err' : string };
@@ -317,24 +325,25 @@ export type Wallet = {
     }
   };
 export interface _SERVICE {
-  'activate_link_v2' : ActorMethod<[string], Result>,
-  'admin_inspect_message_enable' : ActorMethod<[boolean], Result_1>,
+  'admin_inspect_message_enable' : ActorMethod<[boolean], Result>,
   'admin_permissions_add' : ActorMethod<
     [Principal, Array<Permission>],
-    Result_2
+    Result_1
   >,
   'admin_permissions_get' : ActorMethod<[Principal], Array<Permission>>,
   'admin_permissions_remove' : ActorMethod<
     [Principal, Array<Permission>],
-    Result_2
+    Result_1
   >,
-  'create_action' : ActorMethod<[CreateActionInput], Result_3>,
+  'create_action' : ActorMethod<[CreateActionInput], Result_2>,
   'create_action_anonymous' : ActorMethod<
     [CreateActionAnonymousInput],
-    Result_3
+    Result_2
   >,
-  'create_link' : ActorMethod<[CreateLinkInput], Result>,
+  'create_action_v2' : ActorMethod<[CreateActionInput], Result_2>,
+  'create_link' : ActorMethod<[CreateLinkInput], Result_3>,
   'create_link_v2' : ActorMethod<[CreateLinkInput], Result_4>,
+  'disable_link_v2' : ActorMethod<[string], Result_3>,
   'get_canister_build_data' : ActorMethod<[], BuildData>,
   'get_link' : ActorMethod<[string, [] | [GetLinkOptions]], Result_5>,
   'get_links' : ActorMethod<[[] | [PaginateInput]], Result_6>,
@@ -351,14 +360,15 @@ export interface _SERVICE {
   'is_inspect_message_enabled' : ActorMethod<[], boolean>,
   'link_get_user_state' : ActorMethod<[LinkGetUserStateInput], Result_8>,
   'link_update_user_state' : ActorMethod<[LinkUpdateUserStateInput], Result_8>,
-  'process_action' : ActorMethod<[ProcessActionInput], Result_3>,
+  'process_action' : ActorMethod<[ProcessActionInput], Result_2>,
   'process_action_anonymous' : ActorMethod<
     [ProcessActionAnonymousInput],
-    Result_3
+    Result_2
   >,
+  'process_action_v2' : ActorMethod<[ProcessActionInput], Result_4>,
   'trigger_transaction' : ActorMethod<[TriggerTransactionInput], Result_9>,
-  'update_action' : ActorMethod<[UpdateActionInput], Result_3>,
-  'update_link' : ActorMethod<[UpdateLinkInput], Result>,
+  'update_action' : ActorMethod<[UpdateActionInput], Result_2>,
+  'update_link' : ActorMethod<[UpdateLinkInput], Result_3>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

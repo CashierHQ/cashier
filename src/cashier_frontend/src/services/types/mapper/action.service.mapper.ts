@@ -1,17 +1,17 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+import { fromNullable } from '@dfinity/utils';
+import { assertNever, getKeyVariant } from '.';
 import {
   ActionDto,
   ActionType,
   IntentState,
-} from "../../../generated/cashier_backend/cashier_backend.did";
-import { ACTION_STATE, ACTION_TYPE } from "../enum";
-import { ActionModel } from "../action.service.types";
-import { mapIntentDtoToIntentModel } from "./intent.service.mapper";
-import { mapICRC112Request } from "./transaction.service.mapper";
-import { fromNullable } from "@dfinity/utils";
-import { assertNever, getKeyVariant } from ".";
+} from '../../../generated/cashier_backend/cashier_backend.did';
+import { ActionModel } from '../action.service.types';
+import { ACTION_STATE, ACTION_TYPE } from '../enum';
+import { mapIntentDtoToIntentModel } from './intent.service.mapper';
+import { mapICRC112Request } from './transaction.service.mapper';
 
 // Back-end ActionState variant
 type ActionState = IntentState;
@@ -20,12 +20,16 @@ type ActionState = IntentState;
 const mapActionTypeToEnum = (actionType: ActionType): ACTION_TYPE => {
   const key = getKeyVariant(actionType);
   switch (key) {
-    case "Use":
+    case 'Use':
       return ACTION_TYPE.USE;
-    case "Withdraw":
+    case 'Withdraw':
       return ACTION_TYPE.WITHDRAW;
-    case "CreateLink":
+    case 'CreateLink':
       return ACTION_TYPE.CREATE_LINK;
+    case 'Claim':
+      return ACTION_TYPE.CLAIM;
+    case 'Pay':
+      return ACTION_TYPE.PAY;
     default:
       assertNever(key);
   }
@@ -35,13 +39,13 @@ const mapActionTypeToEnum = (actionType: ActionType): ACTION_TYPE => {
 const mapActionStateToEnum = (actionState: ActionState) => {
   const key = getKeyVariant(actionState);
   switch (key) {
-    case "Created":
+    case 'Created':
       return ACTION_STATE.CREATED;
-    case "Processing":
+    case 'Processing':
       return ACTION_STATE.PROCESSING;
-    case "Success":
+    case 'Success':
       return ACTION_STATE.SUCCESS;
-    case "Fail":
+    case 'Fail':
       return ACTION_STATE.FAIL;
     default:
       assertNever(key);
@@ -50,7 +54,7 @@ const mapActionStateToEnum = (actionState: ActionState) => {
 
 // Map Front-end ACTION_TYPE enum to back-end ActionType
 export const mapFrontendActionTypeToActionType = (
-  actionType: ACTION_TYPE,
+  actionType: ACTION_TYPE
 ): ActionType => {
   switch (actionType) {
     case ACTION_TYPE.USE:
@@ -59,6 +63,10 @@ export const mapFrontendActionTypeToActionType = (
       return { Withdraw: null };
     case ACTION_TYPE.CREATE_LINK:
       return { CreateLink: null };
+    case ACTION_TYPE.CLAIM:
+      return { Claim: null };
+    case ACTION_TYPE.PAY:
+      return { Pay: null };
     default:
       assertNever(actionType);
   }
@@ -72,7 +80,7 @@ export const mapActionModel = (actionDTO: ActionDto): ActionModel => {
     type: mapActionTypeToEnum(actionDTO.type),
     state: mapActionStateToEnum(actionDTO.state),
     intents: actionDTO.intents.map((intent) =>
-      mapIntentDtoToIntentModel(intent),
+      mapIntentDtoToIntentModel(intent)
     ),
     icrc112Requests: fromNullable(actionDTO.icrc_112_requests)
       ? fromNullable(actionDTO.icrc_112_requests)?.map((request) => {
