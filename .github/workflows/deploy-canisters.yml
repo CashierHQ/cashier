@@ -113,7 +113,6 @@ jobs:
                   NETWORK: ${{ needs.setup_environment.outputs.network }}
               run: |
                   # Create environment file with the correct values
-
                   env_file = "env.${NETWORK}"
                   
                   # create env file for old frontend
