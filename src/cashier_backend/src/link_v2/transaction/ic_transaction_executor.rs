@@ -4,7 +4,6 @@ use crate::{
     link_v2::transaction::traits::TransactionExecutor,
     services::ext::icrc_token::{Account, TransferFromArgs},
 };
-use candid::Nat;
 use cashier_backend_types::repository::common::Asset;
 use cashier_backend_types::repository::transaction::v1::{
     FromCallType, IcTransaction, Icrc1Transfer, Protocol,
@@ -18,6 +17,11 @@ use std::pin::Pin;
 pub struct IcTransactionExecutor;
 
 impl IcTransactionExecutor {
+    /// Execute ICRC-2 TransferFrom transaction
+    /// # Arguments
+    /// * `transaction` - The ICRC-2 TransferFrom transaction to be executed
+    /// # Returns
+    /// * `Result<(), CanisterError>` - Ok if successful, Err otherwise
     async fn execute_icrc2_transfer_from(
         transaction: Icrc2TransferFrom,
     ) -> Result<(), CanisterError> {
@@ -54,14 +58,21 @@ impl IcTransactionExecutor {
         Ok(())
     }
 
+    /// Execute ICRC-1 Transfer transaction
+    /// # Arguments
+    /// * `transaction` - The ICRC-1 Transfer transaction to be executed
+    /// # Returns
+    /// * `Result<(), CanisterError>` - Ok if successful, Err otherwise
     async fn execute_icrc1_transfer(transaction: Icrc1Transfer) -> Result<(), CanisterError> {
+        let token_fee_map = get_batch_tokens_fee(std::slice::from_ref(&transaction.asset)).await?;
+
         let address = match transaction.asset {
             Asset::IC { address, .. } => address,
         };
         let from_account: Account = transaction.from.into();
         let to_account: Account = transaction.to.into();
 
-        let fee_amount = Nat::from(10_000u64); // TODO
+        let fee_amount = token_fee_map.get(&address).cloned().unwrap_or_default();
 
         let transfer_arg = TransferArg {
             from_subaccount: from_account.subaccount,

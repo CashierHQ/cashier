@@ -5,19 +5,10 @@ use crate::cashier_backend::link::fixture::{
     LinkTestFixture, activate_tip_link_v2_fixture, create_tip_linkv2_fixture,
 };
 use crate::utils::principal::TestUser;
-use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
-use candid::Nat;
+use crate::utils::with_pocket_ic_context;
 use cashier_backend_types::constant::ICP_TOKEN;
-use cashier_backend_types::dto::action::CreateActionInput;
-use cashier_backend_types::dto::link;
 use cashier_backend_types::error::CanisterError;
-use cashier_backend_types::link_v2::dto::ProcessActionV2Input;
-use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
-use cashier_backend_types::repository::common::Wallet;
-use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, IntentType};
 use cashier_backend_types::repository::link::v1::LinkState;
-use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
-use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]
 async fn it_should_disable_icp_token_tip_linkv2_error_if_link_not_active() {
@@ -95,12 +86,11 @@ async fn it_should_disable_icp_token_tip_linkv2_error_if_caller_is_not_creator()
 async fn it_should_disable_icp_token_tip_linkv2_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let caller = TestUser::User1.get_principal();
         let tip_amount = 1_000_000u64;
         let (test_fixture, create_link_result) =
             activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
 
-        // Act: disable the link first to make it Inactive
+        // Act
         let link_id = create_link_result.link.id.clone();
         let disable_link_result = test_fixture.disable_link_v2(&link_id).await;
 
