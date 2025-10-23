@@ -6,39 +6,24 @@ use crate::link_v2::utils::icrc_token::get_link_account;
 use candid::{Nat, Principal};
 use cashier_backend_types::{
     constant::INTENT_LABEL_SEND_TIP_ASSET,
-    dto::action::Icrc112Requests,
     error::CanisterError,
     repository::{
         action::v1::{Action, ActionState, ActionType},
         intent::v1::Intent,
         link::v1::Link,
-        transaction::v1::Transaction,
     },
 };
-use std::collections::HashMap;
 use uuid::Uuid;
 
 #[derive(Debug)]
 pub struct ClaimAction {
     pub action: Action,
     pub intents: Vec<Intent>,
-    pub intent_txs_map: HashMap<String, Vec<Transaction>>,
-    pub icrc112_requests: Option<Icrc112Requests>,
 }
 
 impl ClaimAction {
-    pub fn new(
-        action: Action,
-        intents: Vec<Intent>,
-        intent_txs_map: HashMap<String, Vec<Transaction>>,
-        icrc112_requests: Option<Icrc112Requests>,
-    ) -> Self {
-        Self {
-            action,
-            intents,
-            intent_txs_map,
-            icrc112_requests,
-        }
+    pub fn new(action: Action, intents: Vec<Intent>) -> Self {
+        Self { action, intents }
     }
 
     /// Creates a new ClaimAction for a given Link.
@@ -83,14 +68,6 @@ impl ClaimAction {
                 intents.push(link_to_wallet_intent.intent.clone());
             });
 
-        // intent_txs_map
-        let mut intent_txs_map = HashMap::<String, Vec<Transaction>>::new();
-
-        for link_to_wallet_intent in link_to_wallet_intents.iter() {
-            let intent_id = link_to_wallet_intent.intent.id.clone();
-            intent_txs_map.insert(intent_id, link_to_wallet_intent.transactions.clone());
-        }
-
-        Ok(Self::new(action, intents, intent_txs_map, None))
+        Ok(Self::new(action, intents))
     }
 }

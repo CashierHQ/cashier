@@ -14,7 +14,7 @@ pub trait TransactionManager {
     /// * `CreateActionResult` - The result containing the created action, intents, transactions, and ICRC-112 requests
     /// # Errors
     /// * `CanisterError` - If there is an error during transaction creation
-    fn create_action(
+    async fn create_action(
         &self,
         action: Action,
         intents: Vec<Intent>,

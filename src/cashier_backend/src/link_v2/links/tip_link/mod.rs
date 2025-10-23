@@ -5,8 +5,11 @@ pub mod actions;
 pub mod states;
 
 use crate::link_v2::{
-    links::tip_link::states::{active::ActiveState, inactive::InactiveState},
-    traits::{LinkV2, LinkV2State},
+    links::{
+        tip_link::states::{active::ActiveState, inactive::InactiveState},
+        traits::{LinkV2, LinkV2State},
+    },
+    transaction_manager::traits::TransactionManager,
 };
 use candid::Principal;
 use cashier_backend_types::{
@@ -15,22 +18,28 @@ use cashier_backend_types::{
     repository::{
         action::v1::{Action, ActionType},
         asset_info::AssetInfo,
+        intent::v1::Intent,
         link::v1::{Link, LinkState, LinkType},
+        transaction::v1::Transaction,
     },
 };
 use states::created::CreatedState;
-use std::{future::Future, pin::Pin};
+use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
 use uuid::Uuid;
 
-#[derive(Debug)]
-pub struct TipLink {
+pub struct TipLink<M: TransactionManager + 'static> {
     pub link: Link,
     pub canister_id: Principal,
+    pub transaction_manager: Rc<M>,
 }
 
-impl TipLink {
-    pub fn new(link: Link, canister_id: Principal) -> Self {
-        Self { link, canister_id }
+impl<M: TransactionManager + 'static> TipLink<M> {
+    pub fn new(link: Link, canister_id: Principal, transaction_manager: Rc<M>) -> Self {
+        Self {
+            link,
+            canister_id,
+            transaction_manager,
+        }
     }
 
     /// Create a new TipLink instance
@@ -49,6 +58,7 @@ impl TipLink {
         max_use: u64,
         created_at_ts: u64,
         canister_id: Principal,
+        transaction_manager: Rc<M>,
     ) -> Self {
         let new_link = Link {
             id: Uuid::new_v4().to_string(),
@@ -62,7 +72,7 @@ impl TipLink {
             create_at: created_at_ts,
         };
 
-        Self::new(new_link, canister_id)
+        Self::new(new_link, canister_id, transaction_manager)
     }
 
     /// Get the appropriate state handler for the current link state
@@ -75,17 +85,30 @@ impl TipLink {
     pub fn get_state_handler(
         link: &Link,
         canister_id: Principal,
+        transaction_manager: Rc<M>,
     ) -> Result<Box<dyn LinkV2State>, CanisterError> {
         match link.state {
-            LinkState::CreateLink => Ok(Box::new(CreatedState::new(link, canister_id))),
-            LinkState::Active => Ok(Box::new(ActiveState::new(link, canister_id))),
-            LinkState::Inactive => Ok(Box::new(InactiveState::new(link, canister_id))),
+            LinkState::CreateLink => Ok(Box::new(CreatedState::new(
+                link,
+                canister_id,
+                transaction_manager,
+            ))),
+            LinkState::Active => Ok(Box::new(ActiveState::new(
+                link,
+                canister_id,
+                transaction_manager,
+            ))),
+            LinkState::Inactive => Ok(Box::new(InactiveState::new(
+                link,
+                canister_id,
+                transaction_manager,
+            ))),
             _ => Err(CanisterError::from("Unsupported link state")),
         }
     }
 }
 
-impl LinkV2 for TipLink {
+impl<M: TransactionManager + 'static> LinkV2 for TipLink<M> {
     /// Creates an action for the TipLink.
     /// # Arguments
     /// * `canister_id` - The canister ID of the token contract.
@@ -97,46 +120,12 @@ impl LinkV2 for TipLink {
         caller: Principal,
         action_type: ActionType,
     ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
-        // let link = self.link.clone();
-
-        // Box::pin(async move {
-        //     match action_type {
-        //         ActionType::CreateLink => {
-        //             let create_action = CreateAction::create(&link, canister_id).await?;
-        //             Ok(CreateActionResult {
-        //                 action: create_action.action,
-        //                 intents: create_action.intents,
-        //                 intent_txs_map: create_action.intent_txs_map,
-        //                 icrc112_requests: create_action.icrc112_requests,
-        //             })
-        //         }
-        //         ActionType::Withdraw => {
-        //             let withdraw_action = WithdrawAction::create(&link, canister_id).await?;
-        //             Ok(CreateActionResult {
-        //                 action: withdraw_action.action,
-        //                 intents: withdraw_action.intents,
-        //                 intent_txs_map: withdraw_action.intent_txs_map,
-        //                 icrc112_requests: withdraw_action.icrc112_requests,
-        //             })
-        //         }
-        //         ActionType::Claim => {
-        //             let claim_action = ClaimAction::create(&link, canister_id).await?;
-        //             Ok(CreateActionResult {
-        //                 action: claim_action.action,
-        //                 intents: claim_action.intents,
-        //                 intent_txs_map: claim_action.intent_txs_map,
-        //                 icrc112_requests: claim_action.icrc112_requests,
-        //             })
-        //         }
-        //         _ => Err(CanisterError::from("Unsupported action type")),
-        //     }
-        // })
-
         let link = self.link.clone();
         let canister_id = self.canister_id;
+        let transaction_manager = self.transaction_manager.clone();
 
         Box::pin(async move {
-            let state = TipLink::get_state_handler(&link, canister_id)?;
+            let state = TipLink::get_state_handler(&link, canister_id, transaction_manager)?;
             let create_action_result = state.create_action(caller, action_type).await?;
             Ok(create_action_result)
         })
@@ -146,14 +135,18 @@ impl LinkV2 for TipLink {
         &self,
         caller: Principal,
         action: Action,
+        intents: Vec<Intent>,
+        intent_txs_map: HashMap<String, Vec<Transaction>>,
     ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
         let link = self.link.clone();
         let canister_id = self.canister_id;
-        let action = action.clone();
+        let transaction_manager = self.transaction_manager.clone();
 
         Box::pin(async move {
-            let state = TipLink::get_state_handler(&link, canister_id)?;
-            let process_action_result = state.process_action(caller, action).await?;
+            let state = TipLink::get_state_handler(&link, canister_id, transaction_manager)?;
+            let process_action_result = state
+                .process_action(caller, action, intents, intent_txs_map)
+                .await?;
             Ok(process_action_result)
         })
     }

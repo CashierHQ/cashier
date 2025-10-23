@@ -1,9 +1,13 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use std::rc::Rc;
+
+use crate::link_v2::links::factory::LinkFactory;
+use crate::link_v2::transaction_manager::traits::TransactionManager;
+use crate::repositories;
 use crate::repositories::Repositories;
 use crate::services::action::ActionService;
-use crate::{link_v2::links::factory, repositories};
 use candid::Principal;
 use cashier_backend_types::link_v2::dto::{CreateLinkDto, ProcessActionDto};
 use cashier_backend_types::repository::link::v1::LinkState;
@@ -17,19 +21,21 @@ use cashier_backend_types::{
     service::action::ActionData,
 };
 
-pub struct LinkV2Service<R: Repositories> {
+pub struct LinkV2Service<R: Repositories, M: TransactionManager + 'static> {
     pub link_repository: repositories::link::LinkRepository<R::Link>,
     pub user_link_repository: repositories::user_link::UserLinkRepository<R::UserLink>,
     pub action_service: ActionService<R>,
+    pub transaction_manager: Rc<M>,
 }
 
 #[allow(clippy::too_many_arguments)]
-impl<R: Repositories> LinkV2Service<R> {
-    pub fn new(repo: &R) -> Self {
+impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
+    pub fn new(repo: &R, transaction_manager: Rc<M>) -> Self {
         Self {
             link_repository: repo.link(),
             user_link_repository: repo.user_link(),
             action_service: ActionService::new(repo),
+            transaction_manager,
         }
     }
 
@@ -50,7 +56,8 @@ impl<R: Repositories> LinkV2Service<R> {
         input: CreateLinkInput,
         created_at_ts: u64,
     ) -> Result<CreateLinkDto, CanisterError> {
-        let link_model = factory::create_link(creator_id, input, created_at_ts, canister_id)?;
+        let factory = LinkFactory::new(self.transaction_manager.clone());
+        let link_model = factory.create_link(creator_id, input, created_at_ts, canister_id)?;
 
         // save link & user_link to db
         self.link_repository.create(link_model.clone());
@@ -108,12 +115,13 @@ impl<R: Repositories> LinkV2Service<R> {
         link_id: &str,
         action_type: ActionType,
     ) -> Result<ActionDto, CanisterError> {
-        let link = self
+        let link_model = self
             .link_repository
             .get(&link_id.to_string())
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
-        let link = factory::from_link(link, canister_id)?;
+        let factory = LinkFactory::new(self.transaction_manager.clone());
+        let link = factory.create_from_link(link_model, canister_id)?;
         let result = link.create_action(caller, action_type).await?;
 
         // save action to DB
@@ -144,18 +152,31 @@ impl<R: Repositories> LinkV2Service<R> {
         canister_id: Principal,
         action_id: &str,
     ) -> Result<ProcessActionDto, CanisterError> {
-        let action = self
+        let action_data = self
             .action_service
-            .get_action_by_id(action_id)
-            .ok_or_else(|| CanisterError::NotFound("Action not found".to_string()))?;
+            .get_action_data(action_id)
+            .map_err(|e| {
+                CanisterError::from(format!(
+                    "Failed to get action data for action_id {}: {}",
+                    action_id, e
+                ))
+            })?;
 
-        let link = self
+        let link_model = self
             .link_repository
-            .get(&action.link_id)
+            .get(&action_data.action.link_id)
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
-        let link = factory::from_link(link, canister_id)?;
-        let result = link.process_action(caller, action).await?;
+        let factory = LinkFactory::new(self.transaction_manager.clone());
+        let link = factory.create_from_link(link_model, canister_id)?;
+        let result = link
+            .process_action(
+                caller,
+                action_data.action,
+                action_data.intents,
+                action_data.intent_txs,
+            )
+            .await?;
 
         let action_dto = ActionDto::build(
             &ActionData {
