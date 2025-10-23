@@ -5,7 +5,6 @@ pub mod icrc112;
 pub mod intents;
 pub mod links;
 pub mod services;
-pub mod traits;
 pub mod transaction;
 pub mod transaction_manager;
 pub mod utils;

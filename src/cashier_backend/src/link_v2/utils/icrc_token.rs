@@ -6,7 +6,7 @@ use crate::{
     services::ext::{
         self,
         icrc_token::{
-            Account as ExtAccount, Allowance, AllowanceArgs, Service, TransferArg, TransferFromArgs,
+            Account as ExtAccount, AllowanceArgs, Service, TransferArg, TransferFromArgs,
         },
     },
     utils::helper::to_subaccount,
@@ -59,6 +59,7 @@ pub fn get_link_ext_account(
 /// * `link` - The link for which to retrieve the creator's account.
 /// # Returns
 /// * `ext::icrc_token::Account` - The resulting external account of the link creator.
+#[allow(dead_code)]
 pub fn get_link_creator_ext_account(link: &Link) -> ext::icrc_token::Account {
     ext::icrc_token::Account {
         owner: link.creator,
@@ -72,6 +73,7 @@ pub fn get_link_creator_ext_account(link: &Link) -> ext::icrc_token::Account {
 /// * `canister_id` - The principal of the canister.
 /// # Returns
 /// * `ext::icrc_token::Account` - The resulting external account of the canister.
+#[allow(dead_code)]
 pub fn get_canister_ext_account(canister_id: Principal) -> ext::icrc_token::Account {
     ext::icrc_token::Account {
         owner: canister_id,
@@ -83,6 +85,7 @@ pub fn get_canister_ext_account(canister_id: Principal) -> ext::icrc_token::Acco
 /// This account is used for interactions with external ICRC token services.
 /// # Returns
 /// * `ext::icrc_token::Account` - The resulting external account of the treasury
+#[allow(dead_code)]
 pub fn get_treasury_ext_account() -> ext::icrc_token::Account {
     get_canister_ext_account(FEE_TREASURY_PRINCIPAL)
 }
@@ -231,6 +234,7 @@ pub async fn get_batch_tokens_balance(
 /// # Returns
 /// * `Result<HashMap<Principal, Nat>, CanisterError>` - A mapping from token principal IDs (as strings)
 ///   to their corresponding allowances as Nat values, or an error if the operation failed
+#[allow(dead_code)]
 pub async fn get_batch_tokens_allowance(
     assets: &[Asset],
     owner: &ExtAccount,
@@ -286,6 +290,7 @@ pub async fn get_batch_tokens_allowance(
 /// * `icp_token_fee` - The transaction fee for the ICP token transfer.
 /// # Returns
 /// * `Result<block_id: Nat, CanisterError>` - The block ID of the transfer transaction if successful, or an error if the transfer fails.
+#[allow(dead_code)]
 pub async fn transfer_fee_from_link_creator_to_treasury(
     link: &Link,
     fee_amount: Nat,
@@ -316,6 +321,7 @@ pub async fn transfer_fee_from_link_creator_to_treasury(
     Ok(block_id)
 }
 
+#[allow(dead_code)]
 pub async fn transfer_single_asset_from_link_to_account(
     link_account: &ExtAccount,
     to: &ExtAccount,
@@ -357,6 +363,7 @@ pub async fn transfer_single_asset_from_link_to_account(
     }
 }
 
+#[allow(dead_code)]
 pub async fn transfer_assets_from_link_to_account(
     link: &Link,
     canister_id: Principal,

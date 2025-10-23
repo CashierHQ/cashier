@@ -4,21 +4,17 @@
 use crate::{
     link_v2::{
         icrc112::create_icrc_112_requests,
-        transaction::traits::{TransactionExecutor, TransactionValidator},
+        transaction::{
+            ic_transaction_executor::IcTransactionExecutor,
+            ic_transaction_validator::IcTransactionValidator,
+        },
         transaction_manager::{
             dependency_analyzer::DependencyAnalyzer, executor_service::ExecutorService,
             traits::TransactionManager, validator_service::ValidatorService,
         },
-        utils::icrc_token::{get_link_account, get_link_ext_account},
+        utils::icrc_token::get_link_account,
     },
-    repositories::{
-        Repositories, action::ActionRepository,
-        processing_transaction::ProcessingTransactionRepository,
-    },
-    services::{
-        action::ActionService, adapter::IntentAdapterImpl, transaction::TransactionService,
-    },
-    utils::icrc::IcrcService,
+    services::adapter::IntentAdapterImpl,
 };
 use cashier_backend_types::{
     error::CanisterError,
@@ -31,24 +27,21 @@ use std::{
     rc::Rc,
 };
 
-pub struct IcTransactionManager<E: IcEnvironment, V: TransactionValidator, T: TransactionExecutor> {
+pub struct IcTransactionManager<E: IcEnvironment> {
     pub ic_env: E,
     pub intent_adapter: IntentAdapterImpl,
-    pub dependency_analyzer: DependencyAnalyzer<V, T>,
-    pub validator_service: ValidatorService<V>,
-    pub executor_service: ExecutorService<T>,
+    pub dependency_analyzer: DependencyAnalyzer,
+    pub validator_service: ValidatorService<IcTransactionValidator>,
+    pub executor_service: ExecutorService<IcTransactionExecutor>,
 }
 
 #[allow(clippy::too_many_arguments)]
-impl<E: IcEnvironment, V: TransactionValidator, T: TransactionExecutor>
-    IcTransactionManager<E, V, T>
-{
-    pub fn new(ic_env: E, transaction_validator: Rc<V>, transaction_executor: Rc<T>) -> Self {
+impl<E: IcEnvironment> IcTransactionManager<E> {
+    pub fn new(ic_env: E) -> Self {
         let intent_adapter = IntentAdapterImpl::new();
-        let dependency_analyzer = DependencyAnalyzer::new(
-            Rc::clone(&transaction_validator),
-            Rc::clone(&transaction_executor),
-        );
+        let transaction_validator = Rc::new(IcTransactionValidator);
+        let transaction_executor = Rc::new(IcTransactionExecutor);
+        let dependency_analyzer = DependencyAnalyzer;
         let validator_service = ValidatorService::new(Rc::clone(&transaction_validator));
         let executor_service = ExecutorService::new(Rc::clone(&transaction_executor));
 
@@ -62,10 +55,8 @@ impl<E: IcEnvironment, V: TransactionValidator, T: TransactionExecutor>
     }
 }
 
-impl<E: IcEnvironment, V: TransactionValidator, T: TransactionExecutor> TransactionManager
-    for IcTransactionManager<E, V, T>
-{
-    fn create_action(
+impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
+    async fn create_action(
         &self,
         action: Action,
         intents: Vec<Intent>,

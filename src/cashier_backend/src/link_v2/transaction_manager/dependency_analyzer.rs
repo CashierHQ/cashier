@@ -1,45 +1,23 @@
-use crate::link_v2::{
-    transaction::traits::{TransactionExecutor, TransactionValidator},
-    transaction_manager::topological_sort::{
-        flatten_sorted_list, kahn_topological_sort, kahn_topological_sort_flat,
-    },
-};
+use crate::link_v2::transaction_manager::topological_sort::kahn_topological_sort;
 use cashier_backend_types::{
     error::CanisterError,
-    link_v2::{graph::Graph, transaction_manager::ValidateActionTransactionsResult},
-    repository::{
-        intent::v1::Intent,
-        transaction::v1::{FromCallType, Transaction, TransactionState},
-    },
+    link_v2::graph::Graph,
+    repository::{intent::v1::Intent, transaction::v1::Transaction},
 };
-use std::{
-    collections::{HashMap, HashSet},
-    rc::Rc,
-};
+use std::collections::{HashMap, HashSet};
 
-pub struct DependencyAnalyzer<V: TransactionValidator, E: TransactionExecutor> {
-    pub validator: Rc<V>,
-    pub executor: Rc<E>,
-}
+pub struct DependencyAnalyzer;
 
-impl<V: TransactionValidator, E: TransactionExecutor> DependencyAnalyzer<V, E> {
-    pub fn new(validator: Rc<V>, executor: Rc<E>) -> Self {
-        Self {
-            validator,
-            executor,
-        }
-    }
-
+impl DependencyAnalyzer {
     /// Analyze and fill transaction dependencies based on intent dependencies
     /// # Arguments
     /// * `intents` - A reference to a vector of Intents
     /// * `intent_txs_map` - A reference to a map from intent ID to its associated Transactions
     /// # Returns
-    /// * `Result<Vec<Transaction>, CanisterError>` - A result containing the updated Transactions
-    ///  or an error if circular dependencies are detected
+    /// * `Result<Vec<Transaction>, CanisterError>` - A result containing the updated Transactions or an error if circular dependencies are detected
     pub fn analyze_and_fill_transaction_dependencies(
         &self,
-        intents: &Vec<Intent>,
+        intents: &[Intent],
         intent_txs_map: &HashMap<String, Vec<Transaction>>,
     ) -> Result<Vec<Transaction>, CanisterError> {
         self.check_circular_intents_dependencies(intents)?;
@@ -67,9 +45,7 @@ impl<V: TransactionValidator, E: TransactionExecutor> DependencyAnalyzer<V, E> {
             }
 
             for tx in txs.iter() {
-                let deps = tx_dependency_map
-                    .entry(tx.id.clone())
-                    .or_insert_with(HashSet::new);
+                let deps = tx_dependency_map.entry(tx.id.clone()).or_default();
 
                 // Add intent-derived dependencies
                 deps.extend(dependent_txs.iter().cloned());
@@ -102,9 +78,9 @@ impl<V: TransactionValidator, E: TransactionExecutor> DependencyAnalyzer<V, E> {
     /// * `Result<(), CanisterError>` - Ok if no cycles, Err if cycles detected
     pub fn check_circular_intents_dependencies(
         &self,
-        intents: &Vec<Intent>,
+        intents: &[Intent],
     ) -> Result<(), CanisterError> {
-        let graph: Graph = intents.clone().into();
+        let graph: Graph = intents.to_vec().into();
         let _sorted_levels = kahn_topological_sort(&graph)?;
 
         Ok(())
@@ -117,9 +93,9 @@ impl<V: TransactionValidator, E: TransactionExecutor> DependencyAnalyzer<V, E> {
     /// * `Result<(), CanisterError>` - Ok if no cycles, Err if cycles detected
     pub fn check_circular_transactions_dependencies(
         &self,
-        transactions: &Vec<Transaction>,
+        transactions: &[Transaction],
     ) -> Result<(), CanisterError> {
-        let graph: Graph = transactions.clone().into();
+        let graph: Graph = transactions.to_vec().into();
         let _sorted_levels = kahn_topological_sort(&graph)?;
 
         Ok(())

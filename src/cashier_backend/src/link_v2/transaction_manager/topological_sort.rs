@@ -83,7 +83,7 @@ pub fn kahn_topological_sort(graph: &Graph) -> Result<Vec<Vec<String>>, Canister
     Ok(sorted_list)
 }
 
-pub fn flatten_sorted_list(sorted_levels: Vec<Vec<String>>) -> Vec<String> {
+pub fn flatten_sorted_list(sorted_levels: &[Vec<String>]) -> Vec<String> {
     let mut flat_list = Vec::<String>::new();
     for level in sorted_levels.iter() {
         for vertex in level.iter() {
@@ -95,5 +95,5 @@ pub fn flatten_sorted_list(sorted_levels: Vec<Vec<String>>) -> Vec<String> {
 
 pub fn kahn_topological_sort_flat(graph: &Graph) -> Result<Vec<String>, CanisterError> {
     let sorted_levels = kahn_topological_sort(graph)?;
-    Ok(flatten_sorted_list(sorted_levels))
+    Ok(flatten_sorted_list(&sorted_levels))
 }
