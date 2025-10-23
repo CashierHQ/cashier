@@ -7,12 +7,11 @@ use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_contex
 use candid::Nat;
 use cashier_backend_types::constant::ICP_TOKEN;
 use cashier_backend_types::dto::action::CreateActionInput;
-use cashier_backend_types::dto::link;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::link_v2::dto::ProcessActionV2Input;
 use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
 use cashier_backend_types::repository::common::Wallet;
-use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, IntentType};
+use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType};
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
 use icrc_ledger_types::icrc1::account::Account;
@@ -21,17 +20,9 @@ use icrc_ledger_types::icrc1::account::Account;
 async fn it_should_withdraw_icp_token_tip_linkv2_error_if_link_active() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let caller = TestUser::User1.get_principal();
         let tip_amount = 1_000_000u64;
         let (test_fixture, create_link_result) =
             activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
-        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
-
-        let caller_account = Account {
-            owner: caller,
-            subaccount: None,
-        };
-        let icp_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
 
         // Act: create WITHDRAW action
         let link_id = create_link_result.link.id.clone();
@@ -90,7 +81,10 @@ async fn it_should_withdraw_icp_token_tip_linkv2_successfully() {
         // Act: disable the link first to make it Inactive
         let link_id = create_link_result.link.id.clone();
         let disable_link_result = test_fixture.disable_link_v2(&link_id).await;
-        assert_eq!(disable_link_result.state, LinkState::Inactive);
+
+        assert!(disable_link_result.is_ok());
+        let link_dto = disable_link_result.unwrap();
+        assert_eq!(link_dto.state, LinkState::Inactive);
 
         // Act: create WITHDRAW action
         let link_id = create_link_result.link.id.clone();
@@ -157,6 +151,14 @@ async fn it_should_withdraw_icp_token_tip_linkv2_successfully() {
             icp_balance_after,
             icp_balance_before + withdraw_balance,
             "Creator balance after withdraw should be increased by link balance"
+        );
+
+        // Assert: link balance is zero
+        let link_balance_after = icp_ledger_client.balance_of(&link_account).await.unwrap();
+        assert_eq!(
+            link_balance_after,
+            Nat::from(0u64),
+            "Link balance should be zero"
         );
 
         Ok(())

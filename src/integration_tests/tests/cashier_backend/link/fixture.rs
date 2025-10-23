@@ -93,13 +93,12 @@ impl LinkTestFixture {
     /// * `link_id` - The ID of the link to disable
     /// # Returns
     /// * `LinkDto` - The disabled link data
-    pub async fn disable_link_v2(&self, link_id: &str) -> LinkDto {
+    pub async fn disable_link_v2(&self, link_id: &str) -> Result<LinkDto, CanisterError> {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
             .disable_link_v2(link_id)
             .await
-            .unwrap()
             .unwrap()
     }
 
