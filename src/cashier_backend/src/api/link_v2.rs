@@ -5,11 +5,10 @@ use crate::api::state::get_state;
 use cashier_backend_types::{
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput},
-        link::{CreateLinkInput, GetLinkResp, LinkDto},
+        link::{CreateLinkInput, LinkDto},
     },
     error::CanisterError,
-    link_v2::dto::LinkActionDto,
-    repository::link_action::v1::LinkAction,
+    link_v2::dto::{CreateLinkDto, ProcessActionDto},
 };
 use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
 use ic_cdk::{api::msg_caller, update};
@@ -22,7 +21,7 @@ use log::{debug, info};
 /// * `Ok(GetLinkResp)` - The created link data
 /// * `Err(CanisterError)` - If link creation fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
-async fn create_link_v2(input: CreateLinkInput) -> Result<LinkActionDto, CanisterError> {
+async fn create_link_v2(input: CreateLinkInput) -> Result<CreateLinkDto, CanisterError> {
     info!("[create_link_v2]");
     debug!("[create_link_v2] input: {input:?}");
 
@@ -56,7 +55,7 @@ async fn create_action_v2(input: CreateActionInput) -> Result<ActionDto, Caniste
 }
 
 #[update(guard = "is_not_anonymous")]
-async fn process_action_v2(input: ProcessActionInput) -> Result<LinkActionDto, CanisterError> {
+async fn process_action_v2(input: ProcessActionInput) -> Result<ProcessActionDto, CanisterError> {
     info!("[process_action_v2]");
     debug!("[process_action_v2] input: {input:?}");
 

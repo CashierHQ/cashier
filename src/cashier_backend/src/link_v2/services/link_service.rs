@@ -5,13 +5,12 @@ use crate::repositories::Repositories;
 use crate::services::action::ActionService;
 use crate::{link_v2::links::factory, repositories};
 use candid::Principal;
-use cashier_backend_types::dto::action::IntentDto;
-use cashier_backend_types::link_v2::dto::LinkActionDto;
+use cashier_backend_types::link_v2::dto::{CreateLinkDto, ProcessActionDto};
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::{
     dto::{
         action::ActionDto,
-        link::{CreateLinkInput, GetLinkResp, LinkDto},
+        link::{CreateLinkInput, LinkDto},
     },
     error::CanisterError,
     repository::{action::v1::ActionType, link_action::v1::LinkAction, user_link::v1::UserLink},
@@ -50,7 +49,7 @@ impl<R: Repositories> LinkV2Service<R> {
         canister_id: Principal,
         input: CreateLinkInput,
         created_at_ts: u64,
-    ) -> Result<LinkActionDto, CanisterError> {
+    ) -> Result<CreateLinkDto, CanisterError> {
         let link_model = factory::create_link(creator_id, input, created_at_ts, canister_id)?;
 
         // save link & user_link to db
@@ -73,7 +72,7 @@ impl<R: Repositories> LinkV2Service<R> {
 
         let link_dto = LinkDto::from(link_model);
 
-        Ok(LinkActionDto {
+        Ok(CreateLinkDto {
             link: link_dto,
             action: action_dto,
         })
@@ -144,7 +143,7 @@ impl<R: Repositories> LinkV2Service<R> {
         caller: Principal,
         canister_id: Principal,
         action_id: &str,
-    ) -> Result<LinkActionDto, CanisterError> {
+    ) -> Result<ProcessActionDto, CanisterError> {
         let action = self
             .action_service
             .get_action_by_id(action_id)
@@ -169,7 +168,7 @@ impl<R: Repositories> LinkV2Service<R> {
 
         let link_dto = LinkDto::from(result.link);
 
-        Ok(LinkActionDto {
+        Ok(ProcessActionDto {
             link: link_dto,
             action: action_dto,
         })
