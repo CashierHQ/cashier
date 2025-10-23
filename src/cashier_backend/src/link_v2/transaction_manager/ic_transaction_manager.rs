@@ -22,6 +22,7 @@ use cashier_backend_types::{
     repository::{action::v1::Action, intent::v1::Intent, transaction::v1::Transaction},
 };
 use cashier_common::runtime::IcEnvironment;
+use log::debug;
 use std::{
     collections::{HashMap, HashSet},
     rc::Rc,

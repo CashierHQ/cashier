@@ -20,6 +20,7 @@ use cashier_backend_types::{
     repository::{action::v1::ActionType, link_action::v1::LinkAction, user_link::v1::UserLink},
     service::action::ActionData,
 };
+use log::{debug, info};
 
 pub struct LinkV2Service<R: Repositories, M: TransactionManager + 'static> {
     pub link_repository: repositories::link::LinkRepository<R::Link>,

@@ -1,6 +1,7 @@
 use crate::repository::{intent::v1::Intent, transaction::v1::Transaction};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
+#[derive(Debug, Clone)]
 pub struct Graph {
     pub vertices: Vec<String>,
     pub adjacency_list: HashMap<String, Vec<String>>,
@@ -17,57 +18,72 @@ impl Graph {
 
 impl From<Vec<Intent>> for Graph {
     fn from(intents: Vec<Intent>) -> Self {
-        let mut vertices = Vec::<String>::new();
-        let mut adjacency_list = HashMap::<String, Vec<String>>::new();
+        let mut vertices = HashSet::<String>::new();
+        let mut adjacency_list = HashMap::<String, HashSet<String>>::new();
 
+        // First pass: collect all vertices
         for intent in intents.iter() {
-            if vertices.contains(&intent.id) {
-                continue;
+            vertices.insert(intent.id.clone());
+
+            for dep in intent.dependency.iter() {
+                vertices.insert(dep.clone());
             }
-            vertices.push(intent.id.clone());
-            match adjacency_list.get_mut(&intent.id) {
-                Some(deps) => {
-                    deps.extend(intent.dependency.clone());
-                }
-                None => {
-                    adjacency_list.insert(intent.id.clone(), intent.dependency.clone());
-                }
+        }
+
+        // Second pass: build adjacency list
+        for intent in intents.iter() {
+            for dep in intent.dependency.iter() {
+                adjacency_list
+                    .entry(dep.clone())
+                    .or_default()
+                    .insert(intent.id.clone());
             }
         }
 
         Self {
-            vertices,
-            adjacency_list,
+            vertices: vertices.into_iter().collect(),
+            adjacency_list: adjacency_list
+                .into_iter()
+                .map(|(k, v)| (k, v.into_iter().collect()))
+                .collect(),
         }
     }
 }
 
 impl From<Vec<Transaction>> for Graph {
     fn from(transactions: Vec<Transaction>) -> Self {
-        let mut vertices = Vec::<String>::new();
-        let mut adjacency_list = HashMap::<String, Vec<String>>::new();
+        let mut vertices = HashSet::<String>::new();
+        let mut adjacency_list = HashMap::<String, HashSet<String>>::new();
 
+        // First pass: collect all vertices
         for tx in transactions.iter() {
-            if vertices.contains(&tx.id) {
-                continue;
-            }
+            vertices.insert(tx.id.clone());
 
-            vertices.push(tx.id.clone());
-            match adjacency_list.get_mut(&tx.id) {
-                Some(deps) => {
-                    if let Some(tx_deps) = &tx.dependency {
-                        deps.extend(tx_deps.clone());
-                    }
+            if let Some(deps) = &tx.dependency {
+                for dep in deps.iter() {
+                    vertices.insert(dep.clone());
                 }
-                None => {
-                    adjacency_list.insert(tx.id.clone(), tx.dependency.clone().unwrap_or_default());
+            }
+        }
+
+        // Second pass: build adjacency list
+        for tx in transactions.iter() {
+            if let Some(deps) = &tx.dependency {
+                for dep in deps.iter() {
+                    adjacency_list
+                        .entry(dep.clone())
+                        .or_default()
+                        .insert(tx.id.clone());
                 }
             }
         }
 
         Self {
-            vertices,
-            adjacency_list,
+            vertices: vertices.into_iter().collect(),
+            adjacency_list: adjacency_list
+                .into_iter()
+                .map(|(k, v)| (k, v.into_iter().collect()))
+                .collect(),
         }
     }
 }

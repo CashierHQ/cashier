@@ -1,9 +1,11 @@
 use crate::link_v2::transaction_manager::topological_sort::kahn_topological_sort;
+use candid::de;
 use cashier_backend_types::{
     error::CanisterError,
     link_v2::graph::Graph,
     repository::{intent::v1::Intent, transaction::v1::Transaction},
 };
+use log::debug;
 use std::collections::{HashMap, HashSet};
 
 pub struct DependencyAnalyzer;
