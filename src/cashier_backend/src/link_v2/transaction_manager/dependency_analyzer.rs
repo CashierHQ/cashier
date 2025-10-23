@@ -12,15 +12,18 @@ use cashier_backend_types::{
         transaction::v1::{FromCallType, Transaction, TransactionState},
     },
 };
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    rc::Rc,
+};
 
 pub struct DependencyAnalyzer<V: TransactionValidator, E: TransactionExecutor> {
-    pub validator: V,
-    pub executor: E,
+    pub validator: Rc<V>,
+    pub executor: Rc<E>,
 }
 
 impl<V: TransactionValidator, E: TransactionExecutor> DependencyAnalyzer<V, E> {
-    pub fn new(validator: V, executor: E) -> Self {
+    pub fn new(validator: Rc<V>, executor: Rc<E>) -> Self {
         Self {
             validator,
             executor,
@@ -120,46 +123,5 @@ impl<V: TransactionValidator, E: TransactionExecutor> DependencyAnalyzer<V, E> {
         let _sorted_levels = kahn_topological_sort(&graph)?;
 
         Ok(())
-    }
-
-    pub async fn validate_action_transactions(
-        &self,
-        transactions: &Vec<Transaction>,
-    ) -> Result<ValidateActionTransactionsResult, CanisterError> {
-        let mut updated_transactions = Vec::<Transaction>::new();
-
-        let mut txs_map: HashMap<String, Transaction> = transactions
-            .iter()
-            .map(|tx| (tx.id.clone(), tx.clone()))
-            .collect();
-
-        // topologically sort transactions
-        let graph: Graph = transactions.clone().into();
-        let sorted_transactions = kahn_topological_sort_flat(&graph)?;
-
-        // validate transactions in topological order and update their status
-        let mut is_dependencies_resolved = true;
-        for tx_id in sorted_transactions.iter() {
-            if let Some(tx) = txs_map.get_mut(tx_id) {
-                if tx.from_call_type == FromCallType::Canister {
-                    // Skip validation for canister-initiated transactions
-                    updated_transactions.push(tx.clone());
-                    continue;
-                }
-
-                if let Ok(_tx_success) = self.validator.validate_success(tx.clone()).await {
-                    tx.state = TransactionState::Success;
-                } else {
-                    tx.state = TransactionState::Fail;
-                    is_dependencies_resolved = false;
-                }
-                updated_transactions.push(tx.clone());
-            }
-        }
-
-        Ok(ValidateActionTransactionsResult {
-            transactions: updated_transactions,
-            is_dependencies_resolved,
-        })
     }
 }
