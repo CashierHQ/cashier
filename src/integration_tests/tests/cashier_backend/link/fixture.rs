@@ -84,6 +84,42 @@ impl LinkTestFixture {
             .unwrap()
     }
 
+    /// Create action v2
+    /// # Arguments
+    /// * `input` - The input data for creating the action
+    /// # Returns
+    /// * `ActionDto` - The created action data
+    /// * `CanisterError` - Error if the action creation fails
+    pub async fn create_action_v2(
+        &self,
+        input: CreateActionInput,
+    ) -> Result<ActionDto, CanisterError> {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .create_action_v2(input)
+            .await
+            .unwrap()
+    }
+
+    /// Process action v2
+    /// # Arguments
+    /// * `input` - The input data for processing the action
+    /// # Returns
+    /// * `ProcessActionDto` - The processed action data
+    /// * `CanisterError` - Error if the action processing fails
+    pub async fn process_action_v2(
+        &self,
+        input: ProcessActionV2Input,
+    ) -> Result<ProcessActionDto, CanisterError> {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .process_action_v2(input)
+            .await
+            .unwrap()
+    }
+
     // Pre-defined input for creating tip link.
     pub async fn create_tip_link(&self, token: &str, amount: u64) -> LinkDto {
         let link_input = self
@@ -559,6 +595,33 @@ pub async fn create_tip_linkv2_fixture(
 
     let link_response = creator_fixture.create_tip_link_v2(token, amount).await;
     (creator_fixture, link_response)
+}
+
+/// Activate a tip link v2 fixture.
+/// # Arguments
+/// * `ctx` - The Pocket IC test context
+/// * `token` - The token identifier (e.g., "ICP")
+/// * `amount` - The tip amount
+/// # Returns
+/// * `(LinkTestFixture, ProcessActionDto)` - The link test fixture and the ProcessActionDto
+pub async fn activate_tip_link_v2_fixture(
+    ctx: &PocketIcTestContext,
+    token: &str,
+    amount: u64,
+) -> (LinkTestFixture, ProcessActionDto) {
+    let (test_fixture, create_link_result) = create_tip_linkv2_fixture(ctx, token, amount).await;
+
+    // Execute ICRC112 requests (simulate FE behavior)
+    let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
+    let _icrc112_execution_result =
+        icrc_112::execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
+
+    let activate_link_result = test_fixture
+        .activate_link_v2(&create_link_result.action.id)
+        .await
+        .unwrap();
+
+    (test_fixture, activate_link_result)
 }
 
 /// Creates a fixture for a token basket link.

@@ -1,7 +1,10 @@
 // This is an experimental feature to generate Rust binding from Candid.
 // You may want to manually adjust some of the types.
 use candid::{self, CandidType, Deserialize, Principal};
-use cashier_backend_types::{error::CanisterError, repository::common::Wallet};
+use cashier_backend_types::{
+    error::CanisterError,
+    repository::{common::Wallet, transaction::v1::Icrc1Transfer},
+};
 use ic_cdk::call::{Call, CandidDecodeFailed};
 
 pub type SubAccount = serde_bytes::ByteBuf;

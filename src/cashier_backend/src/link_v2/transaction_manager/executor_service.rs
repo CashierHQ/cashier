@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use cashier_backend_types::{
     error::CanisterError,
+    link_v2::transaction_manager::ExecuteTransactionsResult,
     repository::transaction::v1::{Transaction, TransactionState},
 };
 
@@ -19,8 +20,9 @@ impl<E: TransactionExecutor> ExecutorService<E> {
     pub async fn execute_transactions(
         &self,
         transactions: &[Transaction],
-    ) -> Result<Vec<Transaction>, CanisterError> {
+    ) -> Result<ExecuteTransactionsResult, CanisterError> {
         let mut executed_transactions = Vec::<Transaction>::new();
+        let mut errors = Vec::<String>::new();
         for transaction in transactions.iter() {
             match self.executor.execute(transaction.clone()).await {
                 Ok(_executed_tx) => {
@@ -30,15 +32,22 @@ impl<E: TransactionExecutor> ExecutorService<E> {
                     };
                     executed_transactions.push(executed_tx);
                 }
-                Err(_err) => {
+                Err(err) => {
                     let failed_tx = Transaction {
                         state: TransactionState::Fail,
                         ..transaction.clone()
                     };
                     executed_transactions.push(failed_tx);
+                    errors.push(format!(
+                        "Transaction {} failed to execute: {}",
+                        transaction.id, err
+                    ));
                 }
             }
         }
-        Ok(executed_transactions)
+        Ok(ExecuteTransactionsResult {
+            transactions: executed_transactions,
+            errors,
+        })
     }
 }

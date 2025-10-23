@@ -79,7 +79,9 @@ impl<M: TransactionManager + 'static> LinkV2State for InactiveState<M> {
                         create_action_result,
                     })
                 }
-                _ => Err(CanisterError::from("Unsupported action type")),
+                _ => Err(CanisterError::from(
+                    "Unsupported action type for InactiveState",
+                )),
             }
         })
     }
