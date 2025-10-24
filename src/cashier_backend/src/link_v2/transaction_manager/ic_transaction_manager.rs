@@ -188,3 +188,65 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
         })
     }
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Principal;
+    use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType, TransferData};
+    use cashier_backend_types::repository::common::{Asset, Wallet};
+    use cashier_backend_types::repository::action::v1::{Action, ActionState, ActionType};
+    use candid::Nat;
+
+    // Use the shared mock environment from test utilities
+    use crate::utils::test_utils::runtime::MockIcEnvironment;
+
+    #[tokio::test]
+    async fn test_create_action_generates_icrc_requests() {
+    // Arrange: create manager with shared mock env
+    let mut env = MockIcEnvironment::new();
+    // tests expect a smaller now value; override the default if needed
+    env.current_time = 1_700_000_000;
+    let manager = IcTransactionManager::new(env);
+
+        // prepare action
+        let action = Action {
+            id: "action1".to_string(),
+            r#type: ActionType::CreateLink,
+            state: ActionState::Created,
+            creator: Principal::anonymous(),
+            link_id: "11111111-1111-1111-1111-111111111111".to_string(),
+        };
+
+        // prepare an intent that will be converted to an ICRC1 wallet transfer
+        let mut intent = crate::utils::test_utils::generate_mock_intent("intent1", vec![]);
+        // adjust to the wallet->link transfer task
+        intent.task = IntentTask::TransferWalletToLink;
+        intent.r#type = IntentType::Transfer(TransferData {
+            from: Wallet::default(),
+            to: Wallet::default(),
+            asset: Asset::default(),
+            amount: Nat::from(1u64),
+        });
+
+        // Act
+        let res = manager.create_action(action.clone(), vec![intent.clone()]).await;
+        println!("Create action result: {:?}", res);
+
+        // Assert
+        assert!(res.is_ok());
+        let create_res = res.unwrap();
+        // should return intent and intent_txs_map containing our intent
+        assert_eq!(create_res.intents.len(), 1);
+        assert!(create_res.intent_txs_map.contains_key(&intent.id));
+        // should generate icrc112 requests
+        assert!(create_res.icrc112_requests.is_some());
+        let requests = create_res.icrc112_requests.unwrap();
+        // there should be at least one group of requests
+        assert!(!requests.is_empty());
+        // and each request group should contain at least one request
+        assert!(requests.iter().all(|group| !group.is_empty()));
+    }
+}
+
