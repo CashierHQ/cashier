@@ -1,7 +1,7 @@
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
-import debounce from './debounce';
+import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
+import debounce from "./debounce";
 
-describe('debounce', () => {
+describe("debounce", () => {
   beforeEach(() => {
     vi.useFakeTimers();
   });
@@ -11,11 +11,11 @@ describe('debounce', () => {
     vi.restoreAllMocks();
   });
 
-  it('calls the function after the wait time', () => {
+  it("calls the function after the wait time", () => {
     const fn = vi.fn();
     const debounced = debounce(fn, 100);
 
-    debounced('a');
+    debounced("a");
     expect(fn).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(99);
@@ -23,10 +23,10 @@ describe('debounce', () => {
 
     vi.advanceTimersByTime(1);
     expect(fn).toHaveBeenCalledTimes(1);
-    expect(fn).toHaveBeenCalledWith('a');
+    expect(fn).toHaveBeenCalledWith("a");
   });
 
-  it('uses the last arguments when called multiple times', () => {
+  it("uses the last arguments when called multiple times", () => {
     const fn = vi.fn();
     const debounced = debounce(fn, 50);
 
@@ -42,7 +42,7 @@ describe('debounce', () => {
     expect(fn).toHaveBeenCalledWith(3);
   });
 
-  it('preserves `this` binding when invoking', () => {
+  it("preserves `this` binding when invoking", () => {
     const ctx = { x: 42 };
     const fn = vi.fn(function (this: { x: number }) {
       // access `this` to ensure binding is forwarded
@@ -60,17 +60,17 @@ describe('debounce', () => {
     expect(fn.mock.instances[0]).toBe(ctx);
   });
 
-  it('postpones calls when invoked repeatedly (last call wins)', () => {
+  it("postpones calls when invoked repeatedly (last call wins)", () => {
     const fn = vi.fn();
     const debounced = debounce(fn, 30);
 
-    debounced('x');
-    debounced('y');
+    debounced("x");
+    debounced("y");
 
     vi.advanceTimersByTime(29);
     expect(fn).not.toHaveBeenCalled();
     vi.advanceTimersByTime(1);
     expect(fn).toHaveBeenCalledTimes(1);
-    expect(fn).toHaveBeenCalledWith('y');
+    expect(fn).toHaveBeenCalledWith("y");
   });
 });

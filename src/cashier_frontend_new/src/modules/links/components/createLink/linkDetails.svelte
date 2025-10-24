@@ -2,7 +2,7 @@
   import { resolve } from "$app/paths";
   import type { LinkStore } from "../../state/linkStore.svelte";
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
-    import { formatNumber } from "$modules/shared/utils/formatNumber";
+  import { formatNumber } from "$modules/shared/utils/formatNumber";
 
   const {
     link,
@@ -23,7 +23,6 @@
     }
     return 0;
   });
-
 </script>
 
 <div>

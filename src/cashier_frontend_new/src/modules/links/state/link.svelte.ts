@@ -1,13 +1,14 @@
 import type { GetLinkResp } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { managedState } from "$lib/managedState";
+import { fromNullable } from "@dfinity/utils";
 import { cashierBackendService } from "../services/cashierBackend";
-import type Action from "../types/action/action";
+import Action from "../types/action/action";
 import type { ActionType } from "../types/action/actionType";
 import { Link } from "../types/link/link";
 
 // A state for the user tokens list
 
-type LinkAndAction = {
+export type LinkAndAction = {
   link: Link;
   action?: Action;
 };
@@ -26,9 +27,14 @@ export const linkQuery = (id: string, action?: ActionType) =>
       ).unwrap();
 
       const link = Link.fromBackend(resp.link);
-
+      const actionRes = fromNullable(resp.action);
+      let actionResult: Action | undefined = undefined;
+      if (actionRes) {
+        actionResult = Action.fromBackend(actionRes);
+      }
       return {
         link,
+        action: actionResult,
       };
     },
     watch: true,

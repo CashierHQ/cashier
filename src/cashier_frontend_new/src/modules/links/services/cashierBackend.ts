@@ -4,6 +4,7 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { Err, type Result } from "ts-results-es";
 import type { CreateLinkData } from "../types/createLinkData";
+import type { ActionType } from "../types/action/actionType";
 
 /**
  * Service for interacting with the Cashier Backend canister.
@@ -128,15 +129,19 @@ class CanisterBackendService {
    * @param input The CreateActionInput containing action creation details.
    * @returns A Result containing ActionDto or an Error.
    */
-  async createActionV2(
-    input: cashierBackend.CreateActionInput,
-  ): Promise<Result<cashierBackend.ActionDto, Error>> {
+  async createActionV2(input: {
+    linkId: string;
+    actionType: ActionType;
+  }): Promise<Result<cashierBackend.ActionDto, Error>> {
     const actor = this.#getActor();
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
 
-    const response = await actor.create_action_v2(input);
+    const response = await actor.create_action_v2({
+      link_id: input.linkId,
+      action_type: input.actionType.toBackendType(),
+    });
 
     return responseToResult(response)
       .map((res) => res)

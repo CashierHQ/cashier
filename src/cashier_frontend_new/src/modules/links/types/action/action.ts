@@ -25,7 +25,7 @@ class Action {
    * @param action : ActionDto from backend
    * @returns  Action instance
    */
-  static fromBackendType(action: ActionDto): Action {
+  static fromBackend(action: ActionDto): Action {
     const type = ActionType.fromBackendType(action.type);
 
     const state = ActionState.fromBackendType(

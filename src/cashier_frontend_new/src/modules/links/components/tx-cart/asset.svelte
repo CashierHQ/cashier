@@ -4,14 +4,18 @@
   import loadingGif from "$lib/assets/loading.gif";
   import { Check, X } from "lucide-svelte";
   import type { LinkStore } from "../../state/linkStore.svelte";
+  import type Action from "$modules/links/types/action/action";
+  import { ActionType } from "$modules/links/types/action/actionType";
 
   let {
     link,
+    action,
     isProcessing,
     successMessage,
     errorMessage,
   }: {
     link: LinkStore;
+    action: Action;
     isProcessing: boolean;
     successMessage: string | null;
     errorMessage: string | null;
@@ -20,7 +24,18 @@
 
 {#if link.action && link.action.intents.length > 0}
   <div>
-    <h5 class="text-sm font-medium mb-2">You send</h5>
+    {#if link.action}
+      {@const heading = (() => {
+        const t = link.action.type;
+        if (t === ActionType.CreateLink) return "You send";
+        if (t === ActionType.Withdraw || t === ActionType.Claim)
+          return "You receive";
+        return "You send";
+      })()}
+      <h5 class="text-sm font-medium mb-2">{heading}</h5>
+    {:else}
+      <h5 class="text-sm font-medium mb-2">You send</h5>
+    {/if}
 
     <div class="space-y-3">
       {#each link.getIntentProperties() as intent (intent.id)}

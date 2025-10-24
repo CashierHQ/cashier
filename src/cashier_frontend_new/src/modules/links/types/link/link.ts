@@ -12,9 +12,7 @@ export class Link {
   link_type: LinkType;
   create_at: bigint;
   state: LinkState;
-
   link_use_action_max_count: bigint;
-
   link_use_action_counter: bigint;
 
   constructor(
