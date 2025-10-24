@@ -46,7 +46,6 @@
             {#if isProcessing}
               <img src={loadingGif} alt="loading" class="w-6 h-6" />
             {/if}
-
             {#if successMessage}
               <div class="text-green-600">
                 <Check class="w-4 h-4" />
