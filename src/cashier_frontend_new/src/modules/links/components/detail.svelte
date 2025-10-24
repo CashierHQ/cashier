@@ -79,7 +79,6 @@
       if (actionRes.isErr()) {
         throw actionRes.error;
       }
-
       linkQueryState.refresh();
     } catch (err) {
       console.error("end link failed", err);
@@ -89,6 +88,7 @@
   const withdraw = async () => {
     try {
       await link.goNext();
+      linkQueryState.refresh();
     } catch (err) {
       console.error("withdraw failed", err);
     }

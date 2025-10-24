@@ -37,57 +37,59 @@
       return;
     }
 
-    try {
-      isProcessing = true;
-      errorMessage = null;
-      successMessage = null;
+    // Start processing only after basic checks passed
+    isProcessing = true;
+    errorMessage = null;
+    successMessage = null;
 
+    try {
       if (!authState.account?.owner) {
         errorMessage = "You are not authorized to confirm this action.";
         return;
       }
+
       const requests = link.action.icrc_112_requests ?? [];
 
+      // Only attempt ICRC-112 batch if requests exist
       if (requests.length > 0) {
-        const icrc112Service = new Icrc112Service(signer);
-        const batchResult = await icrc112Service.sendBatchRequest(
-          requests,
-          authState.account.owner,
-          CASHIER_BACKEND_CANISTER_ID,
-        );
+        try {
+          const icrc112Service = new Icrc112Service(signer);
+          const batchResult = await icrc112Service.sendBatchRequest(
+            requests,
+            authState.account.owner,
+            CASHIER_BACKEND_CANISTER_ID,
+          );
 
-        if (batchResult.isOk()) {
-          console.log("Batch request successful:", batchResult.unwrap());
-          successMessage = "ICRC-112 batch request sent successfully";
-          // proceed to next step
-          try {
-            await goNext();
-          } catch (e) {
-            console.error("goNext threw an error:", e);
-            errorMessage = e instanceof Error ? e.message : String(e);
+          if (batchResult.isOk()) {
+            console.log("Batch request successful:", batchResult.unwrap());
+            successMessage = "ICRC-112 batch request sent successfully";
+          } else {
+            const err = batchResult.unwrapErr();
+            console.error("Batch request failed:", err);
+            errorMessage = `Batch request failed: ${err?.message ?? String(err)}`;
           }
-          return;
-        } else {
-          const err = batchResult.unwrapErr();
-          console.error("Batch request failed:", err);
-          errorMessage = `Batch request failed: ${err?.message ?? String(err)}`;
-          return;
+        } catch (err) {
+          console.error("Error sending ICRC-112 batch request:", err);
+          errorMessage = `Error sending ICRC-112 batch request: ${err instanceof Error ? err.message : String(err)}`;
+        }
+        finally{
+          isProcessing = false;
+
         }
       }
 
-      // No ICRC-112 requests: continue to next step without error
-      try {
+      // Always attempt to proceed to the next step regardless of whether ICRC-112 ran or failed
+    try {
         await goNext();
-        return;
       } catch (e) {
         console.error("goNext threw an error:", e);
-        errorMessage = e instanceof Error ? e.message : String(e);
+        const msg = e instanceof Error ? e.message : String(e);
+        // append goNext error to any existing errorMessage
+        errorMessage = errorMessage ? `${errorMessage}; goNext error: ${msg}` : msg;
       }
     } catch (error) {
       console.error("Error processing action:", error);
       errorMessage = `Error processing action: ${error instanceof Error ? error.message : String(error)}`;
-    } finally {
-      isProcessing = false;
     }
   }
 
