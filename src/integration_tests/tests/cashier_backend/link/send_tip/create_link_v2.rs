@@ -29,15 +29,12 @@ async fn it_should_error_create_icp_token_tip_linkv2_if_caller_anonymous() {
             .unwrap();
 
         // Act
-        let result = be_client.create_link_v2(input).await;
+        let result = be_client.user_create_link_v2(input).await;
 
         // Assert
         assert!(result.is_err());
         if let Err(CanisterClientError::PocketIcTestError(err)) = result {
-            assert!(
-                err.reject_message
-                    .contains("Anonymous caller is not allowed")
-            );
+            assert!(err.reject_message.contains("AnonimousUserNotAllowed"));
         } else {
             panic!("Expected PocketIcTestError, got {:?}", result);
         }

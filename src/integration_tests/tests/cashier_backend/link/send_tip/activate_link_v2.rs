@@ -26,15 +26,12 @@ async fn it_should_error_activate_icp_token_tip_linkv2_if_caller_anonymous() {
 
         // Act: Activate the link
         let link_id = create_link_result.link.id.clone();
-        let activate_link_result = cashier_backend_client.activate_link_v2(&link_id).await;
+        let activate_link_result = cashier_backend_client.user_activate_link_v2(&link_id).await;
 
         // Assert: Activated link result
         assert!(activate_link_result.is_err());
         if let Err(CanisterClientError::PocketIcTestError(err)) = activate_link_result {
-            assert!(
-                err.reject_message
-                    .contains("Anonymous caller is not allowed")
-            );
+            assert!(err.reject_message.contains("AnonimousUserNotAllowed"));
         } else {
             panic!("Expected PocketIcTestError, got {:?}", activate_link_result);
         }
@@ -58,7 +55,7 @@ async fn it_should_error_activate_icp_token_tip_linkv2_if_caller_not_creator() {
 
         // Act: Activate the link
         let link_id = create_link_result.link.id.clone();
-        let activate_link_result = cashier_backend_client.activate_link_v2(&link_id).await;
+        let activate_link_result = cashier_backend_client.user_activate_link_v2(&link_id).await;
 
         // Assert: Activated link result
         assert!(activate_link_result.is_ok());
