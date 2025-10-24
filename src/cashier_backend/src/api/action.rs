@@ -14,9 +14,11 @@ use ic_cdk::update;
 use log::{debug, info};
 
 #[update(guard = "is_not_anonymous")]
-pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<String, CanisterError> {
-    info!("[trigger_transaction]");
-    debug!("[trigger_transaction] Input: {:?}", input);
+pub async fn user_trigger_transaction(
+    input: TriggerTransactionInput,
+) -> Result<String, CanisterError> {
+    info!("[user_trigger_transaction]");
+    debug!("[user_trigger_transaction] Input: {:?}", input);
 
     let caller = msg_caller();
     let ic_env = RealIcEnvironment::new();
@@ -45,7 +47,7 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
     )?;
 
     info!(
-        "[trigger_transaction] Request lock key: {:?}",
+        "[user_trigger_transaction] Request lock key: {:?}",
         request_lock_key
     );
 
@@ -62,7 +64,7 @@ pub async fn trigger_transaction(input: TriggerTransactionInput) -> Result<Strin
     // Drop lock regardless of success or failure
     let _ = request_lock_service.drop(&request_lock_key);
 
-    info!("[trigger_transaction] Request lock dropped");
+    info!("[user_trigger_transaction] Request lock dropped");
 
     result
 }
