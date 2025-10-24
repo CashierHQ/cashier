@@ -136,6 +136,8 @@ export enum ACTION_TYPE {
   CREATE_LINK = "CreateLink",
   WITHDRAW = "Withdraw",
   USE = "Use",
+  CLAIM = "Claim",
+  PAY = "Pay",
 }
 
 export enum LINK_INTENT_ASSET_LABEL {

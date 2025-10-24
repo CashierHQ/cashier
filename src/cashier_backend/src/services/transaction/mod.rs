@@ -193,7 +193,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> TransactionService<E, R> {
             return Ok(Some(vec![vec![icrc_112_request]]));
         }
 
-        // For consistency, use topological sort regardless of number of transactions
+        // For consistency, use Kahn's topological sort regardless of number of transactions
         let mut icrc_112_requests: Vec<Vec<Icrc112Request>> = Vec::new();
         let mut processed_tx_ids: HashSet<String> = HashSet::new();
         let tx_clone = transactions.to_owned();

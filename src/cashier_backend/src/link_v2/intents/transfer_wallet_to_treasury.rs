@@ -2,14 +2,12 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::constant::FEE_TREASURY_PRINCIPAL;
-use crate::services::adapter::IntentAdapterImpl;
 use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,
     repository::{
         common::{Asset, Chain, Wallet},
         intent::v1::{Intent, IntentState, IntentTask, IntentType},
-        transaction::v1::Transaction,
     },
 };
 use icrc_ledger_types::icrc1::account::Account;
@@ -17,15 +15,11 @@ use uuid::Uuid;
 
 pub struct TransferWalletToTreasuryIntent {
     pub intent: Intent,
-    pub transactions: Vec<Transaction>,
 }
 
 impl TransferWalletToTreasuryIntent {
-    pub fn new(intent: Intent, transactions: Vec<Transaction>) -> Self {
-        Self {
-            intent,
-            transactions,
-        }
+    pub fn new(intent: Intent) -> Self {
+        Self { intent }
     }
 
     /// Creates a new TransferWalletToTreasuryIntent.
@@ -81,11 +75,6 @@ impl TransferWalletToTreasuryIntent {
         transfer_from_data.spender = spender_wallet;
         intent.r#type = IntentType::TransferFrom(transfer_from_data);
 
-        // generate the blockchain transactions
-        let intent_adapter = IntentAdapterImpl::new();
-        let transactions =
-            intent_adapter.intent_to_transactions(&intent.chain, created_at_ts, &intent)?;
-
-        Ok(Self::new(intent, transactions))
+        Ok(Self::new(intent))
     }
 }
