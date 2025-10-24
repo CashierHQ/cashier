@@ -275,7 +275,11 @@ const feeCalculation = calculateFees(assets);
 const formValidation = validateForm(assets);
 
 // After (Single unified call)
-const result = ValidationService.validateAssetsWithFees(assets, tokenMap, options);
+const result = ValidationService.validateAssetsWithFees(
+  assets,
+  tokenMap,
+  options,
+);
 ```
 
 ## Testing Scenarios

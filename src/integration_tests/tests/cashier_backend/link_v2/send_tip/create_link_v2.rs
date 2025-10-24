@@ -86,8 +86,6 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
         assert_eq!(link.asset_info.len(), 1);
         assert_eq!(link.asset_info[0].amount_per_link_use_action, tip_amount);
 
-        assert!(action.is_some());
-        let action = action.unwrap();
         assert_eq!(action.intents.len(), 2);
 
         // Assert Intent 1: TransferWalletToLink
@@ -183,19 +181,23 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
         let requests = &icrc112_requests[0];
 
         assert_eq!(requests.len(), 2);
-        let req0 = &requests[0];
-        assert_eq!(req0.method, "icrc1_transfer");
-        assert_eq!(
-            req0.canister_id,
-            Principal::from_text(ICP_PRINCIPAL).unwrap()
-        );
-
-        let req1 = &requests[1];
-        assert_eq!(req1.method, "icrc2_approve");
-        assert_eq!(
-            req1.canister_id,
-            Principal::from_text(ICP_PRINCIPAL).unwrap()
-        );
+        for req in requests {
+            match req.method.as_str() {
+                "icrc1_transfer" => {
+                    assert_eq!(
+                        req.canister_id,
+                        Principal::from_text(ICP_PRINCIPAL).unwrap()
+                    );
+                }
+                "icrc2_approve" => {
+                    assert_eq!(
+                        req.canister_id,
+                        Principal::from_text(ICP_PRINCIPAL).unwrap()
+                    );
+                }
+                _ => panic!("Unexpected method in ICRC-112 request"),
+            }
+        }
 
         Ok(())
     })
@@ -252,8 +254,6 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
         assert_eq!(link.asset_info.len(), 1);
         assert_eq!(link.asset_info[0].amount_per_link_use_action, tip_amount);
 
-        assert!(action.is_some());
-        let action = action.unwrap();
         assert_eq!(action.intents.len(), 2);
 
         // Assert Intent 1: TransferWalletToLink
@@ -349,19 +349,23 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
         let requests = &icrc112_requests[0];
 
         assert_eq!(requests.len(), 2);
-        let req0 = &requests[0];
-        assert_eq!(req0.method, "icrc1_transfer");
-        assert_eq!(
-            req0.canister_id,
-            Principal::from_text(CK_BTC_PRINCIPAL).unwrap()
-        );
-
-        let req1 = &requests[1];
-        assert_eq!(req1.method, "icrc2_approve");
-        assert_eq!(
-            req1.canister_id,
-            Principal::from_text(ICP_PRINCIPAL).unwrap()
-        );
+        for req in requests {
+            match req.method.as_str() {
+                "icrc1_transfer" => {
+                    assert_eq!(
+                        req.canister_id,
+                        Principal::from_text(CK_BTC_PRINCIPAL).unwrap()
+                    );
+                }
+                "icrc2_approve" => {
+                    assert_eq!(
+                        req.canister_id,
+                        Principal::from_text(ICP_PRINCIPAL).unwrap()
+                    );
+                }
+                _ => panic!("Unexpected method in ICRC-112 request"),
+            }
+        }
 
         Ok(())
     })

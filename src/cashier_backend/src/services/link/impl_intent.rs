@@ -512,6 +512,12 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
 
                 intents.push(intent);
             }
+            _ => {
+                return Err(CanisterError::HandleLogicError(format!(
+                    "No intent config for link_type: {:?} and action_type: {:?}",
+                    link.link_type, action_type
+                )));
+            }
         }
 
         Ok(Some(intents))

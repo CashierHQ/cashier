@@ -3,8 +3,12 @@
 
 use crate::api::state::get_state;
 use cashier_backend_types::{
-    dto::link::{CreateLinkInput, GetLinkResp, LinkDto},
+    dto::{
+        action::{ActionDto, CreateActionInput},
+        link::{CreateLinkInput, LinkDto},
+    },
     error::CanisterError,
+    link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
 };
 use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
 use ic_cdk::{api::msg_caller, update};
@@ -17,7 +21,7 @@ use log::{debug, info};
 /// * `Ok(GetLinkResp)` - The created link data
 /// * `Err(CanisterError)` - If link creation fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
-async fn create_link_v2(input: CreateLinkInput) -> Result<GetLinkResp, CanisterError> {
+async fn create_link_v2(input: CreateLinkInput) -> Result<CreateLinkDto, CanisterError> {
     info!("[create_link_v2]");
     debug!("[create_link_v2] input: {input:?}");
 
@@ -29,21 +33,53 @@ async fn create_link_v2(input: CreateLinkInput) -> Result<GetLinkResp, CanisterE
         .await
 }
 
-/// Activate a link v2, transitioning it from CREATED to ACTIVE state.
-/// Only the link creator can activate the link.
+/// Disables an existing link V2
 /// # Arguments
-/// * `link_id` - The ID of the link to activate
+/// * `link_id` - The ID of the link to disable
 /// # Returns
-/// * `Ok(LinkDto)` - The activated link data
-/// * `Err(CanisterError)` - If activation fails or unauthorized
+/// * `Ok(LinkDto)` - The disabled link data
+/// * `Err(CanisterError)` - If disabling fails or unauthorized
 #[update(guard = "is_not_anonymous")]
-async fn activate_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
-    info!("[activate_link_v2]");
-    debug!("[activate_link_v2] link_id: {link_id}");
+async fn disable_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
+    info!("[disable_link_v2]");
+    debug!("[disable_link_v2] link_id: {link_id}");
+
+    let mut link_v2_service = get_state().link_v2_service;
+    link_v2_service.disable_link(msg_caller(), link_id).await
+}
+
+/// Creates a new action V2.
+/// # Arguments
+/// * `input` - Action creation data
+/// # Returns
+/// * `Ok(ActionDto)` - The created action data
+/// * `Err(CanisterError)` - If action creation fails or validation errors occur
+#[update(guard = "is_not_anonymous")]
+async fn create_action_v2(input: CreateActionInput) -> Result<ActionDto, CanisterError> {
+    info!("[create_action_v2]");
+    debug!("[create_action_v2] input: {input:?}");
 
     let mut link_v2_service = get_state().link_v2_service;
     let canister_id = get_state().env.id();
     link_v2_service
-        .activate_link(msg_caller(), link_id, canister_id)
+        .create_action(msg_caller(), canister_id, &input.link_id, input.action_type)
+        .await
+}
+
+/// Processes a created action V2.
+/// # Arguments
+/// * `input` - Action processing data
+/// # Returns
+/// * `Ok(ProcessActionDto)` - The processed action data
+/// * `Err(CanisterError)` - If action processing fails or validation errors occur
+#[update(guard = "is_not_anonymous")]
+async fn process_action_v2(input: ProcessActionV2Input) -> Result<ProcessActionDto, CanisterError> {
+    info!("[process_action_v2]");
+    debug!("[process_action_v2] input: {input:?}");
+
+    let mut link_v2_service = get_state().link_v2_service;
+    let canister_id = get_state().env.id();
+    link_v2_service
+        .process_action(msg_caller(), canister_id, &input.action_id)
         .await
 }

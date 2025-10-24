@@ -1,7 +1,7 @@
 // This is an experimental feature to generate Rust binding from Candid.
 // You may want to manually adjust some of the types.
 use candid::{self, CandidType, Deserialize, Principal};
-use cashier_backend_types::error::CanisterError;
+use cashier_backend_types::{error::CanisterError, repository::common::Wallet};
 use ic_cdk::call::{Call, CandidDecodeFailed};
 
 pub type SubAccount = serde_bytes::ByteBuf;
@@ -11,6 +11,30 @@ pub struct Account {
     pub owner: Principal,
     pub subaccount: Option<SubAccount>,
 }
+
+impl From<Principal> for Account {
+    fn from(owner: Principal) -> Self {
+        Account {
+            owner,
+            subaccount: None,
+        }
+    }
+}
+
+impl From<Wallet> for Account {
+    fn from(wallet: Wallet) -> Self {
+        match wallet {
+            Wallet::IC {
+                address,
+                subaccount,
+            } => Account {
+                owner: address,
+                subaccount: subaccount.map(|s| serde_bytes::ByteBuf::from(s.to_vec())),
+            },
+        }
+    }
+}
+
 pub type Icrc1Tokens = candid::Nat;
 
 pub type Icrc1Timestamp = u64;
