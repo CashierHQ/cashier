@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite dev --port 3000 --mode local_dev",
     "dev:dev": "vite dev --port 3000 --mode dev",
-    "build:local_dev": "vite build --mode local_dev",
+    "build": "vite build --mode local_dev",
     "build:dev": "vite build --mode dev",
     "build:staging": "vite build --mode staging",
     "build:production": "vite build --mode production",

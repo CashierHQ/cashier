@@ -1,0 +1,120 @@
+name: Frontend Deployment
+on:
+    # For main and staging branches, only trigger on closed PRs
+    pull_request:
+        paths:
+            - "src/cashier_frontend/**"
+        branches:
+            - main
+            - staging
+            - dev
+        types:
+            - closed
+    push:
+        paths:
+            - "src/cashier_frontend/**"
+        branches-ignore:
+            - main
+            - staging
+
+# Permissions needed for the GITHUB_TOKEN
+permissions:
+    actions: write # This allows the workflow to delete workflow runs
+    contents: read # Default permission to read the repository contents
+
+jobs:
+    setup_environment:
+        runs-on: ubuntu-latest
+        outputs:
+            environment: ${{ steps.set-env.outputs.environment }}
+        steps:
+            - name: Set deployment environment
+              id: set-env
+              run: |
+                  # For pull requests, use base_ref, for pushes use ref_name
+                  if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+                    TARGET_BRANCH="${{ github.base_ref }}"
+                  else
+                    TARGET_BRANCH="${{ github.ref_name }}"
+                  fi
+
+                  echo "Detected branch: $TARGET_BRANCH"
+
+                  if [[ "$TARGET_BRANCH" == "main" ]]; then
+                    echo "environment=production" >> $GITHUB_OUTPUT
+                  elif [[ "$TARGET_BRANCH" == "staging" ]]; then
+                    echo "environment=staging" >> $GITHUB_OUTPUT
+                  else
+                    # Any other branch will deploy to dev environment
+                    echo "environment=dev" >> $GITHUB_OUTPUT
+                  fi
+
+    build_and_deploy:
+        runs-on: ubuntu-latest
+        needs: setup_environment
+        environment: ${{ needs.setup_environment.outputs.environment }}
+
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: "22"
+
+            - name: Install dfx
+              uses: dfinity/setup-dfx@main
+
+            - name: Confirm successful installation
+              run: dfx --version
+
+            - name: Install Just command runner
+              uses: extractions/setup-just@v1
+
+            - name: Create private key file
+              run: |
+                  echo "${{ secrets.DEPLOYER }}" > private_key.pem
+
+            # DANGEROUS: This is a plaintext identity import
+            - name: Import identity
+              run: dfx identity import deployer private_key.pem --storage-mode=plaintext
+            # DANGEROUS: Do not echo the private key to the console
+
+            - name: Get cashier dev address
+              run: |
+                  dfx identity use deployer
+                  dfx identity get-principal
+
+            - name: Deploy to ${{ needs.setup_environment.outputs.environment }} environment
+              env:
+                  VITE_IC_EXPLORER_BASE_URL: ${{ vars.VITE_IC_EXPLORER_BASE_URL }}
+                  VITE_BACKEND_CANISTER_ID: ${{ vars.VITE_BACKEND_CANISTER_ID }}
+                  VITE_TOKEN_STORAGE_CANISTER_ID: ${{ vars.VITE_TOKEN_STORAGE_CANISTER_ID }}
+                  DFX_WARNING: -mainnet_plaintext_identity
+                  ENVIRONMENT: ${{ needs.setup_environment.outputs.environment }}
+              run: |
+                  # Set environment-specific network
+                  if [[ "$ENVIRONMENT" == "production" ]]; then
+                    NETWORK="ic"
+                    ENV_FILE=".env.production"
+                  elif [[ "$ENVIRONMENT" == "staging" ]]; then
+                    NETWORK="staging"
+                    ENV_FILE=".env.staging"
+                  else
+                    NETWORK="dev"
+                    ENV_FILE=".env.dev"
+                  fi
+
+                  # Create environment file with the correct values
+                  echo "VITE_IC_EXPLORER_BASE_URL=${VITE_IC_EXPLORER_BASE_URL}" > src/cashier_frontend/${ENV_FILE}
+                  echo "VITE_BACKEND_CANISTER_ID=${VITE_BACKEND_CANISTER_ID}" >> src/cashier_frontend/${ENV_FILE}
+                  echo "VITE_TOKEN_STORAGE_CANISTER_ID=${VITE_TOKEN_STORAGE_CANISTER_ID}" >> src/cashier_frontend/${ENV_FILE}
+                  echo "VITE_FEATURE_FLAGS_ENABLE_SWAP=true" >> src/cashier_frontend/${ENV_FILE}
+                  echo "VITE_ENV=${ENVIRONMENT}" >> src/cashier_frontend/${ENV_FILE}
+
+                  echo "Created ${ENV_FILE} with values:"
+                  cat src/cashier_frontend/${ENV_FILE}
+
+                  just build_frontend "$ENVIRONMENT"
+                  dfx deploy cashier_frontend --network ${NETWORK}
