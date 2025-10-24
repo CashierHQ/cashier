@@ -60,7 +60,7 @@ class CanisterBackendService {
    */
   async createLinkV2(
     input: CreateLinkData,
-  ): Promise<Result<cashierBackend.GetLinkResp, Error>> {
+  ): Promise<Result<cashierBackend.CreateLinkDto, Error>> {
     const actor = this.#getActor();
     if (!actor) {
       return Err(new Error("User not logged in"));
@@ -80,11 +80,35 @@ class CanisterBackendService {
   }
 
   /**
-   * Activate a link v2 by id. Only the link owner may call this via an authenticated actor.
-   * @param id The ID of the link to activate.
-   * @returns A Result containing LinkDto or an Error.
+   *  Process an action by its ID. This method calls the canister's `process_action_v2`
+   *  @param actionId The ID of the action to process.
+   *  @returns A Result containing LinkDto or an Error.
    */
-  async activateLinkV2(
+  async processActionV2(
+    actionId: string,
+  ): Promise<Result<cashierBackend.CreateLinkDto, Error>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    console.log("Processing action with ID:", actionId);
+
+    const response = await actor.process_action_v2({
+      action_id: actionId,
+    });
+
+    return responseToResult(response)
+      .map((res) => res)
+      .mapErr((err) => new Error(JSON.stringify(err)));
+  }
+
+  /**
+   * Disable an existing link V2 by its id.
+   * @param id The ID of the link to disable
+   * @returns A Result containing the disabled LinkDto or an Error.
+   */
+  async disableLinkV2(
     id: string,
   ): Promise<Result<cashierBackend.LinkDto, Error>> {
     const actor = this.#getActor();
@@ -92,7 +116,27 @@ class CanisterBackendService {
       return Err(new Error("User not logged in"));
     }
 
-    const response = await actor.activate_link_v2(id);
+    const response = await actor.disable_link_v2(id);
+
+    return responseToResult(response)
+      .map((res) => res)
+      .mapErr((err) => new Error(JSON.stringify(err)));
+  }
+
+  /**
+   * Create a new action using the v2 API format.
+   * @param input The CreateActionInput containing action creation details.
+   * @returns A Result containing ActionDto or an Error.
+   */
+  async createActionV2(
+    input: cashierBackend.CreateActionInput,
+  ): Promise<Result<cashierBackend.ActionDto, Error>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const response = await actor.create_action_v2(input);
 
     return responseToResult(response)
       .map((res) => res)
