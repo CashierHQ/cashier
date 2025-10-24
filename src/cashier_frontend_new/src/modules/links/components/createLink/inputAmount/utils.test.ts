@@ -1,8 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  sanitizeInput,
-  parseDisplayNumber,
-} from "./utils";
+import { sanitizeInput, parseDisplayNumber } from "./utils";
 import { computeAmountFromInput } from "./utils";
 
 describe("inputAmount utils", () => {
