@@ -2,8 +2,8 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-    import { parseBalanceUnits } from "$modules/shared/utils/converter";
-    import { formatNumber } from "$modules/shared/utils/formatNumber";
+  import { parseBalanceUnits } from "$modules/shared/utils/converter";
+  import { formatNumber } from "$modules/shared/utils/formatNumber";
   import {
     sanitizeInput,
     parseDisplayNumber,
@@ -72,10 +72,10 @@
     }
 
     value = computeAmountFromInput({
-        num: parsed,
-        mode,
-        priceUsd,
-        decimals,
+      num: parsed,
+      mode,
+      priceUsd,
+      decimals,
     });
   }
 

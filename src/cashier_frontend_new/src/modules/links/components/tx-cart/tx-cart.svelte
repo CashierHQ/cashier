@@ -46,13 +46,12 @@
         errorMessage = "You are not authorized to confirm this action.";
         return;
       }
-      if (
-        link.action.icrc_112_requests &&
-        link.action.icrc_112_requests.length > 0
-      ) {
+      const requests = link.action.icrc_112_requests ?? [];
+
+      if (requests.length > 0) {
         const icrc112Service = new Icrc112Service(signer);
         const batchResult = await icrc112Service.sendBatchRequest(
-          link.action.icrc_112_requests,
+          requests,
           authState.account.owner,
           CASHIER_BACKEND_CANISTER_ID,
         );
@@ -60,14 +59,29 @@
         if (batchResult.isOk()) {
           console.log("Batch request successful:", batchResult.unwrap());
           successMessage = "ICRC-112 batch request sent successfully";
+          // proceed to next step
+          try {
+            await goNext();
+          } catch (e) {
+            console.error("goNext threw an error:", e);
+            errorMessage = e instanceof Error ? e.message : String(e);
+          }
           return;
         } else {
-          const error = batchResult.unwrapErr();
-          console.error("Batch request failed:", error);
-          errorMessage = `Batch request failed: ${error.message}`;
+          const err = batchResult.unwrapErr();
+          console.error("Batch request failed:", err);
+          errorMessage = `Batch request failed: ${err?.message ?? String(err)}`;
+          return;
         }
-      } else {
-        errorMessage = "No ICRC-112 requests available in this action";
+      }
+
+      // No ICRC-112 requests: continue to next step without error
+      try {
+        await goNext();
+        return;
+      } catch (e) {
+        console.error("goNext threw an error:", e);
+        errorMessage = e instanceof Error ? e.message : String(e);
       }
     } catch (error) {
       console.error("Error processing action:", error);
@@ -130,7 +144,13 @@
           </div>
         {/if}
 
-        <Asset {link} {isProcessing} {successMessage} {errorMessage} />
+        <Asset
+          {link}
+          action={link.action}
+          {isProcessing}
+          {successMessage}
+          {errorMessage}
+        />
 
         <Fee />
       </div>

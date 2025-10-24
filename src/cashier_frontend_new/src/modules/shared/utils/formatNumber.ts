@@ -79,17 +79,17 @@ const formatSmallNumber = (num: number): string => {
     exponent += 1;
   }
 
-    // when exponent is large enough, use subscript notation (use >= 7)
-    if (exponent >= 7) {
-      const subscript = numberToSubscript(exponent-1);
-      // format adjusted number to max 4 decimal places and trim trailing zeros
-      const adjustedStr = absNum.toFixed(4).replace(/\.?0+$/, "");
-      // remove decimal point so digits follow the subscript directly
-      const digits = adjustedStr.replace(".", "");
-      return `${sign}0.0${subscript}${digits}`;
-    }
+  // when exponent is large enough, use subscript notation (use >= 7)
+  if (exponent >= 7) {
+    const subscript = numberToSubscript(exponent - 1);
+    // format adjusted number to max 4 decimal places and trim trailing zeros
+    const adjustedStr = absNum.toFixed(4).replace(/\.?0+$/, "");
+    // remove decimal point so digits follow the subscript directly
+    const digits = adjustedStr.replace(".", "");
+    return `${sign}0.0${subscript}${digits}`;
+  }
 
-    // otherwise, show the original number with leading zeros (enough places)
-    // exponent ensures we include necessary leading zeros after the decimal
-    return `${sign}${num.toFixed(exponent + 1).replace(/\.?0+$/, "")}`;
+  // otherwise, show the original number with leading zeros (enough places)
+  // exponent ensures we include necessary leading zeros after the decimal
+  return `${sign}${num.toFixed(exponent + 1).replace(/\.?0+$/, "")}`;
 };

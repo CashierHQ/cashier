@@ -1,7 +1,7 @@
 <script lang="ts">
   import { linkQuery } from "../state/link.svelte";
+  import { LinkStore } from "../state/linkStore.svelte";
   import { ActionType } from "../types/action/actionType";
-  import { cashierBackendService } from "../services/cashierBackend";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { ChevronLeft } from "lucide-svelte";
   import { statusBadge } from "../utils/statusBadge";
@@ -9,6 +9,9 @@
   import { resolve } from "$app/paths";
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
+  import { cashierBackendService } from "../services/cashierBackend";
+  import TxCart from "./tx-cart/tx-cart.svelte";
+  import { LinkState } from "../types/link/linkState";
 
   // safely get asset address text (returns null if not available)
   const assetAddressToText = (asset: any) => {
@@ -30,14 +33,21 @@
 
   let showCopied: boolean = $state(false);
 
-  const {
-    id,
-  }: {
-    id: string;
-  } = $props();
+  let { id }: { id: string } = $props();
 
-  let link = linkQuery(id, ActionType.Withdraw);
-  console.log("link detail", link);
+  // query for link data (used for loading/refresh) and a local store for view-model
+  const linkQueryState = linkQuery(id, ActionType.Withdraw);
+  let link = $state(new LinkStore());
+
+  $effect(() => {
+    if (linkQueryState?.data?.link) {
+      console.log("Link data loaded:", linkQueryState?.data?.link);
+        link.from(linkQueryState?.data?.link, linkQueryState?.data?.action);
+
+    }
+    
+  });
+
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -47,27 +57,49 @@
       console.error("copy failed", err);
     }
   };
+
   const endLink = async () => {
     try {
-      if (!link || !link.data) return;
-      const id = link.data.link.id;
-      // call service with plain object; service will handle typing
-      await cashierBackendService.updateLink({
-        id,
-        goto: { Back: null },
-      } as any);
-      // managedState exposes refresh()
-      link.refresh();
+      if (!linkQueryState || !linkQueryState.data) return;
+      await link.goNext();
+      linkQueryState.refresh();
     } catch (err) {
       console.error("end link failed", err);
     }
   };
+
+  const createWithdrawAction = async () => {
+    try {
+      if (!link.id) throw new Error("Link ID is missing");
+      const actionRes = await cashierBackendService.createActionV2({
+        linkId: link.id,
+        actionType: ActionType.Withdraw,
+      });
+
+      if (actionRes.isErr()) {
+        throw actionRes.error;
+      }
+
+      linkQueryState.refresh();
+    } catch (err) {
+      console.error("end link failed", err);
+    }
+  };
+
+  const withdraw = async () => {
+    try {
+      await link.goNext();
+    } catch (err) {
+      console.error("withdraw failed", err);
+    }
+  };
+
 </script>
 
-{#if link.isLoading}
+{#if linkQueryState.isLoading}
   Loading...
 {/if}
-{#if link?.data?.link}
+{#if link.link}
   <div class="px-4 py-4">
     <div class="flex items-center gap-3 mb-4">
       <button
@@ -80,7 +112,7 @@
       </button>
 
       <h3 class="text-lg font-semibold flex-1 text-center">
-        {link.data.link.title}
+        {link.link.title}
       </h3>
 
       <!-- placeholder to keep title centered (matches back button width) -->
@@ -94,15 +126,15 @@
         <div class="flex items-center justify-between">
           <div class="text-xs text-muted-foreground">Status</div>
           <div class="font-medium">
-            <span class={`${statusBadge(link.data.link.state).classes}`}>
-              {statusBadge(link.data.link.state).text}
+            <span class={`${statusBadge(link.link.state).classes}`}>
+              {statusBadge(link.link.state).text}
             </span>
           </div>
         </div>
 
         <div class="flex items-center justify-between">
           <div class="text-xs text-muted-foreground">Type</div>
-          <div class="font-medium">{link.data.link.link_type.id}</div>
+          <div class="font-medium">{link.link.link_type.id}</div>
         </div>
 
         <div class="flex items-center justify-between">
@@ -113,9 +145,9 @@
         <div class="flex items-center justify-between">
           <div class="text-xs text-muted-foreground">User claims</div>
           <div class="font-medium">
-            {#if link.data.link.asset_info && link.data.link.asset_info.length > 0}
+            {#if link.link.asset_info && link.link.asset_info.length > 0}
               <div class="flex gap-2 flex-wrap">
-                {#each link.data.link.asset_info as assetInfo (assetInfo.label + String(assetInfo.amount_per_link_use_action))}
+                {#each link.link.asset_info as assetInfo (assetInfo.label + String(assetInfo.amount_per_link_use_action))}
                   <div class="inline-flex items-center text-sm gap-2">
                     <div class="text-sm">
                       {#if assetAddressToText(assetInfo.asset)}
@@ -151,7 +183,7 @@
         <div class="flex items-center justify-between">
           <div class="text-xs text-muted-foreground">Max use</div>
           <div class="font-medium">
-            {String(link.data.link.link_use_action_max_count)}
+            {String(link.link.link_use_action_max_count)}
           </div>
         </div>
       </div>
@@ -164,8 +196,8 @@
         <div class="flex items-center justify-between">
           <div class="text-xs text-muted-foreground">Assets in link</div>
           <div class="font-medium">
-            {#if link.data.link.asset_info && link.data.link.asset_info.length > 0}
-              {link.data.link.asset_info[0].label}
+            {#if link.link.asset_info && link.link.asset_info.length > 0}
+              {link.link.asset_info[0].label}
             {:else}
               Empty
             {/if}
@@ -175,14 +207,14 @@
         <div class="flex items-center justify-between">
           <div class="text-xs text-muted-foreground">Used</div>
           <div class="font-medium">
-            {String(link.data.link.link_use_action_counter)}
+            {String(link.link.link_use_action_counter)}
           </div>
         </div>
       </div>
     </div>
 
     <div class="mb-20">
-      {#if link.data.link.state?.id === "ACTIVE"}
+      {#if link.link.state === LinkState.ACTIVE}
         <Button
           variant="outline"
           onclick={endLink}
@@ -190,14 +222,27 @@
         >
           End link
         </Button>
+        <Button
+          id="copy-link-button"
+          onclick={copyLink}
+          class="w-full h-11 bg-emerald-600 text-white rounded-full cursor-pointer hover:bg-emerald-700 hover:shadow-md hover:font-semibold transition transform hover:-translate-y-0.5"
+        >
+          {showCopied ? "Copied" : "Copy link"}
+        </Button>
       {/if}
-      <Button
-        id="copy-link-button"
-        onclick={copyLink}
-        class="w-full h-11 bg-emerald-600 text-white rounded-full cursor-pointer hover:bg-emerald-700 hover:shadow-md hover:font-semibold transition transform hover:-translate-y-0.5"
-      >
-        {showCopied ? "Copied" : "Copy link"}
-      </Button>
+      {#if link.link.state === LinkState.INACTIVE}
+        <Button
+          variant="outline"
+          onclick={createWithdrawAction}
+          class="w-full h-11 bg-emerald-600 text-white rounded-full cursor-pointer hover:bg-emerald-700 hover:shadow-md hover:font-semibold transition transform hover:-translate-y-0.5"
+        >
+          Withdraw
+        </Button>
+      {/if}
     </div>
   </div>
+{/if}
+
+{#if link.link?.state !== LinkState.INACTIVE_ENDED}
+<TxCart {link} goNext={withdraw}/>
 {/if}

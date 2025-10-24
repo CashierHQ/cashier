@@ -44,7 +44,7 @@ describe("Action.fromBackendType", () => {
       state: { Created: null },
     };
 
-    const action = Action.fromBackendType(backend);
+    const action = Action.fromBackend(backend);
 
     expect(action.id).toBe("a1");
     expect(action.creator?.toText()).toBe(principal.toText());
