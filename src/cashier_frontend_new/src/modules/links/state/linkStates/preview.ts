@@ -6,7 +6,6 @@ import type { LinkStore } from "../linkStore.svelte";
 import { AddAssetState } from "./addAsset";
 import { LinkCreatedState } from "./created";
 import Action from "../../types/action/action";
-import { fromNullable } from "@dfinity/utils";
 
 // State when the user is previewing the link before creation
 export class PreviewState implements LinkState {
@@ -33,11 +32,7 @@ export class PreviewState implements LinkState {
 
     this.#link.state = new LinkCreatedState(this.#link);
     this.#link.id = result.value.link.id;
-
-    const action = fromNullable(result.value.action);
-    if (action) {
-      this.#link.action = Action.fromBackendType(action);
-    }
+    this.#link.action = Action.fromBackendType(result.value.action);
   }
 
   // Go back to the add asset state

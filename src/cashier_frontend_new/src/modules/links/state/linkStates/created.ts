@@ -17,7 +17,12 @@ export class LinkCreatedState implements LinkState {
     if (!this.#link.id) {
       throw new Error("Link ID is missing");
     }
-    const result = await cashierBackendService.activateLinkV2(this.#link.id);
+    if (!(this.#link.action && this.#link.action.id)) {
+      throw new Error("Action ID is missing");
+    }
+    const result = await cashierBackendService.processActionV2(
+      this.#link.action.id,
+    );
     if (result.isErr()) {
       throw new Error(`Failed to activate link: ${result.error}`);
     }

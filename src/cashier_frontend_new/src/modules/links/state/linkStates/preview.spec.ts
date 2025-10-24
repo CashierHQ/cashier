@@ -55,7 +55,7 @@ describe("PreviewState", () => {
 
     // Act: move to ADD_ASSET then set tip and move to PREVIEW
     await store.goNext();
-    store.tipLink = { asset: "aaaaa-aa", useAmount: 10 };
+    store.tipLink = { asset: "aaaaa-aa", useAmount: 10n };
     await store.goNext();
 
     // Assert precondition
@@ -75,7 +75,7 @@ describe("PreviewState", () => {
 
     // Act: get to PREVIEW
     await store.goNext();
-    store.tipLink = { asset: "aaaaa-aa", useAmount: 10 };
+    store.tipLink = { asset: "aaaaa-aa", useAmount: 10n };
     await store.goNext();
 
     // Ensure backend mock returns Ok
@@ -100,7 +100,7 @@ describe("PreviewState", () => {
 
     // Act: move to PREVIEW
     await store.goNext();
-    store.tipLink = { asset: "aaaaa-aa", useAmount: 10 };
+    store.tipLink = { asset: "aaaaa-aa", useAmount: 10n };
     await store.goNext();
 
     // Arrange: mock backend to return Err
