@@ -10,11 +10,11 @@ export interface ActionDto {
   'type' : ActionType,
   'state' : IntentState,
 }
-export type ActionType = { 'Pay' : null } |
-  { 'Use' : null } |
+export type ActionType = { 'Use' : null } |
   { 'Withdraw' : null } |
+  { 'Send' : null } |
   { 'CreateLink' : null } |
-  { 'Claim' : null };
+  { 'Receive' : null };
 export type Asset = { 'IC' : { 'address' : Principal } };
 export interface AssetInfoDto {
   'asset' : Asset,

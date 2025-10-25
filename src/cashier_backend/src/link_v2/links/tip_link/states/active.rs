@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::link_v2::{
-    links::{tip_link::actions::claim::ClaimAction, traits::LinkV2State},
+    links::{tip_link::actions::receive::ReceiveAction, traits::LinkV2State},
     transaction_manager::traits::TransactionManager,
 };
 use candid::Principal;
@@ -33,16 +33,16 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
         }
     }
 
-    /// Process a CLAIM action on the active tip link
+    /// Process a RECEIVE action on the active tip link
     /// # Arguments
-    /// * `link` - The tip link being claimed
-    /// * `action` - The claim action to be processed
+    /// * `link` - The tip link being received
+    /// * `action` - The receive action to be processed
     /// * `intents` - The intents associated with the action
     /// * `intent_txs_map` - A mapping of intent IDs to their associated transactions
     /// * `transaction_manager` - The transaction manager to handle the action processing
     /// # Returns
-    /// * `Result<LinkProcessActionResult, CanisterError>` - The result of processing the claim action
-    pub async fn claim(
+    /// * `Result<LinkProcessActionResult, CanisterError>` - The result of processing the receive action
+    pub async fn receive(
         link: &Link,
         action: Action,
         intents: Vec<Intent>,
@@ -86,10 +86,10 @@ impl<M: TransactionManager + 'static> LinkV2State for ActiveState<M> {
 
         Box::pin(async move {
             match action_type {
-                ActionType::Claim => {
-                    let claim_action = ClaimAction::create(&link, canister_id).await?;
+                ActionType::Receive => {
+                    let receive_action = ReceiveAction::create(&link, canister_id).await?;
                     let create_action_result = transaction_manager
-                        .create_action(claim_action.action, claim_action.intents)
+                        .create_action(receive_action.action, receive_action.intents)
                         .await?;
 
                     Ok(LinkCreateActionResult {
@@ -116,11 +116,11 @@ impl<M: TransactionManager + 'static> LinkV2State for ActiveState<M> {
 
         Box::pin(async move {
             match action.r#type {
-                ActionType::Claim => {
-                    let claim_result =
-                        Self::claim(&link, action, intents, intent_txs_map, transaction_manager)
+                ActionType::Receive => {
+                    let receive_result =
+                        Self::receive(&link, action, intents, intent_txs_map, transaction_manager)
                             .await?;
-                    Ok(claim_result)
+                    Ok(receive_result)
                 }
                 _ => Err(CanisterError::ValidationErrors(
                     "Unsupported action type for ActiveState".to_string(),
