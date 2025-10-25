@@ -5,7 +5,7 @@ use crate::api::state::get_state;
 use cashier_backend_types::{
     dto::{
         action::{ActionDto, CreateActionInput},
-        link::{CreateLinkInput, LinkDto},
+        link::{CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDto},
     },
     error::CanisterError,
     link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
@@ -95,7 +95,7 @@ async fn process_action_v2(input: ProcessActionV2Input) -> Result<ProcessActionD
 ///
 /// # Returns
 /// * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by the caller
-/// * `Err(String)` - Error message if retrieval fails
+/// * `Err(CanisterError)` - Error message if retrieval fails
 #[query(guard = "is_not_anonymous")]
 async fn get_links_v2(
     input: Option<PaginateInput>,
@@ -105,4 +105,31 @@ async fn get_links_v2(
 
     let link_v2_service = get_state().link_v2_service;
     link_v2_service.get_links(msg_caller(), input).await
+}
+
+/// Retrieves a specific link by its ID with optional action data.
+///
+/// This endpoint is accessible to both anonymous and authenticated users. The response
+/// includes the link details and optionally associated action data based on the caller's
+/// permissions and the requested action type.
+///
+/// # Arguments
+/// * `link_id` - The unique identifier of the link to retrieve
+/// * `options` - Optional parameters including action type to include in response
+///
+/// # Returns
+/// * `Ok(LinkDto)` - Link data
+/// * `Err(String)` - Error message if link not found or access denied
+#[query]
+async fn get_link_details_v2(
+    link_id: &str,
+    options: Option<GetLinkOptions>,
+) -> Result<GetLinkResp, CanisterError> {
+    info!("[get_link_details_v2]");
+    debug!("[get_link_details_v2] link_id: {link_id}, options: {options:?}");
+
+    let link_v2_service = get_state().link_v2_service;
+    link_v2_service
+        .get_link_details(msg_caller(), link_id, options)
+        .await
 }

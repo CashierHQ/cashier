@@ -169,6 +169,23 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         self.client.query("get_links_v2", (options,)).await
     }
 
+    /// Retrieves a specific link by its ID with optional action data.
+    /// # Arguments
+    /// * `link_id` - The unique identifier of the link to retrieve
+    /// * `options` - Optional parameters including action type to include in response
+    /// # Returns
+    /// * `Ok(GetLinkResp)` - The link details response
+    /// * `Err(CanisterError)` - Error if the link not found or access denied
+    pub async fn get_link_details_v2(
+        &self,
+        link_id: &str,
+        options: Option<GetLinkOptions>,
+    ) -> CanisterClientResult<Result<GetLinkResp, CanisterError>> {
+        self.client
+            .query("get_link_details_v2", (link_id, options))
+            .await
+    }
+
     /// Creates a new action.
     pub async fn create_action(
         &self,
