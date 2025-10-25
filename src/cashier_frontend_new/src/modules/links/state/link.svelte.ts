@@ -1,4 +1,3 @@
-import type { GetLinkResp } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { managedState } from "$lib/managedState";
 import { fromNullable } from "@dfinity/utils";
 import { cashierBackendService } from "../services/cashierBackend";
@@ -16,18 +15,19 @@ export type LinkAndAction = {
 export const linkQuery = (id: string, action?: ActionType) =>
   managedState<LinkAndAction>({
     queryFn: async () => {
-      const resp: GetLinkResp = (
-        await cashierBackendService.getLink(
-          id,
-          // Only include action_type if action is defined
-          action && {
-            action_type: action.toBackendType(),
-          },
-        )
-      ).unwrap();
+      const resp = await cashierBackendService.getLink(
+        id,
+        // Only include action_type if action is defined
+        action && {
+          action_type: action.toBackendType(),
+        },
+      );
+      if (resp.isErr()) {
+        throw resp.error;
+      }
 
-      const link = Link.fromBackend(resp.link);
-      const actionRes = fromNullable(resp.action);
+      const link = Link.fromBackend(resp.value.link);
+      const actionRes = fromNullable(resp.value.action);
       let actionResult: Action | undefined = undefined;
       if (actionRes) {
         actionResult = Action.fromBackend(actionRes);

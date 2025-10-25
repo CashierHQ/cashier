@@ -10,7 +10,7 @@
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { cashierBackendService } from "../services/cashierBackend";
-  import TxCart from "./tx-cart/tx-cart.svelte";
+  import TxCart from "../components/tx-cart/tx-cart.svelte";
   import { LinkState } from "../types/link/linkState";
 
   // safely get asset address text (returns null if not available)
@@ -50,7 +50,8 @@
 
   const copyLink = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      const linkUrl = `${window.location.origin}/link/${id}`;
+      await navigator.clipboard.writeText(linkUrl);
       showCopied = true;
       setTimeout(() => (showCopied = false), 1500);
     } catch (err) {

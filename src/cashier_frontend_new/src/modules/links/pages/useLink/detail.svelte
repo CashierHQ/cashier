@@ -5,21 +5,39 @@
   import { ActionType } from "$modules/links/types/action/actionType";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import { LinkState } from "$modules/links/types/link/linkState";
-  import TxCart from "../tx-cart/tx-cart.svelte";
-    import { ActionState } from "$modules/links/types/action/actionState";
+  import TxCart from "../../components/tx-cart/tx-cart.svelte";
+  import { ActionState } from "$modules/links/types/action/actionState";
+  import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
+  import { parseBalanceUnits } from "$modules/shared/utils/converter";
 
   let { id }: { id: string } = $props();
 
   // query for link data (used for loading/refresh) and a local store for view-model
-  const linkQueryState = linkQuery(id, ActionType.Claim);
+  const linkQueryState = linkQuery(id, ActionType.Use);
   let link = $state(new LinkStore());
+
+  // safely get asset address text (returns null if not available)
+  const assetAddressToText = (asset: any) => {
+    try {
+      if (asset?.address && typeof asset.address.toText === "function")
+        return asset.address.toText();
+      if (asset?.IC?.address && typeof asset.IC.address.toText === "function")
+        return asset.IC.address.toText();
+      if (
+        asset?.asset?.IC?.address &&
+        typeof asset.asset.IC.address.toText === "function"
+      )
+        return asset.asset.IC.address.toText();
+      return null;
+    } catch (e) {
+      return null;
+    }
+  };
 
   $effect(() => {
     if (linkQueryState?.data?.link) {
-      console.log("Link data loaded:", linkQueryState?.data?.link);
-        link.from(linkQueryState?.data?.link, linkQueryState?.data?.action);
+      link.from(linkQueryState?.data?.link, linkQueryState?.data?.action);
     }
-    
   });
 
   const createUseAction = async () => {
@@ -27,9 +45,8 @@
       if (!link.id) throw new Error("Link ID is missing");
       const actionRes = await cashierBackendService.createActionV2({
         linkId: link.id,
-        actionType: ActionType.Claim,
+        actionType: ActionType.Receive,
       });
-
       if (actionRes.isErr()) {
         throw actionRes.error;
       }
@@ -69,13 +86,28 @@
           {#each link.link.asset_info as assetInfo, i}
             <div class="p-3 border rounded flex items-center justify-between">
               <div>
-                <div class="text-sm font-medium">{assetInfo.label}</div>
+                <div class="text-sm font-medium">
+                  {#if assetAddressToText(assetInfo.asset)}
+                    {tokenMetadataQuery(assetAddressToText(assetInfo.asset)).data?.symbol ?? assetInfo.label ?? "TOKEN"}
+                  {:else}
+                    {assetInfo.label ?? "TOKEN"}
+                  {/if}
+                </div>
                 <div class="text-xs text-muted-foreground">
                   {assetInfo.asset.kind}{assetInfo.asset.address ? ` - ${String(assetInfo.asset.address)}` : ''}
                 </div>
               </div>
               <div class="text-right">
-                <div class="text-lg font-semibold">{assetInfo.amount_per_link_use_action.toString()}</div>
+                <div class="text-lg font-semibold">
+                  {#if assetAddressToText(assetInfo.asset)}
+                    {parseBalanceUnits(
+                      assetInfo.amount_per_link_use_action,
+                      tokenMetadataQuery(assetAddressToText(assetInfo.asset)).data?.decimals ?? 8,
+                    ).toFixed(5)}
+                  {:else}
+                    {String(assetInfo.amount_per_link_use_action)}
+                  {/if}
+                </div>
                 <div class="text-xs text-muted-foreground">per claim</div>
               </div>
             </div>
