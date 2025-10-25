@@ -11,7 +11,7 @@ use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::link::v1::LinkState;
 
 #[tokio::test]
-async fn it_should_disable_icp_token_tip_linkv2_error_if_link_not_active() {
+async fn it_should_fail_disable_icp_token_tip_linkv2_if_link_not_active() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tip_amount = 1_000_000u64;
@@ -44,7 +44,7 @@ async fn it_should_disable_icp_token_tip_linkv2_error_if_link_not_active() {
 }
 
 #[tokio::test]
-async fn it_should_disable_icp_token_tip_linkv2_error_if_caller_is_not_creator() {
+async fn it_should_fail_disable_icp_token_tip_linkv2_if_caller_is_not_creator() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tip_amount = 1_000_000u64;
@@ -56,7 +56,7 @@ async fn it_should_disable_icp_token_tip_linkv2_error_if_caller_is_not_creator()
 
         // Act
         let link_id = create_link_result.link.id.clone();
-        let disable_link_result = cashier_backend_client.disable_link_v2(&link_id).await;
+        let disable_link_result = cashier_backend_client.user_disable_link_v2(&link_id).await;
 
         // Assert
         assert!(disable_link_result.is_ok());
@@ -83,7 +83,7 @@ async fn it_should_disable_icp_token_tip_linkv2_error_if_caller_is_not_creator()
 }
 
 #[tokio::test]
-async fn it_should_disable_icp_token_tip_linkv2_successfully() {
+async fn it_should_succeed_disable_icp_token_tip_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tip_amount = 1_000_000u64;

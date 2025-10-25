@@ -45,13 +45,13 @@ export interface RegistryToken {
   'details' : ChainTokenDetails,
   'symbol' : string,
 }
-export type Result = { 'Ok' : null } |
+export type Result = { 'Ok' : RegistryStats } |
   { 'Err' : string };
-export type Result_1 = { 'Ok' : RegistryStats } |
+export type Result_1 = { 'Ok' : Array<[TokenId, bigint]> } |
   { 'Err' : string };
-export type Result_2 = { 'Ok' : Array<[TokenId, bigint]> } |
+export type Result_2 = { 'Ok' : UserTokens } |
   { 'Err' : string };
-export type Result_3 = { 'Ok' : UserTokens } |
+export type Result_3 = { 'Ok' : null } |
   { 'Err' : string };
 export type Result_4 = { 'Ok' : null } |
   { 'Err' : TokenStorageError };
@@ -106,23 +106,16 @@ export interface UserTokens {
   'enabled' : bigint,
 }
 export interface _SERVICE {
-  'add_token' : ActorMethod<[AddTokenInput], Result>,
-  /**
-   * Add multiple tokens to the user's list
-   * 
-   * ToDo: this function is not atomic can leave the state in an inconsistent state
-   */
-  'add_token_batch' : ActorMethod<[AddTokensInput], Result>,
   /**
    * Gets the full metadata of the token registry
    * Includes version number and last updated timestamp
    */
   'admin_get_registry_metadata' : ActorMethod<[], TokenRegistryMetadata>,
   'admin_get_registry_tokens' : ActorMethod<[boolean], Array<TokenDto>>,
-  'admin_get_stats' : ActorMethod<[], Result_1>,
-  'admin_get_user_balance' : ActorMethod<[Principal], Result_2>,
-  'admin_get_user_tokens' : ActorMethod<[Principal], Result_3>,
-  'admin_initialize_registry' : ActorMethod<[], Result>,
+  'admin_get_stats' : ActorMethod<[], Result>,
+  'admin_get_user_balance' : ActorMethod<[Principal], Result_1>,
+  'admin_get_user_tokens' : ActorMethod<[Principal], Result_2>,
+  'admin_initialize_registry' : ActorMethod<[], Result_3>,
   /**
    * Enables/disables the inspect message.
    */
@@ -158,19 +151,26 @@ export interface _SERVICE {
    * Lists the tokens in the registry for the caller
    */
   'list_tokens' : ActorMethod<[], Result_5>,
-  'sync_token_list' : ActorMethod<[], Result>,
-  'update_token_balance' : ActorMethod<
+  'user_add_token' : ActorMethod<[AddTokenInput], Result_3>,
+  /**
+   * Add multiple tokens to the user's list
+   * 
+   * ToDo: this function is not atomic can leave the state in an inconsistent state
+   */
+  'user_add_token_batch' : ActorMethod<[AddTokensInput], Result_3>,
+  'user_sync_token_list' : ActorMethod<[], Result_3>,
+  'user_update_token_balance' : ActorMethod<
     [Array<UpdateTokenBalanceInput>],
-    Result
+    Result_3
   >,
-  'update_token_enable' : ActorMethod<[UpdateTokenInput], Result>,
-  'update_token_registry' : ActorMethod<[AddTokenInput], Result>,
+  'user_update_token_enable' : ActorMethod<[UpdateTokenInput], Result_3>,
+  'user_update_token_registry' : ActorMethod<[AddTokenInput], Result_3>,
   /**
    * Update the metadata for multiple tokens
    * 
    * ToDo: this function is not atomic can leave the state in an inconsistent state
    */
-  'update_token_registry_batch' : ActorMethod<[AddTokensInput], Result>,
+  'user_update_token_registry_batch' : ActorMethod<[AddTokensInput], Result_3>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

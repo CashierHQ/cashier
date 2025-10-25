@@ -1,16 +1,16 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use std::rc::Rc;
-
 use crate::link_v2::links::factory::LinkFactory;
 use crate::link_v2::transaction_manager::traits::TransactionManager;
 use crate::repositories;
 use crate::repositories::Repositories;
 use crate::services::action::ActionService;
 use candid::Principal;
+use cashier_backend_types::dto::link::{GetLinkOptions, GetLinkResp};
 use cashier_backend_types::link_v2::dto::{CreateLinkDto, ProcessActionDto};
 use cashier_backend_types::repository::link::v1::LinkState;
+use cashier_backend_types::service::link::{PaginateInput, PaginateResult};
 use cashier_backend_types::{
     dto::{
         action::ActionDto,
@@ -20,10 +20,12 @@ use cashier_backend_types::{
     repository::{action::v1::ActionType, link_action::v1::LinkAction, user_link::v1::UserLink},
     service::action::ActionData,
 };
+use std::rc::Rc;
 
 pub struct LinkV2Service<R: Repositories, M: TransactionManager + 'static> {
     pub link_repository: repositories::link::LinkRepository<R::Link>,
     pub user_link_repository: repositories::user_link::UserLinkRepository<R::UserLink>,
+    pub link_action_repository: repositories::link_action::LinkActionRepository<R::LinkAction>,
     pub action_service: ActionService<R>,
     pub transaction_manager: Rc<M>,
 }
@@ -34,6 +36,7 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         Self {
             link_repository: repo.link(),
             user_link_repository: repo.user_link(),
+            link_action_repository: repo.link_action(),
             action_service: ActionService::new(repo),
             transaction_manager,
         }
@@ -222,6 +225,77 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         let link_dto = LinkDto::from(result.link);
 
         Ok(ProcessActionDto {
+            link: link_dto,
+            action: action_dto,
+        })
+    }
+
+    /// Retrieves a paginated list of links of caller.
+    /// # Arguments
+    /// * `caller` - The principal of the user retrieving the links
+    /// * `input` - Pagination options
+    /// # Returns
+    /// * `Ok(PaginateResult<LinkDto>)` - The paginated list of links
+    /// * `Err(CanisterError)` - If retrieval fails
+    pub async fn get_links(
+        &self,
+        caller: Principal,
+        input: Option<PaginateInput>,
+    ) -> Result<PaginateResult<LinkDto>, CanisterError> {
+        let user_links = self
+            .user_link_repository
+            .get_links_by_user_id(&caller, &input.unwrap_or_default());
+
+        let link_ids = user_links
+            .data
+            .iter()
+            .map(|link_user| link_user.link_id.clone())
+            .collect();
+
+        let links = self.link_repository.get_batch(link_ids);
+        let paginate_result = PaginateResult::new(links, user_links.metadata);
+        Ok(paginate_result.map(LinkDto::from))
+    }
+
+    /// Retrieves the details of a specific link along with an optional action.
+    /// # Arguments
+    /// * `caller` - The principal of the user retrieving the link details
+    /// * `link_id` - The ID of the link to retrieve
+    /// * `options` - Optional parameters to include action data
+    /// # Returns
+    /// * `Ok(GetLinkResp)` - The link details along with optional action data
+    /// * `Err(CanisterError)` - If retrieval fails or link not found
+    pub async fn get_link_details(
+        &self,
+        caller: Principal,
+        link_id: &str,
+        options: Option<GetLinkOptions>,
+    ) -> Result<GetLinkResp, CanisterError> {
+        let link_model = self
+            .link_repository
+            .get(&link_id.to_string())
+            .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
+
+        let action = options.and_then(|opts| {
+            let action_type = opts.action_type;
+            let link_actions =
+                self.link_action_repository
+                    .get_by_prefix(link_id, &action_type, &caller);
+
+            link_actions
+                .first()
+                .map(|link_action| link_action.action_id.clone())
+                .and_then(|action_id| self.action_service.get_action_by_id(&action_id))
+        });
+
+        // build response dto
+        let link_dto = LinkDto::from(link_model);
+        let action_dto = action.map(|action| {
+            let intents = self.action_service.get_intents_by_action_id(&action.id);
+            ActionDto::from(action, intents)
+        });
+
+        Ok(GetLinkResp {
             link: link_dto,
             action: action_dto,
         })

@@ -6,13 +6,14 @@ use cashier_backend_types::{
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
         link::{
-            CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto, LinkStateMachineGoto,
-            UpdateLinkInput,
+            CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDetailUpdateAssetInfoInput, LinkDto,
+            LinkStateMachineGoto, UpdateLinkInput,
         },
     },
     error::CanisterError,
     link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
     repository::{action::v1::ActionType, common::Asset, link::v1::LinkType},
+    service::link::{PaginateInput, PaginateResult},
 };
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
@@ -41,17 +42,6 @@ impl LinkTestFixture {
         }
     }
 
-    // This is generic function to create a link.
-    pub async fn create_link(&self, input: CreateLinkInput) -> LinkDto {
-        self.cashier_backend_client
-            .as_ref()
-            .unwrap()
-            .create_link(input)
-            .await
-            .unwrap()
-            .unwrap()
-    }
-
     /// Create link v2
     /// # Arguments
     /// * `input` - The input data for creating the link
@@ -61,7 +51,7 @@ impl LinkTestFixture {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .create_link_v2(input)
+            .user_create_link_v2(input)
             .await
             .unwrap()
             .unwrap()
@@ -83,7 +73,7 @@ impl LinkTestFixture {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .process_action_v2(process_action_input)
+            .user_process_action_v2(process_action_input)
             .await
             .unwrap()
     }
@@ -97,7 +87,7 @@ impl LinkTestFixture {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .disable_link_v2(link_id)
+            .user_disable_link_v2(link_id)
             .await
             .unwrap()
     }
@@ -115,7 +105,7 @@ impl LinkTestFixture {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .create_action_v2(input)
+            .user_create_action_v2(input)
             .await
             .unwrap()
     }
@@ -133,8 +123,57 @@ impl LinkTestFixture {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .process_action_v2(input)
+            .user_process_action_v2(input)
             .await
+            .unwrap()
+    }
+
+    /// Get links v2
+    /// # Arguments
+    /// * `options` - Optional pagination input
+    /// # Returns
+    /// * `PaginateResult<LinkDto>` - The paginated list of links
+    /// * `CanisterError` - Error if the retrieval fails
+    pub async fn get_links_v2(
+        &self,
+        options: Option<PaginateInput>,
+    ) -> Result<PaginateResult<LinkDto>, CanisterError> {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .get_links_v2(options)
+            .await
+            .unwrap()
+    }
+
+    /// Get link details v2
+    /// # Arguments
+    /// * `link_id` - The ID of the link to retrieve details for
+    /// * `options` - Optional parameters for retrieving link details
+    /// # Returns
+    /// * `GetLinkResp` - The link details response
+    /// * `CanisterError` - Error if the retrieval fails
+    pub async fn get_link_details_v2(
+        &self,
+        link_id: &str,
+        options: Option<GetLinkOptions>,
+    ) -> Result<GetLinkResp, CanisterError> {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .get_link_details_v2(link_id, options)
+            .await
+            .unwrap()
+    }
+
+    // This is generic function to create a link.
+    pub async fn create_link(&self, input: CreateLinkInput) -> LinkDto {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_create_link(input)
+            .await
+            .unwrap()
             .unwrap()
     }
 
@@ -204,7 +243,7 @@ impl LinkTestFixture {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .create_action(CreateActionInput {
+            .user_create_action(CreateActionInput {
                 link_id: link_id.to_string(),
                 action_type,
             })
@@ -224,7 +263,7 @@ impl LinkTestFixture {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .process_action(ProcessActionInput {
+            .user_process_action(ProcessActionInput {
                 action_id: action_id.to_string(),
                 action_type,
                 link_id: link_id.to_string(),
@@ -239,7 +278,7 @@ impl LinkTestFixture {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .update_action(UpdateActionInput {
+            .user_update_action(UpdateActionInput {
                 action_id: action_id.to_string(),
                 link_id: link_id.to_string(),
                 external: true,
@@ -274,7 +313,7 @@ impl LinkTestFixture {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .update_link(input)
+            .user_update_link(input)
             .await
             .unwrap()
             .unwrap()
