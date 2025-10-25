@@ -41,11 +41,8 @@
 
   $effect(() => {
     if (linkQueryState?.data?.link) {
-      console.log("Link data loaded:", linkQueryState?.data?.link);
         link.from(linkQueryState?.data?.link, linkQueryState?.data?.action);
-
     }
-    
   });
 
   const copyLink = async () => {
