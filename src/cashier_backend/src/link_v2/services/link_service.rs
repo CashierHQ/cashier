@@ -11,6 +11,7 @@ use crate::services::action::ActionService;
 use candid::Principal;
 use cashier_backend_types::link_v2::dto::{CreateLinkDto, ProcessActionDto};
 use cashier_backend_types::repository::link::v1::LinkState;
+use cashier_backend_types::service::link::{PaginateInput, PaginateResult};
 use cashier_backend_types::{
     dto::{
         action::ActionDto,
@@ -225,5 +226,32 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             link: link_dto,
             action: action_dto,
         })
+    }
+
+    /// Retrieves a paginated list of links of caller.
+    /// # Arguments
+    /// * `caller` - The principal of the user retrieving the links
+    /// * `input` - Pagination options
+    /// # Returns
+    /// * `Ok(PaginateResult<LinkDto>)` - The paginated list of links
+    /// * `Err(CanisterError)` - If retrieval fails
+    pub async fn get_links(
+        &self,
+        caller: Principal,
+        input: Option<PaginateInput>,
+    ) -> Result<PaginateResult<LinkDto>, CanisterError> {
+        let user_links = self
+            .user_link_repository
+            .get_links_by_user_id(&caller, &input.unwrap_or_default());
+
+        let link_ids = user_links
+            .data
+            .iter()
+            .map(|link_user| link_user.link_id.clone())
+            .collect();
+
+        let links = self.link_repository.get_batch(link_ids);
+        let paginate_result = PaginateResult::new(links, user_links.metadata);
+        Ok(paginate_result.map(LinkDto::from))
     }
 }

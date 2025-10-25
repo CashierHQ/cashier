@@ -263,6 +263,8 @@ export type Result = { 'Ok' : null } |
   { 'Err' : CanisterError };
 export type Result_1 = { 'Ok' : Array<Permission> } |
   { 'Err' : CanisterError };
+export type Result_10 = { 'Ok' : string } |
+  { 'Err' : CanisterError };
 export type Result_2 = { 'Ok' : ActionDto } |
   { 'Err' : CanisterError };
 export type Result_3 = { 'Ok' : LinkDto } |
@@ -273,11 +275,11 @@ export type Result_5 = { 'Ok' : GetLinkResp } |
   { 'Err' : string };
 export type Result_6 = { 'Ok' : PaginateResult } |
   { 'Err' : string };
-export type Result_7 = { 'Ok' : Icrc21ConsentInfo } |
-  { 'Err' : Icrc21Error };
-export type Result_8 = { 'Ok' : [] | [LinkGetUserStateOutput] } |
+export type Result_7 = { 'Ok' : PaginateResult } |
   { 'Err' : CanisterError };
-export type Result_9 = { 'Ok' : string } |
+export type Result_8 = { 'Ok' : Icrc21ConsentInfo } |
+  { 'Err' : Icrc21Error };
+export type Result_9 = { 'Ok' : [] | [LinkGetUserStateOutput] } |
   { 'Err' : CanisterError };
 export interface TransactionDto {
   'id' : string,
@@ -348,6 +350,7 @@ export interface _SERVICE {
   'get_canister_build_data' : ActorMethod<[], BuildData>,
   'get_link' : ActorMethod<[string, [] | [GetLinkOptions]], Result_5>,
   'get_links' : ActorMethod<[[] | [PaginateInput]], Result_6>,
+  'get_links_v2' : ActorMethod<[[] | [PaginateInput]], Result_7>,
   'icrc10_supported_standards' : ActorMethod<
     [],
     Array<Icrc21SupportedStandard>
@@ -355,19 +358,19 @@ export interface _SERVICE {
   'icrc114_validate' : ActorMethod<[Icrc114ValidateArgs], boolean>,
   'icrc21_canister_call_consent_message' : ActorMethod<
     [Icrc21ConsentMessageRequest],
-    Result_7
+    Result_8
   >,
   'icrc28_trusted_origins' : ActorMethod<[], Icrc28TrustedOriginsResponse>,
   'is_inspect_message_enabled' : ActorMethod<[], boolean>,
-  'link_get_user_state' : ActorMethod<[LinkGetUserStateInput], Result_8>,
-  'link_update_user_state' : ActorMethod<[LinkUpdateUserStateInput], Result_8>,
+  'link_get_user_state' : ActorMethod<[LinkGetUserStateInput], Result_9>,
+  'link_update_user_state' : ActorMethod<[LinkUpdateUserStateInput], Result_9>,
   'process_action' : ActorMethod<[ProcessActionInput], Result_2>,
   'process_action_anonymous' : ActorMethod<
     [ProcessActionAnonymousInput],
     Result_2
   >,
   'process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_4>,
-  'trigger_transaction' : ActorMethod<[TriggerTransactionInput], Result_9>,
+  'trigger_transaction' : ActorMethod<[TriggerTransactionInput], Result_10>,
   'update_action' : ActorMethod<[UpdateActionInput], Result_2>,
   'update_link' : ActorMethod<[UpdateLinkInput], Result_3>,
 }

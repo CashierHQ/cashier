@@ -13,6 +13,7 @@ use cashier_backend_types::{
     error::CanisterError,
     link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
     repository::{action::v1::ActionType, common::Asset, link::v1::LinkType},
+    service::link::{PaginateInput, PaginateResult},
 };
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
@@ -39,17 +40,6 @@ impl LinkTestFixture {
             caller: *caller,
             cashier_backend_client,
         }
-    }
-
-    // This is generic function to create a link.
-    pub async fn create_link(&self, input: CreateLinkInput) -> LinkDto {
-        self.cashier_backend_client
-            .as_ref()
-            .unwrap()
-            .create_link(input)
-            .await
-            .unwrap()
-            .unwrap()
     }
 
     /// Create link v2
@@ -135,6 +125,29 @@ impl LinkTestFixture {
             .unwrap()
             .process_action_v2(input)
             .await
+            .unwrap()
+    }
+
+    pub async fn get_links_v2(
+        &self,
+        options: Option<PaginateInput>,
+    ) -> Result<PaginateResult<LinkDto>, CanisterError> {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .get_links_v2(options)
+            .await
+            .unwrap()
+    }
+
+    // This is generic function to create a link.
+    pub async fn create_link(&self, input: CreateLinkInput) -> LinkDto {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .create_link(input)
+            .await
+            .unwrap()
             .unwrap()
     }
 

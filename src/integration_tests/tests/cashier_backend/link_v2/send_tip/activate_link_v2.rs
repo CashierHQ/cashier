@@ -18,7 +18,7 @@ use cashier_common::test_utils;
 use ic_mple_client::CanisterClientError;
 
 #[tokio::test]
-async fn it_should_error_activate_icp_token_tip_linkv2_if_caller_anonymous() {
+async fn it_should_fail_activate_icp_token_tip_linkv2_if_caller_anonymous() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (test_fixture, create_link_result) =
@@ -55,7 +55,7 @@ async fn it_should_error_activate_icp_token_tip_linkv2_if_caller_anonymous() {
 }
 
 #[tokio::test]
-async fn it_should_error_activate_icp_token_tip_linkv2_if_caller_not_creator() {
+async fn it_should_fail_activate_icp_token_tip_linkv2_if_caller_not_creator() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (test_fixture, create_link_result) =
@@ -99,7 +99,7 @@ async fn it_should_error_activate_icp_token_tip_linkv2_if_caller_not_creator() {
 }
 
 #[tokio::test]
-async fn it_should_error_activate_icp_token_tip_linkv2_if_link_not_exists() {
+async fn it_should_fail_activate_icp_token_tip_linkv2_if_link_not_exists() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (test_fixture, _create_link_result) =
@@ -132,7 +132,7 @@ async fn it_should_error_activate_icp_token_tip_linkv2_if_link_not_exists() {
 }
 
 #[tokio::test]
-async fn it_should_error_activate_icp_token_tip_linkv2_if_insufficient_token_balance_in_link() {
+async fn it_should_fail_activate_icp_token_tip_linkv2_if_insufficient_token_balance_in_link() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (test_fixture, create_link_result) =
@@ -167,7 +167,7 @@ async fn it_should_error_activate_icp_token_tip_linkv2_if_insufficient_token_bal
 }
 
 #[tokio::test]
-async fn it_should_error_activate_icp_token_tip_linkv2_if_insufficient_icp_allowance_for_creation_fee()
+async fn it_should_fail_activate_icp_token_tip_linkv2_if_insufficient_icp_allowance_for_creation_fee()
  {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
@@ -221,7 +221,7 @@ async fn it_should_error_activate_icp_token_tip_linkv2_if_insufficient_icp_allow
 }
 
 #[tokio::test]
-async fn it_should_error_activate_icrc_token_tip_linkv2_if_insufficient_token_balance_in_link() {
+async fn it_should_fail_activate_icrc_token_tip_linkv2_if_insufficient_token_balance_in_link() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (test_fixture, create_link_result) =
@@ -256,7 +256,7 @@ async fn it_should_error_activate_icrc_token_tip_linkv2_if_insufficient_token_ba
 }
 
 #[tokio::test]
-async fn it_should_activate_icp_token_tip_linkv2_successfully() {
+async fn it_should_succeed_activate_icp_token_tip_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
@@ -319,7 +319,7 @@ async fn it_should_activate_icp_token_tip_linkv2_successfully() {
 }
 
 #[tokio::test]
-async fn it_should_activate_icrc_token_tip_linkv2_successfully() {
+async fn it_should_succeed_activate_icrc_token_tip_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
