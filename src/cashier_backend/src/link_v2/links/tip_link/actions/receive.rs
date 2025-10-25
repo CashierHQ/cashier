@@ -29,10 +29,15 @@ impl ReceiveAction {
     /// Creates a new ReceiveAction for a given Link.
     /// # Arguments
     /// * `link` - The Link for which the action is created.
+    /// * `receiver_id` - The Principal ID of the receiver.
     /// * `canister_id` - The canister ID of the token contract.
     /// # Returns
     /// * `Result<ReceiveAction, CanisterError>` - The resulting action or an error if the creation fails.
-    pub async fn create(link: &Link, canister_id: Principal) -> Result<Self, CanisterError> {
+    pub async fn create(
+        link: &Link,
+        receiver_id: Principal,
+        canister_id: Principal,
+    ) -> Result<Self, CanisterError> {
         let action = Action {
             id: Uuid::new_v4().to_string(),
             r#type: ActionType::Receive,
@@ -54,7 +59,7 @@ impl ReceiveAction {
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                     asset_info.asset.clone(),
                     sending_amount,
-                    link.creator,
+                    receiver_id,
                     link_account,
                     link.create_at,
                 )

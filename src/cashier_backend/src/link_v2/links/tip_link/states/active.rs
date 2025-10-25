@@ -77,7 +77,7 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
 impl<M: TransactionManager + 'static> LinkV2State for ActiveState<M> {
     fn create_action(
         &self,
-        _caller: Principal,
+        caller: Principal,
         action_type: ActionType,
     ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
         let link = self.link.clone();
@@ -87,7 +87,7 @@ impl<M: TransactionManager + 'static> LinkV2State for ActiveState<M> {
         Box::pin(async move {
             match action_type {
                 ActionType::Receive => {
-                    let receive_action = ReceiveAction::create(&link, canister_id).await?;
+                    let receive_action = ReceiveAction::create(&link, caller, canister_id).await?;
                     let create_action_result = transaction_manager
                         .create_action(receive_action.action, receive_action.intents)
                         .await?;
