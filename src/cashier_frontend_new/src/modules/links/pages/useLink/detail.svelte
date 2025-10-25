@@ -5,15 +5,16 @@
   import { ActionType } from "$modules/links/types/action/actionType";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import { LinkState } from "$modules/links/types/link/linkState";
-  import TxCart from "../../components/tx-cart/tx-cart.svelte";
-  import { ActionState } from "$modules/links/types/action/actionState";
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
+    import TxCart from "$modules/links/components/tx-cart/tx-cart.svelte";
+    import Action from "$modules/links/types/action/action";
+    import { ActionState } from "$modules/links/types/action/actionState";
 
   let { id }: { id: string } = $props();
 
   // query for link data (used for loading/refresh) and a local store for view-model
-  const linkQueryState = linkQuery(id, ActionType.Use);
+  const linkQueryState = linkQuery(id, ActionType.Receive);
   let link = $state(new LinkStore());
 
   // safely get asset address text (returns null if not available)
@@ -50,6 +51,7 @@
       if (actionRes.isErr()) {
         throw actionRes.error;
       }
+      link.action = Action.fromBackend(actionRes.value);
       linkQueryState.refresh();
     } catch (err) {
       console.error("end link failed", err);
@@ -130,5 +132,5 @@
 {/if}
 
 {#if link.action?.state !== ActionState.Success}
-<TxCart {link} goNext={claim}/>
+    <TxCart {link} goNext={claim}/>
 {/if}
