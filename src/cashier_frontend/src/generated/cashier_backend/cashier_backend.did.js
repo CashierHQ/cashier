@@ -53,11 +53,11 @@ export const idlFactory = ({ IDL }) => {
     'Err' : CanisterError,
   });
   const ActionType = IDL.Variant({
-    'Pay' : IDL.Null,
     'Use' : IDL.Null,
     'Withdraw' : IDL.Null,
+    'Send' : IDL.Null,
     'CreateLink' : IDL.Null,
-    'Claim' : IDL.Null,
+    'Receive' : IDL.Null,
   });
   const CreateActionInput = IDL.Record({
     'link_id' : IDL.Text,

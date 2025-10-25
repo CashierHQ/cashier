@@ -16,26 +16,26 @@ use cashier_backend_types::{
 use uuid::Uuid;
 
 #[derive(Debug)]
-pub struct ClaimAction {
+pub struct ReceiveAction {
     pub action: Action,
     pub intents: Vec<Intent>,
 }
 
-impl ClaimAction {
+impl ReceiveAction {
     pub fn new(action: Action, intents: Vec<Intent>) -> Self {
         Self { action, intents }
     }
 
-    /// Creates a new ClaimAction for a given Link.
+    /// Creates a new ReceiveAction for a given Link.
     /// # Arguments
     /// * `link` - The Link for which the action is created.
     /// * `canister_id` - The canister ID of the token contract.
     /// # Returns
-    /// * `Result<ClaimAction, CanisterError>` - The resulting action or an error if the creation fails.
+    /// * `Result<ReceiveAction, CanisterError>` - The resulting action or an error if the creation fails.
     pub async fn create(link: &Link, canister_id: Principal) -> Result<Self, CanisterError> {
         let action = Action {
             id: Uuid::new_v4().to_string(),
-            r#type: ActionType::Claim,
+            r#type: ActionType::Receive,
             link_id: link.id.clone(),
             creator: link.creator,
             state: ActionState::Created,

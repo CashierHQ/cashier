@@ -39,8 +39,8 @@ pub enum ActionType {
     CreateLink,
     Withdraw,
     Use,
-    Claim,
-    Pay,
+    Receive,
+    Send,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Display)]
