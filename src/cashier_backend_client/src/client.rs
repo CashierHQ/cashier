@@ -84,11 +84,11 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     }
 
     /// Creates a new link.
-    pub async fn create_link(
+    pub async fn user_create_link(
         &self,
         input: CreateLinkInput,
     ) -> CanisterClientResult<Result<LinkDto, CanisterError>> {
-        self.client.update("create_link", ((input),)).await
+        self.client.update("user_create_link", ((input),)).await
     }
 
     /// Creates a new link V2.
@@ -97,11 +97,11 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     /// # Returns
     /// * `Ok(CreateLinkDto)` - The created link data
     /// * `Err(CanisterError)` - If link creation fails or validation errors occur
-    pub async fn create_link_v2(
+    pub async fn user_create_link_v2(
         &self,
         input: CreateLinkInput,
     ) -> CanisterClientResult<Result<CreateLinkDto, CanisterError>> {
-        self.client.update("create_link_v2", ((input),)).await
+        self.client.update("user_create_link_v2", ((input),)).await
     }
 
     /// Disables a link V2.
@@ -110,24 +110,11 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     /// # Returns
     /// * `Ok(LinkDto)` - The disabled link data
     /// * `Err(CanisterError)` - If disabling fails or unauthorized
-    pub async fn disable_link_v2(
+    pub async fn user_disable_link_v2(
         &self,
         link_id: &str,
     ) -> CanisterClientResult<Result<LinkDto, CanisterError>> {
-        self.client.update("disable_link_v2", (link_id,)).await
-    }
-
-    /// Activates a link V2.
-    /// # Arguments
-    /// * `link_id` - The ID of the link to activate
-    /// # Returns
-    /// * `Ok(LinkDto)` - The activated link data
-    /// * `Err(CanisterError)` - If activation fails or unauthorized
-    pub async fn activate_link_v2(
-        &self,
-        link_id: &str,
-    ) -> CanisterClientResult<Result<LinkDto, CanisterError>> {
-        self.client.update("activate_link_v2", (link_id,)).await
+        self.client.update("user_disable_link_v2", (link_id,)).await
     }
 
     /// Creates a new action V2.
@@ -136,11 +123,13 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     /// # Returns
     /// * `Ok(ActionDto)` - The created action data
     /// * `Err(CanisterError)` - If action creation fails or validation errors occur
-    pub async fn create_action_v2(
+    pub async fn user_create_action_v2(
         &self,
         input: CreateActionInput,
     ) -> CanisterClientResult<Result<ActionDto, CanisterError>> {
-        self.client.update("create_action_v2", ((input),)).await
+        self.client
+            .update("user_create_action_v2", ((input),))
+            .await
     }
 
     /// Processes a created action V2.
@@ -149,11 +138,13 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     /// # Returns
     /// * `Ok(ProcessActionDto)` - The processed action data
     /// * `Err(CanisterError)` - If action processing fails or validation errors occur
-    pub async fn process_action_v2(
+    pub async fn user_process_action_v2(
         &self,
         input: ProcessActionV2Input,
     ) -> CanisterClientResult<Result<ProcessActionDto, CanisterError>> {
-        self.client.update("process_action_v2", ((input),)).await
+        self.client
+            .update("user_process_action_v2", ((input),))
+            .await
     }
 
     /// Retrieves a paginated list of links of caller.
@@ -187,34 +178,34 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     }
 
     /// Creates a new action.
-    pub async fn create_action(
+    pub async fn user_create_action(
         &self,
         input: CreateActionInput,
     ) -> CanisterClientResult<Result<ActionDto, CanisterError>> {
-        self.client.update("create_action", ((input),)).await
+        self.client.update("user_create_action", ((input),)).await
     }
 
     /// Processes a created action.
-    pub async fn process_action(
+    pub async fn user_process_action(
         &self,
         input: ProcessActionInput,
     ) -> CanisterClientResult<Result<ActionDto, CanisterError>> {
-        self.client.update("process_action", ((input),)).await
+        self.client.update("user_process_action", ((input),)).await
     }
 
     /// Updates a created action. This function should be called after executing icrc112.
-    pub async fn update_action(
+    pub async fn user_update_action(
         &self,
         input: UpdateActionInput,
     ) -> CanisterClientResult<Result<ActionDto, CanisterError>> {
-        self.client.update("update_action", ((input),)).await
+        self.client.update("user_update_action", ((input),)).await
     }
 
-    pub async fn update_link(
+    pub async fn user_update_link(
         &self,
         input: UpdateLinkInput,
     ) -> CanisterClientResult<Result<LinkDto, CanisterError>> {
-        self.client.update("update_link", ((input),)).await
+        self.client.update("user_update_link", ((input),)).await
     }
 
     /// Retrieves a specific link by its ID with optional action data.
@@ -255,7 +246,7 @@ mod pic {
             args: CreateActionInput,
         ) -> CanisterClientResult<RawMessageId> {
             // For single-argument candid calls, pass a one-element tuple `(args,)`
-            self.client.submit_call("create_action", (args,)).await
+            self.client.submit_call("user_create_action", (args,)).await
         }
 
         /// Submit a process_action call and return the message ID (PocketIC only).
@@ -263,7 +254,9 @@ mod pic {
             &self,
             args: ProcessActionInput,
         ) -> CanisterClientResult<RawMessageId> {
-            self.client.submit_call("process_action", (args,)).await
+            self.client
+                .submit_call("user_process_action", (args,))
+                .await
         }
 
         /// Submit an update_action call and return the message ID (PocketIC only).
@@ -271,7 +264,7 @@ mod pic {
             &self,
             args: UpdateActionInput,
         ) -> CanisterClientResult<RawMessageId> {
-            self.client.submit_call("update_action", (args,)).await
+            self.client.submit_call("user_update_action", (args,)).await
         }
     }
 }

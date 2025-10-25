@@ -16,7 +16,23 @@ dfx_local_start: dfx_prepare_env dfx_local_stop
 [group('dfx')]
 dfx_local_stop:
   dfx stop
-  
+
+
+# Deploys the canisters to the specified network - eg: just dfx_deploy --network=dev
+# params owner: principal id of the owner, for canister initialization
+# network: dfx network flag, e.g. --network=dev
+# backend_log_filter: log filter string for the backend canister
+# token_storage_log_filter: log filter string for the token_storage canister
+[group('dfx')]
+dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="": 
+  #!/usr/bin/env bash
+  just dfx_deploy_token_storage {{owner}} {{network}} {{token_storage_log_filter}}
+
+  just dfx_deploy_backend {{owner}} {{network}} {{backend_log_filter}}
+
+  dfx deploy cashier_frontend {{network}}
+
+  dfx deploy cashier_frontend_new {{network}}
 
 # Starts the local dfx server and deploys the canisters
 [group('dfx')]
@@ -26,12 +42,7 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
 
   export OWNER=$(dfx identity get-principal)
 
-  just dfx_local_deploy_token_storage "${OWNER}"
-
-  dfx deploy cashier_backend --argument "(record {
-      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
-      owner=principal \"${OWNER}\";
-  })"
+  just dfx_deploy "${OWNER}"
 
   cashier_backend_id=$(dfx canister id cashier_backend)
   dfx deploy gate_service --argument "(record {
@@ -39,9 +50,6 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
       owner=principal \"${OWNER}\";
       permissions=opt (vec { record { principal \"${cashier_backend_id}\"; vec { variant { GateCreate } } } });
   })"
-
-  dfx deploy cashier_frontend
-  dfx deploy cashier_frontend_new 
 
   dfx deploy internet_identity
 
@@ -123,13 +131,29 @@ create_canisters network cycles:
   dfx canister --network={{network}} create --with-cycles={{cycles}} --all
 
 
+# Deploys the backend canister
+# params owner: principal id of the owner
+# network: dfx network flag, e.g. --network=dev
+# log_filter: log filter string (default for local and dev)
 [private]
-dfx_local_deploy_token_storage owner:
+dfx_deploy_backend owner network="" log_filter="global,cashier=debug":
+  #!/usr/bin/env bash
+  dfx deploy cashier_backend --argument "(record {
+      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"{{log_filter}}\"; };
+      owner=principal \"{{owner}}\";
+  })" {{network}}
+
+# Deploys the token_storage canister
+# params owner: principal id of the owner
+# network: dfx network flag, e.g. --network=dev
+# log_filter: log filter string (default for local and dev)
+[private]
+dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token_storage=debug":
   #!/usr/bin/env bash
   set -e
 
   dfx deploy token_storage --argument "(record {
-      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug,token_storage=debug\"; };
+      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"{{log_filter}}\"; };
       owner=principal \"{{owner}}\";
       tokens = opt vec {
         record {
@@ -180,19 +204,8 @@ dfx_local_deploy_token_storage owner:
           decimals = 8;
           enabled_by_default = true;
         };
-        record {
-          details = variant { IC = record {
-              ledger_id = principal \"x5qut-viaaa-aaaar-qajda-cai\";
-              fee = 10_000 : nat;
-            }
-          };
-          symbol = \"tICP\";
-          name = \"Test Internet Computer\";
-          decimals = 8;
-          enabled_by_default = true;
-        };
       };
-  })"
+  })" {{network}}
 
 
 [private]

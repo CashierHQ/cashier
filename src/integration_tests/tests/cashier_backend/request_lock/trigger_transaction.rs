@@ -1,4 +1,5 @@
 use candid::{CandidType, Decode};
+use cashier_backend_types::constant::TRIGGER_TRANSACTION_METHOD_NAME;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::action::v1::ActionType;
 use ic_mple_pocket_ic::pocket_ic::common::rest::RawMessageId;
@@ -45,7 +46,7 @@ async fn test_request_lock_for_trigger_action() {
         // Execute all ICRC-112 requests except trigger_transaction
         if let Some(mut reqs) = processing_action.icrc_112_requests.clone() {
             reqs.iter_mut()
-                .for_each(|g| g.retain(|r| r.method != "trigger_transaction"));
+                .for_each(|g| g.retain(|r| r.method != TRIGGER_TRANSACTION_METHOD_NAME));
             reqs.retain(|g| !g.is_empty());
             if !reqs.is_empty() {
                 execute_icrc112_request(&reqs, caller, ctx)
@@ -61,7 +62,7 @@ async fn test_request_lock_for_trigger_action() {
             .and_then(|reqs| {
                 reqs.iter()
                     .flat_map(|g| g.iter())
-                    .find(|r| r.method == "trigger_transaction")
+                    .find(|r| r.method == TRIGGER_TRANSACTION_METHOD_NAME)
             })
             .expect("no trigger_transaction request found");
 
@@ -91,7 +92,10 @@ async fn test_request_lock_for_trigger_action() {
         let failed_count = results.len() - success_count;
 
         // Assert
-        assert_eq!(trigger_transaction_req.method, "trigger_transaction");
+        assert_eq!(
+            trigger_transaction_req.method,
+            TRIGGER_TRANSACTION_METHOD_NAME
+        );
         assert_eq!(success_count, 1);
         assert_eq!(failed_count, 2);
 

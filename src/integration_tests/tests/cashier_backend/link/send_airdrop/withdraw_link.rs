@@ -28,7 +28,7 @@ async fn it_should_error_withdraw_link_airdrop_if_caller_anonymous() {
 
         // Act
         let result = cashier_backend_client
-            .create_action(CreateActionInput {
+            .user_create_action(CreateActionInput {
                 link_id: link.id.clone(),
                 action_type: ActionType::Withdraw,
             })
@@ -37,10 +37,7 @@ async fn it_should_error_withdraw_link_airdrop_if_caller_anonymous() {
         // Assert
         assert!(result.is_err());
         if let Err(CanisterClientError::PocketIcTestError(err)) = result {
-            assert!(
-                err.reject_message
-                    .contains("Anonymous caller is not allowed")
-            );
+            assert!(err.reject_message.contains("AnonimousUserNotAllowed"));
         } else {
             panic!("Expected PocketIcTestError, got {:?}", result);
         }
@@ -64,7 +61,7 @@ async fn it_should_error_withdraw_link_airdrop_if_caller_not_creator() {
 
         // Act
         let result = cashier_backend_client
-            .create_action(CreateActionInput {
+            .user_create_action(CreateActionInput {
                 link_id: link.id.clone(),
                 action_type: ActionType::Withdraw,
             })

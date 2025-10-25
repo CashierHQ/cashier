@@ -1,5 +1,7 @@
 use candid::Principal;
 
+pub const TRIGGER_TRANSACTION_METHOD_NAME: &str = "user_trigger_transaction";
+
 pub const INTENT_LABEL_LINK_CREATION_FEE: &str = "LINK_CREATION_FEE";
 pub const INTENT_LABEL_SEND_TIP_ASSET: &str = "SEND_TIP_ASSET";
 pub const INTENT_LABEL_SEND_AIRDROP_ASSET: &str = "SEND_AIRDROP_ASSET";
