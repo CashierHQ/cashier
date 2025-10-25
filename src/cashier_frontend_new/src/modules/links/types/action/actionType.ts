@@ -8,8 +8,8 @@ export class ActionType {
   static readonly CreateLink = new ActionType("CREATE_LINK");
   static readonly Use = new ActionType("USE");
   static readonly Withdraw = new ActionType("WITHDRAW");
-  static readonly Claim = new ActionType("CLAIM");
-  static readonly Pay = new ActionType("PAY");
+  static readonly Receive = new ActionType("RECEIVE");
+  static readonly Send = new ActionType("SEND");
 
   /**
    * Convert frontend ActionType to corresponding BackendActionType.
@@ -23,10 +23,10 @@ export class ActionType {
         return { Use: null };
       case ActionType.Withdraw:
         return { Withdraw: null };
-      case ActionType.Claim:
-        return { Claim: null };
-      case ActionType.Pay:
-        return { Pay: null };
+      case ActionType.Send:
+        return { Send: null };
+      case ActionType.Receive:
+        return { Receive: null };
       default:
         return assertUnreachable(this as never);
     }
@@ -41,8 +41,8 @@ export class ActionType {
       CreateLink: () => ActionType.CreateLink,
       Use: () => ActionType.Use,
       Withdraw: () => ActionType.Withdraw,
-      Claim: () => ActionType.Claim,
-      Pay: () => ActionType.Pay,
+      Receive: () => ActionType.Receive,
+      Send: () => ActionType.Send,
     });
   }
 }

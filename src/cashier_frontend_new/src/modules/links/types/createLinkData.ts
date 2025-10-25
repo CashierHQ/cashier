@@ -4,7 +4,7 @@ import type {
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { Principal } from "@dfinity/principal";
 import { Result, Ok, Err } from "ts-results-es";
-import type { LinkType } from "./linkType";
+import type { LinkType } from "./link/linkType";
 
 // Tip link details
 export type TipLink = {

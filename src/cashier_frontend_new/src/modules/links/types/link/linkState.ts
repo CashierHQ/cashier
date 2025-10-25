@@ -20,7 +20,7 @@ export class LinkState {
       case LinkState.INACTIVE_ENDED:
         return { InactiveEnded: null };
       default:
-        assertUnreachable(this);
+        assertUnreachable(this as never);
     }
   }
 

@@ -28,7 +28,7 @@
       {@const heading = (() => {
         const t = link.action.type;
         if (t === ActionType.CreateLink) return "You send";
-        if (t === ActionType.Withdraw || t === ActionType.Claim)
+        if (t === ActionType.Withdraw || t === ActionType.Receive)
           return "You receive";
         return "You send";
       })()}

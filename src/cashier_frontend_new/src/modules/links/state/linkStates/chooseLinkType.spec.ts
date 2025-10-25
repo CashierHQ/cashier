@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { LinkStore } from "../linkStore.svelte";
-import { LinkType } from "../../types/linkType";
 import { LinkStep } from "../../types/linkStep";
+import { LinkType } from "$modules/links/types/link/linkType";
 
 describe("ChooseLinkTypeState", () => {
   it("should transition to ADD_ASSET sucessfully", async () => {
