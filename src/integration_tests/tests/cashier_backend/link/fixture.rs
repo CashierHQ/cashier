@@ -6,8 +6,8 @@ use cashier_backend_types::{
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
         link::{
-            CreateLinkInput, LinkDetailUpdateAssetInfoInput, LinkDto, LinkStateMachineGoto,
-            UpdateLinkInput,
+            CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDetailUpdateAssetInfoInput, LinkDto,
+            LinkStateMachineGoto, UpdateLinkInput,
         },
     },
     error::CanisterError,
@@ -128,6 +128,12 @@ impl LinkTestFixture {
             .unwrap()
     }
 
+    /// Get links v2
+    /// # Arguments
+    /// * `options` - Optional pagination input
+    /// # Returns
+    /// * `PaginateResult<LinkDto>` - The paginated list of links
+    /// * `CanisterError` - Error if the retrieval fails
     pub async fn get_links_v2(
         &self,
         options: Option<PaginateInput>,
@@ -136,6 +142,26 @@ impl LinkTestFixture {
             .as_ref()
             .unwrap()
             .get_links_v2(options)
+            .await
+            .unwrap()
+    }
+
+    /// Get link details v2
+    /// # Arguments
+    /// * `link_id` - The ID of the link to retrieve details for
+    /// * `options` - Optional parameters for retrieving link details
+    /// # Returns
+    /// * `GetLinkResp` - The link details response
+    /// * `CanisterError` - Error if the retrieval fails
+    pub async fn get_link_details_v2(
+        &self,
+        link_id: &str,
+        options: Option<GetLinkOptions>,
+    ) -> Result<GetLinkResp, CanisterError> {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .get_link_details_v2(link_id, options)
             .await
             .unwrap()
     }
