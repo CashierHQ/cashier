@@ -23,7 +23,7 @@ async fn it_should_error_use_link_airdrop_icp_if_caller_anonymous() {
 
         // Act
         let result = cashier_backend_client
-            .create_action(CreateActionInput {
+            .user_create_action(CreateActionInput {
                 link_id: link.id.clone(),
                 action_type: ActionType::Use,
             })
@@ -32,10 +32,7 @@ async fn it_should_error_use_link_airdrop_icp_if_caller_anonymous() {
         // Assert
         assert!(result.is_err());
         if let Err(CanisterClientError::PocketIcTestError(err)) = result {
-            assert!(
-                err.reject_message
-                    .contains("Anonymous caller is not allowed")
-            );
+            assert!(err.reject_message.contains("AnonimousUserNotAllowed"));
         } else {
             panic!("Expected PocketIcTestError, got {:?}", result);
         }
@@ -184,7 +181,7 @@ async fn it_should_error_use_link_airdrop_multiple_times_from_same_user() {
 
         // Act
         let result = cashier_backend_client
-            .create_action(CreateActionInput {
+            .user_create_action(CreateActionInput {
                 link_id: link.id.clone(),
                 action_type: ActionType::Use,
             })
@@ -303,7 +300,7 @@ async fn it_should_error_use_link_airdrop_more_than_max_use_count() {
 
         // Act
         let result = cashier_backend_client
-            .create_action(CreateActionInput {
+            .user_create_action(CreateActionInput {
                 link_id: link.id.clone(),
                 action_type: ActionType::Use,
             })

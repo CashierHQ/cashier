@@ -37,12 +37,14 @@ class TokenStorageService {
   }
   async addToken(input: AddTokenInput): Promise<null> {
     console.log("Adding token:", input);
-    const res = parseResultResponse(await this.actor.add_token(input));
+    const res = parseResultResponse(await this.actor.user_add_token(input));
     console.log("Add token result:", res);
     return res;
   }
   async addTokens(input: AddTokensInput): Promise<null> {
-    const res = parseResultResponse(await this.actor.add_token_batch(input));
+    const res = parseResultResponse(
+      await this.actor.user_add_token_batch(input),
+    );
     return res;
   }
 
@@ -53,20 +55,22 @@ class TokenStorageService {
       mapStringToTokenId(id.tokenId, id.chain),
     );
     const res = parseResultResponse(
-      await this.actor.update_token_registry_batch({ token_ids: ids_update }),
+      await this.actor.user_update_token_registry_batch({
+        token_ids: ids_update,
+      }),
     );
     return res;
   }
 
   async updateTokenEnable(input: UpdateTokenInput): Promise<null> {
     const res = parseResultResponse(
-      await this.actor.update_token_enable(input),
+      await this.actor.user_update_token_enable(input),
     );
     return res;
   }
   async syncTokenList(): Promise<void> {
     try {
-      parseResultResponse(await this.actor.sync_token_list());
+      parseResultResponse(await this.actor.user_sync_token_list());
     } catch (error) {
       console.error("Error syncing token list:", error);
       throw error; // Rethrow the error to handle it in the calling function
@@ -88,7 +92,7 @@ class TokenStorageService {
     );
 
     // Handle the response safely
-    const response = await this.actor.update_token_balance(balancesInput);
+    const response = await this.actor.user_update_token_balance(balancesInput);
 
     // Only parse if the response has a format that parseResultResponse can handle
     if (response !== undefined) {

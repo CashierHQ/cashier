@@ -19,12 +19,12 @@ use log::{debug, info};
 /// # Arguments
 /// * `input` - Link creation data
 /// # Returns
-/// * `Ok(GetLinkResp)` - The created link data
+/// * `Ok(CreateLinkDto)` - The created link data
 /// * `Err(CanisterError)` - If link creation fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
-async fn create_link_v2(input: CreateLinkInput) -> Result<CreateLinkDto, CanisterError> {
-    info!("[create_link_v2]");
-    debug!("[create_link_v2] input: {input:?}");
+async fn user_create_link_v2(input: CreateLinkInput) -> Result<CreateLinkDto, CanisterError> {
+    info!("[user_create_link_v2]");
+    debug!("[user_create_link_v2] input: {input:?}");
 
     let mut link_v2_service = get_state().link_v2_service;
     let created_at = get_state().env.time();
@@ -41,7 +41,7 @@ async fn create_link_v2(input: CreateLinkInput) -> Result<CreateLinkDto, Caniste
 /// * `Ok(LinkDto)` - The disabled link data
 /// * `Err(CanisterError)` - If disabling fails or unauthorized
 #[update(guard = "is_not_anonymous")]
-async fn disable_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
+async fn user_disable_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
     info!("[disable_link_v2]");
     debug!("[disable_link_v2] link_id: {link_id}");
 
@@ -56,7 +56,7 @@ async fn disable_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
 /// * `Ok(ActionDto)` - The created action data
 /// * `Err(CanisterError)` - If action creation fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
-async fn create_action_v2(input: CreateActionInput) -> Result<ActionDto, CanisterError> {
+async fn user_create_action_v2(input: CreateActionInput) -> Result<ActionDto, CanisterError> {
     info!("[create_action_v2]");
     debug!("[create_action_v2] input: {input:?}");
 
@@ -74,9 +74,11 @@ async fn create_action_v2(input: CreateActionInput) -> Result<ActionDto, Caniste
 /// * `Ok(ProcessActionDto)` - The processed action data
 /// * `Err(CanisterError)` - If action processing fails or validation errors occur
 #[update(guard = "is_not_anonymous")]
-async fn process_action_v2(input: ProcessActionV2Input) -> Result<ProcessActionDto, CanisterError> {
-    info!("[process_action_v2]");
-    debug!("[process_action_v2] input: {input:?}");
+async fn user_process_action_v2(
+    input: ProcessActionV2Input,
+) -> Result<ProcessActionDto, CanisterError> {
+    info!("[user_process_action_v2]");
+    debug!("[user_process_action_v2] input: {input:?}");
 
     let mut link_v2_service = get_state().link_v2_service;
     let canister_id = get_state().env.id();
