@@ -7,6 +7,7 @@ use cashier_backend_types::{
     },
     error::CanisterError,
     link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
+    service::link::{PaginateInput, PaginateResult},
 };
 use cashier_common::{build_data::BuildData, icrc::Icrc114ValidateArgs};
 use ic_mple_client::{CanisterClient, CanisterClientResult};
@@ -103,6 +104,12 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         self.client.update("create_link_v2", ((input),)).await
     }
 
+    /// Disables a link V2.
+    /// # Arguments
+    /// * `link_id` - The ID of the link to disable
+    /// # Returns
+    /// * `Ok(LinkDto)` - The disabled link data
+    /// * `Err(CanisterError)` - If disabling fails or unauthorized
     pub async fn disable_link_v2(
         &self,
         link_id: &str,
@@ -147,6 +154,19 @@ impl<C: CanisterClient> CashierBackendClient<C> {
         input: ProcessActionV2Input,
     ) -> CanisterClientResult<Result<ProcessActionDto, CanisterError>> {
         self.client.update("process_action_v2", ((input),)).await
+    }
+
+    /// Retrieves a paginated list of links of caller.
+    /// # Arguments
+    /// * `options` - Pagination options
+    /// # Returns
+    /// * `Ok(PaginateResult<LinkDto>)` - The paginated list of links
+    /// * `Err(String)` - If retrieval fails
+    pub async fn get_links_v2(
+        &self,
+        options: Option<PaginateInput>,
+    ) -> CanisterClientResult<Result<PaginateResult<LinkDto>, CanisterError>> {
+        self.client.query("get_links_v2", (options,)).await
     }
 
     /// Creates a new action.

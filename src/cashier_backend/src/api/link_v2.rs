@@ -9,9 +9,10 @@ use cashier_backend_types::{
     },
     error::CanisterError,
     link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
+    service::link::{PaginateInput, PaginateResult},
 };
 use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
-use ic_cdk::{api::msg_caller, update};
+use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, info};
 
 /// Creates a new link V2
@@ -82,4 +83,26 @@ async fn process_action_v2(input: ProcessActionV2Input) -> Result<ProcessActionD
     link_v2_service
         .process_action(msg_caller(), canister_id, &input.action_id)
         .await
+}
+
+/// Retrieves a paginated list of links created by the authenticated caller.
+///
+/// This endpoint requires the caller to be authenticated (non-anonymous) and returns
+/// only the links that were created by the calling principal.
+///
+/// # Arguments
+/// * `input` - Optional pagination parameters (page size, offset, etc.)
+///
+/// # Returns
+/// * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by the caller
+/// * `Err(String)` - Error message if retrieval fails
+#[query(guard = "is_not_anonymous")]
+async fn get_links_v2(
+    input: Option<PaginateInput>,
+) -> Result<PaginateResult<LinkDto>, CanisterError> {
+    info!("[get_links_v2]");
+    debug!("[get_links_v2] input: {input:?}");
+
+    let link_v2_service = get_state().link_v2_service;
+    link_v2_service.get_links(msg_caller(), input).await
 }
