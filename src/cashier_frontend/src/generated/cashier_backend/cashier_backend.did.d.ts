@@ -10,11 +10,11 @@ export interface ActionDto {
   'type' : ActionType,
   'state' : IntentState,
 }
-export type ActionType = { 'Pay' : null } |
-  { 'Use' : null } |
+export type ActionType = { 'Use' : null } |
   { 'Withdraw' : null } |
+  { 'Send' : null } |
   { 'CreateLink' : null } |
-  { 'Claim' : null };
+  { 'Receive' : null };
 export type Asset = { 'IC' : { 'address' : Principal } };
 export interface AssetInfoDto {
   'asset' : Asset,
@@ -184,11 +184,6 @@ export type IntentTask = { 'TransferWalletToLink' : null } |
   { 'TransferWalletToTreasury' : null };
 export type IntentType = { 'Transfer' : TransferData } |
   { 'TransferFrom' : TransferFromData };
-export interface LinkDetailUpdateAssetInfoInput {
-  'asset' : Asset,
-  'amount_per_link_use_action' : bigint,
-  'label' : string,
-}
 export interface LinkDto {
   'id' : string,
   'title' : string,
@@ -263,21 +258,25 @@ export type Result = { 'Ok' : null } |
   { 'Err' : CanisterError };
 export type Result_1 = { 'Ok' : Array<Permission> } |
   { 'Err' : CanisterError };
+export type Result_10 = { 'Ok' : CreateLinkDto } |
+  { 'Err' : CanisterError };
+export type Result_11 = { 'Ok' : string } |
+  { 'Err' : CanisterError };
 export type Result_2 = { 'Ok' : ActionDto } |
   { 'Err' : CanisterError };
-export type Result_3 = { 'Ok' : LinkDto } |
+export type Result_3 = { 'Ok' : GetLinkResp } |
+  { 'Err' : string };
+export type Result_4 = { 'Ok' : GetLinkResp } |
   { 'Err' : CanisterError };
-export type Result_4 = { 'Ok' : CreateLinkDto } |
-  { 'Err' : CanisterError };
-export type Result_5 = { 'Ok' : GetLinkResp } |
+export type Result_5 = { 'Ok' : PaginateResult } |
   { 'Err' : string };
 export type Result_6 = { 'Ok' : PaginateResult } |
-  { 'Err' : string };
+  { 'Err' : CanisterError };
 export type Result_7 = { 'Ok' : Icrc21ConsentInfo } |
   { 'Err' : Icrc21Error };
 export type Result_8 = { 'Ok' : [] | [LinkGetUserStateOutput] } |
   { 'Err' : CanisterError };
-export type Result_9 = { 'Ok' : string } |
+export type Result_9 = { 'Ok' : LinkDto } |
   { 'Err' : CanisterError };
 export interface TransactionDto {
   'id' : string,
@@ -349,21 +348,6 @@ export interface _SERVICE {
     Result_1
   >,
   /**
-   * Creates a new action for authenticated users on a specific link.
-   * 
-   * This endpoint allows users to create blockchain actions (like claims, transfers, etc.)
-   * on existing links. The action is prepared with all necessary intents and transactions
-   * but not immediately executed.
-   * 
-   * # Arguments
-   * * `input` - Action creation parameters including link ID and action type
-   * 
-   * # Returns
-   * * `Ok(ActionDto)` - Created action data with associated intents
-   * * `Err(CanisterError)` - Error if creation fails or action already exists
-   */
-  'create_action' : ActorMethod<[CreateActionInput], Result_2>,
-  /**
    * Creates a new action for anonymous users with wallet address.
    * 
    * This endpoint allows anonymous users to create blockchain actions (typically claims)
@@ -381,47 +365,6 @@ export interface _SERVICE {
     [CreateActionAnonymousInput],
     Result_2
   >,
-  /**
-   * Creates a new action V2.
-   * # Arguments
-   * * `input` - Action creation data
-   * # Returns
-   * * `Ok(ActionDto)` - The created action data
-   * * `Err(CanisterError)` - If action creation fails or validation errors occur
-   */
-  'create_action_v2' : ActorMethod<[CreateActionInput], Result_2>,
-  /**
-   * Creates a new link using the v2 API format with enhanced features.
-   * 
-   * This endpoint requires authentication and creates a new blockchain transaction link
-   * owned by the calling principal. Returns the complete link data structure.
-   * 
-   * # Arguments
-   * * `input` - Link creation parameters (v2 format with additional features)
-   * 
-   * # Returns
-   * * `Ok(LinkDto)` - Complete data of the created link
-   * * `Err(CanisterError)` - Error if link creation fails
-   */
-  'create_link' : ActorMethod<[CreateLinkInput], Result_3>,
-  /**
-   * Creates a new link V2
-   * # Arguments
-   * * `input` - Link creation data
-   * # Returns
-   * * `Ok(GetLinkResp)` - The created link data
-   * * `Err(CanisterError)` - If link creation fails or validation errors occur
-   */
-  'create_link_v2' : ActorMethod<[CreateLinkInput], Result_4>,
-  /**
-   * Disables an existing link V2
-   * # Arguments
-   * * `link_id` - The ID of the link to disable
-   * # Returns
-   * * `Ok(LinkDto)` - The disabled link data
-   * * `Err(CanisterError)` - If disabling fails or unauthorized
-   */
-  'disable_link_v2' : ActorMethod<[string], Result_3>,
   /**
    * Returns the build data of the canister.
    */
@@ -441,7 +384,26 @@ export interface _SERVICE {
    * * `Ok(GetLinkResp)` - Link data with optional action information
    * * `Err(String)` - Error message if link not found or access denied
    */
-  'get_link' : ActorMethod<[string, [] | [GetLinkOptions]], Result_5>,
+  'get_link' : ActorMethod<[string, [] | [GetLinkOptions]], Result_3>,
+  /**
+   * Retrieves a specific link by its ID with optional action data.
+   * 
+   * This endpoint is accessible to both anonymous and authenticated users. The response
+   * includes the link details and optionally associated action data based on the caller's
+   * permissions and the requested action type.
+   * 
+   * # Arguments
+   * * `link_id` - The unique identifier of the link to retrieve
+   * * `options` - Optional parameters including action type to include in response
+   * 
+   * # Returns
+   * * `Ok(LinkDto)` - Link data
+   * * `Err(String)` - Error message if link not found or access denied
+   */
+  'get_link_details_v2' : ActorMethod<
+    [string, [] | [GetLinkOptions]],
+    Result_4
+  >,
   /**
    * Retrieves a paginated list of links created by the authenticated caller.
    * 
@@ -455,7 +417,21 @@ export interface _SERVICE {
    * * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by the caller
    * * `Err(String)` - Error message if retrieval fails
    */
-  'get_links' : ActorMethod<[[] | [PaginateInput]], Result_6>,
+  'get_links' : ActorMethod<[[] | [PaginateInput]], Result_5>,
+  /**
+   * Retrieves a paginated list of links created by the authenticated caller.
+   * 
+   * This endpoint requires the caller to be authenticated (non-anonymous) and returns
+   * only the links that were created by the calling principal.
+   * 
+   * # Arguments
+   * * `input` - Optional pagination parameters (page size, offset, etc.)
+   * 
+   * # Returns
+   * * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by the caller
+   * * `Err(CanisterError)` - Error message if retrieval fails
+   */
+  'get_links_v2' : ActorMethod<[[] | [PaginateInput]], Result_6>,
   'icrc10_supported_standards' : ActorMethod<
     [],
     Array<Icrc21SupportedStandard>
@@ -487,37 +463,6 @@ export interface _SERVICE {
    */
   'link_get_user_state' : ActorMethod<[LinkGetUserStateInput], Result_8>,
   /**
-   * Updates the user state for a specific link action.
-   * 
-   * This endpoint transitions the user through different states in a link's action flow
-   * (e.g., from wallet selection to transaction signing). It implements a state machine
-   * to guide users through the complete action process.
-   * 
-   * # Arguments
-   * * `input` - Parameters including link ID, action type, target state, and optional wallet address
-   * 
-   * # Returns
-   * * `Ok(Some(LinkGetUserStateOutput))` - Updated user state and action data
-   * * `Ok(None)` - If state transition is not valid
-   * * `Err(CanisterError)` - Error if validation fails or transition not allowed
-   */
-  'link_update_user_state' : ActorMethod<[LinkUpdateUserStateInput], Result_8>,
-  /**
-   * Processes an existing action for authenticated users.
-   * 
-   * This endpoint executes a blockchain action that was previously created by the user.
-   * It validates the action state, executes the associated blockchain transactions,
-   * and updates the action status accordingly.
-   * 
-   * # Arguments
-   * * `input` - Action processing parameters including link ID and action type
-   * 
-   * # Returns
-   * * `Ok(ActionDto)` - Updated action data after processing
-   * * `Err(CanisterError)` - Error if processing fails or action not found
-   */
-  'process_action' : ActorMethod<[ProcessActionInput], Result_2>,
-  /**
    * Processes an existing action for anonymous users with wallet address.
    * 
    * This endpoint allows anonymous users to execute blockchain actions (typically claims)
@@ -536,6 +481,96 @@ export interface _SERVICE {
     Result_2
   >,
   /**
+   * Creates a new action for authenticated users on a specific link.
+   * 
+   * This endpoint allows users to create blockchain actions (like claims, transfers, etc.)
+   * on existing links. The action is prepared with all necessary intents and transactions
+   * but not immediately executed.
+   * 
+   * # Arguments
+   * * `input` - Action creation parameters including link ID and action type
+   * 
+   * # Returns
+   * * `Ok(ActionDto)` - Created action data with associated intents
+   * * `Err(CanisterError)` - Error if creation fails or action already exists
+   */
+  'user_create_action' : ActorMethod<[CreateActionInput], Result_2>,
+  /**
+   * Creates a new action V2.
+   * # Arguments
+   * * `input` - Action creation data
+   * # Returns
+   * * `Ok(ActionDto)` - The created action data
+   * * `Err(CanisterError)` - If action creation fails or validation errors occur
+   */
+  'user_create_action_v2' : ActorMethod<[CreateActionInput], Result_2>,
+  /**
+   * Creates a new link using the v2 API format with enhanced features.
+   * 
+   * This endpoint requires authentication and creates a new blockchain transaction link
+   * owned by the calling principal. Returns the complete link data structure.
+   * 
+   * # Arguments
+   * * `input` - Link creation parameters (v2 format with additional features)
+   * 
+   * # Returns
+   * * `Ok(LinkDto)` - Complete data of the created link
+   * * `Err(CanisterError)` - Error if link creation fails
+   */
+  'user_create_link' : ActorMethod<[CreateLinkInput], Result_9>,
+  /**
+   * Creates a new link V2
+   * # Arguments
+   * * `input` - Link creation data
+   * # Returns
+   * * `Ok(CreateLinkDto)` - The created link data
+   * * `Err(CanisterError)` - If link creation fails or validation errors occur
+   */
+  'user_create_link_v2' : ActorMethod<[CreateLinkInput], Result_10>,
+  /**
+   * Disables an existing link V2
+   * # Arguments
+   * * `link_id` - The ID of the link to disable
+   * # Returns
+   * * `Ok(LinkDto)` - The disabled link data
+   * * `Err(CanisterError)` - If disabling fails or unauthorized
+   */
+  'user_disable_link_v2' : ActorMethod<[string], Result_9>,
+  /**
+   * Updates the user state for a specific link action.
+   * 
+   * This endpoint transitions the user through different states in a link's action flow
+   * (e.g., from wallet selection to transaction signing). It implements a state machine
+   * to guide users through the complete action process.
+   * 
+   * # Arguments
+   * * `input` - Parameters including link ID, action type, target state, and optional wallet address
+   * 
+   * # Returns
+   * * `Ok(Some(LinkGetUserStateOutput))` - Updated user state and action data
+   * * `Ok(None)` - If state transition is not valid
+   * * `Err(CanisterError)` - Error if validation fails or transition not allowed
+   */
+  'user_link_update_user_state' : ActorMethod<
+    [LinkUpdateUserStateInput],
+    Result_8
+  >,
+  /**
+   * Processes an existing action for authenticated users.
+   * 
+   * This endpoint executes a blockchain action that was previously created by the user.
+   * It validates the action state, executes the associated blockchain transactions,
+   * and updates the action status accordingly.
+   * 
+   * # Arguments
+   * * `input` - Action processing parameters including link ID and action type
+   * 
+   * # Returns
+   * * `Ok(ActionDto)` - Updated action data after processing
+   * * `Err(CanisterError)` - Error if processing fails or action not found
+   */
+  'user_process_action' : ActorMethod<[ProcessActionInput], Result_2>,
+  /**
    * Processes a created action V2.
    * # Arguments
    * * `input` - Action processing data
@@ -543,8 +578,11 @@ export interface _SERVICE {
    * * `Ok(ProcessActionDto)` - The processed action data
    * * `Err(CanisterError)` - If action processing fails or validation errors occur
    */
-  'process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_4>,
-  'trigger_transaction' : ActorMethod<[TriggerTransactionInput], Result_9>,
+  'user_process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_10>,
+  'user_trigger_transaction' : ActorMethod<
+    [TriggerTransactionInput],
+    Result_11
+  >,
   /**
    * Updates an existing action's state and executes associated transactions.
    * 
@@ -559,7 +597,7 @@ export interface _SERVICE {
    * * `Ok(ActionDto)` - Updated action data after processing
    * * `Err(CanisterError)` - Error if update fails, unauthorized, or action not found
    */
-  'update_action' : ActorMethod<[UpdateActionInput], Result_2>,
+  'user_update_action' : ActorMethod<[UpdateActionInput], Result_2>,
   /**
    * Updates an existing link's configuration or state.
    * 
@@ -573,7 +611,7 @@ export interface _SERVICE {
    * * `Ok(LinkDto)` - Updated link data
    * * `Err(CanisterError)` - Error if update fails or unauthorized
    */
-  'update_link' : ActorMethod<[UpdateLinkInput], Result_3>,
+  'user_update_link' : ActorMethod<[UpdateLinkInput], Result_9>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

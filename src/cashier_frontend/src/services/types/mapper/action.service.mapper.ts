@@ -26,10 +26,10 @@ const mapActionTypeToEnum = (actionType: ActionType): ACTION_TYPE => {
       return ACTION_TYPE.WITHDRAW;
     case "CreateLink":
       return ACTION_TYPE.CREATE_LINK;
-    case "Claim":
-      return ACTION_TYPE.CLAIM;
-    case "Pay":
-      return ACTION_TYPE.PAY;
+    case "Receive":
+      return ACTION_TYPE.RECEIVE;
+    case "Send":
+      return ACTION_TYPE.SEND;
     default:
       assertNever(key);
   }
@@ -63,10 +63,10 @@ export const mapFrontendActionTypeToActionType = (
       return { Withdraw: null };
     case ACTION_TYPE.CREATE_LINK:
       return { CreateLink: null };
-    case ACTION_TYPE.CLAIM:
-      return { Claim: null };
-    case ACTION_TYPE.PAY:
-      return { Pay: null };
+    case ACTION_TYPE.RECEIVE:
+      return { Receive: null };
+    case ACTION_TYPE.SEND:
+      return { Send: null };
     default:
       assertNever(actionType);
   }

@@ -40,15 +40,12 @@ async fn it_should_error_create_link_tip_if_caller_anonymous() {
             .unwrap();
 
         // Act
-        let result = be_client.create_link(link_input).await;
+        let result = be_client.user_create_link(link_input).await;
 
         // Assert
         assert!(result.is_err());
         if let Err(CanisterClientError::PocketIcTestError(err)) = result {
-            assert!(
-                err.reject_message
-                    .contains("Anonymous caller is not allowed")
-            );
+            assert!(err.reject_message.contains("AnonimousUserNotAllowed"));
         } else {
             panic!("Expected PocketIcTestError, got {:?}", result);
         }

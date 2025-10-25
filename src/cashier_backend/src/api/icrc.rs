@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Decode;
-use cashier_backend_types::error::CanisterError;
+use cashier_backend_types::{constant::TRIGGER_TRANSACTION_METHOD_NAME, error::CanisterError};
 use ic_cdk::{query, update};
 use itertools::Itertools;
 
@@ -164,7 +164,7 @@ fn consent_msg_text_pages(
 // following the ICRC-114 standard for helping signer validate the canister call
 // Source: https://github.com/dfinity/wg-identity-authentication/blob/main/topics/icrc_114_validate_batch_call.md
 fn icrc114_validate(args: Icrc114ValidateArgs) -> bool {
-    if args.method == "trigger_transaction" {
+    if args.method == TRIGGER_TRANSACTION_METHOD_NAME {
         match Decode!(args.res.as_slice(), Result<String, CanisterError>) {
             Ok(Ok(_ok)) => return true,
             Ok(Err(_err)) => return false,
