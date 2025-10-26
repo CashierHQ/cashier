@@ -5,8 +5,11 @@ import { Link } from "../types/link/link";
 // A state for the user tokens list
 export const linkListQuery = managedState<Link[]>({
   queryFn: async () => {
-    const backendLinks = (await cashierBackendService.getLinks()).unwrap();
-    const links = backendLinks.map((b) => Link.fromBackend(b));
+    const res = await cashierBackendService.getLinks();
+    if (res.isErr()) {
+      throw res.unwrapErr();
+    }
+    const links = res.unwrap().map((b) => Link.fromBackend(b));
     return links;
   },
   watch: true,

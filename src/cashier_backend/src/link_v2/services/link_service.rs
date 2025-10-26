@@ -20,6 +20,7 @@ use cashier_backend_types::{
     repository::{action::v1::ActionType, link_action::v1::LinkAction, user_link::v1::UserLink},
     service::action::ActionData,
 };
+use log::info;
 use std::rc::Rc;
 
 pub struct LinkV2Service<R: Repositories, M: TransactionManager + 'static> {
@@ -252,7 +253,15 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             .map(|link_user| link_user.link_id.clone())
             .collect();
 
+        info!("Link IDs retrieved for user {}: {:?}", caller, link_ids);
+
         let links = self.link_repository.get_batch(link_ids);
+
+        info!(
+            "Links retrieved for user {}: {:?}",
+            caller,
+            links.iter().map(|link| &link.id).collect::<Vec<&String>>()
+        );
         let paginate_result = PaginateResult::new(links, user_links.metadata);
         Ok(paginate_result.map(LinkDto::from))
     }

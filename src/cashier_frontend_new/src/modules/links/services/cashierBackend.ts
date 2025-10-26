@@ -35,23 +35,23 @@ class CanisterBackendService {
       limit: number;
     } = {
       offset: 0,
-      limit: 100,
+      limit: 10,
     },
   ): Promise<Result<cashierBackend.LinkDto[], Error>> {
     const actor = this.#getActor();
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
-    const response = await actor.get_links([
-      {
-        offset: BigInt(params.limit),
-        limit: BigInt(params.offset),
-      },
-    ]);
+    const response = await actor.get_links_v2(
+      toNullable({
+        offset: BigInt(params.offset),
+        limit: BigInt(params.limit),
+      }),
+    );
 
     return responseToResult(response)
       .map((res) => res.data)
-      .mapErr((err) => new Error(err));
+      .mapErr((err) => new Error(JSON.stringify(err)));
   }
 
   /**
