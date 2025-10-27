@@ -3,7 +3,7 @@
   import AssetList from "./assetList.svelte";
   import type { Link } from "../../types/link/link";
   import { LinkType } from "../../types/link/linkType";
-    import { assertUnreachable } from "$lib/rsMatch";
+  import { assertUnreachable } from "$lib/rsMatch";
 
   interface Props {
     link: Link;
