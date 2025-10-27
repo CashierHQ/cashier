@@ -20,13 +20,15 @@ use cashier_backend_types::{
     repository::{action::v1::ActionType, link_action::v1::LinkAction, user_link::v1::UserLink},
     service::action::ActionData,
 };
-use log::info;
+use log::debug;
 use std::rc::Rc;
 
 pub struct LinkV2Service<R: Repositories, M: TransactionManager + 'static> {
     pub link_repository: repositories::link::LinkRepository<R::Link>,
     pub user_link_repository: repositories::user_link::UserLinkRepository<R::UserLink>,
-    pub link_action_repository: repositories::link_action::LinkActionRepository<R::LinkAction>,
+    pub _link_action_repository: repositories::link_action::LinkActionRepository<R::LinkAction>,
+    pub user_link_action_repository:
+        repositories::user_link_action::UserLinkActionRepository<R::UserLinkAction>,
     pub action_service: ActionService<R>,
     pub transaction_manager: Rc<M>,
 }
@@ -37,7 +39,8 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         Self {
             link_repository: repo.link(),
             user_link_repository: repo.user_link(),
-            link_action_repository: repo.link_action(),
+            _link_action_repository: repo.link_action(),
+            user_link_action_repository: repo.user_link_action(),
             action_service: ActionService::new(repo),
             transaction_manager,
         }
@@ -72,6 +75,7 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         };
         self.user_link_repository.create(new_user_link);
 
+        // create action firstly
         let action_dto = self
             .create_action(
                 creator_id,
@@ -150,7 +154,7 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         let link = factory.create_from_link(link_model, canister_id)?;
         let result = link.create_action(caller, action_type).await?;
 
-        // save action to DB
+        // save data to DB
         let link_action = LinkAction {
             link_id: link_id.to_string(),
             action_type: result.create_action_result.action.r#type.clone(),
@@ -159,13 +163,15 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             link_user_state: None,
         };
 
-        let _ = self.action_service.store_action_data(
-            link_action,
+        self.action_service.store_action_data(
+            link_action.clone(),
             result.create_action_result.action.clone(),
             result.create_action_result.intents.clone(),
             result.create_action_result.intent_txs_map.clone(),
             result.create_action_result.action.creator,
-        );
+        )?;
+
+        self.user_link_action_repository.create(link_action);
 
         let action_dto: ActionDto = result.create_action_result.into();
 
@@ -253,15 +259,8 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             .map(|link_user| link_user.link_id.clone())
             .collect();
 
-        info!("Link IDs retrieved for user {}: {:?}", caller, link_ids);
-
         let links = self.link_repository.get_batch(link_ids);
-
-        info!(
-            "Links retrieved for user {}: {:?}",
-            caller,
-            links.iter().map(|link| &link.id).collect::<Vec<&String>>()
-        );
+        
         let paginate_result = PaginateResult::new(links, user_links.metadata);
         Ok(paginate_result.map(LinkDto::from))
     }
@@ -287,11 +286,17 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
 
         let action = options.and_then(|opts| {
             let action_type = opts.action_type;
-            let link_actions =
-                self.link_action_repository
-                    .get_by_prefix(link_id, &action_type, &caller);
 
-            link_actions
+            let user_link_actions = self
+                .user_link_action_repository
+                .get_actions_by_user_link_and_type(caller, link_id, &action_type)?;
+
+            debug!(
+                "get_link_details: user_link_actions found: {:?}",
+                user_link_actions
+            );
+
+            user_link_actions
                 .first()
                 .map(|link_action| link_action.action_id.clone())
                 .and_then(|action_id| self.action_service.get_action_by_id(&action_id))

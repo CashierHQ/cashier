@@ -258,7 +258,7 @@ export type Result = { 'Ok' : null } |
   { 'Err' : CanisterError };
 export type Result_1 = { 'Ok' : Array<Permission> } |
   { 'Err' : CanisterError };
-export type Result_10 = { 'Ok' : CreateLinkDto } |
+export type Result_10 = { 'Ok' : PaginateResult } |
   { 'Err' : CanisterError };
 export type Result_11 = { 'Ok' : string } |
   { 'Err' : CanisterError };
@@ -270,13 +270,13 @@ export type Result_4 = { 'Ok' : GetLinkResp } |
   { 'Err' : CanisterError };
 export type Result_5 = { 'Ok' : PaginateResult } |
   { 'Err' : string };
-export type Result_6 = { 'Ok' : PaginateResult } |
-  { 'Err' : CanisterError };
-export type Result_7 = { 'Ok' : Icrc21ConsentInfo } |
+export type Result_6 = { 'Ok' : Icrc21ConsentInfo } |
   { 'Err' : Icrc21Error };
-export type Result_8 = { 'Ok' : [] | [LinkGetUserStateOutput] } |
+export type Result_7 = { 'Ok' : [] | [LinkGetUserStateOutput] } |
   { 'Err' : CanisterError };
-export type Result_9 = { 'Ok' : LinkDto } |
+export type Result_8 = { 'Ok' : LinkDto } |
+  { 'Err' : CanisterError };
+export type Result_9 = { 'Ok' : CreateLinkDto } |
   { 'Err' : CanisterError };
 export interface TransactionDto {
   'id' : string,
@@ -418,20 +418,6 @@ export interface _SERVICE {
    * * `Err(String)` - Error message if retrieval fails
    */
   'get_links' : ActorMethod<[[] | [PaginateInput]], Result_5>,
-  /**
-   * Retrieves a paginated list of links created by the authenticated caller.
-   * 
-   * This endpoint requires the caller to be authenticated (non-anonymous) and returns
-   * only the links that were created by the calling principal.
-   * 
-   * # Arguments
-   * * `input` - Optional pagination parameters (page size, offset, etc.)
-   * 
-   * # Returns
-   * * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by the caller
-   * * `Err(CanisterError)` - Error message if retrieval fails
-   */
-  'get_links_v2' : ActorMethod<[[] | [PaginateInput]], Result_6>,
   'icrc10_supported_standards' : ActorMethod<
     [],
     Array<Icrc21SupportedStandard>
@@ -439,7 +425,7 @@ export interface _SERVICE {
   'icrc114_validate' : ActorMethod<[Icrc114ValidateArgs], boolean>,
   'icrc21_canister_call_consent_message' : ActorMethod<
     [Icrc21ConsentMessageRequest],
-    Result_7
+    Result_6
   >,
   'icrc28_trusted_origins' : ActorMethod<[], Icrc28TrustedOriginsResponse>,
   /**
@@ -461,7 +447,7 @@ export interface _SERVICE {
    * * `Ok(None)` - If no action exists for the user
    * * `Err(CanisterError)` - Error if validation fails or invalid parameters
    */
-  'link_get_user_state' : ActorMethod<[LinkGetUserStateInput], Result_8>,
+  'link_get_user_state' : ActorMethod<[LinkGetUserStateInput], Result_7>,
   /**
    * Processes an existing action for anonymous users with wallet address.
    * 
@@ -517,7 +503,7 @@ export interface _SERVICE {
    * * `Ok(LinkDto)` - Complete data of the created link
    * * `Err(CanisterError)` - Error if link creation fails
    */
-  'user_create_link' : ActorMethod<[CreateLinkInput], Result_9>,
+  'user_create_link' : ActorMethod<[CreateLinkInput], Result_8>,
   /**
    * Creates a new link V2
    * # Arguments
@@ -526,7 +512,7 @@ export interface _SERVICE {
    * * `Ok(CreateLinkDto)` - The created link data
    * * `Err(CanisterError)` - If link creation fails or validation errors occur
    */
-  'user_create_link_v2' : ActorMethod<[CreateLinkInput], Result_10>,
+  'user_create_link_v2' : ActorMethod<[CreateLinkInput], Result_9>,
   /**
    * Disables an existing link V2
    * # Arguments
@@ -535,7 +521,21 @@ export interface _SERVICE {
    * * `Ok(LinkDto)` - The disabled link data
    * * `Err(CanisterError)` - If disabling fails or unauthorized
    */
-  'user_disable_link_v2' : ActorMethod<[string], Result_9>,
+  'user_disable_link_v2' : ActorMethod<[string], Result_8>,
+  /**
+   * Retrieves a paginated list of links created by the authenticated caller.
+   * 
+   * This endpoint requires the caller to be authenticated (non-anonymous) and returns
+   * only the links that were created by the calling principal.
+   * 
+   * # Arguments
+   * * `input` - Optional pagination parameters (page size, offset, etc.)
+   * 
+   * # Returns
+   * * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by the caller
+   * * `Err(CanisterError)` - Error message if retrieval fails
+   */
+  'user_get_links_v2' : ActorMethod<[[] | [PaginateInput]], Result_10>,
   /**
    * Updates the user state for a specific link action.
    * 
@@ -553,7 +553,7 @@ export interface _SERVICE {
    */
   'user_link_update_user_state' : ActorMethod<
     [LinkUpdateUserStateInput],
-    Result_8
+    Result_7
   >,
   /**
    * Processes an existing action for authenticated users.
@@ -578,7 +578,7 @@ export interface _SERVICE {
    * * `Ok(ProcessActionDto)` - The processed action data
    * * `Err(CanisterError)` - If action processing fails or validation errors occur
    */
-  'user_process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_10>,
+  'user_process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_9>,
   'user_trigger_transaction' : ActorMethod<
     [TriggerTransactionInput],
     Result_11
@@ -611,7 +611,7 @@ export interface _SERVICE {
    * * `Ok(LinkDto)` - Updated link data
    * * `Err(CanisterError)` - Error if update fails or unauthorized
    */
-  'user_update_link' : ActorMethod<[UpdateLinkInput], Result_9>,
+  'user_update_link' : ActorMethod<[UpdateLinkInput], Result_8>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];
