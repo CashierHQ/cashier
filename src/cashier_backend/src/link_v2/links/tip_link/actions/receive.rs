@@ -42,7 +42,7 @@ impl ReceiveAction {
             id: Uuid::new_v4().to_string(),
             r#type: ActionType::Receive,
             link_id: link.id.clone(),
-            creator: link.creator,
+            creator: receiver_id,
             state: ActionState::Created,
         };
 

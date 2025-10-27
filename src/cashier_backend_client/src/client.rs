@@ -153,11 +153,11 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     /// # Returns
     /// * `Ok(PaginateResult<LinkDto>)` - The paginated list of links
     /// * `Err(String)` - If retrieval fails
-    pub async fn get_links_v2(
+    pub async fn user_get_links_v2(
         &self,
         options: Option<PaginateInput>,
     ) -> CanisterClientResult<Result<PaginateResult<LinkDto>, CanisterError>> {
-        self.client.query("get_links_v2", (options,)).await
+        self.client.query("user_get_links_v2", (options,)).await
     }
 
     /// Retrieves a specific link by its ID with optional action data.

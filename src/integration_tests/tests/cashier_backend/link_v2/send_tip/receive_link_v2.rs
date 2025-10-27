@@ -140,6 +140,7 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
         assert!(!create_action_result.id.is_empty());
         assert_eq!(create_action_result.r#type, ActionType::Receive);
         assert_eq!(create_action_result.intents.len(), 1);
+        assert_eq!(create_action_result.creator, receiver);
 
         // Assert Intent 1: TransferLinkToWallet
         let intent1 = &create_action_result.intents[0];
@@ -256,6 +257,7 @@ async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
         assert!(!create_action_result.id.is_empty());
         assert_eq!(create_action_result.r#type, ActionType::Receive);
         assert_eq!(create_action_result.intents.len(), 1);
+        assert_eq!(create_action_result.creator, receiver);
 
         // Assert Intent 1: TransferLinkToWallet
         let intent1 = &create_action_result.intents[0];
