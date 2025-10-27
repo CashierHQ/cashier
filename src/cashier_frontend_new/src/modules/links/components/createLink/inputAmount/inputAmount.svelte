@@ -24,7 +24,7 @@
     balance?: bigint;
   } = $props();
 
-  // input string shown in the input (preserves caret while typing)
+  // input string shown in the input, do not bind `value` directly to input
   let displayStr: string = $state("");
 
   // converted value: if mode === 'amount' -> USD equivalent, else -> token equivalent
@@ -32,66 +32,43 @@
     const parsed = parseDisplayNumber(displayStr);
     if (parsed == null) return null;
     if (!priceUsd || priceUsd <= 0) return null;
-    if (mode === "amount") {
-      // mode 'amount' means the input is token amount -> show USD
-      return parsed * priceUsd;
-    } else {
-      // mode 'usd' means the input is USD amount -> show tokens
-      return parsed / priceUsd;
-    }
+    return mode === "amount" ? parsed * priceUsd : parsed / priceUsd;
   });
 
-  // Initialize inputStr from incoming `value`
+  // Helper: format the current `value` into the display string depending on `mode`
+  function formatValueForDisplay(): string {
+    if (value == null) return "";
+    const asAmount = parseBalanceUnits(value, decimals);
+    if (mode === "amount") return formatNumber(asAmount);
+    if (priceUsd && priceUsd > 0) return formatNumber(asAmount * priceUsd);
+    return "";
+  }
+
+  // Update the displayed string when `value`, `mode`, or `priceUsd` changes
   $effect(() => {
-    // only update the displayed string when the input is not focused
-    if (value != null && value !== undefined) {
-      const asAmount: number = parseBalanceUnits(value, decimals);
-      if (mode === "amount") {
-        displayStr = formatNumber(asAmount);
-      } else {
-        if (priceUsd && priceUsd > 0) {
-          displayStr = formatNumber(asAmount * priceUsd);
-        } else {
-          displayStr = "";
-        }
-      }
-    }
+    displayStr = formatValueForDisplay();
   });
 
   // Handle input events and keep numeric displayNumber
   function handleInput(e: Event) {
     const t = e.target as HTMLInputElement;
-    // sanitize input (removes invalid chars) and parse
-    const sanitized = sanitizeInput(t.value);
-    displayStr = sanitized;
+    displayStr = sanitizeInput(t.value);
     const parsed = parseDisplayNumber(displayStr);
     if (parsed == null) {
-      // empty or invalid
       value = 0n;
       return;
     }
 
-    value = computeAmountFromInput({
-      num: parsed,
-      mode,
-      priceUsd,
-      decimals,
-    });
+    value = computeAmountFromInput({ num: parsed, mode, priceUsd, decimals });
   }
 
   // Toggle mode (external callers can set `mode` prop too)
   function setMode(m: "amount" | "usd") {
-    // disallow switching to USD when price is not provided
     if (m === "usd" && !priceUsd) return;
     mode = m;
-    // when switching, refresh the displayed string to reflect current value in the new mode
-    const asAmount: number = parseBalanceUnits(value, decimals);
-    if (mode === "amount") {
-      displayStr = formatNumber(asAmount);
-    } else if (priceUsd && priceUsd > 0) {
-      displayStr = formatNumber(asAmount * priceUsd);
-    }
+    displayStr = formatValueForDisplay();
   }
+
 </script>
 
 <div class="flex flex-col space-y-1">
