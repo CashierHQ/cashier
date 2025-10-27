@@ -70,6 +70,10 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
 
                 Ok(())
             }
+            _ => Err(CanisterError::HandleLogicError(format!(
+                "No validation logic for action type: {:?}",
+                action_type
+            ))),
         }
     }
 
@@ -110,6 +114,13 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
                         "Action is already success".to_string(),
                     ));
                 }
+            }
+
+            _ => {
+                return Err(CanisterError::HandleLogicError(format!(
+                    "No validation logic for action type: {:?}",
+                    action.r#type
+                )));
             }
         }
 

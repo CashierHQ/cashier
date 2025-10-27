@@ -6,12 +6,14 @@ use cashier_backend_types::{
     dto::{
         action::{ActionDto, CreateActionInput, ProcessActionInput, UpdateActionInput},
         link::{
-            CreateLinkInput, GetLinkResp, LinkDetailUpdateAssetInfoInput, LinkDto,
+            CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDetailUpdateAssetInfoInput, LinkDto,
             LinkStateMachineGoto, UpdateLinkInput,
         },
     },
     error::CanisterError,
+    link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
     repository::{action::v1::ActionType, common::Asset, link::v1::LinkType},
+    service::link::{PaginateInput, PaginateResult},
 };
 use ic_mple_client::PocketIcClient;
 use icrc_ledger_types::icrc1::account::Account;
@@ -40,19 +42,12 @@ impl LinkTestFixture {
         }
     }
 
-    // This is generic function to create a link.
-    pub async fn create_link(&self, input: CreateLinkInput) -> LinkDto {
-        self.cashier_backend_client
-            .as_ref()
-            .unwrap()
-            .user_create_link(input)
-            .await
-            .unwrap()
-            .unwrap()
-    }
-
-    // This is generic function to create a link.
-    pub async fn create_link_v2(&self, input: CreateLinkInput) -> GetLinkResp {
+    /// Create link v2
+    /// # Arguments
+    /// * `input` - The input data for creating the link
+    /// # Returns
+    /// * `CreateLinkDto` - The created link data
+    pub async fn create_link_v2(&self, input: CreateLinkInput) -> CreateLinkDto {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
@@ -67,12 +62,118 @@ impl LinkTestFixture {
     /// * `link_id` - The ID of the link to activate
     /// # Returns
     /// * `LinkDto` - The activated link data
-    pub async fn activate_link_v2(&self, link_id: &str) -> Result<LinkDto, CanisterError> {
+    pub async fn activate_link_v2(
+        &self,
+        action_id: &str,
+    ) -> Result<ProcessActionDto, CanisterError> {
+        let process_action_input = ProcessActionV2Input {
+            action_id: action_id.to_string(),
+        };
+
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .user_activate_link_v2(link_id)
+            .user_process_action_v2(process_action_input)
             .await
+            .unwrap()
+    }
+
+    /// Disable link v2
+    /// # Arguments
+    /// * `link_id` - The ID of the link to disable
+    /// # Returns
+    /// * `LinkDto` - The disabled link data
+    pub async fn disable_link_v2(&self, link_id: &str) -> Result<LinkDto, CanisterError> {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_disable_link_v2(link_id)
+            .await
+            .unwrap()
+    }
+
+    /// Create action v2
+    /// # Arguments
+    /// * `input` - The input data for creating the action
+    /// # Returns
+    /// * `ActionDto` - The created action data
+    /// * `CanisterError` - Error if the action creation fails
+    pub async fn create_action_v2(
+        &self,
+        input: CreateActionInput,
+    ) -> Result<ActionDto, CanisterError> {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_create_action_v2(input)
+            .await
+            .unwrap()
+    }
+
+    /// Process action v2
+    /// # Arguments
+    /// * `input` - The input data for processing the action
+    /// # Returns
+    /// * `ProcessActionDto` - The processed action data
+    /// * `CanisterError` - Error if the action processing fails
+    pub async fn process_action_v2(
+        &self,
+        input: ProcessActionV2Input,
+    ) -> Result<ProcessActionDto, CanisterError> {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_process_action_v2(input)
+            .await
+            .unwrap()
+    }
+
+    /// Get links v2
+    /// # Arguments
+    /// * `options` - Optional pagination input
+    /// # Returns
+    /// * `PaginateResult<LinkDto>` - The paginated list of links
+    /// * `CanisterError` - Error if the retrieval fails
+    pub async fn user_get_links_v2(
+        &self,
+        options: Option<PaginateInput>,
+    ) -> Result<PaginateResult<LinkDto>, CanisterError> {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_get_links_v2(options)
+            .await
+            .unwrap()
+    }
+
+    /// Get link details v2
+    /// # Arguments
+    /// * `link_id` - The ID of the link to retrieve details for
+    /// * `options` - Optional parameters for retrieving link details
+    /// # Returns
+    /// * `GetLinkResp` - The link details response
+    /// * `CanisterError` - Error if the retrieval fails
+    pub async fn get_link_details_v2(
+        &self,
+        link_id: &str,
+        options: Option<GetLinkOptions>,
+    ) -> Result<GetLinkResp, CanisterError> {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .get_link_details_v2(link_id, options)
+            .await
+            .unwrap()
+    }
+
+    // This is generic function to create a link.
+    pub async fn create_link(&self, input: CreateLinkInput) -> LinkDto {
+        self.cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_create_link(input)
+            .await
+            .unwrap()
             .unwrap()
     }
 
@@ -85,7 +186,7 @@ impl LinkTestFixture {
     }
 
     // Pre-defined input for creating tip link V2.
-    pub async fn create_tip_link_v2(&self, token: &str, amount: u64) -> GetLinkResp {
+    pub async fn create_tip_link_v2(&self, token: &str, amount: u64) -> CreateLinkDto {
         let link_input = self
             .tip_link_input(vec![token.to_string()], vec![amount])
             .unwrap();
@@ -536,7 +637,7 @@ pub async fn create_tip_linkv2_fixture(
     ctx: &PocketIcTestContext,
     token: &str,
     amount: u64,
-) -> (LinkTestFixture, GetLinkResp) {
+) -> (LinkTestFixture, CreateLinkDto) {
     let caller = TestUser::User1.get_principal();
     let mut creator_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
@@ -551,6 +652,33 @@ pub async fn create_tip_linkv2_fixture(
 
     let link_response = creator_fixture.create_tip_link_v2(token, amount).await;
     (creator_fixture, link_response)
+}
+
+/// Activate a tip link v2 fixture.
+/// # Arguments
+/// * `ctx` - The Pocket IC test context
+/// * `token` - The token identifier (e.g., "ICP")
+/// * `amount` - The tip amount
+/// # Returns
+/// * `(LinkTestFixture, ProcessActionDto)` - The link test fixture and the ProcessActionDto
+pub async fn activate_tip_link_v2_fixture(
+    ctx: &PocketIcTestContext,
+    token: &str,
+    amount: u64,
+) -> (LinkTestFixture, ProcessActionDto) {
+    let (test_fixture, create_link_result) = create_tip_linkv2_fixture(ctx, token, amount).await;
+
+    // Execute ICRC112 requests (simulate FE behavior)
+    let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
+    let _icrc112_execution_result =
+        icrc_112::execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
+
+    let activate_link_result = test_fixture
+        .activate_link_v2(&create_link_result.action.id)
+        .await
+        .unwrap();
+
+    (test_fixture, activate_link_result)
 }
 
 /// Creates a fixture for a token basket link.

@@ -136,6 +136,8 @@ export enum ACTION_TYPE {
   CREATE_LINK = "CreateLink",
   WITHDRAW = "Withdraw",
   USE = "Use",
+  RECEIVE = "Receive",
+  SEND = "Send",
 }
 
 export enum LINK_INTENT_ASSET_LABEL {

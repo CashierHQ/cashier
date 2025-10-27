@@ -6,6 +6,8 @@ use cashier_backend_types::{
         link::{CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDto, UpdateLinkInput},
     },
     error::CanisterError,
+    link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
+    service::link::{PaginateInput, PaginateResult},
 };
 use cashier_common::{build_data::BuildData, icrc::Icrc114ValidateArgs};
 use ic_mple_client::{CanisterClient, CanisterClientResult};
@@ -93,27 +95,85 @@ impl<C: CanisterClient> CashierBackendClient<C> {
     /// # Arguments
     /// * `input` - Link creation data
     /// # Returns
-    /// * `Ok(GetLinkResp)` - The created link data
+    /// * `Ok(CreateLinkDto)` - The created link data
     /// * `Err(CanisterError)` - If link creation fails or validation errors occur
     pub async fn user_create_link_v2(
         &self,
         input: CreateLinkInput,
-    ) -> CanisterClientResult<Result<GetLinkResp, CanisterError>> {
+    ) -> CanisterClientResult<Result<CreateLinkDto, CanisterError>> {
         self.client.update("user_create_link_v2", ((input),)).await
     }
 
-    /// Activates a link V2.
+    /// Disables a link V2.
     /// # Arguments
-    /// * `link_id` - The ID of the link to activate
+    /// * `link_id` - The ID of the link to disable
     /// # Returns
-    /// * `Ok(LinkDto)` - The activated link data
-    /// * `Err(CanisterError)` - If activation fails or unauthorized
-    pub async fn user_activate_link_v2(
+    /// * `Ok(LinkDto)` - The disabled link data
+    /// * `Err(CanisterError)` - If disabling fails or unauthorized
+    pub async fn user_disable_link_v2(
         &self,
         link_id: &str,
     ) -> CanisterClientResult<Result<LinkDto, CanisterError>> {
+        self.client.update("user_disable_link_v2", (link_id,)).await
+    }
+
+    /// Creates a new action V2.
+    /// # Arguments
+    /// * `input` - Action creation data
+    /// # Returns
+    /// * `Ok(ActionDto)` - The created action data
+    /// * `Err(CanisterError)` - If action creation fails or validation errors occur
+    pub async fn user_create_action_v2(
+        &self,
+        input: CreateActionInput,
+    ) -> CanisterClientResult<Result<ActionDto, CanisterError>> {
         self.client
-            .update("user_activate_link_v2", (link_id,))
+            .update("user_create_action_v2", ((input),))
+            .await
+    }
+
+    /// Processes a created action V2.
+    /// # Arguments
+    /// * `input` - Action processing data
+    /// # Returns
+    /// * `Ok(ProcessActionDto)` - The processed action data
+    /// * `Err(CanisterError)` - If action processing fails or validation errors occur
+    pub async fn user_process_action_v2(
+        &self,
+        input: ProcessActionV2Input,
+    ) -> CanisterClientResult<Result<ProcessActionDto, CanisterError>> {
+        self.client
+            .update("user_process_action_v2", ((input),))
+            .await
+    }
+
+    /// Retrieves a paginated list of links of caller.
+    /// # Arguments
+    /// * `options` - Pagination options
+    /// # Returns
+    /// * `Ok(PaginateResult<LinkDto>)` - The paginated list of links
+    /// * `Err(String)` - If retrieval fails
+    pub async fn user_get_links_v2(
+        &self,
+        options: Option<PaginateInput>,
+    ) -> CanisterClientResult<Result<PaginateResult<LinkDto>, CanisterError>> {
+        self.client.query("user_get_links_v2", (options,)).await
+    }
+
+    /// Retrieves a specific link by its ID with optional action data.
+    /// # Arguments
+    /// * `link_id` - The unique identifier of the link to retrieve
+    /// * `options` - Optional parameters including action type to include in response
+    /// # Returns
+    /// * `Ok(GetLinkResp)` - The link details response
+    /// * `Err(CanisterError)` - Error if the link not found or access denied
+    pub async fn get_link_details_v2(
+        &self,
+        link_id: &str,
+        options: Option<GetLinkOptions>,
+    ) -> CanisterClientResult<Result<GetLinkResp, CanisterError>> {
+        self.client
+            .query("get_link_details_v2", (link_id, options))
             .await
     }
 

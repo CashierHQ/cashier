@@ -6,6 +6,7 @@ pub mod admin;
 pub mod icrc;
 pub mod inspect_message;
 pub mod link;
+pub mod link_v2;
 pub mod request_lock;
 
 pub mod upgrade;
