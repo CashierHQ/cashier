@@ -68,7 +68,6 @@
     mode = m;
     displayStr = formatValueForDisplay();
   }
-
 </script>
 
 <div class="flex flex-col space-y-1">
