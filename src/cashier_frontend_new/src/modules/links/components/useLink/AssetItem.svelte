@@ -2,6 +2,7 @@
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import type { AssetInfo } from "../../types/link/asset";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
 
   interface Props {
     assetInfo: AssetInfo;
@@ -9,38 +10,34 @@
 
   let { assetInfo }: Props = $props();
 
-  const assetAddressToText = (asset: any) => {
+  // Derive address directly from the frontend Asset model
+  const address =
+    assetInfo.asset.address?.toText?.() ?? assetInfo.asset.address?.toString?.() ?? "";
+
+  const walletToken = () => {
     try {
-      if (asset?.address && typeof asset.address.toText === "function")
-        return asset.address.toText();
-      if (asset?.IC?.address && typeof asset.IC.address.toText === "function")
-        return asset.IC.address.toText();
-      if (
-        asset?.asset?.IC?.address &&
-        typeof asset.asset.IC.address.toText === "function"
-      )
-        return asset.asset.IC.address.toText();
-      return null;
+      return walletStore.query.data?.find((t: any) => t.address === address);
     } catch (e) {
-      return null;
+      return undefined;
     }
   };
 
-  const address = assetAddressToText(assetInfo.asset);
   const tokenMeta = address ? tokenMetadataQuery(address) : null;
 
   const displaySymbol = () => {
-    if (!address) return assetInfo.label ?? "TOKEN";
-    return tokenMeta?.data?.symbol ?? assetInfo.label ?? "TOKEN";
+    const wt = walletToken();
+    if (wt) return wt.symbol;
+    if (tokenMeta?.data?.symbol) return tokenMeta.data.symbol;
+    return assetInfo.label ?? "TOKEN";
   };
 
   const displayAmount = () => {
-    if (!address) return String(assetInfo.amount_per_link_use_action);
+    const wt = walletToken();
+    if (wt && typeof wt.decimals === "number") {
+      return parseBalanceUnits(assetInfo.amount_per_link_use_action, wt.decimals).toFixed(5);
+    }
     const decimals = tokenMeta?.data?.decimals ?? 8;
-    return parseBalanceUnits(
-      assetInfo.amount_per_link_use_action,
-      decimals,
-    ).toFixed(5);
+    return parseBalanceUnits(assetInfo.amount_per_link_use_action, decimals).toFixed(5);
   };
 </script>
 

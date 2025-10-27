@@ -28,25 +28,7 @@
     return new LinkStore();
   });
 
-  // safely get asset address text (returns null if not available)
-  const assetAddressToText = (asset: any) => {
-    try {
-      if (asset?.address && typeof asset.address.toText === "function")
-        return asset.address.toText();
-      if (asset?.IC?.address && typeof asset.IC.address.toText === "function")
-        return asset.IC.address.toText();
-      if (
-        asset?.asset?.IC?.address &&
-        typeof asset.asset.IC.address.toText === "function"
-      )
-        return asset.asset.IC.address.toText();
-      return null;
-    } catch (e) {
-      return null;
-    }
-  };
-
-  const createUseAction = async () => {
+  const createAction = async () => {
     try {
       if (!link.id) throw new Error("Link ID is missing");
       const actionRes = await cashierBackendService.createActionV2({
@@ -85,7 +67,7 @@
 
     <AssetList assetInfo={link.link.asset_info} />
 
-    <Actions {link} onCreateUseAction={createUseAction} />
+    <Actions {link} onCreateUseAction={createAction} />
   </div>
 {/if}
 
