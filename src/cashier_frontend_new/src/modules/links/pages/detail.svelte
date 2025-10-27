@@ -5,9 +5,9 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { cashierBackendService } from "../services/cashierBackend";
-  import TxCart from "../components/tx-cart/tx-cart.svelte";
-  import LinkInfoSection from "../components/linkInfoSection.svelte";
-  import UsageInfoSection from "../components/usageInfoSection.svelte";
+  import TxCart from "../components/txCart/txCart.svelte";
+  import LinkInfoSection from "../components/linkDetail/linkInfoSection.svelte";
+  import UsageInfoSection from "../components/linkDetail/usageInfoSection.svelte";
   import { LinkState } from "../types/link/linkState";
   import { linkDetailQuery } from "../state/linkDetail.svelte";
   import { LinkStore } from "../state/linkStore.svelte";
