@@ -176,7 +176,9 @@ class CanisterBackendService {
   }
 
   /**
-   * This method fetches link detail first then based on the link detail, the action is populated separately.
+   * This method fetches call to `get_link_details_v2` twice
+   * first to get link and its type
+   * second to get action derived from link type
    * @param id The ID of the link to retrieve.
    * @returns A Result containing GetLinkResp or an Error.
    */
