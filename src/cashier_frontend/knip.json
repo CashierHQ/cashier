@@ -1,9 +1,4 @@
 {
-  "project": [
-    "src/**"
-  ],
-  "ignore": [
-    "src/workers/**",
-    "src/generated/**"
-  ]
+  "project": ["src/**"],
+  "ignore": ["src/workers/**", "src/generated/**"]
 }

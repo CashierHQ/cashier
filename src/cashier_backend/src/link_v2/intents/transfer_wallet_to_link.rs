@@ -1,14 +1,12 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::services::adapter::IntentAdapterImpl;
 use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,
     repository::{
         common::{Asset, Chain, Wallet},
         intent::v1::{Intent, IntentState, IntentTask, IntentType},
-        transaction::v1::Transaction,
     },
 };
 use icrc_ledger_types::icrc1::account::Account;
@@ -16,15 +14,11 @@ use uuid::Uuid;
 
 pub struct TransferWalletToLinkIntent {
     pub intent: Intent,
-    pub transactions: Vec<Transaction>,
 }
 
 impl TransferWalletToLinkIntent {
-    pub fn new(intent: Intent, transactions: Vec<Transaction>) -> Self {
-        Self {
-            intent,
-            transactions,
-        }
+    pub fn new(intent: Intent) -> Self {
+        Self { intent }
     }
 
     /// Creates a new TransferWalletToLinkIntent.
@@ -40,7 +34,7 @@ impl TransferWalletToLinkIntent {
     pub fn create(
         label: String,
         asset: Asset,
-        sending_amount: u64,
+        sending_amount: Nat,
         sender_id: Principal,
         link_account: Account,
         created_at_ts: u64,
@@ -63,17 +57,12 @@ impl TransferWalletToLinkIntent {
         let mut transfer_data = intent.r#type.as_transfer().ok_or_else(|| {
             CanisterError::HandleLogicError("Transfer data not found".to_string())
         })?;
-        transfer_data.amount = Nat::from(sending_amount);
+        transfer_data.amount = sending_amount;
         transfer_data.asset = asset;
         transfer_data.from = from_wallet;
         transfer_data.to = to_wallet;
         intent.r#type = IntentType::Transfer(transfer_data);
 
-        // generate the blockchain transactions
-        let intent_adapter = IntentAdapterImpl::new();
-        let transactions =
-            intent_adapter.intent_to_transactions(&intent.chain, created_at_ts, &intent)?;
-
-        Ok(Self::new(intent, transactions))
+        Ok(Self::new(intent))
     }
 }

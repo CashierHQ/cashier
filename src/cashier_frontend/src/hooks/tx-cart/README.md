@@ -12,10 +12,10 @@ This folder contains custom hooks that encapsulate the confirmation logic for di
 
 **Key Methods:**
 
--   `handleSuccessContinue` - Updates link user state and navigates to completion
--   `handleConfirmTransaction` - Validates and processes the use transaction
--   `onActionResult` - Handles action success/failure notifications
--   `onCashierError` - Handles error display with toast notifications
+- `handleSuccessContinue` - Updates link user state and navigates to completion
+- `handleConfirmTransaction` - Validates and processes the use transaction
+- `onActionResult` - Handles action success/failure notifications
+- `onCashierError` - Handles error display with toast notifications
 
 ### `useWithdrawConfirmation`
 
@@ -25,10 +25,10 @@ This folder contains custom hooks that encapsulate the confirmation logic for di
 
 **Key Methods:**
 
--   `handleSuccessContinue` - Sets link to inactive ended state after withdrawal
--   `handleConfirmTransaction` - Processes the withdrawal transaction
--   `onActionResult` - Updates action state
--   `onCashierError` - Handles errors and closes confirmation drawer
+- `handleSuccessContinue` - Sets link to inactive ended state after withdrawal
+- `handleConfirmTransaction` - Processes the withdrawal transaction
+- `onActionResult` - Updates action state
+- `onCashierError` - Handles errors and closes confirmation drawer
 
 ### `useCreateConfirmation`
 
@@ -38,10 +38,10 @@ This folder contains custom hooks that encapsulate the confirmation logic for di
 
 **Key Methods:**
 
--   `handleSuccessContinue` - Sets link to active state after creation
--   `handleConfirmTransaction` - Processes the link creation transaction
--   `onActionResult` - Updates internal action state
--   `onCashierError` - Passes through error handling to parent component
+- `handleSuccessContinue` - Sets link to active state after creation
+- `handleConfirmTransaction` - Processes the link creation transaction
+- `onActionResult` - Updates internal action state
+- `onCashierError` - Passes through error handling to parent component
 
 ## Benefits
 
@@ -98,7 +98,7 @@ Each hook follows the same pattern:
 
 All hooks are fully typed with:
 
--   Input prop interfaces (`Use*ConfirmationProps`)
--   Return type interfaces (`Use*ConfirmationReturn`)
--   Proper error handling with typed catch blocks
--   Callback function signatures for consistency
+- Input prop interfaces (`Use*ConfirmationProps`)
+- Return type interfaces (`Use*ConfirmationReturn`)
+- Proper error handling with typed catch blocks
+- Callback function signatures for consistency

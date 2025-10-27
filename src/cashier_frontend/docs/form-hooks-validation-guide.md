@@ -14,11 +14,11 @@
 
 The Cashier frontend uses a unified validation system built around centralized hooks that provide consistent validation, error handling, and form submission across all components. The system is designed with the following principles:
 
--   **Centralized Logic**: All validation logic is consolidated in `ValidationService`
--   **Template-based Errors**: Error messages use translation templates with dynamic variables
--   **O(1) Performance**: Token lookups use hash maps for optimal performance
--   **Type Safety**: Full TypeScript support with proper error codes
--   **Consistent API**: Unified interface across all form types
+- **Centralized Logic**: All validation logic is consolidated in `ValidationService`
+- **Template-based Errors**: Error messages use translation templates with dynamic variables
+- **O(1) Performance**: Token lookups use hash maps for optimal performance
+- **Type Safety**: Full TypeScript support with proper error codes
+- **Consistent API**: Unified interface across all form types
 
 ## Form Validation Hooks
 
@@ -30,30 +30,30 @@ The Cashier frontend uses a unified validation system built around centralized h
 
 **Key Methods**:
 
--   `validateLinkPreview(link)` - Basic link existence and type validation
--   `validateBalanceWithCreationFee(link, maxActionNumber, includeLinkCreationFee)` - Balance validation with fee control
--   `validateLinkPreviewWithBalance(link, options)` - Combined validation with balance checking
--   `validateActionCreation(link)` - Simplified action creation validation
--   `showValidationErrorToast(errors)` - Display validation errors as toast notifications
+- `validateLinkPreview(link)` - Basic link existence and type validation
+- `validateBalanceWithCreationFee(link, maxActionNumber, includeLinkCreationFee)` - Balance validation with fee control
+- `validateLinkPreviewWithBalance(link, options)` - Combined validation with balance checking
+- `validateActionCreation(link)` - Simplified action creation validation
+- `showValidationErrorToast(errors)` - Display validation errors as toast notifications
 
 **Features**:
 
--   Unified ValidationService integration
--   Template-based error message translation
--   Configurable link creation fee inclusion
--   Automatic toast notifications for errors
+- Unified ValidationService integration
+- Template-based error message translation
+- Configurable link creation fee inclusion
+- Automatic toast notifications for errors
 
 ```typescript
 const { validateLinkPreviewWithBalance } = useLinkCreateValidation();
 
 const validationResult = validateLinkPreviewWithBalance(link, {
-    maxActionNumber: BigInt(1),
-    includeLinkCreationFee: true,
+  maxActionNumber: BigInt(1),
+  includeLinkCreationFee: true,
 });
 
 if (!validationResult.isValid) {
-    // Errors automatically shown as toast notifications
-    return;
+  // Errors automatically shown as toast notifications
+  return;
 }
 ```
 
@@ -65,26 +65,27 @@ if (!validationResult.isValid) {
 
 **Key Methods**:
 
--   `validateLinkTemplate(currentLink, carouselIndex)` - Template form validation
--   `isLinkTypeSupported(linkType)` - Check if link type is supported
--   `clearValidationErrors()` - Clear all validation state
--   `showValidationError(errorType)` - Show specific validation errors
--   `getValidationMessage(errorType)` - Get validation messages for display
+- `validateLinkTemplate(currentLink, carouselIndex)` - Template form validation
+- `isLinkTypeSupported(linkType)` - Check if link type is supported
+- `clearValidationErrors()` - Clear all validation state
+- `showValidationError(errorType)` - Show specific validation errors
+- `getValidationMessage(errorType)` - Get validation messages for display
 
 **Features**:
 
--   Centralized validation state management
--   Automatic error clearing on user interaction
--   Type-safe validation methods
--   Toast notifications for validation errors
+- Centralized validation state management
+- Automatic error clearing on user interaction
+- Type-safe validation methods
+- Toast notifications for validation errors
 
 ```typescript
-const { validationState, validateLinkTemplate, clearValidationError } = useLinkTemplateValidation();
+const { validationState, validateLinkTemplate, clearValidationError } =
+  useLinkTemplateValidation();
 
 const result = validateLinkTemplate(currentLink, carouselIndex);
 if (!result.isValid) {
-    // Errors automatically displayed via toast
-    return;
+  // Errors automatically displayed via toast
+  return;
 }
 ```
 
@@ -98,15 +99,15 @@ if (!result.isValid) {
 
 **Key Methods**:
 
--   `handleFormSubmission(context)` - Form validation and submission
--   `handleLinkCreation(context)` - Link creation submission logic
--   `handleTemplateSubmission(context)` - Template submission logic
+- `handleFormSubmission(context)` - Form validation and submission
+- `handleLinkCreation(context)` - Link creation submission logic
+- `handleTemplateSubmission(context)` - Template submission logic
 
 **Context Types**:
 
--   `FormSubmissionContext` - For form submissions with validation
--   `LinkCreationContext` - For link creation/preview submissions
--   `TemplateSubmissionContext` - For template submissions
+- `FormSubmissionContext` - For form submissions with validation
+- `LinkCreationContext` - For link creation/preview submissions
+- `TemplateSubmissionContext` - For template submissions
 
 ### usePageSubmissionHandlers
 
@@ -116,13 +117,13 @@ if (!result.isValid) {
 
 **Available Handlers**:
 
--   `useFormSubmissionHandler()` - Generic form submission
--   `useLinkCreationHandler()` - Link creation/preview
--   `useLinkTemplateHandler()` - Template handling
--   `useSendTipFormHandler()` - Send tip form specific
--   `useSendAirdropFormHandler()` - Send airdrop form specific
--   `useSendTokenBasketFormHandler()` - Send token basket form specific
--   `useReceivePaymentFormHandler()` - Receive payment form specific
+- `useFormSubmissionHandler()` - Generic form submission
+- `useLinkCreationHandler()` - Link creation/preview
+- `useLinkTemplateHandler()` - Template handling
+- `useSendTipFormHandler()` - Send tip form specific
+- `useSendAirdropFormHandler()` - Send airdrop form specific
+- `useSendTokenBasketFormHandler()` - Send token basket form specific
+- `useReceivePaymentFormHandler()` - Receive payment form specific
 
 ```typescript
 const { submitTipForm } = useSendTipFormHandler();
@@ -146,24 +147,24 @@ await submitTipForm(linkId, formAssets, maxActionNumber, errorHandler);
 
 #### Form Submission Validation
 
--   **Purpose**: Validate assets before creating/updating links
--   **Balance Check**: Ensures user has sufficient balance for asset amount + network fees
--   **Fee Calculation**: `asset.amount + networkFee` (× maxActionNumber for airdrops)
--   **Error Handling**: Form-level validation with toast notifications
+- **Purpose**: Validate assets before creating/updating links
+- **Balance Check**: Ensures user has sufficient balance for asset amount + network fees
+- **Fee Calculation**: `asset.amount + networkFee` (× maxActionNumber for airdrops)
+- **Error Handling**: Form-level validation with toast notifications
 
 #### Link Creation Validation
 
--   **Purpose**: Final validation before link creation in backend
--   **Balance Check**: Comprehensive validation including link creation fees
--   **Fee Calculation**: `asset.amount + networkFee + linkCreationFee`
--   **Error Handling**: Preview-level validation with detailed error messages
+- **Purpose**: Final validation before link creation in backend
+- **Balance Check**: Comprehensive validation including link creation fees
+- **Fee Calculation**: `asset.amount + networkFee + linkCreationFee`
+- **Error Handling**: Preview-level validation with detailed error messages
 
 #### Asset Addition Validation
 
--   **Purpose**: Real-time validation when adding assets to forms
--   **Balance Check**: Immediate feedback on asset selection
--   **Fee Calculation**: Basic network fee calculation
--   **Error Handling**: Inline validation with immediate feedback
+- **Purpose**: Real-time validation when adding assets to forms
+- **Balance Check**: Immediate feedback on asset selection
+- **Fee Calculation**: Basic network fee calculation
+- **Error Handling**: Inline validation with immediate feedback
 
 ### Token Amount Calculation Formulas
 
@@ -184,16 +185,16 @@ await submitTipForm(linkId, formAssets, maxActionNumber, errorHandler);
 const { submitTipForm } = useSendTipFormHandler();
 
 const handleSubmit = async () => {
-    const formAssets = getValues("assets");
+  const formAssets = getValues("assets");
 
-    try {
-        await submitTipForm(linkId, formAssets, maxActionNumber, (error) => {
-            console.error("Submission failed:", error);
-            toast.error(error.message);
-        });
-    } catch (error) {
-        // Error handling is done by the hook
-    }
+  try {
+    await submitTipForm(linkId, formAssets, maxActionNumber, (error) => {
+      console.error("Submission failed:", error);
+      toast.error(error.message);
+    });
+  } catch (error) {
+    // Error handling is done by the hook
+  }
 };
 ```
 
@@ -204,18 +205,18 @@ const handleSubmit = async () => {
 const { validateLinkPreviewWithBalance } = useLinkCreateValidation();
 
 const handleCreateAction = async () => {
-    const validationResult = validateLinkPreviewWithBalance(link, {
-        maxActionNumber: BigInt(maxUses),
-        includeLinkCreationFee: true,
-    });
+  const validationResult = validateLinkPreviewWithBalance(link, {
+    maxActionNumber: BigInt(maxUses),
+    includeLinkCreationFee: true,
+  });
 
-    if (!validationResult.isValid) {
-        // Errors automatically shown as toast
-        return;
-    }
+  if (!validationResult.isValid) {
+    // Errors automatically shown as toast
+    return;
+  }
 
-    // Proceed with action creation
-    await createAction();
+  // Proceed with action creation
+  await createAction();
 };
 ```
 
@@ -223,21 +224,22 @@ const handleCreateAction = async () => {
 
 ```typescript
 // In LinkTemplate component
-const { validateLinkTemplate, isLinkTypeSupported } = useLinkTemplateValidation();
+const { validateLinkTemplate, isLinkTypeSupported } =
+  useLinkTemplateValidation();
 
 const handleTemplateSubmit = async () => {
-    const validationResult = validateLinkTemplate(currentLink, carouselIndex);
+  const validationResult = validateLinkTemplate(currentLink, carouselIndex);
 
-    if (!validationResult.isValid) {
-        return; // Errors handled by validation system
-    }
+  if (!validationResult.isValid) {
+    return; // Errors handled by validation system
+  }
 
-    if (!isLinkTypeSupported(currentLink.linkType)) {
-        onUnsupportedType();
-        return;
-    }
+  if (!isLinkTypeSupported(currentLink.linkType)) {
+    onUnsupportedType();
+    return;
+  }
 
-    // Proceed with template submission
+  // Proceed with template submission
 };
 ```
 
@@ -248,25 +250,25 @@ const handleTemplateSubmit = async () => {
 import { ValidationService } from "@/services/validation.service";
 
 const validateCustomAssets = (assets, tokenMap) => {
-    const result = ValidationService.validateAssetsWithFees(assets, tokenMap, {
-        useCase: "create",
-        linkType: LINK_TYPE.SEND_TIP,
-        maxActionNumber: 1,
-        includeLinkCreationFee: true,
-        skipBalanceCheck: false,
+  const result = ValidationService.validateAssetsWithFees(assets, tokenMap, {
+    useCase: "create",
+    linkType: LINK_TYPE.SEND_TIP,
+    maxActionNumber: 1,
+    includeLinkCreationFee: true,
+    skipBalanceCheck: false,
+  });
+
+  if (!result.isValid) {
+    result.errors.forEach((error) => {
+      if (error.metadata && error.message.startsWith("error.")) {
+        const message = t(error.message, error.metadata);
+        toast.error(message);
+      }
     });
+    return false;
+  }
 
-    if (!result.isValid) {
-        result.errors.forEach((error) => {
-            if (error.metadata && error.message.startsWith("error.")) {
-                const message = t(error.message, error.metadata);
-                toast.error(message);
-            }
-        });
-        return false;
-    }
-
-    return true;
+  return true;
 };
 ```
 
@@ -274,31 +276,31 @@ const validateCustomAssets = (assets, tokenMap) => {
 
 ### 1. Hook Selection
 
--   Use page-specific handlers (`useSendTipFormHandler`) for form submissions
--   Use `useLinkCreateValidation` for preview/creation validation
--   Use `useLinkTemplateValidation` for template validation
--   Use `ValidationService` directly only for custom scenarios
+- Use page-specific handlers (`useSendTipFormHandler`) for form submissions
+- Use `useLinkCreateValidation` for preview/creation validation
+- Use `useLinkTemplateValidation` for template validation
+- Use `ValidationService` directly only for custom scenarios
 
 ### 2. Error Handling
 
--   Always provide error handlers to submission functions
--   Use template-based error messages for consistency
--   Let hooks handle toast notifications automatically
--   Handle validation failures gracefully
+- Always provide error handlers to submission functions
+- Use template-based error messages for consistency
+- Let hooks handle toast notifications automatically
+- Handle validation failures gracefully
 
 ### 3. Performance Optimization
 
--   Use token maps (`createTokenMap()`) for O(1) lookups
--   Avoid direct token array searches
--   Cache validation results when appropriate
--   Use unified validation to avoid duplicate checks
+- Use token maps (`createTokenMap()`) for O(1) lookups
+- Avoid direct token array searches
+- Cache validation results when appropriate
+- Use unified validation to avoid duplicate checks
 
 ### 4. Type Safety
 
--   Use proper TypeScript types for all validation functions
--   Cast link types appropriately (`link.linkType as LINK_TYPE`)
--   Leverage error codes for consistent error handling
--   Use proper context types for submission handlers
+- Use proper TypeScript types for all validation functions
+- Cast link types appropriately (`link.linkType as LINK_TYPE`)
+- Leverage error codes for consistent error handling
+- Use proper context types for submission handlers
 
 ## Error Handling
 
@@ -306,13 +308,13 @@ const validateCustomAssets = (assets, tokenMap) => {
 
 ```typescript
 enum ErrorCode {
-    INSUFFICIENT_BALANCE = "INSUFFICIENT_BALANCE",
-    INSUFFICIENT_BALANCE_CREATE = "INSUFFICIENT_BALANCE_CREATE",
-    TOKEN_NOT_FOUND = "TOKEN_NOT_FOUND",
-    NO_ASSETS_FOUND = "NO_ASSETS_FOUND",
-    LINK_NOT_FOUND = "LINK_NOT_FOUND",
-    FORM_VALIDATION_FAILED = "FORM_VALIDATION_FAILED",
-    // ... other error codes
+  INSUFFICIENT_BALANCE = "INSUFFICIENT_BALANCE",
+  INSUFFICIENT_BALANCE_CREATE = "INSUFFICIENT_BALANCE_CREATE",
+  TOKEN_NOT_FOUND = "TOKEN_NOT_FOUND",
+  NO_ASSETS_FOUND = "NO_ASSETS_FOUND",
+  LINK_NOT_FOUND = "LINK_NOT_FOUND",
+  FORM_VALIDATION_FAILED = "FORM_VALIDATION_FAILED",
+  // ... other error codes
 }
 ```
 
@@ -321,22 +323,22 @@ enum ErrorCode {
 ```typescript
 // Translation keys with metadata
 "error.balance.insufficient_balance" =
-    "Insufficient {{tokenSymbol}} balance. Available: {{available}}, Required: {{required}}";
+  "Insufficient {{tokenSymbol}} balance. Available: {{available}}, Required: {{required}}";
 "error.balance.insufficient_balance_create" =
-    "Insufficient {{tokenSymbol}} balance to create link. Available: {{available}}, Required: {{required}}";
+  "Insufficient {{tokenSymbol}} balance to create link. Available: {{available}}, Required: {{required}}";
 ```
 
 ### Custom Error Handling
 
 ```typescript
 const handleCustomError = (error: Error) => {
-    if (error.message.includes("INSUFFICIENT_BALANCE")) {
-        // Handle insufficient balance specifically
-        showBalanceErrorDialog();
-    } else {
-        // Handle generic errors
-        toast.error(error.message);
-    }
+  if (error.message.includes("INSUFFICIENT_BALANCE")) {
+    // Handle insufficient balance specifically
+    showBalanceErrorDialog();
+  } else {
+    // Handle generic errors
+    toast.error(error.message);
+  }
 };
 ```
 
@@ -361,15 +363,14 @@ For more detailed examples and advanced usage, see the individual hook files and
 The system performs asset balance validation at two critical points:
 
 1. **Pre-Action Creation Validation**
-
-    - Validates sufficient balance for the transaction before creating an action
-    - Includes network fees and creation fees where applicable
-    - Prevents unnecessary action creation if balance is insufficient
+   - Validates sufficient balance for the transaction before creating an action
+   - Includes network fees and creation fees where applicable
+   - Prevents unnecessary action creation if balance is insufficient
 
 2. **Pre-Transaction Validation**
-    - Validates balance again before executing the transaction
-    - Ensures balance hasn't changed between action creation and execution
-    - Protects against race conditions and balance changes
+   - Validates balance again before executing the transaction
+   - Ensures balance hasn't changed between action creation and execution
+   - Protects against race conditions and balance changes
 
 ### Balance Validation by Link Type
 
@@ -387,18 +388,18 @@ The current flow for action creation follows this pattern:
 ```typescript
 // Current implementation
 const handleCreateAction = async () => {
-    // Validate balance first
-    const validationResult = validateLinkPreviewWithBalance(link, {
-        maxActionNumber: link.maxActionNumber,
-        includeLinkCreationFee: true,
-    });
-    if (!validationResult.isValid) {
-        return;
-    }
+  // Validate balance first
+  const validationResult = validateLinkPreviewWithBalance(link, {
+    maxActionNumber: link.maxActionNumber,
+    includeLinkCreationFee: true,
+  });
+  if (!validationResult.isValid) {
+    return;
+  }
 
-    // Create action if validation passes
-    const action = await createAction(link.id, actionType);
-    setAction(action);
+  // Create action if validation passes
+  const action = await createAction(link.id, actionType);
+  setAction(action);
 };
 ```
 
@@ -409,24 +410,24 @@ To make the flow more consistent, we recommend renaming methods to clearly indic
 ```typescript
 // Recommended implementation
 const initiateActionWithValidation = async () => {
-    // Step 1: Validate balance
-    const validationResult = validateLinkPreviewWithBalance(link, {
-        maxActionNumber: link.maxActionNumber,
-        includeLinkCreationFee: true,
-    });
-    if (!validationResult.isValid) {
-        return;
-    }
+  // Step 1: Validate balance
+  const validationResult = validateLinkPreviewWithBalance(link, {
+    maxActionNumber: link.maxActionNumber,
+    includeLinkCreationFee: true,
+  });
+  if (!validationResult.isValid) {
+    return;
+  }
 
-    // Step 2: Create or retrieve action
-    let currentAction = action;
-    if (!currentAction) {
-        currentAction = await createAction(link.id, actionType);
-        setAction(currentAction);
-    }
+  // Step 2: Create or retrieve action
+  let currentAction = action;
+  if (!currentAction) {
+    currentAction = await createAction(link.id, actionType);
+    setAction(currentAction);
+  }
 
-    // Step 3: Show confirmation
-    setShowConfirmation(true);
+  // Step 3: Show confirmation
+  setShowConfirmation(true);
 };
 ```
 
@@ -434,28 +435,28 @@ const initiateActionWithValidation = async () => {
 
 Current methods that should be unified:
 
--   `handleSubmit` in LinkPreview
--   `handleCreateAction` in ChooseWallet
--   `handleWithdrawAssets` in DetailPage
+- `handleSubmit` in LinkPreview
+- `handleCreateAction` in ChooseWallet
+- `handleWithdrawAssets` in DetailPage
 
 Should be renamed to reflect their true purpose:
 
 1. For Link Creation:
 
-    ```typescript
-    initiateCreateLinkAction();
-    ```
+   ```typescript
+   initiateCreateLinkAction();
+   ```
 
 2. For Link Usage:
 
-    ```typescript
-    initiateUseLinkAction();
-    ```
+   ```typescript
+   initiateUseLinkAction();
+   ```
 
 3. For Withdrawals:
-    ```typescript
-    initiateWithdrawAction();
-    ```
+   ```typescript
+   initiateWithdrawAction();
+   ```
 
 ### Action State Flow
 
@@ -475,40 +476,40 @@ graph TD
 
 1. **Button State Management**:
 
-    ```typescript
-    useEffect(() => {
-        setButtonState({
-            label: getActionButtonLabel(),
-            isDisabled: isProcessing,
-            action: initiateActionWithValidation,
-        });
-    }, [isProcessing, action]);
-    ```
+   ```typescript
+   useEffect(() => {
+     setButtonState({
+       label: getActionButtonLabel(),
+       isDisabled: isProcessing,
+       action: initiateActionWithValidation,
+     });
+   }, [isProcessing, action]);
+   ```
 
 2. **Validation Service Integration**:
 
-    ```typescript
-    const validateBeforeAction = async (link: LinkModel) => {
-        const validationResult = await validateAssetAndFees(link);
-        if (!validationResult.isValid) {
-            toast.error(validationResult.errors[0].message);
-            return false;
-        }
-        return true;
-    };
-    ```
+   ```typescript
+   const validateBeforeAction = async (link: LinkModel) => {
+     const validationResult = await validateAssetAndFees(link);
+     if (!validationResult.isValid) {
+       toast.error(validationResult.errors[0].message);
+       return false;
+     }
+     return true;
+   };
+   ```
 
 3. **Action Creation Service**:
-    ```typescript
-    const ensureActionExists = async (link: LinkModel) => {
-        if (action) return action;
-        return await createAction(link.id, determineActionType(link));
-    };
-    ```
+   ```typescript
+   const ensureActionExists = async (link: LinkModel) => {
+     if (action) return action;
+     return await createAction(link.id, determineActionType(link));
+   };
+   ```
 
 This unified approach ensures:
 
--   Consistent validation before any action creation
--   Clear separation of validation and action creation logic
--   Predictable state management
--   Reusable validation and action creation methods
+- Consistent validation before any action creation
+- Clear separation of validation and action creation logic
+- Predictable state management
+- Reusable validation and action creation methods
