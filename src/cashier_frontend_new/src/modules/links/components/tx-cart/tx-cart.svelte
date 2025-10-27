@@ -71,21 +71,21 @@
         } catch (err) {
           console.error("Error sending ICRC-112 batch request:", err);
           errorMessage = `Error sending ICRC-112 batch request: ${err instanceof Error ? err.message : String(err)}`;
-        }
-        finally{
+        } finally {
           isProcessing = false;
-
         }
       }
 
       // Always attempt to proceed to the next step regardless of whether ICRC-112 ran or failed
-    try {
+      try {
         await goNext();
       } catch (e) {
         console.error("goNext threw an error:", e);
         const msg = e instanceof Error ? e.message : String(e);
         // append goNext error to any existing errorMessage
-        errorMessage = errorMessage ? `${errorMessage}; goNext error: ${msg}` : msg;
+        errorMessage = errorMessage
+          ? `${errorMessage}; goNext error: ${msg}`
+          : msg;
       }
     } catch (error) {
       console.error("Error processing action:", error);

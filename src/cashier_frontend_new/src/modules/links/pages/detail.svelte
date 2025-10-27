@@ -1,47 +1,28 @@
 <script lang="ts">
-  import { linkQuery } from "../state/link.svelte";
-  import { LinkStore } from "../state/linkStore.svelte";
   import { ActionType } from "../types/action/actionType";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { ChevronLeft } from "lucide-svelte";
-  import { statusBadge } from "../utils/statusBadge";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
-  import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { cashierBackendService } from "../services/cashierBackend";
   import TxCart from "../components/tx-cart/tx-cart.svelte";
+  import LinkInfoSection from "../components/linkInfoSection.svelte";
+  import UsageInfoSection from "../components/usageInfoSection.svelte";
   import { LinkState } from "../types/link/linkState";
-
-  // safely get asset address text (returns null if not available)
-  const assetAddressToText = (asset: any) => {
-    try {
-      if (asset?.address && typeof asset.address.toText === "function")
-        return asset.address.toText();
-      if (asset?.IC?.address && typeof asset.IC.address.toText === "function")
-        return asset.IC.address.toText();
-      if (
-        asset?.asset?.IC?.address &&
-        typeof asset.asset.IC.address.toText === "function"
-      )
-        return asset.asset.IC.address.toText();
-      return null;
-    } catch (e) {
-      return null;
-    }
-  };
+  import { linkDetailQuery } from "../state/linkDetail.svelte";
+  import { LinkStore } from "../state/linkStore.svelte";
 
   let showCopied: boolean = $state(false);
 
   let { id }: { id: string } = $props();
 
   // query for link data (used for loading/refresh) and a local store for view-model
-  const linkQueryState = linkQuery(id, ActionType.Withdraw);
+  const linkQueryState = linkDetailQuery(id, ActionType.Withdraw);
   let link = $state(new LinkStore());
 
   $effect(() => {
     if (linkQueryState?.data?.link) {
-        link.from(linkQueryState?.data?.link, linkQueryState?.data?.action);
+      link.from(linkQueryState?.data?.link, linkQueryState?.data?.action);
     }
   });
 
@@ -91,7 +72,6 @@
       console.error("withdraw failed", err);
     }
   };
-
 </script>
 
 {#if linkQueryState.isLoading}
@@ -100,14 +80,15 @@
 {#if link.link}
   <div class="px-4 py-4">
     <div class="flex items-center gap-3 mb-4">
-      <button
+      <Button
+        variant="outline"
         onclick={() => {
           goto(resolve("/"));
         }}
-        class="p-2 cursor-pointer w-8 h-8 flex items-center justify-center"
+        class="p-2 cursor-pointer w-8 h-8 flex items-center justify-center "
       >
         <ChevronLeft />
-      </button>
+      </Button>
 
       <h3 class="text-lg font-semibold flex-1 text-center">
         {link.link.title}
@@ -117,99 +98,11 @@
       <div class="w-8 h-8" aria-hidden="true"></div>
     </div>
 
-    <div class="text-sm text-muted-foreground mb-2">Link info</div>
-
-    <div class="bg-card border rounded-lg p-4 mb-4">
-      <div class="space-y-3 text-sm">
-        <div class="flex items-center justify-between">
-          <div class="text-xs text-muted-foreground">Status</div>
-          <div class="font-medium">
-            <span class={`${statusBadge(link.link.state).classes}`}>
-              {statusBadge(link.link.state).text}
-            </span>
-          </div>
-        </div>
-
-        <div class="flex items-center justify-between">
-          <div class="text-xs text-muted-foreground">Type</div>
-          <div class="font-medium">{link.link.link_type.id}</div>
-        </div>
-
-        <div class="flex items-center justify-between">
-          <div class="text-xs text-muted-foreground">User pays</div>
-          <div class="font-medium">-</div>
-        </div>
-
-        <div class="flex items-center justify-between">
-          <div class="text-xs text-muted-foreground">User claims</div>
-          <div class="font-medium">
-            {#if link.link.asset_info && link.link.asset_info.length > 0}
-              <div class="flex gap-2 flex-wrap">
-                {#each link.link.asset_info as assetInfo (assetInfo.label + String(assetInfo.amount_per_link_use_action))}
-                  <div class="inline-flex items-center text-sm gap-2">
-                    <div class="text-sm">
-                      {#if assetAddressToText(assetInfo.asset)}
-                        {parseBalanceUnits(
-                          assetInfo.amount_per_link_use_action,
-                          tokenMetadataQuery(
-                            assetAddressToText(assetInfo.asset),
-                          ).data?.decimals ?? 8,
-                        ).toFixed(5)}
-                      {:else}
-                        {String(assetInfo.amount_per_link_use_action)}
-                      {/if}
-                    </div>
-                    <div class="font-medium">
-                      {#if assetAddressToText(assetInfo.asset)}
-                        {tokenMetadataQuery(assetAddressToText(assetInfo.asset))
-                          .data?.symbol ??
-                          assetInfo.label ??
-                          "TOKEN"}
-                      {:else}
-                        {assetInfo.label ?? "TOKEN"}
-                      {/if}
-                    </div>
-                  </div>
-                {/each}
-              </div>
-            {:else}
-              -
-            {/if}
-          </div>
-        </div>
-
-        <div class="flex items-center justify-between">
-          <div class="text-xs text-muted-foreground">Max use</div>
-          <div class="font-medium">
-            {String(link.link.link_use_action_max_count)}
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="text-sm text-muted-foreground mb-2">Usage info</div>
-
-    <div class="bg-card border rounded-lg p-4 mb-4">
-      <div class="space-y-3 text-sm">
-        <div class="flex items-center justify-between">
-          <div class="text-xs text-muted-foreground">Assets in link</div>
-          <div class="font-medium">
-            {#if link.link.asset_info && link.link.asset_info.length > 0}
-              {link.link.asset_info[0].label}
-            {:else}
-              Empty
-            {/if}
-          </div>
-        </div>
-
-        <div class="flex items-center justify-between">
-          <div class="text-xs text-muted-foreground">Used</div>
-          <div class="font-medium">
-            {String(link.link.link_use_action_counter)}
-          </div>
-        </div>
-      </div>
-    </div>
+    {#if linkQueryState.data?.link}
+      <LinkInfoSection link={linkQueryState.data.link} />
+      
+      <UsageInfoSection link={linkQueryState.data.link} />
+    {/if}
 
     <div class="mb-20">
       {#if link.link.state === LinkState.ACTIVE}
@@ -242,5 +135,5 @@
 {/if}
 
 {#if link.link?.state !== LinkState.INACTIVE_ENDED}
-<TxCart {link} goNext={withdraw}/>
+  <TxCart {link} goNext={withdraw} />
 {/if}

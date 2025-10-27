@@ -67,7 +67,7 @@
         {#each linkListQuery.data as link (link.id)}
           <li>
             <a
-              href={resolve(`/link/${link.id}`)}
+              href={resolve(`/link/detail/${link.id}`)}
               class="flex items-center justify-between gap-3 p-3 bg-card border rounded-lg hover:shadow-md hover:bg-surface transition-transform cursor-pointer block"
             >
               <div class="flex items-center gap-3">
