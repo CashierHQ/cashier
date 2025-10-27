@@ -100,7 +100,7 @@
 
     {#if linkQueryState.data?.link}
       <LinkInfoSection link={linkQueryState.data.link} />
-      
+
       <UsageInfoSection link={linkQueryState.data.link} />
     {/if}
 

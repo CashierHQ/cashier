@@ -16,14 +16,12 @@
     tokenMetadata.data
       ? parseBalanceUnits(
           assetInfo.amount_per_link_use_action,
-          tokenMetadata.data.decimals
+          tokenMetadata.data.decimals,
         ).toFixed(5)
-      : String(assetInfo.amount_per_link_use_action)
+      : String(assetInfo.amount_per_link_use_action),
   );
 
-  const tokenSymbol = $derived(
-    tokenMetadata.data?.symbol || address.slice(-8)
-  );
+  const tokenSymbol = $derived(tokenMetadata.data?.symbol || address.slice(-8));
 </script>
 
 <div class="inline-flex items-center text-sm gap-2">
@@ -31,11 +29,13 @@
     <div class="text-sm">Loading...</div>
   {:else if tokenMetadata.error}
     <div class="text-sm">
-      {String(assetInfo.amount_per_link_use_action)} {address.slice(-8)}
+      {String(assetInfo.amount_per_link_use_action)}
+      {address.slice(-8)}
     </div>
   {:else}
     <div class="text-sm">
-      {formattedAmount} {tokenSymbol}
+      {formattedAmount}
+      {tokenSymbol}
     </div>
   {/if}
 </div>

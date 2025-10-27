@@ -166,14 +166,14 @@
       </div>
 
       <Drawer.Footer>
-          <Button
-      class="flex gap-2 w-full"
-            onclick={confirmAction}
-            disabled={isProcessing}
-            variant="default"
-          >
-            {isProcessing ? "Processing..." : "Confirm"}
-          </Button>
+        <Button
+          class="flex gap-2 w-full"
+          onclick={confirmAction}
+          disabled={isProcessing}
+          variant="default"
+        >
+          {isProcessing ? "Processing..." : "Confirm"}
+        </Button>
       </Drawer.Footer>
     </Drawer.Content>
   </Drawer.Root>

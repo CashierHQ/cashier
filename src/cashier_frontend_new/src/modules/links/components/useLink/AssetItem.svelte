@@ -12,7 +12,9 @@
 
   // Derive address directly from the frontend Asset model
   const address =
-    assetInfo.asset.address?.toText?.() ?? assetInfo.asset.address?.toString?.() ?? "";
+    assetInfo.asset.address?.toText?.() ??
+    assetInfo.asset.address?.toString?.() ??
+    "";
 
   const walletToken = () => {
     try {
@@ -34,10 +36,16 @@
   const displayAmount = () => {
     const wt = walletToken();
     if (wt && typeof wt.decimals === "number") {
-      return parseBalanceUnits(assetInfo.amount_per_link_use_action, wt.decimals).toFixed(5);
+      return parseBalanceUnits(
+        assetInfo.amount_per_link_use_action,
+        wt.decimals,
+      ).toFixed(5);
     }
     const decimals = tokenMeta?.data?.decimals ?? 8;
-    return parseBalanceUnits(assetInfo.amount_per_link_use_action, decimals).toFixed(5);
+    return parseBalanceUnits(
+      assetInfo.amount_per_link_use_action,
+      decimals,
+    ).toFixed(5);
   };
 </script>
 
