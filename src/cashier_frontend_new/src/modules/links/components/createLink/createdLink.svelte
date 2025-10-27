@@ -34,7 +34,7 @@
         return;
       }
       await link.goNext();
-      goto(resolve(`/link/edit/${link.id}`));
+      goto(resolve(`/link/detail/${link.id}`));
     } catch (error) {
       console.error("Failed to go next: ", error);
     }

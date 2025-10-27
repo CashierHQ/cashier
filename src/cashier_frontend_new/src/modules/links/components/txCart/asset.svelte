@@ -4,18 +4,15 @@
   import loadingGif from "$lib/assets/loading.gif";
   import { Check, X } from "lucide-svelte";
   import type { LinkStore } from "../../state/linkStore.svelte";
-  import type Action from "$modules/links/types/action/action";
   import { ActionType } from "$modules/links/types/action/actionType";
 
   let {
     link,
-    action,
     isProcessing,
     successMessage,
     errorMessage,
   }: {
     link: LinkStore;
-    action: Action;
     isProcessing: boolean;
     successMessage: string | null;
     errorMessage: string | null;

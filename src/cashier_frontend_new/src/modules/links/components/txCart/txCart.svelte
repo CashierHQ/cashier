@@ -22,6 +22,7 @@
   let successMessage: string | null = $state(null);
 
   let isProcessing: boolean = $state(false);
+  let isExecutingIcrc112: boolean = $state(false);
   let isOpen: boolean = $derived(!!link.action);
 
   // Confirm and process the action
@@ -53,6 +54,7 @@
       // Only attempt ICRC-112 batch if requests exist
       if (requests.length > 0) {
         try {
+          isExecutingIcrc112 = true;
           const icrc112Service = new Icrc112Service(signer);
           const batchResult = await icrc112Service.sendBatchRequest(
             requests,
@@ -72,7 +74,7 @@
           console.error("Error sending ICRC-112 batch request:", err);
           errorMessage = `Error sending ICRC-112 batch request: ${err instanceof Error ? err.message : String(err)}`;
         } finally {
-          isProcessing = false;
+          isExecutingIcrc112 = false;
         }
       }
 
@@ -89,6 +91,7 @@
       }
     } catch (error) {
       console.error("Error processing action:", error);
+      isProcessing = false;
       errorMessage = `Error processing action: ${error instanceof Error ? error.message : String(error)}`;
     }
   }
@@ -148,8 +151,7 @@
 
         <Asset
           {link}
-          action={link.action}
-          {isProcessing}
+          isProcessing={isExecutingIcrc112}
           {successMessage}
           {errorMessage}
         />
@@ -164,20 +166,14 @@
       </div>
 
       <Drawer.Footer>
-        {#if successMessage}
-          <Button class="flex gap-2 w-full" onclick={goNext} variant="default">
-            Continue
-          </Button>
-        {:else}
           <Button
-            class="flex gap-2 w-full"
+      class="flex gap-2 w-full"
             onclick={confirmAction}
             disabled={isProcessing}
             variant="default"
           >
             {isProcessing ? "Processing..." : "Confirm"}
           </Button>
-        {/if}
       </Drawer.Footer>
     </Drawer.Content>
   </Drawer.Root>
