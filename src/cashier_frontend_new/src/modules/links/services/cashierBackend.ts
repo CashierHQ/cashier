@@ -4,8 +4,9 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { Err, type Result } from "ts-results-es";
 import type { CreateLinkData } from "../types/createLinkData";
-import type { ActionType } from "../types/action/actionType";
+import { ActionType } from "../types/action/actionType";
 import { toNullable } from "@dfinity/utils";
+import { rsMatch } from "$lib/rsMatch";
 
 /**
  * Service for interacting with the Cashier Backend canister.
@@ -42,7 +43,7 @@ class CanisterBackendService {
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
-    const response = await actor.get_links_v2(
+    const response = await actor.user_get_links_v2(
       toNullable({
         offset: BigInt(params.offset),
         limit: BigInt(params.limit),
@@ -144,6 +145,8 @@ class CanisterBackendService {
       action_type: input.actionType.toBackendType(),
     });
 
+    console.log("Response from create_action_v2:", response);
+
     return responseToResult(response)
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
@@ -164,12 +167,59 @@ class CanisterBackendService {
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
-
     const response = await actor.get_link_details_v2(id, toNullable(options));
+    console.log("Response from get_link_details_v2:", response);
 
     return responseToResult(response)
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
+  }
+
+  /**
+   * This method fetches link detail first then based on the link detail, the action is populated separately.
+   * @param id The ID of the link to retrieve.
+   * @returns A Result containing GetLinkResp or an Error.
+   */
+  async getLinkWithoutAction(id: string) {
+    const actor = this.#getActor();
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    // first call to get link without action
+    const response = await actor.get_link_details_v2(id, toNullable());
+    const link = responseToResult(response)
+      .map((res) => res)
+      .mapErr((err) => new Error(JSON.stringify(err)));
+
+    if (link.isOk()) {
+      const actionType = rsMatch(link.unwrap().link.link_type, {
+        SendAirdrop: function (): ActionType {
+          return ActionType.Receive;
+        },
+        SendTip: function (): ActionType {
+          return ActionType.Receive;
+        },
+        SendTokenBasket: function (): ActionType {
+          return ActionType.Receive;
+        },
+        ReceivePayment: function (): ActionType {
+          return ActionType.Send;
+        },
+      });
+      const response = await actor.get_link_details_v2(
+        id,
+        toNullable({
+          action_type: actionType.toBackendType(),
+        }),
+      );
+
+      return responseToResult(response)
+        .map((res) => res)
+        .mapErr((err) => new Error(JSON.stringify(err)));
+    } else {
+      return link;
+    }
   }
 }
 

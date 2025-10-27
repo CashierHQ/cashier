@@ -5,5 +5,5 @@
 </script>
 
 <Protected>
-    {@render children?.()}
+  {@render children?.()}
 </Protected>

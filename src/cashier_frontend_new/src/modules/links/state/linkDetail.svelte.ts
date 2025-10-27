@@ -12,26 +12,34 @@ export type LinkAndAction = {
   action?: Action;
 };
 
-export const linkQuery = (id: string, action?: ActionType) =>
+export const linkDetailQuery = (id: string, action?: ActionType) =>
   managedState<LinkAndAction>({
     queryFn: async () => {
-      const resp = await cashierBackendService.getLink(
-        id,
-        // Only include action_type if action is defined
-        action && {
+      let resp;
+      
+      if (action) {
+        resp = await cashierBackendService.getLink(id, {
           action_type: action.toBackendType(),
-        },
-      );
+        });
+      } else {
+        resp = await cashierBackendService.getLinkWithoutAction(id);
+      }
+
       if (resp.isErr()) {
         throw resp.error;
       }
 
       const link = Link.fromBackend(resp.value.link);
-      const actionRes = fromNullable(resp.value.action);
+      
+      // Handle action if present in response
       let actionResult: Action | undefined = undefined;
-      if (actionRes) {
-        actionResult = Action.fromBackend(actionRes);
+      if ('action' in resp.value) {
+        const actionRes = fromNullable(resp.value.action);
+        if (actionRes) {
+          actionResult = Action.fromBackend(actionRes);
+        }
       }
+
       return {
         link,
         action: actionResult,
