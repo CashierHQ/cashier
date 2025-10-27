@@ -99,7 +99,7 @@ async fn user_process_action_v2(
 /// * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by the caller
 /// * `Err(CanisterError)` - Error message if retrieval fails
 #[query(guard = "is_not_anonymous")]
-async fn get_links_v2(
+async fn user_get_links_v2(
     input: Option<PaginateInput>,
 ) -> Result<PaginateResult<LinkDto>, CanisterError> {
     info!("[get_links_v2]");

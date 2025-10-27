@@ -134,14 +134,14 @@ impl LinkTestFixture {
     /// # Returns
     /// * `PaginateResult<LinkDto>` - The paginated list of links
     /// * `CanisterError` - Error if the retrieval fails
-    pub async fn get_links_v2(
+    pub async fn user_get_links_v2(
         &self,
         options: Option<PaginateInput>,
     ) -> Result<PaginateResult<LinkDto>, CanisterError> {
         self.cashier_backend_client
             .as_ref()
             .unwrap()
-            .get_links_v2(options)
+            .user_get_links_v2(options)
             .await
             .unwrap()
     }

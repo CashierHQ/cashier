@@ -1,13 +1,18 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link::fixture::activate_tip_link_v2_fixture;
+use crate::cashier_backend::link::fixture::{LinkTestFixture, activate_tip_link_v2_fixture};
+use crate::utils::link_id_to_account::link_id_to_account;
+use crate::utils::principal::TestUser;
 use crate::utils::with_pocket_ic_context;
+use candid::Nat;
 use cashier_backend_types::constant::ICP_TOKEN;
+use cashier_backend_types::dto::action::CreateActionInput;
 use cashier_backend_types::dto::link::GetLinkOptions;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
-use cashier_backend_types::repository::intent::v1::IntentState;
+use cashier_backend_types::repository::common::Wallet;
+use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, IntentType};
 use cashier_backend_types::repository::link::v1::LinkState;
 
 #[tokio::test]
@@ -67,7 +72,7 @@ async fn it_should_succeed_get_tip_linkv2_details_with_no_option() {
 }
 
 #[tokio::test]
-async fn it_should_succeed_get_tip_linkv2_details_with_option() {
+async fn it_should_succeed_get_linkv2_details_with_create_action_type() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tip_amount = 1_000_000u64;
@@ -105,7 +110,7 @@ async fn it_should_succeed_get_tip_linkv2_details_with_option() {
 }
 
 #[tokio::test]
-async fn it_should_succeed_get_tip_linkv2_details_with_option_action_not_existent() {
+async fn it_should_succeed_get_linkv2_details_with_option_action_not_existent() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tip_amount = 1_000_000u64;
@@ -128,6 +133,140 @@ async fn it_should_succeed_get_tip_linkv2_details_with_option_action_not_existen
         assert_eq!(link.id, link_id);
         assert_eq!(link.state, LinkState::Active);
         assert!(get_link_result.action.is_none());
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_succeed_get_linkv2_details_with_receive_action() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let tip_amount = 1_000_000u64;
+        let (test_fixture, create_link_result) =
+            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+
+        let receiver = TestUser::User2.get_principal();
+        let receiver_fixture = LinkTestFixture::new(test_fixture.ctx.clone(), &receiver).await;
+
+        // Act: create RECEIVE action
+        let link_id = create_link_result.link.id.clone();
+        let create_action_input = CreateActionInput {
+            link_id: link_id.clone(),
+            action_type: ActionType::Receive,
+        };
+        let create_action_result = receiver_fixture.create_action_v2(create_action_input).await;
+
+        // Assert
+        assert!(create_action_result.is_ok());
+        let create_action_result = create_action_result.unwrap();
+        assert_eq!(create_action_result.r#type, ActionType::Receive);
+        assert!(!create_action_result.id.is_empty());
+        assert_eq!(create_action_result.creator, receiver);
+
+        // Act
+        let link_id = create_link_result.link.id;
+        let option = GetLinkOptions {
+            action_type: ActionType::Receive,
+        };
+        let get_links_result = receiver_fixture
+            .get_link_details_v2(&link_id, Some(option))
+            .await;
+
+        // Assert
+        assert!(get_links_result.is_ok());
+        let get_link_result = get_links_result.unwrap();
+        let link = get_link_result.link;
+        assert_eq!(link.id, link_id);
+        assert_eq!(link.state, LinkState::Active);
+        assert!(get_link_result.action.is_some());
+        let action = get_link_result.action.unwrap();
+        assert_eq!(action.r#type, ActionType::Receive);
+        assert_eq!(action.state, ActionState::Created);
+        assert_eq!(action.intents.len(), 1);
+
+        // Assert Intent 1: TransferLinkToWallet
+        let intent1 = &create_action_result.intents[0];
+        assert_eq!(intent1.task, IntentTask::TransferLinkToWallet);
+        match intent1.r#type {
+            IntentType::Transfer(ref transfer) => {
+                assert_eq!(transfer.to, Wallet::new(receiver));
+                assert_eq!(transfer.from, link_id_to_account(ctx, &link_id).into());
+                assert_eq!(
+                    transfer.amount,
+                    Nat::from(tip_amount),
+                    "Transfer amount incorrect"
+                );
+            }
+            _ => panic!("Expected Transfer intent type"),
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_succeed_get_linkv2_details_with_withdraw_action() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let tip_amount = 1_000_000u64;
+        let (test_fixture, create_link_result) =
+            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+
+        // Act: disable the link first to make it Inactive
+        let link_id = create_link_result.link.id.clone();
+        let _disable_link_result = test_fixture.disable_link_v2(&link_id).await;
+
+        // Act: create WITHDRAW action
+        let link_id = create_link_result.link.id.clone();
+        let create_action_input = CreateActionInput {
+            link_id: link_id.clone(),
+            action_type: ActionType::Withdraw,
+        };
+        let create_action_result = test_fixture.create_action_v2(create_action_input).await;
+
+        // Assert
+        assert!(create_action_result.is_ok());
+        let create_action_result = create_action_result.unwrap();
+        assert_eq!(create_action_result.r#type, ActionType::Withdraw);
+        assert!(!create_action_result.id.is_empty());
+
+        // Act
+        let link_id = create_link_result.link.id;
+        let option = GetLinkOptions {
+            action_type: ActionType::Withdraw,
+        };
+        let get_links_result = test_fixture
+            .get_link_details_v2(&link_id, Some(option))
+            .await;
+
+        // Assert
+        assert!(get_links_result.is_ok());
+        let get_link_result = get_links_result.unwrap();
+        let link = get_link_result.link;
+        assert_eq!(link.id, link_id);
+        assert_eq!(link.state, LinkState::Inactive);
+        assert!(get_link_result.action.is_some());
+        let action = get_link_result.action.unwrap();
+        assert_eq!(action.r#type, ActionType::Withdraw);
+        assert_eq!(action.state, ActionState::Created);
+        assert_eq!(action.intents.len(), 1);
+
+        // Assert Intent 1: TransferLinkToWallet
+        let intent1 = &action.intents[0];
+        assert_eq!(intent1.task, IntentTask::TransferLinkToWallet);
+        match intent1.r#type {
+            IntentType::Transfer(ref transfer) => {
+                assert_eq!(transfer.to, Wallet::new(caller));
+                assert_eq!(transfer.from, link_id_to_account(ctx, &link_id).into());
+            }
+            _ => panic!("Expected Transfer intent type"),
+        }
 
         Ok(())
     })
