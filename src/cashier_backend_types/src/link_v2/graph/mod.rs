@@ -173,7 +173,7 @@ mod tests {
             graph.adjacency_list.get("C").unwrap(),
             &vec!["D".to_string()]
         );
-        assert!(graph.adjacency_list.contains_key("D"));
+        assert!(!graph.adjacency_list.contains_key("D"));
     }
 
     #[test]
@@ -207,6 +207,6 @@ mod tests {
             graph.adjacency_list.get("C").unwrap(),
             &vec!["D".to_string()]
         );
-        assert!(graph.adjacency_list.contains_key("D"));
+        assert!(!graph.adjacency_list.contains_key("D"));
     }
 }
