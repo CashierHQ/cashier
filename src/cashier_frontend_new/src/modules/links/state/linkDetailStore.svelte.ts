@@ -18,7 +18,7 @@ export type LinkAndAction = {
  * @param action Optional action type to fetch along with the link
  * @returns Managed state containing link and optional action
  */
-export const linkDetailQuery = (id: string, action?: ActionType) =>
+export const linkDetailStore = (id: string, action?: ActionType) =>
   managedState<LinkAndAction>({
     queryFn: async () => {
       let resp;

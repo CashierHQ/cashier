@@ -21,7 +21,7 @@ export class LinkActiveState implements LinkState {
     const result = await cashierBackendService.disableLinkV2(this.#link.id);
 
     if (result.isErr()) {
-      throw new Error(`Failed to deactivate link: ${result.error}`);
+      throw new Error(`Failed to active link: ${result.error}`);
     }
 
     this.#link.state = new LinkInactiveState(this.#link);

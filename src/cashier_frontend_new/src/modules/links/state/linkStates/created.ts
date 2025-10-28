@@ -1,6 +1,7 @@
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkState } from ".";
+import { linkListStore } from "../linkListStore.svelte";
 import type { LinkStore } from "../linkStore.svelte";
 import { LinkActiveState } from "./active";
 
@@ -26,6 +27,8 @@ export class LinkCreatedState implements LinkState {
     if (result.isErr()) {
       throw new Error(`Failed to activate link: ${result.error}`);
     }
+
+    linkListStore.refresh();
 
     this.#link.state = new LinkActiveState(this.#link);
   }

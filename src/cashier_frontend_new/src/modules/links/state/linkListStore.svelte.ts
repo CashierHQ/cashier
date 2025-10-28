@@ -3,7 +3,7 @@ import { cashierBackendService } from "../services/cashierBackend";
 import { Link } from "../types/link/link";
 
 // A state for the user tokens list
-export const linkListQuery = managedState<Link[]>({
+export const linkListStore = managedState<Link[]>({
   queryFn: async () => {
     const res = await cashierBackendService.getLinks();
     if (res.isErr()) {

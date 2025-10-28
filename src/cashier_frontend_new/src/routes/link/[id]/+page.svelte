@@ -1,9 +1,9 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import Detail from "$modules/links/pages/useLink/detail.svelte";
+  import UseLink from "$modules/links/pages/use.svelte";
   const id = page.params.id;
 </script>
 
 {#if id}
-  <Detail {id} />
+  <UseLink {id} />
 {/if}

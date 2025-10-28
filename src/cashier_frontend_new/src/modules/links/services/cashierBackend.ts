@@ -168,7 +168,6 @@ class CanisterBackendService {
       return Err(new Error("User not logged in"));
     }
     const response = await actor.get_link_details_v2(id, toNullable(options));
-    console.log("Response from get_link_details_v2:", response);
 
     return responseToResult(response)
       .map((res) => res)

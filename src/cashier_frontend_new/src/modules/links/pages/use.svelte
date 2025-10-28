@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { linkDetailQuery } from "$modules/links/state/linkDetail.svelte";
+  import { linkDetailStore } from "$modules/links/state/linkDetailStore.svelte";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import TxCart from "$modules/links/components/txCart/txCart.svelte";
@@ -11,7 +11,7 @@
 
   let { id }: { id: string } = $props();
 
-  const linkQueryState = linkDetailQuery(id);
+  const linkQueryState = linkDetailStore(id);
 
   // Derive link state from query data with error handling
   const link = $derived.by(() => {
