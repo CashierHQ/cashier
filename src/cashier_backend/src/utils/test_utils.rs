@@ -1,12 +1,16 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::Principal;
-use cashier_common::test_utils;
-use cashier_backend_types::repository::intent::v1::{Intent, IntentState, IntentTask, IntentType, TransferData};
-use cashier_backend_types::repository::transaction::v1::{FromCallType, IcTransaction, Icrc1Transfer, Protocol, Transaction, TransactionState};
-use cashier_backend_types::repository::common::{Asset, Chain, Wallet};
 use candid::Nat;
+use candid::Principal;
+use cashier_backend_types::repository::common::{Asset, Chain, Wallet};
+use cashier_backend_types::repository::intent::v1::{
+    Intent, IntentState, IntentTask, IntentType, TransferData,
+};
+use cashier_backend_types::repository::transaction::v1::{
+    FromCallType, IcTransaction, Icrc1Transfer, Protocol, Transaction, TransactionState,
+};
+use cashier_common::test_utils;
 
 pub fn random_id_string() -> String {
     test_utils::random_id_string()
@@ -80,7 +84,7 @@ pub fn generate_mock_intent(id: &str, dependencies: Vec<&str>) -> Intent {
         id: id.to_string(),
         state: IntentState::Created,
         created_at: 0,
-        dependency: dependencies.into_iter().map(|s| s.to_string()).collect(),
+        dependency: dependencies.into_iter().map(ToString::to_string).collect(),
         chain: Chain::IC,
         task: IntentTask::TransferWalletToTreasury,
         r#type: IntentType::Transfer(TransferData {
@@ -98,7 +102,11 @@ pub fn generate_mock_transaction(id: &str, dependencies: Vec<&str>) -> Transacti
         id: id.to_string(),
         created_at: 0,
         state: TransactionState::Created,
-        dependency: if dependencies.is_empty() { None } else { Some(dependencies.into_iter().map(|s| s.to_string()).collect()) },
+        dependency: if dependencies.is_empty() {
+            None
+        } else {
+            Some(dependencies.into_iter().map(ToString::to_string).collect())
+        },
         group: 0,
         from_call_type: FromCallType::Canister,
         protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {

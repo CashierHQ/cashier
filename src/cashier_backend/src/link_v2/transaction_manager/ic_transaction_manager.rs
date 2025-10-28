@@ -204,26 +204,25 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use candid::Principal;
-    use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType, TransferData};
-    use cashier_backend_types::repository::common::{Asset, Wallet};
-    use cashier_backend_types::repository::action::v1::{Action, ActionState, ActionType};
     use candid::Nat;
+    use candid::Principal;
+    use cashier_backend_types::repository::action::v1::{Action, ActionState, ActionType};
+    use cashier_backend_types::repository::common::{Asset, Wallet};
+    use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType, TransferData};
 
     // Use the shared mock environment from test utilities
     use crate::utils::test_utils::runtime::MockIcEnvironment;
 
     #[tokio::test]
     async fn test_create_action_generates_icrc_requests() {
-    // Arrange: create manager with shared mock env
-    let mut env = MockIcEnvironment::new();
-    // tests expect a smaller now value; override the default if needed
-    env.current_time = 1_700_000_000;
-    let manager = IcTransactionManager::new(env);
+        // Arrange: create manager with shared mock env
+        let mut env = MockIcEnvironment::new();
+        // tests expect a smaller now value; override the default if needed
+        env.current_time = 1_700_000_000;
+        let manager = IcTransactionManager::new(env);
 
         // prepare action
         let action = Action {
@@ -246,7 +245,9 @@ mod tests {
         });
 
         // Act
-        let res = manager.create_action(action.clone(), vec![intent.clone()]).await;
+        let res = manager
+            .create_action(action.clone(), vec![intent.clone()])
+            .await;
         println!("Create action result: {:?}", res);
 
         // Assert
@@ -264,4 +265,3 @@ mod tests {
         assert!(requests.iter().all(|group| !group.is_empty()));
     }
 }
-
