@@ -4,6 +4,7 @@ import { cashierBackendService } from "../services/cashierBackend";
 import Action from "../types/action/action";
 import type { ActionType } from "../types/action/actionType";
 import { Link } from "../types/link/link";
+import { authState } from "$modules/auth/state/auth.svelte";
 
 // A state for the user tokens list
 
@@ -30,7 +31,9 @@ export const linkDetailStore = (id: string, action?: ActionType) =>
         });
       } else {
         // Fetch link without action, normally used for Send or Receive link detail view
-        resp = await cashierBackendService.getLinkWithoutAction(id);
+        resp = await cashierBackendService.getLinkWithoutAction(id, {
+          anonymous: !authState.isLoggedIn,
+        });
       }
 
       if (resp.isErr()) {

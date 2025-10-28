@@ -1,5 +1,6 @@
 import type { ActionType as BackendActionType } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { assertUnreachable, rsMatch } from "$lib/rsMatch";
+import { LinkType } from "../link/linkType";
 
 // Frontend representation of action types for links
 export class ActionType {
@@ -44,5 +45,18 @@ export class ActionType {
       Receive: () => ActionType.Receive,
       Send: () => ActionType.Send,
     });
+  }
+
+  static fromLinkType(a: LinkType) {
+    switch (a) {
+      case LinkType.AIRDROP:
+      case LinkType.TIP:
+      case LinkType.TOKEN_BASKET:
+        return ActionType.Receive;
+      case LinkType.RECEIVE_PAYMENT:
+        return ActionType.Send;
+      default:
+        return assertUnreachable(a as never);
+    }
   }
 }
