@@ -39,11 +39,6 @@
       console.error("Failed to go next: ", error);
     }
   }
-
-  // Create the link
-  async function create() {
-    alert("WIP execute action " + link.id);
-  }
 </script>
 
 <h3 class="text-lg font-semibold">Created</h3>
@@ -52,7 +47,6 @@
 
   <div class="flex gap-2 mt-4">
     <Button onclick={goBack}>Back</Button>
-    <Button onclick={create}>Create</Button>
   </div>
 
   <TxCart {link} {goNext} />

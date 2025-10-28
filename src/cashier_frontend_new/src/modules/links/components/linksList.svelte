@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { linkListQuery } from "../state/links.svelte";
+  import { linkListStore } from "../state/linkList.svelte";
   import { resolve } from "$app/paths";
 
   // normalize various timestamp inputs to BigInt nanoseconds and format
@@ -37,34 +37,34 @@
 <section class="px-4 py-4">
   <div class="mb-4">
     <h2 class="text-lg font-semibold">Links created by me</h2>
-    {#if linkListQuery.data}
+    {#if linkListStore.data}
       <div class="text-sm text-muted-foreground">
-        Total links – {linkListQuery.data.length}
+        Total links – {linkListStore.data.length}
       </div>
-      {#if linkListQuery.data.length > 0}
+      {#if linkListStore.data.length > 0}
         <div class="text-sm text-muted-foreground mt-2">
-          {formatDate(linkListQuery.data[0].create_at)}
+          {formatDate(linkListStore.data[0].create_at)}
         </div>
       {/if}
     {/if}
   </div>
 
-  {#if linkListQuery.isLoading}
+  {#if linkListStore.isLoading}
     <div class="text-sm text-muted-foreground">Loading...</div>
   {/if}
 
-  {#if linkListQuery.error}
+  {#if linkListStore.error}
     <div class="text-sm text-destructive">
-      Cannot fetch links list: {linkListQuery.error}
+      Cannot fetch links list: {linkListStore.error}
     </div>
   {/if}
 
-  {#if linkListQuery.data}
-    {#if linkListQuery.data.length === 0}
+  {#if linkListStore.data}
+    {#if linkListStore.data.length === 0}
       <div class="text-sm text-muted-foreground">There are no links</div>
     {:else}
       <ul class="space-y-3">
-        {#each linkListQuery.data as link (link.id)}
+        {#each linkListStore.data as link (link.id)}
           <li>
             <a
               href={resolve(`/link/detail/${link.id}`)}

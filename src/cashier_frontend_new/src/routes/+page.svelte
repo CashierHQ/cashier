@@ -6,6 +6,10 @@
   import LinksList from "$modules/links/components/linksList.svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
   import { Plus } from "lucide-svelte";
+
+  const handleCreateLink = () => {
+    goto(resolve("/link/create"));
+  };
 </script>
 
 <!-- DEMO: no need for a dedicated tailwind configuration because this uses version 4 by default -->
@@ -26,9 +30,7 @@
     </div>
     <!-- Fixed floating plus button placed at page level so it stays on screen -->
     <Button
-      onclick={() => {
-        goto(resolve("/link/edit"));
-      }}
+    onclick={handleCreateLink}
       class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg hover:bg-emerald-700 transition-colors z-50"
       aria-label="Create link"
     >

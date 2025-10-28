@@ -9,7 +9,7 @@
   import LinkInfoSection from "../components/linkDetail/linkInfoSection.svelte";
   import UsageInfoSection from "../components/linkDetail/usageInfoSection.svelte";
   import { LinkState } from "../types/link/linkState";
-  import { linkDetailQuery } from "../state/linkDetail.svelte";
+  import { linkDetailStore } from "../state/linkDetailStore.svelte";
   import { LinkStore } from "../state/linkStore.svelte";
 
   let showCopied: boolean = $state(false);
@@ -17,7 +17,7 @@
   let { id }: { id: string } = $props();
 
   // query for link data (used for loading/refresh) and a local store for view-model
-  const linkQueryState = linkDetailQuery(id, ActionType.Withdraw);
+  const linkQueryState = linkDetailStore(id, ActionType.Withdraw);
   let link = $state(new LinkStore());
 
   $effect(() => {

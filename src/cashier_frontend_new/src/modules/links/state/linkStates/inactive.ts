@@ -31,10 +31,8 @@ export class LinkInactiveState implements LinkState {
     );
 
     if (result.isErr()) {
-      throw new Error(`Failed to deactivate link: ${result.error}`);
+      throw new Error(`Failed to inactive link: ${result.error}`);
     }
-
-    this.#link.state = new LinkInactiveState(this.#link);
 
     this.#link.state = new LinkEndedState(this.#link);
   }
