@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { linkListStore } from "../state/linkList.svelte";
+  import { linkListStore } from "../state/linkListStore.svelte";
   import { resolve } from "$app/paths";
 
   // normalize various timestamp inputs to BigInt nanoseconds and format
