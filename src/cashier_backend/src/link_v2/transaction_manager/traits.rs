@@ -20,6 +20,15 @@ pub trait TransactionManager {
         intents: Vec<Intent>,
     ) -> Result<CreateActionResult, CanisterError>;
 
+    /// Process the given action by executing the associated transactions
+    /// # Arguments
+    /// * `action` - The action to be processed
+    /// * `intents` - The intents associated with the action
+    /// * `intent_txs_map` - A mapping of intent IDs to their corresponding transactions
+    /// # Returns
+    /// * `ProcessActionResult` - The result containing the processed action, intents, and transactions
+    /// # Errors
+    /// * `CanisterError` - If there is an error during action processing
     async fn process_action(
         &self,
         action: Action,

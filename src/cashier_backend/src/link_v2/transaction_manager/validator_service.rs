@@ -137,7 +137,7 @@ mod tests {
     use super::*;
     use crate::utils::test_utils::{generate_mock_intent, generate_mock_transaction};
     use cashier_backend_types::repository::action::v1::{Action, ActionState, ActionType};
-    use cashier_backend_types::repository::intent::v1::{IntentState};
+    use cashier_backend_types::repository::intent::v1::IntentState;
     use cashier_backend_types::repository::transaction::v1::{
         FromCallType, Transaction, TransactionState,
     };
@@ -201,9 +201,17 @@ mod tests {
         let result = service.validate_action_transactions(&txs).await.unwrap();
 
         // Assert
-        let tx1_result = result.wallet_transactions.iter().find(|tx| tx.id == "tx1").unwrap();
+        let tx1_result = result
+            .wallet_transactions
+            .iter()
+            .find(|tx| tx.id == "tx1")
+            .unwrap();
         assert_eq!(tx1_result.state, TransactionState::Success);
-        let tx2_result = result.canister_transactions.iter().find(|tx| tx.id == "tx2").unwrap();
+        let tx2_result = result
+            .canister_transactions
+            .iter()
+            .find(|tx| tx.id == "tx2")
+            .unwrap();
         assert_eq!(tx2_result.state, TransactionState::Created);
         assert!(result.is_success);
         assert!(result.errors.is_empty());
@@ -218,10 +226,17 @@ mod tests {
         tx1.from_call_type = FromCallType::Wallet;
 
         // Act
-        let result_fail = service_fail.validate_action_transactions(&[tx1.clone()]).await.unwrap();
+        let result_fail = service_fail
+            .validate_action_transactions(&[tx1.clone()])
+            .await
+            .unwrap();
 
         // Assert
-        let tx1_fail = result_fail.wallet_transactions.iter().find(|tx| tx.id == "tx1").unwrap();
+        let tx1_fail = result_fail
+            .wallet_transactions
+            .iter()
+            .find(|tx| tx.id == "tx1")
+            .unwrap();
         assert_eq!(tx1_fail.state, TransactionState::Fail);
         assert!(!result_fail.is_success);
         assert_eq!(result_fail.errors, vec!["mock fail".to_string()]);
@@ -242,11 +257,11 @@ mod tests {
         tx_success.from_call_type = FromCallType::Wallet;
         tx_success.state = TransactionState::Success;
         intent_txs_map.insert("intent1".to_string(), vec![tx_success.clone()]);
-        intent_txs_map.insert("intent2".to_string(), vec![tx_success.clone()]);
+        intent_txs_map.insert("intent2".to_string(), vec![tx_success]);
 
         // Act
         let result = service
-            .rollup_action_state(action.clone(), &[intent1.clone(), intent2.clone()], intent_txs_map.clone())
+            .rollup_action_state(action, &[intent1, intent2], intent_txs_map.clone())
             .unwrap();
 
         // Assert
@@ -274,18 +289,22 @@ mod tests {
         tx_fail.from_call_type = FromCallType::Wallet;
         tx_fail.state = TransactionState::Fail;
         intent_txs_map.insert("intent1".to_string(), vec![tx_success.clone()]);
-        intent_txs_map.insert("intent2".to_string(), vec![tx_success.clone()]);
+        intent_txs_map.insert("intent2".to_string(), vec![tx_success]);
 
         // Act
         let mut intent_txs_map_fail = intent_txs_map.clone();
-        intent_txs_map_fail.insert("intent2".to_string(), vec![tx_fail.clone()]);
+        intent_txs_map_fail.insert("intent2".to_string(), vec![tx_fail]);
         let result_fail = service
-            .rollup_action_state(action.clone(), &[intent1.clone(), intent2.clone()], intent_txs_map_fail)
+            .rollup_action_state(action, &[intent1, intent2], intent_txs_map_fail)
             .unwrap();
 
         // Assert
         assert_eq!(result_fail.action.state, ActionState::Fail);
-        let intent2_result = result_fail.intents.iter().find(|i| i.id == "intent2").unwrap();
+        let intent2_result = result_fail
+            .intents
+            .iter()
+            .find(|i| i.id == "intent2")
+            .unwrap();
         assert_eq!(intent2_result.state, IntentState::Fail);
     }
 }
