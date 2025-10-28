@@ -303,10 +303,19 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
 
         // build response dto
         let link_dto = LinkDto::from(link_model);
-        let action_dto = action.map(|action| {
+
+        let action_dto: Option<ActionDto> = if let Some(action) = action {
             let intents = self.action_service.get_intents_by_action_id(&action.id);
-            ActionDto::from(action, intents)
-        });
+
+            let create_action_result = self
+                .transaction_manager
+                .create_action(action, intents)
+                .await?;
+
+            Some(create_action_result.into())
+        } else {
+            None
+        };
 
         Ok(GetLinkResp {
             link: link_dto,
