@@ -109,25 +109,30 @@ pub fn kahn_topological_sort_flat(graph: &Graph) -> Result<Vec<String>, Canister
     Ok(flatten_sorted_list(&sorted_levels))
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use std::collections::HashMap;
 
     fn make_graph(vertices: &[&str], edges: &[(&str, &str)]) -> Graph {
-        let vertices: Vec<String> = vertices.iter().map(|s| s.to_string()).collect();
+        let vertices: Vec<String> = vertices.iter().map(|s| (*s).to_string()).collect();
         let mut adjacency_list: HashMap<String, Vec<String>> = HashMap::new();
         for (from, to) in edges {
-            adjacency_list.entry(from.to_string()).or_default().push(to.to_string());
+            adjacency_list
+                .entry((*from).to_string())
+                .or_default()
+                .push((*to).to_string());
         }
-        Graph { vertices, adjacency_list }
+        Graph {
+            vertices,
+            adjacency_list,
+        }
     }
 
     #[test]
     fn test_simple_topological_sort() {
         // A -> B -> C
-        let graph = make_graph(&["A", "B", "C"], &[ ("A", "B"), ("B", "C") ]);
+        let graph = make_graph(&["A", "B", "C"], &[("A", "B"), ("B", "C")]);
         let sorted = kahn_topological_sort(&graph).unwrap();
         // Should be [[A], [B], [C]]
         assert_eq!(sorted.len(), 3);
@@ -139,7 +144,7 @@ mod tests {
     #[test]
     fn test_parallel_levels() {
         // A -> B, A -> C
-        let graph = make_graph(&["A", "B", "C"], &[ ("A", "B"), ("A", "C") ]);
+        let graph = make_graph(&["A", "B", "C"], &[("A", "B"), ("A", "C")]);
         let sorted = kahn_topological_sort(&graph).unwrap();
         // Should be [[A], [B, C]] or [[A], [C, B]]
         assert_eq!(sorted.len(), 2);
@@ -152,7 +157,7 @@ mod tests {
     #[test]
     fn test_cycle_detection() {
         // A -> B -> C -> A (cycle)
-        let graph = make_graph(&["A", "B", "C"], &[ ("A", "B"), ("B", "C"), ("C", "A") ]);
+        let graph = make_graph(&["A", "B", "C"], &[("A", "B"), ("B", "C"), ("C", "A")]);
         let result = kahn_topological_sort(&graph);
         assert!(result.is_err());
         if let Err(e) = result {
@@ -160,7 +165,7 @@ mod tests {
         }
     }
 
-        #[test]
+    #[test]
     fn test_complex_topological_sort() {
         // Graph:
         //   A   B
@@ -175,7 +180,16 @@ mod tests {
         // Edges: A->C, A->D, B->C, B->D, C->E, D->F, E->G, F->G
         let graph = make_graph(
             &["A", "B", "C", "D", "E", "F", "G"],
-            &[ ("A", "C"), ("A", "D"), ("B", "C"), ("B", "D"), ("C", "E"), ("D", "F"), ("E", "G"), ("F", "G") ]
+            &[
+                ("A", "C"),
+                ("A", "D"),
+                ("B", "C"),
+                ("B", "D"),
+                ("C", "E"),
+                ("D", "F"),
+                ("E", "G"),
+                ("F", "G"),
+            ],
         );
 
         let sorted = kahn_topological_sort(&graph).unwrap();
@@ -194,27 +208,43 @@ mod tests {
 
         // All vertices should be present
         let all_sorted: Vec<String> = sorted.into_iter().flatten().collect();
-        let mut expected: Vec<String> = vec!["A", "B", "C", "D", "E", "F", "G"].into_iter().map(|s| s.to_string()).collect();
+        let mut expected: Vec<String> = vec!["A", "B", "C", "D", "E", "F", "G"]
+            .into_iter()
+            .map(|s| (*s).to_string())
+            .collect();
         expected.sort();
-        let mut all_sorted_sorted = all_sorted.clone();
+        let mut all_sorted_sorted = all_sorted;
         all_sorted_sorted.sort();
         assert_eq!(all_sorted_sorted, expected);
     }
 
-      #[test]
+    #[test]
     fn test_complicated_cycle_detection() {
         // Graph with multiple interconnected cycles:
         // A -> B -> C -> D -> E -> F -> G -> H -> I -> J
         // And cycles: (A->C->A), (D->F->D), (G->I->G), (J->B->J)
         let graph = make_graph(
             &["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
-            &[ ("A", "B"), ("B", "C"), ("C", "D"), ("D", "E"), ("E", "F"), ("F", "G"), ("G", "H"), ("H", "I"), ("I", "J"),
-               // Cycles
-               ("A", "C"), ("C", "A"), // cycle 1
-               ("D", "F"), ("F", "D"), // cycle 2
-               ("G", "I"), ("I", "G"), // cycle 3
-               ("J", "B"), ("B", "J")  // cycle 4
-            ]
+            &[
+                ("A", "B"),
+                ("B", "C"),
+                ("C", "D"),
+                ("D", "E"),
+                ("E", "F"),
+                ("F", "G"),
+                ("G", "H"),
+                ("H", "I"),
+                ("I", "J"),
+                // Cycles
+                ("A", "C"),
+                ("C", "A"), // cycle 1
+                ("D", "F"),
+                ("F", "D"), // cycle 2
+                ("G", "I"),
+                ("I", "G"), // cycle 3
+                ("J", "B"),
+                ("B", "J"), // cycle 4
+            ],
         );
         let result = kahn_topological_sort(&graph);
         assert!(result.is_err());
