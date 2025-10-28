@@ -30,7 +30,7 @@
     </div>
     <!-- Fixed floating plus button placed at page level so it stays on screen -->
     <Button
-    onclick={handleCreateLink}
+      onclick={handleCreateLink}
       class="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg hover:bg-emerald-700 transition-colors z-50"
       aria-label="Create link"
     >
