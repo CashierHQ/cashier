@@ -17,11 +17,7 @@
     "";
 
   const walletToken = () => {
-    try {
-      return walletStore.query.data?.find((t: any) => t.address === address);
-    } catch (e) {
-      return undefined;
-    }
+    return walletStore.query.data?.find((t) => t.address === address);
   };
 
   const tokenMeta = address ? tokenMetadataQuery(address) : null;

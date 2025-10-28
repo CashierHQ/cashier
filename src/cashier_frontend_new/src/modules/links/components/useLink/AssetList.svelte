@@ -11,7 +11,7 @@
 
 {#if assetInfo && assetInfo.length > 0}
   <div class="space-y-3 mb-4">
-    {#each assetInfo as assetInfoItem}
+    {#each assetInfo as assetInfoItem (assetInfoItem.asset.address?.toText?.() ?? assetInfoItem.label)}
       <AssetItem assetInfo={assetInfoItem} />
     {/each}
   </div>
