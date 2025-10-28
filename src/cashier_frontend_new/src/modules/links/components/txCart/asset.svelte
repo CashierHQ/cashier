@@ -4,6 +4,7 @@
   import loadingGif from "$lib/assets/loading.gif";
   import { Check, X } from "lucide-svelte";
   import type { LinkStore } from "../../state/linkStore.svelte";
+  import { ActionType } from "$modules/links/types/action/actionType";
 
   let {
     link,
@@ -20,7 +21,18 @@
 
 {#if link.action && link.action.intents.length > 0}
   <div>
-    <h5 class="text-sm font-medium mb-2">You send</h5>
+    {#if link.action}
+      {@const heading = (() => {
+        const t = link.action.type;
+        if (t === ActionType.CreateLink) return "You send";
+        if (t === ActionType.Withdraw || t === ActionType.Receive)
+          return "You receive";
+        return "You send";
+      })()}
+      <h5 class="text-sm font-medium mb-2">{heading}</h5>
+    {:else}
+      <h5 class="text-sm font-medium mb-2">You send</h5>
+    {/if}
 
     <div class="space-y-3">
       {#each link.getIntentProperties() as intent (intent.id)}
@@ -31,7 +43,6 @@
             {#if isProcessing}
               <img src={loadingGif} alt="loading" class="w-6 h-6" />
             {/if}
-
             {#if successMessage}
               <div class="text-green-600">
                 <Check class="w-4 h-4" />

@@ -8,6 +8,7 @@
   import { LinkStep } from "$modules/links/types/linkStep";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
+  import InputAmount from "../inputAmount/inputAmount.svelte";
 
   const {
     link,
@@ -17,23 +18,7 @@
 
   // UI local state
   let selectedAddress: string | null = $state(link.tipLink?.asset ?? null);
-  let amountStr: string = $state("");
-
-  // Initialize amountStr from stored data if available
-  $effect(() => {
-    if (link.tipLink?.useAmount && selectedAddress) {
-      const selectedToken = getSelectedToken();
-      if (selectedToken) {
-        const userAmount =
-          link.tipLink.useAmount / Math.pow(10, selectedToken.decimals);
-        amountStr = userAmount.toString();
-      } else {
-        amountStr = link.tipLink.useAmount.toString();
-      }
-    } else {
-      amountStr = "";
-    }
-  });
+  let amountBaseUnits: bigint = $state(link.tipLink?.useAmount ?? 0n);
 
   // useAmount selected token metadata
   function getSelectedToken() {
@@ -45,18 +30,21 @@
     );
   }
 
-  // Convert amount string to number (base units) using token decimals
-  function convertAmountToBaseUnits(
-    amountStr: string,
-    decimals: number,
-  ): number {
-    const amount = Number(amountStr);
-    if (Number.isNaN(amount) || amount <= 0) return 0;
+  // selected token state for template usage (derived from selection + wallet)
+  let selectedTokenState = $derived(() => getSelectedToken());
 
-    // Convert to base units (e.g., ICP to e8s)
-    const multiplier = Math.pow(10, decimals);
-    return Math.round(amount * multiplier);
-  }
+  // Auto-select the first token when wallet data becomes available and nothing is selected
+  $effect(() => {
+    if (
+      !selectedAddress &&
+      walletStore.query.data &&
+      walletStore.query.data.length > 0
+    ) {
+      selectedAddress = walletStore.query.data[0].address;
+    }
+  });
+
+  // (conversion now handled by InputAmount component; addAsset uses base units)
 
   // Redirect if not in the correct step
   $effect(() => {
@@ -65,23 +53,12 @@
     }
   });
 
-  // effect to update the store
+  // effect to update the store when selected asset or base units change
   $effect(() => {
-    if (selectedAddress && amountStr) {
-      const selectedToken = getSelectedToken();
-      if (selectedToken) {
-        const amountBaseUnits = convertAmountToBaseUnits(
-          amountStr,
-          selectedToken.decimals,
-        );
-        if (amountBaseUnits > 0) {
-          link.tipLink = { asset: selectedAddress, useAmount: amountBaseUnits };
-          return;
-        }
-      }
+    if (selectedAddress && amountBaseUnits && amountBaseUnits > 0) {
+      link.tipLink = { asset: selectedAddress, useAmount: amountBaseUnits };
+      return;
     }
-
-    // Clear tipLink when selection/amount is invalid or missing
     link.tipLink = undefined;
   });
 
@@ -143,13 +120,16 @@
   {/if}
 
   <div>
-    <Label for="amount">Amount</Label>
-    <Input
-      id="amount"
-      type="number"
-      bind:value={amountStr}
-      placeholder="0.00"
-    />
+    {#if selectedTokenState}
+      <InputAmount
+        bind:value={amountBaseUnits}
+        decimals={selectedTokenState()?.decimals ?? 8}
+        priceUsd={selectedTokenState()?.priceUSD ?? undefined}
+        balance={selectedTokenState()?.balance}
+      />
+    {:else}
+      <Input id="amount" type="number" placeholder="0.00" disabled />
+    {/if}
   </div>
 
   {#if errorMessage}

@@ -1,5 +1,5 @@
 import type { LinkType as BackendLinkType } from "$lib/generated/cashier_backend/cashier_backend.did";
-import { assertUnreachable } from "$lib/rsMatch";
+import { assertUnreachable, rsMatch } from "$lib/rsMatch";
 
 /** Frontend LinkType as a class with built-in mapping to backend union */
 export class LinkType {
@@ -27,5 +27,14 @@ export class LinkType {
       default:
         return assertUnreachable(this as never);
     }
+  }
+
+  static fromBackendType(b: BackendLinkType): LinkType {
+    return rsMatch(b, {
+      SendTip: () => LinkType.TIP,
+      SendAirdrop: () => LinkType.AIRDROP,
+      SendTokenBasket: () => LinkType.TOKEN_BASKET,
+      ReceivePayment: () => LinkType.RECEIVE_PAYMENT,
+    });
   }
 }

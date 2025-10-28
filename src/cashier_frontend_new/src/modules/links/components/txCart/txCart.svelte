@@ -22,10 +22,21 @@
   let successMessage: string | null = $state(null);
 
   let isProcessing: boolean = $state(false);
+  let isExecutingIcrc112: boolean = $state(false);
   let isOpen: boolean = $derived(!!link.action);
 
+  let isProcessingAsset = $derived(() => {
+    if (link.action?.icrc_112_requests?.length === 0) {
+      return isProcessing;
+    }
+    return isExecutingIcrc112;
+  });
+
   // Confirm and process the action
+  // first execute icrc-112 requests if any, then call goNext
+  // in case execute icrc-112 fails, do not call goNext
   async function confirmAction() {
+    // Basic validation BEFORE starting processing UI state
     if (!link.action || !link.id) {
       errorMessage = "No action or link ID available";
       return;
@@ -37,44 +48,59 @@
       return;
     }
 
-    try {
-      isProcessing = true;
-      errorMessage = null;
-      successMessage = null;
+    if (!authState.account?.owner) {
+      errorMessage = "You are not authorized to confirm this action.";
+      return;
+    }
 
-      if (!authState.account?.owner) {
-        errorMessage = "You are not authorized to confirm this action.";
-        return;
-      }
-      if (
-        link.action.icrc_112_requests &&
-        link.action.icrc_112_requests.length > 0
-      ) {
+    // Now mark processing started and clear messages
+    isProcessing = true;
+    errorMessage = null;
+    successMessage = null;
+
+    const requests = link.action.icrc_112_requests ?? [];
+
+    // Execute ICRC-112 batch only if there are requests.
+    if (requests.length > 0) {
+      isExecutingIcrc112 = true;
+      try {
         const icrc112Service = new Icrc112Service(signer);
         const batchResult = await icrc112Service.sendBatchRequest(
-          link.action.icrc_112_requests,
+          requests,
           authState.account.owner,
           CASHIER_BACKEND_CANISTER_ID,
         );
 
-        if (batchResult.isOk()) {
-          console.log("Batch request successful:", batchResult.unwrap());
-          successMessage = "ICRC-112 batch request sent successfully";
+        if (!batchResult.isOk()) {
+          const err = batchResult.unwrapErr();
+          console.error("Batch request failed:", err);
+          errorMessage = `Batch request failed: ${err?.message ?? String(err)}`;
+          // Do not proceed to goNext if batch failed (matches comment)
           return;
-        } else {
-          const error = batchResult.unwrapErr();
-          console.error("Batch request failed:", error);
-          errorMessage = `Batch request failed: ${error.message}`;
         }
-      } else {
-        errorMessage = "No ICRC-112 requests available in this action";
+
+        console.log("Batch request successful:", batchResult.unwrap());
+        successMessage = "ICRC-112 batch request sent successfully";
+      } catch (err) {
+        console.error("Error sending ICRC-112 batch request:", err);
+        errorMessage = `Error sending ICRC-112 batch request: ${err instanceof Error ? err.message : String(err)}`;
+        return;
+      } finally {
+        isExecutingIcrc112 = false;
       }
-    } catch (error) {
-      console.error("Error processing action:", error);
-      errorMessage = `Error processing action: ${error instanceof Error ? error.message : String(error)}`;
-    } finally {
-      isProcessing = false;
     }
+
+    // Only reaches here if batch succeeded or there were no requests
+    try {
+      await goNext();
+    } catch (e) {
+      console.error("goNext threw an error:", e);
+      const msg = e instanceof Error ? e.message : String(e);
+      errorMessage = errorMessage
+        ? `${errorMessage}; goNext error: ${msg}`
+        : msg;
+    }
+    isProcessing = false;
   }
 
   // Continue to next step after success
@@ -130,7 +156,12 @@
           </div>
         {/if}
 
-        <Asset {link} {isProcessing} {successMessage} {errorMessage} />
+        <Asset
+          {link}
+          isProcessing={isProcessingAsset()}
+          {successMessage}
+          {errorMessage}
+        />
 
         <Fee />
       </div>
@@ -142,20 +173,14 @@
       </div>
 
       <Drawer.Footer>
-        {#if successMessage}
-          <Button class="flex gap-2 w-full" onclick={goNext} variant="default">
-            Continue
-          </Button>
-        {:else}
-          <Button
-            class="flex gap-2 w-full"
-            onclick={confirmAction}
-            disabled={isProcessing}
-            variant="default"
-          >
-            {isProcessing ? "Processing..." : "Confirm"}
-          </Button>
-        {/if}
+        <Button
+          class="flex gap-2 w-full"
+          onclick={confirmAction}
+          disabled={isProcessing}
+          variant="default"
+        >
+          {isProcessing ? "Processing..." : "Confirm"}
+        </Button>
       </Drawer.Footer>
     </Drawer.Content>
   </Drawer.Root>

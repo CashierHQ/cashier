@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { CreateLinkData, type TipLink } from "./createLinkData";
-import { LinkType } from "./linkType";
+import { LinkType } from "./link/linkType";
 
 describe("CreateLinkData.toCreateLinkInput", () => {
   it("converts TIP CreateLinkData into CreateLinkInput Ok result", () => {
     // Arrange
-    const tip: TipLink = { asset: "aaaaa-aa", useAmount: 42 };
+    const tip: TipLink = { asset: "aaaaa-aa", useAmount: 42n };
     const data = new CreateLinkData({
       title: "My tip",
       linkType: LinkType.TIP,
