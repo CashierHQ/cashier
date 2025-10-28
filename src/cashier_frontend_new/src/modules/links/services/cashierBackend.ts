@@ -17,10 +17,17 @@ class CanisterBackendService {
    *
    * @throws Error if the user is not authenticated
    */
-  #getActor(): cashierBackend._SERVICE | null {
+  #getActor({
+    anonymous = false,
+  }: {
+    anonymous?: boolean;
+  }): cashierBackend._SERVICE | null {
     return authState.buildActor({
       canisterId: CASHIER_BACKEND_CANISTER_ID,
       idlFactory: cashierBackend.idlFactory,
+      options: {
+        anonymous,
+      },
     });
   }
 
@@ -39,7 +46,9 @@ class CanisterBackendService {
       limit: 10,
     },
   ): Promise<Result<cashierBackend.LinkDto[], Error>> {
-    const actor = this.#getActor();
+    const actor = this.#getActor({
+      anonymous: false,
+    });
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
@@ -64,7 +73,9 @@ class CanisterBackendService {
   async createLinkV2(
     input: CreateLinkData,
   ): Promise<Result<cashierBackend.CreateLinkDto, Error>> {
-    const actor = this.#getActor();
+    const actor = this.#getActor({
+      anonymous: false,
+    });
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
@@ -90,7 +101,9 @@ class CanisterBackendService {
   async processActionV2(
     actionId: string,
   ): Promise<Result<cashierBackend.CreateLinkDto, Error>> {
-    const actor = this.#getActor();
+    const actor = this.#getActor({
+      anonymous: false,
+    });
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
@@ -114,7 +127,9 @@ class CanisterBackendService {
   async disableLinkV2(
     id: string,
   ): Promise<Result<cashierBackend.LinkDto, Error>> {
-    const actor = this.#getActor();
+    const actor = this.#getActor({
+      anonymous: false,
+    });
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
@@ -135,7 +150,9 @@ class CanisterBackendService {
     linkId: string;
     actionType: ActionType;
   }): Promise<Result<cashierBackend.ActionDto, Error>> {
-    const actor = this.#getActor();
+    const actor = this.#getActor({
+      anonymous: false,
+    });
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
@@ -144,8 +161,6 @@ class CanisterBackendService {
       link_id: input.linkId,
       action_type: input.actionType.toBackendType(),
     });
-
-    console.log("Response from create_action_v2:", response);
 
     return responseToResult(response)
       .map((res) => res)
@@ -156,14 +171,25 @@ class CanisterBackendService {
    * Retrieve a single link by id. This method calls the canister's `get_link` query
    * and returns the GetLinkResp on success.
    * @param id The ID of the link to retrieve.
-   * @param options Optional GetLinkOptions to add action type if needed
+   * @param options Optional GetLinkOptions to add action type if needed.
+   *   - When provided, `action_type` will be sent to the canister to request
+   *     link details scoped to that action type.
+   * @param actorOptions Optional actor options used when building the actor.
+   *   - { anonymous?: boolean } — when true the actor is created as anonymous
+   *     (useful for public reads where no identity should be attached). If
+   *     omitted the actor will be built with the current authenticated user.
    * @returns A Result containing GetLinkResp or an Error.
    */
   async getLink(
     id: string,
     options?: cashierBackend.GetLinkOptions,
+    actorOptions?: {
+      anonymous: boolean;
+    },
   ): Promise<Result<cashierBackend.GetLinkResp, Error>> {
-    const actor = this.#getActor();
+    const actor = this.#getActor({
+      anonymous: actorOptions?.anonymous,
+    });
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
@@ -179,10 +205,21 @@ class CanisterBackendService {
    * first to get link and its type
    * second to get action derived from link type
    * @param id The ID of the link to retrieve.
+   * @param actorOptions Optional actor options used when building the actor.
+   *   - { anonymous?: boolean } — when true the actor is created as anonymous.
+   *     If omitted the default (authenticated actor) is used.
+   *
    * @returns A Result containing GetLinkResp or an Error.
    */
-  async getLinkWithoutAction(id: string) {
-    const actor = this.#getActor();
+  async getLinkWithoutAction(
+    id: string,
+    actorOptions?: {
+      anonymous: boolean;
+    },
+  ) {
+    const actor = this.#getActor({
+      anonymous: actorOptions?.anonymous,
+    });
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
@@ -219,6 +256,7 @@ class CanisterBackendService {
         .map((res) => res)
         .mapErr((err) => new Error(JSON.stringify(err)));
     } else {
+      console.log("debug link error:", link.unwrapErr());
       return link;
     }
   }
