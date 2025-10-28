@@ -4,6 +4,9 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { Err, type Result } from "ts-results-es";
 import type { CreateLinkData } from "../types/createLinkData";
+import { ActionType } from "../types/action/actionType";
+import { toNullable } from "@dfinity/utils";
+import { rsMatch } from "$lib/rsMatch";
 
 /**
  * Service for interacting with the Cashier Backend canister.
@@ -14,10 +17,17 @@ class CanisterBackendService {
    *
    * @throws Error if the user is not authenticated
    */
-  #getActor(): cashierBackend._SERVICE | null {
+  #getActor({
+    anonymous = false,
+  }: {
+    anonymous?: boolean;
+  }): cashierBackend._SERVICE | null {
     return authState.buildActor({
       canisterId: CASHIER_BACKEND_CANISTER_ID,
       idlFactory: cashierBackend.idlFactory,
+      options: {
+        anonymous,
+      },
     });
   }
 
@@ -33,23 +43,25 @@ class CanisterBackendService {
       limit: number;
     } = {
       offset: 0,
-      limit: 100,
+      limit: 10,
     },
   ): Promise<Result<cashierBackend.LinkDto[], Error>> {
-    const actor = this.#getActor();
+    const actor = this.#getActor({
+      anonymous: false,
+    });
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
-    const response = await actor.get_links([
-      {
-        offset: BigInt(params.limit),
-        limit: BigInt(params.offset),
-      },
-    ]);
+    const response = await actor.user_get_links_v2(
+      toNullable({
+        offset: BigInt(params.offset),
+        limit: BigInt(params.limit),
+      }),
+    );
 
     return responseToResult(response)
       .map((res) => res.data)
-      .mapErr((err) => new Error(err));
+      .mapErr((err) => new Error(JSON.stringify(err)));
   }
 
   /**
@@ -60,8 +72,10 @@ class CanisterBackendService {
    */
   async createLinkV2(
     input: CreateLinkData,
-  ): Promise<Result<cashierBackend.GetLinkResp, Error>> {
-    const actor = this.#getActor();
+  ): Promise<Result<cashierBackend.CreateLinkDto, Error>> {
+    const actor = this.#getActor({
+      anonymous: false,
+    });
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
@@ -72,7 +86,7 @@ class CanisterBackendService {
       return Err(request.unwrapErr());
     }
 
-    const response = await actor.create_link_v2(request.unwrap());
+    const response = await actor.user_create_link_v2(request.unwrap());
 
     return responseToResult(response)
       .map((res) => res)
@@ -80,19 +94,73 @@ class CanisterBackendService {
   }
 
   /**
-   * Activate a link v2 by id. Only the link owner may call this via an authenticated actor.
-   * @param id The ID of the link to activate.
-   * @returns A Result containing LinkDto or an Error.
+   *  Process an action by its ID. This method calls the canister's `process_action_v2`
+   *  @param actionId The ID of the action to process.
+   *  @returns A Result containing LinkDto or an Error.
    */
-  async activateLinkV2(
-    id: string,
-  ): Promise<Result<cashierBackend.LinkDto, Error>> {
-    const actor = this.#getActor();
+  async processActionV2(
+    actionId: string,
+  ): Promise<Result<cashierBackend.CreateLinkDto, Error>> {
+    const actor = this.#getActor({
+      anonymous: false,
+    });
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
 
-    const response = await actor.activate_link_v2(id);
+    console.log("Processing action with ID:", actionId);
+
+    const response = await actor.user_process_action_v2({
+      action_id: actionId,
+    });
+
+    return responseToResult(response)
+      .map((res) => res)
+      .mapErr((err) => new Error(JSON.stringify(err)));
+  }
+
+  /**
+   * Disable an existing link V2 by its id.
+   * @param id The ID of the link to disable
+   * @returns A Result containing the disabled LinkDto or an Error.
+   */
+  async disableLinkV2(
+    id: string,
+  ): Promise<Result<cashierBackend.LinkDto, Error>> {
+    const actor = this.#getActor({
+      anonymous: false,
+    });
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const response = await actor.user_disable_link_v2(id);
+
+    return responseToResult(response)
+      .map((res) => res)
+      .mapErr((err) => new Error(JSON.stringify(err)));
+  }
+
+  /**
+   * Create a new action using the v2 API format.
+   * @param input The CreateActionInput containing action creation details.
+   * @returns A Result containing ActionDto or an Error.
+   */
+  async createActionV2(input: {
+    linkId: string;
+    actionType: ActionType;
+  }): Promise<Result<cashierBackend.ActionDto, Error>> {
+    const actor = this.#getActor({
+      anonymous: false,
+    });
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    const response = await actor.user_create_action_v2({
+      link_id: input.linkId,
+      action_type: input.actionType.toBackendType(),
+    });
 
     return responseToResult(response)
       .map((res) => res)
@@ -103,25 +171,94 @@ class CanisterBackendService {
    * Retrieve a single link by id. This method calls the canister's `get_link` query
    * and returns the GetLinkResp on success.
    * @param id The ID of the link to retrieve.
-   * @param options Optional GetLinkOptions to add action type if needed
+   * @param options Optional GetLinkOptions to add action type if needed.
+   *   - When provided, `action_type` will be sent to the canister to request
+   *     link details scoped to that action type.
+   * @param actorOptions Optional actor options used when building the actor.
+   *   - { anonymous?: boolean } — when true the actor is created as anonymous
+   *     (useful for public reads where no identity should be attached). If
+   *     omitted the actor will be built with the current authenticated user.
    * @returns A Result containing GetLinkResp or an Error.
    */
   async getLink(
     id: string,
     options?: cashierBackend.GetLinkOptions,
+    actorOptions?: {
+      anonymous: boolean;
+    },
   ): Promise<Result<cashierBackend.GetLinkResp, Error>> {
-    const actor = this.#getActor();
+    const actor = this.#getActor({
+      anonymous: actorOptions?.anonymous,
+    });
     if (!actor) {
       return Err(new Error("User not logged in"));
     }
-
-    // The generated actor expects the options as an Opt<GetLinkOptions> -> [] | [GetLinkOptions]
-    const opt: [] | [cashierBackend.GetLinkOptions] = options ? [options] : [];
-    const response = await actor.get_link(id, opt);
+    const response = await actor.get_link_details_v2(id, toNullable(options));
 
     return responseToResult(response)
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
+  }
+
+  /**
+   * This method fetches call to `get_link_details_v2` twice
+   * first to get link and its type
+   * second to get action derived from link type
+   * @param id The ID of the link to retrieve.
+   * @param actorOptions Optional actor options used when building the actor.
+   *   - { anonymous?: boolean } — when true the actor is created as anonymous.
+   *     If omitted the default (authenticated actor) is used.
+   *
+   * @returns A Result containing GetLinkResp or an Error.
+   */
+  async getLinkWithoutAction(
+    id: string,
+    actorOptions?: {
+      anonymous: boolean;
+    },
+  ) {
+    const actor = this.#getActor({
+      anonymous: actorOptions?.anonymous,
+    });
+    if (!actor) {
+      return Err(new Error("User not logged in"));
+    }
+
+    // first call to get link without action
+    const response = await actor.get_link_details_v2(id, toNullable());
+    const link = responseToResult(response)
+      .map((res) => res)
+      .mapErr((err) => new Error(JSON.stringify(err)));
+
+    if (link.isOk()) {
+      const actionType = rsMatch(link.unwrap().link.link_type, {
+        SendAirdrop: function (): ActionType {
+          return ActionType.Receive;
+        },
+        SendTip: function (): ActionType {
+          return ActionType.Receive;
+        },
+        SendTokenBasket: function (): ActionType {
+          return ActionType.Receive;
+        },
+        ReceivePayment: function (): ActionType {
+          return ActionType.Send;
+        },
+      });
+      const response = await actor.get_link_details_v2(
+        id,
+        toNullable({
+          action_type: actionType.toBackendType(),
+        }),
+      );
+
+      return responseToResult(response)
+        .map((res) => res)
+        .mapErr((err) => new Error(JSON.stringify(err)));
+    } else {
+      console.log("debug link error:", link.unwrapErr());
+      return link;
+    }
   }
 }
 

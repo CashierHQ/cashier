@@ -49,7 +49,7 @@ class TokenStorageService {
     if (!actor) {
       throw new Error("User is not authenticated");
     }
-    const res: tokenStorage.Result = await actor.update_token_enable({
+    const res = await actor.user_update_token_enable({
       token_id: { IC: { ledger_id: address } },
       is_enabled,
     });
@@ -67,7 +67,7 @@ class TokenStorageService {
     if (!actor) {
       throw new Error("User is not authenticated");
     }
-    const res: tokenStorage.Result = await actor.add_token({
+    const res = await actor.user_add_token({
       token_id: { IC: { ledger_id: address } },
       index_id: [],
     });

@@ -202,7 +202,6 @@ impl<R: Repositories> ActionService<R> {
                     intent_id: intent_id.clone(),
                     transaction_id: tx.id.clone(),
                 };
-
                 intent_transactions.push(intent_transaction);
                 transactions.push(tx);
             }

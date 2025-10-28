@@ -1,6 +1,8 @@
+import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkState } from ".";
 import type { LinkStore } from "../linkStore.svelte";
+import { LinkInactiveState } from "./inactive";
 
 // State when the link has been successfully active
 export class LinkActiveState implements LinkState {
@@ -11,10 +13,18 @@ export class LinkActiveState implements LinkState {
     this.#link = link;
   }
 
-  // No next state from the created state
   async goNext(): Promise<void> {
-    console.log("No next state from Active", this.#link);
-    throw new Error("No next state from Created");
+    if (!this.#link.id) {
+      throw new Error("Link ID is missing");
+    }
+
+    const result = await cashierBackendService.disableLinkV2(this.#link.id);
+
+    if (result.isErr()) {
+      throw new Error(`Failed to active link: ${result.error}`);
+    }
+
+    this.#link.state = new LinkInactiveState(this.#link);
   }
 
   // No previous state from the created state

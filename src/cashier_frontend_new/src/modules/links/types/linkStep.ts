@@ -5,4 +5,6 @@ export enum LinkStep {
   PREVIEW,
   CREATED,
   ACTIVE,
+  INACTIVE,
+  ENDED,
 }

@@ -5,7 +5,7 @@
   import { LinkStep } from "../../types/linkStep";
   import { resolve } from "$app/paths";
   import LinkDetails from "./linkDetails.svelte";
-  import TxCart from "../tx-cart/tx-cart.svelte";
+  import TxCart from "../txCart/txCart.svelte";
 
   const {
     link,
@@ -34,15 +34,10 @@
         return;
       }
       await link.goNext();
-      goto(resolve(`/link/${link.id}`));
+      goto(resolve(`/link/detail/${link.id}`));
     } catch (error) {
       console.error("Failed to go next: ", error);
     }
-  }
-
-  // Create the link
-  async function create() {
-    alert("WIP execute action " + link.id);
   }
 </script>
 
@@ -52,7 +47,6 @@
 
   <div class="flex gap-2 mt-4">
     <Button onclick={goBack}>Back</Button>
-    <Button onclick={create}>Create</Button>
   </div>
 
   <TxCart {link} {goNext} />

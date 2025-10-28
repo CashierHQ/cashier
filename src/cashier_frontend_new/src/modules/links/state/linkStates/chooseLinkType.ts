@@ -1,5 +1,5 @@
 import { LinkStep } from "$modules/links/types/linkStep";
-import { LinkType } from "$modules/links/types/linkType";
+import { LinkType } from "$modules/links/types/link/linkType";
 import type { LinkState } from ".";
 import type { LinkStore } from "../linkStore.svelte";
 import { AddAssetState } from "./addAsset";

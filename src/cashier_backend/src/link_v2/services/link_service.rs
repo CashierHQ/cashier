@@ -260,6 +260,7 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             .collect();
 
         let links = self.link_repository.get_batch(link_ids);
+
         let paginate_result = PaginateResult::new(links, user_links.metadata);
         Ok(paginate_result.map(LinkDto::from))
     }
