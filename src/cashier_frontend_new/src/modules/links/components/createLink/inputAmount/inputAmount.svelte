@@ -24,49 +24,82 @@
     balance?: bigint;
   } = $props();
 
-  // input string shown in the input, do not bind `value` directly to input
-  let displayStr: string = $state("");
+  // input string shown in the input, do no
+  let input: string = $state("");
+
+  const USD_DISPLAY_DECIMALS = 6;
+
+  function trimNumber(n: number, decimals = USD_DISPLAY_DECIMALS) {
+    if (!isFinite(n)) return String(n);
+    // limit precision and strip trailing zeros
+    const fixed = n.toFixed(decimals);
+    return fixed.replace(/\.?0+$/, "");
+  }
 
   // converted value: if mode === 'amount' -> USD equivalent, else -> token equivalent
   let converted = $derived(() => {
-    const parsed = parseDisplayNumber(displayStr);
-    if (parsed == null) return null;
-    if (!priceUsd || priceUsd <= 0) return null;
-    return mode === "amount" ? parsed * priceUsd : parsed / priceUsd;
+    const parsed = parseDisplayNumber(input);
+    if (parsed == null) return 0;
+    if (!priceUsd || priceUsd <= 0) return 0;
+    if (mode === "amount") {
+      // mode 'amount' means the input is token amount -> show USD
+      return parsed * priceUsd;
+    } else {
+      // mode 'usd' means the input is USD amount -> show tokens
+      return parsed / priceUsd;
+    }
   });
 
-  // Helper: format the current `value` into the display string depending on `mode`
-  function formatValueForDisplay(): string {
-    if (value == null) return "";
-    const asAmount = parseBalanceUnits(value, decimals);
-    if (mode === "amount") return formatNumber(asAmount);
-    if (priceUsd && priceUsd > 0) return formatNumber(asAmount * priceUsd);
-    return "";
-  }
-
-  // Update the displayed string when `value`, `mode`, or `priceUsd` changes
+  // Initialize inputStr from incoming `value`
   $effect(() => {
-    displayStr = formatValueForDisplay();
+    if (value != null && value !== undefined) {
+      const asAmount: number = parseBalanceUnits(value, decimals);
+      if (mode === "amount") {
+        input = String(asAmount);
+      } else {
+        if (priceUsd && priceUsd > 0) {
+          // trim floating-point precision for USD display to avoid extremely long decimal strings
+          input = trimNumber(asAmount * priceUsd, USD_DISPLAY_DECIMALS);
+        } else {
+          input = "";
+        }
+      }
+    }
   });
 
   // Handle input events and keep numeric displayNumber
   function handleInput(e: Event) {
     const t = e.target as HTMLInputElement;
-    displayStr = sanitizeInput(t.value);
-    const parsed = parseDisplayNumber(displayStr);
+    // sanitize input (removes invalid chars) and parse
+    const sanitized = sanitizeInput(t.value);
+    input = sanitized;
+    const parsed = parseDisplayNumber(input);
     if (parsed == null) {
+      // empty or invalid
       value = 0n;
       return;
     }
 
-    value = computeAmountFromInput({ num: parsed, mode, priceUsd, decimals });
+    value = computeAmountFromInput({
+      num: parsed,
+      mode,
+      priceUsd,
+      decimals,
+    });
   }
 
   // Toggle mode (external callers can set `mode` prop too)
   function setMode(m: "amount" | "usd") {
+    // disallow switching to USD when price is not provided
     if (m === "usd" && !priceUsd) return;
     mode = m;
-    displayStr = formatValueForDisplay();
+    // when switching, refresh the displayed string to reflect current value in the new mode
+    const asAmount: number = parseBalanceUnits(value, decimals);
+    if (mode === "amount") {
+      input = String(asAmount);
+    } else if (priceUsd && priceUsd > 0) {
+      input = trimNumber(asAmount * priceUsd, USD_DISPLAY_DECIMALS);
+    }
   }
 </script>
 
@@ -99,9 +132,7 @@
           value = balance;
           // ensure input string refreshes via the effect
         }}
-        disabled={!balance ||
-          (typeof balance === "number" && balance <= 0) ||
-          (typeof balance === "bigint" && balance === 0n)}
+        disabled={!balance || balance === 0n}
       >
         Max
       </Button>
@@ -109,7 +140,7 @@
   </div>
 
   <Input
-    bind:value={displayStr}
+    bind:value={input}
     type="text"
     inputmode="decimal"
     step="any"
@@ -128,9 +159,9 @@
     {#if converted() != null}
       <div class="text-sm text-gray-700 mt-1">
         {#if mode === "amount"}
-          ≈ ${converted()!.toFixed(2)}
+          ≈ ${formatNumber(converted())}
         {:else}
-          ≈ {converted()!.toFixed(Math.min(6, decimals))} tokens
+          ≈ {formatNumber(converted())} tokens
         {/if}
       </div>
     {/if}

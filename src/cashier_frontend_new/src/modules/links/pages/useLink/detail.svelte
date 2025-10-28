@@ -67,7 +67,7 @@
 
     <AssetList assetInfo={link.link.asset_info} />
 
-    <Actions {link} onCreateUseAction={createAction} />
+    <Actions link={link.link} onCreateUseAction={createAction} />
   </div>
 {/if}
 
