@@ -56,6 +56,13 @@ impl<E: IcEnvironment> IcTransactionManager<E> {
 }
 
 impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
+    /// Create action by generating transactions from intents,
+    /// analyzing dependencies, and creating ICRC-112 requests.
+    /// # Arguments
+    /// * `action` - The action to be created
+    /// * `intents` - The intents associated with the action
+    /// # Returns
+    /// * `Result<CreateActionResult, CanisterError>` - The result of creating the action
     async fn create_action(
         &self,
         action: Action,
@@ -112,6 +119,14 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
         })
     }
 
+    /// Process action by validating and executing transactions,
+    /// and rolling up the action and intents states.
+    /// # Arguments
+    /// * `action` - The action to be processed
+    /// * `intents` - The intents associated with the action
+    /// * `intent_txs_map` - A mapping of intent IDs to their associated transactions
+    /// # Returns
+    /// * `Result<ProcessActionResult, CanisterError>` - The result of processing the action
     async fn process_action(
         &self,
         action: Action,
