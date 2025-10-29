@@ -62,8 +62,8 @@
     });
   });
   let linkFees: FeeItem[] = $derived.by(() =>
-    assetAndFeeList.map(({ fee }) => fee).filter((f): f is FeeItem => !!f
-  ));
+    assetAndFeeList.map(({ fee }) => fee).filter((f): f is FeeItem => !!f),
+  );
 
   let assetTitle = $derived.by(() =>
     getHeadingFromActionType(link.action?.type),
