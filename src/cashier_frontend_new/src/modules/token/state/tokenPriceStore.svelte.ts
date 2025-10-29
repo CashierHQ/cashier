@@ -25,7 +25,15 @@ export class TokenPriceStore {
           const result = prices_results[i];
 
           if (result.status === "fulfilled") {
-            Object.assign(prices, result.value.unwrap());
+            if (result.value.isOk()) {
+              Object.assign(prices, result.value.unwrap());
+            } else {
+              console.error(
+                "Failed to fetch token prices:",
+                result.value.unwrapErr(),
+                services[i],
+              );
+            }
           } else {
             console.error(
               "Failed to fetch token prices:",
