@@ -1,7 +1,7 @@
 <script lang="ts">
   import { assertUnreachable } from "$lib/rsMatch";
+  import { FeeType, type FeeItem } from "$modules/fee/type";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
-  import { FeeType, type FeeItem } from "./type";
 
   let {
     fees,
@@ -70,7 +70,7 @@
 
   <!-- Fees list card -->
   <div class="p-4 rounded-lg border border-green-100 bg-white mb-4">
-    {#each fees as fee}
+    {#each fees as fee, i (i)}
       <div
         class="flex items-center justify-between py-3 border-b last:border-b-0"
       >
@@ -94,7 +94,7 @@
       {#if uniqueSymbols() > 1}
         <div class="text-sm">Multiple tokens</div>
       {:else if fees[0]}
-        <div class="text-sm">{totalAmount()} {primarySymbol()}</div>
+        <div class="text-sm">{formatNumber(totalAmount())} {primarySymbol()}</div>
       {/if}
       <div class="text-xs text-muted-foreground">
         {`~$${formatNumber(totalUsd())}`}
