@@ -12,6 +12,6 @@
 
 {#if link.createLinkData}
   {#if link.createLinkData.linkType === LinkType.TIP}
-  <TipLinkAddAsset {link} />
+    <TipLinkAddAsset {link} />
   {/if}
 {/if}
