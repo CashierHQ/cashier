@@ -94,7 +94,10 @@
       {#if uniqueSymbols() > 1}
         <div class="text-sm">Multiple tokens</div>
       {:else if fees[0]}
-        <div class="text-sm">{formatNumber(totalAmount())} {primarySymbol()}</div>
+        <div class="text-sm">
+          {formatNumber(totalAmount())}
+          {primarySymbol()}
+        </div>
       {/if}
       <div class="text-xs text-muted-foreground">
         {`~$${formatNumber(totalUsd())}`}

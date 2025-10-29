@@ -62,8 +62,8 @@
     });
   });
   let linkFees: FeeItem[] = $derived.by(() =>
-    assetAndFeeList.map((p) => p.fee),
-  );
+    assetAndFeeList.map(({ fee }) => fee).filter((f): f is FeeItem => !!f
+  ));
 
   let assetTitle = $derived.by(() =>
     getHeadingFromActionType(link.action?.type),
@@ -218,7 +218,7 @@
       {#if !showFeeBreakdown}
         <Drawer.Footer>
           <Button
-      class="flex gap-2 w-full"
+            class="flex gap-2 w-full"
             onclick={confirmAction}
             disabled={isProcessing}
             variant="default"
