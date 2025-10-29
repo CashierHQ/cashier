@@ -9,6 +9,10 @@ import type {
   ActionDto,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { Principal } from "@dfinity/principal";
+import {
+  CreateLinkAsset,
+  CreateLinkData,
+} from "$modules/links/types/createLinkData";
 
 const mockLinkDto: LinkDto = {
   id: "mock-link-id",
@@ -51,11 +55,16 @@ describe("PreviewState", () => {
   it("should transition back to ADD_ASSET successfully", async () => {
     // Arrange
     const store = new LinkStore();
-    store.title = "My tip";
+    store.createLinkData.title = "My tip";
 
     // Act: move to ADD_ASSET then set tip and move to PREVIEW
     await store.goNext();
-    store.tipLink = { asset: "aaaaa-aa", useAmount: 10n };
+    store.createLinkData = new CreateLinkData({
+      title: "Test",
+      linkType: store.createLinkData.linkType,
+      maxUse: 1,
+      assets: [new CreateLinkAsset("aaaaa-aa", 100n)],
+    });
     await store.goNext();
 
     // Assert precondition
@@ -71,11 +80,16 @@ describe("PreviewState", () => {
   it("should trainsition to CREATED successfully", async () => {
     // Arrange
     const store = new LinkStore();
-    store.title = "My tip";
+    store.createLinkData.title = "My tip";
 
     // Act: get to PREVIEW
     await store.goNext();
-    store.tipLink = { asset: "aaaaa-aa", useAmount: 10n };
+    store.createLinkData = new CreateLinkData({
+      title: "Test",
+      linkType: store.createLinkData.linkType,
+      maxUse: 1,
+      assets: [new CreateLinkAsset("aaaaa-aa", 100n)],
+    });
     await store.goNext();
 
     // Ensure backend mock returns Ok
@@ -96,11 +110,16 @@ describe("PreviewState", () => {
   it("should throws when backend returns Err", async () => {
     // Arrange
     const store = new LinkStore();
-    store.title = "My tip";
+    store.createLinkData.title = "My tip";
 
     // Act: move to PREVIEW
     await store.goNext();
-    store.tipLink = { asset: "aaaaa-aa", useAmount: 10n };
+    store.createLinkData = new CreateLinkData({
+      title: "Test",
+      linkType: store.createLinkData.linkType,
+      maxUse: 1,
+      assets: [new CreateLinkAsset("aaaaa-aa", 100n)],
+    });
     await store.goNext();
 
     // Arrange: mock backend to return Err

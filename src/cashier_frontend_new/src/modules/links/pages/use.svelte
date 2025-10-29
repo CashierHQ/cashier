@@ -31,7 +31,10 @@
   const createAction = async () => {
     try {
       if (!link.id) throw new Error("Link ID is missing");
-      const actionType: ActionType = ActionType.fromLinkType(link.linkType);
+      if (!link.link?.link_type) throw new Error("Link type is missing");
+      const actionType: ActionType = ActionType.fromLinkType(
+        link.link.link_type,
+      );
       const actionRes = await cashierBackendService.createActionV2({
         linkId: link.id,
         actionType,

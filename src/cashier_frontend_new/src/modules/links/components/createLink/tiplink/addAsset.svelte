@@ -9,6 +9,7 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import InputAmount from "../inputAmount/inputAmount.svelte";
+  import { CreateLinkAsset } from "$modules/links/types/createLinkData";
 
   const {
     link,
@@ -17,12 +18,29 @@
   } = $props();
 
   // UI local state
-  let selectedAddress: string | null = $state(link.tipLink?.asset ?? null);
-  let amountBaseUnits: bigint = $state(link.tipLink?.useAmount ?? 0n);
+  // UI local state
+  // If there are assets already on the createLinkData, use the first one's values as defaults.
+  // Otherwise default to undefined and 0n respectively.
+  let selectedAddress: string | undefined = $state(
+    (() => {
+      const assets = link.createLinkData?.assets;
+      if (assets && assets.length > 0) return assets[0].address;
+      return undefined;
+    })(),
+  );
+
+  let amountBaseUnits: bigint = $state(
+    (() => {
+      const assets = link.createLinkData?.assets;
+      if (assets && assets.length > 0) return assets[0].useAmount ?? 0n;
+      return 0n;
+    })(),
+  );
 
   // useAmount selected token metadata
   function getSelectedToken() {
-    if (!selectedAddress || !walletStore.query.data) return null;
+    if (!selectedAddress || !walletStore.query.data || !selectedAddress)
+      return null;
     return (
       walletStore.query.data.find(
         (token) => token.address === selectedAddress,
@@ -56,10 +74,11 @@
   // effect to update the store when selected asset or base units change
   $effect(() => {
     if (selectedAddress && amountBaseUnits && amountBaseUnits > 0) {
-      link.tipLink = { asset: selectedAddress, useAmount: amountBaseUnits };
+      link.createLinkData.assets = new Array(
+        new CreateLinkAsset(selectedAddress, amountBaseUnits),
+      );
       return;
     }
-    link.tipLink = undefined;
   });
 
   // ErruseAmountsage state

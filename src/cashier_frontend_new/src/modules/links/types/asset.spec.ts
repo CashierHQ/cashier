@@ -7,7 +7,7 @@ describe("Asset.fromBackendType", () => {
   it("maps IC asset to frontend Asset", () => {
     const p = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
     const backend: BackendAsset = { IC: { address: p } };
-    const asset = Asset.fromBackendType(backend);
+    const asset = Asset.fromBackend(backend);
     expect(asset.address.toText()).toBe(p.toText());
   });
 });
