@@ -68,8 +68,10 @@
     "@dfinity/principal": "^2.4.1",
     "@dfinity/utils": "^2.14.0",
     "@windoge98/plug-n-play": "^0.1.0-beta.20",
+    "axios": "^1.13.1",
     "devalue": "^5.3.2",
     "lucide-svelte": "^0.546.0",
+    "query-string": "^9.3.1",
     "runed": "^0.34.0",
     "ts-results-es": "^6.0.0"
   }
