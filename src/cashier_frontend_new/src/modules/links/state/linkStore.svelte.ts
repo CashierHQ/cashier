@@ -1,12 +1,14 @@
 import type Action from "../types/action/action";
 import type { TipLink } from "../types/createLinkData";
 import type { Link } from "../types/link/link";
+import { FeeType } from "../components/txCart/type";
 import { LinkState as FrontendState } from "../types/link/linkState";
 import { LinkType } from "../types/link/linkType";
 import type { LinkState } from "./linkStates";
 import { LinkActiveState } from "./linkStates/active";
 import { ChooseLinkTypeState } from "./linkStates/chooseLinkType";
 import { LinkInactiveState } from "./linkStates/inactive";
+import IntentTask from "../types/action/intentTask";
 
 // Simple reactive state management
 export class LinkStore {
@@ -98,5 +100,35 @@ export class LinkStore {
         };
         break;
     }
+  }
+
+  /**
+   * @return Array of fee information objects
+   * @property feeType - Type of the fee
+   * @property amountRaw - Amount of the fee in raw bigint format eg: 100000000 = 1 token in 8 decimal places
+   * @property address - Address associated with the fee
+   */
+  getFeeInfo(): Array<{
+    feeType: FeeType;
+    amountRaw: bigint;
+    address: string;
+  }> {
+    if (!this.action) return [];
+
+    return this.action.intents.map((intent) => {
+      const address = intent.type.payload.asset.address.toString();
+      const amountRaw = intent.type.payload.amount;
+      let feeType: FeeType = FeeType.NETWORK_FEE;
+
+      if (this.link && intent.task === IntentTask.TransferWalletToTreasury) {
+        feeType = FeeType.CREATE_LINK_FEE;
+      }
+
+      return {
+        feeType,
+        amountRaw,
+        address,
+      };
+    });
   }
 }
