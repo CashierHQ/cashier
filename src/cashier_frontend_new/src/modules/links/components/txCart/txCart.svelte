@@ -10,13 +10,10 @@
   import AssetList from "./assetList.svelte";
   import Fee from "./fee.svelte";
   import FeeBreakdown from "./feeBreakdown.svelte";
-  import type { FeeItem } from "./type";
-  import {
-    enrichFee,
-    mapActionToAssetItems,
-    getHeadingFromActionType,
-  } from "./utils";
-  import { AssetProcessState, type AssetItem as AssetItemType } from "./type";
+  import { getHeadingFromActionType } from "./utils";
+  import { AssetProcessState } from "./type";
+  import { FeeService } from "$modules/fee/services";
+  import type { FeeItem } from "$modules/fee/type";
 
   let {
     link,
@@ -25,6 +22,8 @@
     link: LinkStore;
     goNext?: () => Promise<void> | void;
   } = $props();
+
+  const service = new FeeService();
 
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
@@ -40,38 +39,37 @@
     return isExecutingIcrc112;
   });
 
+  const assetAndFeeList = $derived.by(() =>
+    link.action ? service.mapActionToAssetAndFeeList(link.action) : [],
+  );
+
   // Derive asset items from the action, but override each item's state based on
   // the current processing / error / success UI state so the UI (AssetItem)
   // shows the correct status icons.
   let assetItems = $derived.by(() => {
-    const base = link.action ? mapActionToAssetItems(link.action) : [];
-    return base.map((item: AssetItemType) => {
-      // create a shallow copy so we don't mutate the original source object
-      const copy: AssetItemType = { ...item };
-
+    return assetAndFeeList.map(({ asset }) => {
       if (isProcessingAsset()) {
-        copy.state = AssetProcessState.PROCESSING;
+        asset.state = AssetProcessState.PROCESSING;
       } else if (errorMessage) {
-        copy.state = AssetProcessState.FAILED;
+        asset.state = AssetProcessState.FAILED;
       } else if (successMessage) {
-        copy.state = AssetProcessState.SUCCEED;
+        asset.state = AssetProcessState.SUCCEED;
       } else {
         // default to whatever the mapper produced or PENDING if missing
-        copy.state = copy.state ?? AssetProcessState.PENDING;
+        asset.state = asset.state ?? AssetProcessState.PENDING;
       }
-
-      return copy;
+      return asset;
     });
   });
+  let linkFees: FeeItem[] = $derived.by(() =>
+    assetAndFeeList.map((p) => p.fee),
+  );
 
   let assetTitle = $derived.by(() =>
     getHeadingFromActionType(link.action?.type),
   );
 
-
-
   let showFeeBreakdown = $state(false);
-  let linkFees: FeeItem[] = link.getFeeInfo().map(enrichFee);
 
   // Confirm and process the action
   // first execute icrc-112 requests if any, then call goNext
@@ -220,7 +218,7 @@
       {#if !showFeeBreakdown}
         <Drawer.Footer>
           <Button
-       class="flex gap-2 w-full"
+      class="flex gap-2 w-full"
             onclick={confirmAction}
             disabled={isProcessing}
             variant="default"

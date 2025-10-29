@@ -58,7 +58,7 @@
   <div class="text-right">
     <div class="font-medium text-lg">{asset.amount}</div>
     {#if asset.usdValueStr}
-      <div class="text-xs text-muted-foreground">{asset.usdValueStr}</div>
+      <div class="text-xs text-muted-foreground">${asset.usdValueStr}</div>
     {/if}
   </div>
 </div>
