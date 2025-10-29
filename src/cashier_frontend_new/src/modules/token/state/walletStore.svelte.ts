@@ -34,7 +34,6 @@ export class WalletStore {
         const balances: bigint[] = await Promise.all(balanceRequests);
 
         // fetch token prices
-        //const prices = await tokenPriceService.getTokenPrices();
         const prices = tokenPriceStore.query.data
           ? tokenPriceStore.query.data
           : {};
@@ -67,11 +66,9 @@ export class WalletStore {
         this.#walletTokensQuery.refresh();
       });
 
+      // Refresh wallet tokens when token prices are updated
       $effect(() => {
-        console.log(
-          "Token prices updated, refreshing wallet tokens...",
-          $state.snapshot(tokenPriceStore.query.data),
-        );
+        console.log("Token prices updated, refreshing wallet tokens...");
         this.#walletTokensQuery.refresh();
       });
     });

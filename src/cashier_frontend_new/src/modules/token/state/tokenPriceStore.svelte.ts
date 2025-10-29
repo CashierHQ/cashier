@@ -20,12 +20,11 @@ export class TokenPriceStore {
         const prices_results = await Promise.allSettled(fetchingPriceTasks);
         const prices: Record<string, number> = {};
 
-        // process price in order icExplorer > kongSwap > icpSwap
+        // update price in priority order icExplorer > kongSwap > icpSwap
         for (let i = 0; i < prices_results.length; i++) {
           const result = prices_results[i];
 
           if (result.status === "fulfilled") {
-            console.log("Fetched token prices:", result.value, services[i]);
             Object.assign(prices, result.value.unwrap());
           } else {
             console.error(
@@ -35,8 +34,6 @@ export class TokenPriceStore {
             );
           }
         }
-
-        console.log("Final merged token prices:", prices);
 
         return prices;
       },
