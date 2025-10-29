@@ -7,8 +7,8 @@ describe("ChooseLinkTypeState", () => {
   it("should transition to ADD_ASSET sucessfully", async () => {
     // Arrange
     const store = new LinkStore();
-    store.title = "My tip";
-    store.linkType = LinkType.TIP;
+    store.createLinkData.title = "My tip";
+    store.createLinkData.linkType = LinkType.TIP;
 
     // Act
 
@@ -21,8 +21,8 @@ describe("ChooseLinkTypeState", () => {
   it("should throws when title is empty", async () => {
     // Arrange
     const store = new LinkStore();
-    store.title = "";
-    store.linkType = LinkType.TIP;
+    store.createLinkData.title = "";
+    store.createLinkData.linkType = LinkType.TIP;
 
     // Act
     const res = store.goNext();
@@ -34,8 +34,8 @@ describe("ChooseLinkTypeState", () => {
   it("should throws when link type is not TIP", async () => {
     // Arrange
     const store = new LinkStore();
-    store.title = "My tip";
-    store.linkType = LinkType.AIRDROP;
+    store.createLinkData.title = "My tip";
+    store.createLinkData.linkType = LinkType.AIRDROP;
 
     // Act
     const res = store.goNext();
