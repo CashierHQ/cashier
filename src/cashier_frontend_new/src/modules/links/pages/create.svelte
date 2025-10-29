@@ -4,7 +4,6 @@
   import AddAsset from "$modules/links/components/createLink/addAsset.svelte";
   import ChooseLinkType from "$modules/links/components/createLink/chooseLinkType.svelte";
   import Preview from "../components/createLink/preview.svelte";
-  import CreatedLink from "../components/createLink/createdLink.svelte";
   import CreateLinkHeader from "$modules/links/components/createLink/createLinkHeader.svelte";
 
   let newLink = new LinkStore();
