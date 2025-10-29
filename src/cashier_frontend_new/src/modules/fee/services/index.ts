@@ -21,30 +21,6 @@ type AssetAndFeeList = {
 
 export class FeeService {
   /**
-   * Forecast the final fee amount for a given intent and action type.
-   * @param intent The intent to calculate the fee for.
-   * @param ledgerFee The base ledger fee to consider.
-   * @param actionType The type of action being performed.
-   * @returns The forecasted fee amount as bigint.
-   * */
-  forecastFee({
-    intent,
-    ledgerFee,
-    actionType,
-  }: {
-    intent: Intent;
-    ledgerFee: bigint;
-    actionType: ActionType;
-  }): bigint {
-    const { amount } = this.computeAmountAndFeeRaw({
-      intent,
-      ledgerFee,
-      actionType,
-    });
-    return amount;
-  }
-
-  /**
    * Compute both the final amount (what will be shown as the asset amount)
    * and an optional fee (undefined when there is no fee to display) based
    * on the provided rules.
