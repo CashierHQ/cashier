@@ -46,3 +46,12 @@ export const catchError = <T>(callback: () => T): Result<T, unknown> => {
     return Err(error);
   }
 };
+
+/**
+ * Parses a result response and extracts the value.
+ * @param response
+ * @returns
+ */
+export const parseResultResponse = <T, E>(response: Response<T, E>): T => {
+  return responseToResult(response).unwrap();
+};
