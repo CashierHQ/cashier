@@ -84,8 +84,9 @@ class IcExplorerTokenPriceService implements TokenPriceService {
 
       return Ok(priceMap);
     } catch (error) {
-      console.error("Error fetching prices:", error);
-      return Err(new Error("Failed to fetch prices from IC Explorer"));
+      return Err(
+        new Error(`Failed to fetch prices from IC Explorer: ${error}`),
+      );
     }
   }
 }
