@@ -7,8 +7,16 @@
   import type { Signer } from "@slide-computer/signer";
   import type { IITransport } from "$modules/auth/signer/ii/IITransport";
   import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
-  import Asset from "./asset.svelte";
+  import AssetList from "./assetList.svelte";
   import Fee from "./fee.svelte";
+  import FeeBreakdown from "./feeBreakdown.svelte";
+  import type { FeeItem } from "./type";
+  import {
+    enrichFee,
+    mapActionToAssetItems,
+    getHeadingFromActionType,
+  } from "./utils";
+  import { AssetProcessState, type AssetItem as AssetItemType } from "./type";
 
   let {
     link,
@@ -31,6 +39,39 @@
     }
     return isExecutingIcrc112;
   });
+
+  // Derive asset items from the action, but override each item's state based on
+  // the current processing / error / success UI state so the UI (AssetItem)
+  // shows the correct status icons.
+  let assetItems = $derived.by(() => {
+    const base = link.action ? mapActionToAssetItems(link.action) : [];
+    return base.map((item: AssetItemType) => {
+      // create a shallow copy so we don't mutate the original source object
+      const copy: AssetItemType = { ...item };
+
+      if (isProcessingAsset()) {
+        copy.state = AssetProcessState.PROCESSING;
+      } else if (errorMessage) {
+        copy.state = AssetProcessState.FAILED;
+      } else if (successMessage) {
+        copy.state = AssetProcessState.SUCCEED;
+      } else {
+        // default to whatever the mapper produced or PENDING if missing
+        copy.state = copy.state ?? AssetProcessState.PENDING;
+      }
+
+      return copy;
+    });
+  });
+
+  let assetTitle = $derived.by(() =>
+    getHeadingFromActionType(link.action?.type),
+  );
+
+
+
+  let showFeeBreakdown = $state(false);
+  let linkFees: FeeItem[] = link.getFeeInfo().map(enrichFee);
 
   // Confirm and process the action
   // first execute icrc-112 requests if any, then call goNext
@@ -141,47 +182,53 @@
       </Drawer.Header>
 
       <div class="px-4 pb-4">
-        {#if errorMessage}
-          <div
-            class="mb-3 p-2 bg-red-100 border border-red-300 text-red-700 rounded text-sm"
-          >
-            {errorMessage}
+        {#if showFeeBreakdown}
+          <!-- When showing breakdown, hide all other tx cart content -->
+          <FeeBreakdown
+            fees={linkFees}
+            onBack={() => (showFeeBreakdown = false)}
+          />
+        {:else}
+          {#if errorMessage}
+            <div
+              class="mb-3 p-2 bg-red-100 border border-red-300 text-red-700 rounded text-sm"
+            >
+              {errorMessage}
+            </div>
+          {/if}
+          {#if successMessage}
+            <div
+              class="mb-3 p-2 bg-green-100 border border-green-300 text-green-700 rounded text-sm"
+            >
+              {successMessage}
+            </div>
+          {/if}
+
+          <AssetList title={assetTitle} {assetItems} />
+
+          {#if linkFees && linkFees.length > 0}
+            <Fee fees={linkFees} onOpen={() => (showFeeBreakdown = true)} />
+          {/if}
+
+          <div class="px-4 pb-4 text-sm text-muted-foreground">
+            By confirming you agree execute the transaction above and agree to
+            the terms of service
           </div>
         {/if}
-        {#if successMessage}
-          <div
-            class="mb-3 p-2 bg-green-100 border border-green-300 text-green-700 rounded text-sm"
+      </div>
+
+      {#if !showFeeBreakdown}
+        <Drawer.Footer>
+          <Button
+       class="flex gap-2 w-full"
+            onclick={confirmAction}
+            disabled={isProcessing}
+            variant="default"
           >
-            {successMessage}
-          </div>
-        {/if}
-
-        <Asset
-          {link}
-          isProcessing={isProcessingAsset()}
-          {successMessage}
-          {errorMessage}
-        />
-
-        <Fee />
-      </div>
-      <!-- end of MOVE TO fee.svelte -->
-
-      <div class="px-4 pb-4 text-sm text-muted-foreground">
-        By confirming you agree execute the transaction above and agree to the
-        terms of service
-      </div>
-
-      <Drawer.Footer>
-        <Button
-          class="flex gap-2 w-full"
-          onclick={confirmAction}
-          disabled={isProcessing}
-          variant="default"
-        >
-          {isProcessing ? "Processing..." : "Confirm"}
-        </Button>
-      </Drawer.Footer>
+            {isProcessing ? "Processing..." : "Confirm"}
+          </Button>
+        </Drawer.Footer>
+      {/if}
     </Drawer.Content>
   </Drawer.Root>
 {/if}
