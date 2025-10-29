@@ -16,9 +16,8 @@ import { assertUnreachable } from "$lib/rsMatch";
 // Type for paired AssetItem and FeeItem
 type AssetAndFeeList = {
   asset: AssetItem;
-  fee: FeeItem;
+  fee?: FeeItem;
 }[];
-
 
 export class FeeService {
   /**
@@ -37,19 +36,54 @@ export class FeeService {
     ledgerFee: bigint;
     actionType: ActionType;
   }): bigint {
+    const { amount } = this.computeAmountAndFeeRaw({
+      intent,
+      ledgerFee,
+      actionType,
+    });
+    return amount;
+  }
+
+  /**
+   * Compute both the final amount (what will be shown as the asset amount)
+   * and an optional fee (undefined when there is no fee to display) based
+   * on the provided rules.
+   *
+   * Rules implemented (assumption: the 4th rule refers to ActionType.Receive)
+   * 1) CreateLink + TransferWalletToTreasury: amount = ledgerFee*2 + payload.amount
+   *    fee = ledgerFee*2 + payload.amount
+   * 2) CreateLink + other intent: amount = ledgerFee + payload.amount
+   *    fee = ledgerFee
+   * 3) Withdraw: amount = payload.amount - ledgerFee
+   *    fee = ledgerFee
+   * 4) Receive: amount = payload.amount
+   *    fee = undefined
+   */
+  computeAmountAndFeeRaw({
+    intent,
+    ledgerFee,
+    actionType,
+  }: {
+    intent: Intent;
+    ledgerFee: bigint;
+    actionType: ActionType;
+  }): { amount: bigint; fee?: bigint } {
     if (actionType === ActionType.CreateLink) {
       if (intent.task === IntentTask.TransferWalletToTreasury) {
-        return ledgerFee * 2n + intent.type.payload.amount;
+        const total = ledgerFee * 2n + intent.type.payload.amount;
+        return { amount: total, fee: total };
       } else {
-        return ledgerFee + intent.type.payload.amount;
+        return {
+          amount: ledgerFee + intent.type.payload.amount,
+          fee: ledgerFee,
+        };
       }
-    } else if (
-      actionType === ActionType.Withdraw ||
-      actionType === ActionType.Receive
-    ) {
-      return intent.type.payload.amount - ledgerFee;
+    } else if (actionType === ActionType.Withdraw) {
+      return { amount: intent.type.payload.amount - ledgerFee, fee: ledgerFee };
     } else if (actionType === ActionType.Send) {
-      return intent.type.payload.amount + ledgerFee;
+      return { amount: intent.type.payload.amount + ledgerFee, fee: ledgerFee };
+    } else if (actionType === ActionType.Receive) {
+      return { amount: intent.type.payload.amount, fee: undefined };
     }
 
     assertUnreachable(actionType as never);
@@ -85,7 +119,7 @@ export class FeeService {
 
       // compute adjusted amount (uses token fee when token found, otherwise ICP fallback)
       let asset: AssetItem;
-      let fee: FeeItem;
+      let fee: FeeItem | undefined;
 
       if (tokenRes.isErr()) {
         // Token not found: fallback to ICP
@@ -94,12 +128,12 @@ export class FeeService {
           address,
           tokenRes.unwrapErr(),
         );
-
-        const forecastFeeRaw = this.forecastFee({
-          intent,
-          ledgerFee: ICP_LEDGER_FEE,
-          actionType: action.type,
-        });
+        const { amount: forecastAmountRaw, fee: feeRaw } =
+          this.computeAmountAndFeeRaw({
+            intent,
+            ledgerFee: ICP_LEDGER_FEE,
+            actionType: action.type,
+          });
 
         asset = {
           id,
@@ -107,44 +141,36 @@ export class FeeService {
           label,
           symbol: "N/A",
           address,
-          amount: parseBalanceUnits(forecastFeeRaw, 8).toString(),
+          amount: parseBalanceUnits(forecastAmountRaw, 8).toString(),
           usdValueStr: undefined,
         };
-        fee = {
-          feeType,
-          amount: parseBalanceUnits(ICP_LEDGER_FEE, 8).toString(),
-          symbol: "N/A",
-        };
+
+        if (feeRaw === undefined) {
+          fee = undefined;
+        } else {
+          fee = {
+            feeType,
+            amount: parseBalanceUnits(feeRaw, 8).toString(),
+            symbol: "N/A",
+          };
+        }
       } else {
         const token = tokenRes.unwrap();
         const tokenFee = token.fee ?? ICP_LEDGER_FEE;
+        const { amount: forecastAmountRaw, fee: feeRaw } =
+          this.computeAmountAndFeeRaw({
+            intent,
+            ledgerFee: tokenFee,
+            actionType: action.type,
+          });
 
-        const forecastFeeRaw = this.forecastFee({
-          intent,
-          ledgerFee: tokenFee,
-          actionType: action.type,
-        });
         const forecastFeeAmount = parseBalanceUnits(
-          forecastFeeRaw,
+          forecastAmountRaw,
           token.decimals,
         );
         const forecastFeeUsd = token.priceUSD
           ? forecastFeeAmount * token.priceUSD
           : undefined;
-
-        let tokenFeeAmount: number;
-        if (feeType == FeeType.CREATE_LINK_FEE) {
-            tokenFeeAmount = parseBalanceUnits(token.fee * 3n, token.decimals);
-        }
-        else {
-           tokenFeeAmount = parseBalanceUnits(tokenFee, token.decimals);
-        }
-       
-        const feeUsdValue = token.priceUSD
-          ? tokenFeeAmount * token.priceUSD
-          : undefined;
-        const feeUsdValueStr =
-          feeUsdValue ? formatNumber(feeUsdValue) : undefined;
 
         asset = {
           id,
@@ -158,14 +184,26 @@ export class FeeService {
             : undefined,
         };
 
-        fee = {
-          feeType,
-          amount: formatNumber(tokenFeeAmount),
-          symbol: token.symbol,
-          price: token.priceUSD,
-          usdValue: feeUsdValue,
-          usdValueStr: feeUsdValueStr,
-        };
+        if (feeRaw === undefined) {
+          fee = undefined;
+        } else {
+          const tokenFeeAmount = parseBalanceUnits(feeRaw, token.decimals);
+          const feeUsdValue = token.priceUSD
+            ? tokenFeeAmount * token.priceUSD
+            : undefined;
+          const feeUsdValueStr = feeUsdValue
+            ? formatNumber(feeUsdValue)
+            : undefined;
+
+          fee = {
+            feeType,
+            amount: formatNumber(tokenFeeAmount),
+            symbol: token.symbol,
+            price: token.priceUSD,
+            usdValue: feeUsdValue,
+            usdValueStr: feeUsdValueStr,
+          };
+        }
       }
       return { asset, fee };
     });
