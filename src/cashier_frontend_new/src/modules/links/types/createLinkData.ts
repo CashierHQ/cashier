@@ -2,33 +2,55 @@ import type {
   AssetInfoDto,
   CreateLinkInput,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
-import { Principal } from "@dfinity/principal";
 import { Result, Ok, Err } from "ts-results-es";
-import type { LinkType } from "./link/linkType";
+import { LinkType } from "./link/linkType";
+import Asset from "./asset";
+import { Principal } from "@dfinity/principal";
 
-// Tip link details
-export type TipLink = {
-  asset: string;
+export class CreateLinkAsset {
+  address: string;
   useAmount: bigint;
-};
+
+  constructor(address: string, useAmount: bigint) {
+    this.address = address;
+    this.useAmount = useAmount;
+  }
+
+  /**
+   * Convert CreateLinkAsset to AssetInfoDto for backend consumption
+   * @param label Label for the asset info
+   * @returns AssetInfoDto
+   */
+  toBackendWithLabel(label: string): AssetInfoDto {
+    return {
+      asset: Asset.IC(Principal.fromText(this.address)).toBackend(),
+      amount_per_link_use_action: BigInt(this.useAmount),
+      label,
+    };
+  }
+}
 
 /** Data required to create a new link */
 export class CreateLinkData {
   title: string;
   linkType: LinkType;
-  tipLink?: TipLink;
+  assets?: CreateLinkAsset[];
+  maxUse: number;
   constructor({
     title,
     linkType,
-    tipLink,
+    assets,
+    maxUse,
   }: {
     title: string;
     linkType: LinkType;
-    tipLink?: TipLink;
+    assets?: CreateLinkAsset[];
+    maxUse: number;
   }) {
     this.title = title;
     this.linkType = linkType;
-    this.tipLink = tipLink;
+    this.assets = assets;
+    this.maxUse = maxUse;
   }
 
   /**
@@ -38,24 +60,21 @@ export class CreateLinkData {
   toCreateLinkInput(): Result<CreateLinkInput, Error> {
     const link_type = this.linkType.toBackendType();
 
-    const assetInfo: Array<AssetInfoDto> = [];
-
-    // We can't directly compare LinkType here because it's imported elsewhere;
-    // consumers should pass the frontend LinkType instance. We check using id.
-    if (this.linkType?.id === "TIP") {
-      if (!this.tipLink) {
-        return Err(new Error("Tip link data is missing"));
-      }
-      assetInfo.push({
-        asset: {
-          IC: {
-            address: Principal.fromText(this.tipLink.asset),
-          },
-        },
-        amount_per_link_use_action: BigInt(this.tipLink.useAmount),
-        label: "SEND_TIP_ASSET",
-      });
+    if (this.linkType != LinkType.TIP) {
+      return Err(new Error("Only tip links are supported"));
     }
+
+    if (!this.assets) {
+      return Err(new Error("Asset is missing"));
+    }
+
+    if (this.assets.length === 0) {
+      return Err(new Error("Tip link asset data is missing"));
+    }
+
+    const assetInfo: Array<AssetInfoDto> = this.assets.map((a) =>
+      a.toBackendWithLabel("SEND_TIP_ASSET"),
+    );
 
     const input: CreateLinkInput = {
       title: this.title,

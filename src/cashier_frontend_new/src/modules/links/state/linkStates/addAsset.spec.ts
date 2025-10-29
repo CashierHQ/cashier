@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { LinkStore } from "../linkStore.svelte";
 import { LinkStep } from "../../types/linkStep";
+import {
+  CreateLinkAsset,
+  CreateLinkData,
+} from "$modules/links/types/createLinkData";
 
 describe("AddAssetState", () => {
   it("should transition to PREVIEW successfully", async () => {
     // Arrange
     const store = new LinkStore();
-    store.title = "My tip";
+    store.createLinkData.title = "My tip";
 
     // Act: move to ADD_ASSET
     await store.goNext();
@@ -15,7 +19,12 @@ describe("AddAssetState", () => {
     expect(store.state.step).toEqual(LinkStep.ADD_ASSET);
 
     // Arrange: provide tip link details
-    store.tipLink = { asset: "aaaaa-aa", useAmount: 10n };
+    store.createLinkData = new CreateLinkData({
+      title: "Test",
+      linkType: store.createLinkData.linkType,
+      maxUse: 1,
+      assets: [new CreateLinkAsset("aaaaa-aa", 100n)],
+    });
 
     // Act: attempt to go next
     await store.goNext();
@@ -24,44 +33,39 @@ describe("AddAssetState", () => {
     expect(store.state.step).toEqual(LinkStep.PREVIEW);
   });
 
-  it("should throws when tipLink is missing", async () => {
-    // Arrange
-    const store = new LinkStore();
-    store.title = "My tip";
-    await store.goNext(); // to ADD_ASSET
-
-    // Act: clear tipLink
-    store.tipLink = undefined;
-
-    // Assert: goNext rejects with informative message
-    await expect(store.goNext()).rejects.toThrow(
-      "Tip link details are required to proceed",
-    );
-  });
-
   it("should throws when asset is empty", async () => {
     // Arrange
     const store = new LinkStore();
-    store.title = "My tip";
+    store.createLinkData.title = "My tip";
     await store.goNext(); // to ADD_ASSET
 
     // Act: set empty asset
-    store.tipLink = { asset: "", useAmount: 10n };
+    store.createLinkData = new CreateLinkData({
+      title: "Test",
+      linkType: store.createLinkData.linkType,
+      maxUse: 1,
+      assets: [new CreateLinkAsset("", 100n)],
+    });
 
     // Assert
     await expect(store.goNext()).rejects.toThrow(
-      "Asset is required to proceed",
+      "Address is required to proceed",
     );
   });
 
   it("should throws when amount is zero or negative", async () => {
     // Arrange
     const store = new LinkStore();
-    store.title = "My tip";
+    store.createLinkData.title = "My tip";
     await store.goNext(); // to ADD_ASSET
 
     // Act: set invalid amount
-    store.tipLink = { asset: "aaaaa-aa", useAmount: 0n };
+    store.createLinkData = new CreateLinkData({
+      title: "Test",
+      linkType: store.createLinkData.linkType,
+      maxUse: 1,
+      assets: [new CreateLinkAsset("aaaaa-aa", 0n)],
+    });
 
     // Assert
     await expect(store.goNext()).rejects.toThrow(

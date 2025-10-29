@@ -8,7 +8,7 @@ import { rsMatch } from "$lib/rsMatch";
 export class Asset {
   // Currently only IC is modeled in the backend union. Keep wrapper for future extensibility.
   private constructor(
-    public readonly kind: string,
+    public readonly chain: string,
     public readonly address?: Principal,
   ) {}
 
@@ -17,12 +17,12 @@ export class Asset {
   }
 
   toBackend(): BackendAsset {
-    if (this.kind === "IC") {
+    if (this.chain === "IC") {
       return {
         IC: { address: this.address as unknown as Principal },
-      } as BackendAsset;
+      };
     }
-    throw new Error(`Unsupported asset kind: ${this.kind}`);
+    throw new Error(`Unsupported asset chain: ${this.chain}`);
   }
 
   static fromBackend(b: BackendAsset): Asset {

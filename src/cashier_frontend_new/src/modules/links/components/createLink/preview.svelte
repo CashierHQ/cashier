@@ -37,6 +37,7 @@
     successMessage = null;
     try {
       await link.goNext();
+      goto(resolve(`/link/create/${link.id}`));
       successMessage = "Link created successfully: " + link.id;
     } catch (error) {
       errorMessage = "Failed to create link: " + error;
