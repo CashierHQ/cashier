@@ -4,14 +4,14 @@ import { HOST_ICP_MAINNET } from "$modules/shared/constants";
 import { ICPSWAP_INDEX_CANISTER_ID } from "$modules/token/constants";
 import { Actor } from "@dfinity/agent";
 import { Err, Ok, type Result } from "ts-results-es";
-import { type TokenPriceClient } from ".";
+import { type TokenPriceService } from ".";
 
 type IndexNodeActor = icpSwapIndexNode._SERVICE;
 
 /**
  * Service for fetching token prices from the ICPSwap backend canister
  */
-class IcpSwapTokenPriceService implements TokenPriceClient {
+class IcpSwapTokenPriceService implements TokenPriceService {
   private actor: IndexNodeActor;
 
   constructor() {

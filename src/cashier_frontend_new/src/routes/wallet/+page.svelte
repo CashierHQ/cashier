@@ -1,10 +1,13 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
-    balanceToUSDValue,
-    parseBalanceUnits,
+      balanceToUSDValue,
+      parseBalanceUnits,
   } from "$modules/shared/utils/converter";
+  import { tokenPriceStore } from '$modules/token/state/tokenPriceStore.svelte';
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+
+  console.log("Token Price Store Data:", $state.snapshot(tokenPriceStore.query.data));
 </script>
 
 <div>

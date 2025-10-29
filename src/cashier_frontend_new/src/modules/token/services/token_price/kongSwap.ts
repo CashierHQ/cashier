@@ -5,7 +5,7 @@ import { HOST_ICP_MAINNET } from "$modules/shared/constants";
 import { KONGSWAP_INDEX_CANISTER_ID } from "$modules/token/constants";
 import { Actor } from "@dfinity/agent";
 import { Err, Ok, Result } from "ts-results-es";
-import { type TokenPriceClient } from ".";
+import { type TokenPriceService } from ".";
 
 const ckUSDT_ADDRESS = "cngnf-vqaaa-aaaar-qag4q-cai";
 
@@ -14,7 +14,7 @@ type KongSwapActor = kongBackend._SERVICE;
 /**
  * Service for fetching data from the KongSwap backend
  */
-class KongSwapClient implements TokenPriceClient {
+class KongSwapTokenPriceService implements TokenPriceService {
   private actor: KongSwapActor;
 
   constructor() {
@@ -49,9 +49,9 @@ class KongSwapClient implements TokenPriceClient {
     // Map to a simple object of tokenId -> price
     const priceMap: Record<string, number> = {};
     for (const token of result.unwrap()) {
-      console.debug(
-        `Processing pair: ${token.symbol_0}/${token.symbol_1} (${token.address_0})/(${token.address_1}) with price: ${token.price}`,
-      );
+      // console.debug(
+      //   `Processing pair: ${token.symbol_0}/${token.symbol_1} (${token.address_0})/(${token.address_1}) with price: ${token.price}`,
+      // );
       priceMap[token.address_0] = Number(token.price.toFixed(7));
     }
 
@@ -122,3 +122,5 @@ export type Token = {
   token_id: number;
   canister_id: string;
 };
+
+export const kongSwapTokenPriceService = new KongSwapTokenPriceService();
