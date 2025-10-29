@@ -5,12 +5,12 @@ import { IC_EXPLORER_BASE_URL } from "$modules/token/constants";
 import axios from "axios";
 import queryString from "query-string";
 import { Err, Ok, type Result } from "ts-results-es";
-import { type TokenPriceClient } from ".";
+import { type TokenPriceService } from ".";
 
 /**
  * Simple service for fetching token prices from IC Explorer
  */
-class IcExplorerTokenPriceService implements TokenPriceClient {
+class IcExplorerTokenPriceService implements TokenPriceService {
   /**
    * Fetch the list of tokens from IC Explorer
    * @returns Promise resolving to an array of IcExplorerTokenDetail objects

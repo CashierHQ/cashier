@@ -5,13 +5,13 @@ import {
   icpLedgerService,
 } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
-import { tokenPriceService } from "$modules/token/services/tokenPrice";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Principal } from "@dfinity/principal";
 import { Err, Ok, type Result } from "ts-results-es";
 import { ICP_LEDGER_CANISTER_ID } from "../constants";
 import { sortWalletTokens } from "../utils/sorter";
+import { tokenPriceStore } from "./tokenPriceStore.svelte";
 
 export class WalletStore {
   #walletTokensQuery;
@@ -34,7 +34,10 @@ export class WalletStore {
         const balances: bigint[] = await Promise.all(balanceRequests);
 
         // fetch token prices
-        const prices = await tokenPriceService.getTokenPrices();
+        //const prices = await tokenPriceService.getTokenPrices();
+        const prices = tokenPriceStore.query.data
+          ? tokenPriceStore.query.data
+          : {};
 
         const enrichedTokens = tokens.map((token, index) => ({
           ...token,
@@ -61,6 +64,14 @@ export class WalletStore {
           return;
         }
         // Refresh the wallet tokens data when user logs in
+        this.#walletTokensQuery.refresh();
+      });
+
+      $effect(() => {
+        console.log(
+          "Token prices updated, refreshing wallet tokens...",
+          $state.snapshot(tokenPriceStore.query.data),
+        );
         this.#walletTokensQuery.refresh();
       });
     });
