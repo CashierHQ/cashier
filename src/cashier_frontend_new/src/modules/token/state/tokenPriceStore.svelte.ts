@@ -45,7 +45,7 @@ export class TokenPriceStore {
 
         return prices;
       },
-      refetchInterval: 15_000, // Refresh every 60 seconds to keep prices up-to-date
+      refetchInterval: 60_000, // Refresh every 60 seconds to keep prices up-to-date
       persistedKey: ["tokenPricesQuery"],
       storageType: "localStorage",
     });
