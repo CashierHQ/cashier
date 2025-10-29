@@ -4,13 +4,13 @@
 import { IC_EXPLORER_BASE_URL } from "$modules/token/constants";
 import axios from "axios";
 import queryString from "query-string";
-import { Err, type Result } from "ts-results-es";
-import { TokenPriceClient } from ".";
+import { Err, Ok, type Result } from "ts-results-es";
+import { type TokenPriceClient } from ".";
 
 /**
  * Simple service for fetching token prices from IC Explorer
  */
-export class IcExplorerClient implements TokenPriceClient {
+class IcExplorerTokenPriceService implements TokenPriceClient {
   /**
    * Fetch the list of tokens from IC Explorer
    * @returns Promise resolving to an array of IcExplorerTokenDetail objects
@@ -118,3 +118,5 @@ export interface IcExplorerTokenDetail {
   tvl: string;
   txVolume24: string;
 }
+
+export const icExplorerTokenPriceService = new IcExplorerTokenPriceService();
