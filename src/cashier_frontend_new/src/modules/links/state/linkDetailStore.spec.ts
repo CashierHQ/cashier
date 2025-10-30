@@ -115,7 +115,7 @@ describe("fetchLinkDetail behavior", () => {
     expect(firstCallArgs[2]).toEqual({ anonymous: false });
   });
 
-  it("should call getLink twice and first call anonymous=true when not logged in", async () => {
+  it("should call getLink once anonymous=true when not logged in", async () => {
     // arrange
     const linkInstance = makeLink(LinkState.ACTIVE, LinkType.TIP);
     vi.spyOn(Link, "fromBackend").mockReturnValue(linkInstance);
@@ -130,7 +130,7 @@ describe("fetchLinkDetail behavior", () => {
     await fetchLinkDetail("some-id", { anonymous: true });
 
     // assert
-    expect(vi.mocked(cashierBackendService.getLink)).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(cashierBackendService.getLink)).toHaveBeenCalledTimes(1);
     const firstCallArgs = vi.mocked(cashierBackendService.getLink).mock
       .calls[0];
     // first call should include actorOptions { anonymous: true }
