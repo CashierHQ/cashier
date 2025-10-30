@@ -3,13 +3,14 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import type { LinkStore } from "$modules/links/state/linkStore.svelte";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import UsdShortcutButton from "./usdShortcutButton.svelte";
+  import UsdShortcutButton from "./UsdShortcutButton.svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import InputAmount from "../inputAmount/inputAmount.svelte";
+  import { CreateLinkAsset } from "$modules/links/types/createLinkData";
 
   const {
     link,
@@ -17,14 +18,24 @@
     link: LinkStore;
   } = $props();
 
-  // UI local state
-  let selectedAddress: string | null = $state(link.tipLink?.asset ?? null);
-  let amountBaseUnits: bigint = $state(link.tipLink?.useAmount ?? 0n);
+  // UI local state — initialize from first asset if present
+  let selectedAddress: string | null = $state(
+    link.createLinkData?.assets && link.createLinkData.assets.length > 0
+      ? link.createLinkData.assets[0].address
+      : null,
+  );
+
+  let amountBaseUnits: bigint = $state(
+    link.createLinkData?.assets && link.createLinkData.assets.length > 0
+      ? link.createLinkData.assets[0].useAmount
+      : 0n,
+  );
   let mode = $state<"amount" | "usd">("amount");
 
   // useAmount selected token metadata
   function getSelectedToken() {
-    if (!selectedAddress || !walletStore.query.data) return null;
+    if (!selectedAddress || !walletStore.query.data || !selectedAddress)
+      return null;
     return (
       walletStore.query.data.find(
         (token) => token.address === selectedAddress,
@@ -58,10 +69,11 @@
   // effect to update the store when selected asset or base units change
   $effect(() => {
     if (selectedAddress && amountBaseUnits && amountBaseUnits > 0) {
-      link.tipLink = { asset: selectedAddress, useAmount: amountBaseUnits };
+      link.createLinkData.assets = new Array(
+        new CreateLinkAsset(selectedAddress, amountBaseUnits),
+      );
       return;
     }
-    link.tipLink = undefined;
   });
 
   // ErruseAmountsage state
