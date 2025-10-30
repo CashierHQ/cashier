@@ -59,15 +59,20 @@
   const createWithdrawAction = async () => {
     try {
       if (!link.id) throw new Error("Link ID is missing");
-      const actionRes = await cashierBackendService.createActionV2({
-        linkId: link.id,
-        actionType: ActionType.Withdraw,
-      });
 
-      if (actionRes.isErr()) {
-        throw actionRes.error;
+      if (link.action) {
+        showTxCart = true;
+      } else {
+        const actionRes = await cashierBackendService.createActionV2({
+          linkId: link.id,
+          actionType: ActionType.Withdraw,
+        });
+
+        if (actionRes.isErr()) {
+          throw actionRes.error;
+        }
+        linkQueryState.refresh();
       }
-      linkQueryState.refresh();
     } catch (err) {
       console.error("end link failed", err);
     }

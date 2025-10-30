@@ -15,10 +15,8 @@
     id,
   });
 
-  let showTxCart: boolean = $state(false);
-
-  $effect(() => {
-    showTxCart = !!(
+  let showTxCart: boolean = $derived.by(() => {
+    return !!(
       linkQueryState?.data?.action &&
       linkQueryState.data.action.state !== ActionState.Success
     );
@@ -47,18 +45,22 @@
     try {
       if (!link.id) throw new Error("Link ID is missing");
       if (!link.link?.link_type) throw new Error("Link type is missing");
-      const actionType: ActionType = ActionType.fromLinkType(
-        link.link.link_type,
-      );
-      const actionRes = await cashierBackendService.createActionV2({
-        linkId: link.id,
-        actionType,
-      });
-      if (actionRes.isErr()) {
-        throw actionRes.error;
+      if (link.action) {
+        showTxCart = true;
+      } else {
+        const actionType: ActionType = ActionType.fromLinkType(
+          link.link.link_type,
+        );
+        const actionRes = await cashierBackendService.createActionV2({
+          linkId: link.id,
+          actionType,
+        });
+        if (actionRes.isErr()) {
+          throw actionRes.error;
+        }
+        // Refresh query state to update the derived link with new action
+        linkQueryState.refresh();
       }
-      // Refresh query state to update the derived link with new action
-      linkQueryState.refresh();
     } catch (err) {
       console.error("create use action failed", err);
     }
