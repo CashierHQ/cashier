@@ -8,9 +8,11 @@ import {
 } from "$modules/links/components/txCart/type";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import { formatNumber } from "$modules/shared/utils/formatNumber";
-import { walletStore } from "$modules/token/state/walletStore.svelte";
+import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { FeeType, type FeeItem } from "../type";
+
 import type Intent from "$modules/links/types/action/intent";
+
 import { assertUnreachable } from "$lib/rsMatch";
 
 // Type for paired AssetItem and FeeItem
@@ -32,6 +34,7 @@ export class FeeService {
    *    fee = ledgerFee
    * 3) Withdraw: amount = payload.amount - ledgerFee
    *    fee = ledgerFee
+      import type Intent from "$modules/links/types/action/intent";
    * 4) Receive: amount = payload.amount
    *    fee = undefined
    */
@@ -70,7 +73,13 @@ export class FeeService {
    * @param action
    * @returns Array of Asset and Fee pairs
    */
-  mapActionToAssetAndFeeList(action: Action): AssetAndFeeList {
+  // Now accepts a tokens map keyed by token address. This removes any
+  // dependence on WalletStore inside this method — callers should pass the
+  // current tokens (e.g. from `walletStore.query.data`) as a record.
+  mapActionToAssetAndFeeList(
+    action: Action,
+    tokens: Record<string, TokenWithPriceAndBalance>,
+  ): AssetAndFeeList {
     const pairs: AssetAndFeeList = action.intents.map((intent) => {
       const address = intent.type.payload.asset.address.toString();
 
@@ -90,20 +99,15 @@ export class FeeService {
       }
 
       const label = getLabel(intent);
-      const tokenRes = walletStore.findTokenByAddress(address);
-      const id = intent.id + "_" + address;
+      const token = tokens[address];
 
       // compute adjusted amount (uses token fee when token found, otherwise ICP fallback)
       let asset: AssetItem;
       let fee: FeeItem | undefined;
 
-      if (tokenRes.isErr()) {
+      if (!token) {
         // Token not found: fallback to ICP
-        console.error(
-          "Failed to resolve token for asset:",
-          address,
-          tokenRes.unwrapErr(),
-        );
+        console.error("Failed to resolve token for asset:", address);
         const { amount: forecastAmountRaw, fee: feeRaw } =
           this.computeAmountAndFeeRaw({
             intent,
@@ -112,7 +116,6 @@ export class FeeService {
           });
 
         asset = {
-          id,
           state: AssetProcessState.PENDING,
           label,
           symbol: "N/A",
@@ -131,7 +134,6 @@ export class FeeService {
           };
         }
       } else {
-        const token = tokenRes.unwrap();
         const tokenFee = token.fee ?? ICP_LEDGER_FEE;
         const { amount: forecastAmountRaw, fee: feeRaw } =
           this.computeAmountAndFeeRaw({
@@ -149,7 +151,6 @@ export class FeeService {
           : undefined;
 
         asset = {
-          id,
           state: AssetProcessState.PENDING,
           label,
           symbol: token.symbol,

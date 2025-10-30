@@ -14,7 +14,6 @@ export class AssetProcessState {
  * Asset item representation
  */
 export interface AssetItem {
-  id: string;
   state: AssetProcessState;
   label: string;
   symbol: string;

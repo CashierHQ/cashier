@@ -14,7 +14,7 @@
 <div>
   <h5 class="text-sm font-medium mb-2">{title}</h5>
   <div class="space-y-3">
-    {#each assetItems as asset (asset.id)}
+    {#each assetItems as asset, i (i)}
       <AssetItem {asset} />
     {/each}
   </div>

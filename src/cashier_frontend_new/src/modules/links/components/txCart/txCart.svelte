@@ -13,6 +13,7 @@
   import { getHeadingFromActionType } from "./utils";
   import { AssetProcessState } from "./type";
   import { FeeService } from "$modules/fee/services";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { FeeItem } from "$modules/fee/type";
 
   let {
@@ -40,7 +41,15 @@
   });
 
   const assetAndFeeList = $derived.by(() =>
-    link.action ? service.mapActionToAssetAndFeeList(link.action) : [],
+    link.action
+      ? service.mapActionToAssetAndFeeList(
+          link.action,
+          // build a record keyed by token address for the service
+          Object.fromEntries(
+            (walletStore.query.data ?? []).map((t) => [t.address, t]),
+          ),
+        )
+      : [],
   );
 
   // Derive asset items from the action, but override each item's state based on
