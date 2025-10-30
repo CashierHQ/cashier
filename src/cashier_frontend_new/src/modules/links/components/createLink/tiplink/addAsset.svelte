@@ -3,11 +3,15 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import type { LinkStore } from "$modules/links/state/linkStore.svelte";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import UsdShortcutButton from "./usdShortcutButton.svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { parseBalanceUnits } from "$modules/shared/utils/converter";
+  import {
+    formatBalanceUnits,
+    parseBalanceUnits,
+  } from "$modules/shared/utils/converter";
   import InputAmount from "../inputAmount/inputAmount.svelte";
 
   const {
@@ -19,6 +23,7 @@
   // UI local state
   let selectedAddress: string | null = $state(link.tipLink?.asset ?? null);
   let amountBaseUnits: bigint = $state(link.tipLink?.useAmount ?? 0n);
+  let mode = $state<"amount" | "usd">("amount");
 
   // useAmount selected token metadata
   function getSelectedToken() {
@@ -31,7 +36,7 @@
   }
 
   // selected token state for template usage (derived from selection + wallet)
-  let selectedTokenState = $derived(() => getSelectedToken());
+  let selectedTokenState = $derived.by(() => getSelectedToken());
 
   // Auto-select the first token when wallet data becomes available and nothing is selected
   $effect(() => {
@@ -90,7 +95,10 @@
               type="button"
               class="w-full text-left p-2 border rounded cursor-pointer"
               class:bg-gray-100={selectedAddress === token.address}
-              onclick={() => (selectedAddress = token.address)}
+              onclick={() => {
+                selectedAddress = token.address;
+                amountBaseUnits = 0n;
+              }}
             >
               <div class="flex justify-between items-center">
                 <div>
@@ -123,9 +131,36 @@
     {#if selectedTokenState}
       <InputAmount
         bind:value={amountBaseUnits}
-        decimals={selectedTokenState()?.decimals ?? 8}
-        priceUsd={selectedTokenState()?.priceUSD ?? undefined}
-        balance={selectedTokenState()?.balance}
+        bind:mode
+        decimals={selectedTokenState?.decimals}
+        priceUsd={selectedTokenState?.priceUSD ?? undefined}
+        balance={selectedTokenState?.balance}
+        symbol={selectedTokenState?.symbol ?? "N/A"}
+        ledgerFee={selectedTokenState?.fee}
+      />
+
+      <UsdShortcutButton
+        bind:value={amountBaseUnits}
+        bind:mode
+        usd={1}
+        decimals={selectedTokenState?.decimals}
+        priceUsd={selectedTokenState?.priceUSD}
+      />
+
+      <UsdShortcutButton
+        bind:value={amountBaseUnits}
+        bind:mode
+        usd={5}
+        decimals={selectedTokenState?.decimals}
+        priceUsd={selectedTokenState?.priceUSD}
+      />
+
+      <UsdShortcutButton
+        bind:value={amountBaseUnits}
+        bind:mode
+        usd={10}
+        decimals={selectedTokenState?.decimals}
+        priceUsd={selectedTokenState?.priceUSD}
       />
     {:else}
       <Input id="amount" type="number" placeholder="0.00" disabled />

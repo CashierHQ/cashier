@@ -14,18 +14,18 @@ export function parseBalanceUnits(balance: bigint, decimals: number): number {
 }
 
 /**
- * Convert an ICP amount to the balance unit
+ * Convert an token amount to the balance unit
  * This value is aimed to be used in UI, such as sending token form.
- * @param icp amount in ICP
+ * @param number amount in token
  * @param decimals
  * @returns amount in balance
  */
-export function formatBalanceUnits(icp: number, decimals: number): bigint {
+export function formatBalanceUnits(number: number, decimals: number): bigint {
   if (decimals < 0) {
     throw new Error("Decimals cannot be negative");
   }
   const factor = 10 ** decimals;
-  return BigInt(Math.round(icp * factor));
+  return BigInt(Math.round(number * factor));
 }
 
 /**
