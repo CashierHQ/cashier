@@ -7,10 +7,6 @@
   import CreateLinkHeader from "$modules/links/components/createLink/createLinkHeader.svelte";
 
   let newLink = new LinkStore();
-
-  $effect(() => {
-    console.log("Current Link Step:", newLink.state.step);
-  });
 </script>
 
 <div class="min-h-screen flex justify-center">

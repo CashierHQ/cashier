@@ -14,32 +14,13 @@
     link: LinkStore;
   } = $props();
 
-  // Local reactive copies for form bindings
-  // bind:value should target local reactive variables, not nested non-reactive props
-  let title: string = $state(link.createLinkData.title ?? "");
-  let linkType: LinkType = $state(link.createLinkData.linkType ?? LinkType.TIP);
-
   // Redirect if not in the correct step
   $effect(() => {
     if (link.state.step !== LinkStep.CHOOSE_TYPE) {
       goto(resolve("/"));
     }
   });
-
   let errorMessage: string | null = $state(null);
-
-  // Sync local values back to the store's createLinkData so other code sees updates
-  $effect(() => {
-    if (link.createLinkData.title !== title) {
-      link.createLinkData.title = title;
-    }
-  });
-
-  $effect(() => {
-    if (link.createLinkData.linkType !== linkType) {
-      link.createLinkData.linkType = linkType;
-    }
-  });
 
   // Navigate back to home (cancel)
   function goBack() {
@@ -62,7 +43,7 @@
     <Label for="title">Link title</Label>
     <Input
       id="title"
-      bind:value={title}
+      bind:value={link.createLinkData.title}
       placeholder="Enter a title for your link"
     />
   </div>
@@ -72,7 +53,7 @@
     <select
       id="linkType"
       class="block w-full rounded-md border px-3 py-2 text-base"
-      bind:value={linkType}
+      bind:value={link.createLinkData.linkType}
     >
       <option value={LinkType.TIP}>Tip</option>
       <option value={LinkType.AIRDROP}>Airdrop</option>
