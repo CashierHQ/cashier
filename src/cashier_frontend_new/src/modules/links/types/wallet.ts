@@ -5,8 +5,8 @@ import { rsMatch } from "$lib/rsMatch";
 // Frontend representation of a Wallet
 class Wallet {
   constructor(
-    public subaccount: Uint8Array | number[] | null,
     public address: Principal,
+    public subaccount: Uint8Array | number[] | null,
   ) {}
 
   /**
@@ -17,8 +17,8 @@ class Wallet {
     return rsMatch(wallet, {
       IC: (data) => {
         return new Wallet(
-          data.subaccount.length > 0 ? data.subaccount[0]! : null,
           data.address,
+          data.subaccount.length > 0 ? data.subaccount[0]! : null,
         );
       },
     });
