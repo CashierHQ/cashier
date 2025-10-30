@@ -20,7 +20,7 @@ export class TransferData {
   static fromBackendType(data: BackendTransferData): TransferData {
     return new TransferData(
       Wallet.fromBackendType(data.to),
-      Asset.fromBackendType(data.asset),
+      Asset.fromBackend(data.asset),
       Wallet.fromBackendType(data.from),
       data.amount,
     );
@@ -43,7 +43,7 @@ export class TransferFromData {
   static fromBackendType(data: BackendTransferFromData): TransferFromData {
     return new TransferFromData(
       Wallet.fromBackendType(data.to),
-      Asset.fromBackendType(data.asset),
+      Asset.fromBackend(data.asset),
       Wallet.fromBackendType(data.from),
       data.actual_amount.length > 0 ? data.actual_amount[0]! : null,
       data.amount,

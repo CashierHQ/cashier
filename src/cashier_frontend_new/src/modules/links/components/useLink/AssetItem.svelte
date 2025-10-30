@@ -49,7 +49,7 @@
   <div>
     <div class="text-sm font-medium">{displaySymbol()}</div>
     <div class="text-xs text-muted-foreground">
-      {assetInfo.asset.kind}{assetInfo.asset.address
+      {assetInfo.asset.chain}{assetInfo.asset.address
         ? ` - ${String(assetInfo.asset.address)}`
         : ""}
     </div>

@@ -15,13 +15,19 @@ export class AddAssetState implements LinkState {
 
   // Validate the asset details and move to the preview state
   async goNext(): Promise<void> {
-    if (!this.#link.tipLink) {
-      throw new Error("Tip link details are required to proceed");
-    }
-    if (this.#link.tipLink.asset.trim() === "") {
+    if (
+      !this.#link.createLinkData.assets ||
+      this.#link.createLinkData.assets?.length === 0
+    ) {
       throw new Error("Asset is required to proceed");
     }
-    if (this.#link.tipLink.useAmount <= 0) {
+    if (this.#link.createLinkData.assets.length > 1) {
+      throw new Error("Only one asset is supported for tip links");
+    }
+    if (this.#link.createLinkData.assets[0].address.trim() === "") {
+      throw new Error("Address is required to proceed");
+    }
+    if (this.#link.createLinkData.assets[0].useAmount <= 0n) {
       throw new Error("Amount must be greater than zero to proceed");
     }
 

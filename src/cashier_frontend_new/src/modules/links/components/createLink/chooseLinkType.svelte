@@ -20,7 +20,6 @@
       goto(resolve("/"));
     }
   });
-
   let errorMessage: string | null = $state(null);
 
   // Navigate back to home (cancel)
@@ -44,7 +43,7 @@
     <Label for="title">Link title</Label>
     <Input
       id="title"
-      bind:value={link.title}
+      bind:value={link.createLinkData.title}
       placeholder="Enter a title for your link"
     />
   </div>
@@ -54,7 +53,7 @@
     <select
       id="linkType"
       class="block w-full rounded-md border px-3 py-2 text-base"
-      bind:value={link.linkType}
+      bind:value={link.createLinkData.linkType}
     >
       <option value={LinkType.TIP}>Tip</option>
       <option value={LinkType.AIRDROP}>Airdrop</option>
