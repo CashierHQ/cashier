@@ -22,7 +22,6 @@ export class LinkStore {
   public action?: Action;
   // ID of the created link (if any)
   #id?: string;
-
   constructor() {
     this.#state = $state<LinkState>(new ChooseLinkTypeState(this));
     this.createLinkData = $state<CreateLinkData>(

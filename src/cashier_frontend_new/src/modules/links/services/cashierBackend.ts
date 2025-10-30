@@ -6,7 +6,6 @@ import { Err, type Result } from "ts-results-es";
 import type { CreateLinkData } from "../types/createLinkData";
 import { ActionType } from "../types/action/actionType";
 import { toNullable } from "@dfinity/utils";
-import { rsMatch } from "$lib/rsMatch";
 
 /**
  * Service for interacting with the Cashier Backend canister.
@@ -43,7 +42,7 @@ class CanisterBackendService {
       limit: number;
     } = {
       offset: 0,
-      limit: 10,
+      limit: 100,
     },
   ): Promise<Result<cashierBackend.LinkDto[], Error>> {
     const actor = this.#getActor({
@@ -198,67 +197,6 @@ class CanisterBackendService {
     return responseToResult(response)
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
-  }
-
-  /**
-   * This method fetches call to `get_link_details_v2` twice
-   * first to get link and its type
-   * second to get action derived from link type
-   * @param id The ID of the link to retrieve.
-   * @param actorOptions Optional actor options used when building the actor.
-   *   - { anonymous?: boolean } — when true the actor is created as anonymous.
-   *     If omitted the default (authenticated actor) is used.
-   *
-   * @returns A Result containing GetLinkResp or an Error.
-   */
-  async getLinkWithoutAction(
-    id: string,
-    actorOptions?: {
-      anonymous: boolean;
-    },
-  ) {
-    const actor = this.#getActor({
-      anonymous: actorOptions?.anonymous,
-    });
-    if (!actor) {
-      return Err(new Error("User not logged in"));
-    }
-
-    // first call to get link without action
-    const response = await actor.get_link_details_v2(id, toNullable());
-    const link = responseToResult(response)
-      .map((res) => res)
-      .mapErr((err) => new Error(JSON.stringify(err)));
-
-    if (link.isOk()) {
-      const actionType = rsMatch(link.unwrap().link.link_type, {
-        SendAirdrop: function (): ActionType {
-          return ActionType.Receive;
-        },
-        SendTip: function (): ActionType {
-          return ActionType.Receive;
-        },
-        SendTokenBasket: function (): ActionType {
-          return ActionType.Receive;
-        },
-        ReceivePayment: function (): ActionType {
-          return ActionType.Send;
-        },
-      });
-      const response = await actor.get_link_details_v2(
-        id,
-        toNullable({
-          action_type: actionType.toBackendType(),
-        }),
-      );
-
-      return responseToResult(response)
-        .map((res) => res)
-        .mapErr((err) => new Error(JSON.stringify(err)));
-    } else {
-      console.log("debug link error:", link.unwrapErr());
-      return link;
-    }
   }
 }
 

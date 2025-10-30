@@ -5,6 +5,7 @@
   import { LinkStep } from "../../types/linkStep";
   import { resolve } from "$app/paths";
   import LinkDetails from "./linkDetails.svelte";
+  import { linkListStore } from "$modules/links/state/linkListStore.svelte";
 
   const {
     link,
@@ -37,7 +38,8 @@
     successMessage = null;
     try {
       await link.goNext();
-      goto(resolve(`/link/create/${link.id}`));
+      linkListStore.refresh();
+      goto(resolve(`/link/detail/${link.id}`));
       successMessage = "Link created successfully: " + link.id;
     } catch (error) {
       errorMessage = "Failed to create link: " + error;
