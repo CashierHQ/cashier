@@ -8,10 +8,7 @@
   import { resolve } from "$app/paths";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import {
-    formatBalanceUnits,
-    parseBalanceUnits,
-  } from "$modules/shared/utils/converter";
+  import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import InputAmount from "../inputAmount/inputAmount.svelte";
 
   const {
