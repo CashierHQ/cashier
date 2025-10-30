@@ -11,7 +11,20 @@
 
   let { id }: { id: string } = $props();
 
-  const linkQueryState = linkDetailStore(id);
+  const linkQueryState = linkDetailStore({
+    id,
+  });
+
+  let showTxCart: boolean = $derived.by(() => {
+    return !!(
+      linkQueryState?.data?.action &&
+      linkQueryState.data.action.state !== ActionState.Success
+    );
+  });
+
+  const onCloseDrawer = () => {
+    showTxCart = false;
+  };
 
   // Derive link state from query data with error handling
   const link = $derived.by(() => {
@@ -31,16 +44,23 @@
   const createAction = async () => {
     try {
       if (!link.id) throw new Error("Link ID is missing");
-      const actionType: ActionType = ActionType.fromLinkType(link.linkType);
-      const actionRes = await cashierBackendService.createActionV2({
-        linkId: link.id,
-        actionType,
-      });
-      if (actionRes.isErr()) {
-        throw actionRes.error;
+      if (!link.link?.link_type) throw new Error("Link type is missing");
+      if (link.action) {
+        showTxCart = true;
+      } else {
+        const actionType: ActionType = ActionType.fromLinkType(
+          link.link.link_type,
+        );
+        const actionRes = await cashierBackendService.createActionV2({
+          linkId: link.id,
+          actionType,
+        });
+        if (actionRes.isErr()) {
+          throw actionRes.error;
+        }
+        // Refresh query state to update the derived link with new action
+        linkQueryState.refresh();
       }
-      // Refresh query state to update the derived link with new action
-      linkQueryState.refresh();
     } catch (err) {
       console.error("create use action failed", err);
     }
@@ -72,6 +92,6 @@
   </div>
 {/if}
 
-{#if link.action?.state !== ActionState.Success}
-  <TxCart {link} goNext={claim} />
+{#if showTxCart}
+  <TxCart isOpen={showTxCart} {link} goNext={claim} {onCloseDrawer} />
 {/if}

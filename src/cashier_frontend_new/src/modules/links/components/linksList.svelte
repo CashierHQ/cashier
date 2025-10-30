@@ -1,6 +1,9 @@
 <script lang="ts">
   import { linkListStore } from "../state/linkListStore.svelte";
   import { resolve } from "$app/paths";
+  import { statusBadge } from "../utils/statusBadge";
+  import type { Link } from "../types/link/link";
+  import { goto } from "$app/navigation";
 
   // normalize various timestamp inputs to BigInt nanoseconds and format
   const toBigIntNanoseconds = (input: unknown): bigint => {
@@ -31,7 +34,9 @@
     });
   }
 
-  import { statusBadge } from "../utils/statusBadge";
+  function handleLinkItemClick(link: Link) {
+    goto(resolve(`/link/detail/${link.id}`));
+  }
 </script>
 
 <section class="px-4 py-4">
@@ -66,8 +71,8 @@
       <ul class="space-y-3">
         {#each linkListStore.data as link (link.id)}
           <li>
-            <a
-              href={resolve(`/link/detail/${link.id}`)}
+            <button
+              onclick={() => handleLinkItemClick(link)}
               class="flex items-center justify-between gap-3 p-3 bg-card border rounded-lg hover:shadow-md hover:bg-surface transition-transform cursor-pointer block"
             >
               <div class="flex items-center gap-3">
@@ -124,7 +129,7 @@
                   >
                 {/if}
               </div>
-            </a>
+            </button>
           </li>
         {/each}
       </ul>

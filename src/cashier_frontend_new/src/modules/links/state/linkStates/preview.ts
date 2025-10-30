@@ -1,5 +1,4 @@
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
-import { CreateLinkData } from "$modules/links/types/createLinkData";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkState } from ".";
 import type { LinkStore } from "../linkStore.svelte";
@@ -18,13 +17,9 @@ export class PreviewState implements LinkState {
 
   // Create the link using the backend service and move to the created state
   async goNext(): Promise<void> {
-    const data: CreateLinkData = new CreateLinkData({
-      title: this.#link.title,
-      linkType: this.#link.linkType,
-      tipLink: this.#link.tipLink,
-    });
-
-    const result = await cashierBackendService.createLinkV2(data);
+    const result = await cashierBackendService.createLinkV2(
+      this.#link.createLinkData,
+    );
 
     if (result.isErr()) {
       throw new Error(`Link creation failed: ${result.error.message}`);
