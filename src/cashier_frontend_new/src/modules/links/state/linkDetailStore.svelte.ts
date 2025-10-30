@@ -144,7 +144,6 @@ export const linkDetailStore = ({
         action,
         anonymous: !authState.isLoggedIn,
       });
-      console.log("Fetched link detail:", linkDetail);
       if (linkDetail.isErr()) {
         throw linkDetail.error;
       }
