@@ -2,8 +2,6 @@ name: Deploy all canisters
 on:
     # For main and staging branches, only trigger on closed PRs
     pull_request:
-        paths:
-            - "src/cashier_frontend/**"
         branches:
             - main
             - staging
