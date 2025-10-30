@@ -11,7 +11,7 @@
   import { LinkState } from "../types/link/linkState";
   import { linkDetailStore } from "../state/linkDetailStore.svelte";
   import { LinkStore } from "../state/linkStore.svelte";
-    import { ActionState } from "../types/action/actionState";
+  import { ActionState } from "../types/action/actionState";
 
   let { id }: { id: string } = $props();
 
@@ -83,8 +83,11 @@
   };
 
   const onCloseDrawer = () => {
-    console.log("close drawer");
     showTxCart = false;
+  };
+
+  const openDrawer = () => {
+    showTxCart = true;
   };
 </script>
 
@@ -142,6 +145,15 @@
           class="w-full h-11 bg-emerald-600 text-white rounded-full cursor-pointer hover:bg-emerald-700 hover:shadow-md hover:font-semibold transition transform hover:-translate-y-0.5"
         >
           Withdraw
+        </Button>
+      {/if}
+      {#if link.link.state === LinkState.CREATE_LINK}
+        <Button
+          variant="outline"
+          onclick={openDrawer}
+          class="w-full h-11 bg-emerald-600 text-white rounded-full cursor-pointer hover:bg-emerald-700 hover:shadow-md hover:font-semibold transition transform hover:-translate-y-0.5"
+        >
+          Create
         </Button>
       {/if}
     </div>

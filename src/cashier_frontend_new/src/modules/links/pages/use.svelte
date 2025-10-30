@@ -12,7 +12,7 @@
   let { id }: { id: string } = $props();
 
   const linkQueryState = linkDetailStore({
-    id
+    id,
   });
 
   let showTxCart: boolean = $state(false);
@@ -23,6 +23,10 @@
       linkQueryState.data.action.state !== ActionState.Success
     );
   });
+
+  const onCloseDrawer = () => {
+    showTxCart = false;
+  };
 
   // Derive link state from query data with error handling
   const link = $derived.by(() => {
@@ -87,5 +91,5 @@
 {/if}
 
 {#if showTxCart}
-  <TxCart isOpen={showTxCart} {link} goNext={claim} />
+  <TxCart isOpen={showTxCart} {link} goNext={claim} {onCloseDrawer} />
 {/if}

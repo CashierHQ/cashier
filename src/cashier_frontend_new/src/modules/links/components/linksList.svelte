@@ -3,7 +3,6 @@
   import { resolve } from "$app/paths";
   import { statusBadge } from "../utils/statusBadge";
   import type { Link } from "../types/link/link";
-  import { LinkState } from "../types/link/linkState";
   import { goto } from "$app/navigation";
 
   // normalize various timestamp inputs to BigInt nanoseconds and format
