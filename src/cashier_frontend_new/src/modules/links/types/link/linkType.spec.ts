@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LinkType } from "./linkType";
+import { LinkType, LinkTypeMapper } from "./linkType";
 
 describe("LinkType.toBackendType", () => {
   it("maps TIP to SendTip", () => {
@@ -7,7 +7,7 @@ describe("LinkType.toBackendType", () => {
     const t = LinkType.TIP;
 
     // Act
-    const backend = t.toBackendType();
+    const backend = LinkTypeMapper.toBackendType(t);
 
     // Assert
     expect(backend).toEqual({ SendTip: null });
@@ -18,7 +18,7 @@ describe("LinkType.toBackendType", () => {
     const t = LinkType.AIRDROP;
 
     // Act
-    const backend = t.toBackendType();
+    const backend = LinkTypeMapper.toBackendType(t);
 
     // Assert
     expect(backend).toEqual({ SendAirdrop: null });
@@ -29,7 +29,7 @@ describe("LinkType.toBackendType", () => {
     const t = LinkType.TOKEN_BASKET;
 
     // Act
-    const backend = t.toBackendType();
+    const backend = LinkTypeMapper.toBackendType(t);
 
     // Assert
     expect(backend).toEqual({ SendTokenBasket: null });

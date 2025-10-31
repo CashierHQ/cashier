@@ -1,11 +1,10 @@
 import type { Principal } from "@dfinity/principal";
-import { ActionType } from "./actionType";
-import { ActionState } from "./actionState";
+import { ActionType, ActionTypeMapper } from "./actionType";
+import { ActionState, ActionStateMapper } from "./actionState";
 import Intent from "./intent";
 import type {
   ActionDto,
   Icrc112Request as BackendIcrc112Request,
-  IntentState as BackendIntentState,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 import Icrc112Request from "$modules/icrc112/types/icrc112Request";
 
@@ -19,18 +18,18 @@ class Action {
     public intents: Array<Intent>,
     public icrc_112_requests?: Icrc112Request[][],
   ) {}
+}
 
+export class ActionMapper {
   /**
    * Create an Action instance from backend ActionDto
    * @param action : ActionDto from backend
    * @returns  Action instance
    */
-  static fromBackend(action: ActionDto): Action {
-    const type = ActionType.fromBackendType(action.type);
+  static fromBackendType(action: ActionDto): Action {
+    const type = ActionTypeMapper.fromBackendType(action.type);
 
-    const state = ActionState.fromBackendType(
-      action.state as BackendIntentState,
-    );
+    const state = ActionStateMapper.fromBackendType(action.state);
 
     const intents = action.intents.map((intentDto) =>
       Intent.fromBackendType(intentDto),

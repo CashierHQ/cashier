@@ -15,12 +15,14 @@ export class TransferData {
     public from: Wallet,
     public amount: bigint,
   ) {}
+}
 
+export class TransferDataMapper {
   // Convert from backend TransferData to frontend TransferData
   static fromBackendType(data: BackendTransferData): TransferData {
     return new TransferData(
       Wallet.fromBackendType(data.to),
-      Asset.fromBackend(data.asset),
+      Asset.fromBackendType(data.asset),
       Wallet.fromBackendType(data.from),
       data.amount,
     );
@@ -38,12 +40,14 @@ export class TransferFromData {
     public approve_amount: bigint | null,
     public spender: Wallet,
   ) {}
+}
 
+export class TransferFromDataMapper {
   // Convert from backend TransferFromData to frontend TransferFromData
   static fromBackendType(data: BackendTransferFromData): TransferFromData {
     return new TransferFromData(
       Wallet.fromBackendType(data.to),
-      Asset.fromBackend(data.asset),
+      Asset.fromBackendType(data.asset),
       Wallet.fromBackendType(data.from),
       data.actual_amount.length > 0 ? data.actual_amount[0]! : null,
       data.amount,
@@ -58,17 +62,19 @@ export type IntentPayload = TransferData | TransferFromData;
 
 // Frontend representation of an IntentType
 class IntentType {
-  private constructor(public readonly payload: IntentPayload) {}
+  constructor(public payload: IntentPayload) {}
+}
 
+export class IntentTypeMapper {
   // Static instances for each IntentType
   static fromBackendType(type: BackendIntentType): IntentType {
     return rsMatch(type, {
       Transfer: (data) => {
-        const transferData = TransferData.fromBackendType(data);
+        const transferData = TransferDataMapper.fromBackendType(data);
         return new IntentType(transferData);
       },
       TransferFrom: (data) => {
-        const transferFromData = TransferFromData.fromBackendType(data);
+        const transferFromData = TransferFromDataMapper.fromBackendType(data);
         return new IntentType(transferFromData);
       },
     });
