@@ -16,11 +16,11 @@ export class ChooseLinkTypeState implements LinkState {
 
   // Validate the title and link type, then move to the next state
   async goNext(): Promise<void> {
-    if (this.#link.title.trim() === "") {
+    if (this.#link.createLinkData.title.trim() === "") {
       throw new Error("Title is required to proceed");
     }
 
-    if (this.#link.linkType !== LinkType.TIP) {
+    if (this.#link.createLinkData.linkType !== LinkType.TIP) {
       throw new Error("Only Tip link type is supported currently");
     }
 

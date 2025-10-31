@@ -18,10 +18,14 @@
 
   let {
     link,
+    isOpen,
     goNext = async () => {},
+    onCloseDrawer,
   }: {
     link: LinkStore;
+    isOpen: boolean;
     goNext?: () => Promise<void> | void;
+    onCloseDrawer?: () => void;
   } = $props();
 
   const service = new FeeService();
@@ -31,7 +35,6 @@
 
   let isProcessing: boolean = $state(false);
   let isExecutingIcrc112: boolean = $state(false);
-  let isOpen: boolean = $derived(!!link.action);
 
   let isProcessingAsset = $derived(() => {
     if (link.action?.icrc_112_requests?.length === 0) {
@@ -167,6 +170,7 @@
 
         <Drawer.Close>
           <Button
+            onclick={onCloseDrawer}
             aria-label="Close"
             class="absolute top-4 right-4 inline-flex items-center justify-center rounded-full w-8 h-8"
           >
