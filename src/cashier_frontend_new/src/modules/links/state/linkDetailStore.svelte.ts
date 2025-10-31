@@ -16,7 +16,7 @@ import { Err, Ok, type Result } from "ts-results-es";
 
 // A state for the user tokens list
 
-export type LinkAndAction = {
+type LinkAndAction = {
   link: Link;
   action?: Action;
 };

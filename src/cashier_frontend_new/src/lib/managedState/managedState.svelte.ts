@@ -11,7 +11,7 @@ import { assertUnreachable } from "$lib/rsMatch";
 // 	// ...
 // })
 
-export type StateConfig<T> = {
+type StateConfig<T> = {
   /**
    * The function to fetch the data.
    */

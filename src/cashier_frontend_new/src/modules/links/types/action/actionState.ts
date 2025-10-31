@@ -10,7 +10,7 @@ export class ActionState {
   static readonly FAIL = "FAIL";
 }
 
-export type ActionStateValue =
+type ActionStateValue =
   | typeof ActionState.CREATED
   | typeof ActionState.PROCESSING
   | typeof ActionState.SUCCESS
