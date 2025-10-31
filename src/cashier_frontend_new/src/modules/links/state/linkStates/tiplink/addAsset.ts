@@ -1,5 +1,6 @@
 import { validationService } from "$modules/links/services/validationService";
 import { LinkStep } from "$modules/links/types/linkStep";
+import { walletStore } from "$modules/token/state/walletStore.svelte";
 import type { LinkState } from "..";
 import type { LinkStore } from "../../linkStore.svelte";
 import { ChooseLinkTypeState } from "../chooseLinkType";
@@ -35,6 +36,7 @@ export class AddAssetTipLinkState implements LinkState {
     // validate required amounts
     const validationResult = validationService.validateRequiredAmount(
       this.#link.createLinkData,
+      walletStore.query.data || [],
     );
 
     if (validationResult.isErr()) {
