@@ -1,32 +1,53 @@
 <script lang="ts">
-  // Fee block extracted from tx-cart
+  import type { FeeItem } from "$modules/links/types/fee";
+  import { formatNumber } from "$modules/shared/utils/formatNumber";
+  import { ChevronRight } from "lucide-svelte";
+  let {
+    fees,
+    onOpen,
+  }: {
+    fees: FeeItem[];
+    onOpen?: () => void;
+  } = $props();
+
+  // compute total USD value
+  let totalUsd = $derived(() => {
+    return fees.reduce((acc, fee) => acc + (fee.usdValue || 0), 0);
+  });
 </script>
 
-<div class="mt-4">
+<div class="mt-4 w-full">
   <h5 class="text-sm font-medium mb-2">Total fees</h5>
-  <div
-    class="p-3 border rounded bg-background flex items-center justify-between"
+
+  <!-- Card -->
+  <button
+    class="p-3 w-full rounded-lg flex items-center justify-between border border-green-100 hover:shadow-sm cursor-pointer"
+    aria-label="Total fees, open breakdown"
+    onclick={() => onOpen && onOpen()}
+    tabindex="0"
   >
-    <div class="flex items-center gap-3">
-      <div
-        class="w-8 h-8 rounded-full bg-white flex items-center justify-center border"
-      >
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <circle cx="12" cy="12" r="10" fill="url(#g2)" />
-          <defs>
-            <linearGradient id="g2" x1="0" x2="1">
-              <stop offset="0" stop-color="#00C9A7" />
-              <stop offset="1" stop-color="#845EC2" />
-            </linearGradient>
-          </defs>
-        </svg>
+    <!-- Left: stacked icons -->
+    <div class="flex items-center">
+      <div class="flex -space-x-2 items-center">
+        {#each fees as fee, i (i)}
+          {#if i < 5}
+            <!-- FeeItem doesn't include an icon field; render the token symbol as a badge -->
+            <div
+              class="w-8 h-8 rounded-md border bg-white flex items-center justify-center text-xs font-semibold shadow-sm"
+            >
+              {fee.symbol}
+            </div>
+          {/if}
+        {/each}
       </div>
     </div>
-  </div>
+
+    <!-- Right: amount + chevron -->
+    <div class="flex items-center gap-3 text-gray-700">
+      <span class="text-base font-medium"
+        >{`~$${formatNumber(totalUsd())}`}</span
+      >
+      <ChevronRight class="w-4 h-4" />
+    </div>
+  </button>
 </div>
