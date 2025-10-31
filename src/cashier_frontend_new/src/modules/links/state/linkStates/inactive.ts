@@ -22,7 +22,7 @@ export class LinkInactiveState implements LinkState {
       throw new Error("Action ID is missing");
     }
 
-    if (this.#link.action.type !== ActionType.Withdraw) {
+    if (this.#link.action.type !== ActionType.WITHDRAW) {
       throw new Error("Cannot activate link with Withdraw action");
     }
 

@@ -1,5 +1,5 @@
 import type { Principal } from "@dfinity/principal";
-import { ActionType, ActionTypeMapper } from "./actionType";
+import { ActionTypeMapper, type ActionTypeValue } from "./actionType";
 import { ActionState, ActionStateMapper } from "./actionState";
 import Intent, { IntentMapper } from "./intent";
 import type {
@@ -13,7 +13,7 @@ class Action {
   constructor(
     public readonly id: string,
     public readonly creator: Principal,
-    public readonly type: ActionType,
+    public readonly type: ActionTypeValue,
     public readonly state: ActionState,
     public readonly intents: Array<Intent>,
     public readonly icrc_112_requests?: Icrc112Request[][],
