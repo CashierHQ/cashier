@@ -1,11 +1,12 @@
 import type Action from "../types/action/action";
-import type { TipLink } from "../types/createLinkData";
+import { CreateLinkAsset, CreateLinkData } from "../types/createLinkData";
 import type { Link } from "../types/link/link";
 import { LinkState as FrontendState } from "../types/link/linkState";
 import { LinkType } from "../types/link/linkType";
 import type { LinkState } from "./linkStates";
 import { LinkActiveState } from "./linkStates/active";
 import { ChooseLinkTypeState } from "./linkStates/chooseLinkType";
+import { LinkCreatedState } from "./linkStates/created";
 import { LinkInactiveState } from "./linkStates/inactive";
 // FeeService and FeeItem removed: fee computations moved to FeeService.mapActionToAssetAndFeeList call sites
 
@@ -15,19 +16,23 @@ export class LinkStore {
   #state: LinkState;
   // the raw Link object received from backend (kept for detail views)
   public link?: Link;
-  // public state variables
-  public title: string;
-  public linkType: LinkType;
-  public tipLink?: TipLink;
+  // draft holds partial data used for creation/edit flows
+  public createLinkData: CreateLinkData;
+  // `title` and `linkType` are proxied to `draft` (see getters/setters below)
+  // tipLink is derived from draft.asset_info (keeps UI convenience while draft is source of truth)
   public action?: Action;
   // ID of the created link (if any)
   #id?: string;
-
   constructor() {
     this.#state = $state<LinkState>(new ChooseLinkTypeState(this));
-    this.title = $state<string>("");
-    this.linkType = $state<LinkType>(LinkType.TIP);
-    this.tipLink = $state<TipLink | undefined>(undefined);
+    this.createLinkData = $state<CreateLinkData>(
+      new CreateLinkData({
+        title: "",
+        linkType: LinkType.TIP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
     this.action = $state<Action | undefined>(undefined);
     this.link = $state<Link | undefined>(undefined);
   }
@@ -50,7 +55,12 @@ export class LinkStore {
 
   // Move to the next state
   async goNext(): Promise<void> {
-    await this.#state.goNext();
+    try {
+      await this.#state.goNext();
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      throw new Error(String(e ?? "rejected promise"));
+    }
   }
 
   // Move to the previous state
@@ -76,27 +86,32 @@ export class LinkStore {
   from(link: Link, action?: Action) {
     // store the full link for detail views
     this.link = link;
-    this.title = link.title;
-    this.linkType = link.link_type;
+    this.createLinkData.title = link.title;
+    this.createLinkData.linkType = link.link_type;
+
+    for (const assetInfo of link.asset_info) {
+      const assets = [];
+      assets.push(
+        new CreateLinkAsset(
+          assetInfo.asset.address ? assetInfo.asset.address.toString() : "",
+          assetInfo.amount_per_link_use_action,
+        ),
+      );
+      this.createLinkData.assets = assets;
+    }
+
     this.action = action;
     this.#id = link.id;
 
     switch (link.state) {
+      case FrontendState.CREATE_LINK:
+        this.#state = new LinkCreatedState(this);
+        break;
       case FrontendState.ACTIVE:
         this.#state = new LinkActiveState(this);
         break;
       case FrontendState.INACTIVE:
         this.#state = new LinkInactiveState(this);
-        break;
-    }
-
-    switch (link.link_type) {
-      case LinkType.TIP:
-        this.tipLink = {
-          useAmount: link.link_use_action_max_count,
-          // Assuming only one asset per tip link for simplicity
-          asset: link.asset_info[0].asset.address!.toString(),
-        };
         break;
     }
   }

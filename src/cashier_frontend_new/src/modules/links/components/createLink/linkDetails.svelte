@@ -1,8 +1,6 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import type { LinkStore } from "../../state/linkStore.svelte";
-  import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
-  import { formatNumber } from "$modules/shared/utils/formatNumber";
 
   const {
     link,
@@ -13,36 +11,21 @@
     errorMessage: string | null;
     successMessage: string | null;
   } = $props();
-
-  const amount = $derived(() => {
-    if (link.tipLink) {
-      const metadata = tokenMetadataQuery(link.tipLink.asset).data;
-      if (metadata) {
-        return Number(link.tipLink.useAmount) / Math.pow(10, metadata.decimals);
-      }
-    }
-    return 0;
-  });
 </script>
 
 <div>
-  <div><strong>Title:</strong> {link.title}</div>
+  <div><strong>Title:</strong> {link.createLinkData.title}</div>
   <div>
     <strong>Link Type:</strong>
-    {link.linkType.id}
+    {link.createLinkData.linkType.id}
   </div>
-  {#if link.tipLink}
-    <div>
-      <strong>Asset:</strong>
-      {link.tipLink.asset}
-    </div>
-    <div>
-      <strong>Amount:</strong>
-      {#if link.tipLink}
-        {formatNumber(amount())}
-        {tokenMetadataQuery(link.tipLink.asset).data?.symbol ?? ""}
-      {/if}
-    </div>
+  {#if link.createLinkData.assets}
+    {#each link.createLinkData.assets as assetInfo (assetInfo.address)}
+      <div class="mt-2 p-2 border rounded">
+        <div><strong>Asset:</strong> {assetInfo.address}</div>
+        <div><strong>Amount per use action:</strong> {assetInfo.useAmount}</div>
+      </div>
+    {/each}
   {/if}
 
   <br />

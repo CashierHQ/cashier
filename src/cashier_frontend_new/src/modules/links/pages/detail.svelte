@@ -11,18 +11,27 @@
   import { LinkState } from "../types/link/linkState";
   import { linkDetailStore } from "../state/linkDetailStore.svelte";
   import { LinkStore } from "../state/linkStore.svelte";
-
-  let showCopied: boolean = $state(false);
+  import { ActionState } from "../types/action/actionState";
 
   let { id }: { id: string } = $props();
 
-  // query for link data (used for loading/refresh) and a local store for view-model
-  const linkQueryState = linkDetailStore(id, ActionType.Withdraw);
+  let showCopied: boolean = $state(false);
+
+  let showTxCart: boolean = $state(false);
+
   let link = $state(new LinkStore());
+  const linkQueryState = linkDetailStore({
+    id,
+  });
+
+  function shouldShowTxCart(): boolean {
+    return !!(link.action && link.action.state !== ActionState.Success);
+  }
 
   $effect(() => {
     if (linkQueryState?.data?.link) {
       link.from(linkQueryState?.data?.link, linkQueryState?.data?.action);
+      showTxCart = shouldShowTxCart();
     }
   });
 
@@ -50,27 +59,40 @@
   const createWithdrawAction = async () => {
     try {
       if (!link.id) throw new Error("Link ID is missing");
-      const actionRes = await cashierBackendService.createActionV2({
-        linkId: link.id,
-        actionType: ActionType.Withdraw,
-      });
 
-      if (actionRes.isErr()) {
-        throw actionRes.error;
+      if (link.action) {
+        showTxCart = true;
+      } else {
+        const actionRes = await cashierBackendService.createActionV2({
+          linkId: link.id,
+          actionType: ActionType.Withdraw,
+        });
+
+        if (actionRes.isErr()) {
+          throw actionRes.error;
+        }
+        linkQueryState.refresh();
       }
-      linkQueryState.refresh();
     } catch (err) {
       console.error("end link failed", err);
     }
   };
 
-  const withdraw = async () => {
+  const goNext = async () => {
     try {
       await link.goNext();
       linkQueryState.refresh();
     } catch (err) {
       console.error("withdraw failed", err);
     }
+  };
+
+  const onCloseDrawer = () => {
+    showTxCart = false;
+  };
+
+  const openDrawer = () => {
+    showTxCart = true;
   };
 </script>
 
@@ -130,10 +152,19 @@
           Withdraw
         </Button>
       {/if}
+      {#if link.link.state === LinkState.CREATE_LINK}
+        <Button
+          variant="outline"
+          onclick={openDrawer}
+          class="w-full h-11 bg-emerald-600 text-white rounded-full cursor-pointer hover:bg-emerald-700 hover:shadow-md hover:font-semibold transition transform hover:-translate-y-0.5"
+        >
+          Create
+        </Button>
+      {/if}
     </div>
   </div>
 {/if}
 
-{#if link.link?.state !== LinkState.INACTIVE_ENDED}
-  <TxCart {link} goNext={withdraw} />
+{#if showTxCart}
+  <TxCart isOpen={showTxCart} {link} {goNext} {onCloseDrawer} />
 {/if}
