@@ -14,7 +14,7 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { FeeItem } from "$modules/fee/type";
   import { AssetProcessState } from "$modules/links/types/txCart";
-    import { getHeadingFromActionType } from "$modules/links/utils/txCart";
+  import { getHeadingFromActionType } from "$modules/links/utils/txCart";
 
   let {
     link,

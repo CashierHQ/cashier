@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { FeeService } from "./index";
+import { FeeService } from "./feeService";
 import { ActionType } from "$modules/links/types/action/actionType";
 import IntentTask from "$modules/links/types/action/intentTask";
 import { formatNumber } from "$modules/shared/utils/formatNumber";
