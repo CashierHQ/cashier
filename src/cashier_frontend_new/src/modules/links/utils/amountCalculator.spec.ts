@@ -1,25 +1,10 @@
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { CreateLinkAsset } from "../types/createLinkData";
 import { calculateRequiredAssetAmount } from "./amountCalculator";
 
-// mock walletStore
-vi.mock("$modules/token/state/walletStore.svelte", () => ({
-  walletStore: {
-    findTokenByAddress: vi.fn(),
-  },
-}));
-
 describe("calculateRequiredAssetAmount", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   it("should return an error if token is not found", () => {
-    // vi.mocked(walletStore.findTokenByAddress).mockReturnValueOnce(
-    //   Err(new Error("Token not found")),
-    // );
-
     const assets: CreateLinkAsset[] = [
       new CreateLinkAsset("nonexistentToken", 1000n),
     ];
@@ -42,9 +27,6 @@ describe("calculateRequiredAssetAmount", () => {
   it("should calculate required amounts correctly", () => {
     const fee1 = 10_000n;
     const fee2 = 2_000n;
-
-    // mock findTokenByAddress to return a token with a fee
-    //vi.mocked(walletStore.findTokenByAddress).mockReturnValue(Ok(mockToken));
 
     const amount1 = 1000_000n;
     const amount2 = 2000_000n;
