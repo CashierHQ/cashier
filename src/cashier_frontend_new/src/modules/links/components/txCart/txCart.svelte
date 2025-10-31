@@ -10,11 +10,11 @@
   import AssetList from "./assetList.svelte";
   import Fee from "./fee.svelte";
   import FeeBreakdown from "./feeBreakdown.svelte";
-  import { getHeadingFromActionType } from "./utils";
-  import { AssetProcessState } from "./type";
   import { FeeService } from "$modules/fee/services";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { FeeItem } from "$modules/fee/type";
+  import { AssetProcessState } from "$modules/links/types/txCart";
+    import { getHeadingFromActionType } from "$modules/links/utils/txCart";
 
   let {
     link,

@@ -2,12 +2,10 @@
  * Enumeration of asset processing states
  */
 export class AssetProcessState {
-  static readonly PENDING = new AssetProcessState("PENDING");
-  static readonly PROCESSING = new AssetProcessState("PROCESSING");
-  static readonly SUCCEED = new AssetProcessState("SUCCEED");
-  static readonly FAILED = new AssetProcessState("FAILED");
-
-  private constructor(public readonly type: string) {}
+  static readonly PENDING = "PENDING";
+  static readonly PROCESSING = "PROCESSING";
+  static readonly SUCCEED = "SUCCEED";
+  static readonly FAILED = "FAILED";
 }
 
 /**

@@ -1,7 +1,10 @@
 <script lang="ts">
   import loadingGif from "$lib/assets/loading.gif";
+  import {
+    AssetProcessState,
+    type AssetItem,
+  } from "$modules/links/types/txCart";
   import { Check, X } from "lucide-svelte";
-  import { AssetProcessState, type AssetItem } from "./type";
 
   let {
     asset,
