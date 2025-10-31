@@ -8,7 +8,6 @@ import { LinkActiveState } from "./linkStates/active";
 import { ChooseLinkTypeState } from "./linkStates/chooseLinkType";
 import { LinkCreatedState } from "./linkStates/created";
 import { LinkInactiveState } from "./linkStates/inactive";
-// FeeService and FeeItem removed: fee computations moved to FeeService.mapActionToAssetAndFeeList call sites
 
 // Simple reactive state management
 export class LinkStore {
@@ -115,12 +114,4 @@ export class LinkStore {
         break;
     }
   }
-
-  /**
-   * @return Array of fee information objects
-   * @property feeType - Type of the fee
-   * @property amountRaw - Amount of the fee in raw bigint format eg: 100000000 = 1 token in 8 decimal places
-   * @property address - Address associated with the fee
-   */
-  // getFeeInfo removed: callers should use FeeService.mapActionToAssetAndFeeList(link.action)
 }
