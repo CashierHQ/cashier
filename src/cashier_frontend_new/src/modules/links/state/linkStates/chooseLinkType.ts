@@ -1,8 +1,9 @@
-import { LinkStep } from "$modules/links/types/linkStep";
 import { LinkType } from "$modules/links/types/link/linkType";
+import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkState } from ".";
 import type { LinkStore } from "../linkStore.svelte";
 import { AddAssetState } from "./addAsset";
+import { AddAssetTipLinkState } from "./tiplink/addAsset";
 
 // State when the user is choosing the type of link to create
 export class ChooseLinkTypeState implements LinkState {
@@ -24,7 +25,11 @@ export class ChooseLinkTypeState implements LinkState {
       throw new Error("Only Tip link type is supported currently");
     }
 
-    this.#link.state = new AddAssetState(this.#link);
+    if (this.#link.createLinkData.linkType === LinkType.TIP) {
+      this.#link.state = new AddAssetTipLinkState(this.#link);
+    } else {
+      this.#link.state = new AddAssetState(this.#link);
+    }
   }
 
   // No previous state from the initial state
