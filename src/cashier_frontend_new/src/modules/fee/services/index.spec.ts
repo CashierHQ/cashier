@@ -55,7 +55,7 @@ describe("FeeService", () => {
         100_000_000n,
       );
 
-      const res = svc.computeAmountAndFeeRaw({
+      const res = svc.computeAmountAndFee({
         intent,
         ledgerFee: LEDGER_FEE,
         actionType: ActionType.CreateLink,
@@ -74,7 +74,7 @@ describe("FeeService", () => {
         100_000_000n,
       );
 
-      const res = svc.computeAmountAndFeeRaw({
+      const res = svc.computeAmountAndFee({
         intent,
         ledgerFee: LEDGER_FEE,
         actionType: ActionType.CreateLink,
@@ -91,7 +91,7 @@ describe("FeeService", () => {
         IntentTask.TransferWalletToLink,
         100_000_000n,
       );
-      const res = svc.computeAmountAndFeeRaw({
+      const res = svc.computeAmountAndFee({
         intent,
         ledgerFee: LEDGER_FEE,
         actionType: ActionType.Withdraw,
@@ -108,7 +108,7 @@ describe("FeeService", () => {
         IntentTask.TransferWalletToLink,
         100_000_000n,
       );
-      const res = svc.computeAmountAndFeeRaw({
+      const res = svc.computeAmountAndFee({
         intent,
         ledgerFee: LEDGER_FEE,
         actionType: ActionType.Send,
@@ -125,7 +125,7 @@ describe("FeeService", () => {
         IntentTask.TransferWalletToLink,
         100_000_000n,
       );
-      const res = svc.computeAmountAndFeeRaw({
+      const res = svc.computeAmountAndFee({
         intent,
         ledgerFee: LEDGER_FEE,
         actionType: ActionType.Receive,
@@ -165,7 +165,7 @@ describe("FeeService", () => {
       }
     });
 
-    it("uses token values when token is found (decimals=0 to keep numbers simple)", () => {
+    it("uses token values when token is found", () => {
       // token with decimals=0 so parseBalanceUnits leaves values unchanged
       const token = {
         address: assets[0].address.toString(),
