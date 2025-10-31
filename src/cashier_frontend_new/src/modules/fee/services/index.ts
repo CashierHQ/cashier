@@ -1,4 +1,4 @@
-import type Action from "$modules/links/types/action/action";
+import Action from "$modules/links/types/action/action";
 import { ICP_LEDGER_FEE } from "$modules/token/constants";
 import { ActionType } from "$modules/links/types/action/actionType";
 import IntentTask from "$modules/links/types/action/intentTask";
@@ -11,9 +11,11 @@ import { formatNumber } from "$modules/shared/utils/formatNumber";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { FeeType, type FeeItem } from "../type";
 
-import type Intent from "$modules/links/types/action/intent";
-
 import { assertUnreachable } from "$lib/rsMatch";
+import type {
+  ComputeAmountAndFeeInput,
+  ComputeAmountAndFeeOutput,
+} from "./type";
 
 // Type for paired AssetItem and FeeItem
 type AssetAndFeeList = {
@@ -38,34 +40,47 @@ export class FeeService {
    * 4) Receive: amount = payload.amount
    *    fee = undefined
    */
-  computeAmountAndFeeRaw({
+  computeAmountAndFee({
     intent,
     ledgerFee,
     actionType,
-  }: {
-    intent: Intent;
-    ledgerFee: bigint;
-    actionType: ActionType;
-  }): { amount: bigint; fee?: bigint } {
-    if (actionType === ActionType.CreateLink) {
-      if (intent.task === IntentTask.TransferWalletToTreasury) {
-        const total = ledgerFee * 2n + intent.type.payload.amount;
-        return { amount: total, fee: total };
-      } else {
-        return {
-          amount: ledgerFee + intent.type.payload.amount,
+  }: ComputeAmountAndFeeInput): ComputeAmountAndFeeOutput {
+    let output: ComputeAmountAndFeeOutput;
+    switch (actionType) {
+      case ActionType.CreateLink:
+        if (intent.task === IntentTask.TransferWalletToTreasury) {
+          const total = ledgerFee * 2n + intent.type.payload.amount;
+          output = { amount: total, fee: total };
+        } else {
+          output = {
+            amount: ledgerFee + intent.type.payload.amount,
+            fee: ledgerFee,
+          };
+        }
+        break;
+      case ActionType.Withdraw:
+        output = {
+          amount: intent.type.payload.amount - ledgerFee,
           fee: ledgerFee,
         };
-      }
-    } else if (actionType === ActionType.Withdraw) {
-      return { amount: intent.type.payload.amount - ledgerFee, fee: ledgerFee };
-    } else if (actionType === ActionType.Send) {
-      return { amount: intent.type.payload.amount + ledgerFee, fee: ledgerFee };
-    } else if (actionType === ActionType.Receive) {
-      return { amount: intent.type.payload.amount, fee: undefined };
+        break;
+      case ActionType.Send:
+        output = {
+          amount: intent.type.payload.amount + ledgerFee,
+          fee: ledgerFee,
+        };
+        break;
+      case ActionType.Receive:
+        output = { amount: intent.type.payload.amount, fee: undefined };
+        break;
+      case ActionType.Use:
+        output = { amount: intent.type.payload.amount, fee: undefined };
+        break;
+      default:
+        return assertUnreachable(actionType as never);
     }
 
-    assertUnreachable(actionType as never);
+    return output;
   }
 
   /**
@@ -83,12 +98,6 @@ export class FeeService {
     const pairs: AssetAndFeeList = action.intents.map((intent) => {
       const address = intent.type.payload.asset.address.toString();
 
-      // --- Asset mapping (inlined from mapActionToAssetItems) ---
-      const getLabel = (it: Intent) =>
-        it.task === IntentTask.TransferWalletToTreasury
-          ? "Create link fee"
-          : "";
-
       // Determine fee type
       let feeType = FeeType.NETWORK_FEE;
       if (
@@ -98,7 +107,10 @@ export class FeeService {
         feeType = FeeType.CREATE_LINK_FEE;
       }
 
-      const label = getLabel(intent);
+      const label =
+        intent.task === IntentTask.TransferWalletToTreasury
+          ? "Create link fee"
+          : "";
       const token = tokens[address];
 
       // compute adjusted amount (uses token fee when token found, otherwise ICP fallback)
@@ -109,7 +121,7 @@ export class FeeService {
         // Token not found: fallback to ICP
         console.error("Failed to resolve token for asset:", address);
         const { amount: forecastAmountRaw, fee: feeRaw } =
-          this.computeAmountAndFeeRaw({
+          this.computeAmountAndFee({
             intent,
             ledgerFee: ICP_LEDGER_FEE,
             actionType: action.type,
@@ -136,7 +148,7 @@ export class FeeService {
       } else {
         const tokenFee = token.fee ?? ICP_LEDGER_FEE;
         const { amount: forecastAmountRaw, fee: feeRaw } =
-          this.computeAmountAndFeeRaw({
+          this.computeAmountAndFee({
             intent,
             ledgerFee: tokenFee,
             actionType: action.type,
