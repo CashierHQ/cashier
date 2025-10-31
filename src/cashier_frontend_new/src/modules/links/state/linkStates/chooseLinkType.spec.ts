@@ -5,6 +5,7 @@ import { LinkStep } from "../../types/linkStep";
 import { LinkStore } from "../linkStore.svelte";
 import { AddAssetTipLinkState } from "./tiplink/addAsset";
 
+// mock wallet store
 vi.mock("$modules/token/state/walletStore.svelte", () => {
   const mockQuery = {
     data: undefined as TokenWithPriceAndBalance[] | undefined,
