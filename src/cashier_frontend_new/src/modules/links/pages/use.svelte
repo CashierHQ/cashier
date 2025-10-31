@@ -1,9 +1,6 @@
 <script lang="ts">
   import { linkDetailStore } from "$modules/links/state/linkDetailStore.svelte";
-  import {
-    ActionType,
-    ActionTypeMapper,
-  } from "$modules/links/types/action/actionType";
+  import { ActionTypeMapper } from "$modules/links/types/action/actionType";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import TxCart from "$modules/links/components/txCart/txCart.svelte";
   import { ActionState } from "$modules/links/types/action/actionState";
