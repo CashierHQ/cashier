@@ -1,27 +1,8 @@
-import { walletStore } from "$modules/token/state/walletStore.svelte";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CreateLinkAsset, CreateLinkData } from "../types/createLinkData";
 import { LinkType } from "../types/link/linkType";
 import { validationService } from "./validationService";
-
-// mock walletStore
-vi.mock("$modules/token/state/walletStore.svelte", () => {
-  const mockQuery = {
-    data: null as TokenWithPriceAndBalance[] | null,
-    reset() {
-      this.data = null;
-    },
-  };
-  return {
-    walletStore: {
-      get query() {
-        return mockQuery;
-      },
-      findTokenByAddress: vi.fn(),
-    },
-  };
-});
 
 describe("validateRequiredAmount", () => {
   beforeEach(() => {
@@ -29,11 +10,7 @@ describe("validateRequiredAmount", () => {
   });
 
   it("should return an error if no assets are provided", () => {
-    // mock walletStore to have no data
-    vi.spyOn(walletStore, "query", "get").mockReturnValue({
-      data: null,
-    } as any);
-
+    const mockWalletTokens: TokenWithPriceAndBalance[] = [];
     const createLinkData: CreateLinkData = new CreateLinkData({
       title: "testLink",
       linkType: LinkType.TIP,
@@ -41,7 +18,10 @@ describe("validateRequiredAmount", () => {
       maxUse: 2,
     });
 
-    const result = validationService.validateRequiredAmount(createLinkData);
+    const result = validationService.validateRequiredAmount(
+      createLinkData,
+      mockWalletTokens,
+    );
     expect(result.isErr()).toBe(true);
     if (result.isErr()) {
       expect(result.error.message).toBe("No assets provided for validation");
@@ -49,11 +29,7 @@ describe("validateRequiredAmount", () => {
   });
 
   it("should return an error if wallet tokens data is not available", () => {
-    // mock walletStore to have no data
-    vi.spyOn(walletStore, "query", "get").mockReturnValue({
-      data: null,
-    } as any);
-
+    const mockWalletTokens: TokenWithPriceAndBalance[] = [];
     const createLinkData: CreateLinkData = new CreateLinkData({
       title: "testLink",
       linkType: LinkType.TIP,
@@ -61,7 +37,10 @@ describe("validateRequiredAmount", () => {
       maxUse: 2,
     });
 
-    const result = validationService.validateRequiredAmount(createLinkData);
+    const result = validationService.validateRequiredAmount(
+      createLinkData,
+      mockWalletTokens,
+    );
     expect(result.isErr()).toBe(true);
     if (result.isErr()) {
       expect(result.error.message).toBe("Wallet tokens data is not available");
@@ -84,30 +63,6 @@ describe("validateRequiredAmount", () => {
       },
     ];
 
-    vi.spyOn(walletStore, "query", "get").mockReturnValue({
-      data: mockWalletTokens,
-    } as any);
-
-    // mock findTokenByAddress to return the corresponding token
-    vi.mocked(walletStore.findTokenByAddress).mockImplementation(
-      (address: string) => {
-        const token = mockWalletTokens.find((t) => t.address === address);
-        if (token) {
-          return {
-            isOk: () => true,
-            isErr: () => false,
-            unwrap: () => token,
-          } as any;
-        } else {
-          return {
-            isOk: () => false,
-            isErr: () => true,
-            error: new Error("Token not found"),
-          } as any;
-        }
-      },
-    );
-
     const createLinkData: CreateLinkData = new CreateLinkData({
       title: "testLink",
       linkType: LinkType.TIP,
@@ -115,7 +70,10 @@ describe("validateRequiredAmount", () => {
       maxUse: 2,
     });
 
-    const result = validationService.validateRequiredAmount(createLinkData);
+    const result = validationService.validateRequiredAmount(
+      createLinkData,
+      mockWalletTokens,
+    );
     expect(result.isErr()).toBe(true);
     if (result.isErr()) {
       expect(result.error.message).toBe(
@@ -151,30 +109,6 @@ describe("validateRequiredAmount", () => {
       },
     ];
 
-    vi.spyOn(walletStore, "query", "get").mockReturnValue({
-      data: mockWalletTokens,
-    } as any);
-
-    // mock findTokenByAddress to return the corresponding token
-    vi.mocked(walletStore.findTokenByAddress).mockImplementation(
-      (address: string) => {
-        const token = mockWalletTokens.find((t) => t.address === address);
-        if (token) {
-          return {
-            isOk: () => true,
-            isErr: () => false,
-            unwrap: () => token,
-          } as any;
-        } else {
-          return {
-            isOk: () => false,
-            isErr: () => true,
-            error: new Error("Token not found"),
-          } as any;
-        }
-      },
-    );
-
     const createLinkData: CreateLinkData = new CreateLinkData({
       title: "testLink",
       linkType: LinkType.TIP,
@@ -182,7 +116,10 @@ describe("validateRequiredAmount", () => {
       maxUse: 2,
     });
 
-    const result = validationService.validateRequiredAmount(createLinkData);
+    const result = validationService.validateRequiredAmount(
+      createLinkData,
+      mockWalletTokens,
+    );
     expect(result.isErr()).toBe(true);
     if (result.isErr()) {
       expect(result.error.message).toBe(
@@ -218,30 +155,6 @@ describe("validateRequiredAmount", () => {
       },
     ];
 
-    vi.spyOn(walletStore, "query", "get").mockReturnValue({
-      data: mockWalletTokens,
-    } as any);
-
-    // mock findTokenByAddress to return the corresponding token
-    vi.mocked(walletStore.findTokenByAddress).mockImplementation(
-      (address: string) => {
-        const token = mockWalletTokens.find((t) => t.address === address);
-        if (token) {
-          return {
-            isOk: () => true,
-            isErr: () => false,
-            unwrap: () => token,
-          } as any;
-        } else {
-          return {
-            isOk: () => false,
-            isErr: () => true,
-            error: new Error("Token not found"),
-          } as any;
-        }
-      },
-    );
-
     const createLinkData: CreateLinkData = new CreateLinkData({
       title: "testLink",
       linkType: LinkType.TIP,
@@ -249,7 +162,10 @@ describe("validateRequiredAmount", () => {
       maxUse: 2,
     });
 
-    const result = validationService.validateRequiredAmount(createLinkData);
+    const result = validationService.validateRequiredAmount(
+      createLinkData,
+      mockWalletTokens,
+    );
     expect(result.isOk()).toBe(true);
   });
 });
@@ -260,11 +176,7 @@ describe("maxAmountPerAsset", () => {
   });
 
   it("should return an error if no assets are provided", () => {
-    // mock walletStore to have no data
-    vi.spyOn(walletStore, "query", "get").mockReturnValue({
-      data: null,
-    } as any);
-
+    const mockWalletTokens: TokenWithPriceAndBalance[] = [];
     const createLinkData: CreateLinkData = new CreateLinkData({
       title: "testLink",
       linkType: LinkType.TIP,
@@ -272,7 +184,10 @@ describe("maxAmountPerAsset", () => {
       maxUse: 2,
     });
 
-    const result = validationService.maxAmountPerAsset(createLinkData);
+    const result = validationService.maxAmountPerAsset(
+      createLinkData,
+      mockWalletTokens,
+    );
     expect(result.isErr()).toBe(true);
     if (result.isErr()) {
       expect(result.error.message).toBe("No assets provided for validation");
@@ -280,11 +195,7 @@ describe("maxAmountPerAsset", () => {
   });
 
   it("should return an error if wallet tokens data is not available", () => {
-    // mock walletStore to have no data
-    vi.spyOn(walletStore, "query", "get").mockReturnValue({
-      data: null,
-    } as any);
-
+    const mockWalletTokens: TokenWithPriceAndBalance[] = [];
     const createLinkData: CreateLinkData = new CreateLinkData({
       title: "testLink",
       linkType: LinkType.TIP,
@@ -292,7 +203,10 @@ describe("maxAmountPerAsset", () => {
       maxUse: 2,
     });
 
-    const result = validationService.maxAmountPerAsset(createLinkData);
+    const result = validationService.maxAmountPerAsset(
+      createLinkData,
+      mockWalletTokens,
+    );
     expect(result.isErr()).toBe(true);
     if (result.isErr()) {
       expect(result.error.message).toBe("Wallet tokens data is not available");
@@ -315,30 +229,6 @@ describe("maxAmountPerAsset", () => {
       },
     ];
 
-    vi.spyOn(walletStore, "query", "get").mockReturnValue({
-      data: mockWalletTokens,
-    } as any);
-
-    // mock findTokenByAddress to return the corresponding token
-    vi.mocked(walletStore.findTokenByAddress).mockImplementation(
-      (address: string) => {
-        const token = mockWalletTokens.find((t) => t.address === address);
-        if (token) {
-          return {
-            isOk: () => true,
-            isErr: () => false,
-            unwrap: () => token,
-          } as any;
-        } else {
-          return {
-            isOk: () => false,
-            isErr: () => true,
-            error: new Error("Token not found"),
-          } as any;
-        }
-      },
-    );
-
     const createLinkData: CreateLinkData = new CreateLinkData({
       title: "testLink",
       linkType: LinkType.TIP,
@@ -346,7 +236,10 @@ describe("maxAmountPerAsset", () => {
       maxUse: 2,
     });
 
-    const result = validationService.maxAmountPerAsset(createLinkData);
+    const result = validationService.maxAmountPerAsset(
+      createLinkData,
+      mockWalletTokens,
+    );
     expect(result.isErr()).toBe(true);
     if (result.isErr()) {
       expect(result.error.message).toBe(
@@ -371,30 +264,6 @@ describe("maxAmountPerAsset", () => {
       },
     ];
 
-    vi.spyOn(walletStore, "query", "get").mockReturnValue({
-      data: mockWalletTokens,
-    } as any);
-
-    // mock findTokenByAddress to return the corresponding token
-    vi.mocked(walletStore.findTokenByAddress).mockImplementation(
-      (address: string) => {
-        const token = mockWalletTokens.find((t) => t.address === address);
-        if (token) {
-          return {
-            isOk: () => true,
-            isErr: () => false,
-            unwrap: () => token,
-          } as any;
-        } else {
-          return {
-            isOk: () => false,
-            isErr: () => true,
-            error: new Error("Token not found"),
-          } as any;
-        }
-      },
-    );
-
     const createLinkData: CreateLinkData = new CreateLinkData({
       title: "testLink",
       linkType: LinkType.TIP,
@@ -402,7 +271,10 @@ describe("maxAmountPerAsset", () => {
       maxUse: 2,
     });
 
-    const result = validationService.maxAmountPerAsset(createLinkData);
+    const result = validationService.maxAmountPerAsset(
+      createLinkData,
+      mockWalletTokens,
+    );
     expect(result.isOk()).toBe(true);
     const maxAmounts = result.unwrap();
     expect(maxAmounts["0xtoken1"]).toBe(

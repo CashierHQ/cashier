@@ -3,7 +3,7 @@ import {
   calculateRequiredAssetAmount,
   maxAmountPerAsset,
 } from "$modules/links/utils/amountCalculator";
-import { walletStore } from "$modules/token/state/walletStore.svelte";
+import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Err, Ok, type Result } from "ts-results-es";
 
 class ValidationService {
@@ -14,19 +14,20 @@ class ValidationService {
    */
   validateRequiredAmount(
     createLinkData: CreateLinkData,
+    walletTokens: TokenWithPriceAndBalance[],
   ): Result<boolean, Error> {
     if (!createLinkData.assets || createLinkData.assets.length === 0) {
       return Err(new Error("No assets provided for validation"));
     }
 
-    if (!walletStore.query.data || walletStore.query.data.length === 0) {
+    if (!walletTokens || walletTokens.length === 0) {
       return Err(new Error("Wallet tokens data is not available"));
     }
 
     const requiredAmountsResult = calculateRequiredAssetAmount(
       createLinkData.assets,
       createLinkData.maxUse,
-      walletStore.query.data,
+      walletTokens,
     );
 
     if (requiredAmountsResult.isErr()) {
@@ -37,14 +38,13 @@ class ValidationService {
 
     // Validate each asset's current balance against the required amounts
     for (const [address, amount] of Object.entries(requiredAmounts)) {
-      const tokenResult = walletStore.findTokenByAddress(address);
-      if (tokenResult.isErr()) {
+      const token = walletTokens.find((t) => t.address === address);
+      if (!token) {
         return Err(
           new Error(`Token with address ${address} not found in wallet`),
         );
       }
 
-      const token = tokenResult.unwrap();
       if (token.balance < amount) {
         return Err(
           new Error(
@@ -64,19 +64,20 @@ class ValidationService {
    */
   maxAmountPerAsset(
     createLinkData: CreateLinkData,
+    walletTokens: TokenWithPriceAndBalance[],
   ): Result<Record<string, bigint>, Error> {
     if (!createLinkData.assets || createLinkData.assets.length === 0) {
       return Err(new Error("No assets provided for validation"));
     }
 
-    if (!walletStore.query.data || walletStore.query.data.length === 0) {
+    if (!walletTokens || walletTokens.length === 0) {
       return Err(new Error("Wallet tokens data is not available"));
     }
 
     return maxAmountPerAsset(
       createLinkData.assets,
       createLinkData.maxUse,
-      walletStore.query.data,
+      walletTokens,
     );
   }
 }
