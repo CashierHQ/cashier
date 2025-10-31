@@ -31,3 +31,33 @@ export function calculateRequiredAssetAmount(
 
   return Ok(requiredAmounts);
 }
+
+/**
+ * Calculate the maximum amount per asset based on wallet balances and fees
+ * @param assets - The list of assets to calculate amounts for
+ * @param maxUse - The maximum number of times each asset can be used
+ * @param walletTokens - The list of tokens in the user's wallet
+ * @returns A Result containing the maximum amounts or an error
+ */
+export function maxAmountPerAsset(
+  assets: CreateLinkAsset[],
+  maxUse: number,
+  walletTokens: TokenWithPriceAndBalance[],
+): Result<Record<string, bigint>, Error> {
+  const maxAmounts: Record<string, bigint> = {};
+
+  for (const asset of assets) {
+    const token = walletTokens.find((t) => t.address === asset.address);
+    if (!token) {
+      return Err(
+        new Error(`Token with address ${asset.address} not found in wallet`),
+      );
+    }
+
+    maxAmounts[asset.address] =
+      (token.balance - token.fee * (BigInt(1) + BigInt(maxUse))) /
+      BigInt(maxUse);
+  }
+
+  return Ok(maxAmounts);
+}
