@@ -12,7 +12,7 @@ class Asset {
   }
 
   // Convert from backend Asset to frontend Asset
-  static fromBackend(asset: BackendAsset): Asset {
+  static fromBackendType(asset: BackendAsset): Asset {
     return rsMatch(asset, {
       IC: (data) => {
         return new Asset(data.address);

@@ -1,9 +1,13 @@
 import { managedState } from "$lib/managedState";
 import { fromNullable } from "@dfinity/utils";
 import { cashierBackendService } from "../services/cashierBackend";
-import Action from "../types/action/action";
-import { ActionType } from "../types/action/actionType";
-import { Link } from "../types/link/link";
+import Action, { ActionMapper } from "../types/action/action";
+import {
+  ActionType,
+  ActionTypeMapper,
+  type ActionTypeValue,
+} from "../types/action/actionType";
+import { Link, LinkMapper } from "../types/link/link";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { LinkState } from "../types/link/linkState";
 import { LinkType } from "../types/link/linkType";
@@ -27,23 +31,24 @@ export type LinkAndAction = {
  */
 export const determineActionTypeFromLink = (
   initialLink: Link,
-): ActionType | undefined => {
-  if (initialLink.state === LinkState.CREATE_LINK) return ActionType.CreateLink;
+): ActionTypeValue | undefined => {
+  if (initialLink.state === LinkState.CREATE_LINK)
+    return ActionType.CREATE_LINK;
 
   if (initialLink.state === LinkState.ACTIVE) {
     switch (initialLink.link_type) {
       case LinkType.TIP:
       case LinkType.TOKEN_BASKET:
       case LinkType.AIRDROP:
-        return ActionType.Receive;
+        return ActionType.RECEIVE;
       case LinkType.RECEIVE_PAYMENT:
-        return ActionType.Send;
+        return ActionType.SEND;
       default:
-        return assertUnreachable(initialLink.link_type as never);
+        return assertUnreachable(initialLink.link_type);
     }
   }
 
-  if (initialLink.state === LinkState.INACTIVE) return ActionType.Withdraw;
+  if (initialLink.state === LinkState.INACTIVE) return ActionType.WITHDRAW;
 
   return undefined;
 };
@@ -63,7 +68,7 @@ export const fetchLinkDetail = async (
     action,
     anonymous,
   }: {
-    action?: ActionType;
+    action?: ActionTypeValue;
     anonymous: boolean;
   },
 ): Promise<Result<LinkAndAction, Error>> => {
@@ -71,7 +76,7 @@ export const fetchLinkDetail = async (
     // initial fetch: either with explicit action or without (respecting anonymous)
     const initialResp = action
       ? await cashierBackendService.getLink(id, {
-          action_type: action.toBackendType(),
+          action_type: ActionTypeMapper.toBackend(action),
         })
       : await cashierBackendService.getLink(id, undefined, {
           anonymous,
@@ -79,14 +84,14 @@ export const fetchLinkDetail = async (
 
     if (initialResp.isErr()) return Err(initialResp.error);
 
-    const initialLink = Link.fromBackend(initialResp.value.link);
+    const initialLink = LinkMapper.fromBackendType(initialResp.value.link);
 
     // If an explicit action was requested, return the initial response mapped
     if (action) {
       const actionDto = fromNullable(initialResp.value.action);
       return Ok({
         link: initialLink,
-        action: actionDto ? Action.fromBackend(actionDto) : undefined,
+        action: actionDto ? ActionMapper.fromBackendType(actionDto) : undefined,
       });
     }
 
@@ -99,15 +104,15 @@ export const fetchLinkDetail = async (
     // on the second call — actions may require authentication/permission.
     if (anonymous) {
       console.log(
-        `Skipping fetching action (action_type=${actionType.id}) because anonymous=true`,
+        `Skipping fetching action (action_type=${actionType}) because anonymous=true`,
       );
       return Ok({ link: initialLink, action: undefined });
     }
 
-    console.log(`Fetching link detail with action type: ${actionType.id}`);
+    console.log(`Fetching link detail with action type: ${actionType}`);
 
     const getLinkResp = await cashierBackendService.getLink(id, {
-      action_type: actionType.toBackendType(),
+      action_type: ActionTypeMapper.toBackend(actionType),
     });
 
     if (getLinkResp.isErr()) return Err(getLinkResp.error);
@@ -116,8 +121,8 @@ export const fetchLinkDetail = async (
     const actionDto = fromNullable(res.action);
 
     return Ok({
-      link: Link.fromBackend(res.link),
-      action: actionDto ? Action.fromBackend(actionDto) : undefined,
+      link: LinkMapper.fromBackendType(res.link),
+      action: actionDto ? ActionMapper.fromBackendType(actionDto) : undefined,
     });
   } catch (e) {
     return Err(e as Error);
@@ -136,7 +141,7 @@ export const linkDetailStore = ({
   action,
 }: {
   id: string;
-  action?: ActionType;
+  action?: ActionTypeValue;
 }) =>
   managedState<LinkAndAction>({
     queryFn: async () => {

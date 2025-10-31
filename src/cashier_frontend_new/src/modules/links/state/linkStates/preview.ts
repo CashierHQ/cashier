@@ -27,7 +27,7 @@ export class PreviewState implements LinkState {
 
     this.#link.state = new LinkCreatedState(this.#link);
     this.#link.id = result.value.link.id;
-    this.#link.action = Action.fromBackend(result.value.action);
+    this.#link.action = Action.fromBackendType(result.value.action);
   }
 
   // Go back to the add asset state

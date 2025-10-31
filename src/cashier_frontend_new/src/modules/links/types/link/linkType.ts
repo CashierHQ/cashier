@@ -3,19 +3,27 @@ import { assertUnreachable, rsMatch } from "$lib/rsMatch";
 
 /** Frontend LinkType as a class with built-in mapping to backend union */
 export class LinkType {
-  private constructor(public readonly id: string) {}
+  private constructor() {}
 
-  static readonly TIP = new LinkType("TIP");
-  static readonly AIRDROP = new LinkType("AIRDROP");
-  static readonly TOKEN_BASKET = new LinkType("TOKEN_BASKET");
-  static readonly RECEIVE_PAYMENT = new LinkType("RECEIVE_PAYMENT");
+  static readonly TIP = "TIP";
+  static readonly AIRDROP = "AIRDROP";
+  static readonly TOKEN_BASKET = "TOKEN_BASKET";
+  static readonly RECEIVE_PAYMENT = "RECEIVE_PAYMENT";
+}
 
+export type LinkTypeValue =
+  | typeof LinkType.TIP
+  | typeof LinkType.AIRDROP
+  | typeof LinkType.TOKEN_BASKET
+  | typeof LinkType.RECEIVE_PAYMENT;
+
+export class LinkTypeMapper {
   /**
    * Convert frontend LinkType to corresponding backend LinkType
    * @returns Corresponding BackendLinkType
    */
-  toBackendType(): BackendLinkType {
-    switch (this) {
+  static toBackendType(value: LinkTypeValue): BackendLinkType {
+    switch (value) {
       case LinkType.TIP:
         return { SendTip: null };
       case LinkType.AIRDROP:
@@ -25,11 +33,11 @@ export class LinkType {
       case LinkType.RECEIVE_PAYMENT:
         return { ReceivePayment: null };
       default:
-        return assertUnreachable(this as never);
+        return assertUnreachable(value);
     }
   }
 
-  static fromBackendType(b: BackendLinkType): LinkType {
+  static fromBackendType(b: BackendLinkType): LinkTypeValue {
     return rsMatch(b, {
       SendTip: () => LinkType.TIP,
       SendAirdrop: () => LinkType.AIRDROP,

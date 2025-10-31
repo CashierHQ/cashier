@@ -9,7 +9,7 @@ export const linkListStore = managedState<Link[]>({
     if (res.isErr()) {
       throw res.unwrapErr();
     }
-    const links = res.unwrap().map((b) => Link.fromBackend(b));
+    const links = res.unwrap().map((b) => Link.fromBackendType(b));
     return links;
   },
   watch: true,

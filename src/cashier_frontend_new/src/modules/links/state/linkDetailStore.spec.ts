@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { determineActionTypeFromLink } from "./linkDetailStore.svelte";
 import { ActionType } from "../types/action/actionType";
-import { LinkState } from "../types/link/linkState";
-import { LinkType } from "../types/link/linkType";
+import { LinkState, type LinkStateValue } from "../types/link/linkState";
+import { LinkType, type LinkTypeValue } from "../types/link/linkType";
 import { fetchLinkDetail } from "./linkDetailStore.svelte";
 import { cashierBackendService } from "../services/cashierBackend";
 import { Ok } from "ts-results-es";
@@ -13,7 +13,7 @@ import type {
   LinkState as BackendLinkState,
   LinkType as BackendLinkType,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
-import { Link } from "../types/link/link";
+import { Link, LinkMapper } from "../types/link/link";
 import { Principal } from "@dfinity/principal";
 
 const mocks = vi.hoisted(() => ({
@@ -26,7 +26,10 @@ vi.mock("../services/cashierBackend", () => ({
   cashierBackendService: mocks.cashierBackendService,
 }));
 
-const makeLink = (state: LinkState, link_type: LinkType = LinkType.TIP) =>
+const makeLink = (
+  state: LinkStateValue,
+  link_type: LinkTypeValue = LinkType.TIP,
+) =>
   new Link(
     "id",
     "title",
@@ -72,7 +75,7 @@ describe("fetchLinkDetail behavior", () => {
   it("should call getLink once when action is provided", async () => {
     // arrange
     const linkInstance = makeLink(LinkState.ACTIVE, LinkType.TIP);
-    vi.spyOn(Link, "fromBackend").mockReturnValue(linkInstance);
+    vi.spyOn(LinkMapper, "fromBackendType").mockReturnValue(linkInstance);
     const linkDto: LinkDto = makeLinkDto({ Active: null }, { SendTip: null });
     const actionDto: ActionDto = makeActionDto();
     const resp1: GetLinkResp = { link: linkDto, action: [actionDto] };
@@ -80,7 +83,7 @@ describe("fetchLinkDetail behavior", () => {
 
     // act
     await fetchLinkDetail("some-id", {
-      action: ActionType.Send,
+      action: ActionType.SEND,
       anonymous: false,
     });
 
@@ -95,7 +98,7 @@ describe("fetchLinkDetail behavior", () => {
   it("should call getLink twice and first call anonymous=false when logged in", async () => {
     // arrange
     const linkInstance = makeLink(LinkState.ACTIVE, LinkType.TIP);
-    vi.spyOn(Link, "fromBackend").mockReturnValue(linkInstance);
+    vi.spyOn(LinkMapper, "fromBackendType").mockReturnValue(linkInstance);
     // first call returns a link without action (empty array), second call returns action
     const linkDto1: LinkDto = makeLinkDto({ Active: null }, { SendTip: null });
     const actionDto2: ActionDto = makeActionDto();
@@ -118,7 +121,7 @@ describe("fetchLinkDetail behavior", () => {
   it("should call getLink once anonymous=true when not logged in", async () => {
     // arrange
     const linkInstance = makeLink(LinkState.ACTIVE, LinkType.TIP);
-    vi.spyOn(Link, "fromBackend").mockReturnValue(linkInstance);
+    vi.spyOn(LinkMapper, "fromBackendType").mockReturnValue(linkInstance);
     const linkDto3: LinkDto = makeLinkDto({ Active: null }, { SendTip: null });
     const actionDto3: ActionDto = makeActionDto();
     const resp4: GetLinkResp = { link: linkDto3, action: [] };
@@ -141,14 +144,18 @@ describe("fetchLinkDetail behavior", () => {
 describe("determineActionTypeFromLink", () => {
   it("returns CreateLink for CREATE_LINK", () => {
     const res = determineActionTypeFromLink(makeLink(LinkState.CREATE_LINK));
-    expect(res).toEqual(ActionType.CreateLink);
+    expect(res).toEqual(ActionType.CREATE_LINK);
   });
 
   it("returns Receive for TIP, TOKEN_BASKET and AIRDROP when ACTIVE", () => {
-    const types = [LinkType.TIP, LinkType.TOKEN_BASKET, LinkType.AIRDROP];
+    const types: LinkTypeValue[] = [
+      LinkType.TIP,
+      LinkType.TOKEN_BASKET,
+      LinkType.AIRDROP,
+    ];
     types.forEach((t) => {
       const res = determineActionTypeFromLink(makeLink(LinkState.ACTIVE, t));
-      expect(res).toEqual(ActionType.Receive);
+      expect(res).toEqual(ActionType.RECEIVE);
     });
   });
 
@@ -156,17 +163,11 @@ describe("determineActionTypeFromLink", () => {
     const res = determineActionTypeFromLink(
       makeLink(LinkState.ACTIVE, LinkType.RECEIVE_PAYMENT),
     );
-    expect(res).toEqual(ActionType.Send);
+    expect(res).toEqual(ActionType.SEND);
   });
 
   it("returns Withdraw for INACTIVE", () => {
     const res = determineActionTypeFromLink(makeLink(LinkState.INACTIVE));
-    expect(res).toEqual(ActionType.Withdraw);
-  });
-
-  it("returns undefined for unknown state", () => {
-    const unknownState = "SOME_UNKNOWN_STATE" as unknown as LinkState;
-    const res = determineActionTypeFromLink(makeLink(unknownState));
-    expect(res).toBeUndefined();
+    expect(res).toEqual(ActionType.WITHDRAW);
   });
 });

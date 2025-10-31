@@ -2,15 +2,23 @@ import type { LinkState as BackendLinkState } from "$lib/generated/cashier_backe
 import { assertUnreachable, rsMatch } from "$lib/rsMatch";
 
 export class LinkState {
-  private constructor(public readonly id: string) {}
+  private constructor() {}
 
-  static readonly INACTIVE = new LinkState("INACTIVE");
-  static readonly ACTIVE = new LinkState("ACTIVE");
-  static readonly CREATE_LINK = new LinkState("CREATE_LINK");
-  static readonly INACTIVE_ENDED = new LinkState("INACTIVE_ENDED");
+  static readonly INACTIVE = "INACTIVE";
+  static readonly ACTIVE = "ACTIVE";
+  static readonly CREATE_LINK = "CREATE_LINK";
+  static readonly INACTIVE_ENDED = "INACTIVE_ENDED";
+}
 
-  toBackend(): BackendLinkState {
-    switch (this) {
+export type LinkStateValue =
+  | typeof LinkState.INACTIVE
+  | typeof LinkState.ACTIVE
+  | typeof LinkState.CREATE_LINK
+  | typeof LinkState.INACTIVE_ENDED;
+
+export class LinkStateMapper {
+  static toBackend(value: LinkStateValue): BackendLinkState {
+    switch (value) {
       case LinkState.INACTIVE:
         return { Inactive: null };
       case LinkState.ACTIVE:
@@ -20,11 +28,11 @@ export class LinkState {
       case LinkState.INACTIVE_ENDED:
         return { InactiveEnded: null };
       default:
-        assertUnreachable(this as never);
+        assertUnreachable(value);
     }
   }
 
-  static fromBackend(b: BackendLinkState): LinkState {
+  static fromBackendType(b: BackendLinkState): LinkStateValue {
     return rsMatch(b, {
       Inactive: () => LinkState.INACTIVE,
       Active: () => LinkState.ACTIVE,
