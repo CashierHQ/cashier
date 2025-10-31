@@ -34,7 +34,7 @@ const createIntentWithPayload = (
   amount: bigint,
 ): Intent => {
   const payload = getPayloadTransfer(amount);
-  return new Intent(id, task, new IntentType(payload), 0n, IntentState.Created);
+  return new Intent(id, task, new IntentType(payload), 0n, IntentState.CREATED);
 };
 
 const LEDGER_FEE = 1_0000n; // 0.0001 token in e8s
@@ -51,14 +51,14 @@ describe("FeeService", () => {
     it("CreateLink + TransferWalletToTreasury -> amount and fee are ledgerFee*2 + payload.amount", () => {
       const intent = createIntentWithPayload(
         "id-1",
-        IntentTask.TransferWalletToTreasury,
+        IntentTask.TRANSFER_WALLET_TO_TREASURY,
         100_000_000n,
       );
 
       const res = svc.computeAmountAndFee({
         intent,
         ledgerFee: LEDGER_FEE,
-        actionType: ActionType.CreateLink,
+        actionType: ActionType.CREATE_LINK,
       });
 
       // amount and fee are ledgerFee*2 + payload.amount
@@ -70,14 +70,14 @@ describe("FeeService", () => {
       // use a different valid IntentTask (not TransferWalletToTreasury)
       const intent = createIntentWithPayload(
         "id-2",
-        IntentTask.TransferWalletToLink,
+        IntentTask.TRANSFER_WALLET_TO_LINK,
         100_000_000n,
       );
 
       const res = svc.computeAmountAndFee({
         intent,
         ledgerFee: LEDGER_FEE,
-        actionType: ActionType.CreateLink,
+        actionType: ActionType.CREATE_LINK,
       });
 
       // amount = ledgerFee + payload.amount, fee = ledgerFee
@@ -88,13 +88,13 @@ describe("FeeService", () => {
     it("Withdraw -> amount = payload.amount - ledgerFee, fee = ledgerFee", () => {
       const intent = createIntentWithPayload(
         "id-3",
-        IntentTask.TransferWalletToLink,
+        IntentTask.TRANSFER_WALLET_TO_LINK,
         100_000_000n,
       );
       const res = svc.computeAmountAndFee({
         intent,
         ledgerFee: LEDGER_FEE,
-        actionType: ActionType.Withdraw,
+        actionType: ActionType.WITHDRAW,
       });
 
       // amount = payload.amount - ledgerFee, fee = ledgerFee
@@ -105,13 +105,13 @@ describe("FeeService", () => {
     it("Send -> amount = payload.amount + ledgerFee, fee = ledgerFee", () => {
       const intent = createIntentWithPayload(
         "id-4",
-        IntentTask.TransferWalletToLink,
+        IntentTask.TRANSFER_WALLET_TO_LINK,
         100_000_000n,
       );
       const res = svc.computeAmountAndFee({
         intent,
         ledgerFee: LEDGER_FEE,
-        actionType: ActionType.Send,
+        actionType: ActionType.SEND,
       });
 
       // amount = payload.amount + ledgerFee, fee = ledgerFee
@@ -122,13 +122,13 @@ describe("FeeService", () => {
     it("Receive -> amount = payload.amount, fee = undefined", () => {
       const intent = createIntentWithPayload(
         "id-5",
-        IntentTask.TransferWalletToLink,
+        IntentTask.TRANSFER_WALLET_TO_LINK,
         100_000_000n,
       );
       const res = svc.computeAmountAndFee({
         intent,
         ledgerFee: LEDGER_FEE,
-        actionType: ActionType.Receive,
+        actionType: ActionType.RECEIVE,
       });
 
       expect(res.amount).toBe(100_000_000n);
@@ -141,17 +141,17 @@ describe("FeeService", () => {
       const svcWithMock = new FeeService();
 
       const action: Action = {
-        type: ActionType.Send,
+        type: ActionType.SEND,
         intents: [
           createIntentWithPayload(
             "id-6",
-            IntentTask.TransferWalletToLink,
+            IntentTask.TRANSFER_WALLET_TO_LINK,
             100_000_000n,
           ),
         ],
         id: "action-id-1",
         creator: Ed25519KeyIdentity.generate().getPrincipal(),
-        state: ActionState.Created,
+        state: ActionState.CREATED,
       };
 
       const pairs = svcWithMock.mapActionToAssetAndFeeList(action, {});
@@ -178,11 +178,11 @@ describe("FeeService", () => {
       const svcWithMock2 = new FeeService();
 
       const action = {
-        type: ActionType.Send,
+        type: ActionType.SEND,
         intents: [
           createIntentWithPayload(
             "id-7",
-            IntentTask.TransferWalletToLink,
+            IntentTask.TRANSFER_WALLET_TO_LINK,
             100_000_000n,
           ),
         ],

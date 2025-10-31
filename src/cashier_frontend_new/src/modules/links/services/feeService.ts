@@ -45,8 +45,8 @@ export class FeeService {
   }: ComputeAmountAndFeeInput): ComputeAmountAndFeeOutput {
     let output: ComputeAmountAndFeeOutput;
     switch (actionType) {
-      case ActionType.CreateLink:
-        if (intent.task === IntentTask.TransferWalletToTreasury) {
+      case ActionType.CREATE_LINK:
+        if (intent.task === IntentTask.TRANSFER_WALLET_TO_TREASURY) {
           const total = ledgerFee * 2n + intent.type.payload.amount;
           output = { amount: total, fee: total };
         } else {
@@ -56,22 +56,22 @@ export class FeeService {
           };
         }
         break;
-      case ActionType.Withdraw:
+      case ActionType.WITHDRAW:
         output = {
           amount: intent.type.payload.amount - ledgerFee,
           fee: ledgerFee,
         };
         break;
-      case ActionType.Send:
+      case ActionType.SEND:
         output = {
           amount: intent.type.payload.amount + ledgerFee,
           fee: ledgerFee,
         };
         break;
-      case ActionType.Receive:
+      case ActionType.RECEIVE:
         output = { amount: intent.type.payload.amount, fee: undefined };
         break;
-      case ActionType.Use:
+      case ActionType.USE:
         output = { amount: intent.type.payload.amount, fee: undefined };
         break;
       default:
@@ -99,14 +99,14 @@ export class FeeService {
       // Determine fee type
       let feeType = FeeType.NETWORK_FEE;
       if (
-        action.type === ActionType.CreateLink &&
-        intent.task === IntentTask.TransferWalletToTreasury
+        action.type === ActionType.CREATE_LINK &&
+        intent.task === IntentTask.TRANSFER_WALLET_TO_TREASURY
       ) {
         feeType = FeeType.CREATE_LINK_FEE;
       }
 
       const label =
-        intent.task === IntentTask.TransferWalletToTreasury
+        intent.task === IntentTask.TRANSFER_WALLET_TO_TREASURY
           ? "Create link fee"
           : "";
       const token = tokens[address];

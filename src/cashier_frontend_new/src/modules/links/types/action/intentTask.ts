@@ -4,15 +4,15 @@ import { rsMatch } from "$lib/rsMatch";
 // Frontend representation of an IntentTask
 class IntentTask {
   private constructor() {}
-  static readonly TransferWalletToLink = "TransferWalletToLink";
-  static readonly TransferLinkToWallet = "TransferLinkToWallet";
-  static readonly TransferWalletToTreasury = "TransferWalletToTreasury";
+  static readonly TRANSFER_WALLET_TO_LINK = "TRANSFER_WALLET_TO_LINK";
+  static readonly TRANSFER_LINK_TO_WALLET = "TRANSFER_LINK_TO_WALLET";
+  static readonly TRANSFER_WALLET_TO_TREASURY = "TRANSFER_WALLET_TO_TREASURY";
 }
 
 export type IntentTaskValue =
-  | typeof IntentTask.TransferWalletToLink
-  | typeof IntentTask.TransferLinkToWallet
-  | typeof IntentTask.TransferWalletToTreasury;
+  | typeof IntentTask.TRANSFER_WALLET_TO_LINK
+  | typeof IntentTask.TRANSFER_LINK_TO_WALLET
+  | typeof IntentTask.TRANSFER_WALLET_TO_TREASURY;
 
 export class IntentTaskMapper {
   /**
@@ -21,9 +21,9 @@ export class IntentTaskMapper {
    */
   static fromBackendType(b: BackendIntentTask): IntentTask {
     return rsMatch(b, {
-      TransferWalletToLink: () => IntentTask.TransferWalletToLink,
-      TransferLinkToWallet: () => IntentTask.TransferLinkToWallet,
-      TransferWalletToTreasury: () => IntentTask.TransferWalletToTreasury,
+      TransferWalletToLink: () => IntentTask.TRANSFER_WALLET_TO_LINK,
+      TransferLinkToWallet: () => IntentTask.TRANSFER_LINK_TO_WALLET,
+      TransferWalletToTreasury: () => IntentTask.TRANSFER_WALLET_TO_TREASURY,
     });
   }
 }

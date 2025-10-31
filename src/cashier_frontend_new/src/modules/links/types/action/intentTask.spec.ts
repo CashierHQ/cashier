@@ -6,6 +6,6 @@ describe("IntentTask.fromBackendType", () => {
   it("maps TransferWalletToLink", () => {
     const b = { TransferWalletToLink: null } as BackendIntentTask;
     const t = IntentTaskMapper.fromBackendType(b);
-    expect(t).toBe(IntentTask.TransferWalletToLink);
+    expect(t).toBe(IntentTask.TRANSFER_WALLET_TO_LINK);
   });
 });
