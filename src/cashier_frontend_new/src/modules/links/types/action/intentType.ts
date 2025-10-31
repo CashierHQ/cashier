@@ -10,10 +10,10 @@ import Asset from "../asset";
 // Frontend representation of TransferData for IntentType
 export class TransferData {
   constructor(
-    public to: Wallet,
-    public asset: Asset,
-    public from: Wallet,
-    public amount: bigint,
+    public readonly to: Wallet,
+    public readonly asset: Asset,
+    public readonly from: Wallet,
+    public readonly amount: bigint,
   ) {}
 }
 
@@ -32,13 +32,13 @@ export class TransferDataMapper {
 // Frontend representation of TransferFromData for IntentType
 export class TransferFromData {
   constructor(
-    public to: Wallet,
-    public asset: Asset,
-    public from: Wallet,
-    public actual_amount: bigint | null,
-    public amount: bigint,
-    public approve_amount: bigint | null,
-    public spender: Wallet,
+    public readonly to: Wallet,
+    public readonly asset: Asset,
+    public readonly from: Wallet,
+    public readonly actual_amount: bigint | null,
+    public readonly amount: bigint,
+    public readonly approve_amount: bigint | null,
+    public readonly spender: Wallet,
   ) {}
 }
 
@@ -62,7 +62,7 @@ export type IntentPayload = TransferData | TransferFromData;
 
 // Frontend representation of an IntentType
 class IntentType {
-  constructor(public payload: IntentPayload) {}
+  constructor(public readonly payload: IntentPayload) {}
 }
 
 export class IntentTypeMapper {

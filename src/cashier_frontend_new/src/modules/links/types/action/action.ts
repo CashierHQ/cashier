@@ -1,7 +1,7 @@
 import type { Principal } from "@dfinity/principal";
 import { ActionType, ActionTypeMapper } from "./actionType";
 import { ActionState, ActionStateMapper } from "./actionState";
-import Intent from "./intent";
+import Intent, { IntentMapper } from "./intent";
 import type {
   ActionDto,
   Icrc112Request as BackendIcrc112Request,
@@ -11,12 +11,12 @@ import Icrc112Request from "$modules/icrc112/types/icrc112Request";
 // Frontend Action class representing an action entity
 class Action {
   constructor(
-    public id: string,
-    public creator: Principal,
-    public type: ActionType,
-    public state: ActionState,
-    public intents: Array<Intent>,
-    public icrc_112_requests?: Icrc112Request[][],
+    public readonly id: string,
+    public readonly creator: Principal,
+    public readonly type: ActionType,
+    public readonly state: ActionState,
+    public readonly intents: Array<Intent>,
+    public readonly icrc_112_requests?: Icrc112Request[][],
   ) {}
 }
 
@@ -32,7 +32,7 @@ export class ActionMapper {
     const state = ActionStateMapper.fromBackendType(action.state);
 
     const intents = action.intents.map((intentDto) =>
-      Intent.fromBackendType(intentDto),
+      IntentMapper.fromBackendType(intentDto),
     );
 
     let icrc: Icrc112Request[][] | undefined = undefined;
