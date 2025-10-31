@@ -1,10 +1,46 @@
-import { describe, expect, it } from "vitest";
-import { LinkStore } from "../linkStore.svelte";
-import { LinkStep } from "../../types/linkStep";
 import {
   CreateLinkAsset,
   CreateLinkData,
 } from "$modules/links/types/createLinkData";
+import type { TokenWithPriceAndBalance } from "$modules/token/types";
+import { describe, expect, it, vi } from "vitest";
+import { LinkStep } from "../../types/linkStep";
+import { LinkStore } from "../linkStore.svelte";
+
+// mock wallet store
+vi.mock("$modules/token/state/walletStore.svelte", () => {
+  const mockWalletTokens: TokenWithPriceAndBalance[] = [
+    {
+      name: "token1",
+      symbol: "TKN1",
+      address: "aaaaa-aa",
+      decimals: 8,
+      enabled: true,
+      fee: 10_000n,
+      is_default: false,
+      balance: 1_000_000n,
+      priceUSD: 1.0,
+    },
+  ];
+  const mockQuery = {
+    data: mockWalletTokens,
+  };
+
+  return {
+    walletStore: {
+      get query() {
+        return mockQuery;
+      },
+      findTokenByAddress: vi.fn(),
+      toggleToken: vi.fn(),
+      addToken: vi.fn(),
+      transferTokenToPrincipal: vi.fn(),
+      transferICPToAccount: vi.fn(),
+      icpAccountID: vi.fn(),
+    },
+    __mockQuery: mockQuery,
+  };
+});
 
 describe("AddAssetState", () => {
   it("should transition to PREVIEW successfully", async () => {
