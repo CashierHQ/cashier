@@ -9,13 +9,13 @@ import {
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import { formatNumber } from "$modules/shared/utils/formatNumber";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
-import { FeeType, type FeeItem } from "../type";
 
 import { assertUnreachable } from "$lib/rsMatch";
-import type {
-  ComputeAmountAndFeeInput,
-  ComputeAmountAndFeeOutput,
-} from "./type";
+import {
+  FeeType,
+  type ComputeAmountAndFeeInput,
+  type ComputeAmountAndFeeOutput,
+} from "../types/fee";
 
 // Type for paired AssetItem and FeeItem
 type AssetAndFeeList = {
