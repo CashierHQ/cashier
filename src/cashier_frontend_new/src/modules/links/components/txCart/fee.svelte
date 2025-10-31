@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { FeeItem } from "$modules/fee/type";
+  import type { FeeItem } from "$modules/links/types/fee";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
   import { ChevronRight } from "lucide-svelte";
   let {
