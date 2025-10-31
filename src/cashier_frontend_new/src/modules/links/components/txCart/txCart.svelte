@@ -7,8 +7,14 @@
   import type { Signer } from "@slide-computer/signer";
   import type { IITransport } from "$modules/auth/signer/ii/IITransport";
   import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
-  import Asset from "./asset.svelte";
+  import AssetList from "./assetList.svelte";
   import Fee from "./fee.svelte";
+  import FeeBreakdown from "./feeBreakdown.svelte";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { AssetProcessState } from "$modules/links/types/txCart";
+  import { getHeadingFromActionType } from "$modules/links/utils/txCart";
+  import { FeeService } from "$modules/links/services/feeService";
+  import type { FeeItem } from "$modules/links/types/fee";
 
   let {
     link,
@@ -22,6 +28,8 @@
     onCloseDrawer?: () => void;
   } = $props();
 
+  const service = new FeeService();
+
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
 
@@ -34,6 +42,46 @@
     }
     return isExecutingIcrc112;
   });
+
+  const assetAndFeeList = $derived.by(() =>
+    link.action
+      ? service.mapActionToAssetAndFeeList(
+          link.action,
+          // build a record keyed by token address for the service
+          Object.fromEntries(
+            (walletStore.query.data ?? []).map((t) => [t.address, t]),
+          ),
+        )
+      : [],
+  );
+
+  // Derive asset items from the action, but override each item's state based on
+  // the current processing / error / success UI state so the UI (AssetItem)
+  // shows the correct status icons.
+  let assetItems = $derived.by(() => {
+    return assetAndFeeList.map(({ asset }) => {
+      if (isProcessingAsset()) {
+        asset.state = AssetProcessState.PROCESSING;
+      } else if (errorMessage) {
+        asset.state = AssetProcessState.FAILED;
+      } else if (successMessage) {
+        asset.state = AssetProcessState.SUCCEED;
+      } else {
+        // default to whatever the mapper produced or PENDING if missing
+        asset.state = asset.state ?? AssetProcessState.PENDING;
+      }
+      return asset;
+    });
+  });
+  let linkFees: FeeItem[] = $derived.by(() =>
+    assetAndFeeList.map(({ fee }) => fee).filter((f): f is FeeItem => !!f),
+  );
+
+  let assetTitle = $derived.by(() =>
+    getHeadingFromActionType(link.action?.type),
+  );
+
+  let showFeeBreakdown = $state(false);
 
   // Confirm and process the action
   // first execute icrc-112 requests if any, then call goNext
@@ -145,47 +193,53 @@
       </Drawer.Header>
 
       <div class="px-4 pb-4">
-        {#if errorMessage}
-          <div
-            class="mb-3 p-2 bg-red-100 border border-red-300 text-red-700 rounded text-sm"
-          >
-            {errorMessage}
+        {#if showFeeBreakdown}
+          <!-- When showing breakdown, hide all other tx cart content -->
+          <FeeBreakdown
+            fees={linkFees}
+            onBack={() => (showFeeBreakdown = false)}
+          />
+        {:else}
+          {#if errorMessage}
+            <div
+              class="mb-3 p-2 bg-red-100 border border-red-300 text-red-700 rounded text-sm"
+            >
+              {errorMessage}
+            </div>
+          {/if}
+          {#if successMessage}
+            <div
+              class="mb-3 p-2 bg-green-100 border border-green-300 text-green-700 rounded text-sm"
+            >
+              {successMessage}
+            </div>
+          {/if}
+
+          <AssetList title={assetTitle} {assetItems} />
+
+          {#if linkFees && linkFees.length > 0}
+            <Fee fees={linkFees} onOpen={() => (showFeeBreakdown = true)} />
+          {/if}
+
+          <div class="px-4 pb-4 text-sm text-muted-foreground">
+            By confirming you agree execute the transaction above and agree to
+            the terms of service
           </div>
         {/if}
-        {#if successMessage}
-          <div
-            class="mb-3 p-2 bg-green-100 border border-green-300 text-green-700 rounded text-sm"
+      </div>
+
+      {#if !showFeeBreakdown}
+        <Drawer.Footer>
+          <Button
+            class="flex gap-2 w-full"
+            onclick={confirmAction}
+            disabled={isProcessing}
+            variant="default"
           >
-            {successMessage}
-          </div>
-        {/if}
-
-        <Asset
-          {link}
-          isProcessing={isProcessingAsset()}
-          {successMessage}
-          {errorMessage}
-        />
-
-        <Fee />
-      </div>
-      <!-- end of MOVE TO fee.svelte -->
-
-      <div class="px-4 pb-4 text-sm text-muted-foreground">
-        By confirming you agree execute the transaction above and agree to the
-        terms of service
-      </div>
-
-      <Drawer.Footer>
-        <Button
-          class="flex gap-2 w-full"
-          onclick={confirmAction}
-          disabled={isProcessing}
-          variant="default"
-        >
-          {isProcessing ? "Processing..." : "Confirm"}
-        </Button>
-      </Drawer.Footer>
+            {isProcessing ? "Processing..." : "Confirm"}
+          </Button>
+        </Drawer.Footer>
+      {/if}
     </Drawer.Content>
   </Drawer.Root>
 {/if}
