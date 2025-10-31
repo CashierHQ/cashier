@@ -1,6 +1,6 @@
 import { managedState } from "$lib/managedState";
 import { cashierBackendService } from "../services/cashierBackend";
-import { Link } from "../types/link/link";
+import { Link, LinkMapper } from "../types/link/link";
 
 // A state for the user tokens list
 export const linkListStore = managedState<Link[]>({
@@ -9,7 +9,7 @@ export const linkListStore = managedState<Link[]>({
     if (res.isErr()) {
       throw res.unwrapErr();
     }
-    const links = res.unwrap().map((b) => Link.fromBackendType(b));
+    const links = res.unwrap().map((b) => LinkMapper.fromBackendType(b));
     return links;
   },
   watch: true,

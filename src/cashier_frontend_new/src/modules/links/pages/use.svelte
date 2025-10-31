@@ -51,7 +51,7 @@
       if (link.action) {
         showTxCart = true;
       } else {
-        const actionType: ActionType = ActionTypeMapper.fromLinkType(
+        const actionType = ActionTypeMapper.fromLinkType(
           link.link.link_type,
         );
         const actionRes = await cashierBackendService.createActionV2({

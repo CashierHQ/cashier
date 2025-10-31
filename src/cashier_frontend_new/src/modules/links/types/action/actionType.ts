@@ -24,7 +24,7 @@ export class ActionTypeMapper {
   /**
    * Convert frontend ActionTypeValue to corresponding BackendActionType.
    */
-  static toBackend(value: ActionTypeValue): BackendActionType {
+  static toBackendType(value: ActionTypeValue): BackendActionType {
     switch (value) {
       case ActionType.CREATE_LINK:
         return { CreateLink: null };

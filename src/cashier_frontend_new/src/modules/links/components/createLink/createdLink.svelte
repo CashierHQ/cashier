@@ -49,5 +49,5 @@
     <Button onclick={goBack}>Back</Button>
   </div>
 
-  <TxCart {link} {goNext} />
+  <TxCart isOpen={true} {link} {goNext} />
 </div>

@@ -76,7 +76,7 @@ export const fetchLinkDetail = async (
     // initial fetch: either with explicit action or without (respecting anonymous)
     const initialResp = action
       ? await cashierBackendService.getLink(id, {
-          action_type: ActionTypeMapper.toBackend(action),
+          action_type: ActionTypeMapper.toBackendType(action),
         })
       : await cashierBackendService.getLink(id, undefined, {
           anonymous,
@@ -112,7 +112,7 @@ export const fetchLinkDetail = async (
     console.log(`Fetching link detail with action type: ${actionType}`);
 
     const getLinkResp = await cashierBackendService.getLink(id, {
-      action_type: ActionTypeMapper.toBackend(actionType),
+      action_type: ActionTypeMapper.toBackendType(actionType),
     });
 
     if (getLinkResp.isErr()) return Err(getLinkResp.error);
