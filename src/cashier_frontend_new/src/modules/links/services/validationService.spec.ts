@@ -18,22 +18,41 @@ vi.mock("$modules/token/state/walletStore.svelte", () => {
       get query() {
         return mockQuery;
       },
+      findTokenByAddress: vi.fn(),
     },
-    __mockQuery: mockQuery,
   };
 });
 
-const mockQuery = (walletStore as any).__mockQuery || { data: null };
-
-describe("ValidationService", () => {
+describe("validateRequiredAmount", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    walletStore.query.reset();
+  });
+
+  it("should return an error if no assets are provided", () => {
+    // mock walletStore to have no data
+    vi.spyOn(walletStore, "query", "get").mockReturnValue({
+      data: null,
+    } as any);
+
+    const createLinkData: CreateLinkData = new CreateLinkData({
+      title: "testLink",
+      linkType: LinkType.TIP,
+      assets: [],
+      maxUse: 2,
+    });
+
+    const result = validationService.validateRequiredAmount(createLinkData);
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) {
+      expect(result.error.message).toBe("No assets provided for validation");
+    }
   });
 
   it("should return an error if wallet tokens data is not available", () => {
     // mock walletStore to have no data
-    mockQuery.data = null;
+    vi.spyOn(walletStore, "query", "get").mockReturnValue({
+      data: null,
+    } as any);
 
     const createLinkData: CreateLinkData = new CreateLinkData({
       title: "testLink",
@@ -46,6 +65,62 @@ describe("ValidationService", () => {
     expect(result.isErr()).toBe(true);
     if (result.isErr()) {
       expect(result.error.message).toBe("Wallet tokens data is not available");
+    }
+  });
+
+  it("should return an error if token is not found in wallet", () => {
+    // mock walletStore to have token with insufficient balance
+    const mockWalletTokens: TokenWithPriceAndBalance[] = [
+      {
+        name: "token1",
+        symbol: "TKN1",
+        address: "0xtoken1",
+        decimals: 8,
+        enabled: true,
+        fee: 10_000n,
+        is_default: false,
+        balance: 1_000_000n,
+        priceUSD: 1.0,
+      },
+    ];
+
+    vi.spyOn(walletStore, "query", "get").mockReturnValue({
+      data: mockWalletTokens,
+    } as any);
+
+    // mock findTokenByAddress to return the corresponding token
+    vi.mocked(walletStore.findTokenByAddress).mockImplementation(
+      (address: string) => {
+        const token = mockWalletTokens.find((t) => t.address === address);
+        if (token) {
+          return {
+            isOk: () => true,
+            isErr: () => false,
+            unwrap: () => token,
+          } as any;
+        } else {
+          return {
+            isOk: () => false,
+            isErr: () => true,
+            error: new Error("Token not found"),
+          } as any;
+        }
+      },
+    );
+
+    const createLinkData: CreateLinkData = new CreateLinkData({
+      title: "testLink",
+      linkType: LinkType.TIP,
+      assets: [new CreateLinkAsset("0xtoken2", 1_000_000n)],
+      maxUse: 2,
+    });
+
+    const result = validationService.validateRequiredAmount(createLinkData);
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) {
+      expect(result.error.message).toBe(
+        "Token with address 0xtoken2 not found in wallet",
+      );
     }
   });
 
@@ -71,10 +146,267 @@ describe("ValidationService", () => {
         enabled: true,
         fee: 10_000n,
         is_default: false,
+        balance: 5_000_000n,
+        priceUSD: 1.0,
+      },
+    ];
+
+    vi.spyOn(walletStore, "query", "get").mockReturnValue({
+      data: mockWalletTokens,
+    } as any);
+
+    // mock findTokenByAddress to return the corresponding token
+    vi.mocked(walletStore.findTokenByAddress).mockImplementation(
+      (address: string) => {
+        const token = mockWalletTokens.find((t) => t.address === address);
+        if (token) {
+          return {
+            isOk: () => true,
+            isErr: () => false,
+            unwrap: () => token,
+          } as any;
+        } else {
+          return {
+            isOk: () => false,
+            isErr: () => true,
+            error: new Error("Token not found"),
+          } as any;
+        }
+      },
+    );
+
+    const createLinkData: CreateLinkData = new CreateLinkData({
+      title: "testLink",
+      linkType: LinkType.TIP,
+      assets: [new CreateLinkAsset("0xtoken1", 1_000_000n)],
+      maxUse: 2,
+    });
+
+    const result = validationService.validateRequiredAmount(createLinkData);
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) {
+      expect(result.error.message).toBe(
+        "Insufficient amount for asset 0xtoken1, required: 2030000, available: 1000000",
+      );
+    }
+  });
+
+  it("should validate successfully when sufficient amounts are available", () => {
+    // mock walletStore to have token with insufficient balance
+    const mockWalletTokens: TokenWithPriceAndBalance[] = [
+      {
+        name: "token1",
+        symbol: "TKN1",
+        address: "0xtoken1",
+        decimals: 8,
+        enabled: true,
+        fee: 10_000n,
+        is_default: false,
+        balance: 3_000_000n,
+        priceUSD: 1.0,
+      },
+      {
+        name: "token2",
+        symbol: "TKN2",
+        address: "0xtoken2",
+        decimals: 8,
+        enabled: true,
+        fee: 10_000n,
+        is_default: false,
+        balance: 5_000_000n,
+        priceUSD: 1.0,
+      },
+    ];
+
+    vi.spyOn(walletStore, "query", "get").mockReturnValue({
+      data: mockWalletTokens,
+    } as any);
+
+    // mock findTokenByAddress to return the corresponding token
+    vi.mocked(walletStore.findTokenByAddress).mockImplementation(
+      (address: string) => {
+        const token = mockWalletTokens.find((t) => t.address === address);
+        if (token) {
+          return {
+            isOk: () => true,
+            isErr: () => false,
+            unwrap: () => token,
+          } as any;
+        } else {
+          return {
+            isOk: () => false,
+            isErr: () => true,
+            error: new Error("Token not found"),
+          } as any;
+        }
+      },
+    );
+
+    const createLinkData: CreateLinkData = new CreateLinkData({
+      title: "testLink",
+      linkType: LinkType.TIP,
+      assets: [new CreateLinkAsset("0xtoken1", 1_000_000n)],
+      maxUse: 2,
+    });
+
+    const result = validationService.validateRequiredAmount(createLinkData);
+    expect(result.isOk()).toBe(true);
+  });
+});
+
+describe("maxAmountPerAsset", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should return an error if no assets are provided", () => {
+    // mock walletStore to have no data
+    vi.spyOn(walletStore, "query", "get").mockReturnValue({
+      data: null,
+    } as any);
+
+    const createLinkData: CreateLinkData = new CreateLinkData({
+      title: "testLink",
+      linkType: LinkType.TIP,
+      assets: [],
+      maxUse: 2,
+    });
+
+    const result = validationService.maxAmountPerAsset(createLinkData);
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) {
+      expect(result.error.message).toBe("No assets provided for validation");
+    }
+  });
+
+  it("should return an error if wallet tokens data is not available", () => {
+    // mock walletStore to have no data
+    vi.spyOn(walletStore, "query", "get").mockReturnValue({
+      data: null,
+    } as any);
+
+    const createLinkData: CreateLinkData = new CreateLinkData({
+      title: "testLink",
+      linkType: LinkType.TIP,
+      assets: [new CreateLinkAsset("0xtoken1", 1000n)],
+      maxUse: 2,
+    });
+
+    const result = validationService.maxAmountPerAsset(createLinkData);
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) {
+      expect(result.error.message).toBe("Wallet tokens data is not available");
+    }
+  });
+
+  it("should return an error if token is not found in wallet", () => {
+    // mock walletStore to have token with insufficient balance
+    const mockWalletTokens: TokenWithPriceAndBalance[] = [
+      {
+        name: "token1",
+        symbol: "TKN1",
+        address: "0xtoken1",
+        decimals: 8,
+        enabled: true,
+        fee: 10_000n,
+        is_default: false,
         balance: 1_000_000n,
         priceUSD: 1.0,
       },
     ];
-    mockQuery.data = mockWalletTokens;
+
+    vi.spyOn(walletStore, "query", "get").mockReturnValue({
+      data: mockWalletTokens,
+    } as any);
+
+    // mock findTokenByAddress to return the corresponding token
+    vi.mocked(walletStore.findTokenByAddress).mockImplementation(
+      (address: string) => {
+        const token = mockWalletTokens.find((t) => t.address === address);
+        if (token) {
+          return {
+            isOk: () => true,
+            isErr: () => false,
+            unwrap: () => token,
+          } as any;
+        } else {
+          return {
+            isOk: () => false,
+            isErr: () => true,
+            error: new Error("Token not found"),
+          } as any;
+        }
+      },
+    );
+
+    const createLinkData: CreateLinkData = new CreateLinkData({
+      title: "testLink",
+      linkType: LinkType.TIP,
+      assets: [new CreateLinkAsset("0xtoken2", 1_000_000n)],
+      maxUse: 2,
+    });
+
+    const result = validationService.maxAmountPerAsset(createLinkData);
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) {
+      expect(result.error.message).toBe(
+        "Token with address 0xtoken2 not found in wallet",
+      );
+    }
+  });
+
+  it("should calculate max amounts per asset successfully", () => {
+    // mock walletStore to have token with insufficient balance
+    const mockWalletTokens: TokenWithPriceAndBalance[] = [
+      {
+        name: "token1",
+        symbol: "TKN1",
+        address: "0xtoken1",
+        decimals: 8,
+        enabled: true,
+        fee: 10_000n,
+        is_default: false,
+        balance: 1_000_000n,
+        priceUSD: 1.0,
+      },
+    ];
+
+    vi.spyOn(walletStore, "query", "get").mockReturnValue({
+      data: mockWalletTokens,
+    } as any);
+
+    // mock findTokenByAddress to return the corresponding token
+    vi.mocked(walletStore.findTokenByAddress).mockImplementation(
+      (address: string) => {
+        const token = mockWalletTokens.find((t) => t.address === address);
+        if (token) {
+          return {
+            isOk: () => true,
+            isErr: () => false,
+            unwrap: () => token,
+          } as any;
+        } else {
+          return {
+            isOk: () => false,
+            isErr: () => true,
+            error: new Error("Token not found"),
+          } as any;
+        }
+      },
+    );
+
+    const createLinkData: CreateLinkData = new CreateLinkData({
+      title: "testLink",
+      linkType: LinkType.TIP,
+      assets: [new CreateLinkAsset("0xtoken1", 0n)],
+      maxUse: 2,
+    });
+
+    const result = validationService.maxAmountPerAsset(createLinkData);
+    expect(result.isOk()).toBe(true);
+    const maxAmounts = result.unwrap();
+    expect(maxAmounts["0xtoken1"]).toBe(
+      (1_000_000n - 10_000n * (1n + 2n)) / 2n,
+    );
   });
 });
