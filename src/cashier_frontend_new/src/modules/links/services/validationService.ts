@@ -16,9 +16,14 @@ class ValidationService {
       return Err(new Error("No assets provided for validation"));
     }
 
+    if (!walletStore.query.data || walletStore.query.data.length === 0) {
+      return Err(new Error("Wallet tokens data is not available"));
+    }
+
     const requiredAmountsResult = calculateRequiredAssetAmount(
       createLinkData.assets,
       createLinkData.maxUse,
+      walletStore.query.data,
     );
 
     if (requiredAmountsResult.isErr()) {
