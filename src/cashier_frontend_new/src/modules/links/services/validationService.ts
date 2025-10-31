@@ -45,7 +45,11 @@ class ValidationService {
 
       const token = tokenResult.unwrap();
       if (token.balance < requiredAmount) {
-        return Err(new Error(`Insufficient amount for asset ${asset.address}`));
+        return Err(
+          new Error(
+            `Insufficient amount for asset ${asset.address}, required: ${requiredAmount}, available: ${token.balance}`,
+          ),
+        );
       }
     }
 
