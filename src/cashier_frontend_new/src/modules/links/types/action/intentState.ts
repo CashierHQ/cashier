@@ -10,7 +10,7 @@ class IntentState {
   static readonly FAIL = "FAIL";
 }
 
-export type IntentStateValue =
+type IntentStateValue =
   | typeof IntentState.CREATED
   | typeof IntentState.PROCESSING
   | typeof IntentState.SUCCESS

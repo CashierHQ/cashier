@@ -15,7 +15,7 @@
  * @template T - A union of object types, each with exactly one unique key.
  */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-export type Tags<T> = T extends Record<infer K, any> ? K : never;
+type Tags<T> = T extends Record<infer K, any> ? K : never;
 
 /**
  * Extracts the tag (key) from a single branch of a tagged-union type.

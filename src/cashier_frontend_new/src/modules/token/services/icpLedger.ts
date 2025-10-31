@@ -118,7 +118,7 @@ export function encodeAccountID(principal: Principal): string | null {
  * @param account The ICP account ID in hex format string
  * @returns The decoded account identifier as Uint8Array or null if decoding fails
  */
-export function decodeAccountID(account: string): Uint8Array | number[] {
+function decodeAccountID(account: string): Uint8Array | number[] {
   try {
     return AccountIdentifier.fromHex(account).toUint8Array();
   } catch (error) {

@@ -9,11 +9,6 @@ class IntentTask {
   static readonly TRANSFER_WALLET_TO_TREASURY = "TRANSFER_WALLET_TO_TREASURY";
 }
 
-export type IntentTaskValue =
-  | typeof IntentTask.TRANSFER_WALLET_TO_LINK
-  | typeof IntentTask.TRANSFER_LINK_TO_WALLET
-  | typeof IntentTask.TRANSFER_WALLET_TO_TREASURY;
-
 export class IntentTaskMapper {
   /**
    * @param b BackendIntentTask from backend

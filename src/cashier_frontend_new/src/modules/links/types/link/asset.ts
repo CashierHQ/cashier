@@ -17,7 +17,7 @@ export class Asset {
   }
 }
 
-export class AssetMapper {
+class AssetMapper {
   static toBackendType(asset: Asset): BackendAsset {
     if (asset.chain === "IC") {
       return {
