@@ -9,7 +9,12 @@
  * @param amount - amount in tokens
  * @returns formatted token amount string
  */
-export const formatNumber = (amount: number): string => {
+export const formatNumber = (
+  amount: number,
+  options?: {
+    tofixed?: number;
+  },
+): string => {
   // handle very small numbers with specialized formatting
   if (Math.abs(amount) < 0.000001) {
     return formatSmallNumber(amount);
@@ -22,7 +27,7 @@ export const formatNumber = (amount: number): string => {
 
   // show up to 5 decimal places, trimming trailing zeros
   // e.g. 0.0230097375 -> "0.02301", and 0.1 -> "0.1" (no zero-padding)
-  return amount.toFixed(5).replace(/\.?0+$/, "");
+  return amount.toFixed(options?.tofixed ?? 5).replace(/\.?0+$/, "");
 };
 
 /**
