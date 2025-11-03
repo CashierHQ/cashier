@@ -20,7 +20,7 @@ use icrc_ledger_types::icrc1::account::Account;
 async fn it_should_withdraw_icp_token_tip_linkv2_error_if_link_active() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
             activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
 
@@ -57,7 +57,7 @@ async fn it_should_withdraw_icp_token_tip_linkv2_error_if_link_active() {
 async fn it_should_withdraw_icp_token_tip_linkv2_error_if_more_than_once() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
             activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
 
@@ -115,7 +115,7 @@ async fn it_should_withdraw_icp_token_tip_linkv2_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
             activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
@@ -228,7 +228,7 @@ async fn it_should_withdraw_icrc_token_tip_linkv2_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
             activate_tip_link_v2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount).await;
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);

@@ -25,7 +25,10 @@ async fn it_should_error_create_icp_token_tip_linkv2_if_caller_anonymous() {
         let test_fixture =
             LinkTestFixture::new(Arc::new(ctx.clone()), &Principal::anonymous()).await;
         let input = test_fixture
-            .tip_link_input(vec![constant::ICP_TOKEN.to_string()], vec![1_000_000u64])
+            .tip_link_input(
+                vec![constant::ICP_TOKEN.to_string()],
+                vec![Nat::from(1_000_000u64)],
+            )
             .unwrap();
 
         // Act
@@ -54,8 +57,8 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
 
-        let initial_balance = 1_000_000_000u64;
-        let tip_amount = 1_000_000u64;
+        let initial_balance = Nat::from(1_000_000_000u64);
+        let tip_amount = Nat::from(1_000_000u64);
         let caller_account = Account {
             owner: caller,
             subaccount: None,
@@ -63,7 +66,9 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
         let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
 
         // Act
-        test_fixture.airdrop_icp(initial_balance, &caller).await;
+        test_fixture
+            .airdrop_icp(initial_balance.clone(), &caller)
+            .await;
 
         // Assert
         let caller_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
@@ -71,7 +76,7 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
 
         // Act
         let create_link_result = test_fixture
-            .create_tip_link_v2(constant::ICP_TOKEN, tip_amount)
+            .create_tip_link_v2(constant::ICP_TOKEN, tip_amount.clone())
             .await;
 
         // Assert
@@ -81,7 +86,10 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
         assert!(!link.id.is_empty());
         assert_eq!(link.link_type, LinkType::SendTip);
         assert_eq!(link.asset_info.len(), 1);
-        assert_eq!(link.asset_info[0].amount_per_link_use_action, tip_amount);
+        assert_eq!(
+            link.asset_info[0].amount_per_link_use_action,
+            tip_amount.clone()
+        );
 
         assert_eq!(action.intents.len(), 2);
 
@@ -95,8 +103,8 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
                 assert_eq!(
                     transfer.amount,
                     Nat::from(test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        tip_amount,
-                        &icp_ledger_fee,
+                        tip_amount.clone(),
+                        icp_ledger_fee.clone(),
                         1
                     ))
                 );
@@ -113,7 +121,7 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
                     data.amount,
                     Nat::from(test_utils::calculate_amount_for_wallet_to_link_transfer(
                         tip_amount,
-                        &icp_ledger_fee,
+                        icp_ledger_fee.clone(),
                         1
                     ))
                 );
@@ -212,9 +220,9 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);
 
-        let icp_initial_balance = 1_000_000u64;
-        let ckbtc_initial_balance = 1_000_000_000u64;
-        let tip_amount = 5_000_000u64;
+        let icp_initial_balance = Nat::from(1_000_000u64);
+        let ckbtc_initial_balance = Nat::from(1_000_000_000u64);
+        let tip_amount = Nat::from(5_000_000u64);
         let caller_account = Account {
             owner: caller,
             subaccount: None,
@@ -223,9 +231,15 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
         let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
 
         // Act
-        test_fixture.airdrop_icp(icp_initial_balance, &caller).await;
         test_fixture
-            .airdrop_icrc(constant::CKBTC_ICRC_TOKEN, ckbtc_initial_balance, &caller)
+            .airdrop_icp(icp_initial_balance.clone(), &caller)
+            .await;
+        test_fixture
+            .airdrop_icrc(
+                constant::CKBTC_ICRC_TOKEN,
+                ckbtc_initial_balance.clone(),
+                &caller,
+            )
             .await;
 
         // Assert
@@ -239,7 +253,7 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
 
         // Act
         let create_link_result = test_fixture
-            .create_tip_link_v2(constant::CKBTC_ICRC_TOKEN, tip_amount)
+            .create_tip_link_v2(constant::CKBTC_ICRC_TOKEN, tip_amount.clone())
             .await;
 
         // Assert
@@ -249,7 +263,10 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
         assert!(!link.id.is_empty());
         assert_eq!(link.link_type, LinkType::SendTip);
         assert_eq!(link.asset_info.len(), 1);
-        assert_eq!(link.asset_info[0].amount_per_link_use_action, tip_amount);
+        assert_eq!(
+            link.asset_info[0].amount_per_link_use_action,
+            tip_amount.clone()
+        );
 
         assert_eq!(action.intents.len(), 2);
 
@@ -263,8 +280,8 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
                 assert_eq!(
                     transfer.amount,
                     Nat::from(test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        tip_amount,
-                        &ckbtc_ledger_fee,
+                        tip_amount.clone(),
+                        ckbtc_ledger_fee.clone(),
                         1
                     ))
                 );
@@ -281,7 +298,7 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
                     data.amount,
                     Nat::from(test_utils::calculate_amount_for_wallet_to_link_transfer(
                         tip_amount,
-                        &ckbtc_ledger_fee,
+                        ckbtc_ledger_fee,
                         1
                     ))
                 );

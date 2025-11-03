@@ -2,7 +2,7 @@ use crate::cashier_backend::link::fixture::LinkTestFixture;
 use crate::utils::{
     icrc_112, link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context,
 };
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_backend_types::dto::link::LinkStateMachineGoto;
 use cashier_backend_types::{
     constant,
@@ -25,9 +25,9 @@ async fn it_should_error_create_link_tip_if_caller_anonymous() {
         let be_client = ctx.new_cashier_backend_client(Principal::anonymous());
         let test_fixture =
             LinkTestFixture::new(Arc::new(ctx.clone()), &Principal::anonymous()).await;
-        let icp_link_amount = 10_000_000u64;
-        let ckbtc_link_amount = 1_000u64;
-        let ckusdc_link_amount = 50_000_000u64;
+        let icp_link_amount = Nat::from(10_000_000u64);
+        let ckbtc_link_amount = Nat::from(1_000u64);
+        let ckusdc_link_amount = Nat::from(50_000_000u64);
         let link_input = test_fixture
             .token_basket_link_input(
                 vec![
@@ -66,17 +66,27 @@ async fn it_should_create_link_token_basket_successfully() {
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);
         let ckusdc_ledger_client = ctx.new_icrc_ledger_client(constant::CKUSDC_ICRC_TOKEN, caller);
-        let icp_initial_balance = 1_000_000_000u64;
-        let ckbtc_initial_balance = 1_000_000_000u64;
-        let ckusdc_initial_balance = 1_000_000_000u64;
+        let icp_initial_balance = Nat::from(1_000_000_000u64);
+        let ckbtc_initial_balance = Nat::from(1_000_000_000u64);
+        let ckusdc_initial_balance = Nat::from(1_000_000_000u64);
 
         // Act
-        test_fixture.airdrop_icp(icp_initial_balance, &caller).await;
         test_fixture
-            .airdrop_icrc(constant::CKBTC_ICRC_TOKEN, ckbtc_initial_balance, &caller)
+            .airdrop_icp(icp_initial_balance.clone(), &caller)
             .await;
         test_fixture
-            .airdrop_icrc(constant::CKUSDC_ICRC_TOKEN, ckusdc_initial_balance, &caller)
+            .airdrop_icrc(
+                constant::CKBTC_ICRC_TOKEN,
+                ckbtc_initial_balance.clone(),
+                &caller,
+            )
+            .await;
+        test_fixture
+            .airdrop_icrc(
+                constant::CKUSDC_ICRC_TOKEN,
+                ckusdc_initial_balance.clone(),
+                &caller,
+            )
             .await;
 
         // Assert
@@ -99,9 +109,9 @@ async fn it_should_create_link_token_basket_successfully() {
         assert_eq!(ckusdc_balance, ckusdc_initial_balance);
 
         // Arrange
-        let icp_link_amount = 10_000_000u64;
-        let ckbtc_link_amount = 1_000u64;
-        let ckusdc_link_amount = 50_000_000u64;
+        let icp_link_amount = Nat::from(10_000_000u64);
+        let ckbtc_link_amount = Nat::from(1_000u64);
+        let ckusdc_link_amount = Nat::from(50_000_000u64);
         let link_input = test_fixture
             .token_basket_link_input(
                 vec![
@@ -109,7 +119,11 @@ async fn it_should_create_link_token_basket_successfully() {
                     constant::CKBTC_ICRC_TOKEN.to_string(),
                     constant::CKUSDC_ICRC_TOKEN.to_string(),
                 ],
-                vec![icp_link_amount, ckbtc_link_amount, ckusdc_link_amount],
+                vec![
+                    icp_link_amount.clone(),
+                    ckbtc_link_amount.clone(),
+                    ckusdc_link_amount.clone(),
+                ],
             )
             .unwrap();
 
@@ -218,7 +232,7 @@ async fn it_should_create_link_token_basket_successfully() {
             icp_link_balance,
             test_utils::calculate_amount_for_wallet_to_link_transfer(
                 icp_link_amount,
-                &icp_ledger_fee,
+                icp_ledger_fee.clone(),
                 1
             ),
             "ICP Link balance is incorrect"
@@ -227,7 +241,7 @@ async fn it_should_create_link_token_basket_successfully() {
             ckbtc_link_balance,
             test_utils::calculate_amount_for_wallet_to_link_transfer(
                 ckbtc_link_amount,
-                &ckbtc_ledger_fee,
+                ckbtc_ledger_fee.clone(),
                 1
             ),
             "CKBTC Link balance is incorrect"
@@ -236,7 +250,7 @@ async fn it_should_create_link_token_basket_successfully() {
             ckusdc_link_balance,
             test_utils::calculate_amount_for_wallet_to_link_transfer(
                 ckusdc_link_amount,
-                &ckusdc_ledger_fee,
+                ckusdc_ledger_fee.clone(),
                 1
             ),
             "CKUSDC Link balance is incorrect"
@@ -274,9 +288,9 @@ async fn benchmark_create_link_token_basket() {
         // Arrange
         let caller = TestUser::User1.get_principal();
         let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
-        let icp_initial_balance = 1_000_000_000u64;
-        let ckbtc_initial_balance = 1_000_000_000u64;
-        let ckusdc_initial_balance = 1_000_000_000u64;
+        let icp_initial_balance = Nat::from(1_000_000_000u64);
+        let ckbtc_initial_balance = Nat::from(1_000_000_000u64);
+        let ckusdc_initial_balance = Nat::from(1_000_000_000u64);
 
         test_fixture.airdrop_icp(icp_initial_balance, &caller).await;
         test_fixture
@@ -286,9 +300,9 @@ async fn benchmark_create_link_token_basket() {
             .airdrop_icrc(constant::CKUSDC_ICRC_TOKEN, ckusdc_initial_balance, &caller)
             .await;
 
-        let icp_link_amount = 10_000_000u64;
-        let ckbtc_link_amount = 1_000u64;
-        let ckusdc_link_amount = 50_000_000u64;
+        let icp_link_amount = Nat::from(10_000_000u64);
+        let ckbtc_link_amount = Nat::from(1_000u64);
+        let ckusdc_link_amount = Nat::from(50_000_000u64);
         let link_input = test_fixture
             .token_basket_link_input(
                 vec![

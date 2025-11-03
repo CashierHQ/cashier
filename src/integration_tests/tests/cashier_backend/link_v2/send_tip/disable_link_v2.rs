@@ -6,6 +6,7 @@ use crate::cashier_backend::link::fixture::{
 };
 use crate::utils::principal::TestUser;
 use crate::utils::with_pocket_ic_context;
+use candid::Nat;
 use cashier_backend_types::constant::ICP_TOKEN;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::link::v1::LinkState;
@@ -14,7 +15,7 @@ use cashier_backend_types::repository::link::v1::LinkState;
 async fn it_should_fail_disable_icp_token_tip_linkv2_if_link_not_active() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
             create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount).await;
 
@@ -47,7 +48,7 @@ async fn it_should_fail_disable_icp_token_tip_linkv2_if_link_not_active() {
 async fn it_should_fail_disable_icp_token_tip_linkv2_if_caller_is_not_creator() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
             create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount).await;
         let caller = TestUser::User2.get_principal();
@@ -86,7 +87,7 @@ async fn it_should_fail_disable_icp_token_tip_linkv2_if_caller_is_not_creator() 
 async fn it_should_succeed_disable_icp_token_tip_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
             activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
 
