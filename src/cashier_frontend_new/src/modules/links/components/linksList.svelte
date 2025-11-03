@@ -4,6 +4,7 @@
   import { statusBadge } from "../utils/statusBadge";
   import type { Link } from "../types/link/link";
   import { goto } from "$app/navigation";
+  import { LinkState } from "../types/link/linkState";
 
   // normalize various timestamp inputs to BigInt nanoseconds and format
   const toBigIntNanoseconds = (input: unknown): bigint => {
@@ -35,7 +36,11 @@
   }
 
   function handleLinkItemClick(link: Link) {
-    goto(resolve(`/link/detail/${link.id}`));
+    if (link.state == LinkState.CREATE_LINK) {
+      goto(resolve(`/link/create/${link.id}`));
+    } else {
+      goto(resolve(`/link/detail/${link.id}`));
+    }
   }
 </script>
 
