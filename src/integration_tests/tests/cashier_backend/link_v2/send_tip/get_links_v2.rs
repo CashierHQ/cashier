@@ -4,6 +4,7 @@
 use crate::cashier_backend::link::fixture::{LinkTestFixture, activate_tip_link_v2_fixture};
 use crate::utils::principal::TestUser;
 use crate::utils::with_pocket_ic_context;
+use candid::Nat;
 use cashier_backend_types::constant::{CKBTC_ICRC_TOKEN, CKUSDC_ICRC_TOKEN, ICP_TOKEN};
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::service::link::PaginateInput;
@@ -34,7 +35,7 @@ async fn it_should_succeed_get_icp_token_tip_linkv2_with_no_link_existed() {
 async fn it_should_succeed_get_icp_token_tip_linkv2_with_no_paginate_option() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
             activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
 
@@ -60,11 +61,11 @@ async fn it_should_succeed_get_icp_token_tip_linkv2_with_no_paginate_option() {
 async fn it_should_succeed_get_icp_token_tip_linkv2_with_paginate_option() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (_test_fixture, _create_link_result) =
-            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount.clone()).await;
         let (_test_fixture, _create_link_result) =
-            activate_tip_link_v2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount).await;
+            activate_tip_link_v2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount.clone()).await;
         let (test_fixture, _create_link_result) =
             activate_tip_link_v2_fixture(ctx, CKUSDC_ICRC_TOKEN, tip_amount).await;
 

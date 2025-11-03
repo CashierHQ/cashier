@@ -22,8 +22,12 @@ async fn should_setup_environment_success() {
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let icrc_ledger_client = ctx.new_icrc_ledger_client("ckBTC", caller);
 
-        fixture.airdrop_icp(10000000000, &caller).await; // 0.01 ICP
-        fixture.airdrop_icrc("ckBTC", 1000000, &caller).await; // 0.01 ckBTC
+        fixture
+            .airdrop_icp(Nat::from(10000000000u64), &caller)
+            .await; // 0.01 ICP
+        fixture
+            .airdrop_icrc("ckBTC", Nat::from(1000000u64), &caller)
+            .await; // 0.01 ckBTC
 
         let account = Account {
             owner: caller,

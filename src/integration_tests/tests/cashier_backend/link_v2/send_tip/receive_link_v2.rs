@@ -22,7 +22,7 @@ use icrc_ledger_types::icrc1::account::Account;
 async fn it_should_fail_receive_icp_token_tip_linkv2_if_link_not_active() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (creator_fixture, create_link_result) =
             create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount).await;
 
@@ -59,7 +59,7 @@ async fn it_should_fail_receive_icp_token_tip_linkv2_if_link_not_active() {
 async fn it_should_fail_receive_icp_token_tip_linkv2_if_requested_more_than_once() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (creator_fixture, create_link_result) =
             activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
 
@@ -109,9 +109,9 @@ async fn it_should_fail_receive_icp_token_tip_linkv2_if_requested_more_than_once
 async fn it_should_succeed_receive_icp_token_tip_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (creator_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount.clone()).await;
 
         let receiver = TestUser::User2.get_principal();
         let receiver_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &receiver).await;
@@ -149,11 +149,7 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
             IntentType::Transfer(ref transfer) => {
                 assert_eq!(transfer.to, Wallet::new(receiver));
                 assert_eq!(transfer.from, link_id_to_account(ctx, &link_id).into());
-                assert_eq!(
-                    transfer.amount,
-                    Nat::from(tip_amount),
-                    "Transfer amount incorrect"
-                );
+                assert_eq!(transfer.amount, tip_amount, "Transfer amount incorrect");
             }
             _ => panic!("Expected Transfer intent type"),
         }
@@ -163,11 +159,7 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
             Protocol::IC(IcTransaction::Icrc1Transfer(ref data)) => {
                 assert_eq!(data.to, Wallet::new(receiver));
                 assert_eq!(data.from, link_id_to_account(ctx, &link_id).into());
-                assert_eq!(
-                    data.amount,
-                    Nat::from(tip_amount),
-                    "Icrc1Transfer amount incorrect"
-                );
+                assert_eq!(data.amount, tip_amount, "Icrc1Transfer amount incorrect");
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
@@ -225,9 +217,9 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
 async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (creator_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount).await;
+            activate_tip_link_v2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount.clone()).await;
 
         let receiver = TestUser::User2.get_principal();
         let receiver_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &receiver).await;
@@ -266,11 +258,7 @@ async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
             IntentType::Transfer(ref transfer) => {
                 assert_eq!(transfer.to, Wallet::new(receiver));
                 assert_eq!(transfer.from, link_id_to_account(ctx, &link_id).into());
-                assert_eq!(
-                    transfer.amount,
-                    Nat::from(tip_amount),
-                    "Transfer amount incorrect"
-                );
+                assert_eq!(transfer.amount, tip_amount, "Transfer amount incorrect");
             }
             _ => panic!("Expected Transfer intent type"),
         }
@@ -280,11 +268,7 @@ async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
             Protocol::IC(IcTransaction::Icrc1Transfer(ref data)) => {
                 assert_eq!(data.to, Wallet::new(receiver));
                 assert_eq!(data.from, link_id_to_account(ctx, &link_id).into());
-                assert_eq!(
-                    data.amount,
-                    Nat::from(tip_amount),
-                    "Icrc1Transfer amount incorrect"
-                );
+                assert_eq!(data.amount, tip_amount, "Icrc1Transfer amount incorrect");
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
@@ -319,7 +303,7 @@ async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
             .unwrap();
         assert_eq!(
             ckbtc_balance_after,
-            ckbtc_balance_before + Nat::from(tip_amount),
+            ckbtc_balance_before + tip_amount,
             "Receiveer's CKBTC balance should increase by tip amount"
         );
 
