@@ -2,7 +2,7 @@
   import { statusBadge } from "../../utils/statusBadge";
   import AssetList from "./assetList.svelte";
   import type { Link } from "../../types/link/link";
-  import { LinkType } from "../../types/link/linkType";
+  import { LinkType, type LinkTypeValue } from "../../types/link/linkType";
   import { assertUnreachable } from "$lib/rsMatch";
 
   interface Props {
@@ -12,7 +12,7 @@
   let { link }: Props = $props();
 
   // Get link type display text
-  function getLinkTypeText(linkType: LinkType): string {
+  function getLinkTypeText(linkType: LinkTypeValue): string {
     switch (linkType) {
       case LinkType.TIP:
         return "Send Tip";
@@ -23,7 +23,7 @@
       case LinkType.TOKEN_BASKET:
         return "Send Token Basket";
       default:
-        assertUnreachable(linkType as never);
+        assertUnreachable(linkType);
     }
   }
 

@@ -1,62 +1,69 @@
 import type { ActionType as BackendActionType } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { assertUnreachable, rsMatch } from "$lib/rsMatch";
-import { LinkType } from "../link/linkType";
+import { LinkType, type LinkTypeValue } from "../link/linkType";
 
-// Frontend representation of action types for links
+// Frontend representation of action types for links (string-based)
 export class ActionType {
-  private constructor(public readonly id: string) {}
+  private constructor() {}
 
-  static readonly CreateLink = new ActionType("CREATE_LINK");
-  static readonly Use = new ActionType("USE");
-  static readonly Withdraw = new ActionType("WITHDRAW");
-  static readonly Receive = new ActionType("RECEIVE");
-  static readonly Send = new ActionType("SEND");
+  static readonly CREATE_LINK = "CREATE_LINK";
+  static readonly USE = "USE";
+  static readonly WITHDRAW = "WITHDRAW";
+  static readonly RECEIVE = "RECEIVE";
+  static readonly SEND = "SEND";
+}
 
+export type ActionTypeValue =
+  | typeof ActionType.CREATE_LINK
+  | typeof ActionType.USE
+  | typeof ActionType.WITHDRAW
+  | typeof ActionType.RECEIVE
+  | typeof ActionType.SEND;
+
+export class ActionTypeMapper {
   /**
-   * Convert frontend ActionType to corresponding BackendActionType.
-   * @returns Corresponding BackendLinkType
+   * Convert frontend ActionTypeValue to corresponding BackendActionType.
    */
-  toBackendType(): BackendActionType {
-    switch (this) {
-      case ActionType.CreateLink:
+  static toBackendType(value: ActionTypeValue): BackendActionType {
+    switch (value) {
+      case ActionType.CREATE_LINK:
         return { CreateLink: null };
-      case ActionType.Use:
+      case ActionType.USE:
         return { Use: null };
-      case ActionType.Withdraw:
+      case ActionType.WITHDRAW:
         return { Withdraw: null };
-      case ActionType.Send:
+      case ActionType.SEND:
         return { Send: null };
-      case ActionType.Receive:
+      case ActionType.RECEIVE:
         return { Receive: null };
       default:
-        return assertUnreachable(this as never);
+        return assertUnreachable(value);
     }
   }
 
   /**
-   * Create frontend ActionType from corresponding backend union
-   * @returns Corresponding ActionType
+   * Create frontend ActionTypeValue from corresponding backend union
    */
-  static fromBackendType(b: BackendActionType): ActionType {
+  static fromBackendType(b: BackendActionType): ActionTypeValue {
     return rsMatch(b, {
-      CreateLink: () => ActionType.CreateLink,
-      Use: () => ActionType.Use,
-      Withdraw: () => ActionType.Withdraw,
-      Receive: () => ActionType.Receive,
-      Send: () => ActionType.Send,
+      CreateLink: () => ActionType.CREATE_LINK,
+      Use: () => ActionType.USE,
+      Withdraw: () => ActionType.WITHDRAW,
+      Receive: () => ActionType.RECEIVE,
+      Send: () => ActionType.SEND,
     });
   }
 
-  static fromLinkType(a: LinkType) {
+  static fromLinkType(a: LinkTypeValue): ActionTypeValue {
     switch (a) {
       case LinkType.AIRDROP:
       case LinkType.TIP:
       case LinkType.TOKEN_BASKET:
-        return ActionType.Receive;
+        return ActionType.RECEIVE;
       case LinkType.RECEIVE_PAYMENT:
-        return ActionType.Send;
+        return ActionType.SEND;
       default:
-        return assertUnreachable(a as never);
+        return assertUnreachable(a);
     }
   }
 }

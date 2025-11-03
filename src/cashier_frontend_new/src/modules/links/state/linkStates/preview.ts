@@ -4,7 +4,7 @@ import type { LinkState } from ".";
 import type { LinkStore } from "../linkStore.svelte";
 import { AddAssetState } from "./addAsset";
 import { LinkCreatedState } from "./created";
-import Action from "../../types/action/action";
+import { ActionMapper } from "../../types/action/action";
 
 // State when the user is previewing the link before creation
 export class PreviewState implements LinkState {
@@ -27,7 +27,7 @@ export class PreviewState implements LinkState {
 
     this.#link.state = new LinkCreatedState(this.#link);
     this.#link.id = result.value.link.id;
-    this.#link.action = Action.fromBackend(result.value.action);
+    this.#link.action = ActionMapper.fromBackendType(result.value.action);
   }
 
   // Go back to the add asset state

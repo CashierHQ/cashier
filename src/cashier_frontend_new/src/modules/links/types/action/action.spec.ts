@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { Principal } from "@dfinity/principal";
-import Action from "./action";
+import { ActionMapper } from "./action";
 import type {
   ActionDto,
   IntentDto,
@@ -44,7 +44,7 @@ describe("Action.fromBackendType", () => {
       state: { Created: null },
     };
 
-    const action = Action.fromBackend(backend);
+    const action = ActionMapper.fromBackendType(backend);
 
     expect(action.id).toBe("a1");
     expect(action.creator?.toText()).toBe(principal.toText());

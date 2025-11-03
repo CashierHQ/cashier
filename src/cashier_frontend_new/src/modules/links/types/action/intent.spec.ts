@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { Principal } from "@dfinity/principal";
 import type { IntentDto } from "$lib/generated/cashier_backend/cashier_backend.did";
-import Intent from "./intent";
+import { IntentMapper } from "./intent";
 
 describe("Intent.fromBackendType", () => {
   it("maps basic intent dto", () => {
@@ -23,7 +23,7 @@ describe("Intent.fromBackendType", () => {
       transactions: [],
     } as IntentDto;
 
-    const intent = Intent.fromBackendType(dto);
+    const intent = IntentMapper.fromBackendType(dto);
     expect(intent.id).toBe("i1");
   });
 });
