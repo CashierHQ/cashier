@@ -3,7 +3,7 @@ import { icExplorerTokenPriceService } from "../services/token_price/icExplorer"
 import { icpSwapTokenPriceService } from "../services/token_price/icpSwap";
 import { kongSwapTokenPriceService } from "../services/token_price/kongSwap";
 
-export class TokenPriceStore {
+class TokenPriceStore {
   #tokenPricesQuery;
 
   constructor() {

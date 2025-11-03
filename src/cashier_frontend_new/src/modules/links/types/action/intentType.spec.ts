@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { Principal } from "@dfinity/principal";
-import { TransferData, TransferFromData } from "./intentType";
+import { TransferDataMapper, TransferFromDataMapper } from "./intentType";
 import type {
   TransferData as BackendTransferData,
   TransferFromData as BackendTransferFromData,
@@ -17,7 +17,12 @@ describe("IntentType payloads", () => {
     };
     const asset: BackendTransferData["asset"] = { IC: { address: p } };
 
-    const td = TransferData.fromBackendType({ to, asset, from, amount: 10n });
+    const td = TransferDataMapper.fromBackendType({
+      to,
+      asset,
+      from,
+      amount: 10n,
+    });
     expect(td.amount).toBe(10n);
     expect(td.to.address.toText()).toBe(p.toText());
   });
@@ -35,7 +40,7 @@ describe("IntentType payloads", () => {
       IC: { address: p, subaccount: [] },
     };
 
-    const tfd = TransferFromData.fromBackendType({
+    const tfd = TransferFromDataMapper.fromBackendType({
       to,
       asset,
       from,

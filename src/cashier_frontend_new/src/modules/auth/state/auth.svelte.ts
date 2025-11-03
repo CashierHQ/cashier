@@ -15,7 +15,7 @@ import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
 import { PersistedState } from "runed";
 
 // Config for PNP instance
-export const CONFIG: CreatePnpArgs = {
+const CONFIG: CreatePnpArgs = {
   // Network settings
   network: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED ? "local" : "ic",
   // If local dfx network, set replica port

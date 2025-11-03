@@ -1,24 +1,32 @@
 import { rsMatch } from "$lib/rsMatch";
 import type { IntentState as BackendIntentState } from "$lib/generated/cashier_backend/cashier_backend.did";
 
-// Frontend representation of the state of an Intent
+// Frontend representation of the state of an Intent (string-based)
 class IntentState {
-  private constructor(public readonly id: string) {}
-  static readonly Created = new IntentState("Created");
-  static readonly Processing = new IntentState("Processing");
-  static readonly Success = new IntentState("Success");
-  static readonly Fail = new IntentState("Fail");
+  private constructor() {}
+  static readonly CREATED = "CREATED";
+  static readonly PROCESSING = "PROCESSING";
+  static readonly SUCCESS = "SUCCESS";
+  static readonly FAIL = "FAIL";
+}
 
+type IntentStateValue =
+  | typeof IntentState.CREATED
+  | typeof IntentState.PROCESSING
+  | typeof IntentState.SUCCESS
+  | typeof IntentState.FAIL;
+
+export class IntentStateMapper {
   /**
    * @param b BackendIntentState from backend
-   * @returns Intent state corresponding to the backend state
+   * @returns IntentStateValue corresponding to the backend state
    */
-  static fromBackendType(b: BackendIntentState): IntentState {
+  static fromBackendType(b: BackendIntentState): IntentStateValue {
     return rsMatch(b, {
-      Created: () => IntentState.Created,
-      Processing: () => IntentState.Processing,
-      Success: () => IntentState.Success,
-      Fail: () => IntentState.Fail,
+      Created: () => IntentState.CREATED,
+      Processing: () => IntentState.PROCESSING,
+      Success: () => IntentState.SUCCESS,
+      Fail: () => IntentState.FAIL,
     });
   }
 }

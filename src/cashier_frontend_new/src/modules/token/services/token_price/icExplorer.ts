@@ -94,7 +94,7 @@ class IcExplorerTokenPriceService implements TokenPriceService {
 /**
  * Detailed token information from IC Explorer
  */
-export interface IcExplorerTokenDetail {
+interface IcExplorerTokenDetail {
   controllerArray: string[];
   cycleBalance: string;
   fee: string;

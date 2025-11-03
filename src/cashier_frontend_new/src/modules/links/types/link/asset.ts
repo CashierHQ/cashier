@@ -15,19 +15,21 @@ export class Asset {
   static IC(address: Principal) {
     return new Asset("IC", address);
   }
+}
 
-  toBackend(): BackendAsset {
-    if (this.chain === "IC") {
+class AssetMapper {
+  static toBackendType(asset: Asset): BackendAsset {
+    if (asset.chain === "IC") {
       return {
-        IC: { address: this.address as unknown as Principal },
+        IC: { address: asset.address as unknown as Principal },
       };
     }
-    throw new Error(`Unsupported asset chain: ${this.chain}`);
+    throw new Error(`Unsupported asset chain: ${asset.chain}`);
   }
 
-  static fromBackend(b: BackendAsset): Asset {
+  static fromBackendType(b: BackendAsset): Asset {
     return rsMatch(b, {
-      IC: (v) => new Asset("IC", v.address),
+      IC: (v) => Asset.IC(v.address),
     });
   }
 }
@@ -42,18 +44,20 @@ export class AssetInfo {
     this.amount_per_link_use_action = amount_per_link_use_action;
     this.label = label;
   }
+}
 
-  toBackend(): BackendAssetInfoDto {
+export class AssetInfoMapper {
+  static toBackendType(asseInfo: AssetInfo): BackendAssetInfoDto {
     return {
-      asset: this.asset.toBackend(),
-      amount_per_link_use_action: this.amount_per_link_use_action,
-      label: this.label,
-    } as BackendAssetInfoDto;
+      asset: AssetMapper.toBackendType(asseInfo.asset),
+      amount_per_link_use_action: asseInfo.amount_per_link_use_action,
+      label: asseInfo.label,
+    };
   }
 
-  static fromBackend(b: BackendAssetInfoDto): AssetInfo {
+  static fromBackendType(b: BackendAssetInfoDto): AssetInfo {
     return new AssetInfo(
-      Asset.fromBackend(b.asset),
+      AssetMapper.fromBackendType(b.asset),
       b.amount_per_link_use_action,
       b.label,
     );

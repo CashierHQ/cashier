@@ -1,6 +1,6 @@
 <script lang="ts">
   import { linkDetailStore } from "$modules/links/state/linkDetailStore.svelte";
-  import { ActionType } from "$modules/links/types/action/actionType";
+  import { ActionTypeMapper } from "$modules/links/types/action/actionType";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import TxCart from "$modules/links/components/txCart/txCart.svelte";
   import { ActionState } from "$modules/links/types/action/actionState";
@@ -18,7 +18,7 @@
   let showTxCart: boolean = $derived.by(() => {
     return !!(
       linkQueryState?.data?.action &&
-      linkQueryState.data.action.state !== ActionState.Success
+      linkQueryState.data.action.state !== ActionState.SUCCESS
     );
   });
 
@@ -48,9 +48,7 @@
       if (link.action) {
         showTxCart = true;
       } else {
-        const actionType: ActionType = ActionType.fromLinkType(
-          link.link.link_type,
-        );
+        const actionType = ActionTypeMapper.fromLinkType(link.link.link_type);
         const actionRes = await cashierBackendService.createActionV2({
           linkId: link.id,
           actionType,

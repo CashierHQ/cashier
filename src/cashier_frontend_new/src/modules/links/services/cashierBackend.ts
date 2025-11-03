@@ -4,7 +4,10 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { Err, type Result } from "ts-results-es";
 import type { CreateLinkData } from "../types/createLinkData";
-import { ActionType } from "../types/action/actionType";
+import {
+  ActionTypeMapper,
+  type ActionTypeValue,
+} from "../types/action/actionType";
 import { toNullable } from "@dfinity/utils";
 
 /**
@@ -147,7 +150,7 @@ class CanisterBackendService {
    */
   async createActionV2(input: {
     linkId: string;
-    actionType: ActionType;
+    actionType: ActionTypeValue;
   }): Promise<Result<cashierBackend.ActionDto, Error>> {
     const actor = this.#getActor({
       anonymous: false,
@@ -158,7 +161,7 @@ class CanisterBackendService {
 
     const response = await actor.user_create_action_v2({
       link_id: input.linkId,
-      action_type: input.actionType.toBackendType(),
+      action_type: ActionTypeMapper.toBackendType(input.actionType),
     });
 
     return responseToResult(response)

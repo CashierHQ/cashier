@@ -6,7 +6,7 @@ export enum Status {
 
 // copy from windoge98/plug-n-play, they don't export this type
 // Global configuration options for Plug and Play
-export interface GlobalPnpConfig {
+interface GlobalPnpConfig {
   dfxNetwork?: string; // Useful for determining dev environment
   replicaPort?: number;
   solanaNetwork?: string;

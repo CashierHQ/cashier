@@ -25,7 +25,7 @@
   });
 
   function shouldShowTxCart(): boolean {
-    return !!(link.action && link.action.state !== ActionState.Success);
+    return !!(link.action && link.action.state !== ActionState.SUCCESS);
   }
 
   $effect(() => {
@@ -65,7 +65,7 @@
       } else {
         const actionRes = await cashierBackendService.createActionV2({
           linkId: link.id,
-          actionType: ActionType.Withdraw,
+          actionType: ActionType.WITHDRAW,
         });
 
         if (actionRes.isErr()) {

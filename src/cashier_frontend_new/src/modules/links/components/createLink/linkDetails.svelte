@@ -17,7 +17,7 @@
   <div><strong>Title:</strong> {link.createLinkData.title}</div>
   <div>
     <strong>Link Type:</strong>
-    {link.createLinkData.linkType.id}
+    {link.createLinkData.linkType}
   </div>
   {#if link.createLinkData.assets}
     {#each link.createLinkData.assets as assetInfo (assetInfo.address)}

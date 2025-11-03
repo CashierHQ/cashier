@@ -13,7 +13,7 @@ import { ICP_LEDGER_CANISTER_ID } from "../constants";
 import { sortWalletTokens } from "../utils/sorter";
 import { tokenPriceStore } from "./tokenPriceStore.svelte";
 
-export class WalletStore {
+class WalletStore {
   #walletTokensQuery;
 
   constructor() {

@@ -3,7 +3,7 @@ import type {
   CreateLinkInput,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { Result, Ok, Err } from "ts-results-es";
-import { LinkType } from "./link/linkType";
+import { LinkType, LinkTypeMapper, type LinkTypeValue } from "./link/linkType";
 import Asset from "./asset";
 import { Principal } from "@dfinity/principal";
 
@@ -33,7 +33,7 @@ export class CreateLinkAsset {
 /** Data required to create a new link */
 export class CreateLinkData {
   title: string;
-  linkType: LinkType;
+  linkType: LinkTypeValue;
   assets?: CreateLinkAsset[];
   maxUse: number;
   constructor({
@@ -43,7 +43,7 @@ export class CreateLinkData {
     maxUse,
   }: {
     title: string;
-    linkType: LinkType;
+    linkType: LinkTypeValue;
     assets?: CreateLinkAsset[];
     maxUse: number;
   }) {
@@ -58,7 +58,7 @@ export class CreateLinkData {
    * @returns Result wrapping CreateLinkInput or Error if validation fails
    */
   toCreateLinkInput(): Result<CreateLinkInput, Error> {
-    const link_type = this.linkType.toBackendType();
+    const link_type = LinkTypeMapper.toBackendType(this.linkType);
 
     if (this.linkType != LinkType.TIP) {
       return Err(new Error("Only tip links are supported"));
