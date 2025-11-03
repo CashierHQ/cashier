@@ -186,7 +186,7 @@ export const idlFactory = ({ IDL }) => {
   const GetLinkOptions = IDL.Record({ 'action_type' : ActionType });
   const AssetInfoDto = IDL.Record({
     'asset' : Asset,
-    'amount_per_link_use_action' : IDL.Nat64,
+    'amount_per_link_use_action' : IDL.Nat,
     'label' : IDL.Text,
   });
   const LinkType = IDL.Variant({
