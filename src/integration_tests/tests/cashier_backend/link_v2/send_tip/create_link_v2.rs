@@ -102,11 +102,11 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
                 assert_eq!(transfer.to, link_id_to_account(ctx, &link.id).into());
                 assert_eq!(
                     transfer.amount,
-                    Nat::from(test_utils::calculate_amount_for_wallet_to_link_transfer(
+                    test_utils::calculate_amount_for_wallet_to_link_transfer(
                         tip_amount.clone(),
                         icp_ledger_fee.clone(),
                         1
-                    ))
+                    )
                 );
             }
             _ => panic!("Expected Transfer intent type"),
@@ -119,11 +119,11 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
                 assert_eq!(data.to, link_id_to_account(ctx, &link.id).into());
                 assert_eq!(
                     data.amount,
-                    Nat::from(test_utils::calculate_amount_for_wallet_to_link_transfer(
+                    test_utils::calculate_amount_for_wallet_to_link_transfer(
                         tip_amount,
                         icp_ledger_fee.clone(),
                         1
-                    ))
+                    )
                 );
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
@@ -279,11 +279,11 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
                 assert_eq!(transfer.to, link_id_to_account(ctx, &link.id).into());
                 assert_eq!(
                     transfer.amount,
-                    Nat::from(test_utils::calculate_amount_for_wallet_to_link_transfer(
+                    test_utils::calculate_amount_for_wallet_to_link_transfer(
                         tip_amount.clone(),
                         ckbtc_ledger_fee.clone(),
                         1
-                    ))
+                    )
                 );
             }
             _ => panic!("Expected Transfer intent type"),
@@ -296,11 +296,11 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
                 assert_eq!(data.to, link_id_to_account(ctx, &link.id).into());
                 assert_eq!(
                     data.amount,
-                    Nat::from(test_utils::calculate_amount_for_wallet_to_link_transfer(
+                    test_utils::calculate_amount_for_wallet_to_link_transfer(
                         tip_amount,
                         ckbtc_ledger_fee,
                         1
-                    ))
+                    )
                 );
             }
             _ => panic!("Expected Icrc1Transfer transaction"),

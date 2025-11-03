@@ -194,7 +194,7 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
             .unwrap();
         assert_eq!(
             icp_balance_after,
-            icp_balance_before + Nat::from(tip_amount),
+            icp_balance_before + tip_amount,
             "Receiveer's ICP balance should increase by tip amount"
         );
 
