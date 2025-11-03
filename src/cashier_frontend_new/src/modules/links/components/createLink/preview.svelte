@@ -39,7 +39,6 @@
     try {
       await link.goNext();
       linkListStore.refresh();
-      goto(resolve(`/link/detail/${link.id}`));
       successMessage = "Link created successfully: " + link.id;
     } catch (error) {
       errorMessage = "Failed to create link: " + error;
