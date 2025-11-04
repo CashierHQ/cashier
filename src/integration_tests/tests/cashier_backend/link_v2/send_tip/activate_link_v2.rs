@@ -16,6 +16,7 @@ use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_common::constant::CREATE_LINK_FEE;
 use cashier_common::test_utils;
 use ic_mple_client::CanisterClientError;
+use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]
 async fn it_should_fail_activate_icp_token_tip_linkv2_if_caller_anonymous() {
@@ -312,6 +313,74 @@ async fn it_should_succeed_activate_icp_token_tip_linkv2() {
 }
 
 #[tokio::test]
+async fn it_should_fail_reexecute_icrc112_icp_thanks_to_deduplication() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let tip_amount = Nat::from(1_000_000u64);
+        let (test_fixture, create_link_result) =
+            create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount.clone()).await;
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+        let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
+        let caller_account = Account {
+            owner: caller,
+            subaccount: None,
+        };
+
+        let initial_caller_balance = icp_ledger_client.balance_of(&caller_account).await.unwrap();
+
+        // Act: Execute ICRC112 requests (simulate FE behavior)
+        let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
+        let icrc112_execution_result =
+            execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
+
+        // Assert: ICRC112 execution result
+        assert!(icrc112_execution_result.is_ok());
+        let link_id = create_link_result.link.id.clone();
+        let link_account = link_id_to_account(ctx, &link_id);
+        let icp_link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
+
+        let balance_after_first_execution =
+            icp_ledger_client.balance_of(&caller_account).await.unwrap();
+        assert_eq!(
+            balance_after_first_execution,
+            initial_caller_balance
+                - test_utils::calculate_amount_for_wallet_to_link_transfer(
+                    tip_amount,
+                    icp_ledger_fee.clone(),
+                    1
+                )
+                - Nat::from(2u64) * icp_ledger_fee, // 1 transfer fee for deposit to link and 1 transfer fee to approve the creation fee
+            "Caller balance after first execution is incorrect"
+        );
+
+        // Act: Re-execute ICRC112 requests
+        let icrc112_reexecution_result =
+            execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
+
+        // Assert: Balance should remain unchanged due to deduplication
+        assert!(icrc112_reexecution_result.is_ok());
+        let balance_after_reexecution =
+            icp_ledger_client.balance_of(&caller_account).await.unwrap();
+        assert_eq!(
+            balance_after_reexecution, balance_after_first_execution,
+            "Caller balance after re-execution should be unchanged due to deduplication"
+        );
+
+        let icp_link_balance_after_reexecution =
+            icp_ledger_client.balance_of(&link_account).await.unwrap();
+        assert_eq!(
+            icp_link_balance_after_reexecution, icp_link_balance,
+            "Link balance after re-execution should be unchanged due to deduplication"
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
 async fn it_should_succeed_activate_icrc_token_tip_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
@@ -362,12 +431,96 @@ async fn it_should_succeed_activate_icrc_token_tip_linkv2() {
             .balance_of(&fee_treasury_account)
             .await
             .unwrap();
-        let _icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
 
         assert_eq!(
             icp_fee_treasury_balance,
             Nat::from(CREATE_LINK_FEE),
             "Fee treasury balance is incorrect"
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_fail_reexecute_icrc112_icrc_thanks_to_deduplication() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let tip_amount = Nat::from(5_000_000u64);
+        let (test_fixture, create_link_result) =
+            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount.clone()).await;
+
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+        let _icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
+        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
+        let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
+        let caller_account = Account {
+            owner: caller,
+            subaccount: None,
+        };
+        let initial_icp_caller_balance =
+            icp_ledger_client.balance_of(&caller_account).await.unwrap();
+        let initial_ckbtc_caller_balance = ckbtc_ledger_client
+            .balance_of(&caller_account)
+            .await
+            .unwrap();
+
+        // Act: Execute ICRC112 requests (simulate FE behavior)
+        let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
+        let icrc112_execution_result =
+            execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
+
+        // Assert: ICRC112 execution result
+        assert!(icrc112_execution_result.is_ok());
+
+        let icp_caller_balance_after_first_execution =
+            icp_ledger_client.balance_of(&caller_account).await.unwrap();
+        let ckbtc_caller_balance_after_first_execution = ckbtc_ledger_client
+            .balance_of(&caller_account)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            icp_caller_balance_after_first_execution,
+            initial_icp_caller_balance - Nat::from(CREATE_LINK_FEE),
+            "ICP Caller balance after first execution is incorrect"
+        );
+
+        assert_eq!(
+            ckbtc_caller_balance_after_first_execution,
+            initial_ckbtc_caller_balance
+                - test_utils::calculate_amount_for_wallet_to_link_transfer(
+                    tip_amount,
+                    ckbtc_ledger_fee.clone(),
+                    1,
+                )
+                - ckbtc_ledger_fee.clone(), // 1 transfer fee for deposit to link
+            "CKBTC Caller balance after first execution is incorrect"
+        );
+
+        // Act: Re-execute ICRC112 requests
+        let icrc112_reexecution_result =
+            execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
+
+        // Assert: Balance should remain unchanged due to deduplication
+        assert!(icrc112_reexecution_result.is_ok());
+        let icp_caller_balance_after_reexecution =
+            icp_ledger_client.balance_of(&caller_account).await.unwrap();
+        assert_eq!(
+            icp_caller_balance_after_reexecution, icp_caller_balance_after_first_execution,
+            "ICP Caller balance after re-execution should be unchanged due to deduplication"
+        );
+
+        let ckbtc_caller_balance_after_reexecution = ckbtc_ledger_client
+            .balance_of(&caller_account)
+            .await
+            .unwrap();
+        assert_eq!(
+            ckbtc_caller_balance_after_reexecution, ckbtc_caller_balance_after_first_execution,
+            "CKBTC Caller balance after re-execution should be unchanged due to deduplication"
         );
 
         Ok(())

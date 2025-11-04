@@ -92,6 +92,7 @@ impl IcIntentAdapter {
             asset: transfer_intent.asset.clone(),
             amount: approve_amount,
             memo: Some(memo),
+            ts: Some(ts),
         };
 
         let ic_approve_tx = IcTransaction::Icrc2Approve(icrc2_approve);

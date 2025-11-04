@@ -83,13 +83,22 @@ pub fn convert_tx_to_icrc_112_request(
 ) -> Result<Icrc112Request, CanisterError> {
     match &tx.protocol {
         Protocol::IC(IcTransaction::Icrc1Transfer(tx_transfer)) => {
+            let memo = tx_transfer.clone().memo.ok_or_else(|| {
+                CanisterError::InvalidDataError("Transaction memo should not be empty".to_string())
+            })?;
+            let created_at_time = tx_transfer.clone().ts.ok_or_else(|| {
+                CanisterError::InvalidDataError(
+                    "Transaction timestamp should not be empty".to_string(),
+                )
+            })?;
+
             let arg = TransferArg {
                 to: link_account,
                 amount: tx_transfer.amount.clone(),
-                memo: None,
-                fee: None,
-                created_at_time: None,
                 from_subaccount: None,
+                fee: None,
+                created_at_time: Some(created_at_time),
+                memo: Some(memo),
             };
 
             let canister_id = match tx_transfer.asset {
@@ -107,6 +116,16 @@ pub fn convert_tx_to_icrc_112_request(
             })
         }
         Protocol::IC(IcTransaction::Icrc2Approve(tx_approve)) => {
+            let memo = tx_approve.clone().memo.ok_or_else(|| {
+                CanisterError::InvalidDataError("Transaction memo should not be empty".to_string())
+            })?;
+
+            let created_at_time = tx_approve.clone().ts.ok_or_else(|| {
+                CanisterError::InvalidDataError(
+                    "Transaction timestamp should not be empty".to_string(),
+                )
+            })?;
+
             let spender = Account {
                 owner: canister_id,
                 subaccount: None,
@@ -118,8 +137,8 @@ pub fn convert_tx_to_icrc_112_request(
                 expected_allowance: None,
                 expires_at: None,
                 fee: None,
-                memo: tx_approve.memo.clone(),
-                created_at_time: None,
+                memo: Some(memo),
+                created_at_time: Some(created_at_time),
             };
 
             let canister_id = match tx_approve.asset {
