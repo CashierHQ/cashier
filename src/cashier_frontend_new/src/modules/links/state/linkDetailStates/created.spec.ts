@@ -72,9 +72,14 @@ describe("LinkCreatedState", () => {
     it("should reject with not supported error", async () => {
       // Arrange
       const store = {
+        query: {
+          data: { link: mockLink, action: mockAction },
+          refresh: vi.fn(),
+        },
+        // state classes access .link and .action helpers on the store
         link: mockLink,
         action: mockAction,
-      } as LinkDetailStore;
+      } as unknown as LinkDetailStore;
       const state = new LinkCreatedState(store);
 
       // Act
@@ -91,9 +96,10 @@ describe("LinkCreatedState", () => {
     it("should throw when link missing", async () => {
       // Arrange
       const store = {
+        query: undefined,
         link: undefined,
-        action: mockAction,
-      } as LinkDetailStore;
+        action: undefined,
+      } as unknown as LinkDetailStore;
       const state = new LinkCreatedState(store);
 
       // Act
@@ -106,9 +112,10 @@ describe("LinkCreatedState", () => {
     it("should throw when action id missing", async () => {
       // Arrange
       const store = {
+        query: { data: { link: mockLink, action: undefined } },
         link: mockLink,
         action: undefined,
-      } as LinkDetailStore;
+      } as unknown as LinkDetailStore;
       const state = new LinkCreatedState(store);
 
       // Act
@@ -121,12 +128,15 @@ describe("LinkCreatedState", () => {
     it("should throw when action type invalid", async () => {
       // Arrange
       const store = {
-        link: mockLink,
-        action: {
-          ...mockAction,
-          type: ActionType.RECEIVE,
+        query: {
+          data: {
+            link: mockLink,
+            action: { ...mockAction, type: ActionType.RECEIVE },
+          },
         },
-      } as LinkDetailStore;
+        link: mockLink,
+        action: { ...mockAction, type: ActionType.RECEIVE },
+      } as unknown as LinkDetailStore;
       const state = new LinkCreatedState(store);
 
       // Act
@@ -141,12 +151,15 @@ describe("LinkCreatedState", () => {
     it("should throw error when action type is not CREATE_LINK", async () => {
       // Arrange
       const store = {
-        link: mockLink,
-        action: {
-          ...mockAction,
-          type: ActionType.WITHDRAW,
+        query: {
+          data: {
+            link: mockLink,
+            action: { ...mockAction, type: ActionType.WITHDRAW },
+          },
         },
-      } as LinkDetailStore;
+        link: mockLink,
+        action: { ...mockAction, type: ActionType.WITHDRAW },
+      } as unknown as LinkDetailStore;
       const state = new LinkCreatedState(store);
 
       // Act
@@ -161,9 +174,14 @@ describe("LinkCreatedState", () => {
     it("should throw when backend returns error", async () => {
       // Arrange
       const store = {
+        query: {
+          data: { link: mockLink, action: mockAction },
+          refresh: vi.fn(),
+        },
         link: mockLink,
         action: mockAction,
-      } as LinkDetailStore;
+        state: undefined,
+      } as unknown as LinkDetailStore;
       const state = new LinkCreatedState(store);
       mocks.cashierBackendService.processActionV2.mockResolvedValueOnce(
         Err("Backend error"),
@@ -179,9 +197,14 @@ describe("LinkCreatedState", () => {
     it("should process action and transition to active state", async () => {
       // Arrange
       const store = {
+        query: {
+          data: { link: mockLink, action: mockAction },
+          refresh: vi.fn(),
+        },
         link: mockLink,
         action: mockAction,
-      } as LinkDetailStore;
+        state: undefined,
+      } as unknown as LinkDetailStore;
       const state = new LinkCreatedState(store);
       // construct backend-shaped DTOs matching what the mappers expect
       const backendLinkDto = {

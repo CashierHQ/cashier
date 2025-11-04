@@ -78,7 +78,11 @@ describe("LinkInactiveState", () => {
   describe("createAction", () => {
     it("should throw when link missing", async () => {
       // Arrange
-      const store = { link: undefined } as LinkDetailStore;
+      const store = {
+        query: { data: undefined },
+        link: undefined,
+        action: undefined,
+      } as unknown as LinkDetailStore;
       const state = new LinkInactiveState(store);
 
       // Act
@@ -91,8 +95,12 @@ describe("LinkInactiveState", () => {
     it("should call backend and set action and refresh query", async () => {
       // Arrange
       const store = {
+        query: {
+          data: { link: mockLink, action: undefined },
+          refresh: vi.fn(),
+        },
         link: mockLink,
-        query: { refresh: vi.fn() },
+        action: undefined,
       } as unknown as LinkDetailStore;
       const state = new LinkInactiveState(store);
 
@@ -107,7 +115,6 @@ describe("LinkInactiveState", () => {
         linkId: mockLink.id,
         actionType: ActionType.WITHDRAW,
       });
-      expect(store.action).toEqual({ id: backendActionDto.id });
       expect(store.query.refresh).toHaveBeenCalled();
     });
   });
@@ -115,7 +122,11 @@ describe("LinkInactiveState", () => {
   describe("processAction", () => {
     it("should throw when action id missing", async () => {
       // Arrange
-      const store = { link: mockLink, action: undefined } as LinkDetailStore;
+      const store = {
+        query: { data: { link: mockLink, action: undefined } },
+        link: mockLink,
+        action: undefined,
+      } as unknown as LinkDetailStore;
       const state = new LinkInactiveState(store);
 
       // Act
@@ -127,7 +138,14 @@ describe("LinkInactiveState", () => {
 
     it("should throw when backend returns error", async () => {
       // Arrange
-      const store = { link: mockLink, action: mockAction } as LinkDetailStore;
+      const store = {
+        query: {
+          data: { link: mockLink, action: mockAction },
+          refresh: vi.fn(),
+        },
+        link: mockLink,
+        action: mockAction,
+      } as unknown as LinkDetailStore;
       const state = new LinkInactiveState(store);
 
       mocks.processActionV2.mockResolvedValueOnce(Err("Backend error"));
@@ -143,7 +161,14 @@ describe("LinkInactiveState", () => {
 
     it("should call backend and refresh link list on success", async () => {
       // Arrange
-      const store = { link: mockLink, action: mockAction } as LinkDetailStore;
+      const store = {
+        query: {
+          data: { link: mockLink, action: mockAction },
+          refresh: vi.fn(),
+        },
+        link: mockLink,
+        action: mockAction,
+      } as unknown as LinkDetailStore;
       const state = new LinkInactiveState(store);
 
       mocks.processActionV2.mockResolvedValueOnce(Ok({}));

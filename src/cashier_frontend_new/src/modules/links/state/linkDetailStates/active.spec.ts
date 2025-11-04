@@ -94,7 +94,11 @@ describe("LinkActiveState", () => {
   describe("createAction", () => {
     it("should reject with not supported error when link missing", async () => {
       // Arrange
-      const store = { link: undefined } as LinkDetailStore;
+      const store = {
+        query: { data: undefined },
+        link: undefined,
+        action: undefined,
+      } as unknown as LinkDetailStore;
       const state = new LinkActiveState(store);
 
       // Act
@@ -107,8 +111,12 @@ describe("LinkActiveState", () => {
     it("should call backend and set action and refresh query", async () => {
       // Arrange
       const store = {
+        query: {
+          data: { link: mockLink, action: undefined },
+          refresh: vi.fn(),
+        },
         link: mockLink,
-        query: { refresh: vi.fn() },
+        action: undefined,
       } as unknown as LinkDetailStore;
       const state = new LinkActiveState(store);
 
@@ -123,7 +131,6 @@ describe("LinkActiveState", () => {
         linkId: mockLink.id,
         actionType: "DUMMY_ACTION_TYPE",
       });
-      expect(store.action).toEqual({ id: backendActionDto.id });
       expect(store.query.refresh).toHaveBeenCalled();
     });
   });
@@ -131,7 +138,11 @@ describe("LinkActiveState", () => {
   describe("processAction", () => {
     it("should throw when link missing", async () => {
       // Arrange
-      const store = { link: undefined, action: mockAction } as LinkDetailStore;
+      const store = {
+        query: { data: undefined },
+        link: undefined,
+        action: undefined,
+      } as unknown as LinkDetailStore;
       const state = new LinkActiveState(store);
 
       // Act
@@ -143,7 +154,11 @@ describe("LinkActiveState", () => {
 
     it("should throw when action id missing", async () => {
       // Arrange
-      const store = { link: mockLink, action: undefined } as LinkDetailStore;
+      const store = {
+        query: { data: { link: mockLink, action: undefined } },
+        link: mockLink,
+        action: undefined,
+      } as unknown as LinkDetailStore;
       const state = new LinkActiveState(store);
 
       // Act
@@ -155,7 +170,14 @@ describe("LinkActiveState", () => {
 
     it("should throw when backend returns error", async () => {
       // Arrange
-      const store = { link: mockLink, action: mockAction } as LinkDetailStore;
+      const store = {
+        query: {
+          data: { link: mockLink, action: mockAction },
+          refresh: vi.fn(),
+        },
+        link: mockLink,
+        action: mockAction,
+      } as unknown as LinkDetailStore;
       const state = new LinkActiveState(store);
 
       mocks.processActionV2.mockResolvedValueOnce(Err("Backend error"));
@@ -172,9 +194,13 @@ describe("LinkActiveState", () => {
     it("should process action, update link/action and refresh link list", async () => {
       // Arrange
       const store = {
+        query: {
+          data: { link: mockLink, action: mockAction },
+          refresh: vi.fn(),
+        },
         link: mockLink,
         action: mockAction,
-      } as LinkDetailStore;
+      } as unknown as LinkDetailStore;
       const state = new LinkActiveState(store);
 
       const backendLinkDto = { id: mockLink.id };
@@ -189,9 +215,8 @@ describe("LinkActiveState", () => {
       // Assert
       expect(mocks.processActionV2).toHaveBeenCalledWith(mockAction.id);
       expect(mocks.linkListStore.refresh).toHaveBeenCalled();
-      // Link and action should be updated from backend mapper
-      expect(store.link).toEqual({ id: backendLinkDto.id });
-      expect(store.action).toEqual({ id: backendActionDto.id });
+      // Query should be refreshed so managedState can pick up the updated link/action
+      expect(store.query.refresh).toHaveBeenCalled();
     });
   });
 });
