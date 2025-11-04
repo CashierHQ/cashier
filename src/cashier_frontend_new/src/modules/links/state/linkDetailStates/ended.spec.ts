@@ -19,7 +19,7 @@ describe("LinkEndedState", () => {
 
   it("processAction should throw that link has ended", async () => {
     // Arrange
-      const store = { query: { data: undefined } } as unknown as LinkDetailStore;
+    const store = { query: { data: undefined } } as unknown as LinkDetailStore;
     const state = new LinkEndedState(store);
 
     // Act

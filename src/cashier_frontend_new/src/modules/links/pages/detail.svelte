@@ -23,7 +23,7 @@
 
   $effect(() => {
     console.log("linkDetail changed:", linkDetail);
-    if(linkDetail){
+    if (linkDetail) {
       showTxCart = shouldShowTxCart();
     }
   });
@@ -83,7 +83,7 @@
   Loading...
 {/if}
 {#if !link}
-Link not found
+  Link not found
 {/if}
 {#if linkDetail.query.data && link}
   <div class="px-4 py-4">
@@ -107,12 +107,12 @@ Link not found
     </div>
 
     {#if link}
-      <LinkInfoSection link={link} />
-      <UsageInfoSection link={link} />
+      <LinkInfoSection {link} />
+      <UsageInfoSection {link} />
     {/if}
 
     <div class="mb-20">
-  {#if link.state === LinkState.ACTIVE}
+      {#if link.state === LinkState.ACTIVE}
         <Button
           variant="outline"
           onclick={endLink}
@@ -128,7 +128,7 @@ Link not found
           {showCopied ? "Copied" : "Copy link"}
         </Button>
       {/if}
-  {#if link.state === LinkState.INACTIVE}
+      {#if link.state === LinkState.INACTIVE}
         <Button
           variant="outline"
           onclick={createWithdrawAction}
@@ -137,7 +137,7 @@ Link not found
           Withdraw
         </Button>
       {/if}
-  {#if link.state === LinkState.CREATE_LINK}
+      {#if link.state === LinkState.CREATE_LINK}
         <Button
           variant="outline"
           onclick={openDrawer}
@@ -153,7 +153,7 @@ Link not found
 {#if showTxCart && link && linkDetail.action}
   <TxCart
     isOpen={showTxCart}
-    link={link}
+    {link}
     action={linkDetail.action}
     {goNext}
     {onCloseDrawer}
