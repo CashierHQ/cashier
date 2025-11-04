@@ -1,16 +1,13 @@
 <script lang="ts">
-  import { ActionType } from "../types/action/actionType";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { ChevronLeft } from "lucide-svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import { cashierBackendService } from "../services/cashierBackend";
   import TxCart from "../components/txCart/txCart.svelte";
   import LinkInfoSection from "../components/linkDetail/linkInfoSection.svelte";
   import UsageInfoSection from "../components/linkDetail/usageInfoSection.svelte";
   import { LinkState } from "../types/link/linkState";
-  import { linkDetailStore } from "../state/linkDetailStore.svelte";
-  import { LinkStore } from "../state/linkStore.svelte";
+  import { LinkDetailStore } from "../state/linkDetailStore.svelte";
   import { ActionState } from "../types/action/actionState";
 
   let { id }: { id: string } = $props();
@@ -19,21 +16,23 @@
 
   let showTxCart: boolean = $state(false);
 
-  let link = $state(new LinkStore());
-  const linkQueryState = linkDetailStore({
-    id,
-  });
+  let linkDetail = new LinkDetailStore({ id });
 
-  function shouldShowTxCart(): boolean {
-    return !!(link.action && link.action.state !== ActionState.SUCCESS);
-  }
+  // derive a plain accessor for the link so the template can read it succinctly
+  const link = $derived.by(() => linkDetail.link);
 
   $effect(() => {
-    if (linkQueryState?.data?.link) {
-      link.from(linkQueryState?.data?.link, linkQueryState?.data?.action);
+    console.log("linkDetail changed:", linkDetail);
+    if(linkDetail){
       showTxCart = shouldShowTxCart();
     }
   });
+
+  function shouldShowTxCart(): boolean {
+    return !!(
+      linkDetail.action && linkDetail.action.state !== ActionState.SUCCESS
+    );
+  }
 
   const copyLink = async () => {
     try {
@@ -48,9 +47,8 @@
 
   const endLink = async () => {
     try {
-      if (!linkQueryState || !linkQueryState.data) return;
-      await link.goNext();
-      linkQueryState.refresh();
+      if (!link) return;
+      linkDetail.disableLink();
     } catch (err) {
       console.error("end link failed", err);
     }
@@ -58,21 +56,7 @@
 
   const createWithdrawAction = async () => {
     try {
-      if (!link.id) throw new Error("Link ID is missing");
-
-      if (link.action) {
-        showTxCart = true;
-      } else {
-        const actionRes = await cashierBackendService.createActionV2({
-          linkId: link.id,
-          actionType: ActionType.WITHDRAW,
-        });
-
-        if (actionRes.isErr()) {
-          throw actionRes.error;
-        }
-        linkQueryState.refresh();
-      }
+      linkDetail.createAction();
     } catch (err) {
       console.error("end link failed", err);
     }
@@ -80,8 +64,7 @@
 
   const goNext = async () => {
     try {
-      await link.goNext();
-      linkQueryState.refresh();
+      linkDetail.processAction();
     } catch (err) {
       console.error("withdraw failed", err);
     }
@@ -96,10 +79,13 @@
   };
 </script>
 
-{#if linkQueryState.isLoading}
+{#if linkDetail.query.isLoading}
   Loading...
 {/if}
-{#if link.link}
+{#if !link}
+Link not found
+{/if}
+{#if linkDetail.query.data && link}
   <div class="px-4 py-4">
     <div class="flex items-center gap-3 mb-4">
       <Button
@@ -113,21 +99,20 @@
       </Button>
 
       <h3 class="text-lg font-semibold flex-1 text-center">
-        {link.link.title}
+        {link.title}
       </h3>
 
       <!-- placeholder to keep title centered (matches back button width) -->
       <div class="w-8 h-8" aria-hidden="true"></div>
     </div>
 
-    {#if linkQueryState.data?.link}
-      <LinkInfoSection link={linkQueryState.data.link} />
-
-      <UsageInfoSection link={linkQueryState.data.link} />
+    {#if link}
+      <LinkInfoSection link={link} />
+      <UsageInfoSection link={link} />
     {/if}
 
     <div class="mb-20">
-      {#if link.link.state === LinkState.ACTIVE}
+  {#if link.state === LinkState.ACTIVE}
         <Button
           variant="outline"
           onclick={endLink}
@@ -143,7 +128,7 @@
           {showCopied ? "Copied" : "Copy link"}
         </Button>
       {/if}
-      {#if link.link.state === LinkState.INACTIVE}
+  {#if link.state === LinkState.INACTIVE}
         <Button
           variant="outline"
           onclick={createWithdrawAction}
@@ -152,7 +137,7 @@
           Withdraw
         </Button>
       {/if}
-      {#if link.link.state === LinkState.CREATE_LINK}
+  {#if link.state === LinkState.CREATE_LINK}
         <Button
           variant="outline"
           onclick={openDrawer}
@@ -165,6 +150,12 @@
   </div>
 {/if}
 
-{#if showTxCart}
-  <TxCart isOpen={showTxCart} {link} {goNext} {onCloseDrawer} />
+{#if showTxCart && link && linkDetail.action}
+  <TxCart
+    isOpen={showTxCart}
+    link={link}
+    action={linkDetail.action}
+    {goNext}
+    {onCloseDrawer}
+  />
 {/if}

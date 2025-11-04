@@ -59,5 +59,13 @@
 
   <Button onclick={onClickCreate}>Create</Button>
 
-  <TxCart isOpen={isOpenTxCart} {link} {goNext} onCloseDrawer={onCloseTxCart} />
+  {#if link.link && link.action && isOpenTxCart}
+    <TxCart
+      isOpen={isOpenTxCart}
+      link={link.link}
+      action={link.action}
+      {goNext}
+      onCloseDrawer={onCloseTxCart}
+    />
+  {/if}
 </div>
