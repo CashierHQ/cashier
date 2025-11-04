@@ -581,6 +581,26 @@ async fn it_should_fail_reexecute_icrc112_icrc_immediately_due_to_deduplication(
 
         // Assert: Balance should remain unchanged due to deduplication
         assert!(icrc112_reexecution_result.is_ok());
+        for res in icrc112_reexecution_result.unwrap() {
+            for call_response in res {
+                match call_response.parsed_res {
+                    Err(decode_err) => {
+                        // Expected error due to deduplication
+                        let s = format!("{:?}", decode_err).to_lowercase();
+                        assert!(
+                            s.contains("transaction is a duplicate of another transaction in block")
+                        );
+                    }
+                    Ok(_) => {
+                        panic!(
+                            "Expected an error (decode or protocol), got success: {:?}",
+                            call_response.parsed_res
+                        );
+                    }
+                }
+            }
+        };
+
         let icp_caller_balance_after_reexecution =
             icp_ledger_client.balance_of(&caller_account).await.unwrap();
         assert_eq!(
@@ -670,6 +690,26 @@ async fn it_should_fail_reexecute_icrc112_icrc_after_1week_due_to_deduplication(
 
         // Assert: Balance should remain unchanged due to deduplication
         assert!(icrc112_reexecution_result.is_ok());
+        for res in icrc112_reexecution_result.unwrap() {
+            for call_response in res {
+                match call_response.parsed_res {
+                    Err(decode_err) => {
+                        // Expected error due to deduplication
+                        let s = format!("{:?}", decode_err).to_lowercase();
+                        println!("error message {}", s);
+                        assert!(
+                            s.contains("transaction is a duplicate of another transaction in block")
+                        );
+                    }
+                    Ok(_) => {
+                        panic!(
+                            "Expected an error (decode or protocol), got success: {:?}",
+                            call_response.parsed_res
+                        );
+                    }
+                }
+            }
+        };
         let icp_caller_balance_after_reexecution =
             icp_ledger_client.balance_of(&caller_account).await.unwrap();
         assert_eq!(
