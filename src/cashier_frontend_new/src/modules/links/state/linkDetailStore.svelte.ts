@@ -13,6 +13,10 @@ import { LinkState } from "../types/link/linkState";
 import { LinkType } from "../types/link/linkType";
 import { assertUnreachable } from "$lib/rsMatch";
 import { Err, Ok, type Result } from "ts-results-es";
+import type { LinkDetailState } from "./linkDetailStates";
+import { LinkCreatedState } from "./linkDetailStates/created";
+import { LinkDetailStep } from "./linkDetailStates/linkStep";
+import { LinkInactiveState } from "./linkDetailStates/inactive";
 
 // A state for the user tokens list
 
@@ -130,29 +134,110 @@ export const fetchLinkDetail = async (
 };
 
 /**
- * Fetch link detail along with optional action
- * @param id Link ID
- * @param action Optional action type to fetch along with the link
- * @param watch Watch dependencies for re-fetching
- * @returns Managed state containing link and optional action
+ * Store for link detail
  */
-export const linkDetailStore = ({
-  id,
-  action,
-}: {
-  id: string;
-  action?: ActionTypeValue;
-}) =>
-  managedState<LinkAndAction>({
-    queryFn: async () => {
-      const linkDetail = await fetchLinkDetail(id, {
-        action,
-        anonymous: !authState.isLoggedIn,
-      });
-      if (linkDetail.isErr()) {
-        throw linkDetail.error;
-      }
-      return linkDetail.value;
-    },
-    watch: true,
-  });
+export class LinkDetailStore {
+  #linkDetailQuery;
+  #state: LinkDetailState;
+  public link?: Link;
+  public action?: Action;
+  #id: string;
+
+  constructor({ id, action }: { id: string; action?: ActionTypeValue }) {
+    this.#id = id;
+    this.#linkDetailQuery = managedState<LinkAndAction>({
+      queryFn: async () => {
+        const linkDetail = await fetchLinkDetail(id, {
+          action,
+          anonymous: !authState.isLoggedIn,
+        });
+        if (linkDetail.isErr()) {
+          throw linkDetail.error;
+        }
+        return linkDetail.value;
+      },
+      watch: true,
+    });
+    this.#state = new LinkCreatedState(this);
+
+    $effect(() => {
+      this.link = this.#linkDetailQuery.data?.link;
+      this.action = this.#linkDetailQuery.data?.action;
+    });
+  }
+
+  /**
+   * Get link detail query
+   */
+  get query() {
+    return this.#linkDetailQuery;
+  }
+
+  /**
+   * Get link detail state
+   */
+  get state() {
+    return this.#state;
+  }
+  /**
+   * Set link detail state
+   */
+  set state(state: LinkDetailState) {
+    this.#state = state;
+  }
+  /**
+   * Get link id
+   */
+  get id() {
+    return this.#id;
+  }
+  /**
+   * Set link id
+   */
+  set id(id: string) {
+    this.#id = id;
+  }
+
+  /**
+   * Create an action based on the current state
+   */
+  async createAction() {
+    this.#state.createAction();
+  }
+
+  /**
+   * Process the current action in the store
+   */
+  async processAction() {
+    this.#state.processAction();
+  }
+
+  /**
+   * Disable the link from active -> inactive state
+   * @returns void
+   * @throws Error when link is missing or not active and backend call fails
+   */
+  async disableLink() {
+    if (!this.link) {
+      throw new Error("Link is missing");
+    }
+
+    if (
+      this.#state.step !== LinkDetailStep.ACTIVE &&
+      this.link.state !== LinkState.ACTIVE
+    ) {
+      throw new Error("Only active links can be disabled");
+    }
+
+    const result = await cashierBackendService.disableLinkV2(this.link.id);
+
+    if (result.isErr()) {
+      throw new Error(`Failed to active link: ${result.error}`);
+    }
+
+    // Update link and action in the store
+    this.link = LinkMapper.fromBackendType(result.value);
+    this.action = undefined;
+    this.#state = new LinkInactiveState(this);
+  }
+}
