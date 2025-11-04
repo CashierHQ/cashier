@@ -22,7 +22,7 @@ async fn it_should_fail_activate_icp_token_tip_linkv2_if_caller_anonymous() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, ICP_TOKEN, 1_000_000u64).await;
+            create_tip_linkv2_fixture(ctx, ICP_TOKEN, Nat::from(1_000_000u64)).await;
 
         let caller = Principal::anonymous();
         let caller_fixture = LinkTestFixture::new(test_fixture.ctx.clone(), &caller).await;
@@ -56,7 +56,7 @@ async fn it_should_fail_activate_icp_token_tip_linkv2_if_caller_not_creator() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, ICP_TOKEN, 1_000_000u64).await;
+            create_tip_linkv2_fixture(ctx, ICP_TOKEN, Nat::from(1_000_000u64)).await;
 
         let caller = TestUser::User2.get_principal();
         let caller_fixture = LinkTestFixture::new(test_fixture.ctx.clone(), &caller).await;
@@ -100,7 +100,7 @@ async fn it_should_fail_activate_icp_token_tip_linkv2_if_link_not_exists() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (test_fixture, _create_link_result) =
-            create_tip_linkv2_fixture(ctx, ICP_TOKEN, 1_000_000u64).await;
+            create_tip_linkv2_fixture(ctx, ICP_TOKEN, Nat::from(1_000_000u64)).await;
 
         // Act: Activate the link
         let action_id = "not_existing_action_id".to_string();
@@ -133,7 +133,7 @@ async fn it_should_fail_activate_icp_token_tip_linkv2_if_insufficient_token_bala
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, ICP_TOKEN, 1_000_000u64).await;
+            create_tip_linkv2_fixture(ctx, ICP_TOKEN, Nat::from(1_000_000u64)).await;
 
         // Act: Activate the link
         let action_id = create_link_result.action.id.clone();
@@ -169,7 +169,7 @@ async fn it_should_fail_activate_icp_token_tip_linkv2_if_insufficient_icp_allowa
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, ICP_TOKEN, 1_000_000u64).await;
+            create_tip_linkv2_fixture(ctx, ICP_TOKEN, Nat::from(1_000_000u64)).await;
 
         // Act: Execute only deposit asset tx in ICRC112 requests
         let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
@@ -222,7 +222,7 @@ async fn it_should_fail_activate_icrc_token_tip_linkv2_if_insufficient_token_bal
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, 1_000_000u64).await;
+            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, Nat::from(1_000_000u64)).await;
 
         // Act: Activate the link
         let action_id = create_link_result.action.id.clone();
@@ -257,9 +257,9 @@ async fn it_should_succeed_activate_icp_token_tip_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+            create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount.clone()).await;
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
 
         // Act: Execute ICRC112 requests (simulate FE behavior)
@@ -287,11 +287,7 @@ async fn it_should_succeed_activate_icp_token_tip_linkv2() {
 
         assert_eq!(
             icp_link_balance,
-            test_utils::calculate_amount_for_wallet_to_link_transfer(
-                tip_amount,
-                &icp_ledger_fee,
-                1
-            ),
+            test_utils::calculate_amount_for_wallet_to_link_transfer(tip_amount, icp_ledger_fee, 1),
             "Link balance is incorrect"
         );
 
@@ -320,9 +316,9 @@ async fn it_should_succeed_activate_icrc_token_tip_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let tip_amount = 5_000_000u64;
+        let tip_amount = Nat::from(5_000_000u64);
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount).await;
+            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount.clone()).await;
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
@@ -354,7 +350,7 @@ async fn it_should_succeed_activate_icrc_token_tip_linkv2() {
             ckbtc_link_balance,
             test_utils::calculate_amount_for_wallet_to_link_transfer(
                 tip_amount,
-                &ckbtc_ledger_fee,
+                ckbtc_ledger_fee,
                 1,
             ),
             "Link balance is incorrect"

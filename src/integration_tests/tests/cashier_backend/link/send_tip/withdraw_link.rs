@@ -2,7 +2,7 @@ use crate::{
     cashier_backend::link::fixture::{LinkTestFixture, create_tip_link_fixture},
     utils::{link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context},
 };
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_backend_types::{
     constant,
     dto::action::CreateActionInput,
@@ -19,7 +19,8 @@ use icrc_ledger_types::icrc1::account::Account;
 async fn it_should_error_withdraw_link_tip_if_caller_anonymous() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let (creator_fixture, link) = create_tip_link_fixture(ctx, constant::ICP_TOKEN, 1u64).await;
+        let (creator_fixture, link) =
+            create_tip_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1u64)).await;
 
         let caller = Principal::anonymous();
         let caller_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &caller).await;
@@ -51,7 +52,8 @@ async fn it_should_error_withdraw_link_tip_if_caller_anonymous() {
 async fn it_should_error_withdraw_link_tip_if_caller_not_creator() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let (creator_fixture, link) = create_tip_link_fixture(ctx, constant::ICP_TOKEN, 1u64).await;
+        let (creator_fixture, link) =
+            create_tip_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1u64)).await;
 
         let caller = TestUser::User2.get_principal();
         let caller_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &caller).await;
@@ -85,7 +87,7 @@ async fn it_should_withdraw_link_tip_icp_token_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_tip_link_fixture(ctx, constant::ICP_TOKEN, 10_000u64).await;
+            create_tip_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(10_000u64)).await;
 
         let icp_ledger_client = creator_fixture
             .ctx
@@ -121,7 +123,7 @@ async fn it_should_withdraw_link_tip_icp_token_successfully() {
         // Assert
         assert_eq!(withdraw_result.id, withdraw_action.id);
 
-        let tip_amount = link.asset_info[0].amount_per_link_use_action;
+        let tip_amount = link.asset_info[0].amount_per_link_use_action.clone();
         let caller_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
         assert_eq!(
             caller_balance_after,
@@ -148,7 +150,7 @@ async fn benchmark_withdraw_link_tip_icp_token() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_tip_link_fixture(ctx, constant::ICP_TOKEN, 10_000u64).await;
+            create_tip_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(10_000u64)).await;
 
         let be_cycles_before = ctx
             .client
@@ -183,7 +185,7 @@ async fn it_should_withdraw_link_tip_icrc_token_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_tip_link_fixture(ctx, constant::CKBTC_ICRC_TOKEN, 1_000_000u64).await;
+            create_tip_link_fixture(ctx, constant::CKBTC_ICRC_TOKEN, Nat::from(1_000_000u64)).await;
 
         let icrc_ledger_client = creator_fixture
             .ctx
@@ -222,7 +224,7 @@ async fn it_should_withdraw_link_tip_icrc_token_successfully() {
         // Assert
         assert_eq!(withdraw_result.id, withdraw_action.id);
 
-        let tip_amount = link.asset_info[0].amount_per_link_use_action;
+        let tip_amount = link.asset_info[0].amount_per_link_use_action.clone();
         let caller_balance_after = icrc_ledger_client
             .balance_of(&caller_account)
             .await
@@ -252,7 +254,7 @@ async fn benchmark_withdraw_link_tip_icrc_token() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_tip_link_fixture(ctx, constant::CKBTC_ICRC_TOKEN, 1_000_000u64).await;
+            create_tip_link_fixture(ctx, constant::CKBTC_ICRC_TOKEN, Nat::from(1_000_000u64)).await;
 
         let be_cycles_before = ctx
             .client

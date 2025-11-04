@@ -1,6 +1,6 @@
 use crate::cashier_backend::link::fixture::{LinkTestFixture, create_airdrop_link_fixture};
 use crate::utils::{principal::TestUser, with_pocket_ic_context};
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::{
@@ -15,7 +15,7 @@ async fn it_should_error_use_link_airdrop_icp_if_caller_anonymous() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000, 5).await;
+            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64), 5).await;
 
         let claimer = Principal::anonymous();
         let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
@@ -48,7 +48,7 @@ async fn it_should_use_link_airdrop_icp_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64, 5).await;
+            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64), 5).await;
 
         let claimer = TestUser::User2.get_principal();
         let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
@@ -89,8 +89,8 @@ async fn it_should_use_link_airdrop_icp_successfully() {
         // Assert
         assert_eq!(claim_result.id, claim_action.id);
 
-        let airdrop_amount = link.asset_info[0].amount_per_link_use_action;
-        assert_ne!(airdrop_amount, 0);
+        let airdrop_amount = link.asset_info[0].amount_per_link_use_action.clone();
+        assert_ne!(airdrop_amount, Nat::from(0u64));
 
         let claimer_balance_after = icp_ledger_client
             .balance_of(&claimer_account)
@@ -126,7 +126,7 @@ async fn benchmark_use_link_airdrop_icp() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64, 5).await;
+            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64), 5).await;
 
         let claimer = TestUser::User2.get_principal();
         let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
@@ -165,7 +165,7 @@ async fn it_should_error_use_link_airdrop_multiple_times_from_same_user() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64, 5).await;
+            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64), 5).await;
 
         let claimer = TestUser::User2.get_principal();
         let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
@@ -207,10 +207,10 @@ async fn it_should_use_link_airdrop_multiple_times_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64, 5).await;
+            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64), 5).await;
 
-        let airdrop_amount = link.asset_info[0].amount_per_link_use_action;
-        assert_ne!(airdrop_amount, 0);
+        let airdrop_amount = link.asset_info[0].amount_per_link_use_action.clone();
+        assert_ne!(airdrop_amount, Nat::from(0u64));
         let max_use_count = link.link_use_action_max_count;
         let icp_ledger_client = creator_fixture
             .ctx
@@ -276,10 +276,10 @@ async fn it_should_error_use_link_airdrop_more_than_max_use_count() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64, 5).await;
+            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64), 5).await;
 
-        let airdrop_amount = link.asset_info[0].amount_per_link_use_action;
-        assert_ne!(airdrop_amount, 0);
+        let airdrop_amount = link.asset_info[0].amount_per_link_use_action.clone();
+        assert_ne!(airdrop_amount, Nat::from(0u64));
         let max_use_count = link.link_use_action_max_count;
 
         for _i in 0..max_use_count {
@@ -325,8 +325,13 @@ async fn it_should_error_use_link_airdrop_more_than_max_use_count() {
 async fn it_should_use_link_airdrop_icrc_token_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let (creator_fixture, link) =
-            create_airdrop_link_fixture(ctx, constant::CKUSDC_ICRC_TOKEN, 1_000_000u64, 5).await;
+        let (creator_fixture, link) = create_airdrop_link_fixture(
+            ctx,
+            constant::CKUSDC_ICRC_TOKEN,
+            Nat::from(1_000_000u64),
+            5,
+        )
+        .await;
 
         let claimer = TestUser::User2.get_principal();
         let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
@@ -369,8 +374,8 @@ async fn it_should_use_link_airdrop_icrc_token_successfully() {
         // Assert
         assert_eq!(claim_result.id, claim_action.id);
 
-        let airdrop_amount = link.asset_info[0].amount_per_link_use_action;
-        assert_ne!(airdrop_amount, 0);
+        let airdrop_amount = link.asset_info[0].amount_per_link_use_action.clone();
+        assert_ne!(airdrop_amount, Nat::from(0u64));
 
         let claimer_balance_after = ckusdc_ledger_client
             .balance_of(&claimer_account)
@@ -405,8 +410,13 @@ async fn it_should_use_link_airdrop_icrc_token_successfully() {
 async fn benchmark_use_link_airdrop_icrc_token() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let (creator_fixture, link) =
-            create_airdrop_link_fixture(ctx, constant::CKUSDC_ICRC_TOKEN, 1_000_000u64, 5).await;
+        let (creator_fixture, link) = create_airdrop_link_fixture(
+            ctx,
+            constant::CKUSDC_ICRC_TOKEN,
+            Nat::from(1_000_000u64),
+            5,
+        )
+        .await;
 
         let claimer = TestUser::User2.get_principal();
         let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;

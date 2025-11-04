@@ -24,7 +24,7 @@ use cashier_common::constant::CREATE_LINK_FEE;
 async fn it_should_fail_get_tip_linkv2_details_if_link_not_found() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, _create_link_result) =
             activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
 
@@ -56,7 +56,7 @@ async fn it_should_fail_get_tip_linkv2_details_if_link_not_found() {
 async fn it_should_succeed_get_tip_linkv2_details_with_no_option() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
             activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
 
@@ -80,7 +80,7 @@ async fn it_should_succeed_get_tip_linkv2_details_with_no_option() {
 async fn it_should_succeed_get_linkv2_details_with_create_action_succeeded() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
             activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
 
@@ -118,7 +118,7 @@ async fn it_should_succeed_get_linkv2_details_with_create_action_succeeded() {
 async fn it_should_succeed_get_linkv2_details_with_option_action_not_existent() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
             activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
 
@@ -150,7 +150,7 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
             create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount).await;
 
@@ -260,9 +260,9 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
 async fn it_should_succeed_get_linkv2_details_with_receive_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount.clone()).await;
 
         let receiver = TestUser::User2.get_principal();
         let receiver_fixture = LinkTestFixture::new(test_fixture.ctx.clone(), &receiver).await;
@@ -310,11 +310,7 @@ async fn it_should_succeed_get_linkv2_details_with_receive_action() {
             IntentType::Transfer(ref transfer) => {
                 assert_eq!(transfer.to, Wallet::new(receiver));
                 assert_eq!(transfer.from, link_id_to_account(ctx, &link_id).into());
-                assert_eq!(
-                    transfer.amount,
-                    Nat::from(tip_amount),
-                    "Transfer amount incorrect"
-                );
+                assert_eq!(transfer.amount, tip_amount, "Transfer amount incorrect");
             }
             _ => panic!("Expected Transfer intent type"),
         }
@@ -339,7 +335,7 @@ async fn it_should_succeed_get_linkv2_details_with_withdraw_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let tip_amount = 1_000_000u64;
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
             activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
 

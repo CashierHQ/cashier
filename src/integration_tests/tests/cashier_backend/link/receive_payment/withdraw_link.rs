@@ -4,7 +4,7 @@ use crate::{
     },
     utils::{principal::TestUser, with_pocket_ic_context},
 };
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_backend_types::{
     constant,
     dto::action::CreateActionInput,
@@ -21,9 +21,12 @@ use icrc_ledger_types::icrc1::account::Account;
 async fn it_should_error_withdraw_link_payment_if_caller_anonymous() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let (creator_fixture, link) =
-            create_and_use_receive_payment_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64)
-                .await;
+        let (creator_fixture, link) = create_and_use_receive_payment_link_fixture(
+            ctx,
+            constant::ICP_TOKEN,
+            Nat::from(1_000_000u64),
+        )
+        .await;
 
         let caller = Principal::anonymous();
         let caller_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &caller).await;
@@ -55,9 +58,12 @@ async fn it_should_error_withdraw_link_payment_if_caller_anonymous() {
 async fn it_should_error_withdraw_link_payment_if_caller_not_creator() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let (creator_fixture, link) =
-            create_and_use_receive_payment_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64)
-                .await;
+        let (creator_fixture, link) = create_and_use_receive_payment_link_fixture(
+            ctx,
+            constant::ICP_TOKEN,
+            Nat::from(1_000_000u64),
+        )
+        .await;
 
         let caller = TestUser::User2.get_principal();
         let caller_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &caller).await;
@@ -90,9 +96,12 @@ async fn it_should_error_withdraw_link_payment_if_caller_not_creator() {
 async fn it_should_withdraw_link_payment_icp_token_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let (creator_fixture, link) =
-            create_and_use_receive_payment_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64)
-                .await;
+        let (creator_fixture, link) = create_and_use_receive_payment_link_fixture(
+            ctx,
+            constant::ICP_TOKEN,
+            Nat::from(1_000_000u64),
+        )
+        .await;
 
         let icp_ledger_client = creator_fixture
             .ctx
@@ -128,7 +137,7 @@ async fn it_should_withdraw_link_payment_icp_token_successfully() {
         // Assert
         assert_eq!(withdraw_result.id, withdraw_action.id);
 
-        let link_amount = link.asset_info[0].amount_per_link_use_action;
+        let link_amount = link.asset_info[0].amount_per_link_use_action.clone();
         let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
 
         let caller_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
@@ -149,9 +158,12 @@ async fn it_should_withdraw_link_payment_icp_token_successfully() {
 async fn benchmark_withdraw_link_payment_icp_token() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let (creator_fixture, link) =
-            create_and_use_receive_payment_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64)
-                .await;
+        let (creator_fixture, link) = create_and_use_receive_payment_link_fixture(
+            ctx,
+            constant::ICP_TOKEN,
+            Nat::from(1_000_000u64),
+        )
+        .await;
 
         let be_cycles_before = ctx
             .client
@@ -191,7 +203,7 @@ async fn it_should_withdraw_link_payment_icrc_token_successfully() {
         let (creator_fixture, link) = create_and_use_receive_payment_link_fixture(
             ctx,
             constant::CKUSDC_ICRC_TOKEN,
-            1_000_000u64,
+            Nat::from(1_000_000u64),
         )
         .await;
 
@@ -238,7 +250,7 @@ async fn it_should_withdraw_link_payment_icrc_token_successfully() {
         // Assert
         assert_eq!(withdraw_result.id, withdraw_action.id);
 
-        let link_amount = link.asset_info[0].amount_per_link_use_action;
+        let link_amount = link.asset_info[0].amount_per_link_use_action.clone();
         let ckusdc_ledger_fee = ckusdc_ledger_client.fee().await.unwrap();
 
         let ckusdc_balance_after = ckusdc_ledger_client
@@ -265,7 +277,7 @@ async fn benchmark_withdraw_link_payment_icrc_token() {
         let (creator_fixture, link) = create_and_use_receive_payment_link_fixture(
             ctx,
             constant::CKUSDC_ICRC_TOKEN,
-            1_000_000u64,
+            Nat::from(1_000_000u64),
         )
         .await;
 
