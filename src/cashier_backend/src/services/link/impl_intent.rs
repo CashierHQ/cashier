@@ -110,9 +110,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                     })?;
                     let fee_amount = convert_nat_to_u64(fee_in_nat)?;
 
-                    let amount = Fee::CreateTipLinkFeeIcp.as_u64();
-                    let actual_amount = amount;
-                    let approve_amount = amount + fee_amount;
+                    let amount = Nat::from(Fee::CreateTipLinkFeeIcp.as_u64());
+                    let actual_amount = amount.clone();
+                    let approve_amount = amount.clone() + fee_amount;
 
                     let asset = Asset::IC {
                         address: ICP_CANISTER_PRINCIPAL,
@@ -237,10 +237,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                     }
                     .into();
                     let to_wallet = Wallet::new(user_wallet);
-
-                    let amount_64 = convert_nat_to_u64(&amount)?;
-
-                    (amount_64, None, None, asset, from_wallet, to_wallet, None)
+                    (amount, None, None, asset, from_wallet, to_wallet, None)
                 }
 
                 _ => {
@@ -261,9 +258,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                                 "TransferFrom data not found".to_string(),
                             )
                         })?;
-                    transfer_from_data.amount = Nat::from(amount);
-                    transfer_from_data.approve_amount = maybe_approve_amount.map(Nat::from);
-                    transfer_from_data.actual_amount = maybe_transfer_amount.map(Nat::from);
+                    transfer_from_data.amount = amount;
+                    transfer_from_data.approve_amount = maybe_approve_amount;
+                    transfer_from_data.actual_amount = maybe_transfer_amount;
                     transfer_from_data.asset = asset;
                     transfer_from_data.from = from_wallet;
                     transfer_from_data.to = to_wallet;
@@ -275,7 +272,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                     let mut transfer_data = intent.r#type.as_transfer().ok_or_else(|| {
                         CanisterError::HandleLogicError("Transfer data not found".to_string())
                     })?;
-                    transfer_data.amount = Nat::from(amount);
+                    transfer_data.amount = amount;
                     transfer_data.asset = asset;
                     transfer_data.from = from_wallet;
                     transfer_data.to = to_wallet;
@@ -711,7 +708,7 @@ mod tests {
                 asset: Asset::IC {
                     address: random_principal_id(),
                 },
-                amount_per_link_use_action: 100,
+                amount_per_link_use_action: Nat::from(100u64),
                 label: "invalid_label".to_string(), // Invalid label
             }],
             ..link
@@ -746,7 +743,7 @@ mod tests {
                 asset: Asset::IC {
                     address: random_principal_id(),
                 },
-                amount_per_link_use_action: 100,
+                amount_per_link_use_action: Nat::from(100u64),
                 label: format!(
                     "{}_{}",
                     INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"
@@ -782,7 +779,7 @@ mod tests {
                 asset: Asset::IC {
                     address: random_principal_id(),
                 },
-                amount_per_link_use_action: 100,
+                amount_per_link_use_action: Nat::from(100u64),
                 label: format!(
                     "{}_{}",
                     INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"
@@ -817,7 +814,7 @@ mod tests {
                 asset: Asset::IC {
                     address: random_principal_id(),
                 },
-                amount_per_link_use_action: 100,
+                amount_per_link_use_action: Nat::from(100u64),
                 label: format!(
                     "{}_{}",
                     INTENT_LABEL_SEND_TOKEN_BASKET_ASSET, "some_address"
@@ -967,7 +964,7 @@ mod tests {
                 asset: Asset::IC {
                     address: asset_address,
                 },
-                amount_per_link_use_action: 100,
+                amount_per_link_use_action: Nat::from(100u64),
                 label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
             }],
             ..link
@@ -1003,7 +1000,7 @@ mod tests {
                 asset: Asset::IC {
                     address: asset_address,
                 },
-                amount_per_link_use_action: 100,
+                amount_per_link_use_action: Nat::from(100u64),
                 label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
             }],
             ..link
@@ -1061,7 +1058,7 @@ mod tests {
                 asset: Asset::IC {
                     address: asset_address,
                 },
-                amount_per_link_use_action: 100,
+                amount_per_link_use_action: Nat::from(100u64),
                 label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
             }],
             ..link

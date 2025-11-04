@@ -2,7 +2,7 @@ use crate::cashier_backend::link::fixture::{LinkTestFixture, create_tip_link_fix
 use crate::utils::{
     link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context,
 };
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_backend_types::dto::action::CreateActionInput;
 use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::{constant, repository::action::v1::ActionState};
@@ -14,7 +14,7 @@ async fn it_should_error_use_link_tip_if_caller_anonymous() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_tip_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64).await;
+            create_tip_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64)).await;
 
         let claimer = Principal::anonymous();
         let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
@@ -47,7 +47,7 @@ async fn it_should_use_link_tip_icp_token_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_tip_link_fixture(ctx, constant::ICP_TOKEN, 5_000_000u64).await;
+            create_tip_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(5_000_000u64)).await;
 
         let claimer = TestUser::User2.get_principal();
         let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
@@ -87,8 +87,8 @@ async fn it_should_use_link_tip_icp_token_successfully() {
 
         // Assert
         assert_eq!(claim_result.id, claim_action.id);
-        let tip_amount = link.asset_info[0].amount_per_link_use_action;
-        assert_ne!(tip_amount, 0);
+        let tip_amount = link.asset_info[0].amount_per_link_use_action.clone();
+        assert_ne!(tip_amount, Nat::from(0u64));
 
         let claimer_balance_after = icp_ledger_client
             .balance_of(&claimer_account)
@@ -115,7 +115,7 @@ async fn benchmark_use_link_tip_icp_token() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_tip_link_fixture(ctx, constant::ICP_TOKEN, 5_000_000u64).await;
+            create_tip_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(5_000_000u64)).await;
         let claimer = TestUser::User2.get_principal();
         let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
         let be_cycles_before = ctx
@@ -151,7 +151,7 @@ async fn it_should_use_link_tip_icrc_token_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_tip_link_fixture(ctx, constant::CKBTC_ICRC_TOKEN, 1_000_000u64).await;
+            create_tip_link_fixture(ctx, constant::CKBTC_ICRC_TOKEN, Nat::from(1_000_000u64)).await;
 
         let claimer = TestUser::User2.get_principal();
         let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
@@ -193,8 +193,8 @@ async fn it_should_use_link_tip_icrc_token_successfully() {
 
         // Assert
         assert_eq!(claim_result.id, claim_action.id);
-        let tip_amount = link.asset_info[0].amount_per_link_use_action;
-        assert_ne!(tip_amount, 0);
+        let tip_amount = link.asset_info[0].amount_per_link_use_action.clone();
+        assert_ne!(tip_amount, Nat::from(0u64));
 
         let claimer_balance_after = icrc_ledger_client
             .balance_of(&claimer_account)
@@ -221,7 +221,7 @@ async fn benchmark_use_link_tip_icrc_token() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_tip_link_fixture(ctx, constant::CKBTC_ICRC_TOKEN, 1_000_000u64).await;
+            create_tip_link_fixture(ctx, constant::CKBTC_ICRC_TOKEN, Nat::from(1_000_000u64)).await;
         let claimer = TestUser::User2.get_principal();
         let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
         let be_cycles_before = ctx

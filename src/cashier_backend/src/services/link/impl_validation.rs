@@ -152,13 +152,14 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
                 return false;
             }
 
-            let Some(amount_per_link_use_action) =
-                asset_infos.first().map(|a| a.amount_per_link_use_action)
+            let Some(amount_per_link_use_action) = asset_infos
+                .first()
+                .map(|a| a.amount_per_link_use_action.clone())
             else {
                 return false;
             };
 
-            if amount_per_link_use_action == 0 {
+            if amount_per_link_use_action == 0u64 {
                 return false;
             }
 
@@ -177,13 +178,14 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
                 return false;
             }
 
-            let Some(amount_per_link_use_action) =
-                asset_infos.first().map(|a| a.amount_per_link_use_action)
+            let Some(amount_per_link_use_action) = asset_infos
+                .first()
+                .map(|a| a.amount_per_link_use_action.clone())
             else {
                 return false;
             };
 
-            if amount_per_link_use_action == 0 {
+            if amount_per_link_use_action == 0u64 {
                 return false;
             }
 
@@ -199,7 +201,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
 
             // Token basket can have multiple assets
             for asset in asset_infos.iter() {
-                if asset.amount_per_link_use_action == 0 {
+                if asset.amount_per_link_use_action == 0u64 {
                     return false;
                 }
             }
@@ -217,13 +219,14 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
                 return false;
             }
 
-            let Some(amount_per_link_use_action) =
-                asset_infos.first().map(|a| a.amount_per_link_use_action)
+            let Some(amount_per_link_use_action) = asset_infos
+                .first()
+                .map(|a| a.amount_per_link_use_action.clone())
             else {
                 return false;
             };
 
-            if amount_per_link_use_action == 1 {
+            if amount_per_link_use_action == 1u64 {
                 return false;
             }
 
@@ -269,14 +272,14 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
 
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
-
     use super::*;
     use crate::{
         repositories::tests::TestRepositories,
         services::link::test_fixtures::create_link_fixture,
         utils::test_utils::{random_id_string, random_principal_id, runtime::MockIcEnvironment},
     };
+    use candid::Nat;
+    use std::rc::Rc;
 
     #[test]
     fn it_should_error_link_validate_user_create_action_if_link_not_found() {
@@ -758,14 +761,14 @@ mod tests {
                 asset: Asset::IC {
                     address: random_principal_id(),
                 },
-                amount_per_link_use_action: 100,
+                amount_per_link_use_action: Nat::from(100u64),
                 label: "some_label".to_string(),
             },
             AssetInfo {
                 asset: Asset::IC {
                     address: random_principal_id(),
                 },
-                amount_per_link_use_action: 200,
+                amount_per_link_use_action: Nat::from(200u64),
                 label: "another_label".to_string(),
             },
         ];
@@ -788,7 +791,7 @@ mod tests {
             asset: Asset::IC {
                 address: random_principal_id(),
             },
-            amount_per_link_use_action: 0,
+            amount_per_link_use_action: Nat::from(0u64),
             label: "some_label".to_string(),
         }];
 
@@ -810,7 +813,7 @@ mod tests {
             asset: Asset::IC {
                 address: random_principal_id(),
             },
-            amount_per_link_use_action: 100,
+            amount_per_link_use_action: Nat::from(100u64),
             label: "some_label".to_string(),
         }];
 
@@ -855,14 +858,14 @@ mod tests {
                 asset: Asset::IC {
                     address: random_principal_id(),
                 },
-                amount_per_link_use_action: 100,
+                amount_per_link_use_action: Nat::from(100u64),
                 label: "some_label".to_string(),
             },
             AssetInfo {
                 asset: Asset::IC {
                     address: random_principal_id(),
                 },
-                amount_per_link_use_action: 200,
+                amount_per_link_use_action: Nat::from(200u64),
                 label: "another_label".to_string(),
             },
         ];
@@ -888,7 +891,7 @@ mod tests {
             asset: Asset::IC {
                 address: random_principal_id(),
             },
-            amount_per_link_use_action: 0,
+            amount_per_link_use_action: Nat::from(0u64),
             label: "some_label".to_string(),
         }];
 
@@ -913,7 +916,7 @@ mod tests {
             asset: Asset::IC {
                 address: random_principal_id(),
             },
-            amount_per_link_use_action: 100,
+            amount_per_link_use_action: Nat::from(100u64),
             label: "some_label".to_string(),
         }];
 
@@ -957,7 +960,7 @@ mod tests {
             asset: Asset::IC {
                 address: random_principal_id(),
             },
-            amount_per_link_use_action: 0,
+            amount_per_link_use_action: Nat::from(0u64),
             label: "some_label".to_string(),
         }];
 
@@ -982,7 +985,7 @@ mod tests {
             asset: Asset::IC {
                 address: random_principal_id(),
             },
-            amount_per_link_use_action: 100,
+            amount_per_link_use_action: Nat::from(100u64),
             label: "some_label".to_string(),
         }];
 
@@ -1027,14 +1030,14 @@ mod tests {
                 asset: Asset::IC {
                     address: random_principal_id(),
                 },
-                amount_per_link_use_action: 100,
+                amount_per_link_use_action: Nat::from(100u64),
                 label: "some_label".to_string(),
             },
             AssetInfo {
                 asset: Asset::IC {
                     address: random_principal_id(),
                 },
-                amount_per_link_use_action: 200,
+                amount_per_link_use_action: Nat::from(200u64),
                 label: "another_label".to_string(),
             },
         ];
@@ -1060,7 +1063,7 @@ mod tests {
             asset: Asset::IC {
                 address: random_principal_id(),
             },
-            amount_per_link_use_action: 1,
+            amount_per_link_use_action: Nat::from(1u64),
             label: "some_label".to_string(),
         }];
 

@@ -2,7 +2,7 @@ use crate::{
     cashier_backend::link::fixture::{LinkTestFixture, create_airdrop_link_fixture},
     utils::{principal::TestUser, with_pocket_ic_context},
 };
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_backend_types::{
     constant,
     dto::action::CreateActionInput,
@@ -20,7 +20,7 @@ async fn it_should_error_withdraw_link_airdrop_if_caller_anonymous() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64, 5).await;
+            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64), 5).await;
 
         let caller = Principal::anonymous();
         let caller_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &caller).await;
@@ -53,7 +53,7 @@ async fn it_should_error_withdraw_link_airdrop_if_caller_not_creator() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64, 5).await;
+            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64), 5).await;
 
         let caller = TestUser::User2.get_principal();
         let caller_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &caller).await;
@@ -87,7 +87,7 @@ async fn it_should_withdraw_link_airdrop_icp_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64, 5).await;
+            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64), 5).await;
 
         let icp_ledger_client = creator_fixture
             .ctx
@@ -123,7 +123,7 @@ async fn it_should_withdraw_link_airdrop_icp_successfully() {
         // Assert
         assert_eq!(withdraw_result.id, withdraw_action.id);
 
-        let link_amount = link.asset_info[0].amount_per_link_use_action;
+        let link_amount = link.asset_info[0].amount_per_link_use_action.clone();
         let max_use_count = link.link_use_action_max_count;
         let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
 
@@ -148,7 +148,7 @@ async fn benchmark_withdraw_link_airdrop_icp() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64, 5).await;
+            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64), 5).await;
         let be_cycles_before = ctx
             .client
             .cycle_balance(ctx.cashier_backend_principal)
@@ -184,8 +184,13 @@ async fn benchmark_withdraw_link_airdrop_icp() {
 async fn it_should_withdraw_link_airdrop_icrc_token_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let (creator_fixture, link) =
-            create_airdrop_link_fixture(ctx, constant::CKUSDC_ICRC_TOKEN, 1_000_000u64, 5).await;
+        let (creator_fixture, link) = create_airdrop_link_fixture(
+            ctx,
+            constant::CKUSDC_ICRC_TOKEN,
+            Nat::from(1_000_000u64),
+            5,
+        )
+        .await;
 
         let ckusdc_ledger_client = creator_fixture
             .ctx
@@ -224,7 +229,7 @@ async fn it_should_withdraw_link_airdrop_icrc_token_successfully() {
         // Assert
         assert_eq!(withdraw_result.id, withdraw_action.id);
 
-        let link_amount = link.asset_info[0].amount_per_link_use_action;
+        let link_amount = link.asset_info[0].amount_per_link_use_action.clone();
         let max_use_count = link.link_use_action_max_count;
 
         let ckusdc_ledger_fee = ckusdc_ledger_client.fee().await.unwrap();
@@ -253,8 +258,13 @@ async fn it_should_withdraw_link_airdrop_icrc_token_successfully() {
 async fn benchmark_withdraw_link_airdrop_icrc_token() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let (creator_fixture, link) =
-            create_airdrop_link_fixture(ctx, constant::CKUSDC_ICRC_TOKEN, 1_000_000u64, 5).await;
+        let (creator_fixture, link) = create_airdrop_link_fixture(
+            ctx,
+            constant::CKUSDC_ICRC_TOKEN,
+            Nat::from(1_000_000u64),
+            5,
+        )
+        .await;
 
         let be_cycles_before = ctx
             .client
