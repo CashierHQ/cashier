@@ -160,6 +160,8 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
                 assert_eq!(data.to, Wallet::new(receiver));
                 assert_eq!(data.from, link_id_to_account(ctx, &link_id).into());
                 assert_eq!(data.amount, tip_amount, "Icrc1Transfer amount incorrect");
+                assert!(data.memo.is_some());
+                assert!(data.ts.is_some());
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
@@ -269,6 +271,8 @@ async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
                 assert_eq!(data.to, Wallet::new(receiver));
                 assert_eq!(data.from, link_id_to_account(ctx, &link_id).into());
                 assert_eq!(data.amount, tip_amount, "Icrc1Transfer amount incorrect");
+                assert!(data.memo.is_some());
+                assert!(data.ts.is_some());
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
