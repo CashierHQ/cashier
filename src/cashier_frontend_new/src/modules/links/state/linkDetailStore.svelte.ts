@@ -17,6 +17,7 @@ import type { LinkDetailState } from "./linkDetailStates";
 import { LinkCreatedState } from "./linkDetailStates/created";
 import { LinkDetailStep } from "./linkDetailStates/linkStep";
 import { LinkInactiveState } from "./linkDetailStates/inactive";
+import { LinkActiveState } from "./linkDetailStates/active";
 
 // A state for the user tokens list
 
@@ -139,16 +140,13 @@ export const fetchLinkDetail = async (
 export class LinkDetailStore {
   #linkDetailQuery;
   #state: LinkDetailState;
-  public link?: Link;
-  public action?: Action;
   #id: string;
 
-  constructor({ id, action }: { id: string; action?: ActionTypeValue }) {
+  constructor({ id }: { id: string }) {
     this.#id = id;
     this.#linkDetailQuery = managedState<LinkAndAction>({
       queryFn: async () => {
         const linkDetail = await fetchLinkDetail(id, {
-          action,
           anonymous: !authState.isLoggedIn,
         });
         if (linkDetail.isErr()) {
@@ -161,8 +159,26 @@ export class LinkDetailStore {
     this.#state = new LinkCreatedState(this);
 
     $effect(() => {
-      this.link = this.#linkDetailQuery.data?.link;
-      this.action = this.#linkDetailQuery.data?.action;
+      const link = this.link;
+      if (!link) return;
+
+      // Update state based on link state
+      switch (link.state) {
+        case LinkState.CREATE_LINK:
+          this.#state = new LinkCreatedState(this);
+          break;
+        case LinkState.ACTIVE:
+          this.#state = new LinkActiveState(this);
+          break;
+        case LinkState.INACTIVE:
+          this.#state = new LinkInactiveState(this);
+          break;
+        case LinkState.INACTIVE_ENDED:
+          this.#state = new LinkInactiveState(this);
+          break;
+        default:
+          assertUnreachable(link.state);
+      }
     });
   }
 
@@ -171,6 +187,14 @@ export class LinkDetailStore {
    */
   get query() {
     return this.#linkDetailQuery;
+  }
+
+  get link() {
+    return this.#linkDetailQuery.data?.link;
+  }
+
+  get action() {
+    return this.#linkDetailQuery.data?.action;
   }
 
   /**
@@ -235,9 +259,7 @@ export class LinkDetailStore {
       throw new Error(`Failed to active link: ${result.error}`);
     }
 
-    // Update link and action in the store
-    this.link = LinkMapper.fromBackendType(result.value);
-    this.action = undefined;
     this.#state = new LinkInactiveState(this);
+    this.query.refresh();
   }
 }
