@@ -36,11 +36,7 @@
   }
 
   function handleLinkItemClick(link: Link) {
-    if (link.state == LinkState.CREATE_LINK) {
-      goto(resolve(`/link/create/${link.id}`));
-    } else {
-      goto(resolve(`/link/detail/${link.id}`));
-    }
+    goto(resolve(`/link/detail/${link.id}`));
   }
 </script>
 
