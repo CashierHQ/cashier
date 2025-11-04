@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::{CandidType, Principal};
+use candid::{CandidType, Nat, Principal};
 
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
@@ -27,7 +27,7 @@ pub struct CreateLinkInput {
 pub struct LinkDetailUpdateAssetInfoInput {
     pub asset: Asset,
     pub label: String,
-    pub amount_per_link_use_action: u64,
+    pub amount_per_link_use_action: Nat,
 }
 
 impl LinkDetailUpdateAssetInfoInput {
@@ -35,7 +35,7 @@ impl LinkDetailUpdateAssetInfoInput {
         AssetInfo {
             asset: self.asset.clone(),
             label: self.label.clone(),
-            amount_per_link_use_action: self.amount_per_link_use_action,
+            amount_per_link_use_action: self.amount_per_link_use_action.clone(),
         }
     }
 
@@ -78,7 +78,7 @@ pub struct LinkDto {
 pub struct AssetInfoDto {
     pub asset: Asset,
     pub label: String,
-    pub amount_per_link_use_action: u64,
+    pub amount_per_link_use_action: Nat,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -98,7 +98,7 @@ impl From<&AssetInfo> for AssetInfoDto {
         AssetInfoDto {
             asset: input.asset.clone(),
             label: input.label.clone(),
-            amount_per_link_use_action: input.amount_per_link_use_action,
+            amount_per_link_use_action: input.amount_per_link_use_action.clone(),
         }
     }
 }
@@ -126,7 +126,7 @@ impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfoDto {
         AssetInfoDto {
             asset: input.asset.clone(),
             label: input.label.clone(),
-            amount_per_link_use_action: input.amount_per_link_use_action,
+            amount_per_link_use_action: input.amount_per_link_use_action.clone(),
         }
     }
 }

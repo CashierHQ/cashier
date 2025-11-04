@@ -12,6 +12,7 @@ mod test_canister_upgrade {
     use crate::{cashier_backend::link::fixture::LinkTestFixture, utils::PocketIcTestContext};
 
     use super::*;
+    use candid::Nat;
     use cashier_backend_types::{
         dto::{action::ActionDto, link::LinkDto},
         repository::action::v1::ActionType,
@@ -28,10 +29,12 @@ mod test_canister_upgrade {
         let caller = TestUser::User1.get_principal();
         let mut fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
-        fixture.airdrop_icp(1_000_000_000, &caller).await;
+        fixture
+            .airdrop_icp(Nat::from(1_000_000_000u64), &caller)
+            .await;
 
         // Create tip link with 1 ICP
-        let tip_link_amount = 100_000_000u64;
+        let tip_link_amount = Nat::from(100_000_000u64);
         let link = fixture
             .create_tip_link(constant::ICP_TOKEN, tip_link_amount)
             .await;

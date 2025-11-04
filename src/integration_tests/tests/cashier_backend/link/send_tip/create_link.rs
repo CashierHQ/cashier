@@ -3,7 +3,7 @@ use crate::utils::{
     icrc_112::execute_icrc112_request, link_id_to_account::link_id_to_account, principal::TestUser,
     with_pocket_ic_context,
 };
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_backend_types::{
     constant,
     dto::link::{LinkStateMachineGoto, UpdateLinkInput},
@@ -26,7 +26,10 @@ async fn it_should_error_create_link_tip_if_caller_anonymous() {
         let test_fixture =
             LinkTestFixture::new(Arc::new(ctx.clone()), &Principal::anonymous()).await;
         let input = test_fixture
-            .tip_link_input(vec![constant::ICP_TOKEN.to_string()], vec![1_000_000u64])
+            .tip_link_input(
+                vec![constant::ICP_TOKEN.to_string()],
+                vec![Nat::from(1_000_000u64)],
+            )
             .unwrap();
 
         // Act
@@ -54,15 +57,17 @@ async fn it_should_create_link_tip_icp_token_successfully() {
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
 
-        let initial_balance = 1_000_000_000u64;
-        let tip_amount = 1_000_000u64;
+        let initial_balance = Nat::from(1_000_000_000u64);
+        let tip_amount = Nat::from(1_000_000u64);
         let caller_account = Account {
             owner: caller,
             subaccount: None,
         };
 
         // Act
-        test_fixture.airdrop_icp(initial_balance, &caller).await;
+        test_fixture
+            .airdrop_icp(initial_balance.clone(), &caller)
+            .await;
 
         // Assert
         let caller_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
@@ -70,14 +75,17 @@ async fn it_should_create_link_tip_icp_token_successfully() {
 
         // Act
         let link = test_fixture
-            .create_tip_link(constant::ICP_TOKEN, tip_amount)
+            .create_tip_link(constant::ICP_TOKEN, tip_amount.clone())
             .await;
 
         // Assert
         assert!(!link.id.is_empty());
         assert_eq!(link.link_type, LinkType::SendTip);
         assert_eq!(link.asset_info.len(), 1);
-        assert_eq!(link.asset_info[0].amount_per_link_use_action, tip_amount);
+        assert_eq!(
+            link.asset_info[0].amount_per_link_use_action.clone(),
+            tip_amount
+        );
 
         // Act
         let create_action = test_fixture
@@ -158,7 +166,7 @@ async fn it_should_create_link_tip_icp_token_successfully() {
             icp_link_balance,
             test_utils::calculate_amount_for_wallet_to_link_transfer(
                 tip_amount,
-                &icp_ledger_fee,
+                icp_ledger_fee.clone(),
                 1
             ),
             "Link balance is incorrect"
@@ -185,8 +193,8 @@ async fn benchmark_create_link_tip_icp_token() {
         // Arrange
         let caller = TestUser::User1.get_principal();
         let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
-        let initial_balance = 1_000_000_000u64;
-        let tip_amount = 1_000_000u64;
+        let initial_balance = Nat::from(1_000_000_000u64);
+        let tip_amount = Nat::from(1_000_000u64);
         test_fixture.airdrop_icp(initial_balance, &caller).await;
 
         let be_cycles_before = ctx
@@ -241,18 +249,24 @@ async fn it_should_create_link_tip_icrc_token_successfully() {
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);
 
-        let icp_initial_balance = 1_000_000u64;
-        let ckbtc_initial_balance = 1_000_000_000u64;
-        let tip_amount = 5_000_000u64;
+        let icp_initial_balance = Nat::from(1_000_000u64);
+        let ckbtc_initial_balance = Nat::from(1_000_000_000u64);
+        let tip_amount = Nat::from(5_000_000u64);
         let caller_account = Account {
             owner: caller,
             subaccount: None,
         };
 
         // Act
-        test_fixture.airdrop_icp(icp_initial_balance, &caller).await;
         test_fixture
-            .airdrop_icrc(constant::CKBTC_ICRC_TOKEN, ckbtc_initial_balance, &caller)
+            .airdrop_icp(icp_initial_balance.clone(), &caller)
+            .await;
+        test_fixture
+            .airdrop_icrc(
+                constant::CKBTC_ICRC_TOKEN,
+                ckbtc_initial_balance.clone(),
+                &caller,
+            )
             .await;
 
         // Assert
@@ -266,14 +280,17 @@ async fn it_should_create_link_tip_icrc_token_successfully() {
 
         // Act
         let link = test_fixture
-            .create_tip_link(constant::CKBTC_ICRC_TOKEN, tip_amount)
+            .create_tip_link(constant::CKBTC_ICRC_TOKEN, tip_amount.clone())
             .await;
 
         // Assert
         assert!(!link.id.is_empty());
         assert_eq!(link.link_type, LinkType::SendTip);
         assert_eq!(link.asset_info.len(), 1);
-        assert_eq!(link.asset_info[0].amount_per_link_use_action, tip_amount);
+        assert_eq!(
+            link.asset_info[0].amount_per_link_use_action.clone(),
+            tip_amount
+        );
 
         // Act
         let create_action = test_fixture
@@ -359,7 +376,7 @@ async fn it_should_create_link_tip_icrc_token_successfully() {
             ckbtc_link_balance,
             test_utils::calculate_amount_for_wallet_to_link_transfer(
                 tip_amount,
-                &ckbtc_ledger_fee,
+                ckbtc_ledger_fee.clone(),
                 1,
             ),
             "Link balance is incorrect"
@@ -388,9 +405,9 @@ async fn benchmark_create_link_tip_icrc_token() {
         // Arrange
         let caller = TestUser::User1.get_principal();
         let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
-        let icp_initial_balance = 1_000_000u64;
-        let ckbtc_initial_balance = 1_000_000_000u64;
-        let tip_amount = 5_000_000u64;
+        let icp_initial_balance = Nat::from(1_000_000u64);
+        let ckbtc_initial_balance = Nat::from(1_000_000_000u64);
+        let tip_amount = Nat::from(5_000_000u64);
         test_fixture.airdrop_icp(icp_initial_balance, &caller).await;
         test_fixture
             .airdrop_icrc(constant::CKBTC_ICRC_TOKEN, ckbtc_initial_balance, &caller)

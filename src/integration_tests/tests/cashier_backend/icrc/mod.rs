@@ -3,6 +3,7 @@ use crate::utils::icrc_112::execute_icrc112_request_malformed;
 use crate::utils::{
     icrc_112::execute_icrc112_request, principal::TestUser, with_pocket_ic_context,
 };
+use candid::Nat;
 use cashier_backend_types::constant::TRIGGER_TRANSACTION_METHOD_NAME;
 use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::{
@@ -22,15 +23,17 @@ async fn it_should_call_icrc_114_validate_success() {
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
 
-        let initial_balance = 1_000_000_000u64;
-        let tip_amount = 1_000_000u64;
+        let initial_balance = Nat::from(1_000_000_000u64);
+        let tip_amount = Nat::from(1_000_000u64);
         let caller_account = Account {
             owner: caller,
             subaccount: None,
         };
 
         // Act
-        test_fixture.airdrop_icp(initial_balance, &caller).await;
+        test_fixture
+            .airdrop_icp(initial_balance.clone(), &caller)
+            .await;
 
         // Assert
         let caller_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
@@ -38,14 +41,17 @@ async fn it_should_call_icrc_114_validate_success() {
 
         // Act
         let link = test_fixture
-            .create_tip_link(constant::ICP_TOKEN, tip_amount)
+            .create_tip_link(constant::ICP_TOKEN, tip_amount.clone())
             .await;
 
         // Assert
         assert!(!link.id.is_empty());
         assert_eq!(link.link_type, LinkType::SendTip);
         assert_eq!(link.asset_info.len(), 1);
-        assert_eq!(link.asset_info[0].amount_per_link_use_action, tip_amount);
+        assert_eq!(
+            link.asset_info[0].amount_per_link_use_action.clone(),
+            tip_amount
+        );
 
         // Act
         let create_action = test_fixture
@@ -129,15 +135,17 @@ async fn it_should_return_false_if_validate_icrc_112_response_failed() {
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
 
-        let initial_balance = 1_000_000_000u64;
-        let tip_amount = 1_000_000u64;
+        let initial_balance = Nat::from(1_000_000_000u64);
+        let tip_amount = Nat::from(1_000_000u64);
         let caller_account = Account {
             owner: caller,
             subaccount: None,
         };
 
         // Act
-        test_fixture.airdrop_icp(initial_balance, &caller).await;
+        test_fixture
+            .airdrop_icp(initial_balance.clone(), &caller)
+            .await;
 
         // Assert
         let caller_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
@@ -145,14 +153,17 @@ async fn it_should_return_false_if_validate_icrc_112_response_failed() {
 
         // Act
         let link = test_fixture
-            .create_tip_link(constant::ICP_TOKEN, tip_amount)
+            .create_tip_link(constant::ICP_TOKEN, tip_amount.clone())
             .await;
 
         // Assert
         assert!(!link.id.is_empty());
         assert_eq!(link.link_type, LinkType::SendTip);
         assert_eq!(link.asset_info.len(), 1);
-        assert_eq!(link.asset_info[0].amount_per_link_use_action, tip_amount);
+        assert_eq!(
+            link.asset_info[0].amount_per_link_use_action.clone(),
+            tip_amount
+        );
 
         // Act
         let create_action = test_fixture
