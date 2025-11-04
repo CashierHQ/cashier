@@ -698,7 +698,7 @@ async fn it_should_fail_reexecute_icrc112_icrc_after_1week_due_to_deduplication(
                         let s = format!("{:?}", decode_err).to_lowercase();
                         println!("error message {}", s);
                         assert!(
-                            s.contains("transaction is a duplicate of another transaction in block")
+                            s.contains("transaction's created_at_time is too far in the past")
                         );
                     }
                     Ok(_) => {
