@@ -5,6 +5,7 @@
   import ChooseLinkType from "$modules/links/components/createLink/chooseLinkType.svelte";
   import Preview from "../components/createLink/preview.svelte";
   import CreateLinkHeader from "$modules/links/components/createLink/createLinkHeader.svelte";
+  import CreatedLink from "../components/createLink/createdLink.svelte";
 
   let newLink = new LinkStore();
 </script>
@@ -20,6 +21,8 @@
         <AddAsset link={newLink} />
       {:else if newLink.state.step === LinkStep.PREVIEW}
         <Preview link={newLink} />
+      {:else if newLink.state.step === LinkStep.CREATED}
+        <CreatedLink link={newLink} />
       {/if}
     </div>
   </div>
