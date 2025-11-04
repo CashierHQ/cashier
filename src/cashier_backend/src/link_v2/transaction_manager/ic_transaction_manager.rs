@@ -189,15 +189,22 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
 
         // rollup action and intents states from processed transactions
         let rollup_action_state_result = self.validator_service.rollup_action_state(
-            action,
+            action.clone(),
             &intents,
             updated_intent_txs_map.clone(),
         )?;
+
+        // create ICRC112 requests from transactions
+        let canister_id = self.ic_env.id();
+        let link_account = get_link_account(&action.link_id, canister_id)?;
+        let icrc112_requests =
+            create_icrc_112_requests(&processed_transactions, link_account, canister_id)?;
 
         Ok(ProcessActionResult {
             action: rollup_action_state_result.action,
             intents: rollup_action_state_result.intents,
             intent_txs_map: updated_intent_txs_map,
+            icrc112_requests: Some(icrc112_requests),
             is_success,
             errors,
         })

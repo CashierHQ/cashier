@@ -12,7 +12,7 @@ use cashier_backend_types::{
     link_v2::graph::Graph,
     repository::{
         common::Asset,
-        transaction::v1::{FromCallType, IcTransaction, Protocol, Transaction},
+        transaction::v1::{FromCallType, IcTransaction, Protocol, Transaction, TransactionState},
     },
 };
 use icrc_112_utils::build_canister_call;
@@ -41,6 +41,12 @@ pub fn create_icrc_112_requests(
         .iter()
         .filter(|tx| tx.from_call_type == FromCallType::Wallet)
         .cloned()
+        .collect();
+
+    // filter only CREATED or FAILED transactions
+    let wallet_transactions: Vec<Transaction> = wallet_transactions
+        .into_iter()
+        .filter(|tx| tx.state == TransactionState::Created || tx.state == TransactionState::Fail)
         .collect();
 
     let tx_graph: Graph = wallet_transactions.clone().into();

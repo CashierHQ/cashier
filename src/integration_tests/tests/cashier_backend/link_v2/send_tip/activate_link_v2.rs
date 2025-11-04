@@ -10,11 +10,17 @@ use crate::utils::link_id_to_account::fee_treasury_account;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::{Nat, Principal};
-use cashier_backend_types::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
+use cashier_backend_types::constant::{self, CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use cashier_backend_types::dto::action::Icrc112Request;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::link_v2::dto::ProcessActionV2Input;
+use cashier_backend_types::repository::action::v1::ActionState;
+use cashier_backend_types::repository::common::Wallet;
+use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, IntentType};
 use cashier_backend_types::repository::link::v1::LinkState;
+use cashier_backend_types::repository::transaction::v1::{
+    IcTransaction, Protocol, TransactionState,
+};
 use cashier_common::constant::CREATE_LINK_FEE;
 use cashier_common::test_utils;
 use ic_mple_client::CanisterClientError;
@@ -132,32 +138,205 @@ async fn it_should_fail_activate_icp_token_tip_linkv2_if_link_not_exists() {
 }
 
 #[tokio::test]
-async fn it_should_fail_activate_icp_token_tip_linkv2_if_insufficient_token_balance_in_link() {
+async fn it_should_fail_activate_tip_linkv2_icp_if_icrc112_not_executed() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
+        let caller = TestUser::User1.get_principal();
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, ICP_TOKEN, Nat::from(1_000_000u64)).await;
+            create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount.clone()).await;
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+        let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
 
         // Act: Activate the link
         let action_id = create_link_result.action.id.clone();
         let activate_link_result = test_fixture.activate_link_v2(&action_id).await;
 
         // Assert: Activated link result
-        assert!(activate_link_result.is_err());
+        assert!(activate_link_result.is_ok());
+        let activate_link_result = activate_link_result.unwrap();
 
-        if let Err(err) = activate_link_result {
-            match err {
-                CanisterError::ValidationErrors(err) => {
-                    assert!(err.contains(
-                        format!("Insufficient balance for {} asset", ICP_PRINCIPAL).as_str(),
-                    ));
+        println!("activate_link_result: {:?}", activate_link_result);
+
+        // Assert: IsSuccess and Errors
+        assert!(!activate_link_result.is_success, "Activation should fail");
+        assert_eq!(
+            activate_link_result.errors.len(),
+            2,
+            "There should be 2 errors"
+        );
+
+        let error_message = activate_link_result.errors.join(", ");
+        assert!(
+            error_message
+                .contains(format!("Insufficient balance for {} asset", ICP_PRINCIPAL).as_str())
+        );
+        assert!(
+            error_message
+                .contains(format!("Insufficient allowance for {} asset", ICP_PRINCIPAL).as_str())
+        );
+
+        // Assert: ICRC112 requests
+        assert!(activate_link_result.action.icrc_112_requests.is_some());
+        let icrc112_requests = activate_link_result.action.icrc_112_requests.unwrap();
+        assert_eq!(icrc112_requests.len(), 1);
+        let requests = &icrc112_requests[0];
+
+        assert_eq!(requests.len(), 2);
+        for req in requests {
+            match req.method.as_str() {
+                "icrc1_transfer" => {
+                    assert_eq!(
+                        req.canister_id,
+                        Principal::from_text(ICP_PRINCIPAL).unwrap()
+                    );
                 }
-                _ => {
-                    panic!("Expected ValidationErrors, got different error: {:?}", err);
+                "icrc2_approve" => {
+                    assert_eq!(
+                        req.canister_id,
+                        Principal::from_text(ICP_PRINCIPAL).unwrap()
+                    );
                 }
+                _ => panic!("Unexpected method in ICRC-112 request"),
             }
-        } else {
-            panic!("Expected error, got success");
+        }
+
+        // Assert: Link state should remain Created
+        assert_eq!(
+            activate_link_result.link.state,
+            LinkState::CreateLink,
+            "Link state should remain Created"
+        );
+
+        // Assert: Action state should be Fail
+        assert_eq!(
+            activate_link_result.action.state,
+            ActionState::Fail,
+            "Action state should be Fail"
+        );
+
+        // Assert Intent 1: TransferWalletToLink
+        assert_eq!(
+            activate_link_result.action.intents.len(),
+            2,
+            "There should be 2 intents"
+        );
+        let link_id = activate_link_result.link.id.clone();
+
+        let intent1 = &activate_link_result.action.intents[0];
+        assert_eq!(
+            intent1.state,
+            IntentState::Fail,
+            "Intent1 state should be Fail"
+        );
+        assert_eq!(intent1.task, IntentTask::TransferWalletToLink);
+        match intent1.r#type {
+            IntentType::Transfer(ref transfer) => {
+                assert_eq!(transfer.from, Wallet::new(caller));
+                assert_eq!(transfer.to, link_id_to_account(ctx, &link_id).into());
+                assert_eq!(
+                    transfer.amount,
+                    test_utils::calculate_amount_for_wallet_to_link_transfer(
+                        tip_amount.clone(),
+                        icp_ledger_fee.clone(),
+                        1
+                    )
+                );
+            }
+            _ => panic!("Expected Transfer intent type"),
+        }
+        assert_eq!(intent1.transactions.len(), 1);
+        let tx0 = &intent1.transactions[0];
+        assert_eq!(
+            tx0.state,
+            TransactionState::Fail,
+            "Intent1-Transaction0 state should be Fail"
+        );
+        match tx0.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(ref data)) => {
+                assert_eq!(data.from, Wallet::new(caller));
+                assert_eq!(data.to, link_id_to_account(ctx, &link_id).into());
+                assert_eq!(
+                    data.amount,
+                    test_utils::calculate_amount_for_wallet_to_link_transfer(
+                        tip_amount,
+                        icp_ledger_fee.clone(),
+                        1
+                    )
+                );
+                assert!(data.memo.is_some());
+                assert!(data.ts.is_some());
+            }
+            _ => panic!("Expected Icrc1Transfer transaction"),
+        }
+
+        // Assert Intent 2: TransferWalletToTreasury
+        let intent2 = &activate_link_result.action.intents[1];
+        assert_eq!(
+            intent2.state,
+            IntentState::Fail,
+            "Intent2 state should be Fail"
+        );
+        assert_eq!(intent2.task, IntentTask::TransferWalletToTreasury);
+        match intent2.r#type {
+            IntentType::TransferFrom(ref transfer_from) => {
+                assert_eq!(transfer_from.from, Wallet::new(caller));
+                assert_eq!(
+                    transfer_from.to,
+                    Wallet::new(constant::FEE_TREASURY_PRINCIPAL)
+                );
+                assert_eq!(
+                    transfer_from.spender,
+                    Wallet::new(ctx.cashier_backend_principal)
+                );
+                assert_eq!(
+                    transfer_from.approve_amount,
+                    Some(
+                        test_utils::calculate_approval_amount_for_create_link(&icp_ledger_fee)
+                            .into()
+                    )
+                );
+            }
+            _ => panic!("Expected TransferFrom intent type"),
+        }
+        assert_eq!(intent2.transactions.len(), 2);
+        let tx1 = &intent2.transactions[0];
+        assert_eq!(
+            tx1.state,
+            TransactionState::Fail,
+            "Intent2-Transaction1 state should be Fail"
+        );
+        match tx1.protocol {
+            Protocol::IC(IcTransaction::Icrc2Approve(ref data)) => {
+                assert_eq!(data.from, Wallet::new(caller));
+                assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
+                assert_eq!(
+                    data.amount,
+                    Nat::from(test_utils::calculate_approval_amount_for_create_link(
+                        &icp_ledger_fee
+                    ))
+                );
+                assert!(data.memo.is_some());
+                assert!(data.ts.is_some());
+            }
+            _ => panic!("Expected Icrc2Approve transaction"),
+        }
+        let tx2 = &intent2.transactions[1];
+        assert_eq!(
+            tx2.state,
+            TransactionState::Created,
+            "Intent2-Transaction2 state should be Created"
+        );
+        match tx2.protocol {
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(ref data)) => {
+                assert_eq!(data.from, Wallet::new(caller));
+                assert_eq!(data.to, Wallet::new(constant::FEE_TREASURY_PRINCIPAL));
+                assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
+                assert_eq!(data.amount, Nat::from(CREATE_LINK_FEE));
+                assert!(data.memo.is_some());
+                assert!(data.ts.is_some());
+            }
+            _ => panic!("Expected Icrc2TransferFrom transaction"),
         }
 
         Ok(())
