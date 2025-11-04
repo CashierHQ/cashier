@@ -110,8 +110,6 @@ class CanisterBackendService {
       return Err(new Error("User not logged in"));
     }
 
-    console.log("Processing action with ID:", actionId);
-
     const response = await actor.user_process_action_v2({
       action_id: actionId,
     });
