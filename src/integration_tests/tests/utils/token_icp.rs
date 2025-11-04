@@ -28,11 +28,11 @@ impl<C: CanisterClient> IcpLedgerClient<C> {
     pub async fn transfer(
         &self,
         to_account: IcrcAccount,
-        amount: u64,
+        amount: Nat,
     ) -> Result<Nat, TransferError> {
         let transfer_args = TransferArg {
             memo: None,
-            amount: candid::Nat::from(amount),
+            amount,
             fee: None,
             from_subaccount: None,
             to: to_account,

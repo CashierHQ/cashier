@@ -2,7 +2,7 @@ use crate::cashier_backend::link::fixture::{LinkTestFixture, create_receive_paym
 use crate::utils::{
     icrc_112, link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context,
 };
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::{
     constant,
@@ -17,7 +17,8 @@ async fn it_should_error_use_link_payment_if_caller_anonymous() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_receive_payment_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64).await;
+            create_receive_payment_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64))
+                .await;
 
         let payer = Principal::anonymous();
         let payer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &payer).await;
@@ -50,13 +51,16 @@ async fn it_should_use_link_payment_icp_token_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_receive_payment_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64).await;
+            create_receive_payment_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64))
+                .await;
 
         let payer = TestUser::User2.get_principal();
         let mut payer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &payer).await;
 
-        let initial_balance = 1_000_000_000u64;
-        payer_fixture.airdrop_icp(initial_balance, &payer).await;
+        let initial_balance = Nat::from(1_000_000_000u64);
+        payer_fixture
+            .airdrop_icp(initial_balance.clone(), &payer)
+            .await;
 
         let icp_ledger_client = payer_fixture.ctx.new_icp_ledger_client(payer);
         let payer_account = Account {
@@ -123,14 +127,14 @@ async fn it_should_use_link_payment_icp_token_successfully() {
                 .all(|intent| intent.state == IntentState::Success)
         );
 
-        let payment_amount = link.asset_info[0].amount_per_link_use_action;
-        assert_ne!(payment_amount, 0);
+        let payment_amount = link.asset_info[0].amount_per_link_use_action.clone();
+        assert_ne!(payment_amount, Nat::from(0u64));
 
         let icp_balance_after = icp_ledger_client.balance_of(&payer_account).await.unwrap();
         let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
         assert_eq!(
             icp_balance_after,
-            icp_balance_before - payment_amount - icp_ledger_fee,
+            icp_balance_before - payment_amount.clone() - icp_ledger_fee,
             "payer balance after is incorrect"
         );
 
@@ -153,10 +157,11 @@ async fn benchmark_use_link_payment_icp_token() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let (creator_fixture, link) =
-            create_receive_payment_link_fixture(ctx, constant::ICP_TOKEN, 1_000_000u64).await;
+            create_receive_payment_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64))
+                .await;
         let payer = TestUser::User2.get_principal();
         let mut payer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &payer).await;
-        let initial_balance = 1_000_000_000u64;
+        let initial_balance = Nat::from(1_000_000_000u64);
         payer_fixture.airdrop_icp(initial_balance, &payer).await;
         let be_cycles_before = ctx
             .client
@@ -197,18 +202,23 @@ async fn benchmark_use_link_payment_icp_token() {
 async fn it_should_use_link_payment_icrc_token_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let (creator_fixture, link) =
-            create_receive_payment_link_fixture(ctx, constant::CKUSDC_ICRC_TOKEN, 1_000_000u64)
-                .await;
+        let (creator_fixture, link) = create_receive_payment_link_fixture(
+            ctx,
+            constant::CKUSDC_ICRC_TOKEN,
+            Nat::from(1_000_000u64),
+        )
+        .await;
 
         let payer = TestUser::User2.get_principal();
         let mut payer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &payer).await;
 
-        let initial_balance = 1_000_000_000u64;
+        let initial_balance = Nat::from(1_000_000_000u64);
 
-        payer_fixture.airdrop_icp(initial_balance, &payer).await;
         payer_fixture
-            .airdrop_icrc(constant::CKUSDC_ICRC_TOKEN, initial_balance, &payer)
+            .airdrop_icp(initial_balance.clone(), &payer)
+            .await;
+        payer_fixture
+            .airdrop_icrc(constant::CKUSDC_ICRC_TOKEN, initial_balance.clone(), &payer)
             .await;
 
         let ckusdc_ledger_client = payer_fixture
@@ -282,8 +292,8 @@ async fn it_should_use_link_payment_icrc_token_successfully() {
                 .all(|intent| intent.state == IntentState::Success)
         );
 
-        let payment_amount = link.asset_info[0].amount_per_link_use_action;
-        assert_ne!(payment_amount, 0);
+        let payment_amount = link.asset_info[0].amount_per_link_use_action.clone();
+        assert_ne!(payment_amount, Nat::from(0u64));
 
         let ckusdc_balance_after = ckusdc_ledger_client
             .balance_of(&payer_account)
@@ -292,7 +302,7 @@ async fn it_should_use_link_payment_icrc_token_successfully() {
         let ckusdc_ledger_fee = ckusdc_ledger_client.fee().await.unwrap();
         assert_eq!(
             ckusdc_balance_after,
-            ckusdc_balance_before - payment_amount - ckusdc_ledger_fee,
+            ckusdc_balance_before - payment_amount.clone() - ckusdc_ledger_fee,
             "payer balance after is incorrect"
         );
 
@@ -317,13 +327,18 @@ async fn it_should_use_link_payment_icrc_token_successfully() {
 async fn benchmark_use_link_payment_icrc_token() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let (creator_fixture, link) =
-            create_receive_payment_link_fixture(ctx, constant::CKUSDC_ICRC_TOKEN, 1_000_000u64)
-                .await;
+        let (creator_fixture, link) = create_receive_payment_link_fixture(
+            ctx,
+            constant::CKUSDC_ICRC_TOKEN,
+            Nat::from(1_000_000u64),
+        )
+        .await;
         let payer = TestUser::User2.get_principal();
         let mut payer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &payer).await;
-        let initial_balance = 1_000_000_000u64;
-        payer_fixture.airdrop_icp(initial_balance, &payer).await;
+        let initial_balance = Nat::from(1_000_000_000u64);
+        payer_fixture
+            .airdrop_icp(initial_balance.clone(), &payer)
+            .await;
         payer_fixture
             .airdrop_icrc(constant::CKUSDC_ICRC_TOKEN, initial_balance, &payer)
             .await;

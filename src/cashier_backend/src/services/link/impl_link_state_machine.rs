@@ -193,6 +193,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkStateMachine for LinkService
 
 #[cfg(test)]
 mod tests {
+    use candid::Nat;
     use cashier_backend_types::constant::{
         INTENT_LABEL_RECEIVE_PAYMENT_ASSET, INTENT_LABEL_SEND_AIRDROP_ASSET,
         INTENT_LABEL_SEND_TIP_ASSET, INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
@@ -300,7 +301,7 @@ mod tests {
                 address: random_principal_id(),
             },
             label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
-            amount_per_link_use_action: 1000000, // 0.01 ICP (8 decimals)
+            amount_per_link_use_action: Nat::from(1000000u64), // 0.01 ICP (8 decimals)
         };
         let input = CreateLinkInput {
             title: "Test Link".to_string(),
@@ -325,7 +326,10 @@ mod tests {
             link.asset_info[0].label,
             INTENT_LABEL_SEND_TIP_ASSET.to_string()
         );
-        assert_eq!(link.asset_info[0].amount_per_link_use_action, 1000000);
+        assert_eq!(
+            link.asset_info[0].amount_per_link_use_action,
+            Nat::from(1000000u64)
+        );
     }
 
     // SendTip failure test cases
@@ -365,14 +369,14 @@ mod tests {
                 address: random_principal_id(),
             },
             label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
-            amount_per_link_use_action: 1000000,
+            amount_per_link_use_action: Nat::from(1000000u64),
         };
         let mock_asset_info2 = LinkDetailUpdateAssetInfoInput {
             asset: Asset::IC {
                 address: random_principal_id(),
             },
             label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
-            amount_per_link_use_action: 2000000,
+            amount_per_link_use_action: Nat::from(2000000u64),
         };
         let input = CreateLinkInput {
             title: "Test Link".to_string(),
@@ -404,7 +408,7 @@ mod tests {
                 address: random_principal_id(),
             },
             label: INTENT_LABEL_SEND_TIP_ASSET.to_string(),
-            amount_per_link_use_action: 0, // Zero amount not allowed
+            amount_per_link_use_action: Nat::from(0u64), // Zero amount not allowed
         };
         let input = CreateLinkInput {
             title: "Test Link".to_string(),
@@ -462,14 +466,14 @@ mod tests {
                 address: random_principal_id(),
             },
             label: INTENT_LABEL_SEND_AIRDROP_ASSET.to_string(),
-            amount_per_link_use_action: 1000000,
+            amount_per_link_use_action: Nat::from(1000000u64),
         };
         let mock_asset_info2 = LinkDetailUpdateAssetInfoInput {
             asset: Asset::IC {
                 address: random_principal_id(),
             },
             label: INTENT_LABEL_SEND_AIRDROP_ASSET.to_string(),
-            amount_per_link_use_action: 2000000,
+            amount_per_link_use_action: Nat::from(2000000u64),
         };
         let input = CreateLinkInput {
             title: "Test Airdrop Link".to_string(),
@@ -501,7 +505,7 @@ mod tests {
                 address: random_principal_id(),
             },
             label: INTENT_LABEL_SEND_AIRDROP_ASSET.to_string(),
-            amount_per_link_use_action: 0, // Zero amount not allowed
+            amount_per_link_use_action: Nat::from(0u64), // Zero amount not allowed
         };
         let input = CreateLinkInput {
             title: "Test Airdrop Link".to_string(),
@@ -559,14 +563,14 @@ mod tests {
                 address: random_principal_id(),
             },
             label: INTENT_LABEL_SEND_TOKEN_BASKET_ASSET.to_string(),
-            amount_per_link_use_action: 1000000,
+            amount_per_link_use_action: Nat::from(1000000u64),
         };
         let mock_asset_info2 = LinkDetailUpdateAssetInfoInput {
             asset: Asset::IC {
                 address: random_principal_id(),
             },
             label: INTENT_LABEL_SEND_TOKEN_BASKET_ASSET.to_string(),
-            amount_per_link_use_action: 0, // Zero amount not allowed
+            amount_per_link_use_action: Nat::from(0u64), // Zero amount not allowed
         };
         let input = CreateLinkInput {
             title: "Test Token Basket Link".to_string(),
@@ -624,14 +628,14 @@ mod tests {
                 address: random_principal_id(),
             },
             label: INTENT_LABEL_RECEIVE_PAYMENT_ASSET.to_string(),
-            amount_per_link_use_action: 1000000,
+            amount_per_link_use_action: Nat::from(1000000u64),
         };
         let mock_asset_info2 = LinkDetailUpdateAssetInfoInput {
             asset: Asset::IC {
                 address: random_principal_id(),
             },
             label: INTENT_LABEL_RECEIVE_PAYMENT_ASSET.to_string(),
-            amount_per_link_use_action: 2000000,
+            amount_per_link_use_action: Nat::from(2000000u64),
         };
         let input = CreateLinkInput {
             title: "Test Payment Link".to_string(),
@@ -663,7 +667,7 @@ mod tests {
                 address: random_principal_id(),
             },
             label: INTENT_LABEL_RECEIVE_PAYMENT_ASSET.to_string(),
-            amount_per_link_use_action: 1, // Amount of 1 not allowed for ReceivePayment
+            amount_per_link_use_action: Nat::from(1u64), // Amount of 1 not allowed for ReceivePayment
         };
         let input = CreateLinkInput {
             title: "Test Payment Link".to_string(),

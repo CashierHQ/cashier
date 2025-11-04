@@ -1,3 +1,4 @@
+use candid::Nat;
 use cashier_backend_types::{
     dto::action::{ActionDto, UpdateActionInput},
     error::CanisterError,
@@ -18,12 +19,14 @@ async fn test_request_lock_for_update_action() {
         let mut fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
         // Setup user and airdrop tokens
-        fixture.airdrop_icp(1_000_000_000_000_000, &caller).await;
         fixture
-            .airdrop_icrc("ckBTC", 1_000_000_000_000_000, &caller)
+            .airdrop_icp(Nat::from(1_000_000_000_000_000u64), &caller)
             .await;
         fixture
-            .airdrop_icrc("ckUSDC", 1_000_000_000_000_000, &caller)
+            .airdrop_icrc("ckBTC", Nat::from(1_000_000_000_000_000u64), &caller)
+            .await;
+        fixture
+            .airdrop_icrc("ckUSDC", Nat::from(1_000_000_000_000_000u64), &caller)
             .await;
 
         // Create and process link to get ICRC-112 requests
