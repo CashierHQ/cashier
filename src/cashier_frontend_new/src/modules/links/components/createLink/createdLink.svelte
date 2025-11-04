@@ -45,6 +45,10 @@
   async function onClickCreate() {
     isOpenTxCart = true;
   }
+
+  async function onCloseTxCart() {
+    isOpenTxCart = false;
+  }
 </script>
 
 <h3 class="text-lg font-semibold">Created</h3>
@@ -55,5 +59,5 @@
 
   <Button onclick={onClickCreate}>Create</Button>
 
-  <TxCart isOpen={isOpenTxCart} {link} {goNext} />
+  <TxCart isOpen={isOpenTxCart} {link} {goNext} onCloseDrawer={onCloseTxCart} />
 </div>
