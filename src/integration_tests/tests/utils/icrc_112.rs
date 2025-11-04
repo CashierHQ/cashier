@@ -1,4 +1,4 @@
-use candid::Principal;
+use candid::{Decode, Principal};
 
 use cashier_backend_types::{
     constant::TRIGGER_TRANSACTION_METHOD_NAME, dto::action::Icrc112Request,
@@ -12,7 +12,39 @@ pub struct CanisterCallResponse {
     pub method: String,
     pub arg: Vec<u8>,
     pub res: Vec<u8>,
+    pub parsed_res: Result<candid::Nat, String>,
     pub nonce: Option<Vec<u8>>,
+}
+
+/// This function parses ICRC1, 2 standards response to its types
+pub fn parse_response(
+    method: &str,
+    res: Vec<u8>,
+) -> Result<candid::Nat, String> {
+    let parsed_res: Result<candid::Nat, String> =
+        candid::decode_one::<candid::Nat>(&res).map_err(|e| format!("Failed to decode response: {e}"));
+
+    let parsed_res = match method {
+        "icrc1_transfer" => {
+            Decode!(&res, Result<candid::Nat, icrc_ledger_types::icrc1::transfer::TransferError>)
+                .map_err(|e| format!("Failed to decode icrc1_transfer response: {e}"))
+                .and_then(|inner| match inner {
+                    Ok(n) => Ok(n),
+                    Err(err) => Err(format!("icrc1_transfer failed: {:?}", err.to_string())),
+                })
+        },
+        "icrc2_approve" => {
+            Decode!(&res, Result<candid::Nat, icrc_ledger_types::icrc2::approve::ApproveError>)
+                .map_err(|e| format!("Failed to decode icrc2_approve response: {e}"))
+                .and_then(|inner| match inner {
+                    Ok(n) => Ok(n),
+                    Err(err) => Err(format!("icrc2_approve failed: {:?}", err.to_string())),
+                })
+        },
+        _ => parsed_res,
+    };
+
+    parsed_res
 }
 
 /// Executes ICRC112 requests with error handling that stops iteration on first error
@@ -42,11 +74,15 @@ pub async fn execute_icrc112_request(
             }
 
             let res = res.unwrap();
+            
+            let parsed = parse_response(&request.method, res.clone());
+
             parallel_responses.push(CanisterCallResponse {
                 canister_id: request.canister_id,
                 method: request.method.clone(),
                 arg: request.arg.clone(),
                 res,
+                parsed_res: parsed,
                 nonce: request.nonce.clone(),
             });
         }
@@ -96,11 +132,14 @@ pub async fn execute_icrc112_request_malformed(
             }
 
             let res = res.unwrap();
+            let parsed_res = parse_response(&request.method, res.clone());
+
             parallel_responses.push(CanisterCallResponse {
                 canister_id: request.canister_id,
                 method: request.method.clone(),
                 arg: request.arg.clone(),
                 res,
+                parsed_res,
                 nonce: request.nonce.clone(),
             });
         }
