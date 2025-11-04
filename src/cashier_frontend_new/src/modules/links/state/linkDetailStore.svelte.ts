@@ -189,10 +189,16 @@ export class LinkDetailStore {
     return this.#linkDetailQuery;
   }
 
+  /**
+   * Get link from the query result
+   */
   get link() {
     return this.#linkDetailQuery.data?.link;
   }
 
+  /**
+   * Get action from the query result
+   */
   get action() {
     return this.#linkDetailQuery.data?.action;
   }
