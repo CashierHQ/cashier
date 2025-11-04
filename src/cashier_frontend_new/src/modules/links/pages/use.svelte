@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { linkDetailStore } from "$modules/links/state/linkDetailStore.svelte";
+  import { LinkDetailStore } from "$modules/links/state/linkDetailStore.svelte";
   import { ActionTypeMapper } from "$modules/links/types/action/actionType";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import TxCart from "$modules/links/components/txCart/txCart.svelte";
@@ -11,14 +11,13 @@
 
   let { id }: { id: string } = $props();
 
-  const linkQueryState = linkDetailStore({
+  const linkDefault = new LinkDetailStore({
     id,
   });
 
   let showTxCart: boolean = $derived.by(() => {
     return !!(
-      linkQueryState?.data?.action &&
-      linkQueryState.data.action.state !== ActionState.SUCCESS
+      linkDefault.action && linkDefault.action.state !== ActionState.SUCCESS
     );
   });
 
@@ -28,10 +27,10 @@
 
   // Derive link state from query data with error handling
   const link = $derived.by(() => {
-    if (linkQueryState?.data?.link) {
+    if (linkDefault.link) {
       try {
         const linkStore = new LinkStore();
-        linkStore.from(linkQueryState.data.link, linkQueryState.data.action);
+        linkStore.from(linkDefault.link, linkDefault.action);
         return linkStore;
       } catch (error) {
         console.error("Failed to create link store from query data:", error);
@@ -57,7 +56,7 @@
           throw actionRes.error;
         }
         // Refresh query state to update the derived link with new action
-        linkQueryState.refresh();
+        linkDefault.query.refresh();
       }
     } catch (err) {
       console.error("create use action failed", err);
@@ -70,14 +69,14 @@
         throw new Error("No action available to process");
       }
       await cashierBackendService.processActionV2(link.action.id);
-      linkQueryState.refresh();
+      linkDefault.query.refresh();
     } catch (err) {
       console.error("claim failed", err);
     }
   };
 </script>
 
-{#if linkQueryState.isLoading}
+{#if linkDefault.query.isLoading}
   Loading...
 {/if}
 {#if link.link}
@@ -90,6 +89,12 @@
   </div>
 {/if}
 
-{#if showTxCart}
-  <TxCart isOpen={showTxCart} {link} goNext={claim} {onCloseDrawer} />
+{#if showTxCart && link.link && link.action}
+  <TxCart
+    isOpen={showTxCart}
+    link={link.link}
+    action={link.action}
+    goNext={claim}
+    {onCloseDrawer}
+  />
 {/if}
