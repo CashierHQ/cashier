@@ -33,7 +33,7 @@ pub fn get_tx_timeout_nano_seconds() -> u64 {
     get_tx_timeout_seconds() * 1_000_000_000
 }
 
-pub const ICRC_TRANSACTION_TIME_WINDOW_SECS: u64 = 24 * 3600; // 24 hours
+pub const ICRC_TRANSACTION_TIME_WINDOW_NANOSECS: u64 = 24 * 3600 * 1_000_000_000; // 24 hours
 
 #[cfg(test)]
 pub mod dfd {

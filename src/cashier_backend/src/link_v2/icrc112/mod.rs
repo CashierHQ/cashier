@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::{
-    constant::ICRC_TRANSACTION_TIME_WINDOW_SECS,
+    constant::ICRC_TRANSACTION_TIME_WINDOW_NANOSECS,
     link_v2::transaction_manager::topological_sort::kahn_topological_sort,
     utils::helper::nonce_from_tx_id,
 };
@@ -113,7 +113,7 @@ pub fn convert_tx_to_icrc_112_request(
             })?;
 
             if (current_ts as i64 - created_at_time as i64)
-                > ICRC_TRANSACTION_TIME_WINDOW_SECS as i64
+                > ICRC_TRANSACTION_TIME_WINDOW_NANOSECS as i64
             {
                 created_at_time = current_ts;
                 tx_transfer.ts = Some(created_at_time);
@@ -155,7 +155,7 @@ pub fn convert_tx_to_icrc_112_request(
             })?;
 
             if (current_ts as i64 - created_at_time as i64)
-                > ICRC_TRANSACTION_TIME_WINDOW_SECS as i64
+                > ICRC_TRANSACTION_TIME_WINDOW_NANOSECS as i64
             {
                 created_at_time = current_ts;
                 tx_approve.ts = Some(created_at_time);
