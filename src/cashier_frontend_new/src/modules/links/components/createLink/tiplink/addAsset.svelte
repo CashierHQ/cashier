@@ -1,15 +1,15 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import type { LinkCreationStore } from "$modules/links/state/linkCreationStore.svelte";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
-  import { LinkStep } from "$modules/links/types/linkStep";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { parseBalanceUnits } from "$modules/shared/utils/converter";
-  import InputAmount from "../inputAmount/inputAmount.svelte";
   import { CreateLinkAsset } from "$modules/links/types/createLinkData";
+  import { LinkStep } from "$modules/links/types/linkStep";
+  import { parseBalanceUnits } from "$modules/shared/utils/converter";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import InputAmount from "../inputAmount/inputAmount.svelte";
 
   const {
     link,
@@ -17,7 +17,6 @@
     link: LinkCreationStore;
   } = $props();
 
-  // UI local state
   // UI local state
   // If there are assets already on the createLinkData, use the first one's values as defaults.
   // Otherwise default to undefined and 0n respectively.
