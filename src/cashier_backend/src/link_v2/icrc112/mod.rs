@@ -92,6 +92,8 @@ pub fn convert_tx_to_icrc_112_request(
             let memo = tx_transfer.clone().memo.ok_or_else(|| {
                 CanisterError::InvalidDataError("Transaction memo should not be empty".to_string())
             })?;
+
+            // TODO: update the created_at_time to NOW
             let created_at_time = tx_transfer.clone().ts.ok_or_else(|| {
                 CanisterError::InvalidDataError(
                     "Transaction timestamp should not be empty".to_string(),
@@ -126,6 +128,7 @@ pub fn convert_tx_to_icrc_112_request(
                 CanisterError::InvalidDataError("Transaction memo should not be empty".to_string())
             })?;
 
+            // TODO: update the created_at_time to NOW
             let created_at_time = tx_approve.clone().ts.ok_or_else(|| {
                 CanisterError::InvalidDataError(
                     "Transaction timestamp should not be empty".to_string(),
