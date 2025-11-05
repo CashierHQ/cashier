@@ -106,7 +106,7 @@ export class LinkCreationStore {
         this.#state = new LinkCreatedState(this);
         break;
       case FrontendState.ACTIVE:
-        this.#state = new LinkActiveState();
+        this.#state = new LinkActiveState(this);
         break;
     }
   }
