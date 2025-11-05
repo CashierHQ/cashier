@@ -3,14 +3,14 @@ import {
   ActionType,
   type ActionTypeValue,
 } from "$modules/links/types/action/actionType";
+import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkDetailState } from ".";
 import type { LinkDetailStore } from "../linkDetailStore.svelte";
-import { LinkDetailStep } from "./linkStep";
 import { linkListStore } from "../linkListStore.svelte";
 
 // State when the link active and ready for use
 export class LinkActiveState implements LinkDetailState {
-  readonly step = LinkDetailStep.ACTIVE;
+  readonly step = LinkStep.ACTIVE;
   #linkDetailStore: LinkDetailStore;
 
   constructor(link: LinkDetailStore) {

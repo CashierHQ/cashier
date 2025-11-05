@@ -9,8 +9,8 @@ import { ActionState } from "$modules/links/types/action/actionState";
 import type { Link } from "$modules/links/types/link/link";
 import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkState } from "$modules/links/types/link/linkState";
-import { LinkDetailStep } from "./linkStep";
 import { Err, Ok } from "ts-results-es";
+import { LinkStep } from "$modules/links/types/linkStep";
 
 const mocks = vi.hoisted(() => {
   const user_process_action_v2Mock = vi.fn();
@@ -219,7 +219,7 @@ describe("LinkCreatedState", () => {
         mockAction.id,
       );
       expect(mocks.linkListStore.refresh).toHaveBeenCalled();
-      expect(store.state?.step).toBe(LinkDetailStep.ACTIVE);
+      expect(store.state?.step).toBe(LinkStep.ACTIVE);
     });
   });
 });

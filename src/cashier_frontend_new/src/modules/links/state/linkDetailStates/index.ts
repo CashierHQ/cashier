@@ -1,12 +1,12 @@
 import type { ActionType } from "$modules/links/types/action/actionType";
-import type { LinkDetailStep } from "./linkStep";
+import { LinkStep } from "$modules/links/types/linkStep";
 
 /**
  * State pattern interface for managing the different steps in the link detail.
  */
 export interface LinkDetailState {
   // The current step in the link creation process
-  readonly step: LinkDetailStep;
+  readonly step: LinkStep;
   /**
    * Method to create action in the current state
    * @param actionType The type of action to create

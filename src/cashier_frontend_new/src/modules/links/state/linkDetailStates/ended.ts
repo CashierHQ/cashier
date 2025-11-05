@@ -1,10 +1,10 @@
+import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkDetailState } from ".";
 import type { LinkDetailStore } from "../linkDetailStore.svelte";
-import { LinkDetailStep } from "./linkStep";
 
 // State when the link ended
 export class LinkEndedState implements LinkDetailState {
-  readonly step = LinkDetailStep.INACTIVE;
+  readonly step = LinkStep.INACTIVE;
   #linkDetailStore: LinkDetailStore;
 
   constructor(link: LinkDetailStore) {
