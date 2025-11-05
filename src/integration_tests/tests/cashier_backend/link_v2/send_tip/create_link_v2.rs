@@ -125,6 +125,8 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
                         1
                     )
                 );
+                assert!(data.memo.is_some());
+                assert!(data.ts.is_some());
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
@@ -165,6 +167,8 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
                         &icp_ledger_fee
                     ))
                 );
+                assert!(data.memo.is_some());
+                assert!(data.ts.is_some());
             }
             _ => panic!("Expected Icrc2Approve transaction"),
         }
@@ -175,6 +179,8 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
                 assert_eq!(data.to, Wallet::new(constant::FEE_TREASURY_PRINCIPAL));
                 assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
                 assert_eq!(data.amount, Nat::from(CREATE_LINK_FEE));
+                assert!(data.memo.is_some());
+                assert!(data.ts.is_some());
             }
             _ => panic!("Expected Icrc2TransferFrom transaction"),
         }
@@ -302,6 +308,8 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
                         1
                     )
                 );
+                assert!(data.memo.is_some());
+                assert!(data.ts.is_some());
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
@@ -342,6 +350,8 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
                         &icp_ledger_fee
                     ))
                 );
+                assert!(data.memo.is_some());
+                assert!(data.ts.is_some());
             }
             _ => panic!("Expected Icrc2Approve transaction"),
         }
@@ -352,6 +362,8 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
                 assert_eq!(data.to, Wallet::new(constant::FEE_TREASURY_PRINCIPAL));
                 assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
                 assert_eq!(data.amount, Nat::from(CREATE_LINK_FEE));
+                assert!(data.memo.is_some());
+                assert!(data.ts.is_some());
             }
             _ => panic!("Expected Icrc2TransferFrom transaction"),
         }
