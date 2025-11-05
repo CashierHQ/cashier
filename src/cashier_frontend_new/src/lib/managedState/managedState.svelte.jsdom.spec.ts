@@ -28,6 +28,64 @@ describe("ManagedState - Global storage", () => {
     expect(store.data).toEqual(426);
   });
 
+  it("should persist and restore custom values with serde", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(5000);
+
+    // Small custom class to test serializers
+    class TestValue {
+      constructor(
+        public name: string,
+        public age: number,
+      ) {}
+    }
+
+    // Serializer/deserializer mapping supplied to managedState/localStorage.
+    const serde = {
+      serialize: {
+        // devalue will call this with the instance (unknown in typings) — cast inside
+        TestValue: (v: unknown) => v instanceof TestValue && [v.name, v.age],
+      },
+      deserialize: {
+        TestValue: (value: unknown) => {
+          const [name, age] = value as [string, number];
+          return new TestValue(name, age);
+        },
+      },
+    };
+
+    const item = new TestValue("Alice", 30);
+
+    const store = managedState<TestValue>({
+      queryFn: () => Promise.resolve(item),
+      persistedKey: ["test_key_serde"],
+      storageType: "localStorage",
+      serde,
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+
+    // Data should be available and equal (deep equality)
+    expect(store.data).toEqual(item);
+
+    // Stored value should be serialized using our serializer mapping
+    expect(localStorage.getItem("test_key_serde")).toEqual(
+      devalue.stringify({ created_ts: 5000, data: item }, serde.serialize),
+    );
+
+    // Create a new managedState reading the same key; it should deserialize
+    // the stored value into a TestValue instance via our deserializer.
+    const store2 = managedState<TestValue>({
+      queryFn: () => Promise.resolve(new TestValue("ignored", 0)),
+      persistedKey: ["test_key_serde"],
+      storageType: "localStorage",
+      serde,
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store2.data).toEqual(item);
+  });
+
   it("data should expire if stale", async () => {
     vi.useFakeTimers();
 
