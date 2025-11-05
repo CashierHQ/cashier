@@ -20,9 +20,6 @@ import { LinkInactiveState } from "./linkDetailStates/inactive";
 import { LinkActiveState } from "./linkDetailStates/active";
 import type { LinkAndAction } from "../types/linkAndAction";
 
-// NOTE: The logic that used to be top-level helper functions (determineActionTypeFromLink
-// and fetchLinkDetail) has been moved into the LinkDetailStore as static methods below.
-
 /**
  * Store for link detail
  */
