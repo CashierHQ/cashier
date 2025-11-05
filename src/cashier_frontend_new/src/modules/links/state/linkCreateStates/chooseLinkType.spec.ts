@@ -2,7 +2,7 @@ import { LinkType } from "$modules/links/types/link/linkType";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { describe, expect, it, vi } from "vitest";
 import { LinkStep } from "../../types/linkStep";
-import { LinkStore } from "../linkStore.svelte";
+import { LinkCreationStore } from "../linkStore.svelte";
 import { AddAssetTipLinkState } from "./tiplink/addAsset";
 
 // mock wallet store
@@ -30,7 +30,7 @@ vi.mock("$modules/token/state/walletStore.svelte", () => {
 describe("ChooseLinkTypeState", () => {
   it("should transition to ADD_ASSET sucessfully", async () => {
     // Arrange
-    const store = new LinkStore();
+    const store = new LinkCreationStore();
     store.createLinkData.title = "My tip";
     store.createLinkData.linkType = LinkType.TIP;
 
@@ -43,7 +43,7 @@ describe("ChooseLinkTypeState", () => {
 
   it("should throws when title is empty", async () => {
     // Arrange
-    const store = new LinkStore();
+    const store = new LinkCreationStore();
     store.createLinkData.title = "";
     store.createLinkData.linkType = LinkType.TIP;
 
@@ -56,7 +56,7 @@ describe("ChooseLinkTypeState", () => {
 
   it("should throws when link type is not TIP", async () => {
     // Arrange
-    const store = new LinkStore();
+    const store = new LinkCreationStore();
     store.createLinkData.title = "My tip";
     store.createLinkData.linkType = LinkType.AIRDROP;
 
@@ -71,7 +71,7 @@ describe("ChooseLinkTypeState", () => {
 
   it("should transiton to ADD_ASSET_TIP_LINK for tip link types", async () => {
     // Arrange
-    const store = new LinkStore();
+    const store = new LinkCreationStore();
     store.createLinkData.title = "My tip";
     store.createLinkData.linkType = LinkType.TIP;
 

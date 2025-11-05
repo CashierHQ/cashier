@@ -5,13 +5,13 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { LinkStep } from "../../types/linkStep";
   import { LinkType } from "../../types/link/linkType";
-  import type { LinkStore } from "../../state/linkStore.svelte";
+  import type { LinkCreationStore } from "../../state/linkStore.svelte";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
 
   const {
     link,
   }: {
-    link: LinkStore;
+    link: LinkCreationStore;
   } = $props();
 
   // Redirect if not in the correct step
