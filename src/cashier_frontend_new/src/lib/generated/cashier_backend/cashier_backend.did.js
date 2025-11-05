@@ -111,6 +111,7 @@ export const idlFactory = ({ IDL }) => {
     'Created' : IDL.Null,
   });
   const Icrc2Approve = IDL.Record({
+    'ts' : IDL.Opt(IDL.Nat64),
     'asset' : Asset,
     'from' : Wallet,
     'memo' : IDL.Opt(IDL.Vec(IDL.Nat8)),

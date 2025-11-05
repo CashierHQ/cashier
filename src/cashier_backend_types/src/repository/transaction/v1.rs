@@ -183,6 +183,7 @@ pub struct Icrc2Approve {
     pub asset: Asset,
     pub amount: Nat,
     pub memo: Option<Memo>,
+    pub ts: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]
