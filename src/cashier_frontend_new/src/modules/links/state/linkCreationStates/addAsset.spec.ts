@@ -5,7 +5,7 @@ import {
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { describe, expect, it, vi } from "vitest";
 import { LinkStep } from "../../types/linkStep";
-import { LinkCreationStore } from "../linkStore.svelte";
+import { LinkCreationStore } from "../linkCreationStore.svelte";
 
 // mock wallet store
 vi.mock("$modules/token/state/walletStore.svelte", () => {

@@ -5,7 +5,7 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { LinkStep } from "../../types/linkStep";
   import { LinkType } from "../../types/link/linkType";
-  import type { LinkCreationStore } from "../../state/linkStore.svelte";
+  import type { LinkCreationStore } from "../../state/linkCreationStore.svelte";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
 
   const {

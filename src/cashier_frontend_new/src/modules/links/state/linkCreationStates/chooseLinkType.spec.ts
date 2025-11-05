@@ -2,7 +2,7 @@ import { LinkType } from "$modules/links/types/link/linkType";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { describe, expect, it, vi } from "vitest";
 import { LinkStep } from "../../types/linkStep";
-import { LinkCreationStore } from "../linkStore.svelte";
+import { LinkCreationStore } from "../linkCreationStore.svelte";
 import { AddAssetTipLinkState } from "./tiplink/addAsset";
 
 // mock wallet store

@@ -1,7 +1,7 @@
 import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkCreationState } from ".";
-import type { LinkCreationStore } from "../linkStore.svelte";
+import type { LinkCreationStore } from "../linkCreationStore.svelte";
 import { AddAssetState } from "./addAsset";
 import { AddAssetTipLinkState } from "./tiplink/addAsset";
 

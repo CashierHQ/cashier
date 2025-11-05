@@ -3,10 +3,10 @@ import { CreateLinkAsset, CreateLinkData } from "../types/createLinkData";
 import type { Link } from "../types/link/link";
 import { LinkState as FrontendState } from "../types/link/linkState";
 import { LinkType } from "../types/link/linkType";
-import type { LinkCreationState } from "./linkCreateStates";
-import { LinkActiveState } from "./linkCreateStates/active";
-import { ChooseLinkTypeState } from "./linkCreateStates/chooseLinkType";
-import { LinkCreatedState } from "./linkCreateStates/created";
+import type { LinkCreationState } from "./linkCreationStates";
+import { LinkActiveState } from "./linkCreationStates/active";
+import { ChooseLinkTypeState } from "./linkCreationStates/chooseLinkType";
+import { LinkCreatedState } from "./linkCreationStates/created";
 
 // Simple reactive state management
 export class LinkCreationStore {
@@ -106,7 +106,7 @@ export class LinkCreationStore {
         this.#state = new LinkCreatedState(this);
         break;
       case FrontendState.ACTIVE:
-        this.#state = new LinkActiveState(this);
+        this.#state = new LinkActiveState();
         break;
     }
   }

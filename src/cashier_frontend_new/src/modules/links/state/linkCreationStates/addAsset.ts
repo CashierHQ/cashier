@@ -1,6 +1,6 @@
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkCreationState } from ".";
-import type { LinkCreationStore } from "../linkStore.svelte";
+import type { LinkCreationStore } from "../linkCreationStore.svelte";
 import { ChooseLinkTypeState } from "./chooseLinkType";
 import { PreviewState } from "./preview";
 

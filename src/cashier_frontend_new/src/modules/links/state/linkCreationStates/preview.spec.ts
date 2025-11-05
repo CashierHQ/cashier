@@ -13,7 +13,7 @@ import { Err, Ok } from "ts-results-es";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { cashierBackendService } from "../../services/cashierBackend";
 import { LinkStep } from "../../types/linkStep";
-import { LinkCreationStore } from "../linkStore.svelte";
+import { LinkCreationStore } from "../linkCreationStore.svelte";
 
 // mock wallet store
 vi.mock("$modules/token/state/walletStore.svelte", () => {
