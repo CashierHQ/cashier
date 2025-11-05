@@ -34,7 +34,7 @@ use std::collections::HashMap;
 /// # Returns
 /// * `Result<Icrc112Requests, CanisterError>` - The resulting Icrc112Requests or an error
 pub fn create_icrc_112_requests(
-    transactions: &[Transaction],
+    transactions: &mut [Transaction],
     link_account: Account,
     canister_id: Principal,
     current_ts: u64,
@@ -55,8 +55,8 @@ pub fn create_icrc_112_requests(
     let tx_graph: Graph = wallet_transactions.clone().into();
     let sorted_txs = kahn_topological_sort(&tx_graph)?;
 
-    let tx_map: HashMap<String, &Transaction> = wallet_transactions
-        .iter()
+    let mut tx_map: HashMap<String, Transaction> = wallet_transactions
+        .into_iter()
         .map(|tx| (tx.id.clone(), tx))
         .collect();
 
@@ -64,7 +64,7 @@ pub fn create_icrc_112_requests(
     for tx_group in sorted_txs.iter() {
         let mut group_requests = Vec::<Icrc112Request>::new();
         for tx_id in tx_group.iter() {
-            if let Some(tx) = tx_map.get(tx_id) {
+            if let Some(tx) = tx_map.get_mut(tx_id) {
                 let icrc_112_request =
                     convert_tx_to_icrc_112_request(tx, link_account, canister_id, current_ts)?;
                 group_requests.push(icrc_112_request);
@@ -72,6 +72,13 @@ pub fn create_icrc_112_requests(
         }
         if !group_requests.is_empty() {
             icrc_112_requests.push(group_requests);
+        }
+    }
+
+    // update the original transactions using the modified tx_map
+    for tx in transactions.iter_mut() {
+        if let Some(updated_tx) = tx_map.get(&tx.id) {
+            *tx = updated_tx.clone();
         }
     }
 
@@ -87,12 +94,12 @@ pub fn create_icrc_112_requests(
 /// # Returns
 /// * `Result<Icrc112Request, CanisterError>` - The resulting Icrc112Request or an error if the conversion fails.
 pub fn convert_tx_to_icrc_112_request(
-    tx: &Transaction,
+    tx: &mut Transaction,
     link_account: Account,
     canister_id: Principal,
     current_ts: u64,
 ) -> Result<Icrc112Request, CanisterError> {
-    match &tx.protocol {
+    match &mut tx.protocol {
         Protocol::IC(IcTransaction::Icrc1Transfer(tx_transfer)) => {
             let memo = tx_transfer.clone().memo.ok_or_else(|| {
                 CanisterError::InvalidDataError("Transaction memo should not be empty".to_string())
@@ -109,6 +116,7 @@ pub fn convert_tx_to_icrc_112_request(
                 > ICRC_TRANSACTION_TIME_WINDOW_SECS as i64
             {
                 created_at_time = current_ts;
+                tx_transfer.ts = Some(created_at_time);
             }
 
             let arg = TransferArg {
@@ -150,6 +158,7 @@ pub fn convert_tx_to_icrc_112_request(
                 > ICRC_TRANSACTION_TIME_WINDOW_SECS as i64
             {
                 created_at_time = current_ts;
+                tx_approve.ts = Some(created_at_time);
             }
 
             let spender = Account {
