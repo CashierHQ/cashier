@@ -1,5 +1,4 @@
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
-import { ActionType } from "$modules/links/types/action/actionType";
 import type { LinkDetailState } from ".";
 import type { LinkDetailStore } from "../linkDetailStore.svelte";
 import { linkListStore } from "../linkListStore.svelte";
@@ -21,21 +20,13 @@ export class LinkCreatedState implements LinkDetailState {
   }
 
   // Process the action to activate the link
-  async processAction(): Promise<void> {
+  async processAction(actionId: string): Promise<void> {
     const link = this.#linkDetailStore.link;
     if (!link) {
       throw new Error("Link is missing");
     }
 
-    const action = this.#linkDetailStore.action;
-    if (!action || !action.id) {
-      throw new Error("Action ID is missing");
-    }
-
-    if (action.type != ActionType.CREATE_LINK) {
-      throw new Error("Invalid action type for Created state");
-    }
-    const result = await cashierBackendService.processActionV2(action.id);
+    const result = await cashierBackendService.processActionV2(actionId);
     if (result.isErr()) {
       throw new Error(`Failed to activate link: ${result.error}`);
     }

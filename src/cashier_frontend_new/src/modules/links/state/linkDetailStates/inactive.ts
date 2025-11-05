@@ -1,5 +1,8 @@
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
-import { ActionType } from "$modules/links/types/action/actionType";
+import {
+  ActionType,
+  type ActionTypeValue,
+} from "$modules/links/types/action/actionType";
 import type { LinkDetailState } from ".";
 import type { LinkDetailStore } from "../linkDetailStore.svelte";
 import { LinkDetailStep } from "./linkStep";
@@ -15,15 +18,21 @@ export class LinkInactiveState implements LinkDetailState {
   }
 
   // inactive only create withdraw action
-  async createAction(): Promise<void> {
+  async createAction(actionType: ActionTypeValue): Promise<void> {
     const link = this.#linkDetailStore.link;
     if (!link) {
       throw new Error("Link is missing");
     }
+
+    if (actionType !== ActionType.WITHDRAW) {
+      throw new Error("Invalid action type for Inactive state");
+    }
+
     const actionRes = await cashierBackendService.createActionV2({
       linkId: link.id,
-      actionType: ActionType.WITHDRAW,
+      actionType,
     });
+
     if (actionRes.isErr()) {
       throw actionRes.error;
     }
@@ -32,16 +41,12 @@ export class LinkInactiveState implements LinkDetailState {
   }
 
   // process withdraw action
-  async processAction(): Promise<void> {
+  async processAction(actionId: string): Promise<void> {
     const link = this.#linkDetailStore.link;
-    const action = this.#linkDetailStore.action;
     if (!link) {
       throw new Error("Link is missing");
     }
-    if (!(action && action.id)) {
-      throw new Error("Action ID is missing");
-    }
-    const result = await cashierBackendService.processActionV2(action.id);
+    const result = await cashierBackendService.processActionV2(actionId);
     if (result.isErr()) {
       throw new Error(`Failed to activate link: ${result.error}`);
     }

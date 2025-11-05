@@ -3,11 +3,11 @@ import { CreateLinkAsset, CreateLinkData } from "../types/createLinkData";
 import type { Link } from "../types/link/link";
 import { LinkState as FrontendState } from "../types/link/linkState";
 import { LinkType } from "../types/link/linkType";
-import type { LinkState } from "./linkStates";
-import { LinkActiveState } from "./linkStates/active";
-import { ChooseLinkTypeState } from "./linkStates/chooseLinkType";
-import { LinkCreatedState } from "./linkStates/created";
-import { LinkInactiveState } from "./linkStates/inactive";
+import type { LinkState } from "./linkCreateStates";
+import { LinkActiveState } from "./linkCreateStates/active";
+import { ChooseLinkTypeState } from "./linkCreateStates/chooseLinkType";
+import { LinkCreatedState } from "./linkCreateStates/created";
+import { LinkInactiveState } from "./linkCreateStates/inactive";
 
 // Simple reactive state management
 export class LinkStore {
