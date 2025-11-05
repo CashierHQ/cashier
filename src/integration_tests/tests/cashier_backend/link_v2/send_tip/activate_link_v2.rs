@@ -1418,65 +1418,6 @@ async fn it_should_fail_activate_tip_linkv2_icrc_if_only_icrc2_approve_executed(
 }
 
 #[tokio::test]
-async fn it_should_succeed_activate_icp_token_tip_linkv2() {
-    with_pocket_ic_context::<_, ()>(async move |ctx| {
-        // Arrange
-        let caller = TestUser::User1.get_principal();
-        let tip_amount = Nat::from(1_000_000u64);
-        let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount.clone()).await;
-        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
-
-        // Act: Execute ICRC112 requests (simulate FE behavior)
-        let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
-        let icrc112_execution_result =
-            execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
-
-        // Assert: ICRC112 execution result
-        assert!(icrc112_execution_result.is_ok());
-
-        // Act: Activate the link
-        let link_id = create_link_result.link.id.clone();
-        let action_id = create_link_result.action.id.clone();
-        let activate_link_result = test_fixture.activate_link_v2(&action_id).await;
-
-        // Assert: Activated link result
-        assert!(activate_link_result.is_ok());
-        let result = activate_link_result.unwrap();
-        assert_eq!(result.link.state, LinkState::Active);
-
-        // Assert: Link balance after activation
-        let link_account = link_id_to_account(ctx, &link_id);
-        let icp_link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
-        let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
-
-        assert_eq!(
-            icp_link_balance,
-            test_utils::calculate_amount_for_wallet_to_link_transfer(tip_amount, icp_ledger_fee, 1),
-            "Link balance is incorrect"
-        );
-
-        // Assert: Fee treasury balance after activation
-        let fee_treasury_account = fee_treasury_account();
-        let icp_fee_treasury_balance = icp_ledger_client
-            .balance_of(&fee_treasury_account)
-            .await
-            .unwrap();
-        let _icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
-
-        assert_eq!(
-            icp_fee_treasury_balance,
-            Nat::from(CREATE_LINK_FEE),
-            "Fee treasury balance is incorrect"
-        );
-
-        Ok(())
-    })
-    .await
-    .unwrap();
-}
-
-#[tokio::test]
 async fn it_should_fail_reexecute_icrc112_icp_immediately_due_to_deduplication() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
@@ -1522,8 +1463,29 @@ async fn it_should_fail_reexecute_icrc112_icp_immediately_due_to_deduplication()
         let icrc112_reexecution_result =
             execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
 
-        // Assert: Balance should remain unchanged due to deduplication
+        // Assert: ICRC112 re-execution result contains deduplication errors
         assert!(icrc112_reexecution_result.is_ok());
+        for res in icrc112_reexecution_result.unwrap() {
+            for call_response in res {
+                match call_response.parsed_res {
+                    Err(decode_err) => {
+                        // Expected error due to deduplication
+                        let s = format!("{:?}", decode_err).to_lowercase();
+                        assert!(s.contains(
+                            "transaction is a duplicate of another transaction in block"
+                        ));
+                    }
+                    Ok(_) => {
+                        panic!(
+                            "Expected an error (decode or protocol), got success: {:?}",
+                            call_response.parsed_res
+                        );
+                    }
+                }
+            }
+        }
+
+        // Assert: Balance should remain unchanged due to deduplication
         let balance_after_reexecution =
             icp_ledger_client.balance_of(&caller_account).await.unwrap();
         assert_eq!(
@@ -1594,8 +1556,27 @@ async fn it_should_fail_reexecute_icrc112_icp_after_1week_due_to_deduplication()
         let icrc112_reexecution_result =
             execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
 
-        // Assert: Balance should remain unchanged due to deduplication
+        // Assert: ICRC112 re-execution result contains deduplication errors
         assert!(icrc112_reexecution_result.is_ok());
+        for res in icrc112_reexecution_result.unwrap() {
+            for call_response in res {
+                match call_response.parsed_res {
+                    Err(decode_err) => {
+                        // Expected error due to deduplication
+                        let s = format!("{:?}", decode_err).to_lowercase();
+                        assert!(s.contains("transaction's created_at_time is too far in the past"));
+                    }
+                    Ok(_) => {
+                        panic!(
+                            "Expected an error (decode or protocol), got success: {:?}",
+                            call_response.parsed_res
+                        );
+                    }
+                }
+            }
+        }
+
+        // Assert: Balance should remain unchanged due to deduplication
         let balance_after_reexecution =
             icp_ledger_client.balance_of(&caller_account).await.unwrap();
         assert_eq!(
@@ -1617,16 +1598,14 @@ async fn it_should_fail_reexecute_icrc112_icp_after_1week_due_to_deduplication()
 }
 
 #[tokio::test]
-async fn it_should_succeed_activate_icrc_token_tip_linkv2() {
+async fn it_should_succeed_activate_icp_token_tip_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let tip_amount = Nat::from(5_000_000u64);
+        let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount.clone()).await;
-
+            create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount.clone()).await;
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
-        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
 
         // Act: Execute ICRC112 requests (simulate FE behavior)
         let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
@@ -1648,16 +1627,12 @@ async fn it_should_succeed_activate_icrc_token_tip_linkv2() {
 
         // Assert: Link balance after activation
         let link_account = link_id_to_account(ctx, &link_id);
-        let ckbtc_link_balance = ckbtc_ledger_client.balance_of(&link_account).await.unwrap();
-        let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
+        let icp_link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
+        let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
 
         assert_eq!(
-            ckbtc_link_balance,
-            test_utils::calculate_amount_for_wallet_to_link_transfer(
-                tip_amount,
-                ckbtc_ledger_fee,
-                1,
-            ),
+            icp_link_balance,
+            test_utils::calculate_amount_for_wallet_to_link_transfer(tip_amount, icp_ledger_fee, 1),
             "Link balance is incorrect"
         );
 
@@ -1667,6 +1642,7 @@ async fn it_should_succeed_activate_icrc_token_tip_linkv2() {
             .balance_of(&fee_treasury_account)
             .await
             .unwrap();
+        let _icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
 
         assert_eq!(
             icp_fee_treasury_balance,
@@ -1741,8 +1717,29 @@ async fn it_should_fail_reexecute_icrc112_icrc_immediately_due_to_deduplication(
         let icrc112_reexecution_result =
             execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
 
-        // Assert: Balance should remain unchanged due to deduplication
+        // Assert: ICRC112 re-execution result contains deduplication errors
         assert!(icrc112_reexecution_result.is_ok());
+        for res in icrc112_reexecution_result.unwrap() {
+            for call_response in res {
+                match call_response.parsed_res {
+                    Err(decode_err) => {
+                        // Expected error due to deduplication
+                        let s = format!("{:?}", decode_err).to_lowercase();
+                        assert!(s.contains(
+                            "transaction is a duplicate of another transaction in block"
+                        ));
+                    }
+                    Ok(_) => {
+                        panic!(
+                            "Expected an error (decode or protocol), got success: {:?}",
+                            call_response.parsed_res
+                        );
+                    }
+                }
+            }
+        }
+
+        // Assert: Balance should remain unchanged due to deduplication
         let icp_caller_balance_after_reexecution =
             icp_ledger_client.balance_of(&caller_account).await.unwrap();
         assert_eq!(
@@ -1830,8 +1827,27 @@ async fn it_should_fail_reexecute_icrc112_icrc_after_1week_due_to_deduplication(
         let icrc112_reexecution_result =
             execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
 
-        // Assert: Balance should remain unchanged due to deduplication
+        // Assert: ICRC112 re-execution result contains deduplication errors
         assert!(icrc112_reexecution_result.is_ok());
+        for res in icrc112_reexecution_result.unwrap() {
+            for call_response in res {
+                match call_response.parsed_res {
+                    Err(decode_err) => {
+                        // Expected error due to deduplication
+                        let s = format!("{:?}", decode_err).to_lowercase();
+                        assert!(s.contains("transaction's created_at_time is too far in the past"));
+                    }
+                    Ok(_) => {
+                        panic!(
+                            "Expected an error (decode or protocol), got success: {:?}",
+                            call_response.parsed_res
+                        );
+                    }
+                }
+            }
+        }
+
+        // Assert: Balance should remain unchanged due to deduplication
         let icp_caller_balance_after_reexecution =
             icp_ledger_client.balance_of(&caller_account).await.unwrap();
         assert_eq!(
@@ -1846,6 +1862,70 @@ async fn it_should_fail_reexecute_icrc112_icrc_after_1week_due_to_deduplication(
         assert_eq!(
             ckbtc_caller_balance_after_reexecution, ckbtc_caller_balance_after_first_execution,
             "CKBTC Caller balance after re-execution should be unchanged due to deduplication"
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_succeed_activate_icrc_token_tip_linkv2() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let tip_amount = Nat::from(5_000_000u64);
+        let (test_fixture, create_link_result) =
+            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount.clone()).await;
+
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
+
+        // Act: Execute ICRC112 requests (simulate FE behavior)
+        let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
+        let icrc112_execution_result =
+            execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
+
+        // Assert: ICRC112 execution result
+        assert!(icrc112_execution_result.is_ok());
+
+        // Act: Activate the link
+        let link_id = create_link_result.link.id.clone();
+        let action_id = create_link_result.action.id.clone();
+        let activate_link_result = test_fixture.activate_link_v2(&action_id).await;
+
+        // Assert: Activated link result
+        assert!(activate_link_result.is_ok());
+        let result = activate_link_result.unwrap();
+        assert_eq!(result.link.state, LinkState::Active);
+
+        // Assert: Link balance after activation
+        let link_account = link_id_to_account(ctx, &link_id);
+        let ckbtc_link_balance = ckbtc_ledger_client.balance_of(&link_account).await.unwrap();
+        let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
+
+        assert_eq!(
+            ckbtc_link_balance,
+            test_utils::calculate_amount_for_wallet_to_link_transfer(
+                tip_amount,
+                ckbtc_ledger_fee,
+                1,
+            ),
+            "Link balance is incorrect"
+        );
+
+        // Assert: Fee treasury balance after activation
+        let fee_treasury_account = fee_treasury_account();
+        let icp_fee_treasury_balance = icp_ledger_client
+            .balance_of(&fee_treasury_account)
+            .await
+            .unwrap();
+
+        assert_eq!(
+            icp_fee_treasury_balance,
+            Nat::from(CREATE_LINK_FEE),
+            "Fee treasury balance is incorrect"
         );
 
         Ok(())
