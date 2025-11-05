@@ -5,6 +5,51 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import * as devalue from "devalue";
 import { SessionStorageStore } from "./storageSessionStorage";
+import type { DevalueSerde } from ".";
+import { Principal } from "@dfinity/principal";
+
+class TestValue {
+  public name: string;
+  public age: number;
+  public principal: Principal;
+  constructor({
+    name,
+    age,
+    principal,
+  }: {
+    name: string;
+    age: number;
+    principal: Principal;
+  }) {
+    this.name = name;
+    this.age = age;
+    this.principal = principal;
+  }
+}
+
+const testValueDevalueSerde: DevalueSerde = {
+  serialize: {
+    TestValue: (v) =>
+      v instanceof TestValue && {
+        name: v.name,
+        age: v.age,
+        principal: v.principal,
+      },
+    Principal: (principal) =>
+      principal instanceof Principal && principal.toText(),
+  },
+  deserialize: {
+    TestValue: (v) => {
+      const value = v as { name: string; age: number; principal: Principal };
+      return new TestValue({
+        name: value.name,
+        age: value.age,
+        principal: value.principal,
+      });
+    },
+    Principal: (data) => typeof data == "string" && Principal.fromText(data),
+  },
+};
 
 describe("SessionStorageStore", () => {
   beforeEach(() => {
@@ -98,5 +143,25 @@ describe("SessionStorageStore", () => {
 
     // Assert
     expect(store.getItem()).toEqual(null);
+  });
+
+  it("should handle custom values", () => {
+    // Arrange
+    const store = new SessionStorageStore("test_key", testValueDevalueSerde);
+    store.removeItem();
+
+    const item = new TestValue({
+      name: "Alice123",
+      age: 30,
+      principal: Principal.fromText(
+        "ur2tx-mciqf-h4p4b-qggnv-arpsc-s3wui-2blbn-aphly-wzoos-iqjik-hae",
+      ),
+    });
+
+    // Act
+    store.setItem(item);
+
+    // Assert
+    expect(store.getItem()).toEqual(item);
   });
 });

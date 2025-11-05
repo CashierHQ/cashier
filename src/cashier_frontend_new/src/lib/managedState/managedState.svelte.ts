@@ -1,5 +1,5 @@
 import { onDestroy } from "svelte";
-import type { Storage } from ".";
+import type { DevalueSerde, Storage } from ".";
 import { GlobalStore } from "./storageGlobal";
 import { LocalStorageStore } from "./storageLocalStorage";
 import { NoOpsStore } from "./storageNoOps";
@@ -89,6 +89,33 @@ type StateConfig<T> = {
    * Defaults to `false`.
    */
   watch?: boolean | (() => unknown) | (() => unknown)[];
+
+  /**
+   * The serializer/deserializer to use for persisting the data.
+   *
+   * Example (using `devalue` custom serializers/deserializers):
+   *
+   * ```ts
+   * class Vector {
+   *   constructor(public x: number, public y: number) {}
+   * }
+   *
+   * const serde = {
+   *   serialize: {
+   *     Vector: (v: Vector) => [v.x, v.y],
+   *   },
+   *   deserialize: {
+   *     Vector: ([x, y]: [number, number]) => new Vector(x, y),
+   *   },
+   * };
+   *
+   * const stringified = devalue.stringify(new Vector(30, 40), serde.serialize);
+   * console.log(stringified); // [["Vector",1],[2,3],30,40]
+   * const vector = devalue.parse(stringified, serde.deserialize);
+   *
+   * ```
+   */
+  serde?: DevalueSerde;
 };
 
 type Data<T> = {
@@ -116,7 +143,11 @@ export class ManagedState<T> {
           this.#storage = new GlobalStore(config.persistedKey);
           break;
         case "localStorage":
-          this.#storage = new LocalStorageStore(config.persistedKey);
+          console.log("Using LocalStorageStore with serde", config.serde);
+          this.#storage = new LocalStorageStore(
+            config.persistedKey,
+            config.serde,
+          );
           break;
         case "sessionStorage":
           this.#storage = new SessionStorageStore(config.persistedKey);
