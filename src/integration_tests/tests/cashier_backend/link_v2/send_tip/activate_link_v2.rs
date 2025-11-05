@@ -665,7 +665,7 @@ async fn it_should_create_new_icrc112_with_proper_created_time_if_activate_twice
         let (test_fixture, create_link_result) =
             create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount.clone()).await;
 
-        // Act: Activate the link
+        // Act: Activate the link first time after 1 day
         ctx.advance_time(Duration::from_secs(24 * 3600 + 1)).await; // advance time by 1 day + 1 second
         let action_id = create_link_result.action.id.clone();
         let activate_link_result = test_fixture.activate_link_v2(&action_id).await;
@@ -691,7 +691,8 @@ async fn it_should_create_new_icrc112_with_proper_created_time_if_activate_twice
         let second_icrc2_approve_arg = Decode!(&icrc2_approve_request.arg, ApproveArgs)
             .expect("Failed to decode icrc2_approve args");
 
-        // Act: Activate the link again
+        // Act: Activate the link second time after another 1 hour
+        ctx.advance_time(Duration::from_secs(3600)).await; // advance time by 1 hour
         let activate_link_result = test_fixture.activate_link_v2(&action_id).await;
 
         // Assert: Activated link result
@@ -722,6 +723,53 @@ async fn it_should_create_new_icrc112_with_proper_created_time_if_activate_twice
         assert_eq!(
             third_icrc2_approve_arg, second_icrc2_approve_arg,
             "ICRC2 approve args should be the same on second activation"
+        );
+
+        // Act: Activate the link third time after another 1 day
+        ctx.advance_time(Duration::from_secs(24 * 3600 + 1)).await; // advance time by 1 day + 1 second
+        let activate_link_result = test_fixture.activate_link_v2(&action_id).await;
+
+        // Assert: Activated link result
+        assert!(activate_link_result.is_ok());
+        let activate_link_result = activate_link_result.unwrap();
+        assert!(activate_link_result.action.icrc_112_requests.is_some());
+        let icrc112_requests = activate_link_result.action.icrc_112_requests.unwrap();
+        assert_eq!(icrc112_requests.len(), 1);
+        let requests = &icrc112_requests[0];
+        assert_eq!(requests.len(), 2, "There should be 2 ICRC-112 requests");
+        let icrc1_transfer_request = requests
+            .iter()
+            .find(|req| req.method == "icrc1_transfer")
+            .expect("icrc1_transfer request not found");
+        let icrc2_approve_request = requests
+            .iter()
+            .find(|req| req.method == "icrc2_approve")
+            .expect("icrc2_approve request not found");
+        let forth_icrc1_transfer_arg = Decode!(&icrc1_transfer_request.arg, TransferArg)
+            .expect("Failed to decode icrc1_transfer args");
+        let forth_icrc2_approve_arg = Decode!(&icrc2_approve_request.arg, ApproveArgs)
+            .expect("Failed to decode icrc2_approve args");
+
+        let forth_created_ts = forth_icrc1_transfer_arg
+            .created_at_time
+            .expect("Forth icrc1_transfer args ts should not be None");
+        let third_created_ts = third_icrc1_transfer_arg
+            .created_at_time
+            .expect("Third icrc1_transfer args ts should not be None");
+        assert!(
+            (forth_created_ts - third_created_ts) > (24 * 3600 + 1) * 1_000_000_000,
+            "ICRC1 transfer created_at_time should be advanced by 1 day + 1 second on third activation"
+        );
+
+        let forth_approve_created_ts = forth_icrc2_approve_arg
+            .created_at_time
+            .expect("Forth icrc2_approve args ts should not be None");
+        let third_approve_created_ts = third_icrc2_approve_arg
+            .created_at_time
+            .expect("Third icrc2_approve args ts should not be None");
+        assert!(
+            (forth_approve_created_ts - third_approve_created_ts) > (24 * 3600 + 1) * 1_000_000_000 ,
+            "ICRC2 approve created_at_time should be advanced by 1 day + 1 second on third activation"
         );
 
         Ok(())
