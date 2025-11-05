@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::{
+    constant::ICRC_TRANSACTION_TIME_WINDOW_SECS,
     link_v2::transaction_manager::topological_sort::kahn_topological_sort,
     utils::helper::nonce_from_tx_id,
 };
@@ -29,12 +30,14 @@ use std::collections::HashMap;
 /// * `transactions` - A reference to a vector of Transactions
 /// * `link_account` - The account to which the tokens will be transferred
 /// * `canister_id` - The canister ID of the token contract
+/// * `current_ts` - The current timestamp to be used for created_at_time fields
 /// # Returns
 /// * `Result<Icrc112Requests, CanisterError>` - The resulting Icrc112Requests or an error
 pub fn create_icrc_112_requests(
     transactions: &[Transaction],
     link_account: Account,
     canister_id: Principal,
+    current_ts: u64,
 ) -> Result<Icrc112Requests, CanisterError> {
     // filter only wallet transactions
     let wallet_transactions: Vec<Transaction> = transactions
@@ -63,7 +66,7 @@ pub fn create_icrc_112_requests(
         for tx_id in tx_group.iter() {
             if let Some(tx) = tx_map.get(tx_id) {
                 let icrc_112_request =
-                    convert_tx_to_icrc_112_request(tx, link_account, canister_id)?;
+                    convert_tx_to_icrc_112_request(tx, link_account, canister_id, current_ts)?;
                 group_requests.push(icrc_112_request);
             }
         }
@@ -80,12 +83,14 @@ pub fn create_icrc_112_requests(
 /// * `tx` - The transaction to convert.
 /// * `link_account` - The account to which the tokens will be transferred.
 /// * `canister_id` - The canister ID of the token contract.
+/// * `current_ts` - The current timestamp to be used for the created_at_time field.
 /// # Returns
 /// * `Result<Icrc112Request, CanisterError>` - The resulting Icrc112Request or an error if the conversion fails.
 pub fn convert_tx_to_icrc_112_request(
     tx: &Transaction,
     link_account: Account,
     canister_id: Principal,
+    current_ts: u64,
 ) -> Result<Icrc112Request, CanisterError> {
     match &tx.protocol {
         Protocol::IC(IcTransaction::Icrc1Transfer(tx_transfer)) => {
@@ -93,12 +98,18 @@ pub fn convert_tx_to_icrc_112_request(
                 CanisterError::InvalidDataError("Transaction memo should not be empty".to_string())
             })?;
 
-            // TODO: update the created_at_time to NOW
-            let created_at_time = tx_transfer.clone().ts.ok_or_else(|| {
+            // update the created_at_time to current_ts if the tx created_at_time is outdated
+            let mut created_at_time = tx_transfer.clone().ts.ok_or_else(|| {
                 CanisterError::InvalidDataError(
                     "Transaction timestamp should not be empty".to_string(),
                 )
             })?;
+
+            if (current_ts as i64 - created_at_time as i64)
+                > ICRC_TRANSACTION_TIME_WINDOW_SECS as i64
+            {
+                created_at_time = current_ts;
+            }
 
             let arg = TransferArg {
                 to: link_account,
@@ -128,12 +139,18 @@ pub fn convert_tx_to_icrc_112_request(
                 CanisterError::InvalidDataError("Transaction memo should not be empty".to_string())
             })?;
 
-            // TODO: update the created_at_time to NOW
-            let created_at_time = tx_approve.clone().ts.ok_or_else(|| {
+            // update the created_at_time to current_ts if the tx created_at_time is outdated
+            let mut created_at_time = tx_approve.clone().ts.ok_or_else(|| {
                 CanisterError::InvalidDataError(
                     "Transaction timestamp should not be empty".to_string(),
                 )
             })?;
+
+            if (current_ts as i64 - created_at_time as i64)
+                > ICRC_TRANSACTION_TIME_WINDOW_SECS as i64
+            {
+                created_at_time = current_ts;
+            }
 
             let spender = Account {
                 owner: canister_id,
