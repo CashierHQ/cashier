@@ -657,6 +657,80 @@ async fn it_should_fail_activate_tip_linkv2_icp_and_create_new_icrc112_if_icrc11
 }
 
 #[tokio::test]
+async fn it_should_create_new_icrc112_with_proper_created_time_if_activate_twice_later_than_1_day()
+{
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let tip_amount = Nat::from(1_000_000u64);
+        let (test_fixture, create_link_result) =
+            create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount.clone()).await;
+
+        // Act: Activate the link
+        ctx.advance_time(Duration::from_secs(24 * 3600 + 1)).await; // advance time by 1 day + 1 second
+        let action_id = create_link_result.action.id.clone();
+        let activate_link_result = test_fixture.activate_link_v2(&action_id).await;
+
+        // Assert: Activated link result
+        assert!(activate_link_result.is_ok());
+        let activate_link_result = activate_link_result.unwrap();
+        assert!(activate_link_result.action.icrc_112_requests.is_some());
+        let icrc112_requests = activate_link_result.action.icrc_112_requests.unwrap();
+        assert_eq!(icrc112_requests.len(), 1);
+        let requests = &icrc112_requests[0];
+        assert_eq!(requests.len(), 2, "There should be 2 ICRC-112 requests");
+        let icrc1_transfer_request = requests
+            .iter()
+            .find(|req| req.method == "icrc1_transfer")
+            .expect("icrc1_transfer request not found");
+        let icrc2_approve_request = requests
+            .iter()
+            .find(|req| req.method == "icrc2_approve")
+            .expect("icrc2_approve request not found");
+        let second_icrc1_transfer_arg = Decode!(&icrc1_transfer_request.arg, TransferArg)
+            .expect("Failed to decode icrc1_transfer args");
+        let second_icrc2_approve_arg = Decode!(&icrc2_approve_request.arg, ApproveArgs)
+            .expect("Failed to decode icrc2_approve args");
+
+        // Act: Activate the link again
+        let activate_link_result = test_fixture.activate_link_v2(&action_id).await;
+
+        // Assert: Activated link result
+        assert!(activate_link_result.is_ok());
+        let activate_link_result = activate_link_result.unwrap();
+        assert!(activate_link_result.action.icrc_112_requests.is_some());
+        let icrc112_requests = activate_link_result.action.icrc_112_requests.unwrap();
+        assert_eq!(icrc112_requests.len(), 1);
+        let requests = &icrc112_requests[0];
+        assert_eq!(requests.len(), 2, "There should be 2 ICRC-112 requests");
+        let icrc1_transfer_request = requests
+            .iter()
+            .find(|req| req.method == "icrc1_transfer")
+            .expect("icrc1_transfer request not found");
+        let icrc2_approve_request = requests
+            .iter()
+            .find(|req| req.method == "icrc2_approve")
+            .expect("icrc2_approve request not found");
+        let third_icrc1_transfer_arg = Decode!(&icrc1_transfer_request.arg, TransferArg)
+            .expect("Failed to decode icrc1_transfer args");
+        let third_icrc2_approve_arg = Decode!(&icrc2_approve_request.arg, ApproveArgs)
+            .expect("Failed to decode icrc2_approve args");
+
+        assert_eq!(
+            third_icrc1_transfer_arg, second_icrc1_transfer_arg,
+            "ICRC1 transfer args should be the same on second activation"
+        );
+        assert_eq!(
+            third_icrc2_approve_arg, second_icrc2_approve_arg,
+            "ICRC2 approve args should be the same on second activation"
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
 async fn it_should_fail_activate_tip_linkv2_icp_and_return_same_icrc112_if_only_icrc1_transfer_executed()
  {
     with_pocket_ic_context::<_, ()>(async move |ctx| {

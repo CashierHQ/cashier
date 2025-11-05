@@ -84,7 +84,7 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
         }
 
         // transaction with dependencies filled
-        let transactions = self
+        let mut transactions = self
             .dependency_analyzer
             .analyze_and_fill_transaction_dependencies(&intents, &intent_txs_map)?;
 
@@ -110,7 +110,7 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
         let canister_id = self.ic_env.id();
         let link_account = get_link_account(&action.link_id, canister_id)?;
         let icrc112_requests =
-            create_icrc_112_requests(&transactions, link_account, canister_id, current_ts)?;
+            create_icrc_112_requests(&mut transactions, link_account, canister_id, current_ts)?;
 
         Ok(CreateActionResult {
             action,
@@ -171,6 +171,16 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
             processed_transactions.extend(validate_transactions_result.canister_transactions);
         }
 
+        // create ICRC112 requests from transactions
+        let canister_id = self.ic_env.id();
+        let link_account = get_link_account(&action.link_id, canister_id)?;
+        let icrc112_requests = create_icrc_112_requests(
+            &mut processed_transactions,
+            link_account,
+            canister_id,
+            current_ts,
+        )?;
+
         // update intent_txs_map with processed transactions
         let mut updated_intent_txs_map = HashMap::<String, Vec<Transaction>>::new();
         for intent in intents.iter() {
@@ -195,16 +205,6 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
             action.clone(),
             &intents,
             updated_intent_txs_map.clone(),
-        )?;
-
-        // create ICRC112 requests from transactions
-        let canister_id = self.ic_env.id();
-        let link_account = get_link_account(&action.link_id, canister_id)?;
-        let icrc112_requests = create_icrc_112_requests(
-            &processed_transactions,
-            link_account,
-            canister_id,
-            current_ts,
         )?;
 
         Ok(ProcessActionResult {

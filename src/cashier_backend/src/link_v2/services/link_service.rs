@@ -218,6 +218,7 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         self.action_service.update_action_data(
             result.process_action_result.action.clone(),
             result.process_action_result.intents.clone(),
+            &result.process_action_result.intent_txs_map,
         )?;
 
         // response dto
