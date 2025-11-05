@@ -3,16 +3,15 @@ import { CreateLinkAsset, CreateLinkData } from "../types/createLinkData";
 import type { Link } from "../types/link/link";
 import { LinkState as FrontendState } from "../types/link/linkState";
 import { LinkType } from "../types/link/linkType";
-import type { LinkState } from "./linkStates";
-import { LinkActiveState } from "./linkStates/active";
-import { ChooseLinkTypeState } from "./linkStates/chooseLinkType";
-import { LinkCreatedState } from "./linkStates/created";
-import { LinkInactiveState } from "./linkStates/inactive";
+import type { LinkCreationState } from "./linkCreationStates";
+import { LinkActiveState } from "./linkCreationStates/active";
+import { ChooseLinkTypeState } from "./linkCreationStates/chooseLinkType";
+import { LinkCreatedState } from "./linkCreationStates/created";
 
 // Simple reactive state management
-export class LinkStore {
+export class LinkCreationStore {
   // Private state variables
-  #state: LinkState;
+  #state: LinkCreationState;
   // the raw Link object received from backend (kept for detail views)
   public link?: Link;
   // draft holds partial data used for creation/edit flows
@@ -23,7 +22,7 @@ export class LinkStore {
   // ID of the created link (if any)
   #id?: string;
   constructor() {
-    this.#state = $state<LinkState>(new ChooseLinkTypeState(this));
+    this.#state = $state<LinkCreationState>(new ChooseLinkTypeState(this));
     this.createLinkData = $state<CreateLinkData>(
       new CreateLinkData({
         title: "",
@@ -36,11 +35,11 @@ export class LinkStore {
     this.link = $state<Link | undefined>(undefined);
   }
 
-  get state(): LinkState {
+  get state(): LinkCreationState {
     return this.#state;
   }
 
-  set state(state: LinkState) {
+  set state(state: LinkCreationState) {
     this.#state = state;
   }
 
@@ -108,9 +107,6 @@ export class LinkStore {
         break;
       case FrontendState.ACTIVE:
         this.#state = new LinkActiveState(this);
-        break;
-      case FrontendState.INACTIVE:
-        this.#state = new LinkInactiveState(this);
         break;
     }
   }
