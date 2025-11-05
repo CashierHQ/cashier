@@ -30,7 +30,7 @@ export class LinkCreatedState implements LinkCreationState {
 
     linkListStore.refresh();
 
-    this.#link.state = new LinkActiveState(this.#link);
+    this.#link.state = new LinkActiveState();
   }
 
   // No previous state from the created state
