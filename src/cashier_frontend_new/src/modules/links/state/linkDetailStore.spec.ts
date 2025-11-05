@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { determineActionTypeFromLink } from "./linkDetailStore.svelte";
+import { LinkDetailStore } from "./linkDetailStore.svelte";
 import { ActionType } from "../types/action/actionType";
 import { LinkState, type LinkStateValue } from "../types/link/linkState";
 import { LinkType, type LinkTypeValue } from "../types/link/linkType";
-import { fetchLinkDetail } from "./linkDetailStore.svelte";
 import { cashierBackendService } from "../services/cashierBackend";
 import { Ok } from "ts-results-es";
 import type {
@@ -82,7 +81,7 @@ describe("fetchLinkDetail behavior", () => {
     vi.mocked(cashierBackendService.getLink).mockResolvedValueOnce(Ok(resp1));
 
     // act
-    await fetchLinkDetail("some-id", {
+    await LinkDetailStore.fetchLinkDetail("some-id", {
       action: ActionType.SEND,
       anonymous: false,
     });
@@ -108,7 +107,7 @@ describe("fetchLinkDetail behavior", () => {
     vi.mocked(cashierBackendService.getLink).mockResolvedValueOnce(Ok(resp3));
 
     // act
-    await fetchLinkDetail("some-id", { anonymous: false });
+    await LinkDetailStore.fetchLinkDetail("some-id", { anonymous: false });
 
     // assert
     expect(vi.mocked(cashierBackendService.getLink)).toHaveBeenCalledTimes(2);
@@ -130,7 +129,7 @@ describe("fetchLinkDetail behavior", () => {
     vi.mocked(cashierBackendService.getLink).mockResolvedValueOnce(Ok(resp5));
 
     // act
-    await fetchLinkDetail("some-id", { anonymous: true });
+    await LinkDetailStore.fetchLinkDetail("some-id", { anonymous: true });
 
     // assert
     expect(vi.mocked(cashierBackendService.getLink)).toHaveBeenCalledTimes(1);
@@ -143,7 +142,9 @@ describe("fetchLinkDetail behavior", () => {
 
 describe("determineActionTypeFromLink", () => {
   it("returns CreateLink for CREATE_LINK", () => {
-    const res = determineActionTypeFromLink(makeLink(LinkState.CREATE_LINK));
+    const res = LinkDetailStore.determineActionTypeFromLink(
+      makeLink(LinkState.CREATE_LINK),
+    );
     expect(res).toEqual(ActionType.CREATE_LINK);
   });
 
@@ -154,20 +155,24 @@ describe("determineActionTypeFromLink", () => {
       LinkType.AIRDROP,
     ];
     types.forEach((t) => {
-      const res = determineActionTypeFromLink(makeLink(LinkState.ACTIVE, t));
+      const res = LinkDetailStore.determineActionTypeFromLink(
+        makeLink(LinkState.ACTIVE, t),
+      );
       expect(res).toEqual(ActionType.RECEIVE);
     });
   });
 
   it("returns Send for RECEIVE_PAYMENT when ACTIVE", () => {
-    const res = determineActionTypeFromLink(
+    const res = LinkDetailStore.determineActionTypeFromLink(
       makeLink(LinkState.ACTIVE, LinkType.RECEIVE_PAYMENT),
     );
     expect(res).toEqual(ActionType.SEND);
   });
 
   it("returns Withdraw for INACTIVE", () => {
-    const res = determineActionTypeFromLink(makeLink(LinkState.INACTIVE));
+    const res = LinkDetailStore.determineActionTypeFromLink(
+      makeLink(LinkState.INACTIVE),
+    );
     expect(res).toEqual(ActionType.WITHDRAW);
   });
 });

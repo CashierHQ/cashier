@@ -5,12 +5,12 @@ import {
 } from "$modules/links/types/action/actionType";
 import type { LinkDetailState } from ".";
 import type { LinkDetailStore } from "../linkDetailStore.svelte";
-import { LinkDetailStep } from "./linkStep";
+import { LinkStep } from "$modules/links/types/linkStep";
 import { linkListStore } from "../linkListStore.svelte";
 
 // State when the link inactive
 export class LinkInactiveState implements LinkDetailState {
-  readonly step = LinkDetailStep.INACTIVE;
+  readonly step = LinkStep.INACTIVE;
   #linkDetailStore: LinkDetailStore;
 
   constructor(link: LinkDetailStore) {

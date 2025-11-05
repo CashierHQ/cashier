@@ -3,11 +3,11 @@ import type { LinkDetailState } from ".";
 import type { LinkDetailStore } from "../linkDetailStore.svelte";
 import { linkListStore } from "../linkListStore.svelte";
 import { LinkActiveState } from "./active";
-import { LinkDetailStep } from "./linkStep";
+import { LinkStep } from "$modules/links/types/linkStep";
 
 // State when the link has been successfully created
 export class LinkCreatedState implements LinkDetailState {
-  readonly step = LinkDetailStep.CREATED;
+  readonly step = LinkStep.CREATED;
   #linkDetailStore: LinkDetailStore;
 
   constructor(link: LinkDetailStore) {

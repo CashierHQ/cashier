@@ -9,6 +9,7 @@
   import { LinkState } from "../types/link/linkState";
   import { LinkDetailStore } from "../state/linkDetailStore.svelte";
   import { ActionState } from "../types/action/actionState";
+  import { ActionType } from "../types/action/actionType";
 
   let { id }: { id: string } = $props();
 
@@ -18,11 +19,7 @@
 
   let linkDetail = new LinkDetailStore({ id });
 
-  // derive a plain accessor for the link so the template can read it succinctly
-  const link = $derived.by(() => linkDetail.link);
-
   $effect(() => {
-    console.log("linkDetail changed:", linkDetail);
     if (linkDetail) {
       showTxCart = shouldShowTxCart();
     }
@@ -47,8 +44,8 @@
 
   const endLink = async () => {
     try {
-      if (!link) return;
-      linkDetail.disableLink();
+      if (!linkDetail.link) throw new Error("Link is missing");
+      await linkDetail.disableLink();
     } catch (err) {
       console.error("end link failed", err);
     }
@@ -56,7 +53,11 @@
 
   const createWithdrawAction = async () => {
     try {
-      linkDetail.createAction();
+      if (!linkDetail.link) {
+        throw new Error("Link is missing");
+      }
+
+      await linkDetail.createAction(ActionType.WITHDRAW);
     } catch (err) {
       console.error("end link failed", err);
     }
@@ -64,7 +65,10 @@
 
   const goNext = async () => {
     try {
-      linkDetail.processAction();
+      if (!linkDetail.action) {
+        throw new Error("Action is missing");
+      }
+      await linkDetail.processAction(linkDetail.action.id);
     } catch (err) {
       console.error("withdraw failed", err);
     }
@@ -82,10 +86,10 @@
 {#if linkDetail.query.isLoading}
   Loading...
 {/if}
-{#if !link}
+{#if !linkDetail.link}
   Link not found
 {/if}
-{#if linkDetail.query.data && link}
+{#if linkDetail.query.data && linkDetail.link}
   <div class="px-4 py-4">
     <div class="flex items-center gap-3 mb-4">
       <Button
@@ -99,20 +103,20 @@
       </Button>
 
       <h3 class="text-lg font-semibold flex-1 text-center">
-        {link.title}
+        {linkDetail.link.title}
       </h3>
 
       <!-- placeholder to keep title centered (matches back button width) -->
       <div class="w-8 h-8" aria-hidden="true"></div>
     </div>
 
-    {#if link}
-      <LinkInfoSection {link} />
-      <UsageInfoSection {link} />
+    {#if linkDetail.link}
+      <LinkInfoSection link={linkDetail.link} />
+      <UsageInfoSection link={linkDetail.link} />
     {/if}
 
     <div class="mb-20">
-      {#if link.state === LinkState.ACTIVE}
+      {#if linkDetail.link.state === LinkState.ACTIVE}
         <Button
           variant="outline"
           onclick={endLink}
@@ -128,7 +132,7 @@
           {showCopied ? "Copied" : "Copy link"}
         </Button>
       {/if}
-      {#if link.state === LinkState.INACTIVE}
+      {#if linkDetail.link.state === LinkState.INACTIVE}
         <Button
           variant="outline"
           onclick={createWithdrawAction}
@@ -137,7 +141,7 @@
           Withdraw
         </Button>
       {/if}
-      {#if link.state === LinkState.CREATE_LINK}
+      {#if linkDetail.link.state === LinkState.CREATE_LINK}
         <Button
           variant="outline"
           onclick={openDrawer}
@@ -150,10 +154,10 @@
   </div>
 {/if}
 
-{#if showTxCart && link && linkDetail.action}
+{#if showTxCart && linkDetail.link && linkDetail.action}
   <TxCart
     isOpen={showTxCart}
-    {link}
+    link={linkDetail.link}
     action={linkDetail.action}
     {goNext}
     {onCloseDrawer}
