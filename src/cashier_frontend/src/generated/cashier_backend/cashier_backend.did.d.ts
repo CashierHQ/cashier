@@ -151,6 +151,7 @@ export interface Icrc28TrustedOriginsResponse {
   'trusted_origins' : Array<string>,
 }
 export interface Icrc2Approve {
+  'ts' : [] | [bigint],
   'asset' : Asset,
   'from' : Wallet,
   'memo' : [] | [Uint8Array | number[]],

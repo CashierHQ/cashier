@@ -183,6 +183,8 @@ async fn it_should_withdraw_icp_token_tip_linkv2_successfully() {
                     data.amount, withdraw_balance,
                     "Icrc1Transfer amount incorrect"
                 );
+                assert!(data.memo.is_some());
+                assert!(data.ts.is_some());
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
@@ -299,6 +301,8 @@ async fn it_should_withdraw_icrc_token_tip_linkv2_successfully() {
                     data.amount, withdraw_balance,
                     "Icrc1Transfer amount incorrect"
                 );
+                assert!(data.memo.is_some());
+                assert!(data.ts.is_some());
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
