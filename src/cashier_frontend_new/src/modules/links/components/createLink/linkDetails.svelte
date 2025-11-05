@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import type { LinkCreationStore } from "../../state/linkStore.svelte";
+  import type { LinkCreationStore } from "../../state/linkCreationStore.svelte";
 
   const {
     link,

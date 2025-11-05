@@ -1,7 +1,7 @@
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkCreationState } from ".";
-import type { LinkCreationStore } from "../linkStore.svelte";
+import type { LinkCreationStore } from "../linkCreationStore.svelte";
 import { AddAssetState } from "./addAsset";
 import { LinkCreatedState } from "./created";
 import { ActionMapper } from "../../types/action/action";

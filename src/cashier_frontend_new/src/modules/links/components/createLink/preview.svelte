@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import type { LinkCreationStore } from "../../state/linkStore.svelte";
+  import type { LinkCreationStore } from "../../state/linkCreationStore.svelte";
   import { LinkStep } from "../../types/linkStep";
   import { resolve } from "$app/paths";
   import LinkDetails from "./linkDetails.svelte";

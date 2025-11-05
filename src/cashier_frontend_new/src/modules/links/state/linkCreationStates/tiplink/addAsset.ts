@@ -2,7 +2,7 @@ import { validationService } from "$modules/links/services/validationService";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
 import type { LinkCreationState } from "..";
-import type { LinkCreationStore } from "../../linkStore.svelte";
+import type { LinkCreationStore } from "../../linkCreationStore.svelte";
 import { ChooseLinkTypeState } from "../chooseLinkType";
 import { PreviewState } from "../preview";
 
