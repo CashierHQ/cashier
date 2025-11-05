@@ -7,7 +7,6 @@ import type { LinkCreationState } from "./linkCreateStates";
 import { LinkActiveState } from "./linkCreateStates/active";
 import { ChooseLinkTypeState } from "./linkCreateStates/chooseLinkType";
 import { LinkCreatedState } from "./linkCreateStates/created";
-import { LinkInactiveState } from "./linkCreateStates/inactive";
 
 // Simple reactive state management
 export class LinkCreationStore {
@@ -108,9 +107,6 @@ export class LinkCreationStore {
         break;
       case FrontendState.ACTIVE:
         this.#state = new LinkActiveState(this);
-        break;
-      case FrontendState.INACTIVE:
-        this.#state = new LinkInactiveState(this);
         break;
     }
   }
