@@ -68,7 +68,7 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
         action: Action,
         intents: Vec<Intent>,
     ) -> Result<CreateActionResult, CanisterError> {
-        let created_at = self.ic_env.time();
+        let current_ts = self.ic_env.time();
 
         // assemble intent transactions
         let mut transactions = Vec::<Transaction>::new();
@@ -78,7 +78,7 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
             let chain = intent.chain.clone();
             let intent_transactions = self
                 .intent_adapter
-                .intent_to_transactions(&chain, created_at, intent)?;
+                .intent_to_transactions(&chain, current_ts, intent)?;
             transactions.extend(intent_transactions.clone());
             intent_txs_map.insert(intent.id.clone(), intent_transactions);
         }
@@ -109,7 +109,8 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
         // create ICRC112 requests from transactions
         let canister_id = self.ic_env.id();
         let link_account = get_link_account(&action.link_id, canister_id)?;
-        let icrc112_requests = create_icrc_112_requests(&transactions, link_account, canister_id)?;
+        let icrc112_requests =
+            create_icrc_112_requests(&transactions, link_account, canister_id, current_ts)?;
 
         Ok(CreateActionResult {
             action,
@@ -133,6 +134,8 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
         intents: Vec<Intent>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
     ) -> Result<ProcessActionResult, CanisterError> {
+        let current_ts = self.ic_env.time();
+
         // extract all transactions from intent_txs_map, these transactions are fulfilled with dependencies
         let mut transactions = Vec::<Transaction>::new();
         let mut processed_transactions = Vec::<Transaction>::new();
@@ -197,8 +200,12 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
         // create ICRC112 requests from transactions
         let canister_id = self.ic_env.id();
         let link_account = get_link_account(&action.link_id, canister_id)?;
-        let icrc112_requests =
-            create_icrc_112_requests(&processed_transactions, link_account, canister_id)?;
+        let icrc112_requests = create_icrc_112_requests(
+            &processed_transactions,
+            link_account,
+            canister_id,
+            current_ts,
+        )?;
 
         Ok(ProcessActionResult {
             action: rollup_action_state_result.action,
