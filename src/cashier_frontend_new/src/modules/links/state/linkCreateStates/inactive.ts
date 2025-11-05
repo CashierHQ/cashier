@@ -1,12 +1,12 @@
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { ActionType } from "$modules/links/types/action/actionType";
 import { LinkStep } from "$modules/links/types/linkStep";
-import type { LinkState } from ".";
+import type { LinkCreationState } from ".";
 import type { LinkCreationStore } from "../linkStore.svelte";
 import { LinkEndedState } from "./ended";
 
 // State when the link has been successfully inactive
-export class LinkInactiveState implements LinkState {
+export class LinkInactiveState implements LinkCreationState {
   readonly step = LinkStep.INACTIVE;
   #link: LinkCreationStore;
 

@@ -1,9 +1,9 @@
 import { LinkStep } from "$modules/links/types/linkStep";
-import type { LinkState } from ".";
+import type { LinkCreationState } from ".";
 import type { LinkCreationStore } from "../linkStore.svelte";
 
 // State when the link has been successfully inactive
-export class LinkEndedState implements LinkState {
+export class LinkEndedState implements LinkCreationState {
   readonly step = LinkStep.ENDED;
   #link: LinkCreationStore;
 
