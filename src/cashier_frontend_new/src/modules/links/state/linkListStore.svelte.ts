@@ -1,4 +1,5 @@
 import { managedState } from "$lib/managedState";
+import { authState } from "$modules/auth/state/auth.svelte";
 import { cashierBackendService } from "../services/cashierBackend";
 import { Link, LinkMapper } from "../types/link/link";
 
@@ -13,4 +14,7 @@ export const linkListStore = managedState<Link[]>({
     return links;
   },
   watch: true,
+  persistedKey: ["linkList", authState.account?.owner ?? "anon"],
+  storageType: "localStorage",
+  serde: LinkMapper.serde,
 });
