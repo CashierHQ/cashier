@@ -3,7 +3,7 @@ import { CreateLinkAsset, CreateLinkData } from "../types/createLinkData";
 import type { Link } from "../types/link/link";
 import { LinkState as FrontendState } from "../types/link/linkState";
 import { LinkType } from "../types/link/linkType";
-import type { LinkState } from "./linkCreateStates";
+import type { LinkCreationState } from "./linkCreateStates";
 import { LinkActiveState } from "./linkCreateStates/active";
 import { ChooseLinkTypeState } from "./linkCreateStates/chooseLinkType";
 import { LinkCreatedState } from "./linkCreateStates/created";
@@ -12,7 +12,7 @@ import { LinkInactiveState } from "./linkCreateStates/inactive";
 // Simple reactive state management
 export class LinkCreationStore {
   // Private state variables
-  #state: LinkState;
+  #state: LinkCreationState;
   // the raw Link object received from backend (kept for detail views)
   public link?: Link;
   // draft holds partial data used for creation/edit flows
@@ -23,7 +23,7 @@ export class LinkCreationStore {
   // ID of the created link (if any)
   #id?: string;
   constructor() {
-    this.#state = $state<LinkState>(new ChooseLinkTypeState(this));
+    this.#state = $state<LinkCreationState>(new ChooseLinkTypeState(this));
     this.createLinkData = $state<CreateLinkData>(
       new CreateLinkData({
         title: "",
@@ -36,11 +36,11 @@ export class LinkCreationStore {
     this.link = $state<Link | undefined>(undefined);
   }
 
-  get state(): LinkState {
+  get state(): LinkCreationState {
     return this.#state;
   }
 
-  set state(state: LinkState) {
+  set state(state: LinkCreationState) {
     this.#state = state;
   }
 

@@ -1,12 +1,12 @@
 import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkStep } from "$modules/links/types/linkStep";
-import type { LinkState } from ".";
+import type { LinkCreationState } from ".";
 import type { LinkCreationStore } from "../linkStore.svelte";
 import { AddAssetState } from "./addAsset";
 import { AddAssetTipLinkState } from "./tiplink/addAsset";
 
 // State when the user is choosing the type of link to create
-export class ChooseLinkTypeState implements LinkState {
+export class ChooseLinkTypeState implements LinkCreationState {
   readonly step = LinkStep.CHOOSE_TYPE;
   #link: LinkCreationStore;
 
