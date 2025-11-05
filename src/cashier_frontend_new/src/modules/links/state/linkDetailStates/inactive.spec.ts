@@ -7,6 +7,7 @@ import type { Link } from "$modules/links/types/link/link";
 import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkState } from "$modules/links/types/link/linkState";
 import { ActionType } from "$modules/links/types/action/actionType";
+import type { ActionTypeValue } from "$modules/links/types/action/actionType";
 import { Err, Ok } from "ts-results-es";
 
 const mocks = vi.hoisted(() => {
@@ -86,10 +87,33 @@ describe("LinkInactiveState", () => {
       const state = new LinkInactiveState(store);
 
       // Act
-      const res = state.createAction();
+      const res = state.createAction(
+        ActionType.WITHDRAW as unknown as ActionTypeValue,
+      );
 
       // Assert
       await expect(res).rejects.toThrow("Link is missing");
+    });
+
+    it("should throw when action type is not WITHDRAW", async () => {
+      // Arrange
+      const store = {
+        query: {
+          data: { link: mockLink, action: undefined },
+          refresh: vi.fn(),
+        },
+        link: mockLink,
+        action: undefined,
+      } as unknown as LinkDetailStore;
+      const state = new LinkInactiveState(store);
+
+      // Act
+      const res = state.createAction(ActionType.SEND);
+
+      // Assert
+      await expect(res).rejects.toThrow(
+        "Invalid action type for Inactive state",
+      );
     });
 
     it("should call backend and set action and refresh query", async () => {
@@ -108,7 +132,9 @@ describe("LinkInactiveState", () => {
       mocks.createActionV2.mockResolvedValueOnce(Ok(backendActionDto));
 
       // Act
-      await state.createAction();
+      await state.createAction(
+        ActionType.WITHDRAW as unknown as ActionTypeValue,
+      );
 
       // Assert
       expect(mocks.createActionV2).toHaveBeenCalledWith({
@@ -120,22 +146,6 @@ describe("LinkInactiveState", () => {
   });
 
   describe("processAction", () => {
-    it("should throw when action id missing", async () => {
-      // Arrange
-      const store = {
-        query: { data: { link: mockLink, action: undefined } },
-        link: mockLink,
-        action: undefined,
-      } as unknown as LinkDetailStore;
-      const state = new LinkInactiveState(store);
-
-      // Act
-      const res = state.processAction();
-
-      // Assert
-      await expect(res).rejects.toThrow("Action ID is missing");
-    });
-
     it("should throw when backend returns error", async () => {
       // Arrange
       const store = {
@@ -151,7 +161,7 @@ describe("LinkInactiveState", () => {
       mocks.processActionV2.mockResolvedValueOnce(Err("Backend error"));
 
       // Act
-      const res = state.processAction();
+      const res = state.processAction(mockAction.id);
 
       // Assert
       await expect(res).rejects.toThrow(
@@ -174,7 +184,7 @@ describe("LinkInactiveState", () => {
       mocks.processActionV2.mockResolvedValueOnce(Ok({}));
 
       // Act
-      await state.processAction();
+      await state.processAction(mockAction.id);
 
       // Assert
       expect(mocks.processActionV2).toHaveBeenCalledWith(mockAction.id);

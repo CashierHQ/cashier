@@ -103,72 +103,10 @@ describe("LinkCreatedState", () => {
       const state = new LinkCreatedState(store);
 
       // Act
-      const res = state.processAction();
+      const res = state.processAction("");
 
       // Assert
       await expect(res).rejects.toThrow("Link is missing");
-    });
-
-    it("should throw when action id missing", async () => {
-      // Arrange
-      const store = {
-        query: { data: { link: mockLink, action: undefined } },
-        link: mockLink,
-        action: undefined,
-      } as unknown as LinkDetailStore;
-      const state = new LinkCreatedState(store);
-
-      // Act
-      const res = state.processAction();
-
-      // Assert
-      await expect(res).rejects.toThrow("Action ID is missing");
-    });
-
-    it("should throw when action type invalid", async () => {
-      // Arrange
-      const store = {
-        query: {
-          data: {
-            link: mockLink,
-            action: { ...mockAction, type: ActionType.RECEIVE },
-          },
-        },
-        link: mockLink,
-        action: { ...mockAction, type: ActionType.RECEIVE },
-      } as unknown as LinkDetailStore;
-      const state = new LinkCreatedState(store);
-
-      // Act
-      const res = state.processAction();
-
-      // Assert
-      await expect(res).rejects.toThrow(
-        "Invalid action type for Created state",
-      );
-    });
-
-    it("should throw error when action type is not CREATE_LINK", async () => {
-      // Arrange
-      const store = {
-        query: {
-          data: {
-            link: mockLink,
-            action: { ...mockAction, type: ActionType.WITHDRAW },
-          },
-        },
-        link: mockLink,
-        action: { ...mockAction, type: ActionType.WITHDRAW },
-      } as unknown as LinkDetailStore;
-      const state = new LinkCreatedState(store);
-
-      // Act
-      const res = state.processAction();
-
-      // Assert
-      await expect(res).rejects.toThrow(
-        "Invalid action type for Created state",
-      );
     });
 
     it("should throw when backend returns error", async () => {
@@ -188,7 +126,7 @@ describe("LinkCreatedState", () => {
       );
 
       // Act
-      const res = state.processAction();
+      const res = state.processAction(mockAction.id);
 
       // Assert
       await expect(res).rejects.toThrow("Failed to activate link");
@@ -274,7 +212,7 @@ describe("LinkCreatedState", () => {
       );
 
       // Act
-      await state.processAction();
+      await state.processAction(mockAction.id);
 
       // Assert
       expect(mocks.cashierBackendService.processActionV2).toHaveBeenCalledWith(

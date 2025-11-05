@@ -1,7 +1,7 @@
 import { managedState } from "$lib/managedState";
 import { fromNullable } from "@dfinity/utils";
 import { cashierBackendService } from "../services/cashierBackend";
-import Action, { ActionMapper } from "../types/action/action";
+import { ActionMapper } from "../types/action/action";
 import {
   ActionType,
   ActionTypeMapper,
@@ -18,13 +18,7 @@ import { LinkCreatedState } from "./linkDetailStates/created";
 import { LinkDetailStep } from "./linkDetailStates/linkStep";
 import { LinkInactiveState } from "./linkDetailStates/inactive";
 import { LinkActiveState } from "./linkDetailStates/active";
-
-// A state for the user tokens list
-
-type LinkAndAction = {
-  link: Link;
-  action?: Action;
-};
+import type { LinkAndAction } from "../types/linkAndAction";
 
 /**
  * This method determines the appropriate ActionType based on the link's state and type.
@@ -230,16 +224,20 @@ export class LinkDetailStore {
 
   /**
    * Create an action based on the current state
+   * @param actionType The type of action to create
+   * @returns void
    */
-  async createAction() {
-    this.#state.createAction();
+  async createAction(actionType: ActionTypeValue) {
+    this.#state.createAction(actionType);
   }
 
   /**
    * Process the current action in the store
+   * @param actionId id of the action to process
+   * @returns void
    */
-  async processAction() {
-    this.#state.processAction();
+  async processAction(actionId: string) {
+    this.#state.processAction(actionId);
   }
 
   /**

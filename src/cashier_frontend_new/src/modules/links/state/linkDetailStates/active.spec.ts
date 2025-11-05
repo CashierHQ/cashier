@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { LinkActiveState } from "./active";
 import type { LinkDetailStore } from "../linkDetailStore.svelte";
 import { Ed25519KeyIdentity } from "@dfinity/identity";
+import { ActionType } from "$modules/links/types/action/actionType";
+import type { ActionTypeValue } from "$modules/links/types/action/actionType";
 import Action from "$modules/links/types/action/action";
 import type { Link } from "$modules/links/types/link/link";
 import { LinkType } from "$modules/links/types/link/linkType";
@@ -40,10 +42,14 @@ vi.mock("$modules/auth/state/auth.svelte", () => ({
   },
 }));
 
-// Keep ActionTypeMapper predictable for assertion
+// Keep ActionTypeMapper predictable for assertion and provide ActionType constants
 vi.mock("$modules/links/types/action/actionType", () => ({
   ActionTypeMapper: {
     fromLinkType: vi.fn().mockReturnValue("DUMMY_ACTION_TYPE"),
+  },
+  ActionType: {
+    RECEIVE: "RECEIVE",
+    SEND: "SEND",
   },
 }));
 
@@ -102,7 +108,9 @@ describe("LinkActiveState", () => {
       const state = new LinkActiveState(store);
 
       // Act
-      const res = state.createAction();
+      const res = state.createAction(
+        "DUMMY_ACTION_TYPE" as unknown as ActionTypeValue,
+      );
 
       // Assert
       await expect(res).rejects.toThrow("Link is missing");
@@ -124,12 +132,34 @@ describe("LinkActiveState", () => {
       mocks.createActionV2.mockResolvedValueOnce(Ok(backendActionDto));
 
       // Act
-      await state.createAction();
+      const res = state.createAction(ActionType.CREATE_LINK);
+
+      // Assert
+      await expect(res).rejects.toThrow("Invalid action type for Active state");
+    });
+
+    it("should call backend and set action for SEND action type", async () => {
+      // Arrange
+      const store = {
+        query: {
+          data: { link: mockLink, action: undefined },
+          refresh: vi.fn(),
+        },
+        link: mockLink,
+        action: undefined,
+      } as unknown as LinkDetailStore;
+      const state = new LinkActiveState(store);
+
+      const backendActionDto = { id: "backend-act-send" };
+      mocks.createActionV2.mockResolvedValueOnce(Ok(backendActionDto));
+
+      // Act
+      await state.createAction(ActionType.SEND as unknown as ActionTypeValue);
 
       // Assert
       expect(mocks.createActionV2).toHaveBeenCalledWith({
         linkId: mockLink.id,
-        actionType: "DUMMY_ACTION_TYPE",
+        actionType: ActionType.SEND,
       });
       expect(store.query.refresh).toHaveBeenCalled();
     });
@@ -146,26 +176,10 @@ describe("LinkActiveState", () => {
       const state = new LinkActiveState(store);
 
       // Act
-      const res = state.processAction();
+      const res = state.processAction("");
 
       // Assert
       await expect(res).rejects.toThrow("Link is missing");
-    });
-
-    it("should throw when action id missing", async () => {
-      // Arrange
-      const store = {
-        query: { data: { link: mockLink, action: undefined } },
-        link: mockLink,
-        action: undefined,
-      } as unknown as LinkDetailStore;
-      const state = new LinkActiveState(store);
-
-      // Act
-      const res = state.processAction();
-
-      // Assert
-      await expect(res).rejects.toThrow("Action ID is missing");
     });
 
     it("should throw when backend returns error", async () => {
@@ -183,7 +197,7 @@ describe("LinkActiveState", () => {
       mocks.processActionV2.mockResolvedValueOnce(Err("Backend error"));
 
       // Act
-      const res = state.processAction();
+      const res = state.processAction(mockAction.id);
 
       // Assert
       await expect(res).rejects.toThrow(
@@ -210,7 +224,7 @@ describe("LinkActiveState", () => {
       );
 
       // Act
-      await state.processAction();
+      await state.processAction(mockAction.id);
 
       // Assert
       expect(mocks.processActionV2).toHaveBeenCalledWith(mockAction.id);
