@@ -2,15 +2,15 @@ import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkState } from ".";
 import { linkListStore } from "../linkListStore.svelte";
-import type { LinkStore } from "../linkStore.svelte";
+import type { LinkCreationStore } from "../linkStore.svelte";
 import { LinkActiveState } from "./active";
 
 // State when the link has been successfully created
 export class LinkCreatedState implements LinkState {
   readonly step = LinkStep.CREATED;
-  #link: LinkStore;
+  #link: LinkCreationStore;
 
-  constructor(link: LinkStore) {
+  constructor(link: LinkCreationStore) {
     this.#link = link;
   }
 

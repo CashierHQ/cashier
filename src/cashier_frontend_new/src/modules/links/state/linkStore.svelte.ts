@@ -10,7 +10,7 @@ import { LinkCreatedState } from "./linkCreateStates/created";
 import { LinkInactiveState } from "./linkCreateStates/inactive";
 
 // Simple reactive state management
-export class LinkStore {
+export class LinkCreationStore {
   // Private state variables
   #state: LinkState;
   // the raw Link object received from backend (kept for detail views)

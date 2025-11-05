@@ -1,13 +1,13 @@
 <script lang="ts">
   import { LinkStep } from "$modules/links/types/linkStep";
-  import { LinkStore } from "$modules/links/state/linkStore.svelte";
+  import { LinkCreationStore } from "$modules/links/state/linkStore.svelte";
   import AddAsset from "$modules/links/components/createLink/addAsset.svelte";
   import ChooseLinkType from "$modules/links/components/createLink/chooseLinkType.svelte";
   import Preview from "../components/createLink/preview.svelte";
   import CreateLinkHeader from "$modules/links/components/createLink/createLinkHeader.svelte";
   import CreatedLink from "../components/createLink/createdLink.svelte";
 
-  let newLink = new LinkStore();
+  let newLink = new LinkCreationStore();
 </script>
 
 <div class="min-h-screen flex justify-center">

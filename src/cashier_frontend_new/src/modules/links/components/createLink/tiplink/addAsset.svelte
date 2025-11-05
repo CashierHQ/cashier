@@ -1,7 +1,7 @@
 <script lang="ts">
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import type { LinkStore } from "$modules/links/state/linkStore.svelte";
+  import type { LinkCreationStore } from "$modules/links/state/linkStore.svelte";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
@@ -14,7 +14,7 @@
   const {
     link,
   }: {
-    link: LinkStore;
+    link: LinkCreationStore;
   } = $props();
 
   // UI local state

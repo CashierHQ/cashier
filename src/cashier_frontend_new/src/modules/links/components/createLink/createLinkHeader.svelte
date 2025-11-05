@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { LinkStore } from "$modules/links/state/linkStore.svelte";
+  import type { LinkCreationStore } from "$modules/links/state/linkStore.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   // Accept a link store instance. We type as `any` to avoid tightly coupling to store internals here.
   // The pages pass a LinkStore instance (newLink).
-  export let link: LinkStore;
+  export let link: LinkCreationStore;
 </script>
 
 <nav class="flex gap-2">

@@ -1,15 +1,15 @@
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkState } from ".";
-import type { LinkStore } from "../linkStore.svelte";
+import type { LinkCreationStore } from "../linkStore.svelte";
 import { ChooseLinkTypeState } from "./chooseLinkType";
 import { PreviewState } from "./preview";
 
 // State when the user is adding asset details for the tip link
 export class AddAssetState implements LinkState {
   readonly step = LinkStep.ADD_ASSET;
-  #link: LinkStore;
+  #link: LinkCreationStore;
 
-  constructor(link: LinkStore) {
+  constructor(link: LinkCreationStore) {
     this.#link = link;
   }
 
