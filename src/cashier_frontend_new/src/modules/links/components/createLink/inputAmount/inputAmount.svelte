@@ -2,17 +2,17 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import { validationService } from '$modules/links/services/validationService';
-  import { USD_DISPLAY_DECIMALS } from '$modules/shared/constants';
+  import { validationService } from "$modules/links/services/validationService";
+  import { USD_DISPLAY_DECIMALS } from "$modules/shared/constants";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import type { TokenWithPriceAndBalance } from '$modules/token/types';
+  import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import {
-      computeAmountFromInput,
-      parseDisplayNumber,
-      sanitizeInput,
-      trimNumber,
+    computeAmountFromInput,
+    parseDisplayNumber,
+    sanitizeInput,
+    trimNumber,
   } from "../../../utils/inputAmount";
 
   let {
@@ -150,10 +150,7 @@
       >
         USD
       </Button>
-      <Button
-        class="px-2 py-1 border rounded text-sm"
-        onclick={handleSetMax}
-      >
+      <Button class="px-2 py-1 border rounded text-sm" onclick={handleSetMax}>
         Max
       </Button>
     </div>
