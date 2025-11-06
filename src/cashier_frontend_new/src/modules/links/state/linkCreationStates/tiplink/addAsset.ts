@@ -1,17 +1,17 @@
 import { validationService } from "$modules/links/services/validationService";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
-import type { LinkState } from "..";
-import type { LinkStore } from "../../linkStore.svelte";
+import type { LinkCreationState } from "..";
+import type { LinkCreationStore } from "../../linkCreationStore.svelte";
 import { ChooseLinkTypeState } from "../chooseLinkType";
 import { PreviewState } from "../preview";
 
 // State when the user is adding asset details for the tip link
-export class AddAssetTipLinkState implements LinkState {
+export class AddAssetTipLinkState implements LinkCreationState {
   readonly step = LinkStep.ADD_ASSET;
-  #link: LinkStore;
+  #link: LinkCreationStore;
 
-  constructor(link: LinkStore) {
+  constructor(link: LinkCreationStore) {
     this.#link = link;
   }
 

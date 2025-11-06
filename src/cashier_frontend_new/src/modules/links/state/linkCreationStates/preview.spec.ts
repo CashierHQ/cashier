@@ -13,7 +13,7 @@ import { Err, Ok } from "ts-results-es";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { cashierBackendService } from "../../services/cashierBackend";
 import { LinkStep } from "../../types/linkStep";
-import { LinkStore } from "../linkStore.svelte";
+import { LinkCreationStore } from "../linkCreationStore.svelte";
 
 // mock wallet store
 vi.mock("$modules/token/state/walletStore.svelte", () => {
@@ -90,7 +90,7 @@ describe("PreviewState", () => {
 
   it("should transition back to ADD_ASSET successfully", async () => {
     // Arrange
-    const store = new LinkStore();
+    const store = new LinkCreationStore();
     store.createLinkData.title = "My tip";
 
     // Act: move to ADD_ASSET then set tip and move to PREVIEW
@@ -115,7 +115,7 @@ describe("PreviewState", () => {
 
   it("should trainsition to CREATED successfully", async () => {
     // Arrange
-    const store = new LinkStore();
+    const store = new LinkCreationStore();
     store.createLinkData.title = "My tip";
 
     // Act: get to PREVIEW
@@ -145,7 +145,7 @@ describe("PreviewState", () => {
 
   it("should throws when backend returns Err", async () => {
     // Arrange
-    const store = new LinkStore();
+    const store = new LinkCreationStore();
     store.createLinkData.title = "My tip";
 
     // Act: move to PREVIEW
