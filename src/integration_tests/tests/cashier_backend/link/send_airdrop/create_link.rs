@@ -3,7 +3,7 @@ use crate::utils::{
     icrc_112::execute_icrc112_request, link_id_to_account::link_id_to_account, principal::TestUser,
     with_pocket_ic_context,
 };
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_backend_types::{
     constant,
     dto::link::{LinkStateMachineGoto, UpdateLinkInput},
@@ -26,7 +26,7 @@ async fn it_should_error_create_link_airdrop_if_caller_anonymous() {
         let test_fixture =
             LinkTestFixture::new(Arc::new(ctx.clone()), &Principal::anonymous()).await;
 
-        let airdrop_amount = 1_000_000u64;
+        let airdrop_amount = Nat::from(1_000_000u64);
         let max_use_count = 5;
         let link_input = test_fixture
             .airdrop_link_input(
@@ -61,8 +61,8 @@ async fn it_should_create_link_airdrop_icp_token_successfully() {
         let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
 
-        let initial_balance = 1_000_000_000u64;
-        let airdrop_amount = 1_000_000u64;
+        let initial_balance = Nat::from(1_000_000_000u64);
+        let airdrop_amount = Nat::from(1_000_000u64);
         let max_use_count = 5;
 
         let caller_account = Account {
@@ -71,7 +71,9 @@ async fn it_should_create_link_airdrop_icp_token_successfully() {
         };
 
         // Act
-        test_fixture.airdrop_icp(initial_balance, &caller).await;
+        test_fixture
+            .airdrop_icp(initial_balance.clone(), &caller)
+            .await;
 
         // Assert
         let caller_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
@@ -81,7 +83,7 @@ async fn it_should_create_link_airdrop_icp_token_successfully() {
         let link_input = test_fixture
             .airdrop_link_input(
                 vec![constant::ICP_TOKEN.to_string()],
-                vec![airdrop_amount],
+                vec![airdrop_amount.clone()],
                 max_use_count,
             )
             .unwrap();
@@ -94,7 +96,7 @@ async fn it_should_create_link_airdrop_icp_token_successfully() {
         assert_eq!(link.link_type, LinkType::SendAirdrop);
         assert_eq!(link.asset_info.len(), 1);
         assert_eq!(
-            link.asset_info[0].amount_per_link_use_action,
+            link.asset_info[0].amount_per_link_use_action.clone(),
             airdrop_amount
         );
         assert_eq!(link.link_use_action_max_count, max_use_count);
@@ -182,7 +184,7 @@ async fn it_should_create_link_airdrop_icp_token_successfully() {
             link_balance,
             test_utils::calculate_amount_for_wallet_to_link_transfer(
                 airdrop_amount,
-                &icp_ledger_fee,
+                icp_ledger_fee.clone(),
                 max_use_count
             ),
             "Link balance is incorrect"
@@ -210,8 +212,8 @@ async fn benchmark_create_link_airdrop_icp_token() {
         let caller = TestUser::User1.get_principal();
         let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
-        let initial_balance = 1_000_000_000u64;
-        let airdrop_amount = 1_000_000u64;
+        let initial_balance = Nat::from(1_000_000_000u64);
+        let airdrop_amount = Nat::from(1_000_000u64);
         let max_use_count = 5;
 
         test_fixture.airdrop_icp(initial_balance, &caller).await;
@@ -274,8 +276,8 @@ async fn it_should_create_link_airdrop_icrc_token_successfully() {
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let ckusdc_ledger_client = ctx.new_icrc_ledger_client(constant::CKUSDC_ICRC_TOKEN, caller);
 
-        let initial_balance = 1_000_000_000u64;
-        let airdrop_amount = 1_000_000u64;
+        let initial_balance = Nat::from(1_000_000_000u64);
+        let airdrop_amount = Nat::from(1_000_000u64);
         let max_use_count = 5;
 
         let caller_account = Account {
@@ -284,9 +286,15 @@ async fn it_should_create_link_airdrop_icrc_token_successfully() {
         };
 
         // Act
-        test_fixture.airdrop_icp(initial_balance, &caller).await;
         test_fixture
-            .airdrop_icrc(constant::CKUSDC_ICRC_TOKEN, initial_balance, &caller)
+            .airdrop_icp(initial_balance.clone(), &caller)
+            .await;
+        test_fixture
+            .airdrop_icrc(
+                constant::CKUSDC_ICRC_TOKEN,
+                initial_balance.clone(),
+                &caller,
+            )
             .await;
 
         // Assert
@@ -302,7 +310,7 @@ async fn it_should_create_link_airdrop_icrc_token_successfully() {
         let link_input = test_fixture
             .airdrop_link_input(
                 vec![constant::CKUSDC_ICRC_TOKEN.to_string()],
-                vec![airdrop_amount],
+                vec![airdrop_amount.clone()],
                 max_use_count,
             )
             .unwrap();
@@ -315,7 +323,7 @@ async fn it_should_create_link_airdrop_icrc_token_successfully() {
         assert_eq!(link.link_type, LinkType::SendAirdrop);
         assert_eq!(link.asset_info.len(), 1);
         assert_eq!(
-            link.asset_info[0].amount_per_link_use_action,
+            link.asset_info[0].amount_per_link_use_action.clone(),
             airdrop_amount
         );
         assert_eq!(link.link_use_action_max_count, max_use_count);
@@ -412,7 +420,7 @@ async fn it_should_create_link_airdrop_icrc_token_successfully() {
             link_balance,
             test_utils::calculate_amount_for_wallet_to_link_transfer(
                 airdrop_amount,
-                &ckusdc_ledger_fee,
+                ckusdc_ledger_fee.clone(),
                 max_use_count
             ),
             "Link balance is incorrect"
@@ -442,18 +450,20 @@ async fn benchmark_create_link_airdrop_icrc_token() {
         let caller = TestUser::User1.get_principal();
         let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
-        let initial_balance = 1_000_000_000u64;
-        let airdrop_amount = 1_000_000u64;
+        let initial_balance = Nat::from(1_000_000_000u64);
+        let airdrop_amount = Nat::from(1_000_000u64);
         let max_use_count = 5;
 
-        test_fixture.airdrop_icp(initial_balance, &caller).await;
+        test_fixture
+            .airdrop_icp(initial_balance.clone(), &caller)
+            .await;
         test_fixture
             .airdrop_icrc(constant::CKUSDC_ICRC_TOKEN, initial_balance, &caller)
             .await;
         let link_input = test_fixture
             .airdrop_link_input(
                 vec![constant::CKUSDC_ICRC_TOKEN.to_string()],
-                vec![airdrop_amount],
+                vec![airdrop_amount.clone()],
                 max_use_count,
             )
             .unwrap();

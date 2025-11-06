@@ -5,6 +5,8 @@
 import * as devalue from "devalue";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { managedState } from "./managedState.svelte";
+import { TestValue, Option, testValueDevalueSerde } from "./utils";
+import { Ed25519KeyIdentity } from "@dfinity/identity";
 
 describe("ManagedState - Global storage", () => {
   beforeEach(() => {
@@ -300,6 +302,59 @@ describe("ManagedState - LocalStorage", () => {
     );
   });
 
+  it("should persist and restore custom values with serde", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(5000);
+    const item = new TestValue({
+      name: "Alice",
+      age: 30,
+      principal: Ed25519KeyIdentity.generate().getPrincipal(),
+      testers: [Ed25519KeyIdentity.generate().getPrincipal()],
+      option: Option.OPTION_A,
+    });
+
+    const store = managedState<TestValue>({
+      queryFn: () => Promise.resolve(item),
+      persistedKey: ["test_key_serde"],
+      storageType: "localStorage",
+      serde: testValueDevalueSerde,
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+
+    // Data should be available and equal (deep equality)
+    expect(store.data).toEqual(item);
+
+    // Stored value should be serialized using our serializer mapping
+    expect(localStorage.getItem("test_key_serde")).toEqual(
+      devalue.stringify(
+        { created_ts: 5000, data: item },
+        testValueDevalueSerde.serialize,
+      ),
+    );
+
+    // Create a new managedState reading the same key; it should deserialize
+    // the stored value into a TestValue instance via our deserializer.
+    const store2 = managedState<TestValue>({
+      queryFn: () =>
+        Promise.resolve(
+          new TestValue({
+            name: "ignored",
+            age: 0,
+            principal: Ed25519KeyIdentity.generate().getPrincipal(),
+            testers: [],
+            option: Option.OPTION_A,
+          }),
+        ),
+      persistedKey: ["test_key_serde"],
+      storageType: "localStorage",
+      serde: testValueDevalueSerde,
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store2.data).toEqual(item);
+  });
+
   it("data should expire if stale", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(2123);
@@ -497,6 +552,60 @@ describe("ManagedState - SessionStorage", () => {
         data: 45,
       }),
     );
+  });
+
+  it("should persist and restore custom values with serde", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(5000);
+
+    const item = new TestValue({
+      name: "Alice",
+      age: 30,
+      principal: Ed25519KeyIdentity.generate().getPrincipal(),
+      testers: [Ed25519KeyIdentity.generate().getPrincipal()],
+      option: Option.OPTION_A,
+    });
+
+    const store = managedState<TestValue>({
+      queryFn: () => Promise.resolve(item),
+      persistedKey: ["test_key_serde_session"],
+      storageType: "sessionStorage",
+      serde: testValueDevalueSerde,
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+
+    // Data should be available and equal (deep equality)
+    expect(store.data).toEqual(item);
+
+    // Stored value should be serialized using our serializer mapping
+    expect(sessionStorage.getItem("test_key_serde_session")).toEqual(
+      devalue.stringify(
+        { created_ts: 5000, data: item },
+        testValueDevalueSerde.serialize,
+      ),
+    );
+
+    // Create a new managedState reading the same key; it should deserialize
+    // the stored value into a TestValue instance via our deserializer.
+    const store2 = managedState<TestValue>({
+      queryFn: () =>
+        Promise.resolve(
+          new TestValue({
+            name: "ignored",
+            age: 0,
+            principal: Ed25519KeyIdentity.generate().getPrincipal(),
+            testers: [],
+            option: Option.OPTION_A,
+          }),
+        ),
+      persistedKey: ["test_key_serde_session"],
+      storageType: "sessionStorage",
+      serde: testValueDevalueSerde,
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store2.data).toEqual(item);
   });
 
   it("data should expire if stale", async () => {

@@ -1,4 +1,4 @@
-import type { Storage } from ".";
+import type { DevalueSerde, Storage } from ".";
 import * as devalue from "devalue";
 
 /**
@@ -7,19 +7,24 @@ import * as devalue from "devalue";
  */
 export class LocalStorageStore<T> implements Storage<T> {
   readonly key: string;
+  readonly serde?: DevalueSerde;
 
-  constructor(key: string | string[]) {
+  constructor(key: string | string[], serde?: DevalueSerde) {
     this.key = Array.isArray(key) ? key.join(".") : key;
+    this.serde = serde;
   }
 
   getItem(): T | null {
     const item = this.#localStorage()?.getItem(this.key);
-    return item ? devalue.parse(item) : null;
+    return item ? devalue.parse(item, this.serde?.deserialize) : null;
   }
 
   setItem(value: T): void {
     if (value) {
-      this.#localStorage()?.setItem(this.key, devalue.stringify(value));
+      this.#localStorage()?.setItem(
+        this.key,
+        devalue.stringify(value, this.serde?.serialize),
+      );
     } else {
       this.removeItem();
     }

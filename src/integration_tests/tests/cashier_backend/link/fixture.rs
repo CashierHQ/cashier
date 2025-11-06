@@ -1,5 +1,5 @@
 use crate::utils::{PocketIcTestContext, icrc_112, principal::TestUser};
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_backend_client::client::CashierBackendClient;
 use cashier_backend_types::{
     constant,
@@ -178,7 +178,7 @@ impl LinkTestFixture {
     }
 
     // Pre-defined input for creating tip link.
-    pub async fn create_tip_link(&self, token: &str, amount: u64) -> LinkDto {
+    pub async fn create_tip_link(&self, token: &str, amount: Nat) -> LinkDto {
         let link_input = self
             .tip_link_input(vec![token.to_string()], vec![amount])
             .unwrap();
@@ -186,7 +186,7 @@ impl LinkTestFixture {
     }
 
     // Pre-defined input for creating tip link V2.
-    pub async fn create_tip_link_v2(&self, token: &str, amount: u64) -> CreateLinkDto {
+    pub async fn create_tip_link_v2(&self, token: &str, amount: Nat) -> CreateLinkDto {
         let link_input = self
             .tip_link_input(vec![token.to_string()], vec![amount])
             .unwrap();
@@ -208,7 +208,7 @@ impl LinkTestFixture {
                         constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
                         self.ctx.icp_ledger_principal.to_text()
                     ),
-                    amount_per_link_use_action: 10_000_000,
+                    amount_per_link_use_action: Nat::from(10_000_000u64),
                 },
                 LinkDetailUpdateAssetInfoInput {
                     asset: Asset::IC {
@@ -219,7 +219,7 @@ impl LinkTestFixture {
                         constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
                         self.ctx.icrc_token_map["ckBTC"].to_text()
                     ),
-                    amount_per_link_use_action: 1_000_000,
+                    amount_per_link_use_action: Nat::from(1_000_000u64),
                 },
                 LinkDetailUpdateAssetInfoInput {
                     asset: Asset::IC {
@@ -230,7 +230,7 @@ impl LinkTestFixture {
                         constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
                         self.ctx.icrc_token_map["ckUSDC"].to_text()
                     ),
-                    amount_per_link_use_action: 10_000_000,
+                    amount_per_link_use_action: Nat::from(10_000_000u64),
                 },
             ],
             link_type: LinkType::SendTokenBasket,
@@ -320,7 +320,7 @@ impl LinkTestFixture {
     }
 
     // This function is used to airdrop ICP to the user.
-    pub async fn airdrop_icp(&mut self, amount: u64, to_user: &Principal) -> () {
+    pub async fn airdrop_icp(&mut self, amount: Nat, to_user: &Principal) -> () {
         let caller = TestUser::TokenDeployer.get_principal();
 
         let icp_ledger_client = self.ctx.new_icp_ledger_client(caller);
@@ -338,7 +338,7 @@ impl LinkTestFixture {
     }
 
     // This function is used to airdrop ICRC to the user.
-    pub async fn airdrop_icrc(&mut self, token_name: &str, amount: u64, to_user: &Principal) -> () {
+    pub async fn airdrop_icrc(&mut self, token_name: &str, amount: Nat, to_user: &Principal) -> () {
         let caller = TestUser::TokenDeployer.get_principal();
         let icrc_ledger_client = self.ctx.new_icrc_ledger_client(token_name, caller);
 
@@ -366,7 +366,7 @@ impl LinkTestFixture {
     pub fn tip_link_input(
         &self,
         tokens: Vec<String>,
-        amounts: Vec<u64>,
+        amounts: Vec<Nat>,
     ) -> Result<CreateLinkInput, String> {
         if tokens.len() != amounts.len() {
             return Err(format!(
@@ -404,7 +404,7 @@ impl LinkTestFixture {
     pub fn token_basket_link_input(
         &self,
         tokens: Vec<String>,
-        amounts: Vec<u64>,
+        amounts: Vec<Nat>,
     ) -> Result<CreateLinkInput, String> {
         if tokens.len() != amounts.len() {
             return Err(format!(
@@ -443,7 +443,7 @@ impl LinkTestFixture {
     pub fn airdrop_link_input(
         &self,
         tokens: Vec<String>,
-        amounts: Vec<u64>,
+        amounts: Vec<Nat>,
         max_count: u64,
     ) -> Result<CreateLinkInput, String> {
         if tokens.len() != amounts.len() {
@@ -482,7 +482,7 @@ impl LinkTestFixture {
     pub fn receive_payment_link_input(
         &self,
         tokens: Vec<String>,
-        amounts: Vec<u64>,
+        amounts: Vec<Nat>,
     ) -> Result<CreateLinkInput, String> {
         if tokens.len() != amounts.len() {
             return Err(format!(
@@ -523,7 +523,7 @@ impl LinkTestFixture {
     fn asset_info_from_tokens_and_amount(
         &self,
         tokens: Vec<String>,
-        amounts: Vec<u64>,
+        amounts: Vec<Nat>,
         label: &str,
         is_token_basket: bool,
     ) -> Result<Vec<LinkDetailUpdateAssetInfoInput>, String> {
@@ -589,18 +589,20 @@ impl LinkTestFixture {
 pub async fn create_tip_link_fixture(
     ctx: &PocketIcTestContext,
     token: &str,
-    amount: u64,
+    amount: Nat,
 ) -> (LinkTestFixture, LinkDto) {
     let caller = TestUser::User1.get_principal();
     let mut creator_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
-    let initial_balance = 1_000_000_000u64;
+    let initial_balance = Nat::from(1_000_000_000u64);
     //let tip_amount = 1_000_000u64;
 
-    creator_fixture.airdrop_icp(initial_balance, &caller).await;
+    creator_fixture
+        .airdrop_icp(initial_balance.clone(), &caller)
+        .await;
     if token != constant::ICP_TOKEN {
         creator_fixture
-            .airdrop_icrc(token, initial_balance, &caller)
+            .airdrop_icrc(token, initial_balance.clone(), &caller)
             .await;
     }
 
@@ -636,17 +638,19 @@ pub async fn create_tip_link_fixture(
 pub async fn create_tip_linkv2_fixture(
     ctx: &PocketIcTestContext,
     token: &str,
-    amount: u64,
+    amount: Nat,
 ) -> (LinkTestFixture, CreateLinkDto) {
     let caller = TestUser::User1.get_principal();
     let mut creator_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
-    let initial_balance = 1_000_000_000u64;
+    let initial_balance = Nat::from(1_000_000_000u64);
 
-    creator_fixture.airdrop_icp(initial_balance, &caller).await;
+    creator_fixture
+        .airdrop_icp(initial_balance.clone(), &caller)
+        .await;
     if token != constant::ICP_TOKEN {
         creator_fixture
-            .airdrop_icrc(token, initial_balance, &caller)
+            .airdrop_icrc(token, initial_balance.clone(), &caller)
             .await;
     }
 
@@ -664,7 +668,7 @@ pub async fn create_tip_linkv2_fixture(
 pub async fn activate_tip_link_v2_fixture(
     ctx: &PocketIcTestContext,
     token: &str,
-    amount: u64,
+    amount: Nat,
 ) -> (LinkTestFixture, ProcessActionDto) {
     let (test_fixture, create_link_result) = create_tip_linkv2_fixture(ctx, token, amount).await;
 
@@ -689,9 +693,9 @@ pub async fn create_token_basket_link_fixture(
 
     let mut creator_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
-    let icp_initial_balance = 1_000_000_000u64;
-    let ckbtc_initial_balance = 1_000_000_000u64;
-    let ckusdc_initial_balance = 1_000_000_000u64;
+    let icp_initial_balance = Nat::from(1_000_000_000u64);
+    let ckbtc_initial_balance = Nat::from(1_000_000_000u64);
+    let ckusdc_initial_balance = Nat::from(1_000_000_000u64);
 
     creator_fixture
         .airdrop_icp(icp_initial_balance, &caller)
@@ -713,7 +717,10 @@ pub async fn create_token_basket_link_fixture(
                 constant::CKBTC_ICRC_TOKEN.to_string(),
                 constant::CKUSDC_ICRC_TOKEN.to_string(),
             ],
-            vec![icp_link_amount, ckbtc_link_amount, ckusdc_link_amount],
+            vec![icp_link_amount, ckbtc_link_amount, ckusdc_link_amount]
+                .into_iter()
+                .map(Nat::from)
+                .collect::<Vec<_>>(),
         )
         .unwrap();
 
@@ -744,15 +751,17 @@ pub async fn create_token_basket_link_fixture(
 pub async fn create_airdrop_link_fixture(
     ctx: &PocketIcTestContext,
     token: &str,
-    amount: u64,
+    amount: Nat,
     max_use_count: u64,
 ) -> (LinkTestFixture, LinkDto) {
     let caller = TestUser::User1.get_principal();
     let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
-    let initial_balance = 1_000_000_000u64;
+    let initial_balance = Nat::from(1_000_000_000u64);
 
-    test_fixture.airdrop_icp(initial_balance, &caller).await;
+    test_fixture
+        .airdrop_icp(initial_balance.clone(), &caller)
+        .await;
     if token != constant::ICP_TOKEN {
         test_fixture
             .airdrop_icrc(token, initial_balance, &caller)
@@ -791,12 +800,12 @@ pub async fn create_airdrop_link_fixture(
 pub async fn create_receive_payment_link_fixture(
     ctx: &PocketIcTestContext,
     token: &str,
-    amount: u64,
+    amount: Nat,
 ) -> (LinkTestFixture, LinkDto) {
     let caller = TestUser::User1.get_principal();
     let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
-    let initial_balance = 1_000_000_000u64;
+    let initial_balance = Nat::from(1_000_000_000u64);
     test_fixture.airdrop_icp(initial_balance, &caller).await;
 
     let link_input = test_fixture
@@ -835,15 +844,17 @@ pub async fn create_receive_payment_link_fixture(
 pub async fn create_and_use_receive_payment_link_fixture(
     ctx: &PocketIcTestContext,
     token: &str,
-    amount: u64,
+    amount: Nat,
 ) -> (LinkTestFixture, LinkDto) {
     let (creator_fixture, link) = create_receive_payment_link_fixture(ctx, token, amount).await;
 
     let claimer = TestUser::User2.get_principal();
     let mut claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
 
-    let initial_balance = 1_000_000_000u64;
-    claimer_fixture.airdrop_icp(initial_balance, &claimer).await;
+    let initial_balance = Nat::from(1_000_000_000u64);
+    claimer_fixture
+        .airdrop_icp(initial_balance.clone(), &claimer)
+        .await;
 
     if token != constant::ICP_TOKEN {
         claimer_fixture

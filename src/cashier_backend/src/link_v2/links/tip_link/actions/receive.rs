@@ -3,7 +3,7 @@
 
 use crate::link_v2::intents::transfer_link_to_wallet::TransferLinkToWalletIntent;
 use crate::link_v2::utils::icrc_token::get_link_account;
-use candid::{Nat, Principal};
+use candid::Principal;
 use cashier_backend_types::{
     constant::INTENT_LABEL_SEND_TIP_ASSET,
     error::CanisterError,
@@ -53,7 +53,7 @@ impl ReceiveAction {
             .asset_info
             .iter()
             .map(|asset_info| {
-                let sending_amount = Nat::from(asset_info.amount_per_link_use_action);
+                let sending_amount = asset_info.amount_per_link_use_action.clone();
 
                 TransferLinkToWalletIntent::create(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),

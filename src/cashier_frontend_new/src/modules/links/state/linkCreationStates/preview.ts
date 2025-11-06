@@ -1,17 +1,18 @@
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { LinkStep } from "$modules/links/types/linkStep";
-import type { LinkState } from ".";
-import type { LinkStore } from "../linkStore.svelte";
+import type { LinkCreationState } from ".";
+import type { LinkCreationStore } from "../linkCreationStore.svelte";
 import { AddAssetState } from "./addAsset";
 import { LinkCreatedState } from "./created";
 import { ActionMapper } from "../../types/action/action";
+import { LinkMapper } from "$modules/links/types/link/link";
 
 // State when the user is previewing the link before creation
-export class PreviewState implements LinkState {
+export class PreviewState implements LinkCreationState {
   readonly step = LinkStep.PREVIEW;
-  #link: LinkStore;
+  #link: LinkCreationStore;
 
-  constructor(link: LinkStore) {
+  constructor(link: LinkCreationStore) {
     this.#link = link;
   }
 
@@ -27,6 +28,7 @@ export class PreviewState implements LinkState {
 
     this.#link.state = new LinkCreatedState(this.#link);
     this.#link.id = result.value.link.id;
+    this.#link.link = LinkMapper.fromBackendType(result.value.link);
     this.#link.action = ActionMapper.fromBackendType(result.value.action);
   }
 

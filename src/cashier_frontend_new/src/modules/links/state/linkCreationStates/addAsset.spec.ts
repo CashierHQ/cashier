@@ -5,7 +5,7 @@ import {
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { describe, expect, it, vi } from "vitest";
 import { LinkStep } from "../../types/linkStep";
-import { LinkStore } from "../linkStore.svelte";
+import { LinkCreationStore } from "../linkCreationStore.svelte";
 
 // mock wallet store
 vi.mock("$modules/token/state/walletStore.svelte", () => {
@@ -45,7 +45,7 @@ vi.mock("$modules/token/state/walletStore.svelte", () => {
 describe("AddAssetState", () => {
   it("should transition to PREVIEW successfully", async () => {
     // Arrange
-    const store = new LinkStore();
+    const store = new LinkCreationStore();
     store.createLinkData.title = "My tip";
 
     // Act: move to ADD_ASSET
@@ -71,7 +71,7 @@ describe("AddAssetState", () => {
 
   it("should throws when asset is empty", async () => {
     // Arrange
-    const store = new LinkStore();
+    const store = new LinkCreationStore();
     store.createLinkData.title = "My tip";
     await store.goNext(); // to ADD_ASSET
 
@@ -91,7 +91,7 @@ describe("AddAssetState", () => {
 
   it("should throws when amount is zero or negative", async () => {
     // Arrange
-    const store = new LinkStore();
+    const store = new LinkCreationStore();
     store.createLinkData.title = "My tip";
     await store.goNext(); // to ADD_ASSET
 

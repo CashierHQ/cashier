@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import type { LinkStore } from "../../state/linkStore.svelte";
+  import type { LinkCreationStore } from "../../state/linkCreationStore.svelte";
   import { LinkStep } from "../../types/linkStep";
   import { resolve } from "$app/paths";
   import LinkDetails from "./linkDetails.svelte";
@@ -10,11 +10,12 @@
   const {
     link,
   }: {
-    link: LinkStore;
+    link: LinkCreationStore;
   } = $props();
 
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
+  let isOpenTxCart = $state(!!link.action);
 
   // Redirect if not in the correct step
   $effect(() => {
@@ -27,6 +28,7 @@
   async function goBack() {
     goto(resolve("/"));
   }
+
   async function goNext() {
     try {
       if (!link.id) {
@@ -39,15 +41,31 @@
       console.error("Failed to go next: ", error);
     }
   }
+
+  async function onClickCreate() {
+    isOpenTxCart = true;
+  }
+
+  async function onCloseTxCart() {
+    isOpenTxCart = false;
+  }
 </script>
 
 <h3 class="text-lg font-semibold">Created</h3>
 <div class="mt-2">
   <LinkDetails {link} {errorMessage} {successMessage} />
 
-  <div class="flex gap-2 mt-4">
-    <Button onclick={goBack}>Back</Button>
-  </div>
+  <Button onclick={goBack}>Back</Button>
 
-  <TxCart isOpen={true} {link} {goNext} />
+  <Button onclick={onClickCreate}>Create</Button>
+
+  {#if link.link && link.action && isOpenTxCart}
+    <TxCart
+      isOpen={isOpenTxCart}
+      link={link.link}
+      action={link.action}
+      {goNext}
+      onCloseDrawer={onCloseTxCart}
+    />
+  {/if}
 </div>
