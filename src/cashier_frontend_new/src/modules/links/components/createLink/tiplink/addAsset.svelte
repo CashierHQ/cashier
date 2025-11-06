@@ -61,8 +61,6 @@
     }
   });
 
-  // (conversion now handled by InputAmount component; addAsset uses base units)
-
   // Redirect if not in the correct step
   $effect(() => {
     if (link.state.step !== LinkStep.ADD_ASSET) {
@@ -80,13 +78,19 @@
     }
   });
 
-  // ErruseAmountsage state
+  // Error message state
   let errorMessage: string | null = $state(null);
 
-  // Navigate back to previous step
+  // Navigate back to previous ChooseLinkType step
   function goBack() {
-    goto(resolve("/"));
+    try {
+      link.goBack();
+    } catch (e) {
+      errorMessage = "Failed to go back to previous step: " + e;
+    }
   }
+
+  // Navigate to next Preview step
   async function goNext() {
     errorMessage = null;
     try {
