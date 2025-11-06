@@ -170,51 +170,10 @@ describe("validateRequiredAmount", () => {
   });
 });
 
-describe("maxAmountPerAsset", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+describe("maxAmountForAsset", () => {
+  it("should return the maximum amount available for an asset", () => {
+    const fee = 10_000n;
 
-  it("should return an error if no assets are provided", () => {
-    const mockWalletTokens: TokenWithPriceAndBalance[] = [];
-    const createLinkData: CreateLinkData = new CreateLinkData({
-      title: "testLink",
-      linkType: LinkType.TIP,
-      assets: [],
-      maxUse: 2,
-    });
-
-    const result = validationService.maxAmountPerAsset(
-      createLinkData,
-      mockWalletTokens,
-    );
-    expect(result.isErr()).toBe(true);
-    if (result.isErr()) {
-      expect(result.error.message).toBe("No assets provided for validation");
-    }
-  });
-
-  it("should return an error if wallet tokens data is not available", () => {
-    const mockWalletTokens: TokenWithPriceAndBalance[] = [];
-    const createLinkData: CreateLinkData = new CreateLinkData({
-      title: "testLink",
-      linkType: LinkType.TIP,
-      assets: [new CreateLinkAsset("0xtoken1", 1000n)],
-      maxUse: 2,
-    });
-
-    const result = validationService.maxAmountPerAsset(
-      createLinkData,
-      mockWalletTokens,
-    );
-    expect(result.isErr()).toBe(true);
-    if (result.isErr()) {
-      expect(result.error.message).toBe("Wallet tokens data is not available");
-    }
-  });
-
-  it("should return an error if token is not found in wallet", () => {
-    // mock walletStore to have token with insufficient balance
     const mockWalletTokens: TokenWithPriceAndBalance[] = [
       {
         name: "token1",
@@ -222,63 +181,31 @@ describe("maxAmountPerAsset", () => {
         address: "0xtoken1",
         decimals: 8,
         enabled: true,
-        fee: 10_000n,
+        fee: fee,
         is_default: false,
-        balance: 1_000_000n,
+        balance: 1_000_000_000n,
         priceUSD: 1.0,
       },
     ];
 
-    const createLinkData: CreateLinkData = new CreateLinkData({
-      title: "testLink",
-      linkType: LinkType.TIP,
-      assets: [new CreateLinkAsset("0xtoken2", 1_000_000n)],
-      maxUse: 2,
-    });
-
-    const result = validationService.maxAmountPerAsset(
-      createLinkData,
+    const maxAmountResult = validationService.maxAmountForAsset(
+      "0xtoken1",
+      1,
       mockWalletTokens,
     );
-    expect(result.isErr()).toBe(true);
-    if (result.isErr()) {
-      expect(result.error.message).toBe(
-        "Token with address 0xtoken2 not found in wallet",
-      );
-    }
+    expect(maxAmountResult.isOk()).toBe(true);
+    const maxAmount = maxAmountResult.unwrap();
+    expect(maxAmount).toBe(1_000_000_000n - 2n * fee);
   });
 
-  it("should calculate max amounts per asset successfully", () => {
-    // mock walletStore to have token with insufficient balance
-    const mockWalletTokens: TokenWithPriceAndBalance[] = [
-      {
-        name: "token1",
-        symbol: "TKN1",
-        address: "0xtoken1",
-        decimals: 8,
-        enabled: true,
-        fee: 10_000n,
-        is_default: false,
-        balance: 1_000_000n,
-        priceUSD: 1.0,
-      },
-    ];
+  it("should return error if token is not found", () => {
+    const mockWalletTokens: TokenWithPriceAndBalance[] = [];
 
-    const createLinkData: CreateLinkData = new CreateLinkData({
-      title: "testLink",
-      linkType: LinkType.TIP,
-      assets: [new CreateLinkAsset("0xtoken1", 0n)],
-      maxUse: 2,
-    });
-
-    const result = validationService.maxAmountPerAsset(
-      createLinkData,
+    const maxAmountResult = validationService.maxAmountForAsset(
+      "nonexistentToken",
+      1,
       mockWalletTokens,
     );
-    expect(result.isOk()).toBe(true);
-    const maxAmounts = result.unwrap();
-    expect(maxAmounts["0xtoken1"]).toBe(
-      (1_000_000n - 10_000n * (1n + 2n)) / 2n,
-    );
+    expect(maxAmountResult.isErr()).toBe(true);
   });
 });

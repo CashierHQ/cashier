@@ -2,9 +2,12 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
+  import { validationService } from '$modules/links/services/validationService';
   import { USD_DISPLAY_DECIMALS } from '$modules/shared/constants';
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import type { TokenWithPriceAndBalance } from '$modules/token/types';
   import {
       computeAmountFromInput,
       parseDisplayNumber,
@@ -13,45 +16,36 @@
   } from "../../../utils/inputAmount";
 
   let {
-    decimals,
-    priceUsd,
+    token,
     tokenAmount = $bindable<bigint>(0n),
-    handleSetMax,
   }: {
-    decimals: number;
-    priceUsd: number;
+    token: TokenWithPriceAndBalance;
     tokenAmount: bigint;
-    handleSetMax?: () => void;
   } = $props();
 
   // read-only input string derived from `tokenAmount`
   let mode: string = $state("amount");
   let userInput: string = $state("");
-  let isTyping: boolean = $state(false);
-  let inputElement: HTMLInputElement | null = $state(null);
 
   let formattedValue: string = $derived.by(() => {
     if (tokenAmount != null && tokenAmount !== undefined) {
-      const asAmount: number = parseBalanceUnits(tokenAmount, decimals);
+      const asAmount: number = parseBalanceUnits(tokenAmount, token.decimals);
       if (mode === "amount") {
         return String(asAmount);
       } else {
-        if (priceUsd && priceUsd > 0) {
+        if (token.priceUSD && token.priceUSD > 0) {
           // trim floating-point precision for USD display to avoid extremely long decimal strings
-          return trimNumber(asAmount * priceUsd, USD_DISPLAY_DECIMALS);
+          return trimNumber(asAmount * token.priceUSD, USD_DISPLAY_DECIMALS);
         }
       }
     }
     return "";
   });
 
+  // reset userInput when token changes
   $effect(() => {
-    // only update input value if user is not typing
-    if (!isTyping) {
+    if (token) {
       userInput = formattedValue;
-      if (inputElement) {
-        inputElement.value = formattedValue;
-      }
     }
   });
 
@@ -59,19 +53,18 @@
   let converted = $derived.by(() => {
     const parsed = parseDisplayNumber(userInput);
     if (parsed == null) return 0;
-    if (!priceUsd || priceUsd <= 0) return 0;
+    if (!token.priceUSD || token.priceUSD <= 0) return 0;
     if (mode === "amount") {
       // mode 'amount' means the input is token amount -> show USD
-      return parsed * priceUsd;
+      return parsed * token.priceUSD;
     } else {
       // mode 'usd' means the input is USD amount -> show tokens
-      return parsed / priceUsd;
+      return parsed / token.priceUSD;
     }
   });
 
   // Handle input events and keep numeric displayNumber
   function handleInput(e: Event) {
-    isTyping = true;
     const t = e.target as HTMLInputElement;
     // sanitize input (removes invalid chars) and parse
     const sanitizedInput = sanitizeInput(t.value);
@@ -81,7 +74,6 @@
     }
 
     userInput = sanitizedInput;
-
     const parsed = parseDisplayNumber(sanitizedInput);
 
     if (parsed == null) {
@@ -91,23 +83,49 @@
       tokenAmount = computeAmountFromInput({
         num: parsed,
         mode,
-        priceUsd,
-        decimals,
+        priceUsd: token.priceUSD,
+        decimals: token.decimals,
       });
     }
-
-    // reset typing flag after a short delay
-    setTimeout(() => {
-      isTyping = false;
-    }, 100);
   }
 
   // Toggle mode (external callers can set `mode` prop too)
   function handleToggleMode(m: "amount" | "usd") {
     // disallow switching to USD when price is not provided
-    if (m === "usd" && !priceUsd) return;
+    if (m === "usd" && !token.priceUSD) return;
     mode = m;
-    isTyping = false;
+
+    const parsed = parseDisplayNumber(userInput);
+    if (parsed == null || parsed <= 0) {
+      userInput = "";
+      return;
+    }
+
+    if (mode === "usd") {
+      userInput = (parsed * token.priceUSD).toFixed(5);
+    } else {
+      userInput = (parsed / token.priceUSD).toFixed(5);
+    }
+  }
+
+  // Set max amount based on wallet balance and validation service
+  function handleSetMax() {
+    if (!walletStore.query.data) {
+      return;
+    }
+
+    const maxUse = 1; // TipLink has maxUse = 1 per asset
+    const maxAmountForAsset = validationService.maxAmountForAsset(
+      token.address,
+      maxUse,
+      walletStore.query.data,
+    );
+    if (maxAmountForAsset.isErr()) {
+      return;
+    }
+
+    tokenAmount = maxAmountForAsset.unwrap();
+    userInput = formattedValue;
   }
 </script>
 
@@ -128,7 +146,7 @@
         class={`px-2 py-1 border rounded text-sm ${mode === "usd" ? "bg-blue-600 text-white border-blue-600" : ""}`}
         aria-pressed={mode === "usd"}
         onclick={() => handleToggleMode("usd")}
-        disabled={!priceUsd}
+        disabled={!token.priceUSD}
       >
         USD
       </Button>
@@ -142,7 +160,6 @@
   </div>
 
   <Input
-    bind:ref={inputElement}
     value={userInput}
     type="text"
     inputmode="decimal"
@@ -154,8 +171,8 @@
   />
 
   <div class="text-sm text-gray-500">
-    {#if priceUsd}
-      1 token = {priceUsd} USD
+    {#if token.priceUSD}
+      1 token = {token.priceUSD} USD
     {:else}
       Price not available
     {/if}
