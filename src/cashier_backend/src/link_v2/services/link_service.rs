@@ -218,6 +218,7 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         self.action_service.update_action_data(
             result.process_action_result.action.clone(),
             result.process_action_result.intents.clone(),
+            &result.process_action_result.intent_txs_map,
         )?;
 
         // response dto
@@ -227,13 +228,15 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
                 intents: result.process_action_result.intents.clone(),
                 intent_txs: result.process_action_result.intent_txs_map,
             },
-            None,
+            result.process_action_result.icrc112_requests,
         );
         let link_dto = LinkDto::from(result.link);
 
         Ok(ProcessActionDto {
             link: link_dto,
             action: action_dto,
+            is_success: result.process_action_result.is_success,
+            errors: result.process_action_result.errors,
         })
     }
 
