@@ -6,6 +6,7 @@
   import { resolve } from "$app/paths";
   import LinkDetails from "./linkDetails.svelte";
   import { linkListStore } from "$modules/links/state/linkListStore.svelte";
+  import { walletStore } from '$modules/token/state/walletStore.svelte';
 
   const {
     link,
