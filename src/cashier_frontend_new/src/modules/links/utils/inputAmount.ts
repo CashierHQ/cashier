@@ -1,3 +1,5 @@
+import { USD_DISPLAY_DECIMALS } from "$modules/shared/constants";
+
 /**
  * Sanitize user input to allow only digits and a single decimal point.
  * @param s user's input
@@ -58,4 +60,16 @@ export function computeAmountFromInput({
   if (!priceUsd || priceUsd <= 0) return 0n;
   const tokenAmount = num / priceUsd;
   return BigInt(Math.trunc(tokenAmount * Math.pow(10, decimals)));
+}
+
+/**
+ * Trim number to given decimals, removing trailing zeros
+ * @param n
+ * @param decimals
+ */
+export function trimNumber(n: number, decimals = USD_DISPLAY_DECIMALS) {
+  if (!isFinite(n)) return String(n);
+  // limit precision and strip trailing zeros
+  const fixed = n.toFixed(decimals);
+  return fixed.replace(/\.?0+$/, "");
 }

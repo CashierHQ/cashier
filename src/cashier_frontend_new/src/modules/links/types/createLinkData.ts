@@ -2,10 +2,10 @@ import type {
   AssetInfoDto,
   CreateLinkInput,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
-import { Result, Ok, Err } from "ts-results-es";
-import { LinkType, LinkTypeMapper, type LinkTypeValue } from "./link/linkType";
-import Asset from "./asset";
 import { Principal } from "@dfinity/principal";
+import { Err, Ok, Result } from "ts-results-es";
+import Asset from "./asset";
+import { LinkType, LinkTypeMapper, type LinkTypeValue } from "./link/linkType";
 
 export class CreateLinkAsset {
   address: string;
@@ -34,7 +34,7 @@ export class CreateLinkAsset {
 export class CreateLinkData {
   title: string;
   linkType: LinkTypeValue;
-  assets?: CreateLinkAsset[];
+  assets: CreateLinkAsset[];
   maxUse: number;
   constructor({
     title,
@@ -44,7 +44,7 @@ export class CreateLinkData {
   }: {
     title: string;
     linkType: LinkTypeValue;
-    assets?: CreateLinkAsset[];
+    assets: CreateLinkAsset[];
     maxUse: number;
   }) {
     this.title = title;

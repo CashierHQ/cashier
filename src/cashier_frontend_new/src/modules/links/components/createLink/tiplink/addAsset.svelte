@@ -2,13 +2,14 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
+  import { validationService } from '$modules/links/services/validationService';
   import type { LinkCreationStore } from "$modules/links/state/linkCreationStore.svelte";
   import { CreateLinkAsset } from "$modules/links/types/createLinkData";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import type { TokenWithPriceAndBalance } from '$modules/token/types';
   import InputAmount from "../inputAmount/inputAmount.svelte";
 
   const {
@@ -17,38 +18,24 @@
     link: LinkCreationStore;
   } = $props();
 
-  // UI local state
-  // If there are assets already on the createLinkData, use the first one's values as defaults.
-  // Otherwise default to undefined and 0n respectively.
-  let selectedAddress: string | undefined = $state(
-    (() => {
+  // read-only derived state for the selected asset address
+  let selectedAddress: string | undefined = $derived.by(
+    () => {
       const assets = link.createLinkData?.assets;
       if (assets && assets.length > 0) return assets[0].address;
       return undefined;
-    })(),
+    },
   );
 
-  let amountBaseUnits: bigint = $state(
-    (() => {
-      const assets = link.createLinkData?.assets;
-      if (assets && assets.length > 0) return assets[0].useAmount ?? 0n;
-      return 0n;
-    })(),
-  );
-
-  // useAmount selected token metadata
-  function getSelectedToken() {
-    if (!selectedAddress || !walletStore.query.data || !selectedAddress)
+  // read-only derived state for the selected token
+  let selectedToken: TokenWithPriceAndBalance | null = $derived.by(() => {
+    if (!selectedAddress || !walletStore.query.data)
       return null;
-    return (
-      walletStore.query.data.find(
-        (token) => token.address === selectedAddress,
-      ) || null
-    );
-  }
-
-  // selected token state for template usage (derived from selection + wallet)
-  let selectedTokenState = $derived(() => getSelectedToken());
+      
+    const token = walletStore.findTokenByAddress(selectedAddress);
+    if (token.isErr()) return null;
+    return token.unwrap();
+  });
 
   // Auto-select the first token when wallet data becomes available and nothing is selected
   $effect(() => {
@@ -57,7 +44,9 @@
       walletStore.query.data &&
       walletStore.query.data.length > 0
     ) {
-      selectedAddress = walletStore.query.data[0].address;
+      link.createLinkData.assets = [
+        new CreateLinkAsset(walletStore.query.data[0].address, 0n),
+      ];
     }
   });
 
@@ -68,21 +57,50 @@
     }
   });
 
-  // effect to update the store when selected asset or base units change
-  $effect(() => {
-    if (selectedAddress && amountBaseUnits && amountBaseUnits > 0) {
-      link.createLinkData.assets = new Array(
-        new CreateLinkAsset(selectedAddress, amountBaseUnits),
-      );
-      return;
-    }
-  });
-
   // Error message state
   let errorMessage: string | null = $state(null);
 
+  // Handle asset selection
+  function handleSelectToken(address: string) {
+    if (!link.createLinkData.assets) {
+      link.createLinkData.assets = [
+        new CreateLinkAsset(address, 0n),
+      ];
+    } else {
+      link.createLinkData.assets[0].address = address;
+    }
+  }
+
+  // Set max amount for selected asset
+  function handleSetMax() {
+    errorMessage = null;
+    if (!walletStore.query.data) {
+      errorMessage = "Wallet tokens not loaded.";
+      return;
+    }
+
+    if (!selectedAddress || link.createLinkData.assets.length === 0) {
+      errorMessage = "No asset selected.";
+      return;
+    }
+
+    const maxUse = 1; // TipLink has maxUse = 1 per asset
+    const maxAmountForAsset = validationService.maxAmountForAsset(
+      selectedAddress,
+      maxUse,
+      walletStore.query.data,
+    );
+    if (maxAmountForAsset.isErr()) {
+      errorMessage = "Query max amount for asset error " + maxAmountForAsset.error.message;
+      return;
+    }
+
+    link.createLinkData.assets[0].useAmount = maxAmountForAsset.unwrap();
+  }
+
   // Navigate back to previous ChooseLinkType step
   function goBack() {
+    errorMessage = null;
     try {
       link.goBack();
     } catch (e) {
@@ -112,7 +130,7 @@
               type="button"
               class="w-full text-left p-2 border rounded cursor-pointer"
               class:bg-gray-100={selectedAddress === token.address}
-              onclick={() => (selectedAddress = token.address)}
+              onclick={() => handleSelectToken(token.address)}
             >
               <div class="flex justify-between items-center">
                 <div>
@@ -142,15 +160,13 @@
   {/if}
 
   <div>
-    {#if selectedTokenState}
+    {#if link.createLinkData.assets.length > 0 && selectedToken}
       <InputAmount
-        bind:value={amountBaseUnits}
-        decimals={selectedTokenState()?.decimals ?? 8}
-        priceUsd={selectedTokenState()?.priceUSD ?? undefined}
-        balance={selectedTokenState()?.balance}
+        bind:value={link.createLinkData.assets[0].useAmount}
+        decimals={selectedToken.decimals}
+        priceUsd={selectedToken.priceUSD}
+        handleSetMax={handleSetMax}
       />
-    {:else}
-      <Input id="amount" type="number" placeholder="0.00" disabled />
     {/if}
   </div>
 
