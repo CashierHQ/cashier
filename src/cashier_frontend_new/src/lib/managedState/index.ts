@@ -6,3 +6,15 @@ export interface Storage<T> {
   setItem(value: T): void;
   removeItem(): void;
 }
+
+// A serializer/deserializer type
+export type DevalueSerde = {
+  /**
+   * The serialization for devalue
+   */
+  serialize: Record<string, (value: unknown) => unknown>;
+  /**
+   * The deserialization for devalue
+   */
+  deserialize: Record<string, (data: unknown) => unknown>;
+};

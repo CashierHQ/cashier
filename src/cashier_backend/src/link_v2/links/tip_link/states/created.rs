@@ -66,17 +66,12 @@ impl<M: TransactionManager + 'static> CreatedState<M> {
         // if process action succeeds, activate the link
         if process_action_result.is_success {
             link.state = LinkState::Active;
-
-            Ok(LinkProcessActionResult {
-                link,
-                process_action_result,
-            })
-        } else {
-            Err(CanisterError::ValidationErrors(format!(
-                "Failed to activate link: {}",
-                process_action_result.errors.join(", ")
-            )))
         }
+
+        Ok(LinkProcessActionResult {
+            link,
+            process_action_result,
+        })
     }
 }
 
