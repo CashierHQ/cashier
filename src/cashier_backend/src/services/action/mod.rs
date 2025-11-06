@@ -177,6 +177,16 @@ impl<R: Repositories> ActionService<R> {
         Ok(RollUpStateResp::from((updated_action_data, previous_state)))
     }
 
+    /// Stores the action and associated intents and transactions in the database.
+    /// # Arguments
+    /// * `link_action` - The link action associated with the action
+    /// * `action` - The action to be stored
+    /// * `intents` - The list of intents associated with the action
+    /// * `intent_tx_map` - A map of intent IDs to their associated transactions
+    /// * `user_id` - The user ID associated with the action
+    /// # Returns
+    /// * `Ok(())` - If the storage is successful
+    /// * `Err(CanisterError)` - If the storage fails
     pub fn store_action_data(
         &mut self,
         link_action: LinkAction,
@@ -235,9 +245,18 @@ impl<R: Repositories> ActionService<R> {
         &mut self,
         action: Action,
         intents: Vec<Intent>,
+        intent_tx_map: &HashMap<String, Vec<Transaction>>,
     ) -> Result<(), CanisterError> {
         self.action_repository.update(action);
         self.intent_repository.batch_update(intents);
+
+        let mut transactions: Vec<Transaction> = vec![];
+        for txs in intent_tx_map.values() {
+            for tx in txs {
+                transactions.push(tx.clone());
+            }
+        }
+        self.transaction_repository.batch_create(transactions);
 
         Ok(())
     }

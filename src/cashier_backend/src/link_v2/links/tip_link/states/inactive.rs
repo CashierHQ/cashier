@@ -57,17 +57,12 @@ impl<M: TransactionManager + 'static> InactiveState<M> {
 
         if process_action_result.is_success {
             link.state = LinkState::InactiveEnded;
-
-            Ok(LinkProcessActionResult {
-                link,
-                process_action_result,
-            })
-        } else {
-            Err(CanisterError::ValidationErrors(format!(
-                "Failed to withdraw link {}",
-                process_action_result.errors.join(", ")
-            )))
         }
+
+        Ok(LinkProcessActionResult {
+            link,
+            process_action_result,
+        })
     }
 }
 
