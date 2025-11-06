@@ -1,4 +1,5 @@
 import { managedState } from "$lib/managedState";
+import { authState } from "$modules/auth/state/auth.svelte";
 import { cashierBackendService } from "../services/cashierBackend";
 import { Link, LinkMapper } from "../types/link/link";
 
@@ -12,5 +13,8 @@ export const linkListStore = managedState<Link[]>({
     const links = res.unwrap().map((b) => LinkMapper.fromBackendType(b));
     return links;
   },
-  watch: true,
+  refetchInterval: 15 * 1000, // 15 seconds
+  persistedKey: ["linkList", authState.account?.owner ?? "anon"],
+  storageType: "localStorage",
+  serde: LinkMapper.serde,
 });
