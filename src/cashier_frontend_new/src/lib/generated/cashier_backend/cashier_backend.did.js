@@ -352,12 +352,22 @@ export const idlFactory = ({ IDL }) => {
     'action_type' : ActionType,
   });
   const ProcessActionV2Input = IDL.Record({ 'action_id' : IDL.Text });
+  const ProcessActionDto = IDL.Record({
+    'action' : ActionDto,
+    'link' : LinkDto,
+    'errors' : IDL.Vec(IDL.Text),
+    'is_success' : IDL.Bool,
+  });
+  const Result_11 = IDL.Variant({
+    'Ok' : ProcessActionDto,
+    'Err' : CanisterError,
+  });
   const TriggerTransactionInput = IDL.Record({
     'transaction_id' : IDL.Text,
     'action_id' : IDL.Text,
     'link_id' : IDL.Text,
   });
-  const Result_11 = IDL.Variant({ 'Ok' : IDL.Text, 'Err' : CanisterError });
+  const Result_12 = IDL.Variant({ 'Ok' : IDL.Text, 'Err' : CanisterError });
   const UpdateActionInput = IDL.Record({
     'action_id' : IDL.Text,
     'link_id' : IDL.Text,
@@ -440,10 +450,14 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'user_process_action' : IDL.Func([ProcessActionInput], [Result_2], []),
-    'user_process_action_v2' : IDL.Func([ProcessActionV2Input], [Result_9], []),
+    'user_process_action_v2' : IDL.Func(
+        [ProcessActionV2Input],
+        [Result_11],
+        [],
+      ),
     'user_trigger_transaction' : IDL.Func(
         [TriggerTransactionInput],
-        [Result_11],
+        [Result_12],
         [],
       ),
     'user_update_action' : IDL.Func([UpdateActionInput], [Result_2], []),

@@ -12,6 +12,8 @@ pub struct CreateLinkDto {
 pub struct ProcessActionDto {
     pub link: LinkDto,
     pub action: ActionDto,
+    pub is_success: bool,
+    pub errors: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]

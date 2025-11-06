@@ -60,17 +60,12 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
             if link.link_use_action_counter >= link.link_use_action_max_count {
                 link.state = LinkState::InactiveEnded;
             }
-
-            Ok(LinkProcessActionResult {
-                link,
-                process_action_result,
-            })
-        } else {
-            Err(CanisterError::ValidationErrors(format!(
-                "Failed to claim link: {}",
-                process_action_result.errors.join(", ")
-            )))
         }
+
+        Ok(LinkProcessActionResult {
+            link,
+            process_action_result,
+        })
     }
 }
 
