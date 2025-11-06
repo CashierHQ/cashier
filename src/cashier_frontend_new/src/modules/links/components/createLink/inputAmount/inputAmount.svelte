@@ -42,7 +42,7 @@
   });
 
   // converted value: if mode === 'amount' -> USD equivalent, else -> token equivalent
-  let converted = $derived(() => {
+  let converted = $derived.by(() => {
     const parsed = parseDisplayNumber(inputStr);
     if (parsed == null) return 0;
     if (!priceUsd || priceUsd <= 0) return 0;
@@ -130,12 +130,12 @@
     {:else}
       Price not available
     {/if}
-    {#if converted() != null}
+    {#if converted != null}
       <div class="text-sm text-gray-700 mt-1">
         {#if mode === "amount"}
-          ≈ ${formatNumber(converted())}
+          ≈ ${formatNumber(converted)} USD
         {:else}
-          ≈ {formatNumber(converted())} tokens
+          ≈ {formatNumber(converted)} tokens
         {/if}
       </div>
     {/if}
