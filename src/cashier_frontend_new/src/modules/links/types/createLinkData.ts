@@ -15,16 +15,21 @@ export class CreateLinkAsset {
     this.address = address;
     this.useAmount = useAmount;
   }
+}
 
+export class CreateLinkAssetMapper {
   /**
    * Convert CreateLinkAsset to AssetInfoDto for backend consumption
    * @param label Label for the asset info
    * @returns AssetInfoDto
    */
-  toBackendWithLabel(label: string): AssetInfoDto {
+  static toBackendWithLabel(
+    asset: CreateLinkAsset,
+    label: string,
+  ): AssetInfoDto {
     return {
-      asset: Asset.IC(Principal.fromText(this.address)).toBackend(),
-      amount_per_link_use_action: BigInt(this.useAmount),
+      asset: Asset.IC(Principal.fromText(asset.address)).toBackend(),
+      amount_per_link_use_action: BigInt(asset.useAmount),
       label,
     };
   }
@@ -78,7 +83,7 @@ export class CreateLinkDataMapper {
     }
 
     const assetInfo: Array<AssetInfoDto> = input.assets.map((a) =>
-      a.toBackendWithLabel("SEND_TIP_ASSET"),
+      CreateLinkAssetMapper.toBackendWithLabel(a, "SEND_TIP_ASSET"),
     );
 
     const inputDto: CreateLinkInput = {

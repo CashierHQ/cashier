@@ -44,8 +44,12 @@
       walletStore.query.data &&
       walletStore.query.data.length > 0
     ) {
+      let linkAsset: CreateLinkAsset = {
+        address: walletStore.query.data[0].address,
+        useAmount: 0n,
+      }
       link.createLinkData.assets = [
-        new CreateLinkAsset(walletStore.query.data[0].address, 0n),
+        linkAsset,
       ];
     }
   });

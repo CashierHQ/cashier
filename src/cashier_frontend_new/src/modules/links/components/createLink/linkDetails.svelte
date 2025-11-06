@@ -1,6 +1,8 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
+  import { parseBalanceUnits } from '$modules/shared/utils/converter';
   import type { LinkCreationStore } from "../../state/linkCreationStore.svelte";
+  import { walletStore } from '$modules/token/state/walletStore.svelte';
 
   const {
     link,
@@ -23,7 +25,7 @@
     {#each link.createLinkData.assets as assetInfo (assetInfo.address)}
       <div class="mt-2 p-2 border rounded">
         <div><strong>Asset:</strong> {assetInfo.address}</div>
-        <div><strong>Amount per use action:</strong> {assetInfo.useAmount}</div>
+        <div><strong>Amount per use action:</strong> {parseBalanceUnits(assetInfo.useAmount)}</div>
       </div>
     {/each}
   {/if}
