@@ -26,8 +26,21 @@
     handleSetMax?: () => void;
   } = $props();
 
-  // input string shown in the input
-  let input: string = $state("");
+  // read-only input string derived from `value`
+  let input: string = $derived.by(() => {
+    if (value != null && value !== undefined) {
+      const asAmount: number = parseBalanceUnits(value, decimals);
+      if (mode === "amount") {
+        return String(asAmount);
+      } else {
+        if (priceUsd && priceUsd > 0) {
+          // trim floating-point precision for USD display to avoid extremely long decimal strings
+          return trimNumber(asAmount * priceUsd, USD_DISPLAY_DECIMALS);
+        }
+      }
+    }
+    return "";
+  });
 
   // converted value: if mode === 'amount' -> USD equivalent, else -> token equivalent
   let converted = $derived(() => {
@@ -43,30 +56,12 @@
     }
   });
 
-  // Initialize inputStr from incoming `value`
-  $effect(() => {
-    if (value != null && value !== undefined) {
-      const asAmount: number = parseBalanceUnits(value, decimals);
-      if (mode === "amount") {
-        input = String(asAmount);
-      } else {
-        if (priceUsd && priceUsd > 0) {
-          // trim floating-point precision for USD display to avoid extremely long decimal strings
-          input = trimNumber(asAmount * priceUsd, USD_DISPLAY_DECIMALS);
-        } else {
-          input = "";
-        }
-      }
-    }
-  });
-
   // Handle input events and keep numeric displayNumber
   function handleInput(e: Event) {
     const t = e.target as HTMLInputElement;
     // sanitize input (removes invalid chars) and parse
-    const sanitized = sanitizeInput(t.value);
-    input = sanitized;
-    const parsed = parseDisplayNumber(input);
+    const sanitizedInput = sanitizeInput(t.value);
+    const parsed = parseDisplayNumber(sanitizedInput);
     if (parsed == null) {
       // empty or invalid
       value = 0n;
@@ -127,7 +122,7 @@
   </div>
 
   <Input
-    bind:value={input}
+    value={input}
     type="text"
     inputmode="decimal"
     step="any"
