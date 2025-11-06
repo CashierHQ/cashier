@@ -97,19 +97,19 @@
     <span class="text-sm">Use locked flow</span>
 
     <div class="mt-4">
-      {#if userStore.currentStep === UserLinkStep.LANDING}
+      {#if userStore.step === UserLinkStep.LANDING}
         <Landing userLink={userStore} {linkDetail} />
-      {:else if userStore.currentStep === UserLinkStep.ADDRESS_LOCKED}
+      {:else if userStore.step === UserLinkStep.ADDRESS_LOCKED}
         <Locked userLink={userStore} {linkDetail} />
-      {:else if userStore.currentStep === UserLinkStep.GATE}
+      {:else if userStore.step === UserLinkStep.GATE}
         <Gate userLink={userStore} />
-      {:else if userStore.currentStep === UserLinkStep.ADDRESS_UNLOCKED}
+      {:else if userStore.step === UserLinkStep.ADDRESS_UNLOCKED}
         <Unlocked
           userLink={userStore}
           {linkDetail}
           onCreateUseAction={createAction}
         />
-      {:else if userStore.currentStep === UserLinkStep.COMPLETED}
+      {:else if userStore.step === UserLinkStep.COMPLETED}
         <Completed {linkDetail} />
       {/if}
 
