@@ -1,6 +1,7 @@
 <script lang="ts">
   import { X } from "lucide-svelte";
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import { toast } from "svelte-sonner";
   import { authState } from "$modules/auth/state/auth.svelte";
 
@@ -28,7 +29,7 @@
       onConfirm();
       onOpenChange(false);
       toast.success("You have been logged out");
-      await goto("/");
+      await goto(resolve("/"));
     } catch (error) {
       console.error("Logout failed:", error);
       toast.error("Failed to disconnect");

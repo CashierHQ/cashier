@@ -9,14 +9,6 @@
 
   let { onLoginClick }: Props = $props();
 
-  async function handleLogin(walletId: string): Promise<void> {
-    try {
-      await authState.login(walletId);
-    } catch (error) {
-      console.error("Login error:", error);
-    }
-  }
-
   async function handleLogout(): Promise<void> {
     try {
       await authState.logout();

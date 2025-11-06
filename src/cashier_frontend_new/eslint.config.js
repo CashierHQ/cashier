@@ -42,5 +42,15 @@ export default defineConfig([
         svelteConfig,
       },
     },
+    rules: {
+      // Allow links without resolve() - external links don't need it
+      // Internal navigation should still use resolve() via goto()
+      "svelte/no-navigation-without-resolve": [
+        "error",
+        {
+          ignoreLinks: true, // Ignore <a> tags, but still check goto(), pushState(), replaceState()
+        },
+      ],
+    },
   },
 ]);
