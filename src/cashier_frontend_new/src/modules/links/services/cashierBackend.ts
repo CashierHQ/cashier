@@ -2,13 +2,13 @@ import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.
 import { responseToResult } from "$lib/result";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
+import { toNullable } from "@dfinity/utils";
 import { Err, type Result } from "ts-results-es";
-import type { CreateLinkData } from "../types/createLinkData";
 import {
   ActionTypeMapper,
   type ActionTypeValue,
 } from "../types/action/actionType";
-import { toNullable } from "@dfinity/utils";
+import { CreateLinkData, CreateLinkDataMapper } from "../types/createLinkData";
 
 /**
  * Service for interacting with the Cashier Backend canister.
@@ -82,7 +82,7 @@ class CanisterBackendService {
       return Err(new Error("User not logged in"));
     }
 
-    const request = input.toCreateLinkInput();
+    const request = CreateLinkDataMapper.toCreateLinkInput(input);
 
     if (request.isErr()) {
       return Err(request.unwrapErr());

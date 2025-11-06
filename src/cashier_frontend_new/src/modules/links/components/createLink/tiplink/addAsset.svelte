@@ -162,7 +162,7 @@
   <div>
     {#if link.createLinkData.assets.length > 0 && selectedToken}
       <InputAmount
-        bind:value={link.createLinkData.assets[0].useAmount}
+        bind:tokenAmount={link.createLinkData.assets[0].useAmount}
         decimals={selectedToken.decimals}
         priceUsd={selectedToken.priceUSD}
         handleSetMax={handleSetMax}

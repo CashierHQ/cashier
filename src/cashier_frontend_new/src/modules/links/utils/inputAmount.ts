@@ -48,7 +48,7 @@ export function computeAmountFromInput({
   decimals,
 }: {
   num: number;
-  mode: "amount" | "usd";
+  mode: string;
   priceUsd?: number;
   decimals: number;
 }): bigint {
