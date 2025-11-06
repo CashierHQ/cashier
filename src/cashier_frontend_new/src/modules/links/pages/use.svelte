@@ -1,12 +1,17 @@
 <script lang="ts">
   import { LinkDetailStore } from "$modules/links/state/linkDetailStore.svelte";
+  import Landing from "$modules/links/components/useLink/states/Landing.svelte";
+  import Locked from "$modules/links/components/useLink/states/Locked.svelte";
+  import Gate from "$modules/links/components/useLink/states/Gate.svelte";
+  import Unlocked from "$modules/links/components/useLink/states/Unlocked.svelte";
+  import Completed from "$modules/links/components/useLink/states/Completed.svelte";
   import { ActionTypeMapper } from "$modules/links/types/action/actionType";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import TxCart from "$modules/links/components/txCart/txCart.svelte";
   import { ActionState } from "$modules/links/types/action/actionState";
-  import Header from "$modules/links/components/useLink/Header.svelte";
-  import AssetList from "$modules/links/components/useLink/AssetList.svelte";
-  import Actions from "$modules/links/components/useLink/Actions.svelte";
+
+  import UserLinkStore from "$modules/links/state/userLinkStore.svelte";
+  import { UserLinkStep } from "$modules/links/types/userLinkStep";
 
   let { id }: { id: string } = $props();
 
@@ -16,7 +21,7 @@
 
   let showTxCart: boolean = $derived.by(() => {
     return !!(
-      linkDetail.action && linkDetail.action.state !== ActionState.SUCCESS
+      linkDetail?.action && linkDetail.action.state !== ActionState.SUCCESS
     );
   });
 
@@ -26,7 +31,7 @@
 
   const createAction = async () => {
     try {
-      if (!linkDetail.link) throw new Error("Link detail is missing");
+      if (!linkDetail?.link) throw new Error("Link detail is missing");
       if (linkDetail.action) {
         showTxCart = true;
       } else {
@@ -49,36 +54,74 @@
 
   const claim = async () => {
     try {
+      // For now we don't run the backend claim. Advance the user flow instead.
       if (!linkDetail.action) {
         throw new Error("No action available to process");
       }
-      await cashierBackendService.processActionV2(linkDetail.action.id);
+      const res = await cashierBackendService.processActionV2(
+        linkDetail.action.id,
+      );
+
+      if (res.isErr()) {
+        throw res.error;
+      }
+
       linkDetail.query.refresh();
+      userStore.goNext();
     } catch (err) {
       console.error("claim failed", err);
     }
+  };
+
+  // temporary flag, gate is not yet implemented
+  let lockedFlag: boolean = $state(false);
+  let userStore = $state(new UserLinkStore({ locked: false }));
+
+  const setLocked = (v: boolean) => {
+    lockedFlag = v;
+    userStore = new UserLinkStore({ locked: lockedFlag });
   };
 </script>
 
 {#if linkDetail.query.isLoading}
   Loading...
 {/if}
+
 {#if linkDetail.link}
   <div class="px-4 py-4">
-    <Header title={linkDetail.link.title} />
+    <input
+      type="checkbox"
+      bind:checked={lockedFlag}
+      onchange={() => setLocked(lockedFlag)}
+    />
+    <span class="text-sm">Use locked flow</span>
 
-    <AssetList assetInfo={linkDetail.link.asset_info} />
+    <div class="mt-4">
+      {#if userStore.currentStep === UserLinkStep.LANDING}
+        <Landing userLink={userStore} {linkDetail} />
+      {:else if userStore.currentStep === UserLinkStep.ADDRESS_LOCKED}
+        <Locked userLink={userStore} {linkDetail} />
+      {:else if userStore.currentStep === UserLinkStep.GATE}
+        <Gate userLink={userStore} />
+      {:else if userStore.currentStep === UserLinkStep.ADDRESS_UNLOCKED}
+        <Unlocked
+          userLink={userStore}
+          {linkDetail}
+          onCreateUseAction={createAction}
+        />
+      {:else if userStore.currentStep === UserLinkStep.COMPLETED}
+        <Completed {linkDetail} />
+      {/if}
 
-    <Actions link={linkDetail.link} onCreateUseAction={createAction} />
+      {#if showTxCart && linkDetail?.link && linkDetail?.action}
+        <TxCart
+          isOpen={showTxCart}
+          link={linkDetail.link}
+          action={linkDetail.action}
+          goNext={claim}
+          {onCloseDrawer}
+        />
+      {/if}
+    </div>
   </div>
-{/if}
-
-{#if showTxCart && linkDetail.link && linkDetail.action}
-  <TxCart
-    isOpen={showTxCart}
-    link={linkDetail.link}
-    action={linkDetail.action}
-    goNext={claim}
-    {onCloseDrawer}
-  />
 {/if}
