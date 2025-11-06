@@ -26,7 +26,11 @@
 
   // read-only input string derived from `tokenAmount`
   let mode: string = $state("amount");
-  let inputStr: string = $derived.by(() => {
+  let userInput: string = $state("");
+  let isTyping: boolean = $state(false);
+  let inputElement: HTMLInputElement | null = $state(null);
+
+  let formattedValue: string = $derived.by(() => {
     if (tokenAmount != null && tokenAmount !== undefined) {
       const asAmount: number = parseBalanceUnits(tokenAmount, decimals);
       if (mode === "amount") {
@@ -41,9 +45,19 @@
     return "";
   });
 
+  $effect(() => {
+    // only update input value if user is not typing
+    if (!isTyping) {
+      userInput = formattedValue;
+      if (inputElement) {
+        inputElement.value = formattedValue;
+      }
+    }
+  });
+
   // converted value: if mode === 'amount' -> USD equivalent, else -> token equivalent
   let converted = $derived.by(() => {
-    const parsed = parseDisplayNumber(inputStr);
+    const parsed = parseDisplayNumber(userInput);
     if (parsed == null) return 0;
     if (!priceUsd || priceUsd <= 0) return 0;
     if (mode === "amount") {
@@ -57,22 +71,35 @@
 
   // Handle input events and keep numeric displayNumber
   function handleInput(e: Event) {
+    isTyping = true;
     const t = e.target as HTMLInputElement;
     // sanitize input (removes invalid chars) and parse
     const sanitizedInput = sanitizeInput(t.value);
+    if (sanitizedInput !== t.value) {
+      // update input field if sanitization changed the value
+      t.value = sanitizedInput;
+    }
+
+    userInput = sanitizedInput;
+
     const parsed = parseDisplayNumber(sanitizedInput);
+
     if (parsed == null) {
       // empty or invalid
       tokenAmount = 0n;
-      return;
+    } else {
+      tokenAmount = computeAmountFromInput({
+        num: parsed,
+        mode,
+        priceUsd,
+        decimals,
+      });
     }
 
-    tokenAmount = computeAmountFromInput({
-      num: parsed,
-      mode,
-      priceUsd,
-      decimals,
-    });
+    // reset typing flag after a short delay
+    setTimeout(() => {
+      isTyping = false;
+    }, 100);
   }
 
   // Toggle mode (external callers can set `mode` prop too)
@@ -80,6 +107,7 @@
     // disallow switching to USD when price is not provided
     if (m === "usd" && !priceUsd) return;
     mode = m;
+    isTyping = false;
   }
 </script>
 
@@ -114,7 +142,8 @@
   </div>
 
   <Input
-    value={inputStr}
+    bind:ref={inputElement}
+    value={userInput}
     type="text"
     inputmode="decimal"
     step="any"
