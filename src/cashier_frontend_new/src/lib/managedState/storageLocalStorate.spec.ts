@@ -5,6 +5,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import * as devalue from "devalue";
 import { LocalStorageStore } from "./storageLocalStorage";
+import { Ed25519KeyIdentity } from "@dfinity/identity";
+import { TestValue, Option, testValueDevalueSerde } from "./utils";
 
 describe("LocalStorageStore", () => {
   beforeEach(() => {
@@ -96,5 +98,47 @@ describe("LocalStorageStore", () => {
 
     // Assert
     expect(store.getItem()).toEqual(null);
+  });
+
+  it("should handle custom values", () => {
+    // Arrange
+    const store = new LocalStorageStore("test_key", testValueDevalueSerde);
+    store.removeItem();
+
+    const item = {
+      owner: Ed25519KeyIdentity.generate().getPrincipal(),
+      deepnested: {
+        test: [
+          new TestValue({
+            name: "Bob",
+            age: 25,
+            principal: Ed25519KeyIdentity.generate().getPrincipal(),
+            testers: [
+              Ed25519KeyIdentity.generate().getPrincipal(),
+              Ed25519KeyIdentity.generate().getPrincipal(),
+              Ed25519KeyIdentity.generate().getPrincipal(),
+            ],
+            option: Option.OPTION_B,
+          }),
+        ],
+        testBigint: 42n,
+      },
+      nested: new TestValue({
+        name: "Alice123",
+        age: 30,
+        principal: Ed25519KeyIdentity.generate().getPrincipal(),
+        testers: [
+          Ed25519KeyIdentity.generate().getPrincipal(),
+          Ed25519KeyIdentity.generate().getPrincipal(),
+          Ed25519KeyIdentity.generate().getPrincipal(),
+        ],
+        option: Option.OPTION_C,
+      }),
+    };
+    // Act
+    store.setItem(item);
+
+    // Assert
+    expect(store.getItem()).toEqual(item);
   });
 });
