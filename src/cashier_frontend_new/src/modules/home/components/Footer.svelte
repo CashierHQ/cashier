@@ -3,7 +3,9 @@
   import { appLinks } from "$modules/shared/constants/links";
 </script>
 
-<footer class="w-full border-t border-border bg-gray-50 text-foreground mt-auto">
+<footer
+  class="w-full border-t border-border bg-gray-50 text-foreground mt-auto"
+>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-3">
     <!-- Mobile view -->
     <div class="flex flex-col gap-6 lg:hidden">
@@ -44,7 +46,9 @@
           </ul>
         </div>
         <div>
-          <h3 class="text-xs font-semibold text-foreground mb-2">Legal & Contact</h3>
+          <h3 class="text-xs font-semibold text-foreground mb-2">
+            Legal & Contact
+          </h3>
           <ul class="space-y-1">
             <li>
               <a
@@ -78,7 +82,9 @@
           </ul>
         </div>
       </div>
-      <div class="flex flex-col items-center gap-2 text-xs text-muted-foreground border-t border-border pt-3">
+      <div
+        class="flex flex-col items-center gap-2 text-xs text-muted-foreground border-t border-border pt-3"
+      >
         <div class="flex items-center gap-2">
           <span>Powered by</span>
           <img alt="ICP" class="w-4 h-4" src="/icpToken.png" />
@@ -152,4 +158,3 @@
     </div>
   </div>
 </footer>
-

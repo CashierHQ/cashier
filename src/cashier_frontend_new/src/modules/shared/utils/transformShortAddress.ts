@@ -8,13 +8,12 @@ export function transformShortAddress(address: string): string {
   if (!address || address.length === 0) {
     return "";
   }
-  
+
   if (address.length <= 16) {
     return address;
   }
-  
+
   const start = address.slice(0, 8);
   const end = address.slice(-8);
   return `${start} ... ${end}`;
 }
-

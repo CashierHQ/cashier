@@ -34,7 +34,7 @@
   <div class="mx-auto px-4 sm:px-6 lg:px-8 py-4">
     <div class="flex justify-between items-center">
       <!-- Logo -->
-       <a href={resolve("/")}>  
+      <a href={resolve("/")}>
         <img
           alt="Cashier logo"
           class="max-w-[130px] cursor-pointer"
@@ -43,13 +43,17 @@
       </a>
       {#if authState.isConnecting}
         <div class="flex items-center gap-2 text-sm text-muted-foreground">
-          <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <div
+            class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"
+          ></div>
           <span>Reconnecting...</span>
         </div>
       {:else if authState.account}
         <div class="flex items-center gap-4">
           <span class="text-sm text-muted-foreground">
-            Welcome <span class="text-foreground font-medium">{authState.account.owner}</span>
+            Welcome <span class="text-foreground font-medium"
+              >{authState.account.owner}</span
+            >
           </span>
           <Button onclick={handleLogout} variant="outline" size="sm">
             Logout
@@ -67,4 +71,3 @@
     </div>
   </div>
 </header>
-

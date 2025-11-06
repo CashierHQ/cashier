@@ -23,13 +23,14 @@
 
     try {
       isConnecting = true;
-      
+
       // Map wallet ID to adapter ID
-      const adapterId = walletId === "internet-identity" ? "iiSigner" : walletId;
-      
+      const adapterId =
+        walletId === "internet-identity" ? "iiSigner" : walletId;
+
       // Call login which will open popup to identity.internetcomputer.org
       await authState.login(adapterId);
-      
+
       // After successful login, redirect to app and close modal
       handleClose();
       await goto(resolve("/app"));
@@ -67,7 +68,10 @@
     tabindex="-1"
   >
     <div class="flex flex-col space-y-1.5 text-center sm:text-left">
-      <h2 id="login-dialog-title" class="text-lg font-semibold leading-none tracking-tight">
+      <h2
+        id="login-dialog-title"
+        class="text-lg font-semibold leading-none tracking-tight"
+      >
         Choose your wallet
       </h2>
     </div>
@@ -81,7 +85,11 @@
           class="w-full h-12 px-3 border border-[#e5e5e5]/60 cursor-pointer rounded-xl text-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center justify-start bg-background text-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span class="flex items-center w-full text-[14px]">
-            <img alt="Internet Identity" class="h-6 w-6 mr-2" src="/icpLogo.png" />
+            <img
+              alt="Internet Identity"
+              class="h-6 w-6 mr-2"
+              src="/icpLogo.png"
+            />
             <span class="flex-grow text-left">
               {#if isConnecting}
                 Connecting...
@@ -90,7 +98,9 @@
               {/if}
             </span>
             {#if isConnecting}
-              <div class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin ml-2"></div>
+              <div
+                class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin ml-2"
+              ></div>
             {/if}
           </span>
         </button>
@@ -108,4 +118,3 @@
     </button>
   </div>
 {/if}
-

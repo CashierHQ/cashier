@@ -54,12 +54,19 @@
     tabindex="-1"
   >
     <div class="flex flex-col space-y-4 text-center sm:text-left">
-      <h2 id="disconnect-dialog-title" class="text-lg font-semibold leading-none tracking-tight">
+      <h2
+        id="disconnect-dialog-title"
+        class="text-lg font-semibold leading-none tracking-tight"
+      >
         Disconnect wallet
       </h2>
-      
-      <p id="disconnect-dialog-description" class="text-sm text-muted-foreground">
-        Are you sure you want to disconnect your wallet? If you do, you will be logged out
+
+      <p
+        id="disconnect-dialog-description"
+        class="text-sm text-muted-foreground"
+      >
+        Are you sure you want to disconnect your wallet? If you do, you will be
+        logged out
       </p>
     </div>
 
@@ -83,4 +90,3 @@
     </button>
   </div>
 {/if}
-

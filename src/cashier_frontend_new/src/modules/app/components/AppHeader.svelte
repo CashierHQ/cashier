@@ -19,9 +19,15 @@
   }
 </script>
 
-<div class="w-full flex justify-between items-center lg:px-8 px-4 py-3 sm:pt-3 pt-4 bg-white">
+<div
+  class="w-full flex justify-between items-center lg:px-8 px-4 py-3 sm:pt-3 pt-4 bg-white"
+>
   <a href={resolve("/app")}>
-    <img alt="Cashier logo" class="max-w-[130px] cursor-pointer" src="/logo.svg" />
+    <img
+      alt="Cashier logo"
+      class="max-w-[130px] cursor-pointer"
+      src="/logo.svg"
+    />
   </a>
 
   <div class="flex items-center">
@@ -64,4 +70,3 @@
 </div>
 
 <AppSidebar open={isSidebarOpen} onOpenChange={handleSidebarChange} />
-
