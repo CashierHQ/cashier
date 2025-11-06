@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import {
     LinkType,
     type LinkTypeValue,
@@ -88,7 +89,7 @@
 
   function handleLinkClick(event: MouseEvent, linkId: string) {
     event.preventDefault();
-    goto(`/app/edit/${linkId}` as any);
+    goto(resolve(`/app/edit/${linkId}`));
   }
 
   const STATE_ORDER_ARRAY = [
@@ -261,7 +262,7 @@
             {#each group.links as link (link.id)}
               <li>
                 <a
-                  href={`/app/edit/${link.id}`}
+                  href={resolve(`/app/edit/${link.id}`)}
                   onclick={(e) => handleLinkClick(e, link.id)}
                   class="block"
                 >

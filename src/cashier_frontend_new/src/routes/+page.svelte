@@ -9,10 +9,6 @@
   function openLoginModal() {
     isLoginModalOpen = true;
   }
-
-  function closeLoginModal() {
-    isLoginModalOpen = false;
-  }
 </script>
 
 <main class="flex flex-col h-screen">
