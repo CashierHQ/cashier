@@ -143,14 +143,16 @@ export class ManagedState<T> {
           this.#storage = new GlobalStore(config.persistedKey);
           break;
         case "localStorage":
-          console.log("Using LocalStorageStore with serde", config.serde);
           this.#storage = new LocalStorageStore(
             config.persistedKey,
             config.serde,
           );
           break;
         case "sessionStorage":
-          this.#storage = new SessionStorageStore(config.persistedKey);
+          this.#storage = new SessionStorageStore(
+            config.persistedKey,
+            config.serde,
+          );
           break;
       }
     } else {
