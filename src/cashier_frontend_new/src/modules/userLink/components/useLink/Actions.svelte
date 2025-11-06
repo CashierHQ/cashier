@@ -1,7 +1,7 @@
 <script lang="ts">
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import type { Link } from "$modules/links/types/link/link";
-  import { LinkState } from "../../types/link/linkState";
+  import { LinkState } from "$modules/links/types/link/linkState";
   interface Props {
     link: Link;
     onCreateUseAction?: () => Promise<void>;
