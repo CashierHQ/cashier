@@ -39,8 +39,8 @@ export class Link {
   }
 }
 
-// Define a raw type for deserialization purposes
-type LinkRaw = {
+// Serialized form of Link used in serde
+export type SerializedLink = {
   id: string;
   title: string;
   creator: string;
@@ -117,9 +117,9 @@ export class LinkMapper {
     },
     deserialize: {
       Link: (obj: unknown) => {
-        const raw = obj as LinkRaw;
+        const serialized = obj as SerializedLink;
 
-        const asset_info = (raw.asset_info || []).map((a) => {
+        const asset_info = (serialized.asset_info || []).map((a) => {
           const chain = a.asset.chain;
           if (chain === "IC") {
             const assetInstance = Asset.IC(
@@ -137,15 +137,15 @@ export class LinkMapper {
         });
 
         return new Link(
-          raw.id,
-          raw.title,
-          Principal.fromText(raw.creator),
+          serialized.id,
+          serialized.title,
+          Principal.fromText(serialized.creator),
           asset_info,
-          raw.link_type,
-          raw.create_at,
-          raw.state,
-          raw.link_use_action_max_count,
-          raw.link_use_action_counter,
+          serialized.link_type,
+          serialized.create_at,
+          serialized.state,
+          serialized.link_use_action_max_count,
+          serialized.link_use_action_counter,
         );
       },
     },

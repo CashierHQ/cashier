@@ -7,7 +7,7 @@ export interface Storage<T> {
   removeItem(): void;
 }
 
-// A serializer/deserializer interface
+// A serializer/deserializer type
 export type DevalueSerde = {
   /**
    * The serialization for devalue
