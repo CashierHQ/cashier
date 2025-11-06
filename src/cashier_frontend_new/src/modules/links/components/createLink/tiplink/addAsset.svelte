@@ -7,7 +7,7 @@
   import { LinkStep } from "$modules/links/types/linkStep";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import type { TokenWithPriceAndBalance } from '$modules/token/types';
+  import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import InputAmount from "../inputAmount/inputAmount.svelte";
 
   const {
@@ -18,21 +18,18 @@
 
   // Error message state
   let errorMessage: string | null = $state(null);
-  
+
   // read-only derived state for the selected asset address
-  let selectedAddress: string | undefined = $derived.by(
-    () => {
-      const assets = link.createLinkData?.assets;
-      if (assets && assets.length > 0) return assets[0].address;
-      return undefined;
-    },
-  );
+  let selectedAddress: string | undefined = $derived.by(() => {
+    const assets = link.createLinkData?.assets;
+    if (assets && assets.length > 0) return assets[0].address;
+    return undefined;
+  });
 
   // read-only derived state for the selected token
   let selectedToken: TokenWithPriceAndBalance | null = $derived.by(() => {
-    if (!selectedAddress || !walletStore.query.data)
-      return null;
-      
+    if (!selectedAddress || !walletStore.query.data) return null;
+
     const token = walletStore.findTokenByAddress(selectedAddress);
     if (token.isErr()) return null;
     return token.unwrap();
@@ -49,7 +46,7 @@
         {
           address: walletStore.query.data[0].address,
           useAmount: 0n,
-        }
+        },
       ];
     }
   });
@@ -61,15 +58,13 @@
     }
   });
 
-  
-
   // Handle asset selection
   function handleSelectToken(address: string) {
     link.createLinkData.assets = [
       {
         address,
         useAmount: 0n,
-      }
+      },
     ];
   }
 
