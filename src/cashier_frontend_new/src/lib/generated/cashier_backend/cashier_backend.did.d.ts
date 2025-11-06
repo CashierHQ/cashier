@@ -248,6 +248,12 @@ export interface ProcessActionAnonymousInput {
   'action_type' : ActionType,
   'wallet_address' : Principal,
 }
+export interface ProcessActionDto {
+  'action' : ActionDto,
+  'link' : LinkDto,
+  'errors' : Array<string>,
+  'is_success' : boolean,
+}
 export interface ProcessActionInput {
   'action_id' : string,
   'link_id' : string,
@@ -261,7 +267,9 @@ export type Result_1 = { 'Ok' : Array<Permission> } |
   { 'Err' : CanisterError };
 export type Result_10 = { 'Ok' : PaginateResult } |
   { 'Err' : CanisterError };
-export type Result_11 = { 'Ok' : string } |
+export type Result_11 = { 'Ok' : ProcessActionDto } |
+  { 'Err' : CanisterError };
+export type Result_12 = { 'Ok' : string } |
   { 'Err' : CanisterError };
 export type Result_2 = { 'Ok' : ActionDto } |
   { 'Err' : CanisterError };
@@ -374,10 +382,10 @@ export interface _SERVICE {
     Result_7
   >,
   'user_process_action' : ActorMethod<[ProcessActionInput], Result_2>,
-  'user_process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_9>,
+  'user_process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_11>,
   'user_trigger_transaction' : ActorMethod<
     [TriggerTransactionInput],
-    Result_11
+    Result_12
   >,
   'user_update_action' : ActorMethod<[UpdateActionInput], Result_2>,
   'user_update_link' : ActorMethod<[UpdateLinkInput], Result_8>,
