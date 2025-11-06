@@ -42,4 +42,3 @@ export const appLinks: Record<string, LinkOrEmail> = {
     email: "contact@cashierapp.io",
   },
 };
-

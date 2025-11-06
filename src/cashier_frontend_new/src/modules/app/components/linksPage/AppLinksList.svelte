@@ -1,6 +1,9 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import { LinkType, type LinkTypeValue } from "$modules/links/types/link/linkType";
+  import {
+    LinkType,
+    type LinkTypeValue,
+  } from "$modules/links/types/link/linkType";
   import { LinkState } from "$modules/links/types/link/linkState";
 
   // Mock data for testing - replace with actual data from store later
@@ -68,7 +71,7 @@
 
   const groupedLinks = $derived.by(() => {
     if (!hasLinks || links.length === 0) return [];
-    
+
     const grouped: Record<string, typeof links> = {};
     for (const link of links) {
       if (!grouped[link.date]) {
@@ -76,7 +79,7 @@
       }
       grouped[link.date].push(link);
     }
-    
+
     return Object.entries(grouped).map(([date, dateLinks]) => ({
       date,
       links: dateLinks,
@@ -120,77 +123,89 @@
   }
 
   function mapStringToStateIndex(state: string): number {
-    
     const mappedState = mapStringToLinkState(state);
     const exactIndex = STATE_ORDER_ARRAY.indexOf(mappedState);
     if (exactIndex !== -1) {
       return exactIndex;
     }
-    
-    if (state === LinkState.CREATE_LINK || mappedState === "Link_state_create_link") {
+
+    if (
+      state === LinkState.CREATE_LINK ||
+      mappedState === "Link_state_create_link"
+    ) {
       return 3;
     }
-    
+
     if (state === LinkState.ACTIVE || mappedState === "Link_state_active") {
       return 4;
     }
-    
+
     if (state === LinkState.INACTIVE || mappedState === "Link_state_inactive") {
       return 5;
     }
-    
-    if (state === LinkState.INACTIVE_ENDED || mappedState === "Link_state_inactive_ended") {
+
+    if (
+      state === LinkState.INACTIVE_ENDED ||
+      mappedState === "Link_state_inactive_ended"
+    ) {
       return 6;
     }
-    
-    return -1; 
+
+    return -1;
   }
 
   function getStatusLabel(state: string): string {
     const mappedState = mapStringToLinkState(state);
-    
-    if (mappedState === "Link_state_choose_link_type" ||
-        mappedState === "Link_state_add_assets" ||
-        mappedState === "Link_state_preview" ||
-        mappedState === "Link_state_create_link" ||
-        state === LinkState.CREATE_LINK) {
+
+    if (
+      mappedState === "Link_state_choose_link_type" ||
+      mappedState === "Link_state_add_assets" ||
+      mappedState === "Link_state_preview" ||
+      mappedState === "Link_state_create_link" ||
+      state === LinkState.CREATE_LINK
+    ) {
       return "Draft";
     }
-    
+
     if (mappedState === "Link_state_active" || state === LinkState.ACTIVE) {
       return "Active";
     }
-    
+
     if (mappedState === "Link_state_inactive" || state === LinkState.INACTIVE) {
       return "Inactive";
     }
-    
-    if (mappedState === "Link_state_inactive_ended" || state === LinkState.INACTIVE_ENDED) {
+
+    if (
+      mappedState === "Link_state_inactive_ended" ||
+      state === LinkState.INACTIVE_ENDED
+    ) {
       return "Inactive";
     }
-    
-    return "Unknown state"; 
+
+    return "Unknown state";
   }
 
   function getStatusClasses(state: string): string {
     const stateIndex = mapStringToStateIndex(state);
-    
+
     if (stateIndex >= 0 && stateIndex <= 3) {
       return "bg-lightyellow text-yellow";
     }
-    
+
     if (stateIndex === 4) {
       return "bg-green text-white";
     }
-    
+
     if (stateIndex > 4) {
       return "bg-gray-200 text-gray-700";
     }
-    
+
     return "bg-muted text-muted-foreground";
   }
 
-  function getLinkDefaultAvatar(linkType: LinkTypeValue | string | undefined): string {
+  function getLinkDefaultAvatar(
+    linkType: LinkTypeValue | string | undefined,
+  ): string {
     switch (linkType) {
       case LinkType.TIP:
       case "TIP":
@@ -215,11 +230,11 @@
 
   function formatDate(dateString: string): string {
     if (!dateString) return "";
-    
+
     try {
       const date = new Date(dateString);
       if (Number.isNaN(date.getTime())) return dateString;
-      
+
       return date.toLocaleDateString(undefined, {
         month: "short",
         day: "numeric",
@@ -237,9 +252,11 @@
     {#if !hasLinks || links.length === 0}
       <p class="text-sm text-grey mt-3">There is no links yet.</p>
     {:else}
-    <div class="space-y-4 mt-4">
-      {#each groupedLinks as group (group.date)}
-          <h3 class="text-lightblack/80 font-normal mb-2 text-[14px]">{formatDate(group.date)}</h3>
+      <div class="space-y-4 mt-4">
+        {#each groupedLinks as group (group.date)}
+          <h3 class="text-lightblack/80 font-normal mb-2 text-[14px]">
+            {formatDate(group.date)}
+          </h3>
           <ul class="space-y-4">
             {#each group.links as link (link.id)}
               <li>
@@ -266,7 +283,9 @@
                       </div>
                       {#if link.state}
                         <div
-                          class="text-xs font-xs rounded-full px-2 py-1 {getStatusClasses(link.state)}"
+                          class="text-xs font-xs rounded-full px-2 py-1 {getStatusClasses(
+                            link.state,
+                          )}"
                         >
                           {getStatusLabel(link.state)}
                         </div>
@@ -277,8 +296,8 @@
               </li>
             {/each}
           </ul>
-      {/each}
-    </div>
+        {/each}
+      </div>
     {/if}
   </div>
 </div>

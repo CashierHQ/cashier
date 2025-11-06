@@ -16,13 +16,17 @@
   }
 </script>
 
-<div class="lg:bg-[url('/LandingPageBackgroundPattern.svg')] lg:bg-cover lg:bg-center lg:w-full lg:pt-[12vh] flex-1">
+<div
+  class="lg:bg-[url('/LandingPageBackgroundPattern.svg')] lg:bg-cover lg:bg-center lg:w-full lg:pt-[12vh] flex-1"
+>
   <!-- Development Disclaimer -->
   <div
     class="mx-auto px-4 py-2 bg-[#ECFEF3] border rounded-xl border-[#ACEFC6] w-10/12 lg:fixed lg:top-10 lg:w-96 lg:left-1/2 lg:-translate-x-1/2 transition-all duration-300 ease-in-out"
   >
     <div class="max-w-[1200px] mx-auto">
-      <div class="flex flex-col gap-2 items-center text-primary text-[11px] lg:text-[14px]">
+      <div
+        class="flex flex-col gap-2 items-center text-primary text-[11px] lg:text-[14px]"
+      >
         <div class="flex flex-row gap-1.5 items-center w-full justify-between">
           <div class="flex flex-row gap-1.5 items-center flex-1 justify-center">
             <Lock class="w-3.5 h-3.5 lg:w-4.5 lg:h-4.5" />
@@ -31,7 +35,9 @@
           <button
             onclick={toggleDevelopment}
             class="flex items-center justify-center w-5 h-5 hover:bg-primary/10 cursor-pointer rounded-full transition-colors duration-200"
-            aria-label={isDevelopmentExpanded ? "Collapse development notice" : "Expand development notice"}
+            aria-label={isDevelopmentExpanded
+              ? "Collapse development notice"
+              : "Expand development notice"}
           >
             {#if isDevelopmentExpanded}
               <ChevronUp class="w-3 h-3 transition-transform duration-200" />
@@ -44,9 +50,10 @@
           <p
             class="text-[10px] lg:text-[12px] text-[#475467] text-center transition-all duration-300 ease-in-out"
           >
-            This website is currently in development and provided for demonstration purposes only. It is
-            not intended for public use. Any data entered or actions taken on this site may not be
-            secure, saved, or processed correctly. Use is at your own risk.
+            This website is currently in development and provided for
+            demonstration purposes only. It is not intended for public use. Any
+            data entered or actions taken on this site may not be secure, saved,
+            or processed correctly. Use is at your own risk.
           </p>
         {/if}
       </div>
@@ -60,7 +67,9 @@
     </div>
   {:else}
     <!-- Main content for unauthenticated users -->
-    <div class="flex flex-col lg:flex-row lg:w-full lg:justify-center lg:px-[200px] md:px-8 pb-8">
+    <div
+      class="flex flex-col lg:flex-row lg:w-full lg:justify-center lg:px-[200px] md:px-8 pb-8"
+    >
       <div
         class="flex flex-col items-center md:items-center lg:items-start lg:justify-center lg:w-[60%] md:text-center lg:text-left"
       >
@@ -100,21 +109,33 @@
         <ul
           class="flex flex-col gap-2 md:gap-3 mt-4 lg:mt-6 self-center md:self-center lg:self-start px-4 md:px-8 lg:px-0"
         >
-          <li class="flex items-center gap-2 md:justify-center lg:justify-start">
+          <li
+            class="flex items-center gap-2 md:justify-center lg:justify-start"
+          >
             <div class="w-2 h-2 bg-primary rounded-full"></div>
-            <p class="text-[10px] md:text-[14px] text-[#475467] lg:text-[16px] text-left font-light">
+            <p
+              class="text-[10px] md:text-[14px] text-[#475467] lg:text-[16px] text-left font-light"
+            >
               No wallet setup or address sharing
             </p>
           </li>
-          <li class="flex items-center gap-2 md:justify-center lg:justify-start">
+          <li
+            class="flex items-center gap-2 md:justify-center lg:justify-start"
+          >
             <div class="w-2 h-2 bg-primary rounded-full"></div>
-            <p class="text-[10px] md:text-[14px] text-[#475467] lg:text-[16px] text-left font-light">
+            <p
+              class="text-[10px] md:text-[14px] text-[#475467] lg:text-[16px] text-left font-light"
+            >
               Use for tips, invoice, airdrops & swaps
             </p>
           </li>
-          <li class="flex items-center gap-2 md:justify-center lg:justify-start">
+          <li
+            class="flex items-center gap-2 md:justify-center lg:justify-start"
+          >
             <div class="w-2 h-2 bg-primary rounded-full"></div>
-            <p class="text-[10px] md:text-[14px] text-[#475467] lg:text-[16px] text-left font-light">
+            <p
+              class="text-[10px] md:text-[14px] text-[#475467] lg:text-[16px] text-left font-light"
+            >
               Lock with a password, NFT, or X
             </p>
           </li>
@@ -129,7 +150,9 @@
         </button>
       </div>
 
-      <div class="flex flex-col items-center justify-center mt-6 md:mt-8 lg:w-[40%]">
+      <div
+        class="flex flex-col items-center justify-center mt-6 md:mt-8 lg:w-[40%]"
+      >
         <img
           class="mx-auto w-[55%] max-w-[300px] max-h-[40vh] object-contain lg:w-[70%] lg:max-w-[400px] lg:max-h-[50vh]"
           src="/LandingPageMainImage.svg"
@@ -147,4 +170,3 @@
     </div>
   {/if}
 </div>
-

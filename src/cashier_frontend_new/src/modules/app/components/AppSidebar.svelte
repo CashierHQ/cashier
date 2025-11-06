@@ -1,5 +1,13 @@
 <script lang="ts">
-  import { X, Link, Compass, AlignLeft, CircleHelp, Wallet, Copy } from "lucide-svelte";
+  import {
+    X,
+    Link,
+    Compass,
+    AlignLeft,
+    CircleHelp,
+    Wallet,
+    Copy,
+  } from "lucide-svelte";
   import { appLinks } from "$modules/shared/constants/links";
   import { toast } from "svelte-sonner";
   import DisconnectModal from "./DisconnectModal.svelte";
@@ -17,7 +25,9 @@
 
   // Get user principal from auth state
   const userPrincipal = $derived(
-    authState.account?.owner ? transformShortAddress(authState.account.owner) : "Not connected"
+    authState.account?.owner
+      ? transformShortAddress(authState.account.owner)
+      : "Not connected",
   );
 
   function handleClose() {
@@ -93,7 +103,9 @@
               <span class="w-8 text-grey group-hover:text-green">
                 <Link class="w-[22px] h-[22px]" />
               </span>
-              <span class="text-[16px] font-semibold text-[#222] group-hover:text-green">
+              <span
+                class="text-[16px] font-semibold text-[#222] group-hover:text-green"
+              >
                 {appLinks.about.label}
               </span>
             </div>
@@ -111,7 +123,9 @@
               <span class="w-8 text-grey group-hover:text-green">
                 <Compass class="w-[22px] h-[22px]" />
               </span>
-              <span class="text-[16px] font-semibold text-[#222] group-hover:text-green">
+              <span
+                class="text-[16px] font-semibold text-[#222] group-hover:text-green"
+              >
                 {appLinks.exploreCashier.label}
               </span>
             </div>
@@ -129,7 +143,9 @@
               <span class="w-8 text-grey group-hover:text-green">
                 <AlignLeft class="w-[22px] h-[22px]" />
               </span>
-              <span class="text-[16px] font-semibold text-[#222] group-hover:text-green">
+              <span
+                class="text-[16px] font-semibold text-[#222] group-hover:text-green"
+              >
                 {appLinks.projectOverview.label}
               </span>
             </div>
@@ -139,7 +155,9 @@
     </div>
 
     <!-- Footer -->
-    <div class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-auto">
+    <div
+      class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 mt-auto"
+    >
       <div class="flex flex-col w-full">
         <div class="w-full flex flex-col flex-grow">
           <a
@@ -153,7 +171,9 @@
                 <span class="w-8 text-grey group-hover:text-green">
                   <CircleHelp class="w-[22px] h-[22px]" />
                 </span>
-                <span class="text-[16px] font-semibold text-[#222] group-hover:text-green">
+                <span
+                  class="text-[16px] font-semibold text-[#222] group-hover:text-green"
+                >
                   {appLinks.faq.label}
                 </span>
               </div>
@@ -168,13 +188,17 @@
         ></div>
 
         <!-- Wallet info -->
-        <div class="w-full font-semibold block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors mt-1">
+        <div
+          class="w-full font-semibold block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors mt-1"
+        >
           <div class="flex items-center justify-between">
             <div class="flex items-center">
               <span class="w-8 text-grey">
                 <Wallet class="w-[22px] h-[22px]" />
               </span>
-              <span class="text-[16px] font-semibold text-[#222]">{userPrincipal}</span>
+              <span class="text-[16px] font-semibold text-[#222]"
+                >{userPrincipal}</span
+              >
             </div>
             <button
               onclick={(e) => {
@@ -209,4 +233,3 @@
   }}
   onConfirm={handleDisconnectConfirm}
 />
-

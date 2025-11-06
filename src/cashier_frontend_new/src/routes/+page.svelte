@@ -21,4 +21,7 @@
   <Footer />
 </main>
 
-<LoginModal open={isLoginModalOpen} onOpenChange={(open) => (isLoginModalOpen = open)} />
+<LoginModal
+  open={isLoginModalOpen}
+  onOpenChange={(open) => (isLoginModalOpen = open)}
+/>
