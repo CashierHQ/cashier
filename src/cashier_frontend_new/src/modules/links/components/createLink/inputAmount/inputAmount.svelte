@@ -15,21 +15,20 @@
   let {
     decimals,
     priceUsd,
-    mode = "amount",
-    value = $bindable<bigint>(0n),
+    tokenAmount = $bindable<bigint>(0n),
     handleSetMax,
   }: {
     decimals: number;
     priceUsd: number;
-    mode?: "amount" | "usd";
-    value: bigint;
+    tokenAmount: bigint;
     handleSetMax?: () => void;
   } = $props();
 
-  // read-only input string derived from `value`
-  let input: string = $derived.by(() => {
-    if (value != null && value !== undefined) {
-      const asAmount: number = parseBalanceUnits(value, decimals);
+  // read-only input string derived from `tokenAmount`
+  let mode: string = $state("amount");
+  let inputStr: string = $derived.by(() => {
+    if (tokenAmount != null && tokenAmount !== undefined) {
+      const asAmount: number = parseBalanceUnits(tokenAmount, decimals);
       if (mode === "amount") {
         return String(asAmount);
       } else {
@@ -44,7 +43,7 @@
 
   // converted value: if mode === 'amount' -> USD equivalent, else -> token equivalent
   let converted = $derived(() => {
-    const parsed = parseDisplayNumber(input);
+    const parsed = parseDisplayNumber(inputStr);
     if (parsed == null) return 0;
     if (!priceUsd || priceUsd <= 0) return 0;
     if (mode === "amount") {
@@ -64,11 +63,11 @@
     const parsed = parseDisplayNumber(sanitizedInput);
     if (parsed == null) {
       // empty or invalid
-      value = 0n;
+      tokenAmount = 0n;
       return;
     }
 
-    value = computeAmountFromInput({
+    tokenAmount = computeAmountFromInput({
       num: parsed,
       mode,
       priceUsd,
@@ -81,13 +80,6 @@
     // disallow switching to USD when price is not provided
     if (m === "usd" && !priceUsd) return;
     mode = m;
-    // when switching, refresh the displayed string to reflect current value in the new mode
-    const asAmount: number = parseBalanceUnits(value, decimals);
-    if (mode === "amount") {
-      input = String(asAmount);
-    } else if (priceUsd && priceUsd > 0) {
-      input = trimNumber(asAmount * priceUsd, USD_DISPLAY_DECIMALS);
-    }
   }
 </script>
 
@@ -122,7 +114,7 @@
   </div>
 
   <Input
-    value={input}
+    value={inputStr}
     type="text"
     inputmode="decimal"
     step="any"

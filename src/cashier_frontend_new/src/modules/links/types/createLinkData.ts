@@ -36,6 +36,7 @@ export class CreateLinkData {
   linkType: LinkTypeValue;
   assets: CreateLinkAsset[];
   maxUse: number;
+
   constructor({
     title,
     linkType,
@@ -52,37 +53,41 @@ export class CreateLinkData {
     this.assets = assets;
     this.maxUse = maxUse;
   }
+}
 
+export class CreateLinkDataMapper {
   /**
    *  Convert CreateLinkData to CreateLinkInput for backend consumption
    * @returns Result wrapping CreateLinkInput or Error if validation fails
    */
-  toCreateLinkInput(): Result<CreateLinkInput, Error> {
-    const link_type = LinkTypeMapper.toBackendType(this.linkType);
+  static toCreateLinkInput(
+    input: CreateLinkData,
+  ): Result<CreateLinkInput, Error> {
+    const link_type = LinkTypeMapper.toBackendType(input.linkType);
 
-    if (this.linkType != LinkType.TIP) {
+    if (input.linkType != LinkType.TIP) {
       return Err(new Error("Only tip links are supported"));
     }
 
-    if (!this.assets) {
+    if (!input.assets) {
       return Err(new Error("Asset is missing"));
     }
 
-    if (this.assets.length === 0) {
+    if (input.assets.length === 0) {
       return Err(new Error("Tip link asset data is missing"));
     }
 
-    const assetInfo: Array<AssetInfoDto> = this.assets.map((a) =>
+    const assetInfo: Array<AssetInfoDto> = input.assets.map((a) =>
       a.toBackendWithLabel("SEND_TIP_ASSET"),
     );
 
-    const input: CreateLinkInput = {
-      title: this.title,
+    const inputDto: CreateLinkInput = {
+      title: input.title,
       asset_info: assetInfo,
       link_type: link_type,
       link_use_action_max_count: 1n,
     };
 
-    return Ok(input);
+    return Ok(inputDto);
   }
 }
