@@ -29,7 +29,7 @@ pub fn calculate_link_balance_map(
         let fee_amount = fee_in_nat.clone();
 
         let sending_amount =
-            (Nat::from(info.amount_per_link_use_action) + fee_amount) * Nat::from(max_use_count);
+            (info.amount_per_link_use_action.clone() + fee_amount) * Nat::from(max_use_count);
 
         balance_map.insert(*address, sending_amount);
     });

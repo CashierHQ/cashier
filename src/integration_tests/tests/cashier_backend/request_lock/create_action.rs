@@ -1,5 +1,6 @@
 use crate::utils::principal::TestUser;
 use crate::{cashier_backend::link::fixture::LinkTestFixture, utils::with_pocket_ic_context};
+use candid::Nat;
 use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::{
     constant,
@@ -17,7 +18,7 @@ async fn test_request_lock_for_create_action() {
 
         // Setup user and create link
         let link = fixture
-            .create_tip_link(constant::ICP_TOKEN, 100_000_000u64)
+            .create_tip_link(constant::ICP_TOKEN, Nat::from(100_000_000u64))
             .await;
 
         // Act - submit 3 create_action calls concurrently

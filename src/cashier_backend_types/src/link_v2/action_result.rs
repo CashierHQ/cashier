@@ -51,6 +51,7 @@ pub struct ProcessActionResult {
     pub action: Action,
     pub intents: Vec<Intent>,
     pub intent_txs_map: HashMap<String, Vec<Transaction>>,
+    pub icrc112_requests: Option<Icrc112Requests>,
     pub is_success: bool,
     pub errors: Vec<String>,
 }
@@ -67,7 +68,7 @@ impl From<ProcessActionResult> for ActionDto {
                 .into_iter()
                 .map(IntentDto::from)
                 .collect(),
-            icrc_112_requests: None,
+            icrc_112_requests: process_action_result.icrc112_requests,
         }
     }
 }
