@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Mail } from "lucide-svelte";
+  import { appLinks } from "$modules/shared/constants/links";
 </script>
 
 <footer class="w-full border-t border-border bg-gray-50 text-foreground mt-auto">
@@ -12,32 +13,32 @@
           <ul class="space-y-1">
             <li>
               <a
-                href="https://doc.clickup.com/9012452868/d/h/8cjy7g4-4292/9a3796b6e853ef0"
+                href={appLinks.aboutCashier.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-xs text-muted-foreground hover:text-primary transition-colors"
               >
-                About Cashier
+                {appLinks.aboutCashier.label}
               </a>
             </li>
             <li>
               <a
-                href="https://doc.clickup.com/9012452868/d/h/8cjy7g4-4792/cd2e9646a3a8a0a"
+                href={appLinks.team.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-xs text-muted-foreground hover:text-primary transition-colors"
               >
-                Team
+                {appLinks.team.label}
               </a>
             </li>
             <li>
               <a
-                href="https://doc.clickup.com/9012452868/d/h/8cjy7g4-4812/2b32fa3ed781459"
+                href={appLinks.faq.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-xs text-muted-foreground hover:text-primary transition-colors"
               >
-                FAQ
+                {appLinks.faq.label}
               </a>
             </li>
           </ul>
@@ -47,31 +48,31 @@
           <ul class="space-y-1">
             <li>
               <a
-                href="https://doc.clickup.com/9012452868/d/h/8cjy7g4-7212/01084c48b7877f0"
+                href={appLinks.termsOfService.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-xs text-muted-foreground hover:text-primary transition-colors"
               >
-                Terms of Service
+                {appLinks.termsOfService.label}
               </a>
             </li>
             <li>
               <a
-                href="https://doc.clickup.com/9012452868/d/h/8cjy7g4-7232/38befdcfae1af1b"
+                href={appLinks.privacyPolicy.url}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-xs text-muted-foreground hover:text-primary transition-colors"
               >
-                Privacy Policy
+                {appLinks.privacyPolicy.label}
               </a>
             </li>
             <li>
               <a
-                href="mailto:contact@cashierapp.io"
+                href="mailto:{appLinks.contactEmail.email}"
                 class="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
               >
                 <Mail class="w-3 h-3" />
-                Contact Email
+                {appLinks.contactEmail.label}
               </a>
             </li>
           </ul>
@@ -93,53 +94,53 @@
         <p class="text-xs text-muted-foreground">CASHIERFI VENTURES LABS LTD</p>
         <div class="flex items-center gap-4 text-xs">
           <a
-            href="https://doc.clickup.com/9012452868/d/h/8cjy7g4-4292/9a3796b6e853ef0"
+            href={appLinks.aboutCashier.url}
             target="_blank"
             rel="noopener noreferrer"
             class="text-muted-foreground hover:text-primary transition-colors"
           >
-            About Cashier
+            {appLinks.aboutCashier.label}
           </a>
           <a
-            href="https://doc.clickup.com/9012452868/d/h/8cjy7g4-4792/cd2e9646a3a8a0a"
+            href={appLinks.team.url}
             target="_blank"
             rel="noopener noreferrer"
             class="text-muted-foreground hover:text-primary transition-colors"
           >
-            Team
+            {appLinks.team.label}
           </a>
           <a
-            href="https://doc.clickup.com/9012452868/d/h/8cjy7g4-4812/2b32fa3ed781459"
+            href={appLinks.faq.url}
             target="_blank"
             rel="noopener noreferrer"
             class="text-muted-foreground hover:text-primary transition-colors"
           >
-            FAQ
-          </a>
-          <span class="text-muted-foreground">|</span>
-          <a
-            href="https://doc.clickup.com/9012452868/d/h/8cjy7g4-7212/01084c48b7877f0"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-muted-foreground hover:text-primary transition-colors"
-          >
-            Terms of Service
-          </a>
-          <a
-            href="https://doc.clickup.com/9012452868/d/h/8cjy7g4-7232/38befdcfae1af1b"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-muted-foreground hover:text-primary transition-colors"
-          >
-            Privacy Policy
+            {appLinks.faq.label}
           </a>
           <span class="text-muted-foreground">|</span>
           <a
-            href="mailto:contact@cashierapp.io"
+            href={appLinks.termsOfService.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-muted-foreground hover:text-primary transition-colors"
+          >
+            {appLinks.termsOfService.label}
+          </a>
+          <a
+            href={appLinks.privacyPolicy.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-muted-foreground hover:text-primary transition-colors"
+          >
+            {appLinks.privacyPolicy.label}
+          </a>
+          <span class="text-muted-foreground">|</span>
+          <a
+            href="mailto:{appLinks.contactEmail.email}"
             class="text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
           >
             <Mail class="w-3 h-3" />
-            Contact Email
+            {appLinks.contactEmail.label}
           </a>
         </div>
       </div>
@@ -151,3 +152,4 @@
     </div>
   </div>
 </footer>
+

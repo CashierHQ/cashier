@@ -79,6 +79,15 @@
   --font-family-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --color-green: #36a18b;
   --color-green-foreground: #ffffff;
+  --color-disabledgreen: #A0D0C5;
+  --color-lightgreen: #e8f2ee;
+  --color-yellow: #a17f37;
+  --color-lightyellow: #fffaf2;
+  --color-lightpurple: #e8e8f2;
+  --color-lightblack: #475467;
+  --color-grey: #8d8d8d;
+  --color-lightgrey: #667085;
+  --color-border-light: rgba(208, 213, 221, 0.5);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -126,4 +135,13 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
 }

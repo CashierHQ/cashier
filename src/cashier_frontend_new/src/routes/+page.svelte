@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Header from "$modules/shared/components/layout/Header.svelte";
-  import Footer from "$modules/shared/components/layout/Footer.svelte";
-  import HomeContent from "$modules/shared/components/HomeContent.svelte";
-  import LoginModal from "$modules/shared/components/modal/LoginModal.svelte";
+  import Header from "$modules/home/components/Header.svelte";
+  import Footer from "$modules/home/components/Footer.svelte";
+  import HomePage from "$modules/home/pages/HomePage.svelte";
+  import LoginModal from "$modules/home/components/LoginModal.svelte";
 
   let isLoginModalOpen = $state(false);
 
@@ -17,7 +17,7 @@
 
 <main class="flex flex-col h-screen">
   <Header onLoginClick={openLoginModal} />
-  <HomeContent onLoginClick={openLoginModal} />
+  <HomePage onLoginClick={openLoginModal} />
   <Footer />
 </main>
 

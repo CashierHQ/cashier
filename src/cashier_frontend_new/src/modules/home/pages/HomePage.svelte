@@ -16,7 +16,7 @@
   }
 </script>
 
-<div class="lg:bg-[url('/LandingPageBackgroundPattern.svg')] lg:bg-cover lg:bg-center lg:w-full lg:pt-24 flex-1">
+<div class="lg:bg-[url('/LandingPageBackgroundPattern.svg')] lg:bg-cover lg:bg-center lg:w-full lg:pt-[12vh] flex-1">
   <!-- Development Disclaimer -->
   <div
     class="mx-auto px-4 py-2 bg-[#ECFEF3] border rounded-xl border-[#ACEFC6] w-10/12 lg:fixed lg:top-10 lg:w-96 lg:left-1/2 lg:-translate-x-1/2 transition-all duration-300 ease-in-out"
@@ -61,11 +61,9 @@
   {:else}
     <!-- Main content for unauthenticated users -->
     <div class="flex flex-col lg:flex-row lg:w-full lg:justify-center lg:px-[200px] md:px-8 pb-8">
-      <!-- Information section -->
       <div
         class="flex flex-col items-center md:items-center lg:items-start lg:justify-center lg:w-[60%] md:text-center lg:text-left"
       >
-        <!-- Badges -->
         <div class="flex gap-4 items-center mt-4 md:justify-center flex-wrap">
           <div
             class="flex flex-row gap-1.5 items-center text-primary text-[11px] md:text-[13px] lg:text-[14px] bg-[#ECFEF3] rounded-full w-fit px-3 py-1 border border-[#ACEFC6]"
@@ -87,21 +85,18 @@
           </div>
         </div>
 
-        <!-- Title -->
         <h1
           class="text-[32px] md:text-[48px] lg:text-[60px] font-bold mt-2 lg:my-[16px] leading-[1.2] px-4 md:px-8 lg:px-0 text-center md:text-center lg:text-left"
         >
           Share crypto <span class="text-primary">as easily as texting</span>
         </h1>
 
-        <!-- Description -->
         <p
           class="text-[14px] md:text-[18px] font-light text-[#475467] px-4 md:px-8 lg:px-0 lg:text-[20px] text-center md:text-center lg:text-left"
         >
           Send or receive tokens & NFTs with just a link or QR code
         </p>
 
-        <!-- Features list -->
         <ul
           class="flex flex-col gap-2 md:gap-3 mt-4 lg:mt-6 self-center md:self-center lg:self-start px-4 md:px-8 lg:px-0"
         >
@@ -125,7 +120,6 @@
           </li>
         </ul>
 
-        <!-- Get started button - Desktop -->
         <button
           onclick={() => onLoginClick?.()}
           class="items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-primary text-primary-foreground shadow hover:bg-primary/90 px-4 hidden md:block lg:block h-[48px] text-[1rem] w-[248px] rounded-full mt-[48px] md:mt-8 lg:mt-[48px]"
@@ -135,7 +129,6 @@
         </button>
       </div>
 
-      <!-- Image container -->
       <div class="flex flex-col items-center justify-center mt-6 md:mt-8 lg:w-[40%]">
         <img
           class="mx-auto w-[55%] max-w-[300px] max-h-[40vh] object-contain lg:w-[70%] lg:max-w-[400px] lg:max-h-[50vh]"
@@ -154,3 +147,4 @@
     </div>
   {/if}
 </div>
+
