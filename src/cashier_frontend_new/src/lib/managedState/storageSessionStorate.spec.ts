@@ -7,25 +7,49 @@ import * as devalue from "devalue";
 import { SessionStorageStore } from "./storageSessionStorage";
 import type { DevalueSerde } from ".";
 import { Principal } from "@dfinity/principal";
+import { Ed25519KeyIdentity } from "@dfinity/identity";
 
 class TestValue {
   public name: string;
   public age: number;
   public principal: Principal;
+  public testers: Principal[];
+  public option: Option;
   constructor({
     name,
     age,
     principal,
+    testers,
+    option,
   }: {
     name: string;
     age: number;
     principal: Principal;
+    testers?: Principal[];
+    option?: Option;
   }) {
     this.name = name;
     this.age = age;
     this.principal = principal;
+    this.testers = testers ?? [];
+    this.option = option ?? Option.OPTION_A;
   }
 }
+
+export class Option {
+  private constructor() {}
+
+  static readonly OPTION_A = "OPTION_A";
+  static readonly OPTION_B = "OPTION_B";
+  static readonly OPTION_C = "OPTION_C";
+  static readonly OPTION_D = "OPTION_D";
+}
+
+export type OptionValue =
+  | typeof Option.OPTION_A
+  | typeof Option.OPTION_B
+  | typeof Option.OPTION_C
+  | typeof Option.OPTION_D;
 
 const testValueDevalueSerde: DevalueSerde = {
   serialize: {
@@ -34,17 +58,27 @@ const testValueDevalueSerde: DevalueSerde = {
         name: v.name,
         age: v.age,
         principal: v.principal,
+        testers: v.testers,
+        option: v.option,
       },
     Principal: (principal) =>
       principal instanceof Principal && principal.toText(),
   },
   deserialize: {
     TestValue: (v) => {
-      const value = v as { name: string; age: number; principal: Principal };
+      const value = v as {
+        name: string;
+        age: number;
+        principal: Principal;
+        testers: Principal[];
+        option: string;
+      };
       return new TestValue({
         name: value.name,
         age: value.age,
         principal: value.principal,
+        testers: value.testers,
+        option: value.option,
       });
     },
     Principal: (data) => typeof data == "string" && Principal.fromText(data),
@@ -150,13 +184,36 @@ describe("SessionStorageStore", () => {
     const store = new SessionStorageStore("test_key", testValueDevalueSerde);
     store.removeItem();
 
-    const item = new TestValue({
-      name: "Alice123",
-      age: 30,
-      principal: Principal.fromText(
-        "ur2tx-mciqf-h4p4b-qggnv-arpsc-s3wui-2blbn-aphly-wzoos-iqjik-hae",
-      ),
-    });
+    const item = {
+      owner: Ed25519KeyIdentity.generate().getPrincipal(),
+      deepnested: {
+        test: [
+          new TestValue({
+            name: "Bob",
+            age: 25,
+            principal: Ed25519KeyIdentity.generate().getPrincipal(),
+            testers: [
+              Ed25519KeyIdentity.generate().getPrincipal(),
+              Ed25519KeyIdentity.generate().getPrincipal(),
+              Ed25519KeyIdentity.generate().getPrincipal(),
+            ],
+            option: Option.OPTION_B,
+          }),
+        ],
+        testBigint: 42n,
+      },
+      nested: new TestValue({
+        name: "Alice123",
+        age: 30,
+        principal: Ed25519KeyIdentity.generate().getPrincipal(),
+        testers: [
+          Ed25519KeyIdentity.generate().getPrincipal(),
+          Ed25519KeyIdentity.generate().getPrincipal(),
+          Ed25519KeyIdentity.generate().getPrincipal(),
+        ],
+        option: Option.OPTION_C,
+      }),
+    };
 
     // Act
     store.setItem(item);

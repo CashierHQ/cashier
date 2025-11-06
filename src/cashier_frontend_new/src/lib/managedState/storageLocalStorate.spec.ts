@@ -183,13 +183,13 @@ describe("LocalStorageStore", () => {
     store.removeItem();
 
     const item = {
-      owner: Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"),
+      owner: Ed25519KeyIdentity.generate().getPrincipal(),
       deepnested: {
         test: [
           new TestValue({
             name: "Bob",
             age: 25,
-            principal: Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"),
+            principal: Ed25519KeyIdentity.generate().getPrincipal(),
             testers: [
               Ed25519KeyIdentity.generate().getPrincipal(),
               Ed25519KeyIdentity.generate().getPrincipal(),
@@ -203,9 +203,7 @@ describe("LocalStorageStore", () => {
       nested: new TestValue({
         name: "Alice123",
         age: 30,
-        principal: Principal.fromText(
-          "ur2tx-mciqf-h4p4b-qggnv-arpsc-s3wui-2blbn-aphly-wzoos-iqjik-hae",
-        ),
+        principal: Ed25519KeyIdentity.generate().getPrincipal(),
         testers: [
           Ed25519KeyIdentity.generate().getPrincipal(),
           Ed25519KeyIdentity.generate().getPrincipal(),
