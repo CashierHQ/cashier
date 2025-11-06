@@ -1,7 +1,6 @@
 <script lang="ts">
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import type { LinkStore } from "../../state/linkStore.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
   import Icrc112Service from "$modules/icrc112/services/icrc112Service";
   import type { Signer } from "@slide-computer/signer";
@@ -15,16 +14,20 @@
   import { getHeadingFromActionType } from "$modules/links/utils/txCart";
   import { FeeService } from "$modules/links/services/feeService";
   import type { FeeItem } from "$modules/links/types/fee";
+  import type Action from "$modules/links/types/action/action";
+  import type { Link } from "$modules/links/types/link/link";
 
   let {
     link,
+    action,
     isOpen,
     goNext = async () => {},
     onCloseDrawer,
   }: {
-    link: LinkStore;
+    link: Link;
+    action: Action;
     isOpen: boolean;
-    goNext?: () => Promise<void> | void;
+    goNext: () => Promise<void> | void;
     onCloseDrawer?: () => void;
   } = $props();
 
@@ -37,16 +40,16 @@
   let isExecutingIcrc112: boolean = $state(false);
 
   let isProcessingAsset = $derived(() => {
-    if (link.action?.icrc_112_requests?.length === 0) {
+    if (action?.icrc_112_requests?.length === 0) {
       return isProcessing;
     }
     return isExecutingIcrc112;
   });
 
   const assetAndFeeList = $derived.by(() =>
-    link.action
+    action
       ? service.mapActionToAssetAndFeeList(
-          link.action,
+          action,
           // build a record keyed by token address for the service
           Object.fromEntries(
             (walletStore.query.data ?? []).map((t) => [t.address, t]),
@@ -77,9 +80,7 @@
     assetAndFeeList.map(({ fee }) => fee).filter((f): f is FeeItem => !!f),
   );
 
-  let assetTitle = $derived.by(() =>
-    getHeadingFromActionType(link.action?.type),
-  );
+  let assetTitle = $derived.by(() => getHeadingFromActionType(action.type));
 
   let showFeeBreakdown = $state(false);
 
@@ -88,7 +89,7 @@
   // in case execute icrc-112 fails, do not call goNext
   async function confirmAction() {
     // Basic validation BEFORE starting processing UI state
-    if (!link.action || !link.id) {
+    if (!action || !link.id) {
       errorMessage = "No action or link ID available";
       return;
     }
@@ -109,7 +110,7 @@
     errorMessage = null;
     successMessage = null;
 
-    const requests = link.action.icrc_112_requests ?? [];
+    const requests = action.icrc_112_requests ?? [];
 
     // Execute ICRC-112 batch only if there are requests.
     if (requests.length > 0) {
@@ -157,7 +158,7 @@
   // Continue to next step after success
 </script>
 
-{#if link.action}
+{#if action}
   <Drawer.Root bind:open={isOpen}>
     <Drawer.Content class="w-full lg:w-1/3">
       <Drawer.Header class="relative">

@@ -1,13 +1,13 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
-  import type { LinkStore } from "../../state/linkStore.svelte";
+  import type { LinkCreationStore } from "../../state/linkCreationStore.svelte";
 
   const {
     link,
     errorMessage,
     successMessage,
   }: {
-    link: LinkStore;
+    link: LinkCreationStore;
     errorMessage: string | null;
     successMessage: string | null;
   } = $props();
