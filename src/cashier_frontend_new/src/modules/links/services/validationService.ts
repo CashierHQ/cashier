@@ -1,7 +1,7 @@
 import type { CreateLinkData } from "$modules/links/types/createLinkData";
 import {
   calculateRequiredAssetAmount,
-  maxAmountPerAsset,
+  maxAmountForAsset,
 } from "$modules/links/utils/amountCalculator";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Err, Ok, type Result } from "ts-results-es";
@@ -58,27 +58,22 @@ class ValidationService {
   }
 
   /**
-   * Get the maximum amount per asset for link creation
-   * @param createLinkData
-   * @returns Result containing max amounts or error
+   * Get the maximum amount for asset for link creation
+   * @param tokenAddress - The address of the token to calculate the max amount for
+   * @param maxUse - The maximum number of times each asset can be used
+   * @param walletTokens - The list of tokens in the user's wallet
+   * @returns Result containing max amount or error
    */
-  maxAmountPerAsset(
-    createLinkData: CreateLinkData,
+  maxAmountForAsset(
+    tokenAddress: string,
+    maxUse: number,
     walletTokens: TokenWithPriceAndBalance[],
-  ): Result<Record<string, bigint>, Error> {
-    if (!createLinkData.assets || createLinkData.assets.length === 0) {
-      return Err(new Error("No assets provided for validation"));
-    }
-
+  ): Result<bigint, Error> {
     if (!walletTokens || walletTokens.length === 0) {
       return Err(new Error("Wallet tokens data is not available"));
     }
 
-    return maxAmountPerAsset(
-      createLinkData.assets,
-      createLinkData.maxUse,
-      walletTokens,
-    );
+    return maxAmountForAsset(tokenAddress, maxUse, walletTokens);
   }
 }
 

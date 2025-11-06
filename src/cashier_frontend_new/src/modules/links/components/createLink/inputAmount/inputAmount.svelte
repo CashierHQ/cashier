@@ -2,39 +2,32 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
+  import { USD_DISPLAY_DECIMALS } from '$modules/shared/constants';
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
   import {
-    sanitizeInput,
-    parseDisplayNumber,
-    computeAmountFromInput,
-  } from "./utils";
-  // force `value` to be a number (base units) at the type level
+      computeAmountFromInput,
+      parseDisplayNumber,
+      sanitizeInput,
+      trimNumber,
+  } from "../../../utils/inputAmount";
+
   let {
-    decimals = 8,
+    decimals,
     priceUsd,
     mode = "amount",
     value = $bindable<bigint>(0n),
-    balance,
+    handleSetMax,
   }: {
-    decimals?: number;
-    priceUsd?: number;
+    decimals: number;
+    priceUsd: number;
     mode?: "amount" | "usd";
     value: bigint;
-    balance?: bigint;
+    handleSetMax?: () => void;
   } = $props();
 
-  // input string shown in the input, do no
+  // input string shown in the input
   let input: string = $state("");
-
-  const USD_DISPLAY_DECIMALS = 6;
-
-  function trimNumber(n: number, decimals = USD_DISPLAY_DECIMALS) {
-    if (!isFinite(n)) return String(n);
-    // limit precision and strip trailing zeros
-    const fixed = n.toFixed(decimals);
-    return fixed.replace(/\.?0+$/, "");
-  }
 
   // converted value: if mode === 'amount' -> USD equivalent, else -> token equivalent
   let converted = $derived(() => {
@@ -89,7 +82,7 @@
   }
 
   // Toggle mode (external callers can set `mode` prop too)
-  function setMode(m: "amount" | "usd") {
+  function handleToggleMode(m: "amount" | "usd") {
     // disallow switching to USD when price is not provided
     if (m === "usd" && !priceUsd) return;
     mode = m;
@@ -111,7 +104,7 @@
         type="button"
         class={`px-2 py-1 border rounded text-sm ${mode === "amount" ? "bg-blue-600 text-white border-blue-600" : ""}`}
         aria-pressed={mode === "amount"}
-        onclick={() => setMode("amount")}
+        onclick={() => handleToggleMode("amount")}
       >
         Amount
       </Button>
@@ -119,20 +112,14 @@
         type="button"
         class={`px-2 py-1 border rounded text-sm ${mode === "usd" ? "bg-blue-600 text-white border-blue-600" : ""}`}
         aria-pressed={mode === "usd"}
-        onclick={() => setMode("usd")}
+        onclick={() => handleToggleMode("usd")}
         disabled={!priceUsd}
       >
         USD
       </Button>
       <Button
         class="px-2 py-1 border rounded text-sm"
-        onclick={() => {
-          // balance is expected to be base units (bigint or number)
-          if (!balance) return;
-          value = balance;
-          // ensure input string refreshes via the effect
-        }}
-        disabled={!balance || balance === 0n}
+        onclick={handleSetMax}
       >
         Max
       </Button>
