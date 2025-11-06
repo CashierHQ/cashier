@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type UserLinkStore from "$modules/links/state/userLinkStore.svelte";
-  import Header from "$modules/links/components/useLink/Header.svelte";
-  import AssetList from "$modules/links/components/useLink/AssetList.svelte";
   import type { LinkDetailStore } from "$modules/links/state/linkDetailStore.svelte";
+  import type UserLinkStore from "$modules/userLink/state/userLinkStore.svelte";
+  import AssetList from "../AssetList.svelte";
+  import Header from "../Header.svelte";
 
   const {
     userLink,
