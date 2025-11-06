@@ -1,26 +1,10 @@
 import { describe, it, expect } from "vitest";
 import * as devalue from "devalue";
 import { Principal } from "@dfinity/principal";
-import { Link, LinkMapper } from "./link";
+import { Link, LinkMapper, type SerializedLink } from "./link";
 import { Asset, AssetInfo } from "./asset";
 import { LinkType } from "./linkType";
 import { LinkState } from "./linkState";
-
-type RawLink = {
-  id: string;
-  title: string;
-  creator: string;
-  asset_info: Array<{
-    asset: { chain: string; address?: string };
-    amount_per_link_use_action: bigint;
-    label: string;
-  }>;
-  link_type: string;
-  create_at: bigint;
-  state: string;
-  link_use_action_max_count: bigint;
-  link_use_action_counter: bigint;
-};
 
 function makeSampleLink(id = "link-1", title = "Test Tip Link") {
   const creator = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
@@ -49,14 +33,18 @@ describe("LinkMapper serde", () => {
     const link = makeSampleLink();
 
     // serialize
-    const raw = LinkMapper.serde.serialize["Link"](link as unknown) as RawLink;
-    expect(raw).toBeTruthy();
-    expect(raw.id).toBe(link.id);
-    expect(raw.title).toBe(link.title);
-    expect(raw.creator).toBe(link.creator.toText());
+    const serialized = LinkMapper.serde.serialize["Link"](
+      link as unknown,
+    ) as SerializedLink;
+    expect(serialized).toBeTruthy();
+    expect(serialized.id).toBe(link.id);
+    expect(serialized.title).toBe(link.title);
+    expect(serialized.creator).toBe(link.creator.toText());
 
     // deserialize
-    const deserialized = LinkMapper.serde.deserialize["Link"](raw) as Link;
+    const deserialized = LinkMapper.serde.deserialize["Link"](
+      serialized,
+    ) as Link;
     expect(deserialized).toBeInstanceOf(Link);
     expect(deserialized.id).toBe(link.id);
     expect(deserialized.title).toBe(link.title);
