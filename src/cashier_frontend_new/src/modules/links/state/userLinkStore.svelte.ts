@@ -10,40 +10,46 @@ export class UserLinkStore {
   // when true: Landing -> AddressLocked -> Gate -> AddressUnlocked -> Completed
   // when false: Landing -> AddressUnlocked -> Completed
   public locked: boolean;
-  // public observable step for Svelte reactivity
-  public currentStep: UserLinkStep;
 
   constructor({ locked = false }: { locked?: boolean } = {}) {
     this.locked = $state(locked);
     this.#state = $state(new LandingState(this));
-    this.currentStep = $state(this.#state.step);
   }
 
+  /**
+   * Get the current state
+   */
   get state(): UserLinkState {
     return this.#state;
   }
 
+  /**
+   * Set the current state
+   */
   set state(s: UserLinkState) {
     this.#state = s;
-    // update public observable so Svelte $state proxy sees a change
-    this.currentStep = this.#state.step;
   }
 
+  /**
+   * The current step in the link creation process
+   */
   get step(): UserLinkStep {
     return this.#state.step;
   }
 
+  /**
+   * Method to transition to the next state
+   */
   async goNext(): Promise<void> {
     console.log("UserLinkStore.goNext called");
     await this.#state.goNext();
-    // ensure public observable is in sync (in case a state mutated internal fields directly)
-    this.currentStep = this.#state.step;
   }
 
+  /**
+   * Method to transition to the previous state
+   */
   async goBack(): Promise<void> {
     await this.#state.goBack();
-    // sync public observable
-    this.currentStep = this.#state.step;
   }
 }
 
