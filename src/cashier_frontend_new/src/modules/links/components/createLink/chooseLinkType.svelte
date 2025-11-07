@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import { LinkStep } from "../../types/linkStep";
-  import { LinkType } from "../../types/link/linkType";
   import type { LinkCreationStore } from "../../state/linkCreationStore.svelte";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import { LinkType } from "../../types/link/linkType";
+  import { LinkStep } from "../../types/linkStep";
 
   const {
     link,
