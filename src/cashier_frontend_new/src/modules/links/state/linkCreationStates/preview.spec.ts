@@ -14,6 +14,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { cashierBackendService } from "../../services/cashierBackend";
 import { LinkStep } from "../../types/linkStep";
 import { LinkCreationStore } from "../linkCreationStore.svelte";
+import { AddAssetTipLinkState } from "./tiplink/addAsset";
 
 // mock wallet store
 vi.mock("$modules/token/state/walletStore.svelte", () => {
@@ -111,6 +112,7 @@ describe("PreviewState", () => {
 
     // Assert: returned to ADD_ASSET
     expect(store.state.step).toEqual(LinkStep.ADD_ASSET);
+    expect(store.state).toBeInstanceOf(AddAssetTipLinkState);
   });
 
   it("should trainsition to CREATED successfully", async () => {

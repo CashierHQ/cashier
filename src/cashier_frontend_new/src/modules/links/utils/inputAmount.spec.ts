@@ -1,6 +1,9 @@
-import { describe, it, expect } from "vitest";
-import { sanitizeInput, parseDisplayNumber } from "./utils";
-import { computeAmountFromInput } from "./utils";
+import { describe, expect, it } from "vitest";
+import {
+  computeAmountFromInput,
+  parseDisplayNumber,
+  sanitizeInput,
+} from "./inputAmount";
 
 describe("inputAmount utils", () => {
   it("sanitizeInput removes letters and keeps digits, dot, comma", () => {
