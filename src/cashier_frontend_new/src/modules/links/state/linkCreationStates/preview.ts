@@ -1,11 +1,13 @@
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
+import { LinkMapper } from "$modules/links/types/link/link";
+import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkCreationState } from ".";
+import { ActionMapper } from "../../types/action/action";
 import type { LinkCreationStore } from "../linkCreationStore.svelte";
 import { AddAssetState } from "./addAsset";
 import { LinkCreatedState } from "./created";
-import { ActionMapper } from "../../types/action/action";
-import { LinkMapper } from "$modules/links/types/link/link";
+import { AddAssetTipLinkState } from "./tiplink/addAsset";
 
 // State when the user is previewing the link before creation
 export class PreviewState implements LinkCreationState {
@@ -34,6 +36,10 @@ export class PreviewState implements LinkCreationState {
 
   // Go back to the add asset state
   async goBack(): Promise<void> {
-    this.#link.state = new AddAssetState(this.#link);
+    if (this.#link.createLinkData.linkType === LinkType.TIP) {
+      this.#link.state = new AddAssetTipLinkState(this.#link);
+    } else {
+      this.#link.state = new AddAssetState(this.#link);
+    }
   }
 }

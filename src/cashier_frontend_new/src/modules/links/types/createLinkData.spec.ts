@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { CreateLinkAsset, CreateLinkData } from "./createLinkData";
+import {
+  CreateLinkAsset,
+  CreateLinkData,
+  CreateLinkDataMapper,
+} from "./createLinkData";
 import { LinkType } from "./link/linkType";
 
 describe("CreateLinkData.toCreateLinkInput", () => {
@@ -14,7 +18,7 @@ describe("CreateLinkData.toCreateLinkInput", () => {
     });
 
     // Act
-    const res = data.toCreateLinkInput();
+    const res = CreateLinkDataMapper.toCreateLinkInput(data);
 
     // Assert
     const input = res.unwrap();
