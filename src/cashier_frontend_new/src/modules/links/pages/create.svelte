@@ -6,24 +6,37 @@
   import Preview from "../components/createLink/preview.svelte";
   import CreateLinkHeader from "$modules/links/components/createLink/createLinkHeader.svelte";
   import CreatedLink from "../components/createLink/createdLink.svelte";
+  import tempLinkService from "../services/tempLinkService";
+  import { onMount } from "svelte";
+  import { authState } from "$modules/auth/state/auth.svelte";
 
-  let newLink = new LinkCreationStore();
+  let newLink: LinkCreationStore | undefined = $state(undefined);
+
+  onMount(() => {
+    const owner = authState?.account?.owner ?? "";
+    const tempLink = tempLinkService.getCurrentCreateLink(owner);
+    newLink = tempLink ? new LinkCreationStore(tempLink) : undefined;
+  });
 </script>
 
-<div class="min-h-screen flex justify-center">
-  <div class="w-1/3 max-w-full px-4">
-    <div class="space-y-6 p-4">
-      <CreateLinkHeader link={newLink} />
+{#if !newLink}
+  <div>Some thing went wrong</div>
+{:else}
+  <div class="min-h-screen flex justify-center">
+    <div class="w-1/3 max-w-full px-4">
+      <div class="space-y-6 p-4">
+        <CreateLinkHeader link={newLink} />
 
-      {#if newLink.state.step === LinkStep.CHOOSE_TYPE}
-        <ChooseLinkType link={newLink} />
-      {:else if newLink.state.step === LinkStep.ADD_ASSET}
-        <AddAsset link={newLink} />
-      {:else if newLink.state.step === LinkStep.PREVIEW}
-        <Preview link={newLink} />
-      {:else if newLink.state.step === LinkStep.CREATED}
-        <CreatedLink link={newLink} />
-      {/if}
+        {#if newLink.state.step === LinkStep.CHOOSE_TYPE}
+          <ChooseLinkType link={newLink} />
+        {:else if newLink.state.step === LinkStep.ADD_ASSET}
+          <AddAsset link={newLink} />
+        {:else if newLink.state.step === LinkStep.PREVIEW}
+          <Preview link={newLink} />
+        {:else if newLink.state.step === LinkStep.CREATED}
+          <CreatedLink link={newLink} />
+        {/if}
+      </div>
     </div>
   </div>
-</div>
+{/if}
