@@ -155,7 +155,7 @@
       >
         <img
           class="mx-auto w-[55%] max-w-[300px] max-h-[40vh] object-contain lg:w-[70%] lg:max-w-[400px] lg:max-h-[50vh]"
-          src="/LandingPageMainImage.svg"
+          src="/LandingPageMainImage.png"
           alt="Cashier landing page illustration"
         />
         <!-- Get started button - Mobile -->

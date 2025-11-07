@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Mail } from "lucide-svelte";
   import { appLinks } from "$modules/shared/constants/links";
+  import FooterItem from "./FooterItem.svelte";
 </script>
 
 <footer
@@ -14,34 +15,19 @@
           <h3 class="text-xs font-semibold text-foreground mb-2">Company</h3>
           <ul class="space-y-1">
             <li>
-              <a
+              <FooterItem
                 href={appLinks.aboutCashier.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-xs text-muted-foreground hover:text-primary transition-colors"
-              >
-                {appLinks.aboutCashier.label}
-              </a>
+                label={appLinks.aboutCashier.label}
+              />
             </li>
             <li>
-              <a
+              <FooterItem
                 href={appLinks.team.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-xs text-muted-foreground hover:text-primary transition-colors"
-              >
-                {appLinks.team.label}
-              </a>
+                label={appLinks.team.label}
+              />
             </li>
             <li>
-              <a
-                href={appLinks.faq.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-xs text-muted-foreground hover:text-primary transition-colors"
-              >
-                {appLinks.faq.label}
-              </a>
+              <FooterItem href={appLinks.faq.url} label={appLinks.faq.label} />
             </li>
           </ul>
         </div>
@@ -51,33 +37,29 @@
           </h3>
           <ul class="space-y-1">
             <li>
-              <a
+              <FooterItem
                 href={appLinks.termsOfService.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-xs text-muted-foreground hover:text-primary transition-colors"
-              >
-                {appLinks.termsOfService.label}
-              </a>
+                label={appLinks.termsOfService.label}
+              />
             </li>
             <li>
-              <a
+              <FooterItem
                 href={appLinks.privacyPolicy.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="text-xs text-muted-foreground hover:text-primary transition-colors"
-              >
-                {appLinks.privacyPolicy.label}
-              </a>
+                label={appLinks.privacyPolicy.label}
+              />
             </li>
             <li>
-              <a
-                href="mailto:{appLinks.contactEmail.email}"
+              <FooterItem
+                href={appLinks.contactEmail.email
+                  ? `mailto:${appLinks.contactEmail.email}`
+                  : undefined}
+                label={appLinks.contactEmail.label}
+                target={undefined}
+                rel={undefined}
                 class="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
               >
                 <Mail class="w-3 h-3" />
-                {appLinks.contactEmail.label}
-              </a>
+              </FooterItem>
             </li>
           </ul>
         </div>
@@ -99,55 +81,44 @@
       <div class="flex items-center gap-6">
         <p class="text-xs text-muted-foreground">CASHIERFI VENTURES LABS LTD</p>
         <div class="flex items-center gap-4 text-xs">
-          <a
+          <FooterItem
             href={appLinks.aboutCashier.url}
-            target="_blank"
-            rel="noopener noreferrer"
+            label={appLinks.aboutCashier.label}
             class="text-muted-foreground hover:text-primary transition-colors"
-          >
-            {appLinks.aboutCashier.label}
-          </a>
-          <a
+          />
+          <FooterItem
             href={appLinks.team.url}
-            target="_blank"
-            rel="noopener noreferrer"
+            label={appLinks.team.label}
             class="text-muted-foreground hover:text-primary transition-colors"
-          >
-            {appLinks.team.label}
-          </a>
-          <a
+          />
+          <FooterItem
             href={appLinks.faq.url}
-            target="_blank"
-            rel="noopener noreferrer"
+            label={appLinks.faq.label}
             class="text-muted-foreground hover:text-primary transition-colors"
-          >
-            {appLinks.faq.label}
-          </a>
+          />
           <span class="text-muted-foreground">|</span>
-          <a
+          <FooterItem
             href={appLinks.termsOfService.url}
-            target="_blank"
-            rel="noopener noreferrer"
+            label={appLinks.termsOfService.label}
             class="text-muted-foreground hover:text-primary transition-colors"
-          >
-            {appLinks.termsOfService.label}
-          </a>
-          <a
+          />
+          <FooterItem
             href={appLinks.privacyPolicy.url}
-            target="_blank"
-            rel="noopener noreferrer"
+            label={appLinks.privacyPolicy.label}
             class="text-muted-foreground hover:text-primary transition-colors"
-          >
-            {appLinks.privacyPolicy.label}
-          </a>
+          />
           <span class="text-muted-foreground">|</span>
-          <a
-            href="mailto:{appLinks.contactEmail.email}"
+          <FooterItem
+            href={appLinks.contactEmail.email
+              ? `mailto:${appLinks.contactEmail.email}`
+              : undefined}
+            label={appLinks.contactEmail.label}
+            target={undefined}
+            rel={undefined}
             class="text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
           >
             <Mail class="w-3 h-3" />
-            {appLinks.contactEmail.label}
-          </a>
+          </FooterItem>
         </div>
       </div>
       <div class="flex items-center gap-2 text-xs text-muted-foreground">

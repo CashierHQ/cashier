@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Button } from "$lib/shadcn/components/ui/button";
+  import CashierLogo from "$modules/ui/components/CashierLogo.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { resolve } from "$app/paths";
 
@@ -26,13 +27,7 @@
   <div class="mx-auto px-4 sm:px-6 lg:px-8 py-4">
     <div class="flex justify-between items-center">
       <!-- Logo -->
-      <a href={resolve("/")}>
-        <img
-          alt="Cashier logo"
-          class="max-w-[130px] cursor-pointer"
-          src="/logo.svg"
-        />
-      </a>
+      <CashierLogo href={resolve("/")} />
       {#if authState.isConnecting}
         <div class="flex items-center gap-2 text-sm text-muted-foreground">
           <div

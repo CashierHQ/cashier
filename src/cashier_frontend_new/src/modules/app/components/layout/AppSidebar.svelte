@@ -13,6 +13,9 @@
   import DisconnectModal from "./DisconnectModal.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
+  import CashierLogo from "$modules/ui/components/CashierLogo.svelte";
+  import { resolve } from "$app/paths";
+  import LinkItem from "./LinkItem.svelte";
 
   type Props = {
     open: boolean;
@@ -86,71 +89,29 @@
 
     <!-- Header -->
     <div class="flex flex-col space-y-2 text-center sm:text-left">
-      <h2 id="sidebar-title" class="text-lg font-semibold text-foreground mb-2">
-        <img alt="Cashier logo" class="max-w-[130px]" src="/logo.svg" />
-      </h2>
+      <div class="mb-2">
+        <CashierLogo href={resolve("/app")} />
+      </div>
 
       <!-- Menu items -->
       <div class="w-full flex flex-col flex-grow mt-2">
-        <a
-          href={appLinks.about.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="w-full font-semibold block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors group hover:text-green hover:cursor-pointer hover:bg-lightgreen focus:bg-accent focus:text-accent-foreground"
-        >
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <span class="w-8 text-grey group-hover:text-green">
-                <Link class="w-[22px] h-[22px]" />
-              </span>
-              <span
-                class="text-[16px] font-semibold text-[#222] group-hover:text-green"
-              >
-                {appLinks.about.label}
-              </span>
-            </div>
-          </div>
-        </a>
+        <LinkItem href={appLinks.about.url} label={appLinks.about.label}>
+          <Link class="w-[22px] h-[22px]" />
+        </LinkItem>
 
-        <a
+        <LinkItem
           href={appLinks.exploreCashier.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="w-full font-semibold block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors group hover:text-green hover:cursor-pointer hover:bg-lightgreen focus:bg-accent focus:text-accent-foreground"
+          label={appLinks.exploreCashier.label}
         >
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <span class="w-8 text-grey group-hover:text-green">
-                <Compass class="w-[22px] h-[22px]" />
-              </span>
-              <span
-                class="text-[16px] font-semibold text-[#222] group-hover:text-green"
-              >
-                {appLinks.exploreCashier.label}
-              </span>
-            </div>
-          </div>
-        </a>
+          <Compass class="w-[22px] h-[22px]" />
+        </LinkItem>
 
-        <a
+        <LinkItem
           href={appLinks.projectOverview.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="w-full font-semibold block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors group hover:text-green hover:cursor-pointer hover:bg-lightgreen focus:bg-accent focus:text-accent-foreground"
+          label={appLinks.projectOverview.label}
         >
-          <div class="flex items-center justify-between">
-            <div class="flex items-center">
-              <span class="w-8 text-grey group-hover:text-green">
-                <AlignLeft class="w-[22px] h-[22px]" />
-              </span>
-              <span
-                class="text-[16px] font-semibold text-[#222] group-hover:text-green"
-              >
-                {appLinks.projectOverview.label}
-              </span>
-            </div>
-          </div>
-        </a>
+          <AlignLeft class="w-[22px] h-[22px]" />
+        </LinkItem>
       </div>
     </div>
 
@@ -160,25 +121,9 @@
     >
       <div class="flex flex-col w-full">
         <div class="w-full flex flex-col flex-grow">
-          <a
-            href={appLinks.faq.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="w-full font-semibold block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors group hover:text-green hover:cursor-pointer hover:bg-lightgreen focus:bg-accent focus:text-accent-foreground"
-          >
-            <div class="flex items-center justify-between">
-              <div class="flex items-center">
-                <span class="w-8 text-grey group-hover:text-green">
-                  <CircleHelp class="w-[22px] h-[22px]" />
-                </span>
-                <span
-                  class="text-[16px] font-semibold text-[#222] group-hover:text-green"
-                >
-                  {appLinks.faq.label}
-                </span>
-              </div>
-            </div>
-          </a>
+          <LinkItem href={appLinks.faq.url} label={appLinks.faq.label}>
+            <CircleHelp class="w-[22px] h-[22px]" />
+          </LinkItem>
         </div>
 
         <div
