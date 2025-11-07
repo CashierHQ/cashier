@@ -3,11 +3,34 @@
   import { resolve } from "$app/paths";
   import { m } from "$lib/paraglide/messages.js";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import { authState } from "$modules/auth/state/auth.svelte";
   import LinksList from "$modules/links/components/linksList.svelte";
+  import tempLinkService from "$modules/links/services/tempLinkService";
+  import { CreateLinkData } from "$modules/links/types/createLinkData";
+  import { LinkState } from "$modules/links/types/link/linkState";
+  import { LinkType } from "$modules/links/types/link/linkType";
+  import type TempLink from "$modules/links/types/tempLink";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
   import { Plus } from "lucide-svelte";
 
   const handleCreateLink = () => {
+    if (!authState.account) {
+      alert("You must be logged in to create a link.");
+      return;
+    }
+    const id = Date.now().toString();
+    const tempLink: TempLink = {
+      id,
+      create_at: BigInt(Date.now()),
+      state: LinkState.CHOOSING_TYPE,
+      createLinkData: new CreateLinkData({
+        title: "",
+        linkType: LinkType.TIP,
+        assets: [],
+        maxUse: 1,
+      }),
+    };
+    tempLinkService.create(id, tempLink, authState.account.owner);
     goto(resolve("/link/create"));
   };
 </script>

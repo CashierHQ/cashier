@@ -4,6 +4,9 @@ import { assertUnreachable, rsMatch } from "$lib/rsMatch";
 export class LinkState {
   private constructor() {}
 
+  static readonly CHOOSING_TYPE = "CHOOSING_TYPE";
+  static readonly ADDING_ASSET = "ADDING_ASSET";
+  static readonly PREVIEW = "PREVIEW";
   static readonly INACTIVE = "INACTIVE";
   static readonly ACTIVE = "ACTIVE";
   static readonly CREATE_LINK = "CREATE_LINK";
@@ -11,6 +14,9 @@ export class LinkState {
 }
 
 export type LinkStateValue =
+  | typeof LinkState.CHOOSING_TYPE
+  | typeof LinkState.ADDING_ASSET
+  | typeof LinkState.PREVIEW
   | typeof LinkState.INACTIVE
   | typeof LinkState.ACTIVE
   | typeof LinkState.CREATE_LINK
@@ -27,6 +33,10 @@ export class LinkStateMapper {
         return { CreateLink: null };
       case LinkState.INACTIVE_ENDED:
         return { InactiveEnded: null };
+      case LinkState.CHOOSING_TYPE:
+      case LinkState.ADDING_ASSET:
+      case LinkState.PREVIEW:
+        throw new Error(`Cannot convert link state ${value} to backend type`);
       default:
         assertUnreachable(value);
     }

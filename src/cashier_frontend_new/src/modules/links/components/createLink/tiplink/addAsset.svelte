@@ -86,7 +86,7 @@
 
   // Navigate back to previous step
   function goBack() {
-    goto(resolve("/"));
+    link.goBack();
   }
   async function goNext() {
     errorMessage = null;
