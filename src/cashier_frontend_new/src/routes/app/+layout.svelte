@@ -1,6 +1,6 @@
 <script lang="ts">
-  import AppHeader from "$modules/app/components/AppHeader.svelte";
-  import AddLinkButton from "$modules/app/components/AddLinkButton.svelte";
+  import AppHeader from "$modules/app/components/layout/AppHeader.svelte";
+  import AddLinkButton from "$modules/app/components/layout/AddLinkButton.svelte";
 
   let { children } = $props();
 </script>
