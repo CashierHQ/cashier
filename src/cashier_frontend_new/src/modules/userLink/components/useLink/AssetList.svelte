@@ -1,6 +1,6 @@
 <script lang="ts">
+  import type { AssetInfo } from "$modules/links/types/link/asset";
   import AssetItem from "./AssetItem.svelte";
-  import type { AssetInfo } from "../../types/link/asset";
 
   interface Props {
     assetInfo: AssetInfo[];
