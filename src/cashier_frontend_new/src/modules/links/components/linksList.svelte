@@ -39,9 +39,13 @@
   }
 </script>
 
-<section class="px-4 py-4">
+<section class="px-4 py-4 relative overflow-y-auto scrollbar-hide">
   <div class="mb-4">
-    <h2 class="text-lg font-semibold">Links created by me</h2>
+    <h2
+      class="text-lg font-semibold sticky top-0 bg-white z-10 py-2 -mx-4 px-4"
+    >
+      Links created by me
+    </h2>
     {#if linkListStore.data}
       <div class="text-sm text-muted-foreground">
         Total links – {linkListStore.data.length}
