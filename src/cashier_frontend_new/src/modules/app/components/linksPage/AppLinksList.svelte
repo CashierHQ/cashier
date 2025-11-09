@@ -1,87 +1,41 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import { LinkType } from "$modules/links/types/link/linkType";
+    import type { Link } from "$modules/links/types/link/link";
   import LinkItem from "./LinkItem.svelte";
 
-  // Mock data for testing - replace with actual data from store later
-  const mockLinks = [
-    {
-      id: "local_link_1",
-      title: "Choose template state",
-      state: "Link_state_choose_link_type",
-      date: "2025-01-05T00:00:00.000Z",
-      link_type: LinkType.TIP,
-    },
-    {
-      id: "local_link_2",
-      title: "Add assets state",
-      state: "Link_state_add_assets",
-      date: "2025-01-05T00:00:00.000Z",
-      link_type: LinkType.AIRDROP,
-    },
-    {
-      id: "local_link_3",
-      title: "Preview state",
-      state: "Link_state_preview",
-      date: "2025-01-05T00:00:00.000Z",
-      link_type: LinkType.TOKEN_BASKET,
-    },
-    {
-      id: "local_link_4",
-      title: "Create link state",
-      state: "Link_state_create_link",
-      date: "2025-01-05T00:00:00.000Z",
-      link_type: LinkType.TIP,
-    },
-    {
-      id: "local_link_5",
-      title: "Active link",
-      state: "Link_state_active",
-      date: "2025-01-05T00:00:00.000Z",
-      link_type: LinkType.RECEIVE_PAYMENT,
-    },
-    {
-      id: "local_link_6",
-      title: "Inactive link",
-      state: "Link_state_inactive",
-      date: "2025-01-05T00:00:00.000Z",
-      link_type: LinkType.AIRDROP,
-    },
-    {
-      id: "local_link_7",
-      title: "Inactive ended link",
-      state: "Link_state_inactive_ended",
-      date: "2025-01-05T00:00:00.000Z",
-      link_type: LinkType.TOKEN_BASKET,
-    },
-    {
-      id: "local_link_8",
-      title: "New link (special)",
-      state: "Link_state_create_link",
-      date: "2025-01-15T00:00:00.000Z",
-      link_type: LinkType.TIP,
-    },
-  ];
-
   let hasLinks = $state(true);
-  let links = $state(mockLinks);
+
+  const {
+    links2,
+  }: {
+    links2: Link[];
+  } = $props();
+
+  let links = $state(links2 ?? []);
+
 
   const groupedLinks = $derived.by(() => {
     if (!hasLinks || links.length === 0) return [];
 
-    const grouped: Record<string, typeof links> = {};
+    const map = new Map<bigint, Link[]>();
+
     for (const link of links) {
-      if (!grouped[link.date]) {
-        grouped[link.date] = [];
-      }
-      grouped[link.date].push(link);
+      const ns = link.create_at
+      const ms = Number(ns / 1000000n);
+      const d = new Date(ms);
+      const midnightLocalMs = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+      const dayKeyNs = BigInt(midnightLocalMs) * 1000000n;
+      // key of the day derived from create_at
+      const existing = map.get(dayKeyNs);
+      if (existing) existing.push(link);
+      else map.set(dayKeyNs, [link]);
     }
 
-    return Object.entries(grouped).map(([date, dateLinks]) => ({
-      date,
-      links: dateLinks,
-    }));
+    // Sort groups by descending day (most recent first)
+    return Array.from(map.entries())
+      .sort((a, b) => (a[0] === b[0] ? 0 : a[0] > b[0] ? -1 : 1))
+      .map(([ns, dateLinks]) => ({ date: ns, links: dateLinks }));
   });
 
   function handleLinkClick(event: MouseEvent, linkId: string) {
@@ -89,21 +43,16 @@
     goto(resolve(`/app/edit/${linkId}`));
   }
 
-  function formatDate(dateString: string): string {
-    if (!dateString) return "";
-
-    try {
-      const date = new Date(dateString);
-      if (Number.isNaN(date.getTime())) return dateString;
-
-      return date.toLocaleDateString(undefined, {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      });
-    } catch {
-      return dateString;
-    }
+  function formatDate(ts: bigint ) {
+    if (ts === 0n) return "";
+    const ms = Number(ts / 1000000n);
+    const d = new Date(ms);
+    if (Number.isNaN(d.getTime())) return "";
+    return d.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   }
 </script>
 
