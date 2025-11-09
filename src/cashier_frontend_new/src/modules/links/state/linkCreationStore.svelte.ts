@@ -2,23 +2,19 @@ import { assertUnreachable } from "$lib/rsMatch";
 import { authState } from "$modules/auth/state/auth.svelte";
 import tempLinkService from "../services/tempLinkService";
 import type Action from "../types/action/action";
-import { CreateLinkAsset, CreateLinkData } from "../types/createLinkData";
+import { CreateLinkData } from "../types/createLinkData";
 import type { Link } from "../types/link/link";
-import {
-  LinkState as FrontendState,
-  LinkState,
-  type LinkStateValue,
-} from "../types/link/linkState";
-import { LinkStep } from "../types/linkStep";
-import type TempLink from "../types/tempLink";
 import type { LinkCreationState } from "./linkCreationStates";
-import { LinkActiveState } from "./linkCreationStates/active";
 import { ChooseLinkTypeState } from "./linkCreationStates/chooseLinkType";
 import { LinkCreatedState } from "./linkCreationStates/created";
 import { AddAssetState } from "./linkCreationStates/addAsset";
 import { AddAssetTipLinkState } from "./linkCreationStates/tiplink/addAsset";
 import { PreviewState } from "./linkCreationStates/preview";
 import { LinkType } from "../types/link/linkType";
+import { LinkState, type LinkStateValue } from "../types/link/linkState";
+import { LinkStep } from "../types/linkStep";
+import type TempLink from "../types/tempLink";
+import { LinkActiveState } from "./linkCreationStates/active";
 
 // Simple reactive state management
 export class LinkCreationStore {
@@ -161,51 +157,6 @@ export class LinkCreationStore {
         },
         authState.account.owner,
       );
-    }
-  }
-
-  // Get intent properties as an array of objects (for reactive display)
-  getIntentProperties() {
-    if (!this.action) return [];
-
-    return this.action.intents.map((intent, index) => ({
-      index: index + 1,
-      id: intent.id,
-      task: intent.task,
-      type: intent.type,
-      createdAt: intent.created_at,
-      state: intent.state,
-    }));
-  }
-
-  // Initialize LinkStore from Link and Action get from linkQuery
-  from(link: Link, action?: Action) {
-    // store the full link for detail views
-    this.link = link;
-    this.createLinkData.title = link.title;
-    this.createLinkData.linkType = link.link_type;
-
-    for (const assetInfo of link.asset_info) {
-      const assets = [];
-      assets.push(
-        new CreateLinkAsset(
-          assetInfo.asset.address ? assetInfo.asset.address.toString() : "",
-          assetInfo.amount_per_link_use_action,
-        ),
-      );
-      this.createLinkData.assets = assets;
-    }
-
-    this.action = action;
-    this.#id = link.id;
-
-    switch (link.state) {
-      case FrontendState.CREATE_LINK:
-        this.#state = new LinkCreatedState(this);
-        break;
-      case FrontendState.ACTIVE:
-        this.#state = new LinkActiveState(this);
-        break;
     }
   }
 }

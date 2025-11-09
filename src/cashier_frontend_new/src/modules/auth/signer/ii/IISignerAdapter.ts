@@ -168,9 +168,10 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
         maxTimeToLive: BigInt(
           (this.config.timeout ?? 1 * 24 * 60 * 60) * 1000 * 1000 * 1000,
         ), // Default 1 day
+        // Open in new popup window (equivalent to target="_blank" but for window.open)
         windowOpenerFeatures: (() => {
           const screen = getScreenDimensions();
-          return `width=500,height=600,left=${screen.width / 2 - 250},top=${screen.height / 2 - 300}`;
+          return `width=500,height=600,left=${screen.width / 2 - 250},top=${screen.height / 2 - 300},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes`;
         })(),
         onSuccess: async () => {
           try {

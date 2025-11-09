@@ -91,9 +91,9 @@ class KongSwapTokenPriceService implements TokenPriceService {
  *
  * @typedef {Object} Token
  * @property {string} address - The address of the token.
- * @property {string} [name] - The name of the token (icpswap).
- * @property {string} [symbol] - The symbol of the token (icpswap).
- * @property {string} [chain] - The chain of the token (kongswap).
+ * @property {string} [name] - The name of the token.
+ * @property {string} [symbol] - The symbol of the token.
+ * @property {string} [chain] - The chain of the token.
  */
 type Token = {
   /**
