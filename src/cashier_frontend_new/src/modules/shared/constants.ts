@@ -1,6 +1,6 @@
 import {
-  PUBLIC_SHARED_CASHIER_BACKEND_CANISTER_ID,
   PUBLIC_SHARED_BUILD_TYPE,
+  PUBLIC_SHARED_CASHIER_BACKEND_CANISTER_ID,
   PUBLIC_SHARED_FEATURE_FLAGS_LOCAL_IDENTITY_PROVIDER,
   PUBLIC_SHARED_HOST_ICP,
   PUBLIC_SHARED_HOST_ICP_MAINNET,
@@ -36,3 +36,4 @@ export const FEATURE_FLAGS = {
 
 // Key for storing the current creating link ID in localStorage for sync between pages
 export const CURRENT_CREATING_LINK_ID_KEY = "currentCreatingLinkId";
+export const USD_DISPLAY_DECIMALS = 6;
