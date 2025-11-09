@@ -1,7 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-    import type { Link } from "$modules/links/types/link/link";
+  import type { Link } from "$modules/links/types/link/link";
   import LinkItem from "./LinkItem.svelte";
 
   let hasLinks = $state(true);
@@ -14,17 +14,20 @@
 
   let links = $state(links2 ?? []);
 
-
   const groupedLinks = $derived.by(() => {
     if (!hasLinks || links.length === 0) return [];
 
     const map = new Map<bigint, Link[]>();
 
     for (const link of links) {
-      const ns = link.create_at
+      const ns = link.create_at;
       const ms = Number(ns / 1000000n);
       const d = new Date(ms);
-      const midnightLocalMs = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+      const midnightLocalMs = new Date(
+        d.getFullYear(),
+        d.getMonth(),
+        d.getDate(),
+      ).getTime();
       const dayKeyNs = BigInt(midnightLocalMs) * 1000000n;
       // key of the day derived from create_at
       const existing = map.get(dayKeyNs);
@@ -43,7 +46,7 @@
     goto(resolve(`/app/edit/${linkId}`));
   }
 
-  function formatDate(ts: bigint ) {
+  function formatDate(ts: bigint) {
     if (ts === 0n) return "";
     const ms = Number(ts / 1000000n);
     const d = new Date(ms);
