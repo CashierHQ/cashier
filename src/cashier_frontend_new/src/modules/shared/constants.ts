@@ -36,4 +36,8 @@ export const FEATURE_FLAGS = {
 
 // Key for storing the current creating link ID in localStorage for sync between pages
 export const CURRENT_CREATING_LINK_ID_KEY = "currentCreatingLinkId";
+
+// Prefix for temporary links storage in localStorage
+export const TEMP_LINKS_STORAGE_KEY_PREFIX = "tempLinks";
+
 export const USD_DISPLAY_DECIMALS = 6;
