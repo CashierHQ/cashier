@@ -1,7 +1,9 @@
 import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
+import { SvelteDate, SvelteMap } from "svelte/reactivity";
 import { cashierBackendService } from "../services/cashierBackend";
 import { Link, LinkMapper } from "../types/link/link";
+import type { GroupedLink } from "../types/linkList";
 
 // A state for the user tokens list
 export const linkListStore = managedState<Link[]>({
@@ -18,3 +20,47 @@ export const linkListStore = managedState<Link[]>({
   storageType: "localStorage",
   serde: LinkMapper.serde,
 });
+
+// A wrapper class for link list store
+export class LinkListStore {
+  readonly store = linkListStore;
+
+  /** Get the list of links */
+  get links(): Link[] {
+    return this.store.data ?? [];
+  }
+
+  /**
+   * Groups links by day and sorts them by descending date (most recent first)
+   */
+  groupAndSortByDate(): GroupedLink[] {
+    if (!this.links) {
+      return [];
+    }
+
+    const map = new SvelteMap<bigint, Link[]>();
+
+    // Group links by day
+    for (const link of this.links) {
+      // derive the day key (midnight local time) from create_at
+      const ns = link.create_at;
+      const ms = Number(ns / 1000000n);
+      const d = new SvelteDate(ms);
+      const midnightLocalMs = new SvelteDate(
+        d.getFullYear(),
+        d.getMonth(),
+        d.getDate(),
+      ).getTime();
+      const dayKeyNs = BigInt(midnightLocalMs) * 1000000n;
+      // key of the day derived from create_at
+      const existing = map.get(dayKeyNs);
+      if (existing) existing.push(link);
+      else map.set(dayKeyNs, [link]);
+    }
+
+    // Sort groups by descending day (most recent first)
+    return Array.from(map.entries())
+      .sort((a, b) => (a[0] === b[0] ? 0 : a[0] > b[0] ? -1 : 1))
+      .map(([ns, dateLinks]) => ({ date: ns, links: dateLinks }));
+  }
+}
