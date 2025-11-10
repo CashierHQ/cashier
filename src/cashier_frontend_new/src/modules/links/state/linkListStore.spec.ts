@@ -1,27 +1,42 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { LinkListStore } from "./linkListStore.svelte";
 import { Link } from "../types/link/link";
 import { LinkState } from "../types/link/linkState";
 import { LinkType } from "../types/link/linkType";
 import { Principal } from "@dfinity/principal";
+import { managedState } from "$lib/managedState";
+
+vi.mock("$lib/managedState", () => ({
+  managedState: vi.fn(),
+}));
+
+type MockManagedState<T> = {
+  data: T | undefined;
+  isLoading: boolean;
+  error: unknown | undefined;
+  isSuccess: boolean;
+  refresh: (interval?: number) => void;
+  reset: () => void;
+};
 
 describe("LinkListStore.groupAndSortByDate", () => {
-  class TestLinkListStore extends LinkListStore {
-    private _testLinks: Link[] = [];
-
-    set testLinks(links: Link[]) {
-      this._testLinks = links;
-    }
-
-    get links(): Link[] {
-      return this._testLinks;
-    }
-  }
-
-  let store: TestLinkListStore;
+  let store: LinkListStore;
+  let mockQuery: MockManagedState<Link[]>;
 
   beforeEach(() => {
-    store = new TestLinkListStore();
+    mockQuery = {
+      data: undefined,
+      refresh: vi.fn(),
+      isLoading: false,
+      error: undefined,
+      isSuccess: true,
+      reset: vi.fn(),
+    };
+    const mockManagedState = vi.mocked(managedState);
+    mockManagedState.mockReturnValue(
+      mockQuery as unknown as ReturnType<typeof managedState>,
+    );
+    store = new LinkListStore();
   });
 
   const makeLink = (create_at: bigint) =>
@@ -38,14 +53,14 @@ describe("LinkListStore.groupAndSortByDate", () => {
     );
 
   it("returns empty array for empty input", () => {
-    store.testLinks = [];
+    mockQuery.data = [];
     const result = store.groupAndSortByDate();
     expect(result).toEqual([]);
   });
 
   it("groups single link", () => {
     const link = makeLink(1700000000000000000n);
-    store.testLinks = [link];
+    mockQuery.data = [link];
 
     const result = store.groupAndSortByDate();
 
@@ -57,7 +72,7 @@ describe("LinkListStore.groupAndSortByDate", () => {
     const baseTime = 1700000000000000000n;
     const link1 = makeLink(baseTime);
     const link2 = makeLink(baseTime + 60n * 60n * 1000000000n); // +1 hour
-    store.testLinks = [link1, link2];
+    mockQuery.data = [link1, link2];
 
     const result = store.groupAndSortByDate();
 
@@ -70,7 +85,7 @@ describe("LinkListStore.groupAndSortByDate", () => {
     const day2 = day1 + 24n * 60n * 60n * 1000000000n; // +1 day
     const link1 = makeLink(day1);
     const link2 = makeLink(day2);
-    store.testLinks = [link1, link2];
+    mockQuery.data = [link1, link2];
 
     const result = store.groupAndSortByDate();
 
@@ -84,7 +99,7 @@ describe("LinkListStore.groupAndSortByDate", () => {
     const time = 1700000000000000000n;
     const link1 = makeLink(time);
     const link2 = makeLink(time);
-    store.testLinks = [link1, link2];
+    mockQuery.data = [link1, link2];
 
     const result = store.groupAndSortByDate();
 
