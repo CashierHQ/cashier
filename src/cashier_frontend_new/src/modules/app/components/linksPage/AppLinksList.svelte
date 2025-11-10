@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import { SvelteMap } from "svelte/reactivity";
   import type { Link } from "$modules/links/types/link/link";
   import LinkItem from "./LinkItem.svelte";
 
@@ -17,7 +18,7 @@
   const groupedLinks = $derived.by(() => {
     if (!hasLinks || links.length === 0) return [];
 
-    const map = new Map<bigint, Link[]>();
+    const map = new SvelteMap<bigint, Link[]>();
 
     for (const link of links) {
       const ns = link.create_at;
