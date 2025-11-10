@@ -5,7 +5,7 @@ import { cashierBackendService } from "../services/cashierBackend";
 import { Link, LinkMapper } from "../types/link/link";
 import type { GroupedLink } from "../types/linkList";
 
-export class LinkListStore {
+class LinkListStore {
   readonly #linkListQuery;
 
   constructor() {
