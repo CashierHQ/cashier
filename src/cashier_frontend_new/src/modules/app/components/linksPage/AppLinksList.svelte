@@ -3,15 +3,14 @@
   import { resolve } from "$app/paths";
   import LinkItem from "./LinkItem.svelte";
   import { formatDate } from "$modules/shared/utils/formatDate";
-  import type { LinkListStore } from "$modules/links/state/linkListStore.svelte";
+  import type { GroupedLink } from "$modules/links/types/linkList";
 
   const {
-    store,
+    groupedLinks,
   }: {
-    store: LinkListStore;
+    groupedLinks: GroupedLink[];
   } = $props();
 
-  const groupedLinks = store.groupAndSortByDate();
   function handleLinkClick(event: MouseEvent, linkId: string) {
     event.preventDefault();
     goto(resolve(`/app/edit/${linkId}`));

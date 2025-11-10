@@ -16,5 +16,5 @@
     >
   </div>
 
-  <AppLinksList store={linkListStore} />
+  <AppLinksList groupedLinks={linkListStore.groupAndSortByDate()} />
 </div>
