@@ -5,25 +5,8 @@ import { cashierBackendService } from "../services/cashierBackend";
 import { Link, LinkMapper } from "../types/link/link";
 import type { GroupedLink } from "../types/linkList";
 
-// A state for the user tokens list
-export const linkListQuery = managedState<Link[]>({
-  queryFn: async () => {
-    const res = await cashierBackendService.getLinks();
-    if (res.isErr()) {
-      throw res.unwrapErr();
-    }
-    const links = res.unwrap().map((b) => LinkMapper.fromBackendType(b));
-    return links;
-  },
-  refetchInterval: 15 * 1000, // 15 seconds
-  persistedKey: ["linkList", authState.account?.owner ?? "anon"],
-  storageType: "localStorage",
-  serde: LinkMapper.serde,
-});
-
-// A wrapper class for link list store
 export class LinkListStore {
-  readonly #linkListQuery = linkListQuery;
+  readonly #linkListQuery;
 
   constructor() {
     this.#linkListQuery = managedState<Link[]>({
