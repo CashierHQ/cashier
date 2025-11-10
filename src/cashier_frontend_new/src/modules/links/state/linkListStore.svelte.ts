@@ -6,7 +6,7 @@ import { Link, LinkMapper } from "../types/link/link";
 import type { GroupedLink } from "../types/linkList";
 
 // A state for the user tokens list
-export const linkListStore = managedState<Link[]>({
+export const linkListQuery = managedState<Link[]>({
   queryFn: async () => {
     const res = await cashierBackendService.getLinks();
     if (res.isErr()) {
@@ -23,25 +23,49 @@ export const linkListStore = managedState<Link[]>({
 
 // A wrapper class for link list store
 export class LinkListStore {
-  readonly store = linkListStore;
+  readonly #linkListQuery = linkListQuery;
 
-  /** Get the list of links */
-  get links(): Link[] {
-    return this.store.data ?? [];
+  constructor() {
+    this.#linkListQuery = managedState<Link[]>({
+      queryFn: async () => {
+        const res = await cashierBackendService.getLinks();
+        if (res.isErr()) {
+          throw res.unwrapErr();
+        }
+        const links = res.unwrap().map((b) => LinkMapper.fromBackendType(b));
+        return links;
+      },
+      refetchInterval: 15 * 1000, // 15 seconds
+      persistedKey: ["linkList", authState.account?.owner ?? "anon"],
+      storageType: "localStorage",
+      serde: LinkMapper.serde,
+    });
+  }
+
+  /** Get the underlying query state */
+  get query() {
+    return this.#linkListQuery;
+  }
+
+  /**
+   * Refreshes the link list data
+   */
+  refresh() {
+    this.#linkListQuery.refresh();
   }
 
   /**
    * Groups links by day and sorts them by descending date (most recent first)
    */
   groupAndSortByDate(): GroupedLink[] {
-    if (!this.links) {
+    if (!this.query.data) {
       return [];
     }
 
     const map = new SvelteMap<bigint, Link[]>();
 
     // Group links by day
-    for (const link of this.links) {
+    for (const link of this.query.data) {
       // derive the day key (midnight local time) from create_at
       const ns = link.create_at;
       const ms = Number(ns / 1000000n);
@@ -64,3 +88,5 @@ export class LinkListStore {
       .map(([ns, dateLinks]) => ({ date: ns, links: dateLinks }));
   }
 }
+
+export const linkListStore = new LinkListStore();
