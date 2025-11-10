@@ -1,5 +1,8 @@
 <script lang="ts">
   import AppLinksList from "$modules/app/components/linksPage/AppLinksList.svelte";
+  import { LinkListStore } from "$modules/links/state/linkListStore.svelte";
+
+  const store = new LinkListStore();
 </script>
 
 <div class="w-full">
@@ -15,5 +18,5 @@
     >
   </div>
 
-  <AppLinksList />
+  <AppLinksList {store} />
 </div>
