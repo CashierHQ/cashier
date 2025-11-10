@@ -1,8 +1,8 @@
 <script lang="ts">
   import AppLinksList from "$modules/app/components/linksPage/AppLinksList.svelte";
-  import { linkListStore } from "$modules/links/state/linkListStore.svelte";
+  import { LinkListStore } from "$modules/links/state/linkListStore.svelte";
 
-  const links = linkListStore.data;
+  const store = new LinkListStore();
 </script>
 
 <div class="w-full">
@@ -18,5 +18,5 @@
     >
   </div>
 
-  <AppLinksList links2={links ?? []} />
+  <AppLinksList {store} />
 </div>

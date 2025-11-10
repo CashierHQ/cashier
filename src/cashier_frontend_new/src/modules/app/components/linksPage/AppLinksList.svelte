@@ -1,69 +1,27 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import { SvelteMap } from "svelte/reactivity";
-  import type { Link } from "$modules/links/types/link/link";
   import LinkItem from "./LinkItem.svelte";
-
-  let hasLinks = $state(true);
+  import { formatDate } from "$modules/shared/utils/formatDate";
+  import type { LinkListStore } from "$modules/links/state/linkListStore.svelte";
 
   const {
-    links2,
+    store,
   }: {
-    links2: Link[];
+    store: LinkListStore;
   } = $props();
 
-  let links = $state(links2 ?? []);
-
-  const groupedLinks = $derived.by(() => {
-    if (!hasLinks || links.length === 0) return [];
-
-    const map = new SvelteMap<bigint, Link[]>();
-
-    for (const link of links) {
-      const ns = link.create_at;
-      const ms = Number(ns / 1000000n);
-      const d = new Date(ms);
-      const midnightLocalMs = new Date(
-        d.getFullYear(),
-        d.getMonth(),
-        d.getDate(),
-      ).getTime();
-      const dayKeyNs = BigInt(midnightLocalMs) * 1000000n;
-      // key of the day derived from create_at
-      const existing = map.get(dayKeyNs);
-      if (existing) existing.push(link);
-      else map.set(dayKeyNs, [link]);
-    }
-
-    // Sort groups by descending day (most recent first)
-    return Array.from(map.entries())
-      .sort((a, b) => (a[0] === b[0] ? 0 : a[0] > b[0] ? -1 : 1))
-      .map(([ns, dateLinks]) => ({ date: ns, links: dateLinks }));
-  });
-
+  const groupedLinks = store.groupAndSortByDate();
   function handleLinkClick(event: MouseEvent, linkId: string) {
     event.preventDefault();
     goto(resolve(`/app/edit/${linkId}`));
-  }
-
-  function formatDate(ts: bigint) {
-    if (ts === 0n) return "";
-    const ms = Number(ts / 1000000n);
-    const d = new Date(ms);
-    if (Number.isNaN(d.getTime())) return "";
-    return d.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
   }
 </script>
 
 <div class="flex flex-col w-full">
   <h2 class="text-base font-semibold mt-0">Links created by me</h2>
   <div class="flex flex-col overflow-y-hidden h-full">
-    {#if !hasLinks || links.length === 0}
+    {#if groupedLinks.length === 0}
       <p class="text-sm text-grey mt-3">There is no links yet.</p>
     {:else}
       <div class="space-y-4 mt-4">
