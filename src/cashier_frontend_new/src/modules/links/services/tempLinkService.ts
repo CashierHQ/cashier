@@ -2,18 +2,52 @@ import TempLink, { TempLinkMapper } from "$modules/links/types/tempLink";
 import * as devalue from "devalue";
 import type { LinkStateValue } from "../types/link/linkState";
 import type { CreateLinkData } from "../types/createLinkData";
-import { CURRENT_CREATING_LINK_ID_KEY } from "$modules/shared/constants";
-
-const PREFIX = "tempLinks";
-
-function storageKey(owner?: string) {
-  return owner ? `${PREFIX}.${owner}` : `${PREFIX}.anon`;
-}
+import {
+  CURRENT_CREATING_LINK_ID_KEY,
+  TEMP_LINKS_STORAGE_KEY_PREFIX,
+} from "$modules/shared/constants";
 
 /**
  * Service for managing temporary links in localStorage
  */
 export class TempLinkService {
+  storeKey(owner?: string) {
+    return owner
+      ? `${TEMP_LINKS_STORAGE_KEY_PREFIX}.${owner}`
+      : `${TEMP_LINKS_STORAGE_KEY_PREFIX}.anon`;
+  }
+
+  /**
+   * Load temporary links from localStorage for the given owner
+   * @param owner owner identifier for loading
+   * @returns array of TempLink objects
+   */
+  private load(owner?: string): TempLink[] {
+    const key = this.storeKey(owner);
+    const raw = localStorage.getItem(key);
+    if (!raw) return [];
+    try {
+      return devalue.parse(raw, TempLinkMapper.serde.deserialize);
+    } catch {
+      console.warn("Failed to parse temp links from localStorage");
+      return [];
+    }
+  }
+
+  /**
+   * Save temporary links to localStorage for the given owner
+   * @param links array of TempLink objects to save
+   * @param owner owner identifier for saving
+   */
+  private save(links: TempLink[], owner?: string): void {
+    const key = this.storeKey(owner);
+    const stringified = devalue.stringify(
+      links,
+      TempLinkMapper.serde.serialize,
+    );
+    localStorage.setItem(key, stringified);
+  }
+
   /**
    * Save a temporary link to localStorage
    * @param id local identifier for the temp link
@@ -21,36 +55,21 @@ export class TempLinkService {
    * @param owner owner identifier for storing
    */
   create(id: string, tempLink: TempLink, owner: string) {
-    const key = storageKey(owner);
-    const raw = localStorage.getItem(key);
-    let arr: TempLink[] = [];
-    if (raw) {
-      try {
-        arr = devalue.parse(raw, TempLinkMapper.serde.deserialize);
-      } catch {
-        console.warn("Failed to parse existing temp links, overwriting.");
-        arr = [];
-      }
-    }
-
-    console.log(`Storing temp link ${id} for owner ${owner}`);
+    const links = this.load(owner);
 
     // replace if exists
-    const idx = arr.findIndex((x) => String(x.id) === id);
-    if (idx >= 0) arr[idx] = tempLink;
-    else arr.push(tempLink);
+    const idx = links.findIndex((x) => String(x.id) === id);
+    if (idx >= 0) links[idx] = tempLink;
+    else links.push(tempLink);
 
-    console.log(`Total temp links for owner ${owner}: ${tempLink}`);
-
-    const stringified = devalue.stringify(arr, TempLinkMapper.serde.serialize);
-    localStorage.setItem(key, stringified);
+    this.save(links, owner);
     localStorage.setItem(CURRENT_CREATING_LINK_ID_KEY, id);
   }
 
   /**
    * Update an existing temporary link in localStorage
    * @param id local identifier for the temp link
-   * @param updateFn function that takes the existing TempLink and returns an updated TempLink
+   * @param updateTempLink object containing state and/or createLinkData to update
    * @param owner owner identifier for updating
    */
   update(
@@ -61,29 +80,33 @@ export class TempLinkService {
     },
     owner: string,
   ) {
-    const list = this.get(owner);
-    console.log("get list ", list);
-    if (!list) return;
-    console.log(`Updating temp link ${id} for owner ${owner}`);
-    try {
-      const tempLink = list.find((x) => String(x.id) === id);
-      if (!tempLink) return;
-      const existing = tempLink;
-      const updated: TempLink = {
-        ...existing,
-        state: updateTempLink.state ?? existing.state,
-        createLinkData:
-          updateTempLink.createLinkData ?? existing.createLinkData,
-      };
-      const updatedList = list.map((x) => (String(x.id) === id ? updated : x));
-      const key = storageKey(owner);
-      localStorage.setItem(
-        key,
-        devalue.stringify(updatedList, TempLinkMapper.serde.serialize),
-      );
-    } catch {
-      // ignore
-    }
+    const links = this.load(owner);
+    if (!links.length) return;
+
+    const tempLink = links.find((x) => String(x.id) === id);
+    if (!tempLink) return;
+
+    const updated: TempLink = {
+      ...tempLink,
+      state: updateTempLink.state ?? tempLink.state,
+      createLinkData: updateTempLink.createLinkData ?? tempLink.createLinkData,
+    };
+
+    const updatedLinks = links.map((x) => (String(x.id) === id ? updated : x));
+    this.save(updatedLinks, owner);
+  }
+
+  /**
+   * Remove a temporary link by id from localStorage
+   * @param id local identifier for the temp link to remove
+   * @param owner owner identifier for removing
+   */
+  delete(id: string, owner?: string) {
+    const links = this.load(owner);
+    if (!links.length) return;
+
+    const filtered = links.filter((x) => String(x.id) !== id);
+    this.save(filtered, owner);
   }
 
   /**
@@ -92,14 +115,7 @@ export class TempLinkService {
    * @returns array of TempLink objects
    */
   get(owner?: string): TempLink[] {
-    const key = storageKey(owner);
-    const raw = localStorage.getItem(key);
-    if (!raw) return [];
-    try {
-      return devalue.parse(raw, TempLinkMapper.serde.deserialize);
-    } catch {
-      return [];
-    }
+    return this.load(owner);
   }
 
   /**
@@ -107,7 +123,7 @@ export class TempLinkService {
    * @param owner owner identifier for retrieving
    * @returns the current TempLink or undefined if not found
    */
-  getCurrentCreateLink(owner: string): TempLink | undefined {
+  getCurrentCreateLink(owner?: string): TempLink | undefined {
     const id = localStorage.getItem(CURRENT_CREATING_LINK_ID_KEY);
     return this.get(owner).find((link) => String(link.id) === id);
   }
@@ -119,28 +135,6 @@ export class TempLinkService {
   setCurrentCreateLink(id: string) {
     localStorage.setItem(CURRENT_CREATING_LINK_ID_KEY, id);
   }
-
-  /**
-   * Remove a temporary link by id from localStorage
-   * @param id local identifier for the temp link to remove
-   * @param owner owner identifier for removing
-   */
-  delete(id: string, owner?: string) {
-    const key = storageKey(owner);
-    const raw = localStorage.getItem(key);
-    if (!raw) return;
-    try {
-      const arr: TempLink[] = devalue.parse(
-        raw,
-        TempLinkMapper.serde.deserialize,
-      );
-      const filtered = arr.filter((x) => String(x.id) !== id);
-      localStorage.setItem(key, devalue.stringify(filtered));
-    } catch {
-      // ignore
-    }
-  }
 }
 
-const tempLinkService = new TempLinkService();
-export default tempLinkService;
+export const tempLinkService = new TempLinkService();

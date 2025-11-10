@@ -1,9 +1,5 @@
 <script lang="ts">
-  import {
-    linkListStore,
-  } from "../state/linkListStore.svelte";
-
-
+  import { linkListStore } from "../state/linkListStore.svelte";
 </script>
 
 <section class="px-4 py-4 relative overflow-y-auto scrollbar-hide">
@@ -18,8 +14,7 @@
         Total links – {linkListStore.query.data.length}
       </div>
       {#if linkListStore.query.data.length > 0}
-        <div class="text-sm text-muted-foreground mt-2">
-        </div>
+        <div class="text-sm text-muted-foreground mt-2"></div>
       {/if}
     {/if}
   </div>
