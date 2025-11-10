@@ -46,34 +46,34 @@
     >
       Links created by me
     </h2>
-    {#if linkListStore.data}
+    {#if linkListStore.query.data}
       <div class="text-sm text-muted-foreground">
-        Total links – {linkListStore.data.length}
+        Total links – {linkListStore.query.data.length}
       </div>
-      {#if linkListStore.data.length > 0}
+      {#if linkListStore.query.data.length > 0}
         <div class="text-sm text-muted-foreground mt-2">
-          {formatDate(linkListStore.data[0].create_at)}
+          {formatDate(linkListStore.query.data[0].create_at)}
         </div>
       {/if}
     {/if}
   </div>
 
-  {#if linkListStore.isLoading}
+  {#if linkListStore.query.isLoading}
     <div class="text-sm text-muted-foreground">Loading...</div>
   {/if}
 
-  {#if linkListStore.error}
+  {#if linkListStore.query.error}
     <div class="text-sm text-destructive">
-      Cannot fetch links list: {linkListStore.error}
+      Cannot fetch links list: {linkListStore.query.error}
     </div>
   {/if}
 
-  {#if linkListStore.data}
-    {#if linkListStore.data.length === 0}
+  {#if linkListStore.query.data}
+    {#if linkListStore.query.data.length === 0}
       <div class="text-sm text-muted-foreground">There are no links</div>
     {:else}
       <ul class="space-y-3">
-        {#each linkListStore.data as link (link.id)}
+        {#each linkListStore.query.data as link (link.id)}
           <li>
             <button
               onclick={() => handleLinkItemClick(link)}
