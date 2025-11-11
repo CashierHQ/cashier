@@ -44,8 +44,6 @@ export class LinkListStore {
   getLinks(): UnifiedLinkList {
     const owner = authState.account?.owner;
     const tempLinks = owner ? tempLinkRepository.get(owner) : [];
-
-    console.log("LinkListStore: getLinks:", { owner, tempLinks });
     return [...(this.query.data ?? []), ...tempLinks];
   }
 
@@ -76,13 +74,9 @@ export class LinkListStore {
     }
 
     // Sort groups by descending day (most recent first)
-    const res = Array.from(map.entries())
+    return Array.from(map.entries())
       .sort((a, b) => (a[0] === b[0] ? 0 : a[0] > b[0] ? -1 : 1))
       .map(([ns, dateLinks]) => ({ date: ns, links: dateLinks }));
-
-    console.log("LinkListStore: groupedAndSortedByDate result:", res);
-
-    return res;
   }
 }
 

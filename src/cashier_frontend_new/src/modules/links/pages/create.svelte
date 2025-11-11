@@ -11,6 +11,7 @@
 
   const { id }: { id: string } = $props();
 
+  // load the temporary link data from localStorage
   const tempLink = LinkCreationStore.getTempLink(id);
 
   if (!tempLink) {

@@ -280,9 +280,6 @@ describe("PreviewState", () => {
     });
     await store.goNext();
 
-    // Clear any previous calls
-    vi.mocked(tempLinkRepository.delete).mockClear();
-
     // Ensure backend mock returns Ok
     vi.spyOn(cashierBackendService, "createLinkV2").mockResolvedValue(
       Ok({ link: mockLinkDto, action: mockActionDto }) as unknown as Awaited<
@@ -328,9 +325,6 @@ describe("PreviewState", () => {
     });
     await store.goNext();
 
-    // Clear any previous calls
-    vi.mocked(tempLinkRepository.delete).mockClear();
-
     // Arrange: mock backend to return Err
     vi.spyOn(cashierBackendService, "createLinkV2").mockResolvedValue(
       Err(new Error("boom")) as unknown as Awaited<
@@ -339,7 +333,9 @@ describe("PreviewState", () => {
     );
 
     // Act + Assert: goNext should throw and NOT delete temp link
-    await expect(store.goNext()).rejects.toThrow("Link creation failed: boom");
+    const res = store.goNext();
+
+    await expect(res).rejects.toThrow("Link creation failed: boom");
     expect(tempLinkRepository.delete).not.toHaveBeenCalled();
   });
 });
