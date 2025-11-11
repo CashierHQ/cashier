@@ -17,14 +17,14 @@
   // Redirect if not in the correct step
   $effect(() => {
     if (link.state.step !== LinkStep.CHOOSE_TYPE) {
-      goto(resolve("/"));
+       goto(resolve("/app"));
     }
   });
   let errorMessage: string | null = $state(null);
 
   // Navigate back to home (cancel)
   function goBack() {
-    goto(resolve("/"));
+    goto(resolve("/app"));
   }
 
   // Proceed to the next step
