@@ -5,16 +5,38 @@ import { LinkState } from "../types/link/linkState";
 import { LinkType } from "../types/link/linkType";
 import { Principal } from "@dfinity/principal";
 import { managedState } from "$lib/managedState";
-import { tempLinkService } from "../services/tempLinkService";
+import { tempLinkRepository } from "../services/tempLinkRepository";
 import { TempLink } from "../types/tempLink";
 import { CreateLinkData } from "../types/createLinkData";
+
+// Mock localStorage
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => {
+      store[key] = value.toString();
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+  };
+})();
+
+Object.defineProperty(global, "localStorage", {
+  value: localStorageMock,
+  writable: true,
+});
 
 vi.mock("$lib/managedState", () => ({
   managedState: vi.fn(),
 }));
 
-vi.mock("../services/tempLinkService", () => ({
-  tempLinkService: {
+vi.mock("../services/tempLinkRepository", () => ({
+  tempLinkRepository: {
     get: vi.fn(() => []),
   },
 }));
@@ -41,6 +63,9 @@ describe("LinkListStore.groupAndSortByDate", () => {
   let mockQuery: MockManagedState<Link[]>;
 
   beforeEach(() => {
+    // Clear localStorage before each test
+    localStorageMock.clear();
+
     mockQuery = {
       data: undefined,
       refresh: vi.fn(),
@@ -140,7 +165,7 @@ describe("LinkListStore.groupAndSortByDate", () => {
     );
 
     mockQuery.data = [link];
-    vi.mocked(tempLinkService.get).mockReturnValue([tempLink]);
+    vi.mocked(tempLinkRepository.get).mockReturnValue([tempLink]);
 
     const result = store.groupAndSortByDate();
 
@@ -180,7 +205,7 @@ describe("LinkListStore.groupAndSortByDate", () => {
     );
 
     mockQuery.data = [link];
-    vi.mocked(tempLinkService.get).mockReturnValue([tempLink, tempLink2]);
+    vi.mocked(tempLinkRepository.get).mockReturnValue([tempLink, tempLink2]);
 
     const result = store.groupAndSortByDate();
 
@@ -218,7 +243,7 @@ describe("LinkListStore.groupAndSortByDate", () => {
     );
 
     mockQuery.data = [];
-    vi.mocked(tempLinkService.get).mockReturnValue([tempLink1, tempLink2]);
+    vi.mocked(tempLinkRepository.get).mockReturnValue([tempLink1, tempLink2]);
 
     const result = store.groupAndSortByDate();
 
@@ -230,7 +255,7 @@ describe("LinkListStore.groupAndSortByDate", () => {
 
   it("returns empty array when no links and no temp links", () => {
     mockQuery.data = [];
-    vi.mocked(tempLinkService.get).mockReturnValue([]);
+    vi.mocked(tempLinkRepository.get).mockReturnValue([]);
 
     const result = store.groupAndSortByDate();
 
@@ -243,6 +268,9 @@ describe("LinkListStore.getLinks", () => {
   let mockQuery: MockManagedState<Link[]>;
 
   beforeEach(() => {
+    // Clear localStorage before each test
+    localStorageMock.clear();
+
     mockQuery = {
       data: undefined,
       refresh: vi.fn(),
@@ -260,7 +288,7 @@ describe("LinkListStore.getLinks", () => {
 
   it("should return empty array when no data", () => {
     mockQuery.data = undefined;
-    vi.mocked(tempLinkService.get).mockReturnValue([]);
+    vi.mocked(tempLinkRepository.get).mockReturnValue([]);
 
     const result = store.getLinks();
 
@@ -281,7 +309,7 @@ describe("LinkListStore.getLinks", () => {
     );
 
     mockQuery.data = [mockLink];
-    vi.mocked(tempLinkService.get).mockReturnValue([]);
+    vi.mocked(tempLinkRepository.get).mockReturnValue([]);
 
     const result = store.getLinks();
 
@@ -303,7 +331,7 @@ describe("LinkListStore.getLinks", () => {
     );
 
     mockQuery.data = undefined;
-    vi.mocked(tempLinkService.get).mockReturnValue([mockTempLink]);
+    vi.mocked(tempLinkRepository.get).mockReturnValue([mockTempLink]);
 
     const result = store.getLinks();
 
@@ -337,7 +365,7 @@ describe("LinkListStore.getLinks", () => {
     );
 
     mockQuery.data = [mockLink];
-    vi.mocked(tempLinkService.get).mockReturnValue([mockTempLink]);
+    vi.mocked(tempLinkRepository.get).mockReturnValue([mockTempLink]);
 
     const result = store.getLinks();
 
