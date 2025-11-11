@@ -4,6 +4,7 @@
   import { resolve } from "$app/paths";
   import { toast } from "svelte-sonner";
   import { authState } from "$modules/auth/state/auth.svelte";
+  import { locale } from "$lib/i18n";
 
   type Props = {
     open: boolean;
@@ -28,11 +29,11 @@
       await authState.logout();
       onConfirm();
       onOpenChange(false);
-      toast.success("You have been logged out");
+      toast.success(locale.t("links.disconnectModal.loggedOut"));
       await goto(resolve("/"));
     } catch (error) {
       console.error("Logout failed:", error);
-      toast.error("Failed to disconnect");
+      toast.error(locale.t("links.disconnectModal.failedToDisconnect"));
     }
   }
 </script>
@@ -59,15 +60,14 @@
         id="disconnect-dialog-title"
         class="text-lg font-semibold leading-none tracking-tight"
       >
-        Disconnect wallet
+        {locale.t("links.disconnectModal.title")}
       </h2>
 
       <p
         id="disconnect-dialog-description"
         class="text-sm text-muted-foreground"
       >
-        Are you sure you want to disconnect your wallet? If you do, you will be
-        logged out
+        {locale.t("links.disconnectModal.description")}
       </p>
     </div>
 
@@ -77,7 +77,7 @@
         onclick={handleConfirm}
         class="text-[#D26060] font-semibold underline decoration-[#D26060] underline-offset-2 hover:no-underline transition-all cursor-pointer bg-transparent border-none outline-none focus:outline-none focus:ring-0 p-0 m-0"
       >
-        Disconnect
+        {locale.t("links.disconnectModal.disconnectButton")}
       </button>
     </div>
 
@@ -87,7 +87,7 @@
       class="absolute right-4 top-4 cursor-pointer rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
     >
       <X class="h-4 w-4" />
-      <span class="sr-only">Close</span>
+      <span class="sr-only">{locale.t("links.disconnectModal.close")}</span>
     </button>
   </div>
 {/if}

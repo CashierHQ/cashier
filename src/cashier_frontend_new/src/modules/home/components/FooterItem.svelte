@@ -1,9 +1,9 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import type { LinkOrEmail } from "$modules/shared/constants/links";
 
   type Props = {
-    href?: string;
-    label: string;
+    link: LinkOrEmail;
     target?: string;
     rel?: string;
     class?: string;
@@ -11,21 +11,25 @@
   };
 
   let {
-    href,
-    label,
+    link,
     target = "_blank",
     rel = "noopener noreferrer",
     class:
       className = "text-xs text-muted-foreground hover:text-primary transition-colors",
     children,
   }: Props = $props();
+
+  // Get href from link (url or mailto:email)
+  const href = $derived(
+    link.url || (link.email ? `mailto:${link.email}` : undefined),
+  );
 </script>
 
 {#if href}
-  <a {href} {target} {rel} class={className}>
+  <a href={href} {target} {rel} class={className}>
     {#if children}
       {@render children()}
     {/if}
-    {label}
+    {link.label}
   </a>
 {/if}
