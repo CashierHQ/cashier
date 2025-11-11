@@ -32,7 +32,6 @@
             {#each group.links as link (link.id)}
               <li>
                 <LinkItem
-                  href={resolve(`/app/edit/${link.id}`)}
                   title={link.title}
                   linkType={link.link_type}
                   state={link.state}
