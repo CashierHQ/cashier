@@ -47,6 +47,10 @@ export class LinkCreationStore {
       void this.createLinkData;
       void this.#state;
 
+      console.log(
+        "LinkCreationStore: detected state change, syncing temp link",
+      );
+
       // Sync on changes (async, no await needed in effect)
       this.syncTempLink();
     });
@@ -164,7 +168,7 @@ export class LinkCreationStore {
   }
 
   // Sync the temp link with storage: updates it or deletes it if link is created
-  private async syncTempLink(): Promise<void> {
+  async syncTempLink(): Promise<void> {
     if (this.#state.step === LinkStep.CREATED) {
       return;
     }

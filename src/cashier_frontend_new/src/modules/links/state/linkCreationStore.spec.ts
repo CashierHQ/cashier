@@ -8,6 +8,29 @@ import { CreateLinkData } from "../types/createLinkData";
 import { TempLink } from "../types/tempLink";
 import { LinkStep } from "../types/linkStep";
 
+// Mock localStorage
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+
+  return {
+    getItem: vi.fn((key: string) => store[key] || null),
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = value.toString();
+    }),
+    removeItem: vi.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: vi.fn(() => {
+      store = {};
+    }),
+  };
+})();
+
+Object.defineProperty(globalThis, "localStorage", {
+  value: localStorageMock,
+  writable: true,
+});
+
 // Mock dependencies
 vi.mock("../services/tempLinkRepository", () => ({
   tempLinkRepository: {
@@ -37,7 +60,6 @@ describe("LinkCreationStore", () => {
   let defaultTempLink: TempLink;
 
   beforeEach(() => {
-    vi.clearAllMocks();
     defaultTempLink = new TempLink(
       "test-id-123",
       BigInt(Date.now()),
@@ -184,27 +206,7 @@ describe("LinkCreationStore", () => {
   });
 
   describe("syncTempLink", () => {
-    it("should delete temp link when step is CREATED", async () => {
-      const tempLink = new TempLink(
-        "test-id",
-        BigInt(Date.now()),
-        LinkState.CREATE_LINK,
-        new CreateLinkData({
-          title: "Test",
-          linkType: LinkType.TIP,
-          assets: [],
-          maxUse: 1,
-        }),
-      );
-
-      new LinkCreationStore(tempLink);
-
-      // The syncTempLink returns early when step is CREATED, so no calls should be made
-      expect(tempLinkRepository.delete).not.toHaveBeenCalled();
-      expect(tempLinkRepository.update).not.toHaveBeenCalled();
-    });
-
-    it("should update temp link when in CHOOSE_TYPE step", async () => {
+    it("should sync temp link when called with CHOOSE_TYPE state", async () => {
       const tempLink = new TempLink(
         "test-id",
         BigInt(Date.now()),
@@ -217,16 +219,23 @@ describe("LinkCreationStore", () => {
         }),
       );
 
-      new LinkCreationStore(tempLink);
+      const store = new LinkCreationStore(tempLink);
 
-      // The $effect in the constructor triggers syncTempLink but is not executed in tests
-      // Since testing Svelte $effect is complex, we just verify the store initializes correctly
-      expect(tempLinkRepository.delete).not.toHaveBeenCalled();
+      await store.syncTempLink();
+
+      expect(tempLinkRepository.update).toHaveBeenCalledWith({
+        id: "test-id",
+        updateTempLink: {
+          state: LinkState.CHOOSING_TYPE,
+          createLinkData: store.createLinkData,
+        },
+        owner: "test-owner",
+      });
     });
 
-    it("should update temp link when in ADD_ASSET step", async () => {
+    it("should sync temp link when called with ADD_ASSET state", async () => {
       const tempLink = new TempLink(
-        "test-id",
+        "test-id-2",
         BigInt(Date.now()),
         LinkState.ADDING_ASSET,
         new CreateLinkData({
@@ -237,16 +246,23 @@ describe("LinkCreationStore", () => {
         }),
       );
 
-      new LinkCreationStore(tempLink);
+      const store = new LinkCreationStore(tempLink);
 
-      // The $effect in the constructor triggers syncTempLink but is not executed in tests
-      // Since testing Svelte $effect is complex, we just verify the store initializes correctly
-      expect(tempLinkRepository.delete).not.toHaveBeenCalled();
+      await store.syncTempLink();
+
+      expect(tempLinkRepository.update).toHaveBeenCalledWith({
+        id: "test-id-2",
+        updateTempLink: {
+          state: LinkState.ADDING_ASSET,
+          createLinkData: store.createLinkData,
+        },
+        owner: "test-owner",
+      });
     });
 
-    it("should update temp link when in PREVIEW step", async () => {
+    it("should sync temp link when called with PREVIEW state", async () => {
       const tempLink = new TempLink(
-        "test-id",
+        "test-id-3",
         BigInt(Date.now()),
         LinkState.PREVIEW,
         new CreateLinkData({
@@ -257,11 +273,38 @@ describe("LinkCreationStore", () => {
         }),
       );
 
-      new LinkCreationStore(tempLink);
+      const store = new LinkCreationStore(tempLink);
 
-      // The $effect in the constructor triggers syncTempLink but is not executed in tests
-      // Since testing Svelte $effect is complex, we just verify the store initializes correctly
-      expect(tempLinkRepository.delete).not.toHaveBeenCalled();
+      await store.syncTempLink();
+
+      expect(tempLinkRepository.update).toHaveBeenCalledWith({
+        id: "test-id-3",
+        updateTempLink: {
+          state: LinkState.PREVIEW,
+          createLinkData: store.createLinkData,
+        },
+        owner: "test-owner",
+      });
+    });
+
+    it("should not sync when step is CREATED", async () => {
+      const tempLink = new TempLink(
+        "test-id-4",
+        BigInt(Date.now()),
+        LinkState.CREATE_LINK,
+        new CreateLinkData({
+          title: "Test",
+          linkType: LinkType.TIP,
+          assets: [],
+          maxUse: 1,
+        }),
+      );
+
+      const store = new LinkCreationStore(tempLink);
+
+      await store.syncTempLink();
+
+      expect(tempLinkRepository.update).not.toHaveBeenCalled();
     });
 
     it("should not sync when authState.account is undefined", async () => {
@@ -269,12 +312,23 @@ describe("LinkCreationStore", () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (authState as any).account = undefined;
 
-      vi.spyOn(store.state, "goNext").mockResolvedValue(undefined);
+      const tempLink = new TempLink(
+        "test-id-5",
+        BigInt(Date.now()),
+        LinkState.CHOOSING_TYPE,
+        new CreateLinkData({
+          title: "Test",
+          linkType: LinkType.TIP,
+          assets: [],
+          maxUse: 1,
+        }),
+      );
 
-      await store.goNext();
+      const store = new LinkCreationStore(tempLink);
+
+      await store.syncTempLink();
 
       expect(tempLinkRepository.update).not.toHaveBeenCalled();
-      expect(tempLinkRepository.delete).not.toHaveBeenCalled();
 
       // Restore
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -291,7 +345,6 @@ describe("LinkCreationStore", () => {
       await store.goNext();
 
       expect(goNextSpy).toHaveBeenCalled();
-      // The $effect handles syncTempLink but isn't triggered in tests
     });
 
     it("should throw error if state.goNext throws", async () => {
