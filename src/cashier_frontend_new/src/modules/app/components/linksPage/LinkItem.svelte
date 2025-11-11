@@ -1,20 +1,17 @@
 <script lang="ts">
-  import type { LinkTypeValue } from "$modules/links/types/link/linkType";
-  import type { LinkStateValue } from "$modules/links/types/link/linkState";
   import {
     getStatusLabel,
     getStatusClasses,
     getLinkDefaultAvatar,
   } from "$modules/links/utils/linkItemHelpers";
+  import type { Link } from "$modules/links/types/link/link";
 
   type Props = {
-    title: string;
-    linkType: LinkTypeValue;
-    state: LinkStateValue;
+    link: Link;
     onClick: (event: MouseEvent) => void;
   };
 
-  let { title, linkType, state, onClick }: Props = $props();
+  let { onClick, link }: Props = $props();
 </script>
 
 <button onclick={onClick} class="block w-full text-left">
@@ -26,21 +23,21 @@
         <img
           alt="link"
           class="w-[18px] h-[18px] rounded-sm"
-          src={getLinkDefaultAvatar(linkType)}
+          src={getLinkDefaultAvatar(link.link_type)}
         />
       </div>
     </div>
     <div class="flex items-center justify-between grow ml-3">
       <div class="flex flex-col items-start justify-center">
-        <h3 class="text-[14px] font-medium">{title}</h3>
+        <h3 class="text-[14px] font-medium">{link.title}</h3>
       </div>
-      {#if state}
+      {#if link.state}
         <div
           class="text-xs font-xs rounded-full px-2 py-1 {getStatusClasses(
-            state,
+            link.state,
           )}"
         >
-          {getStatusLabel(state)}
+          {getStatusLabel(link.state)}
         </div>
       {/if}
     </div>
