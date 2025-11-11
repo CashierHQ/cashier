@@ -30,11 +30,10 @@ export class LinkCreationStore {
     }),
   );
 
-  // Only existed if the link state == Created
   public link = $state<Link | undefined>();
   // Only existed if the link state == Created
   public action = $state<Action | undefined>();
-  #id = $state<string>()!;
+  #id = $state<string>();
 
   constructor(tempLink: TempLink) {
     this.#id = tempLink.id;
@@ -42,6 +41,15 @@ export class LinkCreationStore {
     this.#state = this.stateFromValue(tempLink.state);
     this.action = undefined;
     this.link = undefined;
+
+    $effect(() => {
+      // Access reactive state to track changes
+      void this.createLinkData;
+      void this.#state;
+
+      // Sync on changes (async, no await needed in effect)
+      this.syncTempLink();
+    });
   }
 
   get state(): LinkCreationState {
@@ -64,7 +72,6 @@ export class LinkCreationStore {
   async goNext(): Promise<void> {
     try {
       await this.#state.goNext();
-      this.syncTempLink();
     } catch (e) {
       if (e instanceof Error) throw e;
       throw new Error(String(e ?? "rejected promise"));
@@ -74,9 +81,7 @@ export class LinkCreationStore {
   // Move to the previous state
   async goBack(): Promise<void> {
     try {
-      console.log("LinkCreationStore: going back from step", this.#state.step);
       await this.#state.goBack();
-      this.syncTempLink();
     } catch (e) {
       if (e instanceof Error) throw e;
       throw new Error(String(e ?? "rejected promise"));
@@ -90,7 +95,6 @@ export class LinkCreationStore {
    */
   private stateFromValue(state: LinkStateValue): LinkCreationState {
     let initialState: LinkCreationState;
-    console.log("LinkCreationStore: stateFromValue:", state);
 
     switch (state) {
       case LinkState.CHOOSING_TYPE:
@@ -161,12 +165,7 @@ export class LinkCreationStore {
 
   // Sync the temp link with storage: updates it or deletes it if link is created
   private async syncTempLink(): Promise<void> {
-    // Delete temp link when link is created (no longer needed)
     if (this.#state.step === LinkStep.CREATED) {
-      if (this.#id && authState.account) {
-        console.log(`Deleting temp link ${this.#id} (link created)`);
-        tempLinkRepository.delete(this.#id, authState.account.owner);
-      }
       return;
     }
 

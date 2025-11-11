@@ -1,4 +1,6 @@
+import { authState } from "$modules/auth/state/auth.svelte";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
+import { tempLinkRepository } from "$modules/links/services/tempLinkRepository";
 import { LinkMapper } from "$modules/links/types/link/link";
 import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkStep } from "$modules/links/types/linkStep";
@@ -28,8 +30,16 @@ export class PreviewState implements LinkCreationState {
       throw new Error(`Link creation failed: ${result.error.message}`);
     }
 
-    this.#link.state = new LinkCreatedState(this.#link);
+    // remove temp link from local storage
+    if (this.#link.id)
+      tempLinkRepository.delete(
+        this.#link.id,
+        authState.account?.owner ?? "anon",
+      );
+
+    // set id to backend link id
     this.#link.id = result.value.link.id;
+    this.#link.state = new LinkCreatedState(this.#link);
     this.#link.link = LinkMapper.fromBackendType(result.value.link);
     this.#link.action = ActionMapper.fromBackendType(result.value.action);
   }
