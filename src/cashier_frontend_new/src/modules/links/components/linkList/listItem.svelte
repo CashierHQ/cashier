@@ -3,7 +3,7 @@
   import { Link } from "../../types/link/link";
   import type TempLink from "../../types/tempLink";
   import { goto } from "$app/navigation";
-    import { resolve } from "$app/paths";
+  import { resolve } from "$app/paths";
 
   let {
     item,
