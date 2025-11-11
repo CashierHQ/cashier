@@ -17,7 +17,7 @@
   // Redirect if not in the correct step
   $effect(() => {
     if (link.state.step !== LinkStep.CHOOSE_TYPE) {
-       goto(resolve("/app"));
+      goto(resolve("/app"));
     }
   });
   let errorMessage: string | null = $state(null);

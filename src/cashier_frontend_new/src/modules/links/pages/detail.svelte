@@ -95,7 +95,7 @@
       <Button
         variant="outline"
         onclick={() => {
-          goto(resolve("/"));
+          goto(resolve("/app"));
         }}
         class="p-2 cursor-pointer w-8 h-8 flex items-center justify-center "
       >

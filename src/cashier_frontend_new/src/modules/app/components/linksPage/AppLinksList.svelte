@@ -17,7 +17,7 @@
     if (isTempLink) {
       goto(resolve(`/app/create/${linkId}`));
     } else {
-      goto(resolve(`/link/${linkId}`));
+      goto(resolve(`/link/detail/${linkId}`));
     }
   }
 </script>
