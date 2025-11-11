@@ -10,7 +10,7 @@ let translations = $state<Translations>(loadTranslations("en"));
 export function setLocale(locale: Locale) {
   currentLocale = locale;
   translations = loadTranslations(locale);
-  
+
   // Save to localStorage for persistence
   if (typeof window !== "undefined") {
     localStorage.setItem("locale", locale);
@@ -59,4 +59,3 @@ export const locale = {
   init: initLocale,
   t,
 };
-
