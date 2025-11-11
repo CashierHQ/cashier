@@ -34,9 +34,6 @@ export const FEATURE_FLAGS = {
     PUBLIC_SHARED_FEATURE_FLAGS_LOCAL_IDENTITY_PROVIDER === "true",
 };
 
-// Key for storing the current creating link ID in localStorage for sync between pages
-export const CURRENT_CREATING_LINK_ID_KEY = "currentCreatingLinkId";
-
 // Prefix for temporary links storage in localStorage
 export const TEMP_LINKS_STORAGE_KEY_PREFIX = "tempLinks";
 
