@@ -5,7 +5,7 @@
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import type { LinkCreationStore } from "../../state/linkCreationStore.svelte";
-  import { LinkType } from "../../types/link/linkType";
+  import {  LinkType, type LinkTypeValue } from "../../types/link/linkType";
   import { LinkStep } from "../../types/linkStep";
 
   const {
@@ -43,7 +43,13 @@
     <Label for="title">Link title</Label>
     <Input
       id="title"
-      bind:value={link.createLinkData.title}
+      value={link.createLinkData.title}
+      oninput={(e) => {
+        link.createLinkData = {
+          ...link.createLinkData,
+          title: e.currentTarget.value,
+        };
+      }}
       placeholder="Enter a title for your link"
     />
   </div>
@@ -53,7 +59,13 @@
     <select
       id="linkType"
       class="block w-full rounded-md border px-3 py-2 text-base"
-      bind:value={link.createLinkData.linkType}
+      value={link.createLinkData.linkType}
+      onchange={(e) => {
+        link.createLinkData = {
+          ...link.createLinkData,
+          linkType: e.currentTarget.value as LinkTypeValue,
+        };
+      }}
     >
       <option value={LinkType.TIP}>Tip</option>
       <option value={LinkType.AIRDROP}>Airdrop</option>

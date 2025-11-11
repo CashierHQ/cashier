@@ -24,10 +24,19 @@ export class TempLinkRepository {
     const raw = localStorage.getItem(key);
     if (!raw) return [];
     try {
-      const list: TempLink[] = devalue.parse(raw, TempLinkMapper.serde.deserialize);
+      const list: TempLink[] = devalue.parse(
+        raw,
+        TempLinkMapper.serde.deserialize,
+      );
       // Instantiate TempLink objects from parsed data
-      return list.map((data) => 
-        new TempLink(data.id, data.create_at, data.state, data.createLinkData)
+      return list.map(
+        (data) =>
+          new TempLink(
+            data.id,
+            data.create_at,
+            data.state,
+            data.createLinkData,
+          ),
       );
     } catch {
       console.warn("Failed to parse temp links from localStorage");
@@ -58,11 +67,11 @@ export class TempLinkRepository {
   create({
     id,
     owner,
-    tempLink
+    tempLink,
   }: {
-    id: string, 
-    owner: string,
-    tempLink: TempLink, 
+    id: string;
+    owner: string;
+    tempLink: TempLink;
   }) {
     const links = this.load(owner);
     const idx = links.findIndex((x) => String(x.id) === id);
@@ -111,7 +120,7 @@ export class TempLinkRepository {
    * @param id local identifier for the temp link to remove
    * @param owner owner identifier for removing
    */
-  delete(id: string, owner?: string) {
+  delete(id: string, owner: string) {
     const links = this.load(owner);
     if (!links.length) return;
 

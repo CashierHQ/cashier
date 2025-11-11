@@ -9,6 +9,7 @@
   let { children } = $props();
 
   function handleCreateNewLink() {
+    console.log("Creating new link...", authState.account);
     if (!authState.account?.owner){
       throw new Error("Cannot create link: no account owner found");
     }
