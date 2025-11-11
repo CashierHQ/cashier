@@ -40,17 +40,13 @@
                 {#if link instanceof Link}
                   <!-- It's a Link -->
                   <LinkItem
-                    title={link.title}
-                    linkType={link.link_type}
-                    state={link.state}
+                    {link}
                     onClick={() => handleLinkClick( link.id, false)}
                   />
                 {:else if link instanceof TempLink}
                   <!-- It's a TempLink (Draft) -->
                   <LinkItem
-                    title={link.createLinkData.title || "No title"}
-                    linkType={link.createLinkData.linkType}
-                    state={link.state}
+                    {link}
                     onClick={() => handleLinkClick( link.id, true)}
                   />
                 {:else}

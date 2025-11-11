@@ -1,72 +1,27 @@
 <script lang="ts">
   import {
-    LinkType,
-    type LinkTypeValue,
-  } from "$modules/links/types/link/linkType";
-  import {
-    LinkState,
-    type LinkStateValue,
-  } from "$modules/links/types/link/linkState";
-  import { assertUnreachable } from "$lib/rsMatch";
+    getStatusLabel,
+    getStatusClasses,
+    getLinkDefaultAvatar,
+  } from "$modules/links/utils/linkItemHelpers";
+  import { Link } from "$modules/links/types/link/link";
+  import { TempLink } from "$modules/links/types/tempLink";
 
   type Props = {
-    title: string;
-    linkType: LinkTypeValue;
-    state: LinkStateValue;
+    link: Link | TempLink;
     onClick: (event: MouseEvent) => void;
   };
 
-  let { title, linkType, state, onClick }: Props = $props();
+  let { onClick, link }: Props = $props();
 
-  function getStatusLabel(state: LinkStateValue): string {
-    switch (state) {
-      case LinkState.CHOOSING_TYPE:
-      case LinkState.ADDING_ASSET:
-      case LinkState.PREVIEW:
-      case LinkState.CREATE_LINK:
-        return "Draft";
-      case LinkState.ACTIVE:
-        return "Active";
-      case LinkState.INACTIVE:
-        return "Inactive";
-      case LinkState.INACTIVE_ENDED:
-        return "Inactive";
-      default:
-        assertUnreachable(state);
-    }
-  }
-
-  function getStatusClasses(state: LinkStateValue): string {
-    switch (state) {
-      case LinkState.CHOOSING_TYPE:
-      case LinkState.ADDING_ASSET:
-      case LinkState.PREVIEW:
-      case LinkState.CREATE_LINK:
-        return "bg-lightyellow text-yellow";
-      case LinkState.ACTIVE:
-        return "bg-green text-white";
-      case LinkState.INACTIVE:
-      case LinkState.INACTIVE_ENDED:
-        return "bg-gray-200 text-gray-700";
-      default:
-        assertUnreachable(state);
-    }
-  }
-
-  function getLinkDefaultAvatar(linkType: LinkTypeValue): string {
-    switch (linkType) {
-      case LinkType.TIP:
-        return "/tip-link-default.svg";
-      case LinkType.AIRDROP:
-        return "/airdrop-default.svg";
-      case LinkType.TOKEN_BASKET:
-        return "/token-basket-default.svg";
-      case LinkType.RECEIVE_PAYMENT:
-        return "/receive-payment-default.svg";
-      default:
-        assertUnreachable(linkType);
-    }
-  }
+  // Derived properties that work for both Link and TempLink
+  let title = $derived(
+    link instanceof Link ? link.title : link.createLinkData.title || "No title"
+  );
+  let linkType = $derived(
+    link instanceof Link ? link.link_type : link.createLinkData.linkType
+  );
+  let state = $derived(link.state);
 </script>
 
 <button onclick={onClick} class="block w-full text-left">
