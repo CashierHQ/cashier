@@ -4,6 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 import { LinkStep } from "../../types/linkStep";
 import { LinkCreationStore } from "../linkCreationStore.svelte";
 import { AddAssetTipLinkState } from "./tiplink/addAsset";
+import { TempLink } from "../../types/tempLink";
+import { LinkState } from "../../types/link/linkState";
+import { CreateLinkData } from "../../types/createLinkData";
 
 // mock wallet store
 vi.mock("$modules/token/state/walletStore.svelte", () => {
@@ -30,7 +33,18 @@ vi.mock("$modules/token/state/walletStore.svelte", () => {
 describe("ChooseLinkTypeState", () => {
   it("should transition to ADD_ASSET sucessfully", async () => {
     // Arrange
-    const store = new LinkCreationStore();
+    const tempLink = new TempLink(
+      "test-id",
+      BigInt(Date.now()),
+      LinkState.CHOOSING_TYPE,
+      new CreateLinkData({
+        title: "My tip",
+        linkType: LinkType.TIP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
+    const store = new LinkCreationStore(tempLink);
     store.createLinkData.title = "My tip";
     store.createLinkData.linkType = LinkType.TIP;
 
@@ -43,7 +57,18 @@ describe("ChooseLinkTypeState", () => {
 
   it("should throws when title is empty", async () => {
     // Arrange
-    const store = new LinkCreationStore();
+    const tempLink = new TempLink(
+      "test-id",
+      BigInt(Date.now()),
+      LinkState.CHOOSING_TYPE,
+      new CreateLinkData({
+        title: "",
+        linkType: LinkType.TIP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
+    const store = new LinkCreationStore(tempLink);
     store.createLinkData.title = "";
     store.createLinkData.linkType = LinkType.TIP;
 
@@ -56,7 +81,18 @@ describe("ChooseLinkTypeState", () => {
 
   it("should throws when link type is not TIP", async () => {
     // Arrange
-    const store = new LinkCreationStore();
+    const tempLink = new TempLink(
+      "test-id",
+      BigInt(Date.now()),
+      LinkState.CHOOSING_TYPE,
+      new CreateLinkData({
+        title: "My tip",
+        linkType: LinkType.AIRDROP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
+    const store = new LinkCreationStore(tempLink);
     store.createLinkData.title = "My tip";
     store.createLinkData.linkType = LinkType.AIRDROP;
 
@@ -71,7 +107,18 @@ describe("ChooseLinkTypeState", () => {
 
   it("should transiton to ADD_ASSET_TIP_LINK for tip link types", async () => {
     // Arrange
-    const store = new LinkCreationStore();
+    const tempLink = new TempLink(
+      "test-id",
+      BigInt(Date.now()),
+      LinkState.CHOOSING_TYPE,
+      new CreateLinkData({
+        title: "My tip",
+        linkType: LinkType.TIP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
+    const store = new LinkCreationStore(tempLink);
     store.createLinkData.title = "My tip";
     store.createLinkData.linkType = LinkType.TIP;
 

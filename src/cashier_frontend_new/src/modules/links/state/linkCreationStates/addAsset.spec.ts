@@ -6,6 +6,9 @@ import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { describe, expect, it, vi } from "vitest";
 import { LinkStep } from "../../types/linkStep";
 import { LinkCreationStore } from "../linkCreationStore.svelte";
+import { TempLink } from "../../types/tempLink";
+import { LinkState } from "../../types/link/linkState";
+import { LinkType } from "../../types/link/linkType";
 
 // mock wallet store
 vi.mock("$modules/token/state/walletStore.svelte", () => {
@@ -45,7 +48,18 @@ vi.mock("$modules/token/state/walletStore.svelte", () => {
 describe("AddAssetState", () => {
   it("should transition to PREVIEW successfully", async () => {
     // Arrange
-    const store = new LinkCreationStore();
+    const tempLink = new TempLink(
+      "test-id",
+      BigInt(Date.now()),
+      LinkState.CHOOSING_TYPE,
+      new CreateLinkData({
+        title: "My tip",
+        linkType: LinkType.TIP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
+    const store = new LinkCreationStore(tempLink);
     store.createLinkData.title = "My tip";
 
     // Act: move to ADD_ASSET
@@ -71,7 +85,18 @@ describe("AddAssetState", () => {
 
   it("should throws when asset is empty", async () => {
     // Arrange
-    const store = new LinkCreationStore();
+    const tempLink = new TempLink(
+      "test-id",
+      BigInt(Date.now()),
+      LinkState.CHOOSING_TYPE,
+      new CreateLinkData({
+        title: "My tip",
+        linkType: LinkType.TIP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
+    const store = new LinkCreationStore(tempLink);
     store.createLinkData.title = "My tip";
     await store.goNext(); // to ADD_ASSET
 
@@ -91,7 +116,18 @@ describe("AddAssetState", () => {
 
   it("should throws when amount is zero or negative", async () => {
     // Arrange
-    const store = new LinkCreationStore();
+    const tempLink = new TempLink(
+      "test-id",
+      BigInt(Date.now()),
+      LinkState.CHOOSING_TYPE,
+      new CreateLinkData({
+        title: "My tip",
+        linkType: LinkType.TIP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
+    const store = new LinkCreationStore(tempLink);
     store.createLinkData.title = "My tip";
     await store.goNext(); // to ADD_ASSET
 
