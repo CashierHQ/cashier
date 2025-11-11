@@ -1,8 +1,20 @@
 <script lang="ts">
   import AppHeader from "$modules/app/components/layout/AppHeader.svelte";
   import AddLinkButton from "$modules/app/components/layout/AddLinkButton.svelte";
+  import { LinkCreationStore } from "$modules/links/state/linkCreationStore.svelte";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+  import { authState } from "$modules/auth/state/auth.svelte";
 
   let { children } = $props();
+
+  function handleCreateNewLink() {
+    if (!authState.account?.owner){
+      throw new Error("Cannot create link: no account owner found");
+    }
+   const tempLink =  LinkCreationStore.createTempLink(authState.account?.owner);
+    goto(resolve(`/app/create/${tempLink.id}`));
+  }
 </script>
 
 <div class="flex flex-col min-h-screen sm:bg-lightgreen bg-white">
@@ -20,5 +32,5 @@
     </div>
   </div>
 
-  <AddLinkButton />
+  <AddLinkButton onClick={handleCreateNewLink} />
 </div>

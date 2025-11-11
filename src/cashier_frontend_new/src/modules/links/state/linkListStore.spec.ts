@@ -5,9 +5,26 @@ import { LinkState } from "../types/link/linkState";
 import { LinkType } from "../types/link/linkType";
 import { Principal } from "@dfinity/principal";
 import { managedState } from "$lib/managedState";
+import { tempLinkService } from "../services/tempLinkService";
+import { TempLink } from "../types/tempLink";
+import { CreateLinkData } from "../types/createLinkData";
 
 vi.mock("$lib/managedState", () => ({
   managedState: vi.fn(),
+}));
+
+vi.mock("../services/tempLinkService", () => ({
+  tempLinkService: {
+    get: vi.fn(() => []),
+  },
+}));
+
+vi.mock("$modules/auth/state/auth.svelte", () => ({
+  authState: {
+    account: {
+      owner: "test-owner",
+    },
+  },
 }));
 
 type MockManagedState<T> = {
@@ -105,5 +122,227 @@ describe("LinkListStore.groupAndSortByDate", () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].links).toEqual([link1, link2]);
+  });
+
+  it("includes temp links in grouping", () => {
+    const time = 1700000000000000000n;
+    const link = makeLink(time);
+    const tempLink = new TempLink(
+      "temp-1",
+      time,
+      LinkState.PREVIEW,
+      new CreateLinkData({
+        title: "Draft",
+        linkType: LinkType.TIP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
+
+    mockQuery.data = [link];
+    vi.mocked(tempLinkService.get).mockReturnValue([tempLink]);
+
+    const result = store.groupAndSortByDate();
+
+    expect(result).toHaveLength(1);
+    expect(result[0].links).toHaveLength(2);
+    expect(result[0].links).toContain(link);
+    expect(result[0].links).toContain(tempLink);
+  });
+
+  it("groups temp links and persisted links on different days", () => {
+    const day1 = 1700000000000000000n;
+    const day2 = day1 + 24n * 60n * 60n * 1000000000n; // +1 day
+    const day3 = day2 + 24n * 60n * 60n * 1000000000n; // +1 day
+
+    const link = makeLink(day1);
+    const tempLink = new TempLink(
+      "temp-1",
+      day2,
+      LinkState.CHOOSING_TYPE,
+      new CreateLinkData({
+        title: "Draft",
+        linkType: LinkType.TIP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
+    const tempLink2 = new TempLink(
+      "temp-1",
+      day3,
+      LinkState.CHOOSING_TYPE,
+      new CreateLinkData({
+        title: "Draft",
+        linkType: LinkType.TIP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
+
+    mockQuery.data = [link];
+    vi.mocked(tempLinkService.get).mockReturnValue([tempLink, tempLink2]);
+
+    const result = store.groupAndSortByDate();
+
+    expect(result).toHaveLength(3);
+    expect(result[0].date).toBeGreaterThan(result[1].date);
+    expect(result[1].date).toBeGreaterThan(result[2].date);
+    expect(result[0].links).toEqual([tempLink2]);
+    expect(result[1].links).toEqual([tempLink]);
+    expect(result[2].links).toEqual([link]);
+  });
+
+  it("handles only temp links", () => {
+    const time = 1700000000000000000n;
+    const tempLink1 = new TempLink(
+      "temp-1",
+      time,
+      LinkState.ADDING_ASSET,
+      new CreateLinkData({
+        title: "Draft 1",
+        linkType: LinkType.TIP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
+    const tempLink2 = new TempLink(
+      "temp-2",
+      time + 60n * 60n * 1000000000n, // +1 hour
+      LinkState.PREVIEW,
+      new CreateLinkData({
+        title: "Draft 2",
+        linkType: LinkType.TIP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
+
+    mockQuery.data = [];
+    vi.mocked(tempLinkService.get).mockReturnValue([tempLink1, tempLink2]);
+
+    const result = store.groupAndSortByDate();
+
+    expect(result).toHaveLength(1);
+    expect(result[0].links).toHaveLength(2);
+    expect(result[0].links).toContain(tempLink1);
+    expect(result[0].links).toContain(tempLink2);
+  });
+
+  it("returns empty array when no links and no temp links", () => {
+    mockQuery.data = [];
+    vi.mocked(tempLinkService.get).mockReturnValue([]);
+
+    const result = store.groupAndSortByDate();
+
+    expect(result).toEqual([]);
+  });
+});
+
+describe("LinkListStore.getLinks", () => {
+  let store: LinkListStore;
+  let mockQuery: MockManagedState<Link[]>;
+
+  beforeEach(() => {
+    mockQuery = {
+      data: undefined,
+      refresh: vi.fn(),
+      isLoading: false,
+      error: undefined,
+      isSuccess: true,
+      reset: vi.fn(),
+    };
+    const mockManagedState = vi.mocked(managedState);
+    mockManagedState.mockReturnValue(
+      mockQuery as unknown as ReturnType<typeof managedState>,
+    );
+    store = new LinkListStore();
+  });
+
+  it("should return empty array when no data", () => {
+    mockQuery.data = undefined;
+    vi.mocked(tempLinkService.get).mockReturnValue([]);
+
+    const result = store.getLinks();
+
+    expect(result).toEqual([]);
+  });
+
+  it("should return only persisted links when no temp links", () => {
+    const mockLink = new Link(
+      "link-1",
+      "Persisted Link",
+      Principal.fromText("aaaaa-aa"),
+      [],
+      LinkType.TIP,
+      BigInt(Date.now()),
+      LinkState.ACTIVE,
+      BigInt(1),
+      BigInt(0),
+    );
+
+    mockQuery.data = [mockLink];
+    vi.mocked(tempLinkService.get).mockReturnValue([]);
+
+    const result = store.getLinks();
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBe(mockLink);
+  });
+
+  it("should return only temp links when no persisted links", () => {
+    const mockTempLink = new TempLink(
+      "temp-1",
+      BigInt(Date.now()),
+      LinkState.CHOOSING_TYPE,
+      new CreateLinkData({
+        title: "Draft",
+        linkType: LinkType.TIP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
+
+    mockQuery.data = undefined;
+    vi.mocked(tempLinkService.get).mockReturnValue([mockTempLink]);
+
+    const result = store.getLinks();
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toBe(mockTempLink);
+  });
+
+  it("should return unified array of both persisted links and temp links", () => {
+    const mockLink = new Link(
+      "link-1",
+      "Persisted Link",
+      Principal.fromText("aaaaa-aa"),
+      [],
+      LinkType.TIP,
+      BigInt(Date.now()),
+      LinkState.ACTIVE,
+      BigInt(1),
+      BigInt(0),
+    );
+
+    const mockTempLink = new TempLink(
+      "temp-1",
+      BigInt(Date.now()),
+      LinkState.PREVIEW,
+      new CreateLinkData({
+        title: "Draft Link",
+        linkType: LinkType.TIP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
+
+    mockQuery.data = [mockLink];
+    vi.mocked(tempLinkService.get).mockReturnValue([mockTempLink]);
+
+    const result = store.getLinks();
+
+    expect(result).toHaveLength(2);
+    expect(result[0]).toBe(mockLink);
+    expect(result[1]).toBe(mockTempLink);
   });
 });

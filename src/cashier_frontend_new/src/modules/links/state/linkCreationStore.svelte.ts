@@ -1,6 +1,5 @@
 import { assertUnreachable } from "$lib/rsMatch";
 import { authState } from "$modules/auth/state/auth.svelte";
-import tempLinkService from "../services/tempLinkService";
 import type Action from "../types/action/action";
 import { CreateLinkData } from "../types/createLinkData";
 import type { Link } from "../types/link/link";
@@ -13,41 +12,87 @@ import { PreviewState } from "./linkCreationStates/preview";
 import { LinkType } from "../types/link/linkType";
 import { LinkState, type LinkStateValue } from "../types/link/linkState";
 import { LinkStep } from "../types/linkStep";
-import type TempLink from "../types/tempLink";
+import { TempLink } from "../types/tempLink";
 import { LinkActiveState } from "./linkCreationStates/active";
+import { tempLinkRepository } from "../services/tempLinkRepository";
 
 // Simple reactive state management
 export class LinkCreationStore {
-  // Private state variables
-  #state: LinkCreationState;
-
+  // Private state variables - declare with $state at class level
+  #state = $state<LinkCreationState>(new ChooseLinkTypeState(this));
   // draft holds partial data used for creation/edit flows
-  public createLinkData: CreateLinkData;
+  public createLinkData = $state<CreateLinkData>(
+    new CreateLinkData({
+      title: "",
+      linkType: LinkType.TIP,
+      assets: [],
+      maxUse: 1,
+    }),
+  );
 
   // Only existed if the link state == Created
-  public link?: Link;
+  public link = $state<Link | undefined>();
   // Only existed if the link state == Created
-  public action?: Action;
-  #id?: string;
+  public action = $state<Action | undefined>();
+  #id = $state<string>()!;
 
-  constructor(temp: TempLink) {
-    this.#id = $state<string | undefined>(temp?.id);
-    // initialize createLinkData with temp data if provided, otherwise a sensible default
-    this.createLinkData = $state<CreateLinkData>(
-      temp?.createLinkData ??
-        new CreateLinkData({
-          title: "",
-          linkType: LinkType.TIP,
-          assets: [],
-          maxUse: 1,
-        }),
-    );
+  constructor(tempLink: TempLink) {
+    this.#id = tempLink.id;
+    this.createLinkData = tempLink.createLinkData;
+    this.#state = this.stateFromValue(tempLink.state);
+    this.action = undefined;
+    this.link = undefined;
+  }
 
-    // initialize the state based on temp.state (if present) so the UI resumes where the user left off
-    const tempState = temp?.state;
-    // create a non-reactive initial state instance first (must be top-level for $state assignment)
+  get state(): LinkCreationState {
+    return this.#state;
+  }
+
+  set state(state: LinkCreationState) {
+    this.#state = state;
+  }
+
+  get id(): string | undefined {
+    return this.#id;
+  }
+
+  set id(id: string) {
+    this.#id = id;
+  }
+
+  // Move to the next state
+  async goNext(): Promise<void> {
+    try {
+      await this.#state.goNext();
+      this.syncTempLink();
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      throw new Error(String(e ?? "rejected promise"));
+    }
+  }
+
+  // Move to the previous state
+  async goBack(): Promise<void> {
+    try {
+      console.log("LinkCreationStore: going back from step", this.#state.step);
+      await this.#state.goBack();
+      this.syncTempLink();
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      throw new Error(String(e ?? "rejected promise"));
+    }
+  }
+
+  /**
+   * Pure function derive the initial state based on the given LinkStateValue
+   * @param state LinkStateValue to initialize from
+   * @returns LinkCreationState corresponding to the given state
+   */
+  private stateFromValue(state: LinkStateValue): LinkCreationState {
     let initialState: LinkCreationState;
-    switch (tempState) {
+    console.log("LinkCreationStore: stateFromValue:", state);
+
+    switch (state) {
       case LinkState.CHOOSING_TYPE:
         initialState = new ChooseLinkTypeState(this);
         break;
@@ -72,53 +117,59 @@ export class LinkCreationStore {
         initialState = new ChooseLinkTypeState(this);
     }
 
-    // first (top-level) $state assignment for the private #state field
-    this.#state = $state<LinkCreationState>(initialState);
-    this.action = $state<Action | undefined>(undefined);
-    this.link = $state<Link | undefined>(undefined);
+    return initialState;
   }
 
-  get state(): LinkCreationState {
-    return this.#state;
+  /**
+   * Create and store a new temporary link for the given principal
+   * @param principalId owner principal identifier
+   * @returns the created TempLink object
+   */
+  static createTempLink(principalId: string): TempLink {
+    const ts = Date.now();
+    const tsInNanoSec = BigInt(ts) * 1000000n;
+    const id = principalId + "-" + ts.toString();
+    const state = LinkState.CHOOSING_TYPE;
+    const newCreateLinkData = new CreateLinkData({
+      title: "",
+      linkType: LinkType.TIP,
+      assets: [],
+      maxUse: 1,
+    });
+
+    const tempLink = new TempLink(id, tsInNanoSec, state, newCreateLinkData);
+
+    tempLinkRepository.create({
+      id: id,
+      owner: principalId,
+      tempLink: tempLink,
+    });
+
+    return tempLink;
   }
 
-  set state(state: LinkCreationState) {
-    this.#state = state;
+  /**
+   * Get a temporary link by id for the current authenticated user
+   * @param id string identifier of the temp link
+   * @returns the TempLink object or undefined if not found
+   */
+  static getTempLink(id: string): TempLink | undefined {
+    const owner = authState.account?.owner;
+    if (!owner) return undefined;
+    return tempLinkRepository.getOne(owner, id);
   }
 
-  get id(): string | undefined {
-    return this.#id;
-  }
-
-  set id(id: string | undefined) {
-    this.#id = id;
-  }
-
-  // Move to the next state
-  async goNext(): Promise<void> {
-    try {
-      await this.#state.goNext();
-      await this.persistTempState();
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      throw new Error(String(e ?? "rejected promise"));
+  // Sync the temp link with storage: updates it or deletes it if link is created
+  private async syncTempLink(): Promise<void> {
+    // Delete temp link when link is created (no longer needed)
+    if (this.#state.step === LinkStep.CREATED) {
+      if (this.#id && authState.account) {
+        console.log(`Deleting temp link ${this.#id} (link created)`);
+        tempLinkRepository.delete(this.#id, authState.account.owner);
+      }
+      return;
     }
-  }
 
-  // Move to the previous state
-  async goBack(): Promise<void> {
-    try {
-      console.log("LinkCreationStore: going back from step", this.#state.step);
-      await this.#state.goBack();
-      await this.persistTempState();
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      throw new Error(String(e ?? "rejected promise"));
-    }
-  }
-
-  // Persist the current #state.step into the temp link store
-  private async persistTempState(): Promise<void> {
     let currentLinkState: LinkStateValue;
 
     switch (this.#state.step) {
@@ -131,9 +182,6 @@ export class LinkCreationStore {
       case LinkStep.PREVIEW:
         currentLinkState = LinkState.PREVIEW;
         break;
-      case LinkStep.CREATED:
-        currentLinkState = LinkState.CREATE_LINK;
-        break;
       case LinkStep.ACTIVE:
       case LinkStep.INACTIVE:
       case LinkStep.ENDED:
@@ -144,19 +192,16 @@ export class LinkCreationStore {
         assertUnreachable(this.#state.step);
     }
 
-    console.log("Updating temp link state to", currentLinkState);
     if (this.#id && currentLinkState && authState.account) {
-      console.log(
-        `Updating temp link ${this.#id} to state ${currentLinkState}`,
-      );
-      await tempLinkService.update(
-        this.#id,
-        {
+      await tempLinkRepository.update({
+        id: this.#id,
+        updateTempLink: {
           state: currentLinkState,
           createLinkData: this.createLinkData,
         },
-        authState.account.owner,
-      );
+        owner: authState.account.owner,
+      });
     }
   }
 }
+

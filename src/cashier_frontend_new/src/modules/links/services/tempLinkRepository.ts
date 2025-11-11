@@ -2,15 +2,12 @@ import TempLink, { TempLinkMapper } from "$modules/links/types/tempLink";
 import * as devalue from "devalue";
 import type { LinkStateValue } from "../types/link/linkState";
 import type { CreateLinkData } from "../types/createLinkData";
-import {
-  CURRENT_CREATING_LINK_ID_KEY,
-  TEMP_LINKS_STORAGE_KEY_PREFIX,
-} from "$modules/shared/constants";
+import { TEMP_LINKS_STORAGE_KEY_PREFIX } from "$modules/shared/constants";
 
 /**
- * Service for managing temporary links in localStorage
+ * Repository for managing temporary links in localStorage
  */
-export class TempLinkService {
+export class TempLinkRepository {
   storeKey(owner?: string) {
     return owner
       ? `${TEMP_LINKS_STORAGE_KEY_PREFIX}.${owner}`
@@ -27,7 +24,11 @@ export class TempLinkService {
     const raw = localStorage.getItem(key);
     if (!raw) return [];
     try {
-      return devalue.parse(raw, TempLinkMapper.serde.deserialize);
+      const list: TempLink[] = devalue.parse(raw, TempLinkMapper.serde.deserialize);
+      // Instantiate TempLink objects from parsed data
+      return list.map((data) => 
+        new TempLink(data.id, data.create_at, data.state, data.createLinkData)
+      );
     } catch {
       console.warn("Failed to parse temp links from localStorage");
       return [];
@@ -51,19 +52,24 @@ export class TempLinkService {
   /**
    * Save a temporary link to localStorage
    * @param id local identifier for the temp link
-   * @param tempLink the TempLink object to save
-   * @param owner owner identifier for storing
+   * @param owner owner identifier for saving
+   * @param tempLink TempLink object to save
    */
-  create(id: string, tempLink: TempLink, owner: string) {
+  create({
+    id,
+    owner,
+    tempLink
+  }: {
+    id: string, 
+    owner: string,
+    tempLink: TempLink, 
+  }) {
     const links = this.load(owner);
-
-    // replace if exists
     const idx = links.findIndex((x) => String(x.id) === id);
     if (idx >= 0) links[idx] = tempLink;
     else links.push(tempLink);
 
     this.save(links, owner);
-    localStorage.setItem(CURRENT_CREATING_LINK_ID_KEY, id);
   }
 
   /**
@@ -72,14 +78,18 @@ export class TempLinkService {
    * @param updateTempLink object containing state and/or createLinkData to update
    * @param owner owner identifier for updating
    */
-  update(
-    id: string,
+  update({
+    id,
+    updateTempLink,
+    owner,
+  }: {
+    id: string;
     updateTempLink: {
       state?: LinkStateValue;
       createLinkData?: CreateLinkData;
-    },
-    owner: string,
-  ) {
+    };
+    owner: string;
+  }) {
     const links = this.load(owner);
     if (!links.length) return;
 
@@ -115,26 +125,22 @@ export class TempLinkService {
    * @returns array of TempLink objects
    */
   get(owner?: string): TempLink[] {
-    return this.load(owner);
+    const list = this.load(owner);
+
+    return list;
   }
 
   /**
-   * Get the current creating temporary link for the given owner
+   * Retrieve a single temporary link by id for the given owner from localStorage
    * @param owner owner identifier for retrieving
-   * @returns the current TempLink or undefined if not found
+   * @param tempLinkId local identifier for the temp link to retrieve
+   * @returns the TempLink object or undefined if not found
    */
-  getCurrentCreateLink(owner?: string): TempLink | undefined {
-    const id = localStorage.getItem(CURRENT_CREATING_LINK_ID_KEY);
-    return this.get(owner).find((link) => String(link.id) === id);
-  }
-
-  /**
-   * Set the current creating temporary link ID in localStorage
-   * @param id local identifier for the temp link
-   */
-  setCurrentCreateLink(id: string) {
-    localStorage.setItem(CURRENT_CREATING_LINK_ID_KEY, id);
+  getOne(owner: string, tempLinkId: string): TempLink | undefined {
+    const links = this.load(owner);
+    if (!links.length) return undefined;
+    return links.find((x) => String(x.id) === tempLinkId);
   }
 }
 
-export const tempLinkService = new TempLinkService();
+export const tempLinkRepository = new TempLinkRepository();
