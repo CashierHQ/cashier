@@ -16,10 +16,12 @@
 
   // Derived properties that work for both Link and TempLink
   let title = $derived(
-    link instanceof Link ? link.title : link.createLinkData.title + " local" || "No title"
+    link instanceof Link
+      ? link.title
+      : link.createLinkData.title + " local" || "No title",
   );
   let linkType = $derived(
-    link instanceof Link ? link.link_type : link.createLinkData.linkType
+    link instanceof Link ? link.link_type : link.createLinkData.linkType,
   );
   let state = $derived(link.state);
 </script>

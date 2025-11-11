@@ -58,7 +58,7 @@ describe("TempLinkService", () => {
   it("update modifies an existing temp link", () => {
     const t = makeTempLink("update-test", 50n);
     tempLinkRepository.create({
-      id: "update-test",  
+      id: "update-test",
       tempLink: t,
       owner: "owner3",
     });
@@ -85,7 +85,7 @@ describe("TempLinkService", () => {
   it("update modifies createLinkData", () => {
     const t = makeTempLink("data-test", 60n);
     tempLinkRepository.create({
-      id: "data-test",  
+      id: "data-test",
       tempLink: t,
       owner: "owner4",
     });
@@ -115,7 +115,7 @@ describe("TempLinkService", () => {
   it("update does nothing if link id not found", () => {
     const t = makeTempLink("exists", 70n);
     tempLinkRepository.create({
-      id: "exists",  
+      id: "exists",
       tempLink: t,
       owner: "owner5",
     });
@@ -139,11 +139,13 @@ describe("TempLinkService", () => {
     localStorage.setItem("tempLinks.anon", "not-a-valid-devalue");
     const t = makeTempLink("x", 2n);
     // should not throw
-    expect(() => tempLinkRepository.create({
-      id: "x",
-      tempLink: t,
-      owner: "anon",
-    })).not.toThrow();
+    expect(() =>
+      tempLinkRepository.create({
+        id: "x",
+        tempLink: t,
+        owner: "anon",
+      }),
+    ).not.toThrow();
 
     const all = tempLinkRepository.get(undefined);
     expect(all.length).toBeGreaterThanOrEqual(1);

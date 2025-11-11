@@ -1,8 +1,6 @@
 <script lang="ts">
   import { LinkStep } from "$modules/links/types/linkStep";
-  import {
-    LinkCreationStore,
-  } from "$modules/links/state/linkCreationStore.svelte";
+  import { LinkCreationStore } from "$modules/links/state/linkCreationStore.svelte";
   import AddAsset from "$modules/links/components/createLink/addAsset.svelte";
   import ChooseLinkType from "$modules/links/components/createLink/chooseLinkType.svelte";
   import Preview from "../components/createLink/preview.svelte";
@@ -11,7 +9,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
 
-  const {id}: {id: string} = $props();
+  const { id }: { id: string } = $props();
 
   const tempLink = LinkCreationStore.getTempLink(id);
 

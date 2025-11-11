@@ -5,10 +5,10 @@
 </script>
 
 {#if id}
-<div class="w-full">
-  <h1 class="text-2xl font-bold mb-4">Create Link</h1>
-  <CreateLink {id}/>
-</div>
+  <div class="w-full">
+    <h1 class="text-2xl font-bold mb-4">Create Link</h1>
+    <CreateLink {id} />
+  </div>
 {:else}
-<div>Invalid link ID</div>
+  <div>Invalid link ID</div>
 {/if}

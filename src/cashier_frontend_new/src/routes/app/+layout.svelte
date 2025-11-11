@@ -10,10 +10,10 @@
 
   function handleCreateNewLink() {
     console.log("Creating new link...", authState.account);
-    if (!authState.account?.owner){
+    if (!authState.account?.owner) {
       throw new Error("Cannot create link: no account owner found");
     }
-   const tempLink =  LinkCreationStore.createTempLink(authState.account?.owner);
+    const tempLink = LinkCreationStore.createTempLink(authState.account?.owner);
     goto(resolve(`/app/create/${tempLink.id}`));
   }
 </script>
