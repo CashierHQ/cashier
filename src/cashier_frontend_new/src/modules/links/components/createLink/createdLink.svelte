@@ -26,7 +26,7 @@
 
   // Navigate back to the previous step
   async function goBack() {
-     goto(resolve("/app"));
+    goto(resolve("/app"));
   }
 
   async function goNext() {
