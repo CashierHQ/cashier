@@ -37,4 +37,3 @@ export function getTranslation(
 
   return typeof value === "string" ? value : undefined;
 }
-

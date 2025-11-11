@@ -9,7 +9,12 @@
     children?: Snippet;
   };
 
-  let { link, target = "_blank", rel = "noopener noreferrer", children }: Props = $props();
+  let {
+    link,
+    target = "_blank",
+    rel = "noopener noreferrer",
+    children,
+  }: Props = $props();
 </script>
 
 {#if link.url}
@@ -35,4 +40,3 @@
     </div>
   </a>
 {/if}
-
