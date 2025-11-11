@@ -1,6 +1,6 @@
 import { authState } from "$modules/auth/state/auth.svelte";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
-import { tempLinkRepository } from "$modules/links/services/tempLinkRepository";
+import { tempLinkRepository } from "$modules/links/repositories/tempLinkRepository";
 import { LinkMapper } from "$modules/links/types/link/link";
 import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkStep } from "$modules/links/types/linkStep";

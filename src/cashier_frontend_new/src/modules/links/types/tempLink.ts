@@ -27,13 +27,13 @@ export class TempLink {
 }
 
 // Serialized form of TempLink used in serde
-type SerializedLinkAsset = {
+export type SerializedLinkAsset = {
   address: string;
   useAmount: bigint;
 };
 
 // Serialized form of CreateLinkData used in TempLink serde
-type SerializedCreateLinkData = {
+export type SerializedCreateLinkData = {
   title: string;
   linkType: LinkTypeValue;
   maxUse: number;
@@ -41,7 +41,7 @@ type SerializedCreateLinkData = {
 };
 
 // Serialized form of TempLink used in serde
-type SerializedTempLink = {
+export type SerializedTempLink = {
   id: string;
   create_at: bigint;
   state: LinkStateValue;

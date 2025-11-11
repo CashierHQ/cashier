@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { LinkCreationStore } from "./linkCreationStore.svelte";
-import { tempLinkRepository } from "../services/tempLinkRepository";
+import { tempLinkRepository } from "../repositories/tempLinkRepository";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { LinkState } from "../types/link/linkState";
 import { LinkType } from "../types/link/linkType";
@@ -32,7 +32,7 @@ Object.defineProperty(globalThis, "localStorage", {
 });
 
 // Mock dependencies
-vi.mock("../services/tempLinkRepository", () => ({
+vi.mock("../repositories/tempLinkRepository", () => ({
   tempLinkRepository: {
     create: vi.fn(),
     update: vi.fn(),

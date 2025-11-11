@@ -18,10 +18,10 @@ import { AddAssetTipLinkState } from "./tiplink/addAsset";
 import { TempLink } from "../../types/tempLink";
 import { LinkState } from "../../types/link/linkState";
 import { LinkType } from "../../types/link/linkType";
-import { tempLinkRepository } from "../../services/tempLinkRepository";
+import { tempLinkRepository } from "../../repositories/tempLinkRepository";
 
 // Mock tempLinkRepository
-vi.mock("../../services/tempLinkRepository", () => ({
+vi.mock("../../repositories/tempLinkRepository", () => ({
   tempLinkRepository: {
     delete: vi.fn(),
     create: vi.fn(),

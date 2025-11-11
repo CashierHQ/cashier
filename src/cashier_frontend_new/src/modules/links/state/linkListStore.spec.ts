@@ -5,7 +5,7 @@ import { LinkState } from "../types/link/linkState";
 import { LinkType } from "../types/link/linkType";
 import { Principal } from "@dfinity/principal";
 import { managedState } from "$lib/managedState";
-import { tempLinkRepository } from "../services/tempLinkRepository";
+import { tempLinkRepository } from "../repositories/tempLinkRepository";
 import { TempLink } from "../types/tempLink";
 import { CreateLinkData } from "../types/createLinkData";
 
@@ -35,7 +35,7 @@ vi.mock("$lib/managedState", () => ({
   managedState: vi.fn(),
 }));
 
-vi.mock("../services/tempLinkRepository", () => ({
+vi.mock("../repositories/tempLinkRepository", () => ({
   tempLinkRepository: {
     get: vi.fn(() => []),
   },
