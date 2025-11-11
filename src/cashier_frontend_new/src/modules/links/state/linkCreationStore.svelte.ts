@@ -14,7 +14,7 @@ import { LinkState, type LinkStateValue } from "../types/link/linkState";
 import { LinkStep } from "../types/linkStep";
 import { TempLink } from "../types/tempLink";
 import { LinkActiveState } from "./linkCreationStates/active";
-import { tempLinkRepository } from "../services/tempLinkRepository";
+import { tempLinkRepository } from "../repositories/tempLinkRepository";
 
 // Simple reactive state management
 export class LinkCreationStore {
