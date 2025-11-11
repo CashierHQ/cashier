@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Lock, Feather, Zap, ChevronDown, ChevronUp } from "lucide-svelte";
-  import LinksList from "$modules/links/components/linksList.svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
+  import LinksList from "$modules/links/components/linksList.svelte";
 
   type Props = {
     onLoginClick?: () => void;

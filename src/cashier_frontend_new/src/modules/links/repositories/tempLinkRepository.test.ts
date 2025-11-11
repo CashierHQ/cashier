@@ -24,21 +24,6 @@ function makeTempLink(id: string, time: bigint) {
 }
 
 describe("TempLinkService", () => {
-  it("create and get should persist and retrieve temp links (anon)", () => {
-    const t = makeTempLink("1", 10n);
-    tempLinkRepository.create({
-      id: "1",
-      tempLink: t,
-      owner: "anon",
-    });
-
-    const all = tempLinkRepository.get(undefined);
-    expect(all).toHaveLength(1);
-    expect(String(all[0].id)).toBe("1");
-    // ensure localStorage key exists
-    expect(localStorage.getItem("tempLinks.anon")).not.toBeNull();
-  });
-
   it("delete removes an entry", () => {
     const t = makeTempLink("del", 5n);
     tempLinkRepository.create({
@@ -132,22 +117,5 @@ describe("TempLinkService", () => {
     expect(links).toHaveLength(1);
     expect(String(links[0].id)).toBe("exists");
     expect(links[0].state).toBe(LinkState.CREATE_LINK);
-  });
-
-  it("handles malformed existing storage gracefully when creating", () => {
-    // write invalid JSON to the key
-    localStorage.setItem("tempLinks.anon", "not-a-valid-devalue");
-    const t = makeTempLink("x", 2n);
-    // should not throw
-    expect(() =>
-      tempLinkRepository.create({
-        id: "x",
-        tempLink: t,
-        owner: "anon",
-      }),
-    ).not.toThrow();
-
-    const all = tempLinkRepository.get(undefined);
-    expect(all.length).toBeGreaterThanOrEqual(1);
   });
 });

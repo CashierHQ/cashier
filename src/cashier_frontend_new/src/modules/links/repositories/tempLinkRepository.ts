@@ -8,10 +8,8 @@ import { TEMP_LINKS_STORAGE_KEY_PREFIX } from "$modules/shared/constants";
  * Repository for managing temporary links in localStorage
  */
 export class TempLinkRepository {
-  storeKey(owner?: string) {
-    return owner
-      ? `${TEMP_LINKS_STORAGE_KEY_PREFIX}.${owner}`
-      : `${TEMP_LINKS_STORAGE_KEY_PREFIX}.anon`;
+  storeKey(owner: string) {
+    return `${TEMP_LINKS_STORAGE_KEY_PREFIX}.${owner}`;
   }
 
   /**
@@ -19,7 +17,7 @@ export class TempLinkRepository {
    * @param owner owner identifier for loading
    * @returns array of TempLink objects
    */
-  private load(owner?: string): TempLink[] {
+  private load(owner: string): TempLink[] {
     const key = this.storeKey(owner);
     const raw = localStorage.getItem(key);
     if (!raw) return [];
@@ -49,7 +47,7 @@ export class TempLinkRepository {
    * @param links array of TempLink objects to save
    * @param owner owner identifier for saving
    */
-  private save(links: TempLink[], owner?: string): void {
+  private save(links: TempLink[], owner: string): void {
     const key = this.storeKey(owner);
     const stringified = devalue.stringify(
       links,
@@ -133,7 +131,7 @@ export class TempLinkRepository {
    * @param owner owner identifier for retrieving
    * @returns array of TempLink objects
    */
-  get(owner?: string): TempLink[] {
+  get(owner: string): TempLink[] {
     const list = this.load(owner);
 
     return list;
