@@ -3,11 +3,11 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { SvelteDate, SvelteMap } from "svelte/reactivity";
 import { cashierBackendService } from "../services/cashierBackend";
 import { Link, LinkMapper } from "../types/link/link";
-import type { GroupedLink } from "../types/linkList";
+import type { GroupedLink, UnifiedLinkList } from "../types/linkList";
+import { tempLinkRepository } from "../services/tempLinkRepository";
 
 export class LinkListStore {
   readonly #linkListQuery;
-
   constructor() {
     this.#linkListQuery = managedState<Link[]>({
       queryFn: async () => {
@@ -38,17 +38,27 @@ export class LinkListStore {
   }
 
   /**
+   * Get all links including both persisted links and temporary links as a unified array
+   * @returns UnifiedLinkList of Link and TempLink objects
+   */
+  getLinks(): UnifiedLinkList {
+    const owner = authState.account?.owner;
+    const tempLinks = owner ? tempLinkRepository.get(owner) : [];
+
+    console.log("LinkListStore: getLinks:", { owner, tempLinks });
+    return [...(this.query.data ?? []), ...tempLinks];
+  }
+
+  /**
    * Groups links by day and sorts them by descending date (most recent first)
+   * Supports both persisted links and temporary links
    */
   groupAndSortByDate(): GroupedLink[] {
-    if (!this.query.data) {
-      return [];
-    }
-
-    const map = new SvelteMap<bigint, Link[]>();
+    const allLinks = this.getLinks();
+    const map = new SvelteMap<bigint, UnifiedLinkList>();
 
     // Group links by day
-    for (const link of this.query.data) {
+    for (const link of allLinks) {
       // derive the day key (midnight local time) from create_at
       const ns = link.create_at;
       const ms = Number(ns / 1000000n);
@@ -66,9 +76,13 @@ export class LinkListStore {
     }
 
     // Sort groups by descending day (most recent first)
-    return Array.from(map.entries())
+    const res = Array.from(map.entries())
       .sort((a, b) => (a[0] === b[0] ? 0 : a[0] > b[0] ? -1 : 1))
       .map(([ns, dateLinks]) => ({ date: ns, links: dateLinks }));
+
+    console.log("LinkListStore: groupedAndSortedByDate result:", res);
+
+    return res;
   }
 }
 

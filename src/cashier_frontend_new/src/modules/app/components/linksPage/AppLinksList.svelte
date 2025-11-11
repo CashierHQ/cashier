@@ -4,6 +4,8 @@
   import LinkItem from "./LinkItem.svelte";
   import { formatDate } from "$modules/shared/utils/formatDate";
   import type { GroupedLink } from "$modules/links/types/linkList";
+  import { Link } from "$modules/links/types/link/link";
+  import { TempLink } from "$modules/links/types/tempLink";
 
   const {
     groupedLinks,
@@ -11,9 +13,13 @@
     groupedLinks: GroupedLink[];
   } = $props();
 
-  function handleLinkClick(event: MouseEvent, linkId: string) {
-    event.preventDefault();
-    goto(resolve(`/app/edit/${linkId}`));
+  function handleLinkClick(linkId: string, isTempLink: boolean) {
+    if (isTempLink) {
+      goto(resolve(`/app/create/${linkId}`));
+    }
+    else {
+      goto(resolve(`/app/edit/${linkId}`));
+    }
   }
 </script>
 
@@ -31,13 +37,25 @@
           <ul class="space-y-4">
             {#each group.links as link (link.id)}
               <li>
-                <LinkItem
-                  href={resolve(`/app/edit/${link.id}`)}
-                  title={link.title}
-                  linkType={link.link_type}
-                  state={link.state}
-                  onClick={(e) => handleLinkClick(e, link.id)}
-                />
+                {#if link instanceof Link}
+                  <!-- It's a Link -->
+                  <LinkItem
+                    title={link.title}
+                    linkType={link.link_type}
+                    state={link.state}
+                    onClick={() => handleLinkClick( link.id, false)}
+                  />
+                {:else if link instanceof TempLink}
+                  <!-- It's a TempLink (Draft) -->
+                  <LinkItem
+                    title={link.createLinkData.title || "No title"}
+                    linkType={link.createLinkData.linkType}
+                    state={link.state}
+                    onClick={() => handleLinkClick( link.id, true)}
+                  />
+                {:else}
+                  <div>Unknown link type</div>
+                {/if}
               </li>
             {/each}
           </ul>

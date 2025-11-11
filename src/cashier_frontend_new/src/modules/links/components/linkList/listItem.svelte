@@ -3,7 +3,6 @@
   import { Link } from "../../types/link/link";
   import type TempLink from "../../types/tempLink";
   import { goto } from "$app/navigation";
-  import tempLinkService from "$modules/links/services/tempLinkService";
 
   let {
     item,
@@ -15,7 +14,6 @@
     if (item instanceof Link) {
       goto(`/link/detail/${item.id}`);
     } else {
-      tempLinkService.setCurrentCreateLink(item.id);
       goto(`/link/create`);
     }
   }
