@@ -1,10 +1,11 @@
 <script lang="ts">
+  import type { Link } from "$modules/links/types/link/link";
   import {
     getStatusLabel,
     getStatusClasses,
     getLinkDefaultAvatar,
   } from "$modules/links/utils/linkItemHelpers";
-  import type { Link } from "$modules/links/types/link/link";
+  import { locale } from "$lib/i18n";
 
   type Props = {
     link: Link;
@@ -37,7 +38,7 @@
             link.state,
           )}"
         >
-          {getStatusLabel(link.state)}
+          {getStatusLabel(link.state, locale.t)}
         </div>
       {/if}
     </div>

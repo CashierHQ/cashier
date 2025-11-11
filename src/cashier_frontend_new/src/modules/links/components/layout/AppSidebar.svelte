@@ -8,14 +8,15 @@
     Wallet,
     Copy,
   } from "lucide-svelte";
-  import { appLinks } from "$modules/shared/constants/links";
+  import { getAppLinks } from "$modules/shared/constants/links";
   import { toast } from "svelte-sonner";
   import DisconnectModal from "./DisconnectModal.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import CashierLogo from "$modules/ui/components/CashierLogo.svelte";
   import { resolve } from "$app/paths";
-  import LinkItem from "./LinkItem.svelte";
+  import SidebarMenuItem from "./SidebarMenuItem.svelte";
+  import { locale } from "$lib/i18n";
 
   type Props = {
     open: boolean;
@@ -26,11 +27,14 @@
 
   let disconnectModalOpen = $state(false);
 
+  // Get translated app links
+  const appLinks = $derived(getAppLinks(locale.t));
+
   // Get user principal from auth state
   const userPrincipal = $derived(
     authState.account?.owner
       ? transformShortAddress(authState.account.owner)
-      : "Not connected",
+      : locale.t("links.appSidebar.notConnected"),
   );
 
   function handleClose() {
@@ -47,7 +51,7 @@
     try {
       const fullPrincipal = authState.account?.owner || "";
       await navigator.clipboard.writeText(fullPrincipal);
-      toast.success("Address copied");
+      toast.success(locale.t("links.appSidebar.addressCopied"));
     } catch (error) {
       console.error("Copy failed:", error);
     }
@@ -84,34 +88,34 @@
       class="absolute right-4 top-6 cursor-pointer rounded-sm ring-offset-background transition-opacity disabled:pointer-events-none data-[state=open]:bg-secondary opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
     >
       <X class="h-6 w-6" />
-      <span class="sr-only">Close</span>
+      <span class="sr-only">{locale.t("links.appSidebar.close")}</span>
     </button>
 
     <!-- Header -->
     <div class="flex flex-col space-y-2 text-center sm:text-left">
       <div class="mb-2">
-        <CashierLogo href={resolve("/app")} />
+        <CashierLogo href={resolve("/links")} />
       </div>
 
       <!-- Menu items -->
       <div class="w-full flex flex-col flex-grow mt-2">
-        <LinkItem href={appLinks.about.url} label={appLinks.about.label}>
-          <Link class="w-[22px] h-[22px]" />
-        </LinkItem>
+        {#if appLinks.about.url}
+          <SidebarMenuItem link={appLinks.about}>
+            <Link class="w-[22px] h-[22px]" />
+          </SidebarMenuItem>
+        {/if}
 
-        <LinkItem
-          href={appLinks.exploreCashier.url}
-          label={appLinks.exploreCashier.label}
-        >
-          <Compass class="w-[22px] h-[22px]" />
-        </LinkItem>
+        {#if appLinks.exploreCashier.url}
+          <SidebarMenuItem link={appLinks.exploreCashier}>
+            <Compass class="w-[22px] h-[22px]" />
+          </SidebarMenuItem>
+        {/if}
 
-        <LinkItem
-          href={appLinks.projectOverview.url}
-          label={appLinks.projectOverview.label}
-        >
-          <AlignLeft class="w-[22px] h-[22px]" />
-        </LinkItem>
+        {#if appLinks.projectOverview.url}
+          <SidebarMenuItem link={appLinks.projectOverview}>
+            <AlignLeft class="w-[22px] h-[22px]" />
+          </SidebarMenuItem>
+        {/if}
       </div>
     </div>
 
@@ -121,9 +125,11 @@
     >
       <div class="flex flex-col w-full">
         <div class="w-full flex flex-col flex-grow">
-          <LinkItem href={appLinks.faq.url} label={appLinks.faq.label}>
-            <CircleHelp class="w-[22px] h-[22px]" />
-          </LinkItem>
+          {#if appLinks.faq.url}
+            <SidebarMenuItem link={appLinks.faq}>
+              <CircleHelp class="w-[22px] h-[22px]" />
+            </SidebarMenuItem>
+          {/if}
         </div>
 
         <div
@@ -152,7 +158,7 @@
               }}
               class="text-grey hover:text-green transition-colors cursor-pointer"
               type="button"
-              aria-label="Copy principal"
+              aria-label={locale.t("links.appSidebar.copyPrincipal")}
             >
               <Copy class="w-[22px] h-[22px]" />
             </button>
@@ -164,7 +170,7 @@
           class="w-[95%] border border-[#D26060] cursor-pointer mx-auto text-[#D26060] flex items-center justify-center rounded-full font-semibold text-[14px] h-[44px] mt-4 hover:bg-[#D26060] hover:text-white transition-colors"
           type="button"
         >
-          Disconnect
+          {locale.t("links.appSidebar.disconnect")}
         </button>
       </div>
     </div>

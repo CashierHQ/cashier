@@ -8,16 +8,19 @@ import {
   type LinkTypeValue,
 } from "$modules/links/types/link/linkType";
 
-export function getStatusLabel(state: LinkStateValue): string {
+export function getStatusLabel(
+  state: LinkStateValue,
+  t: (key: string) => string,
+): string {
   switch (state) {
     case LinkState.CREATE_LINK:
-      return "Draft";
+      return t("links.status.draft");
     case LinkState.ACTIVE:
-      return "Active";
+      return t("links.status.active");
     case LinkState.INACTIVE:
-      return "Inactive";
+      return t("links.status.inactive");
     case LinkState.INACTIVE_ENDED:
-      return "Inactive";
+      return t("links.status.inactive");
     default:
       assertUnreachable(state);
   }

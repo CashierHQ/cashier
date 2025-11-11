@@ -4,6 +4,7 @@
   import { resolve } from "$app/paths";
   import { toast } from "svelte-sonner";
   import { authState } from "$modules/auth/state/auth.svelte";
+  import { locale } from "$lib/i18n";
 
   type Props = {
     open: boolean;
@@ -31,13 +32,13 @@
       // Call login which will open popup to identity.internetcomputer.org
       await authState.login(adapterId);
 
-      // After successful login, redirect to app and close modal
+      // After successful login, redirect to links and close modal
       handleClose();
-      await goto(resolve("/app"));
-      toast.success("Successfully logged in");
+      await goto(resolve("/links"));
+      toast.success(locale.t("home.loginModal.successMessage"));
     } catch (error) {
       console.error("Login error:", error);
-      toast.error("Failed to connect wallet. Please try again.");
+      toast.error(locale.t("home.loginModal.errorMessage"));
     } finally {
       isConnecting = false;
     }
@@ -72,7 +73,7 @@
         id="login-dialog-title"
         class="text-lg font-semibold leading-none tracking-tight"
       >
-        Choose your wallet
+        {locale.t("home.loginModal.title")}
       </h2>
     </div>
 
@@ -92,9 +93,9 @@
             />
             <span class="flex-grow text-left">
               {#if isConnecting}
-                Connecting...
+                {locale.t("home.loginModal.connecting")}
               {:else}
-                Internet Identity
+                {locale.t("home.loginModal.internetIdentity")}
               {/if}
             </span>
             {#if isConnecting}

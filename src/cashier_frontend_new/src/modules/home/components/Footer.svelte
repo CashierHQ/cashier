@@ -1,7 +1,11 @@
 <script lang="ts">
   import { Mail } from "lucide-svelte";
-  import { appLinks } from "$modules/shared/constants/links";
+  import { getAppLinks } from "$modules/shared/constants/links";
   import FooterItem from "./FooterItem.svelte";
+  import { locale } from "$lib/i18n";
+
+  // Get translated app links
+  const appLinks = $derived(getAppLinks(locale.t));
 </script>
 
 <footer
@@ -12,48 +16,33 @@
     <div class="flex flex-col gap-6 lg:hidden">
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <h3 class="text-xs font-semibold text-foreground mb-2">Company</h3>
+          <h3 class="text-xs font-semibold text-foreground mb-2">{locale.t("home.footer.company")}</h3>
           <ul class="space-y-1">
             <li>
-              <FooterItem
-                href={appLinks.aboutCashier.url}
-                label={appLinks.aboutCashier.label}
-              />
+              <FooterItem link={appLinks.aboutCashier} />
             </li>
             <li>
-              <FooterItem
-                href={appLinks.team.url}
-                label={appLinks.team.label}
-              />
+              <FooterItem link={appLinks.team} />
             </li>
             <li>
-              <FooterItem href={appLinks.faq.url} label={appLinks.faq.label} />
+              <FooterItem link={appLinks.faq} />
             </li>
           </ul>
         </div>
         <div>
           <h3 class="text-xs font-semibold text-foreground mb-2">
-            Legal & Contact
+            {locale.t("home.footer.legalAndContact")}
           </h3>
           <ul class="space-y-1">
             <li>
-              <FooterItem
-                href={appLinks.termsOfService.url}
-                label={appLinks.termsOfService.label}
-              />
+              <FooterItem link={appLinks.termsOfService} />
+            </li>
+            <li>
+              <FooterItem link={appLinks.privacyPolicy} />
             </li>
             <li>
               <FooterItem
-                href={appLinks.privacyPolicy.url}
-                label={appLinks.privacyPolicy.label}
-              />
-            </li>
-            <li>
-              <FooterItem
-                href={appLinks.contactEmail.email
-                  ? `mailto:${appLinks.contactEmail.email}`
-                  : undefined}
-                label={appLinks.contactEmail.label}
+                link={appLinks.contactEmail}
                 target={undefined}
                 rel={undefined}
                 class="text-xs text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
@@ -68,9 +57,9 @@
         class="flex flex-col items-center gap-2 text-xs text-muted-foreground border-t border-border pt-3"
       >
         <div class="flex items-center gap-2">
-          <span>Powered by</span>
+          <span>{locale.t("home.footer.poweredBy")}</span>
           <img alt="ICP" class="w-4 h-4" src="/icpToken.png" />
-          <span>Internet Computer</span>
+          <span>{locale.t("home.footer.internetComputer")}</span>
         </div>
         <p>CASHIERFI VENTURES LABS LTD</p>
       </div>
@@ -82,37 +71,29 @@
         <p class="text-xs text-muted-foreground">CASHIERFI VENTURES LABS LTD</p>
         <div class="flex items-center gap-4 text-xs">
           <FooterItem
-            href={appLinks.aboutCashier.url}
-            label={appLinks.aboutCashier.label}
+            link={appLinks.aboutCashier}
             class="text-muted-foreground hover:text-primary transition-colors"
           />
           <FooterItem
-            href={appLinks.team.url}
-            label={appLinks.team.label}
+            link={appLinks.team}
             class="text-muted-foreground hover:text-primary transition-colors"
           />
           <FooterItem
-            href={appLinks.faq.url}
-            label={appLinks.faq.label}
+            link={appLinks.faq}
             class="text-muted-foreground hover:text-primary transition-colors"
           />
           <span class="text-muted-foreground">|</span>
           <FooterItem
-            href={appLinks.termsOfService.url}
-            label={appLinks.termsOfService.label}
+            link={appLinks.termsOfService}
             class="text-muted-foreground hover:text-primary transition-colors"
           />
           <FooterItem
-            href={appLinks.privacyPolicy.url}
-            label={appLinks.privacyPolicy.label}
+            link={appLinks.privacyPolicy}
             class="text-muted-foreground hover:text-primary transition-colors"
           />
           <span class="text-muted-foreground">|</span>
           <FooterItem
-            href={appLinks.contactEmail.email
-              ? `mailto:${appLinks.contactEmail.email}`
-              : undefined}
-            label={appLinks.contactEmail.label}
+            link={appLinks.contactEmail}
             target={undefined}
             rel={undefined}
             class="text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
@@ -122,9 +103,9 @@
         </div>
       </div>
       <div class="flex items-center gap-2 text-xs text-muted-foreground">
-        <span>Powered by</span>
+        <span>{locale.t("home.footer.poweredBy")}</span>
         <img alt="ICP" class="w-4 h-4" src="/icpToken.png" />
-        <span>Internet Computer</span>
+        <span>{locale.t("home.footer.internetComputer")}</span>
       </div>
     </div>
   </div>

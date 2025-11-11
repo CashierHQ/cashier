@@ -5,7 +5,7 @@
     href?: string;
   };
 
-  let { href = resolve("/app") }: Props = $props();
+  let { href = resolve("/links") }: Props = $props();
 </script>
 
 <a {href}>

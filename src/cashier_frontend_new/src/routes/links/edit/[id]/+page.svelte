@@ -1,9 +1,10 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import UseLink from "$modules/userLink/pages/use.svelte";
+  import EditLinkPage from "$modules/links/pages/EditLinkPage.svelte";
+
   const id = page.params.id;
 </script>
 
 {#if id}
-  <UseLink {id} />
+  <EditLinkPage linkId={id} />
 {/if}
