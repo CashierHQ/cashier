@@ -57,7 +57,7 @@
   // Redirect if not in the correct step
   $effect(() => {
     if (link.state.step !== LinkStep.ADD_ASSET) {
-      goto(resolve("/"));
+       goto(resolve("/app"));
     }
   });
 

@@ -20,13 +20,13 @@
   // Redirect if not in the correct step
   $effect(() => {
     if (link.state.step !== LinkStep.CREATED) {
-      goto(resolve("/"));
+      goto(resolve("/app"));
     }
   });
 
   // Navigate back to the previous step
   async function goBack() {
-    goto(resolve("/"));
+     goto(resolve("/app"));
   }
 
   async function goNext() {
