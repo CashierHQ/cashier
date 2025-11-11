@@ -3,6 +3,7 @@
   import { Link } from "../../types/link/link";
   import type TempLink from "../../types/tempLink";
   import { goto } from "$app/navigation";
+    import { resolve } from "$app/paths";
 
   let {
     item,
@@ -12,9 +13,9 @@
 
   function handleClick() {
     if (item instanceof Link) {
-      goto(`/link/detail/${item.id}`);
+      goto(resolve(`/link/detail/${item.id}`));
     } else {
-      goto(`/link/create`);
+      goto(resolve(`/link/create`));
     }
   }
 </script>
