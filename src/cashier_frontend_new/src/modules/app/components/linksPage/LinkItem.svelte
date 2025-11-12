@@ -4,7 +4,6 @@
     getStatusClasses,
     getLinkDefaultAvatar,
   } from "$modules/links/utils/linkItemHelpers";
-  import { Link } from "$modules/links/types/link/link";
   import type { UnifiedLinkItem } from "$modules/links/types/linkList";
 
   type Props = {
