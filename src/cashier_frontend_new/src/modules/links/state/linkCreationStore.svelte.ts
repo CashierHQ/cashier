@@ -47,10 +47,6 @@ export class LinkCreationStore {
       void this.createLinkData;
       void this.#state;
 
-      console.log(
-        "LinkCreationStore: detected state change, syncing temp link",
-      );
-
       // Sync on changes (async, no await needed in effect)
       this.syncTempLink();
     });

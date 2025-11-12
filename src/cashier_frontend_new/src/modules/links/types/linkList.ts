@@ -3,7 +3,9 @@ import type TempLink from "./tempLink";
 
 export type GroupedLink = {
   date: bigint;
-  links: Array<Link | TempLink>;
+  links: UnifiedLinkList;
 };
 
-export type UnifiedLinkList = Array<Link | TempLink>;
+export type UnifiedLinkItem = Link | TempLink;
+
+export type UnifiedLinkList = Array<UnifiedLinkItem>;

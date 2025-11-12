@@ -5,10 +5,10 @@
     getLinkDefaultAvatar,
   } from "$modules/links/utils/linkItemHelpers";
   import { Link } from "$modules/links/types/link/link";
-  import { TempLink } from "$modules/links/types/tempLink";
+  import type { UnifiedLinkItem } from "$modules/links/types/linkList";
 
   type Props = {
-    link: Link | TempLink;
+    link: UnifiedLinkItem;
     onClick: (event: MouseEvent) => void;
   };
 

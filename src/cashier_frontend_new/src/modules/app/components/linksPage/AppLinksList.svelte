@@ -36,21 +36,10 @@
           <ul class="space-y-4">
             {#each group.links as link (link.id)}
               <li>
-                {#if link instanceof Link}
-                  <!-- It's a Link -->
-                  <LinkItem
-                    {link}
-                    onClick={() => handleLinkClick(link.id, false)}
-                  />
-                {:else if link instanceof TempLink}
-                  <!-- It's a TempLink (Draft) -->
-                  <LinkItem
-                    {link}
-                    onClick={() => handleLinkClick(link.id, true)}
-                  />
-                {:else}
-                  <div>Unknown link type</div>
-                {/if}
+                <LinkItem
+                  {link}
+                  onClick={() => handleLinkClick(link.id, true)}
+                />
               </li>
             {/each}
           </ul>
