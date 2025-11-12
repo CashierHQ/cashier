@@ -31,10 +31,7 @@
           <ul class="space-y-4">
             {#each group.links as link (link.id)}
               <li>
-                <LinkItem
-                  {link}
-                  onClick={(e) => handleLinkClick(e, link.id)}
-                />
+                <LinkItem {link} onClick={(e) => handleLinkClick(e, link.id)} />
               </li>
             {/each}
           </ul>
