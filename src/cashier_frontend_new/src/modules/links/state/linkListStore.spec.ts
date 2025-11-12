@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, vitest } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { LinkListStore } from "./linkListStore.svelte";
 import { Link } from "../types/link/link";
 import { LinkState } from "../types/link/linkState";
@@ -36,13 +36,12 @@ describe("LinkListStore.groupAndSortByDate", () => {
     mockManagedState.mockReturnValue(
       mockQuery as unknown as ReturnType<typeof managedState>,
     );
-    vitest.clearAllMocks();
     store = new LinkListStore();
   });
 
   const makeLink = (create_at: bigint) =>
     new Link(
-      "id" + create_at.toString(),
+      "id",
       "title",
       Principal.fromText("aaaaa-aa"),
       [],
