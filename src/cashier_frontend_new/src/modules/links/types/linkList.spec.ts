@@ -29,6 +29,7 @@ describe("UnifiedLinkItemMapper", () => {
     expect(mapped).toEqual({
       id: "link-1",
       title: "My Link",
+      linkCreateAt: BigInt(1),
       state: LinkState.ACTIVE,
       linkType: LinkType.TIP,
     });
@@ -56,6 +57,7 @@ describe("UnifiedLinkItemMapper", () => {
     expect(mapped).toEqual({
       id: "t-1",
       title: "Temp Title",
+      linkCreateAt: BigInt(1),
       state: LinkState.CREATE_LINK,
       linkType: LinkType.TIP,
     });
@@ -82,6 +84,7 @@ describe("UnifiedLinkItemMapper", () => {
     expect(mapped).toEqual({
       id: "t-2",
       title: "No title",
+      linkCreateAt: BigInt(2),
       state: LinkState.CREATE_LINK,
       linkType: LinkType.TIP,
     });
