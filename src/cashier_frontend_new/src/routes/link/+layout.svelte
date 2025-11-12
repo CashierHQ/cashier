@@ -1,6 +1,6 @@
 <script lang="ts">
-  import AppHeader from "$modules/app/components/layout/AppHeader.svelte";
-  import AddLinkButton from "$modules/app/components/layout/AddLinkButton.svelte";
+  import AppHeader from "$modules/shared/components/AppHeader.svelte";
+  import AddLinkButton from "$modules/links/components/layout/AddLinkButton.svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { authState } from "$modules/auth/state/auth.svelte";
