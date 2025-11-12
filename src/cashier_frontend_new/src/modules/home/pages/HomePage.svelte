@@ -1,7 +1,6 @@
 <script lang="ts">
   import { Lock, Feather, Zap, ChevronDown, ChevronUp } from "lucide-svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
-  import LinksList from "$modules/links/components/linksList.svelte";
 
   type Props = {
     onLoginClick?: () => void;
@@ -63,7 +62,7 @@
   {#if userProfile.isLoggedIn()}
     <!-- Logged in content -->
     <div class="w-full lg:w-1/3 mx-auto mt-4 px-4">
-      <LinksList />
+        Logged in
     </div>
   {:else}
     <!-- Main content for unauthenticated users -->
