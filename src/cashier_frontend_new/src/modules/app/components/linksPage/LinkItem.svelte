@@ -14,9 +14,11 @@
 
   const { onClick, link }: Props = $props();
 
-  const title =  link instanceof Link ? link.title : link.createLinkData.title || "No title";
-  const linkType = link instanceof Link ? link.link_type : link.createLinkData.linkType;
-  const state = link.state
+  const title =
+    link instanceof Link ? link.title : link.createLinkData.title || "No title";
+  const linkType =
+    link instanceof Link ? link.link_type : link.createLinkData.linkType;
+  const state = link.state;
 </script>
 
 <button onclick={onClick} class="block w-full text-left">

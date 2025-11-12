@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
-import { LinkCreationStore } from "./linkCreationStore.svelte";
 import { tempLinkRepository } from "../repositories/tempLinkRepository";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { LinkState } from "../types/link/linkState";
-import { LinkType } from "../types/link/linkType";
+import { LinkState } from "../../links/types/link/linkState";
+import { LinkType } from "../../links/types/link/linkType";
 import { CreateLinkData } from "../types/createLinkData";
-import { TempLink } from "../types/tempLink";
-import { LinkStep } from "../types/linkStep";
+import { TempLink } from "../../links/types/tempLink";
+import { LinkStep } from "../../links/types/linkStep";
+import { LinkCreationStore } from "./linkCreationStore.svelte";
 
 // Mock localStorage
 const localStorageMock = (() => {

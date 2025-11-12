@@ -8,7 +8,10 @@ import {
   ActionTypeMapper,
   type ActionTypeValue,
 } from "../types/action/actionType";
-import { CreateLinkData, CreateLinkDataMapper } from "../types/createLinkData";
+import {
+  CreateLinkData,
+  CreateLinkDataMapper,
+} from "$modules/creationLink/types/createLinkData";
 
 /**
  * Service for interacting with the Cashier Backend canister.

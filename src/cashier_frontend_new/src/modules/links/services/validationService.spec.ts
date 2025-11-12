@@ -1,8 +1,11 @@
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { CreateLinkAsset, CreateLinkData } from "../types/createLinkData";
 import { LinkType } from "../types/link/linkType";
 import { validationService } from "./validationService";
+import {
+  CreateLinkAsset,
+  CreateLinkData,
+} from "$modules/creationLink/types/createLinkData";
 
 describe("validateRequiredAmount", () => {
   beforeEach(() => {

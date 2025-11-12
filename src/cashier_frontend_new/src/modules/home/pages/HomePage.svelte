@@ -61,9 +61,7 @@
 
   {#if userProfile.isLoggedIn()}
     <!-- Logged in content -->
-    <div class="w-full lg:w-1/3 mx-auto mt-4 px-4">
-        Logged in
-    </div>
+    <div class="w-full lg:w-1/3 mx-auto mt-4 px-4">Logged in</div>
   {:else}
     <!-- Main content for unauthenticated users -->
     <div

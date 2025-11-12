@@ -1,4 +1,4 @@
-import type { CreateLinkData } from "$modules/links/types/createLinkData";
+import type { CreateLinkData } from "$modules/creationLink/types/createLinkData";
 import {
   calculateRequiredAssetAmount,
   maxAmountForAsset,

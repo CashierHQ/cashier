@@ -4,7 +4,7 @@ import { SvelteDate, SvelteMap } from "svelte/reactivity";
 import { cashierBackendService } from "../services/cashierBackend";
 import { Link, LinkMapper } from "../types/link/link";
 import type { GroupedLink, UnifiedLinkList } from "../types/linkList";
-import { tempLinkRepository } from "../repositories/tempLinkRepository";
+import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
 
 export class LinkListStore {
   readonly #linkListQuery;

@@ -1,9 +1,12 @@
 import { describe, it, expect } from "vitest";
 import TempLink, { TempLinkMapper, type SerializedTempLink } from "./tempLink";
-import { CreateLinkAsset, CreateLinkData } from "./createLinkData";
 import { LinkState } from "./link/linkState";
 import { LinkType } from "./link/linkType";
 import * as devalue from "devalue";
+import {
+  CreateLinkAsset,
+  CreateLinkData,
+} from "$modules/creationLink/types/createLinkData";
 
 describe("TempLinkMapper serde", () => {
   it("should serialize and deserialize a TempLink correctly", () => {

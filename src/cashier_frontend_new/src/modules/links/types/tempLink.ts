@@ -1,10 +1,10 @@
-import {
-  CreateLinkAsset,
-  CreateLinkData,
-} from "$modules/links/types/createLinkData";
 import type { LinkTypeValue } from "$modules/links/types/link/linkType";
 import type { DevalueSerde } from "$lib/managedState";
 import type { LinkStateValue } from "./link/linkState";
+import {
+  CreateLinkAsset,
+  CreateLinkData,
+} from "$modules/creationLink/types/createLinkData";
 
 // Temporary link representation used during link creation
 export class TempLink {
