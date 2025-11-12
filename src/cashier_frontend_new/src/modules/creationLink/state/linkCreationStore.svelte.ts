@@ -1,21 +1,24 @@
 import { assertUnreachable } from "$lib/rsMatch";
 import { authState } from "$modules/auth/state/auth.svelte";
-import type Action from "../types/action/action";
 import { CreateLinkData } from "../types/createLinkData";
-import type { Link } from "../types/link/link";
-import type { LinkCreationState } from "./linkCreationStates";
-import { ChooseLinkTypeState } from "./linkCreationStates/chooseLinkType";
-import { LinkCreatedState } from "./linkCreationStates/created";
-import { AddAssetState } from "./linkCreationStates/addAsset";
-import { AddAssetTipLinkState } from "./linkCreationStates/tiplink/addAsset";
-import { PreviewState } from "./linkCreationStates/preview";
-import { LinkType } from "../types/link/linkType";
-import { LinkState, type LinkStateValue } from "../types/link/linkState";
-import { LinkStep } from "../types/linkStep";
-import { TempLink } from "../types/tempLink";
-import { LinkActiveState } from "./linkCreationStates/active";
+import type { LinkCreationState } from "../../creationLink/state/linkCreationStates";
+import { ChooseLinkTypeState } from "../../creationLink/state/linkCreationStates/chooseLinkType";
+import { LinkCreatedState } from "../../creationLink/state/linkCreationStates/created";
+import { AddAssetState } from "../../creationLink/state/linkCreationStates/addAsset";
+import { AddAssetTipLinkState } from "../../creationLink/state/linkCreationStates/tiplink/addAsset";
+import { PreviewState } from "../../creationLink/state/linkCreationStates/preview";
+import { LinkActiveState } from "../../creationLink/state/linkCreationStates/active";
 import { tempLinkRepository } from "../repositories/tempLinkRepository";
 import { Err, Ok, type Result } from "ts-results-es";
+import {
+  LinkState,
+  type LinkStateValue,
+} from "$modules/links/types/link/linkState";
+import { LinkType } from "$modules/links/types/link/linkType";
+import TempLink from "$modules/links/types/tempLink";
+import { LinkStep } from "$modules/links/types/linkStep";
+import type Action from "$modules/links/types/action/action";
+import type { Link } from "$modules/links/types/link/link";
 
 // Simple reactive state management
 export class LinkCreationStore {

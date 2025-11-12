@@ -2,10 +2,14 @@ import type {
   AssetInfoDto,
   CreateLinkInput,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
+import Asset from "$modules/links/types/asset";
+import {
+  LinkType,
+  LinkTypeMapper,
+  type LinkTypeValue,
+} from "$modules/links/types/link/linkType";
 import { Principal } from "@dfinity/principal";
 import { Err, Ok, Result } from "ts-results-es";
-import Asset from "./asset";
-import { LinkType, LinkTypeMapper, type LinkTypeValue } from "./link/linkType";
 
 export class CreateLinkAsset {
   address: string;

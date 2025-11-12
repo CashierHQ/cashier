@@ -3,10 +3,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
 
 import { tempLinkRepository } from "./tempLinkRepository";
-import TempLink from "../types/tempLink";
 import { CreateLinkData, CreateLinkAsset } from "../types/createLinkData";
-import { LinkState } from "../types/link/linkState";
-import { LinkType } from "../types/link/linkType";
+import { LinkState } from "$modules/links/types/link/linkState";
+import TempLink from "$modules/links/types/tempLink";
+import { LinkType } from "$modules/links/types/link/linkType";
 
 // Use jsdom's localStorage (vitest provides it). Clear before each test.
 beforeEach(() => {

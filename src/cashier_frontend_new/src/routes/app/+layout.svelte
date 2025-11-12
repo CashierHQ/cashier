@@ -1,10 +1,10 @@
 <script lang="ts">
   import AppHeader from "$modules/app/components/layout/AppHeader.svelte";
   import AddLinkButton from "$modules/app/components/layout/AddLinkButton.svelte";
-  import { LinkCreationStore } from "$modules/links/state/linkCreationStore.svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { authState } from "$modules/auth/state/auth.svelte";
+  import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
 
   let { children } = $props();
 

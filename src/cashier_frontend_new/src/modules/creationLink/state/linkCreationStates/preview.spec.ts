@@ -3,22 +3,23 @@ import type {
   AssetInfoDto,
   LinkDto,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
-import {
-  CreateLinkAsset,
-  CreateLinkData,
-} from "$modules/links/types/createLinkData";
+
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Principal } from "@dfinity/principal";
 import { Err, Ok } from "ts-results-es";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { cashierBackendService } from "../../services/cashierBackend";
-import { LinkStep } from "../../types/linkStep";
 import { LinkCreationStore } from "../linkCreationStore.svelte";
 import { AddAssetTipLinkState } from "./tiplink/addAsset";
-import { TempLink } from "../../types/tempLink";
-import { LinkState } from "../../types/link/linkState";
-import { LinkType } from "../../types/link/linkType";
 import { tempLinkRepository } from "../../repositories/tempLinkRepository";
+import { cashierBackendService } from "$modules/links/services/cashierBackend";
+import TempLink from "$modules/links/types/tempLink";
+import { LinkState } from "$modules/links/types/link/linkState";
+import {
+  CreateLinkAsset,
+  CreateLinkData,
+} from "$modules/creationLink/types/createLinkData";
+import { LinkType } from "$modules/links/types/link/linkType";
+import { LinkStep } from "$modules/links/types/linkStep";
 
 // Mock tempLinkRepository
 vi.mock("../../repositories/tempLinkRepository", () => ({

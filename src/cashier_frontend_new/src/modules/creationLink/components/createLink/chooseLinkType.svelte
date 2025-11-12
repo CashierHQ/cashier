@@ -4,9 +4,12 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
+  import {
+    LinkType,
+    type LinkTypeValue,
+  } from "$modules/links/types/link/linkType";
+  import { LinkStep } from "$modules/links/types/linkStep";
   import type { LinkCreationStore } from "../../state/linkCreationStore.svelte";
-  import { LinkType, type LinkTypeValue } from "../../types/link/linkType";
-  import { LinkStep } from "../../types/linkStep";
 
   const {
     link,
@@ -28,9 +31,11 @@
   }
 
   // Handle input changes
-  function handleOnInput(e: Event & {
-    currentTarget: EventTarget & HTMLInputElement;
-}){
+  function handleOnInput(
+    e: Event & {
+      currentTarget: EventTarget & HTMLInputElement;
+    },
+  ) {
     link.createLinkData = {
       ...link.createLinkData,
       title: e.currentTarget.value,
@@ -38,9 +43,11 @@
   }
 
   // Handle select changes
-  function onSelectChange(e: Event & {
-    currentTarget: EventTarget & HTMLSelectElement;
-}){
+  function onSelectChange(
+    e: Event & {
+      currentTarget: EventTarget & HTMLSelectElement;
+    },
+  ) {
     link.createLinkData = {
       ...link.createLinkData,
       linkType: e.currentTarget.value as LinkTypeValue,

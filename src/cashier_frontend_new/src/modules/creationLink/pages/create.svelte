@@ -1,23 +1,28 @@
 <script lang="ts">
   import { LinkStep } from "$modules/links/types/linkStep";
-  import { LinkCreationStore } from "$modules/links/state/linkCreationStore.svelte";
-  import AddAsset from "$modules/links/components/createLink/addAsset.svelte";
-  import ChooseLinkType from "$modules/links/components/createLink/chooseLinkType.svelte";
   import Preview from "../components/createLink/preview.svelte";
-  import CreateLinkHeader from "$modules/links/components/createLink/createLinkHeader.svelte";
   import CreatedLink from "../components/createLink/createdLink.svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import { LinkCreationStore } from "../state/linkCreationStore.svelte";
+  import CreateLinkHeader from "../components/createLink/createLinkHeader.svelte";
+  import ChooseLinkType from "../components/createLink/chooseLinkType.svelte";
+  import AddAsset from "../components/createLink/addAsset.svelte";
 
   const { id }: { id: string } = $props();
 
   // load the temporary link data from localStorage
-  const tempLink = LinkCreationStore.getTempLink(id);
+  const getTempLinkRes = LinkCreationStore.getTempLink(id);
+
+  if (getTempLinkRes.isErr()) {
+    goto(resolve("/app"));
+  }
+
+  const tempLink = getTempLinkRes.unwrap();
 
   if (!tempLink) {
     goto(resolve("/app"));
-    // Add explicit return - this prevents TypeScript from continuing
-    throw new Error("Redirecting: temp link not found");
+    throw new Error("Temporary link data not found");
   }
 
   let newLink = new LinkCreationStore(tempLink);

@@ -3,7 +3,7 @@
   import { resolve } from "$app/paths";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import type { LinkCreationStore } from "$modules/links/state/linkCreationStore.svelte";
+  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { walletStore } from "$modules/token/state/walletStore.svelte";

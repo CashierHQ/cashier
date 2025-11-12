@@ -5,9 +5,9 @@ import { LinkState } from "../types/link/linkState";
 import { LinkType } from "../types/link/linkType";
 import { Principal } from "@dfinity/principal";
 import { managedState } from "$lib/managedState";
-import { tempLinkRepository } from "../repositories/tempLinkRepository";
 import { TempLink } from "../types/tempLink";
-import { CreateLinkData } from "../types/createLinkData";
+import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
+import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
 
 // Mock localStorage
 const localStorageMock = (() => {

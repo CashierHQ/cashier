@@ -1,14 +1,14 @@
+import type { TokenWithPriceAndBalance } from "$modules/token/types";
+import { describe, expect, it, vi } from "vitest";
+import { LinkCreationStore } from "../linkCreationStore.svelte";
+import TempLink from "$modules/links/types/tempLink";
+import { LinkState } from "$modules/links/types/link/linkState";
 import {
   CreateLinkAsset,
   CreateLinkData,
-} from "$modules/links/types/createLinkData";
-import type { TokenWithPriceAndBalance } from "$modules/token/types";
-import { describe, expect, it, vi } from "vitest";
-import { LinkStep } from "../../types/linkStep";
-import { LinkCreationStore } from "../linkCreationStore.svelte";
-import { TempLink } from "../../types/tempLink";
-import { LinkState } from "../../types/link/linkState";
-import { LinkType } from "../../types/link/linkType";
+} from "$modules/creationLink/types/createLinkData";
+import { LinkType } from "$modules/links/types/link/linkType";
+import { LinkStep } from "$modules/links/types/linkStep";
 
 // mock wallet store
 vi.mock("$modules/token/state/walletStore.svelte", () => {
