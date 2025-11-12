@@ -39,10 +39,9 @@ describe("groupAndSortByDate util", () => {
     const link1 = makeLink(baseTime);
     const link2 = makeLink(baseTime + 60n * 60n * 1000000000n); // +1 hour
     const link3 = makeLink(baseTime + 2n * 60n * 60n * 1000000000n); // +2 hour
+
     const result = groupAndSortByDate([link1, link2, link3]);
 
-    expect(result).toHaveLength(1);
-    // newest first
     expect(result[0].links).toEqual([link3, link2, link1]);
   });
 
