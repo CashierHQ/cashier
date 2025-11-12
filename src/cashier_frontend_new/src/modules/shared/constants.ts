@@ -34,4 +34,7 @@ export const FEATURE_FLAGS = {
     PUBLIC_SHARED_FEATURE_FLAGS_LOCAL_IDENTITY_PROVIDER === "true",
 };
 
+// Prefix for temporary links storage in localStorage
+export const TEMP_LINKS_STORAGE_KEY_PREFIX = "tempLinks";
+
 export const USD_DISPLAY_DECIMALS = 6;

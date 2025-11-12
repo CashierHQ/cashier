@@ -1,4 +1,4 @@
-import type { CreateLinkAsset } from "$modules/links/types/createLinkData";
+import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Err, Ok, type Result } from "ts-results-es";
 

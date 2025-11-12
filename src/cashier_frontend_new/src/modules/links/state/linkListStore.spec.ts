@@ -3,11 +3,51 @@ import { LinkListStore } from "./linkListStore.svelte";
 import { Link } from "../types/link/link";
 import { LinkState } from "../types/link/linkState";
 import { LinkType } from "../types/link/linkType";
+import { UnifiedLinkItemMapper } from "../types/linkList";
 import { Principal } from "@dfinity/principal";
 import { managedState } from "$lib/managedState";
+import { TempLink } from "../types/tempLink";
+import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
+import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
+
+// Mock localStorage
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => {
+      store[key] = value.toString();
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+  };
+})();
+
+Object.defineProperty(global, "localStorage", {
+  value: localStorageMock,
+  writable: true,
+});
 
 vi.mock("$lib/managedState", () => ({
   managedState: vi.fn(),
+}));
+
+vi.mock("$modules/creationLink/repositories/tempLinkRepository", () => ({
+  tempLinkRepository: {
+    get: vi.fn(() => []),
+  },
+}));
+
+vi.mock("$modules/auth/state/auth.svelte", () => ({
+  authState: {
+    account: {
+      owner: "test-owner",
+    },
+  },
 }));
 
 type MockManagedState<T> = {
@@ -19,11 +59,14 @@ type MockManagedState<T> = {
   reset: () => void;
 };
 
-describe("LinkListStore.groupAndSortByDate", () => {
+describe("LinkListStore.getLinks", () => {
   let store: LinkListStore;
   let mockQuery: MockManagedState<Link[]>;
 
   beforeEach(() => {
+    // Clear localStorage before each test
+    localStorageMock.clear();
+
     mockQuery = {
       data: undefined,
       refresh: vi.fn(),
@@ -39,71 +82,91 @@ describe("LinkListStore.groupAndSortByDate", () => {
     store = new LinkListStore();
   });
 
-  const makeLink = (create_at: bigint) =>
-    new Link(
-      "id",
-      "title",
-      Principal.fromText("aaaaa-aa"),
-      [],
-      LinkType.TIP,
-      create_at,
-      LinkState.ACTIVE,
-      0n,
-      0n,
-    );
+  it("should return empty array when no data", () => {
+    mockQuery.data = undefined;
+    vi.mocked(tempLinkRepository.get).mockReturnValue([]);
 
-  it("returns empty array for empty input", () => {
-    mockQuery.data = [];
-    const result = store.groupAndSortByDate();
+    const result = store.getLinks();
+
     expect(result).toEqual([]);
   });
 
-  it("groups single link", () => {
-    const link = makeLink(1700000000000000000n);
-    mockQuery.data = [link];
+  it("should return only persisted links when no temp links", () => {
+    const mockLink = new Link(
+      "link-1",
+      "Persisted Link",
+      Principal.fromText("aaaaa-aa"),
+      [],
+      LinkType.TIP,
+      BigInt(Date.now()),
+      LinkState.ACTIVE,
+      BigInt(1),
+      BigInt(0),
+    );
 
-    const result = store.groupAndSortByDate();
+    mockQuery.data = [mockLink];
+    vi.mocked(tempLinkRepository.get).mockReturnValue([]);
+
+    const result = store.getLinks();
 
     expect(result).toHaveLength(1);
-    expect(result[0].links).toEqual([link]);
+    expect(result[0]).toEqual(UnifiedLinkItemMapper.fromLink(mockLink));
   });
 
-  it("groups multiple links on same day", () => {
-    const baseTime = 1700000000000000000n;
-    const link1 = makeLink(baseTime);
-    const link2 = makeLink(baseTime + 60n * 60n * 1000000000n); // +1 hour
-    mockQuery.data = [link1, link2];
+  it("should return only temp links when no persisted links", () => {
+    const mockTempLink = new TempLink(
+      "temp-1",
+      BigInt(Date.now()),
+      LinkState.CHOOSING_TYPE,
+      new CreateLinkData({
+        title: "Draft",
+        linkType: LinkType.TIP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
 
-    const result = store.groupAndSortByDate();
+    mockQuery.data = undefined;
+    vi.mocked(tempLinkRepository.get).mockReturnValue([mockTempLink]);
+
+    const result = store.getLinks();
 
     expect(result).toHaveLength(1);
-    expect(result[0].links).toEqual([link1, link2]);
+    expect(result[0]).toEqual(UnifiedLinkItemMapper.fromTempLink(mockTempLink));
   });
 
-  it("groups links on different days and sorts descending", () => {
-    const day1 = 1700000000000000000n;
-    const day2 = day1 + 24n * 60n * 60n * 1000000000n; // +1 day
-    const link1 = makeLink(day1);
-    const link2 = makeLink(day2);
-    mockQuery.data = [link1, link2];
+  it("should return unified array of both persisted links and temp links", () => {
+    const mockLink = new Link(
+      "link-1",
+      "Persisted Link",
+      Principal.fromText("aaaaa-aa"),
+      [],
+      LinkType.TIP,
+      BigInt(Date.now()),
+      LinkState.ACTIVE,
+      BigInt(1),
+      BigInt(0),
+    );
 
-    const result = store.groupAndSortByDate();
+    const mockTempLink = new TempLink(
+      "temp-1",
+      BigInt(Date.now()),
+      LinkState.PREVIEW,
+      new CreateLinkData({
+        title: "Draft Link",
+        linkType: LinkType.TIP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
+
+    mockQuery.data = [mockLink];
+    vi.mocked(tempLinkRepository.get).mockReturnValue([mockTempLink]);
+
+    const result = store.getLinks();
 
     expect(result).toHaveLength(2);
-    expect(result[0].date).toBeGreaterThan(result[1].date); // Descending
-    expect(result[0].links).toEqual([link2]);
-    expect(result[1].links).toEqual([link1]);
-  });
-
-  it("handles links with same timestamp", () => {
-    const time = 1700000000000000000n;
-    const link1 = makeLink(time);
-    const link2 = makeLink(time);
-    mockQuery.data = [link1, link2];
-
-    const result = store.groupAndSortByDate();
-
-    expect(result).toHaveLength(1);
-    expect(result[0].links).toEqual([link1, link2]);
+    expect(result[0]).toEqual(UnifiedLinkItemMapper.fromLink(mockLink));
+    expect(result[1]).toEqual(UnifiedLinkItemMapper.fromTempLink(mockTempLink));
   });
 });

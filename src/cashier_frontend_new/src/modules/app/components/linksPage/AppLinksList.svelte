@@ -11,9 +11,12 @@
     groupedLinks: GroupedLink[];
   } = $props();
 
-  function handleLinkClick(event: MouseEvent, linkId: string) {
-    event.preventDefault();
-    goto(resolve(`/app/edit/${linkId}`));
+  function handleLinkClick(linkId: string, isTempLink: boolean) {
+    if (isTempLink) {
+      goto(resolve(`/app/create/${linkId}`));
+    } else {
+      goto(resolve(`/link/detail/${linkId}`));
+    }
   }
 </script>
 
@@ -31,7 +34,10 @@
           <ul class="space-y-4">
             {#each group.links as link (link.id)}
               <li>
-                <LinkItem {link} onClick={(e) => handleLinkClick(e, link.id)} />
+                <LinkItem
+                  {link}
+                  onClick={() => handleLinkClick(link.id, true)}
+                />
               </li>
             {/each}
           </ul>

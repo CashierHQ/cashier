@@ -4,9 +4,12 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import type { LinkCreationStore } from "../../state/linkCreationStore.svelte";
-  import { LinkType } from "../../types/link/linkType";
-  import { LinkStep } from "../../types/linkStep";
+  import {
+    LinkType,
+    type LinkTypeValue,
+  } from "$modules/links/types/link/linkType";
+  import { LinkStep } from "$modules/links/types/linkStep";
+  import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
 
   const {
     link,
@@ -17,14 +20,38 @@
   // Redirect if not in the correct step
   $effect(() => {
     if (link.state.step !== LinkStep.CHOOSE_TYPE) {
-      goto(resolve("/"));
+      goto(resolve("/app"));
     }
   });
   let errorMessage: string | null = $state(null);
 
   // Navigate back to home (cancel)
   function goBack() {
-    goto(resolve("/"));
+    goto(resolve("/app"));
+  }
+
+  // Handle input changes
+  function handleOnInput(
+    e: Event & {
+      currentTarget: EventTarget & HTMLInputElement;
+    },
+  ) {
+    link.createLinkData = {
+      ...link.createLinkData,
+      title: e.currentTarget.value,
+    };
+  }
+
+  // Handle select changes
+  function handleSelectLinkType(
+    e: Event & {
+      currentTarget: EventTarget & HTMLSelectElement;
+    },
+  ) {
+    link.createLinkData = {
+      ...link.createLinkData,
+      linkType: e.currentTarget.value as LinkTypeValue,
+    };
   }
 
   // Proceed to the next step
@@ -43,7 +70,8 @@
     <Label for="title">Link title</Label>
     <Input
       id="title"
-      bind:value={link.createLinkData.title}
+      value={link.createLinkData.title}
+      oninput={handleOnInput}
       placeholder="Enter a title for your link"
     />
   </div>
@@ -53,7 +81,8 @@
     <select
       id="linkType"
       class="block w-full rounded-md border px-3 py-2 text-base"
-      bind:value={link.createLinkData.linkType}
+      value={link.createLinkData.linkType}
+      onchange={handleSelectLinkType}
     >
       <option value={LinkType.TIP}>Tip</option>
       <option value={LinkType.AIRDROP}>Airdrop</option>

@@ -1,13 +1,13 @@
 import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { SvelteDate, SvelteMap } from "svelte/reactivity";
 import { cashierBackendService } from "../services/cashierBackend";
 import { Link, LinkMapper } from "../types/link/link";
-import type { GroupedLink } from "../types/linkList";
+import type { UnifiedLinkList } from "../types/linkList";
+import { UnifiedLinkItemMapper } from "../types/linkList";
+import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
 
 export class LinkListStore {
   readonly #linkListQuery;
-
   constructor() {
     this.#linkListQuery = managedState<Link[]>({
       queryFn: async () => {
@@ -38,38 +38,26 @@ export class LinkListStore {
   }
 
   /**
-   * Groups links by day and sorts them by descending date (most recent first)
+   * Get all links including both persisted links and temporary links as a unified array
+   * @returns UnifiedLinkList of Link and TempLink objects
    */
-  groupAndSortByDate(): GroupedLink[] {
-    if (!this.query.data) {
-      return [];
-    }
-
-    const map = new SvelteMap<bigint, Link[]>();
-
-    // Group links by day
-    for (const link of this.query.data) {
-      // derive the day key (midnight local time) from create_at
-      const ns = link.create_at;
-      const ms = Number(ns / 1000000n);
-      const d = new SvelteDate(ms);
-      const midnightLocalMs = new SvelteDate(
-        d.getFullYear(),
-        d.getMonth(),
-        d.getDate(),
-      ).getTime();
-      const dayKeyNs = BigInt(midnightLocalMs) * 1000000n;
-      // key of the day derived from create_at
-      const existing = map.get(dayKeyNs);
-      if (existing) existing.push(link);
-      else map.set(dayKeyNs, [link]);
-    }
-
-    // Sort groups by descending day (most recent first)
-    return Array.from(map.entries())
-      .sort((a, b) => (a[0] === b[0] ? 0 : a[0] > b[0] ? -1 : 1))
-      .map(([ns, dateLinks]) => ({ date: ns, links: dateLinks }));
+  getLinks(): UnifiedLinkList {
+    const owner = authState.account?.owner;
+    const tempLinks = owner ? tempLinkRepository.get(owner) : [];
+    const persisted = (this.query.data ?? []).map((l) =>
+      UnifiedLinkItemMapper.fromLink(l),
+    );
+    const temps = (tempLinks || []).map((t) =>
+      UnifiedLinkItemMapper.fromTempLink(t),
+    );
+    return [...persisted, ...temps];
   }
+
+  /**
+   * Groups links by day and sorts them by descending date (most recent first)
+   * Supports both persisted links and temporary links
+   */
+  // groupAndSortByDate moved to utils/groupAndSortByDate.ts as a pure helper
 }
 
 export const linkListStore = new LinkListStore();

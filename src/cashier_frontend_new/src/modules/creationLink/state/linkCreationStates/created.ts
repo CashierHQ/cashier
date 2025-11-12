@@ -1,7 +1,7 @@
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
+import { linkListStore } from "$modules/links/state/linkListStore.svelte";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkCreationState } from ".";
-import { linkListStore } from "../linkListStore.svelte";
 import type { LinkCreationStore } from "../linkCreationStore.svelte";
 import { LinkActiveState } from "./active";
 

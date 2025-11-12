@@ -4,7 +4,7 @@ import {
   CreateLinkData,
   CreateLinkDataMapper,
 } from "./createLinkData";
-import { LinkType } from "./link/linkType";
+import { LinkType } from "$modules/links/types/link/linkType";
 
 describe("CreateLinkData.toCreateLinkInput", () => {
   it("converts TIP CreateLinkData into CreateLinkInput Ok result", () => {
