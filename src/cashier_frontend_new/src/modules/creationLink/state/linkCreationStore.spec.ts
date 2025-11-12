@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import { tempLinkRepository } from "../repositories/tempLinkRepository";
-import { authState } from "$modules/auth/state/auth.svelte";
 import { LinkState } from "../../links/types/link/linkState";
 import { LinkType } from "../../links/types/link/linkType";
 import { CreateLinkData } from "../types/createLinkData";
@@ -41,14 +40,27 @@ vi.mock("../repositories/tempLinkRepository", () => ({
   },
 }));
 
-vi.mock("$modules/auth/state/auth.svelte", () => ({
-  authState: {
-    account: {
+// Provide a hoisted mock for auth state. It exposes a test-only setter
+// `__setAuthAccount` so tests can toggle authentication without TS casts.
+vi.mock("$modules/auth/state/auth.svelte", () => {
+  let currentAccount: { owner?: string; subaccount?: Uint8Array } | undefined =
+    {
       owner: "test-owner",
+    };
+
+  const authState = {
+    get account() {
+      return currentAccount;
     },
     buildAnonymousAgent: vi.fn(() => ({})),
-  },
-}));
+  };
+
+  function __setAuthAccount(value: { owner?: string } | undefined) {
+    currentAccount = value;
+  }
+
+  return { authState, __setAuthAccount };
+});
 
 // Mock token price store to avoid initialization issues
 vi.mock("$modules/token/state/tokenPriceStore.svelte", () => ({
@@ -308,10 +320,10 @@ describe("LinkCreationStore", () => {
     });
 
     it("should not sync when authState.account is undefined", async () => {
-      const originalAccount = authState.account;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (authState as any).account = undefined;
-
+      const mod = (await vi.importMock("$modules/auth/state/auth.svelte")) as {
+        __setAuthAccount: (v: { owner?: string } | undefined) => void;
+      };
+      mod.__setAuthAccount(undefined);
       const tempLink = new TempLink(
         "test-id-5",
         BigInt(Date.now()),
@@ -329,10 +341,6 @@ describe("LinkCreationStore", () => {
       await store.syncTempLink();
 
       expect(tempLinkRepository.update).not.toHaveBeenCalled();
-
-      // Restore
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (authState as any).account = originalAccount;
     });
   });
 
@@ -417,18 +425,52 @@ describe("LinkCreationStore", () => {
   });
 
   describe("getTempLink static method", () => {
-    it("should return undefined when user not authenticated", () => {
-      const originalAccount = authState.account;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (authState as any).account = undefined;
+    beforeEach(() => {
+      vi.clearAllMocks();
+    });
+
+    it("should return the temp link when user is authenticated", async () => {
+      const mod = (await vi.importMock("$modules/auth/state/auth.svelte")) as {
+        __setAuthAccount: (v: { owner?: string } | undefined) => void;
+      };
+      mod.__setAuthAccount(undefined);
 
       const result = LinkCreationStore.getTempLink("test-id");
 
-      expect(result).toBeUndefined();
+      expect(result.isErr()).toBe(true);
+      expect(result.isOk()).toBe(false);
+      expect(result.unwrapErr().message).toBe("User not authenticated");
+    });
 
-      // Restore
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (authState as any).account = originalAccount;
+    it("should return undefined when user not authenticated", async () => {
+      const mod = (await vi.importMock("$modules/auth/state/auth.svelte")) as {
+        __setAuthAccount: (v: { owner?: string } | undefined) => void;
+      };
+      mod.__setAuthAccount({
+        owner: "test-owner-principal",
+      });
+      tempLinkRepository.getOne = vi.fn().mockReturnValue(
+        new TempLink(
+          "test-id",
+          BigInt(Date.now()),
+          LinkState.CHOOSING_TYPE,
+          new CreateLinkData({
+            title: "Test",
+            linkType: LinkType.TIP,
+            assets: [],
+            maxUse: 1,
+          }),
+        ),
+      );
+
+      const result = LinkCreationStore.getTempLink("test-id");
+
+      expect(result.isOk()).toBe(true);
+      const temp = result.unwrap();
+      expect(temp).toBeDefined();
+      expect(temp).toBeInstanceOf(TempLink);
+      expect(temp?.id).toBe("test-id");
+      expect(result.isErr()).toBe(false);
     });
   });
 });
