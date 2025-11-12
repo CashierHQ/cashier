@@ -4,7 +4,7 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { linkListStore } from "$modules/links/state/linkListStore.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
-  import type { LinkCreationStore } from "../../state/linkCreationStore.svelte";
+  import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
   import LinkDetails from "./linkDetails.svelte";
 
   const {

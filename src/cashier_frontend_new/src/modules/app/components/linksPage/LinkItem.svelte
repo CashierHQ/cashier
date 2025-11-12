@@ -13,12 +13,6 @@
   };
 
   const { onClick, link }: Props = $props();
-
-  const title =
-    link instanceof Link ? link.title : link.createLinkData.title || "No title";
-  const linkType =
-    link instanceof Link ? link.link_type : link.createLinkData.linkType;
-  const state = link.state;
 </script>
 
 <button onclick={onClick} class="block w-full text-left">
@@ -30,21 +24,21 @@
         <img
           alt="link"
           class="w-[18px] h-[18px] rounded-sm"
-          src={getLinkDefaultAvatar(linkType)}
+          src={getLinkDefaultAvatar(link.linkType)}
         />
       </div>
     </div>
     <div class="flex items-center justify-between grow ml-3">
       <div class="flex flex-col items-start justify-center">
-        <h3 class="text-[14px] font-medium">{title}</h3>
+        <h3 class="text-[14px] font-medium">{link.title}</h3>
       </div>
-      {#if state}
+      {#if link.state}
         <div
           class="text-xs font-xs rounded-full px-2 py-1 {getStatusClasses(
-            state,
+            link.state,
           )}"
         >
-          {getStatusLabel(state)}
+          {getStatusLabel(link.state)}
         </div>
       {/if}
     </div>
