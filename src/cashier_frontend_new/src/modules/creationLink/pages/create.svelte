@@ -15,13 +15,13 @@
   const getTempLinkRes = LinkCreationStore.getTempLink(id);
 
   if (getTempLinkRes.isErr()) {
-    goto(resolve("/app"));
+    goto(resolve("/links"));
   }
 
   const tempLink = getTempLinkRes.unwrap();
 
   if (!tempLink) {
-    goto(resolve("/app"));
+    goto(resolve("/links"));
     throw new Error("Temporary link data not found");
   }
 
