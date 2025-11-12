@@ -2,7 +2,7 @@
   import { resolve } from "$app/paths";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import type { LinkCreationStore } from "../../state/linkCreationStore.svelte";
+  import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
 
   const {
     link,

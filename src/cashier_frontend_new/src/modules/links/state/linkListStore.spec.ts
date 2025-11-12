@@ -3,6 +3,7 @@ import { LinkListStore } from "./linkListStore.svelte";
 import { Link } from "../types/link/link";
 import { LinkState } from "../types/link/linkState";
 import { LinkType } from "../types/link/linkType";
+import { UnifiedLinkItemMapper } from "../types/linkList";
 import { Principal } from "@dfinity/principal";
 import { managedState } from "$lib/managedState";
 import { TempLink } from "../types/tempLink";
@@ -109,7 +110,7 @@ describe("LinkListStore.getLinks", () => {
     const result = store.getLinks();
 
     expect(result).toHaveLength(1);
-    expect(result[0]).toBe(mockLink);
+    expect(result[0]).toEqual(UnifiedLinkItemMapper.fromLink(mockLink));
   });
 
   it("should return only temp links when no persisted links", () => {
@@ -131,7 +132,7 @@ describe("LinkListStore.getLinks", () => {
     const result = store.getLinks();
 
     expect(result).toHaveLength(1);
-    expect(result[0]).toBe(mockTempLink);
+    expect(result[0]).toEqual(UnifiedLinkItemMapper.fromTempLink(mockTempLink));
   });
 
   it("should return unified array of both persisted links and temp links", () => {
@@ -165,7 +166,7 @@ describe("LinkListStore.getLinks", () => {
     const result = store.getLinks();
 
     expect(result).toHaveLength(2);
-    expect(result[0]).toBe(mockLink);
-    expect(result[1]).toBe(mockTempLink);
+    expect(result[0]).toEqual(UnifiedLinkItemMapper.fromLink(mockLink));
+    expect(result[1]).toEqual(UnifiedLinkItemMapper.fromTempLink(mockTempLink));
   });
 });

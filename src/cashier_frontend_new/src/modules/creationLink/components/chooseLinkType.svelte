@@ -9,7 +9,7 @@
     type LinkTypeValue,
   } from "$modules/links/types/link/linkType";
   import { LinkStep } from "$modules/links/types/linkStep";
-  import type { LinkCreationStore } from "../../state/linkCreationStore.svelte";
+  import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
 
   const {
     link,
@@ -43,7 +43,7 @@
   }
 
   // Handle select changes
-  function onSelectChange(
+  function handleSelectLinkType(
     e: Event & {
       currentTarget: EventTarget & HTMLSelectElement;
     },
@@ -82,7 +82,7 @@
       id="linkType"
       class="block w-full rounded-md border px-3 py-2 text-base"
       value={link.createLinkData.linkType}
-      onchange={onSelectChange}
+      onchange={handleSelectLinkType}
     >
       <option value={LinkType.TIP}>Tip</option>
       <option value={LinkType.AIRDROP}>Airdrop</option>

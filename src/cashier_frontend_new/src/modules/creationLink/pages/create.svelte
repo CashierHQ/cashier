@@ -1,13 +1,13 @@
 <script lang="ts">
   import { LinkStep } from "$modules/links/types/linkStep";
-  import Preview from "../components/createLink/preview.svelte";
-  import CreatedLink from "../components/createLink/createdLink.svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { LinkCreationStore } from "../state/linkCreationStore.svelte";
-  import CreateLinkHeader from "../components/createLink/createLinkHeader.svelte";
-  import ChooseLinkType from "../components/createLink/chooseLinkType.svelte";
-  import AddAsset from "../components/createLink/addAsset.svelte";
+  import AddAsset from "../components/addAsset.svelte";
+  import CreateLinkHeader from "../components/createLinkHeader.svelte";
+  import ChooseLinkType from "../components/chooseLinkType.svelte";
+  import Preview from "../components/preview.svelte";
+  import CreatedLink from "../components/createdLink.svelte";
 
   const { id }: { id: string } = $props();
 

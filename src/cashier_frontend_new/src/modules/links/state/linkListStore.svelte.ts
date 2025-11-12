@@ -3,6 +3,7 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { cashierBackendService } from "../services/cashierBackend";
 import { Link, LinkMapper } from "../types/link/link";
 import type { UnifiedLinkList } from "../types/linkList";
+import { UnifiedLinkItemMapper } from "../types/linkList";
 import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
 
 export class LinkListStore {
@@ -43,7 +44,13 @@ export class LinkListStore {
   getLinks(): UnifiedLinkList {
     const owner = authState.account?.owner;
     const tempLinks = owner ? tempLinkRepository.get(owner) : [];
-    return [...(this.query.data ?? []), ...tempLinks];
+    const persisted = (this.query.data ?? []).map((l) =>
+      UnifiedLinkItemMapper.fromLink(l),
+    );
+    const temps = (tempLinks || []).map((t) =>
+      UnifiedLinkItemMapper.fromTempLink(t),
+    );
+    return [...persisted, ...temps];
   }
 
   /**
