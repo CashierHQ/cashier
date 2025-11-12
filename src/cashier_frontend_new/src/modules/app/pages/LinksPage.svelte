@@ -1,6 +1,7 @@
 <script lang="ts">
   import AppLinksList from "$modules/app/components/linksPage/AppLinksList.svelte";
   import { linkListStore } from "$modules/links/state/linkListStore.svelte";
+  import { groupAndSortByDate } from "$modules/links/utils/groupAndSortByDate";
 </script>
 
 <div class="w-full">
@@ -16,5 +17,5 @@
     >
   </div>
 
-  <AppLinksList groupedLinks={linkListStore.groupAndSortByDate()} />
+  <AppLinksList groupedLinks={groupAndSortByDate(linkListStore.getLinks())} />
 </div>

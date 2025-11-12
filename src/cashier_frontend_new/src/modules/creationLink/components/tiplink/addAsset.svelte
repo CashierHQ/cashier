@@ -3,7 +3,7 @@
   import { resolve } from "$app/paths";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import type { LinkCreationStore } from "$modules/links/state/linkCreationStore.svelte";
+  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
@@ -18,6 +18,25 @@
 
   // Error message state
   let errorMessage: string | null = $state(null);
+
+  // Auto-select the first token when wallet data becomes available and assets are empty
+  $effect(() => {
+    if (
+      walletStore.query.data &&
+      walletStore.query.data.length > 0 &&
+      link.createLinkData.assets.length === 0
+    ) {
+      link.createLinkData = {
+        ...link.createLinkData,
+        assets: [
+          {
+            address: walletStore.query.data[0].address,
+            useAmount: 0n,
+          },
+        ],
+      };
+    }
+  });
 
   // read-only derived state for the selected asset address
   let selectedAddress: string | undefined = $derived.by(() => {
@@ -35,37 +54,24 @@
     return token.unwrap();
   });
 
-  // Auto-select the first token when wallet data becomes available and nothing is selected
-  $effect(() => {
-    if (
-      !selectedAddress &&
-      walletStore.query.data &&
-      walletStore.query.data.length > 0
-    ) {
-      link.createLinkData.assets = [
-        {
-          address: walletStore.query.data[0].address,
-          useAmount: 0n,
-        },
-      ];
-    }
-  });
-
   // Redirect if not in the correct step
   $effect(() => {
     if (link.state.step !== LinkStep.ADD_ASSET) {
-      goto(resolve("/"));
+      goto(resolve("/app"));
     }
   });
 
   // Handle asset selection
   function handleSelectToken(address: string) {
-    link.createLinkData.assets = [
-      {
-        address,
-        useAmount: 0n,
-      },
-    ];
+    link.createLinkData = {
+      ...link.createLinkData,
+      assets: [
+        {
+          address,
+          useAmount: 0n,
+        },
+      ],
+    };
   }
 
   // Navigate back to previous ChooseLinkType step

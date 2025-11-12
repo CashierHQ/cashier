@@ -3,8 +3,8 @@
   import { resolve } from "$app/paths";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { linkListStore } from "$modules/links/state/linkListStore.svelte";
-  import type { LinkCreationStore } from "../../state/linkCreationStore.svelte";
-  import { LinkStep } from "../../types/linkStep";
+  import { LinkStep } from "$modules/links/types/linkStep";
+  import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
   import LinkDetails from "./linkDetails.svelte";
 
   const {
@@ -19,7 +19,7 @@
   // Redirect if not in the correct step
   $effect(() => {
     if (link.state.step !== LinkStep.PREVIEW) {
-      goto(resolve("/"));
+      goto(resolve("/app"));
     }
   });
 

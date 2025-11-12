@@ -4,14 +4,14 @@
     getStatusClasses,
     getLinkDefaultAvatar,
   } from "$modules/links/utils/linkItemHelpers";
-  import type { Link } from "$modules/links/types/link/link";
+  import type { UnifiedLinkItem } from "$modules/links/types/linkList";
 
   type Props = {
-    link: Link;
+    link: UnifiedLinkItem;
     onClick: (event: MouseEvent) => void;
   };
 
-  let { onClick, link }: Props = $props();
+  const { onClick, link }: Props = $props();
 </script>
 
 <button onclick={onClick} class="block w-full text-left">
@@ -23,7 +23,7 @@
         <img
           alt="link"
           class="w-[18px] h-[18px] rounded-sm"
-          src={getLinkDefaultAvatar(link.link_type)}
+          src={getLinkDefaultAvatar(link.linkType)}
         />
       </div>
     </div>
