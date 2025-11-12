@@ -12,16 +12,11 @@
     onClick: (event: MouseEvent) => void;
   };
 
-  let { onClick, link }: Props = $props();
+  const { onClick, link }: Props = $props();
 
-  // Derived properties that work for both Link and TempLink
-  let title = $derived(
-    link instanceof Link ? link.title : link.createLinkData.title || "No title",
-  );
-  let linkType = $derived(
-    link instanceof Link ? link.link_type : link.createLinkData.linkType,
-  );
-  let state = $derived(link.state);
+  const title =  link instanceof Link ? link.title : link.createLinkData.title || "No title";
+  const linkType = link instanceof Link ? link.link_type : link.createLinkData.linkType;
+  const state = link.state
 </script>
 
 <button onclick={onClick} class="block w-full text-left">
