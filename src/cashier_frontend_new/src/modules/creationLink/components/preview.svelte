@@ -19,7 +19,7 @@
   // Redirect if not in the correct step
   $effect(() => {
     if (link.state.step !== LinkStep.PREVIEW) {
-      goto(resolve("/app"));
+      goto(resolve("/links"));
     }
   });
 
