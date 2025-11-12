@@ -4,8 +4,6 @@
   import LinkItem from "./LinkItem.svelte";
   import { formatDate } from "$modules/shared/utils/formatDate";
   import type { GroupedLink } from "$modules/links/types/linkList";
-  import { Link } from "$modules/links/types/link/link";
-  import { TempLink } from "$modules/links/types/tempLink";
 
   const {
     groupedLinks,
