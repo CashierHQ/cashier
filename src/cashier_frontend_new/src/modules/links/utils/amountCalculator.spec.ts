@@ -1,10 +1,10 @@
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { describe, expect, it } from "vitest";
-import { CreateLinkAsset } from "../types/createLinkData";
 import {
   calculateRequiredAssetAmount,
   maxAmountForAsset,
 } from "./amountCalculator";
+import { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 
 describe("calculateRequiredAssetAmount", () => {
   it("should return an error if token is not found", () => {
