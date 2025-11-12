@@ -36,9 +36,7 @@ const baseAppLinks: Record<string, Omit<LinkOrEmail, "label">> = {
 };
 
 // Function to get translated app links
-export function getAppLinks(
-  t: (key: string) => string,
-): Record<string, LinkOrEmail> {
+export function getAppLinks(t: (key: string) => string): Record<string, LinkOrEmail> {
   return {
     termsOfService: {
       ...baseAppLinks.termsOfService,
@@ -78,3 +76,4 @@ export function getAppLinks(
     },
   };
 }
+
