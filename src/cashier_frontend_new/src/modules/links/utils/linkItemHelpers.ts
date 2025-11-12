@@ -13,6 +13,9 @@ export function getStatusLabel(
   t: (key: string) => string,
 ): string {
   switch (state) {
+    case LinkState.CHOOSING_TYPE:
+    case LinkState.ADDING_ASSET:
+    case LinkState.PREVIEW:
     case LinkState.CREATE_LINK:
       return t("links.status.draft");
     case LinkState.ACTIVE:
@@ -28,6 +31,9 @@ export function getStatusLabel(
 
 export function getStatusClasses(state: LinkStateValue): string {
   switch (state) {
+    case LinkState.CHOOSING_TYPE:
+    case LinkState.ADDING_ASSET:
+    case LinkState.PREVIEW:
     case LinkState.CREATE_LINK:
       return "bg-lightyellow text-yellow";
     case LinkState.ACTIVE:

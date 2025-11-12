@@ -1,6 +1,5 @@
 <script lang="ts">
   import { Lock, Feather, Zap, ChevronDown, ChevronUp } from "lucide-svelte";
-  import LinksList from "$modules/links/components-old/linksList.svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
   import { locale } from "$lib/i18n";
 
@@ -60,9 +59,7 @@
 
   {#if userProfile.isLoggedIn()}
     <!-- Logged in content -->
-    <div class="w-full lg:w-1/3 mx-auto mt-4 px-4">
-      <LinksList />
-    </div>
+    <div class="w-full lg:w-1/3 mx-auto mt-4 px-4">Logged in</div>
   {:else}
     <!-- Main content for unauthenticated users -->
     <div

@@ -162,6 +162,10 @@ export class LinkDetailStore {
         case LinkState.INACTIVE_ENDED:
           this.#state = new LinkInactiveState(this);
           break;
+        case LinkState.CHOOSING_TYPE:
+        case LinkState.ADDING_ASSET:
+        case LinkState.PREVIEW:
+          throw new Error(`Invalid link state for detail store: ${link.state}`);
         default:
           assertUnreachable(link.state);
       }

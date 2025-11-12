@@ -3,3 +3,4 @@ node_modules/
 dist/
 
 project.inlang/cache
+coverage
