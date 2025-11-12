@@ -1,5 +1,5 @@
 <script lang="ts">
-  import CreateLink from "$modules/links/pages/create.svelte";
+  import CreateLink from "$modules/creationLink/pages/create.svelte";
 </script>
 
 <div class="w-full">
