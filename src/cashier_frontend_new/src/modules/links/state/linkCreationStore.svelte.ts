@@ -15,6 +15,7 @@ import { LinkStep } from "../types/linkStep";
 import { TempLink } from "../types/tempLink";
 import { LinkActiveState } from "./linkCreationStates/active";
 import { tempLinkRepository } from "../repositories/tempLinkRepository";
+import { Err, Ok, type Result } from "ts-results-es";
 
 // Simple reactive state management
 export class LinkCreationStore {
@@ -70,22 +71,12 @@ export class LinkCreationStore {
 
   // Move to the next state
   async goNext(): Promise<void> {
-    try {
-      await this.#state.goNext();
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      throw new Error(String(e ?? "rejected promise"));
-    }
+    await this.#state.goNext();
   }
 
   // Move to the previous state
   async goBack(): Promise<void> {
-    try {
-      await this.#state.goBack();
-    } catch (e) {
-      if (e instanceof Error) throw e;
-      throw new Error(String(e ?? "rejected promise"));
-    }
+    await this.#state.goBack();
   }
 
   /**
@@ -157,14 +148,14 @@ export class LinkCreationStore {
    * @param id string identifier of the temp link
    * @returns the TempLink object or undefined if not found
    */
-  static getTempLink(id: string): TempLink | undefined {
+  static getTempLink(id: string): Result<TempLink | undefined, Error> {
     const owner = authState.account?.owner;
-    if (!owner) return undefined;
-    return tempLinkRepository.getOne(owner, id);
+    if (!owner) return Err(new Error("User not authenticated"));
+    return Ok(tempLinkRepository.getOne(owner, id));
   }
 
   // Sync the temp link with storage: updates it or deletes it if link is created
-  async syncTempLink(): Promise<void> {
+  syncTempLink(): void {
     if (this.#state.step === LinkStep.CREATED) {
       return;
     }
@@ -192,7 +183,7 @@ export class LinkCreationStore {
     }
 
     if (this.#id && currentLinkState && authState.account) {
-      await tempLinkRepository.update({
+      tempLinkRepository.update({
         id: this.#id,
         updateTempLink: {
           state: currentLinkState,

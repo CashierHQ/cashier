@@ -27,6 +27,26 @@
     goto(resolve("/app"));
   }
 
+  // Handle input changes
+  function handleOnInput(e: Event & {
+    currentTarget: EventTarget & HTMLInputElement;
+}){
+    link.createLinkData = {
+      ...link.createLinkData,
+      title: e.currentTarget.value,
+    };
+  }
+
+  // Handle select changes
+  function onSelectChange(e: Event & {
+    currentTarget: EventTarget & HTMLSelectElement;
+}){
+    link.createLinkData = {
+      ...link.createLinkData,
+      linkType: e.currentTarget.value as LinkTypeValue,
+    };
+  }
+
   // Proceed to the next step
   async function goNext() {
     errorMessage = null;
@@ -44,12 +64,7 @@
     <Input
       id="title"
       value={link.createLinkData.title}
-      oninput={(e) => {
-        link.createLinkData = {
-          ...link.createLinkData,
-          title: e.currentTarget.value,
-        };
-      }}
+      oninput={handleOnInput}
       placeholder="Enter a title for your link"
     />
   </div>
@@ -60,12 +75,7 @@
       id="linkType"
       class="block w-full rounded-md border px-3 py-2 text-base"
       value={link.createLinkData.linkType}
-      onchange={(e) => {
-        link.createLinkData = {
-          ...link.createLinkData,
-          linkType: e.currentTarget.value as LinkTypeValue,
-        };
-      }}
+      onchange={onSelectChange}
     >
       <option value={LinkType.TIP}>Tip</option>
       <option value={LinkType.AIRDROP}>Airdrop</option>

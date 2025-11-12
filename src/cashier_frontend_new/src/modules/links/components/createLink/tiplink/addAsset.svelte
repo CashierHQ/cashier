@@ -63,7 +63,6 @@
 
   // Handle asset selection
   function handleSelectToken(address: string) {
-    console.log("Selected token address:", address);
     link.createLinkData = {
       ...link.createLinkData,
       assets: [
