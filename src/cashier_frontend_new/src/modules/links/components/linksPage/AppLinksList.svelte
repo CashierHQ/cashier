@@ -13,7 +13,7 @@
 
   function handleLinkClick(event: MouseEvent, linkId: string) {
     event.preventDefault();
-    goto(resolve(`/links/edit/${linkId}`));
+    goto(resolve(`/link/edit/${linkId}`));
   }
 </script>
 
