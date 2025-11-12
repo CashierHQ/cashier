@@ -39,8 +39,7 @@
       {:else if authState.account}
         <div class="flex items-center gap-4">
           <span class="text-sm text-muted-foreground">
-            {locale.t("home.header.welcome")}
-            <span class="text-foreground font-medium"
+            {locale.t("home.header.welcome")} <span class="text-foreground font-medium"
               >{authState.account.owner}</span
             >
           </span>

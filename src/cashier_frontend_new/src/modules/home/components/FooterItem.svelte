@@ -26,7 +26,7 @@
 </script>
 
 {#if href}
-  <a {href} {target} {rel} class={className}>
+  <a href={href} {target} {rel} class={className}>
     {#if children}
       {@render children()}
     {/if}

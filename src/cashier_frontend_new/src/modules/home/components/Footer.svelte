@@ -16,9 +16,7 @@
     <div class="flex flex-col gap-6 lg:hidden">
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <h3 class="text-xs font-semibold text-foreground mb-2">
-            {locale.t("home.footer.company")}
-          </h3>
+          <h3 class="text-xs font-semibold text-foreground mb-2">{locale.t("home.footer.company")}</h3>
           <ul class="space-y-1">
             <li>
               <FooterItem link={appLinks.aboutCashier} />

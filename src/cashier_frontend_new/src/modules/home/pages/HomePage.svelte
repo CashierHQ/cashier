@@ -95,10 +95,7 @@
         <h1
           class="text-[32px] md:text-[48px] lg:text-[60px] font-bold mt-2 lg:my-[16px] leading-[1.2] px-4 md:px-8 lg:px-0 text-center md:text-center lg:text-left"
         >
-          {locale.t("home.homePage.title")}
-          <span class="text-primary"
-            >{locale.t("home.homePage.titleHighlight")}</span
-          >
+          {locale.t("home.homePage.title")} <span class="text-primary">{locale.t("home.homePage.titleHighlight")}</span>
         </h1>
 
         <p
