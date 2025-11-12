@@ -11,7 +11,7 @@ export function groupAndSortByDate(allLinks: UnifiedLinkList): GroupedLink[] {
   // Group links by day
   for (const link of allLinks) {
     // derive the day key (midnight local time) from create_at
-    const ns = link.create_at;
+    const ns = link.linkCreateAt;
     const ms = Number(ns / 1000000n);
     const d = new SvelteDate(ms);
     const midnightLocalMs = new SvelteDate(
@@ -32,7 +32,11 @@ export function groupAndSortByDate(allLinks: UnifiedLinkList): GroupedLink[] {
     .map(([ns, dateLinks]) => {
       // Within each day, sort links by create_at descending (newest first)
       dateLinks.sort((x, y) =>
-        x.create_at === y.create_at ? 0 : x.create_at > y.create_at ? -1 : 1,
+        x.linkCreateAt === y.linkCreateAt
+          ? 0
+          : x.linkCreateAt > y.linkCreateAt
+            ? -1
+            : 1,
       );
       return { date: ns, links: dateLinks };
     });

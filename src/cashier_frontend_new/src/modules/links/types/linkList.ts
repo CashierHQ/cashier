@@ -14,6 +14,7 @@ export type UnifiedLinkItem = {
   title: string;
   state: LinkStateValue;
   linkType: LinkTypeValue;
+  linkCreateAt: bigint;
 };
 
 export class UnifiedLinkItemMapper {
@@ -23,6 +24,7 @@ export class UnifiedLinkItemMapper {
       title: link.title,
       state: link.state,
       linkType: link.link_type,
+      linkCreateAt: link.create_at,
     };
   }
 
@@ -32,6 +34,7 @@ export class UnifiedLinkItemMapper {
       title: tempLink.createLinkData.title || "No title",
       state: tempLink.state,
       linkType: tempLink.createLinkData.linkType,
+      linkCreateAt: tempLink.create_at,
     };
   }
 }
