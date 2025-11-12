@@ -3,7 +3,7 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { resolve } from "$app/paths";
   import LinkDetails from "./linkDetails.svelte";
-  import TxCart from "$modules/links/components/txCart/txCart.svelte";
+  import TxCart from "$modules/links/components-old/txCart/txCart.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
 
