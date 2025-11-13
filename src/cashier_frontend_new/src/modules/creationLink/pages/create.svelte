@@ -35,12 +35,6 @@
 
   setContext(LINK_BACK_CONTEXT_KEY, handleBack);
 
-  $effect(() => {
-    if (newLink) {
-      setContext(LINK_BACK_CONTEXT_KEY, handleBack);
-    }
-  });
-
   onMount(() => {
     const getTempLinkRes = LinkCreationStore.getTempLink(id);
 
