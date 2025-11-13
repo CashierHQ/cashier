@@ -213,9 +213,12 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
 
         // Act: get current user state
         let link_detail_result = receiver_fixture
-            .get_link_details_v2(&link_id, Some( GetLinkOptions {
-            action_type: ActionType::Receive,
-        }))
+            .get_link_details_v2(
+                &link_id,
+                Some(GetLinkOptions {
+                    action_type: ActionType::Receive,
+                }),
+            )
             .await;
 
         assert!(link_detail_result.is_ok());
@@ -338,9 +341,12 @@ async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
 
         // Act: get current user state
         let link_detail_result = receiver_fixture
-            .get_link_details_v2(&link_id, Some( GetLinkOptions {
-            action_type: ActionType::Receive,
-        }))
+            .get_link_details_v2(
+                &link_id,
+                Some(GetLinkOptions {
+                    action_type: ActionType::Receive,
+                }),
+            )
             .await;
 
         assert!(link_detail_result.is_ok());
