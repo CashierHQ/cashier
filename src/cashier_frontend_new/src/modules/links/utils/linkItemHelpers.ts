@@ -23,7 +23,7 @@ export function getStatusLabel(
     case LinkState.INACTIVE:
       return t("links.status.inactive");
     case LinkState.INACTIVE_ENDED:
-      return t("links.status.inactive");
+      return t("links.status.ended");
     default:
       assertUnreachable(state);
   }
@@ -39,8 +39,9 @@ export function getStatusClasses(state: LinkStateValue): string {
     case LinkState.ACTIVE:
       return "bg-green text-white";
     case LinkState.INACTIVE:
-    case LinkState.INACTIVE_ENDED:
       return "bg-gray-200 text-gray-700";
+    case LinkState.INACTIVE_ENDED:
+      return "bg-red-50 text-red-700";
     default:
       assertUnreachable(state);
   }

@@ -80,7 +80,8 @@
     "status": {
       "draft": "Draft",
       "active": "Active",
-      "inactive": "Inactive"
+      "inactive": "Inactive",
+      "ended": "Ended"
     }
   }
 }
