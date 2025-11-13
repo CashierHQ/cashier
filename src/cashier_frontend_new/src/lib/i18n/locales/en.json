@@ -1,0 +1,87 @@
+{
+  "home": {
+    "header": {
+      "reconnecting": "Reconnecting...",
+      "welcome": "Welcome",
+      "logout": "Logout",
+      "login": "Login"
+    },
+    "footer": {
+      "company": "Company",
+      "legalAndContact": "Legal & Contact",
+      "poweredBy": "Powered by",
+      "internetComputer": "Internet Computer"
+    },
+    "homePage": {
+      "inDevelopment": "In Development",
+      "expandDevelopmentNotice": "Expand development notice",
+      "collapseDevelopmentNotice": "Collapse development notice",
+      "developmentDisclaimer": "This website is currently in development and provided for demonstration purposes only. It is not intended for public use. Any data entered or actions taken on this site may not be secure, saved, or processed correctly. Use is at your own risk.",
+      "easy": "Easy",
+      "fast": "Fast",
+      "safe": "Safe",
+      "title": "Share crypto",
+      "titleHighlight": "as easily as texting",
+      "subtitle": "Send or receive tokens & NFTs with just a link or QR code",
+      "feature1": "No wallet setup or address sharing",
+      "feature2": "Use for tips, invoice, airdrops & swaps",
+      "feature3": "Lock with a password, NFT, or X",
+      "getStarted": "Get started"
+    },
+    "loginModal": {
+      "title": "Choose your wallet",
+      "connecting": "Connecting...",
+      "internetIdentity": "Internet Identity",
+      "successMessage": "Successfully logged in",
+      "errorMessage": "Failed to connect wallet. Please try again."
+    }
+  },
+  "constants": {
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "team": "Team",
+    "about": "About us",
+    "aboutCashier": "About Cashier",
+    "exploreCashier": "Explore Cashier",
+    "projectOverview": "Cashier project overview",
+    "faq": "FAQ",
+    "contactEmail": "Contact Email"
+  },
+  "links": {
+    "page": {
+      "title": "Cashier links",
+      "description": "Start creating transaction links with Cashier: create & airdrop NFTs, and more features coming!",
+      "gotItButton": "Got it!"
+    },
+    "disconnectModal": {
+      "title": "Disconnect wallet",
+      "description": "Are you sure you want to disconnect your wallet? If you do, you will be logged out",
+      "disconnectButton": "Disconnect",
+      "close": "Close",
+      "loggedOut": "You have been logged out",
+      "failedToDisconnect": "Failed to disconnect"
+    },
+    "walletButton": {
+      "openWallet": "Open wallet"
+    },
+    "menuButton": {
+      "openMenu": "Open menu"
+    },
+    "addLinkButton": {
+      "createNewLink": "Create new link"
+    },
+    "appSidebar": {
+      "notConnected": "Not connected",
+      "addressCopied": "Address copied",
+      "disconnect": "Disconnect",
+      "close": "Close",
+      "copyPrincipal": "Copy principal"
+    },
+    "status": {
+      "draft": "Draft",
+      "active": "Active",
+      "inactive": "Inactive",
+      "ended": "Ended"
+    }
+  }
+}

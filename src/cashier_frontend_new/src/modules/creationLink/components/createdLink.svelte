@@ -1,11 +1,11 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { resolve } from "$app/paths";
-  import LinkDetails from "./linkDetails.svelte";
-  import TxCart from "$modules/links/components/txCart/txCart.svelte";
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
+  import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
+  import LinkDetails from "./linkDetails.svelte";
 
   const {
     link,
@@ -20,13 +20,13 @@
   // Redirect if not in the correct step
   $effect(() => {
     if (link.state.step !== LinkStep.CREATED) {
-      goto(resolve("/app"));
+      goto(resolve("/links"));
     }
   });
 
   // Navigate back to the previous step
   async function goBack() {
-    goto(resolve("/app"));
+    goto(resolve("/links"));
   }
 
   async function goNext() {

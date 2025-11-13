@@ -8,19 +8,22 @@ import {
   type LinkTypeValue,
 } from "$modules/links/types/link/linkType";
 
-export function getStatusLabel(state: LinkStateValue): string {
+export function getStatusLabel(
+  state: LinkStateValue,
+  t: (key: string) => string,
+): string {
   switch (state) {
     case LinkState.CHOOSING_TYPE:
     case LinkState.ADDING_ASSET:
     case LinkState.PREVIEW:
     case LinkState.CREATE_LINK:
-      return "Draft";
+      return t("links.status.draft");
     case LinkState.ACTIVE:
-      return "Active";
+      return t("links.status.active");
     case LinkState.INACTIVE:
-      return "Inactive";
+      return t("links.status.inactive");
     case LinkState.INACTIVE_ENDED:
-      return "Inactive";
+      return t("links.status.ended");
     default:
       assertUnreachable(state);
   }
@@ -36,8 +39,9 @@ export function getStatusClasses(state: LinkStateValue): string {
     case LinkState.ACTIVE:
       return "bg-green text-white";
     case LinkState.INACTIVE:
-    case LinkState.INACTIVE_ENDED:
       return "bg-gray-200 text-gray-700";
+    case LinkState.INACTIVE_ENDED:
+      return "bg-red-50 text-red-700";
     default:
       assertUnreachable(state);
   }
