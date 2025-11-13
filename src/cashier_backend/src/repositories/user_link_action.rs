@@ -65,12 +65,12 @@ impl<S: Storage<UserLinkActionRepositoryStorage>> UserLinkActionRepository<S> {
             // Fetch current list of actions for this (user, link, action_type)
             let mut actions = store.get(&id_str).unwrap_or(Vec::new());
 
-            // Try to find an existing entry by action_id and replace it.
-            if let Some(pos) = actions
-                .iter()
-                .position(|a| a.action_id == link_action.action_id)
+            // Try to find an existing entry by action_id and replace it safely.
+            if let Some(existing) = actions
+                .iter_mut()
+                .find(|a| a.action_id == link_action.action_id)
             {
-                actions[pos] = link_action;
+                *existing = link_action;
             } else {
                 // If not found, append as new record
                 actions.push(link_action);
@@ -214,18 +214,18 @@ mod tests {
         let link_action2 = LinkAction {
             link_id: link_id.clone(),
             action_type: ActionType::Receive,
-            action_id: action_id2.clone(),
+            action_id: action_id2,
             user_id: user1,
             link_user_state: None,
         };
 
         repo.create(link_action1.clone());
-        repo.create(link_action2.clone());
+        repo.create(link_action2);
 
         // Act: update link_action1 to set state = Completed
         let updated = LinkAction {
             link_user_state: Some(LinkUserState::Completed),
-            ..link_action1.clone()
+            ..link_action1
         };
         repo.update(updated);
 
