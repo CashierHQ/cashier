@@ -1,9 +1,9 @@
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
+import { linkListStore } from "$modules/links/state/linkListStore.svelte";
+import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkDetailState } from ".";
 import type { LinkDetailStore } from "../linkDetailStore.svelte";
-import { linkListStore } from "../linkListStore.svelte";
 import { LinkActiveState } from "./active";
-import { LinkStep } from "$modules/links/types/linkStep";
 
 // State when the link has been successfully created
 export class LinkCreatedState implements LinkDetailState {

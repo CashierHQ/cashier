@@ -1,16 +1,16 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { LinkCreatedState } from "./created";
-import type { LinkDetailStore } from "../linkDetailStore.svelte";
-import { Principal } from "@dfinity/principal";
 import Action from "$modules/links/types/action/action";
-import { Ed25519KeyIdentity } from "@dfinity/identity";
-import { ActionType } from "$modules/links/types/action/actionType";
 import { ActionState } from "$modules/links/types/action/actionState";
+import { ActionType } from "$modules/links/types/action/actionType";
 import type { Link } from "$modules/links/types/link/link";
-import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkState } from "$modules/links/types/link/linkState";
-import { Err, Ok } from "ts-results-es";
+import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkStep } from "$modules/links/types/linkStep";
+import { Ed25519KeyIdentity } from "@dfinity/identity";
+import { Principal } from "@dfinity/principal";
+import { Err, Ok } from "ts-results-es";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { LinkDetailStore } from "../linkDetailStore.svelte";
+import { LinkCreatedState } from "./created";
 
 const mocks = vi.hoisted(() => {
   const user_process_action_v2Mock = vi.fn();
@@ -32,7 +32,7 @@ vi.mock("$modules/links/services/cashierBackend", () => ({
   cashierBackendService: mocks.cashierBackendService,
 }));
 
-vi.mock("../linkListStore.svelte", () => ({
+vi.mock("$modules/links/state/linkListStore.svelte", () => ({
   linkListStore: mocks.linkListStore,
 }));
 

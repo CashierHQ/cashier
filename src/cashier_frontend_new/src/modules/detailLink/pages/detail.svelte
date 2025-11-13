@@ -1,15 +1,15 @@
 <script lang="ts">
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { ChevronLeft } from "lucide-svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import TxCart from "../components/txCart/txCart.svelte";
-  import LinkInfoSection from "../components/linkDetail/linkInfoSection.svelte";
-  import UsageInfoSection from "../components/linkDetail/usageInfoSection.svelte";
-  import { LinkState } from "../types/link/linkState";
-  import { LinkDetailStore } from "../state/linkDetailStore.svelte";
-  import { ActionState } from "../types/action/actionState";
-  import { ActionType } from "../types/action/actionType";
+  import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import LinkInfoSection from "$modules/detailLink/components/linkInfoSection.svelte";
+  import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
+  import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
+  import { ActionState } from "$modules/links/types/action/actionState";
+  import { ActionType } from "$modules/links/types/action/actionType";
+  import { LinkState } from "$modules/links/types/link/linkState";
+  import TxCart from "$modules/transactionCart/components/txCart.svelte";
+  import { ChevronLeft } from "lucide-svelte";
 
   let { id }: { id: string } = $props();
 
@@ -85,11 +85,9 @@
 
 {#if linkDetail.query.isLoading}
   Loading...
-{/if}
-{#if !linkDetail.link}
+{:else if !linkDetail.link}
   Link not found
-{/if}
-{#if linkDetail.query.data && linkDetail.link}
+{:else if linkDetail.query.data && linkDetail.link}
   <div class="px-4 py-4">
     <div class="flex items-center gap-3 mb-4">
       <Button

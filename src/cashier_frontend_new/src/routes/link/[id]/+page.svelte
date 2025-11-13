@@ -1,8 +1,9 @@
 <script lang="ts">
-  import CreateLink from "$modules/creationLink/pages/create.svelte";
+  import { page } from "$app/state";
+  import UseLink from "$modules/userLink/pages/use.svelte";
+  const id = page.params.id;
 </script>
 
-<div class="w-full">
-  <h1 class="text-2xl font-bold mb-4">Create Link</h1>
-  <CreateLink />
-</div>
+{#if id}
+  <UseLink {id} />
+{/if}
