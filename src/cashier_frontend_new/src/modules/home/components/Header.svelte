@@ -3,6 +3,7 @@
   import CashierLogo from "$modules/ui/components/CashierLogo.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { resolve } from "$app/paths";
+  import { locale } from "$lib/i18n";
 
   type Props = {
     onLoginClick?: () => void;
@@ -33,17 +34,18 @@
           <div
             class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"
           ></div>
-          <span>Reconnecting...</span>
+          <span>{locale.t("home.header.reconnecting")}</span>
         </div>
       {:else if authState.account}
         <div class="flex items-center gap-4">
           <span class="text-sm text-muted-foreground">
-            Welcome <span class="text-foreground font-medium"
+            {locale.t("home.header.welcome")}
+            <span class="text-foreground font-medium"
               >{authState.account.owner}</span
             >
           </span>
           <Button onclick={handleLogout} variant="outline" size="sm">
-            Logout
+            {locale.t("home.header.logout")}
           </Button>
         </div>
       {:else}
@@ -52,7 +54,7 @@
           onclick={handleLoginClick}
           class="h-[45px] font-medium bg-transparent border border-[#e5e5e5] cursor-pointer text-primary !font-bold hover:bg-primary/90 hover:text-primary-foreground hover:border-primary hover:shadow-md transition-all duration-300 rounded-lg px-[15px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          Login
+          {locale.t("home.header.login")}
         </button>
       {/if}
     </div>

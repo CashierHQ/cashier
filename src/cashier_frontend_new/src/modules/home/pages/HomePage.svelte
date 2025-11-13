@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Lock, Feather, Zap, ChevronDown, ChevronUp } from "lucide-svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
+  import { locale } from "$lib/i18n";
 
   type Props = {
     onLoginClick?: () => void;
@@ -29,14 +30,14 @@
         <div class="flex flex-row gap-1.5 items-center w-full justify-between">
           <div class="flex flex-row gap-1.5 items-center flex-1 justify-center">
             <Lock class="w-3.5 h-3.5 lg:w-4.5 lg:h-4.5" />
-            <span>In Development</span>
+            <span>{locale.t("home.homePage.inDevelopment")}</span>
           </div>
           <button
             onclick={toggleDevelopment}
             class="flex items-center justify-center w-5 h-5 hover:bg-primary/10 cursor-pointer rounded-full transition-colors duration-200"
             aria-label={isDevelopmentExpanded
-              ? "Collapse development notice"
-              : "Expand development notice"}
+              ? locale.t("home.homePage.collapseDevelopmentNotice")
+              : locale.t("home.homePage.expandDevelopmentNotice")}
           >
             {#if isDevelopmentExpanded}
               <ChevronUp class="w-3 h-3 transition-transform duration-200" />
@@ -49,10 +50,7 @@
           <p
             class="text-[10px] lg:text-[12px] text-[#475467] text-center transition-all duration-300 ease-in-out"
           >
-            This website is currently in development and provided for
-            demonstration purposes only. It is not intended for public use. Any
-            data entered or actions taken on this site may not be secure, saved,
-            or processed correctly. Use is at your own risk.
+            {locale.t("home.homePage.developmentDisclaimer")}
           </p>
         {/if}
       </div>
@@ -75,32 +73,35 @@
             class="flex flex-row gap-1.5 items-center text-primary text-[11px] md:text-[13px] lg:text-[14px] bg-[#ECFEF3] rounded-full w-fit px-3 py-1 border border-[#ACEFC6]"
           >
             <Feather class="w-3.5 h-3.5 lg:w-4.5 lg:h-4.5" />
-            <span>Easy</span>
+            <span>{locale.t("home.homePage.easy")}</span>
           </div>
           <div
             class="flex flex-row gap-1.5 items-center text-primary text-[11px] md:text-[13px] lg:text-[14px] bg-[#ECFEF3] rounded-full w-fit px-3 py-1 border border-[#ACEFC6]"
           >
             <Zap class="w-3.5 h-3.5 lg:w-4.5 lg:h-4.5" />
-            <span>Fast</span>
+            <span>{locale.t("home.homePage.fast")}</span>
           </div>
           <div
             class="flex flex-row gap-1.5 items-center text-primary text-[11px] md:text-[13px] lg:text-[14px] bg-[#ECFEF3] rounded-full w-fit px-3 py-1 border border-[#ACEFC6]"
           >
             <Lock class="w-3.5 h-3.5 lg:w-4.5 lg:h-4.5" />
-            <span>Safe</span>
+            <span>{locale.t("home.homePage.safe")}</span>
           </div>
         </div>
 
         <h1
           class="text-[32px] md:text-[48px] lg:text-[60px] font-bold mt-2 lg:my-[16px] leading-[1.2] px-4 md:px-8 lg:px-0 text-center md:text-center lg:text-left"
         >
-          Share crypto <span class="text-primary">as easily as texting</span>
+          {locale.t("home.homePage.title")}
+          <span class="text-primary"
+            >{locale.t("home.homePage.titleHighlight")}</span
+          >
         </h1>
 
         <p
           class="text-[14px] md:text-[18px] font-light text-[#475467] px-4 md:px-8 lg:px-0 lg:text-[20px] text-center md:text-center lg:text-left"
         >
-          Send or receive tokens & NFTs with just a link or QR code
+          {locale.t("home.homePage.subtitle")}
         </p>
 
         <ul
@@ -113,7 +114,7 @@
             <p
               class="text-[10px] md:text-[14px] text-[#475467] lg:text-[16px] text-left font-light"
             >
-              No wallet setup or address sharing
+              {locale.t("home.homePage.feature1")}
             </p>
           </li>
           <li
@@ -123,7 +124,7 @@
             <p
               class="text-[10px] md:text-[14px] text-[#475467] lg:text-[16px] text-left font-light"
             >
-              Use for tips, invoice, airdrops & swaps
+              {locale.t("home.homePage.feature2")}
             </p>
           </li>
           <li
@@ -133,7 +134,7 @@
             <p
               class="text-[10px] md:text-[14px] text-[#475467] lg:text-[16px] text-left font-light"
             >
-              Lock with a password, NFT, or X
+              {locale.t("home.homePage.feature3")}
             </p>
           </li>
         </ul>
@@ -143,7 +144,7 @@
           class="items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-primary text-primary-foreground shadow hover:bg-primary/90 px-4 hidden md:block lg:block h-[48px] text-[1rem] w-[248px] rounded-full mt-[48px] md:mt-8 lg:mt-[48px]"
           type="button"
         >
-          Get started
+          {locale.t("home.homePage.getStarted")}
         </button>
       </div>
 
@@ -161,7 +162,7 @@
           class="inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-primary text-primary-foreground shadow hover:bg-primary/90 px-4 h-11 text-[1rem] w-[90%] max-w-[350px] rounded-full mx-auto mt-6 mb-8 md:hidden"
           type="button"
         >
-          Get started
+          {locale.t("home.homePage.getStarted")}
         </button>
       </div>
     </div>

@@ -1,34 +1,41 @@
 <script lang="ts">
-  import { LinkStep } from "$modules/links/types/linkStep";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import { LinkCreationStore } from "../state/linkCreationStore.svelte";
+  import { LinkStep } from "$modules/links/types/linkStep";
+  import { onMount } from "svelte";
   import AddAsset from "../components/addAsset.svelte";
-  import CreateLinkHeader from "../components/createLinkHeader.svelte";
   import ChooseLinkType from "../components/chooseLinkType.svelte";
-  import Preview from "../components/preview.svelte";
   import CreatedLink from "../components/createdLink.svelte";
+  import CreateLinkHeader from "../components/createLinkHeader.svelte";
+  import Preview from "../components/preview.svelte";
+  import { LinkCreationStore } from "../state/linkCreationStore.svelte";
 
   const { id }: { id: string } = $props();
+  let isLoading = $state(true);
+  let newLink = $state<LinkCreationStore | null>(null);
 
-  // load the temporary link data from localStorage
-  const getTempLinkRes = LinkCreationStore.getTempLink(id);
+  onMount(() => {
+    // load the temporary link data from localStorage
+    const getTempLinkRes = LinkCreationStore.getTempLink(id);
 
-  if (getTempLinkRes.isErr()) {
-    goto(resolve("/app"));
-  }
+    if (getTempLinkRes.isErr()) {
+      goto(resolve("/links"));
+    }
 
-  const tempLink = getTempLinkRes.unwrap();
+    const tempLink = getTempLinkRes.unwrap();
 
-  if (!tempLink) {
-    goto(resolve("/app"));
-    throw new Error("Temporary link data not found");
-  }
+    if (!tempLink) {
+      goto(resolve("/links"));
+    }
 
-  let newLink = new LinkCreationStore(tempLink);
+    newLink = new LinkCreationStore(tempLink);
+    isLoading = false;
+  });
 </script>
 
-{#if !newLink}
+{#if isLoading}
+  <div>Loading...</div>
+{:else if !newLink}
   <div>Link not found</div>
 {:else}
   <div class="space-y-6 p-4">

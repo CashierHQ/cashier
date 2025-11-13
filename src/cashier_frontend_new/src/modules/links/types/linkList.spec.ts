@@ -1,14 +1,14 @@
-import { describe, it, expect } from "vitest";
-import { UnifiedLinkItemMapper } from "./linkList";
-import { Link } from "./link/link";
-import TempLink from "./tempLink";
-import { LinkType } from "./link/linkType";
-import { LinkState } from "./link/linkState";
 import {
-  CreateLinkData,
   CreateLinkAsset,
+  CreateLinkData,
 } from "$modules/creationLink/types/createLinkData";
 import { Principal } from "@dfinity/principal";
+import { describe, expect, it } from "vitest";
+import { Link } from "./link/link";
+import { LinkState } from "./link/linkState";
+import { LinkType } from "./link/linkType";
+import { UnifiedLinkItemMapper } from "./linkList";
+import TempLink from "./tempLink";
 
 describe("UnifiedLinkItemMapper", () => {
   it("maps from real Link instance", () => {
@@ -32,6 +32,7 @@ describe("UnifiedLinkItemMapper", () => {
       linkCreateAt: BigInt(1),
       state: LinkState.ACTIVE,
       linkType: LinkType.TIP,
+      isCreated: true,
     });
   });
 
@@ -60,6 +61,7 @@ describe("UnifiedLinkItemMapper", () => {
       linkCreateAt: BigInt(1),
       state: LinkState.CREATE_LINK,
       linkType: LinkType.TIP,
+      isCreated: false,
     });
   });
 
@@ -87,6 +89,7 @@ describe("UnifiedLinkItemMapper", () => {
       linkCreateAt: BigInt(2),
       state: LinkState.CREATE_LINK,
       linkType: LinkType.TIP,
+      isCreated: false,
     });
   });
 });
