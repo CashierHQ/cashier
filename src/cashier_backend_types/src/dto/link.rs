@@ -85,6 +85,7 @@ pub struct AssetInfoDto {
 pub struct GetLinkResp {
     pub link: LinkDto,
     pub action: Option<ActionDto>,
+    pub link_user_state: Option<LinkUserState>,
 }
 
 impl From<LinkDetailUpdateAssetInfoInput> for AssetInfo {

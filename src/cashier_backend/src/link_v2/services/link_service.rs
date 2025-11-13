@@ -9,7 +9,9 @@ use crate::services::action::ActionService;
 use candid::Principal;
 use cashier_backend_types::dto::link::{GetLinkOptions, GetLinkResp};
 use cashier_backend_types::link_v2::dto::{CreateLinkDto, ProcessActionDto};
+use cashier_backend_types::repository::action::v1::ActionState;
 use cashier_backend_types::repository::link::v1::LinkState;
+use cashier_backend_types::repository::link_action::v1::LinkUserState;
 use cashier_backend_types::service::link::{PaginateInput, PaginateResult};
 use cashier_backend_types::{
     dto::{
@@ -20,13 +22,12 @@ use cashier_backend_types::{
     repository::{action::v1::ActionType, link_action::v1::LinkAction, user_link::v1::UserLink},
     service::action::ActionData,
 };
-use log::debug;
+use log::{debug, info};
 use std::rc::Rc;
 
 pub struct LinkV2Service<R: Repositories, M: TransactionManager + 'static> {
     pub link_repository: repositories::link::LinkRepository<R::Link>,
     pub user_link_repository: repositories::user_link::UserLinkRepository<R::UserLink>,
-    pub _link_action_repository: repositories::link_action::LinkActionRepository<R::LinkAction>,
     pub user_link_action_repository:
         repositories::user_link_action::UserLinkActionRepository<R::UserLinkAction>,
     pub action_service: ActionService<R>,
@@ -39,7 +40,6 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         Self {
             link_repository: repo.link(),
             user_link_repository: repo.user_link(),
-            _link_action_repository: repo.link_action(),
             user_link_action_repository: repo.user_link_action(),
             action_service: ActionService::new(repo),
             transaction_manager,
@@ -221,6 +221,23 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             &result.process_action_result.intent_txs_map,
         )?;
 
+        let process = &result.process_action_result;
+        let action = &process.action;
+        if process.is_success
+            && matches!(action.r#type, ActionType::Receive | ActionType::Send)
+            && action.state == ActionState::Success
+        {
+            let link_action = LinkAction {
+                link_id: result.link.id.clone(),
+                action_type: action.r#type.clone(),
+                action_id: action.id.clone(),
+                user_id: action.creator,
+                link_user_state: Some(LinkUserState::Completed),
+            };
+
+            self.user_link_action_repository.update(link_action);
+        }
+
         // response dto
         let action_dto = ActionDto::build(
             &ActionData {
@@ -287,23 +304,30 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             .get(&link_id.to_string())
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
-        let action = options.and_then(|opts| {
-            let action_type = opts.action_type;
+        // pick first Action and link_user_state
+        let (action, link_user_state) = match options {
+            Some(opts) => {
+                let action_type = opts.action_type;
 
-            let user_link_actions = self
-                .user_link_action_repository
-                .get_actions_by_user_link_and_type(caller, link_id, &action_type)?;
+                let user_link_actions = self
+                    .user_link_action_repository
+                    .get_actions_by_user_link_and_type(caller, link_id, &action_type);
 
-            debug!(
-                "get_link_details: user_link_actions found: {:?}",
-                user_link_actions
-            );
-
-            user_link_actions
-                .first()
-                .map(|link_action| link_action.action_id.clone())
-                .and_then(|action_id| self.action_service.get_action_by_id(&action_id))
-        });
+                if let Some(actions) = &user_link_actions {
+                    if let Some(link_action) = actions.first() {
+                        let action_id = link_action.action_id.clone();
+                        let state = link_action.link_user_state.clone();
+                        let action = self.action_service.get_action_by_id(&action_id);
+                        (action, state)
+                    } else {
+                        (None, None)
+                    }
+                } else {
+                    (None, None)
+                }
+            }
+            None => (None, None),
+        };
 
         // build response dto
         let link_dto = LinkDto::from(link_model);
@@ -321,9 +345,12 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             None
         };
 
+        info!("link_user_state {:?}", link_user_state);
+
         Ok(GetLinkResp {
             link: link_dto,
             action: action_dto,
+            link_user_state,
         })
     }
 }
