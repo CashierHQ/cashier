@@ -1,8 +1,11 @@
 <script lang="ts">
-  import { statusBadge } from "../../utils/statusBadge";
+  import { statusBadge } from "../../links/utils/statusBadge";
   import AssetList from "./assetList.svelte";
-  import type { Link } from "../../types/link/link";
-  import { LinkType, type LinkTypeValue } from "../../types/link/linkType";
+  import type { Link } from "../../links/types/link/link";
+  import {
+    LinkType,
+    type LinkTypeValue,
+  } from "../../links/types/link/linkType";
   import { assertUnreachable } from "$lib/rsMatch";
 
   interface Props {

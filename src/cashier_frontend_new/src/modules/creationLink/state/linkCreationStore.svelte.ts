@@ -1,24 +1,24 @@
 import { assertUnreachable } from "$lib/rsMatch";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { CreateLinkData } from "../types/createLinkData";
-import type { LinkCreationState } from "../../creationLink/state/linkCreationStates";
-import { ChooseLinkTypeState } from "../../creationLink/state/linkCreationStates/chooseLinkType";
-import { LinkCreatedState } from "../../creationLink/state/linkCreationStates/created";
-import { AddAssetState } from "../../creationLink/state/linkCreationStates/addAsset";
-import { AddAssetTipLinkState } from "../../creationLink/state/linkCreationStates/tiplink/addAsset";
-import { PreviewState } from "../../creationLink/state/linkCreationStates/preview";
-import { LinkActiveState } from "../../creationLink/state/linkCreationStates/active";
-import { tempLinkRepository } from "../repositories/tempLinkRepository";
-import { Err, Ok, type Result } from "ts-results-es";
+import type Action from "$modules/links/types/action/action";
+import type { Link } from "$modules/links/types/link/link";
 import {
   LinkState,
   type LinkStateValue,
 } from "$modules/links/types/link/linkState";
 import { LinkType } from "$modules/links/types/link/linkType";
-import TempLink from "$modules/links/types/tempLink";
 import { LinkStep } from "$modules/links/types/linkStep";
-import type Action from "$modules/links/types/action/action";
-import type { Link } from "$modules/links/types/link/link";
+import TempLink from "$modules/links/types/tempLink";
+import { Err, Ok, type Result } from "ts-results-es";
+import type { LinkCreationState } from "../../creationLink/state/linkCreationStates";
+import { LinkActiveState } from "../../creationLink/state/linkCreationStates/active";
+import { AddAssetState } from "../../creationLink/state/linkCreationStates/addAsset";
+import { ChooseLinkTypeState } from "../../creationLink/state/linkCreationStates/chooseLinkType";
+import { LinkCreatedState } from "../../creationLink/state/linkCreationStates/created";
+import { PreviewState } from "../../creationLink/state/linkCreationStates/preview";
+import { AddAssetTipLinkState } from "../../creationLink/state/linkCreationStates/tiplink/addAsset";
+import { tempLinkRepository } from "../repositories/tempLinkRepository";
+import { CreateLinkData } from "../types/createLinkData";
 
 // Simple reactive state management
 export class LinkCreationStore {
@@ -151,10 +151,14 @@ export class LinkCreationStore {
    * @param id string identifier of the temp link
    * @returns the TempLink object or undefined if not found
    */
-  static getTempLink(id: string): Result<TempLink | undefined, Error> {
+  static getTempLink(id: string): Result<TempLink, Error> {
     const owner = authState.account?.owner;
     if (!owner) return Err(new Error("User not authenticated"));
-    return Ok(tempLinkRepository.getOne(owner, id));
+    const tempLink = tempLinkRepository.getOne(owner, id);
+    if (!tempLink) {
+      return Err(new Error(`Temp link with id ${id} not found`));
+    }
+    return Ok(tempLink);
   }
 
   // Sync the temp link with storage: updates it or deletes it if link is created

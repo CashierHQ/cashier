@@ -1,6 +1,6 @@
 <script lang="ts">
   import AssetList from "./assetList.svelte";
-  import type { Link } from "../../types/link/link";
+  import type { Link } from "../../links/types/link/link";
 
   interface Props {
     link: Link;
