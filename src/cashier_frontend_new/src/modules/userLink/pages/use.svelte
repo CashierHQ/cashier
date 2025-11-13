@@ -1,17 +1,16 @@
 <script lang="ts">
-  import { LinkDetailStore } from "$modules/links/state/linkDetailStore.svelte";
-  import { ActionTypeMapper } from "$modules/links/types/action/actionType";
+  import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
-  import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import { ActionState } from "$modules/links/types/action/actionState";
-
+  import { ActionTypeMapper } from "$modules/links/types/action/actionType";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
-  import UserLinkStore from "../state/userLinkStore.svelte";
+  import TxCart from "$modules/transactionCart/components/txCart.svelte";
+  import Completed from "../components/useLink/states/Completed.svelte";
+  import Gate from "../components/useLink/states/Gate.svelte";
   import Landing from "../components/useLink/states/Landing.svelte";
   import Locked from "../components/useLink/states/Locked.svelte";
-  import Gate from "../components/useLink/states/Gate.svelte";
   import Unlocked from "../components/useLink/states/Unlocked.svelte";
-  import Completed from "../components/useLink/states/Completed.svelte";
+  import UserLinkStore from "../state/userLinkStore.svelte";
 
   let { id }: { id: string } = $props();
 

@@ -1,24 +1,24 @@
 import { managedState } from "$lib/managedState";
-import { fromNullable } from "@dfinity/utils";
-import { cashierBackendService } from "../services/cashierBackend";
-import { ActionMapper } from "../types/action/action";
+import { assertUnreachable } from "$lib/rsMatch";
+import { authState } from "$modules/auth/state/auth.svelte";
+import { cashierBackendService } from "$modules/links/services/cashierBackend";
+import { ActionMapper } from "$modules/links/types/action/action";
 import {
   ActionType,
   ActionTypeMapper,
   type ActionTypeValue,
-} from "../types/action/actionType";
-import { Link, LinkMapper } from "../types/link/link";
-import { authState } from "$modules/auth/state/auth.svelte";
-import { LinkState } from "../types/link/linkState";
-import { LinkType } from "../types/link/linkType";
-import { assertUnreachable } from "$lib/rsMatch";
+} from "$modules/links/types/action/actionType";
+import { Link, LinkMapper } from "$modules/links/types/link/link";
+import { LinkState } from "$modules/links/types/link/linkState";
+import { LinkType } from "$modules/links/types/link/linkType";
+import type { LinkAndAction } from "$modules/links/types/linkAndAction";
+import { LinkStep } from "$modules/links/types/linkStep";
+import { fromNullable } from "@dfinity/utils";
 import { Err, Ok, type Result } from "ts-results-es";
 import type { LinkDetailState } from "./linkDetailStates";
-import { LinkCreatedState } from "./linkDetailStates/created";
-import { LinkStep } from "$modules/links/types/linkStep";
-import { LinkInactiveState } from "./linkDetailStates/inactive";
 import { LinkActiveState } from "./linkDetailStates/active";
-import type { LinkAndAction } from "../types/linkAndAction";
+import { LinkCreatedState } from "./linkDetailStates/created";
+import { LinkInactiveState } from "./linkDetailStates/inactive";
 
 /**
  * Store for link detail
