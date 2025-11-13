@@ -4,7 +4,7 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import LinkInfoSection from "$modules/detailLink/components/linkInfoSection.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
-  import { LinkDetailStore } from "$modules/links/state/linkDetailStore.svelte";
+  import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
