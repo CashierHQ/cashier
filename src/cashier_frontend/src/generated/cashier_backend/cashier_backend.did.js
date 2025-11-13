@@ -185,6 +185,12 @@ export const idlFactory = ({ IDL }) => {
     'git_commit_timestamp' : IDL.Text,
   });
   const GetLinkOptions = IDL.Record({ 'action_type' : ActionType });
+  const LinkUserState = IDL.Variant({
+    'Address' : IDL.Null,
+    'GateClosed' : IDL.Null,
+    'GateOpened' : IDL.Null,
+    'Completed' : IDL.Null,
+  });
   const AssetInfoDto = IDL.Record({
     'asset' : Asset,
     'amount_per_link_use_action' : IDL.Nat,
@@ -215,6 +221,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GetLinkResp = IDL.Record({
     'action' : IDL.Opt(ActionDto),
+    'link_user_state' : IDL.Opt(LinkUserState),
     'link' : LinkDto,
   });
   const Result_3 = IDL.Variant({ 'Ok' : GetLinkResp, 'Err' : IDL.Text });
@@ -298,12 +305,6 @@ export const idlFactory = ({ IDL }) => {
     'link_id' : IDL.Text,
     'action_type' : ActionType,
     'anonymous_wallet_address' : IDL.Opt(IDL.Principal),
-  });
-  const LinkUserState = IDL.Variant({
-    'CompletedLink' : IDL.Null,
-    'Address' : IDL.Null,
-    'GateClosed' : IDL.Null,
-    'GateOpened' : IDL.Null,
   });
   const LinkGetUserStateOutput = IDL.Record({
     'action' : ActionDto,

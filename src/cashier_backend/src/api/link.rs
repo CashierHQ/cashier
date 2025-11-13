@@ -365,6 +365,7 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         Ok(GetLinkResp {
             link: LinkDto::from(link),
             action: action_dto,
+            link_user_state: None,
         })
     }
 
