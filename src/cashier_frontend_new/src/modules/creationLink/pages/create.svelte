@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { LinkStep } from "$modules/links/types/linkStep";
-  import { onMount } from 'svelte';
+  import { onMount } from "svelte";
   import AddAsset from "../components/addAsset.svelte";
   import ChooseLinkType from "../components/chooseLinkType.svelte";
   import CreatedLink from "../components/createdLink.svelte";

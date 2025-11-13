@@ -33,5 +33,5 @@
     </div>
   </div>
 
-  <AddLinkButton onClick={handleCreateNewLink}/>
+  <AddLinkButton onClick={handleCreateNewLink} />
 </div>

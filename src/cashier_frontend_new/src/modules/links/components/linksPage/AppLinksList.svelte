@@ -2,7 +2,10 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import LinkItem from "$modules/links/components/linksPage/LinkItem.svelte";
-  import type { GroupedLink, UnifiedLinkItem } from "$modules/links/types/linkList";
+  import type {
+    GroupedLink,
+    UnifiedLinkItem,
+  } from "$modules/links/types/linkList";
   import { formatDate } from "$modules/shared/utils/formatDate";
 
   const {
@@ -34,10 +37,7 @@
           <ul class="space-y-4">
             {#each group.links as link (link.id)}
               <li>
-                <LinkItem
-                  {link}
-                  onClick={() => handleLinkClick(link)}
-                />
+                <LinkItem {link} onClick={() => handleLinkClick(link)} />
               </li>
             {/each}
           </ul>
