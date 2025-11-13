@@ -15,6 +15,7 @@ export type UnifiedLinkItem = {
   state: LinkStateValue;
   linkType: LinkTypeValue;
   linkCreateAt: bigint;
+  isCreated?: boolean;
 };
 
 export class UnifiedLinkItemMapper {
@@ -25,6 +26,7 @@ export class UnifiedLinkItemMapper {
       state: link.state,
       linkType: link.link_type,
       linkCreateAt: link.create_at,
+      isCreated: true,
     };
   }
 
@@ -35,6 +37,7 @@ export class UnifiedLinkItemMapper {
       state: tempLink.state,
       linkType: tempLink.createLinkData.linkType,
       linkCreateAt: tempLink.create_at,
+      isCreated: false,
     };
   }
 }

@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { Plus } from "lucide-svelte";
   import { locale } from "$lib/i18n";
+  import { Plus } from "lucide-svelte";
 
   const {
     onClick,
   }: {
-    onClick?: () => void;
+    onClick: () => void;
   } = $props();
 </script>
 
