@@ -22,7 +22,6 @@ use cashier_backend_types::{
     repository::{action::v1::ActionType, link_action::v1::LinkAction, user_link::v1::UserLink},
     service::action::ActionData,
 };
-use log::{debug, info};
 use std::rc::Rc;
 
 pub struct LinkV2Service<R: Repositories, M: TransactionManager + 'static> {
@@ -344,8 +343,6 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         } else {
             None
         };
-
-        info!("link_user_state {:?}", link_user_state);
 
         Ok(GetLinkResp {
             link: link_dto,
