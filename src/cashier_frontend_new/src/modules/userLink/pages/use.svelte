@@ -2,7 +2,7 @@
   import { LinkDetailStore } from "$modules/links/state/linkDetailStore.svelte";
   import { ActionTypeMapper } from "$modules/links/types/action/actionType";
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
-  import TxCart from "$modules/links/components-old/txCart/txCart.svelte";
+  import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import { ActionState } from "$modules/links/types/action/actionState";
 
   import { UserLinkStep } from "$modules/links/types/userLinkStep";

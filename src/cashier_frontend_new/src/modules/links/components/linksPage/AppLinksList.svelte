@@ -2,8 +2,8 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import LinkItem from "$modules/links/components/linksPage/LinkItem.svelte";
+  import type { GroupedLink, UnifiedLinkItem } from "$modules/links/types/linkList";
   import { formatDate } from "$modules/shared/utils/formatDate";
-  import type { GroupedLink } from "$modules/links/types/linkList";
 
   const {
     groupedLinks,
@@ -11,11 +11,11 @@
     groupedLinks: GroupedLink[];
   } = $props();
 
-  function handleLinkClick(linkId: string, isTempLink: boolean) {
-    if (isTempLink) {
-      goto(resolve(`/app/create/${linkId}`));
+  function handleLinkClick(link: UnifiedLinkItem) {
+    if (link.isCreated) {
+      goto(resolve(`/link/detail/${link.id}`));
     } else {
-      goto(resolve(`/link/detail/${linkId}`));
+      goto(resolve(`/link/create/${link.id}`));
     }
   }
 </script>
@@ -36,7 +36,7 @@
               <li>
                 <LinkItem
                   {link}
-                  onClick={() => handleLinkClick(link.id, true)}
+                  onClick={() => handleLinkClick(link)}
                 />
               </li>
             {/each}
