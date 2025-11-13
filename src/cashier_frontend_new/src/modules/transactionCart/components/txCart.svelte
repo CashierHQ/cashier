@@ -1,21 +1,21 @@
 <script lang="ts">
-  import * as Drawer from "$lib/shadcn/components/ui/drawer";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import * as Drawer from "$lib/shadcn/components/ui/drawer";
+  import type { IITransport } from "$modules/auth/signer/ii/IITransport";
   import { authState } from "$modules/auth/state/auth.svelte";
   import Icrc112Service from "$modules/icrc112/services/icrc112Service";
-  import type { Signer } from "@slide-computer/signer";
-  import type { IITransport } from "$modules/auth/signer/ii/IITransport";
+  import type Action from "$modules/links/types/action/action";
+  import type { FeeItem } from "$modules/links/types/fee";
+  import type { Link } from "$modules/links/types/link/link";
+  import { getHeadingFromActionType } from "$modules/links/utils/txCart";
   import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { FeeService } from "$modules/transactionCart/services/feeService";
+  import { AssetProcessState } from "$modules/transactionCart/types/txCart";
+  import type { Signer } from "@slide-computer/signer";
   import AssetList from "./assetList.svelte";
   import Fee from "./fee.svelte";
   import FeeBreakdown from "./feeBreakdown.svelte";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { AssetProcessState } from "$modules/links/types/txCart";
-  import { getHeadingFromActionType } from "$modules/links/utils/txCart";
-  import { FeeService } from "$modules/links/services/feeService";
-  import type { FeeItem } from "$modules/links/types/fee";
-  import type Action from "$modules/links/types/action/action";
-  import type { Link } from "$modules/links/types/link/link";
 
   let {
     link,

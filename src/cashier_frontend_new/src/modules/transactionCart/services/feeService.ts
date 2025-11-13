@@ -1,10 +1,10 @@
-import Action from "$modules/links/types/action/action";
-import { ICP_LEDGER_FEE } from "$modules/token/constants";
-import { ActionType } from "$modules/links/types/action/actionType";
-import IntentTask from "$modules/links/types/action/intentTask";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import { formatNumber } from "$modules/shared/utils/formatNumber";
+import { ICP_LEDGER_FEE } from "$modules/token/constants";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
+import Action from "$modules/links/types/action/action";
+import { ActionType } from "$modules/links/types/action/actionType";
+import IntentTask from "$modules/links/types/action/intentTask";
 
 import { assertUnreachable } from "$lib/rsMatch";
 import {
@@ -12,8 +12,11 @@ import {
   type ComputeAmountAndFeeInput,
   type ComputeAmountAndFeeOutput,
   type FeeItem,
-} from "../types/fee";
-import { AssetProcessState, type AssetItem } from "../types/txCart";
+} from "$modules/links/types/fee";
+import {
+  AssetProcessState,
+  type AssetItem,
+} from "$modules/transactionCart/types/txCart";
 
 // Type for paired AssetItem and FeeItem
 type AssetAndFeeList = {

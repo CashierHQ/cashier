@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { AssetItem as AssetItemType } from "$modules/links/types/txCart";
+  import type { AssetItem as AssetItemType } from "$modules/transactionCart/types/txCart";
   import AssetItem from "./assetItem.svelte";
 
   const {
