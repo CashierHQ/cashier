@@ -223,11 +223,14 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
 
         assert!(link_detail_result.is_ok());
         let link_detail = link_detail_result.unwrap();
-        assert!(link_detail.link_user_state.is_some());
+        let link_user_state_dto = link_detail.link_user_state;
+
+        assert!(link_user_state_dto.is_some());
         assert_eq!(
-            link_detail.link_user_state.unwrap(),
-            LinkUserState::Completed
+            link_user_state_dto.unwrap().state,
+            Some(LinkUserState::Completed)
         );
+
         Ok(())
     })
     .await
@@ -351,10 +354,12 @@ async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
 
         assert!(link_detail_result.is_ok());
         let link_detail = link_detail_result.unwrap();
-        assert!(link_detail.link_user_state.is_some());
+        let link_user_state_dto = link_detail.link_user_state;
+
+        assert!(link_user_state_dto.is_some());
         assert_eq!(
-            link_detail.link_user_state.unwrap(),
-            LinkUserState::Completed
+            link_user_state_dto.unwrap().state,
+            Some(LinkUserState::Completed)
         );
 
         Ok(())
