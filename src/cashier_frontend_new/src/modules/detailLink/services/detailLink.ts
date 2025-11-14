@@ -111,8 +111,6 @@ export class DetailLinkService {
         getLinkResp.value.link_user_state.state,
       );
 
-      console.log("linkUserState", linkUserState);
-
       return Ok({
         link: LinkMapper.fromBackendType(res.link),
         action: actionDto ? ActionMapper.fromBackendType(actionDto) : undefined,
