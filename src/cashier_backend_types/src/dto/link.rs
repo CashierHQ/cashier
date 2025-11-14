@@ -85,6 +85,25 @@ pub struct AssetInfoDto {
 pub struct GetLinkResp {
     pub link: LinkDto,
     pub action: Option<ActionDto>,
+    pub link_user_state: LinkUserStateDto,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct LinkUserStateDto {
+    pub user_id: Principal,
+    pub link_id: String,
+    pub state: Option<LinkUserState>,
+}
+
+impl LinkUserStateDto {
+    /// Create a DTO from the provided parts.
+    pub fn from_parts(user_id: &Principal, link_id: &str, state: Option<LinkUserState>) -> Self {
+        LinkUserStateDto {
+            user_id: *user_id,
+            link_id: link_id.to_string(),
+            state,
+        }
+    }
 }
 
 impl From<LinkDetailUpdateAssetInfoInput> for AssetInfo {
