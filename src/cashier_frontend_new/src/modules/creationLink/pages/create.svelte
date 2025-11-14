@@ -2,14 +2,14 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { LinkStep } from "$modules/links/types/linkStep";
-  import { onMount, setContext } from "svelte";
+  import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
+  import { onMount } from "svelte";
   import AddAsset from "../components/addAsset.svelte";
   import ChooseLinkType from "../components/chooseLinkType.svelte";
   import CreatedLink from "../components/createdLink.svelte";
   import CreateLinkHeader from "../components/createLinkHeader.svelte";
   import Preview from "../components/preview.svelte";
   import { LinkCreationStore } from "../state/linkCreationStore.svelte";
-  import { LINK_BACK_CONTEXT_KEY } from "../context/linkBackContext";
 
   const { id }: { id: string } = $props();
   let isLoading = $state(true);
@@ -18,22 +18,16 @@
   async function handleBack() {
     if (!newLink) return;
 
-    const step = newLink.state?.step;
-
-    // On first step, navigate back to /links
-    if (step === LinkStep.CHOOSE_TYPE) {
+    if (newLink.state.step === LinkStep.CHOOSE_TYPE) {
       goto(resolve("/links"));
-      return;
-    }
-
-    try {
-      await newLink.goBack();
-    } catch (e) {
-      console.error("Failed to go back:", e);
+    } else {
+      try {
+        await newLink.goBack();
+      } catch (e) {
+        console.error("Failed to go back:", e);
+      }
     }
   }
-
-  setContext(LINK_BACK_CONTEXT_KEY, handleBack);
 
   onMount(() => {
     const getTempLinkRes = LinkCreationStore.getTempLink(id);
@@ -51,7 +45,13 @@
     }
 
     newLink = new LinkCreationStore(tempLink);
+    appHeaderStore.setBackHandler(handleBack);
     isLoading = false;
+
+    // Cleanup back handler on unmount
+    return () => {
+      appHeaderStore.clearBackHandler();
+    };
   });
 </script>
 
