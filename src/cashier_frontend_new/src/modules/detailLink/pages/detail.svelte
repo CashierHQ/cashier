@@ -8,8 +8,10 @@
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
+  import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import { ChevronLeft } from "lucide-svelte";
+  import { onMount } from "svelte";
 
   let { id }: { id: string } = $props();
 
@@ -81,6 +83,19 @@
   const openDrawer = () => {
     showTxCart = true;
   };
+
+  async function handleBack() {
+    goto(resolve("/links"));
+  }
+
+  onMount(() => {
+    appHeaderStore.setBackHandler(handleBack);
+
+    // Cleanup back handler on unmount
+    return () => {
+      appHeaderStore.clearBackHandler();
+    };
+  });
 </script>
 
 {#if linkDetail.query.isLoading}
@@ -92,9 +107,7 @@
     <div class="flex items-center gap-3 mb-4">
       <Button
         variant="outline"
-        onclick={() => {
-          goto(resolve("/links"));
-        }}
+        onclick={handleBack}
         class="p-2 cursor-pointer w-8 h-8 flex items-center justify-center "
       >
         <ChevronLeft />
