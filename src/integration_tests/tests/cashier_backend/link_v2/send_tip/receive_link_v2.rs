@@ -9,12 +9,14 @@ use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_contex
 use candid::Nat;
 use cashier_backend_types::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
 use cashier_backend_types::dto::action::CreateActionInput;
+use cashier_backend_types::dto::link::GetLinkOptions;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::link_v2::dto::ProcessActionV2Input;
 use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
 use cashier_backend_types::repository::common::Wallet;
 use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, IntentType};
 use cashier_backend_types::repository::link::v1::LinkState;
+use cashier_backend_types::repository::link_action::v1::LinkUserState;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
 use icrc_ledger_types::icrc1::account::Account;
 
@@ -209,6 +211,22 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
             "Link balance should be equal to zero"
         );
 
+        // Act: get current user state
+        let link_detail_result = receiver_fixture
+            .get_link_details_v2(
+                &link_id,
+                Some(GetLinkOptions {
+                    action_type: ActionType::Receive,
+                }),
+            )
+            .await;
+
+        assert!(link_detail_result.is_ok());
+        let link_detail = link_detail_result.unwrap();
+        let link_user_state_dto = link_detail.link_user_state;
+
+        assert_eq!(link_user_state_dto.state, Some(LinkUserState::Completed));
+
         Ok(())
     })
     .await
@@ -319,6 +337,22 @@ async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
             Nat::from(0u64),
             "Link balance should be equal to zero"
         );
+
+        // Act: get current user state
+        let link_detail_result = receiver_fixture
+            .get_link_details_v2(
+                &link_id,
+                Some(GetLinkOptions {
+                    action_type: ActionType::Receive,
+                }),
+            )
+            .await;
+
+        assert!(link_detail_result.is_ok());
+        let link_detail = link_detail_result.unwrap();
+        let link_user_state_dto = link_detail.link_user_state;
+
+        assert_eq!(link_user_state_dto.state, Some(LinkUserState::Completed));
 
         Ok(())
     })

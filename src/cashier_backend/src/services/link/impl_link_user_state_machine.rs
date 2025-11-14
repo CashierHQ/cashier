@@ -46,7 +46,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
         let new_state;
 
         // Check if we're in final state (CompletedLink)
-        if current_user_state == LinkUserState::CompletedLink {
+        if current_user_state == LinkUserState::Completed {
             return Err(CanisterError::HandleLogicError(
                 "current state is final state".to_string(),
             ));
@@ -71,7 +71,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
             }
 
             // Set the new state
-            new_state = LinkUserState::CompletedLink;
+            new_state = LinkUserState::Completed;
         }
         // !End of state machine logic
 
@@ -288,7 +288,7 @@ mod tests {
             action_type: link_action.action_type.clone(),
             action_id: link_action.action_id.clone(),
             user_id: link_action.user_id,
-            link_user_state: Some(LinkUserState::CompletedLink),
+            link_user_state: Some(LinkUserState::Completed),
         };
         service.link_action_repository.update(updated_link_action);
 
@@ -389,10 +389,7 @@ mod tests {
         // Assert
         assert!(result.is_ok());
         let link_action = result.unwrap();
-        assert_eq!(
-            link_action.link_user_state,
-            Some(LinkUserState::CompletedLink)
-        );
+        assert_eq!(link_action.link_user_state, Some(LinkUserState::Completed));
     }
 
     #[test]
@@ -698,7 +695,7 @@ mod tests {
         let output = result.unwrap();
         assert!(output.is_some());
         let output = output.unwrap();
-        assert_eq!(output.link_user_state, LinkUserState::CompletedLink);
+        assert_eq!(output.link_user_state, LinkUserState::Completed);
         assert_eq!(output.action.creator, creator_id);
     }
 }

@@ -183,7 +183,7 @@ mod tests {
             action_type: ActionType::Withdraw,
             action_id: "action2".to_string(),
             user_id: user2,
-            link_user_state: Some(LinkUserState::CompletedLink),
+            link_user_state: Some(LinkUserState::Completed),
         };
 
         repo.create(link_action1);
@@ -211,7 +211,7 @@ mod tests {
         assert_eq!(actions.first().unwrap().user_id, user2);
         assert_eq!(
             actions.first().unwrap().link_user_state,
-            Some(LinkUserState::CompletedLink)
+            Some(LinkUserState::Completed)
         );
     }
 }
