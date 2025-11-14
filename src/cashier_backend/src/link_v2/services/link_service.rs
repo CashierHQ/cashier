@@ -218,7 +218,7 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             &result.process_action_result.intent_txs_map,
         )?;
         self.action_service.update_link_user_state(&result);
-        
+
         // response dto
         let action_dto = ActionDto::build(
             &ActionData {
@@ -286,7 +286,9 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
         // pick first Action and link_user_state
-        let (action, link_user_state) = self.action_service.get_first_action(&caller, link_id, options);
+        let (action, link_user_state) = self
+            .action_service
+            .get_first_action(&caller, link_id, options);
         // build response dto
         let link_dto = LinkDto::from(link_model);
 

@@ -32,7 +32,8 @@ pub struct ActionService<R: Repositories> {
         repositories::intent_transaction::IntentTransactionRepository<R::IntentTransaction>,
     link_action_repository: repositories::link_action::LinkActionRepository<R::LinkAction>,
     user_action_repository: repositories::user_action::UserActionRepository<R::UserAction>,
-    user_link_action_repository: repositories::user_link_action::UserLinkActionRepository<R::UserLinkAction>,
+    user_link_action_repository:
+        repositories::user_link_action::UserLinkActionRepository<R::UserLinkAction>,
     // Domain logic
     domain_logic: ActionDomainLogic,
 }
@@ -270,11 +271,8 @@ impl<R: Repositories> ActionService<R> {
     /// # Arguments
     /// * `result` - `LinkProcessActionResult` containing the processed action and link
     /// # Returns
-    /// * `()` 
-    pub fn update_link_user_state(
-        &mut self,
-        result: &LinkProcessActionResult
-    ) -> () {
+    /// * `()`
+    pub fn update_link_user_state(&mut self, result: &LinkProcessActionResult) -> () {
         let action = &result.process_action_result.action;
         if result.process_action_result.is_success
             && matches!(action.r#type, ActionType::Receive | ActionType::Send)
@@ -292,7 +290,6 @@ impl<R: Repositories> ActionService<R> {
         }
     }
 
-    
     /// Returns the first action for a user and link, optionally filtered by options.
     /// # Arguments
     /// * `caller` - the user principal
@@ -300,7 +297,12 @@ impl<R: Repositories> ActionService<R> {
     /// * `options` - optional `GetLinkOptions` (e.g. action_type filter)
     /// # Returns
     /// * `(Option<Action>, Option<LinkUserStateDto>)` - the action (if any) and the link-user state
-    pub fn get_first_action(&self, caller: &Principal, link_id: &str, options: Option<GetLinkOptions>) -> (Option<Action>, Option<LinkUserStateDto>){
+    pub fn get_first_action(
+        &self,
+        caller: &Principal,
+        link_id: &str,
+        options: Option<GetLinkOptions>,
+    ) -> (Option<Action>, Option<LinkUserStateDto>) {
         match options {
             Some(opts) => {
                 let action_type = opts.action_type;
