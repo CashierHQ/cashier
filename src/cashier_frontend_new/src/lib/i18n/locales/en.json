@@ -82,6 +82,50 @@
       "active": "Active",
       "inactive": "Inactive",
       "ended": "Ended"
+    },
+    "linkForm": {
+      "header": {
+        "linkName": "Link name",
+        "editLink": "Edit link",
+        "back": "Back",
+        "chooseType": "Choose Type",
+        "asset": "Asset",
+        "preview": "Preview"
+      },
+      "chooseType": {
+        "linkTitle": "Link title",
+        "titlePlaceholder": "Enter a title for your link",
+        "titleRequired": "Please enter a name for your link",
+        "linkType": "Link type",
+        "tip": "Tip",
+        "airdrop": "Airdrop",
+        "tokenBasket": "Token basket",
+        "receivePayment": "Receive payment",
+        "back": "Back",
+        "next": "Next",
+        "continue": "Continue",
+        "failedToProceed": "Failed to proceed to next step",
+        "preview": {
+          "tip": {
+            "title": "Tipping crypto",
+            "description": "Congratulations, you received a tip!"
+          },
+          "airdrop": {
+            "title": "Airdrop",
+            "description": "Congratulations, you received an airdrop!"
+          },
+          "tokenBasket": {
+            "title": "Token basket",
+            "description": "Congratulations, you received a token basket!"
+          },
+          "receivePayment": {
+            "title": "Receive payment",
+            "description": "Pay me in crypto!"
+          },
+          "claimButton": "Claim",
+          "payButton": "Pay"
+        }
+      }
     }
   }
 }
