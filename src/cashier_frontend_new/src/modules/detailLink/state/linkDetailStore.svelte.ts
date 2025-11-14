@@ -2,19 +2,11 @@ import { managedState } from "$lib/managedState";
 import { assertUnreachable } from "$lib/rsMatch";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
-import { ActionMapper } from "$modules/links/types/action/action";
-import {
-  ActionType,
-  ActionTypeMapper,
-  type ActionTypeValue,
-} from "$modules/links/types/action/actionType";
-import { Link, LinkMapper } from "$modules/links/types/link/link";
+import { detailLinkService } from "$modules/detailLink/services/detailLink";
+import { type ActionTypeValue } from "$modules/links/types/action/actionType";
 import { LinkState } from "$modules/links/types/link/linkState";
-import { LinkType } from "$modules/links/types/link/linkType";
-import type { LinkAndAction } from "$modules/links/types/linkAndAction";
+import type { LinkAction } from "$modules/links/types/linkAndAction";
 import { LinkStep } from "$modules/links/types/linkStep";
-import { fromNullable } from "@dfinity/utils";
-import { Err, Ok, type Result } from "ts-results-es";
 import type { LinkDetailState } from "./linkDetailStates";
 import { LinkActiveState } from "./linkDetailStates/active";
 import { LinkCreatedState } from "./linkDetailStates/created";
@@ -24,115 +16,16 @@ import { LinkInactiveState } from "./linkDetailStates/inactive";
  * Store for link detail
  */
 export class LinkDetailStore {
-  /**
-   * Determine ActionType based on a Link instance.
-   * Moved from top-level helper into the store as a static method.
-   */
-  static determineActionTypeFromLink(
-    initialLink: Link,
-  ): ActionTypeValue | undefined {
-    if (initialLink.state === LinkState.CREATE_LINK)
-      return ActionType.CREATE_LINK;
-
-    if (initialLink.state === LinkState.ACTIVE) {
-      switch (initialLink.link_type) {
-        case LinkType.TIP:
-        case LinkType.TOKEN_BASKET:
-        case LinkType.AIRDROP:
-          return ActionType.RECEIVE;
-        case LinkType.RECEIVE_PAYMENT:
-          return ActionType.SEND;
-        default:
-          return assertUnreachable(initialLink.link_type);
-      }
-    }
-
-    if (initialLink.state === LinkState.INACTIVE) return ActionType.WITHDRAW;
-
-    return undefined;
-  }
-
-  /**
-   * Fetch link detail (possibly in two calls) — moved into the store as a static method.
-   */
-  static async fetchLinkDetail(
-    id: string,
-    {
-      action,
-      anonymous,
-    }: {
-      action?: ActionTypeValue;
-      anonymous: boolean;
-    },
-  ): Promise<Result<LinkAndAction, Error>> {
-    try {
-      // initial fetch: either with explicit action or without (respecting anonymous)
-      const initialResp = action
-        ? await cashierBackendService.getLink(id, {
-            action_type: ActionTypeMapper.toBackendType(action),
-          })
-        : await cashierBackendService.getLink(id, undefined, {
-            anonymous,
-          });
-
-      if (initialResp.isErr()) return Err(initialResp.error);
-
-      const initialLink = LinkMapper.fromBackendType(initialResp.value.link);
-
-      // If an explicit action was requested, return the initial response mapped
-      if (action) {
-        const actionDto = fromNullable(initialResp.value.action);
-        return Ok({
-          link: initialLink,
-          action: actionDto
-            ? ActionMapper.fromBackendType(actionDto)
-            : undefined,
-        });
-      }
-
-      // determine which ActionType (if any) we should fetch alongside the link
-      const actionType =
-        LinkDetailStore.determineActionTypeFromLink(initialLink);
-
-      if (!actionType) return Ok({ link: initialLink, action: undefined });
-
-      // If the caller requested anonymous access, avoid fetching the action
-      // on the second call — actions may require authentication/permission.
-      if (anonymous) {
-        console.log(
-          `Skipping fetching action (action_type=${actionType}) because anonymous=true`,
-        );
-        return Ok({ link: initialLink, action: undefined });
-      }
-
-      console.log(`Fetching link detail with action type: ${actionType}`);
-
-      const getLinkResp = await cashierBackendService.getLink(id, {
-        action_type: ActionTypeMapper.toBackendType(actionType),
-      });
-
-      if (getLinkResp.isErr()) return Err(getLinkResp.error);
-
-      const res = getLinkResp.unwrap();
-      const actionDto = fromNullable(res.action);
-
-      return Ok({
-        link: LinkMapper.fromBackendType(res.link),
-        action: actionDto ? ActionMapper.fromBackendType(actionDto) : undefined,
-      });
-    } catch (e) {
-      return Err(e as Error);
-    }
-  }
   #linkDetailQuery;
   #state: LinkDetailState;
   #id: string;
 
   constructor({ id }: { id: string }) {
     this.#id = id;
-    this.#linkDetailQuery = managedState<LinkAndAction>({
+    this.#linkDetailQuery = managedState<LinkAction>({
       queryFn: async () => {
-        const linkDetail = await LinkDetailStore.fetchLinkDetail(id, {
+        const linkDetail = await detailLinkService.fetchLinkDetail({
+          id,
           anonymous: !authState.isLoggedIn,
         });
         if (linkDetail.isErr()) {
@@ -141,6 +34,8 @@ export class LinkDetailStore {
         return linkDetail.value;
       },
       watch: true,
+      storageType: "localStorage",
+      persistedKey: ["link", authState.account?.owner ?? "anon", id],
     });
     this.#state = new LinkCreatedState(this);
 
