@@ -3,8 +3,6 @@
   import { LinkStep } from "$modules/links/types/linkStep";
   import { locale } from "$lib/i18n";
   import { ChevronLeft } from "lucide-svelte";
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
 
   const {
     link,
@@ -24,21 +22,6 @@
     link.createLinkData.title.trim() ||
       locale.t("links.linkForm.header.linkName"),
   );
-
-  async function handleBack() {
-    const step = link?.state?.step;
-
-    if (step === LinkStep.CHOOSE_TYPE) {
-      goto(resolve("/links"));
-      return;
-    }
-
-    try {
-      await link.goBack();
-    } catch (e) {
-      console.error("Failed to go back:", e);
-    }
-  }
 </script>
 
 <div class="w-full flex-none mb-2">
@@ -51,7 +34,7 @@
       {linkName}
     </h4>
     <button
-      onclick={handleBack}
+      onclick={async () => await link.goBack()}
       class="absolute left-0 cursor-pointer text-[1.5rem] transition-transform hover:scale-105"
       type="button"
       aria-label={locale.t("links.linkForm.header.back")}
