@@ -4,7 +4,11 @@
 use crate::domains::action::ActionDomainLogic;
 use crate::repositories::{self, Repositories};
 use candid::Principal;
+use cashier_backend_types::dto::link::GetLinkOptions;
 use cashier_backend_types::error::CanisterError;
+use cashier_backend_types::link_v2::link_result::LinkProcessActionResult;
+use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
+use cashier_backend_types::repository::link_action::v1::LinkUserState;
 use cashier_backend_types::service::action::RollUpStateResp;
 use cashier_backend_types::{
     repository::{
@@ -28,7 +32,8 @@ pub struct ActionService<R: Repositories> {
         repositories::intent_transaction::IntentTransactionRepository<R::IntentTransaction>,
     link_action_repository: repositories::link_action::LinkActionRepository<R::LinkAction>,
     user_action_repository: repositories::user_action::UserActionRepository<R::UserAction>,
-
+    user_link_action_repository:
+        repositories::user_link_action::UserLinkActionRepository<R::UserLinkAction>,
     // Domain logic
     domain_logic: ActionDomainLogic,
 }
@@ -44,6 +49,7 @@ impl<R: Repositories> ActionService<R> {
             intent_transaction_repository: repo.intent_transaction(),
             link_action_repository: repo.link_action(),
             user_action_repository: repo.user_action(),
+            user_link_action_repository: repo.user_link_action(),
             domain_logic: ActionDomainLogic::new(),
         }
     }
@@ -259,5 +265,65 @@ impl<R: Repositories> ActionService<R> {
         self.transaction_repository.batch_create(transactions);
 
         Ok(())
+    }
+
+    /// Update link user state based on the given link process action result.
+    /// # Arguments
+    /// * `result` - `LinkProcessActionResult` containing the processed action and link
+    /// # Returns
+    /// * `()`
+    pub fn update_link_user_state(&mut self, result: &LinkProcessActionResult) {
+        let action = &result.process_action_result.action;
+        if result.process_action_result.is_success
+            && matches!(action.r#type, ActionType::Receive | ActionType::Send)
+            && action.state == ActionState::Success
+        {
+            let link_action = LinkAction {
+                link_id: result.link.id.clone(),
+                action_type: action.r#type.clone(),
+                action_id: action.id.clone(),
+                user_id: action.creator,
+                link_user_state: Some(LinkUserState::Completed),
+            };
+
+            self.user_link_action_repository.update(link_action);
+        }
+    }
+
+    /// Returns the first action for a user and link, optionally filtered by options.
+    /// # Arguments
+    /// * `caller` - the user principal
+    /// * `link_id` - the link identifier
+    /// * `options` - optional `GetLinkOptions` (e.g. action_type filter)
+    /// # Returns
+    /// * `(Option<Action>, Option<LinkUserStateDto>)` - the action (if any) and the link-user state
+    pub fn get_first_action(
+        &self,
+        caller: &Principal,
+        link_id: &str,
+        options: Option<GetLinkOptions>,
+    ) -> (Option<Action>, Option<LinkUserState>) {
+        match options {
+            Some(opts) => {
+                let action_type = opts.action_type;
+
+                let user_link_actions = self
+                    .user_link_action_repository
+                    .get_actions_by_user_link_and_type(*caller, link_id, &action_type);
+
+                if let Some(actions) = &user_link_actions {
+                    if let Some(link_action) = actions.first() {
+                        let action = self.get_action_by_id(&link_action.action_id.clone());
+
+                        (action, link_action.link_user_state.clone())
+                    } else {
+                        (None, None)
+                    }
+                } else {
+                    (None, None)
+                }
+            }
+            None => (None, None),
+        }
     }
 }
