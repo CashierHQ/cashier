@@ -1,10 +1,10 @@
+import Action from "$modules/links/types/action/action";
+import { ActionType } from "$modules/links/types/action/actionType";
+import IntentTask from "$modules/links/types/action/intentTask";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import { formatNumber } from "$modules/shared/utils/formatNumber";
 import { ICP_LEDGER_FEE } from "$modules/token/constants";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
-import Action from "$modules/links/types/action/action";
-import { ActionType } from "$modules/links/types/action/actionType";
-import IntentTask from "$modules/links/types/action/intentTask";
 
 import { assertUnreachable } from "$lib/rsMatch";
 import {
@@ -201,3 +201,5 @@ export class FeeService {
     return pairs;
   }
 }
+
+export const feeService = new FeeService();
