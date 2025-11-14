@@ -174,7 +174,7 @@ const mapUserLinkStateToFrontendLinkUserState = (
 ): LINK_USER_STATE => {
   const key = getKeyVariant(state);
   switch (key) {
-    case "CompletedLink":
+    case "Completed":
       return LINK_USER_STATE.COMPLETED;
     case "Address":
       return LINK_USER_STATE.ADDRESS;

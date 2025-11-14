@@ -45,5 +45,5 @@ pub enum LinkUserState {
     // user_state_gate_opened
     GateOpened,
     // user_state_completed_link
-    CompletedLink,
+    Completed,
 }
