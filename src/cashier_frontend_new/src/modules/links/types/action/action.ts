@@ -1,12 +1,15 @@
-import type { Principal } from "@dfinity/principal";
-import { ActionTypeMapper, type ActionTypeValue } from "./actionType";
-import { ActionState, ActionStateMapper } from "./actionState";
-import Intent, { IntentMapper } from "./intent";
 import type {
   ActionDto,
   Icrc112Request as BackendIcrc112Request,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
-import Icrc112Request from "$modules/icrc112/types/icrc112Request";
+import {
+  Icrc112Request,
+  Icrc112RequestMapper,
+} from "$modules/icrc112/types/icrc112Request";
+import type { Principal } from "@dfinity/principal";
+import { ActionState, ActionStateMapper } from "./actionState";
+import { ActionTypeMapper, type ActionTypeValue } from "./actionType";
+import Intent, { IntentMapper } from "./intent";
 
 // Frontend Action class representing an action entity
 class Action {
@@ -40,7 +43,7 @@ export class ActionMapper {
       const outer = action.icrc_112_requests[0];
       icrc = outer.map((innerArr) =>
         innerArr.map((r: BackendIcrc112Request) =>
-          Icrc112Request.fromBackendType(r),
+          Icrc112RequestMapper.fromBackendType(r),
         ),
       );
     }

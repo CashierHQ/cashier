@@ -1,16 +1,20 @@
-import type { Principal } from "@dfinity/principal";
 import type { Icrc112Request as BackendIcrc112Request } from "$lib/generated/cashier_backend/cashier_backend.did";
+import type { Principal } from "@dfinity/principal";
 import { fromNullable } from "@dfinity/utils";
 
 // Frontend representation of an ICRC-112 request
-class Icrc112Request {
+export type Icrc112Requests = Icrc112Request[][];
+
+export class Icrc112Request {
   constructor(
     public arg: ArrayBuffer,
     public method: string,
     public canister_id: Principal,
     public nonce?: ArrayBuffer,
   ) {}
+}
 
+export class Icrc112RequestMapper {
   /**
    * Convert from backend Icrc112Request to frontend Icrc112Request
    * @param b BackendIcrc112Request from backend
@@ -37,5 +41,3 @@ class Icrc112Request {
     );
   }
 }
-
-export default Icrc112Request;

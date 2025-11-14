@@ -1,18 +1,16 @@
 <script lang="ts">
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
-  import type { IITransport } from "$modules/auth/signer/ii/IITransport";
   import { authState } from "$modules/auth/state/auth.svelte";
-  import Icrc112Service from "$modules/icrc112/services/icrc112Service";
   import type Action from "$modules/links/types/action/action";
   import type { FeeItem } from "$modules/links/types/fee";
   import type { Link } from "$modules/links/types/link/link";
   import { getHeadingFromActionType } from "$modules/links/utils/txCart";
-  import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { FeeService } from "$modules/transactionCart/services/feeService";
+  import { feeService } from "$modules/transactionCart/services/feeService";
   import { AssetProcessState } from "$modules/transactionCart/types/txCart";
-  import type { Signer } from "@slide-computer/signer";
+  import { onMount } from 'svelte';
+  import { TransactionCartStore } from '../state/txCartStore.svelte';
   import AssetList from "./assetList.svelte";
   import Fee from "./fee.svelte";
   import FeeBreakdown from "./feeBreakdown.svelte";
@@ -31,8 +29,7 @@
     onCloseDrawer?: () => void;
   } = $props();
 
-  const service = new FeeService();
-
+  const txCartStore = new TransactionCartStore();
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
 
@@ -48,7 +45,7 @@
 
   const assetAndFeeList = $derived.by(() =>
     action
-      ? service.mapActionToAssetAndFeeList(
+      ? feeService.mapActionToAssetAndFeeList(
           action,
           // build a record keyed by token address for the service
           Object.fromEntries(
@@ -94,12 +91,6 @@
       return;
     }
 
-    const signer = authState.getSigner() as Signer<IITransport> | null;
-    if (!signer) {
-      errorMessage = "No signer available for authentication.";
-      return;
-    }
-
     if (!authState.account?.owner) {
       errorMessage = "You are not authorized to confirm this action.";
       return;
@@ -108,42 +99,18 @@
     // Now mark processing started and clear messages
     isProcessing = true;
     errorMessage = null;
-    successMessage = null;
+    successMessage = null;    
 
-    const requests = action.icrc_112_requests ?? [];
-
-    // Execute ICRC-112 batch only if there are requests.
-    if (requests.length > 0) {
-      isExecutingIcrc112 = true;
-      try {
-        const icrc112Service = new Icrc112Service(signer);
-        const batchResult = await icrc112Service.sendBatchRequest(
-          requests,
-          authState.account.owner,
-          CASHIER_BACKEND_CANISTER_ID,
-        );
-
-        if (!batchResult.isOk()) {
-          const err = batchResult.unwrapErr();
-          console.error("Batch request failed:", err);
-          errorMessage = `Batch request failed: ${err?.message ?? String(err)}`;
-          // Do not proceed to goNext if batch failed (matches comment)
-          return;
-        }
-
-        console.log("Batch request successful:", batchResult.unwrap());
-        successMessage = "ICRC-112 batch request sent successfully";
-      } catch (err) {
-        console.error("Error sending ICRC-112 batch request:", err);
-        errorMessage = `Error sending ICRC-112 batch request: ${err instanceof Error ? err.message : String(err)}`;
-        return;
-      } finally {
-        isExecutingIcrc112 = false;
-      }
-    }
-
-    // Only reaches here if batch succeeded or there were no requests
     try {
+      const requests = action.icrc_112_requests ?? [];
+      const icrc112Result = await txCartStore.executeICRC112Requests(requests);
+      if (!icrc112Result.isOk()) {
+        const err = icrc112Result.unwrapErr();
+        console.error("ICRC-112 execution failed:", err);
+        errorMessage = `ICRC-112 execution failed: ${err?.message ?? String(err)}`;
+        isProcessing = false;
+        return;
+      }
       await goNext();
     } catch (e) {
       console.error("goNext threw an error:", e);
@@ -151,11 +118,14 @@
       errorMessage = errorMessage
         ? `${errorMessage}; goNext error: ${msg}`
         : msg;
+    } finally {
+      isProcessing = false;
     }
-    isProcessing = false;
   }
 
-  // Continue to next step after success
+  onMount(() => {
+    txCartStore.initialize();
+  });
 </script>
 
 {#if action}
