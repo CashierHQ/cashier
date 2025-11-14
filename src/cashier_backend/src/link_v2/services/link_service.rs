@@ -9,9 +9,7 @@ use crate::services::action::ActionService;
 use candid::Principal;
 use cashier_backend_types::dto::link::{GetLinkOptions, GetLinkResp};
 use cashier_backend_types::link_v2::dto::{CreateLinkDto, ProcessActionDto};
-use cashier_backend_types::repository::action::v1::ActionState;
 use cashier_backend_types::repository::link::v1::LinkState;
-use cashier_backend_types::repository::link_action::v1::LinkUserState;
 use cashier_backend_types::service::link::{PaginateInput, PaginateResult};
 use cashier_backend_types::{
     dto::{
@@ -219,24 +217,8 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             result.process_action_result.intents.clone(),
             &result.process_action_result.intent_txs_map,
         )?;
-
-        let process = &result.process_action_result;
-        let action = &process.action;
-        if process.is_success
-            && matches!(action.r#type, ActionType::Receive | ActionType::Send)
-            && action.state == ActionState::Success
-        {
-            let link_action = LinkAction {
-                link_id: result.link.id.clone(),
-                action_type: action.r#type.clone(),
-                action_id: action.id.clone(),
-                user_id: action.creator,
-                link_user_state: Some(LinkUserState::Completed),
-            };
-
-            self.user_link_action_repository.update(link_action);
-        }
-
+        self.action_service.update_link_user_state(&result);
+        
         // response dto
         let action_dto = ActionDto::build(
             &ActionData {
@@ -304,30 +286,7 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
         // pick first Action and link_user_state
-        let (action, link_user_state) = match options {
-            Some(opts) => {
-                let action_type = opts.action_type;
-
-                let user_link_actions = self
-                    .user_link_action_repository
-                    .get_actions_by_user_link_and_type(caller, link_id, &action_type);
-
-                if let Some(actions) = &user_link_actions {
-                    if let Some(link_action) = actions.first() {
-                        let action_id = link_action.action_id.clone();
-                        let state = link_action.link_user_state.clone();
-                        let action = self.action_service.get_action_by_id(&action_id);
-                        (action, state)
-                    } else {
-                        (None, None)
-                    }
-                } else {
-                    (None, None)
-                }
-            }
-            None => (None, None),
-        };
-
+        let (action, link_user_state) = self.action_service.get_first_action(&caller, link_id, options);
         // build response dto
         let link_dto = LinkDto::from(link_model);
 

@@ -191,6 +191,11 @@ export const idlFactory = ({ IDL }) => {
     'GateOpened' : IDL.Null,
     'Completed' : IDL.Null,
   });
+  const LinkUserStateDto = IDL.Record({
+    'link_id' : IDL.Text,
+    'user_id' : IDL.Principal,
+    'state' : IDL.Opt(LinkUserState),
+  });
   const AssetInfoDto = IDL.Record({
     'asset' : Asset,
     'amount_per_link_use_action' : IDL.Nat,
@@ -221,7 +226,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GetLinkResp = IDL.Record({
     'action' : IDL.Opt(ActionDto),
-    'link_user_state' : IDL.Opt(LinkUserState),
+    'link_user_state' : IDL.Opt(LinkUserStateDto),
     'link' : LinkDto,
   });
   const Result_3 = IDL.Variant({ 'Ok' : GetLinkResp, 'Err' : IDL.Text });
