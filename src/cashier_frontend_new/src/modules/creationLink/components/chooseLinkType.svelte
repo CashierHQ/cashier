@@ -5,6 +5,7 @@
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
+  import { getLinkTemplateInfo } from "../utils/linkTemplateInfo";
   import {
     LinkType,
     type LinkTypeValue,
@@ -121,54 +122,7 @@
     }
   }
 
-  function getLinkTypeInfo(type: LinkTypeValue) {
-    switch (type) {
-      case LinkType.TIP:
-        return {
-          label: locale.t("links.linkForm.chooseType.tip"),
-          image: "/icpLogo.png",
-          title: locale.t("links.linkForm.chooseType.preview.tip.title"),
-          description: locale.t(
-            "links.linkForm.chooseType.preview.tip.description",
-          ),
-          buttonText: locale.t("links.linkForm.chooseType.preview.claimButton"),
-        };
-      case LinkType.AIRDROP:
-        return {
-          label: locale.t("links.linkForm.chooseType.airdrop"),
-          image: "/chatToken.png",
-          title: locale.t("links.linkForm.chooseType.preview.airdrop.title"),
-          description: locale.t(
-            "links.linkForm.chooseType.preview.airdrop.description",
-          ),
-          buttonText: locale.t("links.linkForm.chooseType.preview.claimButton"),
-        };
-      case LinkType.TOKEN_BASKET:
-        return {
-          label: locale.t("links.linkForm.chooseType.tokenBasket"),
-          image: "/tokenBasket.png",
-          title: locale.t(
-            "links.linkForm.chooseType.preview.tokenBasket.title",
-          ),
-          description: locale.t(
-            "links.linkForm.chooseType.preview.tokenBasket.description",
-          ),
-          buttonText: locale.t("links.linkForm.chooseType.preview.claimButton"),
-        };
-      case LinkType.RECEIVE_PAYMENT:
-        return {
-          label: locale.t("links.linkForm.chooseType.receivePayment"),
-          image: "/ckUSDCLogo.svg",
-          title: locale.t(
-            "links.linkForm.chooseType.preview.receivePayment.title",
-          ),
-          description: locale.t(
-            "links.linkForm.chooseType.preview.receivePayment.description",
-          ),
-          buttonText: locale.t("links.linkForm.chooseType.preview.payButton"),
-        };
-    }
-  }
+
 </script>
 
 <div class="space-y-4 relative grow-1 flex flex-col mt-2 sm:mt-0">
@@ -210,7 +164,7 @@
           ontouchend={handleTouchEnd}
         >
           {#each linkTypes as linkType (linkType)}
-            {@const info = getLinkTypeInfo(linkType)}
+            {@const info = getLinkTemplateInfo(linkType)}
             <div
               class="flex-shrink-0 flex flex-col justify-center items-center px-2 h-[100%]"
               style="width: 25%;"
