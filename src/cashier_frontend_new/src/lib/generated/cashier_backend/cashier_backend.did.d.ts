@@ -87,7 +87,7 @@ export type FromCallType = { 'Canister' : null } |
 export interface GetLinkOptions { 'action_type' : ActionType }
 export interface GetLinkResp {
   'action' : [] | [ActionDto],
-  'link_user_state' : [] | [LinkUserStateDto],
+  'link_user_state' : LinkUserStateDto,
   'link' : LinkDto,
 }
 export type IcTransaction = { 'Icrc2Approve' : Icrc2Approve } |

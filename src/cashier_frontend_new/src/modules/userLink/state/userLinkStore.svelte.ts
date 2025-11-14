@@ -1,19 +1,33 @@
 import type { UserLinkState } from "./userLinkStates";
 import { LandingState } from "./userLinkStates/landing";
+import { CompletedState } from "./userLinkStates/completed";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
+import { LinkUserState } from "$modules/links/types/link/linkUserState";
+import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
+import type { LinkDetailStore as LinkDetailStoreType } from "$modules/detailLink/state/linkDetailStore.svelte";
 
 /**
  * Simple store for user-facing link flow.
  */
 export class UserLinkStore {
-  #state: UserLinkState;
+  #state = $state<UserLinkState>(new LandingState(this));
+
   // when true: Landing -> AddressLocked -> Gate -> AddressUnlocked -> Completed
   // when false: Landing -> AddressUnlocked -> Completed
-  public locked: boolean;
+  public locked = $state<boolean>(false);
 
-  constructor({ locked = false }: { locked?: boolean } = {}) {
-    this.locked = $state(locked);
-    this.#state = $state(new LandingState(this));
+  public linkDetail: LinkDetailStoreType;
+
+  constructor({ locked = false, id }: { locked?: boolean; id: string }) {
+    this.locked = locked;
+    this.linkDetail = new LinkDetailStore({ id });
+
+    $effect(() => {
+      const s = this.linkDetail.query.data?.link_user_state;
+      if (s === LinkUserState.COMPLETED) {
+        this.#state = new CompletedState(this);
+      }
+    });
   }
 
   /**
@@ -37,11 +51,27 @@ export class UserLinkStore {
     return this.#state.step;
   }
 
+  /* Convenience accessors for injected LinkDetailStore */
+  get link() {
+    return this.linkDetail?.link;
+  }
+
+  get action() {
+    return this.linkDetail?.action;
+  }
+
+  get isLoading() {
+    return this.linkDetail?.query?.isLoading ?? false;
+  }
+
+  get query() {
+    return this.linkDetail?.query;
+  }
+
   /**
    * Method to transition to the next state
    */
   async goNext(): Promise<void> {
-    console.log("UserLinkStore.goNext called");
     await this.#state.goNext();
   }
 
