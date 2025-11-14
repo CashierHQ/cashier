@@ -230,7 +230,7 @@
           <ChevronRight class="w-6 h-6 text-green" aria-hidden="true" />
         </button>
 
-        <div class="flex gap-4 mt-0 items-center justify-center w-full">
+        <div class="opacity-0 md:opacity-100 flex gap-4 mt-0 items-center justify-center w-full">
           <div class="flex gap-4 bg-white/50 px-2 py-2 rounded-full">
             {#each linkTypes, index (index)}
               <button
