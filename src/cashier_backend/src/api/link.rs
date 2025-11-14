@@ -10,7 +10,7 @@ use cashier_backend_types::dto::action::{
 };
 use cashier_backend_types::dto::link::{
     CreateLinkInput, GetLinkOptions, GetLinkResp, LinkDto, LinkGetUserStateInput,
-    LinkGetUserStateOutput, LinkUpdateUserStateInput, UpdateLinkInput,
+    LinkGetUserStateOutput, LinkUpdateUserStateInput, LinkUserStateDto, UpdateLinkInput,
 };
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::service::link::{PaginateInput, PaginateResult};
@@ -353,6 +353,9 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         // Get raw link and action data from service
         let (link, action) = self.state.link_service.get_link(id, options, caller)?;
 
+        // Clone link_id before moving link
+        let link_id = link.id.clone();
+
         // Convert action to DTO if it exists
         let action_dto = action.map(|action| {
             let intents = self
@@ -365,7 +368,11 @@ impl<E: IcEnvironment + Clone> LinkApi<E> {
         Ok(GetLinkResp {
             link: LinkDto::from(link),
             action: action_dto,
-            link_user_state: None,
+            link_user_state: LinkUserStateDto {
+                link_id,
+                user_id: caller,
+                state: None,
+            },
         })
     }
 

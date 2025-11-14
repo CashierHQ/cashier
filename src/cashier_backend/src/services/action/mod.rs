@@ -4,7 +4,7 @@
 use crate::domains::action::ActionDomainLogic;
 use crate::repositories::{self, Repositories};
 use candid::Principal;
-use cashier_backend_types::dto::link::{GetLinkOptions, LinkUserStateDto};
+use cashier_backend_types::dto::link::GetLinkOptions;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::link_v2::link_result::LinkProcessActionResult;
 use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
@@ -272,7 +272,7 @@ impl<R: Repositories> ActionService<R> {
     /// * `result` - `LinkProcessActionResult` containing the processed action and link
     /// # Returns
     /// * `()`
-    pub fn update_link_user_state(&mut self, result: &LinkProcessActionResult) -> () {
+    pub fn update_link_user_state(&mut self, result: &LinkProcessActionResult) {
         let action = &result.process_action_result.action;
         if result.process_action_result.is_success
             && matches!(action.r#type, ActionType::Receive | ActionType::Send)
@@ -302,7 +302,7 @@ impl<R: Repositories> ActionService<R> {
         caller: &Principal,
         link_id: &str,
         options: Option<GetLinkOptions>,
-    ) -> (Option<Action>, Option<LinkUserStateDto>) {
+    ) -> (Option<Action>, Option<LinkUserState>) {
         match options {
             Some(opts) => {
                 let action_type = opts.action_type;
@@ -315,13 +315,7 @@ impl<R: Repositories> ActionService<R> {
                     if let Some(link_action) = actions.first() {
                         let action = self.get_action_by_id(&link_action.action_id.clone());
 
-                        let link_user_dto = LinkUserStateDto {
-                            user_id: link_action.user_id.clone(),
-                            link_id: link_action.link_id.clone(),
-                            state: link_action.link_user_state.clone(),
-                        };
-
-                        (action, Some(link_user_dto))
+                        (action, link_action.link_user_state.clone())
                     } else {
                         (None, None)
                     }
