@@ -7,7 +7,7 @@ use crate::repositories;
 use crate::repositories::Repositories;
 use crate::services::action::ActionService;
 use candid::Principal;
-use cashier_backend_types::dto::link::{GetLinkOptions, GetLinkResp};
+use cashier_backend_types::dto::link::{GetLinkOptions, GetLinkResp, LinkUserStateDto};
 use cashier_backend_types::link_v2::dto::{CreateLinkDto, ProcessActionDto};
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::service::link::{PaginateInput, PaginateResult};
@@ -289,6 +289,7 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         let (action, link_user_state) = self
             .action_service
             .get_first_action(&caller, link_id, options);
+
         // build response dto
         let link_dto = LinkDto::from(link_model);
 
@@ -304,11 +305,12 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         } else {
             None
         };
+        let link_user_state_dto = LinkUserStateDto::from_parts(&caller, link_id, link_user_state);
 
         Ok(GetLinkResp {
             link: link_dto,
             action: action_dto,
-            link_user_state,
+            link_user_state: link_user_state_dto,
         })
     }
 }
