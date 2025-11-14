@@ -1,20 +1,19 @@
 <script lang="ts">
-  import CashierLogo from "$modules/ui/components/CashierLogo.svelte";
-  import WalletButton from "./WalletButton.svelte";
-  import MenuButton from "./MenuButton.svelte";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
-  import { goto } from "$app/navigation";
-  import { ChevronLeft } from "lucide-svelte";
   import { locale } from "$lib/i18n";
+  import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
+  import CashierLogo from "$modules/ui/components/CashierLogo.svelte";
+  import { ChevronLeft } from "lucide-svelte";
+  import MenuButton from "./MenuButton.svelte";
+  import WalletButton from "./WalletButton.svelte";
 
   type Props = {
     isCreateOrEditPage?: boolean;
     linkName?: string;
-    onBack?: () => void | Promise<void>;
   };
 
-  let { isCreateOrEditPage = false, linkName, onBack }: Props = $props();
+  let { isCreateOrEditPage = false, linkName }: Props = $props();
 
   function handleWalletClick() {
     // TODO: Implement wallet panel opening
@@ -36,11 +35,7 @@
 
   // Handle back button for mobile
   async function handleMobileBack() {
-    if (onBack) {
-      await onBack();
-    } else {
-      goto(resolve("/links"));
-    }
+    await appHeaderStore.triggerBack();
   }
 </script>
 
