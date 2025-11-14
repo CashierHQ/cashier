@@ -87,7 +87,7 @@ export type FromCallType = { 'Canister' : null } |
 export interface GetLinkOptions { 'action_type' : ActionType }
 export interface GetLinkResp {
   'action' : [] | [ActionDto],
-  'link_user_state' : [] | [LinkUserState],
+  'link_user_state' : [] | [LinkUserStateDto],
   'link' : LinkDto,
 }
 export type IcTransaction = { 'Icrc2Approve' : Icrc2Approve } |
@@ -227,6 +227,11 @@ export type LinkUserState = { 'Address' : null } |
   { 'GateClosed' : null } |
   { 'GateOpened' : null } |
   { 'Completed' : null };
+export interface LinkUserStateDto {
+  'link_id' : string,
+  'user_id' : Principal,
+  'state' : [] | [LinkUserState],
+}
 export interface LogServiceSettings {
   'log_filter' : [] | [string],
   'in_memory_records' : [] | [bigint],

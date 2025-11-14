@@ -85,7 +85,14 @@ pub struct AssetInfoDto {
 pub struct GetLinkResp {
     pub link: LinkDto,
     pub action: Option<ActionDto>,
-    pub link_user_state: Option<LinkUserState>,
+    pub link_user_state: Option<LinkUserStateDto>,
+}
+
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+pub struct LinkUserStateDto {
+    pub user_id: Principal,
+    pub link_id: String,
+    pub state: Option<LinkUserState>,
 }
 
 impl From<LinkDetailUpdateAssetInfoInput> for AssetInfo {
