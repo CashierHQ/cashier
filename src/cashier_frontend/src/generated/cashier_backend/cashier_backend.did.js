@@ -226,7 +226,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GetLinkResp = IDL.Record({
     'action' : IDL.Opt(ActionDto),
-    'link_user_state' : IDL.Opt(LinkUserStateDto),
+    'link_user_state' : LinkUserStateDto,
     'link' : LinkDto,
   });
   const Result_3 = IDL.Variant({ 'Ok' : GetLinkResp, 'Err' : IDL.Text });
