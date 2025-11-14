@@ -3,6 +3,6 @@
   let { children } = $props();
 </script>
 
-<div class="w-full lg:w-1/3 mx-auto mt-4">
+<div class="w-full mx-auto mt-4">
   {@render children?.()}
 </div>

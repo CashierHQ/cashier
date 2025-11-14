@@ -19,7 +19,7 @@ import {
 import { Principal } from "@dfinity/principal";
 import { Ok } from "ts-results-es";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { LinkDetailStore } from "./linkDetailStore.svelte";
+import { detailLinkService } from "./detailLink";
 
 const mocks = vi.hoisted(() => ({
   cashierBackendService: {
@@ -83,11 +83,16 @@ describe("fetchLinkDetail behavior", () => {
     vi.spyOn(LinkMapper, "fromBackendType").mockReturnValue(linkInstance);
     const linkDto: LinkDto = makeLinkDto({ Active: null }, { SendTip: null });
     const actionDto: ActionDto = makeActionDto();
-    const resp1: GetLinkResp = { link: linkDto, action: [actionDto] };
+    const resp1: GetLinkResp = {
+      link: linkDto,
+      action: [actionDto],
+      link_user_state: [],
+    };
     vi.mocked(cashierBackendService.getLink).mockResolvedValueOnce(Ok(resp1));
 
     // act
-    await LinkDetailStore.fetchLinkDetail("some-id", {
+    await detailLinkService.fetchLinkDetail({
+      id: "some-id",
       action: ActionType.SEND,
       anonymous: false,
     });
@@ -107,13 +112,24 @@ describe("fetchLinkDetail behavior", () => {
     // first call returns a link without action (empty array), second call returns action
     const linkDto1: LinkDto = makeLinkDto({ Active: null }, { SendTip: null });
     const actionDto2: ActionDto = makeActionDto();
-    const resp2: GetLinkResp = { link: linkDto1, action: [] };
-    const resp3: GetLinkResp = { link: linkDto1, action: [actionDto2] };
+    const resp2: GetLinkResp = {
+      link: linkDto1,
+      action: [],
+      link_user_state: [],
+    };
+    const resp3: GetLinkResp = {
+      link: linkDto1,
+      action: [actionDto2],
+      link_user_state: [],
+    };
     vi.mocked(cashierBackendService.getLink).mockResolvedValueOnce(Ok(resp2));
     vi.mocked(cashierBackendService.getLink).mockResolvedValueOnce(Ok(resp3));
 
     // act
-    await LinkDetailStore.fetchLinkDetail("some-id", { anonymous: false });
+    await detailLinkService.fetchLinkDetail({
+      id: "some-id",
+      anonymous: false,
+    });
 
     // assert
     expect(vi.mocked(cashierBackendService.getLink)).toHaveBeenCalledTimes(2);
@@ -129,13 +145,21 @@ describe("fetchLinkDetail behavior", () => {
     vi.spyOn(LinkMapper, "fromBackendType").mockReturnValue(linkInstance);
     const linkDto3: LinkDto = makeLinkDto({ Active: null }, { SendTip: null });
     const actionDto3: ActionDto = makeActionDto();
-    const resp4: GetLinkResp = { link: linkDto3, action: [] };
-    const resp5: GetLinkResp = { link: linkDto3, action: [actionDto3] };
+    const resp4: GetLinkResp = {
+      link: linkDto3,
+      action: [],
+      link_user_state: [],
+    };
+    const resp5: GetLinkResp = {
+      link: linkDto3,
+      action: [actionDto3],
+      link_user_state: [],
+    };
     vi.mocked(cashierBackendService.getLink).mockResolvedValueOnce(Ok(resp4));
     vi.mocked(cashierBackendService.getLink).mockResolvedValueOnce(Ok(resp5));
 
     // act
-    await LinkDetailStore.fetchLinkDetail("some-id", { anonymous: true });
+    await detailLinkService.fetchLinkDetail({ id: "some-id", anonymous: true });
 
     // assert
     expect(vi.mocked(cashierBackendService.getLink)).toHaveBeenCalledTimes(1);
@@ -143,42 +167,5 @@ describe("fetchLinkDetail behavior", () => {
       .calls[0];
     // first call should include actorOptions { anonymous: true }
     expect(firstCallArgs[2]).toEqual({ anonymous: true });
-  });
-});
-
-describe("determineActionTypeFromLink", () => {
-  it("returns CreateLink for CREATE_LINK", () => {
-    const res = LinkDetailStore.determineActionTypeFromLink(
-      makeLink(LinkState.CREATE_LINK),
-    );
-    expect(res).toEqual(ActionType.CREATE_LINK);
-  });
-
-  it("returns Receive for TIP, TOKEN_BASKET and AIRDROP when ACTIVE", () => {
-    const types: LinkTypeValue[] = [
-      LinkType.TIP,
-      LinkType.TOKEN_BASKET,
-      LinkType.AIRDROP,
-    ];
-    types.forEach((t) => {
-      const res = LinkDetailStore.determineActionTypeFromLink(
-        makeLink(LinkState.ACTIVE, t),
-      );
-      expect(res).toEqual(ActionType.RECEIVE);
-    });
-  });
-
-  it("returns Send for RECEIVE_PAYMENT when ACTIVE", () => {
-    const res = LinkDetailStore.determineActionTypeFromLink(
-      makeLink(LinkState.ACTIVE, LinkType.RECEIVE_PAYMENT),
-    );
-    expect(res).toEqual(ActionType.SEND);
-  });
-
-  it("returns Withdraw for INACTIVE", () => {
-    const res = LinkDetailStore.determineActionTypeFromLink(
-      makeLink(LinkState.INACTIVE),
-    );
-    expect(res).toEqual(ActionType.WITHDRAW);
   });
 });
