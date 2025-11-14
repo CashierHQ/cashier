@@ -229,7 +229,7 @@
         </button>
 
         <div
-          class="opacity-0 md:opacity-100 flex gap-4 mt-0 items-center justify-center w-full"
+          class="flex gap-4 items-center justify-center w-full mt-10 md:mt-0"
         >
           <div class="flex gap-4 bg-white/50 px-2 py-2 rounded-full">
             {#each linkTypes, index (index)}
@@ -250,7 +250,7 @@
   </div>
 
   <div
-    class="flex-none w-full w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"
+    class="flex-none w-full w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10"
   >
     <Button
       onclick={goNext}
