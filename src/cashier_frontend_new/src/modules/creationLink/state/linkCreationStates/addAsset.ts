@@ -1,4 +1,3 @@
-import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkCreationState } from ".";
 import type { LinkCreationStore } from "../linkCreationStore.svelte";
@@ -38,9 +37,5 @@ export class AddAssetState implements LinkCreationState {
   // Go back to the link type selection state
   async goBack(): Promise<void> {
     this.#link.state = new ChooseLinkTypeState(this.#link);
-  }
-
-  async processAction(actionId: string): Promise<ProcessActionResult> {
-    throw new Error("AddAssetState does not support processing actions.");
   }
 }
