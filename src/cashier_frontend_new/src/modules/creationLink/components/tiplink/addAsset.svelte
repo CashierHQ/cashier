@@ -6,8 +6,8 @@
   import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import type { TokenWithPriceAndBalance } from "$modules/token/types";
+  import { walletStore } from "../../../../../../../token/state/walletStore.svelte";
+  import type { TokenWithPriceAndBalance } from "../../../../../../../token/types";
   import InputAmount from "../inputAmount/inputAmount.svelte";
 
   const {

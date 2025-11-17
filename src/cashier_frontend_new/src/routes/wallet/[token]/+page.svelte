@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { walletStore } from "../../../../../../token/state/walletStore.svelte";
   import {
     balanceToUSDValue,
     parseBalanceUnits,

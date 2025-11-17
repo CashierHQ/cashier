@@ -1,7 +1,7 @@
 import { validationService } from "$modules/links/services/validationService";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { LinkStep } from "$modules/links/types/linkStep";
-import { walletStore } from "$modules/token/state/walletStore.svelte";
+import { walletStore } from "../../../../../../../../token/state/walletStore.svelte";
 import type { LinkCreationState } from "..";
 import type { LinkCreationStore } from "../../linkCreationStore.svelte";
 import { ChooseLinkTypeState } from "../chooseLinkType";
