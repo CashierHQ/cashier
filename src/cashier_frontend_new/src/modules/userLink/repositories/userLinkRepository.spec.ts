@@ -39,14 +39,10 @@ describe("userLinkRepository", () => {
   });
 
   it("upsert should write a persisted entry and getOne should read it back", () => {
-    userLinkRepository.upsert({
-      owner,
-      linkId,
-      data: { step: 2 },
-    });
+    userLinkRepository.upsert({ owner, linkId, data: { step: 2 } });
 
-    // ensure localStorage.setItem was called with the expected key
-    const expectedKey = `user_link.${owner}.${linkId}`;
+    // ensure localStorage.setItem was called with the expected owner-level key
+    const expectedKey = `user_link.${owner}`;
     expect(localStorageMock.setItem).toHaveBeenCalled();
     expect(Object.keys(localStorageMock.__store())).toContain(expectedKey);
 
@@ -74,7 +70,7 @@ describe("userLinkRepository", () => {
     userLinkRepository.upsert({ owner, linkId, data: { step: 5 } });
     const before = userLinkRepository.getOne(owner, linkId)!;
 
-    // call upsert without step
+    // call update without step
     userLinkRepository.upsert({ owner, linkId, data: {} });
     const after = userLinkRepository.getOne(owner, linkId)!;
 
@@ -87,7 +83,8 @@ describe("userLinkRepository", () => {
 
     userLinkRepository.delete(owner, linkId);
 
-    expect(localStorageMock.removeItem).toHaveBeenCalled();
+    // owner-level storage should have been updated (setItem called to persist filtered list)
+    expect(localStorageMock.setItem).toHaveBeenCalled();
     expect(userLinkRepository.getOne(owner, linkId)).toBeUndefined();
   });
 

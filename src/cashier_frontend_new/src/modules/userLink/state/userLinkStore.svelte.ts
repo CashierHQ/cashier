@@ -1,8 +1,5 @@
 import type { UserLinkState } from "./userLinkStates";
 import { LandingState } from "./userLinkStates/landing";
-import { AddressLockedState } from "./userLinkStates/addressLocked";
-import { AddressUnlockedState } from "./userLinkStates/addressUnlocked";
-import { GateState } from "./userLinkStates/gate";
 import { CompletedState } from "./userLinkStates/completed";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { LinkUserState } from "$modules/links/types/link/linkUserState";
@@ -10,7 +7,7 @@ import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelt
 import type { LinkDetailStore as LinkDetailStoreType } from "$modules/detailLink/state/linkDetailStore.svelte";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { userLinkRepository } from "../repositories/userLinkRepository";
-import { assertUnreachable } from "$lib/rsMatch";
+import { userLinkStateFromStep } from "../utils/userLinkStateFromStep";
 
 /**
  * Simple store for user-facing link flow.
@@ -30,7 +27,7 @@ export class UserLinkStore {
       const persisted = userLinkRepository.getOne(owner, id);
       if (!persisted) return;
       if (persisted.step) {
-        this.#state = this.stateFromStep(persisted.step as UserLinkStep);
+        this.#state = userLinkStateFromStep(persisted.step, this);
       }
     });
 
@@ -68,23 +65,6 @@ export class UserLinkStore {
       });
     } catch (e) {
       console.warn("userLink sync failed", e);
-    }
-  }
-
-  private stateFromStep(step: UserLinkStep): UserLinkState {
-    switch (step) {
-      case UserLinkStep.LANDING:
-        return new LandingState(this);
-      case UserLinkStep.ADDRESS_LOCKED:
-        return new AddressLockedState(this);
-      case UserLinkStep.GATE:
-        return new GateState(this);
-      case UserLinkStep.ADDRESS_UNLOCKED:
-        return new AddressUnlockedState(this);
-      case UserLinkStep.COMPLETED:
-        return new CompletedState(this);
-      default:
-        assertUnreachable(step);
     }
   }
 
