@@ -53,12 +53,6 @@
       appHeaderStore.clearBackHandler();
     };
   });
-
-  $effect(() => {
-    if (newLink?.state.step === LinkStep.ACTIVE) {
-      goto(resolve(`/link/detail/${newLink.id}`));
-    }
-  });
 </script>
 
 {#if isLoading}
@@ -75,7 +69,7 @@
     {:else if newLink.state.step === LinkStep.PREVIEW}
       <Preview link={newLink} />
     {:else if newLink.state.step === LinkStep.CREATED}
-      <CreatedLink link={newLink} />
+      <CreatedLink link={newLink}/>
     {/if}
   </div>
 {/if}
