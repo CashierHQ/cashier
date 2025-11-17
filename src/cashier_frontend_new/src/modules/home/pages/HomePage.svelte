@@ -99,7 +99,7 @@
         >
           {locale.t("home.homePage.title")}
           <span class="text-primary"
-          >{locale.t("home.homePage.titleHighlight")}</span
+            >{locale.t("home.homePage.titleHighlight")}</span
           >
         </h1>
 
@@ -158,8 +158,8 @@
       >
         {#if isImageLoading}
           <div
-            class="animate-pulse bg-[#ECFEF3] border rounded-xl border-[#ACEFC6] mx-auto w-[55%] h-[40vh] min-h-[40vh] max-h-[40vh] lg:min-h-[50vh] lg:max-h-[50vh] lg:w-[70%] lg:max-w-[400px]">
-          </div>
+            class="animate-pulse bg-[#ECFEF3] border rounded-xl border-[#ACEFC6] mx-auto w-[55%] h-[40vh] min-h-[40vh] max-h-[40vh] lg:min-h-[50vh] lg:max-h-[50vh] lg:w-[70%] lg:max-w-[400px]"
+          ></div>
         {/if}
 
         <img
@@ -183,5 +183,4 @@
 </div>
 
 <style>
-
 </style>
