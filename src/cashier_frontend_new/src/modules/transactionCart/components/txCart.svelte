@@ -29,7 +29,7 @@
     onCloseDrawer?: () => void;
   } = $props();
 
-  const txCartStore = new TransactionCartStore();
+  const txCartStore = new TransactionCartStore(link, action);
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let isProcessing: boolean = $state(false);
