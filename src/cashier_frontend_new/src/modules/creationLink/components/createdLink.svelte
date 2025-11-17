@@ -4,6 +4,7 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { LinkDetailStore } from '$modules/detailLink/state/linkDetailStore.svelte';
   import type { ProcessActionResult } from '$modules/links/types/action/action';
+  import { LinkState } from '$modules/links/types/link/linkState';
   import { LinkStep } from "$modules/links/types/linkStep";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import { onMount } from 'svelte';
@@ -46,22 +47,6 @@
     }
   }
 
-  async function handleProcessAction(): Promise<ProcessActionResult> {
-    try {
-      if (!linkDetailStore) {
-        throw new Error("LinkDetailStore is not initialized");
-      }
-      if (!linkDetailStore.action || !linkDetailStore.action.id) {
-        throw new Error("Action or Action ID is missing");
-      }
-      
-      return await linkDetailStore.processAction(linkDetailStore.action.id);
-    } catch (error) {
-      console.error("Error processing action:", error);
-      throw error;
-    }
-  }
-
   async function onClickCreate() {
     isOpenTxCart = true;
   }
@@ -70,9 +55,33 @@
     isOpenTxCart = false;
   }
 
+  async function handleProcessAction(): Promise<ProcessActionResult> {
+    try {
+      if (!linkDetailStore) {
+        throw new Error("LinkDetailStore is not initialized");
+      }
+      if (!linkDetailStore.action || !linkDetailStore.action.id) {
+        throw new Error("Action or Action ID is missing");
+      }
+
+      console.log("Processing action with ID:", linkDetailStore.action.id);
+      return await linkDetailStore.processAction(linkDetailStore.action.id);
+    } catch (error) {
+      console.error("Error processing action:", error);
+      throw error;
+    }
+  }
+
   onMount(() => {
-    if (!link.id) return;
-    linkDetailStore = new LinkDetailStore({id: link.id});
+    if (link.id) {
+      linkDetailStore = new LinkDetailStore({ id: link.id });
+    }
+  });
+
+  $effect(() => {
+    if (linkDetailStore && linkDetailStore.link && linkDetailStore.link.state === LinkState.ACTIVE) {
+      goto(resolve(`/link/detail/${linkDetailStore.id}`));
+    }
   });
 </script>
 
