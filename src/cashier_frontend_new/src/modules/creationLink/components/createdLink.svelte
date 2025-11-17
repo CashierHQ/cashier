@@ -2,9 +2,11 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import { LinkDetailStore } from '$modules/detailLink/state/linkDetailStore.svelte';
   import type { ProcessActionResult } from '$modules/links/types/action/action';
   import { LinkStep } from "$modules/links/types/linkStep";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
+  import { onMount } from 'svelte';
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
   import LinkDetails from "./linkDetails.svelte";
 
@@ -14,6 +16,7 @@
     link: LinkCreationStore;
   } = $props();
 
+  let linkDetailStore = $state<LinkDetailStore | null>(null);
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let isOpenTxCart = $state(!!link.action);
@@ -45,10 +48,14 @@
 
   async function handleProcessAction(): Promise<ProcessActionResult> {
     try {
-      if (!link.action) {
-        throw new Error("No action to process");
+      if (!linkDetailStore) {
+        throw new Error("LinkDetailStore is not initialized");
       }
-      return await link.processAction();
+      if (!linkDetailStore.action || !linkDetailStore.action.id) {
+        throw new Error("Action or Action ID is missing");
+      }
+      
+      return await linkDetailStore.processAction(linkDetailStore.action.id);
     } catch (error) {
       console.error("Error processing action:", error);
       throw error;
@@ -62,6 +69,11 @@
   async function onCloseTxCart() {
     isOpenTxCart = false;
   }
+
+  onMount(() => {
+    if (!link.id) return;
+    linkDetailStore = new LinkDetailStore({id: link.id});
+  });
 </script>
 
 <h3 class="text-lg font-semibold">Created</h3>

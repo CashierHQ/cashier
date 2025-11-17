@@ -1,7 +1,7 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
-  import { walletStore } from "../../../../../../token/state/walletStore.svelte";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
 
   const {

@@ -12,5 +12,10 @@ export interface LinkCreationState {
   // Method to transition to the previous state
   goBack(): Promise<void>;
 
+  /**
+   * Process a specific action identified by actionId.
+   * @param actionId
+   * @returns A promise that resolves to the result of processing the action.
+   */
   processAction(actionId: string): Promise<ProcessActionResult>;
 }

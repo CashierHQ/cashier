@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { tokenMetadataQuery } from "../../../../../../../token/state/tokenStore.svelte";
-  import { parseBalanceUnits } from "$modules/shared/utils/converter";
-  import { walletStore } from "../../../../../../../token/state/walletStore.svelte";
   import type { AssetInfo } from "$modules/links/types/link/asset";
+  import { parseBalanceUnits } from "$modules/shared/utils/converter";
+  import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
 
   interface Props {
     assetInfo: AssetInfo;
