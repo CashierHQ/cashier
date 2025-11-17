@@ -93,6 +93,7 @@
     if (!linkDetail.action) {
       throw new Error("Action is missing");
     }
+    console.log("Processing action with id:", linkDetail.action.id);
     return await linkDetail.processAction(linkDetail.action.id);
   }
 
