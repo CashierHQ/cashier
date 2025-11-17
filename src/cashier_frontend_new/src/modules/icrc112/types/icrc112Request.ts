@@ -5,14 +5,12 @@ import { fromNullable } from "@dfinity/utils";
 // Frontend representation of an ICRC-112 request
 export type Icrc112Requests = Icrc112Request[][];
 
-export class Icrc112Request {
-  constructor(
-    public arg: ArrayBuffer,
-    public method: string,
-    public canister_id: Principal,
-    public nonce?: ArrayBuffer,
-  ) {}
-}
+export type Icrc112Request = {
+  arg: ArrayBuffer;
+  method: string;
+  canister_id: Principal;
+  nonce?: ArrayBuffer;
+};
 
 export class Icrc112RequestMapper {
   /**
@@ -33,11 +31,17 @@ export class Icrc112RequestMapper {
         : nonce instanceof Uint8Array
           ? nonce.buffer
           : nonce;
-    return new Icrc112Request(
-      arg as ArrayBuffer,
-      b.method,
-      b.canister_id,
-      nonceArray as ArrayBuffer | undefined,
-    );
+
+    return {
+      arg: arg as ArrayBuffer,
+      method: b.method,
+      canister_id: b.canister_id,
+      nonce: nonceArray as ArrayBuffer | undefined,
+    };
   }
 }
+
+export type Icrc112Response = {
+  isSuccess: boolean;
+  errors: string[] | null;
+};

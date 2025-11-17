@@ -1,4 +1,3 @@
-import { Buffer } from "buffer";
 import { Principal } from "@dfinity/principal";
 import type {
   BatchCallCanisterRequest,
@@ -6,7 +5,8 @@ import type {
   Signer,
   Transport,
 } from "@slide-computer/signer";
-import { Err, Ok, type Result } from "ts-results-es";
+import { Buffer } from "buffer";
+import type { Icrc112Response } from "../types/icrc112Request";
 
 // Class of service handler for ICRC-112 requests
 // T is the Transport type used by the Signer
@@ -33,7 +33,7 @@ class Icrc112Service<T extends Transport> {
     >,
     sender: string,
     cashierBackendCanisterId: string,
-  ): Promise<Result<BatchCallCanisterResponse, Error>> {
+  ): Promise<Icrc112Response> {
     const requests = icrc112Requests.map((parallelRequests) =>
       parallelRequests.map((request) => ({
         canisterId: request.canister_id.toString(),
@@ -67,14 +67,16 @@ class Icrc112Service<T extends Transport> {
 
       if ("error" in res) {
         console.error("ICRC-112 batch request failed:", res.error);
-        return Err(
-          new Error(
-            `Batch request failed: ${res.error.message} (Code: ${res.error.code})`,
-          ),
-        );
+        return {
+          isSuccess: false,
+          errors: [res.error ? JSON.stringify(res.error) : "Unknown error"],
+        };
       }
 
       if ("result" in res) {
+        let isSuccess = true;
+        let errors: string[] = [];
+
         res.result.responses.forEach(
           (
             sequenceResponses: Array<Record<string, unknown>>,
@@ -115,27 +117,33 @@ class Icrc112Service<T extends Transport> {
                     `  ❌ Parallel ${parallelIndex} - Error:`,
                     errObj.error,
                   );
+                  isSuccess = false;
+                  errors.push(
+                    `Sequence ${sequenceIndex} Parallel ${parallelIndex} Error: ${
+                      errObj.error
+                        ? JSON.stringify(errObj.error)
+                        : "Unknown error"
+                    }`,
+                  );
                 }
               },
             );
           },
         );
 
-        return Ok(res);
+        return { isSuccess, errors: errors.length > 0 ? errors : null };
       }
 
-      return Err(
-        new Error(
-          "Invalid response format: missing both result and error properties",
-        ),
-      );
+      return {
+        isSuccess: false,
+        errors: ["Invalid response structure from signer."],
+      };
     } catch (error) {
       console.error("Signer request failed:", error);
-      return Err(
-        new Error(
-          `Signer request failed: ${error instanceof Error ? error.message : String(error)}`,
-        ),
-      );
+      return {
+        isSuccess: false,
+        errors: [error instanceof Error ? error.message : String(error)],
+      };
     }
   }
 }

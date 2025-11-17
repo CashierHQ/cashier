@@ -32,7 +32,6 @@
   const txCartStore = new TransactionCartStore();
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
-
   let isProcessing: boolean = $state(false);
   let isExecutingIcrc112: boolean = $state(false);
 
