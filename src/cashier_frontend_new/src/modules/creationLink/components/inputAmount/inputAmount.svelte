@@ -12,8 +12,8 @@
   import { USD_DISPLAY_DECIMALS } from "$modules/shared/constants";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import type { TokenWithPriceAndBalance } from "$modules/token/types";
+  import { walletStore } from "../../../../../../../token/state/walletStore.svelte";
+  import type { TokenWithPriceAndBalance } from "../../../../../../../token/types";
 
   let {
     token,
