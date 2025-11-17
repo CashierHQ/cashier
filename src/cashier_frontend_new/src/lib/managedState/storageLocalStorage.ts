@@ -21,10 +21,14 @@ export class LocalStorageStore<T> implements Storage<T> {
 
   setItem(value: T): void {
     if (value) {
-      this.#localStorage()?.setItem(
-        this.key,
-        devalue.stringify(value, this.serde?.serialize),
-      );
+      try {
+        this.#localStorage()?.setItem(
+          this.key,
+          devalue.stringify(value, this.serde?.serialize),
+        );
+      } catch (e) {
+        console.error("Error setting item in LocalStorageStore", e);
+      }
     } else {
       this.removeItem();
     }

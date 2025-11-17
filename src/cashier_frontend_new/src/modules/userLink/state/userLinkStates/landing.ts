@@ -1,7 +1,6 @@
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserLinkState } from ".";
 import type { UserLinkStore } from "../userLinkStore.svelte";
-import { AddressLockedState } from "./addressLocked";
 import { AddressUnlockedState } from "./addressUnlocked";
 
 // Landing state for user-facing link flow
@@ -13,13 +12,9 @@ export class LandingState implements UserLinkState {
     this.#store = store;
   }
 
-  // Decide path based on store.locked
+  // The `locked` branch has been removed; always proceed to unlocked path
   async goNext(): Promise<void> {
-    if (this.#store.locked) {
-      this.#store.state = new AddressLockedState(this.#store);
-    } else {
-      this.#store.state = new AddressUnlockedState(this.#store);
-    }
+    this.#store.state = new AddressUnlockedState(this.#store);
   }
 
   async goBack(): Promise<void> {
