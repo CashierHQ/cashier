@@ -6,7 +6,7 @@
   import type { FeeItem } from "$modules/links/types/fee";
   import type { Link } from "$modules/links/types/link/link";
   import { getHeadingFromActionType } from "$modules/links/utils/txCart";
-  import { walletStore } from "../../../../../../token/state/walletStore.svelte";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { feeService } from "$modules/transactionCart/services/feeService";
   import { AssetProcessState } from "$modules/transactionCart/types/txCart";
   import { onMount } from 'svelte';
