@@ -1,3 +1,5 @@
+import type Action from "$modules/links/types/action/action";
+import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkDetailState } from ".";
 import type { LinkDetailStore } from "../linkDetailStore.svelte";
@@ -11,12 +13,12 @@ export class LinkEndedState implements LinkDetailState {
     this.#linkDetailStore = link;
   }
 
-  async createAction(): Promise<void> {
+  async createAction(): Promise<Action> {
     console.log("Link ID:", this.#linkDetailStore);
     throw new Error("Link has ended; no further actions can be created.");
   }
 
-  async processAction(): Promise<void> {
+  async processAction(): Promise<ProcessActionResult> {
     throw new Error("Link has ended; no further actions can be processed.");
   }
 }

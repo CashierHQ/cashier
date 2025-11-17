@@ -53,6 +53,12 @@
       appHeaderStore.clearBackHandler();
     };
   });
+
+  $effect(() => {
+    if (newLink?.state.step === LinkStep.ACTIVE) {
+      goto(resolve(`/link/detail/${newLink.id}`));
+    }
+  });
 </script>
 
 {#if isLoading}
@@ -62,7 +68,6 @@
 {:else}
   <div class="grow-1 flex flex-col mt-2 sm:mt-0">
     <CreateLinkHeader link={newLink} />
-
     {#if newLink.state.step === LinkStep.CHOOSE_TYPE}
       <ChooseLinkType link={newLink} />
     {:else if newLink.state.step === LinkStep.ADD_ASSET}

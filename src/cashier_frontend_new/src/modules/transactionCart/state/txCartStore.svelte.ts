@@ -1,8 +1,8 @@
 import type { IITransport } from "$modules/auth/signer/ii/IITransport";
 import { authState } from "$modules/auth/state/auth.svelte";
 import Icrc112Service from "$modules/icrc112/services/icrc112Service";
-import type { Icrc112Requests } from "$modules/icrc112/types/icrc112Request";
 import type Action from "$modules/links/types/action/action";
+import type { ProcessActionResult } from "$modules/links/types/action/action";
 import type { Link } from "$modules/links/types/link/link";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import type { Signer } from "@slide-computer/signer";
@@ -12,11 +12,16 @@ export class TransactionCartStore {
   #icrc112Service: Icrc112Service<IITransport> | null = null;
   #link: Link;
   #action: Action;
-  #onIcrc112Executed: Promise<void> | null = null;
+  #handleProcessAction: () => Promise<ProcessActionResult>;
 
-  constructor(link: Link, action: Action) {
+  constructor(
+    link: Link,
+    action: Action,
+    handleProcessAction: () => Promise<ProcessActionResult>,
+  ) {
     this.#link = link;
     this.#action = action;
+    this.#handleProcessAction = handleProcessAction;
   }
 
   initialize() {
@@ -26,9 +31,7 @@ export class TransactionCartStore {
     }
   }
 
-  async executeICRC112Requests(
-    requests: Icrc112Requests,
-  ): Promise<Result<boolean, Error>> {
+  async processAction(): Promise<Result<ProcessActionResult, Error>> {
     if (!authState.account?.owner) {
       return Err(new Error("You are not authorized to confirm this action."));
     }
@@ -37,10 +40,21 @@ export class TransactionCartStore {
       return Err(new Error("ICRC-112 Service is not initialized."));
     }
 
+    if (
+      !this.#action.icrc_112_requests ||
+      this.#action.icrc_112_requests.length === 0
+    ) {
+      return Ok({
+        action: this.#action,
+        isSuccess: true,
+        errors: [],
+      }); // No requests to process.
+    }
+
     // Execute ICRC-112 batch only if there are requests.
     try {
       const batchResult = await this.#icrc112Service.sendBatchRequest(
-        requests,
+        this.#action.icrc_112_requests,
         authState.account.owner,
         CASHIER_BACKEND_CANISTER_ID,
       );
@@ -49,10 +63,13 @@ export class TransactionCartStore {
         const err = batchResult.errors
           ? batchResult.errors.join(", ")
           : "Unknown error";
-        return Err(new Error(`Batch request failed: ${err}`));
+        //return Err(new Error(`Batch request failed: ${err}`));
+        console.error(`Batch request failed: ${err}`);
       }
 
-      return Ok(true);
+      // Trigger the callback after successful execution.
+      const processActionResult = await this.#handleProcessAction();
+      return Ok(processActionResult);
     } catch (err) {
       return Err(
         new Error(

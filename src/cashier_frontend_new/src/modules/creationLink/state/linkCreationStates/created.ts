@@ -1,5 +1,9 @@
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { linkListStore } from "$modules/links/state/linkListStore.svelte";
+import {
+  ProcessActionResultMapper,
+  type ProcessActionResult,
+} from "$modules/links/types/action/action";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkCreationState } from ".";
 import type { LinkCreationStore } from "../linkCreationStore.svelte";
@@ -15,6 +19,15 @@ export class LinkCreatedState implements LinkCreationState {
   }
 
   async goNext(): Promise<void> {
+    throw new Error("No next state from Created");
+  }
+
+  // No previous state from the created state
+  async goBack(): Promise<void> {
+    throw new Error("No previous state from Created");
+  }
+
+  async processAction(actionId: string): Promise<ProcessActionResult> {
     if (!this.#link.id) {
       throw new Error("Link ID is missing");
     }
@@ -31,10 +44,6 @@ export class LinkCreatedState implements LinkCreationState {
     linkListStore.refresh();
 
     this.#link.state = new LinkActiveState(this.#link);
-  }
-
-  // No previous state from the created state
-  async goBack(): Promise<void> {
-    throw new Error("No previous state from Created");
+    return ProcessActionResultMapper.fromBackendType(result.unwrap());
   }
 }

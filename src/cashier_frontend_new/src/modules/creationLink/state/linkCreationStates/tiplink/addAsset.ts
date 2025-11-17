@@ -1,4 +1,5 @@
 import { validationService } from "$modules/links/services/validationService";
+import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
 import type { LinkCreationState } from "..";
@@ -49,5 +50,11 @@ export class AddAssetTipLinkState implements LinkCreationState {
   // Go back to the link type selection state
   async goBack(): Promise<void> {
     this.#link.state = new ChooseLinkTypeState(this.#link);
+  }
+
+  async processAction(actionId: string): Promise<ProcessActionResult> {
+    throw new Error(
+      "AddAssetTipLinkState does not support processing actions.",
+    );
   }
 }

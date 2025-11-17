@@ -1,11 +1,31 @@
+import IntentState from "$modules/links/types/action/intentState";
+
 /**
  * Enumeration of asset processing states
  */
-export class AssetProcessState {
-  static readonly PENDING = "PENDING";
-  static readonly PROCESSING = "PROCESSING";
-  static readonly SUCCEED = "SUCCEED";
-  static readonly FAILED = "FAILED";
+export enum AssetProcessState {
+  CREATED = "CREATED",
+  PENDING = "PENDING",
+  PROCESSING = "PROCESSING",
+  SUCCEED = "SUCCEED",
+  FAILED = "FAILED",
+}
+
+export class AccessProcessStateMapper {
+  static fromIntentState(state: IntentState): AssetProcessState {
+    switch (state) {
+      case IntentState.CREATED:
+        return AssetProcessState.CREATED;
+      case IntentState.PROCESSING:
+        return AssetProcessState.PROCESSING;
+      case IntentState.SUCCESS:
+        return AssetProcessState.SUCCEED;
+      case IntentState.FAIL:
+        return AssetProcessState.FAILED;
+      default:
+        return AssetProcessState.PENDING;
+    }
+  }
 }
 
 /**

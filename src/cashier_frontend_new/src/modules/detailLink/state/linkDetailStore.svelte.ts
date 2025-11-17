@@ -1,8 +1,10 @@
 import { managedState } from "$lib/managedState";
 import { assertUnreachable } from "$lib/rsMatch";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { detailLinkService } from "$modules/detailLink/services/detailLink";
+import { cashierBackendService } from "$modules/links/services/cashierBackend";
+import type Action from "$modules/links/types/action/action";
+import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { type ActionTypeValue } from "$modules/links/types/action/actionType";
 import { LinkState } from "$modules/links/types/link/linkState";
 import type { LinkAction } from "$modules/links/types/linkAndAction";
@@ -118,8 +120,8 @@ export class LinkDetailStore {
    * @param actionType The type of action to create
    * @returns void
    */
-  async createAction(actionType: ActionTypeValue) {
-    this.#state.createAction(actionType);
+  async createAction(actionType: ActionTypeValue): Promise<Action> {
+    return this.#state.createAction(actionType);
   }
 
   /**
@@ -127,8 +129,8 @@ export class LinkDetailStore {
    * @param actionId id of the action to process
    * @returns void
    */
-  async processAction(actionId: string) {
-    this.#state.processAction(actionId);
+  async processAction(actionId: string): Promise<ProcessActionResult> {
+    return this.#state.processAction(actionId);
   }
 
   /**

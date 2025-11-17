@@ -15,14 +15,13 @@
 
 <div class="p-3 border rounded bg-background flex items-center justify-between">
   <div class="flex items-center gap-3">
-    {#if asset.state == AssetProcessState.PROCESSING}
+    {#if asset.state === AssetProcessState.PROCESSING}
       <img src={loadingGif} alt="loading" class="w-6 h-6" />
-    {/if}
-    {#if asset.state == AssetProcessState.SUCCEED}
+    {:else if asset.state === AssetProcessState.SUCCEED}
       <div class="text-green-600">
         <Check class="w-4 h-4" />
       </div>
-    {:else if asset.state == AssetProcessState.FAILED}
+    {:else if asset.state === AssetProcessState.FAILED}
       <div class="text-red-600">
         <X class="w-4 h-4" />
       </div>

@@ -1,8 +1,8 @@
 <script lang="ts">
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
-  import { authState } from "$modules/auth/state/auth.svelte";
   import type Action from "$modules/links/types/action/action";
+  import type { ProcessActionResult } from '$modules/links/types/action/action';
   import type { FeeItem } from "$modules/links/types/fee";
   import type { Link } from "$modules/links/types/link/link";
   import { getHeadingFromActionType } from "$modules/links/utils/txCart";
@@ -19,28 +19,24 @@
     link,
     action,
     isOpen,
-    goNext = async () => {},
     onCloseDrawer,
+    handleProcessAction,
   }: {
     link: Link;
     action: Action;
     isOpen: boolean;
-    goNext: () => Promise<void> | void;
     onCloseDrawer?: () => void;
+    handleProcessAction: () => Promise<ProcessActionResult>;
   } = $props();
 
-  const txCartStore = new TransactionCartStore(link, action);
+  const txCartStore = new TransactionCartStore(link, action, handleProcessAction);
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let isProcessing: boolean = $state(false);
-  let isExecutingIcrc112: boolean = $state(false);
 
-  let isProcessingAsset = $derived(() => {
-    if (action?.icrc_112_requests?.length === 0) {
-      return isProcessing;
-    }
-    return isExecutingIcrc112;
-  });
+  $effect(() => {
+    console.log("action changed:", $state.snapshot(action));
+  })
 
   const assetAndFeeList = $derived.by(() =>
     action
@@ -58,20 +54,20 @@
   // the current processing / error / success UI state so the UI (AssetItem)
   // shows the correct status icons.
   let assetItems = $derived.by(() => {
+    void isProcessing;
     return assetAndFeeList.map(({ asset }) => {
-      if (isProcessingAsset()) {
+      if (isProcessing) {
         asset.state = AssetProcessState.PROCESSING;
-      } else if (errorMessage) {
-        asset.state = AssetProcessState.FAILED;
-      } else if (successMessage) {
-        asset.state = AssetProcessState.SUCCEED;
-      } else {
-        // default to whatever the mapper produced or PENDING if missing
-        asset.state = asset.state ?? AssetProcessState.PENDING;
+        console.log("Setting asset state to PROCESSING");
       }
       return asset;
     });
   });
+
+  $effect(() => {
+    console.log("assetItems changed:", $state.snapshot(assetItems));
+  })
+  
   let linkFees: FeeItem[] = $derived.by(() =>
     assetAndFeeList.map(({ fee }) => fee).filter((f): f is FeeItem => !!f),
   );
@@ -81,36 +77,27 @@
   let showFeeBreakdown = $state(false);
 
   // Confirm and process the action
-  // first execute icrc-112 requests if any, then call goNext
-  // in case execute icrc-112 fails, do not call goNext
   async function confirmAction() {
-    // Basic validation BEFORE starting processing UI state
-    if (!action || !link.id) {
-      errorMessage = "No action or link ID available";
-      return;
-    }
-
-    if (!authState.account?.owner) {
-      errorMessage = "You are not authorized to confirm this action.";
-      return;
-    }
-
-    // Now mark processing started and clear messages
     isProcessing = true;
     errorMessage = null;
     successMessage = null;    
 
     try {
-      const requests = action.icrc_112_requests ?? [];
-      const icrc112Result = await txCartStore.executeICRC112Requests(requests);
-      if (!icrc112Result.isOk()) {
-        const err = icrc112Result.unwrapErr();
+      const processActionResult = await txCartStore.processAction();
+      if (!processActionResult.isOk()) {
+        const err = processActionResult.unwrapErr();
         console.error("ICRC-112 execution failed:", err);
         errorMessage = `ICRC-112 execution failed: ${err?.message ?? String(err)}`;
         isProcessing = false;
         return;
       }
-      await goNext();
+
+      const result = processActionResult.unwrap();
+      if (result.isSuccess) {
+        successMessage = "Transaction completed successfully.";
+      } else {
+        errorMessage = `Transaction failed: ${result.errors.join(", ")}`;
+      }
     } catch (e) {
       console.error("goNext threw an error:", e);
       const msg = e instanceof Error ? e.message : String(e);

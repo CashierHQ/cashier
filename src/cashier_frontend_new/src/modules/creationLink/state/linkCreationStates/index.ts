@@ -1,3 +1,4 @@
+import type { ProcessActionResult } from "$modules/links/types/action/action";
 import type { LinkStep } from "$modules/links/types/linkStep";
 
 /**
@@ -10,4 +11,6 @@ export interface LinkCreationState {
   goNext(): Promise<void>;
   // Method to transition to the previous state
   goBack(): Promise<void>;
+
+  processAction(actionId: string): Promise<ProcessActionResult>;
 }
