@@ -34,6 +34,7 @@ export class LinkDetailStore {
         return linkDetail.value;
       },
       watch: true,
+      storageType: "localStorage",
     });
     this.#state = new LinkCreatedState(this);
 
