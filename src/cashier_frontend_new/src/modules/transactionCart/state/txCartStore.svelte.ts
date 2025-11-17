@@ -35,16 +35,15 @@ export class TransactionCartStore {
         CASHIER_BACKEND_CANISTER_ID,
       );
 
-      if (!batchResult.isOk()) {
-        const err = batchResult.unwrapErr();
+      if (!batchResult.isSuccess) {
+        const err = batchResult.errors
+          ? batchResult.errors.join(", ")
+          : "Unknown error";
         console.error("Batch request failed:", err);
-        return Err(
-          new Error(`Batch request failed: ${err?.message ?? String(err)}`),
-        );
+        return Err(new Error(`Batch request failed: ${err}`));
       }
 
-      console.log("Batch request successful:", batchResult.unwrap());
-      //successMessage = "ICRC-112 batch request sent successfully";
+      console.log("Batch request successful:", batchResult);
       return Ok(true);
     } catch (err) {
       console.error("Error sending ICRC-112 batch request:", err);

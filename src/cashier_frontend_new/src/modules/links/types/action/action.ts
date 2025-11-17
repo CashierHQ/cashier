@@ -3,7 +3,7 @@ import type {
   Icrc112Request as BackendIcrc112Request,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
 import {
-  Icrc112Request,
+  type Icrc112Request,
   Icrc112RequestMapper,
 } from "$modules/icrc112/types/icrc112Request";
 import type { Principal } from "@dfinity/principal";
