@@ -1,9 +1,29 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import UseLink from "$modules/userLink/pages/use.svelte";
+  import { resolve } from "$app/paths";
+  import Landing from "$modules/userLink/pages/landing.svelte";
+  import { userProfile } from "$modules/shared/services/userProfile.svelte";
+  import { goto } from "$app/navigation";
+
   const id = page.params.id;
+
+  let isReady: boolean = $state(false);
+  $effect(() => {
+    if (!userProfile.isReady()) return;
+
+    if (userProfile.isLoggedIn() && id) {
+      goto(resolve(`/link/${id}/use`));
+      return;
+    }
+
+    isReady = true;
+  });
 </script>
 
-{#if id}
-  <UseLink {id} />
+{#if !isReady}
+  Loading...
+{/if}
+
+{#if id && isReady}
+  <Landing {id} />
 {/if}

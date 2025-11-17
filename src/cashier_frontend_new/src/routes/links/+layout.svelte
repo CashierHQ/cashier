@@ -5,6 +5,7 @@
   import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import AddLinkButton from "$modules/links/components/layout/AddLinkButton.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
+    import Protected from "$modules/shared/components/Protected.svelte";
 
   let { children } = $props();
 
@@ -18,20 +19,22 @@
   }
 </script>
 
-<div class="flex flex-col min-h-screen sm:bg-lightgreen bg-white">
-  <AppHeader />
+<Protected>
+  <div class="flex flex-col min-h-screen sm:bg-lightgreen bg-white">
+    <AppHeader />
 
-  <div class="flex-1 sm:py-4 pb-2 flex items-center justify-center flex-col">
-    <div
-      class="w-full sm:max-w-[600px] max-w-full sm:p-8 px-4 grow-1 bg-white sm:rounded-xl"
-    >
+    <div class="flex-1 sm:py-4 pb-2 flex items-center justify-center flex-col">
       <div
-        class="sm:max-h-[calc(100vh-156px)] max-h-[calc(100vh-78px)] overflow-y-auto scrollbar-hide"
+        class="w-full sm:max-w-[600px] max-w-full sm:p-8 px-4 grow-1 bg-white sm:rounded-xl"
       >
-        {@render children?.()}
+        <div
+          class="sm:max-h-[calc(100vh-156px)] max-h-[calc(100vh-78px)] overflow-y-auto scrollbar-hide"
+        >
+          {@render children?.()}
+        </div>
       </div>
     </div>
-  </div>
 
-  <AddLinkButton onClick={handleCreateNewLink} />
-</div>
+    <AddLinkButton onClick={handleCreateNewLink} />
+  </div>
+</Protected>

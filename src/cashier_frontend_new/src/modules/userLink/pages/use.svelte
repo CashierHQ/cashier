@@ -7,10 +7,11 @@
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import Completed from "../components/useLink/states/Completed.svelte";
-  import Gate from "../components/useLink/states/Gate.svelte";
-  import Landing from "../components/useLink/states/Landing.svelte";
   import Unlocked from "../components/useLink/states/Unlocked.svelte";
   import UserLinkStore from "../state/userLinkStore.svelte";
+  import Landing from "../components/useLink/states/Landing.svelte";
+  import Ended from "../components/useLink/Ended.svelte";
+  import NotFound from "../components/useLink/NotFound.svelte";
 
   const {
     id,
@@ -75,25 +76,16 @@
   };
 </script>
 
-{#if userStore.isLoading}
+{#if !userStore.link && userStore.isLoading}
   Loading...
-{/if}
-
-{#if userStore.link}
-  {#if userStore.link.state === LinkState.INACTIVE_ENDED && userStore.query?.data?.link_user_state !== LinkUserState.COMPLETED}
-    <div class="px-4 py-8 text-center">
-      <h2 class="text-lg font-semibold">Link ended</h2>
-      <p class="text-sm text-muted-foreground mt-2">
-        This link has ended and is no longer available.
-      </p>
-    </div>
+{:else if userStore.link}
+  {#if userStore.link.state === LinkState.INACTIVE_ENDED && userStore.query.data?.link_user_state !== LinkUserState.COMPLETED}
+    <Ended />
   {:else}
     <div class="px-4 py-4">
       <div class="mt-4">
         {#if userStore.step === UserLinkStep.LANDING}
           <Landing userLink={userStore} linkDetail={userStore.linkDetail} />
-        {:else if userStore.step === UserLinkStep.GATE}
-          <Gate userLink={userStore} />
         {:else if userStore.step === UserLinkStep.ADDRESS_UNLOCKED}
           <Unlocked
             userLink={userStore}
@@ -116,4 +108,6 @@
       </div>
     </div>
   {/if}
+{:else}
+  <NotFound />
 {/if}
