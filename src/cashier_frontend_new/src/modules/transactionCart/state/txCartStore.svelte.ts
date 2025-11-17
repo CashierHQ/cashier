@@ -40,13 +40,12 @@ export class TransactionCartStore {
       return Err(new Error("ICRC-112 Service is not initialized."));
     }
 
-    // Execute ICRC-112 batch only if there are requests.
     try {
       if (
         this.#action.icrc_112_requests &&
         this.#action.icrc_112_requests.length > 0
       ) {
-        console.log("execute icrc-112 requests");
+        // Execute ICRC-112 batch only if there are requests.
         const batchResult = await this.#icrc112Service.sendBatchRequest(
           this.#action.icrc_112_requests,
           authState.account.owner,
@@ -57,7 +56,6 @@ export class TransactionCartStore {
           const err = batchResult.errors
             ? batchResult.errors.join(", ")
             : "Unknown error";
-          //return Err(new Error(`Batch request failed: ${err}`));
           console.error(`Batch request failed: ${err}`);
         }
       }
