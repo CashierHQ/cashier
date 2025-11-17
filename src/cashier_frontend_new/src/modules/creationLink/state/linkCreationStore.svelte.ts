@@ -1,7 +1,6 @@
 import { assertUnreachable } from "$lib/rsMatch";
 import { authState } from "$modules/auth/state/auth.svelte";
 import type Action from "$modules/links/types/action/action";
-import type { ProcessActionResult } from "$modules/links/types/action/action";
 import type { Link } from "$modules/links/types/link/link";
 import {
   LinkState,
@@ -12,7 +11,6 @@ import { LinkStep } from "$modules/links/types/linkStep";
 import TempLink from "$modules/links/types/tempLink";
 import { Err, Ok, type Result } from "ts-results-es";
 import type { LinkCreationState } from "../../creationLink/state/linkCreationStates";
-import { LinkActiveState } from "../../creationLink/state/linkCreationStates/active";
 import { AddAssetState } from "../../creationLink/state/linkCreationStates/addAsset";
 import { ChooseLinkTypeState } from "../../creationLink/state/linkCreationStates/chooseLinkType";
 import { LinkCreatedState } from "../../creationLink/state/linkCreationStates/created";
@@ -83,10 +81,6 @@ export class LinkCreationStore {
     await this.#state.goBack();
   }
 
-  async processAction(): Promise<ProcessActionResult> {
-    return await this.#state.processAction(this.action?.id ?? "");
-  }
-
   /**
    * Pure function derive the initial state based on the given LinkStateValue
    * @param state LinkStateValue to initialize from
@@ -112,9 +106,6 @@ export class LinkCreationStore {
         break;
       case LinkState.CREATE_LINK:
         initialState = new LinkCreatedState(this);
-        break;
-      case LinkState.ACTIVE:
-        initialState = new LinkActiveState(this);
         break;
       default:
         initialState = new ChooseLinkTypeState(this);
@@ -185,8 +176,6 @@ export class LinkCreationStore {
         currentLinkState = LinkState.PREVIEW;
         break;
       case LinkStep.ACTIVE:
-        currentLinkState = LinkState.ACTIVE;
-        break;
       case LinkStep.INACTIVE:
       case LinkStep.ENDED:
         throw new Error(

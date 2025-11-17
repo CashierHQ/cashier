@@ -1,10 +1,7 @@
 import { authState } from "$modules/auth/state/auth.svelte";
 import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
-import {
-  ActionMapper,
-  type ProcessActionResult,
-} from "$modules/links/types/action/action";
+import { ActionMapper } from "$modules/links/types/action/action";
 import { LinkMapper } from "$modules/links/types/link/link";
 import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkStep } from "$modules/links/types/linkStep";
@@ -54,9 +51,5 @@ export class PreviewState implements LinkCreationState {
     } else {
       this.#link.state = new AddAssetState(this.#link);
     }
-  }
-
-  async processAction(actionId: string): Promise<ProcessActionResult> {
-    throw new Error("PreviewState does not support processing actions.");
   }
 }

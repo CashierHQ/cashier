@@ -1,4 +1,3 @@
-import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkCreationState } from ".";
@@ -36,9 +35,5 @@ export class ChooseLinkTypeState implements LinkCreationState {
   // No previous state from the initial state
   async goBack(): Promise<void> {
     throw new Error("No previous state from ChooseLinkType");
-  }
-
-  async processAction(actionId: string): Promise<ProcessActionResult> {
-    throw new Error("ChooseLinkTypeState does not support processing actions.");
   }
 }
