@@ -24,6 +24,7 @@ export class LinkDetailStore {
     this.#id = id;
     this.#linkDetailQuery = managedState<LinkAction>({
       queryFn: async () => {
+        console.log("load link detail", id, authState.isLoggedIn);
         const linkDetail = await detailLinkService.fetchLinkDetail({
           id,
           anonymous: !authState.isLoggedIn,
