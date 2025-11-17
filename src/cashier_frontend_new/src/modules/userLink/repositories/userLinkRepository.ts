@@ -9,37 +9,30 @@ export type PersistedUserLink = {
 };
 
 export class UserLinkRepository {
-  // Storage key for a specific owner+linkId
-  storeKey(owner: string, linkId: string) {
-    return `${USER_LINKS_STORAGE_KEY_PREFIX}.${owner}.${linkId}`;
+  storeKey(owner: string) {
+    return `${USER_LINKS_STORAGE_KEY_PREFIX}.${owner}`;
   }
 
-  // Read a single persisted entry for owner+linkId
-  private readItem(owner: string, linkId: string): PersistedUserLink | null {
-    const key = this.storeKey(owner, linkId);
+  private load(owner: string): PersistedUserLink[] {
+    const key = this.storeKey(owner);
     const raw = localStorage.getItem(key);
-    if (!raw) return null;
+    if (!raw) return [];
     try {
-      const entry: PersistedUserLink = devalue.parse(raw);
-      return entry;
+      const list: PersistedUserLink[] = devalue.parse(raw);
+      return list;
     } catch (e) {
-      console.warn("Failed to parse persisted user link from localStorage", e);
-      return null;
+      console.warn("Failed to parse user links from localStorage", e);
+      return [];
     }
   }
 
-  // Write a single persisted entry for owner+linkId
-  private writeItem(
-    owner: string,
-    linkId: string,
-    entry: PersistedUserLink,
-  ): void {
+  private save(links: PersistedUserLink[], owner: string): void {
+    const key = this.storeKey(owner);
     try {
-      const key = this.storeKey(owner, linkId);
-      const stringified = devalue.stringify(entry);
+      const stringified = devalue.stringify(links);
       localStorage.setItem(key, stringified);
     } catch (e) {
-      console.error("Error saving user link to localStorage", e);
+      console.error("Error saving user links to localStorage", e);
     }
   }
 
@@ -57,27 +50,42 @@ export class UserLinkRepository {
     data: Partial<PersistedUserLink>;
   }) {
     const now = Date.now();
-    const existing = this.readItem(owner, linkId);
+    const links = this.load(owner);
+    const existing = links.find((x) => String(x.linkId) === linkId);
+
     const entry: PersistedUserLink = {
       linkId,
       step: data.step ?? existing?.step,
       updatedAt: now,
     };
-    this.writeItem(owner, linkId, entry);
-  }
 
-  delete(owner: string, linkId: string) {
-    const key = this.storeKey(owner, linkId);
-    try {
-      localStorage.removeItem(key);
-    } catch (e) {
-      console.error("Error removing user link from localStorage", e);
+    if (existing) {
+      const updatedLinks = links.map((x) =>
+        String(x.linkId) === linkId ? entry : x,
+      );
+      this.save(updatedLinks, owner);
+    } else {
+      links.push(entry);
+      this.save(links, owner);
     }
   }
 
+  delete(owner: string, linkId: string) {
+    const links = this.load(owner);
+    if (!links.length) return;
+
+    const filtered = links.filter((x) => String(x.linkId) !== linkId);
+    this.save(filtered, owner);
+  }
+
+  get(owner: string): PersistedUserLink[] {
+    return this.load(owner);
+  }
+
   getOne(owner: string, linkId: string): PersistedUserLink | undefined {
-    const entry = this.readItem(owner, linkId);
-    return entry ?? undefined;
+    const links = this.load(owner);
+    if (!links.length) return undefined;
+    return links.find((x) => String(x.linkId) === linkId);
   }
 }
 
