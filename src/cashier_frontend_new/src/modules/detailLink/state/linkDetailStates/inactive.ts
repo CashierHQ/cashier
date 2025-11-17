@@ -1,5 +1,11 @@
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { linkListStore } from "$modules/links/state/linkListStore.svelte";
+import type Action from "$modules/links/types/action/action";
+import {
+  ActionMapper,
+  ProcessActionResultMapper,
+  type ProcessActionResult,
+} from "$modules/links/types/action/action";
 import {
   ActionType,
   type ActionTypeValue,
@@ -18,7 +24,7 @@ export class LinkInactiveState implements LinkDetailState {
   }
 
   // inactive only create withdraw action
-  async createAction(actionType: ActionTypeValue): Promise<void> {
+  async createAction(actionType: ActionTypeValue): Promise<Action> {
     const link = this.#linkDetailStore.link;
     if (!link) {
       throw new Error("Link is missing");
@@ -38,10 +44,11 @@ export class LinkInactiveState implements LinkDetailState {
     }
 
     this.#linkDetailStore.query.refresh();
+    return ActionMapper.fromBackendType(actionRes.unwrap());
   }
 
   // process withdraw action
-  async processAction(actionId: string): Promise<void> {
+  async processAction(actionId: string): Promise<ProcessActionResult> {
     const link = this.#linkDetailStore.link;
     if (!link) {
       throw new Error("Link is missing");
@@ -53,5 +60,6 @@ export class LinkInactiveState implements LinkDetailState {
 
     linkListStore.refresh();
     this.#linkDetailStore.query.refresh();
+    return ProcessActionResultMapper.fromBackendType(result.unwrap());
   }
 }

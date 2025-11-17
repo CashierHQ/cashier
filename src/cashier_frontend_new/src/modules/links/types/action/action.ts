@@ -2,6 +2,7 @@ import type {
   ActionDto,
   Icrc112Request as BackendIcrc112Request,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
+import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.did";
 import {
   type Icrc112Request,
   Icrc112RequestMapper,
@@ -49,6 +50,25 @@ export class ActionMapper {
     }
 
     return new Action(action.id, action.creator, type, state, intents, icrc);
+  }
+}
+
+export type ProcessActionResult = {
+  action: Action;
+  isSuccess: boolean;
+  errors: string[];
+};
+
+export class ProcessActionResultMapper {
+  static fromBackendType(
+    result: cashierBackend.ProcessActionDto,
+  ): ProcessActionResult {
+    const action = ActionMapper.fromBackendType(result.action);
+    return {
+      action,
+      isSuccess: result.is_success,
+      errors: result.errors,
+    };
   }
 }
 

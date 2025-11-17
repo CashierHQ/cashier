@@ -5,6 +5,7 @@
   import LinkInfoSection from "$modules/detailLink/components/linkInfoSection.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
+  import type { ProcessActionResult } from '$modules/links/types/action/action';
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
@@ -86,6 +87,13 @@
 
   async function handleBack() {
     goto(resolve("/links"));
+  }
+
+  async function handleProcessAction() : Promise<ProcessActionResult> {
+    if (!linkDetail.action) {
+      throw new Error("Action is missing");
+    }
+    return await linkDetail.processAction(linkDetail.action.id);
   }
 
   onMount(() => {
@@ -170,7 +178,7 @@
     isOpen={showTxCart}
     link={linkDetail.link}
     action={linkDetail.action}
-    {goNext}
     {onCloseDrawer}
+    {handleProcessAction}
   />
 {/if}

@@ -1,6 +1,7 @@
 import { assertUnreachable } from "$lib/rsMatch";
 import { authState } from "$modules/auth/state/auth.svelte";
 import type Action from "$modules/links/types/action/action";
+import type { ProcessActionResult } from "$modules/links/types/action/action";
 import type { Link } from "$modules/links/types/link/link";
 import {
   LinkState,
@@ -80,6 +81,10 @@ export class LinkCreationStore {
   // Move to the previous state
   async goBack(): Promise<void> {
     await this.#state.goBack();
+  }
+
+  async processAction(): Promise<ProcessActionResult> {
+    return await this.#state.processAction(this.action?.id ?? "");
   }
 
   /**
@@ -180,10 +185,12 @@ export class LinkCreationStore {
         currentLinkState = LinkState.PREVIEW;
         break;
       case LinkStep.ACTIVE:
+        currentLinkState = LinkState.ACTIVE;
+        break;
       case LinkStep.INACTIVE:
       case LinkStep.ENDED:
         throw new Error(
-          "LinkCreationStore cannot transition to ACTIVE, INACTIVE, or ENDED",
+          "LinkCreationStore cannot transition to INACTIVE, or ENDED",
         );
       default:
         assertUnreachable(this.#state.step);

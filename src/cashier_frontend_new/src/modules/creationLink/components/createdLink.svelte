@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import type { ProcessActionResult } from '$modules/links/types/action/action';
   import { LinkStep } from "$modules/links/types/linkStep";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
@@ -42,6 +43,18 @@
     }
   }
 
+  async function handleProcessAction(): Promise<ProcessActionResult> {
+    try {
+      if (!link.action) {
+        throw new Error("No action to process");
+      }
+      return await link.processAction();
+    } catch (error) {
+      console.error("Error processing action:", error);
+      throw error;
+    }
+  }
+
   async function onClickCreate() {
     isOpenTxCart = true;
   }
@@ -64,8 +77,8 @@
       isOpen={isOpenTxCart}
       link={link.link}
       action={link.action}
-      {goNext}
       onCloseDrawer={onCloseTxCart}
+      {handleProcessAction}
     />
   {/if}
 </div>
