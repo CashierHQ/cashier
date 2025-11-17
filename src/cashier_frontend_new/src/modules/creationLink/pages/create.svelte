@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { LinkStep } from "$modules/links/types/linkStep";
+  import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { onMount } from "svelte";
   import AddAsset from "../components/addAsset.svelte";
   import ChooseLinkType from "../components/chooseLinkType.svelte";
@@ -14,22 +15,43 @@
   let isLoading = $state(true);
   let newLink = $state<LinkCreationStore | null>(null);
 
+  async function handleBack() {
+    if (!newLink) return;
+
+    if (newLink.state.step === LinkStep.CHOOSE_TYPE) {
+      goto(resolve("/links"));
+    } else {
+      try {
+        await newLink.goBack();
+      } catch (e) {
+        console.error("Failed to go back:", e);
+      }
+    }
+  }
+
   onMount(() => {
-    // load the temporary link data from localStorage
     const getTempLinkRes = LinkCreationStore.getTempLink(id);
 
     if (getTempLinkRes.isErr()) {
       goto(resolve("/links"));
+      return;
     }
 
     const tempLink = getTempLinkRes.unwrap();
 
     if (!tempLink) {
       goto(resolve("/links"));
+      return;
     }
 
     newLink = new LinkCreationStore(tempLink);
+    appHeaderStore.setBackHandler(handleBack);
     isLoading = false;
+
+    // Cleanup back handler on unmount
+    return () => {
+      appHeaderStore.clearBackHandler();
+    };
   });
 </script>
 
@@ -38,7 +60,7 @@
 {:else if !newLink}
   <div>Link not found</div>
 {:else}
-  <div class="space-y-6 p-4">
+  <div class="grow-1 flex flex-col mt-2 sm:mt-0">
     <CreateLinkHeader link={newLink} />
 
     {#if newLink.state.step === LinkStep.CHOOSE_TYPE}
