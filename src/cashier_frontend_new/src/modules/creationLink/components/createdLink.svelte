@@ -34,19 +34,6 @@
     goto(resolve("/links"));
   }
 
-  async function goNext() {
-    try {
-      if (!link.id) {
-        console.error("Missing link.id, cannot navigate");
-        return;
-      }
-      await link.goNext();
-      goto(resolve(`/link/detail/${link.id}`));
-    } catch (error) {
-      console.error("Failed to go next: ", error);
-    }
-  }
-
   async function onClickCreate() {
     isOpenTxCart = true;
   }
@@ -72,15 +59,15 @@
     }
   }
 
-  onMount(() => {
-    if (link.id) {
-      linkDetailStore = new LinkDetailStore({ id: link.id });
-    }
-  });
-
   $effect(() => {
     if (linkDetailStore && linkDetailStore.link && linkDetailStore.link.state === LinkState.ACTIVE) {
       goto(resolve(`/link/detail/${linkDetailStore.id}`));
+    }
+  });
+
+  onMount(() => {
+    if (link.id) {
+      linkDetailStore = new LinkDetailStore({ id: link.id });
     }
   });
 </script>
