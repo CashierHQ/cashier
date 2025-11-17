@@ -3,7 +3,7 @@
   import Landing from "../components/useLink/states/Landing.svelte";
   import UserLinkStore from "../state/userLinkStore.svelte";
   import Ended from "../components/useLink/Ended.svelte";
-    import NotFound from "../components/useLink/NotFound.svelte";
+  import NotFound from "../components/useLink/NotFound.svelte";
 
   const {
     id,

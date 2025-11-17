@@ -5,7 +5,7 @@
   import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import AddLinkButton from "$modules/links/components/layout/AddLinkButton.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
-    import Protected from "$modules/shared/components/Protected.svelte";
+  import Protected from "$modules/shared/components/Protected.svelte";
 
   let { children } = $props();
 
