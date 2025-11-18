@@ -417,7 +417,7 @@ describe("LinkCreationStore", () => {
     it("should generate unique IDs for multiple temp links", async () => {
       const tempLink1 = LinkCreationStore.createTempLink("test-principal");
       // Wait a millisecond to ensure Date.now() returns a different value
-      await new Promise((resolve) => setTimeout(resolve, 1));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       const tempLink2 = LinkCreationStore.createTempLink("test-principal");
 
       expect(tempLink1.id).not.toBe(tempLink2.id);

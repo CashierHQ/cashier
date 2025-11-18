@@ -9,7 +9,6 @@
   import Completed from "../components/useLink/states/Completed.svelte";
   import Gate from "../components/useLink/states/Gate.svelte";
   import Landing from "../components/useLink/states/Landing.svelte";
-  import Locked from "../components/useLink/states/Locked.svelte";
   import Unlocked from "../components/useLink/states/Unlocked.svelte";
   import UserLinkStore from "../state/userLinkStore.svelte";
 
@@ -19,8 +18,7 @@
     id: string;
   } = $props();
 
-  const userStore = new UserLinkStore({ locked: false, id });
-  let lockedFlag: boolean = $state(false);
+  const userStore = new UserLinkStore({ id });
 
   let showTxCart: boolean = $derived.by(() => {
     return !!(
@@ -75,11 +73,6 @@
       console.error("claim failed", err);
     }
   };
-
-  const setLocked = (v: boolean) => {
-    lockedFlag = v;
-    userStore.locked = lockedFlag;
-  };
 </script>
 
 {#if userStore.isLoading}
@@ -96,18 +89,9 @@
     </div>
   {:else}
     <div class="px-4 py-4">
-      <input
-        type="checkbox"
-        bind:checked={lockedFlag}
-        onchange={() => setLocked(lockedFlag)}
-      />
-      <span class="text-sm">Use locked flow</span>
-
       <div class="mt-4">
         {#if userStore.step === UserLinkStep.LANDING}
           <Landing userLink={userStore} linkDetail={userStore.linkDetail} />
-        {:else if userStore.step === UserLinkStep.ADDRESS_LOCKED}
-          <Locked userLink={userStore} linkDetail={userStore.linkDetail} />
         {:else if userStore.step === UserLinkStep.GATE}
           <Gate userLink={userStore} />
         {:else if userStore.step === UserLinkStep.ADDRESS_UNLOCKED}

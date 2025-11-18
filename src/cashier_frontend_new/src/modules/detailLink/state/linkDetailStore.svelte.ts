@@ -5,12 +5,15 @@ import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { detailLinkService } from "$modules/detailLink/services/detailLink";
 import { type ActionTypeValue } from "$modules/links/types/action/actionType";
 import { LinkState } from "$modules/links/types/link/linkState";
-import type { LinkAction } from "$modules/links/types/linkAndAction";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkDetailState } from "./linkDetailStates";
 import { LinkActiveState } from "./linkDetailStates/active";
 import { LinkCreatedState } from "./linkDetailStates/created";
 import { LinkInactiveState } from "./linkDetailStates/inactive";
+import {
+  LinkActionMapper,
+  type LinkAction,
+} from "$modules/links/types/linkAndAction";
 
 /**
  * Store for link detail
@@ -35,7 +38,12 @@ export class LinkDetailStore {
       },
       watch: true,
       storageType: "localStorage",
-      persistedKey: ["link", authState.account?.owner ?? "anon", id],
+      persistedKey: [
+        "linkDetail",
+        authState.account?.owner.toString() ?? "anon",
+        id,
+      ],
+      serde: LinkActionMapper.serde,
     });
     this.#state = new LinkCreatedState(this);
 
