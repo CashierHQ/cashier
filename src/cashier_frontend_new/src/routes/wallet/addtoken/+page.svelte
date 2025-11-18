@@ -1,6 +1,6 @@
 <script lang="ts">
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { walletStore } from "../../../../../../token/state/walletStore.svelte";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
 
   let canisterId: string = $state("");
   let errorMessage: string = $state("");

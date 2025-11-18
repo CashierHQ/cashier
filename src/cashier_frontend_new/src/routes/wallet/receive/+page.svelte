@@ -1,11 +1,11 @@
 <script lang="ts">
   import { authState } from "$modules/auth/state/auth.svelte";
   import {
-    ACCOUNT_ID_TYPE,
-    ICP_LEDGER_CANISTER_ID,
-    PRINCIPAL_TYPE,
-  } from "../../../../../../token/constants";
-  import { walletStore } from "../../../../../../token/state/walletStore.svelte";
+      ACCOUNT_ID_TYPE,
+      ICP_LEDGER_CANISTER_ID,
+      PRINCIPAL_TYPE,
+  } from "$modules/token/constants";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
 
   let selectedToken: string = $state(ICP_LEDGER_CANISTER_ID);
   let accountType: number = $state(PRINCIPAL_TYPE);

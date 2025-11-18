@@ -1,10 +1,10 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { walletStore } from "../../../../../../token/state/walletStore.svelte";
   import {
-    balanceToUSDValue,
-    parseBalanceUnits,
+      balanceToUSDValue,
+      parseBalanceUnits,
   } from "$modules/shared/utils/converter";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
 
   let token = page.params.token || "empty";
   let tokenDetails = $derived(
