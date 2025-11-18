@@ -18,7 +18,7 @@
   async function handleBack() {
     if (!newLink) return;
 
-    if (newLink.state.step === LinkStep.CHOOSE_TYPE) {
+    if (newLink.state.step === LinkStep.CHOOSE_TYPE || newLink.state.step === LinkStep.CREATED) {
       goto(resolve("/links"));
     } else {
       try {
