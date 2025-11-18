@@ -1,7 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state";
   import { resolve } from "$app/paths";
-  import Landing from "$modules/userLink/pages/landing.svelte";
+  import Landing from "$modules/useLink/pages/landing.svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
   import { goto } from "$app/navigation";
 

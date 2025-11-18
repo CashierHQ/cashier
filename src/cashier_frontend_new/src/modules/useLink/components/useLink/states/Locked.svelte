@@ -1,19 +1,16 @@
 <script lang="ts">
   import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
-  import type UserLinkStore from "$modules/userLink/state/userLinkStore.svelte";
-  import Actions from "../Actions.svelte";
+  import type UserLinkStore from "$modules/useLink/state/userLinkStore.svelte";
   import AssetList from "../AssetList.svelte";
   import Header from "../Header.svelte";
+  import LockedActions from "../LockedActions.svelte";
 
   const {
     userLink,
     linkDetail,
-    onCreateUseAction,
-  }: {
-    userLink: UserLinkStore;
-    linkDetail: LinkDetailStore;
-    onCreateUseAction?: () => Promise<void>;
-  } = $props();
+  }: { userLink: UserLinkStore; linkDetail?: LinkDetailStore } = $props();
+
+  console.log("Locked.svelte userLink:", userLink);
 </script>
 
 {#if linkDetail?.query.isLoading}
@@ -26,7 +23,7 @@
 
     <AssetList assetInfo={linkDetail.link.asset_info} />
 
-    <Actions link={linkDetail.link} {onCreateUseAction} />
+    <LockedActions link={linkDetail.link} onUnlock={() => userLink.goNext()} />
 
     <div class="mt-4 flex gap-2">
       <button
