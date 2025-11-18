@@ -243,7 +243,6 @@ export class ManagedState<T> {
       console.error("Error setting data in storage:", e);
       throw e;
     }
-  
   }
 
   /**
