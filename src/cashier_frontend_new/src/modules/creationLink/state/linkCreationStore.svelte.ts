@@ -18,6 +18,7 @@ import { PreviewState } from "../../creationLink/state/linkCreationStates/previe
 import { AddAssetTipLinkState } from "../../creationLink/state/linkCreationStates/tiplink/addAsset";
 import { tempLinkRepository } from "../repositories/tempLinkRepository";
 import { CreateLinkData } from "../types/createLinkData";
+import { createTempLinkFromPrincipalId } from "../utils/tempLink";
 
 // Simple reactive state management
 export class LinkCreationStore {
@@ -120,21 +121,10 @@ export class LinkCreationStore {
    * @returns the created TempLink object
    */
   static createTempLink(principalId: string): TempLink {
-    const ts = Date.now();
-    const tsInNanoSec = BigInt(ts) * 1000000n;
-    const id = principalId + "-" + ts.toString();
-    const state = LinkState.CHOOSING_TYPE;
-    const newCreateLinkData = new CreateLinkData({
-      title: "",
-      linkType: LinkType.TIP,
-      assets: [],
-      maxUse: 1,
-    });
-
-    const tempLink = new TempLink(id, tsInNanoSec, state, newCreateLinkData);
+    const tempLink = createTempLinkFromPrincipalId(principalId);
 
     tempLinkRepository.create({
-      id: id,
+      id: tempLink.id,
       owner: principalId,
       tempLink: tempLink,
     });
@@ -157,14 +147,16 @@ export class LinkCreationStore {
     return Ok(tempLink);
   }
 
-  // Sync the temp link with storage: updates it or deletes it if link is created
+  /**
+   * Persist the current state of the draft link state to the local storage using tempLinkRepository
+   * @returns
+   */
   syncTempLink(): void {
     if (this.#state.step === LinkStep.CREATED) {
       return;
     }
 
     let currentLinkState: LinkStateValue;
-
     switch (this.#state.step) {
       case LinkStep.CHOOSE_TYPE:
         currentLinkState = LinkState.CHOOSING_TYPE;
