@@ -11,7 +11,7 @@ describe("IntentState.fromBackendType", () => {
 
   it("serializes and deserializes IntentState via serde", () => {
     const v = IntentState.CREATED;
-    const ser = IntentStateMapper.serde.serialize.IntentState(v as any);
+    const ser = IntentStateMapper.serde.serialize.IntentState(v);
     const des = IntentStateMapper.serde.deserialize.IntentState(ser);
     expect(des).toBe(v);
   });
