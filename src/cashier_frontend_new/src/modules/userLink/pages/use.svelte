@@ -10,8 +10,9 @@
   import Unlocked from "../components/useLink/states/Unlocked.svelte";
   import UserLinkStore from "../state/userLinkStore.svelte";
   import Landing from "../components/useLink/states/Landing.svelte";
-  import Ended from "../components/useLink/Ended.svelte";
   import NotFound from "../components/useLink/NotFound.svelte";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
 
   const {
     id,
@@ -25,6 +26,16 @@
     return !!(
       userStore?.action && userStore.action.state !== ActionState.SUCCESS
     );
+  });
+
+  // Redirect to link page if link ended and user hasn't completed
+  $effect(() => {
+    if (
+      userStore.link?.state === LinkState.INACTIVE_ENDED &&
+      userStore.query.data?.link_user_state !== LinkUserState.COMPLETED
+    ) {
+      goto(resolve(`/link/${id}`));
+    }
   });
 
   const onCloseDrawer = () => {
@@ -79,35 +90,31 @@
 {#if !userStore.link && userStore.isLoading}
   Loading...
 {:else if userStore.link}
-  {#if userStore.link.state === LinkState.INACTIVE_ENDED && userStore.query.data?.link_user_state !== LinkUserState.COMPLETED}
-    <Ended />
-  {:else}
-    <div class="px-4 py-4">
-      <div class="mt-4">
-        {#if userStore.step === UserLinkStep.LANDING}
-          <Landing userLink={userStore} linkDetail={userStore.linkDetail} />
-        {:else if userStore.step === UserLinkStep.ADDRESS_UNLOCKED}
-          <Unlocked
-            userLink={userStore}
-            linkDetail={userStore.linkDetail}
-            onCreateUseAction={createAction}
-          />
-        {:else if userStore.step === UserLinkStep.COMPLETED}
-          <Completed linkDetail={userStore.linkDetail} />
-        {/if}
+  <div class="px-4 py-4">
+    <div class="mt-4">
+      {#if userStore.step === UserLinkStep.LANDING}
+        <Landing userLink={userStore} />
+      {:else if userStore.step === UserLinkStep.ADDRESS_UNLOCKED}
+        <Unlocked
+          userLink={userStore}
+          linkDetail={userStore.linkDetail}
+          onCreateUseAction={createAction}
+        />
+      {:else if userStore.step === UserLinkStep.COMPLETED}
+        <Completed linkDetail={userStore.linkDetail} />
+      {/if}
 
-        {#if showTxCart && userStore?.link && userStore?.action}
-          <TxCart
-            isOpen={showTxCart}
-            link={userStore.link}
-            action={userStore.action}
-            goNext={claim}
-            {onCloseDrawer}
-          />
-        {/if}
-      </div>
+      {#if showTxCart && userStore?.link && userStore?.action}
+        <TxCart
+          isOpen={showTxCart}
+          link={userStore.link}
+          action={userStore.action}
+          goNext={claim}
+          {onCloseDrawer}
+        />
+      {/if}
     </div>
-  {/if}
+  </div>
 {:else}
   <NotFound />
 {/if}
