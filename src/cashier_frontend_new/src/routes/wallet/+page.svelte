@@ -1,10 +1,10 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
   import {
-    balanceToUSDValue,
-    parseBalanceUnits,
+      balanceToUSDValue,
+      parseBalanceUnits,
   } from "$modules/shared/utils/converter";
-  import { walletStore } from "../../../../../token/state/walletStore.svelte";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
 </script>
 
 <div>

@@ -23,6 +23,7 @@ export class TransactionCartStore {
     this.#handleProcessAction = handleProcessAction;
   }
 
+  // Initialize the ICRC-112 service with the current signer
   initialize() {
     const signer = authState.getSigner() as Signer<IITransport> | null;
     if (signer) {
