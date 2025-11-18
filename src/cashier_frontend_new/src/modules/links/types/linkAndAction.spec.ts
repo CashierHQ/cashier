@@ -3,7 +3,7 @@ import { Principal } from "@dfinity/principal";
 import * as devalue from "devalue";
 import { LinkAction, LinkActionMapper } from "./linkAndAction";
 import { Link } from "./link/link";
-import {  AssetInfo } from "./link/asset";
+import { AssetInfo } from "./link/asset";
 import { LinkType } from "./link/linkType";
 import { LinkState } from "./link/linkState";
 import Action from "./action/action";
@@ -86,12 +86,16 @@ describe("LinkActionMapper", () => {
       expect(deserialized.link.title).toBe(link.title);
       expect(deserialized.action).toBeInstanceOf(Action);
       expect(deserialized.action?.id).toBe(action.id);
-      expect(deserialized.link_user_state).toBe( LinkUserState.COMPLETED);
+      expect(deserialized.link_user_state).toBe(LinkUserState.COMPLETED);
     });
 
     it("serializes and deserializes LinkAction with only link (no action)", () => {
       const link = makeSampleLink();
-      const linkAction = new LinkAction(link, undefined, LinkUserState.COMPLETED);
+      const linkAction = new LinkAction(
+        link,
+        undefined,
+        LinkUserState.COMPLETED,
+      );
 
       const serialized =
         LinkActionMapper.serde.serialize.LinkAction(linkAction);
@@ -157,7 +161,10 @@ describe("LinkActionMapper", () => {
       };
 
       // This should NOT throw RangeError
-      const stringified = devalue.stringify(linkAction, combinedSerde.serialize);
+      const stringified = devalue.stringify(
+        linkAction,
+        combinedSerde.serialize,
+      );
       expect(stringified).toBeDefined();
       expect(typeof stringified).toBe("string");
 
@@ -169,12 +176,16 @@ describe("LinkActionMapper", () => {
       expect(parsed.link.id).toBe(link.id);
       expect(parsed.link.title).toBe(link.title);
       expect(parsed.action?.id).toBe(action.id);
-      expect(parsed.link_user_state).toBe( LinkUserState.COMPLETED);
+      expect(parsed.link_user_state).toBe(LinkUserState.COMPLETED);
     });
 
     it("handles LinkAction without action in devalue roundtrip", () => {
       const link = makeSampleLink("link-2", "Another Link");
-      const linkAction = new LinkAction(link, undefined, LinkUserState.COMPLETED);
+      const linkAction = new LinkAction(
+        link,
+        undefined,
+        LinkUserState.COMPLETED,
+      );
 
       const combinedSerde = {
         serialize: {
@@ -185,7 +196,10 @@ describe("LinkActionMapper", () => {
         },
       };
 
-      const stringified = devalue.stringify(linkAction, combinedSerde.serialize);
+      const stringified = devalue.stringify(
+        linkAction,
+        combinedSerde.serialize,
+      );
       const parsed = devalue.parse(
         stringified,
         combinedSerde.deserialize,
@@ -195,7 +209,7 @@ describe("LinkActionMapper", () => {
       expect(parsed.link.id).toBe("link-2");
       expect(parsed.link.title).toBe("Another Link");
       expect(parsed.action).toBeUndefined();
-      expect(parsed.link_user_state).toBe( LinkUserState.COMPLETED);
+      expect(parsed.link_user_state).toBe(LinkUserState.COMPLETED);
     });
   });
 
