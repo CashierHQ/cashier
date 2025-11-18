@@ -29,11 +29,6 @@
     }
   });
 
-  // Navigate back to the previous step
-  async function goBack() {
-    goto(resolve("/links"));
-  }
-
   async function onClickCreate() {
     isOpenTxCart = true;
   }
@@ -67,8 +62,6 @@
 <h3 class="text-lg font-semibold">Created</h3>
 <div class="mt-2">
   <LinkDetails {link} {errorMessage} {successMessage} />
-
-  <Button onclick={goBack}>Back</Button>
 
   <Button onclick={onClickCreate}>Create</Button>
 

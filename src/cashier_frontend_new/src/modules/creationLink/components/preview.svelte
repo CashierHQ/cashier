@@ -23,17 +23,8 @@
     }
   });
 
-  // Navigate back to the previous step
-  async function goBack() {
-    try {
-      await link.goBack();
-    } catch (error) {
-      console.error("Failed to go back: ", error);
-    }
-  }
-
   // Create the link
-  async function create() {
+  async function handleCreate() {
     errorMessage = null;
     successMessage = null;
     try {
@@ -51,7 +42,5 @@
 <div class="mt-2">
   <LinkDetails {link} {errorMessage} {successMessage} />
 
-  <Button onclick={goBack}>Back</Button>
-
-  <Button onclick={create}>Create</Button>
+  <Button onclick={handleCreate}>Create</Button>
 </div>

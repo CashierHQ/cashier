@@ -74,16 +74,6 @@
     };
   }
 
-  // Navigate back to previous ChooseLinkType step
-  function goBack() {
-    errorMessage = null;
-    try {
-      link.goBack();
-    } catch (e) {
-      errorMessage = "Failed to go back to previous step: " + e;
-    }
-  }
-
   // Navigate to next Preview step
   async function goNext() {
     errorMessage = null;
@@ -148,6 +138,5 @@
     <div class="text-red-600">{errorMessage}</div>
   {/if}
 
-  <Button onclick={goBack}>Back</Button>
   <Button onclick={goNext}>Next</Button>
 </div>
