@@ -1,5 +1,6 @@
 import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
+import type { ActionTypeValue } from "$modules/links/types/action/actionType";
 import type { UserLinkStep } from "$modules/links/types/userLinkStep";
 
 /**
@@ -23,7 +24,8 @@ export interface UserLinkState {
    * Method to create an action
    * @returns The created action or an error
    */
-  createAction(): Promise<Action>;
+  createAction(actionType: ActionTypeValue): Promise<Action>;
+
   /**
    * Method to process an action
    * @returns The result of processing the action or an error

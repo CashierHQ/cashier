@@ -2,6 +2,7 @@ import type { LinkDetailStore as LinkDetailStoreType } from "$modules/detailLink
 import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
 import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
+import type { ActionTypeValue } from "$modules/links/types/action/actionType";
 import { LinkUserState } from "$modules/links/types/link/linkUserState";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserLinkState } from "./userLinkStates";
@@ -89,8 +90,8 @@ export class UserLinkStore {
    * @param actionType
    * @returns The action created
    */
-  async createAction(): Promise<Action> {
-    return await this.#state.createAction();
+  async createAction(actionType: ActionTypeValue): Promise<Action> {
+    return await this.#state.createAction(actionType);
   }
 
   /**

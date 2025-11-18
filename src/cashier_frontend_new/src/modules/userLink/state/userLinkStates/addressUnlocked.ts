@@ -5,7 +5,10 @@ import {
   ProcessActionResultMapper,
   type ProcessActionResult,
 } from "$modules/links/types/action/action";
-import { ActionTypeMapper } from "$modules/links/types/action/actionType";
+import {
+  ActionType,
+  type ActionTypeValue,
+} from "$modules/links/types/action/actionType";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserLinkState } from ".";
 import type { UserLinkStore } from "../userLinkStore.svelte";
@@ -28,15 +31,18 @@ export class AddressUnlockedState implements UserLinkState {
     this.#store.state = new LandingState(this.#store);
   }
 
-  async createAction(): Promise<Action> {
+  async createAction(actionType: ActionTypeValue): Promise<Action> {
     if (!this.#store.linkDetail.link) {
       throw new Error("Link not loaded");
     }
 
+    if (actionType !== ActionType.RECEIVE) {
+      throw new Error(
+        `Action type ${actionType} not supported in Address Unlocked state.`,
+      );
+    }
+
     const linkId = this.#store.linkDetail.link.id;
-    const actionType = ActionTypeMapper.fromLinkType(
-      this.#store.linkDetail.link.link_type,
-    );
     const result = await cashierBackendService.createActionV2({
       linkId,
       actionType,
@@ -52,6 +58,12 @@ export class AddressUnlockedState implements UserLinkState {
   async processAction(): Promise<ProcessActionResult> {
     if (!this.#store.action) {
       throw new Error("Action not loaded");
+    }
+
+    if (this.#store.action.type !== ActionType.RECEIVE) {
+      throw new Error(
+        `Action type ${this.#store.action.type} not supported in Address Unlocked state.`,
+      );
     }
 
     const actionId = this.#store.action.id;

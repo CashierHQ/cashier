@@ -1,5 +1,6 @@
 import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
+import type { ActionTypeValue } from "$modules/links/types/action/actionType";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserLinkState } from ".";
 import type { UserLinkStore } from "../userLinkStore.svelte";
@@ -22,7 +23,7 @@ export class AddressLockedState implements UserLinkState {
     this.#store.state = new LandingState(this.#store);
   }
 
-  async createAction(): Promise<Action> {
+  async createAction(actionType: ActionTypeValue): Promise<Action> {
     throw new Error("Method not implemented.");
   }
 
