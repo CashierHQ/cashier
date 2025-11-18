@@ -145,7 +145,7 @@
 
           <AssetList title={assetTitle} {assetAndFeeList} />
 
-          {#if assetAndFeeList && assetAndFeeList.length > 0}
+          {#if assetAndFeeList && assetAndFeeList.length > 0 && assetAndFeeList.some(item => item.fee)}
             <Fee {assetAndFeeList} onOpen={() => (showFeeBreakdown = true)} />
           {/if}
 

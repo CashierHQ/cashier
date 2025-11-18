@@ -72,7 +72,6 @@
 
   const createWithdrawAction = async () => {
     errorMessage = null;
-    successMessage = null;
 
     try {
       if (!linkDetail.link) {
@@ -80,7 +79,6 @@
       }
 
       await linkDetail.createAction(ActionType.WITHDRAW);
-      successMessage = "Withdraw action created successfully.";
     } catch (err) {
       errorMessage = "Failed to create withdraw action." + (err instanceof Error ? err.message : "");
     }
