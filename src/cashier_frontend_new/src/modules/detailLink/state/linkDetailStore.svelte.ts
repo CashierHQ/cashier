@@ -38,7 +38,11 @@ export class LinkDetailStore {
       },
       watch: true,
       storageType: "localStorage",
-      persistedKey: ["linkDetail", id],
+      persistedKey: [
+        "linkDetail",
+        authState.account?.owner.toString() ?? "anon",
+        id,
+      ],
       serde: LinkActionMapper.serde,
     });
     this.#state = new LinkCreatedState(this);
