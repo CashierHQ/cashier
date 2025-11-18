@@ -58,6 +58,18 @@
     }
   };
 
+  const onCloseDrawer = () => {
+    showTxCart = false;
+  };
+
+  const openDrawer = () => {
+    showTxCart = true;
+  };
+
+  const handleBack = async () => {
+    goto(resolve("/links"));
+  }
+
   const createWithdrawAction = async () => {
     errorMessage = null;
     successMessage = null;
@@ -74,19 +86,7 @@
     }
   };
 
-  const onCloseDrawer = () => {
-    showTxCart = false;
-  };
-
-  const openDrawer = () => {
-    showTxCart = true;
-  };
-
-  async function handleBack() {
-    goto(resolve("/links"));
-  }
-
-  async function handleProcessAction() : Promise<ProcessActionResult> {
+  const handleProcessAction = async () : Promise<ProcessActionResult> => {
     return await linkDetail.processAction();
   }
 

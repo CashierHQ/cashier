@@ -8,7 +8,6 @@ import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { type ActionTypeValue } from "$modules/links/types/action/actionType";
 import { LinkState } from "$modules/links/types/link/linkState";
 import type { LinkAction } from "$modules/links/types/linkAndAction";
-import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkDetailState } from "./linkDetailStates";
 import { LinkActiveState } from "./linkDetailStates/active";
 import { LinkCreatedState } from "./linkDetailStates/created";
@@ -19,7 +18,6 @@ import { LinkInactiveState } from "./linkDetailStates/inactive";
  */
 export class LinkDetailStore {
   #linkDetailQuery;
-  #state: LinkDetailState;
   #id: string;
 
   constructor({ id }: { id: string }) {
@@ -38,34 +36,6 @@ export class LinkDetailStore {
       watch: true,
       storageType: "localStorage",
       persistedKey: ["link", authState.account?.owner ?? "anon", id],
-    });
-    this.#state = new LinkCreatedState(this);
-
-    $effect(() => {
-      const link = this.link;
-      if (!link) return;
-
-      // Update state based on link state
-      switch (link.state) {
-        case LinkState.CREATE_LINK:
-          this.#state = new LinkCreatedState(this);
-          break;
-        case LinkState.ACTIVE:
-          this.#state = new LinkActiveState(this);
-          break;
-        case LinkState.INACTIVE:
-          this.#state = new LinkInactiveState(this);
-          break;
-        case LinkState.INACTIVE_ENDED:
-          this.#state = new LinkInactiveState(this);
-          break;
-        case LinkState.CHOOSING_TYPE:
-        case LinkState.ADDING_ASSET:
-        case LinkState.PREVIEW:
-          throw new Error(`Invalid link state for detail store: ${link.state}`);
-        default:
-          assertUnreachable(link.state);
-      }
     });
   }
 
@@ -91,28 +61,37 @@ export class LinkDetailStore {
   }
 
   /**
-   * Get link detail state
+   * Get state handler based on the link state
    */
-  get state() {
-    return this.#state;
+  get state(): LinkDetailState {
+    const link = this.link;
+    if (!link) {
+      throw new Error("Link is missing");
+    }
+
+    switch (link.state) {
+      case LinkState.CREATE_LINK:
+        return new LinkCreatedState(this);
+      case LinkState.ACTIVE:
+        return new LinkActiveState(this);
+      case LinkState.INACTIVE:
+        return new LinkInactiveState(this);
+      case LinkState.INACTIVE_ENDED:
+        return new LinkInactiveState(this);
+      case LinkState.CHOOSING_TYPE:
+      case LinkState.ADDING_ASSET:
+      case LinkState.PREVIEW:
+        throw new Error(`Invalid link state for detail store: ${link.state}`);
+      default:
+        assertUnreachable(link.state);
+    }
   }
-  /**
-   * Set link detail state
-   */
-  set state(state: LinkDetailState) {
-    this.#state = state;
-  }
+
   /**
    * Get link id
    */
   get id() {
     return this.#id;
-  }
-  /**
-   * Set link id
-   */
-  set id(id: string) {
-    this.#id = id;
   }
 
   /**
@@ -121,7 +100,7 @@ export class LinkDetailStore {
    * @returns The action created
    */
   async createAction(actionType: ActionTypeValue): Promise<Action> {
-    return this.#state.createAction(actionType);
+    return this.state.createAction(actionType);
   }
 
   /**
@@ -129,7 +108,7 @@ export class LinkDetailStore {
    * @returns The result of processing the action
    */
   async processAction(): Promise<ProcessActionResult> {
-    return this.#state.processAction();
+    return this.state.processAction();
   }
 
   /**
@@ -142,20 +121,15 @@ export class LinkDetailStore {
       throw new Error("Link is missing");
     }
 
-    if (
-      this.#state.step !== LinkStep.ACTIVE &&
-      this.link.state !== LinkState.ACTIVE
-    ) {
+    if (this.link.state !== LinkState.ACTIVE) {
       throw new Error("Only active links can be disabled");
     }
 
     const result = await cashierBackendService.disableLinkV2(this.link.id);
-
     if (result.isErr()) {
       throw new Error(`Failed to active link: ${result.error}`);
     }
 
-    this.#state = new LinkInactiveState(this);
     this.query.refresh();
   }
 }

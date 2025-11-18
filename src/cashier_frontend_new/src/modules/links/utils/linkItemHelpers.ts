@@ -61,3 +61,18 @@ export function getLinkDefaultAvatar(linkType: LinkTypeValue): string {
       assertUnreachable(linkType);
   }
 }
+
+export function getLinkTypeText(linkType: LinkTypeValue): string {
+  switch (linkType) {
+    case LinkType.TIP:
+      return "Send Tip";
+    case LinkType.AIRDROP:
+      return "Send Airdrop";
+    case LinkType.RECEIVE_PAYMENT:
+      return "Receive Payment";
+    case LinkType.TOKEN_BASKET:
+      return "Send Token Basket";
+    default:
+      assertUnreachable(linkType);
+  }
+}

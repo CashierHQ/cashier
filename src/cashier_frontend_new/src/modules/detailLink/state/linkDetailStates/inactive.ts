@@ -38,7 +38,6 @@ export class LinkInactiveState implements LinkDetailState {
       linkId: link.id,
       actionType,
     });
-
     if (actionRes.isErr()) {
       throw new Error(`Failed to create action: ${actionRes.error}`);
     }
