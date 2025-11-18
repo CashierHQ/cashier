@@ -12,7 +12,6 @@ import {
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkDetailState } from ".";
 import type { LinkDetailStore } from "../linkDetailStore.svelte";
-import { LinkActiveState } from "./active";
 
 // State when the link has been successfully created
 export class LinkCreatedState implements LinkDetailState {
@@ -51,7 +50,6 @@ export class LinkCreatedState implements LinkDetailState {
 
     linkListStore.refresh();
     this.#linkDetailStore.query.refresh();
-    this.#linkDetailStore.state = new LinkActiveState(this.#linkDetailStore);
     return ProcessActionResultMapper.fromBackendType(result.unwrap());
   }
 }

@@ -70,7 +70,6 @@ export class LinkActiveState implements LinkDetailState {
 
     linkListStore.refresh();
     this.#linkDetailStore.query.refresh();
-
     return ProcessActionResultMapper.fromBackendType(result.unwrap());
   }
 }
