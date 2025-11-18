@@ -4,10 +4,10 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { validationService } from "$modules/links/services/validationService";
   import {
-      computeAmountFromInput,
-      parseDisplayNumber,
-      sanitizeInput,
-      trimNumber,
+    computeAmountFromInput,
+    parseDisplayNumber,
+    sanitizeInput,
+    trimNumber,
   } from "$modules/links/utils/inputAmount";
   import { USD_DISPLAY_DECIMALS } from "$modules/shared/constants";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";

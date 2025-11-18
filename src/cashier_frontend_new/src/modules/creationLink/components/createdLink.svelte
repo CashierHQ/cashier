@@ -2,12 +2,12 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { LinkDetailStore } from '$modules/detailLink/state/linkDetailStore.svelte';
-  import type { ProcessActionResult } from '$modules/links/types/action/action';
-  import { LinkState } from '$modules/links/types/link/linkState';
+  import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
+  import type { ProcessActionResult } from "$modules/links/types/action/action";
+  import { LinkState } from "$modules/links/types/link/linkState";
   import { LinkStep } from "$modules/links/types/linkStep";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
-  import { onMount } from 'svelte';
+  import { onMount } from "svelte";
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
   import LinkDetails from "./linkDetails.svelte";
 
@@ -46,7 +46,11 @@
 
   $effect(() => {
     // Redirect to detail page if the link is active
-    if (linkDetailStore && linkDetailStore.link && linkDetailStore.link.state === LinkState.ACTIVE) {
+    if (
+      linkDetailStore &&
+      linkDetailStore.link &&
+      linkDetailStore.link.state === LinkState.ACTIVE
+    ) {
       goto(resolve(`/link/detail/${linkDetailStore.id}`));
     }
   });
@@ -68,7 +72,6 @@
   {#if link.link && link.action && isOpenTxCart}
     <TxCart
       isOpen={isOpenTxCart}
-      link={link.link}
       action={link.action}
       onCloseDrawer={onCloseTxCart}
       {handleProcessAction}

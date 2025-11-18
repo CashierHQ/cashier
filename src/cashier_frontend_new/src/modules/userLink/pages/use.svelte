@@ -1,16 +1,16 @@
 <script lang="ts">
-    import type { ProcessActionResult } from '$modules/links/types/action/action';
-    import { ActionState } from "$modules/links/types/action/actionState";
-    import { ActionType } from '$modules/links/types/action/actionType';
-    import { LinkState } from "$modules/links/types/link/linkState";
-    import { LinkUserState } from "$modules/links/types/link/linkUserState";
-    import { UserLinkStep } from "$modules/links/types/userLinkStep";
-    import TxCart from "$modules/transactionCart/components/txCart.svelte";
-    import Completed from "../components/useLink/states/Completed.svelte";
-    import Gate from "../components/useLink/states/Gate.svelte";
-    import Landing from "../components/useLink/states/Landing.svelte";
-    import Unlocked from "../components/useLink/states/Unlocked.svelte";
-    import UserLinkStore from "../state/userLinkStore.svelte";
+  import type { ProcessActionResult } from "$modules/links/types/action/action";
+  import { ActionState } from "$modules/links/types/action/actionState";
+  import { ActionType } from "$modules/links/types/action/actionType";
+  import { LinkState } from "$modules/links/types/link/linkState";
+  import { LinkUserState } from "$modules/links/types/link/linkUserState";
+  import { UserLinkStep } from "$modules/links/types/userLinkStep";
+  import TxCart from "$modules/transactionCart/components/txCart.svelte";
+  import Completed from "../components/useLink/states/Completed.svelte";
+  import Gate from "../components/useLink/states/Gate.svelte";
+  import Landing from "../components/useLink/states/Landing.svelte";
+  import Unlocked from "../components/useLink/states/Unlocked.svelte";
+  import UserLinkStore from "../state/userLinkStore.svelte";
 
   const {
     id,
@@ -19,10 +19,8 @@
   } = $props();
 
   const userStore = new UserLinkStore({ id });
-  let lockedFlag: boolean = $state(false);
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
-
 
   let showTxCart: boolean = $derived.by(() => {
     return !!(
@@ -43,7 +41,7 @@
       if (userStore.action) {
         showTxCart = true;
       } else {
-        const action = await userStore.createAction(ActionType.RECEIVE);
+        await userStore.createAction(ActionType.RECEIVE);
         // Refresh query state to update the derived link with new action
         userStore.query?.refresh();
       }
@@ -53,8 +51,8 @@
     }
   };
 
-  const handleProcessAction = async () : Promise<ProcessActionResult> => {
-      return await userStore.processAction();    
+  const handleProcessAction = async (): Promise<ProcessActionResult> => {
+    return await userStore.processAction();
   };
 </script>
 
@@ -70,6 +68,21 @@
     </div>
   {:else}
     <div class="px-4 py-4">
+      {#if errorMessage}
+        <div
+          class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
+        >
+          {errorMessage}
+        </div>
+      {/if}
+
+      {#if successMessage}
+        <div
+          class="mb-4 p-3 text-sm text-green-700 bg-green-100 rounded border border-green-200"
+        >
+          {successMessage}
+        </div>
+      {/if}
       <div class="mt-4">
         {#if userStore.step === UserLinkStep.LANDING}
           <Landing userLink={userStore} linkDetail={userStore.linkDetail} />
@@ -88,7 +101,6 @@
         {#if showTxCart && userStore?.link && userStore?.action}
           <TxCart
             isOpen={showTxCart}
-            link={userStore.link}
             action={userStore.action}
             {onCloseDrawer}
             {handleProcessAction}

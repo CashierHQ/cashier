@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getLinkTypeText } from '$modules/links/utils/linkItemHelpers';
+  import { getLinkTypeText } from "$modules/links/utils/linkItemHelpers";
   import type { Link } from "../../links/types/link/link";
   import { statusBadge } from "../../links/utils/statusBadge";
   import AssetList from "./assetList.svelte";

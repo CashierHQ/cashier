@@ -24,7 +24,9 @@ export class GateState implements UserLinkState {
   }
 
   async createAction(actionType: ActionTypeValue): Promise<Action> {
-    throw new Error("Method not implemented.");
+    throw new Error(
+      `Action type ${actionType} cannot be created in Gate state`,
+    );
   }
 
   async processAction(): Promise<ProcessActionResult> {

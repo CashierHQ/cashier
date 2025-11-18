@@ -1,9 +1,9 @@
 <script lang="ts">
   import { authState } from "$modules/auth/state/auth.svelte";
   import {
-      ACCOUNT_ID_TYPE,
-      ICP_LEDGER_CANISTER_ID,
-      PRINCIPAL_TYPE,
+    ACCOUNT_ID_TYPE,
+    ICP_LEDGER_CANISTER_ID,
+    PRINCIPAL_TYPE,
   } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
 

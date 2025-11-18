@@ -2,7 +2,7 @@
   import { assertUnreachable } from "$lib/rsMatch";
   import { FeeType, type FeeItem } from "$modules/links/types/fee";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
-  import type { AssetAndFee } from '../services/feeService';
+  import type { AssetAndFee } from "../services/feeService";
 
   let {
     assetAndFeeList,
@@ -19,7 +19,10 @@
 
   // total token amount (derived)
   let totalAmount = $derived(() => {
-    return assetAndFeeList.reduce((acc, f) => acc + (parseFloat(f.fee?.amount || "0") || 0), 0);
+    return assetAndFeeList.reduce(
+      (acc, f) => acc + (parseFloat(f.fee?.amount || "0") || 0),
+      0,
+    );
   });
 
   // primary symbol (first fee's symbol) — empty if none
@@ -75,13 +78,18 @@
       <div
         class="flex items-center justify-between py-3 border-b last:border-b-0"
       >
-        {#if item.fee }
+        {#if item.fee}
           <div class="text-sm">{labelForFee(item.fee)}</div>
         {/if}
         <div class="text-right">
-          <div class="text-sm font-medium">{item.fee?.amount} {item.fee?.symbol}</div>
+          <div class="text-sm font-medium">
+            {item.fee?.amount}
+            {item.fee?.symbol}
+          </div>
           {#if item.fee?.usdValue !== undefined}
-            <div class="text-xs text-muted-foreground">${item.fee?.usdValueStr}</div>
+            <div class="text-xs text-muted-foreground">
+              ${item.fee?.usdValueStr}
+            </div>
           {/if}
         </div>
       </div>

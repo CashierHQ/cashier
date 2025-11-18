@@ -3,15 +3,9 @@ import type { ProcessActionResult } from "$modules/links/types/action/action";
 import type { ActionTypeValue } from "$modules/links/types/action/actionType";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserLinkState } from ".";
-import type { UserLinkStore } from "../userLinkStore.svelte";
 
 export class CompletedState implements UserLinkState {
   readonly step = UserLinkStep.COMPLETED;
-  #store: UserLinkStore;
-
-  constructor(store: UserLinkStore) {
-    this.#store = store;
-  }
 
   async goNext(): Promise<void> {
     throw new Error("Completed is final state, cannot go next");
@@ -22,7 +16,9 @@ export class CompletedState implements UserLinkState {
   }
 
   async createAction(actionType: ActionTypeValue): Promise<Action> {
-    throw new Error("Completed is final state, cannot create action");
+    throw new Error(
+      `Action type ${actionType} cannot be created in Completed state`,
+    );
   }
 
   async processAction(): Promise<ProcessActionResult> {
