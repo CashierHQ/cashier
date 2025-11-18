@@ -87,7 +87,7 @@ export class UserLinkStore {
 
   /**
    * Create an action
-   * @param actionType
+   * @param actionType The type of action to create
    * @returns The action created
    */
   async createAction(actionType: ActionTypeValue): Promise<Action> {
@@ -96,7 +96,6 @@ export class UserLinkStore {
 
   /**
    * Process an action
-   * @param actionId
    * @returns The result of processing the action
    */
   async processAction(): Promise<ProcessActionResult> {

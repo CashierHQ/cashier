@@ -1,10 +1,5 @@
-import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import type Action from "$modules/links/types/action/action";
-import {
-  ActionMapper,
-  ProcessActionResultMapper,
-  type ProcessActionResult,
-} from "$modules/links/types/action/action";
+import { type ProcessActionResult } from "$modules/links/types/action/action";
 import {
   ActionType,
   type ActionTypeValue,
@@ -12,7 +7,6 @@ import {
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserLinkState } from ".";
 import type { UserLinkStore } from "../userLinkStore.svelte";
-import { CompletedState } from "./completed";
 import { LandingState } from "./landing";
 
 export class AddressUnlockedState implements UserLinkState {
@@ -32,7 +26,7 @@ export class AddressUnlockedState implements UserLinkState {
   }
 
   async createAction(actionType: ActionTypeValue): Promise<Action> {
-    if (!this.#store.linkDetail.link) {
+    if (!this.#store.linkDetail || !this.#store.linkDetail.link) {
       throw new Error("Link not loaded");
     }
 
@@ -42,17 +36,7 @@ export class AddressUnlockedState implements UserLinkState {
       );
     }
 
-    const linkId = this.#store.linkDetail.link.id;
-    const result = await cashierBackendService.createActionV2({
-      linkId,
-      actionType,
-    });
-    if (result.isErr()) {
-      throw new Error(result.error.message);
-    }
-
-    const action = ActionMapper.fromBackendType(result.value);
-    return action;
+    return await this.#store.linkDetail.createAction(actionType);
   }
 
   async processAction(): Promise<ProcessActionResult> {
@@ -66,16 +50,6 @@ export class AddressUnlockedState implements UserLinkState {
       );
     }
 
-    const actionId = this.#store.action.id;
-    const result = await cashierBackendService.processActionV2(actionId);
-    if (result.isErr()) {
-      throw new Error(result.error.message);
-    }
-
-    this.#store.state = new CompletedState(this.#store);
-    const processResult = ProcessActionResultMapper.fromBackendType(
-      result.value,
-    );
-    return processResult;
+    return await this.#store.linkDetail.processAction();
   }
 }

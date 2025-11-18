@@ -1,5 +1,6 @@
 import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
+import type { ActionTypeValue } from "$modules/links/types/action/actionType";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkDetailState } from ".";
 import type { LinkDetailStore } from "../linkDetailStore.svelte";
@@ -13,8 +14,7 @@ export class LinkEndedState implements LinkDetailState {
     this.#linkDetailStore = link;
   }
 
-  async createAction(): Promise<Action> {
-    console.log("Link ID:", this.#linkDetailStore);
+  async createAction(actionType: ActionTypeValue): Promise<Action> {
     throw new Error("Link has ended; no further actions can be created.");
   }
 

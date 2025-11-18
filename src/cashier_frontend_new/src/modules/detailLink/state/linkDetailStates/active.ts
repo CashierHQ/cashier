@@ -39,23 +39,33 @@ export class LinkActiveState implements LinkDetailState {
       actionType,
     });
     if (actionRes.isErr()) {
-      throw actionRes.error;
+      throw new Error(`Failed to create action: ${actionRes.error}`);
     }
+
     // Refresh link detail to get the new action
     this.#linkDetailStore.query.refresh();
     return ActionMapper.fromBackendType(actionRes.unwrap());
   }
 
   // process the action for use link
-  async processAction(actionId: string): Promise<ProcessActionResult> {
-    const link = this.#linkDetailStore.link;
-    if (!link) {
+  async processAction(): Promise<ProcessActionResult> {
+    if (!this.#linkDetailStore.link) {
       throw new Error("Link is missing");
     }
 
+    if (!this.#linkDetailStore.action) {
+      throw new Error("Action is missing");
+    }
+
+    const actionType = this.#linkDetailStore.action.type;
+    if (actionType !== ActionType.RECEIVE && actionType !== ActionType.SEND) {
+      throw new Error("Invalid action type for Active state");
+    }
+
+    const actionId = this.#linkDetailStore.action.id;
     const result = await cashierBackendService.processActionV2(actionId);
     if (result.isErr()) {
-      throw new Error(`Failed to activate link: ${result.error}`);
+      throw new Error(`Failed to process action: ${result.error}`);
     }
 
     linkListStore.refresh();

@@ -118,7 +118,7 @@ export class LinkDetailStore {
   /**
    * Create an action based on the current state
    * @param actionType The type of action to create
-   * @returns void
+   * @returns The action created
    */
   async createAction(actionType: ActionTypeValue): Promise<Action> {
     return this.#state.createAction(actionType);
@@ -126,11 +126,10 @@ export class LinkDetailStore {
 
   /**
    * Process the current action in the store
-   * @param actionId id of the action to process
-   * @returns void
+   * @returns The result of processing the action
    */
-  async processAction(actionId: string): Promise<ProcessActionResult> {
-    return this.#state.processAction(actionId);
+  async processAction(): Promise<ProcessActionResult> {
+    return this.#state.processAction();
   }
 
   /**
