@@ -1,3 +1,5 @@
+import type Action from "$modules/links/types/action/action";
+import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserLinkState } from ".";
 import type { UserLinkStore } from "../userLinkStore.svelte";
@@ -18,5 +20,13 @@ export class GateState implements UserLinkState {
 
   async goBack(): Promise<void> {
     this.#store.state = new AddressLockedState(this.#store);
+  }
+
+  async createAction(): Promise<Action> {
+    throw new Error("Method not implemented.");
+  }
+
+  async processAction(): Promise<ProcessActionResult> {
+    throw new Error("Method not implemented.");
   }
 }

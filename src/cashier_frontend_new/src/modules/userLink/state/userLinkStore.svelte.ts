@@ -1,10 +1,12 @@
-import type { UserLinkState } from "./userLinkStates";
-import { LandingState } from "./userLinkStates/landing";
-import { CompletedState } from "./userLinkStates/completed";
-import { UserLinkStep } from "$modules/links/types/userLinkStep";
-import { LinkUserState } from "$modules/links/types/link/linkUserState";
-import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
 import type { LinkDetailStore as LinkDetailStoreType } from "$modules/detailLink/state/linkDetailStore.svelte";
+import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
+import type Action from "$modules/links/types/action/action";
+import type { ProcessActionResult } from "$modules/links/types/action/action";
+import { LinkUserState } from "$modules/links/types/link/linkUserState";
+import { UserLinkStep } from "$modules/links/types/userLinkStep";
+import type { UserLinkState } from "./userLinkStates";
+import { CompletedState } from "./userLinkStates/completed";
+import { LandingState } from "./userLinkStates/landing";
 
 /**
  * Simple store for user-facing link flow.
@@ -80,6 +82,24 @@ export class UserLinkStore {
    */
   async goBack(): Promise<void> {
     await this.#state.goBack();
+  }
+
+  /**
+   * Create an action
+   * @param actionType
+   * @returns The action created
+   */
+  async createAction(): Promise<Action> {
+    return await this.#state.createAction();
+  }
+
+  /**
+   * Process an action
+   * @param actionId
+   * @returns The result of processing the action
+   */
+  async processAction(): Promise<ProcessActionResult> {
+    return await this.#state.processAction();
   }
 }
 
