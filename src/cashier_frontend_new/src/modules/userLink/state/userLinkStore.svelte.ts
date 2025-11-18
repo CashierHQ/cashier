@@ -1,3 +1,4 @@
+import { authState } from "$modules/auth/state/auth.svelte";
 import type { LinkDetailStore as LinkDetailStoreType } from "$modules/detailLink/state/linkDetailStore.svelte";
 import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
 import type Action from "$modules/links/types/action/action";
@@ -5,32 +6,69 @@ import type { ProcessActionResult } from "$modules/links/types/action/action";
 import type { ActionTypeValue } from "$modules/links/types/action/actionType";
 import { LinkUserState } from "$modules/links/types/link/linkUserState";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
+import { userLinkRepository } from "../repositories/userLinkRepository";
+import { userLinkStateFromStep } from "../utils/userLinkStateFromStep";
 import type { UserLinkState } from "./userLinkStates";
 import { CompletedState } from "./userLinkStates/completed";
 import { LandingState } from "./userLinkStates/landing";
 
 /**
- * Simple store for user-facing link flow.
+ * Store for user link state management
  */
 export class UserLinkStore {
   #state = $state<UserLinkState>(new LandingState(this));
 
-  // when true: Landing -> AddressLocked -> Gate -> AddressUnlocked -> Completed
-  // when false: Landing -> AddressUnlocked -> Completed
-  public locked = $state<boolean>(false);
-
   public linkDetail: LinkDetailStoreType;
 
-  constructor({ locked = false, id }: { locked?: boolean; id: string }) {
-    this.locked = locked;
+  constructor({ id }: { id: string }) {
     this.linkDetail = new LinkDetailStore({ id });
 
+    // initialize from persisted per-user state if present
+    $effect(() => {
+      const owner = authState.account?.owner;
+      if (!owner) return;
+      const persisted = userLinkRepository.getOne(owner, id);
+      if (!persisted) return;
+      if (persisted.step) {
+        this.#state = userLinkStateFromStep(persisted.step, this);
+      }
+    });
+
+    // persist changes to the per-user store whenever link id, owner or step changes
+    $effect(() => {
+      void authState.account?.owner;
+      void this.#state;
+
+      this.syncUserLink();
+    });
+
+    // react to backend-driven user state changes (e.g., completed)
     $effect(() => {
       const s = this.linkDetail.query.data?.link_user_state;
       if (s === LinkUserState.COMPLETED) {
         this.#state = new CompletedState(this);
       }
     });
+  }
+
+  /**
+   * Persist the current user+link state to the repository. Best-effort and
+   * centralized so we can add debouncing or conditional logic later.
+   */
+  syncUserLink(): void {
+    const owner = authState.account?.owner;
+    const linkId = this.linkDetail.id;
+    if (!owner || !linkId) return;
+
+    try {
+      userLinkRepository.upsert({
+        owner,
+        linkId,
+        data: { linkId, step: this.step },
+      });
+    } catch (e) {
+      console.warn("userLink sync failed", e);
+    }
   }
 
   /**
@@ -46,6 +84,8 @@ export class UserLinkStore {
   set state(s: UserLinkState) {
     this.#state = s;
   }
+
+  // `locked` has been removed from the user-facing store and persistence.
 
   /**
    * The current step in the link creation process

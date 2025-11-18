@@ -29,6 +29,22 @@ export class IntentStateMapper {
       Fail: () => IntentState.FAIL,
     });
   }
+
+  // Devalue serde for IntentState: persist the state as a string and restore
+  // as `IntentStateValue`.
+  static serde = {
+    serialize: {
+      IntentState: (value: unknown) => {
+        if (typeof value !== "string") return undefined;
+        return value;
+      },
+    },
+    deserialize: {
+      IntentState: (obj: unknown) => {
+        return obj as IntentStateValue;
+      },
+    },
+  };
 }
 
 export default IntentState;
