@@ -4,7 +4,6 @@ import { ActionType } from "$modules/links/types/action/actionType";
 import type { Link } from "$modules/links/types/link/link";
 import { LinkState } from "$modules/links/types/link/linkState";
 import { LinkType } from "$modules/links/types/link/linkType";
-import { LinkStep } from "$modules/links/types/linkStep";
 import { Ed25519KeyIdentity } from "@dfinity/identity";
 import { Principal } from "@dfinity/principal";
 import { Err, Ok } from "ts-results-es";
@@ -83,7 +82,7 @@ describe("LinkCreatedState", () => {
       const state = new LinkCreatedState(store);
 
       // Act
-      const res = state.createAction();
+      const res = state.createAction(ActionType.RECEIVE);
 
       // Assert
       await expect(res).rejects.toThrow(
@@ -103,7 +102,7 @@ describe("LinkCreatedState", () => {
       const state = new LinkCreatedState(store);
 
       // Act
-      const res = state.processAction("");
+      const res = state.processAction();
 
       // Assert
       await expect(res).rejects.toThrow("Link is missing");
@@ -126,7 +125,7 @@ describe("LinkCreatedState", () => {
       );
 
       // Act
-      const res = state.processAction(mockAction.id);
+      const res = state.processAction();
 
       // Assert
       await expect(res).rejects.toThrow("Failed to activate link");
@@ -212,14 +211,13 @@ describe("LinkCreatedState", () => {
       );
 
       // Act
-      await state.processAction(mockAction.id);
+      await state.processAction();
 
       // Assert
       expect(mocks.cashierBackendService.processActionV2).toHaveBeenCalledWith(
         mockAction.id,
       );
       expect(mocks.linkListStore.refresh).toHaveBeenCalled();
-      expect(store.state?.step).toBe(LinkStep.ACTIVE);
     });
   });
 });

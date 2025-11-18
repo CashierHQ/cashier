@@ -44,43 +44,6 @@ export class Icrc112RequestMapper {
       nonce: nonceArray as ArrayBuffer | undefined,
     };
   }
-
-  // Devalue serde for Icrc112Request: serialize ArrayBuffers to number[] and
-  // Principals to text, and reconstruct on deserialize.
-  static serde = {
-    serialize: {
-      Icrc112Request: (value: unknown) => {
-        if (!(value instanceof Icrc112Request)) return undefined;
-
-        return {
-          arg: Array.from(new Uint8Array(value.arg)),
-          method: value.method,
-          canister_id: value.canister_id.toString(),
-          nonce: value.nonce ? Array.from(new Uint8Array(value.nonce)) : null,
-        };
-      },
-    },
-    deserialize: {
-      Icrc112Request: (obj: unknown) => {
-        const s = obj as ReturnType<
-          typeof Icrc112RequestMapper.serde.serialize.Icrc112Request
-        >;
-
-        if (!s) {
-          throw new Error("Invalid serialized Icrc112Request object");
-        }
-
-        const argBuf = new Uint8Array(s.arg).buffer;
-        const nonceBuf = s.nonce ? new Uint8Array(s.nonce).buffer : undefined;
-        return new Icrc112Request(
-          argBuf,
-          s.method,
-          Principal.fromText(s.canister_id),
-          nonceBuf,
-        );
-      },
-    },
-  };
 }
 
 export type Icrc112ExecutionResult = {
