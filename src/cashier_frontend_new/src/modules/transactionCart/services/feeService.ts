@@ -20,10 +20,12 @@ import {
 } from "$modules/transactionCart/types/txCart";
 
 // Type for paired AssetItem and FeeItem
-type AssetAndFeeList = {
+export type AssetAndFee = {
   asset: AssetItem;
   fee?: FeeItem;
-}[];
+};
+
+export type AssetAndFeeList = AssetAndFee[];
 
 export class FeeService {
   /**
