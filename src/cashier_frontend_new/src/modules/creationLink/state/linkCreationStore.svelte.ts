@@ -20,7 +20,9 @@ import { tempLinkRepository } from "../repositories/tempLinkRepository";
 import { CreateLinkData } from "../types/createLinkData";
 import { createTempLinkFromPrincipalId } from "../utils/tempLink";
 
-// Simple reactive state management
+/**
+ * Store for draft link state management
+ */
 export class LinkCreationStore {
   // Private state variables - declare with $state at class level
   #state = $state<LinkCreationState>(new ChooseLinkTypeState(this));
