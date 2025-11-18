@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { ProcessActionResult } from '$modules/links/types/action/action';
     import { ActionState } from "$modules/links/types/action/actionState";
+    import { ActionType } from '$modules/links/types/action/actionType';
     import { LinkState } from "$modules/links/types/link/linkState";
     import { LinkUserState } from "$modules/links/types/link/linkUserState";
     import { UserLinkStep } from "$modules/links/types/userLinkStep";
@@ -8,7 +9,6 @@
     import Completed from "../components/useLink/states/Completed.svelte";
     import Gate from "../components/useLink/states/Gate.svelte";
     import Landing from "../components/useLink/states/Landing.svelte";
-    import Locked from "../components/useLink/states/Locked.svelte";
     import Unlocked from "../components/useLink/states/Unlocked.svelte";
     import UserLinkStore from "../state/userLinkStore.svelte";
 
@@ -18,10 +18,11 @@
     id: string;
   } = $props();
 
-  const userStore = new UserLinkStore({ locked: false, id });
+  const userStore = new UserLinkStore({ id });
   let lockedFlag: boolean = $state(false);
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
+
 
   let showTxCart: boolean = $derived.by(() => {
     return !!(
@@ -42,7 +43,7 @@
       if (userStore.action) {
         showTxCart = true;
       } else {
-        const action = await userStore.createAction();
+        const action = await userStore.createAction(ActionType.RECEIVE);
         // Refresh query state to update the derived link with new action
         userStore.query?.refresh();
       }
@@ -54,11 +55,6 @@
 
   const handleProcessAction = async () : Promise<ProcessActionResult> => {
       return await userStore.processAction();    
-  };
-
-  const setLocked = (v: boolean) => {
-    lockedFlag = v;
-    userStore.locked = lockedFlag;
   };
 </script>
 
@@ -74,18 +70,9 @@
     </div>
   {:else}
     <div class="px-4 py-4">
-      <input
-        type="checkbox"
-        bind:checked={lockedFlag}
-        onchange={() => setLocked(lockedFlag)}
-      />
-      <span class="text-sm">Use locked flow</span>
-
       <div class="mt-4">
         {#if userStore.step === UserLinkStep.LANDING}
           <Landing userLink={userStore} linkDetail={userStore.linkDetail} />
-        {:else if userStore.step === UserLinkStep.ADDRESS_LOCKED}
-          <Locked userLink={userStore} linkDetail={userStore.linkDetail} />
         {:else if userStore.step === UserLinkStep.GATE}
           <Gate userLink={userStore} />
         {:else if userStore.step === UserLinkStep.ADDRESS_UNLOCKED}

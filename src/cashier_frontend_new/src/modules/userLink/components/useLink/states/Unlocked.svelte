@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { LinkDetailStore } from "$modules/links/state/linkDetailStore.svelte";
+  import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import type UserLinkStore from "$modules/userLink/state/userLinkStore.svelte";
   import Actions from "../Actions.svelte";
   import AssetList from "../AssetList.svelte";

@@ -8,4 +8,11 @@ describe("ActionType conversions", () => {
     const t = ActionTypeMapper.fromBackendType(b);
     expect(t).toBe(ActionType.USE);
   });
+
+  it("serializes and deserializes ActionType via serde", () => {
+    const v = ActionType.CREATE_LINK;
+    const ser = ActionTypeMapper.serde.serialize.ActionType(v);
+    const des = ActionTypeMapper.serde.deserialize.ActionType(ser);
+    expect(des).toBe(v);
+  });
 });
