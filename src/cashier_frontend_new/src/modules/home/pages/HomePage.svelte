@@ -10,9 +10,14 @@
   let { onLoginClick }: Props = $props();
 
   let isDevelopmentExpanded = $state(false);
+  let isImageLoading = $state(true);
 
   function toggleDevelopment() {
     isDevelopmentExpanded = !isDevelopmentExpanded;
+  }
+
+  function onImageLoaded() {
+    isImageLoading = false;
   }
 </script>
 
@@ -151,10 +156,18 @@
       <div
         class="flex flex-col items-center justify-center mt-6 md:mt-8 lg:w-[40%]"
       >
+        {#if isImageLoading}
+          <div
+            class="animate-pulse bg-[#ECFEF3] border rounded-xl border-[#ACEFC6] mx-auto w-[55%] h-[40vh] min-h-[40vh] max-h-[40vh] lg:min-h-[50vh] lg:max-h-[50vh] lg:w-[70%] lg:max-w-[400px]"
+          ></div>
+        {/if}
+
         <img
-          class="mx-auto w-[55%] max-w-[300px] max-h-[40vh] object-contain lg:w-[70%] lg:max-w-[400px] lg:max-h-[50vh]"
+          class:hidden={isImageLoading}
+          class="mx-auto w-[55%] max-w-[300px] h-[40vh] max-h-[40vh] object-contain lg:w-[70%] lg:h-[50vh] lg:max-w-[400px] lg:max-h-[50vh]"
           src="/LandingPageMainImage.png"
           alt="Cashier landing page illustration"
+          onload={onImageLoaded}
         />
         <!-- Get started button - Mobile -->
         <button
@@ -168,3 +181,6 @@
     </div>
   {/if}
 </div>
+
+<style>
+</style>

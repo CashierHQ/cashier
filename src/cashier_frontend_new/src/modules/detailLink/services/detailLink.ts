@@ -9,7 +9,7 @@ import {
 import { Link, LinkMapper } from "$modules/links/types/link/link";
 import { LinkState } from "$modules/links/types/link/linkState";
 import { LinkType } from "$modules/links/types/link/linkType";
-import type { LinkAction } from "$modules/links/types/linkAndAction";
+import { LinkAction } from "$modules/links/types/linkAndAction";
 import { LinkUserStateMapper } from "$modules/links/types/link/linkUserState";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { assertUnreachable } from "$lib/rsMatch";
@@ -111,13 +111,15 @@ export class DetailLinkService {
         getLinkResp.value.link_user_state.state,
       );
 
-      return Ok({
-        link: LinkMapper.fromBackendType(res.link),
-        action: actionDto ? ActionMapper.fromBackendType(actionDto) : undefined,
-        link_user_state: linkUserState
-          ? LinkUserStateMapper.fromBackendType(linkUserState)
-          : undefined,
-      });
+      return Ok(
+        new LinkAction(
+          initialLink,
+          actionDto ? ActionMapper.fromBackendType(actionDto) : undefined,
+          linkUserState
+            ? LinkUserStateMapper.fromBackendType(linkUserState)
+            : undefined,
+        ),
+      );
     } catch (e) {
       return Err(e as Error);
     }
