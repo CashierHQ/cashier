@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { X } from "lucide-svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { toast } from "svelte-sonner";
@@ -65,13 +64,13 @@
     aria-describedby="login-dialog-description"
     aria-labelledby="login-dialog-title"
     data-state={open ? "open" : "closed"}
-    class="fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-12px)] translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg sm:w-full sm:max-w-sm !rounded-[2rem] border-none shadow-2xl overflow-hidden"
+    class="fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-12px)] !max-w-[343px] translate-x-[-50%] translate-y-[-50%] gap-6 border bg-background p-5 duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg sm:w-full sm:max-w-sm !rounded-[2rem] border-none shadow-2xl overflow-hidden"
     tabindex="-1"
   >
     <div class="flex flex-col space-y-1.5 text-center sm:text-left">
       <h2
         id="login-dialog-title"
-        class="text-lg font-semibold leading-none tracking-tight"
+        class="text-lg font-semibold leading-[30px] tracking-tight"
       >
         {locale.t("home.loginModal.title")}
       </h2>
@@ -83,26 +82,49 @@
           type="button"
           onclick={() => handleWalletSelect("internet-identity")}
           disabled={isConnecting}
-          class="w-full h-12 px-3 border border-[#e5e5e5]/60 cursor-pointer rounded-xl text-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center justify-start bg-background text-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full h-10 px-3 border border-[#ebebeb] cursor-pointer rounded-[10px] text-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center justify-start bg-background text-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span class="flex items-center w-full text-[14px]">
             <img
-              alt="Internet Identity"
-              class="h-6 w-6 mr-2"
-              src="/icpLogo.png"
+              alt="Quick Logins"
+              class="h-6 w-6 mr-[10px]"
+              src="/social-icon.svg"
             />
-            <span class="flex-grow text-left">
+            <span class="flex-grow text-left font-medium">
               {#if isConnecting}
                 {locale.t("home.loginModal.connecting")}
               {:else}
-                {locale.t("home.loginModal.internetIdentity")}
+                {locale.t("home.loginModal.quickLogins")}
               {/if}
             </span>
             {#if isConnecting}
               <div
                 class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin ml-2"
               ></div>
+            {:else}
+              <img
+                alt="Social Icons"
+                src="/social-icons.svg"
+                class="h-[22px] object-contain"
+              />
             {/if}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          disabled
+          class="w-full h-10 px-3 border border-[#ebebeb] cursor-pointer rounded-[10px] text-md ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 flex items-center justify-start bg-background text-foreground hover:bg-accent hover:text-accent-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span class="flex items-center w-full text-[14px]">
+            <img
+              alt="Other Wallets"
+              class="h-6 w-6 mr-[10px]"
+              src="/credit-card-check.svg"
+            />
+            <span class="flex-grow text-left font-medium">
+              {locale.t("home.loginModal.otherWallets")}
+            </span>
           </span>
         </button>
       </div>
@@ -112,9 +134,9 @@
       type="button"
       onclick={handleClose}
       disabled={isConnecting}
-      class="absolute right-4 top-4 cursor-pointer rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground disabled:opacity-50"
+      class="absolute right-2.5 top-3.75 w-10 h-10 place-items-center place-content-center cursor-pointer rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground disabled:opacity-50"
     >
-      <X class="h-4 w-4" />
+      <img src="/x.svg" class="w-6 h-6" alt="Close" />
       <span class="sr-only">Close</span>
     </button>
   </div>
