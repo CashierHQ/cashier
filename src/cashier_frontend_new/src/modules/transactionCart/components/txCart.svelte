@@ -3,12 +3,10 @@
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
   import type Action from "$modules/links/types/action/action";
   import type { ProcessActionResult } from '$modules/links/types/action/action';
-  import type { FeeItem } from "$modules/links/types/fee";
   import type { Link } from "$modules/links/types/link/link";
   import { getHeadingFromActionType } from "$modules/links/utils/txCart";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { feeService } from "$modules/transactionCart/services/feeService";
-  import { AssetProcessState } from "$modules/transactionCart/types/txCart";
+  import { feeService, type AssetAndFeeList } from "$modules/transactionCart/services/feeService";
   import { onMount } from 'svelte';
   import { TransactionCartStore } from '../state/txCartStore.svelte';
   import AssetList from "./assetList.svelte";
@@ -34,7 +32,7 @@
   let successMessage: string | null = $state(null);
   let isProcessing: boolean = $state(false);
 
-  const assetAndFeeList = $derived.by(() =>
+  const assetAndFeeList: AssetAndFeeList = $derived.by(() =>
     action
       ? feeService.mapActionToAssetAndFeeList(
           action,
@@ -46,25 +44,7 @@
       : [],
   );
 
-  // Derive asset items from the action, but override each item's state based on
-  // the current processing / error / success UI state so the UI (AssetItem)
-  // shows the correct status icons.
-  let assetItems = $derived.by(() => {
-    void isProcessing;
-    return assetAndFeeList.map(({ asset }) => {
-      if (isProcessing) {
-        asset.state = AssetProcessState.PROCESSING;
-      }
-      return asset;
-    });
-  });
-
-  let linkFees: FeeItem[] = $derived.by(() =>
-    assetAndFeeList.map(({ fee }) => fee).filter((f): f is FeeItem => !!f),
-  );
-
   let assetTitle = $derived.by(() => getHeadingFromActionType(action.type));
-
   let showFeeBreakdown = $state(false);
 
   // Confirm and process the action
@@ -132,7 +112,7 @@
         {#if showFeeBreakdown}
           <!-- When showing breakdown, hide all other tx cart content -->
           <FeeBreakdown
-            fees={linkFees}
+            {assetAndFeeList}
             onBack={() => (showFeeBreakdown = false)}
           />
         {:else}
@@ -151,10 +131,10 @@
             </div>
           {/if}
 
-          <AssetList title={assetTitle} {assetItems} />
+          <AssetList title={assetTitle} {assetAndFeeList} />
 
-          {#if linkFees && linkFees.length > 0}
-            <Fee fees={linkFees} onOpen={() => (showFeeBreakdown = true)} />
+          {#if assetAndFeeList && assetAndFeeList.length > 0}
+            <Fee {assetAndFeeList} onOpen={() => (showFeeBreakdown = true)} />
           {/if}
 
           <div class="px-4 pb-4 text-sm text-muted-foreground">

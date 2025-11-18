@@ -1,18 +1,18 @@
 <script lang="ts">
-  import type { FeeItem } from "$modules/links/types/fee";
-  import { formatNumber } from "$modules/shared/utils/formatNumber";
-  import { ChevronRight } from "lucide-svelte";
+    import { formatNumber } from "$modules/shared/utils/formatNumber";
+    import { ChevronRight } from "lucide-svelte";
+    import type { AssetAndFeeList } from '../services/feeService';
   let {
-    fees,
+    assetAndFeeList,
     onOpen,
   }: {
-    fees: FeeItem[];
+    assetAndFeeList: AssetAndFeeList;
     onOpen?: () => void;
   } = $props();
 
   // compute total USD value
   let totalUsd = $derived(() => {
-    return fees.reduce((acc, fee) => acc + (fee.usdValue || 0), 0);
+    return assetAndFeeList.reduce((acc, item) => acc + (item.fee?.usdValue || 0), 0);
   });
 </script>
 
@@ -29,13 +29,13 @@
     <!-- Left: stacked icons -->
     <div class="flex items-center">
       <div class="flex -space-x-2 items-center">
-        {#each fees as fee, i (i)}
+        {#each assetAndFeeList as item, i (i)}
           {#if i < 5}
             <!-- FeeItem doesn't include an icon field; render the token symbol as a badge -->
             <div
               class="w-8 h-8 rounded-md border bg-white flex items-center justify-center text-xs font-semibold shadow-sm"
             >
-              {fee.symbol}
+              {item.fee?.symbol}
             </div>
           {/if}
         {/each}

@@ -1,21 +1,21 @@
 <script lang="ts">
-  import type { AssetItem as AssetItemType } from "$modules/transactionCart/types/txCart";
-  import AssetItem from "./assetItem.svelte";
+    import type { AssetAndFeeList } from '../services/feeService';
+    import AssetItem from "./assetItem.svelte";
 
   const {
     title,
-    assetItems,
+    assetAndFeeList,
   }: {
     title: string;
-    assetItems: AssetItemType[];
+    assetAndFeeList: AssetAndFeeList;
   } = $props();
 </script>
 
 <div>
   <h5 class="text-sm font-medium mb-2">{title}</h5>
   <div class="space-y-3">
-    {#each assetItems as asset, i (i)}
-      <AssetItem {asset} />
+    {#each assetAndFeeList as item}
+      <AssetItem asset={item.asset} />
     {/each}
   </div>
 </div>

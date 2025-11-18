@@ -2,28 +2,29 @@
   import { assertUnreachable } from "$lib/rsMatch";
   import { FeeType, type FeeItem } from "$modules/links/types/fee";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
+  import type { AssetAndFeeList } from '../services/feeService';
 
   let {
-    fees,
+    assetAndFeeList,
     onBack,
   }: {
-    fees: FeeItem[];
+    assetAndFeeList: AssetAndFeeList;
     onBack: () => void;
   } = $props();
 
   // total in USD (derived)
   let totalUsd = $derived(() => {
-    return fees.reduce((acc, f) => acc + (f.usdValue || 0), 0);
+    return assetAndFeeList.reduce((acc, f) => acc + (f.fee?.usdValue || 0), 0);
   });
 
   // total token amount (derived)
   let totalAmount = $derived(() => {
-    return fees.reduce((acc, f) => acc + (parseFloat(f.amount) || 0), 0);
+    return assetAndFeeList.reduce((acc, f) => acc + (parseFloat(f.fee?.amount || "0") || 0), 0);
   });
 
   // primary symbol (first fee's symbol) — empty if none
   let primarySymbol = $derived(() => {
-    return fees[0] ? fees[0].symbol : "";
+    return assetAndFeeList[0]?.fee?.symbol || "";
   });
 
   function labelForFee(f: FeeItem) {
@@ -39,7 +40,7 @@
 
   // compute whether multiple tokens are present
   let uniqueSymbols = $derived(() => {
-    const s = new Set(fees.map((f) => f.symbol));
+    const s = new Set(assetAndFeeList.map((f) => f.fee?.symbol));
     return s.size;
   });
 </script>
@@ -70,15 +71,17 @@
 
   <!-- Fees list card -->
   <div class="p-4 rounded-lg border border-green-100 bg-white mb-4">
-    {#each fees as fee, i (i)}
+    {#each assetAndFeeList as item, i (i)}
       <div
         class="flex items-center justify-between py-3 border-b last:border-b-0"
       >
-        <div class="text-sm">{labelForFee(fee)}</div>
+        {#if item.fee }
+          <div class="text-sm">{labelForFee(item.fee)}</div>
+        {/if}
         <div class="text-right">
-          <div class="text-sm font-medium">{fee.amount} {fee.symbol}</div>
-          {#if fee.usdValue !== undefined}
-            <div class="text-xs text-muted-foreground">${fee.usdValueStr}</div>
+          <div class="text-sm font-medium">{item.fee?.amount} {item.fee?.symbol}</div>
+          {#if item.fee?.usdValue !== undefined}
+            <div class="text-xs text-muted-foreground">${item.fee?.usdValueStr}</div>
           {/if}
         </div>
       </div>
@@ -93,7 +96,7 @@
     <div class="text-right">
       {#if uniqueSymbols() > 1}
         <div class="text-sm">Multiple tokens</div>
-      {:else if fees[0]}
+      {:else if assetAndFeeList[0]?.fee}
         <div class="text-sm">
           {formatNumber(totalAmount())}
           {primarySymbol()}
