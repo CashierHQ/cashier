@@ -17,7 +17,6 @@ import { LandingState } from "./userLinkStates/landing";
  */
 export class UserLinkStore {
   #state = $state<UserLinkState>(new LandingState(this));
-
   public linkDetail: LinkDetailStoreType;
 
   constructor({ id }: { id: string }) {
