@@ -26,6 +26,39 @@ export class IntentMapper {
     const state = IntentStateMapper.fromBackendType(dto.state);
     return new Intent(dto.id, task, type, dto.created_at, state);
   }
+
+  // Devalue serde for Intent
+  static serde = {
+    serialize: {
+      Intent: (value: unknown) => {
+        return (
+          value instanceof Intent && {
+            id: value.id,
+            task: IntentTaskMapper.serde.serialize.IntentTask(value.task),
+            type: IntentTypeMapper.serde.serialize.IntentType(value.type),
+            created_at: value.created_at,
+            state: IntentStateMapper.serde.serialize.IntentState(value.state),
+          }
+        );
+      },
+    },
+    deserialize: {
+      Intent: (obj: unknown) => {
+        const s = obj as ReturnType<typeof IntentMapper.serde.serialize.Intent>;
+        if (!s) {
+          throw new Error("Invalid serialized Intent object");
+        }
+
+        const taskVal = IntentTaskMapper.serde.deserialize.IntentTask(s.task);
+        const typeVal = IntentTypeMapper.serde.deserialize.IntentType(s.type);
+        const stateVal = IntentStateMapper.serde.deserialize.IntentState(
+          s.state,
+        );
+
+        return new Intent(s.id, taskVal, typeVal, s.created_at, stateVal);
+      },
+    },
+  };
 }
 
 export default Intent;

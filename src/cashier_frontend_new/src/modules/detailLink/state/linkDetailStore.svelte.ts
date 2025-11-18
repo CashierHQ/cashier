@@ -10,7 +10,10 @@ import type { LinkDetailState } from "./linkDetailStates";
 import { LinkActiveState } from "./linkDetailStates/active";
 import { LinkCreatedState } from "./linkDetailStates/created";
 import { LinkInactiveState } from "./linkDetailStates/inactive";
-import type { LinkAction } from "$modules/links/types/linkAndAction";
+import {
+  LinkActionMapper,
+  type LinkAction,
+} from "$modules/links/types/linkAndAction";
 
 /**
  * Store for link detail
@@ -35,6 +38,8 @@ export class LinkDetailStore {
       },
       watch: true,
       storageType: "localStorage",
+      persistedKey: ["linkDetail", id],
+      serde: LinkActionMapper.serde,
     });
     this.#state = new LinkCreatedState(this);
 
