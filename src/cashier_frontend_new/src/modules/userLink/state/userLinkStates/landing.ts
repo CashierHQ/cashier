@@ -15,7 +15,6 @@ export class LandingState implements UserLinkState {
     this.#store = store;
   }
 
-  // The `locked` branch has been removed; always proceed to unlocked path
   async goNext(): Promise<void> {
     this.#store.state = new AddressUnlockedState(this.#store);
   }
@@ -25,10 +24,10 @@ export class LandingState implements UserLinkState {
   }
 
   async createAction(actionType: ActionTypeValue): Promise<Action> {
-    throw new Error("Method not implemented.");
+    throw new Error("Cannot create action from Landing state.");
   }
 
   async processAction(): Promise<ProcessActionResult> {
-    throw new Error("Method not implemented.");
+    throw new Error("Cannot process action from Landing state.");
   }
 }

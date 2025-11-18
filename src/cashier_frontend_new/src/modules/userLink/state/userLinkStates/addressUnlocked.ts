@@ -26,13 +26,9 @@ export class AddressUnlockedState implements UserLinkState {
   }
 
   async createAction(actionType: ActionTypeValue): Promise<Action> {
-    if (!this.#store.linkDetail || !this.#store.linkDetail.link) {
-      throw new Error("Link not loaded");
-    }
-
     if (actionType !== ActionType.RECEIVE) {
       throw new Error(
-        `Action type ${actionType} not supported in Address Unlocked state.`,
+        `Action type ${actionType} not supported in AddressUnlocked state.`,
       );
     }
 
@@ -41,12 +37,12 @@ export class AddressUnlockedState implements UserLinkState {
 
   async processAction(): Promise<ProcessActionResult> {
     if (!this.#store.action) {
-      throw new Error("Action not loaded");
+      throw new Error("Action is not created");
     }
 
     if (this.#store.action.type !== ActionType.RECEIVE) {
       throw new Error(
-        `Action type ${this.#store.action.type} not supported in Address Unlocked state.`,
+        `Action type ${this.#store.action.type} not supported in AddressUnlocked state.`,
       );
     }
 

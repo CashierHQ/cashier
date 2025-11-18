@@ -4,7 +4,6 @@ import type { ActionTypeValue } from "$modules/links/types/action/actionType";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserLinkState } from ".";
 import type { UserLinkStore } from "../userLinkStore.svelte";
-import { AddressUnlockedState } from "./addressUnlocked";
 
 export class CompletedState implements UserLinkState {
   readonly step = UserLinkStep.COMPLETED;
@@ -15,19 +14,18 @@ export class CompletedState implements UserLinkState {
   }
 
   async goNext(): Promise<void> {
-    throw new Error("Completed is terminal: cannot go next");
+    throw new Error("Completed is final state, cannot go next");
   }
 
   async goBack(): Promise<void> {
-    // move back to unlocked address when possible
-    this.#store.state = new AddressUnlockedState(this.#store);
+    throw new Error("Completed is final state, cannot go back");
   }
 
   async createAction(actionType: ActionTypeValue): Promise<Action> {
-    throw new Error("Method not implemented.");
+    throw new Error("Completed is final state, cannot create action");
   }
 
   async processAction(): Promise<ProcessActionResult> {
-    throw new Error("Method not implemented.");
+    throw new Error("Completed is final state, cannot process action");
   }
 }
