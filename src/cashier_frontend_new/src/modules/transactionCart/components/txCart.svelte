@@ -6,9 +6,10 @@
   import type { Link } from "$modules/links/types/link/link";
   import { getHeadingFromActionType } from "$modules/links/utils/txCart";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { feeService, type AssetAndFeeList } from "$modules/transactionCart/services/feeService";
+  import { feeService, type AssetAndFee } from "$modules/transactionCart/services/feeService";
   import { onMount } from 'svelte';
   import { TransactionCartStore } from '../state/txCartStore.svelte';
+  import { AssetProcessState } from '../types/txCart';
   import AssetList from "./assetList.svelte";
   import Fee from "./fee.svelte";
   import FeeBreakdown from "./feeBreakdown.svelte";
@@ -32,17 +33,28 @@
   let successMessage: string | null = $state(null);
   let isProcessing: boolean = $state(false);
 
-  const assetAndFeeList: AssetAndFeeList = $derived.by(() =>
-    action
-      ? feeService.mapActionToAssetAndFeeList(
+  const assetAndFeeList: AssetAndFee[] = $derived.by(() => {
+    const list = feeService.mapActionToAssetAndFeeList(
           action,
           // build a record keyed by token address for the service
           Object.fromEntries(
             (walletStore.query.data ?? []).map((t) => [t.address, t]),
           ),
-        )
-      : [],
-  );
+        );
+
+    if (isProcessing) {
+      // when processing, we want to show all assets as processing
+      return list.map((item) => ({
+        ...item,
+        asset: {
+          ...item.asset,
+          state: AssetProcessState.PROCESSING,
+        },
+      }));
+    }
+      
+    return list;
+  });
 
   let assetTitle = $derived.by(() => getHeadingFromActionType(action.type));
   let showFeeBreakdown = $state(false);
