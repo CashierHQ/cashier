@@ -34,7 +34,7 @@
           <h3 class="text-lightblack/80 font-normal mb-2 text-[14px]">
             {formatDate(group.date)}
           </h3>
-          <ul class="space-y-4">
+          <ul>
             {#each group.links as link (link.id)}
               <li>
                 <LinkItem {link} onClick={() => handleLinkClick(link)} />
