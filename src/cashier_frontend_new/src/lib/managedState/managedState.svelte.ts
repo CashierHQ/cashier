@@ -232,10 +232,16 @@ export class ManagedState<T> {
    */
   #setData(data: Data<T> | undefined): void {
     this.#data = data;
-    if (data) {
-      this.#storage.setItem(data);
-    } else {
-      this.#storage.removeItem();
+    try {
+      if (data) {
+        this.#storage.setItem(data);
+      } else {
+        this.#storage.removeItem();
+      }
+    } catch (e) {
+      // logging the error
+      console.error("Error setting data in storage:", e);
+      throw e;
     }
   }
 

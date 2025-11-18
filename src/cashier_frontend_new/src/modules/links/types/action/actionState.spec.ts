@@ -8,4 +8,11 @@ describe("ActionState.fromBackendType", () => {
     const s = ActionStateMapper.fromBackendType(b);
     expect(s).toBe(ActionState.CREATED);
   });
+
+  it("serializes and deserializes ActionState via serde", () => {
+    const v = ActionState.CREATED;
+    const ser = ActionStateMapper.serde.serialize.ActionState(v);
+    const des = ActionStateMapper.serde.deserialize.ActionState(ser);
+    expect(des).toBe(v);
+  });
 });

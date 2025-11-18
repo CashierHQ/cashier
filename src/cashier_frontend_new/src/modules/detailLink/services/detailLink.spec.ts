@@ -86,7 +86,11 @@ describe("fetchLinkDetail behavior", () => {
     const resp1: GetLinkResp = {
       link: linkDto,
       action: [actionDto],
-      link_user_state: [],
+      link_user_state: {
+        link_id: linkDto.id,
+        user_id: Principal.fromText("aaaaa-aa"),
+        state: [],
+      },
     };
     vi.mocked(cashierBackendService.getLink).mockResolvedValueOnce(Ok(resp1));
 
@@ -115,12 +119,20 @@ describe("fetchLinkDetail behavior", () => {
     const resp2: GetLinkResp = {
       link: linkDto1,
       action: [],
-      link_user_state: [],
+      link_user_state: {
+        link_id: linkDto1.id,
+        user_id: Principal.fromText("aaaaa-aa"),
+        state: [],
+      },
     };
     const resp3: GetLinkResp = {
       link: linkDto1,
       action: [actionDto2],
-      link_user_state: [],
+      link_user_state: {
+        link_id: linkDto1.id,
+        user_id: Principal.fromText("aaaaa-aa"),
+        state: [],
+      },
     };
     vi.mocked(cashierBackendService.getLink).mockResolvedValueOnce(Ok(resp2));
     vi.mocked(cashierBackendService.getLink).mockResolvedValueOnce(Ok(resp3));
@@ -148,12 +160,20 @@ describe("fetchLinkDetail behavior", () => {
     const resp4: GetLinkResp = {
       link: linkDto3,
       action: [],
-      link_user_state: [],
+      link_user_state: {
+        link_id: linkDto3.id,
+        user_id: Principal.fromText("aaaaa-aa"),
+        state: [],
+      },
     };
     const resp5: GetLinkResp = {
       link: linkDto3,
       action: [actionDto3],
-      link_user_state: [],
+      link_user_state: {
+        link_id: linkDto3.id,
+        user_id: Principal.fromText("aaaaa-aa"),
+        state: [],
+      },
     };
     vi.mocked(cashierBackendService.getLink).mockResolvedValueOnce(Ok(resp4));
     vi.mocked(cashierBackendService.getLink).mockResolvedValueOnce(Ok(resp5));

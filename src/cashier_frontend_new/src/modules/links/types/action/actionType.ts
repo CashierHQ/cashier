@@ -66,4 +66,19 @@ export class ActionTypeMapper {
         return assertUnreachable(a);
     }
   }
+
+  // Devalue serde for ActionType (store as string)
+  static serde = {
+    serialize: {
+      ActionType: (value: unknown) => {
+        if (typeof value !== "string") return undefined;
+        return value;
+      },
+    },
+    deserialize: {
+      ActionType: (obj: unknown) => {
+        return obj as ActionTypeValue;
+      },
+    },
+  };
 }
