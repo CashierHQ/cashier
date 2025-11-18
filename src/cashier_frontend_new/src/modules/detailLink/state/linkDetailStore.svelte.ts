@@ -7,17 +7,14 @@ import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { type ActionTypeValue } from "$modules/links/types/action/actionType";
 import { LinkState } from "$modules/links/types/link/linkState";
-import {
-  LinkActionMapper,
-  type LinkAction,
-} from "$modules/links/types/linkAndAction";
+import { type LinkAction } from "$modules/links/types/linkAndAction";
 import type { LinkDetailState } from "./linkDetailStates";
 import { LinkActiveState } from "./linkDetailStates/active";
 import { LinkCreatedState } from "./linkDetailStates/created";
 import { LinkInactiveState } from "./linkDetailStates/inactive";
 
 /**
- * Store for link detail
+ * Store for created link state management
  */
 export class LinkDetailStore {
   #linkDetailQuery;
@@ -37,13 +34,6 @@ export class LinkDetailStore {
         return linkDetail.value;
       },
       watch: true,
-      storageType: "localStorage",
-      persistedKey: [
-        "linkDetail",
-        authState.account?.owner.toString() ?? "anon",
-        id,
-      ],
-      serde: LinkActionMapper.serde,
     });
   }
 
