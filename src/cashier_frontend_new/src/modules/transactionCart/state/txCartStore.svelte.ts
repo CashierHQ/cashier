@@ -6,7 +6,6 @@ import type { ProcessActionResult } from "$modules/links/types/action/action";
 import type { Link } from "$modules/links/types/link/link";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import type { Signer } from "@slide-computer/signer";
-import { Err, Ok, type Result } from "ts-results-es";
 
 export class TransactionCartStore {
   #icrc112Service: Icrc112Service<IITransport> | null = null;
@@ -31,44 +30,30 @@ export class TransactionCartStore {
     }
   }
 
-  async processAction(): Promise<Result<ProcessActionResult, Error>> {
+  async processAction(): Promise<ProcessActionResult> {
     if (!authState.account?.owner) {
-      return Err(new Error("You are not authorized to confirm this action."));
+      throw new Error("User is not authenticated.");
     }
 
     if (!this.#icrc112Service) {
-      return Err(new Error("ICRC-112 Service is not initialized."));
+      throw new Error("ICRC-112 Service is not initialized.");
     }
 
-    try {
-      if (
-        this.#action.icrc_112_requests &&
-        this.#action.icrc_112_requests.length > 0
-      ) {
-        // Execute ICRC-112 batch only if there are requests.
-        const batchResult = await this.#icrc112Service.sendBatchRequest(
-          this.#action.icrc_112_requests,
-          authState.account.owner,
-          CASHIER_BACKEND_CANISTER_ID,
-        );
-
-        if (!batchResult.isSuccess) {
-          const err = batchResult.errors
-            ? batchResult.errors.join(", ")
-            : "Unknown error";
-          console.error(`Batch request failed: ${err}`);
-        }
-      }
-
-      // Trigger the callback after successful execution.
-      const processActionResult = await this.#handleProcessAction();
-      return Ok(processActionResult);
-    } catch (err) {
-      return Err(
-        new Error(
-          `Error sending ICRC-112 batch request: ${err instanceof Error ? err.message : String(err)}`,
-        ),
+    if (
+      this.#action.icrc_112_requests &&
+      this.#action.icrc_112_requests.length > 0
+    ) {
+      // If there are ICRC-112 requests, execute them using ICRC-112 service.
+      // The execution result is ignored here; errors will be handled in processAction handler.
+      // The idea is using the BE to validate the ICRC-112 execution result and process the action accordingly.
+      const batchResult = await this.#icrc112Service.sendBatchRequest(
+        this.#action.icrc_112_requests,
+        authState.account.owner,
+        CASHIER_BACKEND_CANISTER_ID,
       );
     }
+
+    // Trigger processing action after ICRC-112 execution
+    return await this.#handleProcessAction();
   }
 }
