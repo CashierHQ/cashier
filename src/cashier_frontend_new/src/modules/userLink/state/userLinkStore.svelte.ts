@@ -45,7 +45,7 @@ export class UserLinkStore {
     $effect(() => {
       const s = this.linkDetail.query.data?.link_user_state;
       if (s === LinkUserState.COMPLETED) {
-        this.#state = new CompletedState(this);
+        this.#state = new CompletedState();
       }
     });
   }

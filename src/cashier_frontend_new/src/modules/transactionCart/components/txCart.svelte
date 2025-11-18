@@ -2,45 +2,45 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
   import type Action from "$modules/links/types/action/action";
-  import type { ProcessActionResult } from '$modules/links/types/action/action';
-  import type { Link } from "$modules/links/types/link/link";
+  import type { ProcessActionResult } from "$modules/links/types/action/action";
   import { getHeadingFromActionType } from "$modules/links/utils/txCart";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { feeService, type AssetAndFee } from "$modules/transactionCart/services/feeService";
-  import { onMount } from 'svelte';
-  import { TransactionCartStore } from '../state/txCartStore.svelte';
-  import { AssetProcessState } from '../types/txCart';
+  import {
+    feeService,
+    type AssetAndFee,
+  } from "$modules/transactionCart/services/feeService";
+  import { onMount } from "svelte";
+  import { TransactionCartStore } from "../state/txCartStore.svelte";
+  import { AssetProcessState } from "../types/txCart";
   import AssetList from "./assetList.svelte";
   import Fee from "./fee.svelte";
   import FeeBreakdown from "./feeBreakdown.svelte";
 
   let {
-    link,
     action,
     isOpen,
     onCloseDrawer,
     handleProcessAction,
   }: {
-    link: Link;
     action: Action;
     isOpen: boolean;
     onCloseDrawer?: () => void;
     handleProcessAction: () => Promise<ProcessActionResult>;
   } = $props();
 
-  const txCartStore = new TransactionCartStore(link, action, handleProcessAction);
+  const txCartStore = new TransactionCartStore(action, handleProcessAction);
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let isProcessing: boolean = $state(false);
 
   const assetAndFeeList: AssetAndFee[] = $derived.by(() => {
     const list = feeService.mapActionToAssetAndFeeList(
-          action,
-          // build a record keyed by token address for the service
-          Object.fromEntries(
-            (walletStore.query.data ?? []).map((t) => [t.address, t]),
-          ),
-        );
+      action,
+      // build a record keyed by token address for the service
+      Object.fromEntries(
+        (walletStore.query.data ?? []).map((t) => [t.address, t]),
+      ),
+    );
 
     if (isProcessing) {
       // when processing, we want to show all assets as processing
@@ -52,7 +52,7 @@
         },
       }));
     }
-      
+
     return list;
   });
 
@@ -63,7 +63,7 @@
   async function handleConfirm() {
     isProcessing = true;
     errorMessage = null;
-    successMessage = null;    
+    successMessage = null;
 
     try {
       const processActionResult = await txCartStore.processAction();
@@ -145,7 +145,7 @@
 
           <AssetList title={assetTitle} {assetAndFeeList} />
 
-          {#if assetAndFeeList && assetAndFeeList.length > 0 && assetAndFeeList.some(item => item.fee)}
+          {#if assetAndFeeList && assetAndFeeList.length > 0 && assetAndFeeList.some((item) => item.fee)}
             <Fee {assetAndFeeList} onOpen={() => (showFeeBreakdown = true)} />
           {/if}
 

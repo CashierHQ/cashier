@@ -5,7 +5,7 @@
   import LinkInfoSection from "$modules/detailLink/components/linkInfoSection.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
-  import type { ProcessActionResult } from '$modules/links/types/action/action';
+  import type { ProcessActionResult } from "$modules/links/types/action/action";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
@@ -19,8 +19,8 @@
   let showCopied: boolean = $state(false);
   let showTxCart: boolean = $state(false);
   let linkDetail = new LinkDetailStore({ id });
-  let errorMessage: string | null  = $state(null);
-  let successMessage: string | null  = $state(null);
+  let errorMessage: string | null = $state(null);
+  let successMessage: string | null = $state(null);
 
   $effect(() => {
     if (linkDetail) {
@@ -54,7 +54,8 @@
       await linkDetail.disableLink();
       successMessage = "Link ended successfully.";
     } catch (err) {
-      errorMessage = "Failed to end link." + (err instanceof Error ? err.message : "");
+      errorMessage =
+        "Failed to end link." + (err instanceof Error ? err.message : "");
     }
   };
 
@@ -68,7 +69,7 @@
 
   const handleBack = async () => {
     goto(resolve("/links"));
-  }
+  };
 
   const createWithdrawAction = async () => {
     errorMessage = null;
@@ -80,13 +81,15 @@
 
       await linkDetail.createAction(ActionType.WITHDRAW);
     } catch (err) {
-      errorMessage = "Failed to create withdraw action." + (err instanceof Error ? err.message : "");
+      errorMessage =
+        "Failed to create withdraw action." +
+        (err instanceof Error ? err.message : "");
     }
   };
 
-  const handleProcessAction = async () : Promise<ProcessActionResult> => {
+  const handleProcessAction = async (): Promise<ProcessActionResult> => {
     return await linkDetail.processAction();
-  }
+  };
 
   onMount(() => {
     appHeaderStore.setBackHandler(handleBack);
@@ -184,7 +187,6 @@
 {#if showTxCart && linkDetail.link && linkDetail.action}
   <TxCart
     isOpen={showTxCart}
-    link={linkDetail.link}
     action={linkDetail.action}
     {onCloseDrawer}
     {handleProcessAction}

@@ -75,7 +75,7 @@ class Icrc112Service<T extends Transport> {
 
       if ("result" in res) {
         let isSuccess = true;
-        let errors: string[] = [];
+        const errors: string[] = [];
 
         res.result.responses.forEach(
           (

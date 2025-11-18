@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { formatNumber } from "$modules/shared/utils/formatNumber";
-    import { ChevronRight } from "lucide-svelte";
-    import type { AssetAndFee } from '../services/feeService';
+  import { formatNumber } from "$modules/shared/utils/formatNumber";
+  import { ChevronRight } from "lucide-svelte";
+  import type { AssetAndFee } from "../services/feeService";
   let {
     assetAndFeeList,
     onOpen,
@@ -12,7 +12,10 @@
 
   // compute total USD value
   let totalUsd = $derived(() => {
-    return assetAndFeeList.reduce((acc, item) => acc + (item.fee?.usdValue || 0), 0);
+    return assetAndFeeList.reduce(
+      (acc, item) => acc + (item.fee?.usdValue || 0),
+      0,
+    );
   });
 </script>
 

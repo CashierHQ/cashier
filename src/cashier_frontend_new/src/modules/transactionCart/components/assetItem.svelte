@@ -1,8 +1,8 @@
 <script lang="ts">
   import loadingGif from "$lib/assets/loading.gif";
   import {
-      AssetProcessState,
-      type AssetItem,
+    AssetProcessState,
+    type AssetItem,
   } from "$modules/transactionCart/types/txCart";
   import { Check, X } from "lucide-svelte";
 

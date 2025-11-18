@@ -61,7 +61,9 @@ vi.mock("$modules/links/types/action/action", () => ({
     }),
   },
   ProcessActionResultMapper: {
-    fromBackendType: (a: Record<string, unknown>) => ({}),
+    fromBackendType: (a: Record<string, unknown>) => ({
+      id: typeof a["id"] === "string" ? (a["id"] as string) : "mapped-result",
+    }),
   },
 }));
 

@@ -24,7 +24,9 @@ export class LandingState implements UserLinkState {
   }
 
   async createAction(actionType: ActionTypeValue): Promise<Action> {
-    throw new Error("Cannot create action from Landing state.");
+    throw new Error(
+      `Action type ${actionType} cannot be created in Landing state`,
+    );
   }
 
   async processAction(): Promise<ProcessActionResult> {

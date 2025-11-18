@@ -24,7 +24,9 @@ export class LinkCreatedState implements LinkDetailState {
 
   // Creating action is not supported in created state
   async createAction(actionType: ActionTypeValue): Promise<Action> {
-    throw new Error("Created state does not support creating actions.");
+    throw new Error(
+      `Creating ${actionType} action is not supported in Created state`,
+    );
   }
 
   // Process the action to activate the link
