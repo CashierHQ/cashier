@@ -83,7 +83,7 @@ export class Icrc112RequestMapper {
   };
 }
 
-export type Icrc112Response = {
+export type Icrc112ExecutionResult = {
   isSuccess: boolean;
   errors: string[] | null;
 };

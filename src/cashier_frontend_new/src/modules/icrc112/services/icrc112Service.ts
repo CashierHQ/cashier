@@ -6,7 +6,7 @@ import type {
   Transport,
 } from "@slide-computer/signer";
 import { Buffer } from "buffer";
-import type { Icrc112Response } from "../types/icrc112Request";
+import type { Icrc112ExecutionResult } from "../types/icrc112Request";
 
 // Class of service handler for ICRC-112 requests
 // T is the Transport type used by the Signer
@@ -20,7 +20,7 @@ class Icrc112Service<T extends Transport> {
   /**
    * Send ICRC-112 batch call request using the connected signer
    * @param icrc112Requests - 2D array of ICRC-112 requests (sequences of parallel requests)
-   * @returns Result containing BatchCallCanisterResponse or Error
+   * @returns The result of the ICRC-112 execution
    */
   async sendBatchRequest(
     icrc112Requests: Array<
@@ -33,7 +33,7 @@ class Icrc112Service<T extends Transport> {
     >,
     sender: string,
     cashierBackendCanisterId: string,
-  ): Promise<Icrc112Response> {
+  ): Promise<Icrc112ExecutionResult> {
     const requests = icrc112Requests.map((parallelRequests) =>
       parallelRequests.map((request) => ({
         canisterId: request.canister_id.toString(),

@@ -34,10 +34,6 @@
   let successMessage: string | null = $state(null);
   let isProcessing: boolean = $state(false);
 
-  $effect(() => {
-    console.log("action changed:", $state.snapshot(action));
-  })
-
   const assetAndFeeList = $derived.by(() =>
     action
       ? feeService.mapActionToAssetAndFeeList(
@@ -72,34 +68,21 @@
   let showFeeBreakdown = $state(false);
 
   // Confirm and process the action
-  async function confirmAction() {
+  async function handleConfirm() {
     isProcessing = true;
     errorMessage = null;
     successMessage = null;    
 
     try {
       const processActionResult = await txCartStore.processAction();
-      if (!processActionResult.isOk()) {
-        const err = processActionResult.unwrapErr();
-        console.error("ICRC-112 execution failed:", err);
-        errorMessage = `ICRC-112 execution failed: ${err?.message ?? String(err)}`;
-        isProcessing = false;
-        return;
-      }
-
-      const result = processActionResult.unwrap();
-      if (result.isSuccess) {
-        successMessage = "Transaction completed successfully.";
+      if (processActionResult.isSuccess) {
+        successMessage = "Process action completed successfully.";
         onCloseDrawer?.();
       } else {
-        errorMessage = `Transaction failed: ${result.errors.join(", ")}`;
+        errorMessage = `Process action failed: ${processActionResult.errors.join(", ")}`;
       }
     } catch (e) {
-      console.error("goNext threw an error:", e);
-      const msg = e instanceof Error ? e.message : String(e);
-      errorMessage = errorMessage
-        ? `${errorMessage}; goNext error: ${msg}`
-        : msg;
+      errorMessage = `Process action failed: ${(e as Error).message}`;
     } finally {
       isProcessing = false;
     }
@@ -185,7 +168,7 @@
         <Drawer.Footer>
           <Button
             class="flex gap-2 w-full"
-            onclick={confirmAction}
+            onclick={handleConfirm}
             disabled={isProcessing}
             variant="default"
           >
