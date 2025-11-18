@@ -2,13 +2,13 @@
   import { assertUnreachable } from "$lib/rsMatch";
   import { FeeType, type FeeItem } from "$modules/links/types/fee";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
-  import type { AssetAndFeeList } from '../services/feeService';
+  import type { AssetAndFee } from '../services/feeService';
 
   let {
     assetAndFeeList,
     onBack,
   }: {
-    assetAndFeeList: AssetAndFeeList;
+    assetAndFeeList: AssetAndFee[];
     onBack: () => void;
   } = $props();
 

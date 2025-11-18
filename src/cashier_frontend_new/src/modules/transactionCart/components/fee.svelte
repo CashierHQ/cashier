@@ -1,12 +1,12 @@
 <script lang="ts">
     import { formatNumber } from "$modules/shared/utils/formatNumber";
     import { ChevronRight } from "lucide-svelte";
-    import type { AssetAndFeeList } from '../services/feeService';
+    import type { AssetAndFee } from '../services/feeService';
   let {
     assetAndFeeList,
     onOpen,
   }: {
-    assetAndFeeList: AssetAndFeeList;
+    assetAndFeeList: AssetAndFee[];
     onOpen?: () => void;
   } = $props();
 
