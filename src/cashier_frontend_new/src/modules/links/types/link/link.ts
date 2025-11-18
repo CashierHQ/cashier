@@ -1,6 +1,5 @@
 import { Principal } from "@dfinity/principal";
 import type { LinkDto as BackendLinkDto } from "$lib/generated/cashier_backend/cashier_backend.did";
-import type { DevalueSerde } from "$lib/managedState";
 import { LinkTypeMapper, type LinkTypeValue } from "./linkType";
 import { Asset, AssetInfo, AssetInfoMapper } from "./asset";
 import { LinkStateMapper, type LinkStateValue } from "./linkState";
@@ -89,7 +88,7 @@ export class LinkMapper {
    * A helper serde for serializing and deserializing Link instances.
    * Used in managedState for persistence.
    */
-  static serde: DevalueSerde = {
+  static serde = {
     serialize: {
       Link: (link: unknown) => {
         const value = link instanceof Link && {
@@ -117,7 +116,13 @@ export class LinkMapper {
     },
     deserialize: {
       Link: (obj: unknown) => {
-        const serialized = obj as SerializedLink;
+        const serialized = obj as ReturnType<
+          typeof LinkMapper.serde.serialize.Link
+        >;
+
+        if (!serialized) {
+          throw new Error("Invalid serialized Link object");
+        }
 
         const asset_info = (serialized.asset_info || []).map((a) => {
           const chain = a.asset.chain;
