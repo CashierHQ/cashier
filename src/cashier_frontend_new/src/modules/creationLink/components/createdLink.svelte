@@ -43,29 +43,21 @@
   }
 
   async function handleProcessAction(): Promise<ProcessActionResult> {
-    try {
-      if (!linkDetailStore) {
-        throw new Error("LinkDetailStore is not initialized");
-      }
-      if (!linkDetailStore.action || !linkDetailStore.action.id) {
-        throw new Error("Action or Action ID is missing");
-      }
-
-      console.log("Processing action with ID:", linkDetailStore.action.id);
-      return await linkDetailStore.processAction(linkDetailStore.action.id);
-    } catch (error) {
-      console.error("Error processing action:", error);
-      throw error;
+    if (!linkDetailStore) {
+      throw new Error("LinkDetailStore is not initialized");
     }
+    return await linkDetailStore.processAction();
   }
 
   $effect(() => {
+    // Redirect to detail page if the link is active
     if (linkDetailStore && linkDetailStore.link && linkDetailStore.link.state === LinkState.ACTIVE) {
       goto(resolve(`/link/detail/${linkDetailStore.id}`));
     }
   });
 
   onMount(() => {
+    // Initialize LinkDetailStore with the created link ID
     if (link.id) {
       linkDetailStore = new LinkDetailStore({ id: link.id });
     }
