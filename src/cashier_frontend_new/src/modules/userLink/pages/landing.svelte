@@ -22,7 +22,7 @@
   {:else}
     <div class="px-4 py-4">
       <div class="mt-4">
-        <Landing userLink={userStore} linkDetail={userStore.linkDetail} />
+        <Landing userLink={userStore} />
       </div>
     </div>
   {/if}
