@@ -17,10 +17,10 @@
   let { id }: { id: string } = $props();
 
   let showCopied: boolean = $state(false);
-
   let showTxCart: boolean = $state(false);
-
   let linkDetail = new LinkDetailStore({ id });
+  let errorMessage: string | null  = $state(null);
+  let successMessage: string | null  = $state(null);
 
   $effect(() => {
     if (linkDetail) {
@@ -46,34 +46,31 @@
   };
 
   const endLink = async () => {
+    errorMessage = null;
+    successMessage = null;
+
     try {
       if (!linkDetail.link) throw new Error("Link is missing");
       await linkDetail.disableLink();
+      successMessage = "Link ended successfully.";
     } catch (err) {
-      console.error("end link failed", err);
+      errorMessage = "Failed to end link." + (err instanceof Error ? err.message : "");
     }
   };
 
   const createWithdrawAction = async () => {
+    errorMessage = null;
+    successMessage = null;
+
     try {
       if (!linkDetail.link) {
         throw new Error("Link is missing");
       }
 
       await linkDetail.createAction(ActionType.WITHDRAW);
+      successMessage = "Withdraw action created successfully.";
     } catch (err) {
-      console.error("end link failed", err);
-    }
-  };
-
-  const goNext = async () => {
-    try {
-      if (!linkDetail.action) {
-        throw new Error("Action is missing");
-      }
-      await linkDetail.processAction(linkDetail.action.id);
-    } catch (err) {
-      console.error("withdraw failed", err);
+      errorMessage = "Failed to create withdraw action." + (err instanceof Error ? err.message : "");
     }
   };
 
@@ -90,11 +87,7 @@
   }
 
   async function handleProcessAction() : Promise<ProcessActionResult> {
-    if (!linkDetail.action) {
-      throw new Error("Action is missing");
-    }
-    console.log("Processing action with id:", linkDetail.action.id);
-    return await linkDetail.processAction(linkDetail.action.id);
+    return await linkDetail.processAction();
   }
 
   onMount(() => {
@@ -129,6 +122,22 @@
       <!-- placeholder to keep title centered (matches back button width) -->
       <div class="w-8 h-8" aria-hidden="true"></div>
     </div>
+
+    {#if errorMessage}
+      <div
+        class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
+      >
+        {errorMessage}
+      </div>
+    {/if}
+
+    {#if successMessage}
+      <div
+        class="mb-4 p-3 text-sm text-green-700 bg-green-100 rounded border border-green-200"
+      >
+        {successMessage}
+      </div>
+    {/if}
 
     {#if linkDetail.link}
       <LinkInfoSection link={linkDetail.link} />

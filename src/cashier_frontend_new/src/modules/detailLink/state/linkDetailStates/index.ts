@@ -1,6 +1,6 @@
 import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
-import type { ActionType } from "$modules/links/types/action/actionType";
+import type { ActionTypeValue } from "$modules/links/types/action/actionType";
 import { LinkStep } from "$modules/links/types/linkStep";
 
 /**
@@ -9,14 +9,17 @@ import { LinkStep } from "$modules/links/types/linkStep";
 export interface LinkDetailState {
   // The current step in the link creation process
   readonly step: LinkStep;
+
   /**
    * Method to create action in the current state
    * @param actionType The type of action to create
+   * @returns The created action
    */
-  createAction(actionType: ActionType): Promise<Action>;
+
+  createAction(actionType: ActionTypeValue): Promise<Action>;
   /**
    * Method to process action in the current state
-   * @param actionId id of the action to process
+   * @returns The result of processing the action
    */
-  processAction(actionId: string): Promise<ProcessActionResult>;
+  processAction(): Promise<ProcessActionResult>;
 }

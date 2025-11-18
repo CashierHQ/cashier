@@ -22,6 +22,7 @@ export interface UserLinkState {
 
   /**
    * Method to create an action
+   * @param actionType The type of action to create
    * @returns The created action or an error
    */
   createAction(actionType: ActionTypeValue): Promise<Action>;
