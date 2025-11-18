@@ -64,7 +64,7 @@ export class FeeService {
         break;
       case ActionType.WITHDRAW:
         output = {
-          amount: intent.type.payload.amount - ledgerFee,
+          amount: intent.type.payload.amount,
           fee: ledgerFee,
         };
         break;
