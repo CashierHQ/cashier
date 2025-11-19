@@ -32,6 +32,8 @@
       "title": "Choose your wallet",
       "connecting": "Connecting...",
       "internetIdentity": "Internet Identity",
+      "quickLogins": "Quick logins",
+      "otherWallets": "Other wallets",
       "successMessage": "Successfully logged in",
       "errorMessage": "Failed to connect wallet. Please try again."
     }
