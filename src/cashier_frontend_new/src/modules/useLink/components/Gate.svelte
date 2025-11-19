@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type UserLinkStore from "$modules/userLink/state/userLinkStore.svelte";
+  import type UserLinkStore from "$modules/useLink/state/userLinkStore.svelte";
 
   const { userLink }: { userLink: UserLinkStore } = $props();
   // checkbox state: user must check to enable "Next"

@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
-import { LandingState } from "../state/userLinkStates/landing";
-import { AddressUnlockedState } from "../state/userLinkStates/addressUnlocked";
-import { AddressLockedState } from "../state/userLinkStates/addressLocked";
-import { GateState } from "../state/userLinkStates/gate";
-import { CompletedState } from "../state/userLinkStates/completed";
+import { LandingState } from "../state/useLinkStates/landing";
+import { AddressUnlockedState } from "../state/useLinkStates/addressUnlocked";
+import { AddressLockedState } from "../state/useLinkStates/addressLocked";
+import { GateState } from "../state/useLinkStates/gate";
+import { CompletedState } from "../state/useLinkStates/completed";
 import type UserLinkStore from "../state/userLinkStore.svelte";
 import { userLinkStateFromStep } from "./userLinkStateFromStep";
 

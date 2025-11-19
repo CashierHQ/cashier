@@ -1,6 +1,6 @@
-import type { UserLinkState } from "./userLinkStates";
-import { LandingState } from "./userLinkStates/landing";
-import { CompletedState } from "./userLinkStates/completed";
+import type { UserLinkState } from "./useLinkStates";
+import { LandingState } from "./useLinkStates/landing";
+import { CompletedState } from "./useLinkStates/completed";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { LinkUserState } from "$modules/links/types/link/linkUserState";
 import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
