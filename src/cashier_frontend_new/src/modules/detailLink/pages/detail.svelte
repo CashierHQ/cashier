@@ -4,10 +4,12 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import LinkInfoSection from "$modules/detailLink/components/linkInfoSection.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
+  import DetailFlowProtected from "$modules/detailLink/components/detailFlowProtected.svelte";
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
+  import { LinkStep } from "$modules/links/types/linkStep";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import { ChevronLeft } from "lucide-svelte";
@@ -98,72 +100,77 @@
   });
 </script>
 
-{#if linkDetail.query.isLoading}
-  Loading...
-{:else if !linkDetail.link}
-  Link not found
-{:else if linkDetail.query.data && linkDetail.link}
-  <div class="px-4 py-4">
-    <div class="flex items-center gap-3 mb-4">
-      <Button
-        variant="outline"
-        onclick={handleBack}
-        class="p-2 cursor-pointer w-8 h-8 flex items-center justify-center "
-      >
-        <ChevronLeft />
-      </Button>
+<DetailFlowProtected
+  linkStore={linkDetail}
+  allowSteps={[LinkStep.CREATED, LinkStep.ACTIVE, LinkStep.INACTIVE, LinkStep.ENDED]}
+>
+  {#if linkDetail.query.isLoading}
+    Loading...
+  {:else if !linkDetail.link}
+    Link not found
+  {:else if linkDetail.query.data && linkDetail.link}
+    <div class="px-4 py-4">
+      <div class="flex items-center gap-3 mb-4">
+        <Button
+          variant="outline"
+          onclick={handleBack}
+          class="p-2 cursor-pointer w-8 h-8 flex items-center justify-center "
+        >
+          <ChevronLeft />
+        </Button>
 
-      <h3 class="text-lg font-semibold flex-1 text-center">
-        {linkDetail.link.title}
-      </h3>
+        <h3 class="text-lg font-semibold flex-1 text-center">
+          {linkDetail.link.title}
+        </h3>
 
-      <!-- placeholder to keep title centered (matches back button width) -->
-      <div class="w-8 h-8" aria-hidden="true"></div>
+        <!-- placeholder to keep title centered (matches back button width) -->
+        <div class="w-8 h-8" aria-hidden="true"></div>
+      </div>
+
+      {#if linkDetail.link}
+        <LinkInfoSection link={linkDetail.link} />
+        <UsageInfoSection link={linkDetail.link} />
+      {/if}
+
+      <div class="mb-20">
+        {#if linkDetail.link.state === LinkState.ACTIVE}
+          <Button
+            variant="outline"
+            onclick={endLink}
+            class="w-full h-11 border border-red-200 text-red-600 rounded-full mb-3 cursor-pointer hover:bg-red-50 hover:text-red-700 hover:border-red-400 hover:font-semibold transition-colors"
+          >
+            End link
+          </Button>
+          <Button
+            id="copy-link-button"
+            onclick={copyLink}
+            class="w-full h-11 bg-emerald-600 text-white rounded-full cursor-pointer hover:bg-emerald-700 hover:shadow-md hover:font-semibold transition transform hover:-translate-y-0.5"
+          >
+            {showCopied ? "Copied" : "Copy link"}
+          </Button>
+        {/if}
+        {#if linkDetail.link.state === LinkState.INACTIVE}
+          <Button
+            variant="outline"
+            onclick={createWithdrawAction}
+            class="w-full h-11 bg-emerald-600 text-white rounded-full cursor-pointer hover:bg-emerald-700 hover:shadow-md hover:font-semibold transition transform hover:-translate-y-0.5"
+          >
+            Withdraw
+          </Button>
+        {/if}
+        {#if linkDetail.link.state === LinkState.CREATE_LINK}
+          <Button
+            variant="outline"
+            onclick={openDrawer}
+            class="w-full h-11 bg-emerald-600 text-white rounded-full cursor-pointer hover:bg-emerald-700 hover:shadow-md hover:font-semibold transition transform hover:-translate-y-0.5"
+          >
+            Create
+          </Button>
+        {/if}
+      </div>
     </div>
-
-    {#if linkDetail.link}
-      <LinkInfoSection link={linkDetail.link} />
-      <UsageInfoSection link={linkDetail.link} />
-    {/if}
-
-    <div class="mb-20">
-      {#if linkDetail.link.state === LinkState.ACTIVE}
-        <Button
-          variant="outline"
-          onclick={endLink}
-          class="w-full h-11 border border-red-200 text-red-600 rounded-full mb-3 cursor-pointer hover:bg-red-50 hover:text-red-700 hover:border-red-400 hover:font-semibold transition-colors"
-        >
-          End link
-        </Button>
-        <Button
-          id="copy-link-button"
-          onclick={copyLink}
-          class="w-full h-11 bg-emerald-600 text-white rounded-full cursor-pointer hover:bg-emerald-700 hover:shadow-md hover:font-semibold transition transform hover:-translate-y-0.5"
-        >
-          {showCopied ? "Copied" : "Copy link"}
-        </Button>
-      {/if}
-      {#if linkDetail.link.state === LinkState.INACTIVE}
-        <Button
-          variant="outline"
-          onclick={createWithdrawAction}
-          class="w-full h-11 bg-emerald-600 text-white rounded-full cursor-pointer hover:bg-emerald-700 hover:shadow-md hover:font-semibold transition transform hover:-translate-y-0.5"
-        >
-          Withdraw
-        </Button>
-      {/if}
-      {#if linkDetail.link.state === LinkState.CREATE_LINK}
-        <Button
-          variant="outline"
-          onclick={openDrawer}
-          class="w-full h-11 bg-emerald-600 text-white rounded-full cursor-pointer hover:bg-emerald-700 hover:shadow-md hover:font-semibold transition transform hover:-translate-y-0.5"
-        >
-          Create
-        </Button>
-      {/if}
-    </div>
-  </div>
-{/if}
+  {/if}
+</DetailFlowProtected>
 
 {#if showTxCart && linkDetail.link && linkDetail.action}
   <TxCart

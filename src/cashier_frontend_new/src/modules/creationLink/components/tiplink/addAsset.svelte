@@ -1,10 +1,7 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-  import { LinkStep } from "$modules/links/types/linkStep";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
@@ -52,13 +49,6 @@
     const token = walletStore.findTokenByAddress(selectedAddress);
     if (token.isErr()) return null;
     return token.unwrap();
-  });
-
-  // Redirect if not in the correct step
-  $effect(() => {
-    if (link.state.step !== LinkStep.ADD_ASSET) {
-      goto(resolve("/links"));
-    }
   });
 
   // Handle asset selection

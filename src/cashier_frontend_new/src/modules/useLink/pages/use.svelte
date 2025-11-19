@@ -2,8 +2,6 @@
   import { cashierBackendService } from "$modules/links/services/cashierBackend";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionTypeMapper } from "$modules/links/types/action/actionType";
-  import { LinkState } from "$modules/links/types/link/linkState";
-  import { LinkUserState } from "$modules/links/types/link/linkUserState";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import Completed from "../components/Completed.svelte";
@@ -11,8 +9,7 @@
   import UserLinkStore from "../state/userLinkStore.svelte";
   import Landing from "../components/Landing.svelte";
   import NotFound from "../components/NotFound.svelte";
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
+  import UseFlowProtected from "../components/useFlowProtected.svelte";
 
   const {
     id,
@@ -26,16 +23,6 @@
     return !!(
       userStore?.action && userStore.action.state !== ActionState.SUCCESS
     );
-  });
-
-  // Redirect to link page if link ended and user hasn't completed
-  $effect(() => {
-    if (
-      userStore.link?.state === LinkState.INACTIVE_ENDED &&
-      userStore.query.data?.link_user_state !== LinkUserState.COMPLETED
-    ) {
-      goto(resolve(`/link/${id}`));
-    }
   });
 
   const onCloseDrawer = () => {
@@ -87,34 +74,46 @@
   };
 </script>
 
-{#if !userStore.link && userStore.isLoading}
-  Loading...
-{:else if userStore.link}
-  <div class="px-4 py-4">
-    <div class="mt-4">
-      {#if userStore.step === UserLinkStep.LANDING}
-        <Landing userLink={userStore} />
-      {:else if userStore.step === UserLinkStep.ADDRESS_UNLOCKED}
-        <Unlocked
-          userLink={userStore}
-          linkDetail={userStore.linkDetail}
-          onCreateUseAction={createAction}
-        />
-      {:else if userStore.step === UserLinkStep.COMPLETED}
-        <Completed linkDetail={userStore.linkDetail} />
-      {/if}
+<UseFlowProtected
+  {userStore}
+  linkId={id}
+  allowSteps={[
+    UserLinkStep.LANDING,
+    UserLinkStep.ADDRESS_UNLOCKED,
+    UserLinkStep.ADDRESS_LOCKED,
+    UserLinkStep.GATE,
+    UserLinkStep.COMPLETED,
+  ]}
+>
+  {#if !userStore.link && userStore.isLoading}
+    Loading...
+  {:else if userStore.link}
+    <div class="px-4 py-4">
+      <div class="mt-4">
+        {#if userStore.step === UserLinkStep.LANDING}
+          <Landing userLink={userStore} />
+        {:else if userStore.step === UserLinkStep.ADDRESS_UNLOCKED}
+          <Unlocked
+            userLink={userStore}
+            linkDetail={userStore.linkDetail}
+            onCreateUseAction={createAction}
+          />
+        {:else if userStore.step === UserLinkStep.COMPLETED}
+          <Completed linkDetail={userStore.linkDetail} />
+        {/if}
 
-      {#if showTxCart && userStore?.link && userStore?.action}
-        <TxCart
-          isOpen={showTxCart}
-          link={userStore.link}
-          action={userStore.action}
-          goNext={claim}
-          {onCloseDrawer}
-        />
-      {/if}
+        {#if showTxCart && userStore?.link && userStore?.action}
+          <TxCart
+            isOpen={showTxCart}
+            link={userStore.link}
+            action={userStore.action}
+            goNext={claim}
+            {onCloseDrawer}
+          />
+        {/if}
+      </div>
     </div>
-  </div>
-{:else}
-  <NotFound />
-{/if}
+  {:else}
+    <NotFound />
+  {/if}
+</UseFlowProtected>
