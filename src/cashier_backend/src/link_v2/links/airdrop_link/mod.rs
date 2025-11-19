@@ -62,7 +62,7 @@ impl<M: TransactionManager + 'static> AirdropLink<M> {
     ) -> Self {
         let new_link = Link {
             id: Uuid::new_v4().to_string(),
-            link_type: LinkType::SendTip,
+            link_type: LinkType::SendAirdrop,
             title,
             asset_info,
             link_use_action_counter: 0,
