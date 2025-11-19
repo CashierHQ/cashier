@@ -25,8 +25,7 @@
     if (!userProfile.isReady() || userStore.isLoading) return;
 
     if (userProfile.isLoggedIn() && userStore.link) {
-      const isLinkActive =
-        userStore.link.state === LinkState.ACTIVE;
+      const isLinkActive = userStore.link.state === LinkState.ACTIVE;
 
       const isEndedButCompleted =
         userStore.link.state === LinkState.INACTIVE_ENDED &&
@@ -45,10 +44,10 @@
 {:else if !userStore.link}
   <NotFound />
 {:else}
-  {@const isEndedWithoutCompletion = 
-    userStore.link.state === LinkState.INACTIVE_ENDED && 
+  {@const isEndedWithoutCompletion =
+    userStore.link.state === LinkState.INACTIVE_ENDED &&
     userStore.query.data?.link_user_state !== LinkUserState.COMPLETED}
-  
+
   {#if isEndedWithoutCompletion}
     <Ended />
   {:else}
