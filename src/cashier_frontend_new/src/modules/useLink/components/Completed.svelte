@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { LinkDetailStore } from "$modules/links/state/linkDetailStore.svelte";
-  import AssetList from "../AssetList.svelte";
-  import Header from "../Header.svelte";
+  import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
+  import AssetList from "./AssetList.svelte";
+  import Header from "./Header.svelte";
 
   const { linkDetail }: { linkDetail?: LinkDetailStore } = $props();
 </script>
