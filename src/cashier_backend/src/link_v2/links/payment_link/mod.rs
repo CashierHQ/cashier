@@ -3,7 +3,7 @@
 
 use crate::link_v2::{
     links::{
-        shared::send_link::states::{
+        shared::receive_link::states::{
             active::ActiveState, created::CreatedState, inactive::InactiveState,
         },
         traits::{LinkV2, LinkV2State},
