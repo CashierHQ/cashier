@@ -1,6 +1,6 @@
 <script lang="ts">
   import { LinkState } from "$modules/links/types/link/linkState";
-  import Landing from "../components/states/Landing.svelte";
+  import Landing from "../components/Landing.svelte";
   import UserLinkStore from "../state/userLinkStore.svelte";
   import Ended from "../components/Ended.svelte";
   import NotFound from "../components/NotFound.svelte";

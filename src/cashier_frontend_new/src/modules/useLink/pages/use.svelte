@@ -6,10 +6,10 @@
   import { LinkUserState } from "$modules/links/types/link/linkUserState";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
-  import Completed from "../components/states/Completed.svelte";
-  import Unlocked from "../components/states/Unlocked.svelte";
+  import Completed from "../components/Completed.svelte";
+  import Unlocked from "../components/Unlocked.svelte";
   import UserLinkStore from "../state/userLinkStore.svelte";
-  import Landing from "../components/states/Landing.svelte";
+  import Landing from "../components/Landing.svelte";
   import NotFound from "../components/NotFound.svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";

@@ -1,7 +1,7 @@
 <script lang="ts">
   import type UserLinkStore from "$modules/useLink/state/userLinkStore.svelte";
-  import AssetList from "../AssetList.svelte";
-  import Header from "../Header.svelte";
+  import AssetList from "./AssetList.svelte";
+  import Header from "./Header.svelte";
 
   const { userLink }: { userLink: UserLinkStore } = $props();
 </script>
