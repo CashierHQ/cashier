@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::link_v2::{
-    links::{tip_link::actions::create::CreateAction, traits::LinkV2State},
+    links::{shared::send_link::actions::create::CreateAction, traits::LinkV2State},
     transaction_manager::traits::TransactionManager,
 };
 use candid::Principal;
@@ -31,6 +31,38 @@ impl<M: TransactionManager + 'static> CreatedState<M> {
             canister_id,
             transaction_manager,
         }
+    }
+
+    /// Create CREATE action for the tip link
+    /// # Arguments
+    /// * `caller` - The principal of the user creating the action
+    /// * `link` - The tip link for which the action is being created
+    /// * `canister_id` - The canister ID of the backend canister
+    /// * `transaction_manager` - The transaction manager to handle action creation
+    /// # Returns
+    /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the CREATE action
+    pub async fn create_create_action(
+        caller: Principal,
+        link: Link,
+        canister_id: Principal,
+        transaction_manager: Rc<M>,
+    ) -> Result<LinkCreateActionResult, CanisterError> {
+        // validate caller is the link creator
+        if caller != link.creator {
+            return Err(CanisterError::Unauthorized(
+                "Only the creator can create CREATE action on this link".to_string(),
+            ));
+        }
+
+        let create_action = CreateAction::create(&link, canister_id).await?;
+        let create_action_result = transaction_manager
+            .create_action(create_action.action, create_action.intents)
+            .await?;
+
+        Ok(LinkCreateActionResult {
+            link: link.clone(),
+            create_action_result,
+        })
     }
 
     /// Process CREATE action to activate the tip link
@@ -78,7 +110,7 @@ impl<M: TransactionManager + 'static> CreatedState<M> {
 impl<M: TransactionManager + 'static> LinkV2State for CreatedState<M> {
     fn create_action(
         &self,
-        _caller: Principal,
+        caller: Principal,
         action_type: ActionType,
     ) -> Pin<Box<dyn Future<Output = Result<LinkCreateActionResult, CanisterError>>>> {
         let link = self.link.clone();
@@ -88,15 +120,10 @@ impl<M: TransactionManager + 'static> LinkV2State for CreatedState<M> {
         Box::pin(async move {
             match action_type {
                 ActionType::CreateLink => {
-                    let create_action = CreateAction::create(&link, canister_id).await?;
-                    let create_action_result = transaction_manager
-                        .create_action(create_action.action, create_action.intents)
-                        .await?;
-
-                    Ok(LinkCreateActionResult {
-                        link: link.clone(),
-                        create_action_result,
-                    })
+                    let create_action_result =
+                        Self::create_create_action(caller, link, canister_id, transaction_manager)
+                            .await?;
+                    Ok(create_action_result)
                 }
                 _ => Err(CanisterError::ValidationErrors(
                     "Unsupported action type for Created state".to_string(),
