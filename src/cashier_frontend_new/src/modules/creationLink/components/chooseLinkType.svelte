@@ -120,11 +120,6 @@
   }
 
   async function goNext() {
-    if (!link.createLinkData.title || link.createLinkData.title.trim() === "") {
-      toast.error(locale.t("links.linkForm.chooseType.titleRequired"));
-      return;
-    }
-
     try {
       await link.goNext();
     } catch (e) {
