@@ -2,7 +2,6 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { LinkStep } from "$modules/links/types/linkStep";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
   import LinkDetails from "./linkDetails.svelte";
@@ -16,13 +15,6 @@
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let isOpenTxCart = $state(!!link.action);
-
-  // Redirect if not in the correct step
-  $effect(() => {
-    if (link.state.step !== LinkStep.CREATED) {
-      goto(resolve("/links"));
-    }
-  });
 
   // Navigate back to the previous step
   async function goBack() {

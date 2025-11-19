@@ -10,6 +10,7 @@
   import CreateLinkHeader from "../components/createLinkHeader.svelte";
   import Preview from "../components/preview.svelte";
   import { LinkCreationStore } from "../state/linkCreationStore.svelte";
+  import CreateionFlowProtected from "../components/CreationFlowProtected.svelte";
 
   const { id }: { id: string } = $props();
   let isLoading = $state(true);
@@ -60,6 +61,7 @@
 {:else if !newLink}
   <div>Link not found</div>
 {:else}
+<CreateionFlowProtected linkStore={newLink} allowSteps={[LinkStep.CHOOSE_TYPE, LinkStep.ADD_ASSET, LinkStep.PREVIEW, LinkStep.CREATED]}>
   <div class="grow-1 flex flex-col mt-2 sm:mt-0">
     <CreateLinkHeader link={newLink} />
 
@@ -73,4 +75,5 @@
       <CreatedLink link={newLink} />
     {/if}
   </div>
+  </CreateionFlowProtected>
 {/if}

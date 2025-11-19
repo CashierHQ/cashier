@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
+  import CreationFlowProtected from "./creationFlowProtected.svelte";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
@@ -20,12 +19,6 @@
   }: {
     link: LinkCreationStore;
   } = $props();
-
-  $effect(() => {
-    if (link.state.step !== LinkStep.CHOOSE_TYPE) {
-      goto(resolve("/links"));
-    }
-  });
 
   const linkTypes: LinkTypeValue[] = [
     LinkType.TIP,
