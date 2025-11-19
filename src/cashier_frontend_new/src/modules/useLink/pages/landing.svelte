@@ -19,12 +19,13 @@
   // Redirect logged-in users to /use route ONLY if link is active
   $effect(() => {
     if (!userProfile.isReady() || userStore.isLoading) return;
-    
+
     if (userProfile.isLoggedIn() && userStore.link) {
-      const isLinkActive = userStore.link.state === LinkState.ACTIVE ||
-                           userStore.link.state === LinkState.CREATE_LINK ||
-                           userStore.link.state === LinkState.INACTIVE;
-      
+      const isLinkActive =
+        userStore.link.state === LinkState.ACTIVE ||
+        userStore.link.state === LinkState.CREATE_LINK ||
+        userStore.link.state === LinkState.INACTIVE;
+
       if (isLinkActive) {
         goto(resolve(`/link/${id}/use`));
       }
