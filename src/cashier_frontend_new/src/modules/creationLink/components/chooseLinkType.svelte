@@ -89,12 +89,14 @@
       link.createLinkData = {
         ...link.createLinkData,
         linkType: linkTypes[index],
-      }
+      };
       currentSlide = index;
     }
   }
 
-  function handleOnInput(e: Event & { currentTarget: EventTarget & HTMLInputElement }) {
+  function handleOnInput(
+    e: Event & { currentTarget: EventTarget & HTMLInputElement },
+  ) {
     link.createLinkData = {
       ...link.createLinkData,
       title: e.currentTarget.value,
