@@ -1,4 +1,4 @@
-import type { Principal } from "@dfinity/principal";
+import { Principal } from "@dfinity/principal";
 import type { Icrc112Request as BackendIcrc112Request } from "$lib/generated/cashier_backend/cashier_backend.did";
 import { fromNullable } from "@dfinity/utils";
 
@@ -10,7 +10,12 @@ class Icrc112Request {
     public canister_id: Principal,
     public nonce?: ArrayBuffer,
   ) {}
+}
 
+export default Icrc112Request;
+
+// Mapper helper for Icrc112Request to match repository patterns
+export class Icrc112RequestMapper {
   /**
    * Convert from backend Icrc112Request to frontend Icrc112Request
    * @param b BackendIcrc112Request from backend
@@ -36,6 +41,41 @@ class Icrc112Request {
       nonceArray as ArrayBuffer | undefined,
     );
   }
-}
 
-export default Icrc112Request;
+  // Devalue serde for Icrc112Request: serialize ArrayBuffers to number[] and
+  // Principals to text, and reconstruct on deserialize.
+  static serde = {
+    serialize: {
+      Icrc112Request: (value: unknown) => {
+        if (!(value instanceof Icrc112Request)) return undefined;
+
+        return {
+          arg: Array.from(new Uint8Array(value.arg)),
+          method: value.method,
+          canister_id: value.canister_id.toString(),
+          nonce: value.nonce ? Array.from(new Uint8Array(value.nonce)) : null,
+        };
+      },
+    },
+    deserialize: {
+      Icrc112Request: (obj: unknown) => {
+        const s = obj as ReturnType<
+          typeof Icrc112RequestMapper.serde.serialize.Icrc112Request
+        >;
+
+        if (!s) {
+          throw new Error("Invalid serialized Icrc112Request object");
+        }
+
+        const argBuf = new Uint8Array(s.arg).buffer;
+        const nonceBuf = s.nonce ? new Uint8Array(s.nonce).buffer : undefined;
+        return new Icrc112Request(
+          argBuf,
+          s.method,
+          Principal.fromText(s.canister_id),
+          nonceBuf,
+        );
+      },
+    },
+  };
+}

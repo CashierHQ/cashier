@@ -21,6 +21,22 @@ export class IntentTaskMapper {
       TransferWalletToTreasury: () => IntentTask.TRANSFER_WALLET_TO_TREASURY,
     });
   }
+
+  // Devalue serde for IntentTask: store as plain string and restore as the
+  // corresponding IntentTask value (the codebase uses string constants).
+  static serde = {
+    serialize: {
+      IntentTask: (value: unknown) => {
+        if (typeof value !== "string") return undefined;
+        return value;
+      },
+    },
+    deserialize: {
+      IntentTask: (obj: unknown) => {
+        return obj as IntentTask;
+      },
+    },
+  };
 }
 
 export default IntentTask;

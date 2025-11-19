@@ -1,4 +1,3 @@
-<!-- This layout is a workaround for https://github.com/sveltejs/kit/issues/4941 -->
 <script lang="ts">
   let { children } = $props();
 </script>
