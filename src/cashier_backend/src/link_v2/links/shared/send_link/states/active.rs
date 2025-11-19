@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::link_v2::{
-    links::{tip_link::actions::receive::ReceiveAction, traits::LinkV2State},
+    links::{shared::send_link::actions::receive::ReceiveAction, traits::LinkV2State},
     transaction_manager::traits::TransactionManager,
 };
 use candid::Principal;
@@ -31,6 +31,31 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
             canister_id,
             transaction_manager,
         }
+    }
+
+    /// Create RECEIVE action for the tip link
+    /// # Arguments
+    /// * `caller` - The principal of the user creating the action
+    /// * `link` - The tip link for which the action is being created
+    /// * `canister_id` - The canister ID of the backend canister
+    /// * `transaction_manager` - The transaction manager to handle action creation
+    /// # Returns
+    /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the RECEIVE action
+    pub async fn create_receive_action(
+        caller: Principal,
+        link: Link,
+        canister_id: Principal,
+        transaction_manager: Rc<M>,
+    ) -> Result<LinkCreateActionResult, CanisterError> {
+        let receive_action = ReceiveAction::create(&link, caller, canister_id).await?;
+        let create_action_result = transaction_manager
+            .create_action(receive_action.action, receive_action.intents)
+            .await?;
+
+        Ok(LinkCreateActionResult {
+            link: link.clone(),
+            create_action_result,
+        })
     }
 
     /// Process a RECEIVE action on the active tip link
@@ -82,15 +107,10 @@ impl<M: TransactionManager + 'static> LinkV2State for ActiveState<M> {
         Box::pin(async move {
             match action_type {
                 ActionType::Receive => {
-                    let receive_action = ReceiveAction::create(&link, caller, canister_id).await?;
-                    let create_action_result = transaction_manager
-                        .create_action(receive_action.action, receive_action.intents)
-                        .await?;
-
-                    Ok(LinkCreateActionResult {
-                        link: link.clone(),
-                        create_action_result,
-                    })
+                    let create_action_result =
+                        Self::create_receive_action(caller, link, canister_id, transaction_manager)
+                            .await?;
+                    Ok(create_action_result)
                 }
                 _ => Err(CanisterError::ValidationErrors(
                     "Unsupported action type for ActiveState".to_string(),
