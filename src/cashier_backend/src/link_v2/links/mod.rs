@@ -3,6 +3,7 @@
 
 pub mod airdrop_link;
 pub mod factory;
+pub mod payment_link;
 pub mod shared;
 pub mod tip_link;
 pub mod token_basket_link;
