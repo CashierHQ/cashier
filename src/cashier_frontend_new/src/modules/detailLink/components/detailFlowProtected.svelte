@@ -47,4 +47,6 @@
 
 {#if linkStore && linkStore.link && allowedSteps.includes(linkStore.state.step) && isCreator}
   {@render children()}
+{:else if !linkStore || !linkStore.link}
+  <div>Loading...</div>
 {/if}

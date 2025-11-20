@@ -38,7 +38,7 @@
       onclick={async () => {
         const backHandler = appHeaderStore.getBackHandler();
         if (backHandler) {
-          backHandler();
+          await backHandler();
         } else await link.goBack();
       }}
       class="absolute left-0 cursor-pointer text-[1.5rem] transition-transform hover:scale-105"

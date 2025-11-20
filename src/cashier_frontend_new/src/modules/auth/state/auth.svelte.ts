@@ -200,7 +200,7 @@ export const authState = {
     broadcastChannel.post(BroadcastMessageLogin);
   },
 
-  // Disconnect from wallet and redirect to / or call logout handler if set
+  // Disconnect from wallet. Calls custom logout handler if set, otherwise redirects to /
   async logout() {
     await inner_logout();
     broadcastChannel.post("Logout");
