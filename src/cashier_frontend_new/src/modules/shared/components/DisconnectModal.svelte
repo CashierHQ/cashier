@@ -1,7 +1,5 @@
 <script lang="ts">
   import { X } from "lucide-svelte";
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
   import { toast } from "svelte-sonner";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { locale } from "$lib/i18n";

@@ -10,7 +10,7 @@
   import CreateLinkHeader from "../components/createLinkHeader.svelte";
   import Preview from "../components/preview.svelte";
   import { LinkCreationStore } from "../state/linkCreationStore.svelte";
-  import CreateionFlowProtected from "../components/CreationFlowProtected.svelte";
+  import CreateionFlowProtected from "../components/creationFlowProtected.svelte";
 
   const { id }: { id: string } = $props();
   let isLoading = $state(true);

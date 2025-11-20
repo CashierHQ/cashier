@@ -1,5 +1,4 @@
 <script lang="ts">
-  import CreationFlowProtected from "./creationFlowProtected.svelte";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
@@ -9,7 +8,6 @@
     LinkType,
     type LinkTypeValue,
   } from "$modules/links/types/link/linkType";
-  import { LinkStep } from "$modules/links/types/linkStep";
   import { locale } from "$lib/i18n";
   import { ChevronLeft, ChevronRight } from "lucide-svelte";
   import { toast } from "svelte-sonner";
