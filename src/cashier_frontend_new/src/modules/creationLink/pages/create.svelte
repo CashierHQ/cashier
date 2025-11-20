@@ -19,7 +19,10 @@
   async function handleBack() {
     if (!createLinkStore) return;
 
-    if (createLinkStore.state.step === LinkStep.CHOOSE_TYPE) {
+    if (
+      createLinkStore.state.step === LinkStep.CHOOSE_TYPE ||
+      createLinkStore.state.step === LinkStep.CREATED
+    ) {
       goto(resolve("/links"));
     } else {
       try {
