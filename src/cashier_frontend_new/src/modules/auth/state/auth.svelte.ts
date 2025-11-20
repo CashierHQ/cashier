@@ -13,6 +13,8 @@ import { Principal } from "@dfinity/principal";
 import type { BaseSignerAdapter, CreatePnpArgs } from "@windoge98/plug-n-play";
 import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
 import { PersistedState } from "runed";
+import { goto } from "$app/navigation";
+import { resolve } from "$app/paths";
 
 // Config for PNP instance
 const CONFIG: CreatePnpArgs = {
@@ -53,6 +55,9 @@ const CONFIG: CreatePnpArgs = {
 
 // Plug-n-play global instance
 let pnp: PNP | null = null;
+
+// Optional logout handler configured by UI components. If set, invoked when `authState.logout` is called.
+let logoutHandler: (() => void) | null = null;
 
 // state to store connected wallet ID for reconnecting later
 const connectedWalletId = new PersistedState<{ id: string | null }>(
@@ -195,10 +200,27 @@ export const authState = {
     broadcastChannel.post(BroadcastMessageLogin);
   },
 
-  // Disconnect from wallet
+  // Disconnect from wallet and redirect to / or call logout handler if set
   async logout() {
     await inner_logout();
     broadcastChannel.post("Logout");
+    // invoke configured logout handler if exists, otherwise default to redirect to '/'
+    if (logoutHandler) {
+      logoutHandler();
+    } else {
+      goto(resolve("/"));
+    }
+  },
+
+  // Configure a custom logout handler that will be invoked when `authState.logout` is called.
+  // Handler will receive an optional redirectPath passed to `logout`.
+  setOnLogout(handler: () => void) {
+    logoutHandler = handler;
+  },
+
+  // Clear any configured logout handler
+  resetOnLogoutHandler() {
+    logoutHandler = null;
   },
 };
 

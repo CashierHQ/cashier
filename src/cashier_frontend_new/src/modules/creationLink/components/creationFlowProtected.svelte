@@ -3,26 +3,36 @@
   import { resolve } from "$app/paths";
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
+  import type { Snippet } from "svelte";
 
   let {
     linkStore,
-    allowSteps,
     children,
   }: {
     linkStore: LinkCreationStore;
-    allowSteps: LinkStep[];
-    children: import("svelte").Snippet<[]>;
+    children: Snippet<[]>;
   } = $props();
+
+  const allowedSteps = [
+    LinkStep.CHOOSE_TYPE,
+    LinkStep.ADD_ASSET,
+    LinkStep.PREVIEW,
+    LinkStep.CREATED,
+    LinkStep.ACTIVE,
+  ];
 
   $effect(() => {
     if (!linkStore) return;
-    if (!allowSteps) return;
 
     const current = linkStore.state.step;
+    const isAllowed = allowedSteps.includes(current);
 
-    const isAllowed = Array.isArray(allowSteps)
-      ? allowSteps.includes(current)
-      : current === allowSteps;
+    console.log(
+      "CreationFlowProtected: current step =",
+      current,
+      "isAllowed =",
+      isAllowed,
+    );
 
     if (!isAllowed) {
       goto(resolve("/links"));
@@ -30,6 +40,6 @@
   });
 </script>
 
-{#if allowSteps.includes(linkStore.state.step)}
+{#if allowedSteps.includes(linkStore.state.step)}
   {@render children()}
 {/if}

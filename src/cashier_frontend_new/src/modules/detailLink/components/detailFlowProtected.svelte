@@ -4,27 +4,46 @@
   import type { LinkDetailStore } from "../state/linkDetailStore.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { authState } from "$modules/auth/state/auth.svelte";
+  import type { Snippet } from "svelte";
 
   let {
     linkStore,
-    allowSteps,
     children,
   }: {
     linkStore: LinkDetailStore;
-    allowSteps: LinkStep[];
-    children: import("svelte").Snippet<[]>;
+    children: Snippet<[]>;
   } = $props();
 
+  const allowedSteps = [
+    LinkStep.CREATED,
+    LinkStep.ACTIVE,
+    LinkStep.INACTIVE,
+    LinkStep.ENDED,
+  ];
+
+  const isCreator = $derived(
+    linkStore.link?.creator.toString() === authState.account?.owner,
+  );
+
   $effect(() => {
-    if (!linkStore || !allowSteps) return;
+    console.log(
+      "DetailFlowProtected: current step =",
+      linkStore?.state.step,
+      "isCreator =",
+      isCreator,
+    );
+    if (!linkStore) {
+      goto(resolve("/links"));
+      return;
+    }
+
+    if (!linkStore.link) {
+      goto(resolve("/links"));
+      return;
+    }
 
     const current = linkStore.state.step;
-    const isAllowedStep = Array.isArray(allowSteps)
-      ? allowSteps.includes(current)
-      : current === allowSteps;
-
-    const isCreator =
-      linkStore.link?.creator.toString() === authState.account?.owner;
+    const isAllowedStep = allowedSteps.includes(current);
 
     if (!isAllowedStep || !isCreator) {
       goto(resolve("/links"));
@@ -32,6 +51,6 @@
   });
 </script>
 
-{#if allowSteps.includes(linkStore.state.step)}
+{#if allowedSteps.includes(linkStore.state.step) && isCreator}
   {@render children()}
 {/if}
