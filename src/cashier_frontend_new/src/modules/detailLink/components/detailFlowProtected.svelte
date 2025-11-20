@@ -26,12 +26,6 @@
   );
 
   $effect(() => {
-    console.log(
-      "DetailFlowProtected: current step =",
-      linkStore?.state.step,
-      "isCreator =",
-      isCreator,
-    );
     if (!linkStore) {
       goto(resolve("/links"));
       return;

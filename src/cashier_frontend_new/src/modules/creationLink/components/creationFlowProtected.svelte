@@ -27,13 +27,6 @@
     const current = linkStore.state.step;
     const isAllowed = allowedSteps.includes(current);
 
-    console.log(
-      "CreationFlowProtected: current step =",
-      current,
-      "isAllowed =",
-      isAllowed,
-    );
-
     if (!isAllowed) {
       goto(resolve("/links"));
     }
