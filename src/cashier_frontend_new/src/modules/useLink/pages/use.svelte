@@ -8,7 +8,6 @@
   import Unlocked from "../components/Unlocked.svelte";
   import UserLinkStore from "../state/userLinkStore.svelte";
   import Landing from "../components/Landing.svelte";
-  import NotFound from "../components/NotFound.svelte";
   import UseLinkProtected from "../components/useFlowProtected.svelte";
 
   const {
