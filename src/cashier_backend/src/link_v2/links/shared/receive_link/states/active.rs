@@ -59,7 +59,7 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
 
         let receive_action = ReceiveAction::create(&link, caller, canister_id).await?;
         let create_action_result = transaction_manager
-            .create_action(receive_action.action, receive_action.intents)
+            .create_action(receive_action.action, receive_action.intents, None)
             .await?;
 
         Ok(LinkCreateActionResult {
@@ -82,7 +82,7 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
     ) -> Result<LinkCreateActionResult, CanisterError> {
         let send_action = SendAction::create(&link, canister_id).await?;
         let create_action_result = transaction_manager
-            .create_action(send_action.action, send_action.intents)
+            .create_action(send_action.action, send_action.intents, None)
             .await?;
 
         Ok(LinkCreateActionResult {

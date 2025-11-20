@@ -1,11 +1,11 @@
 import { assertUnreachable } from "$lib/rsMatch";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
-import type { UserLinkState } from "../state/userLinkStates";
-import { AddressLockedState } from "../state/userLinkStates/addressLocked";
-import { AddressUnlockedState } from "../state/userLinkStates/addressUnlocked";
-import { CompletedState } from "../state/userLinkStates/completed";
-import { GateState } from "../state/userLinkStates/gate";
-import { LandingState } from "../state/userLinkStates/landing";
+import type { UserLinkState } from "../state/useLinkStates";
+import { AddressLockedState } from "../state/useLinkStates/addressLocked";
+import { AddressUnlockedState } from "../state/useLinkStates/addressUnlocked";
+import { CompletedState } from "../state/useLinkStates/completed";
+import { GateState } from "../state/useLinkStates/gate";
+import { LandingState } from "../state/useLinkStates/landing";
 import type UserLinkStore from "../state/userLinkStore.svelte";
 
 // Map a UserLinkStep to the corresponding UserLinkState instance
@@ -23,7 +23,7 @@ export const userLinkStateFromStep = (
     case UserLinkStep.GATE:
       return new GateState(store);
     case UserLinkStep.COMPLETED:
-      return new CompletedState(store);
+      return new CompletedState();
     default:
       assertUnreachable(step);
   }

@@ -55,7 +55,7 @@ impl<M: TransactionManager + 'static> InactiveState<M> {
 
         let withdraw_action = WithdrawAction::create(&link, canister_id).await?;
         let create_action_result = transaction_manager
-            .create_action(withdraw_action.action, withdraw_action.intents)
+            .create_action(withdraw_action.action, withdraw_action.intents, None)
             .await?;
 
         Ok(LinkCreateActionResult {

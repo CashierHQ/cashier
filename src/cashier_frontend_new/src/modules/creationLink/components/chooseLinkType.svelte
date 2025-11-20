@@ -86,9 +86,21 @@
 
   function handleSlideChange(index: number) {
     if (index >= 0 && index < linkTypes.length) {
-      link.createLinkData.linkType = linkTypes[index];
+      link.createLinkData = {
+        ...link.createLinkData,
+        linkType: linkTypes[index],
+      };
       currentSlide = index;
     }
+  }
+
+  function handleOnInput(
+    e: Event & { currentTarget: EventTarget & HTMLInputElement },
+  ) {
+    link.createLinkData = {
+      ...link.createLinkData,
+      title: e.currentTarget.value,
+    };
   }
 
   function goToPrevious() {
@@ -108,11 +120,6 @@
   }
 
   async function goNext() {
-    if (!link.createLinkData.title || link.createLinkData.title.trim() === "") {
-      toast.error(locale.t("links.linkForm.chooseType.titleRequired"));
-      return;
-    }
-
     try {
       await link.goNext();
     } catch (e) {
@@ -130,7 +137,8 @@
     >
     <Input
       id="title"
-      bind:value={link.createLinkData.title}
+      value={link.createLinkData.title}
+      oninput={handleOnInput}
       placeholder={locale.t("links.linkForm.chooseType.titlePlaceholder")}
     />
   </div>

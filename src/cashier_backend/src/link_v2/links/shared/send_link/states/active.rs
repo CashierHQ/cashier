@@ -49,7 +49,7 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
     ) -> Result<LinkCreateActionResult, CanisterError> {
         let receive_action = ReceiveAction::create(&link, caller, canister_id).await?;
         let create_action_result = transaction_manager
-            .create_action(receive_action.action, receive_action.intents)
+            .create_action(receive_action.action, receive_action.intents, None)
             .await?;
 
         Ok(LinkCreateActionResult {

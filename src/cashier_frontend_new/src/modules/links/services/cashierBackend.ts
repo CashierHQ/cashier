@@ -86,7 +86,6 @@ class CanisterBackendService {
     }
 
     const request = CreateLinkDataMapper.toCreateLinkInput(input);
-
     if (request.isErr()) {
       return Err(request.unwrapErr());
     }
