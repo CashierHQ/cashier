@@ -11,6 +11,10 @@ export class LinkListStore {
   constructor() {
     this.#linkListQuery = managedState<Link[]>({
       queryFn: async () => {
+        if (!authState.account?.owner) {
+          return [];
+        }
+
         const res = await cashierBackendService.getLinks();
         if (res.isErr()) {
           throw res.unwrapErr();
@@ -18,6 +22,7 @@ export class LinkListStore {
         const links = res.unwrap().map((b) => LinkMapper.fromBackendType(b));
         return links;
       },
+      watch: [() => authState.account?.owner],
       refetchInterval: 15 * 1000, // 15 seconds
       persistedKey: ["linkList", authState.account?.owner ?? "anon"],
       storageType: "localStorage",
