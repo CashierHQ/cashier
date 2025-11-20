@@ -65,18 +65,19 @@
     if (!newLink) return;
 
     const step = newLink.state.step;
-    if (step === LinkStep.ADD_ASSET) {
-      appHeaderStore.setHeaderName(locale.t("links.linkForm.header.addAssets"));
-    } else if (step === LinkStep.CHOOSE_TYPE) {
-      appHeaderStore.setHeaderName(
-        newLink.createLinkData.title.trim() ||
-          locale.t("links.linkForm.header.linkName"),
-      );
-    } else {
-      appHeaderStore.setHeaderName(
-        newLink.createLinkData.title.trim() ||
-          locale.t("links.linkForm.header.linkName"),
-      );
+    switch (step) {
+      case LinkStep.ADD_ASSET:
+        appHeaderStore.setHeaderName(
+          locale.t("links.linkForm.header.addAssets"),
+        );
+        break;
+      case LinkStep.CHOOSE_TYPE:
+      default:
+        appHeaderStore.setHeaderName(
+          newLink.createLinkData.title.trim() ||
+            locale.t("links.linkForm.header.linkName"),
+        );
+        break;
     }
   }
 
@@ -84,20 +85,19 @@
   $effect(() => {
     if (newLink) {
       const step = newLink.state.step;
-      if (step === LinkStep.ADD_ASSET) {
-        appHeaderStore.setHeaderName(
-          locale.t("links.linkForm.header.addAssets"),
-        );
-      } else if (step === LinkStep.CHOOSE_TYPE) {
-        appHeaderStore.setHeaderName(
-          newLink.createLinkData.title.trim() ||
-            locale.t("links.linkForm.header.linkName"),
-        );
-      } else {
-        appHeaderStore.setHeaderName(
-          newLink.createLinkData.title.trim() ||
-            locale.t("links.linkForm.header.linkName"),
-        );
+      switch (step) {
+        case LinkStep.ADD_ASSET:
+          appHeaderStore.setHeaderName(
+            locale.t("links.linkForm.header.addAssets"),
+          );
+          break;
+        case LinkStep.CHOOSE_TYPE:
+        default:
+          appHeaderStore.setHeaderName(
+            newLink.createLinkData.title.trim() ||
+              locale.t("links.linkForm.header.linkName"),
+          );
+          break;
       }
     }
   });
