@@ -90,9 +90,9 @@
         {#if showTxCart && userStore?.link && userStore?.action}
           <TxCart
             isOpen={showTxCart}
-          action={userStore.action}
-          {onCloseDrawer}
-          {handleProcessAction}
+            action={userStore.action}
+            {onCloseDrawer}
+            {handleProcessAction}
           />
         {/if}
       {:else if userStore.state.step === UserLinkStep.COMPLETED}

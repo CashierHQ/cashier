@@ -108,7 +108,7 @@ export class LinkCreationStore {
         initialState = new PreviewState(this);
         break;
       case LinkState.CREATE_LINK:
-        initialState = new LinkCreatedState(this);
+        initialState = new LinkCreatedState();
         break;
       default:
         initialState = new ChooseLinkTypeState(this);
