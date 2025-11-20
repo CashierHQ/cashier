@@ -1,4 +1,7 @@
-import IntentState from "$modules/links/types/action/intentState";
+import { assertUnreachable } from "$lib/rsMatch";
+import IntentState, {
+  type IntentStateValue,
+} from "$modules/links/types/action/intentState";
 
 /**
  * Enumeration of asset processing states
@@ -12,7 +15,7 @@ export enum AssetProcessState {
 }
 
 export class AccessProcessStateMapper {
-  static fromIntentState(state: IntentState): AssetProcessState {
+  static fromIntentState(state: IntentStateValue): AssetProcessState {
     switch (state) {
       case IntentState.CREATED:
         return AssetProcessState.CREATED;
@@ -23,7 +26,7 @@ export class AccessProcessStateMapper {
       case IntentState.FAIL:
         return AssetProcessState.FAILED;
       default:
-        return AssetProcessState.PENDING;
+        assertUnreachable(state);
     }
   }
 }
