@@ -1,15 +1,16 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import type { ProcessActionResult } from "$modules/links/types/action/action";
   import { ActionState } from "$modules/links/types/action/actionState";
-  import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
   import { LinkUserState } from "$modules/links/types/link/linkUserState";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
-  import Completed from "../components/useLink/states/Completed.svelte";
-  import Gate from "../components/useLink/states/Gate.svelte";
-  import Landing from "../components/useLink/states/Landing.svelte";
-  import Unlocked from "../components/useLink/states/Unlocked.svelte";
+  import Completed from "../components/Completed.svelte";
+  import Landing from "../components/Landing.svelte";
+  import NotFound from "../components/NotFound.svelte";
+  import Unlocked from "../components/Unlocked.svelte";
   import UserLinkStore from "../state/userLinkStore.svelte";
 
   const {
@@ -28,6 +29,16 @@
     );
   });
 
+  // Redirect to link page if link ended and user hasn't completed
+  $effect(() => {
+    if (
+      userStore.link?.state === LinkState.INACTIVE_ENDED &&
+      userStore.query.data?.link_user_state !== LinkUserState.COMPLETED
+    ) {
+      goto(resolve(`/link/${id}`));
+    }
+  });
+
   const onCloseDrawer = () => {
     showTxCart = false;
   };
@@ -41,13 +52,20 @@
       if (userStore.action) {
         showTxCart = true;
       } else {
-        await userStore.createAction(ActionType.RECEIVE);
+        const actionType = userStore.findUseActionType();
+        if (!actionType) {
+          throw new Error("No applicable action type found for this link");
+        }
+        await userStore.createAction(actionType);
+
+        successMessage = "Action created successfully.";
         // Refresh query state to update the derived link with new action
         userStore.query?.refresh();
       }
     } catch (err) {
-      console.error("create use action failed", err);
-      errorMessage = (err as Error).message;
+      errorMessage = `Failed to create action. ${
+        err instanceof Error ? err.message : ""
+      }`;
     }
   };
 
@@ -56,18 +74,11 @@
   };
 </script>
 
-{#if userStore.isLoading}
+{#if !userStore.link && userStore.isLoading}
   Loading...
 {:else if userStore.link}
-  {#if userStore.link.state === LinkState.INACTIVE_ENDED && userStore.query?.data?.link_user_state !== LinkUserState.COMPLETED}
-    <div class="px-4 py-8 text-center">
-      <h2 class="text-lg font-semibold">Link ended</h2>
-      <p class="text-sm text-muted-foreground mt-2">
-        This link has ended and is no longer available.
-      </p>
-    </div>
-  {:else}
-    <div class="px-4 py-4">
+  <div class="px-4 py-4">
+    <div class="mt-4">
       {#if errorMessage}
         <div
           class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
@@ -83,30 +94,29 @@
           {successMessage}
         </div>
       {/if}
-      <div class="mt-4">
-        {#if userStore.step === UserLinkStep.LANDING}
-          <Landing userLink={userStore} linkDetail={userStore.linkDetail} />
-        {:else if userStore.step === UserLinkStep.GATE}
-          <Gate userLink={userStore} />
-        {:else if userStore.step === UserLinkStep.ADDRESS_UNLOCKED}
-          <Unlocked
-            userLink={userStore}
-            linkDetail={userStore.linkDetail}
-            onCreateUseAction={handleCreateUseAction}
-          />
-        {:else if userStore.step === UserLinkStep.COMPLETED}
-          <Completed linkDetail={userStore.linkDetail} />
-        {/if}
 
-        {#if showTxCart && userStore?.link && userStore?.action}
-          <TxCart
-            isOpen={showTxCart}
-            action={userStore.action}
-            {onCloseDrawer}
-            {handleProcessAction}
-          />
-        {/if}
-      </div>
+      {#if userStore.step === UserLinkStep.LANDING}
+        <Landing userLink={userStore} />
+      {:else if userStore.step === UserLinkStep.ADDRESS_UNLOCKED}
+        <Unlocked
+          userLink={userStore}
+          linkDetail={userStore.linkDetail}
+          onCreateUseAction={handleCreateUseAction}
+        />
+      {:else if userStore.step === UserLinkStep.COMPLETED}
+        <Completed linkDetail={userStore.linkDetail} />
+      {/if}
+
+      {#if showTxCart && userStore?.link && userStore?.action}
+        <TxCart
+          isOpen={showTxCart}
+          action={userStore.action}
+          {onCloseDrawer}
+          {handleProcessAction}
+        />
+      {/if}
     </div>
-  {/if}
+  </div>
+{:else}
+  <NotFound />
 {/if}

@@ -1,6 +1,3 @@
-import type Action from "$modules/links/types/action/action";
-import type { ProcessActionResult } from "$modules/links/types/action/action";
-import type { ActionTypeValue } from "$modules/links/types/action/actionType";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserLinkState } from ".";
 import type { UserLinkStore } from "../userLinkStore.svelte";
@@ -21,15 +18,5 @@ export class GateState implements UserLinkState {
 
   async goBack(): Promise<void> {
     this.#store.state = new AddressLockedState(this.#store);
-  }
-
-  async createAction(actionType: ActionTypeValue): Promise<Action> {
-    throw new Error(
-      `Action type ${actionType} cannot be created in Gate state`,
-    );
-  }
-
-  async processAction(): Promise<ProcessActionResult> {
-    throw new Error("Method not implemented.");
   }
 }
