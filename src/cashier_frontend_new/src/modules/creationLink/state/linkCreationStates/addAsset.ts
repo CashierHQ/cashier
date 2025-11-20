@@ -23,13 +23,19 @@ export class AddAssetState implements LinkCreationState {
       throw new Error(locale.t("links.linkForm.addAsset.errors.assetRequired"));
     }
     if (this.#link.createLinkData.assets.length > 1) {
-      throw new Error(locale.t("links.linkForm.addAsset.errors.onlyOneAssetSupported"));
+      throw new Error(
+        locale.t("links.linkForm.addAsset.errors.onlyOneAssetSupported"),
+      );
     }
     if (this.#link.createLinkData.assets[0].address.trim() === "") {
-      throw new Error(locale.t("links.linkForm.addAsset.errors.addressRequired"));
+      throw new Error(
+        locale.t("links.linkForm.addAsset.errors.addressRequired"),
+      );
     }
     if (this.#link.createLinkData.assets[0].useAmount <= 0n) {
-      throw new Error(locale.t("links.linkForm.addAsset.errors.amountMustBeGreaterThanZero"));
+      throw new Error(
+        locale.t("links.linkForm.addAsset.errors.amountMustBeGreaterThanZero"),
+      );
     }
 
     this.#link.state = new PreviewState(this.#link);

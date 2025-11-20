@@ -4,9 +4,11 @@
   import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { formatBalanceUnits } from "$modules/shared/utils/converter";
-  import { formatUsdAmount, formatNumber } from "$modules/shared/utils/formatNumber";
+  import {
+    formatUsdAmount,
+    formatNumber,
+  } from "$modules/shared/utils/formatNumber";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import { maxAmountForAsset } from "$modules/links/utils/amountCalculator";
   import { locale } from "$lib/i18n";
@@ -81,8 +83,10 @@
     const asset = link.createLinkData.assets[0];
     const currentUseAmount = asset?.useAmount;
 
-    const addressChanged = currentAddress && currentAddress !== previousTokenAddress;
-    const amountChanged = currentUseAmount !== undefined && currentUseAmount !== previousUseAmount;
+    const addressChanged =
+      currentAddress && currentAddress !== previousTokenAddress;
+    const amountChanged =
+      currentUseAmount !== undefined && currentUseAmount !== previousUseAmount;
 
     if (addressChanged) {
       localTokenAmount = "";
@@ -96,14 +100,15 @@
 
     if (selectedToken && link.createLinkData.assets.length > 0 && asset) {
       if (asset.useAmount !== undefined && asset.useAmount !== 0n) {
-        const tokenAmountNumber = parseBalanceUnits(
-          asset.useAmount,
-          decimals,
-        );
+        const tokenAmountNumber = parseBalanceUnits(asset.useAmount, decimals);
 
         if (tokenAmountNumber > 0) {
           // Only update if we're not in USD mode (to avoid overwriting user input)
-          if (addressChanged || amountChanged || (previousUseAmount === undefined && !isUsd)) {
+          if (
+            addressChanged ||
+            amountChanged ||
+            (previousUseAmount === undefined && !isUsd)
+          ) {
             localTokenAmount = tokenAmountNumber.toString();
 
             if (canConvert && tokenUsdPrice) {
@@ -262,7 +267,13 @@
 
   // Calculate max available USD balance with fee consideration
   const maxUsdBalance = $derived.by(() => {
-    if (!selectedToken || !canConvert || !tokenUsdPrice || !walletStore.query.data) return 0;
+    if (
+      !selectedToken ||
+      !canConvert ||
+      !tokenUsdPrice ||
+      !walletStore.query.data
+    )
+      return 0;
 
     const maxAmountResult = maxAmountForAsset(
       selectedToken.address,
@@ -292,29 +303,13 @@
 
     const tokenAmountNeeded = usdAmount / tokenUsdPrice;
     // Format token amount to avoid excessive decimal places
-    const formattedTokenAmount = formatNumber(tokenAmountNeeded, { tofixed: 8 });
+    const formattedTokenAmount = formatNumber(tokenAmountNeeded, {
+      tofixed: 8,
+    });
 
     localTokenAmount = formattedTokenAmount;
     localUsdAmount = formatUsdAmount(usdAmount);
     setTokenAmount(formattedTokenAmount);
-  }
-
-
-  let isRefreshing = $state(false);
-  async function handleRefresh() {
-    if (isRefreshing) return;
-    isRefreshing = true;
-    try {
-      await Promise.all([
-        walletStore.query.refresh(),
-        tokenPriceStore.query.refresh(),
-      ]);
-    } catch (e) {
-      console.error("Failed to refresh:", e);
-      toast.error(locale.t("links.linkForm.addAsset.failedToRefresh"));
-    } finally {
-      isRefreshing = false;
-    }
   }
 
   // Navigate to next Preview step
@@ -349,10 +344,10 @@
         tokenValue={localTokenAmount}
         usdValue={localUsdAmount}
         onInputChange={handleAmountChange}
-        isUsd={isUsd}
+        {isUsd}
         onToggleUsd={handleToggleUsd}
         token={selectedToken}
-        canConvert={canConvert}
+        {canConvert}
         tokenDecimals={decimals}
         maxUse={link.createLinkData.maxUse}
         walletTokens={walletStore.query.data || []}
@@ -367,14 +362,14 @@
 
       <TokenSelectorDrawer
         bind:open={showAssetDrawer}
-        selectedAddress={selectedAddress}
+        {selectedAddress}
         onSelectToken={handleSelectToken}
       />
     </div>
 
     {#if selectedToken && canConvert && tokenUsdPrice}
       <div class="flex justify-between items-center gap-2 mt-6">
-        {#each USD_AMOUNT_PRESETS as usdAmount}
+        {#each USD_AMOUNT_PRESETS as usdAmount, key (key)}
           {@const isDisabled = !isUsdAmountAvailable(usdAmount)}
           <button
             type="button"

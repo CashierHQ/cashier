@@ -44,35 +44,37 @@ export class AddAssetTipLinkState implements LinkCreationState {
 
     if (validationResult.isErr()) {
       const errorMessage = validationResult.error.message;
-      
+
       // Check if it's an insufficient amount error
       const insufficientAmountMatch = errorMessage.match(
         /Insufficient amount for asset ([^,]+), required: (\d+), available: (\d+)/,
       );
-      
+
       if (insufficientAmountMatch && walletStore.query.data) {
         const [, address, requiredStr, availableStr] = insufficientAmountMatch;
         const required = BigInt(requiredStr);
         const available = BigInt(availableStr);
-        
+
         // Find the token to get symbol and decimals
         const token = walletStore.query.data.find((t) => t.address === address);
-        
+
         if (token) {
           const requiredAmount = parseBalanceUnits(required, token.decimals);
           const availableAmount = parseBalanceUnits(available, token.decimals);
-          
+
           // Format the error message using locale
-          const template = locale.t("links.linkForm.addAsset.errors.insufficientBalance");
+          const template = locale.t(
+            "links.linkForm.addAsset.errors.insufficientBalance",
+          );
           const formattedMessage = template
             .replace("{{required}}", formatNumber(requiredAmount))
             .replace("{{tokenSymbol}}", token.symbol)
             .replace("{{available}}", formatNumber(availableAmount));
-          
+
           throw new Error(formattedMessage);
         }
       }
-      
+
       // For other errors, throw the original message
       throw new Error(`Validation failed: ${errorMessage}`);
     }

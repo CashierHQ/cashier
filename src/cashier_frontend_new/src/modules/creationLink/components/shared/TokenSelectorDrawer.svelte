@@ -11,6 +11,7 @@
   import { formatTokenPrice } from "$modules/shared/utils/formatNumber";
   import { locale } from "$lib/i18n";
   import { Search, X } from "lucide-svelte";
+  import { SvelteSet } from "svelte/reactivity";
 
   type Props = {
     open?: boolean;
@@ -27,17 +28,17 @@
   }: Props = $props();
 
   let searchQuery = $state("");
-  let failedImageLoads = $state<Set<string>>(new Set());
+  let failedImageLoads = new SvelteSet<string>();
 
   const filteredTokens = $derived.by(() => {
     if (!walletStore.query.data) return [];
     if (!searchQuery.trim()) return walletStore.query.data;
-    
+
     const query = searchQuery.toLowerCase().trim();
     return walletStore.query.data.filter(
       (token) =>
         token.symbol.toLowerCase().includes(query) ||
-        token.name.toLowerCase().includes(query)
+        token.name.toLowerCase().includes(query),
     );
   });
 
@@ -59,7 +60,9 @@
   <DrawerContent class="max-w-full w-[400px] mx-auto">
     <DrawerHeader>
       <div class="flex justify-center items-center relative mb-2">
-        <DrawerTitle class="text-[18px] font-[600] leading-[20px] px-8 text-center w-[100%]">
+        <DrawerTitle
+          class="text-[18px] font-[600] leading-[20px] px-8 text-center w-[100%]"
+        >
           {locale.t("links.linkForm.addAsset.selectAsset")}
         </DrawerTitle>
         <DrawerClose>
@@ -92,7 +95,9 @@
     <div class="px-4 pb-4 max-h-[60vh] overflow-y-auto">
       {#if walletStore.query.data}
         {#if filteredTokens.length > 0}
-          <div class="font-semibold">{locale.t("links.linkForm.addAsset.yourAssets")}</div>
+          <div class="font-semibold">
+            {locale.t("links.linkForm.addAsset.yourAssets")}
+          </div>
           <ul class="space-y-1 py-4">
             {#each filteredTokens as token (token.address)}
               {@const tokenLogo = (() => {
@@ -112,22 +117,29 @@
                   <div class="flex justify-between items-center">
                     <div class="flex items-center gap-2">
                       {#if tokenLogo && !failedImageLoads.has(token.address)}
-                        <span class="relative flex shrink-0 overflow-hidden rounded-full w-9 h-9">
-                          <div class="w-full h-full overflow-hidden rounded-full">
+                        <span
+                          class="relative flex shrink-0 overflow-hidden rounded-full w-9 h-9"
+                        >
+                          <div
+                            class="w-full h-full overflow-hidden rounded-full"
+                          >
                             <img
                               alt={token.symbol}
                               class="w-full h-full object-cover"
                               src={tokenLogo}
                               onerror={() => {
                                 failedImageLoads.add(token.address);
-                                failedImageLoads = new Set(failedImageLoads);
                               }}
                             />
                           </div>
                         </span>
                       {:else}
-                        <span class="relative flex shrink-0 overflow-hidden rounded-full w-9 h-9">
-                          <div class="w-full h-full flex items-center justify-center bg-gray-200 rounded-full text-xs">
+                        <span
+                          class="relative flex shrink-0 overflow-hidden rounded-full w-9 h-9"
+                        >
+                          <div
+                            class="w-full h-full flex items-center justify-center bg-gray-200 rounded-full text-xs"
+                          >
                             {token.symbol[0]?.toUpperCase() || "?"}
                           </div>
                         </span>
@@ -139,7 +151,7 @@
                         </div>
                       </div>
                     </div>
-                    
+
                     <div>
                       <div class="text-sm text-gray-500">
                         {(() => {
@@ -156,7 +168,11 @@
                             token.balance,
                             token.decimals,
                           );
-                          if (balance === 0 || !token.priceUSD || token.priceUSD === 0) {
+                          if (
+                            balance === 0 ||
+                            !token.priceUSD ||
+                            token.priceUSD === 0
+                          ) {
                             return "-";
                           }
                           const usdValue = balance * token.priceUSD;
@@ -170,18 +186,23 @@
             {/each}
           </ul>
         {:else if searchQuery.trim()}
-          <p class="text-center py-4">{locale.t("links.linkForm.addAsset.noTokensMatchingSearch")}</p>
+          <p class="text-center py-4">
+            {locale.t("links.linkForm.addAsset.noTokensMatchingSearch")}
+          </p>
         {:else}
-          <p class="text-center py-4">{locale.t("links.linkForm.addAsset.noTokensFound")}</p>
+          <p class="text-center py-4">
+            {locale.t("links.linkForm.addAsset.noTokensFound")}
+          </p>
         {/if}
       {:else if walletStore.query.error}
         <p class="text-red-600 text-center py-4">
           {locale.t("links.linkForm.addAsset.error")}: {walletStore.query.error}
         </p>
       {:else}
-        <p class="text-center py-4">{locale.t("links.linkForm.addAsset.loadingTokens")}</p>
+        <p class="text-center py-4">
+          {locale.t("links.linkForm.addAsset.loadingTokens")}
+        </p>
       {/if}
     </div>
   </DrawerContent>
 </Drawer>
-

@@ -14,7 +14,6 @@
   };
 
   type Props = {
-    handleClick: () => void;
     text: string;
     tokenValue?: string;
     usdValue?: string;
@@ -27,13 +26,11 @@
     showPresetButtons?: boolean;
     presetButtons?: PresetButton[];
     isDisabled?: boolean;
-    showMaxButton?: boolean;
-    onMaxClick?: () => void;
     showInput?: boolean;
     isTip?: boolean;
     maxUse?: number;
     walletTokens?: TokenWithPriceAndBalance[];
-    children?: any;
+    children?: unknown;
   };
 
   let {
@@ -56,21 +53,35 @@
     walletTokens = [],
   }: Props = $props();
 
-  let localInputValue = $state("");
-
   const displayValue = $derived.by(() => {
     return isUsd ? usdValue : tokenValue;
   });
 
+  let localInputValue = $state(displayValue || "");
+  let previousDisplayValue = $state(displayValue);
+
   $effect(() => {
-    localInputValue = displayValue || "";
+    if (displayValue !== previousDisplayValue) {
+      localInputValue = displayValue || "";
+      previousDisplayValue = displayValue;
+    }
   });
 
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   function handleKeyDown(e: KeyboardEvent) {
     if (
-      ["Backspace", "Delete", "Tab", "Escape", "Enter", "ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)
+      [
+        "Backspace",
+        "Delete",
+        "Tab",
+        "Escape",
+        "Enter",
+        "ArrowLeft",
+        "ArrowRight",
+        "ArrowUp",
+        "ArrowDown",
+      ].includes(e.key)
     ) {
       return;
     }
@@ -116,7 +127,10 @@
     );
 
     if (maxAmountResult.isErr()) {
-      console.warn("Failed to calculate max amount with fee:", maxAmountResult.error);
+      console.warn(
+        "Failed to calculate max amount with fee:",
+        maxAmountResult.error,
+      );
       return maxBalance; // Fallback to balance without fee
     }
 
@@ -137,8 +151,7 @@
 
       if (/[0-9]/.test(char)) {
         sanitized += char;
-      }
-      else if ((char === "." || char === ",") && !hasDecimal) {
+      } else if ((char === "." || char === ",") && !hasDecimal) {
         sanitized += ".";
         hasDecimal = true;
       }
@@ -204,7 +217,8 @@
       onInputChange?.(maxValueStr);
 
       const symbol = isUsd ? "USD" : token.symbol;
-      const message = locale.t("links.linkForm.addAsset.maxBalanceExceeded")
+      const message = locale
+        .t("links.linkForm.addAsset.maxBalanceExceeded")
         .replace("{{max}}", formatNumber(maxValue))
         .replace("{{symbol}}", symbol);
       toast.info(message, {
@@ -235,20 +249,20 @@
 
   const balanceDisplay = $derived.by(() => {
     if (!token?.balance) return "0";
-    return formatNumber(
-      parseBalanceUnits(token.balance, token.decimals),
-    );
+    return formatNumber(parseBalanceUnits(token.balance, token.decimals));
   });
 </script>
 
-  <div class="flex flex-col w-full relative">
-    <!-- Asset selector with input -->
-    <div class="input-field-asset flex items-center relative rounded-md border border-gray-300 hover:border-green focus:border-green focus:ring-0 py-2 px-3 focus:outline-none">
-      {#if children}
-        <div class="flex items-center w-full relative">
-          <div class="text-left w-fit max-w-[calc(100%-120px)]">
-            {@render children()}
-          </div>
+<div class="flex flex-col w-full relative">
+  <!-- Asset selector with input -->
+  <div
+    class="input-field-asset flex items-center relative rounded-md border border-gray-300 hover:border-green focus:border-green focus:ring-0 py-2 px-3 focus:outline-none"
+  >
+    {#if children}
+      <div class="flex items-center w-full relative">
+        <div class="text-left w-fit max-w-[calc(100%-120px)]">
+          {@render children()}
+        </div>
         <div class="flex w-fit items-center ml-auto relative">
           {#if showInput}
             <div class="relative flex items-center">
@@ -303,7 +317,9 @@
   {#if token}
     <div class="flex px-1 items-center justify-between mt-1.5">
       <p class="text-[10px] font-light text-grey-400/60">
-        {locale.t("links.linkForm.addAsset.balance")} {balanceDisplay} {token?.symbol}
+        {locale.t("links.linkForm.addAsset.balance")}
+        {balanceDisplay}
+        {token?.symbol}
       </p>
 
       {#if onToggleUsd}
@@ -328,4 +344,3 @@
     </div>
   {/if}
 </div>
-

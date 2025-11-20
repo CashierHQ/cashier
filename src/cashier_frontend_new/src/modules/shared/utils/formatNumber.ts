@@ -113,7 +113,7 @@ const formatSmallNumber = (num: number): string => {
  */
 export const formatTokenPrice = (price: number): string => {
   if (!price || price <= 0) return "-";
-  
+
   let decimalPlaces: number;
   if (price > 100) {
     decimalPlaces = 3;
@@ -124,7 +124,7 @@ export const formatTokenPrice = (price: number): string => {
   } else {
     decimalPlaces = 7;
   }
-  
+
   // Use toLocaleString for consistent formatting with React app
   return `$${price.toLocaleString("en-US", {
     minimumFractionDigits: 0,
@@ -146,9 +146,9 @@ export const formatTokenPrice = (price: number): string => {
  */
 export const formatUsdAmount = (amount: number | string): string => {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
-  
+
   if (isNaN(num)) return "0";
-  
+
   // Convert to string with enough decimal places (up to 7), then remove trailing zeros
   // This ensures we capture all significant digits before removing zeros
   return num.toFixed(7).replace(/\.?0+$/, "");
