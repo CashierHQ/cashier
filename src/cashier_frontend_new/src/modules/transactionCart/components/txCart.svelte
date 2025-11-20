@@ -1,161 +1,88 @@
 <script lang="ts">
-  import * as Drawer from "$lib/shadcn/components/ui/drawer";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { authState } from "$modules/auth/state/auth.svelte";
-  import Icrc112Service from "$modules/icrc112/services/icrc112Service";
-  import type { Signer } from "@slide-computer/signer";
-  import type { IITransport } from "$modules/auth/signer/ii/IITransport";
-  import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
+  import * as Drawer from "$lib/shadcn/components/ui/drawer";
+  import type Action from "$modules/links/types/action/action";
+  import type { ProcessActionResult } from "$modules/links/types/action/action";
+  import { getHeadingFromActionType } from "$modules/links/utils/txCart";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import {
+    feeService,
+    type AssetAndFee,
+  } from "$modules/transactionCart/services/feeService";
+  import { onMount } from "svelte";
+  import { TransactionCartStore } from "../state/txCartStore.svelte";
+  import { AssetProcessState } from "../types/txCart";
   import AssetList from "./assetList.svelte";
   import Fee from "./fee.svelte";
   import FeeBreakdown from "./feeBreakdown.svelte";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { AssetProcessState } from "$modules/links/types/txCart";
-  import { getHeadingFromActionType } from "$modules/links/utils/txCart";
-  import { FeeService } from "$modules/links/services/feeService";
-  import type { FeeItem } from "$modules/links/types/fee";
-  import type Action from "$modules/links/types/action/action";
-  import type { Link } from "$modules/links/types/link/link";
 
   let {
-    link,
     action,
     isOpen,
-    goNext = async () => {},
     onCloseDrawer,
+    handleProcessAction,
   }: {
-    link: Link;
     action: Action;
     isOpen: boolean;
-    goNext: () => Promise<void> | void;
     onCloseDrawer?: () => void;
+    handleProcessAction: () => Promise<ProcessActionResult>;
   } = $props();
 
-  const service = new FeeService();
-
+  const txCartStore = new TransactionCartStore(action, handleProcessAction);
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
-
   let isProcessing: boolean = $state(false);
-  let isExecutingIcrc112: boolean = $state(false);
 
-  let isProcessingAsset = $derived(() => {
-    if (action?.icrc_112_requests?.length === 0) {
-      return isProcessing;
+  const assetAndFeeList: AssetAndFee[] = $derived.by(() => {
+    const list = feeService.mapActionToAssetAndFeeList(
+      action,
+      // build a record keyed by token address for the service
+      Object.fromEntries(
+        (walletStore.query.data ?? []).map((t) => [t.address, t]),
+      ),
+    );
+
+    if (isProcessing) {
+      // when processing, we want to show all assets as processing
+      return list.map((item) => ({
+        ...item,
+        asset: {
+          ...item.asset,
+          state: AssetProcessState.PROCESSING,
+        },
+      }));
     }
-    return isExecutingIcrc112;
-  });
 
-  const assetAndFeeList = $derived.by(() =>
-    action
-      ? service.mapActionToAssetAndFeeList(
-          action,
-          // build a record keyed by token address for the service
-          Object.fromEntries(
-            (walletStore.query.data ?? []).map((t) => [t.address, t]),
-          ),
-        )
-      : [],
-  );
-
-  // Derive asset items from the action, but override each item's state based on
-  // the current processing / error / success UI state so the UI (AssetItem)
-  // shows the correct status icons.
-  let assetItems = $derived.by(() => {
-    return assetAndFeeList.map(({ asset }) => {
-      if (isProcessingAsset()) {
-        asset.state = AssetProcessState.PROCESSING;
-      } else if (errorMessage) {
-        asset.state = AssetProcessState.FAILED;
-      } else if (successMessage) {
-        asset.state = AssetProcessState.SUCCEED;
-      } else {
-        // default to whatever the mapper produced or PENDING if missing
-        asset.state = asset.state ?? AssetProcessState.PENDING;
-      }
-      return asset;
-    });
+    return list;
   });
-  let linkFees: FeeItem[] = $derived.by(() =>
-    assetAndFeeList.map(({ fee }) => fee).filter((f): f is FeeItem => !!f),
-  );
 
   let assetTitle = $derived.by(() => getHeadingFromActionType(action.type));
-
   let showFeeBreakdown = $state(false);
 
   // Confirm and process the action
-  // first execute icrc-112 requests if any, then call goNext
-  // in case execute icrc-112 fails, do not call goNext
-  async function confirmAction() {
-    // Basic validation BEFORE starting processing UI state
-    if (!action || !link.id) {
-      errorMessage = "No action or link ID available";
-      return;
-    }
-
-    const signer = authState.getSigner() as Signer<IITransport> | null;
-    if (!signer) {
-      errorMessage = "No signer available for authentication.";
-      return;
-    }
-
-    if (!authState.account?.owner) {
-      errorMessage = "You are not authorized to confirm this action.";
-      return;
-    }
-
-    // Now mark processing started and clear messages
+  async function handleConfirm() {
     isProcessing = true;
     errorMessage = null;
     successMessage = null;
 
-    const requests = action.icrc_112_requests ?? [];
-
-    // Execute ICRC-112 batch only if there are requests.
-    if (requests.length > 0) {
-      isExecutingIcrc112 = true;
-      try {
-        const icrc112Service = new Icrc112Service(signer);
-        const batchResult = await icrc112Service.sendBatchRequest(
-          requests,
-          authState.account.owner,
-          CASHIER_BACKEND_CANISTER_ID,
-        );
-
-        if (!batchResult.isOk()) {
-          const err = batchResult.unwrapErr();
-          console.error("Batch request failed:", err);
-          errorMessage = `Batch request failed: ${err?.message ?? String(err)}`;
-          // Do not proceed to goNext if batch failed (matches comment)
-          return;
-        }
-
-        console.log("Batch request successful:", batchResult.unwrap());
-        successMessage = "ICRC-112 batch request sent successfully";
-      } catch (err) {
-        console.error("Error sending ICRC-112 batch request:", err);
-        errorMessage = `Error sending ICRC-112 batch request: ${err instanceof Error ? err.message : String(err)}`;
-        return;
-      } finally {
-        isExecutingIcrc112 = false;
-      }
-    }
-
-    // Only reaches here if batch succeeded or there were no requests
     try {
-      await goNext();
+      const processActionResult = await txCartStore.processAction();
+      if (processActionResult.isSuccess) {
+        successMessage = "Process action completed successfully.";
+        onCloseDrawer?.();
+      } else {
+        errorMessage = `Process action failed: ${processActionResult.errors.join(", ")}`;
+      }
     } catch (e) {
-      console.error("goNext threw an error:", e);
-      const msg = e instanceof Error ? e.message : String(e);
-      errorMessage = errorMessage
-        ? `${errorMessage}; goNext error: ${msg}`
-        : msg;
+      errorMessage = `Process action failed: ${(e as Error).message}`;
+    } finally {
+      isProcessing = false;
     }
-    isProcessing = false;
   }
 
-  // Continue to next step after success
+  onMount(() => {
+    txCartStore.initialize();
+  });
 </script>
 
 {#if action}
@@ -197,7 +124,7 @@
         {#if showFeeBreakdown}
           <!-- When showing breakdown, hide all other tx cart content -->
           <FeeBreakdown
-            fees={linkFees}
+            {assetAndFeeList}
             onBack={() => (showFeeBreakdown = false)}
           />
         {:else}
@@ -216,10 +143,10 @@
             </div>
           {/if}
 
-          <AssetList title={assetTitle} {assetItems} />
+          <AssetList title={assetTitle} {assetAndFeeList} />
 
-          {#if linkFees && linkFees.length > 0}
-            <Fee fees={linkFees} onOpen={() => (showFeeBreakdown = true)} />
+          {#if assetAndFeeList && assetAndFeeList.length > 0 && assetAndFeeList.some((item) => item.fee)}
+            <Fee {assetAndFeeList} onOpen={() => (showFeeBreakdown = true)} />
           {/if}
 
           <div class="px-4 pb-4 text-sm text-muted-foreground">
@@ -233,7 +160,7 @@
         <Drawer.Footer>
           <Button
             class="flex gap-2 w-full"
-            onclick={confirmAction}
+            onclick={handleConfirm}
             disabled={isProcessing}
             variant="default"
           >

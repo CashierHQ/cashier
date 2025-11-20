@@ -1,14 +1,15 @@
-import { Principal } from "@dfinity/principal";
-import { ActionTypeMapper, type ActionTypeValue } from "./actionType";
-import { ActionState, ActionStateMapper } from "./actionState";
-import Intent, { IntentMapper } from "./intent";
 import type {
   ActionDto,
   Icrc112Request as BackendIcrc112Request,
 } from "$lib/generated/cashier_backend/cashier_backend.did";
+import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.did";
 import Icrc112Request, {
   Icrc112RequestMapper,
 } from "$modules/icrc112/types/icrc112Request";
+import { Principal } from "@dfinity/principal";
+import { ActionState, ActionStateMapper } from "./actionState";
+import { ActionTypeMapper, type ActionTypeValue } from "./actionType";
+import Intent, { IntentMapper } from "./intent";
 
 // Frontend Action class representing an action entity
 class Action {
@@ -97,6 +98,25 @@ export class ActionMapper {
       },
     },
   };
+}
+
+export type ProcessActionResult = {
+  action: Action;
+  isSuccess: boolean;
+  errors: string[];
+};
+
+export class ProcessActionResultMapper {
+  static fromBackendType(
+    result: cashierBackend.ProcessActionDto,
+  ): ProcessActionResult {
+    const action = ActionMapper.fromBackendType(result.action);
+    return {
+      action,
+      isSuccess: result.is_success,
+      errors: result.errors,
+    };
+  }
 }
 
 export default Action;

@@ -1,9 +1,17 @@
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { linkListStore } from "$modules/links/state/linkListStore.svelte";
+import type Action from "$modules/links/types/action/action";
+import {
+  ProcessActionResultMapper,
+  type ProcessActionResult,
+} from "$modules/links/types/action/action";
+import {
+  ActionType,
+  type ActionTypeValue,
+} from "$modules/links/types/action/actionType";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { LinkDetailState } from ".";
 import type { LinkDetailStore } from "../linkDetailStore.svelte";
-import { LinkActiveState } from "./active";
 
 // State when the link has been successfully created
 export class LinkCreatedState implements LinkDetailState {
@@ -15,17 +23,28 @@ export class LinkCreatedState implements LinkDetailState {
   }
 
   // Creating action is not supported in created state
-  async createAction(): Promise<void> {
-    throw new Error("Created state does not support creating actions.");
+  async createAction(actionType: ActionTypeValue): Promise<Action> {
+    throw new Error(
+      `Creating ${actionType} action is not supported in Created state`,
+    );
   }
 
   // Process the action to activate the link
-  async processAction(actionId: string): Promise<void> {
-    const link = this.#linkDetailStore.link;
-    if (!link) {
+  async processAction(): Promise<ProcessActionResult> {
+    if (!this.#linkDetailStore.link) {
       throw new Error("Link is missing");
     }
 
+    if (!this.#linkDetailStore.action) {
+      throw new Error("Action is missing");
+    }
+
+    const actionType = this.#linkDetailStore.action.type;
+    if (actionType !== ActionType.CREATE_LINK) {
+      throw new Error("Invalid action type for Created state");
+    }
+
+    const actionId = this.#linkDetailStore.action.id;
     const result = await cashierBackendService.processActionV2(actionId);
     if (result.isErr()) {
       throw new Error(`Failed to activate link: ${result.error}`);
@@ -33,6 +52,6 @@ export class LinkCreatedState implements LinkDetailState {
 
     linkListStore.refresh();
     this.#linkDetailStore.query.refresh();
-    this.#linkDetailStore.state = new LinkActiveState(this.#linkDetailStore);
+    return ProcessActionResultMapper.fromBackendType(result.unwrap());
   }
 }
