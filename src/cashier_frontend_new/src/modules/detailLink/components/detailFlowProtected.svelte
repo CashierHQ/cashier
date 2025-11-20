@@ -22,15 +22,12 @@
   ];
 
   const isCreator = $derived(
-    linkStore.link?.creator.toString() === authState.account?.owner,
+    linkStore.link?.creator != null &&
+      authState.account?.owner != null &&
+      linkStore.link.creator.toString() === authState.account.owner,
   );
 
   $effect(() => {
-    if (!linkStore) {
-      goto(resolve("/links"));
-      return;
-    }
-
     if (!linkStore.link) {
       goto(resolve("/links"));
       return;

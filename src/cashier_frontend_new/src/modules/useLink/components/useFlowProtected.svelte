@@ -6,7 +6,6 @@
   import { authState } from "$modules/auth/state/auth.svelte";
   import { LinkState } from "$modules/links/types/link/linkState";
   import { LinkUserState } from "$modules/links/types/link/linkUserState";
-  import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
   import type { UserLinkStore } from "../state/userLinkStore.svelte";
 
@@ -20,108 +19,52 @@
     linkId: string;
   } = $props();
 
-  const USE_PAGE_STEPS = [
-    UserLinkStep.LANDING,
-    UserLinkStep.ADDRESS_UNLOCKED,
-    UserLinkStep.ADDRESS_LOCKED,
-    UserLinkStep.GATE,
-    UserLinkStep.COMPLETED,
-  ];
-
-  const isLandingPage = $derived(page.url.pathname.endsWith(`/link/${linkId}`));
-  const allowedSteps = $derived(
-    isLandingPage ? [UserLinkStep.LANDING] : USE_PAGE_STEPS,
-  );
-
-  const userlandingUrl = resolve(`/link/${linkId}`);
+  const landingUrl = resolve(`/link/${linkId}`);
   const useUrl = resolve(`/link/${linkId}/use`);
-  const landingUrl = resolve("/");
+  const isUsePage = $derived(page.url.pathname === useUrl);
 
-  // Set logout redirect to landing page
-  $effect(() => {
-    authState.setOnLogout(() => goto(userlandingUrl));
-  });
+  // Set logout and login handlers
+  authState.setOnLogout(() => goto(landingUrl));
+  authState.setOnLogin(() => goto(useUrl));
 
-  // Redirect logic based on link and user state
+  // Redirect logic:
+  // 1. Logged in users go to /use
+  // 2. Non-logged in blocked from /use
+  // 3. Inactive/ended links only allow completed users to /use
   $effect(() => {
-    if (!userStore?.link || !userProfile.isReady() || userStore.isLoading) {
+    if (!userProfile.isReady() || userStore.isLoading || !userStore.link)
       return;
-    }
 
-    const { step: currentStep } = userStore.state;
-    const linkUserState = userStore.query?.data?.link_user_state;
-    const linkState = userStore.link.state;
     const isLoggedIn = userProfile.isLoggedIn();
+    const linkState = userStore.link.state;
+    const linkUserState = userStore.query?.data?.link_user_state;
     const isCompleted = linkUserState === LinkUserState.COMPLETED;
-    const isLinkInactive =
-      linkState === LinkState.INACTIVE ||
-      linkState === LinkState.INACTIVE_ENDED;
+    const isLinkActive = linkState === LinkState.ACTIVE;
 
-    if (isLandingPage) {
-      handleLandingPageRedirect({
-        isLoggedIn,
-        linkState,
-        isCompleted,
-        isLinkInactive,
-      });
-    } else {
-      handleUsePageRedirect({ currentStep, linkState, isCompleted });
-    }
-  });
-
-  // Redirect to /use page if conditions are met
-  // condition 1: user is logged
-  // condition 2: link is active OR link is inactive/ended but user has completed it
-  function handleLandingPageRedirect({
-    isLoggedIn,
-    linkState,
-    isCompleted,
-    isLinkInactive,
-  }: {
-    isLoggedIn: boolean;
-    linkState: LinkState;
-    isCompleted: boolean;
-    isLinkInactive: boolean;
-  }): void {
-    if (!isLoggedIn) return;
-
-    const shouldRedirectToUse =
-      linkState === LinkState.ACTIVE || (isLinkInactive && isCompleted);
-
-    if (shouldRedirectToUse) {
-      goto(useUrl);
-    }
-  }
-
-  // Redirect logic for /use page
-  // condition 1: current step is allowed
-  // condition 2: user cannot access completed step without completing the link
-  function handleUsePageRedirect({
-    currentStep,
-    linkState,
-    isCompleted,
-  }: {
-    currentStep: UserLinkStep;
-    linkState: LinkState;
-    isCompleted: boolean;
-  }): void {
-    const isStepAllowed = allowedSteps.includes(currentStep);
-    const isUnauthorizedCompleted =
-      currentStep === UserLinkStep.COMPLETED && !isCompleted;
-
-    if (!isStepAllowed || isUnauthorizedCompleted) {
+    // If on /use page and not logged in -> redirect to landing
+    if (isUsePage && !isLoggedIn) {
       goto(landingUrl);
       return;
     }
 
-    if (linkState === LinkState.INACTIVE_ENDED && !isCompleted) {
-      goto(userlandingUrl);
+    // If on landing page and logged in
+    if (!isUsePage && isLoggedIn) {
+      // Active link: allow access to /use
+      if (isLinkActive) {
+        goto(useUrl);
+        return;
+      }
+
+      // Inactive/ended link: only completed users go to /use
+      if (isCompleted) {
+        goto(useUrl);
+      }
     }
-  }
+  });
 </script>
 
-{#if userStore?.link && allowedSteps.includes(userStore.state.step)}
-  {@render children()}
-{:else if userStore?.isLoading}
+{#if userStore?.isLoading}
   <div class="flex items-center justify-center p-8">Loading...</div>
+{:else if userStore?.link}
+  {@render children()}
 {/if}
