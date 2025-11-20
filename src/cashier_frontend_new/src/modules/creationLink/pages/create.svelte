@@ -66,9 +66,7 @@
 
     const step = newLink.state.step;
     if (step === LinkStep.ADD_ASSET) {
-      appHeaderStore.setHeaderName(
-        locale.t("links.linkForm.header.addAssets"),
-      );
+      appHeaderStore.setHeaderName(locale.t("links.linkForm.header.addAssets"));
     } else if (step === LinkStep.CHOOSE_TYPE) {
       appHeaderStore.setHeaderName(
         newLink.createLinkData.title.trim() ||

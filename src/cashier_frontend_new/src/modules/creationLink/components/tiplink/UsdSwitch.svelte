@@ -11,7 +11,6 @@
     isUsd: boolean;
     canConvert?: boolean;
     onToggle: (isUsd: boolean) => void;
-    tokenDecimals?: number;
     usdDecimals?: number;
   };
 
@@ -22,7 +21,6 @@
     amount = 0,
     symbol = "",
     canConvert = false,
-    tokenDecimals = 8,
     usdDecimals = 2,
   }: Props = $props();
 
@@ -62,10 +60,15 @@
     type="button"
     class="flex items-center text-grey-400"
     onclick={() => onToggle(!isUsd)}
-    aria-label={isUsd ? locale.t("links.linkForm.addAsset.switchToTokenAmount") : locale.t("links.linkForm.addAsset.switchToUsdAmount")}
+    aria-label={isUsd
+      ? locale.t("links.linkForm.addAsset.switchToTokenAmount")
+      : locale.t("links.linkForm.addAsset.switchToUsdAmount")}
   >
     <span class="text-[10px] font-light">{valueToDisplay}</span>
-    <Repeat2 class="ml-1 text-destructive text-primary cursor-pointer" size={15} stroke-width={2} />
+    <Repeat2
+      class="ml-1 text-destructive text-primary cursor-pointer"
+      size={15}
+      stroke-width={2}
+    />
   </button>
 {/if}
-

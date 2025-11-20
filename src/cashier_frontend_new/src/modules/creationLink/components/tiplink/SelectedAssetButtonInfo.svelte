@@ -15,14 +15,14 @@
   // Get token logo URL based on token address
   const tokenLogo = $derived.by(() => {
     if (!selectedToken) return null;
-    
+
     const address = selectedToken.address;
-    
+
     // Special case for ICP
     if (address === "ryjl3-tyaaa-aaaaa-aaaba-cai") {
       return "/icpLogo.png";
     }
-    
+
     // Use icexplorer API for all other tokens
     return `https://api.icexplorer.io/images/${address}`;
   });
@@ -37,7 +37,9 @@
 
 {#if selectedToken}
   <div class="flex font-normal flex-grow items-center w-fit w-full">
-    <div class="relative flex shrink-0 overflow-hidden rounded-full mr-2 w-6 h-6">
+    <div
+      class="relative flex shrink-0 overflow-hidden rounded-full mr-2 w-6 h-6"
+    >
       {#if tokenLogo && !imageLoadFailed}
         <img
           alt={selectedToken.symbol}
@@ -72,7 +74,11 @@
         }
       }}
     >
-      <div class="text-[14px] font-normal whitespace-nowrap overflow-hidden text-ellipsis">{selectedToken.name}</div>
+      <div
+        class="text-[14px] font-normal whitespace-nowrap overflow-hidden text-ellipsis"
+      >
+        {selectedToken.name}
+      </div>
       <ChevronDown
         color="#36A18B"
         stroke-width={2}
@@ -82,4 +88,3 @@
     </div>
   </div>
 {/if}
-

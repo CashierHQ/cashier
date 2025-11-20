@@ -15,7 +15,7 @@
 </script>
 
 <div class="flex justify-between w-full mx-auto gap-2">
-  {#each data as { content, action }, index}
+  {#each data as { content, action }, key (key)}
     <Button
       type="button"
       variant="outline"
@@ -32,4 +32,3 @@
     </Button>
   {/each}
 </div>
-
