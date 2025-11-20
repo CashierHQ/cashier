@@ -1,10 +1,8 @@
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { beforeEach, describe, expect, it } from "vitest";
-import type { UserLinkStore } from "../userLinkStore.svelte";
 import { CompletedState } from "./completed";
 
 describe("CompletedState", () => {
-  let mockStore: UserLinkStore;
   let state: CompletedState;
 
   beforeEach(() => {
