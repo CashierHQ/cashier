@@ -1,20 +1,23 @@
-import type { UserLinkState } from "./useLinkStates";
-import { LandingState } from "./useLinkStates/landing";
-import { CompletedState } from "./useLinkStates/completed";
-import { UserLinkStep } from "$modules/links/types/userLinkStep";
-import { LinkUserState } from "$modules/links/types/link/linkUserState";
-import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
-import type { LinkDetailStore as LinkDetailStoreType } from "$modules/detailLink/state/linkDetailStore.svelte";
 import { authState } from "$modules/auth/state/auth.svelte";
+import type { LinkDetailStore as LinkDetailStoreType } from "$modules/detailLink/state/linkDetailStore.svelte";
+import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
+import type Action from "$modules/links/types/action/action";
+import type { ProcessActionResult } from "$modules/links/types/action/action";
+import { type ActionTypeValue } from "$modules/links/types/action/actionType";
+import { LinkUserState } from "$modules/links/types/link/linkUserState";
+import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { userLinkRepository } from "../repositories/userLinkRepository";
+import { findUseActionTypeFromLinkType } from "../utils/useActionTypeFromLinkType";
 import { userLinkStateFromStep } from "../utils/userLinkStateFromStep";
+import type { UserActionCapableState, UserLinkState } from "./useLinkStates";
+import { CompletedState } from "./useLinkStates/completed";
+import { LandingState } from "./useLinkStates/landing";
 
 /**
- * Simple store for user-facing link flow.
+ * Store for user link state management
  */
 export class UserLinkStore {
   #state = $state<UserLinkState>(new LandingState(this));
-
   public linkDetail: LinkDetailStoreType;
 
   constructor({ id }: { id: string }) {
@@ -43,7 +46,7 @@ export class UserLinkStore {
     $effect(() => {
       const s = this.linkDetail.query.data?.link_user_state;
       if (s === LinkUserState.COMPLETED) {
-        this.#state = new CompletedState(this);
+        this.#state = new CompletedState();
       }
     });
   }
@@ -120,6 +123,54 @@ export class UserLinkStore {
    */
   async goBack(): Promise<void> {
     await this.#state.goBack();
+  }
+
+  /**
+   * Create an action
+   * @param actionType The type of action to create
+   * @returns The action created
+   */
+  async createAction(actionType: ActionTypeValue): Promise<Action> {
+    if (!this.isActionCapable(this.#state)) {
+      throw new Error(
+        `Current state ${this.#state.step} does not support user actions`,
+      );
+    }
+
+    return await this.#state.createAction(actionType);
+  }
+
+  /**
+   * Process an action
+   * @returns The result of processing the action
+   */
+  async processAction(): Promise<ProcessActionResult> {
+    if (!this.isActionCapable(this.#state)) {
+      throw new Error(
+        `Current state ${this.#state.step} does not support user actions`,
+      );
+    }
+
+    return await this.#state.processAction();
+  }
+
+  /**
+   * Check if the current state supports user actions
+   * @returns True if the current state supports user actions, false otherwise
+   */
+  private isActionCapable(
+    state: UserLinkState,
+  ): state is UserActionCapableState {
+    return "createAction" in state && "processAction" in state;
+  }
+
+  /**
+   * Find the appropriate action type to use based on the link type
+   * @returns The action type to use or null if none applicable
+   */
+  findUseActionType(): ActionTypeValue | null {
+    if (!this.link) return null;
+    return findUseActionTypeFromLinkType(this.link.link_type);
   }
 }
 

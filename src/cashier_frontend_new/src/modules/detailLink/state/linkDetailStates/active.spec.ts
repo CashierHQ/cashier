@@ -60,6 +60,11 @@ vi.mock("$modules/links/types/action/action", () => ({
       id: typeof a["id"] === "string" ? (a["id"] as string) : "mapped-act",
     }),
   },
+  ProcessActionResultMapper: {
+    fromBackendType: (a: Record<string, unknown>) => ({
+      id: typeof a["id"] === "string" ? (a["id"] as string) : "mapped-result",
+    }),
+  },
 }));
 
 vi.mock("$modules/links/types/link/link", () => ({
@@ -78,7 +83,7 @@ const mockAction: Action = {
   id: "act-1",
   creator: Ed25519KeyIdentity.generate().getPrincipal(),
   // narrow the literal to Action's shape without using `any`
-  type: { CreateLink: null } as unknown as Action["type"],
+  type: ActionType.RECEIVE,
   state: { Success: null } as unknown as Action["state"],
   intents: [],
   icrc_112_requests: [],
@@ -176,7 +181,7 @@ describe("LinkActiveState", () => {
       const state = new LinkActiveState(store);
 
       // Act
-      const res = state.processAction("");
+      const res = state.processAction();
 
       // Assert
       await expect(res).rejects.toThrow("Link is missing");
@@ -197,11 +202,11 @@ describe("LinkActiveState", () => {
       mocks.processActionV2.mockResolvedValueOnce(Err("Backend error"));
 
       // Act
-      const res = state.processAction(mockAction.id);
+      const res = state.processAction();
 
       // Assert
       await expect(res).rejects.toThrow(
-        "Failed to activate link: Backend error",
+        "Failed to process action: Backend error",
       );
     });
 
@@ -224,7 +229,7 @@ describe("LinkActiveState", () => {
       );
 
       // Act
-      await state.processAction(mockAction.id);
+      await state.processAction();
 
       // Assert
       expect(mocks.processActionV2).toHaveBeenCalledWith(mockAction.id);

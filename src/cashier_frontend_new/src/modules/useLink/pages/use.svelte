@@ -1,14 +1,13 @@
 <script lang="ts">
-  import { cashierBackendService } from "$modules/links/services/cashierBackend";
+  import type { ProcessActionResult } from "$modules/links/types/action/action";
   import { ActionState } from "$modules/links/types/action/actionState";
-  import { ActionTypeMapper } from "$modules/links/types/action/actionType";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import Completed from "../components/Completed.svelte";
-  import Unlocked from "../components/Unlocked.svelte";
-  import UserLinkStore from "../state/userLinkStore.svelte";
   import Landing from "../components/Landing.svelte";
   import UseLinkProtected from "../components/useFlowProtected.svelte";
+  import Unlocked from "../components/Unlocked.svelte";
+  import UserLinkStore from "../state/userLinkStore.svelte";
 
   const {
     id,
@@ -17,6 +16,8 @@
   } = $props();
 
   const userStore = new UserLinkStore({ id });
+  let errorMessage: string | null = $state(null);
+  let successMessage: string | null = $state(null);
 
   let showTxCart: boolean = $derived.by(() => {
     return !!(
@@ -28,69 +29,70 @@
     showTxCart = false;
   };
 
-  const createAction = async () => {
+  const handleCreateUseAction = async () => {
+    errorMessage = null;
+    successMessage = null;
+
     try {
       if (!userStore?.link) throw new Error("Link detail is missing");
       if (userStore.action) {
         showTxCart = true;
       } else {
-        const link = userStore.link;
-        const actionType = ActionTypeMapper.fromLinkType(link.link_type);
-        const actionRes = await cashierBackendService.createActionV2({
-          linkId: link.id,
-          actionType,
-        });
-        if (actionRes.isErr()) {
-          throw actionRes.error;
+        const actionType = userStore.findUseActionType();
+        if (!actionType) {
+          throw new Error("No applicable action type found for this link");
         }
+        await userStore.createAction(actionType);
+
+        successMessage = "Action created successfully.";
         // Refresh query state to update the derived link with new action
         userStore.query?.refresh();
       }
     } catch (err) {
-      console.error("create use action failed", err);
+      errorMessage = `Failed to create action. ${
+        err instanceof Error ? err.message : ""
+      }`;
     }
   };
 
-  const claim = async () => {
-    try {
-      // For now we don't run the backend claim. Advance the user flow instead.
-      if (!userStore.action) {
-        throw new Error("No action available to process");
-      }
-      const res = await cashierBackendService.processActionV2(
-        userStore.action.id,
-      );
-
-      if (res.isErr()) {
-        throw res.error;
-      }
-
-      userStore.query?.refresh();
-      userStore.goNext();
-    } catch (err) {
-      console.error("claim failed", err);
-    }
+  const handleProcessAction = async (): Promise<ProcessActionResult> => {
+    return await userStore.processAction();
   };
 </script>
 
 <UseLinkProtected {userStore} linkId={id}>
   <div class="px-4 py-4">
     <div class="mt-4">
-      {#if userStore.state.step === UserLinkStep.LANDING}
+      {#if errorMessage}
+        <div
+          class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
+        >
+          {errorMessage}
+        </div>
+      {/if}
+
+      {#if successMessage}
+        <div
+          class="mb-4 p-3 text-sm text-green-700 bg-green-100 rounded border border-green-200"
+        >
+          {successMessage}
+        </div>
+      {/if}
+
+      {#if userStore.step === UserLinkStep.LANDING}
         <Landing userLink={userStore} />
       {:else if userStore.state.step === UserLinkStep.ADDRESS_UNLOCKED}
         <Unlocked
           userLink={userStore}
           linkDetail={userStore.linkDetail}
-          onCreateUseAction={createAction}
+          onCreateUseAction={handleCreateUseAction}
         />
         {#if showTxCart && userStore?.link && userStore?.action}
           <TxCart
             isOpen={showTxCart}
-            link={userStore.link}
-            action={userStore.action}
-            goNext={claim}
-            {onCloseDrawer}
+          action={userStore.action}
+          {onCloseDrawer}
+          {handleProcessAction}
           />
         {/if}
       {:else if userStore.state.step === UserLinkStep.COMPLETED}
