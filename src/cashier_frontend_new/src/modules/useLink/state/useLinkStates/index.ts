@@ -19,7 +19,9 @@ export interface UserLinkState {
    * Method to transition to the previous state
    */
   goBack(): Promise<void>;
+}
 
+export interface UserActionCapableState extends UserLinkState {
   /**
    * Method to create an action
    * @param actionType The type of action to create

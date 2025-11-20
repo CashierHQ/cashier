@@ -22,14 +22,4 @@ export class AddressLockedState implements UserLinkState {
   async goBack(): Promise<void> {
     this.#store.state = new LandingState(this.#store);
   }
-
-  async createAction(actionType: ActionTypeValue): Promise<Action> {
-    throw new Error(
-      `Action type ${actionType} cannot be created in AddressLocked state`,
-    );
-  }
-
-  async processAction(): Promise<ProcessActionResult> {
-    throw new Error("Method not implemented.");
-  }
 }

@@ -92,8 +92,6 @@ class CanisterBackendService {
 
     const response = await actor.user_create_link_v2(request.unwrap());
 
-    console.log("createLinkV2 response:", response);
-
     return responseToResult(response)
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
@@ -117,8 +115,6 @@ class CanisterBackendService {
     const response = await actor.user_process_action_v2({
       action_id: actionId,
     });
-
-    console.log("processActionV2 response:", response);
 
     return responseToResult(response)
       .map((res) => res)
@@ -168,8 +164,6 @@ class CanisterBackendService {
       action_type: ActionTypeMapper.toBackendType(input.actionType),
     });
 
-    console.log("createActionV2 response:", response);
-
     return responseToResult(response)
       .map((res) => res)
       .mapErr((err) => new Error(JSON.stringify(err)));
@@ -202,8 +196,6 @@ class CanisterBackendService {
       return Err(new Error("User not logged in"));
     }
     const response = await actor.get_link_details_v2(id, toNullable(options));
-
-    console.log("getLink response:", response);
 
     return responseToResult(response)
       .map((res) => res)

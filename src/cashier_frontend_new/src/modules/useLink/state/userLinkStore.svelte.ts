@@ -9,7 +9,7 @@ import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { userLinkRepository } from "../repositories/userLinkRepository";
 import { findUseActionTypeFromLinkType } from "../utils/useActionTypeFromLinkType";
 import { userLinkStateFromStep } from "../utils/userLinkStateFromStep";
-import type { UserLinkState } from "./useLinkStates";
+import type { UserActionCapableState, UserLinkState } from "./useLinkStates";
 import { CompletedState } from "./useLinkStates/completed";
 import { LandingState } from "./useLinkStates/landing";
 
@@ -131,6 +131,12 @@ export class UserLinkStore {
    * @returns The action created
    */
   async createAction(actionType: ActionTypeValue): Promise<Action> {
+    if (!this.isActionCapable(this.#state)) {
+      throw new Error(
+        `Current state ${this.#state.step} does not support user actions`,
+      );
+    }
+
     return await this.#state.createAction(actionType);
   }
 
@@ -139,7 +145,23 @@ export class UserLinkStore {
    * @returns The result of processing the action
    */
   async processAction(): Promise<ProcessActionResult> {
+    if (!this.isActionCapable(this.#state)) {
+      throw new Error(
+        `Current state ${this.#state.step} does not support user actions`,
+      );
+    }
+
     return await this.#state.processAction();
+  }
+
+  /**
+   * Check if the current state supports user actions
+   * @returns True if the current state supports user actions, false otherwise
+   */
+  private isActionCapable(
+    state: UserLinkState,
+  ): state is UserActionCapableState {
+    return "createAction" in state && "processAction" in state;
   }
 
   /**
