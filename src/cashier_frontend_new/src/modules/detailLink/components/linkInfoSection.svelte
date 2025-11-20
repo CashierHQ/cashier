@@ -1,36 +1,15 @@
 <script lang="ts">
+  import { getLinkTypeText } from "$modules/links/utils/linkItemHelpers";
+  import type { Link } from "../../links/types/link/link";
   import { statusBadge } from "../../links/utils/statusBadge";
   import AssetList from "./assetList.svelte";
-  import type { Link } from "../../links/types/link/link";
-  import {
-    LinkType,
-    type LinkTypeValue,
-  } from "../../links/types/link/linkType";
-  import { assertUnreachable } from "$lib/rsMatch";
 
   interface Props {
     link: Link;
   }
 
   let { link }: Props = $props();
-
-  // Get link type display text
-  function getLinkTypeText(linkType: LinkTypeValue): string {
-    switch (linkType) {
-      case LinkType.TIP:
-        return "Send Tip";
-      case LinkType.AIRDROP:
-        return "Send Airdrop";
-      case LinkType.RECEIVE_PAYMENT:
-        return "Receive Payment";
-      case LinkType.TOKEN_BASKET:
-        return "Send Token Basket";
-      default:
-        assertUnreachable(linkType);
-    }
-  }
-
-  const linkTypeText = $derived(getLinkTypeText(link.link_type));
+  const linkTypeText = getLinkTypeText(link.link_type);
 </script>
 
 <div class="text-sm text-muted-foreground mb-2">Link info</div>
