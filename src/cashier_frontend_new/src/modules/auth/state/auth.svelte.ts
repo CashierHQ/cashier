@@ -213,7 +213,6 @@ export const authState = {
   },
 
   // Configure a custom logout handler that will be invoked when `authState.logout` is called.
-  // Handler will receive an optional redirectPath passed to `logout`.
   setOnLogout(handler: () => void) {
     logoutHandler = handler;
   },
