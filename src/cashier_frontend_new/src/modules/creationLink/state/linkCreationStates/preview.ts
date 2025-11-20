@@ -39,7 +39,7 @@ export class PreviewState implements LinkCreationState {
 
     // set id to backend link id
     this.#link.id = result.value.link.id;
-    this.#link.state = new LinkCreatedState(this.#link);
+    this.#link.state = new LinkCreatedState();
     this.#link.link = LinkMapper.fromBackendType(result.value.link);
     this.#link.action = ActionMapper.fromBackendType(result.value.action);
   }

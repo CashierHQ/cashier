@@ -19,7 +19,10 @@
   async function handleBack() {
     if (!newLink) return;
 
-    if (newLink.state.step === LinkStep.CHOOSE_TYPE) {
+    if (
+      newLink.state.step === LinkStep.CHOOSE_TYPE ||
+      newLink.state.step === LinkStep.CREATED
+    ) {
       goto(resolve("/links"));
     } else {
       try {
@@ -109,7 +112,6 @@
 {:else}
   <div class="grow-1 flex flex-col mt-2 sm:mt-0">
     <CreateLinkHeader link={newLink} />
-
     {#if newLink.state.step === LinkStep.CHOOSE_TYPE}
       <ChooseLinkType link={newLink} />
     {:else if newLink.state.step === LinkStep.ADD_ASSET}

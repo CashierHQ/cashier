@@ -90,7 +90,7 @@ impl<M: TransactionManager + 'static> LinkV2State for CreatedState<M> {
                 ActionType::CreateLink => {
                     let create_action = CreateAction::create(&link, canister_id).await?;
                     let create_action_result = transaction_manager
-                        .create_action(create_action.action, create_action.intents)
+                        .create_action(create_action.action, create_action.intents, None)
                         .await?;
 
                     Ok(LinkCreateActionResult {

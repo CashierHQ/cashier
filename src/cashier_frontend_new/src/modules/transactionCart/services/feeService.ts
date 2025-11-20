@@ -1,9 +1,9 @@
 import Action from "$modules/links/types/action/action";
-import { ICP_LEDGER_FEE } from "$modules/token/constants";
 import { ActionType } from "$modules/links/types/action/actionType";
 import IntentTask from "$modules/links/types/action/intentTask";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import { formatNumber } from "$modules/shared/utils/formatNumber";
+import { ICP_LEDGER_FEE } from "$modules/token/constants";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 
 import { assertUnreachable } from "$lib/rsMatch";
@@ -12,14 +12,20 @@ import {
   type ComputeAmountAndFeeInput,
   type ComputeAmountAndFeeOutput,
   type FeeItem,
-} from "../types/fee";
-import { AssetProcessState, type AssetItem } from "../types/txCart";
+} from "$modules/links/types/fee";
+import {
+  AccessProcessStateMapper,
+  AssetProcessState,
+  type AssetItem,
+} from "$modules/transactionCart/types/txCart";
 
 // Type for paired AssetItem and FeeItem
-type AssetAndFeeList = {
+export type AssetAndFee = {
   asset: AssetItem;
   fee?: FeeItem;
-}[];
+};
+
+export type AssetAndFeeList = AssetAndFee[];
 
 export class FeeService {
   /**
@@ -58,7 +64,7 @@ export class FeeService {
         break;
       case ActionType.WITHDRAW:
         output = {
-          amount: intent.type.payload.amount - ledgerFee,
+          amount: intent.type.payload.amount,
           fee: ledgerFee,
         };
         break;
@@ -161,7 +167,7 @@ export class FeeService {
           : undefined;
 
         asset = {
-          state: AssetProcessState.PENDING,
+          state: AccessProcessStateMapper.fromIntentState(intent.state),
           label,
           symbol: token.symbol,
           address,
@@ -198,3 +204,5 @@ export class FeeService {
     return pairs;
   }
 }
+
+export const feeService = new FeeService();

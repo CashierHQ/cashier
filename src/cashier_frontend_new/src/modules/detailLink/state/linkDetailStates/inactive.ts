@@ -1,5 +1,11 @@
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import { linkListStore } from "$modules/links/state/linkListStore.svelte";
+import type Action from "$modules/links/types/action/action";
+import {
+  ActionMapper,
+  ProcessActionResultMapper,
+  type ProcessActionResult,
+} from "$modules/links/types/action/action";
 import {
   ActionType,
   type ActionTypeValue,
@@ -18,7 +24,7 @@ export class LinkInactiveState implements LinkDetailState {
   }
 
   // inactive only create withdraw action
-  async createAction(actionType: ActionTypeValue): Promise<void> {
+  async createAction(actionType: ActionTypeValue): Promise<Action> {
     const link = this.#linkDetailStore.link;
     if (!link) {
       throw new Error("Link is missing");
@@ -32,26 +38,37 @@ export class LinkInactiveState implements LinkDetailState {
       linkId: link.id,
       actionType,
     });
-
     if (actionRes.isErr()) {
-      throw actionRes.error;
+      throw new Error(`Failed to create action: ${actionRes.error}`);
     }
 
     this.#linkDetailStore.query.refresh();
+    return ActionMapper.fromBackendType(actionRes.unwrap());
   }
 
   // process withdraw action
-  async processAction(actionId: string): Promise<void> {
-    const link = this.#linkDetailStore.link;
-    if (!link) {
+  async processAction(): Promise<ProcessActionResult> {
+    if (!this.#linkDetailStore.link) {
       throw new Error("Link is missing");
     }
+
+    if (!this.#linkDetailStore.action) {
+      throw new Error("Action is missing");
+    }
+
+    const actionType = this.#linkDetailStore.action.type;
+    if (actionType !== ActionType.WITHDRAW) {
+      throw new Error("Invalid action type for Inactive state");
+    }
+
+    const actionId = this.#linkDetailStore.action.id;
     const result = await cashierBackendService.processActionV2(actionId);
     if (result.isErr()) {
-      throw new Error(`Failed to activate link: ${result.error}`);
+      throw new Error(`Failed to process action: ${result.error}`);
     }
 
     linkListStore.refresh();
     this.#linkDetailStore.query.refresh();
+    return ProcessActionResultMapper.fromBackendType(result.unwrap());
   }
 }
