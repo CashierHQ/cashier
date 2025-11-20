@@ -24,7 +24,7 @@
 
   async function handleConfirm() {
     try {
-      // logout user and redirect
+      //logout and redirection are handled automatically by authState.logout()
       await authState.logout();
       onConfirm();
       onOpenChange(false);

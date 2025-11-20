@@ -59,6 +59,9 @@ let pnp: PNP | null = null;
 // Optional logout handler configured by UI components. If set, invoked when `authState.logout` is called.
 let logoutHandler: (() => void) | null = null;
 
+// Optional login handler configured by UI components. If set, invoked when `authState.login` completes successfully.
+let loginHandler: (() => void) | null = null;
+
 // state to store connected wallet ID for reconnecting later
 const connectedWalletId = new PersistedState<{ id: string | null }>(
   "connectedWallet",
@@ -194,10 +197,16 @@ export const authState = {
     });
   },
 
-  // Connect to wallet
+  // Connect to wallet. Calls custom login handler if set, otherwise redirects to /links
   async login(walletId: string) {
     await inner_login(walletId);
     broadcastChannel.post(BroadcastMessageLogin);
+    // invoke configured login handler if exists
+    if (loginHandler) {
+      loginHandler();
+    } else {
+      await goto(resolve("/links"));
+    }
   },
 
   // Disconnect from wallet. Calls custom logout handler if set, otherwise redirects to /
@@ -210,6 +219,16 @@ export const authState = {
     } else {
       goto(resolve("/"));
     }
+  },
+
+  // Configure a custom login handler that will be invoked when `authState.login` completes successfully.
+  setOnLogin(handler: () => void) {
+    loginHandler = handler;
+  },
+
+  // Clear any configured login handler
+  resetOnLoginHandler() {
+    loginHandler = null;
   },
 
   // Configure a custom logout handler that will be invoked when `authState.logout` is called.

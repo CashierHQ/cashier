@@ -22,8 +22,6 @@
   ];
 
   $effect(() => {
-    if (!linkStore) return;
-
     const current = linkStore.state.step;
     const isAllowed = allowedSteps.includes(current);
 

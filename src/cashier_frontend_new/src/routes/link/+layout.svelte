@@ -1,11 +1,7 @@
 <script lang="ts">
-  import { authState } from "$modules/auth/state/auth.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
 
   let { children } = $props();
-
-  // reset logout handler on mount to avoid leaking behavior across pages
-  authState.resetOnLogoutHandler();
 </script>
 
 <div class="flex flex-col min-h-screen sm:bg-lightgreen bg-white">
