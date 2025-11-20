@@ -1,7 +1,6 @@
 <script lang="ts">
   import { LinkState } from "$modules/links/types/link/linkState";
   import { LinkUserState } from "$modules/links/types/link/linkUserState";
-  import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import Landing from "../components/Landing.svelte";
   import UserLinkStore from "../state/userLinkStore.svelte";
   import Ended from "../components/Ended.svelte";
