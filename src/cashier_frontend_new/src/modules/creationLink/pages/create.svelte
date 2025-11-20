@@ -14,16 +14,16 @@
 
   const { id }: { id: string } = $props();
   let isLoading = $state(true);
-  let newLink = $state<LinkCreationStore | null>(null);
+  let createLinkStore = $state<LinkCreationStore | null>(null);
 
   async function handleBack() {
-    if (!newLink) return;
+    if (!createLinkStore) return;
 
-    if (newLink.state.step === LinkStep.CHOOSE_TYPE) {
+    if (createLinkStore.state.step === LinkStep.CHOOSE_TYPE) {
       goto(resolve("/links"));
     } else {
       try {
-        await newLink.goBack();
+        await createLinkStore.goBack();
       } catch (e) {
         console.error("Failed to go back:", e);
       }
@@ -45,7 +45,7 @@
       return;
     }
 
-    newLink = new LinkCreationStore(tempLink);
+    createLinkStore = new LinkCreationStore(tempLink);
     appHeaderStore.setBackHandler(handleBack);
     isLoading = false;
 
@@ -58,22 +58,22 @@
 
 {#if isLoading}
   <div>Loading...</div>
-{:else if !newLink}
+{:else if !createLinkStore}
   <div>Link not found</div>
 {:else}
-<CreateionFlowProtected linkStore={newLink} allowSteps={[LinkStep.CHOOSE_TYPE, LinkStep.ADD_ASSET, LinkStep.PREVIEW, LinkStep.CREATED]}>
-  <div class="grow-1 flex flex-col mt-2 sm:mt-0">
-    <CreateLinkHeader link={newLink} />
+  <CreateionFlowProtected linkStore={createLinkStore}>
+    <div class="grow-1 flex flex-col mt-2 sm:mt-0">
+      <CreateLinkHeader link={createLinkStore} />
 
-    {#if newLink.state.step === LinkStep.CHOOSE_TYPE}
-      <ChooseLinkType link={newLink} />
-    {:else if newLink.state.step === LinkStep.ADD_ASSET}
-      <AddAsset link={newLink} />
-    {:else if newLink.state.step === LinkStep.PREVIEW}
-      <Preview link={newLink} />
-    {:else if newLink.state.step === LinkStep.CREATED}
-      <CreatedLink link={newLink} />
-    {/if}
-  </div>
+      {#if createLinkStore.state.step === LinkStep.CHOOSE_TYPE}
+        <ChooseLinkType link={createLinkStore} />
+      {:else if createLinkStore.state.step === LinkStep.ADD_ASSET}
+        <AddAsset link={createLinkStore} />
+      {:else if createLinkStore.state.step === LinkStep.PREVIEW}
+        <Preview link={createLinkStore} />
+      {:else if createLinkStore.state.step === LinkStep.CREATED}
+        <CreatedLink link={createLinkStore} />
+      {/if}
+    </div>
   </CreateionFlowProtected>
 {/if}

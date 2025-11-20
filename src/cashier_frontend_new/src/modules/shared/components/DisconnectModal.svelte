@@ -26,11 +26,11 @@
 
   async function handleConfirm() {
     try {
+      // logout user and redirect
       await authState.logout();
       onConfirm();
       onOpenChange(false);
       toast.success(locale.t("links.disconnectModal.loggedOut"));
-      await goto(resolve("/"));
     } catch (error) {
       console.error("Logout failed:", error);
       toast.error(locale.t("links.disconnectModal.failedToDisconnect"));

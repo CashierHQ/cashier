@@ -7,29 +7,45 @@
   import { LinkUserState } from "$modules/links/types/link/linkUserState";
   import { LinkState } from "$modules/links/types/link/linkState";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
+  import type { Snippet } from "svelte";
+  import { authState } from "$modules/auth/state/auth.svelte";
 
   let {
     userStore,
-    allowSteps,
     children,
     linkId,
   }: {
     userStore: UserLinkStore;
-    allowSteps: UserLinkStep[];
-    children: import("svelte").Snippet<[]>;
+    children: Snippet<[]>;
     linkId: string;
   } = $props();
 
   const isLandingPage = $derived(page.url.pathname.endsWith(`/link/${linkId}`));
 
+  const allowedSteps = $derived(
+    isLandingPage
+      ? [UserLinkStep.LANDING]
+      : [
+          UserLinkStep.LANDING,
+          UserLinkStep.ADDRESS_UNLOCKED,
+          UserLinkStep.ADDRESS_LOCKED,
+          UserLinkStep.GATE,
+          UserLinkStep.COMPLETED,
+        ],
+  );
+
   $effect(() => {
-    if (!userStore || !allowSteps || !userStore.link) return;
+    if (!userStore || !userStore.link) return;
     if (!userProfile.isReady() || userStore.isLoading) return;
 
     const currentStep = userStore.state.step;
     const linkUserState = userStore.query?.data?.link_user_state;
     const linkState = userStore.link.state;
     const isLoggedIn = userProfile.isLoggedIn();
+
+    authState.setOnLogout(() => {
+      goto(resolve(`/link/${linkId}`));
+    });
 
     // Landing page logic
     if (isLandingPage) {
@@ -56,7 +72,7 @@
     }
 
     // Use page logic - validate access
-    const isAllowedStep = allowSteps.includes(currentStep);
+    const isAllowedStep = allowedSteps.includes(currentStep);
 
     // Prevent accessing COMPLETED step without participation
     const isUnauthorizedCompletedAccess =
@@ -78,6 +94,6 @@
   });
 </script>
 
-{#if allowSteps.includes(userStore.state.step)}
+{#if allowedSteps.includes(userStore.state.step)}
   {@render children()}
 {/if}

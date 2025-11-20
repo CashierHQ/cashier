@@ -9,7 +9,6 @@
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
-  import { LinkStep } from "$modules/links/types/linkStep";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import { ChevronLeft } from "lucide-svelte";
@@ -100,14 +99,12 @@
   });
 </script>
 
-<DetailFlowProtected
-  linkStore={linkDetail}
-  allowSteps={[LinkStep.CREATED, LinkStep.ACTIVE, LinkStep.INACTIVE, LinkStep.ENDED]}
->
+<DetailFlowProtected linkStore={linkDetail}>
   {#if linkDetail.query.isLoading}
     Loading...
   {:else if !linkDetail.link}
-    Link not found
+    <!-- `DetailFlowProtected` will redirect to /links when link is missing. Show a fallback while redirect occurs. -->
+    Loading...
   {:else if linkDetail.query.data && linkDetail.link}
     <div class="px-4 py-4">
       <div class="flex items-center gap-3 mb-4">

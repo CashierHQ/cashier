@@ -6,7 +6,7 @@
   import UserLinkStore from "../state/userLinkStore.svelte";
   import Ended from "../components/Ended.svelte";
   import NotFound from "../components/NotFound.svelte";
-  import UseFlowProtected from "../components/useFlowProtected.svelte";
+  import UseFlowProtected from "../components/useLinkProtected.svelte";
 
   const {
     id,
@@ -17,7 +17,7 @@
   const userStore = new UserLinkStore({ id });
 </script>
 
-<UseFlowProtected {userStore} linkId={id} allowSteps={[UserLinkStep.LANDING]}>
+<UseFlowProtected {userStore} linkId={id}>
   {#if userStore.isLoading}
     Loading...
   {:else if !userStore.link}
