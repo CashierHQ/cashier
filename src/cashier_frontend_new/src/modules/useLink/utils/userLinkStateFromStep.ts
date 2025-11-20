@@ -23,7 +23,7 @@ export const userLinkStateFromStep = (
     case UserLinkStep.GATE:
       return new GateState(store);
     case UserLinkStep.COMPLETED:
-      return new CompletedState(store);
+      return new CompletedState();
     default:
       assertUnreachable(step);
   }

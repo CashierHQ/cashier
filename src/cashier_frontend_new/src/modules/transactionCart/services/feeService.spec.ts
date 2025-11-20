@@ -1,21 +1,21 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { FeeService } from "./feeService";
+import Action from "$modules/links/types/action/action";
+import { ActionState } from "$modules/links/types/action/actionState";
 import { ActionType } from "$modules/links/types/action/actionType";
-import IntentTask from "$modules/links/types/action/intentTask";
-import { formatNumber } from "$modules/shared/utils/formatNumber";
 import Intent from "$modules/links/types/action/intent";
 import IntentState from "$modules/links/types/action/intentState";
-import Action from "$modules/links/types/action/action";
+import IntentTask from "$modules/links/types/action/intentTask";
 import IntentType, {
   TransferData,
   type IntentPayload,
 } from "$modules/links/types/action/intentType";
-import { Ed25519KeyIdentity } from "@dfinity/identity";
-import Wallet from "$modules/links/types/wallet";
 import Asset from "$modules/links/types/asset";
-import { Principal } from "@dfinity/principal";
-import { ActionState } from "$modules/links/types/action/actionState";
+import Wallet from "$modules/links/types/wallet";
+import { formatNumber } from "$modules/shared/utils/formatNumber";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
+import { Ed25519KeyIdentity } from "@dfinity/identity";
+import { Principal } from "@dfinity/principal";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { FeeService } from "./feeService";
 
 const from = Ed25519KeyIdentity.generate();
 const fromWallet = new Wallet(from.getPrincipal(), []);
@@ -85,7 +85,7 @@ describe("FeeService", () => {
       expect(res.fee).toBe(LEDGER_FEE);
     });
 
-    it("Withdraw -> amount = payload.amount - ledgerFee, fee = ledgerFee", () => {
+    it("Withdraw -> amount = payload.amount, fee = ledgerFee", () => {
       const intent = createIntentWithPayload(
         "id-3",
         IntentTask.TRANSFER_WALLET_TO_LINK,
@@ -98,7 +98,7 @@ describe("FeeService", () => {
       });
 
       // amount = payload.amount - ledgerFee, fee = ledgerFee
-      expect(res.amount).toBe(100_000_000n - LEDGER_FEE);
+      expect(res.amount).toBe(100_000_000n);
       expect(res.fee).toBe(LEDGER_FEE);
     });
 

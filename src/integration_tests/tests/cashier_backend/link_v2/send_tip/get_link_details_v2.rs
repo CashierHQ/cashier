@@ -4,11 +4,10 @@
 use crate::cashier_backend::link::fixture::{
     LinkTestFixture, activate_tip_link_v2_fixture, create_tip_linkv2_fixture,
 };
-use crate::constant::ICP_PRINCIPAL;
 use crate::utils::link_id_to_account::link_id_to_account;
 use crate::utils::principal::TestUser;
 use crate::utils::with_pocket_ic_context;
-use candid::{Nat, Principal};
+use candid::{Decode, Nat};
 use cashier_backend_types::constant::{FEE_TREASURY_PRINCIPAL, ICP_TOKEN};
 use cashier_backend_types::dto::action::CreateActionInput;
 use cashier_backend_types::dto::link::GetLinkOptions;
@@ -19,6 +18,8 @@ use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, Int
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
 use cashier_common::constant::CREATE_LINK_FEE;
+use icrc_ledger_types::icrc1::transfer::TransferArg;
+use icrc_ledger_types::icrc2::approve::ApproveArgs;
 
 #[tokio::test]
 async fn it_should_fail_get_tip_linkv2_details_if_link_not_found() {
@@ -154,6 +155,38 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
         let (test_fixture, create_link_result) =
             create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount).await;
 
+        let initial_action = create_link_result.action.clone();
+        assert_eq!(initial_action.r#type, ActionType::CreateLink);
+        assert_eq!(initial_action.state, ActionState::Created);
+        assert_eq!(initial_action.intents.len(), 2);
+        let initial_intent1 = &initial_action.intents[0];
+        assert_eq!(initial_intent1.state, IntentState::Created);
+        assert_eq!(initial_intent1.transactions.len(), 1);
+        let initial_tx0 = &initial_intent1.transactions[0];
+        let initial_intent2 = &initial_action.intents[1];
+        assert_eq!(initial_intent2.state, IntentState::Created);
+        assert_eq!(initial_intent2.transactions.len(), 2);
+        let initial_tx1 = &initial_intent2.transactions[0];
+        let initial_tx2 = &initial_intent2.transactions[1];
+
+        let initial_icrc112 = create_link_result.action.icrc_112_requests.clone();
+        assert!(initial_icrc112.is_some());
+        let initial_icrc112 = initial_icrc112.unwrap();
+        assert_eq!(initial_icrc112.len(), 1);
+        let initial_icrc112_requests = &initial_icrc112[0];
+        let initial_icrc1_transfer_request = initial_icrc112_requests
+            .iter()
+            .find(|req| req.method == "icrc1_transfer")
+            .expect("Initial icrc1_transfer request not found");
+        let initial_icrc1_transfer_arg = Decode!(&initial_icrc1_transfer_request.arg, TransferArg)
+            .expect("Failed to decode initial icrc1_transfer args");
+        let initial_icrc2_approve_request = initial_icrc112_requests
+            .iter()
+            .find(|req| req.method == "icrc2_approve")
+            .expect("Initial icrc2_approve request not found");
+        let initial_icrc2_approve_arg = Decode!(&initial_icrc2_approve_request.arg, ApproveArgs)
+            .expect("Failed to decode initial icrc2_approve args");
+
         // Act
         let link_id = create_link_result.link.id;
         let option = GetLinkOptions {
@@ -170,12 +203,15 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
         assert_eq!(link.id, link_id);
         assert_eq!(link.state, LinkState::CreateLink);
         let action = get_link_result.action.unwrap();
+        assert_eq!(action.id, initial_action.id);
         assert_eq!(action.r#type, ActionType::CreateLink);
         assert_eq!(action.state, ActionState::Created);
         assert_eq!(action.intents.len(), 2);
 
         // Assert Intent1 TransferWalletToLink
         let intent1 = &action.intents[0];
+        assert_eq!(intent1.id, initial_intent1.id);
+        assert_eq!(intent1.created_at, initial_intent1.created_at);
         assert_eq!(intent1.state, IntentState::Created);
         match intent1.r#type {
             IntentType::Transfer(ref transfer) => {
@@ -186,6 +222,8 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
         }
         assert_eq!(intent1.transactions.len(), 1);
         let tx0 = &intent1.transactions[0];
+        assert_eq!(tx0.id, initial_tx0.id);
+        assert_eq!(tx0.created_at, initial_tx0.created_at);
         match tx0.protocol {
             Protocol::IC(IcTransaction::Icrc1Transfer(ref data)) => {
                 assert_eq!(data.from, Wallet::new(caller));
@@ -207,6 +245,8 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
         }
         assert_eq!(intent2.transactions.len(), 2);
         let tx1 = &intent2.transactions[0];
+        assert_eq!(tx1.id, initial_tx1.id);
+        assert_eq!(tx1.created_at, initial_tx1.created_at);
         match tx1.protocol {
             Protocol::IC(IcTransaction::Icrc2Approve(ref data)) => {
                 assert_eq!(data.from, Wallet::new(caller));
@@ -215,6 +255,8 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
             _ => panic!("Expected Icrc2Approve transaction"),
         }
         let tx2 = &intent2.transactions[1];
+        assert_eq!(tx2.id, initial_tx2.id);
+        assert_eq!(tx2.created_at, initial_tx2.created_at);
         match tx2.protocol {
             Protocol::IC(IcTransaction::Icrc2TransferFrom(ref data)) => {
                 assert_eq!(data.from, Wallet::new(caller));
@@ -230,25 +272,29 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
         let icrc112_requests = action.icrc_112_requests.unwrap();
         assert_eq!(icrc112_requests.len(), 1);
         let requests = &icrc112_requests[0];
-
         assert_eq!(requests.len(), 2);
-        for req in requests {
-            match req.method.as_str() {
-                "icrc1_transfer" => {
-                    assert_eq!(
-                        req.canister_id,
-                        Principal::from_text(ICP_PRINCIPAL).unwrap()
-                    );
-                }
-                "icrc2_approve" => {
-                    assert_eq!(
-                        req.canister_id,
-                        Principal::from_text(ICP_PRINCIPAL).unwrap()
-                    );
-                }
-                _ => panic!("Unexpected method in ICRC-112 request"),
-            }
-        }
+
+        let icrc1_transfer_request = requests
+            .iter()
+            .find(|req| req.method == "icrc1_transfer")
+            .expect("Initial icrc1_transfer request not found");
+        let icrc1_transfer_arg = Decode!(&icrc1_transfer_request.arg, TransferArg)
+            .expect("Failed to decode initial icrc1_transfer args");
+        assert_eq!(
+            icrc1_transfer_arg, initial_icrc1_transfer_arg,
+            "ICRC1 transfer args do not match"
+        );
+
+        let icrc2_approve_request = requests
+            .iter()
+            .find(|req| req.method == "icrc2_approve")
+            .expect("Initial icrc2_approve request not found");
+        let icrc2_approve_arg = Decode!(&icrc2_approve_request.arg, ApproveArgs)
+            .expect("Failed to decode initial icrc2_approve args");
+        assert_eq!(
+            icrc2_approve_arg, initial_icrc2_approve_arg,
+            "ICRC2 approve args do not match"
+        );
 
         Ok(())
     })

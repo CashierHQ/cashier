@@ -294,17 +294,21 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         let link_dto = LinkDto::from(link_model);
 
         let action_dto: Option<ActionDto> = if let Some(action) = action {
-            let intents = self.action_service.get_intents_by_action_id(&action.id);
+            let action_data = self
+                .action_service
+                .get_action_data(&action.id)
+                .map_err(|_e| CanisterError::NotFound("Action not found".to_string()))?;
 
             let create_action_result = self
                 .transaction_manager
-                .create_action(action, intents)
+                .create_action(action, action_data.intents, Some(action_data.intent_txs))
                 .await?;
 
             Some(create_action_result.into())
         } else {
             None
         };
+
         let link_user_state_dto = LinkUserStateDto::from_parts(&caller, link_id, link_user_state);
 
         Ok(GetLinkResp {

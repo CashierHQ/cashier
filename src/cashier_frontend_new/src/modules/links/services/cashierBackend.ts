@@ -1,6 +1,10 @@
 import * as cashierBackend from "$lib/generated/cashier_backend/cashier_backend.did";
 import { responseToResult } from "$lib/result";
 import { authState } from "$modules/auth/state/auth.svelte";
+import {
+  CreateLinkData,
+  CreateLinkDataMapper,
+} from "$modules/creationLink/types/createLinkData";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { toNullable } from "@dfinity/utils";
 import { Err, type Result } from "ts-results-es";
@@ -8,10 +12,6 @@ import {
   ActionTypeMapper,
   type ActionTypeValue,
 } from "../types/action/actionType";
-import {
-  CreateLinkData,
-  CreateLinkDataMapper,
-} from "$modules/creationLink/types/createLinkData";
 
 /**
  * Service for interacting with the Cashier Backend canister.
@@ -86,7 +86,6 @@ class CanisterBackendService {
     }
 
     const request = CreateLinkDataMapper.toCreateLinkInput(input);
-
     if (request.isErr()) {
       return Err(request.unwrapErr());
     }
@@ -105,7 +104,7 @@ class CanisterBackendService {
    */
   async processActionV2(
     actionId: string,
-  ): Promise<Result<cashierBackend.CreateLinkDto, Error>> {
+  ): Promise<Result<cashierBackend.ProcessActionDto, Error>> {
     const actor = this.#getActor({
       anonymous: false,
     });

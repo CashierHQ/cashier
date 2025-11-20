@@ -5,6 +5,7 @@
   import LinkInfoSection from "$modules/detailLink/components/linkInfoSection.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
+  import type { ProcessActionResult } from "$modules/links/types/action/action";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
@@ -16,10 +17,10 @@
   let { id }: { id: string } = $props();
 
   let showCopied: boolean = $state(false);
-
   let showTxCart: boolean = $state(false);
-
   let linkDetail = new LinkDetailStore({ id });
+  let errorMessage: string | null = $state(null);
+  let successMessage: string | null = $state(null);
 
   $effect(() => {
     if (linkDetail) {
@@ -45,34 +46,16 @@
   };
 
   const endLink = async () => {
+    errorMessage = null;
+    successMessage = null;
+
     try {
       if (!linkDetail.link) throw new Error("Link is missing");
       await linkDetail.disableLink();
+      successMessage = "Link ended successfully.";
     } catch (err) {
-      console.error("end link failed", err);
-    }
-  };
-
-  const createWithdrawAction = async () => {
-    try {
-      if (!linkDetail.link) {
-        throw new Error("Link is missing");
-      }
-
-      await linkDetail.createAction(ActionType.WITHDRAW);
-    } catch (err) {
-      console.error("end link failed", err);
-    }
-  };
-
-  const goNext = async () => {
-    try {
-      if (!linkDetail.action) {
-        throw new Error("Action is missing");
-      }
-      await linkDetail.processAction(linkDetail.action.id);
-    } catch (err) {
-      console.error("withdraw failed", err);
+      errorMessage =
+        "Failed to end link." + (err instanceof Error ? err.message : "");
     }
   };
 
@@ -84,9 +67,29 @@
     showTxCart = true;
   };
 
-  async function handleBack() {
+  const handleBack = async () => {
     goto(resolve("/links"));
-  }
+  };
+
+  const createWithdrawAction = async () => {
+    errorMessage = null;
+
+    try {
+      if (!linkDetail.link) {
+        throw new Error("Link is missing");
+      }
+
+      await linkDetail.createAction(ActionType.WITHDRAW);
+    } catch (err) {
+      errorMessage =
+        "Failed to create withdraw action." +
+        (err instanceof Error ? err.message : "");
+    }
+  };
+
+  const handleProcessAction = async (): Promise<ProcessActionResult> => {
+    return await linkDetail.processAction();
+  };
 
   onMount(() => {
     appHeaderStore.setBackHandler(handleBack);
@@ -120,6 +123,22 @@
       <!-- placeholder to keep title centered (matches back button width) -->
       <div class="w-8 h-8" aria-hidden="true"></div>
     </div>
+
+    {#if errorMessage}
+      <div
+        class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
+      >
+        {errorMessage}
+      </div>
+    {/if}
+
+    {#if successMessage}
+      <div
+        class="mb-4 p-3 text-sm text-green-700 bg-green-100 rounded border border-green-200"
+      >
+        {successMessage}
+      </div>
+    {/if}
 
     {#if linkDetail.link}
       <LinkInfoSection link={linkDetail.link} />
@@ -168,9 +187,8 @@
 {#if showTxCart && linkDetail.link && linkDetail.action}
   <TxCart
     isOpen={showTxCart}
-    link={linkDetail.link}
     action={linkDetail.action}
-    {goNext}
     {onCloseDrawer}
+    {handleProcessAction}
   />
 {/if}

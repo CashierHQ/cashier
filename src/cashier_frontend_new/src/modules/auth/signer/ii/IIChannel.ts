@@ -1,3 +1,16 @@
+import type { Icrc114ValidateArgs } from "$lib/generated/cashier_backend/cashier_backend.did";
+import {
+  Actor,
+  Cbor,
+  Certificate,
+  HttpAgent,
+  LookupStatus,
+  polling,
+  type SignIdentity,
+} from "@dfinity/agent";
+import { IDL } from "@dfinity/candid";
+import { DelegationChain, DelegationIdentity } from "@dfinity/identity";
+import { Principal } from "@dfinity/principal";
 import {
   type BatchCallCanisterRequest,
   type BatchCallCanisterResponse,
@@ -19,19 +32,6 @@ import {
   scopes,
   supportedStandards,
 } from "./constants";
-import { DelegationChain, DelegationIdentity } from "@dfinity/identity";
-import {
-  Actor,
-  Cbor,
-  Certificate,
-  HttpAgent,
-  LookupStatus,
-  polling,
-  type SignIdentity,
-} from "@dfinity/agent";
-import { Principal } from "@dfinity/principal";
-import { IDL } from "@dfinity/candid";
-import type { Icrc114ValidateArgs } from "$lib/generated/cashier_backend/cashier_backend.did";
 
 // TODO: Remove this if all PRs resolve
 // - https://github.com/slide-computer/signer-js/pull/9
@@ -414,7 +414,7 @@ export class IIChannel implements Channel {
                       },
                     };
                   }
-                  console.log("reqeust:", request);
+                  //console.log("request:", request);
                   if (
                     request.method.startsWith("icrc1_") ||
                     request.method.startsWith("icrc2_") ||

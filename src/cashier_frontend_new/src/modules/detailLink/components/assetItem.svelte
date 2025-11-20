@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
+  import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import type { AssetInfo } from "../../links/types/link/asset";
 
   interface Props {

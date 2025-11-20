@@ -12,7 +12,6 @@ export class LandingState implements UserLinkState {
     this.#store = store;
   }
 
-  // The `locked` branch has been removed; always proceed to unlocked path
   async goNext(): Promise<void> {
     this.#store.state = new AddressUnlockedState(this.#store);
   }

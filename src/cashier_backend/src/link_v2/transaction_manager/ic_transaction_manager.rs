@@ -67,21 +67,28 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
         &self,
         action: Action,
         intents: Vec<Intent>,
+        intent_txs_map: Option<HashMap<String, Vec<Transaction>>>,
     ) -> Result<CreateActionResult, CanisterError> {
         let current_ts = self.ic_env.time();
 
         // assemble intent transactions
         let mut transactions = Vec::<Transaction>::new();
-        let mut intent_txs_map = HashMap::<String, Vec<Transaction>>::new();
 
-        for intent in intents.iter() {
-            let chain = intent.chain.clone();
-            let intent_transactions = self
-                .intent_adapter
-                .intent_to_transactions(&chain, current_ts, intent)?;
-            transactions.extend(intent_transactions.clone());
-            intent_txs_map.insert(intent.id.clone(), intent_transactions);
-        }
+        let mut intent_txs_map = if let Some(map) = intent_txs_map {
+            map
+        } else {
+            let mut intent_txs_map = HashMap::<String, Vec<Transaction>>::new();
+
+            for intent in intents.iter() {
+                let chain = intent.chain.clone();
+                let intent_transactions = self
+                    .intent_adapter
+                    .intent_to_transactions(&chain, current_ts, intent)?;
+                transactions.extend(intent_transactions.clone());
+                intent_txs_map.insert(intent.id.clone(), intent_transactions);
+            }
+            intent_txs_map
+        };
 
         // transaction with dependencies filled
         let mut transactions = self
@@ -260,7 +267,7 @@ mod tests {
 
         // Act
         let res = manager
-            .create_action(action.clone(), vec![intent.clone()])
+            .create_action(action.clone(), vec![intent.clone()], None)
             .await;
         println!("Create action result: {:?}", res);
 

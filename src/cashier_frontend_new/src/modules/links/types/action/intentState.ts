@@ -1,5 +1,5 @@
-import { rsMatch } from "$lib/rsMatch";
 import type { IntentState as BackendIntentState } from "$lib/generated/cashier_backend/cashier_backend.did";
+import { rsMatch } from "$lib/rsMatch";
 
 // Frontend representation of the state of an Intent (string-based)
 class IntentState {
@@ -10,7 +10,7 @@ class IntentState {
   static readonly FAIL = "FAIL";
 }
 
-type IntentStateValue =
+export type IntentStateValue =
   | typeof IntentState.CREATED
   | typeof IntentState.PROCESSING
   | typeof IntentState.SUCCESS
