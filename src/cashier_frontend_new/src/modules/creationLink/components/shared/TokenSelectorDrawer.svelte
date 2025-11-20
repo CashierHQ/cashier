@@ -12,7 +12,7 @@
   import { locale } from "$lib/i18n";
   import { Search, X } from "lucide-svelte";
   import { SvelteSet } from "svelte/reactivity";
-  import { PUBLIC_TOKEN_ICP_LEDGER_CANISTER_ID } from "./auth.svelte.js";
+  import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
 
   type Props = {
     open?: boolean;
@@ -103,7 +103,7 @@
             {#each filteredTokens as token (token.address)}
               {@const tokenLogo = (() => {
                 const address = token.address;
-                if (address === PUBLIC_TOKEN_ICP_LEDGER_CANISTER_ID) {
+                if (address === ICP_LEDGER_CANISTER_ID) {
                   return "/icpLogo.png";
                 }
                 return `https://api.icexplorer.io/images/${address}`;

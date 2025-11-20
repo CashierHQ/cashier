@@ -1,6 +1,6 @@
 <script lang="ts">
   import { ChevronDown } from "lucide-svelte";
-  import { PUBLIC_TOKEN_ICP_LEDGER_CANISTER_ID } from "./auth.svelte.js";
+  import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
 
   type Props = {
@@ -20,7 +20,7 @@
     const address = selectedToken.address;
 
     // Special case for ICP
-    if (address === PUBLIC_TOKEN_ICP_LEDGER_CANISTER_ID) {
+    if (address === ICP_LEDGER_CANISTER_ID) {
       return "/icpLogo.png";
     }
 
