@@ -9,7 +9,7 @@
   import UserLinkStore from "../state/userLinkStore.svelte";
   import Landing from "../components/Landing.svelte";
   import NotFound from "../components/NotFound.svelte";
-  import UseLinkProtected from "../components/useLinkProtected.svelte";
+  import UseLinkProtected from "../components/useFlowProtected.svelte";
 
   const {
     id,
@@ -75,23 +75,16 @@
 </script>
 
 <UseLinkProtected {userStore} linkId={id}>
-  {#if !userStore.link && userStore.isLoading}
-    Loading...
-  {:else if userStore.link}
-    <div class="px-4 py-4">
-      <div class="mt-4">
-        {#if userStore.step === UserLinkStep.LANDING}
-          <Landing userLink={userStore} />
-        {:else if userStore.step === UserLinkStep.ADDRESS_UNLOCKED}
-          <Unlocked
-            userLink={userStore}
-            linkDetail={userStore.linkDetail}
-            onCreateUseAction={createAction}
-          />
-        {:else if userStore.step === UserLinkStep.COMPLETED}
-          <Completed linkDetail={userStore.linkDetail} />
-        {/if}
-
+  <div class="px-4 py-4">
+    <div class="mt-4">
+      {#if userStore.state.step === UserLinkStep.LANDING}
+        <Landing userLink={userStore} />
+      {:else if userStore.state.step === UserLinkStep.ADDRESS_UNLOCKED}
+        <Unlocked
+          userLink={userStore}
+          linkDetail={userStore.linkDetail}
+          onCreateUseAction={createAction}
+        />
         {#if showTxCart && userStore?.link && userStore?.action}
           <TxCart
             isOpen={showTxCart}
@@ -101,9 +94,9 @@
             {onCloseDrawer}
           />
         {/if}
-      </div>
+      {:else if userStore.state.step === UserLinkStep.COMPLETED}
+        <Completed linkDetail={userStore.linkDetail} />
+      {/if}
     </div>
-  {:else}
-    <NotFound />
-  {/if}
+  </div>
 </UseLinkProtected>

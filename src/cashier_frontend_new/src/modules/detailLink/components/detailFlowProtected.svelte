@@ -45,6 +45,6 @@
   });
 </script>
 
-{#if allowedSteps.includes(linkStore.state.step) && isCreator}
+{#if linkStore && linkStore.link && allowedSteps.includes(linkStore.state.step) && isCreator}
   {@render children()}
 {/if}
