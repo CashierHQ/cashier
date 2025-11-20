@@ -168,7 +168,9 @@
           </Button>
         {/if}
       </div>
+    </div>
 
+    <div>
       {#if errorMessage}
         <div
           class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
@@ -184,6 +186,48 @@
           {successMessage}
         </div>
       {/if}
+
+      {#if linkDetail.link}
+        <LinkInfoSection link={linkDetail.link} />
+        <UsageInfoSection link={linkDetail.link} />
+      {/if}
+
+      <div class="mb-20">
+        {#if linkDetail.link.state === LinkState.ACTIVE}
+          <Button
+            variant="outline"
+            onclick={endLink}
+            class="w-full h-11 border border-red-200 text-red-600 rounded-full mb-3 cursor-pointer hover:bg-red-50 hover:text-red-700 hover:border-red-400 hover:font-semibold transition-colors"
+          >
+            End link
+          </Button>
+          <Button
+            id="copy-link-button"
+            onclick={copyLink}
+            class="w-full h-11 bg-emerald-600 text-white rounded-full cursor-pointer hover:bg-emerald-700 hover:shadow-md hover:font-semibold transition transform hover:-translate-y-0.5"
+          >
+            {showCopied ? "Copied" : "Copy link"}
+          </Button>
+        {/if}
+        {#if linkDetail.link.state === LinkState.INACTIVE}
+          <Button
+            variant="outline"
+            onclick={createWithdrawAction}
+            class="w-full h-11 bg-emerald-600 text-white rounded-full cursor-pointer hover:bg-emerald-700 hover:shadow-md hover:font-semibold transition transform hover:-translate-y-0.5"
+          >
+            Withdraw
+          </Button>
+        {/if}
+        {#if linkDetail.link.state === LinkState.CREATE_LINK}
+          <Button
+            variant="outline"
+            onclick={openDrawer}
+            class="w-full h-11 bg-emerald-600 text-white rounded-full cursor-pointer hover:bg-emerald-700 hover:shadow-md hover:font-semibold transition transform hover:-translate-y-0.5"
+          >
+            Create
+          </Button>
+        {/if}
+      </div>
     </div>
   {/if}
 </DetailFlowProtected>
