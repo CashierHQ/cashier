@@ -3,10 +3,11 @@ import type { LinkDetailStore as LinkDetailStoreType } from "$modules/detailLink
 import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
 import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
-import type { ActionTypeValue } from "$modules/links/types/action/actionType";
+import { type ActionTypeValue } from "$modules/links/types/action/actionType";
 import { LinkUserState } from "$modules/links/types/link/linkUserState";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { userLinkRepository } from "../repositories/userLinkRepository";
+import { findUseActionTypeFromLinkType } from "../utils/useActionTypeFromLinkType";
 import { userLinkStateFromStep } from "../utils/userLinkStateFromStep";
 import type { UserLinkState } from "./useLinkStates";
 import { CompletedState } from "./useLinkStates/completed";
@@ -139,6 +140,15 @@ export class UserLinkStore {
    */
   async processAction(): Promise<ProcessActionResult> {
     return await this.#state.processAction();
+  }
+
+  /**
+   * Find the appropriate action type to use based on the link type
+   * @returns The action type to use or null if none applicable
+   */
+  findUseActionType(): ActionTypeValue | null {
+    if (!this.link) return null;
+    return findUseActionTypeFromLinkType(this.link.link_type);
   }
 }
 
