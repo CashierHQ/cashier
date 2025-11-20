@@ -167,27 +167,26 @@
             Create
           </Button>
         {/if}
+      </div>
+
+      {#if errorMessage}
+        <div
+          class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
+        >
+          {errorMessage}
+        </div>
+      {/if}
+
+      {#if successMessage}
+        <div
+          class="mb-4 p-3 text-sm text-green-700 bg-green-100 rounded border border-green-200"
+        >
+          {successMessage}
+        </div>
+      {/if}
     </div>
-
-    {#if errorMessage}
-      <div
-        class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
-      >
-        {errorMessage}
-      </div>
-    {/if}
-
-    {#if successMessage}
-      <div
-        class="mb-4 p-3 text-sm text-green-700 bg-green-100 rounded border border-green-200"
-      >
-        {successMessage}
-      </div>
-    {/if}
-  </div>
-{/if}
+  {/if}
 </DetailFlowProtected>
-
 
 {#if showTxCart && linkDetail.link && linkDetail.action}
   <TxCart
