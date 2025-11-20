@@ -8,9 +8,9 @@ import { LinkUserState } from "$modules/links/types/link/linkUserState";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { userLinkRepository } from "../repositories/userLinkRepository";
 import { userLinkStateFromStep } from "../utils/userLinkStateFromStep";
-import type { UserLinkState } from "./userLinkStates";
-import { CompletedState } from "./userLinkStates/completed";
-import { LandingState } from "./userLinkStates/landing";
+import type { UserLinkState } from "./useLinkStates";
+import { CompletedState } from "./useLinkStates/completed";
+import { LandingState } from "./useLinkStates/landing";
 
 /**
  * Store for user link state management
