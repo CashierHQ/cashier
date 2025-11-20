@@ -10,6 +10,7 @@
   import CreateLinkHeader from "../components/createLinkHeader.svelte";
   import Preview from "../components/preview.svelte";
   import { LinkCreationStore } from "../state/linkCreationStore.svelte";
+  import { locale } from "$lib/i18n";
 
   const { id }: { id: string } = $props();
   let isLoading = $state(true);
@@ -46,12 +47,58 @@
 
     newLink = new LinkCreationStore(tempLink);
     appHeaderStore.setBackHandler(handleBack);
+    updateHeaderName();
     isLoading = false;
 
     // Cleanup back handler on unmount
     return () => {
       appHeaderStore.clearBackHandler();
+      appHeaderStore.clearHeaderName();
     };
+  });
+
+  // Update header name based on current step
+  function updateHeaderName() {
+    if (!newLink) return;
+
+    const step = newLink.state.step;
+    if (step === LinkStep.ADD_ASSET) {
+      appHeaderStore.setHeaderName(
+        locale.t("links.linkForm.header.addAssets"),
+      );
+    } else if (step === LinkStep.CHOOSE_TYPE) {
+      appHeaderStore.setHeaderName(
+        newLink.createLinkData.title.trim() ||
+          locale.t("links.linkForm.header.linkName"),
+      );
+    } else {
+      appHeaderStore.setHeaderName(
+        newLink.createLinkData.title.trim() ||
+          locale.t("links.linkForm.header.linkName"),
+      );
+    }
+  }
+
+  // Watch for step changes and update header name
+  $effect(() => {
+    if (newLink) {
+      const step = newLink.state.step;
+      if (step === LinkStep.ADD_ASSET) {
+        appHeaderStore.setHeaderName(
+          locale.t("links.linkForm.header.addAssets"),
+        );
+      } else if (step === LinkStep.CHOOSE_TYPE) {
+        appHeaderStore.setHeaderName(
+          newLink.createLinkData.title.trim() ||
+            locale.t("links.linkForm.header.linkName"),
+        );
+      } else {
+        appHeaderStore.setHeaderName(
+          newLink.createLinkData.title.trim() ||
+            locale.t("links.linkForm.header.linkName"),
+        );
+      }
+    }
   });
 </script>
 

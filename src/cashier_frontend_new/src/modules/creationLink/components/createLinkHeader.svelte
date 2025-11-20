@@ -18,10 +18,16 @@
     return 0;
   });
 
-  const linkName = $derived(
-    link.createLinkData.title.trim() ||
-      locale.t("links.linkForm.header.linkName"),
-  );
+  const linkName = $derived.by(() => {
+    const step = link?.state?.step;
+    if (step === LinkStep.ADD_ASSET) {
+      return locale.t("links.linkForm.header.addAssets");
+    }
+    return (
+      link.createLinkData.title.trim() ||
+      locale.t("links.linkForm.header.linkName")
+    );
+  });
 </script>
 
 <div class="w-full flex-none mb-2">
