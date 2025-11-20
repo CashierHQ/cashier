@@ -3,7 +3,6 @@
   import { resolve } from "$app/paths";
   import type { ProcessActionResult } from "$modules/links/types/action/action";
   import { ActionState } from "$modules/links/types/action/actionState";
-  import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
   import { LinkUserState } from "$modules/links/types/link/linkUserState";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
@@ -53,13 +52,20 @@
       if (userStore.action) {
         showTxCart = true;
       } else {
-        await userStore.createAction(ActionType.RECEIVE);
+        const actionType = userStore.findUseActionType();
+        if (!actionType) {
+          throw new Error("No applicable action type found for this link");
+        }
+        await userStore.createAction(actionType);
+
+        successMessage = "Action created successfully.";
         // Refresh query state to update the derived link with new action
         userStore.query?.refresh();
       }
     } catch (err) {
-      console.error("create use action failed", err);
-      errorMessage = (err as Error).message;
+      errorMessage = `Failed to create action. ${
+        err instanceof Error ? err.message : ""
+      }`;
     }
   };
 
@@ -73,6 +79,22 @@
 {:else if userStore.link}
   <div class="px-4 py-4">
     <div class="mt-4">
+      {#if errorMessage}
+        <div
+          class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
+        >
+          {errorMessage}
+        </div>
+      {/if}
+
+      {#if successMessage}
+        <div
+          class="mb-4 p-3 text-sm text-green-700 bg-green-100 rounded border border-green-200"
+        >
+          {successMessage}
+        </div>
+      {/if}
+
       {#if userStore.step === UserLinkStep.LANDING}
         <Landing userLink={userStore} />
       {:else if userStore.step === UserLinkStep.ADDRESS_UNLOCKED}
