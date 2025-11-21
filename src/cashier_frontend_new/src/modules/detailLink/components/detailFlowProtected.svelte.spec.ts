@@ -13,6 +13,7 @@ const mockAuthState = vi.hoisted(() => {
     account: {
       owner: "test-owner-principal",
     } as { owner: string } | null,
+    isReady: true,
   };
 });
 
@@ -30,6 +31,7 @@ function createMockLinkDetailStore(
   step: number,
   creatorPrincipal: string | null = "test-owner-principal",
   hasLink: boolean = true,
+  isLoading: boolean = false,
 ) {
   return {
     state: { step },
@@ -40,6 +42,9 @@ function createMockLinkDetailStore(
           },
         }
       : null,
+    query: {
+      isLoading,
+    },
   } as unknown as LinkDetailStore;
 }
 
