@@ -54,6 +54,12 @@ const CONFIG: CreatePnpArgs = {
 // Plug-n-play global instance
 let pnp: PNP | null = null;
 
+// Optional logout handler configured by UI components. If set, invoked when `authState.logout` is called.
+let logoutHandler: (() => void) | null = null;
+
+// Optional login handler configured by UI components. If set, invoked when `authState.login` completes successfully.
+let loginHandler: (() => void) | null = null;
+
 // state to store connected wallet ID for reconnecting later
 const connectedWalletId = new PersistedState<{ id: string | null }>(
   "connectedWallet",
@@ -189,16 +195,44 @@ export const authState = {
     });
   },
 
-  // Connect to wallet
+  // Connect to wallet. Calls custom login handler if set, otherwise redirects to /links
   async login(walletId: string) {
     await inner_login(walletId);
     broadcastChannel.post(BroadcastMessageLogin);
+    // invoke configured login handler if exists
+    if (loginHandler) {
+      loginHandler();
+    }
   },
 
-  // Disconnect from wallet
+  // Disconnect from wallet. Calls custom logout handler if set, otherwise redirects to /
   async logout() {
     await inner_logout();
     broadcastChannel.post("Logout");
+    // invoke configured logout handler if exists, otherwise default to redirect to '/'
+    if (logoutHandler) {
+      logoutHandler();
+    }
+  },
+
+  // Configure a custom login handler that will be invoked when `authState.login` completes successfully.
+  setOnLogin(handler: () => void) {
+    loginHandler = handler;
+  },
+
+  // Clear any configured login handler
+  resetOnLoginHandler() {
+    loginHandler = null;
+  },
+
+  // Configure a custom logout handler that will be invoked when `authState.logout` is called.
+  setOnLogout(handler: () => void) {
+    logoutHandler = handler;
+  },
+
+  // Clear any configured logout handler
+  resetOnLogoutHandler() {
+    logoutHandler = null;
   },
 };
 

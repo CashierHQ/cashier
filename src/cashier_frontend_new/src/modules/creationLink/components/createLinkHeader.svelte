@@ -6,8 +6,10 @@
 
   const {
     link,
+    onBack,
   }: {
     link: LinkCreationStore;
+    onBack: () => Promise<void>;
   } = $props();
 
   const progress = $derived.by(() => {
@@ -40,7 +42,7 @@
       {linkName}
     </h4>
     <button
-      onclick={async () => await link.goBack()}
+      onclick={onBack}
       class="absolute left-0 cursor-pointer text-[1.5rem] transition-transform hover:scale-105"
       type="button"
       aria-label={locale.t("links.linkForm.header.back")}

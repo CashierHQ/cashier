@@ -5,7 +5,6 @@
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import type { ProcessActionResult } from "$modules/links/types/action/action";
   import { LinkState } from "$modules/links/types/link/linkState";
-  import { LinkStep } from "$modules/links/types/linkStep";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import { onMount } from "svelte";
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
@@ -21,13 +20,6 @@
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let isOpenTxCart = $state(!!link.action);
-
-  // Redirect if not in the correct step
-  $effect(() => {
-    if (link.state.step !== LinkStep.CREATED) {
-      goto(resolve("/links"));
-    }
-  });
 
   async function onClickCreate() {
     isOpenTxCart = true;
