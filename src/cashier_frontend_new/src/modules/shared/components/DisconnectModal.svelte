@@ -3,8 +3,6 @@
   import { toast } from "svelte-sonner";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { locale } from "$lib/i18n";
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
 
   type Props = {
     open: boolean;
