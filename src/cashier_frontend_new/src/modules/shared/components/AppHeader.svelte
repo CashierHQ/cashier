@@ -7,6 +7,7 @@
   import { ChevronLeft } from "lucide-svelte";
   import MenuButton from "./MenuButton.svelte";
   import WalletButton from "./WalletButton.svelte";
+  import { userProfile } from "../services/userProfile.svelte";
 
   type Props = {
     isCreateOrEditPage?: boolean;
@@ -68,8 +69,10 @@
     <CashierLogo href={resolve("/links")} />
   {/if}
 
-  <div class="flex items-center">
-    <WalletButton onClick={handleWalletClick} />
-    <MenuButton />
-  </div>
+  {#if userProfile.isLoggedIn()}
+    <div class="flex items-center">
+      <WalletButton onClick={handleWalletClick} />
+      <MenuButton />
+    </div>
+  {/if}
 </div>

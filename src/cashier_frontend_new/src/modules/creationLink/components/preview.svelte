@@ -1,9 +1,6 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { linkListStore } from "$modules/links/state/linkListStore.svelte";
-  import { LinkStep } from "$modules/links/types/linkStep";
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
   import LinkDetails from "./linkDetails.svelte";
 
@@ -15,13 +12,6 @@
 
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
-
-  // Redirect if not in the correct step
-  $effect(() => {
-    if (link.state.step !== LinkStep.PREVIEW) {
-      goto(resolve("/links"));
-    }
-  });
 
   // Create the link
   async function handleCreate() {
