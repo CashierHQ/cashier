@@ -11,7 +11,7 @@ use cashier_backend_types::{
     },
     error::CanisterError,
     link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
-    repository::{common::Asset, link::v1::LinkType},
+    repository::common::Asset,
     service::link::{PaginateInput, PaginateResult},
 };
 use ic_mple_client::PocketIcClient;
@@ -207,122 +207,6 @@ impl LinkTestFixtureV2 {
             .transfer(user_account, amount)
             .await
             .unwrap();
-    }
-
-    /// Creates the input for an airdrop link.
-    ///
-    /// # Arguments
-    /// - `tokens`: A vector of token identifiers (e.g., ["ICP"])
-    /// - `amounts`: A vector of corresponding amounts (e.g., [100_000_000])
-    /// - `max_count`: The maximum number of times the link can be used
-    ///
-    /// # Returns
-    /// - A `CreateLinkInput` struct containing the transformed asset_info vector.
-    /// # Errors
-    /// Returns an error if the tokens not found in the token map
-    pub fn airdrop_link_input(
-        &self,
-        tokens: Vec<String>,
-        amounts: Vec<Nat>,
-        max_count: u64,
-    ) -> Result<CreateLinkInput, String> {
-        if tokens.len() != amounts.len() {
-            return Err(format!(
-                "Tokens and amounts must have the same length: {} vs {}",
-                tokens.len(),
-                amounts.len()
-            ));
-        }
-
-        let asset_info = self.asset_info_from_tokens_and_amount(
-            tokens,
-            amounts,
-            constant::INTENT_LABEL_SEND_AIRDROP_ASSET,
-            false,
-        )?;
-
-        Ok(CreateLinkInput {
-            title: "Test Airdrop Link".to_string(),
-            link_use_action_max_count: max_count,
-            asset_info,
-            link_type: LinkType::SendAirdrop,
-        })
-    }
-
-    /// Creates the input for a token basket link.
-    ///
-    /// # Arguments
-    /// - `tokens`: A vector of token identifiers (e.g., ["ICP"])
-    /// - `amounts`: A vector of corresponding amounts (e.g., [100_000_000])
-    ///
-    /// # Returns
-    /// - A `CreateLinkInput` struct containing the transformed asset_info vector.
-    /// # Errors
-    /// Returns an error if the tokens not found in the token map
-    pub fn token_basket_link_input(
-        &self,
-        tokens: Vec<String>,
-        amounts: Vec<Nat>,
-    ) -> Result<CreateLinkInput, String> {
-        if tokens.len() != amounts.len() {
-            return Err(format!(
-                "Tokens and amounts must have the same length: {} vs {}",
-                tokens.len(),
-                amounts.len()
-            ));
-        }
-
-        let asset_info = self.asset_info_from_tokens_and_amount(
-            tokens,
-            amounts,
-            constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
-            true,
-        )?;
-
-        Ok(CreateLinkInput {
-            title: "Test Token Basket Link".to_string(),
-            link_use_action_max_count: 1,
-            asset_info,
-            link_type: LinkType::SendTokenBasket,
-        })
-    }
-
-    /// Creates the input for a receive payment link.
-    ///
-    /// # Arguments
-    /// - `tokens`: A vector of token identifiers (e.g., ["ICP"])
-    /// - `amounts`: A vector of corresponding amounts (e.g., [100_000_000])
-    ///
-    /// # Returns
-    /// - A `CreateLinkInput` struct containing the transformed asset_info vector.
-    /// # Errors
-    /// Returns an error if the tokens not found in the token map
-    pub fn payment_link_input(
-        &self,
-        tokens: Vec<String>,
-        amounts: Vec<Nat>,
-    ) -> Result<CreateLinkInput, String> {
-        if tokens.len() != amounts.len() {
-            return Err(format!(
-                "Tokens and amounts must have the same length: {} vs {}",
-                tokens.len(),
-                amounts.len()
-            ));
-        }
-
-        let asset_info = self.asset_info_from_tokens_and_amount(
-            tokens,
-            amounts,
-            constant::INTENT_LABEL_RECEIVE_PAYMENT_ASSET,
-            false,
-        )?;
-
-        Ok(CreateLinkInput {
-            title: "Test Receive Payment Link".to_string(),
-            link_use_action_max_count: 1,
-            asset_info,
-            link_type: LinkType::ReceivePayment,
-        })
     }
 
     /// Creates the asset information from the provided tokens and amounts.

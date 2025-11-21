@@ -26,7 +26,7 @@ async fn it_should_fail_activate_icp_token_tip_linkv2_if_caller_anonymous() {
         let tip_amount = Nat::from(1_000_000u64);
         let test_fixture =
             TipLinkV2Feature::new(Arc::new(ctx.clone()), creator, token, tip_amount).await;
-        let create_link_result = test_fixture.create_tip_link().await;
+        let create_link_result = test_fixture.create_link().await;
 
         let caller = Principal::anonymous();
         let caller_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
@@ -64,7 +64,7 @@ async fn it_should_fail_activate_icp_token_tip_linkv2_if_caller_not_creator() {
         let tip_amount = Nat::from(1_000_000u64);
         let test_fixture =
             TipLinkV2Feature::new(Arc::new(ctx.clone()), creator, token, tip_amount).await;
-        let create_link_result = test_fixture.create_tip_link().await;
+        let create_link_result = test_fixture.create_link().await;
 
         let caller = TestUser::User2.get_principal();
         let caller_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
@@ -112,7 +112,7 @@ async fn it_should_fail_activate_icp_token_tip_linkv2_if_link_not_exists() {
         let tip_amount = Nat::from(1_000_000u64);
         let test_fixture =
             TipLinkV2Feature::new(Arc::new(ctx.clone()), creator, token, tip_amount).await;
-        let _create_link_result = test_fixture.create_tip_link().await;
+        let _create_link_result = test_fixture.create_link().await;
 
         // Act: Activate the link
         let action_id = "not_existing_action_id".to_string();
@@ -149,7 +149,7 @@ async fn it_should_succeed_activate_icp_token_tip_linkv2() {
         let tip_amount = Nat::from(1_000_000u64);
         let mut test_fixture =
             TipLinkV2Feature::new(Arc::new(ctx.clone()), creator, token, tip_amount.clone()).await;
-        let create_link_result = test_fixture.create_tip_link().await;
+        let create_link_result = test_fixture.create_link().await;
         let icp_ledger_client = ctx.new_icp_ledger_client(creator);
 
         // deposit ICP and asset to caller wallet
@@ -213,7 +213,7 @@ async fn it_should_succeed_activate_icrc_token_tip_linkv2() {
         let tip_amount = Nat::from(5_000_000u64);
         let mut test_fixture =
             TipLinkV2Feature::new(Arc::new(ctx.clone()), creator, token, tip_amount.clone()).await;
-        let create_link_result = test_fixture.create_tip_link().await;
+        let create_link_result = test_fixture.create_link().await;
 
         let icp_ledger_client = ctx.new_icp_ledger_client(creator);
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, creator);

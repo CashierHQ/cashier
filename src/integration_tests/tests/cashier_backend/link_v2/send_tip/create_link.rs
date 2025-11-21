@@ -79,7 +79,7 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
         );
 
         // Act
-        let create_link_result = test_fixture.create_tip_link().await;
+        let create_link_result = test_fixture.create_link().await;
 
         // Assert
         let link = create_link_result.link;
@@ -267,7 +267,7 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
         assert_eq!(ckbtc_balance_before, ckbtc_initial_balance);
 
         // Act
-        let create_link_result = test_fixture.create_tip_link().await;
+        let create_link_result = test_fixture.create_link().await;
 
         // Assert
         let link = create_link_result.link;

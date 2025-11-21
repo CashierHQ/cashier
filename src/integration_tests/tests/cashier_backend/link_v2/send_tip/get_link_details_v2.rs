@@ -1,8 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link::fixture::{
-    LinkTestFixture, activate_tip_link_v2_fixture, create_tip_linkv2_fixture,
+use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
+use crate::cashier_backend::link_v2::send_tip::fixture::{
+    activate_tip_link_v2_fixture, create_tip_linkv2_fixture,
 };
 use crate::utils::link_id_to_account::link_id_to_account;
 use crate::utils::principal::TestUser;
@@ -151,9 +152,10 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
+        let token = ICP_TOKEN;
         let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+            create_tip_linkv2_fixture(ctx, caller, token, tip_amount).await;
 
         let initial_action = create_link_result.action.clone();
         assert_eq!(initial_action.r#type, ActionType::CreateLink);
@@ -311,7 +313,7 @@ async fn it_should_succeed_get_linkv2_details_with_receive_action() {
             activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount.clone()).await;
 
         let receiver = TestUser::User2.get_principal();
-        let receiver_fixture = LinkTestFixture::new(test_fixture.ctx.clone(), &receiver).await;
+        let receiver_fixture = LinkTestFixtureV2::new(test_fixture.ctx.clone(), receiver).await;
 
         // Act: create RECEIVE action
         let link_id = create_link_result.link.id.clone();
