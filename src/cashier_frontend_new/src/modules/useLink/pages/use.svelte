@@ -5,17 +5,14 @@
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import Completed from "../components/Completed.svelte";
   import Landing from "../components/Landing.svelte";
-  import UseLinkProtected from "../components/useFlowProtected.svelte";
   import Unlocked from "../components/Unlocked.svelte";
-  import UserLinkStore from "../state/userLinkStore.svelte";
+  import type UserLinkStore from "../state/userLinkStore.svelte";
 
   const {
-    id,
+    userStore,
   }: {
-    id: string;
+    userStore: UserLinkStore;
   } = $props();
-
-  const userStore = new UserLinkStore({ id });
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
 
@@ -60,44 +57,42 @@
   };
 </script>
 
-<UseLinkProtected {userStore} linkId={id}>
-  <div class="px-4 py-4">
-    <div class="mt-4">
-      {#if errorMessage}
-        <div
-          class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
-        >
-          {errorMessage}
-        </div>
-      {/if}
+<div class="px-4 py-4">
+  <div class="mt-4">
+    {#if errorMessage}
+      <div
+        class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
+      >
+        {errorMessage}
+      </div>
+    {/if}
 
-      {#if successMessage}
-        <div
-          class="mb-4 p-3 text-sm text-green-700 bg-green-100 rounded border border-green-200"
-        >
-          {successMessage}
-        </div>
-      {/if}
+    {#if successMessage}
+      <div
+        class="mb-4 p-3 text-sm text-green-700 bg-green-100 rounded border border-green-200"
+      >
+        {successMessage}
+      </div>
+    {/if}
 
-      {#if userStore.step === UserLinkStep.LANDING}
-        <Landing userLink={userStore} />
-      {:else if userStore.state.step === UserLinkStep.ADDRESS_UNLOCKED}
-        <Unlocked
-          userLink={userStore}
-          linkDetail={userStore.linkDetail}
-          onCreateUseAction={handleCreateUseAction}
+    {#if userStore.step === UserLinkStep.LANDING}
+      <Landing userLink={userStore} />
+    {:else if userStore.state.step === UserLinkStep.ADDRESS_UNLOCKED}
+      <Unlocked
+        userLink={userStore}
+        linkDetail={userStore.linkDetail}
+        onCreateUseAction={handleCreateUseAction}
+      />
+      {#if showTxCart && userStore?.link && userStore?.action}
+        <TxCart
+          isOpen={showTxCart}
+          action={userStore.action}
+          {onCloseDrawer}
+          {handleProcessAction}
         />
-        {#if showTxCart && userStore?.link && userStore?.action}
-          <TxCart
-            isOpen={showTxCart}
-            action={userStore.action}
-            {onCloseDrawer}
-            {handleProcessAction}
-          />
-        {/if}
-      {:else if userStore.state.step === UserLinkStep.COMPLETED}
-        <Completed linkDetail={userStore.linkDetail} />
       {/if}
-    </div>
+    {:else if userStore.state.step === UserLinkStep.COMPLETED}
+      <Completed linkDetail={userStore.linkDetail} />
+    {/if}
   </div>
-</UseLinkProtected>
+</div>

@@ -24,6 +24,8 @@
     const current = linkStore.state.step;
     const isAllowed = allowedSteps.includes(current);
 
+    console.log("Current step:", current, "Is allowed:", isAllowed);
+
     if (!isAllowed) {
       goto(resolve("/links"));
     }

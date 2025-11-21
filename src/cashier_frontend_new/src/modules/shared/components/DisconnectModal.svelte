@@ -3,6 +3,8 @@
   import { toast } from "svelte-sonner";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { locale } from "$lib/i18n";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
 
   type Props = {
     open: boolean;
@@ -25,10 +27,14 @@
   async function handleConfirm() {
     try {
       //logout and redirection are handled automatically by authState.logout()
+      authState.setOnLogout(() => {
+        onConfirm();
+        onOpenChange(false);
+        toast.success(locale.t("links.disconnectModal.loggedOut"));
+        goto(resolve("/"));
+      });
+
       await authState.logout();
-      onConfirm();
-      onOpenChange(false);
-      toast.success(locale.t("links.disconnectModal.loggedOut"));
     } catch (error) {
       console.error("Logout failed:", error);
       toast.error(locale.t("links.disconnectModal.failedToDisconnect"));

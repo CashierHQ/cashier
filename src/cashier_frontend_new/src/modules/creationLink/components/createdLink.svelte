@@ -43,6 +43,10 @@
       linkDetailStore.link &&
       linkDetailStore.link.state === LinkState.ACTIVE
     ) {
+      console.log(
+        "Redirecting to detail page for link ID:",
+        linkDetailStore.id,
+      );
       goto(resolve(`/link/detail/${linkDetailStore.id}`));
     }
   });

@@ -28,6 +28,12 @@
   );
 
   $effect(() => {
+    // Wait for the query to finish loading and auth to be ready
+    if (linkStore.query.isLoading || !authState.isReady) {
+      return;
+    }
+
+    // If query finished but no link exists, redirect
     if (!linkStore.link) {
       goto(resolve("/links"));
       return;
@@ -42,8 +48,10 @@
   });
 </script>
 
-{#if linkStore && linkStore.link && allowedSteps.includes(linkStore.state.step) && isCreator}
+{#if linkStore.query.isLoading}
+  <div>Loading...</div>
+{:else if linkStore.link && allowedSteps.includes(linkStore.state.step) && isCreator}
   {@render children()}
-{:else if !linkStore || !linkStore.link}
+{:else}
   <div>Loading...</div>
 {/if}
