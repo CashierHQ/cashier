@@ -31,7 +31,6 @@
         onConfirm();
         onOpenChange(false);
         toast.success(locale.t("links.disconnectModal.loggedOut"));
-        goto(resolve("/"));
       });
 
       await authState.logout();
