@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link::fixture::LinkTestFixture;
+use crate::cashier_backend::link_v2::send_tip::fixture::TipLinkV2Feature;
 use crate::constant::CK_BTC_PRINCIPAL;
 use crate::{
     constant::ICP_PRINCIPAL,
@@ -22,14 +22,13 @@ async fn it_should_error_create_icp_token_tip_linkv2_if_caller_anonymous() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let be_client = ctx.new_cashier_backend_client(Principal::anonymous());
+
+        let caller = TestUser::User1.get_principal();
+        let token = constant::ICP_TOKEN;
+        let amount = Nat::from(1_000_000u64);
         let test_fixture =
-            LinkTestFixture::new(Arc::new(ctx.clone()), &Principal::anonymous()).await;
-        let input = test_fixture
-            .tip_link_input(
-                vec![constant::ICP_TOKEN.to_string()],
-                vec![Nat::from(1_000_000u64)],
-            )
-            .unwrap();
+            TipLinkV2Feature::new(Arc::new(ctx.clone()), caller, token, amount.clone()).await;
+        let input = test_fixture.tip_link_input().unwrap();
 
         // Act
         let result = be_client.user_create_link_v2(input).await;
@@ -53,12 +52,13 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
+        let token = constant::ICP_TOKEN;
+        let tip_amount = Nat::from(1_000_000u64);
+        let mut test_fixture =
+            TipLinkV2Feature::new(Arc::new(ctx.clone()), caller, token, tip_amount.clone()).await;
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
-
         let initial_balance = Nat::from(1_000_000_000u64);
-        let tip_amount = Nat::from(1_000_000u64);
         let caller_account = Account {
             owner: caller,
             subaccount: None,
@@ -67,17 +67,19 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
 
         // Act
         test_fixture
+            .link_fixture
             .airdrop_icp(initial_balance.clone(), &caller)
             .await;
 
         // Assert
         let caller_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
-        assert_eq!(caller_balance_before, initial_balance);
+        assert_eq!(
+            caller_balance_before, initial_balance,
+            "Caller ICP balance does not match"
+        );
 
         // Act
-        let create_link_result = test_fixture
-            .create_tip_link_v2(constant::ICP_TOKEN, tip_amount.clone())
-            .await;
+        let create_link_result = test_fixture.create_tip_link().await;
 
         // Assert
         let link = create_link_result.link;
@@ -88,7 +90,8 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
         assert_eq!(link.asset_info.len(), 1);
         assert_eq!(
             link.asset_info[0].amount_per_link_use_action,
-            tip_amount.clone()
+            tip_amount.clone(),
+            "Tip amount does not match"
         );
 
         assert_eq!(action.intents.len(), 2);
@@ -106,7 +109,8 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
                         tip_amount.clone(),
                         icp_ledger_fee.clone(),
                         1
-                    )
+                    ),
+                    "Transfer amount does not match"
                 );
             }
             _ => panic!("Expected Transfer intent type"),
@@ -123,7 +127,8 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
                         tip_amount,
                         icp_ledger_fee.clone(),
                         1
-                    )
+                    ),
+                    "Icrc1Transfer amount does not match"
                 );
                 assert!(data.memo.is_some());
                 assert!(data.ts.is_some());
@@ -221,14 +226,16 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let mut test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
+        let token = constant::CKBTC_ICRC_TOKEN;
+        let tip_amount = Nat::from(5_000_000u64);
+        let mut test_fixture =
+            TipLinkV2Feature::new(Arc::new(ctx.clone()), caller, token, tip_amount.clone()).await;
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);
 
         let icp_initial_balance = Nat::from(1_000_000u64);
         let ckbtc_initial_balance = Nat::from(1_000_000_000u64);
-        let tip_amount = Nat::from(5_000_000u64);
         let caller_account = Account {
             owner: caller,
             subaccount: None,
@@ -238,9 +245,11 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
 
         // Act
         test_fixture
+            .link_fixture
             .airdrop_icp(icp_initial_balance.clone(), &caller)
             .await;
         test_fixture
+            .link_fixture
             .airdrop_icrc(
                 constant::CKBTC_ICRC_TOKEN,
                 ckbtc_initial_balance.clone(),
@@ -258,9 +267,7 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
         assert_eq!(ckbtc_balance_before, ckbtc_initial_balance);
 
         // Act
-        let create_link_result = test_fixture
-            .create_tip_link_v2(constant::CKBTC_ICRC_TOKEN, tip_amount.clone())
-            .await;
+        let create_link_result = test_fixture.create_tip_link().await;
 
         // Assert
         let link = create_link_result.link;
