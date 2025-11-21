@@ -21,14 +21,13 @@ use std::{sync::Arc, time::Duration};
 #[derive(Clone)]
 pub struct LinkTestFixtureV2 {
     pub ctx: Arc<PocketIcTestContext>,
-    pub caller: Principal,
     pub cashier_backend_client: Option<CashierBackendClient<PocketIcClient>>,
 }
 
 impl LinkTestFixtureV2 {
-    pub async fn new(ctx: Arc<PocketIcTestContext>, caller: &Principal) -> Self {
+    pub async fn new(ctx: Arc<PocketIcTestContext>, caller: Principal) -> Self {
         // Initialize the cashier backend client with the provided caller
-        let cashier_backend_client = Some(ctx.new_cashier_backend_client(*caller));
+        let cashier_backend_client = Some(ctx.new_cashier_backend_client(caller));
 
         // call twice for `raw_rand`` work or else `raw_rand``` api will return error
         // more info https://forum.dfinity.org/t/pocket-ic-support-for-management-canister-calls-and-timers/25676/2
@@ -37,7 +36,6 @@ impl LinkTestFixtureV2 {
 
         Self {
             ctx,
-            caller: *caller,
             cashier_backend_client,
         }
     }

@@ -25,31 +25,13 @@ impl TipLinkV2Feature {
         token: &str,
         amount: Nat,
     ) -> Self {
-        let link_fixture = LinkTestFixtureV2::new(Arc::clone(&ctx), &caller).await;
+        let link_fixture = LinkTestFixtureV2::new(Arc::clone(&ctx), caller).await;
 
         Self {
             caller,
             token: token.to_string(),
             amount,
             link_fixture,
-        }
-    }
-
-    /// This function is used to airdrop ICP and the specified asset to the caller.
-    /// # Returns
-    /// * `()` - No return value
-    pub async fn airdrop_icp_and_asset(&mut self) {
-        let initial_balance = Nat::from(1_000_000_000u64);
-        let mut link_fixture = self.link_fixture.clone();
-
-        link_fixture
-            .airdrop_icp(initial_balance.clone(), &self.caller)
-            .await;
-
-        if self.token != constant::ICP_TOKEN {
-            link_fixture
-                .airdrop_icrc(&self.token, initial_balance.clone(), &self.caller)
-                .await;
         }
     }
 
@@ -65,15 +47,17 @@ impl TipLinkV2Feature {
     /// This function activates a tip link v2.
     /// # Returns
     /// * `ProcessActionDto` - The activated action data
-    pub async fn activate_tip_link(&self) -> ProcessActionDto {
+    pub async fn activate_tip_link(&mut self) -> ProcessActionDto {
         let create_link_result = self.create_tip_link().await;
         let link_id = create_link_result.action.id.clone();
+
+        self.airdrop_icp_and_asset().await;
 
         // Execute ICRC112 requests (simulate FE behavior)
         let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
         let _icrc112_execution_result = icrc_112::execute_icrc112_request(
             &icrc_112_requests,
-            self.link_fixture.caller,
+            self.caller,
             &self.link_fixture.ctx,
         )
         .await;
@@ -105,5 +89,23 @@ impl TipLinkV2Feature {
             asset_info,
             link_type: LinkType::SendTip,
         })
+    }
+
+    /// This function is used to airdrop ICP and the specified asset to the caller.
+    /// # Returns
+    /// * `()` - No return value
+    pub async fn airdrop_icp_and_asset(&mut self) {
+        let initial_balance = Nat::from(1_000_000_000u64);
+        let mut link_fixture = self.link_fixture.clone();
+
+        link_fixture
+            .airdrop_icp(initial_balance.clone(), &self.caller)
+            .await;
+
+        if self.token != constant::ICP_TOKEN {
+            link_fixture
+                .airdrop_icrc(&self.token, initial_balance.clone(), &self.caller)
+                .await;
+        }
     }
 }

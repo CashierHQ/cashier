@@ -1,17 +1,14 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link::fixture::{LinkTestFixture, create_tip_linkv2_fixture};
+use crate::cashier_backend::link::fixture::create_tip_linkv2_fixture;
 use crate::constant::{CK_BTC_PRINCIPAL, ICP_PRINCIPAL};
 use crate::utils::icrc_112::execute_icrc112_request;
-use crate::utils::link_id_to_account::fee_treasury_account;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::{Decode, Nat, Principal};
-use cashier_backend_types::constant::{self, CKBTC_ICRC_TOKEN, ICP_TOKEN};
+use cashier_backend_types::constant::{self, CKBTC_ICRC_TOKEN};
 use cashier_backend_types::dto::action::Icrc112Request;
-use cashier_backend_types::error::CanisterError;
-use cashier_backend_types::link_v2::dto::ProcessActionV2Input;
 use cashier_backend_types::repository::action::v1::ActionState;
 use cashier_backend_types::repository::common::Wallet;
 use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, IntentType};
@@ -21,8 +18,6 @@ use cashier_backend_types::repository::transaction::v1::{
 };
 use cashier_common::constant::CREATE_LINK_FEE;
 use cashier_common::test_utils;
-use ic_mple_client::CanisterClientError;
-use icrc_ledger_types::icrc1::account::Account;
 use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 use std::time::Duration;
