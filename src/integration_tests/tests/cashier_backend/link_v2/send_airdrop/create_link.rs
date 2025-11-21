@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link_v2::send_tip::fixture::TipLinkV2Fixture;
+use crate::cashier_backend::link_v2::send_airdrop::fixture::AirdropLinkV2Fixture;
 use crate::constant::CK_BTC_PRINCIPAL;
 use crate::{
     constant::ICP_PRINCIPAL,
@@ -18,17 +18,24 @@ use icrc_ledger_types::icrc1::account::Account;
 use std::sync::Arc;
 
 #[tokio::test]
-async fn it_should_error_create_icp_token_tip_linkv2_if_caller_anonymous() {
+async fn it_should_error_create_icp_token_airdrop_linkv2_if_caller_anonymous() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let be_client = ctx.new_cashier_backend_client(Principal::anonymous());
 
         let caller = TestUser::User1.get_principal();
-        let token = constant::ICP_TOKEN;
-        let amount = Nat::from(1_000_000u64);
-        let test_fixture =
-            TipLinkV2Fixture::new(Arc::new(ctx.clone()), caller, token, amount.clone()).await;
-        let input = test_fixture.tip_link_input().unwrap();
+        let tokens = vec![constant::ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
+        let max_use_count = 10;
+        let test_fixture = AirdropLinkV2Fixture::new(
+            Arc::new(ctx.clone()),
+            caller,
+            tokens,
+            amounts,
+            max_use_count,
+        )
+        .await;
+        let input = test_fixture.airdrop_link_input().unwrap();
 
         // Act
         let result = be_client.user_create_link_v2(input).await;
@@ -48,14 +55,21 @@ async fn it_should_error_create_icp_token_tip_linkv2_if_caller_anonymous() {
 }
 
 #[tokio::test]
-async fn it_should_create_icp_token_tip_linkv2_successfully() {
+async fn it_should_create_icp_token_airdrop_linkv2_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let token = constant::ICP_TOKEN;
-        let tip_amount = Nat::from(1_000_000u64);
-        let mut test_fixture =
-            TipLinkV2Fixture::new(Arc::new(ctx.clone()), caller, token, tip_amount.clone()).await;
+        let tokens = vec![constant::ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
+        let max_use_count = 10;
+        let mut test_fixture = AirdropLinkV2Fixture::new(
+            Arc::new(ctx.clone()),
+            caller,
+            tokens,
+            amounts.clone(),
+            max_use_count,
+        )
+        .await;
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let initial_balance = Nat::from(1_000_000_000u64);
@@ -86,12 +100,12 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
         let action = create_link_result.action;
 
         assert!(!link.id.is_empty());
-        assert_eq!(link.link_type, LinkType::SendTip);
+        assert_eq!(link.link_type, LinkType::SendAirdrop);
         assert_eq!(link.asset_info.len(), 1);
         assert_eq!(
             link.asset_info[0].amount_per_link_use_action,
-            tip_amount.clone(),
-            "Tip amount does not match"
+            amounts[0].clone(),
+            "Airdrop amount does not match"
         );
 
         assert_eq!(action.intents.len(), 2);
@@ -106,9 +120,9 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
                 assert_eq!(
                     transfer.amount,
                     test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        tip_amount.clone(),
+                        amounts[0].clone(),
                         icp_ledger_fee.clone(),
-                        1
+                        max_use_count
                     ),
                     "Transfer amount does not match"
                 );
@@ -124,9 +138,9 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
                 assert_eq!(
                     data.amount,
                     test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        tip_amount,
+                        amounts[0].clone(),
                         icp_ledger_fee.clone(),
-                        1
+                        max_use_count
                     ),
                     "Icrc1Transfer amount does not match"
                 );
@@ -222,14 +236,21 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
 }
 
 #[tokio::test]
-async fn it_should_create_icrc_token_tip_linkv2_successfully() {
+async fn it_should_create_icrc_token_airdrop_linkv2_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let token = constant::CKBTC_ICRC_TOKEN;
-        let tip_amount = Nat::from(5_000_000u64);
-        let mut test_fixture =
-            TipLinkV2Fixture::new(Arc::new(ctx.clone()), caller, token, tip_amount.clone()).await;
+        let tokens = vec![constant::CKBTC_ICRC_TOKEN.to_string()];
+        let amounts = vec![Nat::from(5_000_000u64)];
+        let max_use_count = 10;
+        let mut test_fixture = AirdropLinkV2Fixture::new(
+            Arc::new(ctx.clone()),
+            caller,
+            tokens,
+            amounts.clone(),
+            max_use_count,
+        )
+        .await;
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);
@@ -274,11 +295,11 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
         let action = create_link_result.action;
 
         assert!(!link.id.is_empty());
-        assert_eq!(link.link_type, LinkType::SendTip);
+        assert_eq!(link.link_type, LinkType::SendAirdrop);
         assert_eq!(link.asset_info.len(), 1);
         assert_eq!(
             link.asset_info[0].amount_per_link_use_action,
-            tip_amount.clone()
+            amounts[0].clone()
         );
 
         assert_eq!(action.intents.len(), 2);
@@ -293,10 +314,11 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
                 assert_eq!(
                     transfer.amount,
                     test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        tip_amount.clone(),
+                        amounts[0].clone(),
                         ckbtc_ledger_fee.clone(),
-                        1
-                    )
+                        max_use_count
+                    ),
+                    "Transfer amount does not match"
                 );
             }
             _ => panic!("Expected Transfer intent type"),
@@ -310,10 +332,11 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
                 assert_eq!(
                     data.amount,
                     test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        tip_amount,
+                        amounts[0].clone(),
                         ckbtc_ledger_fee,
-                        1
-                    )
+                        max_use_count
+                    ),
+                    "Icrc1Transfer amount does not match"
                 );
                 assert!(data.memo.is_some());
                 assert!(data.ts.is_some());

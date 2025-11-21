@@ -11,40 +11,43 @@ use cashier_backend_types::{
 };
 use std::sync::Arc;
 
-pub struct TipLinkV2Fixture {
+pub struct AirdropLinkV2Fixture {
     pub caller: Principal,
-    pub token: String,
-    pub amount: Nat,
+    pub tokens: Vec<String>,
+    pub amounts: Vec<Nat>,
+    pub max_use_count: u64,
     pub link_fixture: LinkTestFixtureV2,
 }
 
-impl TipLinkV2Fixture {
+impl AirdropLinkV2Fixture {
     pub async fn new(
         ctx: Arc<PocketIcTestContext>,
         caller: Principal,
-        token: &str,
-        amount: Nat,
+        tokens: Vec<String>,
+        amounts: Vec<Nat>,
+        max_use_count: u64,
     ) -> Self {
         let link_fixture = LinkTestFixtureV2::new(Arc::clone(&ctx), caller).await;
 
         Self {
             caller,
-            token: token.to_string(),
-            amount,
+            tokens,
+            amounts,
+            max_use_count,
             link_fixture,
         }
     }
 
-    /// This function creates a tip link v2.
+    /// This function creates an airdrop link v2.
     /// # Returns
-    /// * `CreateLinkDto` - The created tip link data
+    /// * `CreateLinkDto` - The created airdrop link data
     pub async fn create_link(&self) -> CreateLinkDto {
         self.link_fixture
-            .create_link_v2(self.tip_link_input().unwrap())
+            .create_link_v2(self.airdrop_link_input().unwrap())
             .await
     }
 
-    /// This function activates a tip link v2.
+    /// This function activates an airdrop link v2.
     /// # Returns
     /// * `ProcessActionDto` - The activated action data
     pub async fn activate_link(&mut self) -> ProcessActionDto {
@@ -65,29 +68,32 @@ impl TipLinkV2Fixture {
         self.link_fixture.activate_link_v2(&link_id).await.unwrap()
     }
 
-    /// Creates the input for a tip link.
-    ///
-    /// # Arguments
-    /// - `tokens`: A vector of token identifiers (e.g., ["ICP"])
-    /// - `amounts`: A vector of corresponding amounts (e.g., [100_000_000])
-    ///
+    /// Creates the input for an airdrop link.
     /// # Returns
     /// - A `CreateLinkInput` struct containing the transformed asset_info vector.
     /// # Errors
     /// Returns an error if the tokens not found in the token map
-    pub fn tip_link_input(&self) -> Result<CreateLinkInput, String> {
+    pub fn airdrop_link_input(&self) -> Result<CreateLinkInput, String> {
+        if self.tokens.len() != self.amounts.len() {
+            return Err(format!(
+                "Tokens and amounts must have the same length: {} vs {}",
+                self.tokens.len(),
+                self.amounts.len()
+            ));
+        }
+
         let asset_info = self.link_fixture.asset_info_from_tokens_and_amount(
-            vec![self.token.to_string()],
-            vec![self.amount.clone()],
-            constant::INTENT_LABEL_SEND_TIP_ASSET,
+            self.tokens.clone(),
+            self.amounts.clone(),
+            constant::INTENT_LABEL_SEND_AIRDROP_ASSET,
             false,
         )?;
 
         Ok(CreateLinkInput {
-            title: "Test Tip Link".to_string(),
-            link_use_action_max_count: 1,
+            title: "Test Airdrop Link".to_string(),
+            link_use_action_max_count: self.max_use_count,
             asset_info,
-            link_type: LinkType::SendTip,
+            link_type: LinkType::SendAirdrop,
         })
     }
 
@@ -102,30 +108,41 @@ impl TipLinkV2Fixture {
             .airdrop_icp(initial_balance.clone(), &self.caller)
             .await;
 
-        if self.token != constant::ICP_TOKEN {
+        for token in self.tokens.iter() {
+            if token == constant::ICP_TOKEN {
+                continue;
+            }
             link_fixture
-                .airdrop_icrc(&self.token, initial_balance.clone(), &self.caller)
+                .airdrop_icrc(token, initial_balance.clone(), &self.caller)
                 .await;
         }
     }
 }
 
-/// Creates a fixture for a tip link v2.
+/// Creates a fixture for an airdrop link v2.
 /// # Arguments
 /// * `ctx` - The Pocket IC test context
 /// * `creator` - The principal of the creator
-/// * `token` - The token identifier (e.g., "ICP")
-/// * `amount` - The tip amount
+/// * `tokens` - A vector of token identifiers (e.g., ["ICP"])
+/// * `amounts` - A vector of corresponding amounts (e.g., [100_000_000])
+/// * `max_use_count` - The maximum use count for the link
 /// # Returns
 /// * `(LinkTestFixtureV2, GetLinkResp)` - The link test fixture and the GetLinkResp
-pub async fn create_tip_linkv2_fixture(
+pub async fn create_airdrop_linkv2_fixture(
     ctx: &PocketIcTestContext,
     creator: Principal,
-    token: &str,
-    amount: Nat,
+    tokens: Vec<String>,
+    amounts: Vec<Nat>,
+    max_use_count: u64,
 ) -> (LinkTestFixtureV2, CreateLinkDto) {
-    let mut creator_fixture =
-        TipLinkV2Fixture::new(Arc::new(ctx.clone()), creator, token, amount.clone()).await;
+    let mut creator_fixture = AirdropLinkV2Fixture::new(
+        Arc::new(ctx.clone()),
+        creator,
+        tokens,
+        amounts,
+        max_use_count,
+    )
+    .await;
 
     creator_fixture.airdrop_icp_and_asset().await;
 
@@ -133,21 +150,29 @@ pub async fn create_tip_linkv2_fixture(
     (creator_fixture.link_fixture, link_response)
 }
 
-/// Activate a tip link v2 fixture.
+/// Activate an airdrop link v2 fixture.
 /// # Arguments
 /// * `ctx` - The Pocket IC test context
-/// * `token` - The token identifier (e.g., "ICP")
-/// * `amount` - The tip amount
+/// * `tokens` - A vector of token identifiers (e.g., ["ICP"])
+/// * `amounts` - A vector of corresponding amounts (e.g., [100_000_000])
+/// * `max_use_count` - The maximum use count for the link
 /// # Returns
 /// * `(LinkTestFixture, ProcessActionDto)` - The link test fixture and the ProcessActionDto
-pub async fn activate_tip_link_v2_fixture(
+pub async fn activate_airdrop_link_v2_fixture(
     ctx: &PocketIcTestContext,
-    token: &str,
-    amount: Nat,
+    tokens: Vec<String>,
+    amounts: Vec<Nat>,
+    max_use_count: u64,
 ) -> (LinkTestFixtureV2, ProcessActionDto) {
     let creator = TestUser::User1.get_principal();
-    let mut creator_fixture =
-        TipLinkV2Fixture::new(Arc::new(ctx.clone()), creator, token, amount.clone()).await;
+    let mut creator_fixture = AirdropLinkV2Fixture::new(
+        Arc::new(ctx.clone()),
+        creator,
+        tokens,
+        amounts,
+        max_use_count,
+    )
+    .await;
 
     let activate_link_result = creator_fixture.activate_link().await;
     (creator_fixture.link_fixture, activate_link_result)
