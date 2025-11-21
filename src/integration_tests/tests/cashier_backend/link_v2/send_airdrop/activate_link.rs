@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
-use crate::cashier_backend::link_v2::send_tip::fixture::TipLinkV2Fixture;
+use crate::cashier_backend::link_v2::send_airdrop::fixture::AirdropLinkV2Fixture;
 use crate::utils::icrc_112::execute_icrc112_request;
 use crate::utils::link_id_to_account::fee_treasury_account;
 use crate::utils::principal::TestUser;
@@ -22,10 +22,17 @@ async fn it_should_fail_activate_icp_token_tip_linkv2_if_caller_anonymous() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let creator = TestUser::User1.get_principal();
-        let token = ICP_TOKEN;
-        let tip_amount = Nat::from(1_000_000u64);
-        let test_fixture =
-            TipLinkV2Fixture::new(Arc::new(ctx.clone()), creator, token, tip_amount).await;
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
+        let max_use_count = 10;
+        let test_fixture = AirdropLinkV2Fixture::new(
+            Arc::new(ctx.clone()),
+            creator,
+            tokens,
+            amounts,
+            max_use_count,
+        )
+        .await;
         let create_link_result = test_fixture.create_link().await;
 
         let caller = Principal::anonymous();
@@ -60,10 +67,17 @@ async fn it_should_fail_activate_icp_token_tip_linkv2_if_caller_not_creator() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let creator = TestUser::User1.get_principal();
-        let token = ICP_TOKEN;
-        let tip_amount = Nat::from(1_000_000u64);
-        let test_fixture =
-            TipLinkV2Fixture::new(Arc::new(ctx.clone()), creator, token, tip_amount).await;
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
+        let max_use_count = 10;
+        let test_fixture = AirdropLinkV2Fixture::new(
+            Arc::new(ctx.clone()),
+            creator,
+            tokens,
+            amounts,
+            max_use_count,
+        )
+        .await;
         let create_link_result = test_fixture.create_link().await;
 
         let caller = TestUser::User2.get_principal();
@@ -108,10 +122,17 @@ async fn it_should_fail_activate_icp_token_tip_linkv2_if_link_not_exists() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let creator = TestUser::User1.get_principal();
-        let token = ICP_TOKEN;
-        let tip_amount = Nat::from(1_000_000u64);
-        let test_fixture =
-            TipLinkV2Fixture::new(Arc::new(ctx.clone()), creator, token, tip_amount).await;
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
+        let max_use_count = 10;
+        let test_fixture = AirdropLinkV2Fixture::new(
+            Arc::new(ctx.clone()),
+            creator,
+            tokens,
+            amounts,
+            max_use_count,
+        )
+        .await;
         let _create_link_result = test_fixture.create_link().await;
 
         // Act: Activate the link
@@ -145,10 +166,17 @@ async fn it_should_succeed_activate_icp_token_tip_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let creator = TestUser::User1.get_principal();
-        let token = ICP_TOKEN;
-        let tip_amount = Nat::from(1_000_000u64);
-        let mut test_fixture =
-            TipLinkV2Fixture::new(Arc::new(ctx.clone()), creator, token, tip_amount.clone()).await;
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
+        let max_use_count = 10;
+        let mut test_fixture = AirdropLinkV2Fixture::new(
+            Arc::new(ctx.clone()),
+            creator,
+            tokens,
+            amounts.clone(),
+            max_use_count,
+        )
+        .await;
         let create_link_result = test_fixture.create_link().await;
         let icp_ledger_client = ctx.new_icp_ledger_client(creator);
 
@@ -180,7 +208,11 @@ async fn it_should_succeed_activate_icp_token_tip_linkv2() {
 
         assert_eq!(
             icp_link_balance,
-            test_utils::calculate_amount_for_wallet_to_link_transfer(tip_amount, icp_ledger_fee, 1),
+            test_utils::calculate_amount_for_wallet_to_link_transfer(
+                amounts[0].clone(),
+                icp_ledger_fee,
+                max_use_count
+            ),
             "Link balance is incorrect"
         );
 
@@ -209,10 +241,17 @@ async fn it_should_succeed_activate_icrc_token_tip_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let creator = TestUser::User1.get_principal();
-        let token = CKBTC_ICRC_TOKEN;
-        let tip_amount = Nat::from(5_000_000u64);
-        let mut test_fixture =
-            TipLinkV2Fixture::new(Arc::new(ctx.clone()), creator, token, tip_amount.clone()).await;
+        let tokens = vec![CKBTC_ICRC_TOKEN.to_string()];
+        let amounts = vec![Nat::from(5_000_000u64)];
+        let max_use_count = 10;
+        let mut test_fixture = AirdropLinkV2Fixture::new(
+            Arc::new(ctx.clone()),
+            creator,
+            tokens,
+            amounts.clone(),
+            max_use_count,
+        )
+        .await;
         let create_link_result = test_fixture.create_link().await;
 
         let icp_ledger_client = ctx.new_icp_ledger_client(creator);
@@ -247,9 +286,9 @@ async fn it_should_succeed_activate_icrc_token_tip_linkv2() {
         assert_eq!(
             ckbtc_link_balance,
             test_utils::calculate_amount_for_wallet_to_link_transfer(
-                tip_amount,
+                amounts[0].clone(),
                 ckbtc_ledger_fee,
-                1,
+                max_use_count,
             ),
             "Link balance is incorrect"
         );
