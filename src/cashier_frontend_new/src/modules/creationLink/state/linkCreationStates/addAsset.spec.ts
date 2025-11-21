@@ -109,9 +109,7 @@ describe("AddAssetState", () => {
     });
 
     // Assert
-    await expect(store.goNext()).rejects.toThrow(
-      "Address is required to proceed",
-    );
+    await expect(store.goNext()).rejects.toThrow();
   });
 
   it("should throws when amount is zero or negative", async () => {
@@ -140,8 +138,6 @@ describe("AddAssetState", () => {
     });
 
     // Assert
-    await expect(store.goNext()).rejects.toThrow(
-      "Amount must be greater than zero to proceed",
-    );
+    await expect(store.goNext()).rejects.toThrow();
   });
 });

@@ -98,3 +98,58 @@ const formatSmallNumber = (num: number): string => {
   // exponent ensures we include necessary leading zeros after the decimal
   return `${sign}${num.toFixed(exponent + 1).replace(/\.?0+$/, "")}`;
 };
+
+/**
+ * Format a token price with appropriate decimal places based on price value.
+ * Matches the logic from React app (currency.ts formatNumber function).
+ * Uses different precision for different price ranges:
+ * - > 100: 3 decimal places
+ * - > 10: 4 decimal places
+ * - > 0.001: 5 decimal places
+ * - <= 0.001: 7 decimal places
+ *
+ * @param price - token price in USD
+ * @returns formatted price string with $ prefix, or "-" if price is invalid
+ */
+export const formatTokenPrice = (price: number): string => {
+  if (!price || price <= 0) return "-";
+
+  let decimalPlaces: number;
+  if (price > 100) {
+    decimalPlaces = 3;
+  } else if (price > 10) {
+    decimalPlaces = 4;
+  } else if (price > 0.001) {
+    decimalPlaces = 5;
+  } else {
+    decimalPlaces = 7;
+  }
+
+  // Use toLocaleString for consistent formatting with React app
+  return `$${price.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: decimalPlaces,
+  })}`;
+};
+
+/**
+ * Format USD amount with automatic trailing zero removal.
+ * Rounds to whole number if possible, then to tenths, hundredths, etc.
+ * Examples:
+ * - 5.0000000 -> "5"
+ * - 5.1000000 -> "5.1"
+ * - 5.1200000 -> "5.12"
+ * - 5.1230000 -> "5.123"
+ *
+ * @param amount - USD amount as number or string
+ * @returns formatted USD string without trailing zeros
+ */
+export const formatUsdAmount = (amount: number | string): string => {
+  const num = typeof amount === "string" ? parseFloat(amount) : amount;
+
+  if (isNaN(num)) return "0";
+
+  // Convert to string with enough decimal places (up to 7), then remove trailing zeros
+  // This ensures we capture all significant digits before removing zeros
+  return num.toFixed(7).replace(/\.?0+$/, "");
+};
