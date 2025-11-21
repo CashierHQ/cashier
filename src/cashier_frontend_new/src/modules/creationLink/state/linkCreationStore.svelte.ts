@@ -170,12 +170,10 @@ export class LinkCreationStore {
         currentLinkState = LinkState.PREVIEW;
         break;
       case LinkStep.ACTIVE:
-        currentLinkState = LinkState.ACTIVE;
-        break;
       case LinkStep.INACTIVE:
       case LinkStep.ENDED:
         throw new Error(
-          "LinkCreationStore cannot transition to INACTIVE or ENDED",
+          "LinkCreationStore cannot transition to ACTION, INACTIVE or ENDED",
         );
       default:
         assertUnreachable(this.#state.step);

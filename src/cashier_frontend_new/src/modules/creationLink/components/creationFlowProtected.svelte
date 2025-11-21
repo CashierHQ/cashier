@@ -18,7 +18,6 @@
     LinkStep.ADD_ASSET,
     LinkStep.PREVIEW,
     LinkStep.CREATED,
-    LinkStep.ACTIVE,
   ];
 
   $effect(() => {

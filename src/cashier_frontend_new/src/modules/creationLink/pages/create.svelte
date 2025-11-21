@@ -16,6 +16,8 @@
   let isLoading = $state(true);
   let createLinkStore = $state<LinkCreationStore | null>(null);
 
+  let errorMessage: string | null = $state(null);
+
   async function handleBack() {
     if (!createLinkStore) return;
 
@@ -28,7 +30,7 @@
       try {
         await createLinkStore.goBack();
       } catch (e) {
-        console.error("Failed to go back:", e);
+        errorMessage = "Failed to go back: " + e;
       }
     }
   }
@@ -67,6 +69,10 @@
   <CreationFlowProtected linkStore={createLinkStore}>
     <div class="grow-1 flex flex-col mt-2 sm:mt-0">
       <CreateLinkHeader link={createLinkStore} />
+
+      {#if errorMessage}
+        <div class="text-red-600 mb-2">{errorMessage}</div>
+      {/if}
 
       {#if createLinkStore.state.step === LinkStep.CHOOSE_TYPE}
         <ChooseLinkType link={createLinkStore} />
