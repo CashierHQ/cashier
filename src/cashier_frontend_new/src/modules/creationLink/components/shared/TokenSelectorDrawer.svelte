@@ -7,12 +7,10 @@
     DrawerClose,
   } from "$lib/shadcn/components/ui/drawer";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { parseBalanceUnits } from "$modules/shared/utils/converter";
-  import { formatTokenPrice } from "$modules/shared/utils/formatNumber";
   import { locale } from "$lib/i18n";
   import { Search, X } from "lucide-svelte";
   import { SvelteSet } from "svelte/reactivity";
-  import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
+  import TokenItem from "./TokenItem.svelte";
 
   type Props = {
     open?: boolean;
@@ -48,6 +46,10 @@
     if (onClose) {
       onClose();
     }
+  }
+
+  function handleImageError(address: string) {
+    failedImageLoads.add(address);
   }
 
   $effect(() => {
@@ -101,89 +103,13 @@
           </div>
           <ul class="space-y-1 py-4">
             {#each filteredTokens as token (token.address)}
-              {@const tokenLogo = (() => {
-                const address = token.address;
-                if (address === ICP_LEDGER_CANISTER_ID) {
-                  return "/icpLogo.png";
-                }
-                return `https://api.icexplorer.io/images/${address}`;
-              })()}
-              <li>
-                <button
-                  type="button"
-                  class="w-full text-left p-2 rounded cursor-pointer hover:bg-gray-50"
-                  class:bg-gray-100={selectedAddress === token.address}
-                  onclick={() => handleSelectToken(token.address)}
-                >
-                  <div class="flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                      {#if tokenLogo && !failedImageLoads.has(token.address)}
-                        <span
-                          class="relative flex shrink-0 overflow-hidden rounded-full w-9 h-9"
-                        >
-                          <div
-                            class="w-full h-full overflow-hidden rounded-full"
-                          >
-                            <img
-                              alt={token.symbol}
-                              class="w-full h-full object-cover"
-                              src={tokenLogo}
-                              onerror={() => {
-                                failedImageLoads.add(token.address);
-                              }}
-                            />
-                          </div>
-                        </span>
-                      {:else}
-                        <span
-                          class="relative flex shrink-0 overflow-hidden rounded-full w-9 h-9"
-                        >
-                          <div
-                            class="w-full h-full flex items-center justify-center bg-gray-200 rounded-full text-xs"
-                          >
-                            {token.symbol[0]?.toUpperCase() || "?"}
-                          </div>
-                        </span>
-                      {/if}
-                      <div>
-                        <strong>{token.symbol}</strong>
-                        <div class="text-sm text-gray-500">
-                          {formatTokenPrice(token.priceUSD)}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div class="text-sm text-gray-500">
-                        {(() => {
-                          const balance = parseBalanceUnits(
-                            token.balance,
-                            token.decimals,
-                          );
-                          return balance === 0 ? "0" : balance.toFixed(5);
-                        })()}
-                      </div>
-                      <div class="text-sm text-gray-500">
-                        {(() => {
-                          const balance = parseBalanceUnits(
-                            token.balance,
-                            token.decimals,
-                          );
-                          if (
-                            balance === 0 ||
-                            !token.priceUSD ||
-                            token.priceUSD === 0
-                          ) {
-                            return "-";
-                          }
-                          const usdValue = balance * token.priceUSD;
-                          return `$${usdValue.toFixed(2)}`;
-                        })()}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              </li>
+              <TokenItem
+                {token}
+                {selectedAddress}
+                onSelect={handleSelectToken}
+                {failedImageLoads}
+                onImageError={handleImageError}
+              />
             {/each}
           </ul>
         {:else if searchQuery.trim()}

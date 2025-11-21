@@ -12,6 +12,12 @@
   };
 
   let { data, isDisabled = false }: Props = $props();
+
+  function handleButtonClick(e: MouseEvent, action: () => void) {
+    e.preventDefault();
+    e.stopPropagation();
+    action();
+  }
 </script>
 
 <div class="flex justify-between w-full mx-auto gap-2">
@@ -21,11 +27,7 @@
       variant="outline"
       size="icon"
       class="asset-amount-percentage-button focus:border-green focus:text-green focus:bg-white h-9 w-9 rounded-full"
-      onclick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        action();
-      }}
+      onclick={(e) => handleButtonClick(e, action)}
       disabled={isDisabled}
     >
       {content}
