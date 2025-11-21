@@ -5,16 +5,13 @@
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
   import Ended from "../components/Ended.svelte";
   import Landing from "../components/Landing.svelte";
-  import UseFlowProtected from "../components/useFlowProtected.svelte";
-  import UserLinkStore from "../state/userLinkStore.svelte";
+  import type UserLinkStore from "../state/userLinkStore.svelte";
 
   const {
-    id,
+    userStore,
   }: {
-    id: string;
+    userStore: UserLinkStore;
   } = $props();
-
-  const userStore = new UserLinkStore({ id });
   const isEndedWithoutCompletion = $derived(
     userStore.link?.state === LinkState.INACTIVE_ENDED &&
       userStore.query?.data?.link_user_state !== LinkUserState.COMPLETED,
@@ -26,17 +23,15 @@
   }
 </script>
 
-<UseFlowProtected {userStore} linkId={id}>
-  <div class="px-4 py-4">
-    <div class="mt-4">
-      {#if isEndedWithoutCompletion}
-        <Ended />
-      {:else}
-        <Landing userLink={userStore} {openLoginModal} />
-      {/if}
-    </div>
+<div class="px-4 py-4">
+  <div class="mt-4">
+    {#if isEndedWithoutCompletion}
+      <Ended />
+    {:else}
+      <Landing userLink={userStore} {openLoginModal} />
+    {/if}
   </div>
-</UseFlowProtected>
+</div>
 
 {#if !userProfile.isLoggedIn()}
   <LoginModal

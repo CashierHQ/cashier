@@ -13,8 +13,6 @@ import { Principal } from "@dfinity/principal";
 import type { BaseSignerAdapter, CreatePnpArgs } from "@windoge98/plug-n-play";
 import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
 import { PersistedState } from "runed";
-import { goto } from "$app/navigation";
-import { resolve } from "$app/paths";
 
 // Config for PNP instance
 const CONFIG: CreatePnpArgs = {
@@ -204,8 +202,6 @@ export const authState = {
     // invoke configured login handler if exists
     if (loginHandler) {
       loginHandler();
-    } else {
-      await goto(resolve("/links"));
     }
   },
 
@@ -216,8 +212,6 @@ export const authState = {
     // invoke configured logout handler if exists, otherwise default to redirect to '/'
     if (logoutHandler) {
       logoutHandler();
-    } else {
-      goto(resolve("/"));
     }
   },
 
