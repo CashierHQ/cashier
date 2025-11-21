@@ -1,7 +1,7 @@
 pub mod activate_icp_link_retry;
 pub mod activate_icrc_link_retry;
+pub mod activate_link;
 pub mod activate_link_deduplication;
-pub mod activate_link_v2;
 pub mod create_link;
 pub mod disable_link_v2;
 pub mod fixture;
