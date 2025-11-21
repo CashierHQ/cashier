@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link::fixture::create_tip_linkv2_fixture;
+use crate::cashier_backend::link_v2::send_tip::fixture::create_tip_linkv2_fixture;
 use crate::utils::icrc_112::execute_icrc112_request;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
@@ -17,9 +17,10 @@ async fn it_should_fail_reexecute_icrc112_icp_immediately_due_to_deduplication()
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
+        let token = ICP_TOKEN;
         let tip_amount = Nat::from(1_000_000u64);
-        let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount.clone()).await;
+        let (_test_fixture, create_link_result) =
+            create_tip_linkv2_fixture(ctx, caller, token, tip_amount.clone()).await;
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
         let caller_account = Account {
@@ -32,7 +33,7 @@ async fn it_should_fail_reexecute_icrc112_icp_immediately_due_to_deduplication()
         // Act: Execute ICRC112 requests (simulate FE behavior)
         let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
         let icrc112_execution_result =
-            execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
+            execute_icrc112_request(&icrc_112_requests, caller, ctx).await;
 
         // Assert: ICRC112 execution result
         assert!(icrc112_execution_result.is_ok());
@@ -56,7 +57,7 @@ async fn it_should_fail_reexecute_icrc112_icp_immediately_due_to_deduplication()
 
         // Act: Re-execute ICRC112 requests
         let icrc112_reexecution_result =
-            execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
+            execute_icrc112_request(&icrc_112_requests, caller, ctx).await;
 
         // Assert: ICRC112 re-execution result contains deduplication errors
         assert!(icrc112_reexecution_result.is_ok());
@@ -106,9 +107,10 @@ async fn it_should_fail_reexecute_icrc112_icp_after_1week_due_to_deduplication()
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
+        let token = ICP_TOKEN;
         let tip_amount = Nat::from(1_000_000u64);
-        let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount.clone()).await;
+        let (_test_fixture, create_link_result) =
+            create_tip_linkv2_fixture(ctx, caller, token, tip_amount.clone()).await;
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
         let caller_account = Account {
@@ -121,7 +123,7 @@ async fn it_should_fail_reexecute_icrc112_icp_after_1week_due_to_deduplication()
         // Act: Execute ICRC112 requests (simulate FE behavior)
         let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
         let icrc112_execution_result =
-            execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
+            execute_icrc112_request(&icrc_112_requests, caller, ctx).await;
 
         // Assert: ICRC112 execution result
         assert!(icrc112_execution_result.is_ok());
@@ -149,7 +151,7 @@ async fn it_should_fail_reexecute_icrc112_icp_after_1week_due_to_deduplication()
             .await;
 
         let icrc112_reexecution_result =
-            execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
+            execute_icrc112_request(&icrc_112_requests, caller, ctx).await;
 
         // Assert: ICRC112 re-execution result contains deduplication errors
         assert!(icrc112_reexecution_result.is_ok());
@@ -197,13 +199,14 @@ async fn it_should_fail_reexecute_icrc112_icrc_immediately_due_to_deduplication(
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
+        let token = CKBTC_ICRC_TOKEN;
         let tip_amount = Nat::from(5_000_000u64);
-        let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount.clone()).await;
+        let (_test_fixture, create_link_result) =
+            create_tip_linkv2_fixture(ctx, caller, token, tip_amount.clone()).await;
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let _icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
-        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
+        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(token, caller);
         let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
         let caller_account = Account {
             owner: caller,
@@ -219,7 +222,7 @@ async fn it_should_fail_reexecute_icrc112_icrc_immediately_due_to_deduplication(
         // Act: Execute ICRC112 requests (simulate FE behavior)
         let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
         let icrc112_execution_result =
-            execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
+            execute_icrc112_request(&icrc_112_requests, caller, ctx).await;
 
         // Assert: ICRC112 execution result
         assert!(icrc112_execution_result.is_ok());
@@ -251,7 +254,7 @@ async fn it_should_fail_reexecute_icrc112_icrc_immediately_due_to_deduplication(
 
         // Act: Re-execute ICRC112 requests
         let icrc112_reexecution_result =
-            execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
+            execute_icrc112_request(&icrc_112_requests, caller, ctx).await;
 
         // Assert: ICRC112 re-execution result contains deduplication errors
         assert!(icrc112_reexecution_result.is_ok());
@@ -303,13 +306,14 @@ async fn it_should_fail_reexecute_icrc112_icrc_after_1week_due_to_deduplication(
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
+        let token = CKBTC_ICRC_TOKEN;
         let tip_amount = Nat::from(5_000_000u64);
-        let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount.clone()).await;
+        let (_test_fixture, create_link_result) =
+            create_tip_linkv2_fixture(ctx, caller, token, tip_amount.clone()).await;
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let _icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
-        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
+        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(token, caller);
         let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
         let caller_account = Account {
             owner: caller,
@@ -325,7 +329,7 @@ async fn it_should_fail_reexecute_icrc112_icrc_after_1week_due_to_deduplication(
         // Act: Execute ICRC112 requests (simulate FE behavior)
         let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
         let icrc112_execution_result =
-            execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
+            execute_icrc112_request(&icrc_112_requests, caller, ctx).await;
 
         // Assert: ICRC112 execution result
         assert!(icrc112_execution_result.is_ok());
@@ -361,7 +365,7 @@ async fn it_should_fail_reexecute_icrc112_icrc_after_1week_due_to_deduplication(
             .await;
 
         let icrc112_reexecution_result =
-            execute_icrc112_request(&icrc_112_requests, test_fixture.caller, ctx).await;
+            execute_icrc112_request(&icrc_112_requests, caller, ctx).await;
 
         // Assert: ICRC112 re-execution result contains deduplication errors
         assert!(icrc112_reexecution_result.is_ok());

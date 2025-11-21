@@ -1,8 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link::fixture::{
-    LinkTestFixture, activate_tip_link_v2_fixture, create_tip_linkv2_fixture,
+use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
+use crate::cashier_backend::link_v2::send_tip::fixture::{
+    activate_tip_link_v2_fixture, create_tip_linkv2_fixture,
 };
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
@@ -24,12 +25,14 @@ use icrc_ledger_types::icrc1::account::Account;
 async fn it_should_fail_receive_icp_token_tip_linkv2_if_link_not_active() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
+        let caller = TestUser::User1.get_principal();
+        let token = ICP_TOKEN;
         let tip_amount = Nat::from(1_000_000u64);
         let (creator_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+            create_tip_linkv2_fixture(ctx, caller, token, tip_amount).await;
 
         let receiver = TestUser::User2.get_principal();
-        let receiver_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &receiver).await;
+        let receiver_fixture = LinkTestFixtureV2::new(creator_fixture.ctx.clone(), receiver).await;
 
         // Act: create RECEIVE action
         let link_id = create_link_result.link.id.clone();
@@ -61,12 +64,13 @@ async fn it_should_fail_receive_icp_token_tip_linkv2_if_link_not_active() {
 async fn it_should_fail_receive_icp_token_tip_linkv2_if_requested_more_than_once() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
+        let token = ICP_TOKEN;
         let tip_amount = Nat::from(1_000_000u64);
         let (creator_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+            activate_tip_link_v2_fixture(ctx, token, tip_amount).await;
 
         let receiver = TestUser::User2.get_principal();
-        let receiver_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &receiver).await;
+        let receiver_fixture = LinkTestFixtureV2::new(creator_fixture.ctx.clone(), receiver).await;
 
         // Act: create RECEIVE action
         let link_id = create_link_result.link.id.clone();
@@ -111,12 +115,13 @@ async fn it_should_fail_receive_icp_token_tip_linkv2_if_requested_more_than_once
 async fn it_should_succeed_receive_icp_token_tip_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
+        let token = ICP_TOKEN;
         let tip_amount = Nat::from(1_000_000u64);
         let (creator_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount.clone()).await;
+            activate_tip_link_v2_fixture(ctx, token, tip_amount.clone()).await;
 
         let receiver = TestUser::User2.get_principal();
-        let receiver_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &receiver).await;
+        let receiver_fixture = LinkTestFixtureV2::new(creator_fixture.ctx.clone(), receiver).await;
 
         let receiver_account = Account {
             owner: receiver,
@@ -237,12 +242,13 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
 async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
+        let token = CKBTC_ICRC_TOKEN;
         let tip_amount = Nat::from(1_000_000u64);
         let (creator_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount.clone()).await;
+            activate_tip_link_v2_fixture(ctx, token, tip_amount.clone()).await;
 
         let receiver = TestUser::User2.get_principal();
-        let receiver_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &receiver).await;
+        let receiver_fixture = LinkTestFixtureV2::new(creator_fixture.ctx.clone(), receiver).await;
 
         let receiver_account = Account {
             owner: receiver,

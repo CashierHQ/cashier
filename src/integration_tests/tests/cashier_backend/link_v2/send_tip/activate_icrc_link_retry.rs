@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link::fixture::create_tip_linkv2_fixture;
+use crate::cashier_backend::link_v2::send_tip::fixture::create_tip_linkv2_fixture;
 use crate::constant::{CK_BTC_PRINCIPAL, ICP_PRINCIPAL};
 use crate::utils::icrc_112::execute_icrc112_request;
 use crate::utils::principal::TestUser;
@@ -28,9 +28,10 @@ async fn it_should_fail_activate_tip_linkv2_icrc_and_create_new_icrc112_if_icrc1
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
+        let token = CKBTC_ICRC_TOKEN;
         let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount.clone()).await;
+            create_tip_linkv2_fixture(ctx, caller, token, tip_amount.clone()).await;
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);
         let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
@@ -290,9 +291,10 @@ async fn it_should_fail_activate_tip_linkv2_icrc_and_create_new_icrc112_if_only_
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
+        let token = CKBTC_ICRC_TOKEN;
         let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount.clone()).await;
+            create_tip_linkv2_fixture(ctx, caller, token, tip_amount.clone()).await;
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);
         let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
@@ -328,8 +330,7 @@ async fn it_should_fail_activate_tip_linkv2_icrc_and_create_new_icrc112_if_only_
             .collect();
 
         let icrc112_execution_result =
-            execute_icrc112_request(&vec![filtered_icrc_112_requests], test_fixture.caller, ctx)
-                .await;
+            execute_icrc112_request(&vec![filtered_icrc_112_requests], caller, ctx).await;
 
         // Assert: ICRC112 execution result
         assert!(icrc112_execution_result.is_ok());
@@ -533,9 +534,10 @@ async fn it_should_fail_activate_tip_linkv2_icrc_and_create_new_icrc112_if_only_
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
+        let token = CKBTC_ICRC_TOKEN;
         let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount.clone()).await;
+            create_tip_linkv2_fixture(ctx, caller, token, tip_amount.clone()).await;
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);
         let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
@@ -571,8 +573,7 @@ async fn it_should_fail_activate_tip_linkv2_icrc_and_create_new_icrc112_if_only_
             .collect();
 
         let icrc112_execution_result =
-            execute_icrc112_request(&vec![filtered_icrc_112_requests], test_fixture.caller, ctx)
-                .await;
+            execute_icrc112_request(&vec![filtered_icrc_112_requests], caller, ctx).await;
 
         // Assert: ICRC112 execution result
         assert!(icrc112_execution_result.is_ok());
@@ -787,9 +788,10 @@ async fn it_should_fail_activate_tip_linkv2_icrc_and_create_new_icrc112_if_only_
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
+        let token = CKBTC_ICRC_TOKEN;
         let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount.clone()).await;
+            create_tip_linkv2_fixture(ctx, caller, token, tip_amount.clone()).await;
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);
         let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
@@ -825,8 +827,7 @@ async fn it_should_fail_activate_tip_linkv2_icrc_and_create_new_icrc112_if_only_
             .collect();
 
         let icrc112_execution_result =
-            execute_icrc112_request(&vec![filtered_icrc_112_requests], test_fixture.caller, ctx)
-                .await;
+            execute_icrc112_request(&vec![filtered_icrc_112_requests], caller, ctx).await;
 
         // Assert: ICRC112 execution result
         assert!(icrc112_execution_result.is_ok());
@@ -1030,9 +1031,10 @@ async fn it_should_fail_activate_tip_linkv2_icrc_and_create_new_icrc112_if_only_
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
+        let token = CKBTC_ICRC_TOKEN;
         let tip_amount = Nat::from(1_000_000u64);
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount.clone()).await;
+            create_tip_linkv2_fixture(ctx, caller, token, tip_amount.clone()).await;
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(constant::CKBTC_ICRC_TOKEN, caller);
         let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
@@ -1068,8 +1070,7 @@ async fn it_should_fail_activate_tip_linkv2_icrc_and_create_new_icrc112_if_only_
             .collect();
 
         let icrc112_execution_result =
-            execute_icrc112_request(&vec![filtered_icrc_112_requests], test_fixture.caller, ctx)
-                .await;
+            execute_icrc112_request(&vec![filtered_icrc_112_requests], caller, ctx).await;
 
         // Assert: ICRC112 execution result
         assert!(icrc112_execution_result.is_ok());

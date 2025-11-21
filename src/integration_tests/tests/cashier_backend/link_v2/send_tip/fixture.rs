@@ -1,6 +1,6 @@
 use crate::{
     cashier_backend::link_v2::fixture::LinkTestFixtureV2,
-    utils::{PocketIcTestContext, icrc_112},
+    utils::{PocketIcTestContext, icrc_112, principal::TestUser},
 };
 use candid::{Nat, Principal};
 use cashier_backend_types::{
@@ -38,7 +38,7 @@ impl TipLinkV2Feature {
     /// This function creates a tip link v2.
     /// # Returns
     /// * `CreateLinkDto` - The created tip link data
-    pub async fn create_tip_link(&self) -> CreateLinkDto {
+    pub async fn create_link(&self) -> CreateLinkDto {
         self.link_fixture
             .create_link_v2(self.tip_link_input().unwrap())
             .await
@@ -47,8 +47,8 @@ impl TipLinkV2Feature {
     /// This function activates a tip link v2.
     /// # Returns
     /// * `ProcessActionDto` - The activated action data
-    pub async fn activate_tip_link(&mut self) -> ProcessActionDto {
-        let create_link_result = self.create_tip_link().await;
+    pub async fn activate_link(&mut self) -> ProcessActionDto {
+        let create_link_result = self.create_link().await;
         let link_id = create_link_result.action.id.clone();
 
         self.airdrop_icp_and_asset().await;
@@ -108,4 +108,47 @@ impl TipLinkV2Feature {
                 .await;
         }
     }
+}
+
+/// Creates a fixture for a tip link v2.
+/// # Arguments
+/// * `ctx` - The Pocket IC test context
+/// * `creator` - The principal of the creator
+/// * `token` - The token identifier (e.g., "ICP")
+/// * `amount` - The tip amount
+/// # Returns
+/// * `(LinkTestFixtureV2, GetLinkResp)` - The link test fixture and the GetLinkResp
+pub async fn create_tip_linkv2_fixture(
+    ctx: &PocketIcTestContext,
+    creator: Principal,
+    token: &str,
+    amount: Nat,
+) -> (LinkTestFixtureV2, CreateLinkDto) {
+    let mut creator_fixture =
+        TipLinkV2Feature::new(Arc::new(ctx.clone()), creator, token, amount.clone()).await;
+
+    creator_fixture.airdrop_icp_and_asset().await;
+
+    let link_response = creator_fixture.create_link().await;
+    (creator_fixture.link_fixture, link_response)
+}
+
+/// Activate a tip link v2 fixture.
+/// # Arguments
+/// * `ctx` - The Pocket IC test context
+/// * `token` - The token identifier (e.g., "ICP")
+/// * `amount` - The tip amount
+/// # Returns
+/// * `(LinkTestFixture, ProcessActionDto)` - The link test fixture and the ProcessActionDto
+pub async fn activate_tip_link_v2_fixture(
+    ctx: &PocketIcTestContext,
+    token: &str,
+    amount: Nat,
+) -> (LinkTestFixtureV2, ProcessActionDto) {
+    let creator = TestUser::User1.get_principal();
+    let mut creator_fixture =
+        TipLinkV2Feature::new(Arc::new(ctx.clone()), creator, token, amount.clone()).await;
+
+    let activate_link_result = creator_fixture.activate_link().await;
+    (creator_fixture.link_fixture, activate_link_result)
 }
