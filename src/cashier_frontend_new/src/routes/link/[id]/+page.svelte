@@ -12,8 +12,6 @@
       userStore = new UserLinkStore({ id });
     }
   });
-
-  
 </script>
 
 {#if id && userStore}
