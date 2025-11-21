@@ -12,28 +12,47 @@
   let { selectedToken, showInput = true, onOpenDrawer }: Props = $props();
 
   let imageLoadFailed = $state(false);
+  let previousTokenAddress = $state<string | null>(null);
 
   // Get token logo URL based on token address
-  const tokenLogo = $derived.by(() => {
-    if (!selectedToken) return null;
+  const tokenLogo = $derived(
+    selectedToken
+      ? selectedToken.address === ICP_LEDGER_CANISTER_ID
+        ? "/icpLogo.png"
+        : `https://api.icexplorer.io/images/${selectedToken.address}`
+      : null,
+  );
 
-    const address = selectedToken.address;
-
-    // Special case for ICP
-    if (address === ICP_LEDGER_CANISTER_ID) {
-      return "/icpLogo.png";
-    }
-
-    // Use icexplorer API for all other tokens
-    return `https://api.icexplorer.io/images/${address}`;
-  });
-
-  // Reset image load failed state when token changes
+  // Reset image load failed state only when token address actually changes
   $effect(() => {
     if (selectedToken) {
-      imageLoadFailed = false;
+      const currentAddress = selectedToken.address;
+      // Only reset if the address actually changed, not just the object reference
+      if (previousTokenAddress !== currentAddress) {
+        imageLoadFailed = false;
+        previousTokenAddress = currentAddress;
+      }
+    } else {
+      previousTokenAddress = null;
     }
   });
+
+  function handleImageError() {
+    imageLoadFailed = true;
+  }
+
+  function handleOpenDrawerClick(e: MouseEvent) {
+    e.stopPropagation();
+    onOpenDrawer?.();
+  }
+
+  function handleOpenDrawerKeyDown(e: KeyboardEvent) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      e.stopPropagation();
+      onOpenDrawer?.();
+    }
+  }
 </script>
 
 {#if selectedToken}
@@ -41,39 +60,30 @@
     <div
       class="relative flex shrink-0 overflow-hidden rounded-full mr-2 w-6 h-6"
     >
-      {#if tokenLogo && !imageLoadFailed}
-        <img
-          alt={selectedToken.symbol}
-          class="w-full h-full object-cover rounded-full"
-          src={tokenLogo}
-          onerror={() => {
-            imageLoadFailed = true;
-          }}
-        />
-      {:else}
-        <div
-          class="w-full h-full flex items-center justify-center bg-gray-200 rounded-full text-xs"
-        >
-          {selectedToken.symbol[0]?.toUpperCase() || "?"}
-        </div>
-      {/if}
+      {#key `${selectedToken.address}-${imageLoadFailed}`}
+        {#if tokenLogo && !imageLoadFailed}
+          <img
+            alt={selectedToken.symbol}
+            class="w-full h-full object-cover rounded-full"
+            src={tokenLogo}
+            onerror={handleImageError}
+          />
+        {:else}
+          <div
+            class="w-full h-full flex items-center justify-center bg-gray-200 rounded-full text-xs"
+          >
+            {selectedToken.symbol[0]?.toUpperCase() || "?"}
+          </div>
+        {/if}
+      {/key}
     </div>
     <div
       id="asset-info"
       class="text-left flex sm:gap-3 gap-1 w-full leading-none items-center cursor-pointer"
       role="button"
       tabindex="0"
-      onclick={(e) => {
-        e.stopPropagation();
-        onOpenDrawer?.();
-      }}
-      onkeydown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          e.stopPropagation();
-          onOpenDrawer?.();
-        }
-      }}
+      onclick={handleOpenDrawerClick}
+      onkeydown={handleOpenDrawerKeyDown}
     >
       <div
         class="text-[14px] font-normal whitespace-nowrap overflow-hidden text-ellipsis"

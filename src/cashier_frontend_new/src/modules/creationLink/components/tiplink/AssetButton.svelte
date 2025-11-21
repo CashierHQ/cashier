@@ -53,9 +53,7 @@
     walletTokens = [],
   }: Props = $props();
 
-  const displayValue = $derived.by(() => {
-    return isUsd ? usdValue : tokenValue;
-  });
+  const displayValue = $derived(isUsd ? usdValue : tokenValue);
 
   let localInputValue = $state(displayValue || "");
   let previousDisplayValue = $state(displayValue);
@@ -111,10 +109,9 @@
     }
   }
 
-  const maxBalance = $derived.by(() => {
-    if (!token?.balance) return 0;
-    return parseBalanceUnits(token.balance, token.decimals);
-  });
+  const maxBalance = $derived(
+    token?.balance ? parseBalanceUnits(token.balance, token.decimals) : 0,
+  );
 
   // Get max available balance with fee consideration
   const maxBalanceWithFee = $derived.by(() => {
@@ -169,10 +166,11 @@
   }
 
   // Get max USD value (if token has price) - using maxBalanceWithFee
-  const maxUsdValue = $derived.by(() => {
-    if (!token?.priceUSD || token.priceUSD <= 0) return 0;
-    return maxBalanceWithFee * token.priceUSD;
-  });
+  const maxUsdValue = $derived(
+    token?.priceUSD && token.priceUSD > 0
+      ? maxBalanceWithFee * token.priceUSD
+      : 0,
+  );
 
   function handleBlur() {
     if (!token || !localInputValue) return;
@@ -242,15 +240,29 @@
     return value;
   }
 
-  const inputWidth = $derived.by(() => {
-    const formatted = formatDisplayValue(localInputValue);
-    return `${Math.max((formatted || "").length * 9, 30)}px`;
-  });
+  const inputWidth = $derived(
+    `${Math.max((formatDisplayValue(localInputValue) || "").length * 9, 30)}px`,
+  );
 
-  const balanceDisplay = $derived.by(() => {
-    if (!token?.balance) return "0";
-    return formatNumber(parseBalanceUnits(token.balance, token.decimals));
-  });
+  const balanceDisplay = $derived(
+    token?.balance
+      ? formatNumber(parseBalanceUnits(token.balance, token.decimals))
+      : "0",
+  );
+
+  function focusInput() {
+    const input = document.getElementById(
+      `asset-input-${token?.address || "default"}`,
+    );
+    input?.focus();
+  }
+
+  function handleInputAreaKeyDown(e: KeyboardEvent) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      focusInput();
+    }
+  }
 </script>
 
 <div class="flex flex-col w-full relative">
@@ -285,21 +297,8 @@
               <div
                 role="button"
                 tabindex="0"
-                onclick={() => {
-                  const input = document.getElementById(
-                    `asset-input-${token?.address || "default"}`,
-                  );
-                  input?.focus();
-                }}
-                onkeydown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    const input = document.getElementById(
-                      `asset-input-${token?.address || "default"}`,
-                    );
-                    input?.focus();
-                  }
-                }}
+                onclick={focusInput}
+                onkeydown={handleInputAreaKeyDown}
                 class="absolute right-0 top-0 h-full w-[90px] z-20 cursor-pointer"
               ></div>
             </div>
