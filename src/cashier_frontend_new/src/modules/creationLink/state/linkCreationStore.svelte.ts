@@ -173,7 +173,7 @@ export class LinkCreationStore {
       case LinkStep.INACTIVE:
       case LinkStep.ENDED:
         throw new Error(
-          "LinkCreationStore cannot transition to ACTION, INACTIVE or ENDED",
+          "LinkCreationStore cannot transition to ACTIVE, INACTIVE or ENDED",
         );
       default:
         assertUnreachable(this.#state.step);
