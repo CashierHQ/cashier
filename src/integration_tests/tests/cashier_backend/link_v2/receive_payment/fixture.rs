@@ -8,9 +8,9 @@ use crate::{
 use candid::{Nat, Principal};
 use cashier_backend_types::{
     constant,
-    dto::link::CreateLinkInput,
+    dto::{action::CreateActionInput, link::CreateLinkInput},
     link_v2::dto::{CreateLinkDto, ProcessActionDto},
-    repository::link::v1::LinkType,
+    repository::{action::v1::ActionType, link::v1::LinkType},
 };
 use std::sync::Arc;
 
@@ -54,7 +54,7 @@ impl PaymentLinkV2Fixture {
         let create_link_result = self.create_link().await;
         let link_id = create_link_result.action.id.clone();
 
-        self.airdrop_icp_and_asset().await;
+        self.airdrop_icp_and_asset(self.caller).await;
 
         // Execute ICRC112 requests (simulate FE behavior)
         let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
@@ -101,12 +101,12 @@ impl PaymentLinkV2Fixture {
     /// This function is used to airdrop ICP and the specified asset to the caller.
     /// # Returns
     /// * `()` - No return value
-    pub async fn airdrop_icp_and_asset(&mut self) {
+    pub async fn airdrop_icp_and_asset(&mut self, receiver: Principal) {
         let initial_balance = Nat::from(1_000_000_000u64);
         let mut link_fixture = self.link_fixture.clone();
 
         link_fixture
-            .airdrop_icp(initial_balance.clone(), &self.caller)
+            .airdrop_icp(initial_balance.clone(), &receiver)
             .await;
 
         for token in self.tokens.iter() {
@@ -114,7 +114,7 @@ impl PaymentLinkV2Fixture {
                 continue;
             }
             link_fixture
-                .airdrop_icrc(token, initial_balance.clone(), &self.caller)
+                .airdrop_icrc(token, initial_balance.clone(), &receiver)
                 .await;
         }
     }
@@ -137,7 +137,7 @@ pub async fn create_payment_link_v2_fixture(
     let mut creator_fixture =
         PaymentLinkV2Fixture::new(Arc::new(ctx.clone()), creator, tokens, amounts).await;
 
-    creator_fixture.airdrop_icp_and_asset().await;
+    creator_fixture.airdrop_icp_and_asset(creator).await;
 
     let link_response = creator_fixture.create_link().await;
     (creator_fixture.link_fixture, link_response)
@@ -160,5 +160,43 @@ pub async fn activate_payment_link_v2_fixture(
         PaymentLinkV2Fixture::new(Arc::new(ctx.clone()), creator, tokens, amounts).await;
 
     let activate_link_result = creator_fixture.activate_link().await;
+    (creator_fixture.link_fixture, activate_link_result)
+}
+
+/// Send payment via link v2 fixture.
+/// # Arguments
+/// * `ctx` - The Pocket IC test context
+/// * `tokens` - A vector of token identifiers (e.g., ["ICP"])
+/// * `amounts` - A vector of corresponding amounts (e.g., [100_000_000])
+/// # Returns
+/// * `(LinkTestFixtureV2, ProcessActionDto)` - The link test fixture and the ProcessActionDto
+pub async fn send_payment_link_v2_fixture(
+    ctx: &PocketIcTestContext,
+    tokens: Vec<String>,
+    amounts: Vec<Nat>,
+) -> (LinkTestFixtureV2, ProcessActionDto) {
+    let creator = TestUser::User1.get_principal();
+    let mut creator_fixture =
+        PaymentLinkV2Fixture::new(Arc::new(ctx.clone()), creator, tokens, amounts).await;
+
+    let activate_link_result = creator_fixture.activate_link().await;
+    let link_id = activate_link_result.link.id.clone();
+
+    let caller = TestUser::User2.get_principal();
+    let caller_fixture = LinkTestFixtureV2::new(Arc::new(ctx.clone()), caller).await;
+    creator_fixture.airdrop_icp_and_asset(caller).await;
+
+    let create_action_input = CreateActionInput {
+        link_id: link_id.clone(),
+        action_type: ActionType::Send,
+    };
+    let create_action_result = caller_fixture.create_action_v2(create_action_input).await;
+
+    // Execute ICRC112 requests (simulate FE behavior)
+    let create_action_result = create_action_result.unwrap();
+    let icrc_112_requests = create_action_result.icrc_112_requests.unwrap();
+    let _icrc112_execution_result =
+        icrc_112::execute_icrc112_request(&icrc_112_requests, caller, &caller_fixture.ctx).await;
+
     (creator_fixture.link_fixture, activate_link_result)
 }

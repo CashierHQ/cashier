@@ -153,7 +153,7 @@ async fn it_should_succeed_activate_icp_token_payment_linkv2() {
         let icp_ledger_client = ctx.new_icp_ledger_client(creator);
 
         // deposit ICP and asset to caller wallet
-        test_fixture.airdrop_icp_and_asset().await;
+        test_fixture.airdrop_icp_and_asset(creator).await;
 
         // Act: Execute ICRC112 requests (simulate FE behavior)
         let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
@@ -219,7 +219,7 @@ async fn it_should_succeed_activate_icrc_token_payment_linkv2() {
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, creator);
 
         // deposit ICP and asset to caller wallet
-        test_fixture.airdrop_icp_and_asset().await;
+        test_fixture.airdrop_icp_and_asset(creator).await;
 
         // Act: Execute ICRC112 requests (simulate FE behavior)
         let icrc_112_requests = create_link_result.action.icrc_112_requests.unwrap();
