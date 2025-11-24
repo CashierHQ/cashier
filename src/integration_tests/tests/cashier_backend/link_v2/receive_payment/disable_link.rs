@@ -100,7 +100,7 @@ async fn it_should_succeed_disable_icp_token_payment_linkv2() {
 
         // Act
         let link_id = create_link_result.link.id.clone();
-        let disable_link_result = test_fixture.disable_link_v2(&link_id).await;
+        let disable_link_result = test_fixture.link_fixture.disable_link_v2(&link_id).await;
 
         // Assert
         assert!(disable_link_result.is_ok());

@@ -42,7 +42,7 @@ async fn it_should_succeed_get_icp_token_payment_linkv2_with_no_paginate_option(
             activate_payment_link_v2_fixture(ctx, tokens.clone(), amounts.clone()).await;
 
         // Act
-        let get_links_result = test_fixture.user_get_links_v2(None).await;
+        let get_links_result = test_fixture.link_fixture.user_get_links_v2(None).await;
 
         // Assert
         assert!(get_links_result.is_ok());
@@ -81,7 +81,10 @@ async fn it_should_succeed_get_icp_token_payment_linkv2_with_paginate_option() {
             limit: 10,
             offset: 0,
         };
-        let get_links_result = test_fixture.user_get_links_v2(Some(input)).await;
+        let get_links_result = test_fixture
+            .link_fixture
+            .user_get_links_v2(Some(input))
+            .await;
 
         // Assert
         assert!(get_links_result.is_ok());
@@ -93,7 +96,10 @@ async fn it_should_succeed_get_icp_token_payment_linkv2_with_paginate_option() {
             limit: 10,
             offset: 10,
         };
-        let get_links_result = test_fixture.user_get_links_v2(Some(input)).await;
+        let get_links_result = test_fixture
+            .link_fixture
+            .user_get_links_v2(Some(input))
+            .await;
 
         // Assert
         assert!(get_links_result.is_ok());
@@ -105,7 +111,10 @@ async fn it_should_succeed_get_icp_token_payment_linkv2_with_paginate_option() {
             limit: 2,
             offset: 1,
         };
-        let get_links_result = test_fixture.user_get_links_v2(Some(input)).await;
+        let get_links_result = test_fixture
+            .link_fixture
+            .user_get_links_v2(Some(input))
+            .await;
 
         // Assert
         assert!(get_links_result.is_ok());

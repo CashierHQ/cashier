@@ -32,7 +32,10 @@ async fn it_should_fail_get_payment_linkv2_details_if_link_not_found() {
 
         // Act
         let link_id = "non_existent_link_id".to_string();
-        let get_links_result = test_fixture.get_link_details_v2(&link_id, None).await;
+        let get_links_result = test_fixture
+            .link_fixture
+            .get_link_details_v2(&link_id, None)
+            .await;
 
         // Assert
         assert!(get_links_result.is_err());
@@ -65,7 +68,10 @@ async fn it_should_succeed_get_payment_linkv2_details_with_no_option() {
 
         // Act
         let link_id = create_link_result.link.id;
-        let get_links_result = test_fixture.get_link_details_v2(&link_id, None).await;
+        let get_links_result = test_fixture
+            .link_fixture
+            .get_link_details_v2(&link_id, None)
+            .await;
 
         // Assert
         assert!(get_links_result.is_ok());
@@ -94,6 +100,7 @@ async fn it_should_succeed_get_payment_linkv2_details_with_create_action_succeed
             action_type: ActionType::CreateLink,
         };
         let get_links_result = test_fixture
+            .link_fixture
             .get_link_details_v2(&link_id, Some(option))
             .await;
 
@@ -130,6 +137,7 @@ async fn it_should_succeed_get_payment_linkv2_details_with_option_action_not_exi
             action_type: ActionType::Receive,
         };
         let get_links_result = test_fixture
+            .link_fixture
             .get_link_details_v2(&link_id, Some(option))
             .await;
 
@@ -164,8 +172,6 @@ async fn it_should_succeed_get_payment_linkv2_details_with_create_action() {
         let initial_intent1 = &initial_action.intents[0];
         assert_eq!(initial_intent1.state, IntentState::Created);
         assert_eq!(initial_intent1.transactions.len(), 2);
-        let initial_tx0 = &initial_intent1.transactions[0];
-        let initial_tx1 = &initial_intent1.transactions[1];
 
         let initial_icrc112 = create_link_result.action.icrc_112_requests.clone();
         assert!(initial_icrc112.is_some());
@@ -249,7 +255,8 @@ async fn it_should_succeed_get_payment_linkv2_details_with_send_action() {
             activate_payment_link_v2_fixture(ctx, tokens.clone(), amounts.clone()).await;
 
         let caller = TestUser::User2.get_principal();
-        let caller_fixture = LinkTestFixtureV2::new(test_fixture.ctx.clone(), caller).await;
+        let caller_fixture =
+            LinkTestFixtureV2::new(test_fixture.link_fixture.ctx.clone(), caller).await;
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
@@ -348,7 +355,7 @@ async fn it_should_succeed_get_payment_linkv2_details_with_withdraw_action() {
 
         // Act: disable the link first to make it Inactive
         let link_id = create_link_result.link.id.clone();
-        let _disable_link_result = test_fixture.disable_link_v2(&link_id).await;
+        let _disable_link_result = test_fixture.link_fixture.disable_link_v2(&link_id).await;
 
         // Act: create WITHDRAW action
         let link_id = create_link_result.link.id.clone();
@@ -356,7 +363,10 @@ async fn it_should_succeed_get_payment_linkv2_details_with_withdraw_action() {
             link_id: link_id.clone(),
             action_type: ActionType::Withdraw,
         };
-        let create_action_result = test_fixture.create_action_v2(create_action_input).await;
+        let create_action_result = test_fixture
+            .link_fixture
+            .create_action_v2(create_action_input)
+            .await;
 
         // Assert
         assert!(create_action_result.is_ok());
@@ -370,6 +380,7 @@ async fn it_should_succeed_get_payment_linkv2_details_with_withdraw_action() {
             action_type: ActionType::Withdraw,
         };
         let get_links_result = test_fixture
+            .link_fixture
             .get_link_details_v2(&link_id, Some(option))
             .await;
 
