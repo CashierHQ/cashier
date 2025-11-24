@@ -2,8 +2,8 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
-use crate::cashier_backend::link_v2::send_airdrop::fixture::{
-    activate_airdrop_link_v2_fixture, create_airdrop_link_v2_fixture,
+use crate::cashier_backend::link_v2::send_basket::fixture::{
+    activate_basket_link_v2_fixture, create_basket_link_v2_fixture,
 };
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
@@ -19,19 +19,17 @@ use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, Int
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::repository::link_action::v1::LinkUserState;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
-use cashier_common::test_utils;
 use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]
-async fn it_should_fail_receive_icp_token_airdrop_linkv2_if_link_not_active() {
+async fn it_should_fail_receive_icp_token_basket_linkv2_if_link_not_active() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
         let tokens = vec![ICP_TOKEN.to_string()];
         let amounts = vec![Nat::from(1_000_000u64)];
-        let max_use = 10;
         let (creator_fixture, create_link_result) =
-            create_airdrop_link_v2_fixture(ctx, caller, tokens, amounts, max_use).await;
+            create_basket_link_v2_fixture(ctx, caller, tokens, amounts).await;
 
         let receiver = TestUser::User2.get_principal();
         let receiver_fixture = LinkTestFixtureV2::new(creator_fixture.ctx.clone(), receiver).await;
@@ -63,14 +61,13 @@ async fn it_should_fail_receive_icp_token_airdrop_linkv2_if_link_not_active() {
 }
 
 #[tokio::test]
-async fn it_should_fail_receive_icp_token_airdrop_linkv2_if_requested_more_than_max_use() {
+async fn it_should_fail_receive_icp_token_basket_linkv2_if_requested_more_than_once() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tokens = vec![ICP_TOKEN.to_string()];
         let amounts = vec![Nat::from(1_000_000u64)];
-        let max_use = 1;
         let (creator_fixture, create_link_result) =
-            activate_airdrop_link_v2_fixture(ctx, tokens, amounts, max_use).await;
+            activate_basket_link_v2_fixture(ctx, tokens, amounts).await;
 
         let receiver = TestUser::User2.get_principal();
         let receiver_fixture = LinkTestFixtureV2::new(creator_fixture.ctx.clone(), receiver).await;
@@ -115,14 +112,13 @@ async fn it_should_fail_receive_icp_token_airdrop_linkv2_if_requested_more_than_
 }
 
 #[tokio::test]
-async fn it_should_succeed_receive_icp_token_airdrop_linkv2() {
+async fn it_should_succeed_receive_icp_token_basket_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tokens = vec![ICP_TOKEN.to_string()];
         let amounts = vec![Nat::from(1_000_000u64)];
-        let max_use = 10;
         let (creator_fixture, create_link_result) =
-            activate_airdrop_link_v2_fixture(ctx, tokens, amounts.clone(), max_use).await;
+            activate_basket_link_v2_fixture(ctx, tokens, amounts.clone()).await;
 
         let receiver = TestUser::User2.get_principal();
         let receiver_fixture = LinkTestFixtureV2::new(creator_fixture.ctx.clone(), receiver).await;
@@ -132,7 +128,6 @@ async fn it_should_succeed_receive_icp_token_airdrop_linkv2() {
             subaccount: None,
         };
         let icp_ledger_client = ctx.new_icp_ledger_client(receiver);
-        let ledger_fee = icp_ledger_client.fee().await.unwrap();
 
         let icp_balance_before = icp_ledger_client
             .balance_of(&receiver_account)
@@ -192,8 +187,8 @@ async fn it_should_succeed_receive_icp_token_airdrop_linkv2() {
         let process_action_result = process_action_result.unwrap();
         let link_dto = process_action_result.link;
         assert_eq!(link_dto.link_use_action_counter, 1);
-        assert_eq!(link_dto.link_use_action_max_count, max_use);
-        assert_eq!(link_dto.state, LinkState::Active);
+        assert_eq!(link_dto.link_use_action_max_count, 1);
+        assert_eq!(link_dto.state, LinkState::InactiveEnded);
 
         let action_dto = process_action_result.action;
         assert_eq!(action_dto.state, ActionState::Success);
@@ -218,11 +213,7 @@ async fn it_should_succeed_receive_icp_token_airdrop_linkv2() {
         let link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
         assert_eq!(
             link_balance,
-            test_utils::calculate_amount_for_wallet_to_link_transfer(
-                amounts[0].clone(),
-                ledger_fee,
-                max_use - 1
-            ),
+            Nat::from(0u64),
             "Link balance should be equal to zero"
         );
 
@@ -249,14 +240,13 @@ async fn it_should_succeed_receive_icp_token_airdrop_linkv2() {
 }
 
 #[tokio::test]
-async fn it_should_succeed_receive_icrc_token_airdrop_linkv2() {
+async fn it_should_succeed_receive_icrc_token_basket_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tokens = vec![CKBTC_ICRC_TOKEN.to_string()];
         let amounts = vec![Nat::from(5_000_000u64)];
-        let max_use = 10;
         let (creator_fixture, create_link_result) =
-            activate_airdrop_link_v2_fixture(ctx, tokens.clone(), amounts.clone(), max_use).await;
+            activate_basket_link_v2_fixture(ctx, tokens.clone(), amounts.clone()).await;
 
         let receiver = TestUser::User2.get_principal();
         let receiver_fixture = LinkTestFixtureV2::new(creator_fixture.ctx.clone(), receiver).await;
@@ -266,7 +256,6 @@ async fn it_should_succeed_receive_icrc_token_airdrop_linkv2() {
             subaccount: None,
         };
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, receiver);
-        let ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
 
         let ckbtc_balance_before = ckbtc_ledger_client
             .balance_of(&receiver_account)
@@ -326,8 +315,8 @@ async fn it_should_succeed_receive_icrc_token_airdrop_linkv2() {
         let process_action_result = process_action_result.unwrap();
         let link_dto = process_action_result.link;
         assert_eq!(link_dto.link_use_action_counter, 1);
-        assert_eq!(link_dto.link_use_action_max_count, max_use);
-        assert_eq!(link_dto.state, LinkState::Active);
+        assert_eq!(link_dto.link_use_action_max_count, 1);
+        assert_eq!(link_dto.state, LinkState::InactiveEnded);
 
         let action_dto = process_action_result.action;
         assert_eq!(action_dto.state, ActionState::Success);
@@ -352,11 +341,7 @@ async fn it_should_succeed_receive_icrc_token_airdrop_linkv2() {
         let link_balance = ckbtc_ledger_client.balance_of(&link_account).await.unwrap();
         assert_eq!(
             link_balance,
-            test_utils::calculate_amount_for_wallet_to_link_transfer(
-                amounts[0].clone(),
-                ledger_fee,
-                max_use - 1
-            ),
+            Nat::from(0u64),
             "Link balance should be equal to zero"
         );
 
