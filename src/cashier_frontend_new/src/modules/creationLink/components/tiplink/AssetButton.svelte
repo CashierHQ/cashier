@@ -43,7 +43,6 @@
     token,
     onToggleUsd,
     canConvert = false,
-    tokenDecimals = 8,
     showPresetButtons = false,
     presetButtons = [],
     isDisabled = false,
@@ -96,14 +95,14 @@
 
     const char = e.key;
     const currentValue = localInputValue;
-    const hasDecimal = currentValue.includes(".");
+    const hasDecimal = currentValue.includes(".") || currentValue.includes(",");
 
-    if (!/[0-9]/.test(char) && char !== ".") {
+    if (!/[0-9]/.test(char) && char !== "." && char !== ",") {
       e.preventDefault();
       return;
     }
 
-    if (char === "." && hasDecimal) {
+    if ((char === "." || char === ",") && hasDecimal) {
       e.preventDefault();
       return;
     }
@@ -114,6 +113,7 @@
   );
 
   // Get max available balance with fee consideration
+  // This returns the maximum amount per use (without fee, but calculated considering fee)
   const maxBalanceWithFee = $derived.by(() => {
     if (!token || !walletTokens || walletTokens.length === 0) return maxBalance;
 
@@ -132,7 +132,13 @@
     }
 
     const maxAmountBigInt = maxAmountResult.unwrap();
-    return parseBalanceUnits(maxAmountBigInt, token.decimals);
+    const maxAmountPerUse = parseBalanceUnits(maxAmountBigInt, token.decimals);
+
+    // maxAmountForAsset already accounts for fee in calculation:
+    // maxAmount = (balance - fee * (1 + maxUse)) / maxUse
+    // This is the max amount per use WITHOUT fee, but calculated to ensure
+    // totalAmount = maxAmount * maxUse + fee * (1 + maxUse) <= balance
+    return maxAmountPerUse;
   });
 
   function handleInputChange(value: string) {
@@ -178,6 +184,16 @@
     const inputValue = parseFloat(localInputValue);
     if (isNaN(inputValue) || inputValue <= 0) return;
 
+    const hasInsufficientFunds =
+      !isFinite(maxBalanceWithFee) ||
+      maxBalanceWithFee <= 0 ||
+      maxBalance <= 0 ||
+      !isFinite(maxBalance);
+
+    if (hasInsufficientFunds) {
+      return;
+    }
+
     let exceedsBalance = false;
     let maxValue = 0;
     let maxValueStr = "";
@@ -189,19 +205,26 @@
         maxValueStr = maxUsdValue.toFixed(2).replace(/\.?0+$/, "");
       }
     } else {
-      // Use maxBalanceWithFee to account for transaction fees
       if (inputValue > maxBalanceWithFee) {
         exceedsBalance = true;
         maxValue = maxBalanceWithFee;
         maxValueStr = maxBalanceWithFee.toString();
+
+        // Calculate what the total would be with this maxBalanceWithFee
+        const feeHuman = parseBalanceUnits(token.fee, token.decimals);
+        const totalWithFee =
+          maxBalanceWithFee * maxUse + feeHuman * (1 + maxUse);
 
         console.log("Input exceeds balance with fee:", {
           inputValue,
           maxBalance: maxBalance,
           maxBalanceWithFee: maxBalanceWithFee,
           fee: token.fee,
-          feeHuman: parseBalanceUnits(token.fee, token.decimals),
+          feeHuman: feeHuman,
           maxUse: maxUse,
+          totalWithFee: totalWithFee,
+          balance: maxBalance,
+          expectedTotal: totalWithFee,
         });
       }
     }
@@ -329,7 +352,6 @@
           {isUsd}
           onToggle={onToggleUsd}
           {canConvert}
-          {tokenDecimals}
           usdDecimals={2}
         />
       {/if}

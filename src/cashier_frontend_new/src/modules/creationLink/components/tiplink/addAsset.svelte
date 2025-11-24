@@ -232,8 +232,39 @@
     isUsd = value;
   }
 
+  // Calculate max available token balance with fee consideration
+  const maxTokenBalance = $derived.by(() => {
+    if (!selectedToken || !walletStore.query.data) return 0;
+
+    const maxAmountResult = maxAmountForAsset(
+      selectedToken.address,
+      link.createLinkData.maxUse,
+      walletStore.query.data,
+    );
+
+    if (maxAmountResult.isErr()) {
+      // Fallback to balance without fee if calculation fails
+      return parseBalanceUnits(selectedToken.balance, decimals);
+    }
+
+    const maxAmountBigInt = maxAmountResult.unwrap();
+    return parseBalanceUnits(maxAmountBigInt, decimals);
+  });
+
+  // Check if max balance is sufficient (greater than 0 and finite)
+  const isMaxAvailable = $derived.by(() => {
+    return (
+      isFinite(maxTokenBalance) && maxTokenBalance > 0 && selectedToken !== null
+    );
+  });
+
   function handleMaxClick() {
     if (!selectedToken || !walletStore.query.data) return;
+
+    // Don't proceed if balance is insufficient for fees
+    if (!isMaxAvailable) {
+      return;
+    }
 
     // Calculate max amount with fee consideration
     const maxAmountResult = maxAmountForAsset(
@@ -250,6 +281,11 @@
 
     const maxAmountBigInt = maxAmountResult.unwrap();
     const maxTokenAmount = parseBalanceUnits(maxAmountBigInt, decimals);
+
+    // Double check that amount is valid
+    if (!isFinite(maxTokenAmount) || maxTokenAmount <= 0) {
+      return;
+    }
 
     localTokenAmount = maxTokenAmount.toString();
 
@@ -330,7 +366,10 @@
       {#if selectedToken}
         <button
           onclick={handleMaxClick}
-          class="ml-auto text-[#36A18B] text-[12px] font-medium cursor-pointer"
+          disabled={!isMaxAvailable}
+          class="ml-auto text-[12px] font-medium transition-colors {isMaxAvailable
+            ? 'text-[#36A18B] cursor-pointer hover:text-[#2d8a75]'
+            : 'text-gray-400 cursor-not-allowed'}"
         >
           {locale.t("links.linkForm.addAsset.max")}
         </button>
