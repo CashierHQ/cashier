@@ -14,14 +14,14 @@ use cashier_backend_types::{
 };
 use std::sync::Arc;
 
-pub struct BasketLinkV2Fixture {
+pub struct PaymentLinkV2Fixture {
     pub caller: Principal,
     pub tokens: Vec<String>,
     pub amounts: Vec<Nat>,
     pub link_fixture: LinkTestFixtureV2,
 }
 
-impl BasketLinkV2Fixture {
+impl PaymentLinkV2Fixture {
     pub async fn new(
         ctx: Arc<PocketIcTestContext>,
         caller: Principal,
@@ -38,19 +38,16 @@ impl BasketLinkV2Fixture {
         }
     }
 
-    /// This function creates an basket link v2.
+    /// This function creates an airdrop link v2.
     /// # Returns
-    /// * `CreateLinkDto` - The created basket link data
+    /// * `CreateLinkDto` - The created airdrop link data
     pub async fn create_link(&self) -> CreateLinkDto {
         self.link_fixture
-            .create_link_v2(
-                self.token_basket_link_input(self.tokens.clone(), self.amounts.clone())
-                    .unwrap(),
-            )
+            .create_link_v2(self.payment_link_input().unwrap())
             .await
     }
 
-    /// This function activates an basket link v2.
+    /// This function activates an airdrop link v2.
     /// # Returns
     /// * `ProcessActionDto` - The activated action data
     pub async fn activate_link(&mut self) -> ProcessActionDto {
@@ -71,45 +68,37 @@ impl BasketLinkV2Fixture {
         self.link_fixture.activate_link_v2(&link_id).await.unwrap()
     }
 
-    /// Creates the input for a token basket link.
-    ///
-    /// # Arguments
-    /// - `tokens`: A vector of token identifiers (e.g., ["ICP"])
-    /// - `amounts`: A vector of corresponding amounts (e.g., [100_000_000])
+    /// Creates the input for a receive payment link.
     ///
     /// # Returns
     /// - A `CreateLinkInput` struct containing the transformed asset_info vector.
     /// # Errors
     /// Returns an error if the tokens not found in the token map
-    pub fn token_basket_link_input(
-        &self,
-        tokens: Vec<String>,
-        amounts: Vec<Nat>,
-    ) -> Result<CreateLinkInput, String> {
-        if tokens.len() != amounts.len() {
+    pub fn payment_link_input(&self) -> Result<CreateLinkInput, String> {
+        if self.tokens.len() != self.amounts.len() {
             return Err(format!(
                 "Tokens and amounts must have the same length: {} vs {}",
-                tokens.len(),
-                amounts.len()
+                self.tokens.len(),
+                self.amounts.len()
             ));
         }
 
         let asset_info = self.link_fixture.asset_info_from_tokens_and_amount(
-            tokens,
-            amounts,
-            constant::INTENT_LABEL_SEND_TOKEN_BASKET_ASSET,
-            true,
+            self.tokens.clone(),
+            self.amounts.clone(),
+            constant::INTENT_LABEL_RECEIVE_PAYMENT_ASSET,
+            false,
         )?;
 
         Ok(CreateLinkInput {
-            title: "Test Token Basket Link".to_string(),
+            title: "Test Receive Payment Link".to_string(),
             link_use_action_max_count: 1,
             asset_info,
-            link_type: LinkType::SendTokenBasket,
+            link_type: LinkType::ReceivePayment,
         })
     }
 
-    /// This function is used to basket ICP and the specified asset to the caller.
+    /// This function is used to airdrop ICP and the specified asset to the caller.
     /// # Returns
     /// * `()` - No return value
     pub async fn airdrop_icp_and_asset(&mut self) {
@@ -131,23 +120,22 @@ impl BasketLinkV2Fixture {
     }
 }
 
-/// Creates a fixture for an basket link v2.
+/// Creates a fixture for an payment link v2.
 /// # Arguments
 /// * `ctx` - The Pocket IC test context
 /// * `creator` - The principal of the creator
 /// * `tokens` - A vector of token identifiers (e.g., ["ICP"])
 /// * `amounts` - A vector of corresponding amounts (e.g., [100_000_000])
-/// * `max_use_count` - The maximum use count for the link
 /// # Returns
 /// * `(LinkTestFixtureV2, GetLinkResp)` - The link test fixture and the GetLinkResp
-pub async fn create_basket_link_v2_fixture(
+pub async fn create_payment_link_v2_fixture(
     ctx: &PocketIcTestContext,
     creator: Principal,
     tokens: Vec<String>,
     amounts: Vec<Nat>,
 ) -> (LinkTestFixtureV2, CreateLinkDto) {
     let mut creator_fixture =
-        BasketLinkV2Fixture::new(Arc::new(ctx.clone()), creator, tokens, amounts).await;
+        PaymentLinkV2Fixture::new(Arc::new(ctx.clone()), creator, tokens, amounts).await;
 
     creator_fixture.airdrop_icp_and_asset().await;
 
@@ -155,22 +143,21 @@ pub async fn create_basket_link_v2_fixture(
     (creator_fixture.link_fixture, link_response)
 }
 
-/// Activate an basket link v2 fixture.
+/// Activate an payment link v2 fixture.
 /// # Arguments
 /// * `ctx` - The Pocket IC test context
 /// * `tokens` - A vector of token identifiers (e.g., ["ICP"])
 /// * `amounts` - A vector of corresponding amounts (e.g., [100_000_000])
-/// * `max_use_count` - The maximum use count for the link
 /// # Returns
 /// * `(LinkTestFixture, ProcessActionDto)` - The link test fixture and the ProcessActionDto
-pub async fn activate_basket_link_v2_fixture(
+pub async fn activate_payment_link_v2_fixture(
     ctx: &PocketIcTestContext,
     tokens: Vec<String>,
     amounts: Vec<Nat>,
 ) -> (LinkTestFixtureV2, ProcessActionDto) {
     let creator = TestUser::User1.get_principal();
     let mut creator_fixture =
-        BasketLinkV2Fixture::new(Arc::new(ctx.clone()), creator, tokens, amounts).await;
+        PaymentLinkV2Fixture::new(Arc::new(ctx.clone()), creator, tokens, amounts).await;
 
     let activate_link_result = creator_fixture.activate_link().await;
     (creator_fixture.link_fixture, activate_link_result)
