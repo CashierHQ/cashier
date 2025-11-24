@@ -1,0 +1,377 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
+use crate::cashier_backend::link_v2::receive_payment::fixture::activate_payment_link_v2_fixture;
+use crate::utils::principal::TestUser;
+use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
+use candid::Nat;
+use cashier_backend_types::constant::{CKBTC_ICRC_TOKEN, ICP_TOKEN};
+use cashier_backend_types::dto::action::CreateActionInput;
+use cashier_backend_types::error::CanisterError;
+use cashier_backend_types::link_v2::dto::ProcessActionV2Input;
+use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
+use cashier_backend_types::repository::common::Wallet;
+use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType};
+use cashier_backend_types::repository::link::v1::LinkState;
+use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
+use icrc_ledger_types::icrc1::account::Account;
+
+#[tokio::test]
+async fn it_should_withdraw_icp_token_payment_linkv2_error_if_link_active() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
+        let (test_fixture, create_link_result) =
+            activate_payment_link_v2_fixture(ctx, tokens, amounts).await;
+
+        // Act: create WITHDRAW action
+        let link_id = create_link_result.link.id.clone();
+        let create_action_input = CreateActionInput {
+            link_id: link_id.clone(),
+            action_type: ActionType::Withdraw,
+        };
+        let create_action_result = test_fixture
+            .link_fixture
+            .create_action_v2(create_action_input)
+            .await;
+
+        // Assert: action created successfully
+        assert!(create_action_result.is_err());
+        if let Err(CanisterError::ValidationErrors(msg)) = create_action_result {
+            assert!(
+                msg.contains("Unsupported action type for ActiveState"),
+                "Unexpected error message: {}",
+                msg
+            );
+        } else {
+            panic!(
+                "Expected CanisterError::ValidationErrors, got {:?}",
+                create_action_result
+            );
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_withdraw_icp_token_payment_linkv2_error_if_more_than_max_use() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
+        let (test_fixture, create_link_result) =
+            activate_payment_link_v2_fixture(ctx, tokens, amounts).await;
+
+        // Act: disable the link first to make it Inactive
+        let link_id = create_link_result.link.id.clone();
+        let _disable_link_result = test_fixture.link_fixture.disable_link_v2(&link_id).await;
+
+        // Act: create WITHDRAW action
+        let link_id = create_link_result.link.id.clone();
+        let create_action_input = CreateActionInput {
+            link_id: link_id.clone(),
+            action_type: ActionType::Withdraw,
+        };
+        let create_action_result = test_fixture
+            .link_fixture
+            .create_action_v2(create_action_input)
+            .await;
+
+        // Act: process WITHDRAW action
+        let action_dto = create_action_result.unwrap();
+        let action_id = action_dto.id.clone();
+        let process_action_input = ProcessActionV2Input {
+            action_id: action_id.clone(),
+        };
+        let _process_action_result = test_fixture
+            .link_fixture
+            .process_action_v2(process_action_input)
+            .await;
+
+        // Act: create WITHDRAW action again
+        let create_action_input = CreateActionInput {
+            link_id: link_id.clone(),
+            action_type: ActionType::Withdraw,
+        };
+        let create_action_result = test_fixture
+            .link_fixture
+            .create_action_v2(create_action_input)
+            .await;
+
+        // Assert: action creation failed
+        assert!(create_action_result.is_err());
+
+        if let Err(CanisterError::ValidationErrors(msg)) = create_action_result {
+            assert!(
+                msg.contains("Unsupported link state"),
+                "Unexpected error message: {}",
+                msg
+            );
+        } else {
+            panic!(
+                "Expected CanisterError::ValidationErrors, got {:?}",
+                create_action_result
+            );
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_withdraw_icp_token_payment_linkv2_successfully() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
+        let (test_fixture, create_link_result) =
+            activate_payment_link_v2_fixture(ctx, tokens, amounts).await;
+
+        let icp_ledger_client = ctx.new_icp_ledger_client(caller);
+        let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
+
+        let caller_account = Account {
+            owner: caller,
+            subaccount: None,
+        };
+        let icp_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
+        let link_id = create_link_result.link.id.clone();
+        let link_account = link_id_to_account(&test_fixture.link_fixture.ctx, &link_id);
+        let link_balance_before = icp_ledger_client.balance_of(&link_account).await.unwrap();
+        let withdraw_balance = if link_balance_before > icp_ledger_fee {
+            link_balance_before - icp_ledger_fee
+        } else {
+            Nat::from(0u64)
+        };
+
+        // Act: disable the link first to make it Inactive
+        let link_id = create_link_result.link.id.clone();
+        let disable_link_result = test_fixture.link_fixture.disable_link_v2(&link_id).await;
+
+        assert!(disable_link_result.is_ok());
+        let link_dto = disable_link_result.unwrap();
+        assert_eq!(link_dto.state, LinkState::Inactive);
+
+        // Act: create WITHDRAW action
+        let link_id = create_link_result.link.id.clone();
+        let create_action_input = CreateActionInput {
+            link_id: link_id.clone(),
+            action_type: ActionType::Withdraw,
+        };
+        let create_action_result = test_fixture
+            .link_fixture
+            .create_action_v2(create_action_input)
+            .await;
+
+        // Assert: action created successfully
+        assert!(create_action_result.is_ok());
+        let action_dto = create_action_result.unwrap();
+        let action_id = action_dto.id.clone();
+        assert!(!action_id.is_empty());
+        assert_eq!(action_dto.r#type, ActionType::Withdraw);
+        assert_eq!(action_dto.intents.len(), 1);
+
+        // Assert Intent 1: TransferLinkToWallet
+        let intent1 = &action_dto.intents[0];
+        assert_eq!(intent1.task, IntentTask::TransferLinkToWallet);
+        match intent1.r#type {
+            IntentType::Transfer(ref transfer) => {
+                assert_eq!(transfer.to, Wallet::new(caller));
+                assert_eq!(transfer.from, link_id_to_account(ctx, &link_id).into());
+                assert_eq!(
+                    transfer.amount, withdraw_balance,
+                    "Transfer amount incorrect"
+                );
+            }
+            _ => panic!("Expected Transfer intent type"),
+        }
+        assert_eq!(intent1.transactions.len(), 1);
+        let tx0 = &intent1.transactions[0];
+        match tx0.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(ref data)) => {
+                assert_eq!(data.to, Wallet::new(caller));
+                assert_eq!(data.from, link_id_to_account(ctx, &link_id).into());
+                assert_eq!(
+                    data.amount, withdraw_balance,
+                    "Icrc1Transfer amount incorrect"
+                );
+                assert!(data.memo.is_some());
+                assert!(data.ts.is_some());
+            }
+            _ => panic!("Expected Icrc1Transfer transaction"),
+        }
+
+        // Act: process WITHDRAW action
+        let process_action_input = ProcessActionV2Input {
+            action_id: action_id.clone(),
+        };
+        let process_action_result = test_fixture
+            .link_fixture
+            .process_action_v2(process_action_input)
+            .await;
+
+        // Assert: action processed successfully
+        assert!(process_action_result.is_ok());
+        let process_action_dto = process_action_result.unwrap();
+        let link_dto = process_action_dto.link;
+        assert_eq!(link_dto.state, LinkState::InactiveEnded);
+        let action_dto = process_action_dto.action;
+        assert_eq!(action_dto.state, ActionState::Success);
+
+        // Assert: creator balance increased
+        let icp_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
+        assert_eq!(
+            icp_balance_after,
+            icp_balance_before + withdraw_balance,
+            "Creator balance after withdraw should be increased by link balance"
+        );
+
+        // Assert: link balance is zero
+        let link_balance_after = icp_ledger_client.balance_of(&link_account).await.unwrap();
+        assert_eq!(
+            link_balance_after,
+            Nat::from(0u64),
+            "Link balance should be zero"
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_withdraw_icrc_token_payment_linkv2_successfully() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let caller = TestUser::User1.get_principal();
+        let tokens = vec![CKBTC_ICRC_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
+        let (test_fixture, create_link_result) =
+            activate_payment_link_v2_fixture(ctx, tokens, amounts).await;
+
+        let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
+        let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
+
+        let caller_account = Account {
+            owner: caller,
+            subaccount: None,
+        };
+        let ckbtc_balance_before = ckbtc_ledger_client
+            .balance_of(&caller_account)
+            .await
+            .unwrap();
+        let link_id = create_link_result.link.id.clone();
+        let link_account = link_id_to_account(&test_fixture.link_fixture.ctx, &link_id);
+        let link_balance_before = ckbtc_ledger_client.balance_of(&link_account).await.unwrap();
+        let withdraw_balance = if link_balance_before > ckbtc_ledger_fee {
+            link_balance_before - ckbtc_ledger_fee
+        } else {
+            Nat::from(0u64)
+        };
+
+        // Act: disable the link first to make it Inactive
+        let link_id = create_link_result.link.id.clone();
+        let disable_link_result = test_fixture.link_fixture.disable_link_v2(&link_id).await;
+
+        assert!(disable_link_result.is_ok());
+        let link_dto = disable_link_result.unwrap();
+        assert_eq!(link_dto.state, LinkState::Inactive);
+
+        // Act: create WITHDRAW action
+        let link_id = create_link_result.link.id.clone();
+        let create_action_input = CreateActionInput {
+            link_id: link_id.clone(),
+            action_type: ActionType::Withdraw,
+        };
+        let create_action_result = test_fixture
+            .link_fixture
+            .create_action_v2(create_action_input)
+            .await;
+
+        // Assert: action created successfully
+        assert!(create_action_result.is_ok());
+        let action_dto = create_action_result.unwrap();
+        let action_id = action_dto.id.clone();
+        assert!(!action_id.is_empty());
+        assert_eq!(action_dto.r#type, ActionType::Withdraw);
+        assert_eq!(action_dto.intents.len(), 1);
+
+        // Assert Intent 1: TransferLinkToWallet
+        let intent1 = &action_dto.intents[0];
+        assert_eq!(intent1.task, IntentTask::TransferLinkToWallet);
+        match intent1.r#type {
+            IntentType::Transfer(ref transfer) => {
+                assert_eq!(transfer.to, Wallet::new(caller));
+                assert_eq!(transfer.from, link_id_to_account(ctx, &link_id).into());
+                assert_eq!(
+                    transfer.amount, withdraw_balance,
+                    "Transfer amount incorrect"
+                );
+            }
+            _ => panic!("Expected Transfer intent type"),
+        }
+        assert_eq!(intent1.transactions.len(), 1);
+        let tx0 = &intent1.transactions[0];
+        match tx0.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(ref data)) => {
+                assert_eq!(data.to, Wallet::new(caller));
+                assert_eq!(data.from, link_id_to_account(ctx, &link_id).into());
+                assert_eq!(
+                    data.amount, withdraw_balance,
+                    "Icrc1Transfer amount incorrect"
+                );
+                assert!(data.memo.is_some());
+                assert!(data.ts.is_some());
+            }
+            _ => panic!("Expected Icrc1Transfer transaction"),
+        }
+
+        // Act: process WITHDRAW action
+        let process_action_input = ProcessActionV2Input {
+            action_id: action_id.clone(),
+        };
+        let process_action_result = test_fixture
+            .link_fixture
+            .process_action_v2(process_action_input)
+            .await;
+
+        // Assert: action processed successfully
+        assert!(process_action_result.is_ok());
+        let process_action_dto = process_action_result.unwrap();
+        let link_dto = process_action_dto.link;
+        assert_eq!(link_dto.state, LinkState::InactiveEnded);
+        let action_dto = process_action_dto.action;
+        assert_eq!(action_dto.state, ActionState::Success);
+
+        // Assert: creator balance increased
+        let ckbtc_balance_after = ckbtc_ledger_client
+            .balance_of(&caller_account)
+            .await
+            .unwrap();
+        assert_eq!(
+            ckbtc_balance_after,
+            ckbtc_balance_before + withdraw_balance,
+            "Creator balance after withdraw should be increased by link balance"
+        );
+
+        // Assert: link balance is zero
+        let link_balance_after = ckbtc_ledger_client.balance_of(&link_account).await.unwrap();
+        assert_eq!(
+            link_balance_after,
+            Nat::from(0u64),
+            "Link balance should be zero"
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}

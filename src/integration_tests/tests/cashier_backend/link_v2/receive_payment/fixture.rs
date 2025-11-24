@@ -154,13 +154,13 @@ pub async fn activate_payment_link_v2_fixture(
     ctx: &PocketIcTestContext,
     tokens: Vec<String>,
     amounts: Vec<Nat>,
-) -> (LinkTestFixtureV2, ProcessActionDto) {
+) -> (PaymentLinkV2Fixture, ProcessActionDto) {
     let creator = TestUser::User1.get_principal();
     let mut creator_fixture =
         PaymentLinkV2Fixture::new(Arc::new(ctx.clone()), creator, tokens, amounts).await;
 
     let activate_link_result = creator_fixture.activate_link().await;
-    (creator_fixture.link_fixture, activate_link_result)
+    (creator_fixture, activate_link_result)
 }
 
 /// Send payment via link v2 fixture.
@@ -192,7 +192,7 @@ pub async fn send_payment_link_v2_fixture(
     };
     let create_action_result = caller_fixture.create_action_v2(create_action_input).await;
 
-    // Execute ICRC112 requests (simulate FE behavior)
+    // Execute ICRC112 requests
     let create_action_result = create_action_result.unwrap();
     let icrc_112_requests = create_action_result.icrc_112_requests.unwrap();
     let _icrc112_execution_result =
