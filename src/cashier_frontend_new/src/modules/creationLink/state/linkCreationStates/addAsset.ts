@@ -3,6 +3,7 @@ import type { LinkCreationState } from ".";
 import type { LinkCreationStore } from "../linkCreationStore.svelte";
 import { ChooseLinkTypeState } from "./chooseLinkType";
 import { PreviewState } from "./preview";
+import { locale } from "$lib/i18n";
 
 // State when the user is adding asset details for the tip link
 export class AddAssetState implements LinkCreationState {
@@ -19,16 +20,22 @@ export class AddAssetState implements LinkCreationState {
       !this.#link.createLinkData.assets ||
       this.#link.createLinkData.assets?.length === 0
     ) {
-      throw new Error("Asset is required to proceed");
+      throw new Error(locale.t("links.linkForm.addAsset.errors.assetRequired"));
     }
     if (this.#link.createLinkData.assets.length > 1) {
-      throw new Error("Only one asset is supported for tip links");
+      throw new Error(
+        locale.t("links.linkForm.addAsset.errors.onlyOneAssetSupported"),
+      );
     }
     if (this.#link.createLinkData.assets[0].address.trim() === "") {
-      throw new Error("Address is required to proceed");
+      throw new Error(
+        locale.t("links.linkForm.addAsset.errors.addressRequired"),
+      );
     }
     if (this.#link.createLinkData.assets[0].useAmount <= 0n) {
-      throw new Error("Amount must be greater than zero to proceed");
+      throw new Error(
+        locale.t("links.linkForm.addAsset.errors.amountMustBeGreaterThanZero"),
+      );
     }
 
     this.#link.state = new PreviewState(this.#link);

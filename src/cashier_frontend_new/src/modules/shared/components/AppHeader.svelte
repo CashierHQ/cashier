@@ -25,14 +25,21 @@
   const currentPath = $derived.by(() => page.url.pathname);
 
   // Get display name for mobile header
-  const displayName = $derived(
-    linkName ||
-      (isCreateOrEditPage
-        ? currentPath?.startsWith("/link/create")
-          ? locale.t("links.linkForm.header.linkName")
-          : locale.t("links.linkForm.header.editLink")
-        : ""),
-  );
+  const displayName = $derived.by(() => {
+    if (linkName) return linkName;
+
+    // Then check if headerName is set in store
+    const storeHeaderName = appHeaderStore.getHeaderName();
+    if (storeHeaderName) return storeHeaderName;
+
+    if (!isCreateOrEditPage) return "";
+
+    if (currentPath?.startsWith("/link/create")) {
+      return locale.t("links.linkForm.header.linkName");
+    }
+
+    return locale.t("links.linkForm.header.editLink");
+  });
 
   // Handle back button for mobile
   async function handleMobileBack() {
