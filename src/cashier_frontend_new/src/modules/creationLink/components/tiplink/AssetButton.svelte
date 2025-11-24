@@ -329,7 +329,6 @@
           {isUsd}
           onToggle={onToggleUsd}
           {canConvert}
-          {tokenDecimals}
           usdDecimals={2}
         />
       {/if}

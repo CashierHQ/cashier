@@ -1,4 +1,3 @@
-import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import tailwindcss from "@tailwindcss/vite";
 import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig } from "vite";
@@ -13,14 +12,7 @@ process.env.VITE_DEV_BUILD_APP_VERSION = packageConfig.version;
 process.env.VITE_DEV_BUILD_TIMESTAMP = new Date().toISOString();
 
 export default defineConfig({
-  plugins: [
-    tailwindcss(),
-    sveltekit(),
-    paraglideVitePlugin({
-      project: "./project.inlang",
-      outdir: "./src/lib/paraglide",
-    }),
-  ],
+  plugins: [tailwindcss(), sveltekit()],
   optimizeDeps: {
     esbuildOptions: {
       define: {
