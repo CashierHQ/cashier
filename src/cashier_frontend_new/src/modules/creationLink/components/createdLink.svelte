@@ -4,6 +4,7 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import type { ProcessActionResult } from "$modules/links/types/action/action";
+  import { ActionState } from '$modules/links/types/action/actionState';
   import { LinkState } from "$modules/links/types/link/linkState";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import { onMount } from "svelte";
@@ -19,14 +20,14 @@
   let linkDetailStore = $state<LinkDetailStore | null>(null);
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
-  let isOpenTxCart = $state(!!link.action);
+  let showTxCart: boolean = $state(false);
 
-  async function onClickCreate() {
-    isOpenTxCart = true;
+  function onClickCreate() {
+    showTxCart = true;
   }
 
-  async function onCloseTxCart() {
-    isOpenTxCart = false;
+  function onCloseDrawer() {
+    showTxCart = false;
   }
 
   async function handleProcessAction(): Promise<ProcessActionResult> {
@@ -52,6 +53,10 @@
     if (link.id) {
       linkDetailStore = new LinkDetailStore({ id: link.id });
     }
+
+    if (link.action && link.action.state !== ActionState.SUCCESS) {
+      showTxCart = true;
+    }
   });
 </script>
 
@@ -60,13 +65,13 @@
   <LinkDetails {link} {errorMessage} {successMessage} />
 
   <Button onclick={onClickCreate}>Create</Button>
-
-  {#if link.link && link.action && isOpenTxCart}
-    <TxCart
-      isOpen={isOpenTxCart}
-      action={link.action}
-      onCloseDrawer={onCloseTxCart}
-      {handleProcessAction}
-    />
-  {/if}
 </div>
+
+{#if showTxCart && linkDetailStore && linkDetailStore.action}
+  <TxCart
+    isOpen={showTxCart}
+    action={linkDetailStore.action}
+    {onCloseDrawer}
+    {handleProcessAction}
+  />
+{/if}
