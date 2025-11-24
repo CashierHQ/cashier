@@ -6,8 +6,8 @@
   import { getHeadingFromActionType } from "$modules/links/utils/txCart";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
-    feeService,
-    type AssetAndFee,
+      feeService,
+      type AssetAndFee,
   } from "$modules/transactionCart/services/feeService";
   import { onMount } from "svelte";
   import { TransactionCartStore } from "../state/txCartStore.svelte";
@@ -67,6 +67,8 @@
 
     try {
       const processActionResult = await txCartStore.processAction();
+      console.log("Process action result:", processActionResult);
+
       if (processActionResult.isSuccess) {
         successMessage = "Process action completed successfully.";
         onCloseDrawer?.();
