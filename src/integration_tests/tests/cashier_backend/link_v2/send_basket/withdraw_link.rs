@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link_v2::send_airdrop::fixture::activate_airdrop_link_v2_fixture;
+use crate::cashier_backend::link_v2::send_basket::fixture::activate_basket_link_v2_fixture;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
@@ -17,14 +17,13 @@ use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol
 use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]
-async fn it_should_withdraw_icp_token_airdrop_linkv2_error_if_link_active() {
+async fn it_should_withdraw_icp_token_basket_linkv2_error_if_link_active() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tokens = vec![ICP_TOKEN.to_string()];
         let amounts = vec![Nat::from(1_000_000u64)];
-        let max_use = 10;
         let (test_fixture, create_link_result) =
-            activate_airdrop_link_v2_fixture(ctx, tokens, amounts, max_use).await;
+            activate_basket_link_v2_fixture(ctx, tokens, amounts).await;
 
         // Act: create WITHDRAW action
         let link_id = create_link_result.link.id.clone();
@@ -56,14 +55,13 @@ async fn it_should_withdraw_icp_token_airdrop_linkv2_error_if_link_active() {
 }
 
 #[tokio::test]
-async fn it_should_withdraw_icp_token_airdrop_linkv2_error_if_more_than_max_use() {
+async fn it_should_withdraw_icp_token_basket_linkv2_error_if_more_than_max_use() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tokens = vec![ICP_TOKEN.to_string()];
         let amounts = vec![Nat::from(1_000_000u64)];
-        let max_use = 1;
         let (test_fixture, create_link_result) =
-            activate_airdrop_link_v2_fixture(ctx, tokens, amounts, max_use).await;
+            activate_basket_link_v2_fixture(ctx, tokens, amounts).await;
 
         // Act: disable the link first to make it Inactive
         let link_id = create_link_result.link.id.clone();
@@ -115,15 +113,14 @@ async fn it_should_withdraw_icp_token_airdrop_linkv2_error_if_more_than_max_use(
 }
 
 #[tokio::test]
-async fn it_should_withdraw_icp_token_airdrop_linkv2_successfully() {
+async fn it_should_withdraw_icp_token_basket_linkv2_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
         let tokens = vec![ICP_TOKEN.to_string()];
         let amounts = vec![Nat::from(1_000_000u64)];
-        let max_use = 10;
         let (test_fixture, create_link_result) =
-            activate_airdrop_link_v2_fixture(ctx, tokens, amounts, max_use).await;
+            activate_basket_link_v2_fixture(ctx, tokens, amounts).await;
 
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
@@ -233,15 +230,14 @@ async fn it_should_withdraw_icp_token_airdrop_linkv2_successfully() {
 }
 
 #[tokio::test]
-async fn it_should_withdraw_icrc_token_airdrop_linkv2_successfully() {
+async fn it_should_withdraw_icrc_token_basket_linkv2_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
         let tokens = vec![CKBTC_ICRC_TOKEN.to_string()];
         let amounts = vec![Nat::from(1_000_000u64)];
-        let max_use = 10;
         let (test_fixture, create_link_result) =
-            activate_airdrop_link_v2_fixture(ctx, tokens, amounts, max_use).await;
+            activate_basket_link_v2_fixture(ctx, tokens, amounts).await;
 
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
         let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
