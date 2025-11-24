@@ -4,7 +4,7 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import type { ProcessActionResult } from "$modules/links/types/action/action";
-  import { ActionState } from '$modules/links/types/action/actionState';
+  import { ActionState } from "$modules/links/types/action/actionState";
   import { LinkState } from "$modules/links/types/link/linkState";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import { onMount } from "svelte";

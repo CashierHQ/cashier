@@ -7,7 +7,7 @@
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
-  import { LinkDetailStore } from '../state/linkDetailStore.svelte';
+  import { LinkDetailStore } from "../state/linkDetailStore.svelte";
 
   //let { linkStore }: { linkStore: LinkDetailStore } = $props();
   let { id }: { id: string } = $props();
@@ -70,10 +70,14 @@
 
   async function handleProcessAction(): Promise<ProcessActionResult> {
     return await linkStore.processAction();
-  };
+  }
 
   $effect(() => {
-    if (linkStore && linkStore.action && linkStore.action.state !== ActionState.SUCCESS) {
+    if (
+      linkStore &&
+      linkStore.action &&
+      linkStore.action.state !== ActionState.SUCCESS
+    ) {
       showTxCart = true;
     }
   });
