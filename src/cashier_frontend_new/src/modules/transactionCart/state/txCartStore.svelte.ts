@@ -19,7 +19,9 @@ export class TransactionCartStore {
     this.#handleProcessAction = handleProcessAction;
   }
 
-  // Initialize the ICRC-112 service with the current signer
+  /**
+   * Initializes the ICRC-112 service with current signer.
+   */
   initialize() {
     const signer = authState.getSigner() as Signer<IITransport> | null;
     if (signer) {
@@ -27,6 +29,11 @@ export class TransactionCartStore {
     }
   }
 
+  /**
+   * Process the action, including executing any ICRC-112 requests if present.
+   * @returns Promise resolving to ProcessActionResult
+   * @throws Error if user is not authenticated or ICRC-112 service is not initialized.
+   */
   async processAction(): Promise<ProcessActionResult> {
     if (!authState.account?.owner) {
       throw new Error("User is not authenticated.");
