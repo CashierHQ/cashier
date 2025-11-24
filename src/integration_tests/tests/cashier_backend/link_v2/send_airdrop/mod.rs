@@ -5,3 +5,5 @@ pub mod activate_link;
 pub mod create_link;
 pub mod disable_link;
 pub mod fixture;
+pub mod get_link_details;
+pub mod get_links;
