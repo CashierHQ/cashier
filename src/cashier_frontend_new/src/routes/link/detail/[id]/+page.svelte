@@ -37,6 +37,6 @@
   <div>Loading...</div>
 {:else}
   <DetailFlowProtected linkStore={linkDetailStore}>
-    <DetailLink { id }/>
+    <DetailLink {id} />
   </DetailFlowProtected>
 {/if}
