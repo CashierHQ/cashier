@@ -14,6 +14,7 @@
   };
 
   type Props = {
+    handleClick?: () => void;
     text: string;
     tokenValue?: string;
     usdValue?: string;
@@ -22,7 +23,6 @@
     token?: TokenWithPriceAndBalance | null;
     onToggleUsd?: (value: boolean) => void;
     canConvert?: boolean;
-    tokenDecimals?: number;
     showPresetButtons?: boolean;
     presetButtons?: PresetButton[];
     isDisabled?: boolean;
