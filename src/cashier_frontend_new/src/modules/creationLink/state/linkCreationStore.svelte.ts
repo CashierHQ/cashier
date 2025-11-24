@@ -108,7 +108,7 @@ export class LinkCreationStore {
         initialState = new PreviewState(this);
         break;
       case LinkState.CREATE_LINK:
-        initialState = new LinkCreatedState(this);
+        initialState = new LinkCreatedState();
         break;
       default:
         initialState = new ChooseLinkTypeState(this);
@@ -173,7 +173,7 @@ export class LinkCreationStore {
       case LinkStep.INACTIVE:
       case LinkStep.ENDED:
         throw new Error(
-          "LinkCreationStore cannot transition to INACTIVE, or ENDED",
+          "LinkCreationStore cannot transition to ACTIVE, INACTIVE or ENDED",
         );
       default:
         assertUnreachable(this.#state.step);

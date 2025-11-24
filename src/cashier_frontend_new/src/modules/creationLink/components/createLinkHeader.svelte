@@ -6,8 +6,10 @@
 
   const {
     link,
+    onBack,
   }: {
     link: LinkCreationStore;
+    onBack: () => Promise<void>;
   } = $props();
 
   const progress = $derived.by(() => {
@@ -18,10 +20,16 @@
     return 0;
   });
 
-  const linkName = $derived(
-    link.createLinkData.title.trim() ||
-      locale.t("links.linkForm.header.linkName"),
-  );
+  const linkName = $derived.by(() => {
+    const step = link?.state?.step;
+    if (step === LinkStep.ADD_ASSET) {
+      return locale.t("links.linkForm.header.addAssets");
+    }
+    return (
+      link.createLinkData.title.trim() ||
+      locale.t("links.linkForm.header.linkName")
+    );
+  });
 </script>
 
 <div class="w-full flex-none mb-2">
@@ -34,7 +42,7 @@
       {linkName}
     </h4>
     <button
-      onclick={async () => await link.goBack()}
+      onclick={onBack}
       class="absolute left-0 cursor-pointer text-[1.5rem] transition-transform hover:scale-105"
       type="button"
       aria-label={locale.t("links.linkForm.header.back")}

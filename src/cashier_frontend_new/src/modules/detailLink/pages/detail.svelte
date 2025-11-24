@@ -1,129 +1,95 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import LinkInfoSection from "$modules/detailLink/components/linkInfoSection.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
-  import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import type { ProcessActionResult } from "$modules/links/types/action/action";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
-  import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
-  import { ChevronLeft } from "lucide-svelte";
-  import { onMount } from "svelte";
+  import { LinkDetailStore } from "../state/linkDetailStore.svelte";
 
+  //let { linkStore }: { linkStore: LinkDetailStore } = $props();
   let { id }: { id: string } = $props();
 
+  let linkStore = new LinkDetailStore({ id });
+
   let showCopied: boolean = $state(false);
-  let showTxCart: boolean = $state(false);
-  let linkDetail = new LinkDetailStore({ id });
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
+  let showTxCart: boolean = $state(false);
 
-  $effect(() => {
-    if (linkDetail) {
-      showTxCart = shouldShowTxCart();
-    }
-  });
-
-  function shouldShowTxCart(): boolean {
-    return !!(
-      linkDetail.action && linkDetail.action.state !== ActionState.SUCCESS
-    );
-  }
-
-  const copyLink = async () => {
+  async function copyLink() {
     try {
-      const linkUrl = `${window.location.origin}/link/${id}`;
+      const linkUrl = `${window.location.origin}/link/${linkStore.link?.id}`;
       await navigator.clipboard.writeText(linkUrl);
       showCopied = true;
       setTimeout(() => (showCopied = false), 1500);
     } catch (err) {
       console.error("copy failed", err);
     }
-  };
+  }
 
-  const endLink = async () => {
+  async function endLink() {
     errorMessage = null;
     successMessage = null;
 
     try {
-      if (!linkDetail.link) throw new Error("Link is missing");
-      await linkDetail.disableLink();
+      if (!linkStore.link) throw new Error("Link is missing");
+      await linkStore.disableLink();
       successMessage = "Link ended successfully.";
     } catch (err) {
       errorMessage =
         "Failed to end link." + (err instanceof Error ? err.message : "");
     }
-  };
+  }
 
-  const onCloseDrawer = () => {
+  function onCloseDrawer() {
     showTxCart = false;
-  };
+  }
 
-  const openDrawer = () => {
+  function openDrawer() {
     showTxCart = true;
-  };
+  }
 
-  const handleBack = async () => {
-    goto(resolve("/links"));
-  };
-
-  const createWithdrawAction = async () => {
+  async function createWithdrawAction() {
     errorMessage = null;
 
     try {
-      if (!linkDetail.link) {
+      if (!linkStore.link) {
         throw new Error("Link is missing");
       }
 
-      await linkDetail.createAction(ActionType.WITHDRAW);
+      await linkStore.createAction(ActionType.WITHDRAW);
     } catch (err) {
       errorMessage =
         "Failed to create withdraw action." +
         (err instanceof Error ? err.message : "");
     }
-  };
+  }
 
-  const handleProcessAction = async (): Promise<ProcessActionResult> => {
-    return await linkDetail.processAction();
-  };
+  async function handleProcessAction(): Promise<ProcessActionResult> {
+    return await linkStore.processAction();
+  }
 
-  onMount(() => {
-    appHeaderStore.setBackHandler(handleBack);
-
-    // Cleanup back handler on unmount
-    return () => {
-      appHeaderStore.clearBackHandler();
-    };
+  $effect(() => {
+    if (
+      linkStore &&
+      linkStore.action &&
+      linkStore.action.state !== ActionState.SUCCESS
+    ) {
+      showTxCart = true;
+    }
   });
 </script>
 
-{#if linkDetail.query.isLoading}
+{#if linkStore.query.isLoading}
   Loading...
-{:else if !linkDetail.link}
-  Link not found
-{:else if linkDetail.query.data && linkDetail.link}
-  <div class="px-4 py-4">
-    <div class="flex items-center gap-3 mb-4">
-      <Button
-        variant="outline"
-        onclick={handleBack}
-        class="p-2 cursor-pointer w-8 h-8 flex items-center justify-center "
-      >
-        <ChevronLeft />
-      </Button>
-
-      <h3 class="text-lg font-semibold flex-1 text-center">
-        {linkDetail.link.title}
-      </h3>
-
-      <!-- placeholder to keep title centered (matches back button width) -->
-      <div class="w-8 h-8" aria-hidden="true"></div>
-    </div>
-
+{:else if !linkStore.link}
+  <!-- `DetailFlowProtected` will redirect to /links when link is missing. Show a fallback while redirect occurs. -->
+  Loading...
+{:else if linkStore.query.data && linkStore.link}
+  <div>
     {#if errorMessage}
       <div
         class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
@@ -140,13 +106,13 @@
       </div>
     {/if}
 
-    {#if linkDetail.link}
-      <LinkInfoSection link={linkDetail.link} />
-      <UsageInfoSection link={linkDetail.link} />
+    {#if linkStore.link}
+      <LinkInfoSection link={linkStore.link} />
+      <UsageInfoSection link={linkStore.link} />
     {/if}
 
     <div class="mb-20">
-      {#if linkDetail.link.state === LinkState.ACTIVE}
+      {#if linkStore.link.state === LinkState.ACTIVE}
         <Button
           variant="outline"
           onclick={endLink}
@@ -162,7 +128,7 @@
           {showCopied ? "Copied" : "Copy link"}
         </Button>
       {/if}
-      {#if linkDetail.link.state === LinkState.INACTIVE}
+      {#if linkStore.link.state === LinkState.INACTIVE}
         <Button
           variant="outline"
           onclick={createWithdrawAction}
@@ -171,7 +137,7 @@
           Withdraw
         </Button>
       {/if}
-      {#if linkDetail.link.state === LinkState.CREATE_LINK}
+      {#if linkStore.link.state === LinkState.CREATE_LINK}
         <Button
           variant="outline"
           onclick={openDrawer}
@@ -184,10 +150,10 @@
   </div>
 {/if}
 
-{#if showTxCart && linkDetail.link && linkDetail.action}
+{#if showTxCart && linkStore.action}
   <TxCart
     isOpen={showTxCart}
-    action={linkDetail.action}
+    action={linkStore.action}
     {onCloseDrawer}
     {handleProcessAction}
   />

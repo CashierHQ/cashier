@@ -4,7 +4,7 @@ import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig } from "vite";
 import packageConfig from "./package.json";
 import * as child from "child_process";
-
+import { svelteTesting } from "@testing-library/svelte/vite";
 // Get commit hash
 const commitHash = child.execSync("git rev-parse --short HEAD").toString();
 
@@ -29,6 +29,7 @@ export default defineConfig({
     },
   },
   test: {
+    setupFiles: ["./vitest-setup.js"],
     expect: { requireAssertions: true },
     projects: [
       {
@@ -38,6 +39,15 @@ export default defineConfig({
           environment: "node",
           include: ["src/**/*.{test,spec,jsdom.spec}.{js,ts}"],
           exclude: ["src/**/*.svelte.{test,spec}.{js,ts}"],
+        },
+      },
+      {
+        plugins: [svelteTesting()],
+        extends: "./vite.config.ts",
+        test: {
+          name: "jsdom",
+          environment: "jsdom",
+          include: ["src/**/*.svelte.{test,spec}.{js,ts}"],
         },
       },
     ],
