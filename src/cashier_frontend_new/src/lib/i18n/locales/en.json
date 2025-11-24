@@ -92,6 +92,7 @@
         "back": "Back",
         "chooseType": "Choose Type",
         "asset": "Asset",
+        "addAssets": "Add assets",
         "preview": "Preview"
       },
       "chooseType": {
@@ -127,6 +128,34 @@
           "claimButton": "Claim",
           "payButton": "Pay"
         }
+      },
+      "addAsset": {
+        "asset": "Asset",
+        "max": "Max",
+        "chooseAsset": "Choose Asset",
+        "selectAsset": "Select Asset",
+        "searchAssets": "Search assets",
+        "yourAssets": "Your assets",
+        "noTokensFound": "No tokens found.",
+        "noTokensMatchingSearch": "No tokens found matching your search.",
+        "loadingTokens": "Loading tokens…",
+        "error": "Error",
+        "balance": "Balance",
+        "price": "Price",
+        "priceUnavailable": "Price unavailable",
+        "refreshBalanceAndPrices": "Refresh balance and prices",
+        "failedToRefresh": "Failed to refresh data",
+        "maxBalanceExceeded": "Maximum available balance is {{max}} {{symbol}}. Amount adjusted to maximum.",
+        "errors": {
+          "assetRequired": "Asset is required to proceed",
+          "onlyOneAssetSupported": "Only one asset is supported for tip links",
+          "addressRequired": "Address is required to proceed",
+          "amountMustBeGreaterThanZero": "Amount must be greater than zero to proceed",
+          "insufficientBalance": "Cannot create link: Need {{required}} {{tokenSymbol}}, but only have {{available}}."
+        },
+        "noPriceAvailable": "No price available",
+        "switchToTokenAmount": "Switch to token amount",
+        "switchToUsdAmount": "Switch to USD amount"
       }
     }
   }

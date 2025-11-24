@@ -15,7 +15,7 @@
   const { onClick, link }: Props = $props();
 </script>
 
-<button onclick={onClick} class="block w-full text-left">
+<button onclick={onClick} class="block w-full text-left cursor-pointer">
   <div class="w-full flex justify-between items-center my-3">
     <div class="flex gap-x-5 items-center">
       <div

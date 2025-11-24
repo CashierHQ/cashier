@@ -68,8 +68,13 @@ class WalletStore {
 
       // Refresh wallet tokens when token prices are updated
       $effect(() => {
-        console.log("Token prices updated, refreshing wallet tokens...");
-        this.#walletTokensQuery.refresh();
+        // Read tokenPriceStore.query.data to create reactive dependency
+        // This ensures the effect runs when prices are updated
+        const prices = tokenPriceStore.query.data;
+        if (prices) {
+          console.log("Token prices updated, refreshing wallet tokens...");
+          this.#walletTokensQuery.refresh();
+        }
       });
     });
   }
