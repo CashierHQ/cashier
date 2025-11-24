@@ -2,33 +2,24 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import LinkInfoSection from "$modules/detailLink/components/linkInfoSection.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
-  import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import type { ProcessActionResult } from "$modules/links/types/action/action";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
+  import { LinkDetailStore } from '../state/linkDetailStore.svelte';
 
-  let { linkStore }: { linkStore: LinkDetailStore } = $props();
+  //let { linkStore }: { linkStore: LinkDetailStore } = $props();
+  let { id }: { id: string } = $props();
+
+  let linkStore = new LinkDetailStore({ id });
 
   let showCopied: boolean = $state(false);
-  let showTxCart: boolean = $state(false);
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
+  let showTxCart: boolean = $state(false);
 
-  $effect(() => {
-    if (linkStore) {
-      showTxCart = shouldShowTxCart();
-    }
-  });
-
-  function shouldShowTxCart(): boolean {
-    return !!(
-      linkStore.action && linkStore.action.state !== ActionState.SUCCESS
-    );
-  }
-
-  const copyLink = async () => {
+  async function copyLink() {
     try {
       const linkUrl = `${window.location.origin}/link/${linkStore.link?.id}`;
       await navigator.clipboard.writeText(linkUrl);
@@ -37,9 +28,9 @@
     } catch (err) {
       console.error("copy failed", err);
     }
-  };
+  }
 
-  const endLink = async () => {
+  async function endLink() {
     errorMessage = null;
     successMessage = null;
 
@@ -51,17 +42,17 @@
       errorMessage =
         "Failed to end link." + (err instanceof Error ? err.message : "");
     }
-  };
+  }
 
-  const onCloseDrawer = () => {
+  function onCloseDrawer() {
     showTxCart = false;
-  };
+  }
 
-  const openDrawer = () => {
+  function openDrawer() {
     showTxCart = true;
-  };
+  }
 
-  const createWithdrawAction = async () => {
+  async function createWithdrawAction() {
     errorMessage = null;
 
     try {
@@ -75,11 +66,17 @@
         "Failed to create withdraw action." +
         (err instanceof Error ? err.message : "");
     }
-  };
+  }
 
-  const handleProcessAction = async (): Promise<ProcessActionResult> => {
+  async function handleProcessAction(): Promise<ProcessActionResult> {
     return await linkStore.processAction();
   };
+
+  $effect(() => {
+    if (linkStore && linkStore.action && linkStore.action.state !== ActionState.SUCCESS) {
+      showTxCart = true;
+    }
+  });
 </script>
 
 {#if linkStore.query.isLoading}
@@ -149,7 +146,7 @@
   </div>
 {/if}
 
-{#if showTxCart && linkStore.link && linkStore.action}
+{#if showTxCart && linkStore.action}
   <TxCart
     isOpen={showTxCart}
     action={linkStore.action}

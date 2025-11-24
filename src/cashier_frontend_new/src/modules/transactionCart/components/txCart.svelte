@@ -24,7 +24,7 @@
   }: {
     action: Action;
     isOpen: boolean;
-    onCloseDrawer?: () => void;
+    onCloseDrawer: () => void;
     handleProcessAction: () => Promise<ProcessActionResult>;
   } = $props();
 
@@ -59,7 +59,9 @@
   let assetTitle = $derived.by(() => getHeadingFromActionType(action.type));
   let showFeeBreakdown = $state(false);
 
-  // Confirm and process the action
+  /**
+   * Handle confirm button click.
+   */
   async function handleConfirm() {
     isProcessing = true;
     errorMessage = null;
@@ -67,8 +69,6 @@
 
     try {
       const processActionResult = await txCartStore.processAction();
-      console.log("Process action result:", processActionResult);
-
       if (processActionResult.isSuccess) {
         successMessage = "Process action completed successfully.";
         onCloseDrawer?.();
@@ -82,13 +82,26 @@
     }
   }
 
+  /**
+   * Handle drawer open state changes.
+   * @param open
+   */
+  function handleOpenChange(open: boolean) {
+    if (!open) {
+      onCloseDrawer();
+    }
+  }
+
+  /** 
+   * Initialize the txCartStore on mount.
+   */
   onMount(() => {
     txCartStore.initialize();
   });
 </script>
 
 {#if action}
-  <Drawer.Root bind:open={isOpen}>
+  <Drawer.Root bind:open={isOpen} onOpenChange={handleOpenChange}>
     <Drawer.Content class="w-full lg:w-1/3">
       <Drawer.Header class="relative">
         <div>
