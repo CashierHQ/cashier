@@ -32,18 +32,23 @@ impl SendAction {
         Self { action, intents }
     }
 
-    /// Creates a new CreateAction for a given Link.
+    /// Creates a new SendAction for a given Link.
     /// # Arguments
     /// * `link` - The Link for which the action is created.
+    /// * `sender_id` - The Principal ID of the caller.
     /// * `canister_id` - The canister ID of the token contract.
     /// # Returns
-    /// * `Result<CreateAction, CanisterError>` - The resulting action or an error if the creation fails.
-    pub async fn create(link: &Link, canister_id: Principal) -> Result<Self, CanisterError> {
+    /// * `Result<SendAction, CanisterError>` - The resulting action or an error if the creation fails.
+    pub async fn create(
+        link: &Link,
+        sender_id: Principal,
+        canister_id: Principal,
+    ) -> Result<Self, CanisterError> {
         let action = Action {
             id: Uuid::new_v4().to_string(),
             r#type: ActionType::Send,
             link_id: link.id.clone(),
-            creator: link.creator,
+            creator: sender_id,
             state: ActionState::Created,
         };
 
@@ -77,7 +82,7 @@ impl SendAction {
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                     asset_info.asset.clone(),
                     sending_amount.clone(),
-                    link.creator,
+                    sender_id,
                     link_account,
                     link.create_at,
                 )

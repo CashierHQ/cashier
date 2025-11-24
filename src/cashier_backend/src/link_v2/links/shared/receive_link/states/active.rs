@@ -70,17 +70,19 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
 
     /// Create SEND action for the tip link
     /// # Arguments
+    /// * `caller` - The principal of the user creating the action
     /// * `link` - The tip link for which the action is being created
     /// * `canister_id` - The canister ID of the backend canister
     /// * `transaction_manager` - The transaction manager to handle action creation
     /// # Returns
     /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the SEND action
     pub async fn create_send_action(
+        caller: Principal,
         link: Link,
         canister_id: Principal,
         transaction_manager: Rc<M>,
     ) -> Result<LinkCreateActionResult, CanisterError> {
-        let send_action = SendAction::create(&link, canister_id).await?;
+        let send_action = SendAction::create(&link, caller, canister_id).await?;
         let create_action_result = transaction_manager
             .create_action(send_action.action, send_action.intents, None)
             .await?;
@@ -173,7 +175,8 @@ impl<M: TransactionManager + 'static> LinkV2State for ActiveState<M> {
                 }
                 ActionType::Send => {
                     let create_action_result =
-                        Self::create_send_action(link, canister_id, transaction_manager).await?;
+                        Self::create_send_action(caller, link, canister_id, transaction_manager)
+                            .await?;
                     Ok(create_action_result)
                 }
                 _ => Err(CanisterError::ValidationErrors(
