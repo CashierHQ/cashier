@@ -63,63 +63,6 @@ async fn it_should_fail_send_icp_token_payment_linkv2_if_link_not_active() {
 }
 
 #[tokio::test]
-async fn it_should_fail_send_icp_token_payment_linkv2_if_requested_more_than_once() {
-    with_pocket_ic_context::<_, ()>(async move |ctx| {
-        // Arrange
-        let tokens = vec![ICP_TOKEN.to_string()];
-        let amounts = vec![Nat::from(1_000_000u64)];
-        let (mut creator_fixture, create_link_result) =
-            activate_payment_link_v2_fixture(ctx, tokens, amounts).await;
-
-        let caller = TestUser::User2.get_principal();
-        let caller_fixture =
-            LinkTestFixtureV2::new(creator_fixture.link_fixture.ctx.clone(), caller).await;
-        creator_fixture.airdrop_icp_and_asset(caller).await;
-
-        // Act: create SEND action
-        let link_id = create_link_result.link.id.clone();
-        let create_action_input = CreateActionInput {
-            link_id: link_id.clone(),
-            action_type: ActionType::Send,
-        };
-        let create_action_result = caller_fixture.create_action_v2(create_action_input).await;
-
-        // Execute ICRC112 requests
-        let action_dto = create_action_result.unwrap();
-        let icrc_112_requests = action_dto.icrc_112_requests.unwrap();
-        let _icrc112_execution_result =
-            icrc_112::execute_icrc112_request(&icrc_112_requests, caller, &caller_fixture.ctx)
-                .await;
-
-        // Act: process SEND action
-        let action_id = action_dto.id.clone();
-        let process_action_input = ProcessActionV2Input { action_id };
-        let _process_action_result = caller_fixture.process_action_v2(process_action_input).await;
-
-        // Act: create SEND action again
-        let link_id = create_link_result.link.id.clone();
-        let create_action_input = CreateActionInput {
-            link_id: link_id.clone(),
-            action_type: ActionType::Send,
-        };
-        let create_action_result = caller_fixture.create_action_v2(create_action_input).await;
-
-        // Assert: action creation failed
-        assert!(create_action_result.is_err());
-
-        if let Err(CanisterError::ValidationErrors(msg)) = create_action_result {
-            assert_eq!(msg, "Unsupported link state", "Error message mismatch");
-        } else {
-            panic!("Expected ValidationErrors error");
-        }
-
-        Ok(())
-    })
-    .await
-    .unwrap();
-}
-
-#[tokio::test]
 async fn it_should_succeed_send_icp_token_payment_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange

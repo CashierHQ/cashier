@@ -170,7 +170,7 @@ pub async fn activate_payment_link_v2_fixture(
 /// * `amounts` - A vector of corresponding amounts (e.g., [100_000_000])
 /// # Returns
 /// * `(LinkTestFixtureV2, ProcessActionDto)` - The link test fixture and the ProcessActionDto
-pub async fn send_payment_link_v2_fixture(
+pub async fn _send_payment_link_v2_fixture(
     ctx: &PocketIcTestContext,
     tokens: Vec<String>,
     amounts: Vec<Nat>,
