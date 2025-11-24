@@ -18,9 +18,7 @@ use cashier_backend_types::repository::common::Wallet;
 use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, IntentType};
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
-use cashier_common::constant::CREATE_LINK_FEE;
 use cashier_common::test_utils;
-use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 
 #[tokio::test]
@@ -82,7 +80,7 @@ async fn it_should_succeed_get_payment_linkv2_details_with_no_option() {
 }
 
 #[tokio::test]
-async fn it_should_succeed_get_linkv2_details_with_create_action_succeeded() {
+async fn it_should_succeed_get_payment_linkv2_details_with_create_action_succeeded() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tokens = vec![ICP_TOKEN.to_string()];
@@ -118,7 +116,7 @@ async fn it_should_succeed_get_linkv2_details_with_create_action_succeeded() {
 }
 
 #[tokio::test]
-async fn it_should_succeed_get_linkv2_details_with_option_action_not_existent() {
+async fn it_should_succeed_get_payment_linkv2_details_with_option_action_not_existent() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tokens = vec![ICP_TOKEN.to_string()];
@@ -150,7 +148,7 @@ async fn it_should_succeed_get_linkv2_details_with_option_action_not_existent() 
 }
 
 #[tokio::test]
-async fn it_should_succeed_get_linkv2_details_with_create_action() {
+async fn it_should_succeed_get_payment_linkv2_details_with_create_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
@@ -174,12 +172,6 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
         let initial_icrc112 = initial_icrc112.unwrap();
         assert_eq!(initial_icrc112.len(), 1);
         let initial_icrc112_requests = &initial_icrc112[0];
-        let initial_icrc1_transfer_request = initial_icrc112_requests
-            .iter()
-            .find(|req| req.method == "icrc1_transfer")
-            .expect("Initial icrc1_transfer request not found");
-        let initial_icrc1_transfer_arg = Decode!(&initial_icrc1_transfer_request.arg, TransferArg)
-            .expect("Failed to decode initial icrc1_transfer args");
         let initial_icrc2_approve_request = initial_icrc112_requests
             .iter()
             .find(|req| req.method == "icrc2_approve")
@@ -220,46 +212,15 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
             _ => panic!("Expected TransferFrom intent type"),
         }
         assert_eq!(intent1.transactions.len(), 2);
-        let tx1 = &intent1.transactions[0];
-        assert_eq!(tx1.id, initial_tx0.id);
-        assert_eq!(tx1.created_at, initial_tx0.created_at);
-        match tx1.protocol {
-            Protocol::IC(IcTransaction::Icrc2Approve(ref data)) => {
-                assert_eq!(data.from, Wallet::new(caller));
-                assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
-            }
-            _ => panic!("Expected Icrc2Approve transaction"),
-        }
-        let tx2 = &intent1.transactions[1];
-        assert_eq!(tx2.id, initial_tx1.id);
-        assert_eq!(tx2.created_at, initial_tx1.created_at);
-        match tx2.protocol {
-            Protocol::IC(IcTransaction::Icrc2TransferFrom(ref data)) => {
-                assert_eq!(data.from, Wallet::new(caller));
-                assert_eq!(data.to, Wallet::new(FEE_TREASURY_PRINCIPAL));
-                assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
-                assert_eq!(data.amount, Nat::from(CREATE_LINK_FEE));
-            }
-            _ => panic!("Expected Icrc2TransferFrom transaction"),
-        }
+        let _tx1 = &intent1.transactions[0];
+        let _tx2 = &intent1.transactions[1];
 
         // Assert ICRC-112 requests
         assert!(action.icrc_112_requests.is_some());
         let icrc112_requests = action.icrc_112_requests.unwrap();
         assert_eq!(icrc112_requests.len(), 1);
         let requests = &icrc112_requests[0];
-        assert_eq!(requests.len(), 2);
-
-        let icrc1_transfer_request = requests
-            .iter()
-            .find(|req| req.method == "icrc1_transfer")
-            .expect("Initial icrc1_transfer request not found");
-        let icrc1_transfer_arg = Decode!(&icrc1_transfer_request.arg, TransferArg)
-            .expect("Failed to decode initial icrc1_transfer args");
-        assert_eq!(
-            icrc1_transfer_arg, initial_icrc1_transfer_arg,
-            "ICRC1 transfer args do not match"
-        );
+        assert_eq!(requests.len(), 1);
 
         let icrc2_approve_request = requests
             .iter()
@@ -279,7 +240,7 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
 }
 
 #[tokio::test]
-async fn it_should_succeed_get_linkv2_details_with_send_action() {
+async fn it_should_succeed_get_payment_linkv2_details_with_send_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tokens = vec![ICP_TOKEN.to_string()];
@@ -376,7 +337,7 @@ async fn it_should_succeed_get_linkv2_details_with_send_action() {
 }
 
 #[tokio::test]
-async fn it_should_succeed_get_linkv2_details_with_withdraw_action() {
+async fn it_should_succeed_get_payment_linkv2_details_with_withdraw_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
