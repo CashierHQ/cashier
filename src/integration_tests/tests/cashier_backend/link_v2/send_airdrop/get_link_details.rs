@@ -23,7 +23,7 @@ use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 
 #[tokio::test]
-async fn it_should_fail_get_tip_linkv2_details_if_link_not_found() {
+async fn it_should_fail_get_airdrop_linkv2_details_if_link_not_found() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tokens = vec![ICP_TOKEN.to_string()];
@@ -57,7 +57,7 @@ async fn it_should_fail_get_tip_linkv2_details_if_link_not_found() {
 }
 
 #[tokio::test]
-async fn it_should_succeed_get_tip_linkv2_details_with_no_option() {
+async fn it_should_succeed_get_airdrop_linkv2_details_with_no_option() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tokens = vec![ICP_TOKEN.to_string()];

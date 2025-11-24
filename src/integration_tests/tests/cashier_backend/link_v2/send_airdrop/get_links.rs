@@ -12,7 +12,7 @@ use cashier_backend_types::service::link::PaginateInput;
 use std::sync::Arc;
 
 #[tokio::test]
-async fn it_should_succeed_get_icp_token_tip_linkv2_with_no_link_existed() {
+async fn it_should_succeed_get_icp_token_airdrop_linkv2_with_no_link_existed() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
@@ -33,7 +33,7 @@ async fn it_should_succeed_get_icp_token_tip_linkv2_with_no_link_existed() {
 }
 
 #[tokio::test]
-async fn it_should_succeed_get_icp_token_tip_linkv2_with_no_paginate_option() {
+async fn it_should_succeed_get_icp_token_airdrop_linkv2_with_no_paginate_option() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tokens = vec![ICP_TOKEN.to_string()];
@@ -61,7 +61,7 @@ async fn it_should_succeed_get_icp_token_tip_linkv2_with_no_paginate_option() {
 }
 
 #[tokio::test]
-async fn it_should_succeed_get_icp_token_tip_linkv2_with_paginate_option() {
+async fn it_should_succeed_get_icp_token_airdrop_linkv2_with_paginate_option() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let tokens = vec![ICP_TOKEN.to_string()];
