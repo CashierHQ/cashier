@@ -128,7 +128,7 @@ impl AirdropLinkV2Fixture {
 /// * `max_use_count` - The maximum use count for the link
 /// # Returns
 /// * `(LinkTestFixtureV2, GetLinkResp)` - The link test fixture and the GetLinkResp
-pub async fn create_airdrop_linkv2_fixture(
+pub async fn create_airdrop_link_v2_fixture(
     ctx: &PocketIcTestContext,
     creator: Principal,
     tokens: Vec<String>,
