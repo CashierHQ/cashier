@@ -14,4 +14,5 @@
   {#if link.createLinkData.linkType === LinkType.TIP}
     <TipLinkAddAsset {link} />
   {/if}
+  <!-- TODO: Other asset types will be added here -->
 {/if}

@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
@@ -10,7 +8,6 @@
     LinkType,
     type LinkTypeValue,
   } from "$modules/links/types/link/linkType";
-  import { LinkStep } from "$modules/links/types/linkStep";
   import { locale } from "$lib/i18n";
   import { ChevronLeft, ChevronRight } from "lucide-svelte";
   import { toast } from "svelte-sonner";
@@ -20,12 +17,6 @@
   }: {
     link: LinkCreationStore;
   } = $props();
-
-  $effect(() => {
-    if (link.state.step !== LinkStep.CHOOSE_TYPE) {
-      goto(resolve("/links"));
-    }
-  });
 
   const linkTypes: LinkTypeValue[] = [
     LinkType.TIP,
