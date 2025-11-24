@@ -387,7 +387,6 @@
         onToggleUsd={handleToggleUsd}
         token={selectedToken}
         {canConvert}
-        tokenDecimals={decimals}
         maxUse={link.createLinkData.maxUse}
         walletTokens={walletStore.query.data || []}
       >
