@@ -8,3 +8,4 @@ pub mod fixture;
 pub mod get_link_details;
 pub mod get_links;
 pub mod send_link;
+pub mod withdraw_link;
