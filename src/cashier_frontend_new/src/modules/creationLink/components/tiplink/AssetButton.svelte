@@ -14,7 +14,6 @@
   };
 
   type Props = {
-    handleClick?: () => void;
     text: string;
     tokenValue?: string;
     usdValue?: string;
