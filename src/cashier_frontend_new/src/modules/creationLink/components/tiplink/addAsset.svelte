@@ -16,6 +16,7 @@
   import SelectedAssetButtonInfo from "./SelectedAssetButtonInfo.svelte";
   import TokenSelectorDrawer from "../shared/TokenSelectorDrawer.svelte";
   import { toast } from "svelte-sonner";
+  import { USD_AMOUNT_PRESETS } from "$modules/creationLink/constants/amountPresets";
 
   const {
     link,
@@ -243,8 +244,7 @@
     );
 
     if (maxAmountResult.isErr()) {
-      // Fallback to balance without fee if calculation fails
-      return parseBalanceUnits(selectedToken.balance, decimals);
+      return 0;
     }
 
     const maxAmountBigInt = maxAmountResult.unwrap();
@@ -266,26 +266,7 @@
       return;
     }
 
-    // Calculate max amount with fee consideration
-    const maxAmountResult = maxAmountForAsset(
-      selectedToken.address,
-      link.createLinkData.maxUse,
-      walletStore.query.data,
-    );
-
-    if (maxAmountResult.isErr()) {
-      console.error("Failed to calculate max amount:", maxAmountResult.error);
-      toast.error("Failed to calculate maximum amount");
-      return;
-    }
-
-    const maxAmountBigInt = maxAmountResult.unwrap();
-    const maxTokenAmount = parseBalanceUnits(maxAmountBigInt, decimals);
-
-    // Double check that amount is valid
-    if (!isFinite(maxTokenAmount) || maxTokenAmount <= 0) {
-      return;
-    }
+    const maxTokenAmount = maxTokenBalance;
 
     localTokenAmount = maxTokenAmount.toString();
 
@@ -298,8 +279,6 @@
 
     setTokenAmount(maxTokenAmount.toString());
   }
-
-  const USD_AMOUNT_PRESETS = [1, 2, 5];
 
   // Calculate max available USD balance with fee consideration
   const maxUsdBalance = $derived.by(() => {
@@ -318,9 +297,7 @@
     );
 
     if (maxAmountResult.isErr()) {
-      // Fallback to balance without fee if calculation fails
-      const tokenBalance = parseBalanceUnits(selectedToken.balance, decimals);
-      return tokenBalance * tokenUsdPrice;
+      return 0;
     }
 
     const maxAmountBigInt = maxAmountResult.unwrap();
@@ -386,8 +363,7 @@
         onToggleUsd={handleToggleUsd}
         token={selectedToken}
         {canConvert}
-        maxUse={link.createLinkData.maxUse}
-        walletTokens={walletStore.query.data || []}
+        maxBalanceWithFee={maxTokenBalance}
       >
         {#if selectedToken}
           <SelectedAssetButtonInfo

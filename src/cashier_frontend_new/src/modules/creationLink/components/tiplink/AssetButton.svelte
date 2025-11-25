@@ -2,12 +2,12 @@
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
-  import { maxAmountForAsset } from "$modules/links/utils/amountCalculator";
   import { locale } from "$lib/i18n";
   import { toast } from "svelte-sonner";
   import UsdSwitch from "./UsdSwitch.svelte";
   import AmountActionButtons from "./AmountActionButtons.svelte";
   import type { Snippet } from "svelte";
+  import { formatDisplayValue } from "$modules/creationLink/utils/formatDisplayValue";
 
   type PresetButton = {
     content: string;
@@ -28,8 +28,7 @@
     isDisabled?: boolean;
     showInput?: boolean;
     isTip?: boolean;
-    maxUse?: number;
-    walletTokens?: TokenWithPriceAndBalance[];
+    maxBalanceWithFee?: number;
     children?: Snippet<[]>;
   };
 
@@ -48,8 +47,7 @@
     isDisabled = false,
     showInput = true,
     isTip = false,
-    maxUse = 1,
-    walletTokens = [],
+    maxBalanceWithFee = 0,
   }: Props = $props();
 
   const displayValue = $derived(isUsd ? usdValue : tokenValue);
@@ -111,35 +109,6 @@
   const maxBalance = $derived(
     token?.balance ? parseBalanceUnits(token.balance, token.decimals) : 0,
   );
-
-  // Get max available balance with fee consideration
-  // This returns the maximum amount per use (without fee, but calculated considering fee)
-  const maxBalanceWithFee = $derived.by(() => {
-    if (!token || !walletTokens || walletTokens.length === 0) return maxBalance;
-
-    const maxAmountResult = maxAmountForAsset(
-      token.address,
-      maxUse,
-      walletTokens,
-    );
-
-    if (maxAmountResult.isErr()) {
-      console.warn(
-        "Failed to calculate max amount with fee:",
-        maxAmountResult.error,
-      );
-      return maxBalance; // Fallback to balance without fee
-    }
-
-    const maxAmountBigInt = maxAmountResult.unwrap();
-    const maxAmountPerUse = parseBalanceUnits(maxAmountBigInt, token.decimals);
-
-    // maxAmountForAsset already accounts for fee in calculation:
-    // maxAmount = (balance - fee * (1 + maxUse)) / maxUse
-    // This is the max amount per use WITHOUT fee, but calculated to ensure
-    // totalAmount = maxAmount * maxUse + fee * (1 + maxUse) <= balance
-    return maxAmountPerUse;
-  });
 
   function handleInputChange(value: string) {
     if (value.startsWith("-")) {
@@ -209,23 +178,6 @@
         exceedsBalance = true;
         maxValue = maxBalanceWithFee;
         maxValueStr = maxBalanceWithFee.toString();
-
-        // Calculate what the total would be with this maxBalanceWithFee
-        const feeHuman = parseBalanceUnits(token.fee, token.decimals);
-        const totalWithFee =
-          maxBalanceWithFee * maxUse + feeHuman * (1 + maxUse);
-
-        console.log("Input exceeds balance with fee:", {
-          inputValue,
-          maxBalance: maxBalance,
-          maxBalanceWithFee: maxBalanceWithFee,
-          fee: token.fee,
-          feeHuman: feeHuman,
-          maxUse: maxUse,
-          totalWithFee: totalWithFee,
-          balance: maxBalance,
-          expectedTotal: totalWithFee,
-        });
       }
     }
 
@@ -246,21 +198,6 @@
         duration: 3000,
       });
     }
-  }
-
-  function formatDisplayValue(value: string): string {
-    if (!value) return "";
-
-    const num = parseFloat(value);
-
-    if (!isNaN(num) && Math.abs(num) > 0 && Math.abs(num) < 0.0001) {
-      return num.toLocaleString("fullwide", {
-        useGrouping: false,
-        maximumFractionDigits: 20,
-      });
-    }
-
-    return value;
   }
 
   const inputWidth = $derived(
