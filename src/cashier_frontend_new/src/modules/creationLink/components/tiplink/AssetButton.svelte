@@ -7,6 +7,7 @@
   import { toast } from "svelte-sonner";
   import UsdSwitch from "./UsdSwitch.svelte";
   import AmountActionButtons from "./AmountActionButtons.svelte";
+  import type { Snippet } from "svelte";
 
   type PresetButton = {
     content: string;
@@ -22,7 +23,6 @@
     token?: TokenWithPriceAndBalance | null;
     onToggleUsd?: (value: boolean) => void;
     canConvert?: boolean;
-    tokenDecimals?: number;
     showPresetButtons?: boolean;
     presetButtons?: PresetButton[];
     isDisabled?: boolean;
@@ -30,7 +30,7 @@
     isTip?: boolean;
     maxUse?: number;
     walletTokens?: TokenWithPriceAndBalance[];
-    children?: unknown;
+    children?: Snippet<[]>;
   };
 
   let {
@@ -43,7 +43,6 @@
     token,
     onToggleUsd,
     canConvert = false,
-    tokenDecimals = 8,
     showPresetButtons = false,
     presetButtons = [],
     isDisabled = false,
@@ -329,7 +328,6 @@
           {isUsd}
           onToggle={onToggleUsd}
           {canConvert}
-          {tokenDecimals}
           usdDecimals={2}
         />
       {/if}
