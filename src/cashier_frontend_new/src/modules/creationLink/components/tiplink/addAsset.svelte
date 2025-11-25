@@ -339,7 +339,6 @@
 
     <div>
       <AssetButton
-        handleClick={() => (showAssetDrawer = true)}
         text={locale.t("links.linkForm.addAsset.chooseAsset")}
         tokenValue={localTokenAmount}
         usdValue={localUsdAmount}
