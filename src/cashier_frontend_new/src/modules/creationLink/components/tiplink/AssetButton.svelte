@@ -7,6 +7,7 @@
   import { toast } from "svelte-sonner";
   import UsdSwitch from "./UsdSwitch.svelte";
   import AmountActionButtons from "./AmountActionButtons.svelte";
+  import type { Snippet } from "svelte";
 
   type PresetButton = {
     content: string;
@@ -29,7 +30,7 @@
     isTip?: boolean;
     maxUse?: number;
     walletTokens?: TokenWithPriceAndBalance[];
-    children?: unknown;
+    children?: Snippet<[]>;
   };
 
   let {
