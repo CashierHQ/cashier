@@ -2,8 +2,8 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
-use crate::cashier_backend::link_v2::send_tip::fixture::{
-    activate_tip_link_v2_fixture, create_tip_linkv2_fixture,
+use crate::cashier_backend::link_v2::send_airdrop::fixture::{
+    activate_airdrop_link_v2_fixture, create_airdrop_link_v2_fixture,
 };
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
@@ -19,17 +19,19 @@ use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, Int
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::repository::link_action::v1::LinkUserState;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
+use cashier_common::test_utils;
 use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]
-async fn it_should_fail_receive_icp_token_tip_linkv2_if_link_not_active() {
+async fn it_should_fail_receive_icp_token_airdrop_linkv2_if_link_not_active() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let token = ICP_TOKEN;
-        let tip_amount = Nat::from(1_000_000u64);
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
+        let max_use = 10;
         let (creator_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, caller, token, tip_amount).await;
+            create_airdrop_link_v2_fixture(ctx, caller, tokens, amounts, max_use).await;
 
         let receiver = TestUser::User2.get_principal();
         let receiver_fixture = LinkTestFixtureV2::new(creator_fixture.ctx.clone(), receiver).await;
@@ -61,13 +63,14 @@ async fn it_should_fail_receive_icp_token_tip_linkv2_if_link_not_active() {
 }
 
 #[tokio::test]
-async fn it_should_fail_receive_icp_token_tip_linkv2_if_requested_more_than_once() {
+async fn it_should_fail_receive_icp_token_airdrop_linkv2_if_requested_more_than_max_use() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let token = ICP_TOKEN;
-        let tip_amount = Nat::from(1_000_000u64);
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
+        let max_use = 1;
         let (creator_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, token, tip_amount).await;
+            activate_airdrop_link_v2_fixture(ctx, tokens, amounts, max_use).await;
 
         let receiver = TestUser::User2.get_principal();
         let receiver_fixture = LinkTestFixtureV2::new(creator_fixture.ctx.clone(), receiver).await;
@@ -112,13 +115,14 @@ async fn it_should_fail_receive_icp_token_tip_linkv2_if_requested_more_than_once
 }
 
 #[tokio::test]
-async fn it_should_succeed_receive_icp_token_tip_linkv2() {
+async fn it_should_succeed_receive_icp_token_airdrop_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let token = ICP_TOKEN;
-        let tip_amount = Nat::from(1_000_000u64);
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
+        let max_use = 10;
         let (creator_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, token, tip_amount.clone()).await;
+            activate_airdrop_link_v2_fixture(ctx, tokens, amounts.clone(), max_use).await;
 
         let receiver = TestUser::User2.get_principal();
         let receiver_fixture = LinkTestFixtureV2::new(creator_fixture.ctx.clone(), receiver).await;
@@ -128,6 +132,8 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
             subaccount: None,
         };
         let icp_ledger_client = ctx.new_icp_ledger_client(receiver);
+        let ledger_fee = icp_ledger_client.fee().await.unwrap();
+
         let icp_balance_before = icp_ledger_client
             .balance_of(&receiver_account)
             .await
@@ -156,7 +162,7 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
             IntentType::Transfer(ref transfer) => {
                 assert_eq!(transfer.to, Wallet::new(receiver));
                 assert_eq!(transfer.from, link_id_to_account(ctx, &link_id).into());
-                assert_eq!(transfer.amount, tip_amount, "Transfer amount incorrect");
+                assert_eq!(transfer.amount, amounts[0], "Transfer amount incorrect");
             }
             _ => panic!("Expected Transfer intent type"),
         }
@@ -166,7 +172,7 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
             Protocol::IC(IcTransaction::Icrc1Transfer(ref data)) => {
                 assert_eq!(data.to, Wallet::new(receiver));
                 assert_eq!(data.from, link_id_to_account(ctx, &link_id).into());
-                assert_eq!(data.amount, tip_amount, "Icrc1Transfer amount incorrect");
+                assert_eq!(data.amount, amounts[0], "Icrc1Transfer amount incorrect");
                 assert!(data.memo.is_some());
                 assert!(data.ts.is_some());
             }
@@ -186,8 +192,8 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
         let process_action_result = process_action_result.unwrap();
         let link_dto = process_action_result.link;
         assert_eq!(link_dto.link_use_action_counter, 1);
-        assert_eq!(link_dto.link_use_action_max_count, 1);
-        assert_eq!(link_dto.state, LinkState::InactiveEnded);
+        assert_eq!(link_dto.link_use_action_max_count, max_use);
+        assert_eq!(link_dto.state, LinkState::Active);
 
         let action_dto = process_action_result.action;
         assert_eq!(action_dto.state, ActionState::Success);
@@ -203,7 +209,7 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
             .unwrap();
         assert_eq!(
             icp_balance_after,
-            icp_balance_before + tip_amount,
+            icp_balance_before + amounts[0].clone(),
             "Receiveer's ICP balance should increase by tip amount"
         );
 
@@ -212,7 +218,11 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
         let link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
         assert_eq!(
             link_balance,
-            Nat::from(0u64),
+            test_utils::calculate_amount_for_wallet_to_link_transfer(
+                amounts[0].clone(),
+                ledger_fee,
+                max_use - 1
+            ),
             "Link balance should be equal to zero"
         );
 
@@ -239,13 +249,14 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
 }
 
 #[tokio::test]
-async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
+async fn it_should_succeed_receive_icrc_token_airdrop_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let token = CKBTC_ICRC_TOKEN;
-        let tip_amount = Nat::from(1_000_000u64);
+        let tokens = vec![CKBTC_ICRC_TOKEN.to_string()];
+        let amounts = vec![Nat::from(5_000_000u64)];
+        let max_use = 10;
         let (creator_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, token, tip_amount.clone()).await;
+            activate_airdrop_link_v2_fixture(ctx, tokens.clone(), amounts.clone(), max_use).await;
 
         let receiver = TestUser::User2.get_principal();
         let receiver_fixture = LinkTestFixtureV2::new(creator_fixture.ctx.clone(), receiver).await;
@@ -255,6 +266,7 @@ async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
             subaccount: None,
         };
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, receiver);
+        let ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
 
         let ckbtc_balance_before = ckbtc_ledger_client
             .balance_of(&receiver_account)
@@ -284,7 +296,7 @@ async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
             IntentType::Transfer(ref transfer) => {
                 assert_eq!(transfer.to, Wallet::new(receiver));
                 assert_eq!(transfer.from, link_id_to_account(ctx, &link_id).into());
-                assert_eq!(transfer.amount, tip_amount, "Transfer amount incorrect");
+                assert_eq!(transfer.amount, amounts[0], "Transfer amount incorrect");
             }
             _ => panic!("Expected Transfer intent type"),
         }
@@ -294,7 +306,7 @@ async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
             Protocol::IC(IcTransaction::Icrc1Transfer(ref data)) => {
                 assert_eq!(data.to, Wallet::new(receiver));
                 assert_eq!(data.from, link_id_to_account(ctx, &link_id).into());
-                assert_eq!(data.amount, tip_amount, "Icrc1Transfer amount incorrect");
+                assert_eq!(data.amount, amounts[0], "Icrc1Transfer amount incorrect");
                 assert!(data.memo.is_some());
                 assert!(data.ts.is_some());
             }
@@ -314,8 +326,8 @@ async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
         let process_action_result = process_action_result.unwrap();
         let link_dto = process_action_result.link;
         assert_eq!(link_dto.link_use_action_counter, 1);
-        assert_eq!(link_dto.link_use_action_max_count, 1);
-        assert_eq!(link_dto.state, LinkState::InactiveEnded);
+        assert_eq!(link_dto.link_use_action_max_count, max_use);
+        assert_eq!(link_dto.state, LinkState::Active);
 
         let action_dto = process_action_result.action;
         assert_eq!(action_dto.state, ActionState::Success);
@@ -331,7 +343,7 @@ async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
             .unwrap();
         assert_eq!(
             ckbtc_balance_after,
-            ckbtc_balance_before + tip_amount,
+            ckbtc_balance_before + amounts[0].clone(),
             "Receiveer's CKBTC balance should increase by tip amount"
         );
 
@@ -340,7 +352,11 @@ async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
         let link_balance = ckbtc_ledger_client.balance_of(&link_account).await.unwrap();
         assert_eq!(
             link_balance,
-            Nat::from(0u64),
+            test_utils::calculate_amount_for_wallet_to_link_transfer(
+                amounts[0].clone(),
+                ledger_fee,
+                max_use - 1
+            ),
             "Link balance should be equal to zero"
         );
 
