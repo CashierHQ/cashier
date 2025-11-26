@@ -131,6 +131,7 @@
   }
   html {
     font-family: var(--font-family-sans);
+    overflow-y: scroll;
   }
   body {
     @apply bg-background text-foreground;
