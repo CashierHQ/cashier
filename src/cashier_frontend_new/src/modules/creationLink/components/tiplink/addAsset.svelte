@@ -16,6 +16,7 @@
   import SelectedAssetButtonInfo from "./SelectedAssetButtonInfo.svelte";
   import TokenSelectorDrawer from "../shared/TokenSelectorDrawer.svelte";
   import { toast } from "svelte-sonner";
+  import { USD_AMOUNT_PRESETS } from "$modules/creationLink/constants/amountPresets";
 
   const {
     link,
@@ -232,10 +233,10 @@
     isUsd = value;
   }
 
-  function handleMaxClick() {
-    if (!selectedToken || !walletStore.query.data) return;
+  // Calculate max available token balance with fee consideration
+  const maxTokenBalance = $derived.by(() => {
+    if (!selectedToken || !walletStore.query.data) return 0;
 
-    // Calculate max amount with fee consideration
     const maxAmountResult = maxAmountForAsset(
       selectedToken.address,
       link.createLinkData.maxUse,
@@ -243,13 +244,29 @@
     );
 
     if (maxAmountResult.isErr()) {
-      console.error("Failed to calculate max amount:", maxAmountResult.error);
-      toast.error("Failed to calculate maximum amount");
-      return;
+      return 0;
     }
 
     const maxAmountBigInt = maxAmountResult.unwrap();
-    const maxTokenAmount = parseBalanceUnits(maxAmountBigInt, decimals);
+    return parseBalanceUnits(maxAmountBigInt, decimals);
+  });
+
+  // Check if max balance is sufficient (greater than 0 and finite)
+  const isMaxAvailable = $derived.by(() => {
+    return (
+      isFinite(maxTokenBalance) && maxTokenBalance > 0 && selectedToken !== null
+    );
+  });
+
+  function handleMaxClick() {
+    if (!selectedToken || !walletStore.query.data) return;
+
+    // Don't proceed if balance is insufficient for fees
+    if (!isMaxAvailable) {
+      return;
+    }
+
+    const maxTokenAmount = maxTokenBalance;
 
     localTokenAmount = maxTokenAmount.toString();
 
@@ -262,8 +279,6 @@
 
     setTokenAmount(maxTokenAmount.toString());
   }
-
-  const USD_AMOUNT_PRESETS = [1, 2, 5];
 
   // Calculate max available USD balance with fee consideration
   const maxUsdBalance = $derived.by(() => {
@@ -282,9 +297,7 @@
     );
 
     if (maxAmountResult.isErr()) {
-      // Fallback to balance without fee if calculation fails
-      const tokenBalance = parseBalanceUnits(selectedToken.balance, decimals);
-      return tokenBalance * tokenUsdPrice;
+      return 0;
     }
 
     const maxAmountBigInt = maxAmountResult.unwrap();
@@ -330,7 +343,10 @@
       {#if selectedToken}
         <button
           onclick={handleMaxClick}
-          class="ml-auto text-[#36A18B] text-[12px] font-medium cursor-pointer"
+          disabled={!isMaxAvailable}
+          class="ml-auto text-[12px] font-medium transition-colors {isMaxAvailable
+            ? 'text-[#36A18B] cursor-pointer hover:text-[#2d8a75]'
+            : 'text-gray-400 cursor-not-allowed'}"
         >
           {locale.t("links.linkForm.addAsset.max")}
         </button>
@@ -347,9 +363,7 @@
         onToggleUsd={handleToggleUsd}
         token={selectedToken}
         {canConvert}
-        tokenDecimals={decimals}
-        maxUse={link.createLinkData.maxUse}
-        walletTokens={walletStore.query.data || []}
+        maxBalanceWithFee={maxTokenBalance}
       >
         {#if selectedToken}
           <SelectedAssetButtonInfo
