@@ -4,7 +4,10 @@
 use std::rc::Rc;
 
 use crate::link_v2::{
-    links::{tip_link::TipLink, traits::LinkV2},
+    links::{
+        airdrop_link::AirdropLink, payment_link::PaymentLink, tip_link::TipLink,
+        token_basket_link::TokenBasketLink, traits::LinkV2,
+    },
     transaction_manager::traits::TransactionManager,
 };
 use candid::Principal;
@@ -59,9 +62,36 @@ impl<M: TransactionManager + 'static> LinkFactory<M> {
                 self.transaction_manager.clone(),
             )
             .link),
-            _ => Err(CanisterError::InvalidInput(
-                "Unsupported link type".to_string(),
-            )),
+            LinkType::SendAirdrop => Ok(AirdropLink::create(
+                creator,
+                input.title,
+                asset_info,
+                input.link_use_action_max_count,
+                created_at_ts,
+                canister_id,
+                self.transaction_manager.clone(),
+            )
+            .link),
+            LinkType::SendTokenBasket => Ok(TokenBasketLink::create(
+                creator,
+                input.title,
+                asset_info,
+                input.link_use_action_max_count,
+                created_at_ts,
+                canister_id,
+                self.transaction_manager.clone(),
+            )
+            .link),
+            LinkType::ReceivePayment => Ok(PaymentLink::create(
+                creator,
+                input.title,
+                asset_info,
+                input.link_use_action_max_count,
+                created_at_ts,
+                canister_id,
+                self.transaction_manager.clone(),
+            )
+            .link),
         }
     }
 
@@ -81,9 +111,21 @@ impl<M: TransactionManager + 'static> LinkFactory<M> {
                 canister_id,
                 self.transaction_manager.clone(),
             ))),
-            _ => Err(CanisterError::InvalidInput(
-                "Unsupported link type".to_string(),
-            )),
+            LinkType::SendAirdrop => Ok(Box::new(AirdropLink::new(
+                link,
+                canister_id,
+                self.transaction_manager.clone(),
+            ))),
+            LinkType::SendTokenBasket => Ok(Box::new(TokenBasketLink::new(
+                link,
+                canister_id,
+                self.transaction_manager.clone(),
+            ))),
+            LinkType::ReceivePayment => Ok(Box::new(PaymentLink::new(
+                link,
+                canister_id,
+                self.transaction_manager.clone(),
+            ))),
         }
     }
 }
