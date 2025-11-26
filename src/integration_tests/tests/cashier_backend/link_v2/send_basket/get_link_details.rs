@@ -2,8 +2,8 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
-use crate::cashier_backend::link_v2::send_tip::fixture::{
-    activate_tip_link_v2_fixture, create_tip_linkv2_fixture,
+use crate::cashier_backend::link_v2::send_basket::fixture::{
+    activate_basket_link_v2_fixture, create_basket_link_v2_fixture,
 };
 use crate::utils::link_id_to_account::link_id_to_account;
 use crate::utils::principal::TestUser;
@@ -23,12 +23,13 @@ use icrc_ledger_types::icrc1::transfer::TransferArg;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 
 #[tokio::test]
-async fn it_should_fail_get_tip_linkv2_details_if_link_not_found() {
+async fn it_should_fail_get_basket_linkv2_details_if_link_not_found() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = Nat::from(1_000_000u64);
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
         let (test_fixture, _create_link_result) =
-            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+            activate_basket_link_v2_fixture(ctx, tokens, amounts).await;
 
         // Act
         let link_id = "non_existent_link_id".to_string();
@@ -55,12 +56,13 @@ async fn it_should_fail_get_tip_linkv2_details_if_link_not_found() {
 }
 
 #[tokio::test]
-async fn it_should_succeed_get_tip_linkv2_details_with_no_option() {
+async fn it_should_succeed_get_basket_linkv2_details_with_no_option() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = Nat::from(1_000_000u64);
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
         let (test_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+            activate_basket_link_v2_fixture(ctx, tokens, amounts).await;
 
         // Act
         let link_id = create_link_result.link.id;
@@ -82,9 +84,10 @@ async fn it_should_succeed_get_tip_linkv2_details_with_no_option() {
 async fn it_should_succeed_get_linkv2_details_with_create_action_succeeded() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = Nat::from(1_000_000u64);
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
         let (test_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+            activate_basket_link_v2_fixture(ctx, tokens, amounts).await;
 
         // Act
         let link_id = create_link_result.link.id;
@@ -120,9 +123,10 @@ async fn it_should_succeed_get_linkv2_details_with_create_action_succeeded() {
 async fn it_should_succeed_get_linkv2_details_with_option_action_not_existent() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = Nat::from(1_000_000u64);
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
         let (test_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+            activate_basket_link_v2_fixture(ctx, tokens, amounts).await;
 
         // Act
         let link_id = create_link_result.link.id;
@@ -152,10 +156,10 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let token = ICP_TOKEN;
-        let tip_amount = Nat::from(1_000_000u64);
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, caller, token, tip_amount).await;
+            create_basket_link_v2_fixture(ctx, caller, tokens, amounts).await;
 
         let initial_action = create_link_result.action.clone();
         assert_eq!(initial_action.r#type, ActionType::CreateLink);
@@ -308,9 +312,10 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
 async fn it_should_succeed_get_linkv2_details_with_receive_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = Nat::from(1_000_000u64);
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
         let (test_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount.clone()).await;
+            activate_basket_link_v2_fixture(ctx, tokens.clone(), amounts.clone()).await;
 
         let receiver = TestUser::User2.get_principal();
         let receiver_fixture = LinkTestFixtureV2::new(test_fixture.ctx.clone(), receiver).await;
@@ -358,7 +363,7 @@ async fn it_should_succeed_get_linkv2_details_with_receive_action() {
             IntentType::Transfer(ref transfer) => {
                 assert_eq!(transfer.to, Wallet::new(receiver));
                 assert_eq!(transfer.from, link_id_to_account(ctx, &link_id).into());
-                assert_eq!(transfer.amount, tip_amount, "Transfer amount incorrect");
+                assert_eq!(transfer.amount, amounts[0], "Transfer amount incorrect");
             }
             _ => panic!("Expected Transfer intent type"),
         }
@@ -383,9 +388,10 @@ async fn it_should_succeed_get_linkv2_details_with_withdraw_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let tip_amount = Nat::from(1_000_000u64);
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
         let (test_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+            activate_basket_link_v2_fixture(ctx, tokens.clone(), amounts.clone()).await;
 
         // Act: disable the link first to make it Inactive
         let link_id = create_link_result.link.id.clone();
