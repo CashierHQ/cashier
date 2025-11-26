@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link_v2::send_tip::fixture::activate_tip_link_v2_fixture;
+use crate::cashier_backend::link_v2::receive_payment::fixture::send_payment_link_v2_fixture;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
@@ -17,12 +17,13 @@ use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol
 use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]
-async fn it_should_withdraw_icp_token_tip_linkv2_error_if_link_active() {
+async fn it_should_withdraw_icp_token_payment_linkv2_error_if_link_active() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = Nat::from(1_000_000u64);
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
         let (test_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+            send_payment_link_v2_fixture(ctx, tokens, amounts).await;
 
         // Act: create WITHDRAW action
         let link_id = create_link_result.link.id.clone();
@@ -30,7 +31,10 @@ async fn it_should_withdraw_icp_token_tip_linkv2_error_if_link_active() {
             link_id: link_id.clone(),
             action_type: ActionType::Withdraw,
         };
-        let create_action_result = test_fixture.create_action_v2(create_action_input).await;
+        let create_action_result = test_fixture
+            .link_fixture
+            .create_action_v2(create_action_input)
+            .await;
 
         // Assert: action created successfully
         assert!(create_action_result.is_err());
@@ -54,70 +58,15 @@ async fn it_should_withdraw_icp_token_tip_linkv2_error_if_link_active() {
 }
 
 #[tokio::test]
-async fn it_should_withdraw_icp_token_tip_linkv2_error_if_more_than_once() {
-    with_pocket_ic_context::<_, ()>(async move |ctx| {
-        // Arrange
-        let tip_amount = Nat::from(1_000_000u64);
-        let (test_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
-
-        // Act: disable the link first to make it Inactive
-        let link_id = create_link_result.link.id.clone();
-        let _disable_link_result = test_fixture.disable_link_v2(&link_id).await;
-
-        // Act: create WITHDRAW action
-        let link_id = create_link_result.link.id.clone();
-        let create_action_input = CreateActionInput {
-            link_id: link_id.clone(),
-            action_type: ActionType::Withdraw,
-        };
-        let create_action_result = test_fixture.create_action_v2(create_action_input).await;
-
-        // Act: process WITHDRAW action
-        let action_dto = create_action_result.unwrap();
-        let action_id = action_dto.id.clone();
-        let process_action_input = ProcessActionV2Input {
-            action_id: action_id.clone(),
-        };
-        let _process_action_result = test_fixture.process_action_v2(process_action_input).await;
-
-        // Act: create WITHDRAW action again
-        let create_action_input = CreateActionInput {
-            link_id: link_id.clone(),
-            action_type: ActionType::Withdraw,
-        };
-        let create_action_result = test_fixture.create_action_v2(create_action_input).await;
-
-        // Assert: action creation failed
-        assert!(create_action_result.is_err());
-
-        if let Err(CanisterError::ValidationErrors(msg)) = create_action_result {
-            assert!(
-                msg.contains("Unsupported link state"),
-                "Unexpected error message: {}",
-                msg
-            );
-        } else {
-            panic!(
-                "Expected CanisterError::ValidationErrors, got {:?}",
-                create_action_result
-            );
-        }
-
-        Ok(())
-    })
-    .await
-    .unwrap();
-}
-
-#[tokio::test]
-async fn it_should_withdraw_icp_token_tip_linkv2_successfully() {
+async fn it_should_withdraw_icp_token_payment_linkv2_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let tip_amount = Nat::from(1_000_000u64);
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
         let (test_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+            send_payment_link_v2_fixture(ctx, tokens, amounts).await;
+
         let icp_ledger_client = ctx.new_icp_ledger_client(caller);
         let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
 
@@ -127,7 +76,7 @@ async fn it_should_withdraw_icp_token_tip_linkv2_successfully() {
         };
         let icp_balance_before = icp_ledger_client.balance_of(&caller_account).await.unwrap();
         let link_id = create_link_result.link.id.clone();
-        let link_account = link_id_to_account(&test_fixture.ctx, &link_id);
+        let link_account = link_id_to_account(&test_fixture.link_fixture.ctx, &link_id);
         let link_balance_before = icp_ledger_client.balance_of(&link_account).await.unwrap();
         let withdraw_balance = if link_balance_before > icp_ledger_fee {
             link_balance_before - icp_ledger_fee
@@ -137,7 +86,7 @@ async fn it_should_withdraw_icp_token_tip_linkv2_successfully() {
 
         // Act: disable the link first to make it Inactive
         let link_id = create_link_result.link.id.clone();
-        let disable_link_result = test_fixture.disable_link_v2(&link_id).await;
+        let disable_link_result = test_fixture.link_fixture.disable_link_v2(&link_id).await;
 
         assert!(disable_link_result.is_ok());
         let link_dto = disable_link_result.unwrap();
@@ -149,7 +98,10 @@ async fn it_should_withdraw_icp_token_tip_linkv2_successfully() {
             link_id: link_id.clone(),
             action_type: ActionType::Withdraw,
         };
-        let create_action_result = test_fixture.create_action_v2(create_action_input).await;
+        let create_action_result = test_fixture
+            .link_fixture
+            .create_action_v2(create_action_input)
+            .await;
 
         // Assert: action created successfully
         assert!(create_action_result.is_ok());
@@ -193,7 +145,10 @@ async fn it_should_withdraw_icp_token_tip_linkv2_successfully() {
         let process_action_input = ProcessActionV2Input {
             action_id: action_id.clone(),
         };
-        let process_action_result = test_fixture.process_action_v2(process_action_input).await;
+        let process_action_result = test_fixture
+            .link_fixture
+            .process_action_v2(process_action_input)
+            .await;
 
         // Assert: action processed successfully
         assert!(process_action_result.is_ok());
@@ -226,13 +181,15 @@ async fn it_should_withdraw_icp_token_tip_linkv2_successfully() {
 }
 
 #[tokio::test]
-async fn it_should_withdraw_icrc_token_tip_linkv2_successfully() {
+async fn it_should_withdraw_icrc_token_payment_linkv2_successfully() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let tip_amount = Nat::from(1_000_000u64);
+        let tokens = vec![CKBTC_ICRC_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
         let (test_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, CKBTC_ICRC_TOKEN, tip_amount).await;
+            send_payment_link_v2_fixture(ctx, tokens, amounts).await;
+
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, caller);
         let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
 
@@ -245,7 +202,7 @@ async fn it_should_withdraw_icrc_token_tip_linkv2_successfully() {
             .await
             .unwrap();
         let link_id = create_link_result.link.id.clone();
-        let link_account = link_id_to_account(&test_fixture.ctx, &link_id);
+        let link_account = link_id_to_account(&test_fixture.link_fixture.ctx, &link_id);
         let link_balance_before = ckbtc_ledger_client.balance_of(&link_account).await.unwrap();
         let withdraw_balance = if link_balance_before > ckbtc_ledger_fee {
             link_balance_before - ckbtc_ledger_fee
@@ -255,7 +212,7 @@ async fn it_should_withdraw_icrc_token_tip_linkv2_successfully() {
 
         // Act: disable the link first to make it Inactive
         let link_id = create_link_result.link.id.clone();
-        let disable_link_result = test_fixture.disable_link_v2(&link_id).await;
+        let disable_link_result = test_fixture.link_fixture.disable_link_v2(&link_id).await;
 
         assert!(disable_link_result.is_ok());
         let link_dto = disable_link_result.unwrap();
@@ -267,7 +224,10 @@ async fn it_should_withdraw_icrc_token_tip_linkv2_successfully() {
             link_id: link_id.clone(),
             action_type: ActionType::Withdraw,
         };
-        let create_action_result = test_fixture.create_action_v2(create_action_input).await;
+        let create_action_result = test_fixture
+            .link_fixture
+            .create_action_v2(create_action_input)
+            .await;
 
         // Assert: action created successfully
         assert!(create_action_result.is_ok());
@@ -311,7 +271,10 @@ async fn it_should_withdraw_icrc_token_tip_linkv2_successfully() {
         let process_action_input = ProcessActionV2Input {
             action_id: action_id.clone(),
         };
-        let process_action_result = test_fixture.process_action_v2(process_action_input).await;
+        let process_action_result = test_fixture
+            .link_fixture
+            .process_action_v2(process_action_input)
+            .await;
 
         // Assert: action processed successfully
         assert!(process_action_result.is_ok());
