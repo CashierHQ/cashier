@@ -2,8 +2,8 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
-use crate::cashier_backend::link_v2::send_tip::fixture::{
-    activate_tip_link_v2_fixture, create_tip_linkv2_fixture,
+use crate::cashier_backend::link_v2::receive_payment::fixture::{
+    activate_payment_link_v2_fixture, create_payment_link_v2_fixture,
 };
 use crate::utils::principal::TestUser;
 use crate::utils::with_pocket_ic_context;
@@ -13,14 +13,14 @@ use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::link::v1::LinkState;
 
 #[tokio::test]
-async fn it_should_fail_disable_icp_token_tip_linkv2_if_link_not_active() {
+async fn it_should_fail_disable_icp_token_payment_linkv2_if_link_not_active() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let token = ICP_TOKEN;
-        let tip_amount = Nat::from(1_000_000u64);
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, caller, token, tip_amount).await;
+            create_payment_link_v2_fixture(ctx, caller, tokens, amounts).await;
 
         // Act
         let link_id = create_link_result.link.id.clone();
@@ -48,14 +48,14 @@ async fn it_should_fail_disable_icp_token_tip_linkv2_if_link_not_active() {
 }
 
 #[tokio::test]
-async fn it_should_fail_disable_icp_token_tip_linkv2_if_caller_is_not_creator() {
+async fn it_should_fail_disable_icp_token_payment_linkv2_if_caller_is_not_creator() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let token = ICP_TOKEN;
-        let tip_amount = Nat::from(1_000_000u64);
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
         let (test_fixture, create_link_result) =
-            create_tip_linkv2_fixture(ctx, caller, token, tip_amount).await;
+            create_payment_link_v2_fixture(ctx, caller, tokens, amounts).await;
 
         let caller = TestUser::User2.get_principal();
         let caller_fixture = LinkTestFixtureV2::new(test_fixture.ctx.clone(), caller).await;
@@ -90,16 +90,17 @@ async fn it_should_fail_disable_icp_token_tip_linkv2_if_caller_is_not_creator() 
 }
 
 #[tokio::test]
-async fn it_should_succeed_disable_icp_token_tip_linkv2() {
+async fn it_should_succeed_disable_icp_token_payment_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
-        let tip_amount = Nat::from(1_000_000u64);
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
         let (test_fixture, create_link_result) =
-            activate_tip_link_v2_fixture(ctx, ICP_TOKEN, tip_amount).await;
+            activate_payment_link_v2_fixture(ctx, tokens, amounts).await;
 
         // Act
         let link_id = create_link_result.link.id.clone();
-        let disable_link_result = test_fixture.disable_link_v2(&link_id).await;
+        let disable_link_result = test_fixture.link_fixture.disable_link_v2(&link_id).await;
 
         // Assert
         assert!(disable_link_result.is_ok());
