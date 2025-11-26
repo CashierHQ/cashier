@@ -10,7 +10,7 @@
 
 <div class="py-4">
   {#if currentPath === "/wallet"}
-    <Button onclick={() => goto(resolve("/"))}>Go to Home</Button>
+    <Button onclick={() => goto(resolve("/links"))}>Go to Home</Button>
     <Button onclick={() => goto(resolve("/wallet/manage"))}
       >Manage Tokens</Button
     >
