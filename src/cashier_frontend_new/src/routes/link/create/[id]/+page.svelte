@@ -41,31 +41,27 @@
   });
 </script>
 
-{#if !id}
-  <div class="grow-1 flex flex-col">Invalid link ID</div>
-{:else}
-  <div class="w-full grow-1 flex flex-col">
-    <RouteGuard
-      guards={[
-        { type: GuardType.AUTH },
-        { type: GuardType.VALID_LINK },
-        { type: GuardType.LINK_OWNER },
-        {
-          type: GuardType.LINK_STATE,
-          allowedStates: [
-            LinkStep.CHOOSE_TYPE,
-            LinkStep.ADD_ASSET,
-            LinkStep.PREVIEW,
-            LinkStep.CREATED,
-          ],
-        },
-      ]}
-      tempLinkId={id}
-    >
-      {@const context = getRouteGuardContext()}
-      {#if context.linkCreationStore}
-        <CreateLink linkStore={context.linkCreationStore} />
-      {/if}
-    </RouteGuard>
-  </div>
-{/if}
+<div class="w-full grow-1 flex flex-col">
+  <RouteGuard
+    guards={[
+      { type: GuardType.AUTH },
+      { type: GuardType.VALID_LINK },
+      { type: GuardType.LINK_OWNER },
+      {
+        type: GuardType.LINK_STATE,
+        allowedStates: [
+          LinkStep.CHOOSE_TYPE,
+          LinkStep.ADD_ASSET,
+          LinkStep.PREVIEW,
+          LinkStep.CREATED,
+        ],
+      },
+    ]}
+    tempLinkId={id}
+  >
+    {@const context = getRouteGuardContext()}
+    {#if context.linkCreationStore}
+      <CreateLink linkStore={context.linkCreationStore} />
+    {/if}
+  </RouteGuard>
+</div>
