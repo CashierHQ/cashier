@@ -33,52 +33,32 @@
   {@render children()}
 {:else if currentGuard.type === GuardType.AUTH}
   <ProtectedAuth config={currentGuard}>
-    {#if hasMore}
-      <svelte:self {guards} index={index + 1}>
-        {@render children()}
-      </svelte:self>
-    {:else}
+    <svelte:self {guards} index={index + 1}>
       {@render children()}
-    {/if}
+    </svelte:self>
   </ProtectedAuth>
 {:else if currentGuard.type === GuardType.VALID_LINK}
   <ProtectedValidLink config={currentGuard}>
-    {#if hasMore}
-      <svelte:self {guards} index={index + 1}>
-        {@render children()}
-      </svelte:self>
-    {:else}
+    <svelte:self {guards} index={index + 1}>
       {@render children()}
-    {/if}
+    </svelte:self>
   </ProtectedValidLink>
 {:else if currentGuard.type === GuardType.LINK_OWNER}
   <ProtectedLinkOwner config={currentGuard}>
-    {#if hasMore}
-      <svelte:self {guards} index={index + 1}>
-        {@render children()}
-      </svelte:self>
-    {:else}
+    <svelte:self {guards} index={index + 1}>
       {@render children()}
-    {/if}
+    </svelte:self>
   </ProtectedLinkOwner>
 {:else if currentGuard.type === GuardType.LINK_STATE}
   <ProtectedLinkState config={currentGuard}>
-    {#if hasMore}
-      <svelte:self {guards} index={index + 1}>
-        {@render children()}
-      </svelte:self>
-    {:else}
+    <svelte:self {guards} index={index + 1}>
       {@render children()}
-    {/if}
+    </svelte:self>
   </ProtectedLinkState>
 {:else if currentGuard.type === GuardType.USER_STATE}
   <ProtectedUserState config={currentGuard}>
-    {#if hasMore}
-      <svelte:self {guards} index={index + 1}>
-        {@render children()}
-      </svelte:self>
-    {:else}
+    <svelte:self {guards} index={index + 1}>
       {@render children()}
-    {/if}
+    </svelte:self>
   </ProtectedUserState>
 {/if}
