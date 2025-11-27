@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { error } from "@sveltejs/kit";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import type { Snippet } from "svelte";
   import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
@@ -44,15 +45,14 @@
     currentStep !== null && allowedStates.includes(currentStep),
   );
 
+  const shouldRedirect = $derived(
+    (linkStore && "query" in linkStore && !linkStore.query.isLoading && !isStateValid) ||
+    (linkStore && !("query" in linkStore) && !isStateValid)
+  );
+
   $effect(() => {
-    if (linkStore && "query" in linkStore && !linkStore.query.isLoading) {
-      if (!isStateValid) {
-        error(404, "Invalid link state");
-      }
-    } else if (linkStore && !("query" in linkStore)) {
-      if (!isStateValid) {
-        error(404, "Invalid link state");
-      }
+    if (shouldRedirect) {
+      goto(resolve("/404"));
     }
   });
 </script>
@@ -61,6 +61,4 @@
   <ProtectionProcessingState message="Loading..." />
 {:else if isStateValid}
   {@render children()}
-{:else}
-  <ProtectionProcessingState message="Loading..." />
 {/if}

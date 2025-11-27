@@ -65,6 +65,4 @@
   {@render children()}
 {:else if isReady}
   <ProtectionProcessingState message="Redirecting..." />
-{:else}
-  <ProtectionProcessingState message="Loading..." />
 {/if}
