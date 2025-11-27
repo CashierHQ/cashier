@@ -4,6 +4,7 @@ use crate::utils::{
 };
 use candid::{Nat, Principal};
 use cashier_backend_types::dto::action::CreateActionInput;
+use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::{constant, repository::action::v1::ActionState};
 use ic_mple_client::CanisterClientError;
@@ -24,7 +25,7 @@ async fn it_should_error_use_link_tip_if_caller_anonymous() {
         let result = cashier_backend_client
             .user_create_action(CreateActionInput {
                 link_id: link.id.clone(),
-                action_type: ActionType::Use,
+                action_type: ActionType::Receive,
             })
             .await;
 
@@ -34,6 +35,49 @@ async fn it_should_error_use_link_tip_if_caller_anonymous() {
             assert!(err.reject_message.contains("AnonimousUserNotAllowed"));
         } else {
             panic!("Expected PocketIcTestError, got {:?}", result);
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_error_use_link_tip_multiple_times_from_same_user() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) =
+            create_tip_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(5_000_000u64)).await;
+
+        let claimer = TestUser::User2.get_principal();
+        let claimer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &claimer).await;
+
+        // perform first use
+        let claim_action = claimer_fixture
+            .create_action(&link.id, ActionType::Receive)
+            .await;
+        let _processing = claimer_fixture
+            .process_action(&link.id, &claim_action.id, ActionType::Receive)
+            .await;
+
+        let cashier_backend_client = claimer_fixture.ctx.new_cashier_backend_client(claimer);
+
+        // Act
+        let result = cashier_backend_client
+            .user_create_action(CreateActionInput {
+                link_id: link.id.clone(),
+                action_type: ActionType::Receive,
+            })
+            .await
+            .unwrap();
+
+        // Assert
+        assert!(result.is_err());
+        if let Err(CanisterError::ValidationErrors(err)) = result {
+            assert!(err.contains("Action already exist"));
+        } else {
+            panic!("Expected ValidationErrors, got {:?}", result);
         }
 
         Ok(())
@@ -72,17 +116,17 @@ async fn it_should_use_link_tip_icp_token_successfully() {
 
         // Act
         let claim_action = claimer_fixture
-            .create_action(&link.id, ActionType::Use)
+            .create_action(&link.id, ActionType::Receive)
             .await;
 
         // Assert
         assert!(!claim_action.id.is_empty());
-        assert_eq!(claim_action.r#type, ActionType::Use);
+        assert_eq!(claim_action.r#type, ActionType::Receive);
         assert_eq!(claim_action.state, ActionState::Created);
 
         // Act
         let claim_result = claimer_fixture
-            .process_action(&link.id, &claim_action.id, ActionType::Use)
+            .process_action(&link.id, &claim_action.id, ActionType::Receive)
             .await;
 
         // Assert
@@ -125,10 +169,10 @@ async fn benchmark_use_link_tip_icp_token() {
 
         // Act
         let claim_action = claimer_fixture
-            .create_action(&link.id, ActionType::Use)
+            .create_action(&link.id, ActionType::Receive)
             .await;
         let _claim_result = claimer_fixture
-            .process_action(&link.id, &claim_action.id, ActionType::Use)
+            .process_action(&link.id, &claim_action.id, ActionType::Receive)
             .await;
 
         // Assert
@@ -178,17 +222,17 @@ async fn it_should_use_link_tip_icrc_token_successfully() {
 
         // Act
         let claim_action = claimer_fixture
-            .create_action(&link.id, ActionType::Use)
+            .create_action(&link.id, ActionType::Receive)
             .await;
 
         // Assert
         assert!(!claim_action.id.is_empty());
-        assert_eq!(claim_action.r#type, ActionType::Use);
+        assert_eq!(claim_action.r#type, ActionType::Receive);
         assert_eq!(claim_action.state, ActionState::Created);
 
         // Act
         let claim_result = claimer_fixture
-            .process_action(&link.id, &claim_action.id, ActionType::Use)
+            .process_action(&link.id, &claim_action.id, ActionType::Receive)
             .await;
 
         // Assert
@@ -231,10 +275,10 @@ async fn benchmark_use_link_tip_icrc_token() {
 
         // Act
         let claim_action = claimer_fixture
-            .create_action(&link.id, ActionType::Use)
+            .create_action(&link.id, ActionType::Receive)
             .await;
         let _claim_result = claimer_fixture
-            .process_action(&link.id, &claim_action.id, ActionType::Use)
+            .process_action(&link.id, &claim_action.id, ActionType::Receive)
             .await;
 
         // Assert

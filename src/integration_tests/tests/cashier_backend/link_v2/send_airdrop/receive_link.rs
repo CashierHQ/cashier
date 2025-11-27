@@ -91,13 +91,15 @@ async fn it_should_fail_receive_icp_token_airdrop_linkv2_if_requested_more_than_
             .process_action_v2(process_action_input)
             .await;
 
-        // Act: create RECEIVE action again
+        // Act: create RECEIVE action again (from a different principal)
+        let other = test_utils::random_principal_id();
+        let other_fixture = LinkTestFixtureV2::new(creator_fixture.ctx.clone(), other).await;
         let link_id = create_link_result.link.id.clone();
         let create_action_input = CreateActionInput {
             link_id: link_id.clone(),
             action_type: ActionType::Receive,
         };
-        let create_action_result = receiver_fixture.create_action_v2(create_action_input).await;
+        let create_action_result = other_fixture.create_action_v2(create_action_input).await;
 
         // Assert: action creation failed
         assert!(create_action_result.is_err());

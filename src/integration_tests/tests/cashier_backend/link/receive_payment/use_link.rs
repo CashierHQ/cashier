@@ -3,6 +3,7 @@ use crate::utils::{
     icrc_112, link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context,
 };
 use candid::{Nat, Principal};
+use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::{
     constant,
@@ -28,7 +29,7 @@ async fn it_should_error_use_link_payment_if_caller_anonymous() {
         let result = cashier_backend_client
             .user_create_action(CreateActionInput {
                 link_id: link.id.clone(),
-                action_type: ActionType::Use,
+                action_type: ActionType::Send,
             })
             .await;
 
@@ -38,6 +39,50 @@ async fn it_should_error_use_link_payment_if_caller_anonymous() {
             assert!(err.reject_message.contains("AnonimousUserNotAllowed"));
         } else {
             panic!("Expected PocketIcTestError, got {:?}", result);
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_error_use_link_payment_multiple_times_from_same_user() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) =
+            create_receive_payment_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64))
+                .await;
+
+        let payer = TestUser::User2.get_principal();
+        let payer_fixture = LinkTestFixture::new(creator_fixture.ctx.clone(), &payer).await;
+
+        // perform first use
+        let pay_action = payer_fixture
+            .create_action(&link.id, ActionType::Send)
+            .await;
+        let _processing = payer_fixture
+            .process_action(&link.id, &pay_action.id, ActionType::Send)
+            .await;
+
+        let cashier_backend_client = payer_fixture.ctx.new_cashier_backend_client(payer);
+
+        // Act
+        let result = cashier_backend_client
+            .user_create_action(CreateActionInput {
+                link_id: link.id.clone(),
+                action_type: ActionType::Send,
+            })
+            .await
+            .unwrap();
+
+        // Assert
+        assert!(result.is_err());
+        if let Err(CanisterError::ValidationErrors(err)) = result {
+            assert!(err.contains("Action already exist"));
+        } else {
+            panic!("Expected ValidationErrors, got {:?}", result);
         }
 
         Ok(())
@@ -78,16 +123,18 @@ async fn it_should_use_link_payment_icp_token_successfully() {
         );
 
         // Act
-        let pay_action = payer_fixture.create_action(&link.id, ActionType::Use).await;
+        let pay_action = payer_fixture
+            .create_action(&link.id, ActionType::Send)
+            .await;
 
         // Assert
         assert!(!pay_action.id.is_empty());
-        assert_eq!(pay_action.r#type, ActionType::Use);
+        assert_eq!(pay_action.r#type, ActionType::Send);
         assert_eq!(pay_action.state, ActionState::Created);
 
         // Act
         let processing_action = payer_fixture
-            .process_action(&link.id, &pay_action.id, ActionType::Use)
+            .process_action(&link.id, &pay_action.id, ActionType::Send)
             .await;
 
         // Assert
@@ -118,7 +165,7 @@ async fn it_should_use_link_payment_icp_token_successfully() {
 
         // Assert
         assert!(!update_action.id.is_empty());
-        assert_eq!(update_action.r#type, ActionType::Use);
+        assert_eq!(update_action.r#type, ActionType::Send);
         assert_eq!(update_action.state, ActionState::Success);
         assert!(
             update_action
@@ -169,9 +216,11 @@ async fn benchmark_use_link_payment_icp_token() {
             .await;
 
         // Act
-        let pay_action = payer_fixture.create_action(&link.id, ActionType::Use).await;
+        let pay_action = payer_fixture
+            .create_action(&link.id, ActionType::Send)
+            .await;
         let processing_action = payer_fixture
-            .process_action(&link.id, &pay_action.id, ActionType::Use)
+            .process_action(&link.id, &pay_action.id, ActionType::Send)
             .await;
         let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
         let _icrc112_execution_result =
@@ -243,16 +292,18 @@ async fn it_should_use_link_payment_icrc_token_successfully() {
         );
 
         // Act
-        let pay_action = payer_fixture.create_action(&link.id, ActionType::Use).await;
+        let pay_action = payer_fixture
+            .create_action(&link.id, ActionType::Send)
+            .await;
 
         // Assert
         assert!(!pay_action.id.is_empty());
-        assert_eq!(pay_action.r#type, ActionType::Use);
+        assert_eq!(pay_action.r#type, ActionType::Send);
         assert_eq!(pay_action.state, ActionState::Created);
 
         // Act
         let processing_action = payer_fixture
-            .process_action(&link.id, &pay_action.id, ActionType::Use)
+            .process_action(&link.id, &pay_action.id, ActionType::Send)
             .await;
 
         // Assert
@@ -283,7 +334,7 @@ async fn it_should_use_link_payment_icrc_token_successfully() {
 
         // Assert
         assert!(!update_action.id.is_empty());
-        assert_eq!(update_action.r#type, ActionType::Use);
+        assert_eq!(update_action.r#type, ActionType::Send);
         assert_eq!(update_action.state, ActionState::Success);
         assert!(
             update_action
@@ -348,9 +399,11 @@ async fn benchmark_use_link_payment_icrc_token() {
             .await;
 
         // Act
-        let pay_action = payer_fixture.create_action(&link.id, ActionType::Use).await;
+        let pay_action = payer_fixture
+            .create_action(&link.id, ActionType::Send)
+            .await;
         let processing_action = payer_fixture
-            .process_action(&link.id, &pay_action.id, ActionType::Use)
+            .process_action(&link.id, &pay_action.id, ActionType::Send)
             .await;
         let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
         let _icrc112_execution_result =

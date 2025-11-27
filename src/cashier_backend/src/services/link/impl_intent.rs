@@ -143,7 +143,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                 }
 
                 // for use link, mostly for "send" link type - need transfer amount = amount_per_user
-                (ActionType::Use, IntentTask::TransferLinkToWallet) => {
+                (ActionType::Receive, IntentTask::TransferLinkToWallet) => {
                     let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
                         CanisterError::HandleLogicError(
                             "[link_assemble_intents] task TransferLinkToWallet Asset not found"
@@ -165,7 +165,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> IntentAssembler for LinkService<
                 }
 
                 // for use link, mostly for "receive" link type - need transfer amount = amount_per_user
-                (ActionType::Use, IntentTask::TransferWalletToLink) => {
+                (ActionType::Send, IntentTask::TransferWalletToLink) => {
                     let asset_info = link.get_asset_by_label(&intent.label).ok_or_else(|| {
                         CanisterError::HandleLogicError(
                             "[link_assemble_intents] task TransferWalletToLink Asset not found"
@@ -405,7 +405,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
                 intents.push(transfer_asset_intent);
                 intents.push(transfer_fee_intent);
             }
-            (LinkType::SendTip, ActionType::Use) | (LinkType::SendTip, ActionType::Withdraw) => {
+            (LinkType::SendTip, ActionType::Receive) | (LinkType::SendTip, ActionType::Withdraw) => {
                 // Create intent for link asset to user wallet
                 let intent = self.create_basic_intent(
                     IntentTask::TransferLinkToWallet,
@@ -428,7 +428,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
                 intents.push(transfer_asset_intent);
                 intents.push(transfer_fee_intent);
             }
-            (LinkType::SendAirdrop, ActionType::Use)
+            (LinkType::SendAirdrop, ActionType::Receive)
             | (LinkType::SendAirdrop, ActionType::Withdraw) => {
                 // Create intent for link asset to user wallet
                 let intent = self.create_basic_intent(
@@ -468,7 +468,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
                 let transfer_fee_intent = self.create_fee_intent();
                 intents.push(transfer_fee_intent);
             }
-            (LinkType::SendTokenBasket, ActionType::Use)
+            (LinkType::SendTokenBasket, ActionType::Receive)
             | (LinkType::SendTokenBasket, ActionType::Withdraw) => {
                 // Create intents for each asset in asset_info
                 for asset in link.asset_info.iter() {
@@ -491,7 +491,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
                 let transfer_fee_intent = self.create_fee_intent();
                 intents.push(transfer_fee_intent);
             }
-            (LinkType::ReceivePayment, ActionType::Use) => {
+            (LinkType::ReceivePayment, ActionType::Send) => {
                 // Create intent for payment transfer
                 let intent = self.create_basic_intent(
                     IntentTask::TransferWalletToLink,
@@ -591,7 +591,7 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
-        let action_type = ActionType::Use;
+        let action_type = ActionType::Receive;
 
         // Act
         let intents = service.look_up_intent(&link, &action_type).unwrap();
@@ -660,7 +660,7 @@ mod tests {
         };
         service.link_repository.update(updated_link.clone());
 
-        let action_type = ActionType::Use;
+        let action_type = ActionType::Receive;
 
         let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
         assert!(intents.is_some());
@@ -788,7 +788,7 @@ mod tests {
             ..link
         };
         service.link_repository.update(updated_link.clone());
-        let action_type = ActionType::Use;
+        let action_type = ActionType::Receive;
 
         // Act
         let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
@@ -873,7 +873,7 @@ mod tests {
             ..link
         };
         service.link_repository.update(updated_link.clone());
-        let action_type = ActionType::Use;
+        let action_type = ActionType::Send;
 
         // Act
         let intents = service.look_up_intent(&updated_link, &action_type).unwrap();
@@ -915,7 +915,7 @@ mod tests {
         // Arrange
         let service = LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let link_id = random_id_string();
-        let action_type = ActionType::Use;
+        let action_type = ActionType::Receive;
 
         // Act
         let result = service.get_assets_for_action(&link_id, &action_type);
@@ -1033,7 +1033,7 @@ mod tests {
         let link = create_link_fixture(&mut service, random_principal_id());
 
         // Act
-        let result = service.get_assets_for_action(&link.id, &ActionType::Use);
+        let result = service.get_assets_for_action(&link.id, &ActionType::Receive);
 
         // Assert
         assert!(result.is_err());
@@ -1067,7 +1067,7 @@ mod tests {
 
         // Act
         let assets = service
-            .get_assets_for_action(&updated_link.id, &ActionType::Use)
+            .get_assets_for_action(&updated_link.id, &ActionType::Receive)
             .unwrap();
 
         // Assert

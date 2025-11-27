@@ -1,9 +1,10 @@
-use crate::cashier_backend::link::fixture::LinkTestFixture;
+use crate::cashier_backend::link::fixture::{LinkTestFixture, create_tip_link_fixture};
 use crate::utils::{
     icrc_112::execute_icrc112_request, link_id_to_account::link_id_to_account, principal::TestUser,
     with_pocket_ic_context,
 };
 use candid::{Nat, Principal};
+use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::{
     constant,
     dto::link::{LinkStateMachineGoto, UpdateLinkInput},
@@ -179,6 +180,39 @@ async fn it_should_create_link_tip_icp_token_successfully() {
                 - test_utils::calculate_amount_for_create_link(&icp_ledger_fee),
             "ICP Caller balance is incorrect"
         );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_reject_duplicate_create_link_action_for_tip() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) =
+            create_tip_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64)).await;
+
+        // Act: attempt to create a second CreateLink action for the same link by the same user
+        let result = creator_fixture
+            .cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_create_action(cashier_backend_types::dto::action::CreateActionInput {
+                link_id: link.id.clone(),
+                action_type: ActionType::CreateLink,
+            })
+            .await
+            .unwrap();
+
+        // Assert: should be rejected with validation error
+        assert!(result.is_err());
+        if let Err(CanisterError::ValidationErrors(err)) = result {
+            assert!(err.contains("Action already exist") || err.contains("already exist"));
+        } else {
+            panic!("Expected ValidationErrors, got {:?}", result);
+        }
 
         Ok(())
     })

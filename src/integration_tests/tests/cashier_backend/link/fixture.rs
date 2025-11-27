@@ -671,10 +671,10 @@ pub async fn create_and_use_receive_payment_link_fixture(
     }
 
     let claim_action = claimer_fixture
-        .create_action(&link.id, ActionType::Use)
+        .create_action(&link.id, ActionType::Send)
         .await;
     let processing_action = claimer_fixture
-        .process_action(&link.id, &claim_action.id, ActionType::Use)
+        .process_action(&link.id, &claim_action.id, ActionType::Send)
         .await;
     let icrc_112_requests = processing_action.icrc_112_requests.as_ref().unwrap();
     let _icrc112_execution_result =

@@ -5,6 +5,7 @@ use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
 use crate::cashier_backend::link_v2::send_basket::fixture::{
     activate_basket_link_v2_fixture, create_basket_link_v2_fixture,
 };
+use cashier_common::test_utils;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
@@ -88,13 +89,15 @@ async fn it_should_fail_receive_icp_token_basket_linkv2_if_requested_more_than_o
             .process_action_v2(process_action_input)
             .await;
 
-        // Act: create RECEIVE action again
+        // Act: create RECEIVE action again (from a different principal)
+        let other = test_utils::random_principal_id();
+        let other_fixture = LinkTestFixtureV2::new(creator_fixture.ctx.clone(), other).await;
         let link_id = create_link_result.link.id.clone();
         let create_action_input = CreateActionInput {
             link_id: link_id.clone(),
             action_type: ActionType::Receive,
         };
-        let create_action_result = receiver_fixture.create_action_v2(create_action_input).await;
+        let create_action_result = other_fixture.create_action_v2(create_action_input).await;
 
         // Assert: action creation failed
         assert!(create_action_result.is_err());

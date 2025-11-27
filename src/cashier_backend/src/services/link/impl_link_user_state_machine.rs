@@ -97,10 +97,10 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
         caller: Principal,
         input: &LinkGetUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
-        if input.action_type != ActionType::Use {
+        if !matches!(input.action_type, ActionType::Receive | ActionType::Send) {
             return Err(CanisterError::ValidationErrors(
                 "
-                        Invalid action type, only Claim or Use action type is allowed
+                        Invalid action type, only Receive or Send action type is allowed
                         "
                 .to_string(),
             ));
@@ -157,9 +157,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkUserStateMachine for LinkSer
         input: &LinkUpdateUserStateInput,
     ) -> Result<Option<LinkGetUserStateOutput>, CanisterError> {
         // validate action type
-        if input.action_type != ActionType::Use {
+        if !matches!(input.action_type, ActionType::Receive | ActionType::Send) {
             return Err(CanisterError::ValidationErrors(
-                "Invalid action type, only Claim or Use  action type is allowed".to_string(),
+                "Invalid action type, only Receive or Send action type is allowed".to_string(),
             ));
         }
 
@@ -222,7 +222,7 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
-        let action_type = ActionType::Use;
+        let action_type = ActionType::Receive;
 
         // Act
         let result = service.handle_user_link_state_machine(
@@ -249,7 +249,7 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
-        let action_type = ActionType::Use;
+        let action_type = ActionType::Receive;
 
         let _link_action =
             create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
@@ -279,7 +279,7 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
-        let action_type = ActionType::Use;
+        let action_type = ActionType::Receive;
 
         let link_action =
             create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
@@ -318,7 +318,7 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
-        let action_type = ActionType::Use;
+        let action_type = ActionType::Receive;
 
         let link_action =
             create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
@@ -356,7 +356,7 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
-        let action_type = ActionType::Use;
+        let action_type = ActionType::Receive;
 
         let link_action =
             create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
@@ -371,7 +371,7 @@ mod tests {
 
         let updated_action = Action {
             id: link_action.action_id,
-            r#type: ActionType::Use,
+            r#type: ActionType::Receive,
             state: ActionState::Success,
             creator: creator_id,
             link_id: link.id.clone(),
@@ -399,7 +399,7 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
-        let action_type = ActionType::Use;
+        let action_type = ActionType::Receive;
 
         let link_action =
             create_link_action_fixture(&mut service, &link.id, action_type.clone(), creator_id);
@@ -459,7 +459,7 @@ mod tests {
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
-            assert!(msg.contains("Invalid action type, only Claim or Use action type is allowed"));
+            assert!(msg.contains("Invalid action type, only Receive or Send action type is allowed"));
         } else {
             panic!("Expected ValidationErrors");
         }
@@ -506,7 +506,7 @@ mod tests {
             creator,
             &LinkGetUserStateInput {
                 link_id: link.id,
-                action_type: ActionType::Use,
+                action_type: ActionType::Receive,
                 anonymous_wallet_address: None,
             },
         );
@@ -525,7 +525,7 @@ mod tests {
         let creator = random_principal_id();
         let link = create_link_fixture(&mut service, creator);
         let link_action =
-            create_link_action_fixture(&mut service, &link.id, ActionType::Use, creator);
+            create_link_action_fixture(&mut service, &link.id,  ActionType::Receive, creator);
 
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
@@ -541,7 +541,7 @@ mod tests {
             creator,
             &LinkGetUserStateInput {
                 link_id: link.id,
-                action_type: ActionType::Use,
+                action_type:  ActionType::Receive,
                 anonymous_wallet_address: None,
             },
         );
@@ -564,7 +564,7 @@ mod tests {
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let link_action =
-            create_link_action_fixture(&mut service, &link.id, ActionType::Use, creator_id);
+            create_link_action_fixture(&mut service, &link.id,  ActionType::Receive, creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -579,7 +579,7 @@ mod tests {
             creator_id,
             &LinkGetUserStateInput {
                 link_id: link.id,
-                action_type: ActionType::Use,
+                action_type:  ActionType::Receive,
                 anonymous_wallet_address: None,
             },
         );
@@ -616,7 +616,7 @@ mod tests {
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
-            assert!(msg.contains("Invalid action type, only Claim or Use  action type is allowed"));
+            assert!(msg.contains("Invalid action type, only Receive or Send action type is allowed"));
         } else {
             panic!("Expected ValidationErrors");
         }
@@ -659,7 +659,7 @@ mod tests {
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let link_action =
-            create_link_action_fixture(&mut service, &link.id, ActionType::Use, creator_id);
+            create_link_action_fixture(&mut service, &link.id,  ActionType::Receive, creator_id);
 
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
@@ -672,7 +672,7 @@ mod tests {
 
         let updated_action = Action {
             id: link_action.action_id,
-            r#type: ActionType::Use,
+            r#type: ActionType::Receive,
             state: ActionState::Success,
             creator: creator_id,
             link_id: link.id.clone(),
@@ -684,7 +684,7 @@ mod tests {
             creator_id,
             &LinkUpdateUserStateInput {
                 link_id: link.id,
-                action_type: ActionType::Use,
+                action_type:  ActionType::Receive,
                 goto: UserStateMachineGoto::Continue,
                 anonymous_wallet_address: None,
             },
