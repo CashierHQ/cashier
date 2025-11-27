@@ -20,8 +20,6 @@ type ActionState = IntentState;
 const mapActionTypeToEnum = (actionType: ActionType): ACTION_TYPE => {
   const key = getKeyVariant(actionType);
   switch (key) {
-    case "Use":
-      return ACTION_TYPE.USE;
     case "Withdraw":
       return ACTION_TYPE.WITHDRAW;
     case "CreateLink":
@@ -54,11 +52,9 @@ const mapActionStateToEnum = (actionState: ActionState) => {
 
 // Map Front-end ACTION_TYPE enum to back-end ActionType
 export const mapFrontendActionTypeToActionType = (
-  actionType: ACTION_TYPE,
+  actionType: ACTION_TYPE
 ): ActionType => {
   switch (actionType) {
-    case ACTION_TYPE.USE:
-      return { Use: null };
     case ACTION_TYPE.WITHDRAW:
       return { Withdraw: null };
     case ACTION_TYPE.CREATE_LINK:
@@ -66,6 +62,9 @@ export const mapFrontendActionTypeToActionType = (
     case ACTION_TYPE.RECEIVE:
       return { Receive: null };
     case ACTION_TYPE.SEND:
+      return { Send: null };
+    // temporarily ignore USE action type, as it's no longer used
+    case ACTION_TYPE.USE:
       return { Send: null };
     default:
       assertNever(actionType);
