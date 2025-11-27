@@ -5,7 +5,8 @@
   import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import AddLinkButton from "$modules/links/components/layout/AddLinkButton.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
-  import Protected from "$modules/shared/components/Protected.svelte";
+  import RouteGuard from "$modules/shared/components/guards/RouteGuard.svelte";
+  import { GuardType } from "$modules/shared/components/guards/types";
 
   let { children } = $props();
 
@@ -19,7 +20,7 @@
   }
 </script>
 
-<Protected>
+<RouteGuard guards={[{ type: GuardType.AUTH }]}>
   <div class="flex flex-col min-h-screen sm:bg-lightgreen bg-white">
     <AppHeader />
 
@@ -37,4 +38,4 @@
 
     <AddLinkButton onClick={handleCreateNewLink} />
   </div>
-</Protected>
+</RouteGuard>

@@ -1,4 +1,7 @@
 <script lang="ts">
+  import RouteGuard from "$modules/shared/components/guards/RouteGuard.svelte";
+  import { GuardType } from "$modules/shared/components/guards/types";
+
   interface Props {
     name: string;
     version: number;
@@ -8,6 +11,8 @@
   let data: Props = $props();
 </script>
 
-<p>
-  Project name <code>{data.name}</code>, version <code>{data.version}</code>is {data.description}.
-</p>
+<RouteGuard guards={[{ type: GuardType.AUTH }]}>
+  <p>
+    Project name <code>{data.name}</code>, version <code>{data.version}</code>is {data.description}.
+  </p>
+</RouteGuard>

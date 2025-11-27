@@ -4,16 +4,18 @@
   import { page } from "$app/state";
   import { onMount } from "svelte";
   import CreateLink from "$modules/creationLink/pages/create.svelte";
-  import CreationFlowProtected from "$modules/creationLink/components/creationFlowProtected.svelte";
-  import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+  import RouteGuard from "$modules/shared/components/guards/RouteGuard.svelte";
+  import { GuardType } from "$modules/shared/components/guards/types";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
+  import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
 
   const id = page.params.id;
-  let isLoading = $state(true);
-  let createLinkStore = $state<LinkCreationStore | null>(null);
 
   async function handleBack() {
+    const context = getRouteGuardContext();
+    const createLinkStore = context.linkCreationStore;
+
     if (!createLinkStore) return;
 
     if (
@@ -31,30 +33,8 @@
   }
 
   onMount(() => {
-    if (!id) {
-      goto(resolve("/links"));
-      return;
-    }
-
-    const getTempLinkRes = LinkCreationStore.getTempLink(id);
-
-    if (getTempLinkRes.isErr()) {
-      goto(resolve("/links"));
-      return;
-    }
-
-    const tempLink = getTempLinkRes.unwrap();
-
-    if (!tempLink) {
-      goto(resolve("/links"));
-      return;
-    }
-
-    createLinkStore = new LinkCreationStore(tempLink);
     appHeaderStore.setBackHandler(handleBack);
-    isLoading = false;
 
-    // Cleanup back handler on unmount
     return () => {
       appHeaderStore.clearBackHandler();
     };
@@ -63,18 +43,29 @@
 
 {#if !id}
   <div class="grow-1 flex flex-col">Invalid link ID</div>
-{:else if isLoading}
-  <div class="w-full grow-1 flex flex-col">
-    <div>Loading...</div>
-  </div>
-{:else if !createLinkStore}
-  <div class="w-full grow-1 flex flex-col">
-    <div>Link not found</div>
-  </div>
 {:else}
   <div class="w-full grow-1 flex flex-col">
-    <CreationFlowProtected linkStore={createLinkStore}>
-      <CreateLink linkStore={createLinkStore} />
-    </CreationFlowProtected>
+    <RouteGuard
+      guards={[
+        { type: GuardType.AUTH },
+        { type: GuardType.VALID_LINK },
+        { type: GuardType.LINK_OWNER },
+        {
+          type: GuardType.LINK_STATE,
+          allowedStates: [
+            LinkStep.CHOOSE_TYPE,
+            LinkStep.ADD_ASSET,
+            LinkStep.PREVIEW,
+            LinkStep.CREATED,
+          ],
+        },
+      ]}
+      tempLinkId={id}
+    >
+      {@const context = getRouteGuardContext()}
+      {#if context.linkCreationStore}
+        <CreateLink linkStore={context.linkCreationStore} />
+      {/if}
+    </RouteGuard>
   </div>
 {/if}
