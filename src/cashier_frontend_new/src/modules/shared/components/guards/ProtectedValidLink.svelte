@@ -1,6 +1,7 @@
 <script lang="ts">
   import { error } from "@sveltejs/kit";
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import type { Snippet } from "svelte";
   import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
@@ -17,22 +18,25 @@
   const context = getRouteGuardContext();
 
   const linkStore = $derived(
-    context.linkDetailStore || context.userLinkStore || context.linkCreationStore
+    context.linkDetailStore ||
+      context.userLinkStore ||
+      context.linkCreationStore,
   );
 
   const isLoading = $derived(
-    linkStore && "query" in linkStore ? linkStore.query.isLoading : false
+    linkStore && "query" in linkStore ? linkStore.query.isLoading : false,
   );
 
   const link = $derived(
-    linkStore && "link" in linkStore ? linkStore.link : null
+    linkStore && "link" in linkStore ? linkStore.link : null,
   );
 
   $effect(() => {
     if (linkStore && "query" in linkStore && !linkStore.query.isLoading) {
       if (!link) {
         if (config.redirectTo) {
-          goto(config.redirectTo);
+          // @ts-expect-error - dynamic route path
+          goto(resolve(config.redirectTo));
         } else {
           error(404, "Link not found");
         }

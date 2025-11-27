@@ -29,15 +29,17 @@
   const userLinkStore = $derived(context.userLinkStore);
 
   const currentStep = $derived(
-    userLinkStore && "step" in userLinkStore ? userLinkStore.step : null
+    userLinkStore && "step" in userLinkStore ? userLinkStore.step : null,
   );
 
   const isLoading = $derived(
-    userLinkStore && "isLoading" in userLinkStore ? userLinkStore.isLoading : false
+    userLinkStore && "isLoading" in userLinkStore
+      ? userLinkStore.isLoading
+      : false,
   );
 
   const isStateValid = $derived(
-    currentStep !== null && allowedStates.includes(currentStep)
+    currentStep !== null && allowedStates.includes(currentStep),
   );
 
   $effect(() => {
@@ -56,4 +58,3 @@
 {:else}
   <ProtectionProcessingState message="Loading..." />
 {/if}
-

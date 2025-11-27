@@ -25,7 +25,9 @@
   const context = new RouteGuardContext();
 
   if (linkId) {
-    const hasUserStateGuard = guards.some((g) => g.type === GuardType.USER_STATE);
+    const hasUserStateGuard = guards.some(
+      (g) => g.type === GuardType.USER_STATE,
+    );
 
     if (hasUserStateGuard) {
       context.setUserLinkStore(new UserLinkStore({ id: linkId }));
@@ -47,4 +49,3 @@
 <GuardRenderer {guards} index={0}>
   {@render children()}
 </GuardRenderer>
-

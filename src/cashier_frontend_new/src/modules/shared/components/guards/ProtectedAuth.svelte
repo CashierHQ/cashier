@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import type { Snippet } from "svelte";
   import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
@@ -19,16 +20,18 @@
 
   let shouldShow = $derived(
     context.authState.isReady &&
-      (!requireAuth || context.userProfile.isLoggedIn())
+      (!requireAuth || context.userProfile.isLoggedIn()),
   );
 
   $effect(() => {
     if (context.authState.isReady) {
       const isLoggedIn = context.userProfile.isLoggedIn();
       if (requireAuth && !isLoggedIn) {
-        goto(redirectTo);
+        // @ts-expect-error - dynamic route path
+        goto(resolve(redirectTo));
       } else if (!requireAuth && isLoggedIn) {
-        goto(redirectTo);
+        // @ts-expect-error - dynamic route path
+        goto(resolve(redirectTo));
       }
     }
   });
