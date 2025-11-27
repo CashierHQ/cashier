@@ -5,10 +5,10 @@
   import NavBar from "$modules/token/components/navBar.svelte";
 
   let { children } = $props();
-  const context = getRouteGuardContext();
 </script>
 
 <RouteGuard guards={[{ type: GuardType.AUTH }]}>
+  {@const context = getRouteGuardContext()}
   {#if context.isGuardCheckComplete}
     <NavBar />
     {@render children?.()}
