@@ -48,7 +48,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
                     ))
                 }
             }
-            ActionType::Receive  |  ActionType::Send=> {
+            ActionType::Receive | ActionType::Send => {
                 // Validate link state
                 if link.state != LinkState::Active {
                     return Err(CanisterError::ValidationErrors(
@@ -59,7 +59,10 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
                 // Check usage limits for link types that have them
                 if matches!(
                     link.link_type,
-                    LinkType::SendTip | LinkType::SendAirdrop | LinkType::SendTokenBasket | LinkType::ReceivePayment
+                    LinkType::SendTip
+                        | LinkType::SendAirdrop
+                        | LinkType::SendTokenBasket
+                        | LinkType::ReceivePayment
                 ) && link.link_use_action_counter >= link.link_use_action_max_count
                 {
                     return Err(CanisterError::ValidationErrors(format!(
@@ -379,7 +382,7 @@ mod tests {
         let mut link = create_link_fixture(&mut service, creator_id);
         link.state = LinkState::Inactive; // Set link to inactive
         service.link_repository.update(link.clone());
-        let action_type =  ActionType::Receive;
+        let action_type = ActionType::Receive;
         let user_id = random_principal_id();
 
         // Act
@@ -599,7 +602,7 @@ mod tests {
 
     #[test]
     fn it_should_error_link_validate_user_update_action_if_action_type_receive_and_user_is_not_creator()
-    {
+     {
         // Arrange
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());

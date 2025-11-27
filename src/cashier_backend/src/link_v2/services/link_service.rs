@@ -346,14 +346,16 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             | ActionType::Withdraw
             | ActionType::Receive
             | ActionType::Send => {
-                // Block if ANY action exists for CreateLink or Withdraw
-                if let Some(actions) = existing_actions {
-                    if !actions.is_empty() {
-                        return Err(CanisterError::ValidationErrors(format!(
-                            "Action of type {} already exists for this link",
-                            action_type
-                        )));
-                    }
+                // Block if ANY action exists for these types
+                if existing_actions
+                    .as_ref()
+                    .map(|actions| !actions.is_empty())
+                    .unwrap_or(false)
+                {
+                    return Err(CanisterError::ValidationErrors(format!(
+                        "Action of type {} already exists for this link",
+                        action_type
+                    )));
                 }
             }
         }
