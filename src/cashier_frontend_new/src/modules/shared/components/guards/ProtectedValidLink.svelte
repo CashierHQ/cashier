@@ -24,7 +24,7 @@
 
   const isLoading = $derived(
     !linkStore
-      ? true
+      ? !context.hasTempLinkLoadAttempted
       : "query" in linkStore
         ? linkStore.query.isLoading
         : "linkDetail" in linkStore && linkStore.linkDetail?.query
