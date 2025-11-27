@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
   import ProtectedAuth from "./ProtectedAuth.svelte";
   import ProtectedValidLink from "./ProtectedValidLink.svelte";
   import ProtectedLinkOwner from "./ProtectedLinkOwner.svelte";
@@ -17,8 +18,15 @@
     children: Snippet;
   } = $props();
 
+  const context = getRouteGuardContext();
   const currentGuard = guards[index];
   const hasMore = index < guards.length - 1;
+
+  $effect(() => {
+    if (!currentGuard) {
+      context.setGuardCheckComplete(true);
+    }
+  });
 </script>
 
 {#if !currentGuard}
