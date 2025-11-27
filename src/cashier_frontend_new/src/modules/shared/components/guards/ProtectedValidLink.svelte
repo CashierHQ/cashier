@@ -1,5 +1,6 @@
 <script lang="ts">
   import { error } from "@sveltejs/kit";
+  import { goto } from "$app/navigation";
   import type { Snippet } from "svelte";
   import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
@@ -30,7 +31,11 @@
   $effect(() => {
     if (linkStore && "query" in linkStore && !linkStore.query.isLoading) {
       if (!link) {
-        error(404, "Link not found");
+        if (config.redirectTo) {
+          goto(config.redirectTo);
+        } else {
+          error(404, "Link not found");
+        }
       }
     }
   });

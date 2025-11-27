@@ -45,7 +45,7 @@
   <RouteGuard
     guards={[
       { type: GuardType.AUTH },
-      { type: GuardType.VALID_LINK },
+      { type: GuardType.VALID_LINK, redirectTo: "/links" },
       { type: GuardType.LINK_OWNER },
       {
         type: GuardType.LINK_STATE,
