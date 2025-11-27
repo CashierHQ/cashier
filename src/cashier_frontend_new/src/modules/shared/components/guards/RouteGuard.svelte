@@ -48,5 +48,7 @@
 </script>
 
 <GuardRenderer {guards} index={0}>
-  {@render children()}
+  {#if context.isGuardCheckComplete}
+    {@render children()}
+  {/if}
 </GuardRenderer>
