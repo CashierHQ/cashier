@@ -1,23 +1,36 @@
 <script lang="ts">
   import { page } from "$app/state";
   import UseLink from "$modules/useLink/pages/use.svelte";
-  import UseFlowProtected from "$modules/useLink/components/useFlowProtected.svelte";
-  import UserLinkStore from "$modules/useLink/state/userLinkStore.svelte";
+  import RouteGuard from "$modules/shared/components/guards/RouteGuard.svelte";
+  import { GuardType } from "$modules/shared/components/guards/types";
+  import { UserLinkStep } from "$modules/links/types/userLinkStep";
+  import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
 
   const id = page.params.id;
-  let userStore = $state<UserLinkStore | null>(null);
-
-  $effect(() => {
-    if (id) {
-      userStore = new UserLinkStore({ id });
-    }
-  });
 </script>
 
-{#if id && userStore}
-  <UseFlowProtected {userStore} linkId={id}>
-    <UseLink {userStore} />
-  </UseFlowProtected>
-{:else if id}
-  <div>Loading...</div>
+{#if id}
+  <RouteGuard
+    guards={[
+      { type: GuardType.AUTH },
+      { type: GuardType.VALID_LINK },
+      {
+        type: GuardType.USER_STATE,
+        allowedStates: [
+          UserLinkStep.ADDRESS_UNLOCKED,
+          UserLinkStep.ADDRESS_LOCKED,
+          UserLinkStep.GATE,
+          UserLinkStep.COMPLETED,
+        ],
+      },
+    ]}
+    linkId={id}
+  >
+    {@const context = getRouteGuardContext()}
+    {#if context.userLinkStore}
+      <UseLink userStore={context.userLinkStore} />
+    {/if}
+  </RouteGuard>
+{:else}
+  <div>Invalid link ID</div>
 {/if}
