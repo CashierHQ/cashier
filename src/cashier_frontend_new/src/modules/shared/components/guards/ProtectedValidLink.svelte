@@ -4,7 +4,7 @@
   import type { Snippet } from "svelte";
   import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
-  import type { ValidLinkGuardConfig } from "./types";
+  import type { ValidLinkGuardConfig } from "../../types/guards";
 
   let {
     config,

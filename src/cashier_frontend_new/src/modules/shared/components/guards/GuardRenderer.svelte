@@ -6,7 +6,7 @@
   import ProtectedLinkOwner from "./ProtectedLinkOwner.svelte";
   import ProtectedLinkState from "./ProtectedLinkState.svelte";
   import ProtectedUserState from "./ProtectedUserState.svelte";
-  import { GuardType, type GuardConfig } from "./types";
+  import { GuardType, type GuardConfig } from "../../types/guards";
 
   let {
     guards,

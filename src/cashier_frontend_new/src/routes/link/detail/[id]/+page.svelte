@@ -5,7 +5,7 @@
   import DetailLink from "$modules/detailLink/pages/detail.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
   import RouteGuard from "$modules/shared/components/guards/RouteGuard.svelte";
-  import { GuardType } from "$modules/shared/components/guards/types";
+  import { GuardType } from "$modules/shared/types/guards";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
   import { onMount } from "svelte";
