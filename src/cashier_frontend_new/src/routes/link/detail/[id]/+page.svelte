@@ -24,26 +24,22 @@
   });
 </script>
 
-{#if !id}
-  <div>Invalid link ID</div>
-{:else}
-  <RouteGuard
-    guards={[
-      { type: GuardType.AUTH },
-      { type: GuardType.VALID_LINK },
-      { type: GuardType.LINK_OWNER },
-      {
-        type: GuardType.LINK_STATE,
-        allowedStates: [
-          LinkStep.CREATED,
-          LinkStep.ACTIVE,
-          LinkStep.INACTIVE,
-          LinkStep.ENDED,
-        ],
-      },
-    ]}
-    linkId={id}
-  >
-    <DetailLink {id} />
-  </RouteGuard>
-{/if}
+<RouteGuard
+  guards={[
+    { type: GuardType.AUTH },
+    { type: GuardType.VALID_LINK },
+    { type: GuardType.LINK_OWNER },
+    {
+      type: GuardType.LINK_STATE,
+      allowedStates: [
+        LinkStep.CREATED,
+        LinkStep.ACTIVE,
+        LinkStep.INACTIVE,
+        LinkStep.ENDED,
+      ],
+    },
+  ]}
+  linkId={id}
+>
+  <DetailLink {id} />
+</RouteGuard>

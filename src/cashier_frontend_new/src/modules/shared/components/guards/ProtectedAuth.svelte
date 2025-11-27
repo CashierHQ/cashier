@@ -2,6 +2,7 @@
   import { goto } from "$app/navigation";
   import type { Snippet } from "svelte";
   import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
+  import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
   import type { AuthGuardConfig } from "./types";
 
   let {
@@ -36,7 +37,7 @@
 {#if shouldShow}
   {@render children()}
 {:else if context.authState.isReady}
-  <div class="flex items-center justify-center p-8">Redirecting...</div>
+  <ProtectionProcessingState message="Redirecting..." />
 {:else}
-  <div class="flex items-center justify-center p-8">Loading...</div>
+  <ProtectionProcessingState message="Loading..." />
 {/if}

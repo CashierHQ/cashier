@@ -9,19 +9,15 @@
   const id = page.params.id;
 </script>
 
-{#if id}
-  <RouteGuard
-    guards={[
-      { type: GuardType.VALID_LINK },
-      { type: GuardType.USER_STATE, allowedStates: [UserLinkStep.LANDING] },
-    ]}
-    linkId={id}
-  >
-    {@const context = getRouteGuardContext()}
-    {#if context.userLinkStore}
-      <Landing userStore={context.userLinkStore} />
-    {/if}
-  </RouteGuard>
-{:else}
-  <div>Invalid link ID</div>
-{/if}
+<RouteGuard
+  guards={[
+    { type: GuardType.VALID_LINK },
+    { type: GuardType.USER_STATE, allowedStates: [UserLinkStep.LANDING] },
+  ]}
+  linkId={id}
+>
+  {@const context = getRouteGuardContext()}
+  {#if context.userLinkStore}
+    <Landing userStore={context.userLinkStore} />
+  {/if}
+</RouteGuard>

@@ -2,6 +2,7 @@
   import { error } from "@sveltejs/kit";
   import type { Snippet } from "svelte";
   import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
+  import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import type { UserStateGuardConfig } from "./types";
 
@@ -49,10 +50,10 @@
 </script>
 
 {#if isLoading}
-  <div class="flex items-center justify-center p-8">Loading...</div>
+  <ProtectionProcessingState message="Loading..." />
 {:else if isStateValid}
   {@render children()}
 {:else}
-  <div class="flex items-center justify-center p-8">Loading...</div>
+  <ProtectionProcessingState message="Loading..." />
 {/if}
 
