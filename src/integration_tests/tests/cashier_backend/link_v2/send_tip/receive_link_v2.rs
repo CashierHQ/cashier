@@ -5,7 +5,6 @@ use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
 use crate::cashier_backend::link_v2::send_tip::fixture::{
     activate_tip_link_v2_fixture, create_tip_linkv2_fixture,
 };
-use cashier_common::test_utils;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
@@ -20,6 +19,7 @@ use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, Int
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::repository::link_action::v1::LinkUserState;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
+use cashier_common::test_utils;
 use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]

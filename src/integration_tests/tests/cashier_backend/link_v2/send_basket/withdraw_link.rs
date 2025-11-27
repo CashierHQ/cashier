@@ -1,9 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link_v2::send_basket::fixture::activate_basket_link_v2_fixture;
 use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
-use cashier_common::test_utils;
+use crate::cashier_backend::link_v2::send_basket::fixture::activate_basket_link_v2_fixture;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
@@ -16,6 +15,7 @@ use cashier_backend_types::repository::common::Wallet;
 use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType};
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
+use cashier_common::test_utils;
 use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]

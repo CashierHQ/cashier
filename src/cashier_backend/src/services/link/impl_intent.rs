@@ -405,7 +405,8 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
                 intents.push(transfer_asset_intent);
                 intents.push(transfer_fee_intent);
             }
-            (LinkType::SendTip, ActionType::Receive) | (LinkType::SendTip, ActionType::Withdraw) => {
+            (LinkType::SendTip, ActionType::Receive)
+            | (LinkType::SendTip, ActionType::Withdraw) => {
                 // Create intent for link asset to user wallet
                 let intent = self.create_basic_intent(
                     IntentTask::TransferLinkToWallet,

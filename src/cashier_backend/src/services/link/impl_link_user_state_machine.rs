@@ -459,7 +459,9 @@ mod tests {
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
-            assert!(msg.contains("Invalid action type, only Receive or Send action type is allowed"));
+            assert!(
+                msg.contains("Invalid action type, only Receive or Send action type is allowed")
+            );
         } else {
             panic!("Expected ValidationErrors");
         }
@@ -525,7 +527,7 @@ mod tests {
         let creator = random_principal_id();
         let link = create_link_fixture(&mut service, creator);
         let link_action =
-            create_link_action_fixture(&mut service, &link.id,  ActionType::Receive, creator);
+            create_link_action_fixture(&mut service, &link.id, ActionType::Receive, creator);
 
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
@@ -541,7 +543,7 @@ mod tests {
             creator,
             &LinkGetUserStateInput {
                 link_id: link.id,
-                action_type:  ActionType::Receive,
+                action_type: ActionType::Receive,
                 anonymous_wallet_address: None,
             },
         );
@@ -564,7 +566,7 @@ mod tests {
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let link_action =
-            create_link_action_fixture(&mut service, &link.id,  ActionType::Receive, creator_id);
+            create_link_action_fixture(&mut service, &link.id, ActionType::Receive, creator_id);
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
             action_type: link_action.action_type.clone(),
@@ -579,7 +581,7 @@ mod tests {
             creator_id,
             &LinkGetUserStateInput {
                 link_id: link.id,
-                action_type:  ActionType::Receive,
+                action_type: ActionType::Receive,
                 anonymous_wallet_address: None,
             },
         );
@@ -616,7 +618,9 @@ mod tests {
         assert!(result.is_err());
 
         if let Err(CanisterError::ValidationErrors(msg)) = result {
-            assert!(msg.contains("Invalid action type, only Receive or Send action type is allowed"));
+            assert!(
+                msg.contains("Invalid action type, only Receive or Send action type is allowed")
+            );
         } else {
             panic!("Expected ValidationErrors");
         }
@@ -659,7 +663,7 @@ mod tests {
         let creator_id = random_principal_id();
         let link = create_link_fixture(&mut service, creator_id);
         let link_action =
-            create_link_action_fixture(&mut service, &link.id,  ActionType::Receive, creator_id);
+            create_link_action_fixture(&mut service, &link.id, ActionType::Receive, creator_id);
 
         let updated_link_action = LinkAction {
             link_id: link_action.link_id.clone(),
@@ -684,7 +688,7 @@ mod tests {
             creator_id,
             &LinkUpdateUserStateInput {
                 link_id: link.id,
-                action_type:  ActionType::Receive,
+                action_type: ActionType::Receive,
                 goto: UserStateMachineGoto::Continue,
                 anonymous_wallet_address: None,
             },

@@ -258,7 +258,9 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
         }
 
         // Return early if this isn't a claim/use action or if it's not a successful state
-        if !matches!(action_type, ActionType::Receive | ActionType::Send)  || current_state != &ActionState::Success {
+        if !matches!(action_type, ActionType::Receive | ActionType::Send)
+            || current_state != &ActionState::Success
+        {
             return Ok(());
         }
 
@@ -534,8 +536,12 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
-        let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, ActionType::Receive, creator);
+        let link_action = create_link_action_fixture(
+            &mut service,
+            &created_link.id,
+            ActionType::Receive,
+            creator,
+        );
 
         // Act
         let action = service.get_action_of_link(&created_link.id, &ActionType::Receive, creator);
@@ -544,7 +550,7 @@ mod tests {
         assert!(action.is_some());
         let action = action.unwrap();
         assert_eq!(action.id, link_action.action_id);
-        assert_eq!(action.r#type,ActionType::Receive);
+        assert_eq!(action.r#type, ActionType::Receive);
     }
 
     #[test]
@@ -554,7 +560,8 @@ mod tests {
         let creator = random_principal_id();
 
         // Act
-        let result = service.get_link_action_user("nonexistent_link", &ActionType::Receive, creator);
+        let result =
+            service.get_link_action_user("nonexistent_link", &ActionType::Receive, creator);
 
         // Assert
         assert!(result.is_ok());
@@ -568,8 +575,12 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
-        let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, ActionType::Receive, creator);
+        let link_action = create_link_action_fixture(
+            &mut service,
+            &created_link.id,
+            ActionType::Receive,
+            creator,
+        );
 
         // Act
         let result = service.get_link_action_user(&created_link.id, &ActionType::Receive, creator);
@@ -602,8 +613,12 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
-        let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, ActionType::Receive, creator);
+        let link_action = create_link_action_fixture(
+            &mut service,
+            &created_link.id,
+            ActionType::Receive,
+            creator,
+        );
 
         // Act
         let action = service.get_link_action(&created_link.id, &ActionType::Receive, creator);
@@ -622,8 +637,12 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
-        let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, ActionType::Receive, creator);
+        let link_action = create_link_action_fixture(
+            &mut service,
+            &created_link.id,
+            ActionType::Receive,
+            creator,
+        );
 
         let updated_action = Action {
             id: link_action.action_id.clone(),
@@ -667,8 +686,12 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
-        let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, ActionType::Receive, creator);
+        let link_action = create_link_action_fixture(
+            &mut service,
+            &created_link.id,
+            ActionType::Receive,
+            creator,
+        );
 
         let updated_action = Action {
             id: link_action.action_id.clone(),
@@ -694,8 +717,12 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
-        let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, ActionType::Receive, creator);
+        let link_action = create_link_action_fixture(
+            &mut service,
+            &created_link.id,
+            ActionType::Receive,
+            creator,
+        );
 
         let updated_action = Action {
             id: link_action.action_id.clone(),
