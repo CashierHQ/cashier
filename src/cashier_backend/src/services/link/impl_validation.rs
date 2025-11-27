@@ -48,7 +48,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
                     ))
                 }
             }
-            ActionType::Use => {
+            ActionType::Receive  |  ActionType::Send=> {
                 // Validate link state
                 if link.state != LinkState::Active {
                     return Err(CanisterError::ValidationErrors(
@@ -59,7 +59,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
                 // Check usage limits for link types that have them
                 if matches!(
                     link.link_type,
-                    LinkType::SendTip | LinkType::SendAirdrop | LinkType::SendTokenBasket
+                    LinkType::SendTip | LinkType::SendAirdrop | LinkType::SendTokenBasket | LinkType::ReceivePayment
                 ) && link.link_use_action_counter >= link.link_use_action_max_count
                 {
                     return Err(CanisterError::ValidationErrors(format!(
@@ -70,10 +70,6 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
 
                 Ok(())
             }
-            _ => Err(CanisterError::HandleLogicError(format!(
-                "No validation logic for action type: {:?}",
-                action_type
-            ))),
         }
     }
 
@@ -102,7 +98,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
                 }
             }
 
-            ActionType::Use => {
+            ActionType::Send | ActionType::Receive => {
                 if action.creator != user_id {
                     return Err(CanisterError::ValidationErrors(
                         "User is not the creator of the action".to_string(),
@@ -114,13 +110,6 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkValidation for LinkService<E
                         "Action is already success".to_string(),
                     ));
                 }
-            }
-
-            _ => {
-                return Err(CanisterError::HandleLogicError(format!(
-                    "No validation logic for action type: {:?}",
-                    action.r#type
-                )));
             }
         }
 
@@ -382,7 +371,7 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_link_validate_user_create_action_if_action_use_and_link_is_not_active() {
+    fn it_should_error_link_validate_user_create_action_if_action_receive_and_link_is_not_active() {
         // Arrange
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
@@ -390,7 +379,7 @@ mod tests {
         let mut link = create_link_fixture(&mut service, creator_id);
         link.state = LinkState::Inactive; // Set link to inactive
         service.link_repository.update(link.clone());
-        let action_type = ActionType::Use;
+        let action_type =  ActionType::Receive;
         let user_id = random_principal_id();
 
         // Act
@@ -407,7 +396,7 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_link_validate_user_create_action_if_action_use_counter_exceed_max() {
+    fn it_should_error_link_validate_user_create_action_if_action_receive_counter_exceed_max() {
         // Arrange
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
@@ -417,7 +406,7 @@ mod tests {
         link.link_use_action_max_count = 10; // Set max count
         link.state = LinkState::Active; // Ensure link is active
         service.link_repository.update(link.clone());
-        let action_type = ActionType::Use;
+        let action_type = ActionType::Receive;
         let user_id = random_principal_id();
 
         // Act
@@ -434,7 +423,7 @@ mod tests {
     }
 
     #[test]
-    fn it_should_link_validate_user_create_action_if_action_use_and_link_is_active() {
+    fn it_should_link_validate_user_create_action_if_action_receive_and_link_is_active() {
         // Arrange
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
@@ -442,7 +431,7 @@ mod tests {
         let mut link = create_link_fixture(&mut service, creator_id);
         link.state = LinkState::Active; // Ensure link is active
         service.link_repository.update(link.clone());
-        let action_type = ActionType::Use;
+        let action_type = ActionType::Receive;
 
         // Act
         let result = service.link_validate_user_create_action(&link.id, &action_type, creator_id);
@@ -609,7 +598,7 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_link_validate_user_update_action_if_action_type_use_and_user_is_not_creator()
+    fn it_should_error_link_validate_user_update_action_if_action_type_receive_and_user_is_not_creator()
     {
         // Arrange
         let mut service =
@@ -618,7 +607,7 @@ mod tests {
         let link = create_link_fixture(&mut service, creator_id);
         let action = Action {
             id: random_id_string(),
-            r#type: ActionType::Use,
+            r#type: ActionType::Receive,
             state: ActionState::Created,
             creator: random_principal_id(),
             link_id: link.id,
@@ -639,7 +628,7 @@ mod tests {
     }
 
     #[test]
-    fn it_should_error_link_validate_user_update_action_if_action_type_use_and_action_state_success()
+    fn it_should_error_link_validate_user_update_action_if_action_type_receive_and_action_state_success()
      {
         // Arrange
         let mut service =
@@ -648,7 +637,7 @@ mod tests {
         let link = create_link_fixture(&mut service, creator_id);
         let action = Action {
             id: random_id_string(),
-            r#type: ActionType::Use,
+            r#type: ActionType::Receive,
             state: ActionState::Success,
             creator: creator_id,
             link_id: link.id,
@@ -668,7 +657,7 @@ mod tests {
     }
 
     #[test]
-    fn it_should_link_validate_user_update_action_if_action_type_use_and_user_is_creator() {
+    fn it_should_link_validate_user_update_action_if_action_type_receive_and_user_is_creator() {
         // Arrange
         let mut service =
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
@@ -676,7 +665,7 @@ mod tests {
         let link = create_link_fixture(&mut service, creator_id);
         let action = Action {
             id: random_id_string(),
-            r#type: ActionType::Use,
+            r#type: ActionType::Receive,
             state: ActionState::Created,
             creator: creator_id,
             link_id: link.id,

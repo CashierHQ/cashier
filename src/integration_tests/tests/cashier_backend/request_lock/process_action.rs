@@ -56,7 +56,7 @@ async fn test_request_lock_for_process_action() {
                 .await
         };
         let use_action = fixture
-            .create_action(&active_link.id, ActionType::Use)
+            .create_action(&active_link.id, ActionType::Receive)
             .await;
 
         // Act - submit call 3 times concurrently
@@ -70,7 +70,7 @@ async fn test_request_lock_for_process_action() {
                     .submit_process_action(ProcessActionInput {
                         link_id: active_link.id.to_string(),
                         action_id: use_action.id.to_string(),
-                        action_type: ActionType::Use,
+                        action_type: ActionType::Receive,
                     })
                     .await
                     .unwrap(),

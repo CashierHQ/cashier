@@ -1,9 +1,10 @@
-use crate::cashier_backend::link::fixture::LinkTestFixture;
+use crate::cashier_backend::link::fixture::{LinkTestFixture, create_token_basket_link_fixture};
 use crate::utils::{
     icrc_112, link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context,
 };
 use candid::{Nat, Principal};
 use cashier_backend_types::dto::link::LinkStateMachineGoto;
+use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::{
     constant,
     dto::link::UpdateLinkInput,
@@ -274,6 +275,38 @@ async fn it_should_create_link_token_basket_successfully() {
             ckusdc_initial_balance - ckusdc_ledger_fee.clone() - ckusdc_link_balance,
             "CKUSDC balance after link creation is incorrect"
         );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_reject_duplicate_create_link_action_for_token_basket() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) = create_token_basket_link_fixture(ctx).await;
+
+        // Act: attempt to create a second CreateLink action for the same link by the same user
+        let result = creator_fixture
+            .cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_create_action(cashier_backend_types::dto::action::CreateActionInput {
+                link_id: link.id.clone(),
+                action_type: ActionType::CreateLink,
+            })
+            .await
+            .unwrap();
+
+        // Assert: should be rejected with validation error
+        assert!(result.is_err());
+        if let Err(CanisterError::ValidationErrors(err)) = result {
+            assert!(err.contains("Action already exist") || err.contains("already exist"));
+        } else {
+            panic!("Expected ValidationErrors, got {:?}", result);
+        }
 
         Ok(())
     })

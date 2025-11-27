@@ -99,7 +99,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
                 action_type
             }
             // For Claim, don't return the action (handled separately)
-            Some(ActionType::Use) => None,
+            Some(ActionType::Receive | ActionType::Send) => None,
             // For other types, pass through
             _ => action_type,
         };
@@ -190,7 +190,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
         let mut updated_link = link;
         let mut is_update: bool = false;
 
-        if action.r#type == ActionType::Use {
+        if matches!(action.r#type, ActionType::Receive | ActionType::Send) {
             // Update asset info to track the claim
             if updated_link.link_use_action_counter + 1 > updated_link.link_use_action_max_count {
                 return Err(CanisterError::HandleLogicError(
@@ -258,7 +258,7 @@ impl<E: IcEnvironment + Clone, R: Repositories> LinkService<E, R> {
         }
 
         // Return early if this isn't a claim/use action or if it's not a successful state
-        if (action_type != &ActionType::Use) || current_state != &ActionState::Success {
+        if !matches!(action_type, ActionType::Receive | ActionType::Send)  || current_state != &ActionState::Success {
             return Ok(());
         }
 
@@ -477,7 +477,7 @@ mod tests {
         let result = service.get_link(
             "nonexistent_link",
             Some(GetLinkOptions {
-                action_type: ActionType::Use,
+                action_type: ActionType::Receive,
             }),
             principal_id1,
         );
@@ -500,7 +500,7 @@ mod tests {
             .get_link(
                 &created_link.id,
                 Some(GetLinkOptions {
-                    action_type: ActionType::Use,
+                    action_type: ActionType::Receive,
                 }),
                 principal_id1,
             )
@@ -521,7 +521,7 @@ mod tests {
 
         // Act
         let action =
-            service.get_action_of_link("nonexistent_link", &ActionType::Use, principal_id1);
+            service.get_action_of_link("nonexistent_link", &ActionType::Receive, principal_id1);
 
         // Assert
         assert!(action.is_none());
@@ -535,16 +535,16 @@ mod tests {
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
         let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, ActionType::Use, creator);
+            create_link_action_fixture(&mut service, &created_link.id, ActionType::Receive, creator);
 
         // Act
-        let action = service.get_action_of_link(&created_link.id, &ActionType::Use, creator);
+        let action = service.get_action_of_link(&created_link.id, &ActionType::Receive, creator);
 
         // Assert
         assert!(action.is_some());
         let action = action.unwrap();
         assert_eq!(action.id, link_action.action_id);
-        assert_eq!(action.r#type, ActionType::Use);
+        assert_eq!(action.r#type,ActionType::Receive);
     }
 
     #[test]
@@ -554,7 +554,7 @@ mod tests {
         let creator = random_principal_id();
 
         // Act
-        let result = service.get_link_action_user("nonexistent_link", &ActionType::Use, creator);
+        let result = service.get_link_action_user("nonexistent_link", &ActionType::Receive, creator);
 
         // Assert
         assert!(result.is_ok());
@@ -569,10 +569,10 @@ mod tests {
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
         let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, ActionType::Use, creator);
+            create_link_action_fixture(&mut service, &created_link.id, ActionType::Receive, creator);
 
         // Act
-        let result = service.get_link_action_user(&created_link.id, &ActionType::Use, creator);
+        let result = service.get_link_action_user(&created_link.id, &ActionType::Receive, creator);
 
         // Assert
         assert!(result.is_ok());
@@ -589,7 +589,7 @@ mod tests {
         let creator = random_principal_id();
 
         // Act
-        let action = service.get_link_action("nonexistent_link", &ActionType::Use, creator);
+        let action = service.get_link_action("nonexistent_link", &ActionType::Receive, creator);
 
         // Assert
         assert!(action.is_none());
@@ -603,16 +603,16 @@ mod tests {
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
         let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, ActionType::Use, creator);
+            create_link_action_fixture(&mut service, &created_link.id, ActionType::Receive, creator);
 
         // Act
-        let action = service.get_link_action(&created_link.id, &ActionType::Use, creator);
+        let action = service.get_link_action(&created_link.id, &ActionType::Receive, creator);
 
         // Assert
         assert!(action.is_some());
         let action = action.unwrap();
         assert_eq!(action.id, link_action.action_id);
-        assert_eq!(action.r#type, ActionType::Use);
+        assert_eq!(action.r#type, ActionType::Receive);
     }
 
     #[test]
@@ -623,11 +623,11 @@ mod tests {
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
         let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, ActionType::Use, creator);
+            create_link_action_fixture(&mut service, &created_link.id, ActionType::Receive, creator);
 
         let updated_action = Action {
             id: link_action.action_id.clone(),
-            r#type: ActionType::Use,
+            r#type: ActionType::Receive,
             state: ActionState::Success, // Simulate a successful action
             creator,
             link_id: created_link.id.clone(),
@@ -668,11 +668,11 @@ mod tests {
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
         let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, ActionType::Use, creator);
+            create_link_action_fixture(&mut service, &created_link.id, ActionType::Receive, creator);
 
         let updated_action = Action {
             id: link_action.action_id.clone(),
-            r#type: ActionType::Use,
+            r#type: ActionType::Receive,
             state: ActionState::Created, // Simulate a non-successful action
             creator,
             link_id: created_link.id.clone(),
@@ -695,11 +695,11 @@ mod tests {
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
         let link_action =
-            create_link_action_fixture(&mut service, &created_link.id, ActionType::Use, creator);
+            create_link_action_fixture(&mut service, &created_link.id, ActionType::Receive, creator);
 
         let updated_action = Action {
             id: link_action.action_id.clone(),
-            r#type: ActionType::Use,
+            r#type: ActionType::Receive,
             state: ActionState::Success, // Simulate a successful action
             creator,
             link_id: created_link.id.clone(),
@@ -762,7 +762,7 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
-        let action_type = ActionType::Use;
+        let action_type = ActionType::Receive;
         let action_id = random_id_string();
         let previous_state = ActionState::Created;
         let current_state = ActionState::Created;
@@ -787,7 +787,7 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
-        let action_type = ActionType::Use;
+        let action_type = ActionType::Receive;
         let action_id = random_id_string();
         let previous_state = ActionState::Created;
         let current_state = ActionState::Fail;
@@ -837,7 +837,7 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
-        let action_type = ActionType::Use;
+        let action_type = ActionType::Receive;
         let action_id = random_id_string();
 
         let updated_action = Action {
@@ -885,7 +885,7 @@ mod tests {
             LinkService::new(Rc::new(TestRepositories::new()), MockIcEnvironment::new());
         let creator = random_principal_id();
         let created_link = create_link_fixture(&mut service, creator);
-        let action_type = ActionType::Use;
+        let action_type = ActionType::Receive;
         let action_id = random_id_string();
 
         let updated_action = Action {

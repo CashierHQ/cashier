@@ -296,3 +296,44 @@ async fn benchmark_withdraw_link_airdrop_icrc_token() {
     .await
     .unwrap();
 }
+
+#[tokio::test]
+async fn it_should_reject_duplicate_withdraw_action_for_airdrop() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange
+        let (creator_fixture, link) =
+            create_airdrop_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64), 5).await;
+
+        // Act: perform first withdraw
+        let withdraw_action = creator_fixture
+            .create_action(&link.id, ActionType::Withdraw)
+            .await;
+        let _withdraw_result = creator_fixture
+            .process_action(&link.id, &withdraw_action.id, ActionType::Withdraw)
+            .await;
+
+        // Act: attempt to create a second Withdraw action for the same link by the same user
+        let result = creator_fixture
+            .cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_create_action(CreateActionInput {
+                link_id: link.id.clone(),
+                action_type: ActionType::Withdraw,
+            })
+            .await
+            .unwrap();
+
+        // Assert: should be rejected with validation error
+        assert!(result.is_err());
+        if let Err(CanisterError::ValidationErrors(err)) = result {
+            assert!(err.contains("Action already exist") || err.contains("already exist"));
+        } else {
+            panic!("Expected ValidationErrors, got {:?}", result);
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}

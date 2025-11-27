@@ -1,4 +1,4 @@
-use crate::cashier_backend::link::fixture::LinkTestFixture;
+use crate::cashier_backend::link::fixture::{LinkTestFixture, create_receive_payment_link_fixture};
 use crate::utils::{
     icrc_112::execute_icrc112_request, link_id_to_account::link_id_to_account, principal::TestUser,
     with_pocket_ic_context,
@@ -438,6 +438,39 @@ async fn benchmark_create_link_payment_icrc_token() {
         println!(
             "BE cycles usage for create Payment link ICRC token: {}",
             cycles_usage
+        );
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_reject_duplicate_create_link_action_for_receive_payment() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange: create a receive payment link and complete the create action
+        let (creator_fixture, link) =
+            create_receive_payment_link_fixture(ctx, constant::ICP_TOKEN, Nat::from(1_000_000u64))
+                .await;
+
+        // Act: attempt to create a second CreateLink action for the same link by the same user
+        let result = creator_fixture
+            .cashier_backend_client
+            .as_ref()
+            .unwrap()
+            .user_create_action(cashier_backend_types::dto::action::CreateActionInput {
+                link_id: link.id.clone(),
+                action_type: ActionType::CreateLink,
+            })
+            .await
+            .unwrap();
+
+        // Assert: should be rejected with validation error
+        assert!(result.is_err());
+        assert_eq!(
+            result.err().unwrap().to_string(),
+            "Validation error: Action already exist!"
         );
 
         Ok(())

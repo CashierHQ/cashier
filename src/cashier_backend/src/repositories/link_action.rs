@@ -134,7 +134,7 @@ mod tests {
 
         let link_action = LinkAction {
             link_id: link_id.clone(),
-            action_type: ActionType::Use,
+            action_type: ActionType::Receive,
             action_id: "action1".to_string(),
             user_id: user1,
             link_user_state: None,
@@ -143,7 +143,7 @@ mod tests {
 
         let updated_action = LinkAction {
             link_id: link_id.clone(),
-            action_type: ActionType::Use,
+            action_type: ActionType::Receive,
             action_id: "action1".to_string(),
             user_id: user1,
             link_user_state: Some(LinkUserState::Address),
@@ -153,7 +153,7 @@ mod tests {
         repo.update(updated_action);
 
         // Assert
-        let actions = repo.get_by_prefix(&link_id, &ActionType::Use, &user1);
+        let actions = repo.get_by_prefix(&link_id, &ActionType::Receive, &user1);
         assert_eq!(actions.len(), 1);
         assert_eq!(
             actions.first().unwrap().link_user_state,
@@ -172,7 +172,7 @@ mod tests {
 
         let link_action1 = LinkAction {
             link_id: link_id1.clone(),
-            action_type: ActionType::Use,
+            action_type: ActionType::Receive,
             action_id: "action1".to_string(),
             user_id: user1,
             link_user_state: None,
@@ -190,12 +190,12 @@ mod tests {
         repo.create(link_action2);
 
         // Act
-        let actions = repo.get_by_prefix(&link_id1, &ActionType::Use, &user1);
+        let actions = repo.get_by_prefix(&link_id1, &ActionType::Receive, &user1);
 
         // Assert
         assert_eq!(actions.len(), 1);
         assert_eq!(actions.first().unwrap().link_id, link_id1);
-        assert_eq!(actions.first().unwrap().action_type, ActionType::Use);
+        assert_eq!(actions.first().unwrap().action_type, ActionType::Receive);
         assert_eq!(actions.first().unwrap().action_id, "action1");
         assert_eq!(actions.first().unwrap().user_id, user1);
         assert!(actions.first().unwrap().link_user_state.is_none());
