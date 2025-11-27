@@ -17,6 +17,7 @@ export interface AuthGuardConfig {
 
 export interface ValidLinkGuardConfig {
   type: GuardType.VALID_LINK;
+  redirectTo?: string;
 }
 
 export interface LinkOwnerGuardConfig {
@@ -41,4 +42,3 @@ export type GuardConfig =
   | LinkOwnerGuardConfig
   | LinkStateGuardConfig
   | UserStateGuardConfig;
-
