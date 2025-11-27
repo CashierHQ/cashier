@@ -1,5 +1,6 @@
 <script lang="ts">
   import { resolve } from "$app/paths";
+  import { goto } from "$app/navigation";
   import { page } from "$app/state";
   import { locale } from "$lib/i18n";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
@@ -17,8 +18,7 @@
   let { isCreateOrEditPage = false, linkName }: Props = $props();
 
   function handleWalletClick() {
-    // TODO: Implement wallet panel opening
-    console.log("Open wallet");
+    goto(resolve("/wallet"));
   }
 
   // Get current path to determine if it's create or edit
