@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import type { Snippet } from "svelte";
   import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
@@ -18,36 +19,38 @@
   const redirectTo = config.redirectTo ?? "/links";
 
   const linkStore = $derived(
-    context.linkDetailStore || context.userLinkStore || context.linkCreationStore
+    context.linkDetailStore ||
+      context.userLinkStore ||
+      context.linkCreationStore,
   );
 
   const link = $derived(
-    linkStore && "link" in linkStore ? linkStore.link : null
+    linkStore && "link" in linkStore ? linkStore.link : null,
   );
 
   const isOwner = $derived(
     link?.creator != null &&
       context.authState.account?.owner != null &&
-      link.creator.toString() === context.authState.account.owner
+      link.creator.toString() === context.authState.account.owner,
   );
 
   const isReady = $derived(
     context.authState.isReady &&
       linkStore &&
       "query" in linkStore &&
-      !linkStore.query.isLoading
+      !linkStore.query.isLoading,
   );
 
-  const shouldShow = $derived(
-    isReady && (mustBeOwner ? isOwner : !isOwner)
-  );
+  const shouldShow = $derived(isReady && (mustBeOwner ? isOwner : !isOwner));
 
   $effect(() => {
     if (isReady) {
       if (mustBeOwner && !isOwner) {
-        goto(redirectTo);
+        // @ts-expect-error - dynamic route path
+        goto(resolve(redirectTo));
       } else if (!mustBeOwner && isOwner) {
-        goto(redirectTo);
+        // @ts-expect-error - dynamic route path
+        goto(resolve(redirectTo));
       }
     }
   });
@@ -60,4 +63,3 @@
 {:else}
   <ProtectionProcessingState message="Loading..." />
 {/if}
-

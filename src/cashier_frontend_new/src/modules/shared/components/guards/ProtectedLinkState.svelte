@@ -29,19 +29,19 @@
   const allowedStates = config.allowedStates ?? allStates;
 
   const linkStore = $derived(
-    context.linkDetailStore || context.linkCreationStore
+    context.linkDetailStore || context.linkCreationStore,
   );
 
   const currentStep = $derived(
-    linkStore && "state" in linkStore ? linkStore.state.step : null
+    linkStore && "state" in linkStore ? linkStore.state.step : null,
   );
 
   const isLoading = $derived(
-    linkStore && "query" in linkStore ? linkStore.query.isLoading : false
+    linkStore && "query" in linkStore ? linkStore.query.isLoading : false,
   );
 
   const isStateValid = $derived(
-    currentStep !== null && allowedStates.includes(currentStep)
+    currentStep !== null && allowedStates.includes(currentStep),
   );
 
   $effect(() => {
@@ -64,4 +64,3 @@
 {:else}
   <ProtectionProcessingState message="Loading..." />
 {/if}
-

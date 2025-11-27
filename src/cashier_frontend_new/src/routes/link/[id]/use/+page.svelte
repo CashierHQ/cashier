@@ -1,6 +1,5 @@
 <script lang="ts">
   import { page } from "$app/state";
-  import { resolve } from "$app/paths";
   import UseLink from "$modules/useLink/pages/use.svelte";
   import RouteGuard from "$modules/shared/components/guards/RouteGuard.svelte";
   import { GuardType } from "$modules/shared/components/guards/types";
@@ -12,7 +11,7 @@
 
 <RouteGuard
   guards={[
-    { type: GuardType.AUTH, redirectTo: resolve(`/link/${id}`) },
+    { type: GuardType.AUTH, redirectTo: `/link/${id}` },
     { type: GuardType.VALID_LINK },
     {
       type: GuardType.USER_STATE,

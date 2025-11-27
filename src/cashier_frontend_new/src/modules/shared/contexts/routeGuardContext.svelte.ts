@@ -43,7 +43,9 @@ export class RouteGuardContext {
   }
 }
 
-export function setRouteGuardContext(context: RouteGuardContext): RouteGuardContext {
+export function setRouteGuardContext(
+  context: RouteGuardContext,
+): RouteGuardContext {
   setContext(ROUTE_GUARD_CONTEXT_KEY, context);
   return context;
 }
@@ -51,8 +53,9 @@ export function setRouteGuardContext(context: RouteGuardContext): RouteGuardCont
 export function getRouteGuardContext(): RouteGuardContext {
   const context = getContext<RouteGuardContext>(ROUTE_GUARD_CONTEXT_KEY);
   if (!context) {
-    throw new Error("RouteGuardContext not found. Make sure RouteGuard component is wrapping this component.");
+    throw new Error(
+      "RouteGuardContext not found. Make sure RouteGuard component is wrapping this component.",
+    );
   }
   return context;
 }
-
