@@ -58,6 +58,10 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
     this.initializeAuthClientSync();
   }
 
+  getAuthClient(): AuthClient | null {
+    return this.authClient;
+  }
+
   protected ensureTransportInitialized(): Promise<void> {
     throw new Error("Method not implemented.");
   }
@@ -66,15 +70,15 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
     // Initialize AuthClient with transport for better session management
     AuthClient.create({
       idleOptions: {
-        idleTimeout: Number(this.config.timeout ?? 1000 * 60 * 60 * 24), // Default 24 hours
+        idleTimeout: Number(
+          this.config.delegationTimeout ?? 1000 * 60 * 60 * 24,
+        ),
         disableDefaultIdleCallback: true,
       },
     })
-      .then(async (client) => {
+      .then((client) => {
+        console.log("AuthClient initialized");
         this.authClient = client;
-        this.authClient.idleManager?.registerCallback?.(() =>
-          this.refreshLogin(),
-        );
       })
       .catch((err) => {
         this.handleError("Failed to create AuthClient", err);
@@ -165,9 +169,8 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
       const loginOptions = {
         derivationOrigin: this.config.derivationOrigin,
         identityProvider: this.config.iiProviderUrl || "https://id.ai",
-        maxTimeToLive: BigInt(
-          (this.config.timeout ?? 1 * 24 * 60 * 60) * 1000 * 1000 * 1000,
-        ), // Default 1 day
+        maxTimeToLive:
+          this.config.delegationTimeout ?? BigInt(60 * 60 * 1000 * 1000 * 1000), // Default 1 day
         // Open in new popup window (equivalent to target="_blank" but for window.open)
         windowOpenerFeatures: (() => {
           const screen = getScreenDimensions();

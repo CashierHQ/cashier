@@ -6,6 +6,7 @@ import {
   HOST_ICP,
   IC_INTERNET_IDENTITY_PROVIDER,
 } from "$modules/shared/constants";
+import { TIMEOUT_NANO_SEC } from "$modules/auth/constants";
 import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
 import { Actor, HttpAgent } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
@@ -13,6 +14,10 @@ import { Principal } from "@dfinity/principal";
 import type { BaseSignerAdapter, CreatePnpArgs } from "@windoge98/plug-n-play";
 import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
 import { PersistedState } from "runed";
+import {} from "@slide-computer/signer";
+import { Ed25519KeyIdentity } from "@dfinity/identity";
+import { SessionManager } from "../sessionManager";
+import { calculateDelegationExpirationMs } from "../utils/calculateDelegationExpirationMs";
 
 // Config for PNP instance
 const CONFIG: CreatePnpArgs = {
@@ -25,6 +30,9 @@ const CONFIG: CreatePnpArgs = {
   // Fetch root key for local network
   security: {
     fetchRootKey: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED,
+  },
+  delegation: {
+    timeout: BigInt(TIMEOUT_NANO_SEC),
   },
   // Supported wallet adapters
   adapters: {
@@ -77,6 +85,8 @@ let account = $state<{
   owner: string;
   subaccount: string | null;
 } | null>(null);
+
+let sessionManager: SessionManager | null = null;
 
 // Initialize PNP instance,
 const initPnp = async () => {
@@ -280,7 +290,24 @@ const inner_logout = async () => {
   }
 };
 
+/**
+ * Setup session manager with delegation expiration timeout.
+ * @param delegationExpirationInMillis The delegation expiration time in milliseconds
+ */
+export const setupSessionManager = (
+  delegationExpirationInMillis: number,
+): void => {
+  sessionManager = new SessionManager({
+    timeout: delegationExpirationInMillis,
+  });
+  sessionManager.registerCallback(async () => {
+    console.log("Session expired, logging out");
+    await inner_logout();
+  });
+};
+
 // Perform login
+// only delegated identity
 const inner_login = async (walletId: string) => {
   if (!pnp) {
     throw new Error("PNP is not initialized");
@@ -288,6 +315,32 @@ const inner_login = async (walletId: string) => {
   isConnecting = true;
   try {
     const res = await pnp.connect(walletId);
+    const iiAdapter = pnp.provider as IISignerAdapter;
+    const signer = iiAdapter.getSigner();
+    if (!signer) {
+      throw new Error("Signer not available after login");
+    }
+    const delegationChain = await signer.delegation({
+      publicKey: Ed25519KeyIdentity.generate().getPublicKey().toDer(),
+    });
+
+    if (!delegationChain) {
+      throw new Error("Delegation failed: no delegation response");
+    }
+
+    const delegationExpirationInMillis =
+      calculateDelegationExpirationMs(delegationChain);
+
+    // If delegation already expired, immediately logout.
+    if (delegationExpirationInMillis <= 0) {
+      console.log("Delegation already expired — logging out");
+      await inner_logout();
+      return;
+    }
+
+    // Use remaining delegation time as session timeout
+    setupSessionManager(delegationExpirationInMillis);
+
     if (res.owner === null) {
       throw new Error("Login failed: owner is null");
     }
