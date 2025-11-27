@@ -8,7 +8,7 @@
   import UserLinkStore from "$modules/useLink/state/userLinkStore.svelte";
   import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import GuardRenderer from "./GuardRenderer.svelte";
-  import { GuardType, type GuardConfig } from "./types";
+  import { GuardType, type GuardConfig } from "../../types/guards";
 
   let {
     guards,

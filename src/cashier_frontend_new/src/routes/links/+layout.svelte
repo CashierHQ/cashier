@@ -6,7 +6,7 @@
   import AddLinkButton from "$modules/links/components/layout/AddLinkButton.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
   import RouteGuard from "$modules/shared/components/guards/RouteGuard.svelte";
-  import { GuardType } from "$modules/shared/components/guards/types";
+  import { GuardType } from "$modules/shared/types/guards";
 
   let { children } = $props();
 

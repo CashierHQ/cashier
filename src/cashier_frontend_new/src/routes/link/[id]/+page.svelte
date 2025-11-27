@@ -2,7 +2,7 @@
   import { page } from "$app/state";
   import Landing from "$modules/useLink/pages/landing.svelte";
   import RouteGuard from "$modules/shared/components/guards/RouteGuard.svelte";
-  import { GuardType } from "$modules/shared/components/guards/types";
+  import { GuardType } from "$modules/shared/types/guards";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
 

@@ -5,7 +5,7 @@
   import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
-  import type { LinkStateGuardConfig } from "./types";
+  import type { LinkStateGuardConfig } from "../../types/guards";
 
   let {
     config,
