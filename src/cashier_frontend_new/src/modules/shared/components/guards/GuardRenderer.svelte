@@ -20,7 +20,6 @@
 
   const context = getRouteGuardContext();
   const currentGuard = guards[index];
-  const hasMore = index < guards.length - 1;
 
   $effect(() => {
     if (!currentGuard) {

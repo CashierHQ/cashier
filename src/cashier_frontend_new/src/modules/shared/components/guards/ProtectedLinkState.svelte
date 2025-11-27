@@ -46,8 +46,11 @@
   );
 
   const shouldRedirect = $derived(
-    (linkStore && "query" in linkStore && !linkStore.query.isLoading && !isStateValid) ||
-    (linkStore && !("query" in linkStore) && !isStateValid)
+    (linkStore &&
+      "query" in linkStore &&
+      !linkStore.query.isLoading &&
+      !isStateValid) ||
+      (linkStore && !("query" in linkStore) && !isStateValid),
   );
 
   $effect(() => {

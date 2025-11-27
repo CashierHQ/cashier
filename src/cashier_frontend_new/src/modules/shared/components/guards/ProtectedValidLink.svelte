@@ -29,7 +29,7 @@
         ? linkStore.query.isLoading
         : "linkDetail" in linkStore && linkStore.linkDetail?.query
           ? linkStore.linkDetail.query.isLoading
-          : false
+          : false,
   );
 
   const hasLink = $derived(
@@ -40,19 +40,20 @@
         : "link" in linkStore
           ? linkStore.link !== null && linkStore.link !== undefined
           : "linkDetail" in linkStore && linkStore.linkDetail?.link
-            ? linkStore.linkDetail.link !== null && linkStore.linkDetail.link !== undefined
-            : false
+            ? linkStore.linkDetail.link !== null &&
+              linkStore.linkDetail.link !== undefined
+            : false,
   );
 
   const isValid = $derived(!linkStore ? false : isLoading ? false : hasLink);
 
-  const isReadyToCheck = $derived(
-    !isLoading && linkStore !== null
-  );
+  const isReadyToCheck = $derived(!isLoading && linkStore !== null);
 
   const shouldRedirect = $derived(
     (isReadyToCheck && !hasLink) ||
-    (context.authState.isReady && context.hasTempLinkLoadAttempted && !linkStore)
+      (context.authState.isReady &&
+        context.hasTempLinkLoadAttempted &&
+        !linkStore),
   );
 
   $effect(() => {
