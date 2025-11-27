@@ -31,9 +31,9 @@
     );
 
     if (hasUserStateGuard) {
-      context.userLinkStore = new UserLinkStore({ id: linkId });
+      context.setUserLinkStore(new UserLinkStore({ id: linkId }));
     } else {
-      context.linkDetailStore = new LinkDetailStore({ id: linkId });
+      context.setLinkDetailStore(new LinkDetailStore({ id: linkId }));
     }
   }
 
@@ -41,14 +41,15 @@
     if (tempLinkId && context.authState.isReady) {
       const tempLinkResult = LinkCreationStore.getTempLink(tempLinkId);
       if (tempLinkResult.isOk()) {
-        const store = new LinkCreationStore(tempLinkResult.value);
-        context.linkCreationStore = store;
+        context.setLinkCreationStore(
+          new LinkCreationStore(tempLinkResult.value),
+        );
       } else {
         context.linkCreationStore = null;
       }
-      context.hasTempLinkLoadAttempted = true;
+      context.setHasTempLinkLoadAttempted(true);
     } else if (!tempLinkId) {
-      context.hasTempLinkLoadAttempted = true;
+      context.setHasTempLinkLoadAttempted(true);
     }
   });
 
