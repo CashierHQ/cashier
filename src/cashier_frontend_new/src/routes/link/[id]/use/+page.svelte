@@ -16,6 +16,7 @@
     {
       type: GuardType.USER_STATE,
       allowedStates: [
+        UserLinkStep.LANDING,
         UserLinkStep.ADDRESS_UNLOCKED,
         UserLinkStep.ADDRESS_LOCKED,
         UserLinkStep.GATE,
