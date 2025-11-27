@@ -13,6 +13,7 @@ export class RouteGuardContext {
   linkDetailStore: LinkDetailStore | null = null;
   userLinkStore: UserLinkStore | null = null;
   linkCreationStore: LinkCreationStore | null = null;
+  isGuardCheckComplete = $state(false);
 
   constructor(config?: {
     linkDetailStore?: LinkDetailStore;
@@ -40,6 +41,10 @@ export class RouteGuardContext {
 
   setLinkCreationStore(store: LinkCreationStore) {
     this.linkCreationStore = store;
+  }
+
+  setGuardCheckComplete(complete: boolean) {
+    this.isGuardCheckComplete = complete;
   }
 }
 

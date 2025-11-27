@@ -7,6 +7,7 @@
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
   import RouteGuard from "$modules/shared/components/guards/RouteGuard.svelte";
   import { GuardType } from "$modules/shared/components/guards/types";
+  import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
 
   let { children } = $props();
 
@@ -18,24 +19,28 @@
     const tempLink = LinkCreationStore.createTempLink(authState.account?.owner);
     goto(resolve(`/link/create/${tempLink.id}`));
   }
+
+  const context = getRouteGuardContext();
 </script>
 
 <RouteGuard guards={[{ type: GuardType.AUTH }]}>
-  <div class="flex flex-col min-h-screen sm:bg-lightgreen bg-white">
-    <AppHeader />
+  {#if context.isGuardCheckComplete}
+    <div class="flex flex-col min-h-screen sm:bg-lightgreen bg-white">
+      <AppHeader />
 
-    <div class="flex-1 sm:py-4 pb-2 flex items-center justify-center flex-col">
-      <div
-        class="w-full sm:max-w-[600px] max-w-full sm:p-8 px-4 grow-1 bg-white sm:rounded-xl overflow-hidden"
-      >
+      <div class="flex-1 sm:py-4 pb-2 flex items-center justify-center flex-col">
         <div
-          class="sm:max-h-[calc(100vh-156px)] max-h-[calc(100vh-78px)] overflow-y-auto scrollbar-hide"
+          class="w-full sm:max-w-[600px] max-w-full sm:p-8 px-4 grow-1 bg-white sm:rounded-xl overflow-hidden"
         >
-          {@render children?.()}
+          <div
+            class="sm:max-h-[calc(100vh-156px)] max-h-[calc(100vh-78px)] overflow-y-auto scrollbar-hide"
+          >
+            {@render children?.()}
+          </div>
         </div>
       </div>
-    </div>
 
-    <AddLinkButton onClick={handleCreateNewLink} />
-  </div>
+      <AddLinkButton onClick={handleCreateNewLink} />
+    </div>
+  {/if}
 </RouteGuard>

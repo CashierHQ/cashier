@@ -23,6 +23,7 @@
   } = $props();
 
   const context = new RouteGuardContext();
+  context.setGuardCheckComplete(false);
 
   if (linkId) {
     const hasUserStateGuard = guards.some(
