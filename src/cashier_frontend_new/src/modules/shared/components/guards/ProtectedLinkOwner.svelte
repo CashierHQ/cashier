@@ -29,16 +29,21 @@
   );
 
   const isOwner = $derived(
-    link?.creator != null &&
-      context.authState.account?.owner != null &&
-      link.creator.toString() === context.authState.account.owner,
+    context.linkCreationStore
+      ? true
+      : link?.creator != null &&
+          context.authState.account?.owner != null &&
+          link.creator.toString() === context.authState.account.owner,
   );
 
   const isReady = $derived(
-    context.authState.isReady &&
-      linkStore &&
-      "query" in linkStore &&
-      !linkStore.query.isLoading,
+    !context.authState.isReady || !linkStore
+      ? false
+      : context.linkCreationStore
+        ? true
+        : "query" in linkStore && !linkStore.query.isLoading
+          ? true
+          : false,
   );
 
   const shouldShow = $derived(isReady && (mustBeOwner ? isOwner : !isOwner));

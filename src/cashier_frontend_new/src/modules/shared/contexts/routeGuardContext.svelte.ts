@@ -10,9 +10,9 @@ const ROUTE_GUARD_CONTEXT_KEY = Symbol("routeGuardContext");
 export class RouteGuardContext {
   authState = authState;
   userProfile = userProfile;
-  linkDetailStore: LinkDetailStore | null = null;
-  userLinkStore: UserLinkStore | null = null;
-  linkCreationStore: LinkCreationStore | null = null;
+  linkDetailStore = $state<LinkDetailStore | null>(null);
+  userLinkStore = $state<UserLinkStore | null>(null);
+  linkCreationStore = $state<LinkCreationStore | null>(null);
   isGuardCheckComplete = $state(false);
 
   constructor(config?: {

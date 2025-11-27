@@ -59,6 +59,7 @@
   ]}
   tempLinkId={id}
 >
+  {@const context = getRouteGuardContext()}
   <div class="flex flex-col min-h-screen sm:bg-lightgreen bg-white">
     <AppHeader isCreateOrEditPage={true} />
 
@@ -70,7 +71,6 @@
           class="sm:max-h-[calc(100vh-156px)] max-h-[calc(100vh-86px)] overflow-y-auto scrollbar-hide flex flex-col grow-1"
         >
           <div class="w-full grow-1 flex flex-col">
-            {@const context = getRouteGuardContext()}
             {#if context.linkCreationStore}
               <CreateLink linkStore={context.linkCreationStore} />
             {/if}

@@ -31,18 +31,33 @@
     );
 
     if (hasUserStateGuard) {
-      context.setUserLinkStore(new UserLinkStore({ id: linkId }));
+      context.userLinkStore = new UserLinkStore({ id: linkId });
     } else {
-      context.setLinkDetailStore(new LinkDetailStore({ id: linkId }));
+      context.linkDetailStore = new LinkDetailStore({ id: linkId });
     }
   }
 
-  if (tempLinkId) {
-    const tempLinkResult = LinkCreationStore.getTempLink(tempLinkId);
-    if (tempLinkResult.isOk()) {
-      context.setLinkCreationStore(new LinkCreationStore(tempLinkResult.value));
+  $effect(() => {
+    if (tempLinkId && context.authState.isReady) {
+      console.log("[RouteGuard] Auth ready, loading tempLinkId:", tempLinkId);
+      const tempLinkResult = LinkCreationStore.getTempLink(tempLinkId);
+      console.log("[RouteGuard] tempLinkResult:", tempLinkResult);
+      if (tempLinkResult.isOk()) {
+        const store = new LinkCreationStore(tempLinkResult.value);
+        context.linkCreationStore = store;
+        console.log("[RouteGuard] Set linkCreationStore:", store);
+      } else {
+        console.log("[RouteGuard] Failed to get temp link:", tempLinkResult.error);
+        context.linkCreationStore = null;
+      }
     }
-  }
+  });
+
+  console.log("[RouteGuard] Context after setup:", {
+    linkDetailStore: context.linkDetailStore,
+    userLinkStore: context.userLinkStore,
+    linkCreationStore: context.linkCreationStore,
+  });
 
   setRouteGuardContext(context);
 </script>

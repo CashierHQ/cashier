@@ -27,13 +27,28 @@
     linkStore && "query" in linkStore ? linkStore.query.isLoading : false,
   );
 
-  const link = $derived(
-    linkStore && "link" in linkStore ? linkStore.link : null,
+  const isValid = $derived(
+    !linkStore
+      ? false
+      : context.linkCreationStore
+        ? true
+        : "link" in linkStore && linkStore.link
+          ? true
+          : false,
   );
 
   $effect(() => {
+    console.log("[ProtectedValidLink]", {
+      linkStore,
+      linkCreationStore: context.linkCreationStore,
+      isLoading,
+      isValid,
+    });
+  });
+
+  $effect(() => {
     if (linkStore && "query" in linkStore && !linkStore.query.isLoading) {
-      if (!link) {
+      if (!linkStore.link) {
         if (config.redirectTo) {
           // @ts-expect-error - dynamic route path
           goto(resolve(config.redirectTo));
@@ -47,7 +62,7 @@
 
 {#if isLoading}
   <ProtectionProcessingState message="Loading..." />
-{:else if link}
+{:else if isValid}
   {@render children()}
 {:else}
   <ProtectionProcessingState message="Loading..." />
