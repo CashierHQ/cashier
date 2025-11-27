@@ -25,7 +25,13 @@
   );
 
   const link = $derived(
-    linkStore && "link" in linkStore ? linkStore.link : null,
+    !linkStore
+      ? null
+      : "link" in linkStore
+        ? linkStore.link
+        : "linkDetail" in linkStore && linkStore.linkDetail
+          ? linkStore.linkDetail.link
+          : null
   );
 
   const isOwner = $derived(
@@ -33,7 +39,17 @@
       ? true
       : link?.creator != null &&
           context.authState.account?.owner != null &&
-          link.creator.toString() === context.authState.account.owner,
+          link.creator.toString() === context.authState.account.owner
+  );
+
+  const isLoading = $derived(
+    !linkStore
+      ? false
+      : "query" in linkStore
+        ? linkStore.query.isLoading
+        : "linkDetail" in linkStore && linkStore.linkDetail?.query
+          ? linkStore.linkDetail.query.isLoading
+          : false
   );
 
   const isReady = $derived(
@@ -41,9 +57,7 @@
       ? false
       : context.linkCreationStore
         ? true
-        : "query" in linkStore && !linkStore.query.isLoading
-          ? true
-          : false,
+        : !isLoading
   );
 
   const shouldShow = $derived(isReady && (mustBeOwner ? isOwner : !isOwner));

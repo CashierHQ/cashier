@@ -13,27 +13,31 @@
 
   const id = page.params.id;
 
-  async function handleBack() {
-    const context = getRouteGuardContext();
-    const createLinkStore = context.linkCreationStore;
-
-    if (!createLinkStore) return;
-
-    if (
-      createLinkStore.state.step === LinkStep.CHOOSE_TYPE ||
-      createLinkStore.state.step === LinkStep.CREATED
-    ) {
-      goto(resolve("/links"));
-    } else {
-      try {
-        await createLinkStore.goBack();
-      } catch (e) {
-        console.error("Failed to go back:", e);
-      }
-    }
-  }
+  let context = $state<ReturnType<typeof getRouteGuardContext> | null>(null);
 
   onMount(() => {
+    context = getRouteGuardContext();
+
+    const handleBack = async () => {
+      if (!context) return;
+      const createLinkStore = context.linkCreationStore;
+
+      if (!createLinkStore) return;
+
+      if (
+        createLinkStore.state.step === LinkStep.CHOOSE_TYPE ||
+        createLinkStore.state.step === LinkStep.CREATED
+      ) {
+        goto(resolve("/links"));
+      } else {
+        try {
+          await createLinkStore.goBack();
+        } catch (e) {
+          console.error("Failed to go back:", e);
+        }
+      }
+    };
+
     appHeaderStore.setBackHandler(handleBack);
 
     return () => {
@@ -59,7 +63,7 @@
   ]}
   tempLinkId={id}
 >
-  {@const context = getRouteGuardContext()}
+  {@const guardContext = getRouteGuardContext()}
   <div class="flex flex-col min-h-screen sm:bg-lightgreen bg-white">
     <AppHeader isCreateOrEditPage={true} />
 
@@ -71,8 +75,8 @@
           class="sm:max-h-[calc(100vh-156px)] max-h-[calc(100vh-86px)] overflow-y-auto scrollbar-hide flex flex-col grow-1"
         >
           <div class="w-full grow-1 flex flex-col">
-            {#if context.linkCreationStore}
-              <CreateLink linkStore={context.linkCreationStore} />
+            {#if guardContext.linkCreationStore}
+              <CreateLink linkStore={guardContext.linkCreationStore} />
             {/if}
           </div>
         </div>

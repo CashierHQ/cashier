@@ -23,29 +23,60 @@
   );
 
   const isLoading = $derived(
-    linkStore && "query" in linkStore ? linkStore.query.isLoading : false,
+    !linkStore
+      ? true
+      : "query" in linkStore
+        ? linkStore.query.isLoading
+        : "linkDetail" in linkStore && linkStore.linkDetail?.query
+          ? linkStore.linkDetail.query.isLoading
+          : false
   );
 
-  const isValid = $derived(
+  const hasLink = $derived(
     !linkStore
       ? false
       : context.linkCreationStore
         ? true
         : "link" in linkStore
-          ? ("query" in linkStore && linkStore.query.isLoading
-              ? false
-              : linkStore.link !== null && linkStore.link !== undefined)
-          : false,
+          ? linkStore.link !== null && linkStore.link !== undefined
+          : "linkDetail" in linkStore && linkStore.linkDetail?.link
+            ? linkStore.linkDetail.link !== null && linkStore.linkDetail.link !== undefined
+            : false
+  );
+
+  const isValid = $derived(!linkStore ? false : isLoading ? false : hasLink);
+
+  const isReadyToCheck = $derived(
+    !isLoading && linkStore !== null
   );
 
   const shouldRedirect = $derived(
-    (linkStore && "query" in linkStore && !linkStore.query.isLoading && !linkStore.link) ||
+    (isReadyToCheck && !hasLink) ||
     (context.authState.isReady && context.hasTempLinkLoadAttempted && !linkStore)
   );
 
   $effect(() => {
+    console.log("[ProtectedValidLink Debug]", {
+      linkStore: linkStore ? "exists" : "null",
+      linkStoreType: linkStore
+        ? "link" in linkStore
+          ? "LinkDetailStore"
+          : "linkDetail" in linkStore
+            ? "UserLinkStore"
+            : "LinkCreationStore"
+        : "none",
+      isLoading,
+      hasLink,
+      shouldRedirect,
+      authReady: context.authState.isReady,
+      hasTempLinkLoadAttempted: context.hasTempLinkLoadAttempted,
+    });
+  });
+
+  $effect(() => {
     if (shouldRedirect) {
       const redirectPath = config.redirectTo || "/404";
+      console.log("[ProtectedValidLink] Redirecting to:", redirectPath);
       // @ts-expect-error - dynamic route path
       goto(resolve(redirectPath));
     }
