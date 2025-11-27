@@ -52,7 +52,7 @@ const mapActionStateToEnum = (actionState: ActionState) => {
 
 // Map Front-end ACTION_TYPE enum to back-end ActionType
 export const mapFrontendActionTypeToActionType = (
-  actionType: ACTION_TYPE
+  actionType: ACTION_TYPE,
 ): ActionType => {
   switch (actionType) {
     case ACTION_TYPE.WITHDRAW:
