@@ -19,11 +19,10 @@
     const tempLink = LinkCreationStore.createTempLink(authState.account?.owner);
     goto(resolve(`/link/create/${tempLink.id}`));
   }
-
-  const context = getRouteGuardContext();
 </script>
 
 <RouteGuard guards={[{ type: GuardType.AUTH }]}>
+  {@const context = getRouteGuardContext()}
   {#if context.isGuardCheckComplete}
     <div class="flex flex-col min-h-screen sm:bg-lightgreen bg-white">
       <AppHeader />
