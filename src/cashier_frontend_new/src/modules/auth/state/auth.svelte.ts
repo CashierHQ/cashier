@@ -320,8 +320,10 @@ const inner_login = async (walletId: string) => {
     if (!signer) {
       throw new Error("Signer not available after login");
     }
+    // request delegation with timeout
     const delegationChain = await signer.delegation({
       publicKey: Ed25519KeyIdentity.generate().getPublicKey().toDer(),
+      maxTimeToLive: BigInt(TIMEOUT_NANO_SEC),
     });
 
     if (!delegationChain) {
