@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { error } from "@sveltejs/kit";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import type { Snippet } from "svelte";
@@ -32,30 +31,23 @@
       ? false
       : context.linkCreationStore
         ? true
-        : "link" in linkStore && linkStore.link
-          ? true
+        : "link" in linkStore
+          ? ("query" in linkStore && linkStore.query.isLoading
+              ? false
+              : linkStore.link !== null && linkStore.link !== undefined)
           : false,
   );
 
-  $effect(() => {
-    console.log("[ProtectedValidLink]", {
-      linkStore,
-      linkCreationStore: context.linkCreationStore,
-      isLoading,
-      isValid,
-    });
-  });
+  const shouldRedirect = $derived(
+    (linkStore && "query" in linkStore && !linkStore.query.isLoading && !linkStore.link) ||
+    (context.authState.isReady && context.hasTempLinkLoadAttempted && !linkStore)
+  );
 
   $effect(() => {
-    if (linkStore && "query" in linkStore && !linkStore.query.isLoading) {
-      if (!linkStore.link) {
-        if (config.redirectTo) {
-          // @ts-expect-error - dynamic route path
-          goto(resolve(config.redirectTo));
-        } else {
-          error(404, "Link not found");
-        }
-      }
+    if (shouldRedirect) {
+      const redirectPath = config.redirectTo || "/404";
+      // @ts-expect-error - dynamic route path
+      goto(resolve(redirectPath));
     }
   });
 </script>
@@ -64,6 +56,4 @@
   <ProtectionProcessingState message="Loading..." />
 {:else if isValid}
   {@render children()}
-{:else}
-  <ProtectionProcessingState message="Loading..." />
 {/if}

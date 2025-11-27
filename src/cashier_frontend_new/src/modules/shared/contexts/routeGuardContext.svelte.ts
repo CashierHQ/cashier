@@ -14,6 +14,7 @@ export class RouteGuardContext {
   userLinkStore = $state<UserLinkStore | null>(null);
   linkCreationStore = $state<LinkCreationStore | null>(null);
   isGuardCheckComplete = $state(false);
+  hasTempLinkLoadAttempted = $state(false);
 
   constructor(config?: {
     linkDetailStore?: LinkDetailStore;
