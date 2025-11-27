@@ -47,6 +47,10 @@ export class RouteGuardContext {
   setGuardCheckComplete(complete: boolean) {
     this.isGuardCheckComplete = complete;
   }
+
+  setHasTempLinkLoadAttempted(attempted: boolean) {
+    this.hasTempLinkLoadAttempted = attempted;
+  }
 }
 
 export function setRouteGuardContext(

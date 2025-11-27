@@ -46,24 +46,7 @@
   const shouldRedirect = $derived(userLinkStore && !isLoading && !isStateValid);
 
   $effect(() => {
-    console.log("[ProtectedUserState Debug]", {
-      userLinkStore: userLinkStore ? "exists" : "null",
-      currentStep,
-      allowedStates,
-      isStateValid,
-      isLoading,
-      shouldRedirect,
-    });
-  });
-
-  $effect(() => {
     if (shouldRedirect) {
-      console.log(
-        "[ProtectedUserState] Redirecting to 404, current step:",
-        currentStep,
-        "allowed:",
-        allowedStates,
-      );
       goto(resolve("/404"));
     }
   });
