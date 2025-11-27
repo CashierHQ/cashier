@@ -1,12 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-pub mod actions;
-pub mod states;
-
 use crate::link_v2::{
     links::{
-        tip_link::states::{active::ActiveState, inactive::InactiveState},
+        shared::send_link::states::{
+            active::ActiveState, created::CreatedState, inactive::InactiveState,
+        },
         traits::{LinkV2, LinkV2State},
     },
     transaction_manager::traits::TransactionManager,
@@ -23,7 +22,6 @@ use cashier_backend_types::{
         transaction::v1::Transaction,
     },
 };
-use states::created::CreatedState;
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
 use uuid::Uuid;
 

@@ -1,7 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::cashier_backend::link::fixture::{LinkTestFixture, activate_tip_link_v2_fixture};
+use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
+use crate::cashier_backend::link_v2::send_tip::fixture::activate_tip_link_v2_fixture;
 use crate::utils::principal::TestUser;
 use crate::utils::with_pocket_ic_context;
 use candid::Nat;
@@ -15,7 +16,7 @@ async fn it_should_succeed_get_icp_token_tip_linkv2_with_no_link_existed() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let test_fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
+        let test_fixture = LinkTestFixtureV2::new(Arc::new(ctx.clone()), caller).await;
 
         // Act
         let get_links_result = test_fixture.user_get_links_v2(None).await;
