@@ -5,7 +5,7 @@ import { type IIAdapterConfig, isIIAdapterConfig, Status } from "./type";
 import { IITransport } from "./IITransport";
 import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
 import { getScreenDimensions } from "$modules/shared/utils/getScreenDimensions";
-import { Signer, type Transport } from "@slide-computer/signer";
+import { Signer } from "@slide-computer/signer";
 
 /**
  * Account interface representing the connected user's account details.
@@ -23,7 +23,7 @@ interface Account {
 export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   // II specific properties
   private authClient: AuthClient | null = null;
-  public identity: Identity | null = null;
+  private identity: Identity | null = null;
 
   constructor(
     args: { adapter: unknown; config: IIAdapterConfig } | IIAdapterConfig,
@@ -67,7 +67,6 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   }
 
   private initializeAuthClientSync(): void {
-    // Initialize AuthClient with transport for better session management
     AuthClient.create({
       idleOptions: {
         idleTimeout: Number(
@@ -122,7 +121,7 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
     });
 
     this.agent = agent;
-    this.signer = new Signer<Transport>({
+    this.signer = new Signer<IITransport>({
       transport: transport,
     });
   }
@@ -178,7 +177,10 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
         })(),
         onSuccess: async () => {
           try {
-            const identity = this.authClient!.getIdentity();
+            if (!this.authClient) {
+              throw new Error("AuthClient not initialized after login");
+            }
+            const identity = this.authClient.getIdentity();
             const account: Account = {
               owner: identity.getPrincipal().toText(),
               subaccount: null,

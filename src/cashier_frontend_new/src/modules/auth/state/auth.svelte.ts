@@ -14,9 +14,8 @@ import { Principal } from "@dfinity/principal";
 import type { BaseSignerAdapter, CreatePnpArgs } from "@windoge98/plug-n-play";
 import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
 import { PersistedState } from "runed";
-import {} from "@slide-computer/signer";
 import { Ed25519KeyIdentity } from "@dfinity/identity";
-import { SessionManager } from "../sessionManager";
+import { SessionManager } from "../services/sessionManager";
 import { calculateDelegationExpirationMs } from "../utils/calculateDelegationExpirationMs";
 
 // Config for PNP instance
@@ -294,14 +293,11 @@ const inner_logout = async () => {
  * Setup session manager with delegation expiration timeout.
  * @param delegationExpirationInMillis The delegation expiration time in milliseconds
  */
-export const setupSessionManager = (
-  delegationExpirationInMillis: number,
-): void => {
+const setupSessionManager = (delegationExpirationInMillis: number): void => {
   sessionManager = new SessionManager({
     timeout: delegationExpirationInMillis,
   });
   sessionManager.registerCallback(async () => {
-    console.log("Session expired, logging out");
     await inner_logout();
   });
 };
@@ -320,6 +316,7 @@ const inner_login = async (walletId: string) => {
     if (!signer) {
       throw new Error("Signer not available after login");
     }
+
     // request delegation with timeout
     const delegationChain = await signer.delegation({
       publicKey: Ed25519KeyIdentity.generate().getPublicKey().toDer(),
@@ -335,7 +332,6 @@ const inner_login = async (walletId: string) => {
 
     // If delegation already expired, immediately logout.
     if (delegationExpirationInMillis <= 0) {
-      console.log("Delegation already expired — logging out");
       await inner_logout();
       return;
     }
