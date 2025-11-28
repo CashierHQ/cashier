@@ -5,13 +5,11 @@
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
   import Ended from "../components/Ended.svelte";
   import Landing from "../components/Landing.svelte";
-  import type UserLinkStore from "../state/userLinkStore.svelte";
+  import UserLinkStore from "../state/userLinkStore.svelte";
 
-  const {
-    userStore,
-  }: {
-    userStore: UserLinkStore;
-  } = $props();
+  const { linkId }: { linkId: string } = $props();
+
+  const userStore = new UserLinkStore({ id: linkId });
   const isEndedWithoutCompletion = $derived(
     userStore.link?.state === LinkState.INACTIVE_ENDED &&
       userStore.query?.data?.link_user_state !== LinkUserState.COMPLETED,
