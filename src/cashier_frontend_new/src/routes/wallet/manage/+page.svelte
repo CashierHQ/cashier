@@ -3,6 +3,7 @@
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
   import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
+  import NavBar from "$modules/token/components/navBar.svelte";
 
   let errorMessage: string = $state("");
   let successMessage: string = $state("");
@@ -22,6 +23,7 @@
 
 <RouteGuard>
   <ProtectedAuth>
+    <NavBar />
     <div>
       {#if walletStore.query.data}
         <h2>Manage tokens</h2>

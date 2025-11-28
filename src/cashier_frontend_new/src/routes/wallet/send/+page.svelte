@@ -13,6 +13,7 @@
   import { Principal } from "@dfinity/principal";
   import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
   import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
+  import NavBar from "$modules/token/components/navBar.svelte";
 
   let selectedToken: string = $state(ICP_LEDGER_CANISTER_ID);
   let receiveAddress: string = $state("");
@@ -115,6 +116,7 @@
 
 <RouteGuard>
   <ProtectedAuth>
+    <NavBar />
     <div>
       {#if walletStore.query.data}
         <h2>Send token</h2>

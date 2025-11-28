@@ -3,6 +3,7 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
   import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
+  import NavBar from "$modules/token/components/navBar.svelte";
 
   let canisterId: string = $state("");
   let errorMessage: string = $state("");
@@ -35,6 +36,7 @@
 
 <RouteGuard>
   <ProtectedAuth>
+    <NavBar />
     <div>
       {#if walletStore.query.data}
         <h2>Add token</h2>
