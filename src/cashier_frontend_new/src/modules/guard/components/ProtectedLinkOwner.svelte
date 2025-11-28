@@ -2,9 +2,9 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import type { Snippet } from "svelte";
-  import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
+  import { getGuardContext } from "../context.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
-  import type { LinkOwnerGuardConfig } from "../../types/guards";
+  import type { LinkOwnerGuardConfig } from "../types";
 
   let {
     config,
@@ -14,7 +14,7 @@
     children: Snippet;
   } = $props();
 
-  const context = getRouteGuardContext();
+  const context = getGuardContext();
   const mustBeOwner = config.mustBeOwner ?? true;
   const redirectTo = config.redirectTo ?? "/links";
 

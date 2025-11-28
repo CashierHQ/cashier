@@ -1,14 +1,11 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import {
-    RouteGuardContext,
-    setRouteGuardContext,
-  } from "$modules/shared/contexts/routeGuardContext.svelte";
+  import { GuardContext, setGuardContext } from "../context.svelte";
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import UserLinkStore from "$modules/useLink/state/userLinkStore.svelte";
   import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import GuardRenderer from "./GuardRenderer.svelte";
-  import { GuardType, type GuardConfig } from "../../types/guards";
+  import { GuardType, type GuardConfig } from "../types";
 
   let {
     guards,
@@ -22,7 +19,7 @@
     children: Snippet;
   } = $props();
 
-  const context = new RouteGuardContext();
+  const context = new GuardContext();
   context.setGuardCheckComplete(false);
 
   if (linkId) {
@@ -53,10 +50,10 @@
     }
   });
 
-  setRouteGuardContext(context);
+  setGuardContext(context);
 </script>
 
-<GuardRenderer {guards} index={0}>
+<GuardRenderer {guards}>
   {#if context.isGuardCheckComplete}
     {@render children()}
   {/if}

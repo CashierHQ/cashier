@@ -5,18 +5,18 @@
   import { onMount } from "svelte";
   import CreateLink from "$modules/creationLink/pages/create.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
-  import RouteGuard from "$modules/shared/components/guards/RouteGuard.svelte";
-  import { GuardType } from "$modules/shared/types/guards";
+  import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
+  import { GuardType } from "$modules/guard/types";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
-  import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
+  import { getGuardContext } from "$modules/guard/context.svelte";
 
   const id = page.params.id;
 
-  let context = $state<ReturnType<typeof getRouteGuardContext> | null>(null);
+  let context = $state<ReturnType<typeof getGuardContext> | null>(null);
 
   onMount(() => {
-    context = getRouteGuardContext();
+    context = getGuardContext();
 
     const handleBack = async () => {
       if (!context) return;
@@ -63,7 +63,7 @@
   ]}
   tempLinkId={id}
 >
-  {@const guardContext = getRouteGuardContext()}
+  {@const guardContext = getGuardContext()}
   <div class="flex flex-col min-h-screen sm:bg-lightgreen bg-white">
     <AppHeader isCreateOrEditPage={true} />
 

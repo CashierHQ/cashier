@@ -1,10 +1,10 @@
 <script lang="ts">
   import { page } from "$app/state";
   import Landing from "$modules/useLink/pages/landing.svelte";
-  import RouteGuard from "$modules/shared/components/guards/RouteGuard.svelte";
-  import { GuardType } from "$modules/shared/types/guards";
+  import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
+  import { GuardType } from "$modules/guard/types";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
-  import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
+  import { getGuardContext } from "$modules/guard/context.svelte";
 
   const id = page.params.id;
 </script>
@@ -16,7 +16,7 @@
   ]}
   linkId={id}
 >
-  {@const context = getRouteGuardContext()}
+  {@const context = getGuardContext()}
   {#if context.userLinkStore}
     <Landing userStore={context.userLinkStore} />
   {/if}

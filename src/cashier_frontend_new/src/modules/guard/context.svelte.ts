@@ -5,9 +5,9 @@ import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.
 import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
 import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
 
-const ROUTE_GUARD_CONTEXT_KEY = Symbol("routeGuardContext");
+const GUARD_CONTEXT_KEY = Symbol("guardContext");
 
-export class RouteGuardContext {
+export class GuardContext {
   authState = authState;
   userProfile = userProfile;
   linkDetailStore = $state<LinkDetailStore | null>(null);
@@ -53,18 +53,16 @@ export class RouteGuardContext {
   }
 }
 
-export function setRouteGuardContext(
-  context: RouteGuardContext,
-): RouteGuardContext {
-  setContext(ROUTE_GUARD_CONTEXT_KEY, context);
+export function setGuardContext(context: GuardContext): GuardContext {
+  setContext(GUARD_CONTEXT_KEY, context);
   return context;
 }
 
-export function getRouteGuardContext(): RouteGuardContext {
-  const context = getContext<RouteGuardContext>(ROUTE_GUARD_CONTEXT_KEY);
+export function getGuardContext(): GuardContext {
+  const context = getContext<GuardContext>(GUARD_CONTEXT_KEY);
   if (!context) {
     throw new Error(
-      "RouteGuardContext not found. Make sure RouteGuard component is wrapping this component.",
+      "GuardContext not found. Make sure RouteGuard component is wrapping this component.",
     );
   }
   return context;
