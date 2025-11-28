@@ -4,9 +4,8 @@
   import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
   import { GuardType } from "$modules/guard/types";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
-  import { getGuardContext } from "$modules/guard/context.svelte";
 
-  const id = page.params.id;
+  const id = page.params.id!;
 </script>
 
 <RouteGuard
@@ -26,8 +25,5 @@
   ]}
   linkId={id}
 >
-  {@const context = getGuardContext()}
-  {#if context.userLinkStore}
-    <UseLink userStore={context.userLinkStore} />
-  {/if}
+  <UseLink linkId={id} />
 </RouteGuard>
