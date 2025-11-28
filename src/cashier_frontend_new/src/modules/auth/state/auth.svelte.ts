@@ -212,7 +212,7 @@ export const authState = {
     await inner_login(walletId);
 
     // Setup session manager
-    await setupSessionManager(pnp);
+    await setupSessionManager(walletId);
 
     // broadcast login event to another tab
     broadcastChannel.post(BroadcastMessageLogin);
@@ -300,7 +300,15 @@ const inner_logout = async () => {
 /**
  * Setup session manager with delegation expiration timeout.
  */
-const setupSessionManager = async (pnp: PNP) => {
+const setupSessionManager = async (walletId: string) => {
+  if (walletId !== "iiSigner") {
+    throw new Error("Session manager is only supported for II signer");
+  }
+
+  if (!pnp) {
+    throw new Error("PNP is not initialized");
+  }
+
   const iiAdapter = pnp.provider as IISignerAdapter;
   const signer = iiAdapter.getSigner();
   if (!signer) {
