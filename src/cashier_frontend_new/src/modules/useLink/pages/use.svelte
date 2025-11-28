@@ -6,13 +6,11 @@
   import Completed from "../components/Completed.svelte";
   import Landing from "../components/Landing.svelte";
   import Unlocked from "../components/Unlocked.svelte";
-  import type UserLinkStore from "../state/userLinkStore.svelte";
+  import UserLinkStore from "../state/userLinkStore.svelte";
 
-  const {
-    userStore,
-  }: {
-    userStore: UserLinkStore;
-  } = $props();
+  const { linkId }: { linkId: string } = $props();
+
+  const userStore = new UserLinkStore({ id: linkId });
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
 
