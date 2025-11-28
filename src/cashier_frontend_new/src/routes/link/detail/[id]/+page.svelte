@@ -10,7 +10,7 @@
   import { LinkStep } from "$modules/links/types/linkStep";
   import { onMount } from "svelte";
 
-  const id = page.params.id;
+  const id = page.params.id!;
 
   const handleBack = async () => {
     goto(resolve("/links"));
