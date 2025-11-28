@@ -38,3 +38,5 @@ export const FEATURE_FLAGS = {
 export const TEMP_LINKS_STORAGE_KEY_PREFIX = "tempLinks";
 
 export const USD_DISPLAY_DECIMALS = 6;
+
+export const II_SIGNER_WALLET_ID = "iiSigner";
