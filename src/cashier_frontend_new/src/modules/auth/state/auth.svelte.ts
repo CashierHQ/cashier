@@ -5,6 +5,7 @@ import {
   FEATURE_FLAGS,
   HOST_ICP,
   IC_INTERNET_IDENTITY_PROVIDER,
+  II_SIGNER_WALLET_ID,
 } from "$modules/shared/constants";
 import { TIMEOUT_NANO_SEC } from "$modules/auth/constants";
 import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
@@ -36,7 +37,7 @@ const CONFIG: CreatePnpArgs = {
   // Supported wallet adapters
   adapters: {
     iiSigner: {
-      id: "iiSigner",
+      id: II_SIGNER_WALLET_ID,
       enabled: true,
       adapter: IISignerAdapter,
       config: {
@@ -301,7 +302,7 @@ const inner_logout = async () => {
  * Setup session manager with delegation expiration timeout.
  */
 const setupSessionManager = async (walletId: string) => {
-  if (walletId !== "iiSigner") {
+  if (walletId !== II_SIGNER_WALLET_ID) {
     throw new Error("Session manager is only supported for II signer");
   }
 
