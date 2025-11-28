@@ -76,7 +76,6 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
       },
     })
       .then((client) => {
-        console.log("AuthClient initialized");
         this.authClient = client;
       })
       .catch((err) => {
