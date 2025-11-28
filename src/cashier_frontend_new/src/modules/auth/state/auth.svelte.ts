@@ -15,7 +15,7 @@ import { Principal } from "@dfinity/principal";
 import type { BaseSignerAdapter, CreatePnpArgs } from "@windoge98/plug-n-play";
 import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
 import { PersistedState } from "runed";
-import { Ed25519KeyIdentity } from "@dfinity/identity";
+import { DelegationIdentity } from "@dfinity/identity";
 import { SessionManager } from "../services/sessionManager";
 import { calculateDelegationExpirationMs } from "../utils/calculateDelegationExpirationMs";
 
@@ -311,21 +311,14 @@ const setupSessionManager = async (walletId: string) => {
   }
 
   const iiAdapter = pnp.provider as IISignerAdapter;
-  const signer = iiAdapter.getSigner();
-  if (!signer) {
-    throw new Error("Signer not available after login");
-  }
-  const delegationChain = await signer.delegation({
-    publicKey: Ed25519KeyIdentity.generate().getPublicKey().toDer(),
-    maxTimeToLive: BigInt(TIMEOUT_NANO_SEC),
-  });
+  // II always return DelegationIdentity after login
+  const delegationIdentity = iiAdapter
+    .getAuthClient()
+    ?.getIdentity() as DelegationIdentity;
 
-  if (!delegationChain) {
-    throw new Error("Delegation failed: no delegation response");
-  }
-
-  const delegationExpirationInMillis =
-    calculateDelegationExpirationMs(delegationChain);
+  const delegationExpirationInMillis = calculateDelegationExpirationMs(
+    delegationIdentity.getDelegation(),
+  );
 
   if (delegationExpirationInMillis <= 0) {
     await inner_logout();
