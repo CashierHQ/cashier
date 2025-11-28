@@ -31,12 +31,7 @@ interface GlobalPnpConfig {
 // copy from windoge98/plug-n-play, they don't export this type
 // Configuration options specific to the Internet Identity adapter
 export interface IIAdapterConfig extends GlobalPnpConfig {
-  localIdentityCanisterId?: string;
-  maxTimeToLive?: bigint;
-  derivationOrigin?: string;
   iiProviderUrl?: string;
-  iiProviderOrigin?: string;
-  timeout?: number;
 }
 
 // copy from windoge98/plug-n-play, they don't export this function
@@ -53,8 +48,6 @@ function createTypeGuard<T extends GlobalPnpConfig>(
 // copy from windoge98/plug-n-play, they don't export this function
 // Type guard to check if a config is IIAdapterConfig
 export const isIIAdapterConfig = createTypeGuard<IIAdapterConfig>(
-  "localIdentityCanisterId",
   "iiProviderUrl",
-  "iiProviderOrigin",
   "hostUrl",
 );

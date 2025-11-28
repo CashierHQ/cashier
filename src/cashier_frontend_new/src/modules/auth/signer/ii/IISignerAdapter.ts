@@ -5,7 +5,7 @@ import { type IIAdapterConfig, isIIAdapterConfig, Status } from "./type";
 import { IITransport } from "./IITransport";
 import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
 import { getScreenDimensions } from "$modules/shared/utils/getScreenDimensions";
-import { Signer, type Transport } from "@slide-computer/signer";
+import { Signer } from "@slide-computer/signer";
 
 /**
  * Account interface representing the connected user's account details.
@@ -23,7 +23,7 @@ interface Account {
 export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   // II specific properties
   private authClient: AuthClient | null = null;
-  public identity: Identity | null = null;
+  private identity: Identity | null = null;
 
   constructor(
     args: { adapter: unknown; config: IIAdapterConfig } | IIAdapterConfig,
@@ -58,23 +58,25 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
     this.initializeAuthClientSync();
   }
 
+  getAuthClient(): AuthClient | null {
+    return this.authClient;
+  }
+
   protected ensureTransportInitialized(): Promise<void> {
     throw new Error("Method not implemented.");
   }
 
   private initializeAuthClientSync(): void {
-    // Initialize AuthClient with transport for better session management
     AuthClient.create({
       idleOptions: {
-        idleTimeout: Number(this.config.timeout ?? 1000 * 60 * 60 * 24), // Default 24 hours
+        idleTimeout: Number(
+          this.config.delegationTimeout ?? 1000 * 60 * 60 * 24,
+        ),
         disableDefaultIdleCallback: true,
       },
     })
-      .then(async (client) => {
+      .then((client) => {
         this.authClient = client;
-        this.authClient.idleManager?.registerCallback?.(() =>
-          this.refreshLogin(),
-        );
       })
       .catch((err) => {
         this.handleError("Failed to create AuthClient", err);
@@ -118,7 +120,7 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
     });
 
     this.agent = agent;
-    this.signer = new Signer<Transport>({
+    this.signer = new Signer<IITransport>({
       transport: transport,
     });
   }
@@ -165,9 +167,8 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
       const loginOptions = {
         derivationOrigin: this.config.derivationOrigin,
         identityProvider: this.config.iiProviderUrl || "https://id.ai",
-        maxTimeToLive: BigInt(
-          (this.config.timeout ?? 1 * 24 * 60 * 60) * 1000 * 1000 * 1000,
-        ), // Default 1 day
+        maxTimeToLive:
+          this.config.delegationTimeout ?? BigInt(60 * 60 * 1000 * 1000 * 1000), // Default 1 day
         // Open in new popup window (equivalent to target="_blank" but for window.open)
         windowOpenerFeatures: (() => {
           const screen = getScreenDimensions();
@@ -175,7 +176,10 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
         })(),
         onSuccess: async () => {
           try {
-            const identity = this.authClient!.getIdentity();
+            if (!this.authClient) {
+              throw new Error("AuthClient not initialized after login");
+            }
+            const identity = this.authClient.getIdentity();
             const account: Account = {
               owner: identity.getPrincipal().toText(),
               subaccount: null,
