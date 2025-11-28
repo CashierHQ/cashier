@@ -5,7 +5,9 @@ import {
   FEATURE_FLAGS,
   HOST_ICP,
   IC_INTERNET_IDENTITY_PROVIDER,
+  II_SIGNER_WALLET_ID,
 } from "$modules/shared/constants";
+import { TIMEOUT_NANO_SEC } from "$modules/auth/constants";
 import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
 import { Actor, HttpAgent } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
@@ -13,6 +15,9 @@ import { Principal } from "@dfinity/principal";
 import type { BaseSignerAdapter, CreatePnpArgs } from "@windoge98/plug-n-play";
 import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
 import { PersistedState } from "runed";
+import { DelegationIdentity } from "@dfinity/identity";
+import { SessionManager } from "../services/sessionManager";
+import { calculateDelegationExpirationMs } from "../utils/calculateDelegationExpirationMs";
 
 // Config for PNP instance
 const CONFIG: CreatePnpArgs = {
@@ -26,10 +31,13 @@ const CONFIG: CreatePnpArgs = {
   security: {
     fetchRootKey: FEATURE_FLAGS.LOCAL_IDENTITY_PROVIDER_ENABLED,
   },
+  delegation: {
+    timeout: BigInt(TIMEOUT_NANO_SEC),
+  },
   // Supported wallet adapters
   adapters: {
     iiSigner: {
-      id: "iiSigner",
+      id: II_SIGNER_WALLET_ID,
       enabled: true,
       adapter: IISignerAdapter,
       config: {
@@ -77,6 +85,8 @@ let account = $state<{
   owner: string;
   subaccount: string | null;
 } | null>(null);
+
+let sessionManager: SessionManager | null = null;
 
 // Initialize PNP instance,
 const initPnp = async () => {
@@ -197,7 +207,15 @@ export const authState = {
 
   // Connect to wallet. Calls custom login handler if set, otherwise redirects to /links
   async login(walletId: string) {
+    if (!pnp) {
+      throw new Error("PNP is not initialized");
+    }
     await inner_login(walletId);
+
+    // Setup session manager
+    await setupSessionManager(walletId);
+
+    // broadcast login event to another tab
     broadcastChannel.post(BroadcastMessageLogin);
     // invoke configured login handler if exists
     if (loginHandler) {
@@ -280,7 +298,42 @@ const inner_logout = async () => {
   }
 };
 
+/**
+ * Setup session manager with delegation expiration timeout.
+ */
+const setupSessionManager = async (walletId: string) => {
+  if (walletId !== II_SIGNER_WALLET_ID) {
+    throw new Error("Session manager is only supported for II signer");
+  }
+
+  if (!pnp) {
+    throw new Error("PNP is not initialized");
+  }
+
+  const iiAdapter = pnp.provider as IISignerAdapter;
+  // II always return DelegationIdentity after login
+  const delegationIdentity = iiAdapter
+    .getAuthClient()
+    ?.getIdentity() as DelegationIdentity;
+
+  const delegationExpirationInMillis = calculateDelegationExpirationMs(
+    delegationIdentity.getDelegation(),
+  );
+
+  if (delegationExpirationInMillis <= 0) {
+    await inner_logout();
+    return;
+  }
+  sessionManager = new SessionManager({
+    timeout: delegationExpirationInMillis,
+  });
+  sessionManager.registerCallback(async () => {
+    await inner_logout();
+  });
+};
+
 // Perform login
+// only delegated identity
 const inner_login = async (walletId: string) => {
   if (!pnp) {
     throw new Error("PNP is not initialized");
@@ -288,6 +341,7 @@ const inner_login = async (walletId: string) => {
   isConnecting = true;
   try {
     const res = await pnp.connect(walletId);
+
     if (res.owner === null) {
       throw new Error("Login failed: owner is null");
     }
