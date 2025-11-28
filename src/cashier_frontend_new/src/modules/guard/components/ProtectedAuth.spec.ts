@@ -1,7 +1,6 @@
 /* eslint-disable svelte/no-navigation-without-resolve */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { goto } from "$app/navigation";
-import { GuardType } from "../types";
 import type { GuardContext } from "../context.svelte";
 
 // Mock navigation
@@ -40,7 +39,8 @@ describe("ProtectedAuth Guard Logic", () => {
   });
 
   describe("requireAuth: true (default)", () => {
-    const config = { type: GuardType.AUTH };
+    const requireAuth = true;
+    const redirectTo = "/";
 
     it("should show loading state when auth is not ready", () => {
       mockContext.authState.isReady = false;
@@ -55,8 +55,6 @@ describe("ProtectedAuth Guard Logic", () => {
       // Simulate the effect logic
       if (mockContext.authState.isReady) {
         const isLoggedIn = mockContext.userProfile.isLoggedIn();
-        const requireAuth = config.requireAuth ?? true;
-        const redirectTo = "/";
         if (requireAuth && !isLoggedIn) {
           goto(redirectTo);
         }
@@ -78,7 +76,8 @@ describe("ProtectedAuth Guard Logic", () => {
   });
 
   describe("requireAuth: false", () => {
-    const config = { type: GuardType.AUTH, requireAuth: false };
+    const requireAuth = false;
+    const redirectTo = "/";
 
     it("should redirect when requireAuth=false and user is logged in", () => {
       mockContext.authState.isReady = true;
@@ -87,8 +86,6 @@ describe("ProtectedAuth Guard Logic", () => {
       // Simulate the effect logic
       if (mockContext.authState.isReady) {
         const isLoggedIn = mockContext.userProfile.isLoggedIn();
-        const requireAuth = config.requireAuth ?? true;
-        const redirectTo = config.redirectTo ?? "/";
         if (!requireAuth && isLoggedIn) {
           goto(redirectTo);
         }
@@ -101,7 +98,6 @@ describe("ProtectedAuth Guard Logic", () => {
       mockContext.authState.isReady = true;
       mockContext.userProfile.isLoggedIn = () => false;
 
-      const requireAuth = config.requireAuth ?? true;
       const shouldShow =
         mockContext.authState.isReady &&
         (!requireAuth || mockContext.userProfile.isLoggedIn());
@@ -112,11 +108,8 @@ describe("ProtectedAuth Guard Logic", () => {
   });
 
   describe("custom redirectTo", () => {
-    const config = {
-      type: GuardType.AUTH,
-      requireAuth: true,
-      redirectTo: "/custom-path",
-    };
+    const requireAuth = true;
+    const redirectTo = "/custom-path";
 
     it("should redirect to custom path", () => {
       mockContext.authState.isReady = true;
@@ -125,8 +118,8 @@ describe("ProtectedAuth Guard Logic", () => {
       // Simulate the effect logic
       if (mockContext.authState.isReady) {
         const isLoggedIn = mockContext.userProfile.isLoggedIn();
-        if (config.requireAuth && !isLoggedIn) {
-          goto(config.redirectTo);
+        if (requireAuth && !isLoggedIn) {
+          goto(redirectTo);
         }
       }
 

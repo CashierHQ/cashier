@@ -4,13 +4,12 @@
   import type { Snippet } from "svelte";
   import { getGuardContext } from "../context.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
-  import type { ValidLinkGuardConfig } from "../types";
 
   let {
-    config,
+    redirectTo,
     children,
   }: {
-    config: ValidLinkGuardConfig;
+    redirectTo?: string;
     children: Snippet;
   } = $props();
 
@@ -58,7 +57,7 @@
 
   $effect(() => {
     if (shouldRedirect) {
-      const redirectPath = config.redirectTo || "/404";
+      const redirectPath = redirectTo || "/404";
       // @ts-expect-error - dynamic route path
       goto(resolve(redirectPath));
     }
