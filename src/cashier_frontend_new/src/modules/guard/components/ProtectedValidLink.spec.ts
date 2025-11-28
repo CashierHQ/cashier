@@ -44,7 +44,7 @@ describe("ProtectedValidLink Guard Logic", () => {
         link: null,
       } as any;
 
-      const isLoading = mockContext.linkDetailStore.query.isLoading;
+      const isLoading = mockContext.linkDetailStore?.query.isLoading;
       expect(isLoading).toBe(true);
     });
 
@@ -55,9 +55,9 @@ describe("ProtectedValidLink Guard Logic", () => {
       } as any;
 
       const hasLink =
-        mockContext.linkDetailStore.link !== null &&
-        mockContext.linkDetailStore.link !== undefined;
-      const isLoading = mockContext.linkDetailStore.query.isLoading;
+        mockContext.linkDetailStore?.link !== null &&
+        mockContext.linkDetailStore?.link !== undefined;
+      const isLoading = mockContext.linkDetailStore?.query.isLoading;
 
       if (!isLoading && !hasLink) {
         goto("/404");
@@ -73,9 +73,9 @@ describe("ProtectedValidLink Guard Logic", () => {
       } as any;
 
       const hasLink =
-        mockContext.linkDetailStore.link !== null &&
-        mockContext.linkDetailStore.link !== undefined;
-      const isLoading = mockContext.linkDetailStore.query.isLoading;
+        mockContext.linkDetailStore?.link !== null &&
+        mockContext.linkDetailStore?.link !== undefined;
+      const isLoading = mockContext.linkDetailStore?.query.isLoading;
 
       expect(isLoading).toBe(false);
       expect(hasLink).toBe(true);
@@ -129,7 +129,7 @@ describe("ProtectedValidLink Guard Logic", () => {
         },
       } as any;
 
-      const isLoading = mockContext.userLinkStore.linkDetail?.query?.isLoading;
+      const isLoading = mockContext.userLinkStore?.linkDetail?.query?.isLoading;
       expect(isLoading).toBe(true);
     });
 
@@ -142,10 +142,10 @@ describe("ProtectedValidLink Guard Logic", () => {
       } as any;
 
       const hasLink =
-        mockContext.userLinkStore.linkDetail?.link !== null &&
-        mockContext.userLinkStore.linkDetail?.link !== undefined;
+        mockContext.userLinkStore?.linkDetail?.link !== null &&
+        mockContext.userLinkStore?.linkDetail?.link !== undefined;
       const isLoading =
-        mockContext.userLinkStore.linkDetail?.query?.isLoading ?? false;
+        mockContext.userLinkStore?.linkDetail?.query?.isLoading ?? false;
 
       if (!isLoading && !hasLink) {
         goto("/404");
@@ -163,10 +163,10 @@ describe("ProtectedValidLink Guard Logic", () => {
       } as any;
 
       const hasLink =
-        mockContext.userLinkStore.linkDetail?.link !== null &&
-        mockContext.userLinkStore.linkDetail?.link !== undefined;
+        mockContext.userLinkStore?.linkDetail?.link !== null &&
+        mockContext.userLinkStore?.linkDetail?.link !== undefined;
       const isLoading =
-        mockContext.userLinkStore.linkDetail?.query?.isLoading ?? false;
+        mockContext.userLinkStore?.linkDetail?.query?.isLoading ?? false;
 
       expect(isLoading).toBe(false);
       expect(hasLink).toBe(true);
@@ -175,7 +175,7 @@ describe("ProtectedValidLink Guard Logic", () => {
   });
 
   describe("custom redirectTo", () => {
-    const config = { type: GuardType.VALID_LINK, redirectTo: "/custom-path" };
+    const redirectTo = "/custom-path";
 
     it("should redirect to custom path when link not found", () => {
       mockContext.linkDetailStore = {
@@ -183,11 +183,11 @@ describe("ProtectedValidLink Guard Logic", () => {
         link: null,
       } as any;
 
-      const hasLink = mockContext.linkDetailStore.link !== null;
-      const isLoading = mockContext.linkDetailStore.query.isLoading;
+      const hasLink = mockContext.linkDetailStore?.link !== null;
+      const isLoading = mockContext.linkDetailStore?.query.isLoading;
 
       if (!isLoading && !hasLink) {
-        goto(config.redirectTo);
+        goto(redirectTo);
       }
 
       expect(goto).toHaveBeenCalledWith("/custom-path");

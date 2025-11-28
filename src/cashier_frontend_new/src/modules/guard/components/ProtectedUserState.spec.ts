@@ -72,7 +72,7 @@ describe("ProtectedUserState Guard Logic", () => {
         isLoading: true,
       } as any;
 
-      const isLoading = mockContext.userLinkStore.isLoading;
+      const isLoading = mockContext.userLinkStore?.isLoading;
       expect(isLoading).toBe(true);
     });
 

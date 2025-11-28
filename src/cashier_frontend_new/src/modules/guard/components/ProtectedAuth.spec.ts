@@ -43,13 +43,13 @@ describe("ProtectedAuth Guard Logic", () => {
     const redirectTo = "/";
 
     it("should show loading state when auth is not ready", () => {
-      mockContext.authState.isReady = false;
+      mockContext.authState = { ...mockContext.authState, isReady: false };
       const shouldShow = false;
       expect(shouldShow).toBe(false);
     });
 
     it("should redirect when requireAuth=true and user is not logged in", () => {
-      mockContext.authState.isReady = true;
+      mockContext.authState = { ...mockContext.authState, isReady: true };
       mockContext.userProfile.isLoggedIn = () => false;
 
       // Simulate the effect logic
@@ -64,7 +64,7 @@ describe("ProtectedAuth Guard Logic", () => {
     });
 
     it("should render children when auth check passes", () => {
-      mockContext.authState.isReady = true;
+      mockContext.authState = { ...mockContext.authState, isReady: true };
       mockContext.userProfile.isLoggedIn = () => true;
 
       const shouldShow =
@@ -80,7 +80,7 @@ describe("ProtectedAuth Guard Logic", () => {
     const redirectTo = "/";
 
     it("should redirect when requireAuth=false and user is logged in", () => {
-      mockContext.authState.isReady = true;
+      mockContext.authState = { ...mockContext.authState, isReady: true };
       mockContext.userProfile.isLoggedIn = () => true;
 
       // Simulate the effect logic
@@ -95,7 +95,7 @@ describe("ProtectedAuth Guard Logic", () => {
     });
 
     it("should render children when user is not logged in", () => {
-      mockContext.authState.isReady = true;
+      mockContext.authState = { ...mockContext.authState, isReady: true };
       mockContext.userProfile.isLoggedIn = () => false;
 
       const shouldShow =
@@ -112,7 +112,7 @@ describe("ProtectedAuth Guard Logic", () => {
     const redirectTo = "/custom-path";
 
     it("should redirect to custom path", () => {
-      mockContext.authState.isReady = true;
+      mockContext.authState = { ...mockContext.authState, isReady: true };
       mockContext.userProfile.isLoggedIn = () => false;
 
       // Simulate the effect logic

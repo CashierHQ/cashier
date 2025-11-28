@@ -53,7 +53,7 @@ describe("ProtectedLinkOwner Guard Logic", () => {
       } as any;
 
       const isOwner =
-        mockContext.linkDetailStore.link?.creator?.toString() ===
+        mockContext.linkDetailStore?.link?.creator?.toString() ===
         mockContext.authState.account?.owner;
 
       if (mustBeOwner && !isOwner) {
@@ -72,7 +72,7 @@ describe("ProtectedLinkOwner Guard Logic", () => {
       } as any;
 
       const isOwner =
-        mockContext.linkDetailStore.link?.creator?.toString() ===
+        mockContext.linkDetailStore?.link?.creator?.toString() ===
         mockContext.authState.account?.owner;
 
       expect(isOwner).toBe(true);
@@ -93,7 +93,7 @@ describe("ProtectedLinkOwner Guard Logic", () => {
       } as any;
 
       const isOwner =
-        mockContext.linkDetailStore.link?.creator?.toString() ===
+        mockContext.linkDetailStore?.link?.creator?.toString() ===
         mockContext.authState.account?.owner;
 
       if (!mustBeOwner && isOwner) {
@@ -112,7 +112,7 @@ describe("ProtectedLinkOwner Guard Logic", () => {
       } as any;
 
       const isOwner =
-        mockContext.linkDetailStore.link?.creator?.toString() ===
+        mockContext.linkDetailStore?.link?.creator?.toString() ===
         mockContext.authState.account?.owner;
 
       expect(isOwner).toBe(false);
@@ -146,7 +146,7 @@ describe("ProtectedLinkOwner Guard Logic", () => {
       } as any;
 
       const isOwner =
-        mockContext.userLinkStore.linkDetail?.link?.creator?.toString() ===
+        mockContext.userLinkStore?.linkDetail?.link?.creator?.toString() ===
         mockContext.authState.account?.owner;
 
       expect(isOwner).toBe(true);
@@ -166,7 +166,7 @@ describe("ProtectedLinkOwner Guard Logic", () => {
       } as any;
 
       const isOwner =
-        mockContext.linkDetailStore.link?.creator?.toString() ===
+        mockContext.linkDetailStore?.link?.creator?.toString() ===
         mockContext.authState.account?.owner;
 
       if (!isOwner) {
