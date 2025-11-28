@@ -74,7 +74,7 @@ describe("ProtectedLinkState Guard Logic", () => {
         state: { step: LinkStep.CREATED },
       } as any;
 
-      const isLoading = mockContext.linkDetailStore.query.isLoading;
+      const isLoading = mockContext.linkDetailStore?.query.isLoading;
       expect(isLoading).toBe(true);
     });
 
