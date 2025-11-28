@@ -7,6 +7,7 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
   import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
+  import NavBar from "$modules/token/components/navBar.svelte";
 
   let token = page.params.token || "empty";
   let tokenDetails = $derived(
@@ -16,6 +17,7 @@
 
 <RouteGuard>
   <ProtectedAuth>
+    <NavBar />
     <div>
       <h2>Token details</h2>
       {#if tokenDetails}

@@ -6,10 +6,13 @@
   } from "$modules/shared/utils/converter";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
-  import { GuardType } from "$modules/guard/types";
+  import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
+  import NavBar from "$modules/token/components/navBar.svelte";
 </script>
 
-<RouteGuard guards={[{ type: GuardType.AUTH }]}>
+<RouteGuard>
+  <ProtectedAuth>
+  <NavBar />
   <div>
     {#if walletStore.query.data}
       <div>
@@ -49,4 +52,5 @@
       Loading...
     {/if}
   </div>
+  </ProtectedAuth>
 </RouteGuard>
