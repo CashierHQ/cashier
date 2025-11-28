@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, svelte/no-navigation-without-resolve */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { goto } from "$app/navigation";
-import { GuardType } from "../types";
 import type { GuardContext } from "../context.svelte";
 
 // Mock navigation
@@ -42,7 +41,8 @@ describe("ProtectedLinkOwner Guard Logic", () => {
   });
 
   describe("mustBeOwner: true (default)", () => {
-    const config = { type: GuardType.LINK_OWNER };
+    const mustBeOwner = true;
+    const redirectTo = "/links";
 
     it("should redirect when mustBeOwner=true and user is not owner", () => {
       mockContext.linkDetailStore = {
@@ -55,8 +55,6 @@ describe("ProtectedLinkOwner Guard Logic", () => {
       const isOwner =
         mockContext.linkDetailStore.link?.creator?.toString() ===
         mockContext.authState.account?.owner;
-      const mustBeOwner = config.mustBeOwner ?? true;
-      const redirectTo = "/links";
 
       if (mustBeOwner && !isOwner) {
         goto(redirectTo);
@@ -83,7 +81,8 @@ describe("ProtectedLinkOwner Guard Logic", () => {
   });
 
   describe("mustBeOwner: false", () => {
-    const config = { type: GuardType.LINK_OWNER, mustBeOwner: false };
+    const mustBeOwner = false;
+    const redirectTo = "/links";
 
     it("should redirect when mustBeOwner=false and user is owner", () => {
       mockContext.linkDetailStore = {
@@ -96,8 +95,6 @@ describe("ProtectedLinkOwner Guard Logic", () => {
       const isOwner =
         mockContext.linkDetailStore.link?.creator?.toString() ===
         mockContext.authState.account?.owner;
-      const mustBeOwner = config.mustBeOwner ?? true;
-      const redirectTo = config.redirectTo ?? "/links";
 
       if (!mustBeOwner && isOwner) {
         goto(redirectTo);
@@ -117,7 +114,6 @@ describe("ProtectedLinkOwner Guard Logic", () => {
       const isOwner =
         mockContext.linkDetailStore.link?.creator?.toString() ===
         mockContext.authState.account?.owner;
-      const mustBeOwner = config.mustBeOwner ?? true;
 
       expect(isOwner).toBe(false);
       expect(!mustBeOwner).toBe(true);
@@ -159,11 +155,7 @@ describe("ProtectedLinkOwner Guard Logic", () => {
   });
 
   describe("custom redirectTo", () => {
-    const config = {
-      type: GuardType.LINK_OWNER,
-      mustBeOwner: true,
-      redirectTo: "/custom-path",
-    };
+    const redirectTo = "/custom-path";
 
     it("should redirect to custom path when not owner", () => {
       mockContext.linkDetailStore = {
@@ -178,7 +170,7 @@ describe("ProtectedLinkOwner Guard Logic", () => {
         mockContext.authState.account?.owner;
 
       if (!isOwner) {
-        goto(config.redirectTo);
+        goto(redirectTo);
       }
 
       expect(goto).toHaveBeenCalledWith("/custom-path");

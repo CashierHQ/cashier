@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, svelte/no-navigation-without-resolve */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { goto } from "$app/navigation";
-import { GuardType } from "../types";
 import { LinkStep } from "$modules/links/types/linkStep";
 import type { GuardContext } from "../context.svelte";
 
@@ -50,7 +49,7 @@ describe("ProtectedLinkState Guard Logic", () => {
   ];
 
   describe("default behavior (all states allowed)", () => {
-    const config = { type: GuardType.LINK_STATE };
+    const allowedStates = allStates;
 
     it("should allow all states by default", () => {
       mockContext.linkDetailStore = {
@@ -58,9 +57,8 @@ describe("ProtectedLinkState Guard Logic", () => {
         state: { step: LinkStep.ACTIVE },
       } as any;
 
-      const allowedStates = config.allowedStates ?? allStates;
-      const currentStep = mockContext.linkDetailStore.state.step;
-      const isStateValid = allowedStates.includes(currentStep);
+      const currentStep = mockContext.linkDetailStore?.state.step;
+      const isStateValid = allowedStates.includes(currentStep as LinkStep);
 
       expect(isStateValid).toBe(true);
       expect(goto).not.toHaveBeenCalled();
@@ -68,10 +66,7 @@ describe("ProtectedLinkState Guard Logic", () => {
   });
 
   describe("with specific allowedStates", () => {
-    const config = {
-      type: GuardType.LINK_STATE,
-      allowedStates: [LinkStep.CREATED, LinkStep.ACTIVE],
-    };
+    const allowedStates = [LinkStep.CREATED, LinkStep.ACTIVE];
 
     it("should show loading state while link state is loading", () => {
       mockContext.linkDetailStore = {
@@ -89,8 +84,8 @@ describe("ProtectedLinkState Guard Logic", () => {
         state: { step: LinkStep.ENDED },
       } as any;
 
-      const currentStep = mockContext.linkDetailStore.state.step;
-      const isStateValid = config.allowedStates.includes(currentStep);
+      const currentStep = mockContext.linkDetailStore?.state.step;
+      const isStateValid = allowedStates.includes(currentStep as LinkStep);
 
       if (!isStateValid) {
         goto("/404");
@@ -105,8 +100,8 @@ describe("ProtectedLinkState Guard Logic", () => {
         state: { step: LinkStep.ACTIVE },
       } as any;
 
-      const currentStep = mockContext.linkDetailStore.state.step;
-      const isStateValid = config.allowedStates.includes(currentStep);
+      const currentStep = mockContext.linkDetailStore?.state.step;
+      const isStateValid = allowedStates.includes(currentStep as LinkStep);
 
       expect(isStateValid).toBe(true);
       expect(goto).not.toHaveBeenCalled();
@@ -114,10 +109,7 @@ describe("ProtectedLinkState Guard Logic", () => {
   });
 
   describe("LinkCreationStore (temp link)", () => {
-    const config = {
-      type: GuardType.LINK_STATE,
-      allowedStates: [LinkStep.CHOOSE_TYPE, LinkStep.ADD_ASSET],
-    };
+    const allowedStates = [LinkStep.CHOOSE_TYPE, LinkStep.ADD_ASSET];
 
     it("should not show loading for temp links", () => {
       mockContext.linkCreationStore = {
@@ -133,8 +125,8 @@ describe("ProtectedLinkState Guard Logic", () => {
         state: { step: LinkStep.CHOOSE_TYPE },
       } as any;
 
-      const currentStep = mockContext.linkCreationStore.state.step;
-      const isStateValid = config.allowedStates.includes(currentStep);
+      const currentStep = mockContext.linkCreationStore?.state.step;
+      const isStateValid = allowedStates.includes(currentStep as LinkStep);
 
       expect(isStateValid).toBe(true);
       expect(goto).not.toHaveBeenCalled();
@@ -145,8 +137,8 @@ describe("ProtectedLinkState Guard Logic", () => {
         state: { step: LinkStep.CREATED },
       } as any;
 
-      const currentStep = mockContext.linkCreationStore.state.step;
-      const isStateValid = config.allowedStates.includes(currentStep);
+      const currentStep = mockContext.linkCreationStore?.state.step;
+      const isStateValid = allowedStates.includes(currentStep as LinkStep);
 
       if (!isStateValid) {
         goto("/404");

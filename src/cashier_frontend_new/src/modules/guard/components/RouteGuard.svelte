@@ -4,32 +4,25 @@
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import UserLinkStore from "$modules/useLink/state/userLinkStore.svelte";
   import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-  import GuardRenderer from "./GuardRenderer.svelte";
-  import { GuardType, type GuardConfig } from "../types";
 
   let {
-    guards,
     linkId,
     tempLinkId,
+    storeType,
     children,
   }: {
-    guards: GuardConfig[];
     linkId?: string;
     tempLinkId?: string;
+    storeType?: "userLink" | "linkDetail";
     children: Snippet;
   } = $props();
 
   const context = new GuardContext();
-  context.setGuardCheckComplete(false);
 
   if (linkId) {
-    const hasUserStateGuard = guards.some(
-      (g) => g.type === GuardType.USER_STATE,
-    );
-
-    if (hasUserStateGuard) {
+    if (storeType === "userLink") {
       context.setUserLinkStore(new UserLinkStore({ id: linkId }));
-    } else {
+    } else if (storeType === "linkDetail") {
       context.setLinkDetailStore(new LinkDetailStore({ id: linkId }));
     }
   }
@@ -53,8 +46,4 @@
   setGuardContext(context);
 </script>
 
-<GuardRenderer {guards}>
-  {#if context.isGuardCheckComplete}
-    {@render children()}
-  {/if}
-</GuardRenderer>
+{@render children()}

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, svelte/no-navigation-without-resolve */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { goto } from "$app/navigation";
-import { GuardType } from "../types";
 import type { GuardContext } from "../context.svelte";
 
 // Mock navigation

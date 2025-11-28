@@ -4,19 +4,18 @@
   import type { Snippet } from "svelte";
   import { getGuardContext } from "../context.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
-  import type { LinkOwnerGuardConfig } from "../types";
 
   let {
-    config,
+    mustBeOwner = true,
+    redirectTo = "/links",
     children,
   }: {
-    config: LinkOwnerGuardConfig;
+    mustBeOwner?: boolean;
+    redirectTo?: string;
     children: Snippet;
   } = $props();
 
   const context = getGuardContext();
-  const mustBeOwner = config.mustBeOwner ?? true;
-  const redirectTo = config.redirectTo ?? "/links";
 
   const linkStore = $derived(
     context.linkDetailStore ||

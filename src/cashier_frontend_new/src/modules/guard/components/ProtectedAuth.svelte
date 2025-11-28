@@ -4,19 +4,18 @@
   import type { Snippet } from "svelte";
   import { getGuardContext } from "../context.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
-  import type { AuthGuardConfig } from "../types";
 
   let {
-    config,
+    requireAuth = true,
+    redirectTo = "/",
     children,
   }: {
-    config: AuthGuardConfig;
+    requireAuth?: boolean;
+    redirectTo?: string;
     children: Snippet;
   } = $props();
 
   const context = getGuardContext();
-  const requireAuth = config.requireAuth ?? true;
-  const redirectTo = config.redirectTo ?? "/";
 
   let shouldShow = $derived(
     context.authState.isReady &&

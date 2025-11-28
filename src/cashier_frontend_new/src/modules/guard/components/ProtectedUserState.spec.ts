@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, svelte/no-navigation-without-resolve */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { goto } from "$app/navigation";
-import { GuardType } from "../types";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { GuardContext } from "../context.svelte";
 
@@ -48,7 +47,7 @@ describe("ProtectedUserState Guard Logic", () => {
   ];
 
   describe("default behavior (all states allowed)", () => {
-    const config = { type: GuardType.USER_STATE };
+    const allowedStates = allStates;
 
     it("should allow all states by default", () => {
       mockContext.userLinkStore = {
@@ -56,9 +55,8 @@ describe("ProtectedUserState Guard Logic", () => {
         isLoading: false,
       } as any;
 
-      const allowedStates = config.allowedStates ?? allStates;
-      const currentStep = mockContext.userLinkStore.step;
-      const isStateValid = allowedStates.includes(currentStep);
+      const currentStep = mockContext.userLinkStore?.step;
+      const isStateValid = allowedStates.includes(currentStep as UserLinkStep);
 
       expect(isStateValid).toBe(true);
       expect(goto).not.toHaveBeenCalled();
@@ -66,10 +64,7 @@ describe("ProtectedUserState Guard Logic", () => {
   });
 
   describe("with specific allowedStates", () => {
-    const config = {
-      type: GuardType.USER_STATE,
-      allowedStates: [UserLinkStep.LANDING],
-    };
+    const allowedStates = [UserLinkStep.LANDING];
 
     it("should show loading state while user link is loading", () => {
       mockContext.userLinkStore = {
@@ -87,8 +82,8 @@ describe("ProtectedUserState Guard Logic", () => {
         isLoading: false,
       } as any;
 
-      const currentStep = mockContext.userLinkStore.step;
-      const isStateValid = config.allowedStates.includes(currentStep);
+      const currentStep = mockContext.userLinkStore?.step;
+      const isStateValid = allowedStates.includes(currentStep as UserLinkStep);
 
       if (!isStateValid) {
         goto("/404");
@@ -103,8 +98,8 @@ describe("ProtectedUserState Guard Logic", () => {
         isLoading: false,
       } as any;
 
-      const currentStep = mockContext.userLinkStore.step;
-      const isStateValid = config.allowedStates.includes(currentStep);
+      const currentStep = mockContext.userLinkStore?.step;
+      const isStateValid = allowedStates.includes(currentStep as UserLinkStep);
 
       expect(isStateValid).toBe(true);
       expect(goto).not.toHaveBeenCalled();
@@ -112,14 +107,11 @@ describe("ProtectedUserState Guard Logic", () => {
   });
 
   describe("multiple allowed states", () => {
-    const config = {
-      type: GuardType.USER_STATE,
-      allowedStates: [
-        UserLinkStep.ADDRESS_UNLOCKED,
-        UserLinkStep.ADDRESS_LOCKED,
-        UserLinkStep.GATE,
-      ],
-    };
+    const allowedStates = [
+      UserLinkStep.ADDRESS_UNLOCKED,
+      UserLinkStep.ADDRESS_LOCKED,
+      UserLinkStep.GATE,
+    ];
 
     it("should allow any of the specified states", () => {
       const testStates = [
@@ -135,8 +127,10 @@ describe("ProtectedUserState Guard Logic", () => {
           isLoading: false,
         } as any;
 
-        const currentStep = mockContext.userLinkStore.step;
-        const isStateValid = config.allowedStates.includes(currentStep);
+        const currentStep = mockContext.userLinkStore?.step;
+        const isStateValid = allowedStates.includes(
+          currentStep as UserLinkStep,
+        );
 
         expect(isStateValid).toBe(true);
         expect(goto).not.toHaveBeenCalled();
@@ -149,8 +143,8 @@ describe("ProtectedUserState Guard Logic", () => {
         isLoading: false,
       } as any;
 
-      const currentStep = mockContext.userLinkStore.step;
-      const isStateValid = config.allowedStates.includes(currentStep);
+      const currentStep = mockContext.userLinkStore?.step;
+      const isStateValid = allowedStates.includes(currentStep as UserLinkStep);
 
       if (!isStateValid) {
         goto("/404");

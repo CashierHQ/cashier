@@ -6,7 +6,7 @@
   import AddLinkButton from "$modules/links/components/layout/AddLinkButton.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
   import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
-  import { GuardType } from "$modules/guard/types";
+  import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
   import LinksPage from "$modules/links/pages/LinksPage.svelte";
 
   function handleCreateNewLink() {
@@ -19,22 +19,26 @@
   }
 </script>
 
-<RouteGuard guards={[{ type: GuardType.AUTH }]}>
-  <div class="flex flex-col min-h-screen sm:bg-lightgreen bg-white">
-    <AppHeader />
+<RouteGuard>
+  <ProtectedAuth>
+    <div class="flex flex-col min-h-screen sm:bg-lightgreen bg-white">
+      <AppHeader />
 
-    <div class="flex-1 sm:py-4 pb-2 flex items-center justify-center flex-col">
       <div
-        class="w-full sm:max-w-[600px] max-w-full sm:p-8 px-4 grow-1 bg-white sm:rounded-xl overflow-hidden"
+        class="flex-1 sm:py-4 pb-2 flex items-center justify-center flex-col"
       >
         <div
-          class="sm:max-h-[calc(100vh-156px)] max-h-[calc(100vh-78px)] overflow-y-auto scrollbar-hide"
+          class="w-full sm:max-w-[600px] max-w-full sm:p-8 px-4 grow-1 bg-white sm:rounded-xl overflow-hidden"
         >
-          <LinksPage />
+          <div
+            class="sm:max-h-[calc(100vh-156px)] max-h-[calc(100vh-78px)] overflow-y-auto scrollbar-hide"
+          >
+            <LinksPage />
+          </div>
         </div>
       </div>
-    </div>
 
-    <AddLinkButton onClick={handleCreateNewLink} />
-  </div>
+      <AddLinkButton onClick={handleCreateNewLink} />
+    </div>
+  </ProtectedAuth>
 </RouteGuard>

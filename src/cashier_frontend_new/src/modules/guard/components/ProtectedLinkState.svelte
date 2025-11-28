@@ -5,17 +5,6 @@
   import { getGuardContext } from "../context.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
   import { LinkStep } from "$modules/links/types/linkStep";
-  import type { LinkStateGuardConfig } from "../types";
-
-  let {
-    config,
-    children,
-  }: {
-    config: LinkStateGuardConfig;
-    children: Snippet;
-  } = $props();
-
-  const context = getGuardContext();
 
   const allStates = [
     LinkStep.CHOOSE_TYPE,
@@ -27,7 +16,15 @@
     LinkStep.ENDED,
   ];
 
-  const allowedStates = config.allowedStates ?? allStates;
+  let {
+    allowedStates = allStates,
+    children,
+  }: {
+    allowedStates?: LinkStep[];
+    children: Snippet;
+  } = $props();
+
+  const context = getGuardContext();
 
   const linkStore = $derived(
     context.linkDetailStore || context.linkCreationStore,

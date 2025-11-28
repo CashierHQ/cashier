@@ -5,17 +5,6 @@
   import { getGuardContext } from "../context.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
-  import type { UserStateGuardConfig } from "../types";
-
-  let {
-    config,
-    children,
-  }: {
-    config: UserStateGuardConfig;
-    children: Snippet;
-  } = $props();
-
-  const context = getGuardContext();
 
   const allStates = [
     UserLinkStep.LANDING,
@@ -25,7 +14,15 @@
     UserLinkStep.COMPLETED,
   ];
 
-  const allowedStates = config.allowedStates ?? allStates;
+  let {
+    allowedStates = allStates,
+    children,
+  }: {
+    allowedStates?: UserLinkStep[];
+    children: Snippet;
+  } = $props();
+
+  const context = getGuardContext();
 
   const userLinkStore = $derived(context.userLinkStore);
 
