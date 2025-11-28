@@ -11,6 +11,8 @@
   } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { Principal } from "@dfinity/principal";
+  import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
+  import { GuardType } from "$modules/guard/types";
 
   let selectedToken: string = $state(ICP_LEDGER_CANISTER_ID);
   let receiveAddress: string = $state("");
@@ -111,60 +113,64 @@
   }
 </script>
 
-<div>
-  {#if walletStore.query.data}
-    <h2>Send token</h2>
-    <div class="py-4">
-      {#if errorMessage}
-        <p style="color: red;">{errorMessage}</p>
-      {/if}
-      {#if successMessage}
-        <p style="color: green;">{successMessage}</p>
-      {/if}
-      {#if isSending}
-        <p>Sending...</p>
-      {/if}
-      <p>Select a token to send:</p>
-      <select bind:value={selectedToken} style="border: 1px solid #ccc;">
-        {#each walletStore.query.data as token (token.address)}
-          {#if token.enabled}
-            <option value={token.address}>{token.symbol} - {token.name}</option>
-          {/if}
-        {/each}
-      </select>
-      <p>Amount: (max {maxAmount})</p>
-      <input
-        type="number"
-        bind:value={amount}
-        max={maxAmount}
-        style="border: 1px solid #ccc;"
-      />
-      <br />
-      <p>Receive address:</p>
-      <select
-        bind:value={receiveType}
-        style="border: 1px solid #ccc; margin-bottom: 8px;"
-      >
-        <option value={PRINCIPAL_TYPE}>PrincipalID</option>
-        <option value={ACCOUNT_ID_TYPE} disabled={disabledAccount}
-          >AccountID</option
+<RouteGuard guards={[{ type: GuardType.AUTH }]}>
+  <div>
+    {#if walletStore.query.data}
+      <h2>Send token</h2>
+      <div class="py-4">
+        {#if errorMessage}
+          <p style="color: red;">{errorMessage}</p>
+        {/if}
+        {#if successMessage}
+          <p style="color: green;">{successMessage}</p>
+        {/if}
+        {#if isSending}
+          <p>Sending...</p>
+        {/if}
+        <p>Select a token to send:</p>
+        <select bind:value={selectedToken} style="border: 1px solid #ccc;">
+          {#each walletStore.query.data as token (token.address)}
+            {#if token.enabled}
+              <option value={token.address}
+                >{token.symbol} - {token.name}</option
+              >
+            {/if}
+          {/each}
+        </select>
+        <p>Amount: (max {maxAmount})</p>
+        <input
+          type="number"
+          bind:value={amount}
+          max={maxAmount}
+          style="border: 1px solid #ccc;"
+        />
+        <br />
+        <p>Receive address:</p>
+        <select
+          bind:value={receiveType}
+          style="border: 1px solid #ccc; margin-bottom: 8px;"
         >
-      </select>
-      <input
-        type="text"
-        bind:value={receiveAddress}
-        style="border: 1px solid #ccc;"
-      />
-    </div>
-    <Button onclick={() => handleSend()}>Send</Button>
-  {:else if walletStore.query.isSuccess}
-    <p style="color: red">No tokens found in wallet.</p>
-  {:else if walletStore.query.error}
-    <p style="color: red;">
-      An error has occurred:
-      {walletStore.query.error}
-    </p>
-  {:else}
-    Loading...
-  {/if}
-</div>
+          <option value={PRINCIPAL_TYPE}>PrincipalID</option>
+          <option value={ACCOUNT_ID_TYPE} disabled={disabledAccount}
+            >AccountID</option
+          >
+        </select>
+        <input
+          type="text"
+          bind:value={receiveAddress}
+          style="border: 1px solid #ccc;"
+        />
+      </div>
+      <Button onclick={() => handleSend()}>Send</Button>
+    {:else if walletStore.query.isSuccess}
+      <p style="color: red">No tokens found in wallet.</p>
+    {:else if walletStore.query.error}
+      <p style="color: red;">
+        An error has occurred:
+        {walletStore.query.error}
+      </p>
+    {:else}
+      Loading...
+    {/if}
+  </div>
+</RouteGuard>

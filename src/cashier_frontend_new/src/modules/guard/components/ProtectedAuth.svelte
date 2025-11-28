@@ -2,9 +2,9 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import type { Snippet } from "svelte";
-  import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
+  import { getGuardContext } from "../context.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
-  import type { AuthGuardConfig } from "../../types/guards";
+  import type { AuthGuardConfig } from "../types";
 
   let {
     config,
@@ -14,7 +14,7 @@
     children: Snippet;
   } = $props();
 
-  const context = getRouteGuardContext();
+  const context = getGuardContext();
   const requireAuth = config.requireAuth ?? true;
   const redirectTo = config.redirectTo ?? "/";
 

@@ -2,10 +2,10 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import type { Snippet } from "svelte";
-  import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
+  import { getGuardContext } from "../context.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
-  import type { UserStateGuardConfig } from "../../types/guards";
+  import type { UserStateGuardConfig } from "../types";
 
   let {
     config,
@@ -15,7 +15,7 @@
     children: Snippet;
   } = $props();
 
-  const context = getRouteGuardContext();
+  const context = getGuardContext();
 
   const allStates = [
     UserLinkStep.LANDING,

@@ -1,24 +1,24 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { getRouteGuardContext } from "$modules/shared/contexts/routeGuardContext.svelte";
+  import { getGuardContext } from "../context.svelte";
   import ProtectedAuth from "./ProtectedAuth.svelte";
   import ProtectedValidLink from "./ProtectedValidLink.svelte";
   import ProtectedLinkOwner from "./ProtectedLinkOwner.svelte";
   import ProtectedLinkState from "./ProtectedLinkState.svelte";
   import ProtectedUserState from "./ProtectedUserState.svelte";
-  import { GuardType, type GuardConfig } from "../../types/guards";
+  import { GuardType, type GuardConfig } from "../types";
 
   let {
     guards,
-    index,
+    index = 0,
     children,
   }: {
     guards: GuardConfig[];
-    index: number;
+    index?: number;
     children: Snippet;
   } = $props();
 
-  const context = getRouteGuardContext();
+  const context = getGuardContext();
   const currentGuard = guards[index];
 
   $effect(() => {
