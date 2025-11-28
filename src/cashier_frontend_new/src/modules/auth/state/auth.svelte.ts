@@ -206,7 +206,15 @@ export const authState = {
 
   // Connect to wallet. Calls custom login handler if set, otherwise redirects to /links
   async login(walletId: string) {
+    if (!pnp) {
+      throw new Error("PNP is not initialized");
+    }
     await inner_login(walletId);
+
+    // Setup session manager
+    await setupSessionManager(pnp);
+
+    // broadcast login event to another tab
     broadcastChannel.post(BroadcastMessageLogin);
     // invoke configured login handler if exists
     if (loginHandler) {
@@ -291,9 +299,29 @@ const inner_logout = async () => {
 
 /**
  * Setup session manager with delegation expiration timeout.
- * @param delegationExpirationInMillis The delegation expiration time in milliseconds
  */
-const setupSessionManager = (delegationExpirationInMillis: number): void => {
+const setupSessionManager = async (pnp: PNP) => {
+  const iiAdapter = pnp.provider as IISignerAdapter;
+  const signer = iiAdapter.getSigner();
+  if (!signer) {
+    throw new Error("Signer not available after login");
+  }
+  const delegationChain = await signer.delegation({
+    publicKey: Ed25519KeyIdentity.generate().getPublicKey().toDer(),
+    maxTimeToLive: BigInt(TIMEOUT_NANO_SEC),
+  });
+
+  if (!delegationChain) {
+    throw new Error("Delegation failed: no delegation response");
+  }
+
+  const delegationExpirationInMillis =
+    calculateDelegationExpirationMs(delegationChain);
+
+  if (delegationExpirationInMillis <= 0) {
+    await inner_logout();
+    return;
+  }
   sessionManager = new SessionManager({
     timeout: delegationExpirationInMillis,
   });
@@ -311,33 +339,6 @@ const inner_login = async (walletId: string) => {
   isConnecting = true;
   try {
     const res = await pnp.connect(walletId);
-    const iiAdapter = pnp.provider as IISignerAdapter;
-    const signer = iiAdapter.getSigner();
-    if (!signer) {
-      throw new Error("Signer not available after login");
-    }
-
-    // request delegation with timeout
-    const delegationChain = await signer.delegation({
-      publicKey: Ed25519KeyIdentity.generate().getPublicKey().toDer(),
-      maxTimeToLive: BigInt(TIMEOUT_NANO_SEC),
-    });
-
-    if (!delegationChain) {
-      throw new Error("Delegation failed: no delegation response");
-    }
-
-    const delegationExpirationInMillis =
-      calculateDelegationExpirationMs(delegationChain);
-
-    // If delegation already expired, immediately logout.
-    if (delegationExpirationInMillis <= 0) {
-      await inner_logout();
-      return;
-    }
-
-    // Use remaining delegation time as session timeout
-    setupSessionManager(delegationExpirationInMillis);
 
     if (res.owner === null) {
       throw new Error("Login failed: owner is null");
