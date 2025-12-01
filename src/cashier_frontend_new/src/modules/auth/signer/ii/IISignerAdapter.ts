@@ -69,10 +69,7 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   private initializeAuthClientSync(): void {
     AuthClient.create({
       idleOptions: {
-        idleTimeout: Number(
-          this.config.delegationTimeout ?? 1000 * 60 * 60 * 24,
-        ),
-        disableDefaultIdleCallback: true,
+        idleTimeout: 15 * 60 * 1000,
       },
     })
       .then((client) => {
