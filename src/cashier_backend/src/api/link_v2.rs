@@ -9,6 +9,7 @@ use cashier_backend_types::{
     },
     error::CanisterError,
     link_v2::dto::{CreateLinkDto, ProcessActionDto, ProcessActionV2Input},
+    repository::keys::RequestLockKey,
     service::link::{PaginateInput, PaginateResult},
 };
 use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
@@ -26,12 +27,24 @@ async fn user_create_link_v2(input: CreateLinkInput) -> Result<CreateLinkDto, Ca
     info!("[user_create_link_v2]");
     debug!("[user_create_link_v2] input: {input:?}");
 
+    let mut request_lock_service = get_state().request_lock_service;
     let mut link_v2_service = get_state().link_v2_service;
     let created_at = get_state().env.time();
     let canister_id = get_state().env.id();
-    link_v2_service
+    let caller = msg_caller();
+    let key = RequestLockKey::CreateLink {
+        user_principal: caller,
+    };
+
+    let _ = request_lock_service.create(&key, created_at);
+    let res = link_v2_service
         .create_link(msg_caller(), canister_id, input, created_at)
-        .await
+        .await;
+    let _ = request_lock_service.drop(&RequestLockKey::CreateLink {
+        user_principal: caller,
+    });
+
+    res
 }
 
 /// Disables an existing link V2
@@ -60,11 +73,23 @@ async fn user_create_action_v2(input: CreateActionInput) -> Result<ActionDto, Ca
     info!("[create_action_v2]");
     debug!("[create_action_v2] input: {input:?}");
 
+    let mut request_lock_service = get_state().request_lock_service;
     let mut link_v2_service = get_state().link_v2_service;
     let canister_id = get_state().env.id();
-    link_v2_service
+    let caller = msg_caller();
+    let key = RequestLockKey::CreateAction {
+        user_principal: caller,
+        link_id: input.link_id.clone(),
+        action_type: input.action_type.clone().to_string(),
+    };
+
+    let _ = request_lock_service.create(&key, get_state().env.time());
+    let res = link_v2_service
         .create_action(msg_caller(), canister_id, &input.link_id, input.action_type)
-        .await
+        .await;
+    let _ = request_lock_service.drop(&key);
+
+    res
 }
 
 /// Processes a created action V2.
@@ -80,11 +105,22 @@ async fn user_process_action_v2(
     info!("[user_process_action_v2]");
     debug!("[user_process_action_v2] input: {input:?}");
 
+    let mut request_lock_service = get_state().request_lock_service;
     let mut link_v2_service = get_state().link_v2_service;
     let canister_id = get_state().env.id();
-    link_v2_service
+    let caller = msg_caller();
+    let key = RequestLockKey::ProcessAction {
+        user_principal: caller,
+        action_id: input.action_id.clone(),
+    };
+
+    let _ = request_lock_service.create(&key, get_state().env.time());
+    let res = link_v2_service
         .process_action(msg_caller(), canister_id, &input.action_id)
-        .await
+        .await;
+    let _ = request_lock_service.drop(&key);
+
+    res
 }
 
 /// Retrieves a paginated list of links created by the authenticated caller.

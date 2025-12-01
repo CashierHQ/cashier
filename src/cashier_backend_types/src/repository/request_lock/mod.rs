@@ -48,19 +48,31 @@ mod tests {
     #[test]
     fn test_request_lock_key_to_string() {
         let user = Principal::anonymous();
-        let key1 = RequestLockKey::user_link_action(user, "link456", "action789");
+        let key1 = RequestLockKey::CreateAction {
+            user_principal: user,
+            link_id: "link456".to_string(),
+            action_type: "action789".to_string(),
+        };
         assert_eq!(
             key1.to_string(),
-            format!("USER#{}#LINK#link456#ACTION#action789", user)
+            format!(
+                "CREATE_ACTION#USER#{}#LINK#link456#ACTION_TYPE#action789",
+                user
+            )
         );
 
-        let key2 = RequestLockKey::user_link(user, "link456");
-        assert_eq!(key2.to_string(), format!("USER#{}#LINK#link456", user));
+        let key2 = RequestLockKey::CreateLink {
+            user_principal: user,
+        };
+        assert_eq!(key2.to_string(), format!("CREATE_LINK#USER#{}", user));
 
-        let key3 = RequestLockKey::user_action_transaction(user, "action789", "tx101");
+        let key3 = RequestLockKey::ProcessAction {
+            user_principal: user,
+            action_id: "action789".to_string(),
+        };
         assert_eq!(
             key3.to_string(),
-            format!("USER#{}#ACTION#action789#TRANSACTION#tx101", user)
+            format!("PROCESS_ACTION#USER#{}#ACTION#action789", user)
         );
     }
 }
