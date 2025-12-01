@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::domains::action::ActionDomainLogic;
 use crate::repositories::{self, Repositories};
 use candid::Principal;
 use cashier_backend_types::dto::link::GetLinkOptions;
@@ -9,7 +8,6 @@ use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::link_v2::link_result::LinkProcessActionResult;
 use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
 use cashier_backend_types::repository::link_action::v1::LinkUserState;
-use cashier_backend_types::service::action::RollUpStateResp;
 use cashier_backend_types::{
     repository::{
         action::v1::Action, action_intent::v1::ActionIntent, intent::v1::Intent,
@@ -24,7 +22,6 @@ use std::collections::HashMap;
 pub struct ActionService<R: Repositories> {
     // Concrete repository implementations
     action_repository: repositories::action::ActionRepository<R::Action>,
-    action_intent_reposiroty: repositories::action_intent::ActionIntentRepository<R::ActionIntent>,
     intent_repository: repositories::intent::IntentRepository<R::Intent>,
     action_intent_repository: repositories::action_intent::ActionIntentRepository<R::ActionIntent>,
     transaction_repository: repositories::transaction::TransactionRepository<R::Transaction>,
@@ -35,14 +32,12 @@ pub struct ActionService<R: Repositories> {
     user_link_action_repository:
         repositories::user_link_action::UserLinkActionRepository<R::UserLinkAction>,
     // Domain logic
-    domain_logic: ActionDomainLogic,
 }
 
 impl<R: Repositories> ActionService<R> {
     pub fn new(repo: &R) -> Self {
         Self {
             action_repository: repo.action(),
-            action_intent_reposiroty: repo.action_intent(),
             intent_repository: repo.intent(),
             action_intent_repository: repo.action_intent(),
             transaction_repository: repo.transaction(),
@@ -50,7 +45,6 @@ impl<R: Repositories> ActionService<R> {
             link_action_repository: repo.link_action(),
             user_action_repository: repo.user_action(),
             user_link_action_repository: repo.user_link_action(),
-            domain_logic: ActionDomainLogic::new(),
         }
     }
 
@@ -99,88 +93,6 @@ impl<R: Repositories> ActionService<R> {
 
     pub fn get_action_by_id(&self, action_id: &str) -> Option<Action> {
         self.action_repository.get(action_id)
-    }
-
-    pub fn get_action_by_tx_id(&self, tx_id: &str) -> Result<ActionData, String> {
-        let get_intent_tx_res = self
-            .intent_transaction_repository
-            .get_by_transaction_id(tx_id);
-        let intent_tx_belong = get_intent_tx_res
-            .first()
-            .ok_or("intent_transaction not found")?;
-        let intent_id = intent_tx_belong.intent_id.clone();
-
-        let get_action_intent_res = self.action_intent_repository.get_by_intent_id(&intent_id);
-
-        let action_intent = get_action_intent_res
-            .first()
-            .ok_or("action_intent not found")?;
-
-        self.get_action_data(&action_intent.action_id)
-    }
-
-    pub fn get_intents_by_action_id(&self, action_id: &str) -> Vec<Intent> {
-        let action_intents = self.action_intent_reposiroty.get_by_action_id(action_id);
-
-        let intent_ids = action_intents
-            .iter()
-            .map(|action_intent| action_intent.intent_id.clone())
-            .collect();
-
-        self.intent_repository.batch_get(intent_ids)
-    }
-
-    /// Rolls up and updates the state of an action and its associated intents based on a given transaction ID.
-    ///
-    /// This method:
-    /// 1. Retrieves the action data associated with the given transaction ID
-    /// 2. Updates the state of each intent based on its transactions
-    /// 3. Updates the overall action state based on the updated intents
-    /// 4. Persists these state changes to the repositories
-    /// 5. Returns both the updated action data and the previous state
-    ///
-    /// # Parameters
-    /// * `tx_id` - Transaction ID used to lookup the associated action
-    ///
-    /// # Returns
-    /// * `Ok(RollUpStateResp)` - Contains the updated action data and previous state
-    /// * `Err(String)` - Error message if any step in the process fails
-    ///
-    /// # State Changes
-    /// - Updates intent states in the intent repository
-    /// - Updates action state in the action repository
-    pub fn roll_up_state(&mut self, tx_id: &str) -> Result<RollUpStateResp, String> {
-        let action_data = self
-            .get_action_by_tx_id(tx_id)
-            .map_err(|e| format!("get_action_by_tx_id failed: {e}"))?;
-
-        let previous_state = action_data.action.state.clone();
-
-        let mut intents = action_data.intents;
-        let intent_txs = action_data.intent_txs;
-        let mut action = action_data.action;
-
-        for intent in &mut intents {
-            let txs = intent_txs
-                .get(&intent.id)
-                .ok_or_else(|| format!("intent_txs not found for intent: {}", intent.id))?;
-            let intent_state = self.domain_logic.roll_up_intent_state(txs);
-            intent.state = intent_state;
-        }
-
-        action.state = self.domain_logic.roll_up_action_state(&intents);
-
-        self.intent_repository.batch_update(intents.clone());
-        self.action_repository.update(action.clone());
-
-        let updated_action_data = ActionData {
-            action,
-            intents,
-            intent_txs,
-        };
-
-        // Return response with both previous and current states
-        Ok(RollUpStateResp::from((updated_action_data, previous_state)))
     }
 
     /// Stores the action and associated intents and transactions in the database.

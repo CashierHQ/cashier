@@ -30,8 +30,6 @@ dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="":
 
   just dfx_deploy_backend {{owner}} {{network}} {{backend_log_filter}}
 
-  dfx deploy cashier_frontend {{network}}
-
   dfx deploy cashier_frontend_new {{network}}
 
 # Starts the local dfx server and deploys the canisters
