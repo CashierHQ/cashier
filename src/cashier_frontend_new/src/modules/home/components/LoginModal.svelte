@@ -2,6 +2,7 @@
   import { toast } from "svelte-sonner";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { locale } from "$lib/i18n";
+  import { II_SIGNER_WALLET_ID } from "$modules/shared/constants";
 
   type Props = {
     open: boolean;
@@ -24,7 +25,7 @@
 
       // Map wallet ID to adapter ID
       const adapterId =
-        walletId === "internet-identity" ? "iiSigner" : walletId;
+        walletId === "internet-identity" ? II_SIGNER_WALLET_ID : walletId;
 
       // Call login method from authState. redirect handled in authState.login()
       await authState.login(adapterId);

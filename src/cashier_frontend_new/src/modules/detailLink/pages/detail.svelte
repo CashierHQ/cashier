@@ -91,7 +91,7 @@
 {#if linkStore.query.isLoading}
   Loading...
 {:else if !linkStore.link}
-  <!-- `DetailFlowProtected` will redirect to /links when link is missing. Show a fallback while redirect occurs. -->
+  <!-- RouteGuard will redirect to /links when link is missing. Show a fallback while redirect occurs. -->
   Loading...
 {:else if linkStore.query.data && linkStore.link}
   <div>
