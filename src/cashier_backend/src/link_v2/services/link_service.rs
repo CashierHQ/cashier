@@ -321,6 +321,4 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             link_user_state: link_user_state_dto,
         })
     }
-
-    
 }
