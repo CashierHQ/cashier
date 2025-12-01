@@ -1,23 +1,18 @@
 <script lang="ts">
   import { page } from "$app/state";
   import Landing from "$modules/useLink/pages/landing.svelte";
-  import UseFlowProtected from "$modules/useLink/components/useFlowProtected.svelte";
-  import UserLinkStore from "$modules/useLink/state/userLinkStore.svelte";
+  import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
+  import ProtectedValidLink from "$modules/guard/components/ProtectedValidLink.svelte";
+  import ProtectedUserState from "$modules/guard/components/ProtectedUserState.svelte";
+  import { UserLinkStep } from "$modules/links/types/userLinkStep";
 
-  const id = page.params.id;
-  let userStore = $state<UserLinkStore | null>(null);
-
-  $effect(() => {
-    if (id) {
-      userStore = new UserLinkStore({ id });
-    }
-  });
+  const id = page.params.id!;
 </script>
 
-{#if id && userStore}
-  <UseFlowProtected {userStore} linkId={id}>
-    <Landing {userStore} />
-  </UseFlowProtected>
-{:else if id}
-  <div>Loading...</div>
-{/if}
+<RouteGuard linkId={id} storeType="userLink">
+  <ProtectedValidLink>
+    <ProtectedUserState allowedStates={[UserLinkStep.LANDING]}>
+      <Landing linkId={id} />
+    </ProtectedUserState>
+  </ProtectedValidLink>
+</RouteGuard>
