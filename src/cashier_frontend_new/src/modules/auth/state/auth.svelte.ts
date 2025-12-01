@@ -97,7 +97,7 @@ const initPnp = async () => {
 
   if (connectedWalletId.current.id) {
     try {
-      await inner_login(connectedWalletId.current.id);
+      await authState.login(connectedWalletId.current.id);
     } catch (error) {
       console.error("Auto-reconnect failed:", error);
     }
