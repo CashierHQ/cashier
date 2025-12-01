@@ -1,47 +1,50 @@
-use crate::utils::principal::TestUser;
-use crate::{cashier_backend::link::fixture::LinkTestFixture, utils::with_pocket_ic_context};
-use candid::Nat;
-use cashier_backend_types::repository::action::v1::ActionType;
-use cashier_backend_types::{
-    constant,
-    dto::action::{ActionDto, CreateActionInput},
-    error::CanisterError,
-};
 use std::sync::Arc;
 
+use crate::cashier_backend::link_v2::send_tip::fixture::TipLinkV2Fixture;
+use crate::utils::principal::TestUser;
+use crate::utils::with_pocket_ic_context;
+use candid::Nat;
+use cashier_backend_types::link_v2::dto::CreateLinkDto;
+use cashier_backend_types::{constant, error::CanisterError};
+
 #[tokio::test]
-async fn test_request_lock_for_create_action() {
+async fn test_request_lock_for_create_link() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
-        // Setup user and create link
-        let link = fixture
-            .create_tip_link(constant::ICP_TOKEN, Nat::from(100_000_000u64))
-            .await;
+        // Setup user and create link v2
+        let mut creator_fixture = TipLinkV2Fixture::new(
+            Arc::new(ctx.clone()),
+            caller,
+            constant::ICP_TOKEN,
+            Nat::from(100_000_000u64),
+        )
+        .await;
+
+        creator_fixture.airdrop_icp_and_asset().await;
 
         // Act - submit 3 create_action calls concurrently
-        let mut msgs = Vec::with_capacity(3);
+        let mut msgs: Vec<ic_mple_pocket_ic::pocket_ic::common::rest::RawMessageId> =
+            Vec::with_capacity(3);
         for _ in 0..3 {
             msgs.push(
-                fixture
+                creator_fixture
+                    .link_fixture
                     .cashier_backend_client
                     .as_ref()
                     .unwrap()
-                    .submit_create_action(CreateActionInput {
-                        link_id: link.id.to_string(),
-                        action_type: ActionType::CreateLink,
-                    })
+                    .submit_user_create_link_v2(creator_fixture.tip_link_input().unwrap())
                     .await
                     .unwrap(),
             );
         }
 
-        let mut results: Vec<Result<ActionDto, CanisterError>> = Vec::with_capacity(3);
+        let mut results: Vec<Result<CreateLinkDto, CanisterError>> = Vec::with_capacity(3);
         for msg in msgs {
             results.push(
-                fixture
+                creator_fixture
+                    .link_fixture
                     .cashier_backend_client
                     .as_ref()
                     .unwrap()

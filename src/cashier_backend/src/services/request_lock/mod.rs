@@ -5,6 +5,7 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::{keys::RequestLockKey, request_lock::RequestLock},
 };
+use log::info;
 
 use crate::repositories::{Repositories, request_lock::RequestLockRepository};
 
@@ -36,6 +37,13 @@ impl<R: Repositories> RequestLockService<R> {
 
         self.request_lock_repository.create(request_lock);
 
+        let res = self.request_lock_repository.exists(key);
+
+        info!(
+            "Request lock creation for key: {:?} successful: {}",
+            key, res
+        );
+
         Ok(key.to_owned())
     }
 
@@ -43,6 +51,7 @@ impl<R: Repositories> RequestLockService<R> {
     /// Returns Ok(()) regardless of whether the lock existed
     pub fn drop(&mut self, key: &RequestLockKey) -> Result<(), CanisterError> {
         self.request_lock_repository.delete(key);
+        info!("Dropped request lock for key: {:?}", key);
         Ok(())
     }
 }

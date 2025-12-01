@@ -36,7 +36,7 @@ async fn user_create_link_v2(input: CreateLinkInput) -> Result<CreateLinkDto, Ca
         user_principal: caller,
     };
 
-    let _ = request_lock_service.create(&key, created_at);
+    let _ = request_lock_service.create(&key, created_at)?;
     let res = link_v2_service
         .create_link(msg_caller(), canister_id, input, created_at)
         .await;
@@ -54,12 +54,12 @@ async fn user_create_link_v2(input: CreateLinkInput) -> Result<CreateLinkDto, Ca
 /// * `Ok(LinkDto)` - The disabled link data
 /// * `Err(CanisterError)` - If disabling fails or unauthorized
 #[update(guard = "is_not_anonymous")]
-async fn user_disable_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
+fn user_disable_link_v2(link_id: &str) -> Result<LinkDto, CanisterError> {
     info!("[disable_link_v2]");
     debug!("[disable_link_v2] link_id: {link_id}");
 
     let mut link_v2_service = get_state().link_v2_service;
-    link_v2_service.disable_link(msg_caller(), link_id).await
+    link_v2_service.disable_link(msg_caller(), link_id)
 }
 
 /// Creates a new action V2.
@@ -83,7 +83,7 @@ async fn user_create_action_v2(input: CreateActionInput) -> Result<ActionDto, Ca
         action_type: input.action_type.clone().to_string(),
     };
 
-    let _ = request_lock_service.create(&key, get_state().env.time());
+    let _ = request_lock_service.create(&key, get_state().env.time())?;
     let res = link_v2_service
         .create_action(msg_caller(), canister_id, &input.link_id, input.action_type)
         .await;
@@ -114,7 +114,7 @@ async fn user_process_action_v2(
         action_id: input.action_id.clone(),
     };
 
-    let _ = request_lock_service.create(&key, get_state().env.time());
+    let _ = request_lock_service.create(&key, get_state().env.time())?;
     let res = link_v2_service
         .process_action(msg_caller(), canister_id, &input.action_id)
         .await;

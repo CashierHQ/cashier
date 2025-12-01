@@ -238,4 +238,46 @@ impl<R: Repositories> ActionService<R> {
             None => (None, None),
         }
     }
+
+    /// Validates whether the caller can create a new action based on existing actions.
+    /// # Arguments
+    /// * `caller` - The principal of the user attempting to create an action
+    /// * `link_id` - The ID of the link
+    /// * `action_type` - The type of action to be created
+    /// # Returns
+    /// * `Ok(())` - If the action can be created
+    /// * `Err(CanisterError)` - If action creation should be blocked
+    /// # Business Rules
+    /// * Only one action per user per link (can be change at the future)
+    pub fn check_action_exists_for_user(
+        &self,
+        caller: Principal,
+        link_id: &str,
+        action_type: &ActionType,
+    ) -> Result<(), CanisterError> {
+        let existing_actions = self
+            .user_link_action_repository
+            .get_actions_by_user_link_and_type(caller, link_id, action_type);
+
+        match action_type {
+            ActionType::CreateLink
+            | ActionType::Withdraw
+            | ActionType::Receive
+            | ActionType::Send => {
+                // Block if ANY action exists for these types
+                if existing_actions
+                    .as_ref()
+                    .map(|actions| !actions.is_empty())
+                    .unwrap_or(false)
+                {
+                    return Err(CanisterError::ValidationErrors(format!(
+                        "Action of type {} already exists for this link",
+                        action_type
+                    )));
+                }
+            }
+        }
+
+        Ok(())
+    }
 }
