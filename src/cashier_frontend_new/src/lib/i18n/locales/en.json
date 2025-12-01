@@ -93,7 +93,8 @@
         "chooseType": "Choose Type",
         "asset": "Asset",
         "addAssets": "Add assets",
-        "preview": "Preview"
+        "preview": "Preview",
+        "createLink": "Create link"
       },
       "chooseType": {
         "linkTitle": "Link title",
@@ -107,6 +108,7 @@
         "back": "Back",
         "next": "Next",
         "continue": "Continue",
+        "create": "Create",
         "failedToProceed": "Failed to proceed to next step",
         "preview": {
           "tip": {
@@ -156,6 +158,56 @@
         "noPriceAvailable": "No price available",
         "switchToTokenAmount": "Switch to token amount",
         "switchToUsdAmount": "Switch to USD amount"
+      },
+      "preview": {
+        "linkInfo": "Link info",
+        "type": "Type",
+        "userPays": "User pays",
+        "userClaims": "User claims",
+        "maxUse": "Max use",
+        "transactionLock": "Transaction lock",
+        "transactionLockUnlock": "Unlock",
+        "transactionLockLock": "Lock",
+        "youSend": "You send",
+        "includingNetworkFees": "Including network fees",
+        "linkCreationFee": "Link creation fee",
+        "feesBreakdown": "Fees breakdown",
+        "totalFees": "Total fees"
+      },
+      "drawers": {
+        "txCart": {
+          "title": "Confirm transaction",
+          "confirmButton": "Confirm",
+          "processingButton": "Processing...",
+          "termsAgreement": "By confirming you agree execute the transaction above and agree to the terms of service",
+          "successMessage": "Process action completed successfully.",
+          "errorMessagePrefix": "Process action failed:"
+        },
+        "feeInfo": {
+          "title": "Fee Information",
+          "cashierFeeHeader": "Cashier Fee",
+          "cashierFeeText": "Cashier charges a small fee for processing transactions through the platform.",
+          "networkFeeHeader": "Network Fee",
+          "networkFeeText": [
+            "Network fees are charged by the blockchain network for processing transactions.",
+            "These fees vary based on network congestion and transaction complexity."
+          ],
+          "closeButton": "Close"
+        }
+      },
+      "detail": {
+        "loading": "Loading...",
+        "endLink": "End link",
+        "copyLink": "Copy link",
+        "copied": "Copied",
+        "copyFailed": "Failed to copy link",
+        "withdraw": "Withdraw",
+        "create": "Create",
+        "messages": {
+          "linkEndedSuccess": "Link ended successfully.",
+          "failedToEndLink": "Failed to end link.",
+          "failedToCreateWithdrawAction": "Failed to create withdraw action."
+        }
       }
     }
   }

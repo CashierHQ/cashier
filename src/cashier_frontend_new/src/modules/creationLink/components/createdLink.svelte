@@ -10,7 +10,7 @@
   import { onMount } from "svelte";
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
   import LinkDetails from "./linkDetails.svelte";
-
+  import { locale } from "$lib/i18n";
   const {
     link,
   }: {
@@ -60,11 +60,12 @@
   });
 </script>
 
-<h3 class="text-lg font-semibold">Created</h3>
-<div class="mt-2">
+<div class="mt-2 flex flex-col gap-4 grow-1 justify-between">
   <LinkDetails {link} {errorMessage} {successMessage} />
 
-  <Button onclick={onClickCreate}>Create</Button>
+  <Button class="mt-4 h-11 bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen" onclick={onClickCreate}>
+    {locale.t("links.linkForm.detail.create")}
+  </Button>
 </div>
 
 {#if showTxCart && linkDetailStore && linkDetailStore.action}
