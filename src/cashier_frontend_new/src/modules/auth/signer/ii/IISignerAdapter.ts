@@ -6,6 +6,7 @@ import { IITransport } from "./IITransport";
 import { FEATURE_FLAGS, HOST_ICP } from "$modules/shared/constants";
 import { getScreenDimensions } from "$modules/shared/utils/getScreenDimensions";
 import { Signer } from "@slide-computer/signer";
+import { IDLE_TIMEOUT_MILLIS_SECOND } from "$modules/auth/constants";
 
 /**
  * Account interface representing the connected user's account details.
@@ -69,7 +70,7 @@ export class IISignerAdapter extends BaseSignerAdapter<IIAdapterConfig> {
   private initializeAuthClientSync(): void {
     AuthClient.create({
       idleOptions: {
-        idleTimeout: 15 * 60 * 1000,
+        idleTimeout: IDLE_TIMEOUT_MILLIS_SECOND,
       },
     })
       .then((client) => {
