@@ -74,11 +74,10 @@ const connectedWalletId = new PersistedState<{ id: string | null }>(
   { id: null },
 );
 
-// state to store last logged in timestamp for session expiration check
-const lastLoggedInTimestamp = new PersistedState<{ timestamp: number | null }>(
-  "lastLoggedInTimestamp",
-  { timestamp: null },
-);
+// state to store session initialization timestamp for session expiration check
+const sessionTimestamp = new PersistedState<{
+  expiredAtMs: number;
+} | null>("sessionTimestamp", null);
 
 // Session timeout in milliseconds (converted from nanoseconds)
 const SESSION_TIMEOUT_MS = Number(BigInt(TIMEOUT_NANO_SEC) / NANOS_IN_MILLIS);
@@ -98,15 +97,14 @@ let account = $state<{
 let sessionManager: SessionManager | null = null;
 
 /**
- * Check if the stored session has expired based on last logged in timestamp.
+ * Check if the stored session has expired based on initialization timestamp.
  * @returns true if session is expired or no timestamp exists
  */
 const isSessionExpired = (): boolean => {
-  const lastTimestamp = lastLoggedInTimestamp.current.timestamp;
-  if (lastTimestamp === null) {
-    return false;
-  }
-  return Date.now() - lastTimestamp >= SESSION_TIMEOUT_MS;
+  if (!sessionTimestamp.current) return true;
+  return (
+    Date.now() - sessionTimestamp.current.expiredAtMs >= SESSION_TIMEOUT_MS
+  );
 };
 
 /**
@@ -114,7 +112,7 @@ const isSessionExpired = (): boolean => {
  */
 const clearPersistedState = () => {
   connectedWalletId.current.id = null;
-  lastLoggedInTimestamp.current.timestamp = null;
+  sessionTimestamp.current = null;
 };
 
 // Initialize PNP instance
@@ -251,9 +249,6 @@ export const authState = {
     }
     await inner_login(walletId);
 
-    // Store last logged in timestamp for session expiration check on next init
-    lastLoggedInTimestamp.current.timestamp = Date.now();
-
     // Setup session manager
     await setupSessionManager(walletId);
 
@@ -362,6 +357,10 @@ const setupSessionManager = async (walletId: string) => {
     delegationIdentity.getDelegation(),
   );
 
+  // Store last logged in timestamp for session expiration check on next init
+  sessionTimestamp.current = {
+    expiredAtMs: Date.now() + delegationExpirationInMillis,
+  };
   if (delegationExpirationInMillis <= 0) {
     await inner_logout();
     return;
