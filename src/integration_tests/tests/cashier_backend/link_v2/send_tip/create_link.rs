@@ -56,7 +56,7 @@ async fn it_should_error_when_create_createlink_action_twice() {
         let caller = TestUser::User1.get_principal();
         let token = constant::ICP_TOKEN;
         let tip_amount = Nat::from(1_000_000u64);
-        let mut test_fixture =
+        let test_fixture =
             TipLinkV2Fixture::new(Arc::new(ctx.clone()), caller, token, tip_amount.clone()).await;
 
         // Act: create link (remains in Created state)

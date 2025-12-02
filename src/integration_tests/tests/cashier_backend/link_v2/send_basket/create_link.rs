@@ -63,7 +63,7 @@ async fn it_should_error_when_create_createlink_action_twice() {
         let caller = TestUser::User1.get_principal();
         let tokens = vec![constant::ICP_TOKEN.to_string()];
         let amounts = vec![Nat::from(1_000_000u64)];
-        let mut test_fixture =
+        let test_fixture =
             BasketLinkV2Fixture::new(Arc::new(ctx.clone()), caller, tokens, amounts.clone()).await;
 
         // Act: create link (remains in Created state)

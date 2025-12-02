@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
 use crate::cashier_backend::link_v2::receive_payment::fixture::send_payment_link_v2_fixture;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
@@ -14,6 +15,7 @@ use cashier_backend_types::repository::common::Wallet;
 use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType};
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
+use cashier_common::test_utils;
 use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]
@@ -310,9 +312,9 @@ async fn it_should_withdraw_icrc_token_payment_linkv2_successfully() {
 }
 
 #[tokio::test]
-async fn it_should_error_when_create_withdraw_action_twice() {
+async fn it_should_error_when_non_creator_create_withdraw_action_payment_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
-        // Arrange: create payment link and make it Inactive
+        // Arrange: creator creates payment link and makes it Inactive
         let tokens = vec![ICP_TOKEN.to_string()];
         let amounts = vec![Nat::from(1_000_000u64)];
         let (test_fixture, create_link_result) =
@@ -324,28 +326,22 @@ async fn it_should_error_when_create_withdraw_action_twice() {
         let link_dto = disable_link_result.unwrap();
         assert_eq!(link_dto.state, LinkState::Inactive);
 
-        // Act: create first WITHDRAW action
+        // Act: another identity attempts to create a WITHDRAW action -> should error
+        let other = test_utils::random_principal_id();
+        let other_fixture =
+            LinkTestFixtureV2::new(test_fixture.link_fixture.ctx.clone(), other).await;
         let create_action_input = CreateActionInput {
             link_id: link_id.clone(),
             action_type: ActionType::Withdraw,
         };
-        let first = test_fixture
-            .link_fixture
-            .create_action_v2(create_action_input.clone())
-            .await;
-        assert!(first.is_ok());
+        let create_action_result = other_fixture.create_action_v2(create_action_input).await;
 
-        // Act: create WITHDRAW action a second time -> expect error
-        let second = test_fixture
-            .link_fixture
-            .create_action_v2(create_action_input)
-            .await;
-        assert!(second.is_err());
-
-        if let Err(CanisterError::ValidationErrors(_)) = second {
+        // Assert: action creation failed for non-creator
+        assert!(create_action_result.is_err());
+        if let Err(CanisterError::Unauthorized(_)) = create_action_result {
             // expected
         } else {
-            panic!("Expected ValidationErrors error when creating WITHDRAW action twice");
+            panic!("Expected CanisterError::ValidationErrors");
         }
 
         Ok(())
