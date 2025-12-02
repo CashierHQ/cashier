@@ -47,7 +47,9 @@
       type="button"
     >
       {#if isCreating}
-        <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        <div
+          class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+        ></div>
       {/if}
       {locale.t("links.linkForm.chooseType.create")}
     </Button>

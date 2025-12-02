@@ -2,7 +2,10 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { Info } from "lucide-svelte";
   import { locale } from "$lib/i18n";
-  import { formatNumber, formatUsdAmount } from "$modules/shared/utils/formatNumber";
+  import {
+    formatNumber,
+    formatUsdAmount,
+  } from "$modules/shared/utils/formatNumber";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import { formatLinkCreationFeeDisplay } from "$modules/links/utils/feesBreakdown";
 
@@ -60,7 +63,9 @@
   <div class="flex items-center w-full justify-between mb-2">
     <div class="flex items-center gap-1">
       <Label class="font-medium text-sm">
-        {isReceive ? locale.t("links.linkForm.preview.youReceive") : locale.t("links.linkForm.preview.youSend")}
+        {isReceive
+          ? locale.t("links.linkForm.preview.youReceive")
+          : locale.t("links.linkForm.preview.youSend")}
       </Label>
       {#if !isReceive}
         <span class="text-[#b6b6b6] text-[10px] medium-font">
@@ -72,12 +77,16 @@
       <Info size={18} color="#36A18B" />
     </div>
   </div>
-  <div class="border-[1px] rounded-lg border-lightgreen px-4 py-3 flex flex-col gap-3">
+  <div
+    class="border-[1px] rounded-lg border-lightgreen px-4 py-3 flex flex-col gap-3"
+  >
     {#each assetsWithTokenInfo as asset (asset.address)}
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-1.5">
           {#if isProcessing}
-            <div class="w-4 h-4 border-2 border-green border-t-transparent rounded-full animate-spin"></div>
+            <div
+              class="w-4 h-4 border-2 border-green border-t-transparent rounded-full animate-spin"
+            ></div>
           {/if}
           {#if !failedImageLoads.has(asset.address)}
             <img
@@ -87,7 +96,9 @@
               onerror={() => onImageError(asset.address)}
             />
           {:else}
-            <div class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs overflow-hidden">
+            <div
+              class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs overflow-hidden"
+            >
               {asset.token.symbol[0]?.toUpperCase() || "?"}
             </div>
           {/if}
@@ -112,14 +123,16 @@
         <div class="flex justify-between items-center">
           <div class="flex items-center gap-1.5">
             {#if isProcessing}
-              <div class="w-4 h-4 border-2 border-green border-t-transparent rounded-full animate-spin"></div>
+              <div
+                class="w-4 h-4 border-2 border-green border-t-transparent rounded-full animate-spin"
+              ></div>
             {/if}
             <img
               src={getTokenLogo(linkCreationFee.tokenAddress)}
               alt={linkCreationFee.tokenSymbol}
               class="w-5 h-5 rounded-full overflow-hidden"
             />
-            <p class="text-[14px] font-medium">{linkCreationFee.tokenSymbol} </p>
+            <p class="text-[14px] font-medium">{linkCreationFee.tokenSymbol}</p>
             <p class="text-[12px] font-normal text-[#b6b6b6] pt-0.5">
               {locale.t("links.linkForm.preview.linkCreationFee")}
             </p>
@@ -139,4 +152,3 @@
     {/if}
   </div>
 </div>
-

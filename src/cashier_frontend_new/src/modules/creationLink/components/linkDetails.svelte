@@ -1,7 +1,11 @@
 <script lang="ts">
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
-  import { getLinkTypeText, isSendLinkType, isPaymentLinkType } from "$modules/links/utils/linkItemHelpers";
+  import {
+    getLinkTypeText,
+    isSendLinkType,
+    isPaymentLinkType,
+  } from "$modules/links/utils/linkItemHelpers";
   import FeeInfoDrawer from "./drawers/FeeInfoDrawer.svelte";
   import { toast } from "svelte-sonner";
   import YouSendSection from "./previewSections/YouSendSection.svelte";
@@ -42,12 +46,15 @@
 
   // Get assets with token info
   const assetsWithTokenInfo = $derived.by(() => {
-    if (!link.createLinkData.assets || link.createLinkData.assets.length === 0) {
+    if (
+      !link.createLinkData.assets ||
+      link.createLinkData.assets.length === 0
+    ) {
       return [];
     }
 
     const assets = link.createLinkData.assets.map((asset) => ({
-        address: asset.address,
+      address: asset.address,
       amount: asset.useAmount,
     }));
 
@@ -142,7 +149,7 @@
       {assetsWithTokenInfo}
       {failedImageLoads}
       onImageError={handleImageError}
-      linkCreationFee={linkCreationFee}
+      {linkCreationFee}
     />
   {/if}
 

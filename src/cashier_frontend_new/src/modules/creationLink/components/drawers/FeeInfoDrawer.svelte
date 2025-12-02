@@ -28,10 +28,9 @@
     open?: boolean;
     onClose?: () => void;
     feesBreakdown: FeeBreakdownItem[];
-    totalFeesUsd: number;
   };
 
-  let { open = $bindable(false), onClose, feesBreakdown, totalFeesUsd }: Props = $props();
+  let { open = $bindable(false), onClose, feesBreakdown }: Props = $props();
 
   function handleClose() {
     open = false;
@@ -87,7 +86,9 @@
       </div>
     </DrawerHeader>
 
-    <div class="mb-4 border-[1px] rounded-lg border-lightgreen px-4 py-4 flex flex-col gap-4">
+    <div
+      class="mb-4 border-[1px] rounded-lg border-lightgreen px-4 py-4 flex flex-col gap-4"
+    >
       <!-- Network fees -->
       {#each networkFeesView as fee (fee.tokenAddress)}
         <div>
@@ -95,7 +96,8 @@
             <span class="text-[14px] font-medium">{fee.name}</span>
             <div class="flex items-center gap-1">
               <span class="text-[14px] font-normal">
-                {fee.feeAmountFormatted} {fee.tokenSymbol}
+                {fee.feeAmountFormatted}
+                {fee.tokenSymbol}
               </span>
             </div>
           </div>
@@ -111,10 +113,13 @@
       {#if linkCreationFeeView}
         <div>
           <div class="flex justify-between items-center">
-            <span class="text-[14px] font-medium">{linkCreationFeeView.name}</span>
+            <span class="text-[14px] font-medium"
+              >{linkCreationFeeView.name}</span
+            >
             <div class="flex items-center gap-1">
               <span class="text-[14px] font-normal">
-                {linkCreationFeeView.feeAmountFormatted} {linkCreationFeeView.tokenSymbol}
+                {linkCreationFeeView.feeAmountFormatted}
+                {linkCreationFeeView.tokenSymbol}
               </span>
             </div>
           </div>
@@ -127,10 +132,10 @@
       {/if}
     </div>
 
-    <Button 
-        class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
-        onclick={handleClose}
-     >
+    <Button
+      class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
+      onclick={handleClose}
+    >
       {locale.t("links.linkForm.drawers.feeInfo.closeButton")}
     </Button>
   </DrawerContent>

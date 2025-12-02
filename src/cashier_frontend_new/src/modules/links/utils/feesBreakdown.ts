@@ -3,7 +3,10 @@ import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { feeService } from "$modules/transactionCart/services/feeService";
 import type { Result } from "ts-results-es";
 import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
-import { formatNumber, formatUsdAmount } from "$modules/shared/utils/formatNumber";
+import {
+  formatNumber,
+  formatUsdAmount,
+} from "$modules/shared/utils/formatNumber";
 
 export type FeeBreakdownItem = {
   name: string;
@@ -214,4 +217,3 @@ export function formatLinkCreationFeeDisplay(
     usdAmount: fee.usdAmount,
   };
 }
-

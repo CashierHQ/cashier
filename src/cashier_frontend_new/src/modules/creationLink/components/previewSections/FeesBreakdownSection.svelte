@@ -10,21 +10,16 @@
     onInfoClick?: () => void;
   };
 
-  let {
-    totalFeesUsd,
-    isClickable = false,
-    onInfoClick,
-  }: Props = $props();
+  let { totalFeesUsd, isClickable = false, onInfoClick }: Props = $props();
 </script>
 
 <div class="input-label-field-container">
   <div class="flex items-center w-full justify-between mb-2">
-    <Label class="font-medium text-sm">{locale.t("links.linkForm.preview.feesBreakdown")}</Label>
-    <button
-        class="flex items-center gap-1 cursor-pointer"
-        type="button"
-        >
-        <Info size={18} color="#36A18B" />
+    <Label class="font-medium text-sm"
+      >{locale.t("links.linkForm.preview.feesBreakdown")}</Label
+    >
+    <button class="flex items-center gap-1 cursor-pointer" type="button">
+      <Info size={18} color="#36A18B" />
     </button>
   </div>
   {#if isClickable && onInfoClick}
@@ -34,7 +29,9 @@
       onclick={onInfoClick}
     >
       <div class="flex justify-between items-center">
-        <p class="text-[14px] font-medium">{locale.t("links.linkForm.preview.totalFees")}</p>
+        <p class="text-[14px] font-medium">
+          {locale.t("links.linkForm.preview.totalFees")}
+        </p>
         <div class="flex items-center gap-2">
           <p class="text-[14px] font-normal">{formatUsdAmount(totalFeesUsd)}</p>
           <ChevronRight size={18} />
@@ -44,7 +41,9 @@
   {:else}
     <div class="border-[1px] rounded-lg border-lightgreen px-4 py-3">
       <div class="flex justify-between items-center">
-        <p class="text-[14px] font-medium">{locale.t("links.linkForm.preview.totalFees")}</p>
+        <p class="text-[14px] font-medium">
+          {locale.t("links.linkForm.preview.totalFees")}
+        </p>
         <div class="flex items-center gap-2">
           <p class="text-[14px] font-normal">{formatUsdAmount(totalFeesUsd)}</p>
         </div>

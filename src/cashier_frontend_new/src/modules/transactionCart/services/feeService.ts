@@ -3,7 +3,10 @@ import { ActionType } from "$modules/links/types/action/actionType";
 import IntentTask from "$modules/links/types/action/intentTask";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import { formatNumber } from "$modules/shared/utils/formatNumber";
-import { ICP_LEDGER_FEE, ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
+import {
+  ICP_LEDGER_FEE,
+  ICP_LEDGER_CANISTER_ID,
+} from "$modules/token/constants";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 
 import { assertUnreachable } from "$lib/rsMatch";
