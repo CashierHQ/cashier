@@ -25,7 +25,6 @@ test_unit_i686 test_name="":
 # Run the frontend tests
 [group('test')]
 test_frontend: install_frontend_deps
-  cd {{FRONTEND_DIR}} && npm run test
   cd {{FRONTEND_DIR_NEW}} && npm run test
 
 
