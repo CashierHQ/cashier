@@ -203,7 +203,6 @@ async fn it_should_error_when_create_createlink_action_twice() {
         // Assert: should return an error
         assert!(create_action_result.is_err());
         if let Err(err) = create_action_result {
-            println!("Received error as expected: {:?}", err);
             match err {
                 cashier_backend_types::error::CanisterError::ValidationErrors(_) => { /* expected */
                 }

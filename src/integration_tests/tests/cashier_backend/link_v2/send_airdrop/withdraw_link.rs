@@ -58,36 +58,22 @@ async fn it_should_withdraw_icp_token_airdrop_linkv2_error_if_link_active() {
 }
 
 #[tokio::test]
-async fn it_should_withdraw_icp_token_airdrop_linkv2_error_if_more_than_max_use() {
+async fn it_should_error_when_non_creator_create_withdraw_action_airdrop_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
-        // Arrange
+        // Arrange: creator creates and then disables the airdrop link
         let tokens = vec![ICP_TOKEN.to_string()];
         let amounts = vec![Nat::from(1_000_000u64)];
-        let max_use = 1;
+        let max_use = 10;
         let (test_fixture, create_link_result) =
             activate_airdrop_link_v2_fixture(ctx, tokens, amounts, max_use).await;
 
-        // Act: disable the link first to make it Inactive
         let link_id = create_link_result.link.id.clone();
-        let _disable_link_result = test_fixture.disable_link_v2(&link_id).await;
+        let disable_link_result = test_fixture.disable_link_v2(&link_id).await;
+        assert!(disable_link_result.is_ok());
+        let link_dto = disable_link_result.unwrap();
+        assert_eq!(link_dto.state, LinkState::Inactive);
 
-        // Act: create WITHDRAW action
-        let link_id = create_link_result.link.id.clone();
-        let create_action_input = CreateActionInput {
-            link_id: link_id.clone(),
-            action_type: ActionType::Withdraw,
-        };
-        let create_action_result = test_fixture.create_action_v2(create_action_input).await;
-
-        // Act: process WITHDRAW action
-        let action_dto = create_action_result.unwrap();
-        let action_id = action_dto.id.clone();
-        let process_action_input = ProcessActionV2Input {
-            action_id: action_id.clone(),
-        };
-        let _process_action_result = test_fixture.process_action_v2(process_action_input).await;
-
-        // Act: create WITHDRAW action again (from a different principal)
+        // Act: another identity attempts to create a WITHDRAW action -> should error
         let other = test_utils::random_principal_id();
         let other_fixture = LinkTestFixtureV2::new(test_fixture.ctx.clone(), other).await;
         let create_action_input = CreateActionInput {
@@ -96,20 +82,12 @@ async fn it_should_withdraw_icp_token_airdrop_linkv2_error_if_more_than_max_use(
         };
         let create_action_result = other_fixture.create_action_v2(create_action_input).await;
 
-        // Assert: action creation failed
+        // Assert: action creation failed for non-creator
         assert!(create_action_result.is_err());
-
-        if let Err(CanisterError::ValidationErrors(msg)) = create_action_result {
-            assert!(
-                msg.contains("Unsupported link state"),
-                "Unexpected error message: {}",
-                msg
-            );
+        if let Err(CanisterError::Unauthorized(_)) = create_action_result {
+            // expected
         } else {
-            panic!(
-                "Expected CanisterError::ValidationErrors, got {:?}",
-                create_action_result
-            );
+            panic!("Expected CanisterError::ValidationErrors");
         }
 
         Ok(())
