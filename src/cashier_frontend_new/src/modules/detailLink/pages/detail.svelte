@@ -191,6 +191,11 @@
     errorMessage = null;
     isCreatingWithdraw = true;
 
+    if (linkStore.action) {
+      showTxCart = true;
+      return;
+    }
+
     try {
       if (!linkStore.link) {
         throw new Error("Link is missing");

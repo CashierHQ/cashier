@@ -369,7 +369,7 @@ export class FeeService {
 
     if (actionType === ACTION_TYPE.CREATE_LINK) {
       displayAmountBigInt = amountBigInt + networkFeeBigInt;
-    } else if (actionType === ACTION_TYPE.USE) {
+    } else if (actionType === ACTION_TYPE.SEND) {
       if (
         linkType === "ReceivePayment" &&
         intent.task === TASK.TRANSFER_WALLET_TO_LINK
@@ -403,7 +403,7 @@ export class FeeService {
       return true;
     } else if (actionType === ACTION_TYPE.WITHDRAW) {
       return true;
-    } else if (actionType === ACTION_TYPE.USE) {
+    } else if (actionType === ACTION_TYPE.SEND) {
       if (
         linkType === "ReceivePayment" &&
         intentTask === TASK.TRANSFER_LINK_TO_WALLET
