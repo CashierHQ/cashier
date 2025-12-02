@@ -134,10 +134,6 @@ impl Service {
         Service(principal)
     }
 
-    pub fn get_canister_id(&self) -> Principal {
-        self.0
-    }
-
     pub async fn icrc_1_balance_of(&self, arg0: &Account) -> Result<Icrc1Tokens, CanisterError> {
         let res = Call::bounded_wait(self.0, "icrc1_balance_of")
             .with_arg(arg0)

@@ -40,11 +40,6 @@ impl<S: Storage<IntentRepositoryStorage>> IntentRepository<S> {
     pub fn get(&self, id: &str) -> Option<Intent> {
         self.storage.with_borrow(|store| store.get(&id.to_string()))
     }
-
-    pub fn batch_get(&self, ids: Vec<String>) -> Vec<Intent> {
-        self.storage
-            .with_borrow(|store| ids.into_iter().filter_map(|id| store.get(&id)).collect())
-    }
 }
 
 #[cfg(test)]
@@ -237,56 +232,5 @@ mod tests {
         // Assert
         assert!(retrieved_intent.is_some());
         assert_eq!(retrieved_intent.unwrap().id, intent_id);
-    }
-
-    #[test]
-    fn it_should_batch_get_intents() {
-        // Arrange
-        let mut repo = TestRepositories::new().intent();
-        let intent_id1 = random_id_string();
-        let intent_id2 = random_id_string();
-        let intent1 = Intent {
-            id: intent_id1.clone(),
-            state: IntentState::Processing,
-            created_at: 1622547800,
-            dependency: vec![],
-            chain: Chain::IC,
-            task: IntentTask::TransferLinkToWallet,
-            r#type: IntentType::Transfer(TransferData {
-                from: Wallet::default(),
-                to: Wallet::default(),
-                asset: Asset::IC {
-                    address: random_principal_id(),
-                },
-                amount: Nat::from_str("0").unwrap(),
-            }),
-            label: "Test Intent".to_string(),
-        };
-        let intent2 = Intent {
-            id: intent_id2.clone(),
-            state: IntentState::Success,
-            created_at: 1622547801,
-            dependency: vec![],
-            chain: Chain::IC,
-            task: IntentTask::TransferWalletToTreasury,
-            r#type: IntentType::Transfer(TransferData {
-                from: Wallet::default(),
-                to: Wallet::default(),
-                asset: Asset::IC {
-                    address: random_principal_id(),
-                },
-                amount: Nat::from_str("100").unwrap(),
-            }),
-            label: "Another Test Intent".to_string(),
-        };
-        repo.batch_create(vec![intent1, intent2]);
-
-        // Act
-        let retrieved_intents = repo.batch_get(vec![intent_id1.clone(), intent_id2.clone()]);
-
-        // Assert
-        assert_eq!(retrieved_intents.len(), 2);
-        assert_eq!(retrieved_intents.first().unwrap().id, intent_id1);
-        assert_eq!(retrieved_intents.get(1).unwrap().id, intent_id2);
     }
 }

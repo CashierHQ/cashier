@@ -59,10 +59,10 @@ mod tests {
         let link_id = random_id_string();
         let action_id = random_id_string();
         let request_lock = RequestLock {
-            key: RequestLockKey::UserLinkAction {
+            key: RequestLockKey::CreateAction {
                 user_principal: user_principal_id,
                 link_id,
-                action_id,
+                action_type: action_id,
             },
             timestamp: 1622547800,
         };
@@ -90,10 +90,10 @@ mod tests {
         let link_id = random_id_string();
         let action_id = random_id_string();
         let request_lock = RequestLock {
-            key: RequestLockKey::UserLinkAction {
+            key: RequestLockKey::CreateAction {
                 user_principal: user_principal_id,
                 link_id,
-                action_id,
+                action_type: action_id,
             },
             timestamp: 1622547800,
         };
@@ -115,10 +115,10 @@ mod tests {
         let link_id = random_id_string();
         let action_id = random_id_string();
         let request_lock = RequestLock {
-            key: RequestLockKey::UserLinkAction {
+            key: RequestLockKey::CreateAction {
                 user_principal: user_principal_id,
                 link_id,
-                action_id,
+                action_type: action_id,
             },
             timestamp: 1622547800,
         };

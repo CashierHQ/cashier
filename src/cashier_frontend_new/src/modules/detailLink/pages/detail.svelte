@@ -55,6 +55,11 @@
   async function createWithdrawAction() {
     errorMessage = null;
 
+    if (linkStore.action) {
+      showTxCart = true;
+      return;
+    }
+
     try {
       if (!linkStore.link) {
         throw new Error("Link is missing");

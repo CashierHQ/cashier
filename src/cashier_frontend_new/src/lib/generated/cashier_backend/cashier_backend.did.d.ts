@@ -10,8 +10,7 @@ export interface ActionDto {
   'type' : ActionType,
   'state' : IntentState,
 }
-export type ActionType = { 'Use' : null } |
-  { 'Withdraw' : null } |
+export type ActionType = { 'Withdraw' : null } |
   { 'Send' : null } |
   { 'CreateLink' : null } |
   { 'Receive' : null };
@@ -66,11 +65,6 @@ export interface CashierBackendInitData {
   'log_settings' : [] | [LogServiceSettings],
 }
 export type Chain = { 'IC' : null };
-export interface CreateActionAnonymousInput {
-  'link_id' : string,
-  'action_type' : ActionType,
-  'wallet_address' : Principal,
-}
 export interface CreateActionInput {
   'link_id' : string,
   'action_type' : ActionType,
@@ -200,15 +194,6 @@ export interface LinkDto {
   'link_use_action_max_count' : bigint,
   'link_use_action_counter' : bigint,
 }
-export interface LinkGetUserStateInput {
-  'link_id' : string,
-  'action_type' : ActionType,
-  'anonymous_wallet_address' : [] | [Principal],
-}
-export interface LinkGetUserStateOutput {
-  'action' : ActionDto,
-  'link_user_state' : LinkUserState,
-}
 export type LinkState = { 'Inactive' : null } |
   { 'Active' : null } |
   { 'CreateLink' : null } |
@@ -217,12 +202,6 @@ export type LinkType = { 'SendAirdrop' : null } |
   { 'SendTip' : null } |
   { 'ReceivePayment' : null } |
   { 'SendTokenBasket' : null };
-export interface LinkUpdateUserStateInput {
-  'link_id' : string,
-  'action_type' : ActionType,
-  'goto' : UserStateMachineGoto,
-  'anonymous_wallet_address' : [] | [Principal],
-}
 export type LinkUserState = { 'Address' : null } |
   { 'GateClosed' : null } |
   { 'GateOpened' : null } |
@@ -251,22 +230,11 @@ export interface PaginateResultMetadata {
   'limit' : bigint,
 }
 export type Permission = { 'Admin' : null };
-export interface ProcessActionAnonymousInput {
-  'action_id' : string,
-  'link_id' : string,
-  'action_type' : ActionType,
-  'wallet_address' : Principal,
-}
 export interface ProcessActionDto {
   'action' : ActionDto,
   'link' : LinkDto,
   'errors' : Array<string>,
   'is_success' : boolean,
-}
-export interface ProcessActionInput {
-  'action_id' : string,
-  'link_id' : string,
-  'action_type' : ActionType,
 }
 export interface ProcessActionV2Input { 'action_id' : string }
 export type Protocol = { 'IC' : IcTransaction };
@@ -274,27 +242,19 @@ export type Result = { 'Ok' : null } |
   { 'Err' : CanisterError };
 export type Result_1 = { 'Ok' : Array<Permission> } |
   { 'Err' : CanisterError };
-export type Result_10 = { 'Ok' : PaginateResult } |
+export type Result_2 = { 'Ok' : GetLinkResp } |
   { 'Err' : CanisterError };
-export type Result_11 = { 'Ok' : ProcessActionDto } |
-  { 'Err' : CanisterError };
-export type Result_12 = { 'Ok' : string } |
-  { 'Err' : CanisterError };
-export type Result_2 = { 'Ok' : ActionDto } |
-  { 'Err' : CanisterError };
-export type Result_3 = { 'Ok' : GetLinkResp } |
-  { 'Err' : string };
-export type Result_4 = { 'Ok' : GetLinkResp } |
-  { 'Err' : CanisterError };
-export type Result_5 = { 'Ok' : PaginateResult } |
-  { 'Err' : string };
-export type Result_6 = { 'Ok' : Icrc21ConsentInfo } |
+export type Result_3 = { 'Ok' : Icrc21ConsentInfo } |
   { 'Err' : Icrc21Error };
-export type Result_7 = { 'Ok' : [] | [LinkGetUserStateOutput] } |
+export type Result_4 = { 'Ok' : ActionDto } |
   { 'Err' : CanisterError };
-export type Result_8 = { 'Ok' : LinkDto } |
+export type Result_5 = { 'Ok' : CreateLinkDto } |
   { 'Err' : CanisterError };
-export type Result_9 = { 'Ok' : CreateLinkDto } |
+export type Result_6 = { 'Ok' : LinkDto } |
+  { 'Err' : CanisterError };
+export type Result_7 = { 'Ok' : PaginateResult } |
+  { 'Err' : CanisterError };
+export type Result_8 = { 'Ok' : ProcessActionDto } |
   { 'Err' : CanisterError };
 export interface TransactionDto {
   'id' : string,
@@ -320,22 +280,6 @@ export interface TransferFromData {
   'approve_amount' : [] | [bigint],
   'spender' : Wallet,
 }
-export interface TriggerTransactionInput {
-  'transaction_id' : string,
-  'action_id' : string,
-  'link_id' : string,
-}
-export interface UpdateActionInput {
-  'action_id' : string,
-  'link_id' : string,
-  'external' : boolean,
-}
-export interface UpdateLinkInput {
-  'id' : string,
-  'goto' : UserStateMachineGoto,
-}
-export type UserStateMachineGoto = { 'Continue' : null } |
-  { 'Back' : null };
 export type Wallet = {
     'IC' : {
       'subaccount' : [] | [Uint8Array | number[]],
@@ -343,27 +287,51 @@ export type Wallet = {
     }
   };
 export interface _SERVICE {
+  /**
+   * Enables/disables the inspect message.
+   */
   'admin_inspect_message_enable' : ActorMethod<[boolean], Result>,
+  /**
+   * Adds permissions to a principal and returns the principal permissions.
+   */
   'admin_permissions_add' : ActorMethod<
     [Principal, Array<Permission>],
     Result_1
   >,
+  /**
+   * Returns the permissions of a principal.
+   */
   'admin_permissions_get' : ActorMethod<[Principal], Array<Permission>>,
+  /**
+   * Removes permissions from a principal and returns the principal permissions.
+   */
   'admin_permissions_remove' : ActorMethod<
     [Principal, Array<Permission>],
     Result_1
   >,
-  'create_action_anonymous' : ActorMethod<
-    [CreateActionAnonymousInput],
-    Result_2
-  >,
+  /**
+   * Returns the build data of the canister.
+   */
   'get_canister_build_data' : ActorMethod<[], BuildData>,
-  'get_link' : ActorMethod<[string, [] | [GetLinkOptions]], Result_3>,
+  /**
+   * Retrieves a specific link by its ID with optional action data.
+   * 
+   * This endpoint is accessible to both anonymous and authenticated users. The response
+   * includes the link details and optionally associated action data based on the caller's
+   * permissions and the requested action type.
+   * 
+   * # Arguments
+   * * `link_id` - The unique identifier of the link to retrieve
+   * * `options` - Optional parameters including action type to include in response
+   * 
+   * # Returns
+   * * `Ok(LinkDto)` - Link data
+   * * `Err(String)` - Error message if link not found or access denied
+   */
   'get_link_details_v2' : ActorMethod<
     [string, [] | [GetLinkOptions]],
-    Result_4
+    Result_2
   >,
-  'get_links' : ActorMethod<[[] | [PaginateInput]], Result_5>,
   'icrc10_supported_standards' : ActorMethod<
     [],
     Array<Icrc21SupportedStandard>
@@ -371,33 +339,63 @@ export interface _SERVICE {
   'icrc114_validate' : ActorMethod<[Icrc114ValidateArgs], boolean>,
   'icrc21_canister_call_consent_message' : ActorMethod<
     [Icrc21ConsentMessageRequest],
-    Result_6
+    Result_3
   >,
   'icrc28_trusted_origins' : ActorMethod<[], Icrc28TrustedOriginsResponse>,
+  /**
+   * Returns the inspect message status.
+   */
   'is_inspect_message_enabled' : ActorMethod<[], boolean>,
-  'link_get_user_state' : ActorMethod<[LinkGetUserStateInput], Result_7>,
-  'process_action_anonymous' : ActorMethod<
-    [ProcessActionAnonymousInput],
-    Result_2
-  >,
-  'user_create_action' : ActorMethod<[CreateActionInput], Result_2>,
-  'user_create_action_v2' : ActorMethod<[CreateActionInput], Result_2>,
-  'user_create_link' : ActorMethod<[CreateLinkInput], Result_8>,
-  'user_create_link_v2' : ActorMethod<[CreateLinkInput], Result_9>,
-  'user_disable_link_v2' : ActorMethod<[string], Result_8>,
-  'user_get_links_v2' : ActorMethod<[[] | [PaginateInput]], Result_10>,
-  'user_link_update_user_state' : ActorMethod<
-    [LinkUpdateUserStateInput],
-    Result_7
-  >,
-  'user_process_action' : ActorMethod<[ProcessActionInput], Result_2>,
-  'user_process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_11>,
-  'user_trigger_transaction' : ActorMethod<
-    [TriggerTransactionInput],
-    Result_12
-  >,
-  'user_update_action' : ActorMethod<[UpdateActionInput], Result_2>,
-  'user_update_link' : ActorMethod<[UpdateLinkInput], Result_8>,
+  /**
+   * Creates a new action V2.
+   * # Arguments
+   * * `input` - Action creation data
+   * # Returns
+   * * `Ok(ActionDto)` - The created action data
+   * * `Err(CanisterError)` - If action creation fails or validation errors occur
+   */
+  'user_create_action_v2' : ActorMethod<[CreateActionInput], Result_4>,
+  /**
+   * Creates a new link V2
+   * # Arguments
+   * * `input` - Link creation data
+   * # Returns
+   * * `Ok(CreateLinkDto)` - The created link data
+   * * `Err(CanisterError)` - If link creation fails or validation errors occur
+   */
+  'user_create_link_v2' : ActorMethod<[CreateLinkInput], Result_5>,
+  /**
+   * Disables an existing link V2
+   * # Arguments
+   * * `link_id` - The ID of the link to disable
+   * # Returns
+   * * `Ok(LinkDto)` - The disabled link data
+   * * `Err(CanisterError)` - If disabling fails or unauthorized
+   */
+  'user_disable_link_v2' : ActorMethod<[string], Result_6>,
+  /**
+   * Retrieves a paginated list of links created by the authenticated caller.
+   * 
+   * This endpoint requires the caller to be authenticated (non-anonymous) and returns
+   * only the links that were created by the calling principal.
+   * 
+   * # Arguments
+   * * `input` - Optional pagination parameters (page size, offset, etc.)
+   * 
+   * # Returns
+   * * `Ok(PaginateResult<LinkDto>)` - Paginated list of links owned by the caller
+   * * `Err(CanisterError)` - Error message if retrieval fails
+   */
+  'user_get_links_v2' : ActorMethod<[[] | [PaginateInput]], Result_7>,
+  /**
+   * Processes a created action V2.
+   * # Arguments
+   * * `input` - Action processing data
+   * # Returns
+   * * `Ok(ProcessActionDto)` - The processed action data
+   * * `Err(CanisterError)` - If action processing fails or validation errors occur
+   */
+  'user_process_action_v2' : ActorMethod<[ProcessActionV2Input], Result_8>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];
