@@ -4,7 +4,6 @@
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
-  import { LinkType } from "$modules/links/types/link/linkType";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import { LinkDetailStore } from "../state/linkDetailStore.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
@@ -12,13 +11,18 @@
   import YouSendSection from "$modules/creationLink/components/previewSections/YouSendSection.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
-  import { getLinkTypeText } from "$modules/links/utils/linkItemHelpers";
-  import { parseBalanceUnits } from "$modules/shared/utils/converter";
+  import { getLinkTypeText, isSendLinkType, isPaymentLinkType } from "$modules/links/utils/linkItemHelpers";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
-  import { feeService } from "$modules/transactionCart/services/feeService";
   import { locale } from "$lib/i18n";
   import { toast } from "svelte-sonner";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+  import {
+    calculateFeesBreakdown,
+    calculateTotalFeesUsd,
+    getLinkCreationFeeFromBreakdown,
+    calculateAssetsWithTokenInfo,
+  } from "$modules/links/utils/feesBreakdown";
 
   //let { linkStore }: { linkStore: LinkDetailStore } = $props();
   let { id }: { id: string } = $props();
@@ -31,14 +35,8 @@
   let showTxCart: boolean = $state(false);
   let showFeeInfoDrawer = $state(false);
   let failedImageLoads = $state<Set<string>>(new Set());
-
-  // Get token logo URL
-  function getTokenLogo(address: string): string {
-    if (address === ICP_LEDGER_CANISTER_ID) {
-      return "/icpLogo.png";
-    }
-    return `https://api.icexplorer.io/images/${address}`;
-  }
+  let isEndingLink = $state(false);
+  let isCreatingWithdraw = $state(false);
 
   function handleImageError(address: string) {
     failedImageLoads.add(address);
@@ -50,58 +48,33 @@
       return [];
     }
 
-    return linkStore.link.asset_info
+    const assets = linkStore.link.asset_info
       .map((assetInfo) => {
         const assetAddress = assetInfo.asset.address?.toString();
         if (!assetAddress) return null;
-
-        const tokenResult = walletStore.findTokenByAddress(assetAddress);
-        if (tokenResult.isErr()) {
-          return null;
-        }
-        const token = tokenResult.unwrap();
-        const amount = parseBalanceUnits(assetInfo.amount_per_link_use_action, token.decimals);
-        const usdValue = token.priceUSD ? amount * token.priceUSD : 0;
-
         return {
           address: assetAddress,
-          amount,
-          token: {
-            symbol: token.symbol,
-            decimals: token.decimals,
-            priceUSD: token.priceUSD,
-          },
-          usdValue,
-          logo: getTokenLogo(assetAddress),
+          amount: assetInfo.amount_per_link_use_action,
         };
       })
-      .filter((item) => item !== null) as Array<{
-        address: string;
-        amount: number;
-        token: {
-          symbol: string;
-          decimals: number;
-          priceUSD?: number;
-        };
-        usdValue: number;
-        logo: string;
-      }>;
+      .filter((item): item is { address: string; amount: bigint } => item !== null);
+
+    return calculateAssetsWithTokenInfo(
+      assets,
+      walletStore.findTokenByAddress.bind(walletStore),
+    );
   });
 
   // Check if link type is send type (TIP, AIRDROP, TOKEN_BASKET)
   const isSendLink = $derived.by(() => {
     if (!linkStore.link) return false;
-    return (
-      linkStore.link.link_type === LinkType.TIP ||
-      linkStore.link.link_type === LinkType.AIRDROP ||
-      linkStore.link.link_type === LinkType.TOKEN_BASKET
-    );
+    return isSendLinkType(linkStore.link.link_type);
   });
 
-  // Check if link type is payment link
+  // Check if link type is receive link
   const isPaymentLink = $derived.by(() => {
     if (!linkStore.link) return false;
-    return linkStore.link.link_type === LinkType.RECEIVE_PAYMENT;
+    return isPaymentLinkType(linkStore.link.link_type);
   });
 
   // Get link type text
@@ -111,76 +84,30 @@
   });
 
   // Calculate fees breakdown
-  type FeeBreakdownItem = {
-    name: string;
-    amount: bigint;
-    tokenAddress: string;
-    tokenSymbol: string;
-    tokenDecimals: number;
-    usdAmount: number;
-  };
-
   const feesBreakdown = $derived.by(() => {
     if (!linkStore.link) return [];
 
-    const breakdown: FeeBreakdownItem[] = [];
+    const assetAddresses =
+      linkStore.link.asset_info
+        ?.map((assetInfo) => assetInfo.asset.address?.toString())
+        .filter((addr): addr is string => !!addr) || [];
     const maxUse = Number(linkStore.link.link_use_action_max_count) || 1;
 
-    // Calculate network fees for each asset
-    if (linkStore.link.asset_info && linkStore.link.asset_info.length > 0) {
-      for (const assetInfo of linkStore.link.asset_info) {
-        const assetAddress = assetInfo.asset.address?.toString();
-        if (!assetAddress) continue;
-
-        const tokenResult = walletStore.findTokenByAddress(assetAddress);
-        if (tokenResult.isErr()) continue;
-
-        const token = tokenResult.unwrap();
-        // Network fee = token.fee * maxUse (one fee per use)
-        const networkFee = token.fee * BigInt(maxUse);
-        const networkFeeAmount = parseBalanceUnits(networkFee, token.decimals);
-        const usdValue = token.priceUSD ? networkFeeAmount * token.priceUSD : 0;
-
-        breakdown.push({
-          name: "Network fees",
-          amount: networkFee,
-          tokenAddress: assetAddress,
-          tokenSymbol: token.symbol,
-          tokenDecimals: token.decimals,
-          usdAmount: usdValue,
-        });
-      }
-    }
-
-    // Add link creation fee (always in ICP)
-    const linkCreationFeeInfo = feeService.getLinkCreationFee();
-    const icpTokenResult = walletStore.findTokenByAddress(linkCreationFeeInfo.tokenAddress);
-    if (icpTokenResult.isOk()) {
-      const icpToken = icpTokenResult.unwrap();
-      const creationFeeAmount = parseBalanceUnits(linkCreationFeeInfo.amount, icpToken.decimals);
-      const creationFeeUsd = icpToken.priceUSD ? creationFeeAmount * icpToken.priceUSD : 0;
-
-      breakdown.push({
-        name: "Link creation fee",
-        amount: linkCreationFeeInfo.amount,
-        tokenAddress: linkCreationFeeInfo.tokenAddress,
-        tokenSymbol: icpToken.symbol,
-        tokenDecimals: icpToken.decimals,
-        usdAmount: creationFeeUsd,
-      });
-    }
-
-    return breakdown;
+    return calculateFeesBreakdown(
+      assetAddresses,
+      maxUse,
+      walletStore.findTokenByAddress.bind(walletStore),
+    );
   });
 
   // Calculate total fees in USD
   const totalFeesUsd = $derived.by(() => {
-    return feesBreakdown.reduce((total, fee) => total + fee.usdAmount, 0);
+    return calculateTotalFeesUsd(feesBreakdown);
   });
 
   // Get link creation fee from breakdown
   const linkCreationFee = $derived.by(() => {
-    return feesBreakdown.find((fee) => fee.name === "Link creation fee");
+    return getLinkCreationFeeFromBreakdown(feesBreakdown);
   });
 
   // Transaction lock status based on link state
@@ -195,11 +122,17 @@
         return locale.t("links.linkForm.preview.transactionLockUnlock");
       case LinkState.INACTIVE:
         return locale.t("links.linkForm.preview.transactionLockLock");
+      case LinkState.INACTIVE_ENDED:
+        return locale.t("links.linkForm.preview.transactionLockEnded");
       case LinkState.CREATE_LINK:
         return locale.t("links.linkForm.preview.transactionLockUnlock");
       default:
         return locale.t("links.linkForm.preview.transactionLockUnlock");
     }
+  });
+
+  const isTransactionLockEnded = $derived.by(() => {
+    return linkStore.link?.state === LinkState.INACTIVE_ENDED;
   });
 
   function handleFeeInfoClick() {
@@ -222,14 +155,27 @@
   async function endLink() {
     errorMessage = null;
     successMessage = null;
+    isEndingLink = true;
 
     try {
       if (!linkStore.link) throw new Error("Link is missing");
       await linkStore.disableLink();
-      successMessage = locale.t("links.linkForm.detail.messages.linkEndedSuccess");
+      // Refresh to get updated link state and any withdraw action
+      await linkStore.query.refresh();
+      const successMsg = locale.t("links.linkForm.detail.messages.linkEndedSuccess");
+      successMessage = successMsg;
+      toast.success(successMsg);
+        // If there's a withdraw action after ending the link, open txCart
+        if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
+        showTxCart = true;
+      }
     } catch (err) {
-      errorMessage =
-        locale.t("links.linkForm.detail.messages.failedToEndLink") + (err instanceof Error ? err.message : "");
+      const errorMsg = locale.t("links.linkForm.detail.messages.failedToEndLink") + (err instanceof Error ? err.message : "");
+      errorMessage = errorMsg;
+      toast.error(errorMsg);
+    } finally {
+      isEndingLink = false;
+
     }
   }
 
@@ -243,33 +189,102 @@
 
   async function createWithdrawAction() {
     errorMessage = null;
+    isCreatingWithdraw = true;
 
     try {
       if (!linkStore.link) {
         throw new Error("Link is missing");
       }
 
+      // Check if withdraw action already exists
+      if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
+        // Action already exists, just open the modal
+        showTxCart = true;
+        return;
+      }
+
+      // Create withdraw action
       await linkStore.createAction(ActionType.WITHDRAW);
+      // Refresh query to get the newly created action
+      await linkStore.query.refresh();
+      // Wait a bit for the query to update the action
+      // Check again if action exists after refresh
+      if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
+        showTxCart = true;
+      } else {
+        // If action still doesn't exist, try to wait a bit more
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
+          showTxCart = true;
+        }
+      }
     } catch (err) {
-      errorMessage =
-        locale.t("links.linkForm.detail.messages.failedToCreateWithdrawAction") +
-        (err instanceof Error ? err.message : "");
+      const errorMessageText = err instanceof Error ? err.message : String(err);
+      
+      // If error is "Request lock already exists" or "Action already exists", 
+      // it means action was already created, so just open the modal
+      if (
+        errorMessageText.includes("Request lock already exists") ||
+        errorMessageText.includes("Action already exists") ||
+        errorMessageText.includes("already exists")
+      ) {
+        // Refresh to get the existing action
+        await linkStore.query.refresh();
+        // Wait a bit for the query to update
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        // Open modal if action exists
+        if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
+          showTxCart = true;
+        } else {
+          // If still no action, show error
+          const errorMsg =
+            locale.t("links.linkForm.detail.messages.failedToCreateWithdrawAction") +
+            errorMessageText;
+          errorMessage = errorMsg;
+          toast.error(errorMsg);
+        }
+      } else {
+        // For other errors, show error message
+        const errorMsg =
+          locale.t("links.linkForm.detail.messages.failedToCreateWithdrawAction") +
+          errorMessageText;
+        errorMessage = errorMsg;
+        toast.error(errorMsg);
+      }
+    } finally {
+      isCreatingWithdraw = false;
     }
   }
 
+  function goToLinks() {
+    goto(resolve("/links"));
+  }
+
   async function handleProcessAction(): Promise<ProcessActionResult> {
-    return await linkStore.processAction();
+    const result = await linkStore.processAction();
+    // After successful processing, refresh to get updated link state
+    // Backend will change status to INACTIVE_ENDED after successful withdraw
+    if (result.isSuccess) {
+      await linkStore.query.refresh();
+    }
+    return result;
   }
 
   $effect(() => {
     if (
       linkStore &&
       linkStore.link &&
-      linkStore.link.state === LinkState.CREATE_LINK &&
       linkStore.action &&
       linkStore.action.state !== ActionState.SUCCESS
     ) {
-      showTxCart = true;
+      // Open txCart for CREATE_LINK or INACTIVE (withdraw) actions
+      if (
+        linkStore.link.state === LinkState.CREATE_LINK ||
+        (linkStore.link.state === LinkState.INACTIVE &&
+          linkStore.action.type === ActionType.WITHDRAW)
+      ) {
+        showTxCart = true;
+      }
     }
   });
 </script>
@@ -310,7 +325,7 @@
       />
 
       <!-- Block 2: Transaction Lock -->
-      <TransactionLockSection {transactionLockStatus} />
+      <TransactionLockSection {transactionLockStatus} isEnded={isTransactionLockEnded} />
 
       <!-- Block 3: You Send -->
       {#if isSendLink}
@@ -336,8 +351,12 @@
         <Button
           variant="outline"
           onclick={endLink}
-          class="w-full h-11 border border-red-200 text-red-600 rounded-full mb-3 cursor-pointer hover:bg-red-50 hover:text-red-700 hover:border-red-400 transition-colors"
+          disabled={isEndingLink}
+          class="w-full h-11 border border-red-200 text-red-600 rounded-full mb-3 cursor-pointer hover:bg-red-50 hover:text-red-700 hover:border-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
+          {#if isEndingLink}
+            <div class="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+          {/if}
           {locale.t("links.linkForm.detail.endLink")}
         </Button>
         <Button
@@ -348,12 +367,24 @@
           {showCopied ? locale.t("links.linkForm.detail.copied") : locale.t("links.linkForm.detail.copyLink")}
         </Button>
       {/if}
-      {#if linkStore.link.state === LinkState.INACTIVE}
+      {#if linkStore.link.state === LinkState.INACTIVE }
         <Button
           onclick={createWithdrawAction}
-          class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
-         >
+          disabled={isCreatingWithdraw}
+          class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen gap-2"
+        >
+          {#if isCreatingWithdraw}
+            <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          {/if}
           {locale.t("links.linkForm.detail.withdraw")}
+        </Button>
+      {/if}
+      {#if linkStore.link.state === LinkState.INACTIVE_ENDED}
+        <Button
+          onclick={goToLinks}
+          class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
+        >
+          {locale.t("links.linkForm.detail.goToLinks")}
         </Button>
       {/if}
       {#if linkStore.link.state === LinkState.CREATE_LINK}
@@ -369,12 +400,13 @@
   </div>
 {/if}
 
-{#if showTxCart && linkStore.action && linkStore.link?.state === LinkState.CREATE_LINK}
+{#if showTxCart && linkStore.action && (linkStore.link?.state === LinkState.CREATE_LINK || (linkStore.link?.state === LinkState.INACTIVE && linkStore.action.type === ActionType.WITHDRAW))}
   <TxCart
     isOpen={showTxCart}
     action={linkStore.action}
     {onCloseDrawer}
     {handleProcessAction}
+    isProcessing={isCreatingWithdraw}
   />
 {/if}
 

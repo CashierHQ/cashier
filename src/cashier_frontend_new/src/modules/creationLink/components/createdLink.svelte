@@ -62,10 +62,16 @@
 
 <div class="mt-2 flex flex-col gap-4 grow-1 justify-between">
   <LinkDetails {link} {errorMessage} {successMessage} />
-
-  <Button class="mt-4 h-11 bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen" onclick={onClickCreate}>
-    {locale.t("links.linkForm.detail.create")}
-  </Button>
+  <div
+    class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"
+  >
+    <Button 
+      class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
+      type="button"
+      onclick={onClickCreate}>
+      {locale.t("links.linkForm.detail.create")}
+    </Button>
+  </div>
 </div>
 
 {#if showTxCart && linkDetailStore && linkDetailStore.action}
