@@ -388,7 +388,9 @@ async fn it_should_error_when_create_receive_action_twice() {
             link_id: link_id.clone(),
             action_type: ActionType::Receive,
         };
-        let first = receiver_fixture.create_action_v2(create_action_input.clone()).await;
+        let first = receiver_fixture
+            .create_action_v2(create_action_input.clone())
+            .await;
         assert!(first.is_ok());
 
         // Act: create RECEIVE action again -> expect error

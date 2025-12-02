@@ -8,6 +8,8 @@ use crate::{
     utils::{link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context},
 };
 use candid::{Nat, Principal};
+use cashier_backend_types::dto::action::CreateActionInput;
+use cashier_backend_types::repository::action::v1::ActionType;
 use cashier_backend_types::repository::common::Wallet;
 use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType};
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
@@ -16,8 +18,6 @@ use cashier_common::{constant::CREATE_LINK_FEE, test_utils};
 use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
 use std::sync::Arc;
-use cashier_backend_types::dto::action::CreateActionInput;
-use cashier_backend_types::repository::action::v1::ActionType;
 
 #[tokio::test]
 async fn it_should_error_create_icp_token_basket_linkv2_if_caller_anonymous() {
@@ -84,7 +84,8 @@ async fn it_should_error_when_create_createlink_action_twice() {
         assert!(create_action_result.is_err());
         if let Err(err) = create_action_result {
             match err {
-                cashier_backend_types::error::CanisterError::ValidationErrors(_) => { /* expected */ }
+                cashier_backend_types::error::CanisterError::ValidationErrors(_) => { /* expected */
+                }
                 _ => panic!("Expected ValidationErrors, got {:?}", err),
             }
         }
