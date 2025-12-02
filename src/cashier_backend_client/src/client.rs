@@ -240,31 +240,40 @@ mod pic {
             self.client.await_call(msg_id).await
         }
 
-        /// Submit a create_action call and return the message ID (PocketIC only).
-        pub async fn submit_create_action(
+        pub async fn submit_user_create_action_v2(
             &self,
             args: CreateActionInput,
         ) -> CanisterClientResult<RawMessageId> {
-            // For single-argument candid calls, pass a one-element tuple `(args,)`
-            self.client.submit_call("user_create_action", (args,)).await
+            self.client.submit_call("create_action_v2", (args,)).await
         }
 
-        /// Submit a process_action call and return the message ID (PocketIC only).
-        pub async fn submit_process_action(
+        pub async fn submit_user_create_link_v2(
             &self,
-            args: ProcessActionInput,
+            args: CreateLinkInput,
         ) -> CanisterClientResult<RawMessageId> {
             self.client
-                .submit_call("user_process_action", (args,))
+                .submit_call("user_create_link_v2", (args,))
                 .await
         }
 
-        /// Submit an update_action call and return the message ID (PocketIC only).
-        pub async fn submit_update_action(
+        /// Submit a create_action_v2 call and return the message ID (PocketIC only).
+        pub async fn submit_create_action_v2(
             &self,
-            args: UpdateActionInput,
+            args: CreateActionInput,
         ) -> CanisterClientResult<RawMessageId> {
-            self.client.submit_call("user_update_action", (args,)).await
+            self.client
+                .submit_call("user_create_action_v2", (args,))
+                .await
+        }
+
+        /// Submit a process_action_v2 call and return the message ID (PocketIC only).
+        pub async fn submit_process_action_v2(
+            &self,
+            args: ProcessActionV2Input,
+        ) -> CanisterClientResult<RawMessageId> {
+            self.client
+                .submit_call("user_process_action_v2", (args,))
+                .await
         }
     }
 }

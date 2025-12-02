@@ -1,86 +1,64 @@
-use candid::Nat;
-use cashier_backend_types::{
-    dto::{
-        action::{ActionDto, ProcessActionInput},
-        link::{LinkStateMachineGoto, UpdateLinkInput},
-    },
-    error::CanisterError,
-    repository::{action::v1::ActionType, link::v1::LinkState},
-};
-
-use crate::cashier_backend::link::fixture::LinkTestFixture;
-use crate::utils::{
-    icrc_112::execute_icrc112_request, principal::TestUser, with_pocket_ic_context,
-};
 use std::sync::Arc;
+
+use crate::cashier_backend::link_v2::send_tip::fixture::TipLinkV2Fixture;
+use crate::utils::principal::TestUser;
+use crate::utils::with_pocket_ic_context;
+use candid::Nat;
+use cashier_backend_types::dto::action::CreateActionInput;
+use cashier_backend_types::link_v2::dto::{ProcessActionDto, ProcessActionV2Input};
+use cashier_backend_types::repository::action::v1::ActionType;
+use cashier_backend_types::{constant, error::CanisterError};
 
 #[tokio::test]
 async fn test_request_lock_for_process_action() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let caller = TestUser::User1.get_principal();
-        let mut fixture = LinkTestFixture::new(Arc::new(ctx.clone()), &caller).await;
 
-        // Setup user and airdrop tokens
-        fixture
-            .airdrop_icp(Nat::from(1_000_000_000_000_000u64), &caller)
-            .await;
-        fixture
-            .airdrop_icrc("ckBTC", Nat::from(1_000_000_000_000_000u64), &caller)
-            .await;
-        fixture
-            .airdrop_icrc("ckUSDC", Nat::from(1_000_000_000_000_000u64), &caller)
-            .await;
+        // Setup user and create link v2
+        let mut creator_fixture = TipLinkV2Fixture::new(
+            Arc::new(ctx.clone()),
+            caller,
+            constant::ICP_TOKEN,
+            Nat::from(100_000_000u64),
+        )
+        .await;
 
-        // top up link and active link
-        let active_link = {
-            let link = fixture.create_token_basket_link().await;
-            let action = fixture
-                .create_action(&link.id, ActionType::CreateLink)
-                .await;
-            let processing_action = fixture
-                .process_action(&link.id, &action.id, ActionType::CreateLink)
-                .await;
-            let _icrc112_execution_result = execute_icrc112_request(
-                processing_action.icrc_112_requests.as_ref().unwrap(),
-                caller,
-                ctx,
-            )
-            .await;
-            let _ = fixture.update_action(&link.id, &action.id).await;
-            fixture
-                .update_link(UpdateLinkInput {
-                    id: link.id.to_string(),
-                    goto: LinkStateMachineGoto::Continue,
-                })
-                .await
+        let dto = creator_fixture.activate_link().await;
+
+        let create_action_input = CreateActionInput {
+            link_id: dto.link.id.clone(),
+            action_type: ActionType::Receive,
         };
-        let use_action = fixture
-            .create_action(&active_link.id, ActionType::Use)
-            .await;
+        let receive_action = creator_fixture
+            .link_fixture
+            .create_action_v2(create_action_input)
+            .await
+            .unwrap();
 
-        // Act - submit call 3 times concurrently
-        let mut msgs = Vec::with_capacity(3);
+        // Act - submit 3 create_action calls concurrently
+        let mut msgs: Vec<ic_mple_pocket_ic::pocket_ic::common::rest::RawMessageId> =
+            Vec::with_capacity(3);
         for _ in 0..3 {
             msgs.push(
-                fixture
+                creator_fixture
+                    .link_fixture
                     .cashier_backend_client
                     .as_ref()
                     .unwrap()
-                    .submit_process_action(ProcessActionInput {
-                        link_id: active_link.id.to_string(),
-                        action_id: use_action.id.to_string(),
-                        action_type: ActionType::Use,
+                    .submit_process_action_v2(ProcessActionV2Input {
+                        action_id: receive_action.id.clone(),
                     })
                     .await
                     .unwrap(),
             );
         }
 
-        let mut results: Vec<Result<ActionDto, CanisterError>> = Vec::with_capacity(3);
+        let mut results: Vec<Result<ProcessActionDto, CanisterError>> = Vec::with_capacity(3);
         for msg in msgs {
             results.push(
-                fixture
+                creator_fixture
+                    .link_fixture
                     .cashier_backend_client
                     .as_ref()
                     .unwrap()
@@ -90,13 +68,12 @@ async fn test_request_lock_for_process_action() {
             );
         }
 
+        // Assert - exactly 1 of 3 should succeed
         let success_count = results.iter().filter(|r| r.is_ok()).count();
-        let failed_actions = results.iter().filter(|r| r.is_err()).collect::<Vec<_>>();
-
-        // Assert
-        assert_eq!(active_link.state, LinkState::Active);
-
         assert_eq!(success_count, 1, "Expected exactly 1 action to succeed");
+
+        // Assert failed actions contain expected error message
+        let failed_actions = results.iter().filter(|r| r.is_err()).collect::<Vec<_>>();
 
         for failed_action in failed_actions {
             if let Err(error) = failed_action {
