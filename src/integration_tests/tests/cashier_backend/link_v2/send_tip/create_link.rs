@@ -16,6 +16,8 @@ use cashier_common::{constant::CREATE_LINK_FEE, test_utils};
 use ic_mple_client::CanisterClientError;
 use icrc_ledger_types::icrc1::account::Account;
 use std::sync::Arc;
+use cashier_backend_types::dto::action::CreateActionInput;
+use cashier_backend_types::repository::action::v1::ActionType;
 
 #[tokio::test]
 async fn it_should_error_create_icp_token_tip_linkv2_if_caller_anonymous() {
@@ -39,6 +41,45 @@ async fn it_should_error_create_icp_token_tip_linkv2_if_caller_anonymous() {
             assert!(err.reject_message.contains("AnonimousUserNotAllowed"));
         } else {
             panic!("Expected PocketIcTestError, got {:?}", result);
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
+async fn it_should_error_when_create_createlink_action_twice() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange: create tip link but do not activate
+        let caller = TestUser::User1.get_principal();
+        let token = constant::ICP_TOKEN;
+        let tip_amount = Nat::from(1_000_000u64);
+        let mut test_fixture =
+            TipLinkV2Fixture::new(Arc::new(ctx.clone()), caller, token, tip_amount.clone()).await;
+
+        // Act: create link (remains in Created state)
+        let create_link_result = test_fixture.create_link().await;
+
+        // Act: attempt to create CreateLink action again
+        let link_id = create_link_result.link.id.clone();
+        let create_action_input = CreateActionInput {
+            link_id: link_id.clone(),
+            action_type: ActionType::CreateLink,
+        };
+        let create_action_result = test_fixture
+            .link_fixture
+            .create_action_v2(create_action_input)
+            .await;
+
+        // Assert: should return an error
+        assert!(create_action_result.is_err());
+        if let Err(err) = create_action_result {
+            match err {
+                cashier_backend_types::error::CanisterError::ValidationErrors(_) => { /* expected */ }
+                _ => panic!("Expected ValidationErrors, got {:?}", err),
+            }
         }
 
         Ok(())
