@@ -131,15 +131,15 @@ const initPnp = async () => {
     clearPersistedState();
     isReady = true;
     return;
-  }
-
-  // Auto-reconnect if we have a connected wallet ID and session is not expired
-  if (walletId) {
+  } else if (walletId) {
     try {
       await authState.login(walletId);
     } catch (error) {
       console.error("Auto-reconnect failed:", error);
     }
+  } else {
+    // unknown state, clear persisted state
+    clearPersistedState()
   }
 
   isReady = true;
