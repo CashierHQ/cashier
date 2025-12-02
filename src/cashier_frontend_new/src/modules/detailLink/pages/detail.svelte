@@ -11,7 +11,11 @@
   import YouSendSection from "$modules/creationLink/components/previewSections/YouSendSection.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
-  import { getLinkTypeText, isSendLinkType, isPaymentLinkType } from "$modules/links/utils/linkItemHelpers";
+  import {
+    getLinkTypeText,
+    isSendLinkType,
+    isPaymentLinkType,
+  } from "$modules/links/utils/linkItemHelpers";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { locale } from "$lib/i18n";
   import { toast } from "svelte-sonner";
@@ -57,7 +61,9 @@
           amount: assetInfo.amount_per_link_use_action,
         };
       })
-      .filter((item): item is { address: string; amount: bigint } => item !== null);
+      .filter(
+        (item): item is { address: string; amount: bigint } => item !== null,
+      );
 
     return calculateAssetsWithTokenInfo(
       assets,
@@ -115,7 +121,8 @@
   // INACTIVE -> Lock (can withdraw)
   // CREATE_LINK -> Unlock (can create)
   const transactionLockStatus = $derived.by(() => {
-    if (!linkStore.link) return locale.t("links.linkForm.preview.transactionLockUnlock");
+    if (!linkStore.link)
+      return locale.t("links.linkForm.preview.transactionLockUnlock");
 
     switch (linkStore.link.state) {
       case LinkState.ACTIVE:
@@ -148,7 +155,9 @@
       setTimeout(() => (showCopied = false), 1500);
     } catch (err) {
       console.error("copy failed", err);
-      toast.error(locale.t("links.linkForm.detail.copyFailed") || "Failed to copy link");
+      toast.error(
+        locale.t("links.linkForm.detail.copyFailed") || "Failed to copy link",
+      );
     }
   }
 
@@ -162,20 +171,23 @@
       await linkStore.disableLink();
       // Refresh to get updated link state and any withdraw action
       await linkStore.query.refresh();
-      const successMsg = locale.t("links.linkForm.detail.messages.linkEndedSuccess");
+      const successMsg = locale.t(
+        "links.linkForm.detail.messages.linkEndedSuccess",
+      );
       successMessage = successMsg;
       toast.success(successMsg);
-        // If there's a withdraw action after ending the link, open txCart
-        if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
+      // If there's a withdraw action after ending the link, open txCart
+      if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
         showTxCart = true;
       }
     } catch (err) {
-      const errorMsg = locale.t("links.linkForm.detail.messages.failedToEndLink") + (err instanceof Error ? err.message : "");
+      const errorMsg =
+        locale.t("links.linkForm.detail.messages.failedToEndLink") +
+        (err instanceof Error ? err.message : "");
       errorMessage = errorMsg;
       toast.error(errorMsg);
     } finally {
       isEndingLink = false;
-
     }
   }
 
@@ -225,8 +237,8 @@
       }
     } catch (err) {
       const errorMessageText = err instanceof Error ? err.message : String(err);
-      
-      // If error is "Request lock already exists" or "Action already exists", 
+
+      // If error is "Request lock already exists" or "Action already exists",
       // it means action was already created, so just open the modal
       if (
         errorMessageText.includes("Request lock already exists") ||
@@ -243,16 +255,18 @@
         } else {
           // If still no action, show error
           const errorMsg =
-            locale.t("links.linkForm.detail.messages.failedToCreateWithdrawAction") +
-            errorMessageText;
+            locale.t(
+              "links.linkForm.detail.messages.failedToCreateWithdrawAction",
+            ) + errorMessageText;
           errorMessage = errorMsg;
           toast.error(errorMsg);
         }
       } else {
         // For other errors, show error message
         const errorMsg =
-          locale.t("links.linkForm.detail.messages.failedToCreateWithdrawAction") +
-          errorMessageText;
+          locale.t(
+            "links.linkForm.detail.messages.failedToCreateWithdrawAction",
+          ) + errorMessageText;
         errorMessage = errorMsg;
         toast.error(errorMsg);
       }
@@ -330,7 +344,10 @@
       />
 
       <!-- Block 2: Transaction Lock -->
-      <TransactionLockSection {transactionLockStatus} isEnded={isTransactionLockEnded} />
+      <TransactionLockSection
+        {transactionLockStatus}
+        isEnded={isTransactionLockEnded}
+      />
 
       <!-- Block 3: You Send -->
       {#if isSendLink}
@@ -338,7 +355,7 @@
           {assetsWithTokenInfo}
           {failedImageLoads}
           onImageError={handleImageError}
-          linkCreationFee={linkCreationFee}
+          {linkCreationFee}
         />
       {/if}
 
@@ -348,10 +365,11 @@
         isClickable={true}
         onInfoClick={handleFeeInfoClick}
       />
-
     {/if}
 
-    <div class="flex-none w-full w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10 mt-auto pt-4">
+    <div
+      class="flex-none w-full w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10 mt-auto pt-4"
+    >
       {#if linkStore.link.state === LinkState.ACTIVE}
         <Button
           variant="outline"
@@ -360,7 +378,9 @@
           class="w-full h-11 border border-red-200 text-red-600 rounded-full mb-3 cursor-pointer hover:bg-red-50 hover:text-red-700 hover:border-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {#if isEndingLink}
-            <div class="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+            <div
+              class="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"
+            ></div>
           {/if}
           {locale.t("links.linkForm.detail.endLink")}
         </Button>
@@ -369,17 +389,21 @@
           onclick={copyLink}
           class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
         >
-          {showCopied ? locale.t("links.linkForm.detail.copied") : locale.t("links.linkForm.detail.copyLink")}
+          {showCopied
+            ? locale.t("links.linkForm.detail.copied")
+            : locale.t("links.linkForm.detail.copyLink")}
         </Button>
       {/if}
-      {#if linkStore.link.state === LinkState.INACTIVE }
+      {#if linkStore.link.state === LinkState.INACTIVE}
         <Button
           onclick={createWithdrawAction}
           disabled={isCreatingWithdraw}
           class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen gap-2"
         >
           {#if isCreatingWithdraw}
-            <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            <div
+              class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+            ></div>
           {/if}
           {locale.t("links.linkForm.detail.withdraw")}
         </Button>

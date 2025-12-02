@@ -9,7 +9,6 @@
     userLink,
     linkDetail,
   }: { userLink: UserLinkStore; linkDetail?: LinkDetailStore } = $props();
-
 </script>
 
 {#if linkDetail?.query.isLoading}

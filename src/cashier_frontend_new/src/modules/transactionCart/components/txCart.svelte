@@ -137,7 +137,9 @@
     // Parse fee amount from string
     const feeAmountStr = linkCreationFeeItem.fee.amount.replace(/,/g, "");
     const feeAmount = parseFloat(feeAmountStr);
-    const feeAmountBigInt = BigInt(Math.round(feeAmount * Math.pow(10, token.decimals)));
+    const feeAmountBigInt = BigInt(
+      Math.round(feeAmount * Math.pow(10, token.decimals)),
+    );
 
     return {
       amount: feeAmountBigInt,
@@ -169,7 +171,9 @@
     try {
       const processActionResult = await txCartStore.processAction();
       if (processActionResult.isSuccess) {
-        successMessage = locale.t("links.linkForm.drawers.txCart.successMessage");
+        successMessage = locale.t(
+          "links.linkForm.drawers.txCart.successMessage",
+        );
         onCloseDrawer?.();
       } else {
         errorMessage = `${locale.t("links.linkForm.drawers.txCart.errorMessagePrefix")} ${processActionResult.errors.join(", ")}`;
@@ -247,7 +251,7 @@
           <div class="mt-2 space-y-4">
             {#if isSendLink && assetsWithTokenInfo.length > 0}
               <YouSendSection
-                assetsWithTokenInfo={assetsWithTokenInfo}
+                {assetsWithTokenInfo}
                 {failedImageLoads}
                 onImageError={handleImageError}
                 linkCreationFee={linkCreationFee || undefined}
@@ -257,7 +261,7 @@
 
             {#if isWithdraw && assetsWithTokenInfo.length > 0}
               <YouSendSection
-                assetsWithTokenInfo={assetsWithTokenInfo}
+                {assetsWithTokenInfo}
                 {failedImageLoads}
                 onImageError={handleImageError}
                 {isProcessing}
@@ -279,15 +283,17 @@
       </div>
 
       {#if !showFeeBreakdown}
-      <div class="px-3 mb-2">
-        <Button
-          class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
-          onclick={handleConfirm}
-          disabled={isProcessing}
-        >
-          {isProcessing ? locale.t("links.linkForm.drawers.txCart.processingButton") : locale.t("links.linkForm.drawers.txCart.confirmButton")}
-        </Button>
-      </div>
+        <div class="px-3 mb-2">
+          <Button
+            class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
+            onclick={handleConfirm}
+            disabled={isProcessing}
+          >
+            {isProcessing
+              ? locale.t("links.linkForm.drawers.txCart.processingButton")
+              : locale.t("links.linkForm.drawers.txCart.confirmButton")}
+          </Button>
+        </div>
       {/if}
     </Drawer.Content>
   </Drawer.Root>

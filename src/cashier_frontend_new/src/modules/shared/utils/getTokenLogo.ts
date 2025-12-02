@@ -11,4 +11,3 @@ export function getTokenLogo(address: string): string {
   }
   return `https://api.icexplorer.io/images/${address}`;
 }
-
