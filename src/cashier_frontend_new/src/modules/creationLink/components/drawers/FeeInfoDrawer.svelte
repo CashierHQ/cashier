@@ -9,10 +9,11 @@
   import { Button } from "$lib/shadcn/components/ui/button";
   import { locale } from "$lib/i18n";
   import { X } from "lucide-svelte";
-  import { parseBalanceUnits } from "$modules/shared/utils/converter";
-  import { formatNumber, formatUsdAmount } from "$modules/shared/utils/formatNumber";
-  import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
   import { ChevronLeft } from "lucide-svelte";
+  import {
+    formatFeeBreakdownItem,
+    formatLinkCreationFeeView,
+  } from "$modules/links/utils/feesBreakdown";
 
   type FeeBreakdownItem = {
     name: string;
@@ -39,14 +40,6 @@
     }
   }
 
-  // Get token logo URL
-  function getTokenLogo(address: string): string {
-    if (address === ICP_LEDGER_CANISTER_ID) {
-      return "/icpLogo.png";
-    }
-    return `https://api.icexplorer.io/images/${address}`;
-  }
-
   // Separate network fees and link creation fee
   const networkFees = $derived.by(() => {
     return feesBreakdown.filter((fee) => fee.name === "Network fees");
@@ -56,12 +49,14 @@
     return feesBreakdown.find((fee) => fee.name === "Link creation fee");
   });
 
-  // Track failed image loads
-  let failedImageLoads = $state<Set<string>>(new Set());
+  // View models with precomputed values for rendering
+  const networkFeesView = $derived.by(() =>
+    networkFees.map((fee) => formatFeeBreakdownItem(fee)),
+  );
 
-  function handleImageError(address: string) {
-    failedImageLoads.add(address);
-  }
+  const linkCreationFeeView = $derived.by(() =>
+    formatLinkCreationFeeView(linkCreationFee),
+  );
 </script>
 
 <Drawer bind:open>
@@ -94,41 +89,38 @@
 
     <div class="mb-4 border-[1px] rounded-lg border-lightgreen px-4 py-4 flex flex-col gap-4">
       <!-- Network fees -->
-      {#each networkFees as fee (fee.tokenAddress)}
-        {@const feeAmount = parseBalanceUnits(fee.amount, fee.tokenDecimals)}
-        {@const tokenLogo = getTokenLogo(fee.tokenAddress)}
+      {#each networkFeesView as fee (fee.tokenAddress)}
         <div>
           <div class="flex justify-between items-center">
             <span class="text-[14px] font-medium">{fee.name}</span>
             <div class="flex items-center gap-1">
               <span class="text-[14px] font-normal">
-                {formatNumber(feeAmount)} {fee.tokenSymbol}
+                {fee.feeAmountFormatted} {fee.tokenSymbol}
               </span>
             </div>
           </div>
           <div class="flex justify-end">
             <p class="text-[10px] font-normal text-[#b6b6b6]">
-              {formatUsdAmount(fee.usdAmount)}
+              {fee.usdFormatted}
             </p>
           </div>
         </div>
       {/each}
 
       <!-- Link creation fee -->
-      {#if linkCreationFee}
-        {@const feeAmount = parseBalanceUnits(linkCreationFee.amount, linkCreationFee.tokenDecimals)}
+      {#if linkCreationFeeView}
         <div>
           <div class="flex justify-between items-center">
-            <span class="text-[14px] font-medium">{linkCreationFee.name}</span>
+            <span class="text-[14px] font-medium">{linkCreationFeeView.name}</span>
             <div class="flex items-center gap-1">
               <span class="text-[14px] font-normal">
-                {formatNumber(feeAmount)} {linkCreationFee.tokenSymbol}
+                {linkCreationFeeView.feeAmountFormatted} {linkCreationFeeView.tokenSymbol}
               </span>
             </div>
           </div>
           <div class="flex justify-end">
             <p class="text-[10px] font-normal text-[#b6b6b6]">
-              {formatUsdAmount(linkCreationFee.usdAmount)}
+              {linkCreationFeeView.usdFormatted}
             </p>
           </div>
         </div>

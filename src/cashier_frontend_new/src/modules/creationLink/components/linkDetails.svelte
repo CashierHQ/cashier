@@ -1,17 +1,19 @@
 <script lang="ts">
-  import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
-  import { getLinkTypeText } from "$modules/links/utils/linkItemHelpers";
-  import { LinkType } from "$modules/links/types/link/linkType";
-  import { ICP_LEDGER_CANISTER_ID, ICP_LEDGER_FEE } from "$modules/token/constants";
+  import { getLinkTypeText, isSendLinkType, isPaymentLinkType } from "$modules/links/utils/linkItemHelpers";
   import FeeInfoDrawer from "./drawers/FeeInfoDrawer.svelte";
   import { toast } from "svelte-sonner";
   import YouSendSection from "./previewSections/YouSendSection.svelte";
   import FeesBreakdownSection from "./previewSections/FeesBreakdownSection.svelte";
   import LinkInfoSection from "./previewSections/LinkInfoSection.svelte";
   import TransactionLockSection from "./previewSections/TransactionLockSection.svelte";
-    import { feeService } from '$modules/transactionCart/services/feeService';
+  import {
+    calculateFeesBreakdown,
+    calculateTotalFeesUsd,
+    getLinkCreationFeeFromBreakdown,
+    calculateAssetsWithTokenInfo,
+  } from "$modules/links/utils/feesBreakdown";
 
   const {
     link,
@@ -23,26 +25,14 @@
     successMessage: string | null;
   } = $props();
 
-  // Get token logo URL
-  function getTokenLogo(address: string): string {
-    if (address === ICP_LEDGER_CANISTER_ID) {
-      return "/icpLogo.png";
-    }
-    return `https://api.icexplorer.io/images/${address}`;
-  }
-
   // Check if link type is send type (TIP, AIRDROP, TOKEN_BASKET)
   const isSendLink = $derived.by(() => {
-    return (
-      link.createLinkData.linkType === LinkType.TIP ||
-      link.createLinkData.linkType === LinkType.AIRDROP ||
-      link.createLinkData.linkType === LinkType.TOKEN_BASKET
-    );
+    return isSendLinkType(link.createLinkData.linkType);
   });
 
-  // Check if link type is payment link
+  // Check if link type is receive link
   const isPaymentLink = $derived.by(() => {
-    return link.createLinkData.linkType === LinkType.RECEIVE_PAYMENT;
+    return isPaymentLinkType(link.createLinkData.linkType);
   });
 
   // Get link type text
@@ -56,91 +46,38 @@
       return [];
     }
 
-    return link.createLinkData.assets.map((asset) => {
-      const tokenResult = walletStore.findTokenByAddress(asset.address);
-      if (tokenResult.isErr()) {
-        return null;
-      }
-      const token = tokenResult.unwrap();
-      const amount = parseBalanceUnits(asset.useAmount, token.decimals);
-      const usdValue = token.priceUSD ? amount * token.priceUSD : 0;
-
-      return {
+    const assets = link.createLinkData.assets.map((asset) => ({
         address: asset.address,
-        amount,
-        token,
-        usdValue,
-        logo: getTokenLogo(asset.address),
-      };
-    }).filter((item) => item !== null);
+      amount: asset.useAmount,
+    }));
+
+    return calculateAssetsWithTokenInfo(
+      assets,
+      walletStore.findTokenByAddress.bind(walletStore),
+    );
   });
 
   // Calculate fees breakdown
-  type FeeBreakdownItem = {
-    name: string;
-    amount: bigint;
-    tokenAddress: string;
-    tokenSymbol: string;
-    tokenDecimals: number;
-    usdAmount: number;
-  };
-
   const feesBreakdown = $derived.by(() => {
-    const breakdown: FeeBreakdownItem[] = [];
+    const assetAddresses =
+      link.createLinkData.assets?.map((asset) => asset.address) || [];
     const maxUse = link.createLinkData.maxUse || 1;
 
-    // Calculate network fees for each asset
-    if (link.createLinkData.assets && link.createLinkData.assets.length > 0) {
-      for (const asset of link.createLinkData.assets) {
-        const tokenResult = walletStore.findTokenByAddress(asset.address);
-        if (tokenResult.isErr()) continue;
-
-        const token = tokenResult.unwrap();
-        // Network fee = token.fee * maxUse (one fee per use)
-        const networkFee = token.fee * BigInt(maxUse);
-        const networkFeeAmount = parseBalanceUnits(networkFee, token.decimals);
-        const usdValue = token.priceUSD ? networkFeeAmount * token.priceUSD : 0;
-
-        breakdown.push({
-          name: "Network fees",
-          amount: networkFee,
-          tokenAddress: asset.address,
-          tokenSymbol: token.symbol,
-          tokenDecimals: token.decimals,
-          usdAmount: usdValue,
-        });
-      }
-    }
-
-    // Add link creation fee (always in ICP)
-    const linkCreationFeeInfo = feeService.getLinkCreationFee()
-    const icpTokenResult = walletStore.findTokenByAddress(linkCreationFeeInfo.tokenAddress);
-    if (icpTokenResult.isOk()) {
-      const icpToken = icpTokenResult.unwrap();
-      const creationFeeAmount = parseBalanceUnits(linkCreationFeeInfo.amount, icpToken.decimals);
-      const creationFeeUsd = icpToken.priceUSD ? creationFeeAmount * icpToken.priceUSD : 0;
-
-      breakdown.push({
-        name: "Link creation fee",
-        amount: linkCreationFeeInfo.amount,
-        tokenAddress: linkCreationFeeInfo.tokenAddress,
-        tokenSymbol: icpToken.symbol,
-        tokenDecimals: icpToken.decimals,
-        usdAmount: creationFeeUsd,
-      });
-    }
-
-    return breakdown;
+    return calculateFeesBreakdown(
+      assetAddresses,
+      maxUse,
+      walletStore.findTokenByAddress.bind(walletStore),
+    );
   });
 
   // Calculate total fees in USD
   const totalFeesUsd = $derived.by(() => {
-    return feesBreakdown.reduce((total, fee) => total + fee.usdAmount, 0);
+    return calculateTotalFeesUsd(feesBreakdown);
   });
 
   // Get link creation fee from breakdown
   const linkCreationFee = $derived.by(() => {
-    return feesBreakdown.find((fee) => fee.name === "Link creation fee");
+    return getLinkCreationFeeFromBreakdown(feesBreakdown);
   });
 
   // Transaction lock status (currently always "Unlock" for preview links)
@@ -159,23 +96,6 @@
   function handleImageError(address: string) {
     failedImageLoads.add(address);
   }
-
-  // Debug: Log state data
-  $effect(() => {
-    console.log("=== Link State Debug ===");
-    console.log("link.createLinkData:", link.createLinkData);
-    console.log("link.createLinkData.title:", link.createLinkData.title);
-    console.log("link.createLinkData.linkType:", link.createLinkData.linkType);
-    console.log("link.createLinkData.assets:", link.createLinkData.assets);
-    console.log("link.createLinkData.maxUse:", link.createLinkData.maxUse);
-    console.log("link.id:", link.id);
-    console.log("link.state:", link.state);
-    console.log("link.link:", link.link);
-    console.log("link.action:", link.action);
-    console.log("assetsWithTokenInfo:", assetsWithTokenInfo);
-    console.log("walletStore.query.data:", walletStore.query.data);
-    console.log("=========================");
-  });
 
   // Handlers for info drawers
   function handleFeeInfoClick() {

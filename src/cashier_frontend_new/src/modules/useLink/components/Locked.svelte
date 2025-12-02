@@ -10,7 +10,6 @@
     linkDetail,
   }: { userLink: UserLinkStore; linkDetail?: LinkDetailStore } = $props();
 
-  console.log("Locked.svelte userLink:", userLink);
 </script>
 
 {#if linkDetail?.query.isLoading}

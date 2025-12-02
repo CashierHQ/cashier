@@ -13,11 +13,14 @@
 
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
+  let isCreating = $state(false);
 
   // Create the link
   async function handleCreate() {
     errorMessage = null;
     successMessage = null;
+    isCreating = true;
+
     try {
       await link.goNext();
       linkListStore.refresh();
@@ -25,6 +28,8 @@
     } catch (error) {
       errorMessage = "Failed to create link: " + error;
       return;
+    } finally {
+      isCreating = false;
     }
   }
 </script>
@@ -37,9 +42,13 @@
   >
     <Button
       onclick={handleCreate}
-      class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
+      disabled={isCreating}
+      class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen gap-2"
       type="button"
     >
+      {#if isCreating}
+        <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+      {/if}
       {locale.t("links.linkForm.chooseType.create")}
     </Button>
   </div>

@@ -3,8 +3,8 @@
   import { Info } from "lucide-svelte";
   import { locale } from "$lib/i18n";
   import { formatNumber, formatUsdAmount } from "$modules/shared/utils/formatNumber";
-  import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
-  import { parseBalanceUnits } from "$modules/shared/utils/converter";
+  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+  import { formatLinkCreationFeeDisplay } from "$modules/links/utils/feesBreakdown";
 
   type AssetWithTokenInfo = {
     address: string;
@@ -29,6 +29,8 @@
       tokenDecimals: number;
       usdAmount: number;
     };
+    isProcessing?: boolean;
+    isReceive?: boolean; // If true, show "You receive" instead of "You send"
   };
 
   let {
@@ -36,35 +38,35 @@
     failedImageLoads,
     onImageError,
     linkCreationFee,
+    isProcessing = false,
+    isReceive = false,
   }: Props = $props();
-
-  // Get token logo URL
-  function getTokenLogo(address: string): string {
-    if (address === ICP_LEDGER_CANISTER_ID) {
-      return "/icpLogo.png";
-    }
-    return `https://api.icexplorer.io/images/${address}`;
-  }
 
   // Calculate link creation fee display
   const linkCreationFeeDisplay = $derived.by(() => {
     if (!linkCreationFee) return null;
-    const feeAmount = parseBalanceUnits(linkCreationFee.amount, linkCreationFee.tokenDecimals);
-    return {
-      amount: feeAmount,
-      symbol: linkCreationFee.tokenSymbol,
+    return formatLinkCreationFeeDisplay({
+      name: "Link creation fee",
+      amount: linkCreationFee.amount,
+      tokenAddress: linkCreationFee.tokenAddress,
+      tokenSymbol: linkCreationFee.tokenSymbol,
+      tokenDecimals: linkCreationFee.tokenDecimals,
       usdAmount: linkCreationFee.usdAmount,
-    };
+    });
   });
 </script>
 
 <div class="input-label-field-container">
   <div class="flex items-center w-full justify-between mb-2">
     <div class="flex items-center gap-1">
-      <Label class="font-medium text-sm">{locale.t("links.linkForm.preview.youSend")}</Label>
-      <span class="text-[#b6b6b6] text-[10px] medium-font">
-        {locale.t("links.linkForm.preview.includingNetworkFees")}
-      </span>
+      <Label class="font-medium text-sm">
+        {isReceive ? locale.t("links.linkForm.preview.youReceive") : locale.t("links.linkForm.preview.youSend")}
+      </Label>
+      {#if !isReceive}
+        <span class="text-[#b6b6b6] text-[10px] medium-font">
+          {locale.t("links.linkForm.preview.includingNetworkFees")}
+        </span>
+      {/if}
     </div>
     <div class="flex items-center gap-1">
       <Info size={18} color="#36A18B" />
@@ -74,6 +76,9 @@
     {#each assetsWithTokenInfo as asset (asset.address)}
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-1.5">
+          {#if isProcessing}
+            <div class="w-4 h-4 border-2 border-green border-t-transparent rounded-full animate-spin"></div>
+          {/if}
           {#if !failedImageLoads.has(asset.address)}
             <img
               src={asset.logo}
@@ -106,13 +111,16 @@
       <div class="flex flex-col gap-3">
         <div class="flex justify-between items-center">
           <div class="flex items-center gap-1.5">
+            {#if isProcessing}
+              <div class="w-4 h-4 border-2 border-green border-t-transparent rounded-full animate-spin"></div>
+            {/if}
             <img
               src={getTokenLogo(linkCreationFee.tokenAddress)}
               alt={linkCreationFee.tokenSymbol}
               class="w-5 h-5 rounded-full overflow-hidden"
             />
             <p class="text-[14px] font-medium">{linkCreationFee.tokenSymbol} </p>
-            <p class="text-[12px] font-normal text-[#b6b6b6]">
+            <p class="text-[12px] font-normal text-[#b6b6b6] pt-0.5">
               {locale.t("links.linkForm.preview.linkCreationFee")}
             </p>
           </div>

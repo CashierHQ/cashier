@@ -15,28 +15,29 @@
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import FeeBreakdown from "./feeBreakdown.svelte";
   import { X } from "lucide-svelte";
-  import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
-  import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { ActionType } from "$modules/links/types/action/actionType";
   import IntentTask from "$modules/links/types/action/intentTask";
   import { locale } from "$lib/i18n";
+  import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
 
   let {
     action,
     isOpen,
     onCloseDrawer,
     handleProcessAction,
+    isProcessing: externalIsProcessing,
   }: {
     action: Action;
     isOpen: boolean;
     onCloseDrawer: () => void;
     handleProcessAction: () => Promise<ProcessActionResult>;
+    isProcessing?: boolean;
   } = $props();
 
   const txCartStore = new TransactionCartStore(action, handleProcessAction);
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
-  let isProcessing: boolean = $state(false);
+  let isProcessing: boolean = $state(externalIsProcessing ?? false);
 
   const assetAndFeeList: AssetAndFee[] = $derived.by(() => {
     const list = feeService.mapActionToAssetAndFeeList(
@@ -64,64 +65,45 @@
   let showFeeBreakdown = $state(false);
   let failedImageLoads = $state<Set<string>>(new Set());
 
-  // Get token logo URL
-  function getTokenLogo(address: string): string {
-    if (address === ICP_LEDGER_CANISTER_ID) {
-      return "/icpLogo.png";
-    }
-    return `https://api.icexplorer.io/images/${address}`;
-  }
-
   function handleImageError(address: string) {
     failedImageLoads.add(address);
   }
 
   // Convert action.intents to assetsWithTokenInfo format for YouSendSection
   const assetsWithTokenInfo = $derived.by(() => {
-    if (action.type !== ActionType.CREATE_LINK) return [];
-    
-    // Get assets directly from intents, excluding link creation fee
-    return action.intents
-      .filter((intent) => {
-        // Exclude TRANSFER_WALLET_TO_TREASURY (link creation fee)
-        return intent.task !== IntentTask.TRANSFER_WALLET_TO_TREASURY;
-      })
-      .map((intent) => {
-        const assetAddress = intent.type.payload.asset.address.toString();
-        const token = walletStore.query.data?.find(
-          (t) => t.address === assetAddress,
-        );
-        
-        if (!token) return null;
+    if (action.type === ActionType.CREATE_LINK) {
+      // Get assets directly from intents, excluding link creation fee
+      const assets = action.intents
+        .filter((intent) => {
+          // Exclude TRANSFER_WALLET_TO_TREASURY (link creation fee)
+          return intent.task !== IntentTask.TRANSFER_WALLET_TO_TREASURY;
+        })
+        .map((intent) => ({
+          address: intent.type.payload.asset.address.toString(),
+          amount: intent.type.payload.amount,
+        }));
 
-        // Get amount from intent payload
-        const amountBigInt = intent.type.payload.amount;
-        const amount = parseBalanceUnits(amountBigInt, token.decimals);
-        const usdValue = token.priceUSD ? amount * token.priceUSD : 0;
+      return calculateAssetsWithTokenInfo(
+        assets,
+        walletStore.findTokenByAddress.bind(walletStore),
+      );
+    }
 
-        return {
-          address: assetAddress,
-          amount,
-          token: {
-            symbol: token.symbol,
-            decimals: token.decimals,
-            priceUSD: token.priceUSD,
-          },
-          usdValue,
-          logo: getTokenLogo(assetAddress),
-        };
-      })
-      .filter((item) => item !== null) as Array<{
-        address: string;
-        amount: number;
-        token: {
-          symbol: string;
-          decimals: number;
-          priceUSD?: number;
-        };
-        usdValue: number;
-        logo: string;
-      }>;
+    if (action.type === ActionType.WITHDRAW) {
+      // For WITHDRAW, intent.amount is already the amount to be returned (after backend fee deduction)
+      // We show this amount and the network fee separately
+      const assets = action.intents.map((intent) => ({
+        address: intent.type.payload.asset.address.toString(),
+        amount: intent.type.payload.amount, // Amount to be returned
+      }));
+
+      return calculateAssetsWithTokenInfo(
+        assets,
+        walletStore.findTokenByAddress.bind(walletStore),
+      );
+    }
+
+    return [];
   });
 
   // Calculate total fees in USD
@@ -169,6 +151,11 @@
   // Check if this is a send link (CREATE_LINK action)
   const isSendLink = $derived.by(() => {
     return action.type === ActionType.CREATE_LINK;
+  });
+
+  // Check if this is a withdraw action
+  const isWithdraw = $derived.by(() => {
+    return action.type === ActionType.WITHDRAW;
   });
 
   /**
@@ -264,6 +251,17 @@
                 {failedImageLoads}
                 onImageError={handleImageError}
                 linkCreationFee={linkCreationFee || undefined}
+                {isProcessing}
+              />
+            {/if}
+
+            {#if isWithdraw && assetsWithTokenInfo.length > 0}
+              <YouSendSection
+                assetsWithTokenInfo={assetsWithTokenInfo}
+                {failedImageLoads}
+                onImageError={handleImageError}
+                {isProcessing}
+                isReceive={true}
               />
             {/if}
 

@@ -10,7 +10,6 @@
   import LinksPage from "$modules/links/pages/LinksPage.svelte";
 
   function handleCreateNewLink() {
-    console.log("Creating new link...", authState.account);
     if (!authState.account?.owner) {
       throw new Error("Cannot create link: no account owner found");
     }

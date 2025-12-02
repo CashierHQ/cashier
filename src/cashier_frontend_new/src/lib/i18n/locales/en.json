@@ -168,7 +168,9 @@
         "transactionLock": "Transaction lock",
         "transactionLockUnlock": "Unlock",
         "transactionLockLock": "Lock",
+        "transactionLockEnded": "Ended",
         "youSend": "You send",
+        "youReceive": "You receive",
         "includingNetworkFees": "Including network fees",
         "linkCreationFee": "Link creation fee",
         "feesBreakdown": "Fees breakdown",
@@ -203,10 +205,12 @@
         "copyFailed": "Failed to copy link",
         "withdraw": "Withdraw",
         "create": "Create",
+        "goToLinks": "Go to links",
         "messages": {
           "linkEndedSuccess": "Link ended successfully.",
           "failedToEndLink": "Failed to end link.",
-          "failedToCreateWithdrawAction": "Failed to create withdraw action."
+          "failedToCreateWithdrawAction": "Failed to create withdraw action.",
+          "withdrawActionCreated": "Withdraw action created successfully."
         }
       }
     }
