@@ -38,7 +38,6 @@ impl Codec<Action> for ActionCodec {
 pub enum ActionType {
     CreateLink,
     Withdraw,
-    Use,
     Receive,
     Send,
 }
