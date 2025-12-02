@@ -97,7 +97,7 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
     /// # Returns
     /// * `Ok(LinkDto)` - The disabled link data
     /// * `Err(CanisterError)` - If disabling fails or unauthorized
-    pub async fn disable_link(
+    pub fn disable_link(
         &mut self,
         caller: Principal,
         link_id: &str,
@@ -142,6 +142,10 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         link_id: &str,
         action_type: ActionType,
     ) -> Result<ActionDto, CanisterError> {
+        // Check if action already exists for this user, link, and action type
+        self.action_service
+            .check_action_exists_for_user(caller, link_id, &action_type)?;
+
         let link_model = self
             .link_repository
             .get(&link_id.to_string())
