@@ -7,9 +7,9 @@ use crate::{
     utils::{principal::TestUser, with_pocket_ic_context},
 };
 use candid::{Nat, Principal};
-use cashier_backend_types::repository::common::Wallet;
 use cashier_backend_types::dto::action::CreateActionInput;
 use cashier_backend_types::repository::action::v1::ActionType;
+use cashier_backend_types::repository::common::Wallet;
 use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType};
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
 use cashier_backend_types::{constant, repository::link::v1::LinkType};
@@ -205,7 +205,8 @@ async fn it_should_error_when_create_createlink_action_twice() {
         if let Err(err) = create_action_result {
             println!("Received error as expected: {:?}", err);
             match err {
-                cashier_backend_types::error::CanisterError::ValidationErrors(_) => { /* expected */ }
+                cashier_backend_types::error::CanisterError::ValidationErrors(_) => { /* expected */
+                }
                 _ => panic!("Expected ValidationErrors, got {:?}", err),
             }
         }

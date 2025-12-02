@@ -380,42 +380,44 @@ async fn it_should_succeed_send_icrc_token_payment_linkv2() {
     .unwrap();
 }
 
-    #[tokio::test]
-    async fn it_should_return_error_when_create_send_action_twice() {
-        with_pocket_ic_context::<_, ()>(async move |ctx| {
-            // Arrange: active payment link
-            let tokens = vec![ICP_TOKEN.to_string()];
-            let amounts = vec![Nat::from(1_000_000u64)];
-            let (mut creator_fixture, create_link_result) =
-                activate_payment_link_v2_fixture(ctx, tokens, amounts.clone()).await;
+#[tokio::test]
+async fn it_should_return_error_when_create_send_action_twice() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange: active payment link
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
+        let (mut creator_fixture, create_link_result) =
+            activate_payment_link_v2_fixture(ctx, tokens, amounts.clone()).await;
 
-            let caller = TestUser::User2.get_principal();
-            let caller_fixture =
-                LinkTestFixtureV2::new(creator_fixture.link_fixture.ctx.clone(), caller).await;
+        let caller = TestUser::User2.get_principal();
+        let caller_fixture =
+            LinkTestFixtureV2::new(creator_fixture.link_fixture.ctx.clone(), caller).await;
 
-            creator_fixture.airdrop_icp_and_asset(caller).await;
+        creator_fixture.airdrop_icp_and_asset(caller).await;
 
-            // Act: create first SEND action
-            let link_id = create_link_result.link.id.clone();
-            let create_action_input = CreateActionInput {
-                link_id: link_id.clone(),
-                action_type: ActionType::Send,
-            };
-            let first_result = caller_fixture.create_action_v2(create_action_input.clone()).await;
-            assert!(first_result.is_ok());
+        // Act: create first SEND action
+        let link_id = create_link_result.link.id.clone();
+        let create_action_input = CreateActionInput {
+            link_id: link_id.clone(),
+            action_type: ActionType::Send,
+        };
+        let first_result = caller_fixture
+            .create_action_v2(create_action_input.clone())
+            .await;
+        assert!(first_result.is_ok());
 
-            // Act: create SEND action a second time -> expect error
-            let second_result = caller_fixture.create_action_v2(create_action_input).await;
-            assert!(second_result.is_err());
+        // Act: create SEND action a second time -> expect error
+        let second_result = caller_fixture.create_action_v2(create_action_input).await;
+        assert!(second_result.is_err());
 
-            if let Err(CanisterError::ValidationErrors(_msg)) = second_result {
-                // expected
-            } else {
-                panic!("Expected ValidationErrors error when creating SEND action twice");
-            }
+        if let Err(CanisterError::ValidationErrors(_msg)) = second_result {
+            // expected
+        } else {
+            panic!("Expected ValidationErrors error when creating SEND action twice");
+        }
 
-            Ok(())
-        })
-        .await
-        .unwrap();
-    }
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
