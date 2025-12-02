@@ -383,3 +383,41 @@ async fn it_should_succeed_receive_icrc_token_airdrop_linkv2() {
     .await
     .unwrap();
 }
+
+#[tokio::test]
+async fn it_should_error_when_create_receive_action_twice() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange: active airdrop link
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
+        let max_use = 10;
+        let (creator_fixture, create_link_result) =
+            activate_airdrop_link_v2_fixture(ctx, tokens, amounts, max_use).await;
+
+        let receiver = TestUser::User2.get_principal();
+        let receiver_fixture = LinkTestFixtureV2::new(creator_fixture.ctx.clone(), receiver).await;
+
+        // Act: create first RECEIVE action
+        let link_id = create_link_result.link.id.clone();
+        let create_action_input = CreateActionInput {
+            link_id: link_id.clone(),
+            action_type: ActionType::Receive,
+        };
+        let first = receiver_fixture.create_action_v2(create_action_input.clone()).await;
+        assert!(first.is_ok());
+
+        // Act: create RECEIVE action again -> expect error
+        let second = receiver_fixture.create_action_v2(create_action_input).await;
+        assert!(second.is_err());
+
+        if let Err(CanisterError::ValidationErrors(_)) = second {
+            // expected
+        } else {
+            panic!("Expected ValidationErrors error when creating RECEIVE action twice");
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
