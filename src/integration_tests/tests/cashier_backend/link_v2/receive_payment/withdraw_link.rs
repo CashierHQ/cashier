@@ -15,7 +15,7 @@ use cashier_backend_types::repository::common::Wallet;
 use cashier_backend_types::repository::intent::v1::{IntentTask, IntentType};
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
-use cashier_common::test_utils;
+use cashier_common::test_utils::random_principal_id;
 use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]
@@ -312,6 +312,51 @@ async fn it_should_withdraw_icrc_token_payment_linkv2_successfully() {
 }
 
 #[tokio::test]
+async fn it_should_error_when_create_withdraw_action_twice() {
+    with_pocket_ic_context::<_, ()>(async move |ctx| {
+        // Arrange: create payment link and make it Inactive
+        let tokens = vec![ICP_TOKEN.to_string()];
+        let amounts = vec![Nat::from(1_000_000u64)];
+        let (test_fixture, create_link_result) =
+            send_payment_link_v2_fixture(ctx, tokens, amounts).await;
+
+        let link_id = create_link_result.link.id.clone();
+        let disable_link_result = test_fixture.link_fixture.disable_link_v2(&link_id).await;
+        assert!(disable_link_result.is_ok());
+        let link_dto = disable_link_result.unwrap();
+        assert_eq!(link_dto.state, LinkState::Inactive);
+
+        // Act: create first WITHDRAW action
+        let create_action_input = CreateActionInput {
+            link_id: link_id.clone(),
+            action_type: ActionType::Withdraw,
+        };
+        let first = test_fixture
+            .link_fixture
+            .create_action_v2(create_action_input.clone())
+            .await;
+        assert!(first.is_ok());
+
+        // Act: create WITHDRAW action a second time -> expect error
+        let second = test_fixture
+            .link_fixture
+            .create_action_v2(create_action_input)
+            .await;
+        assert!(second.is_err());
+
+        if let Err(CanisterError::ValidationErrors(_)) = second {
+            // expected
+        } else {
+            panic!("Expected ValidationErrors error when creating WITHDRAW action twice");
+        }
+
+        Ok(())
+    })
+    .await
+    .unwrap();
+}
+
+#[tokio::test]
 async fn it_should_error_when_non_creator_create_withdraw_action_payment_linkv2() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange: creator creates payment link and makes it Inactive
@@ -327,7 +372,7 @@ async fn it_should_error_when_non_creator_create_withdraw_action_payment_linkv2(
         assert_eq!(link_dto.state, LinkState::Inactive);
 
         // Act: another identity attempts to create a WITHDRAW action -> should error
-        let other = test_utils::random_principal_id();
+        let other = random_principal_id();
         let other_fixture =
             LinkTestFixtureV2::new(test_fixture.link_fixture.ctx.clone(), other).await;
         let create_action_input = CreateActionInput {
