@@ -139,7 +139,7 @@ const initPnp = async () => {
     }
   } else {
     // unknown state, clear persisted state
-    clearPersistedState()
+    clearPersistedState();
   }
 
   isReady = true;
