@@ -7,7 +7,7 @@ import {
   IC_INTERNET_IDENTITY_PROVIDER,
   II_SIGNER_WALLET_ID,
 } from "$modules/shared/constants";
-import { TIMEOUT_NANO_SEC } from "$modules/auth/constants";
+import { TIMEOUT_NANO_SEC, NANOS_IN_MILLIS } from "$modules/auth/constants";
 import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
 import { Actor, HttpAgent } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
@@ -74,6 +74,15 @@ const connectedWalletId = new PersistedState<{ id: string | null }>(
   { id: null },
 );
 
+// state to store last logged in timestamp for session expiration check
+const lastLoggedInTimestamp = new PersistedState<{ timestamp: number | null }>(
+  "lastLoggedInTimestamp",
+  { timestamp: null },
+);
+
+// Session timeout in milliseconds (converted from nanoseconds)
+const SESSION_TIMEOUT_MS = Number(BigInt(TIMEOUT_NANO_SEC) / NANOS_IN_MILLIS);
+
 // state to indicate if we are reconnecting
 let isConnecting = $state(false);
 
@@ -88,16 +97,46 @@ let account = $state<{
 
 let sessionManager: SessionManager | null = null;
 
-// Initialize PNP instance,
+/**
+ * Check if the stored session has expired based on last logged in timestamp.
+ * @returns true if session is expired or no timestamp exists
+ */
+const isSessionExpired = (): boolean => {
+  const lastTimestamp = lastLoggedInTimestamp.current.timestamp;
+  if (lastTimestamp === null) {
+    return false;
+  }
+  return Date.now() - lastTimestamp >= SESSION_TIMEOUT_MS;
+};
+
+/**
+ * Clear all persisted auth state
+ */
+const clearPersistedState = () => {
+  connectedWalletId.current.id = null;
+  lastLoggedInTimestamp.current.timestamp = null;
+};
+
+// Initialize PNP instance
 const initPnp = async () => {
   if (pnp) {
     return;
   }
   pnp = createPNP(CONFIG);
 
-  if (connectedWalletId.current.id) {
+  const walletId = connectedWalletId.current.id;
+
+  // If session is expired, clear persisted state and do not reconnect
+  if (isSessionExpired()) {
+    clearPersistedState();
+    isReady = true;
+    return;
+  }
+
+  // Auto-reconnect if we have a connected wallet ID and session is not expired
+  if (walletId) {
     try {
-      await authState.login(connectedWalletId.current.id);
+      await authState.login(walletId);
     } catch (error) {
       console.error("Auto-reconnect failed:", error);
     }
@@ -212,6 +251,9 @@ export const authState = {
     }
     await inner_login(walletId);
 
+    // Store last logged in timestamp for session expiration check on next init
+    lastLoggedInTimestamp.current.timestamp = Date.now();
+
     // Setup session manager
     await setupSessionManager(walletId);
 
@@ -291,7 +333,7 @@ const inner_logout = async () => {
   try {
     await pnp.disconnect();
     account = null;
-    connectedWalletId.current.id = null;
+    clearPersistedState();
   } catch (error) {
     console.error("Logout failed:", error);
     throw error;
@@ -341,6 +383,8 @@ const inner_login = async (walletId: string) => {
   isConnecting = true;
   try {
     const res = await pnp.connect(walletId);
+
+    console.log("Login successful:", res);
 
     if (res.owner === null) {
       throw new Error("Login failed: owner is null");
