@@ -17,7 +17,8 @@ import {
 // Standard ICP Ledger Canister ID (use this if ICP_LEDGER_CANISTER_ID is undefined in tests)
 const MOCK_ICP_LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 // Use the actual constant if available, otherwise fallback to mock
-const TEST_ICP_LEDGER_CANISTER_ID = ICP_LEDGER_CANISTER_ID || MOCK_ICP_LEDGER_CANISTER_ID;
+const TEST_ICP_LEDGER_CANISTER_ID =
+  ICP_LEDGER_CANISTER_ID || MOCK_ICP_LEDGER_CANISTER_ID;
 
 describe("feesBreakdown", () => {
   beforeEach(() => {
@@ -63,11 +64,15 @@ describe("feesBreakdown", () => {
       const maxUse = 1;
 
       const linkCreationFeeInfo = feeService.getLinkCreationFee();
-      
+
       const findTokenByAddress = vi.fn((address: string) => {
         // Handle both the asset addresses and the link creation fee token address
         // The function will be called for each asset address AND for the link creation fee token
-        if (address === TEST_ICP_LEDGER_CANISTER_ID || address === linkCreationFeeInfo.tokenAddress || address === MOCK_ICP_LEDGER_CANISTER_ID) {
+        if (
+          address === TEST_ICP_LEDGER_CANISTER_ID ||
+          address === linkCreationFeeInfo.tokenAddress ||
+          address === MOCK_ICP_LEDGER_CANISTER_ID
+        ) {
           return Ok(mockTokenICP);
         }
         if (address === "token-usdc-address") {
@@ -75,7 +80,7 @@ describe("feesBreakdown", () => {
         }
         return Err(new Error(`Token not found for address: ${address}`));
       });
-      
+
       const result = calculateFeesBreakdown(
         assetAddresses,
         maxUse,
@@ -89,7 +94,8 @@ describe("feesBreakdown", () => {
       const icpNetworkFee = result.find(
         (fee) =>
           fee.name === "Network fees" &&
-          (fee.tokenAddress === TEST_ICP_LEDGER_CANISTER_ID || fee.tokenAddress === MOCK_ICP_LEDGER_CANISTER_ID),
+          (fee.tokenAddress === TEST_ICP_LEDGER_CANISTER_ID ||
+            fee.tokenAddress === MOCK_ICP_LEDGER_CANISTER_ID),
       );
       expect(icpNetworkFee).toBeDefined();
       expect(icpNetworkFee?.amount).toBe(10_000n);
@@ -112,7 +118,9 @@ describe("feesBreakdown", () => {
         (fee) => fee.name === "Link creation fee",
       );
       expect(linkCreationFee).toBeDefined();
-      expect(linkCreationFee?.tokenAddress).toBe(TEST_ICP_LEDGER_CANISTER_ID || MOCK_ICP_LEDGER_CANISTER_ID);
+      expect(linkCreationFee?.tokenAddress).toBe(
+        TEST_ICP_LEDGER_CANISTER_ID || MOCK_ICP_LEDGER_CANISTER_ID,
+      );
     });
 
     it("should multiply network fees by maxUse", () => {
@@ -121,7 +129,10 @@ describe("feesBreakdown", () => {
 
       const findTokenByAddress = vi.fn((address: string) => {
         // This will be called twice: once for network fee, once for link creation fee
-        if (address === TEST_ICP_LEDGER_CANISTER_ID || address === MOCK_ICP_LEDGER_CANISTER_ID) {
+        if (
+          address === TEST_ICP_LEDGER_CANISTER_ID ||
+          address === MOCK_ICP_LEDGER_CANISTER_ID
+        ) {
           return Ok(mockTokenICP);
         }
         return Err(new Error("Token not found"));
@@ -136,7 +147,8 @@ describe("feesBreakdown", () => {
       const networkFee = result.find(
         (fee) =>
           fee.name === "Network fees" &&
-          (fee.tokenAddress === TEST_ICP_LEDGER_CANISTER_ID || fee.tokenAddress === MOCK_ICP_LEDGER_CANISTER_ID),
+          (fee.tokenAddress === TEST_ICP_LEDGER_CANISTER_ID ||
+            fee.tokenAddress === MOCK_ICP_LEDGER_CANISTER_ID),
       );
       expect(networkFee).toBeDefined();
       expect(networkFee?.amount).toBe(50_000n); // 10_000 * 5
@@ -147,7 +159,10 @@ describe("feesBreakdown", () => {
       const maxUse = 0;
 
       const findTokenByAddress = vi.fn((address: string) => {
-        if (address === TEST_ICP_LEDGER_CANISTER_ID || address === MOCK_ICP_LEDGER_CANISTER_ID) {
+        if (
+          address === TEST_ICP_LEDGER_CANISTER_ID ||
+          address === MOCK_ICP_LEDGER_CANISTER_ID
+        ) {
           return Ok(mockTokenICP);
         }
         return Err(new Error("Token not found"));
@@ -162,7 +177,8 @@ describe("feesBreakdown", () => {
       const networkFee = result.find(
         (fee) =>
           fee.name === "Network fees" &&
-          (fee.tokenAddress === TEST_ICP_LEDGER_CANISTER_ID || fee.tokenAddress === MOCK_ICP_LEDGER_CANISTER_ID),
+          (fee.tokenAddress === TEST_ICP_LEDGER_CANISTER_ID ||
+            fee.tokenAddress === MOCK_ICP_LEDGER_CANISTER_ID),
       );
       expect(networkFee).toBeDefined();
       expect(networkFee?.amount).toBe(10_000n); // 10_000 * 1
@@ -173,7 +189,10 @@ describe("feesBreakdown", () => {
       const maxUse = 1;
 
       const findTokenByAddress = vi.fn((address: string) => {
-        if (address === TEST_ICP_LEDGER_CANISTER_ID || address === MOCK_ICP_LEDGER_CANISTER_ID) {
+        if (
+          address === TEST_ICP_LEDGER_CANISTER_ID ||
+          address === MOCK_ICP_LEDGER_CANISTER_ID
+        ) {
           return Ok(mockTokenICP);
         }
         return Err(new Error("Token not found"));
@@ -199,7 +218,10 @@ describe("feesBreakdown", () => {
       const maxUse = 1;
 
       const findTokenByAddress = vi.fn((address: string) => {
-        if (address === TEST_ICP_LEDGER_CANISTER_ID || address === MOCK_ICP_LEDGER_CANISTER_ID) {
+        if (
+          address === TEST_ICP_LEDGER_CANISTER_ID ||
+          address === MOCK_ICP_LEDGER_CANISTER_ID
+        ) {
           return Ok(mockTokenICP);
         }
         return Err(new Error("Token not found"));
@@ -228,7 +250,10 @@ describe("feesBreakdown", () => {
 
       const findTokenByAddress = vi.fn((address: string) => {
         // This will be called twice: once for network fee, once for link creation fee
-        if (address === TEST_ICP_LEDGER_CANISTER_ID || address === MOCK_ICP_LEDGER_CANISTER_ID) {
+        if (
+          address === TEST_ICP_LEDGER_CANISTER_ID ||
+          address === MOCK_ICP_LEDGER_CANISTER_ID
+        ) {
           return Ok(tokenWithoutPrice);
         }
         return Err(new Error("Token not found"));
@@ -243,7 +268,8 @@ describe("feesBreakdown", () => {
       const networkFee = result.find(
         (fee) =>
           fee.name === "Network fees" &&
-          (fee.tokenAddress === TEST_ICP_LEDGER_CANISTER_ID || fee.tokenAddress === MOCK_ICP_LEDGER_CANISTER_ID),
+          (fee.tokenAddress === TEST_ICP_LEDGER_CANISTER_ID ||
+            fee.tokenAddress === MOCK_ICP_LEDGER_CANISTER_ID),
       );
       expect(networkFee).toBeDefined();
       expect(networkFee?.usdAmount).toBe(0);
@@ -371,7 +397,10 @@ describe("feesBreakdown", () => {
       ];
 
       const findTokenByAddress = vi.fn((address: string) => {
-        if (address === TEST_ICP_LEDGER_CANISTER_ID || address === MOCK_ICP_LEDGER_CANISTER_ID) {
+        if (
+          address === TEST_ICP_LEDGER_CANISTER_ID ||
+          address === MOCK_ICP_LEDGER_CANISTER_ID
+        ) {
           return Ok(mockTokenICP);
         }
         if (address === "token-usdc-address") {
@@ -419,7 +448,10 @@ describe("feesBreakdown", () => {
       ];
 
       const findTokenByAddress = vi.fn((address: string) => {
-        if (address === TEST_ICP_LEDGER_CANISTER_ID || address === MOCK_ICP_LEDGER_CANISTER_ID) {
+        if (
+          address === TEST_ICP_LEDGER_CANISTER_ID ||
+          address === MOCK_ICP_LEDGER_CANISTER_ID
+        ) {
           return Ok(mockTokenICP);
         }
         return Err(new Error("Token not found"));
@@ -444,7 +476,10 @@ describe("feesBreakdown", () => {
       ];
 
       const findTokenByAddress = vi.fn((address: string) => {
-        if (address === TEST_ICP_LEDGER_CANISTER_ID || address === MOCK_ICP_LEDGER_CANISTER_ID) {
+        if (
+          address === TEST_ICP_LEDGER_CANISTER_ID ||
+          address === MOCK_ICP_LEDGER_CANISTER_ID
+        ) {
           return Ok(mockTokenICP);
         }
         return Err(new Error("Token not found"));
@@ -470,7 +505,10 @@ describe("feesBreakdown", () => {
       ];
 
       const findTokenByAddress = vi.fn((address: string) => {
-        if (address === TEST_ICP_LEDGER_CANISTER_ID || address === MOCK_ICP_LEDGER_CANISTER_ID) {
+        if (
+          address === TEST_ICP_LEDGER_CANISTER_ID ||
+          address === MOCK_ICP_LEDGER_CANISTER_ID
+        ) {
           return Ok(tokenWithoutPrice);
         }
         return Err(new Error("Token not found"));
@@ -558,4 +596,3 @@ describe("feesBreakdown", () => {
     });
   });
 });
-

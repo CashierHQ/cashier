@@ -11,9 +11,7 @@ describe("getTokenLogo", () => {
   it("should return icexplorer URL for other token addresses", () => {
     const otherTokenAddress = "ryjl3-tyaaa-aaaaa-aaaba-cai";
     const logo = getTokenLogo(otherTokenAddress);
-    expect(logo).toBe(
-      `https://api.icexplorer.io/images/${otherTokenAddress}`,
-    );
+    expect(logo).toBe(`https://api.icexplorer.io/images/${otherTokenAddress}`);
   });
 
   it("should return icexplorer URL for different token addresses", () => {
@@ -32,4 +30,3 @@ describe("getTokenLogo", () => {
     expect(logo).toBe("https://api.icexplorer.io/images/");
   });
 });
-

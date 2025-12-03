@@ -109,15 +109,11 @@ describe("linkItemHelpers", () => {
     });
 
     it("should return Receive Payment for RECEIVE_PAYMENT link type", () => {
-      expect(getLinkTypeText(LinkType.RECEIVE_PAYMENT)).toBe(
-        "Receive Payment",
-      );
+      expect(getLinkTypeText(LinkType.RECEIVE_PAYMENT)).toBe("Receive Payment");
     });
 
     it("should return Send Token Basket for TOKEN_BASKET link type", () => {
-      expect(getLinkTypeText(LinkType.TOKEN_BASKET)).toBe(
-        "Send Token Basket",
-      );
+      expect(getLinkTypeText(LinkType.TOKEN_BASKET)).toBe("Send Token Basket");
     });
   });
 
@@ -157,4 +153,3 @@ describe("linkItemHelpers", () => {
     });
   });
 });
-
