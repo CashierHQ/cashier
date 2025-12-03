@@ -4,6 +4,7 @@ import "./just/code_check.just"
 import "./just/dfx.just"
 import "./just/run.just"
 import "./just/test.just"
+import "./just/orbit.just"
 
 export RUST_BACKTRACE := "full"
 FRONTEND_DIR_NEW := "./src/cashier_frontend_new"
