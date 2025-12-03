@@ -16,7 +16,7 @@ export const KONGSWAP_INDEX_CANISTER_ID =
 export const IC_EXPLORER_BASE_URL = PUBLIC_TOKEN_IC_EXPLORER_BASE_URL;
 
 // The ICP Ledger canister id
-export const ICP_LEDGER_CANISTER_ID = PUBLIC_TOKEN_ICP_LEDGER_CANISTER_ID;
+export const ICP_LEDGER_CANISTER_ID = PUBLIC_TOKEN_ICP_LEDGER_CANISTER_ID || "ryjl3-tyaaa-aaaaa-aaaba-cai";
 export const ICP_LEDGER_FEE = 10_000n;
 
 // Address type
