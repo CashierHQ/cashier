@@ -7,10 +7,16 @@
   type Props = {
     totalFeesUsd: number;
     isClickable?: boolean;
-    onInfoClick?: () => void;
+    onInfoClick?: () => void; // Handler for info icon button click
+    onBreakdownClick?: () => void; // Handler for breakdown button click (with ChevronRight)
   };
 
-  let { totalFeesUsd, isClickable = false, onInfoClick }: Props = $props();
+  let {
+    totalFeesUsd,
+    isClickable = false,
+    onInfoClick,
+    onBreakdownClick,
+  }: Props = $props();
 </script>
 
 <div class="input-label-field-container">
@@ -18,15 +24,21 @@
     <Label class="font-medium text-sm"
       >{locale.t("links.linkForm.preview.feesBreakdown")}</Label
     >
-    <button class="flex items-center gap-1 cursor-pointer" type="button">
-      <Info size={18} color="#36A18B" />
-    </button>
+    {#if isClickable && onInfoClick}
+      <button
+        class="flex items-center gap-1 cursor-pointer"
+        type="button"
+        onclick={onInfoClick}
+      >
+        <Info size={18} color="#36A18B" />
+      </button>
+    {/if}
   </div>
-  {#if isClickable && onInfoClick}
+  {#if isClickable && onBreakdownClick}
     <button
       type="button"
       class="border-[1px] rounded-lg border-lightgreen px-4 py-3 w-full text-left cursor-pointer hover:bg-gray-50 transition-colors"
-      onclick={onInfoClick}
+      onclick={onBreakdownClick}
     >
       <div class="flex justify-between items-center">
         <p class="text-[14px] font-medium">
