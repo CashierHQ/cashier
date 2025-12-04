@@ -38,7 +38,7 @@
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let isProcessingLocally: boolean = $state(false);
-  
+
   // Combine local processing state with external processing state
   const isProcessing = $derived.by(() => {
     return isProcessingLocally || (externalIsProcessing ?? false);
@@ -262,7 +262,7 @@
                 linkCreationFee={linkCreationFee || undefined}
                 {isProcessing}
                 hasError={!!errorMessage}
-              />              
+              />
 
               <FeesBreakdownSection
                 {totalFeesUsd}

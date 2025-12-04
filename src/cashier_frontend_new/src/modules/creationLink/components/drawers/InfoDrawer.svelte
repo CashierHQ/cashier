@@ -4,11 +4,9 @@
     DrawerContent,
     DrawerHeader,
     DrawerTitle,
-    DrawerClose,
   } from "$lib/shadcn/components/ui/drawer";
   import { Button } from "$lib/shadcn/components/ui/button";
   import { locale } from "$lib/i18n";
-  import { X } from "lucide-svelte";
   import { ChevronLeft } from "lucide-svelte";
 
   type Props = {
@@ -69,4 +67,3 @@
     </Button>
   </DrawerContent>
 </Drawer>
-
