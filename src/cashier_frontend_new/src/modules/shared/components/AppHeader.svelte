@@ -77,7 +77,7 @@
   {/if}
 
   {#if userProfile.isLoggedIn()}
-    <div class="flex items-center">
+    <div class="flex items-center py-px">
       <WalletButton onClick={handleWalletClick} />
       <MenuButton />
     </div>

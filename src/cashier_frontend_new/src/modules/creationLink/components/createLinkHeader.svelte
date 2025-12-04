@@ -25,6 +25,9 @@
     if (step === LinkStep.ADD_ASSET) {
       return locale.t("links.linkForm.header.addAssets");
     }
+    if (step === LinkStep.PREVIEW) {
+      return locale.t("links.linkForm.header.createLink");
+    }
     return (
       link.createLinkData.title.trim() ||
       locale.t("links.linkForm.header.linkName")
