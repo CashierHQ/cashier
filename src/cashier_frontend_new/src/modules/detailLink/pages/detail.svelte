@@ -45,7 +45,6 @@
 
   let showCopied: boolean = $state(false);
   let errorMessage: string | null = $state(null);
-  let successMessage: string | null = $state(null);
   let showTxCart: boolean = $state(false);
   let showFeeInfoDrawer = $state(false); // For breakdown button (with ChevronRight)
   let showFeeInfoDescriptionDrawer = $state(false); // For info icon button
@@ -206,7 +205,6 @@
 
   async function endLink() {
     errorMessage = null;
-    successMessage = null;
     isEndingLink = true;
 
     try {
@@ -214,7 +212,7 @@
       await linkStore.disableLink();
       // Refresh to get updated link state and any withdraw action
       await linkStore.query.refresh();
-      
+
       // Wait for withdraw action to appear (if it should be created)
       // Try up to 5 times with 200ms delay between attempts
       let attempts = 0;
@@ -223,11 +221,10 @@
         await linkStore.query.refresh();
         attempts++;
       }
-      
+
       const successMsg = locale.t(
         "links.linkForm.detail.messages.linkEndedSuccess",
       );
-      successMessage = successMsg;
       toast.success(successMsg);
       // If there's a withdraw action after ending the link, open txCart
       if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
@@ -255,17 +252,20 @@
   async function createWithdrawAction() {
     errorMessage = null;
     isCreatingWithdraw = true;
-    
+
     try {
       // First, try to refresh and check if action already exists
       // This handles the case when action was created by endLink() but hasn't loaded yet
       let attempts = 0;
-      while (attempts < 3 && (!linkStore.action || linkStore.action.type !== ActionType.WITHDRAW)) {
+      while (
+        attempts < 3 &&
+        (!linkStore.action || linkStore.action.type !== ActionType.WITHDRAW)
+      ) {
         await linkStore.query.refresh();
         await new Promise((resolve) => setTimeout(resolve, 300));
         attempts++;
       }
-      
+
       // If action already exists, just open the drawer
       if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
         showTxCart = true;
@@ -283,15 +283,18 @@
       await linkStore.query.refresh();
       // Wait a bit for the query to update the action
       await new Promise((resolve) => setTimeout(resolve, 300));
-      
+
       // Try to find the action with multiple refresh attempts
       attempts = 0;
-      while (attempts < 3 && (!linkStore.action || linkStore.action.type !== ActionType.WITHDRAW)) {
+      while (
+        attempts < 3 &&
+        (!linkStore.action || linkStore.action.type !== ActionType.WITHDRAW)
+      ) {
         await linkStore.query.refresh();
         await new Promise((resolve) => setTimeout(resolve, 300));
         attempts++;
       }
-      
+
       // Open drawer if action exists
       if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
         showTxCart = true;
@@ -317,12 +320,15 @@
       ) {
         // Refresh to get the existing action - try multiple times with longer waits
         let attempts = 0;
-        while (attempts < 10 && (!linkStore.action || linkStore.action.type !== ActionType.WITHDRAW)) {
+        while (
+          attempts < 10 &&
+          (!linkStore.action || linkStore.action.type !== ActionType.WITHDRAW)
+        ) {
           await linkStore.query.refresh();
           await new Promise((resolve) => setTimeout(resolve, 300));
           attempts++;
         }
-        
+
         // Open modal if action exists (it should exist if we got "already exists" error)
         if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
           showTxCart = true;
@@ -354,7 +360,9 @@
     const result = await linkStore.processAction();
     if (result.isSuccess) {
       await linkStore.query.refresh();
-      toast.success(locale.t("links.linkForm.detail.messages.transactionSuccess"));
+      toast.success(
+        locale.t("links.linkForm.detail.messages.transactionSuccess"),
+      );
     } else {
       toast.error(locale.t("links.linkForm.detail.messages.transactionFailed"));
     }
@@ -387,7 +395,7 @@
   {locale.t("links.linkForm.detail.loading")}
 {:else if linkStore.query.data && linkStore.link}
   <div class="space-y-4 flex flex-col h-full grow-1 relative">
-    <DetailLinkHeader {linkStore} onBack={onBack} />
+    <DetailLinkHeader {linkStore} {onBack} />
     {#if errorMessage}
       <div
         class="mb-4 p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
@@ -538,48 +546,41 @@
   <ConfirmDrawer
     bind:open={showFirstEndLinkConfirm}
     title={locale.t("links.linkForm.detail.endLinkConfirm.title")}
-    confirmButtonText={locale.t("links.linkForm.detail.endLinkConfirm.firstStep.confirmButton")}
+    confirmButtonText={locale.t(
+      "links.linkForm.detail.endLinkConfirm.firstStep.confirmButton",
+    )}
     onConfirm={handleFirstConfirm}
   >
-    {#snippet children()}
-      <div class="pb-4 flex flex-col gap-4">
-        <div class="w-12 h-12 rounded-full bg-[#E8F2EE] flex items-center justify-center">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M18.84 12.25L20.56 10.54H20.54C21.4606 9.58603 21.9651 8.30572 21.9426 6.98017C21.9201 5.65461 21.3725 4.39216 20.42 3.46999C19.4869 2.57019 18.2412 2.06738 16.945 2.06738C15.6488 2.06738 14.4031 2.57019 13.47 3.46999L11.75 5.17999" stroke="#36A18B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M5.16994 11.75L3.45994 13.46C2.53931 14.414 2.03486 15.6943 2.05736 17.0198C2.07986 18.3454 2.62746 19.6078 3.57994 20.53C4.51299 21.4298 5.7587 21.9326 7.05494 21.9326C8.35118 21.9326 9.59689 21.4298 10.5299 20.53L12.2399 18.82" stroke="#36A18B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M8 2V5" stroke="#36A18B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 8H5" stroke="#36A18B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M16 19V22" stroke="#36A18B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M19 16H22" stroke="#36A18B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>            
-        </div>
-        <p class="text-[14px] font-normal text-[#222222]">
-          {locale.t("links.linkForm.detail.endLinkConfirm.firstStep.text")}
-        </p>
+    <div class="pb-4 flex flex-col gap-4">
+      <div
+        class="w-12 h-12 rounded-full bg-[#E8F2EE] flex items-center justify-center"
+      >
+        <img src="/end-link-confirm-first.svg" alt="" width="24" height="24" />
       </div>
-    {/snippet}
+      <p class="text-[14px] font-normal text-[#222222]">
+        {locale.t("links.linkForm.detail.endLinkConfirm.firstStep.text")}
+      </p>
+    </div>
   </ConfirmDrawer>
 
   <ConfirmDrawer
     bind:open={showSecondEndLinkConfirm}
     title={locale.t("links.linkForm.detail.endLinkConfirm.title")}
-    confirmButtonText={locale.t("links.linkForm.detail.endLinkConfirm.secondStep.deleteButton")}
+    confirmButtonText={locale.t(
+      "links.linkForm.detail.endLinkConfirm.secondStep.deleteButton",
+    )}
     confirmButtonVariant="destructive"
     onConfirm={handleFinalConfirm}
   >
-    {#snippet children()}
-      <div class="pb-4 flex flex-col gap-4">
-        <div class="w-12 h-12 rounded-full bg-[#FCE8E8] flex items-center justify-center">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6" stroke="#D26060" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M3 6H21" stroke="#D26060" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6" stroke="#D26060" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>                      
-        </div>
-        <p class="text-[14px] font-normal text-[#222222]">
-          {locale.t("links.linkForm.detail.endLinkConfirm.secondStep.text")}
-        </p>
+    <div class="pb-4 flex flex-col gap-4">
+      <div
+        class="w-12 h-12 rounded-full bg-[#FCE8E8] flex items-center justify-center"
+      >
+        <img src="/end-link-confirm-second.svg" alt="" width="24" height="24" />
       </div>
-    {/snippet}
+      <p class="text-[14px] font-normal text-[#222222]">
+        {locale.t("links.linkForm.detail.endLinkConfirm.secondStep.text")}
+      </p>
+    </div>
   </ConfirmDrawer>
 {/if}
