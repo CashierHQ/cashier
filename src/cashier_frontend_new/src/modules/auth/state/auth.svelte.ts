@@ -18,6 +18,7 @@ import { PersistedState } from "runed";
 import { DelegationIdentity } from "@dfinity/identity";
 import { SessionManager } from "../services/sessionManager";
 import { calculateDelegationExpirationMs } from "../utils/calculateDelegationExpirationMs";
+import { isSessionExpired } from "../utils/isSessionExpired";
 
 // Config for PNP instance
 const CONFIG: CreatePnpArgs = {
@@ -69,10 +70,13 @@ let logoutHandler: (() => void) | null = null;
 let loginHandler: (() => void) | null = null;
 
 // state to store connected wallet ID for reconnecting later
-const connectedWalletId = new PersistedState<{ id: string | null }>(
-  "connectedWallet",
-  { id: null },
-);
+const walletConnect = new PersistedState<{
+  id: string | null;
+  expiredAtMs: number | null;
+}>("connectedWallet", {
+  id: null,
+  expiredAtMs: null,
+});
 
 // state to indicate if we are reconnecting
 let isConnecting = $state(false);
@@ -88,19 +92,44 @@ let account = $state<{
 
 let sessionManager: SessionManager | null = null;
 
-// Initialize PNP instance,
+/**
+ * Clear persisted wallet connect state
+ */
+const resetLoginState = () => {
+  walletConnect.current = {
+    id: null,
+    expiredAtMs: null,
+  };
+  account = null;
+};
+
+// Initialize PNP instance
 const initPnp = async () => {
   if (pnp) {
     return;
   }
   pnp = createPNP(CONFIG);
 
-  if (connectedWalletId.current.id) {
+  const walletId = walletConnect.current.id;
+
+  // If session is expired, clear persisted state and do not reconnect
+  if (
+    walletConnect.current.expiredAtMs &&
+    isSessionExpired(walletConnect.current.expiredAtMs)
+  ) {
+    resetLoginState();
+    isReady = true;
+    return;
+  } else if (walletId) {
+    // try to reconnect
     try {
-      await inner_login(connectedWalletId.current.id);
+      await authState.login(walletId);
     } catch (error) {
       console.error("Auto-reconnect failed:", error);
     }
+  } else {
+    // unknown state, clear persisted state
+    resetLoginState();
   }
 
   isReady = true;
@@ -267,8 +296,8 @@ broadcastChannel.onMessage((message) => {
   switch (message) {
     case BroadcastMessageLogin:
       console.log("Broadcast login received");
-      if (connectedWalletId.current.id) {
-        inner_login(connectedWalletId.current.id);
+      if (walletConnect.current.id) {
+        inner_login(walletConnect.current.id);
       }
       break;
     case BroadcastMessageLogout:
@@ -290,8 +319,7 @@ const inner_logout = async () => {
   }
   try {
     await pnp.disconnect();
-    account = null;
-    connectedWalletId.current.id = null;
+    resetLoginState();
   } catch (error) {
     console.error("Logout failed:", error);
     throw error;
@@ -320,6 +348,11 @@ const setupSessionManager = async (walletId: string) => {
     delegationIdentity.getDelegation(),
   );
 
+  // Store last logged in timestamp for session expiration check on next init
+  walletConnect.current = {
+    id: walletId,
+    expiredAtMs: Date.now() + delegationExpirationInMillis,
+  };
   if (delegationExpirationInMillis <= 0) {
     await inner_logout();
     return;
@@ -349,7 +382,7 @@ const inner_login = async (walletId: string) => {
       owner: res.owner,
       subaccount: res.subaccount,
     };
-    connectedWalletId.current.id = walletId;
+    walletConnect.current.id = walletId;
   } catch (error) {
     console.error("Login failed:", error);
     throw error;
