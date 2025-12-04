@@ -76,3 +76,25 @@ export function getLinkTypeText(linkType: LinkTypeValue): string {
       assertUnreachable(linkType);
   }
 }
+
+/**
+ * Check if link type is a send type (TIP, AIRDROP, TOKEN_BASKET)
+ * @param linkType - Link type to check
+ * @returns true if link type is a send type
+ */
+export function isSendLinkType(linkType: LinkTypeValue): boolean {
+  return (
+    linkType === LinkType.TIP ||
+    linkType === LinkType.AIRDROP ||
+    linkType === LinkType.TOKEN_BASKET
+  );
+}
+
+/**
+ * Check if link type is a payment link (RECEIVE_PAYMENT)
+ * @param linkType - Link type to check
+ * @returns true if link type is a payment link
+ */
+export function isPaymentLinkType(linkType: LinkTypeValue): boolean {
+  return linkType === LinkType.RECEIVE_PAYMENT;
+}

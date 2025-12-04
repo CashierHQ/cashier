@@ -5,7 +5,6 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
 
   let currentPath = $derived.by(() => page.url.pathname);
-  //console.log("Current Path:", $state.snapshot(currentPath));
 </script>
 
 <div class="py-4">

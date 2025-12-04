@@ -2,7 +2,7 @@
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { formatTokenPrice } from "$modules/shared/utils/formatNumber";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
+  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
 
   type Props = {
     token: TokenWithPriceAndBalance;
@@ -19,14 +19,6 @@
     failedImageLoads,
     onImageError,
   }: Props = $props();
-
-  // Get token logo URL
-  function getTokenLogo(address: string): string {
-    if (address === ICP_LEDGER_CANISTER_ID) {
-      return "/icpLogo.png";
-    }
-    return `https://api.icexplorer.io/images/${address}`;
-  }
 
   // Format token balance
   function formatBalance(balance: bigint, decimals: number): string {

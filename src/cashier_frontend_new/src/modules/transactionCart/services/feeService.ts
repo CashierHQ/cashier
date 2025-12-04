@@ -3,7 +3,10 @@ import { ActionType } from "$modules/links/types/action/actionType";
 import IntentTask from "$modules/links/types/action/intentTask";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import { formatNumber } from "$modules/shared/utils/formatNumber";
-import { ICP_LEDGER_FEE } from "$modules/token/constants";
+import {
+  ICP_LEDGER_FEE,
+  ICP_LEDGER_CANISTER_ID,
+} from "$modules/token/constants";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 
 import { assertUnreachable } from "$lib/rsMatch";
@@ -202,6 +205,19 @@ export class FeeService {
     });
 
     return pairs;
+  }
+
+  /**
+   * Get link creation fee information
+   * @returns Object with fee amount, token address, symbol, and decimals
+   */
+  getLinkCreationFee() {
+    return {
+      amount: 10_000n, // 0.0001 ICP in e8s
+      tokenAddress: ICP_LEDGER_CANISTER_ID,
+      symbol: "ICP",
+      decimals: 8,
+    };
   }
 }
 
