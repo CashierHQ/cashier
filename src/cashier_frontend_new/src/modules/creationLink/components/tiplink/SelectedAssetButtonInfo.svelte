@@ -1,7 +1,7 @@
 <script lang="ts">
   import { ChevronDown } from "lucide-svelte";
-  import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
+  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
 
   type Props = {
     selectedToken?: TokenWithPriceAndBalance | null;
@@ -16,11 +16,7 @@
 
   // Get token logo URL based on token address
   const tokenLogo = $derived(
-    selectedToken
-      ? selectedToken.address === ICP_LEDGER_CANISTER_ID
-        ? "/icpLogo.png"
-        : `https://api.icexplorer.io/images/${selectedToken.address}`
-      : null,
+    selectedToken ? getTokenLogo(selectedToken.address) : null,
   );
 
   // Reset image load failed state only when token address actually changes
