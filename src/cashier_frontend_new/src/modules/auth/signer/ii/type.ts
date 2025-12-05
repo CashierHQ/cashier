@@ -1,3 +1,5 @@
+import type { IdleOptions } from "@dfinity/auth-client";
+
 export enum Status {
   CONNECTING = "CONNECTING",
   CONNECTED = "CONNECTED",
@@ -32,6 +34,7 @@ interface GlobalPnpConfig {
 // Configuration options specific to the Internet Identity adapter
 export interface IIAdapterConfig extends GlobalPnpConfig {
   iiProviderUrl?: string;
+  idleOptions?: IdleOptions;
 }
 
 // copy from windoge98/plug-n-play, they don't export this function

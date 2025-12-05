@@ -37,7 +37,12 @@
   const txCartStore = new TransactionCartStore(action, handleProcessAction);
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
-  let isProcessing: boolean = $state(externalIsProcessing ?? false);
+  let isProcessingLocally: boolean = $state(false);
+
+  // Combine local processing state with external processing state
+  const isProcessing = $derived.by(() => {
+    return isProcessingLocally || (externalIsProcessing ?? false);
+  });
 
   const assetAndFeeList: AssetAndFee[] = $derived.by(() => {
     const list = feeService.mapActionToAssetAndFeeList(
@@ -164,7 +169,7 @@
    * Handle confirm button click.
    */
   async function handleConfirm() {
-    isProcessing = true;
+    isProcessingLocally = true;
     errorMessage = null;
     successMessage = null;
 
@@ -181,7 +186,7 @@
     } catch (e) {
       errorMessage = `${locale.t("links.linkForm.drawers.txCart.errorMessagePrefix")} ${(e as Error).message}`;
     } finally {
-      isProcessing = false;
+      isProcessingLocally = false;
     }
   }
 
@@ -256,6 +261,13 @@
                 onImageError={handleImageError}
                 linkCreationFee={linkCreationFee || undefined}
                 {isProcessing}
+                hasError={!!errorMessage}
+              />
+
+              <FeesBreakdownSection
+                {totalFeesUsd}
+                isClickable={false}
+                onInfoClick={() => (showFeeBreakdown = true)}
               />
             {/if}
 
@@ -266,14 +278,9 @@
                 onImageError={handleImageError}
                 {isProcessing}
                 isReceive={true}
+                hasError={!!errorMessage}
               />
             {/if}
-
-            <FeesBreakdownSection
-              {totalFeesUsd}
-              isClickable={false}
-              onInfoClick={() => (showFeeBreakdown = true)}
-            />
 
             <p class="mt-2 text-sm">
               {locale.t("links.linkForm.drawers.txCart.termsAgreement")}

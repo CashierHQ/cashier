@@ -187,30 +187,55 @@
         },
         "feeInfo": {
           "title": "Fee Information",
-          "cashierFeeHeader": "Cashier Fee",
-          "cashierFeeText": "Cashier charges a small fee for processing transactions through the platform.",
-          "networkFeeHeader": "Network Fee",
-          "networkFeeText": [
-            "Network fees are charged by the blockchain network for processing transactions.",
-            "These fees vary based on network congestion and transaction complexity."
-          ],
+          "linkCreationFeeHeader": "Link creation fee",
+          "linkCreationFeeText": "Cashier charges a modest fee for creating links. The fees help us operate and improve Cashier.",
+          "networkFeeHeader": "Network fee",
+          "networkFeeText1": "Network fees are charged by the blockchains, not by Cashier, as a payment to transfer assets on the blockchain. Cashier collects network fees to facilitate these transfer payments.",
+          "networkFeeText2": "When an asset is sent to the link, network fee is charged. The amount may depend on the blockchain.",
+          "networkFeeText3": "When an asset is received from the link, network fee is charged. Cashier pre-emptively collects these network fees from the link creator, so that the receiver does not have to pay a network fee to receive assets from the link.",
           "closeButton": "Close"
+        },
+        "assetTransferInfo": {
+          "title": "Info on asset transfer to link",
+          "text1": "Cashier will hold the assets in a vault, until someone claims them from the link you share.",
+          "text2": "You may end the link and withdraw the assets, if no-one claims the assets."
         }
       },
       "detail": {
         "loading": "Loading...",
         "endLink": "End link",
         "copyLink": "Copy link",
-        "copied": "Copied",
+        "copied": "Copied successfully",
         "copyFailed": "Failed to copy link",
         "withdraw": "Withdraw",
         "create": "Create",
         "goToLinks": "Go to links",
+        "linkInfo": "Link info",
+        "usageInfo": "Usage info",
+        "assetsInLink": "Assets in link",
+        "withdrawAssets": "Withdraw assets",
         "messages": {
           "linkEndedSuccess": "Link ended successfully.",
           "failedToEndLink": "Failed to end link.",
           "failedToCreateWithdrawAction": "Failed to create withdraw action.",
-          "withdrawActionCreated": "Withdraw action created successfully."
+          "withdrawActionCreated": "Withdraw action created successfully.",
+          "transactionSuccess": "Transaction success!",
+          "transactionFailed": "Transaction failed!"
+        },
+        "endLinkConfirm": {
+          "title": "End link",
+          "firstStep": {
+            "text": "Ending the link will deactivate the link page, and you will need not be able to retrieve the remaining assets.",
+            "confirmButton": "Confirm"
+          },
+          "secondStep": {
+            "text": "Are you sure you want to end the link? This action cannot be undone.",
+            "deleteButton": "Delete"
+          }
+        },
+        "error": {
+          "use_without_login_or_wallet": "You need to login or input your wallet",
+          "unknown_action_state": "Unknown action state"
         }
       }
     }

@@ -1,6 +1,6 @@
 <script lang="ts">
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import { Info } from "lucide-svelte";
+  import { Info, X } from "lucide-svelte";
   import { locale } from "$lib/i18n";
   import {
     formatNumber,
@@ -8,6 +8,7 @@
   } from "$modules/shared/utils/formatNumber";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import { formatLinkCreationFeeDisplay } from "$modules/links/utils/feesBreakdown";
+  import AssetTransferInfoDrawer from "../drawers/AssetTransferInfoDrawer.svelte";
 
   type AssetWithTokenInfo = {
     address: string;
@@ -34,6 +35,9 @@
     };
     isProcessing?: boolean;
     isReceive?: boolean; // If true, show "You receive" instead of "You send"
+    isClickable?: boolean; // If false, hide info buttons
+    onInfoClick?: () => void; // Handler for info button click
+    hasError?: boolean; // If true, show error icon instead of spinner
   };
 
   let {
@@ -43,7 +47,20 @@
     linkCreationFee,
     isProcessing = false,
     isReceive = false,
+    isClickable = false,
+    onInfoClick,
+    hasError = false,
   }: Props = $props();
+
+  let assetTransferInfoDrawerOpen = $state(false);
+
+  function handleInfoClick() {
+    if (onInfoClick) {
+      onInfoClick();
+    } else {
+      assetTransferInfoDrawerOpen = true;
+    }
+  }
 
   // Calculate link creation fee display
   const linkCreationFeeDisplay = $derived.by(() => {
@@ -73,9 +90,15 @@
         </span>
       {/if}
     </div>
-    <div class="flex items-center gap-1">
-      <Info size={18} color="#36A18B" />
-    </div>
+    {#if isClickable}
+      <button
+        type="button"
+        class="flex items-center gap-1 cursor-pointer"
+        onclick={handleInfoClick}
+      >
+        <Info size={18} color="#36A18B" />
+      </button>
+    {/if}
   </div>
   <div
     class="border-[1px] rounded-lg border-lightgreen px-4 py-3 flex flex-col gap-3"
@@ -83,7 +106,9 @@
     {#each assetsWithTokenInfo as asset (asset.address)}
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-1.5">
-          {#if isProcessing}
+          {#if hasError}
+            <X size={16} class="text-red-600" stroke-width={2.5} />
+          {:else if isProcessing}
             <div
               class="w-4 h-4 border-2 border-green border-t-transparent rounded-full animate-spin"
             ></div>
@@ -122,7 +147,9 @@
       <div class="flex flex-col gap-3">
         <div class="flex justify-between items-center">
           <div class="flex items-center gap-1.5">
-            {#if isProcessing}
+            {#if hasError}
+              <X size={16} class="text-red-600" stroke-width={2.5} />
+            {:else if isProcessing}
               <div
                 class="w-4 h-4 border-2 border-green border-t-transparent rounded-full animate-spin"
               ></div>
@@ -152,3 +179,7 @@
     {/if}
   </div>
 </div>
+
+{#if !isReceive}
+  <AssetTransferInfoDrawer bind:open={assetTransferInfoDrawerOpen} />
+{/if}

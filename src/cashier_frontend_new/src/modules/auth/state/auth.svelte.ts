@@ -7,7 +7,10 @@ import {
   IC_INTERNET_IDENTITY_PROVIDER,
   II_SIGNER_WALLET_ID,
 } from "$modules/shared/constants";
-import { TIMEOUT_NANO_SEC } from "$modules/auth/constants";
+import {
+  IDLE_TIMEOUT_MILLIS_SECOND,
+  TIMEOUT_NANO_SEC,
+} from "$modules/auth/constants";
 import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
 import { Actor, HttpAgent } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
@@ -55,6 +58,14 @@ const CONFIG: CreatePnpArgs = {
             : typeof window !== "undefined"
               ? window.location.origin
               : undefined,
+        // idle options
+        idleOptions: {
+          idleTimeout: IDLE_TIMEOUT_MILLIS_SECOND,
+          disableDefaultIdleCallback: false,
+          onIdle: () => {
+            authState.logout();
+          },
+        },
       },
     },
   },
