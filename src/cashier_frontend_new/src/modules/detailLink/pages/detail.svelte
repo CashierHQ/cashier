@@ -272,11 +272,6 @@
         return;
       }
 
-      // Create withdraw action if it doesn't exist
-      if (!linkStore.link) {
-        throw new Error("Link is missing");
-      }
-
       // Create withdraw action
       await linkStore.createAction(ActionType.WITHDRAW);
       // Refresh query to get the newly created action
