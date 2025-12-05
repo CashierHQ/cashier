@@ -1,12 +1,8 @@
-import { NANOS_IN_MILLIS, TIMEOUT_NANO_SEC } from "../constants";
-
 /**
- * Check if the stored session has expired based on initialization timestamp.
- * @returns true if session is expired or no timestamp exists
+ * Check if the stored session has expired based on expiration timestamp.
+ * @param expiredAtMs - The timestamp (in milliseconds) when the session expires
+ * @returns true if current time has passed the expiration timestamp
  */
 export const isSessionExpired = (expiredAtMs: number): boolean => {
-  return (
-    Date.now() - expiredAtMs >=
-    Number(BigInt(TIMEOUT_NANO_SEC) / NANOS_IN_MILLIS)
-  );
+  return Date.now() >= expiredAtMs;
 };
