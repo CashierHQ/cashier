@@ -7,6 +7,7 @@
     isPaymentLinkType,
   } from "$modules/links/utils/linkItemHelpers";
   import FeeInfoDrawer from "./drawers/FeeInfoDrawer.svelte";
+  import FeeInfoDescriptionDrawer from "./drawers/FeeInfoDescriptionDrawer.svelte";
   import { toast } from "svelte-sonner";
   import YouSendSection from "./previewSections/YouSendSection.svelte";
   import FeesBreakdownSection from "./previewSections/FeesBreakdownSection.svelte";
@@ -98,15 +99,20 @@
   let failedImageLoads = $state<Set<string>>(new Set());
 
   // Drawer states
-  let showFeeInfoDrawer = $state(false);
+  let showFeeInfoDrawer = $state(false); // For breakdown button (with ChevronRight)
+  let showFeeInfoDescriptionDrawer = $state(false); // For info icon button
 
   function handleImageError(address: string) {
     failedImageLoads.add(address);
   }
 
   // Handlers for info drawers
-  function handleFeeInfoClick() {
+  function handleFeeBreakdownClick() {
     showFeeInfoDrawer = true;
+  }
+
+  function handleFeeInfoClick() {
+    showFeeInfoDescriptionDrawer = true;
   }
 
   // Show toast notifications for error and success messages
@@ -150,6 +156,7 @@
       {failedImageLoads}
       onImageError={handleImageError}
       {linkCreationFee}
+      isClickable={true}
     />
   {/if}
 
@@ -158,6 +165,7 @@
     {totalFeesUsd}
     isClickable={true}
     onInfoClick={handleFeeInfoClick}
+    onBreakdownClick={handleFeeBreakdownClick}
   />
 
   <!-- Drawer Components -->
@@ -167,6 +175,11 @@
       showFeeInfoDrawer = false;
     }}
     {feesBreakdown}
-    {totalFeesUsd}
+  />
+  <FeeInfoDescriptionDrawer
+    bind:open={showFeeInfoDescriptionDrawer}
+    onClose={() => {
+      showFeeInfoDescriptionDrawer = false;
+    }}
   />
 </div>

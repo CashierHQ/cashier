@@ -52,7 +52,7 @@
                 <div
                   class="sm:max-h-[calc(100vh-156px)] max-h-[calc(100vh-86px)] overflow-y-auto scrollbar-hide flex flex-col grow-1"
                 >
-                  <DetailLink {id} />
+                  <DetailLink {id} onBack={handleBack} />
                 </div>
               </div>
             </div>
