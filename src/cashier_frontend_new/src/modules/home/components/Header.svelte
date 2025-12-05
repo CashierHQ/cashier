@@ -29,14 +29,7 @@
     <div class="flex justify-between items-center">
       <!-- Logo -->
       <CashierLogo href={resolve("/")} />
-      {#if authState.isConnecting}
-        <div class="flex items-center gap-2 text-sm text-muted-foreground">
-          <div
-            class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"
-          ></div>
-          <span>{locale.t("home.header.reconnecting")}</span>
-        </div>
-      {:else if authState.account}
+      {#if authState.account}
         <div class="flex items-center gap-4">
           <span class="text-sm text-muted-foreground">
             {locale.t("home.header.welcome")}
