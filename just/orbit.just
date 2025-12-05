@@ -15,8 +15,20 @@ orbit_upgrade_canisters mode network:
   just build_backend_args $(dfx identity get-principal) "$log_filter" "$backend_args_file"
   just build_token_storage_args $(dfx identity get-principal) "$log_filter" "$token_storage_args_file"
 
+  echo "=== Upgrading token_storage canister ==="
+  echo "args file used for token_storage:"
+  cat "$token_storage_args_file"
   just orbit_upgrade token_storage {{mode}} {{network}} "$token_storage_args_file"  2>&1 | grep -A7 "Upgrading canister"
+  echo "=== Token_storage canister upgrade completed ==="
+  echo ""
+  echo ""
+  echo ""
+
+  echo "=== Upgrading backend canister ==="
+  echo "args file used for backend:" 
+  cat "$backend_args_file"
   just orbit_upgrade cashier_backend {{mode}} {{network}} "$backend_args_file"   2>&1 | grep -A7 "Upgrading canister"
+  echo "=== Backend canister upgrade completed ==="
 
   rm -f "$backend_args_file" "$token_storage_args_file"
 
