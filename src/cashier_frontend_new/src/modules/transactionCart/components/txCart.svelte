@@ -3,7 +3,6 @@
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
   import type Action from "$modules/links/types/action/action";
   import type { ProcessActionResult } from "$modules/links/types/action/action";
-  import { getHeadingFromActionType } from "$modules/links/utils/txCart";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
     feeService,
@@ -12,26 +11,33 @@
   import { onMount } from "svelte";
   import { TransactionCartStore } from "../state/txCartStore.svelte";
   import { AssetProcessState } from "../types/txCart";
-  import AssetList from "./assetList.svelte";
-  import Fee from "./fee.svelte";
+  import YouSendSection from "$modules/creationLink/components/previewSections/YouSendSection.svelte";
+  import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import FeeBreakdown from "./feeBreakdown.svelte";
+  import { X } from "lucide-svelte";
+  import { ActionType } from "$modules/links/types/action/actionType";
+  import IntentTask from "$modules/links/types/action/intentTask";
+  import { locale } from "$lib/i18n";
+  import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
 
   let {
     action,
     isOpen,
     onCloseDrawer,
     handleProcessAction,
+    isProcessing: externalIsProcessing,
   }: {
     action: Action;
     isOpen: boolean;
     onCloseDrawer: () => void;
     handleProcessAction: () => Promise<ProcessActionResult>;
+    isProcessing?: boolean;
   } = $props();
 
   const txCartStore = new TransactionCartStore(action, handleProcessAction);
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
-  let isProcessing: boolean = $state(false);
+  let isProcessing: boolean = $state(externalIsProcessing ?? false);
 
   const assetAndFeeList: AssetAndFee[] = $derived.by(() => {
     const list = feeService.mapActionToAssetAndFeeList(
@@ -56,8 +62,103 @@
     return list;
   });
 
-  let assetTitle = $derived.by(() => getHeadingFromActionType(action.type));
   let showFeeBreakdown = $state(false);
+  let failedImageLoads = $state<Set<string>>(new Set());
+
+  function handleImageError(address: string) {
+    failedImageLoads.add(address);
+  }
+
+  // Convert action.intents to assetsWithTokenInfo format for YouSendSection
+  const assetsWithTokenInfo = $derived.by(() => {
+    if (action.type === ActionType.CREATE_LINK) {
+      // Get assets directly from intents, excluding link creation fee
+      const assets = action.intents
+        .filter((intent) => {
+          // Exclude TRANSFER_WALLET_TO_TREASURY (link creation fee)
+          return intent.task !== IntentTask.TRANSFER_WALLET_TO_TREASURY;
+        })
+        .map((intent) => ({
+          address: intent.type.payload.asset.address.toString(),
+          amount: intent.type.payload.amount,
+        }));
+
+      return calculateAssetsWithTokenInfo(
+        assets,
+        walletStore.findTokenByAddress.bind(walletStore),
+      );
+    }
+
+    if (action.type === ActionType.WITHDRAW) {
+      // For WITHDRAW, intent.amount is already the amount to be returned (after backend fee deduction)
+      // We show this amount and the network fee separately
+      const assets = action.intents.map((intent) => ({
+        address: intent.type.payload.asset.address.toString(),
+        amount: intent.type.payload.amount, // Amount to be returned
+      }));
+
+      return calculateAssetsWithTokenInfo(
+        assets,
+        walletStore.findTokenByAddress.bind(walletStore),
+      );
+    }
+
+    return [];
+  });
+
+  // Calculate total fees in USD
+  const totalFeesUsd = $derived.by(() => {
+    return assetAndFeeList.reduce(
+      (total, item) => total + (item.fee?.usdValue || 0),
+      0,
+    );
+  });
+
+  // Find link creation fee from fees
+  const linkCreationFee = $derived.by(() => {
+    // Find fee with CREATE_LINK_FEE type or TRANSFER_WALLET_TO_TREASURY task
+    const linkCreationFeeItem = assetAndFeeList.find(
+      (item) =>
+        item.fee?.feeType === "CREATE_LINK_FEE" ||
+        action.intents.some(
+          (intent) =>
+            intent.task === IntentTask.TRANSFER_WALLET_TO_TREASURY &&
+            intent.type.payload.asset.address.toString() === item.asset.address,
+        ),
+    );
+
+    if (!linkCreationFeeItem?.fee) return null;
+
+    const token = walletStore.query.data?.find(
+      (t) => t.address === linkCreationFeeItem.asset.address,
+    );
+    if (!token) return null;
+
+    // Parse fee amount from string
+    const feeAmountStr = linkCreationFeeItem.fee.amount.replace(/,/g, "");
+    const feeAmount = parseFloat(feeAmountStr);
+    const feeAmountBigInt = BigInt(
+      Math.round(feeAmount * Math.pow(10, token.decimals)),
+    );
+
+    return {
+      amount: feeAmountBigInt,
+      tokenAddress: linkCreationFeeItem.asset.address,
+      tokenSymbol: token.symbol,
+      tokenDecimals: token.decimals,
+      usdAmount: linkCreationFeeItem.fee.usdValue || 0,
+    };
+  });
+
+  // Check if this is a send link (CREATE_LINK action)
+  const isSendLink = $derived.by(() => {
+    return action.type === ActionType.CREATE_LINK;
+  });
+
+  // Check if this is a withdraw action
+  const isWithdraw = $derived.by(() => {
+    return action.type === ActionType.WITHDRAW;
+  });
 
   /**
    * Handle confirm button click.
@@ -70,13 +171,15 @@
     try {
       const processActionResult = await txCartStore.processAction();
       if (processActionResult.isSuccess) {
-        successMessage = "Process action completed successfully.";
+        successMessage = locale.t(
+          "links.linkForm.drawers.txCart.successMessage",
+        );
         onCloseDrawer?.();
       } else {
-        errorMessage = `Process action failed: ${processActionResult.errors.join(", ")}`;
+        errorMessage = `${locale.t("links.linkForm.drawers.txCart.errorMessagePrefix")} ${processActionResult.errors.join(", ")}`;
       }
     } catch (e) {
-      errorMessage = `Process action failed: ${(e as Error).message}`;
+      errorMessage = `${locale.t("links.linkForm.drawers.txCart.errorMessagePrefix")} ${(e as Error).message}`;
     } finally {
       isProcessing = false;
     }
@@ -102,40 +205,27 @@
 
 {#if action}
   <Drawer.Root bind:open={isOpen} onOpenChange={handleOpenChange}>
-    <Drawer.Content class="w-full lg:w-1/3">
-      <Drawer.Header class="relative">
-        <div>
-          <Drawer.Title class="text-left">Confirm transaction</Drawer.Title>
-          <Drawer.Description class="mt-1 text-sm text-muted-foreground">
-            Review and confirm the transaction above.
-          </Drawer.Description>
-        </div>
-
-        <Drawer.Close>
-          <Button
-            onclick={onCloseDrawer}
-            aria-label="Close"
-            class="absolute top-4 right-4 inline-flex items-center justify-center rounded-full w-8 h-8"
+    <Drawer.Content class="max-w-full w-[400px] mx-auto p-3">
+      <Drawer.Header>
+        <div class="flex justify-center items-center relative mb-2 px-3">
+          <Drawer.Title
+            class="text-[18px] font-semibold leading-[20px] px-8 text-center w-[100%]"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-4 w-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </Button>
-        </Drawer.Close>
+            {locale.t("links.linkForm.drawers.txCart.title")}
+          </Drawer.Title>
+          <Drawer.Close>
+            <X
+              size={28}
+              stroke-width={1.5}
+              class="absolute right-0 cursor-pointer top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100"
+              aria-hidden="true"
+              onclick={onCloseDrawer}
+            />
+          </Drawer.Close>
+        </div>
       </Drawer.Header>
 
-      <div class="px-4 pb-4">
+      <div class="px-4 pb-4 h-auto">
         {#if showFeeBreakdown}
           <!-- When showing breakdown, hide all other tx cart content -->
           <FeeBreakdown
@@ -158,30 +248,52 @@
             </div>
           {/if}
 
-          <AssetList title={assetTitle} {assetAndFeeList} />
+          <div class="mt-2 space-y-4">
+            {#if isSendLink && assetsWithTokenInfo.length > 0}
+              <YouSendSection
+                {assetsWithTokenInfo}
+                {failedImageLoads}
+                onImageError={handleImageError}
+                linkCreationFee={linkCreationFee || undefined}
+                {isProcessing}
+              />
+            {/if}
 
-          {#if assetAndFeeList && assetAndFeeList.length > 0 && assetAndFeeList.some((item) => item.fee)}
-            <Fee {assetAndFeeList} onOpen={() => (showFeeBreakdown = true)} />
-          {/if}
+            {#if isWithdraw && assetsWithTokenInfo.length > 0}
+              <YouSendSection
+                {assetsWithTokenInfo}
+                {failedImageLoads}
+                onImageError={handleImageError}
+                {isProcessing}
+                isReceive={true}
+              />
+            {/if}
 
-          <div class="px-4 pb-4 text-sm text-muted-foreground">
-            By confirming you agree execute the transaction above and agree to
-            the terms of service
+            <FeesBreakdownSection
+              {totalFeesUsd}
+              isClickable={false}
+              onInfoClick={() => (showFeeBreakdown = true)}
+            />
+
+            <p class="mt-2 text-sm">
+              {locale.t("links.linkForm.drawers.txCart.termsAgreement")}
+            </p>
           </div>
         {/if}
       </div>
 
       {#if !showFeeBreakdown}
-        <Drawer.Footer>
+        <div class="px-3 mb-2">
           <Button
-            class="flex gap-2 w-full"
+            class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
             onclick={handleConfirm}
             disabled={isProcessing}
-            variant="default"
           >
-            {isProcessing ? "Processing..." : "Confirm"}
+            {isProcessing
+              ? locale.t("links.linkForm.drawers.txCart.processingButton")
+              : locale.t("links.linkForm.drawers.txCart.confirmButton")}
           </Button>
-        </Drawer.Footer>
+        </div>
       {/if}
     </Drawer.Content>
   </Drawer.Root>

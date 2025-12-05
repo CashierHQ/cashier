@@ -1,8 +1,23 @@
 <script lang="ts">
-  import { resolve } from "$app/paths";
-  import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
+  import {
+    getLinkTypeText,
+    isSendLinkType,
+    isPaymentLinkType,
+  } from "$modules/links/utils/linkItemHelpers";
+  import FeeInfoDrawer from "./drawers/FeeInfoDrawer.svelte";
+  import { toast } from "svelte-sonner";
+  import YouSendSection from "./previewSections/YouSendSection.svelte";
+  import FeesBreakdownSection from "./previewSections/FeesBreakdownSection.svelte";
+  import LinkInfoSection from "./previewSections/LinkInfoSection.svelte";
+  import TransactionLockSection from "./previewSections/TransactionLockSection.svelte";
+  import {
+    calculateFeesBreakdown,
+    calculateTotalFeesUsd,
+    getLinkCreationFeeFromBreakdown,
+    calculateAssetsWithTokenInfo,
+  } from "$modules/links/utils/feesBreakdown";
 
   const {
     link,
@@ -14,69 +29,144 @@
     successMessage: string | null;
   } = $props();
 
-  let amountPerAsset = $derived.by(() => {
+  // Check if link type is send type (TIP, AIRDROP, TOKEN_BASKET)
+  const isSendLink = $derived.by(() => {
+    return isSendLinkType(link.createLinkData.linkType);
+  });
+
+  // Check if link type is receive link
+  const isPaymentLink = $derived.by(() => {
+    return isPaymentLinkType(link.createLinkData.linkType);
+  });
+
+  // Get link type text
+  const linkTypeText = $derived.by(() => {
+    return getLinkTypeText(link.createLinkData.linkType);
+  });
+
+  // Get assets with token info
+  const assetsWithTokenInfo = $derived.by(() => {
     if (
       !link.createLinkData.assets ||
       link.createLinkData.assets.length === 0
     ) {
-      return null;
+      return [];
     }
 
-    const amountPerAsset: Record<string, number> = {};
+    const assets = link.createLinkData.assets.map((asset) => ({
+      address: asset.address,
+      amount: asset.useAmount,
+    }));
 
-    for (const assetInfo of link.createLinkData.assets) {
-      const tokenResult = walletStore.findTokenByAddress(assetInfo.address);
-      if (tokenResult.isErr()) {
-        continue;
-      }
-      const token = tokenResult.unwrap();
+    return calculateAssetsWithTokenInfo(
+      assets,
+      walletStore.findTokenByAddress.bind(walletStore),
+    );
+  });
 
-      const amount = parseBalanceUnits(assetInfo.useAmount, token.decimals);
-      amountPerAsset[assetInfo.address] = amount;
+  // Calculate fees breakdown
+  const feesBreakdown = $derived.by(() => {
+    const assetAddresses =
+      link.createLinkData.assets?.map((asset) => asset.address) || [];
+    const maxUse = link.createLinkData.maxUse || 1;
+
+    return calculateFeesBreakdown(
+      assetAddresses,
+      maxUse,
+      walletStore.findTokenByAddress.bind(walletStore),
+    );
+  });
+
+  // Calculate total fees in USD
+  const totalFeesUsd = $derived.by(() => {
+    return calculateTotalFeesUsd(feesBreakdown);
+  });
+
+  // Get link creation fee from breakdown
+  const linkCreationFee = $derived.by(() => {
+    return getLinkCreationFeeFromBreakdown(feesBreakdown);
+  });
+
+  // Transaction lock status (currently always "Unlock" for preview links)
+  const transactionLockStatus = $derived.by(() => {
+    // For now, always return "Unlock" as transaction lock is not yet implemented in backend
+    // In the future, this could check link.link for lock status if added to backend
+    return "Unlock";
+  });
+
+  // Track failed image loads
+  let failedImageLoads = $state<Set<string>>(new Set());
+
+  // Drawer states
+  let showFeeInfoDrawer = $state(false);
+
+  function handleImageError(address: string) {
+    failedImageLoads.add(address);
+  }
+
+  // Handlers for info drawers
+  function handleFeeInfoClick() {
+    showFeeInfoDrawer = true;
+  }
+
+  // Show toast notifications for error and success messages
+  let previousErrorMessage = $state<string | null>(null);
+  let previousSuccessMessage = $state<string | null>(null);
+
+  $effect(() => {
+    if (errorMessage && errorMessage !== previousErrorMessage) {
+      previousErrorMessage = errorMessage;
+      toast.error(errorMessage);
     }
+  });
 
-    return amountPerAsset;
+  $effect(() => {
+    if (successMessage && successMessage !== previousSuccessMessage) {
+      previousSuccessMessage = successMessage;
+      toast.success(successMessage);
+    }
   });
 </script>
 
-<div>
-  <div><strong>Title:</strong> {link.createLinkData.title}</div>
-  <div>
-    <strong>Link Type:</strong>
-    {link.createLinkData.linkType}
-  </div>
-  {#if link.createLinkData.assets}
-    {#each link.createLinkData.assets as assetInfo (assetInfo.address)}
-      {#if amountPerAsset}
-        <div class="mt-2 p-2 border rounded">
-          <div><strong>Asset:</strong> {assetInfo.address}</div>
-          <div>
-            <strong>Amount per use action:</strong>
-            {amountPerAsset[assetInfo.address]}
-          </div>
-        </div>
-      {/if}
-    {/each}
+<div class="space-y-4">
+  <!-- Block 1: Link Info -->
+  <LinkInfoSection
+    {linkTypeText}
+    {assetsWithTokenInfo}
+    {failedImageLoads}
+    onImageError={handleImageError}
+    {isPaymentLink}
+    {isSendLink}
+    maxUse={link.createLinkData.maxUse}
+  />
+
+  <!-- Block 2: Transaction Lock -->
+  <TransactionLockSection {transactionLockStatus} />
+
+  <!-- Block 3: You Send -->
+  {#if isSendLink}
+    <YouSendSection
+      {assetsWithTokenInfo}
+      {failedImageLoads}
+      onImageError={handleImageError}
+      {linkCreationFee}
+    />
   {/if}
 
-  <br />
+  <!-- Block 4: Fees Breakdown -->
+  <FeesBreakdownSection
+    {totalFeesUsd}
+    isClickable={true}
+    onInfoClick={handleFeeInfoClick}
+  />
 
-  <div><strong>Link creation fee</strong></div>
-  <div><strong>Amount:</strong> {0.003}</div>
-
-  {#if errorMessage}
-    <div class="text-red-600">{errorMessage}</div>
-  {/if}
-  {#if successMessage}
-    <div class="text-green-600">{successMessage}</div>
-  {/if}
-
-  {#if link?.id}
-    <div class="mt-2">
-      <strong>Your link:</strong>
-      <div class="break-all text-blue-600">
-        {resolve("/link/")}{link.id}
-      </div>
-    </div>
-  {/if}
+  <!-- Drawer Components -->
+  <FeeInfoDrawer
+    bind:open={showFeeInfoDrawer}
+    onClose={() => {
+      showFeeInfoDrawer = false;
+    }}
+    {feesBreakdown}
+    {totalFeesUsd}
+  />
 </div>

@@ -216,4 +216,23 @@ describe("FeeService", () => {
       }
     });
   });
+
+  describe("getLinkCreationFee", () => {
+    it("should return link creation fee information", () => {
+      const feeInfo = svc.getLinkCreationFee();
+
+      expect(feeInfo).toBeDefined();
+      expect(feeInfo.amount).toBe(10_000n); // 0.0001 ICP in e8s
+      expect(feeInfo.tokenAddress).toBeDefined();
+      expect(feeInfo.symbol).toBe("ICP");
+      expect(feeInfo.decimals).toBe(8);
+    });
+
+    it("should return consistent fee information on multiple calls", () => {
+      const feeInfo1 = svc.getLinkCreationFee();
+      const feeInfo2 = svc.getLinkCreationFee();
+
+      expect(feeInfo1).toEqual(feeInfo2);
+    });
+  });
 });
