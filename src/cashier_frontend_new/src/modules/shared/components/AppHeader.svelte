@@ -62,7 +62,7 @@
         <ChevronLeft class="w-[25px] h-[25px]" aria-hidden="true" />
       </button>
       <h4
-        class="scroll-m-20 text-lg font-semibold tracking-tight self-center transition-opacity duration-200"
+        class="scroll-m-20 text-lg font-semibold tracking-tight self-center transition-opacity duration-200 max-w-[70%] whitespace-nowrap overflow-hidden text-ellipsis text-center"
       >
         {displayName}
       </h4>
