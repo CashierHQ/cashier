@@ -21,8 +21,10 @@ orbit_upgrade canister_name mode network arg_file:
   arg_checksum=$(just sha256_encoded_candid {{arg_file}} {{ARTIFACTS_DIR}}/{{canister_name}}.did)
 
   if [ -n "$arg" ]; then
+    echo "Running: dfx-orbit request canister install --mode ${mode} \"${canister_id}\" --wasm \"${wasm_path}\" --argument '${arg}'"
     output=$(dfx-orbit request canister install --mode {{mode}} "$canister_id" --wasm "$wasm_path" --argument "$arg" 2>&1)
   else
+    echo "Running: dfx-orbit request canister install --mode ${mode} \"${canister_id}\" --wasm \"${wasm_path}\""
     output=$(dfx-orbit request canister install --mode {{mode}} "$canister_id" --wasm "$wasm_path" 2>&1)
   fi
   echo "$output" >&2
