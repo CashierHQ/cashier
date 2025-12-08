@@ -390,7 +390,7 @@ export async function createMintPSBT(params: MintPSBTParams): Promise<string> {
   return psbt.toBase64();
 }
 
-// NEW: Transfer PSBT builder
+// Transfer PSBT builder
 export async function createTransferPSBT(
   params: TransferPSBTParams,
 ): Promise<string> {
@@ -451,7 +451,29 @@ export async function createTransferPSBT(
   );
 
   const runestoneEncoded = encodeRunestone(transferSpec);
-  const runestoneBuffer = Buffer.from(runestoneEncoded);
+
+  // Convert to Buffer - same fix as mint
+  let runestoneBuffer: Buffer;
+
+  if (runestoneEncoded instanceof Uint8Array) {
+    runestoneBuffer = Buffer.from(runestoneEncoded);
+  } else if (Buffer.isBuffer(runestoneEncoded)) {
+    runestoneBuffer = runestoneEncoded;
+  } else if (Array.isArray(runestoneEncoded)) {
+    runestoneBuffer = Buffer.from(runestoneEncoded);
+  } else if (runestoneEncoded?.buffer) {
+    runestoneBuffer = Buffer.from(runestoneEncoded.buffer);
+  } else if (typeof runestoneEncoded === "object") {
+    const arr = Object.keys(runestoneEncoded)
+      .filter((k) => !isNaN(Number(k)))
+      .sort((a, b) => Number(a) - Number(b))
+      .map((k) => runestoneEncoded[k]);
+    runestoneBuffer = Buffer.from(arr);
+  } else {
+    throw new Error(
+      `Unexpected runestone encoding type: ${typeof runestoneEncoded}`,
+    );
+  }
 
   console.log("✅ Runestone hex:", runestoneBuffer.toString("hex"));
   console.log("✅ Runestone length:", runestoneBuffer.length);
