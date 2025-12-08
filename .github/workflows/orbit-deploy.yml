@@ -131,6 +131,9 @@ jobs:
       - name: Install dfx-orbit (only when submitting request)
         run: cargo install -f --git https://github.com/dfinity/orbit.git --bin dfx-orbit
 
+      - name: Build canisters
+        run: just build
+
       - name: Upgrade token_storage canister
         id: token_storage
         env:
