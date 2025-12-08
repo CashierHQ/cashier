@@ -50,6 +50,7 @@ jobs:
   deploy:
     name: Prepare and Submit Orbit request (optional)
     needs: setup_environment
+    environment: ${{ needs.setup_environment.outputs.network }}
     env:
       MODE: ${{ github.event.inputs.mode || 'reinstall' }}
     runs-on: ubuntu-latest
