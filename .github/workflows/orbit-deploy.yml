@@ -90,6 +90,11 @@ jobs:
           tar -xvf /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -C /usr/local/bin
           chmod +x /usr/local/bin/candid-extractor
 
+      - name: Install didc
+        run: |
+          wget https://github.com/dfinity/candid/releases/download/2025-10-16/didc-linux64 -O /usr/local/bin/didc
+          chmod +x /usr/local/bin/didc
+
       - name: Install Just command runner
         uses: extractions/setup-just@v1
 
