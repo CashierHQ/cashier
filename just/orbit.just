@@ -1,37 +1,3 @@
-#Deploy cashier canisters via dfx-orbit
-[group('orbit')]
-orbit_upgrade_canisters mode network:
-  #!/usr/bin/env bash
-
-  if [ "{{network}}" = "production" ]; then
-    log_filter="global,cashier=info,token_storage=info"
-  else
-    log_filter="global,cashier=debug,token_storage=debug"
-  fi
-  
-  backend_args_file="backend_args.txt"
-  token_storage_args_file="token_storage_args.txt"
-  
-  just build_backend_args $(dfx identity get-principal) "$log_filter" "$backend_args_file"
-  just build_token_storage_args $(dfx identity get-principal) "$log_filter" "$token_storage_args_file"
-
-  echo "=== Upgrading token_storage canister ==="
-  echo "args file used for token_storage:"
-  cat "$token_storage_args_file"
-  just orbit_upgrade token_storage {{mode}} {{network}} "$token_storage_args_file"  2>&1 | grep -A7 "Upgrading canister"
-  echo "=== Token_storage canister upgrade completed ==="
-  echo ""
-  echo ""
-  echo ""
-
-  echo "=== Upgrading backend canister ==="
-  echo "args file used for backend:" 
-  cat "$backend_args_file"
-  just orbit_upgrade cashier_backend {{mode}} {{network}} "$backend_args_file"   2>&1 | grep -A7 "Upgrading canister"
-  echo "=== Backend canister upgrade completed ==="
-
-  rm -f "$backend_args_file" "$token_storage_args_file"
-
 # Prepare frontend statis assets and submit commit request to orbit
 [group('orbit')]
 upload_asset canister_id:
@@ -39,6 +5,7 @@ upload_asset canister_id:
     dfx-orbit request asset upload {{canister_id}} --files {{FRONTEND_DIR_NEW}}/build || true
 
 # General canister upgrade request to orbit
+# Returns JSON with: wasm_checksum, arg, arg_checksum, request_url
 [group('orbit')]
 orbit_upgrade canister_name mode network arg_file:
   #!/usr/bin/env bash
@@ -49,28 +16,34 @@ orbit_upgrade canister_name mode network arg_file:
     exit 1
   fi
   wasm_path="{{ARTIFACTS_DIR}}/{{canister_name}}.wasm.gz"
-  wasm_checksum=$(shasum -a 256 "$wasm_path" | awk '{print $1}')
+  wasm_checksum=$(just sha256_file "$wasm_path")
   arg=$(cat {{arg_file}})
-  arg_checksum=$(just encode_and_checksum {{arg_file}} {{ARTIFACTS_DIR}}/{{canister_name}}.did)
+  arg_checksum=$(just sha256_encoded_candid {{arg_file}} {{ARTIFACTS_DIR}}/{{canister_name}}.did)
 
-  printf "Upgrading canister {{canister_name}} with \n id: %s \n network: {{network}} \n mode: {{mode}} \n wasm: %s \n wasm_checksum: %s \n arg_file: %s \n arg_checksum: %s \n" "$canister_id" "$wasm_path" "$wasm_checksum" {{arg_file}} "$arg_checksum"
   if [ -n "$arg" ]; then
-    # the true at the end is to ignore error for now https://github.com/dfinity/orbit/issues/608
-    dfx-orbit request canister install --mode {{mode}} "$canister_id" --wasm "$wasm_path" --argument "$arg" || true
+    output=$(dfx-orbit request canister install --mode {{mode}} "$canister_id" --wasm "$wasm_path" --argument "$arg" 2>&1)
   else
-    # the true at the end is to ignore error for now https://github.com/dfinity/orbit/issues/608
-    dfx-orbit request canister install --mode {{mode}} "$canister_id" --wasm "$wasm_path" || true
+    output=$(dfx-orbit request canister install --mode {{mode}} "$canister_id" --wasm "$wasm_path" 2>&1)
   fi
+  echo "$output" >&2
+  request_url=$(echo "$output" | grep -oE 'Request URL: https://[^ ]+' | sed 's/Request URL: //')
+  
+  # Output JSON result to stdout
+  printf '{"wasm_checksum":"%s","arg":"%s","arg_checksum":"%s","request_url":"%s"}\n' \
+    "$wasm_checksum" \
+    "$(echo "$arg" | sed 's/"/\\"/g' | tr -d '\n')" \
+    "$arg_checksum" \
+    "$request_url"
 
 # Build the backend canister args and save to file
-[private]
+[group('orbit')]
 build_backend_args owner log_filter file_name:
   #!/usr/bin/env bash
   sed -e 's/__OWNER__/{{owner}}/g' -e 's/__LOG_FILTER__/{{log_filter}}/g' \
     scripts/args/backend_args.template | tr -d '\n' | tr -s ' ' > {{file_name}}
 
 # Build token_storage canister args and save to file
-[private]
+[group('orbit')]
 build_token_storage_args owner log_filter file_name:
   #!/usr/bin/env bash
   sed -e 's/__OWNER__/{{owner}}/g' -e 's/__LOG_FILTER__/{{log_filter}}/g' \
@@ -78,8 +51,8 @@ build_token_storage_args owner log_filter file_name:
 
 # Encode candid args and compute SHA-256 checksum of the raw bytes
 # Returns: hex checksum string
-[private]
-encode_and_checksum arg_file did_file:
+[group('orbit')]
+sha256_encoded_candid arg_file did_file:
   #!/usr/bin/env bash
   set -euo pipefail
   # Read content from file
@@ -87,8 +60,32 @@ encode_and_checksum arg_file did_file:
   # Encode to candid hex string
   encoded_hex=$(didc encode "$arg" --defs {{did_file}})
   # Convert hex string to bytes and compute SHA-256 checksum
-  checksum=$(echo -n "$encoded_hex" | xxd -r -p | shasum -a 256 | awk '{print $1}')
+  checksum=$(echo -n "$encoded_hex" | xxd -r -p | just sha256_stdin)
   echo "$checksum"
+
+# Compute SHA-256 checksum of a file (cross-platform)
+# Returns: hex checksum string
+[group('orbit')]
+sha256_file file_path:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  if [ "{{OS}}" = "macos" ]; then
+    shasum -a 256 "{{file_path}}" | awk '{print $1}'
+  else
+    sha256sum "{{file_path}}" | awk '{print $1}'
+  fi
+
+# Compute SHA-256 checksum from stdin (cross-platform)
+# Returns: hex checksum string
+[private]
+sha256_stdin:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  if [ "{{OS}}" = "macos" ]; then
+    shasum -a 256 | awk '{print $1}'
+  else
+    sha256sum | awk '{print $1}'
+  fi
 
 # Get canister id for a given canister name and network
 [private]
