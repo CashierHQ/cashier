@@ -72,7 +72,10 @@
       // Remove the query parameter from URL without reload
       const newUrl = new URL(page.url);
       newUrl.searchParams.delete("created");
-      goto(newUrl.pathname + newUrl.search, { replaceState: true, noScroll: true });
+      goto(newUrl.pathname + newUrl.search, {
+        replaceState: true,
+        noScroll: true,
+      });
     }
   });
 
@@ -203,7 +206,7 @@
       showCopied = true;
       toast.success(locale.t("links.linkForm.detail.copied"));
       setTimeout(() => (showCopied = false), 1500);
-      
+
       if (closeDialog) {
         showCongratulationsDrawer = false;
       }
@@ -548,8 +551,15 @@
   <Dialog bind:open={showCongratulationsDrawer}>
     <DialogContent class="sm:max-w-[425px]" showCloseButton={false}>
       <DialogHeader class="flex flex-col items-center gap-2.5">
-        <div class="w-12 h-12 rounded-full bg-[#E8F2EE] flex items-center justify-center mx-auto">
-          <img src="/congratulations.svg" alt="Congratulations" width="24" height="24" />
+        <div
+          class="w-12 h-12 rounded-full bg-[#E8F2EE] flex items-center justify-center mx-auto"
+        >
+          <img
+            src="/congratulations.svg"
+            alt="Congratulations"
+            width="24"
+            height="24"
+          />
         </div>
         <DialogTitle class="text-xl font-semibold">
           {locale.t("links.linkForm.detail.congratulations.title")}
@@ -559,24 +569,33 @@
         </DialogDescription>
       </DialogHeader>
     </DialogContent>
-    
+
     <!-- Arrow and button on the same level as modal, positioned at bottom of page -->
     {#if showCongratulationsDrawer}
       <DialogPortal>
         <div class="fixed inset-0 z-[60] pointer-events-none">
           <!-- Arrow pointing down to the button -->
-          <div class="fixed start-[50%] z-[60] translate-x-[-50%] bottom-16 sm:bottom-[88px] w-full max-w-[calc(100%-2rem)] sm:max-w-[425px] pointer-events-none flex flex-col items-center" style="top: calc(50% + 90px);">
-            <div class="w-full px-3 flex flex-col justify-center py-3 pointer-events-none grow-1 justify-center items-center">
+          <div
+            class="fixed start-[50%] z-[60] translate-x-[-50%] bottom-16 sm:bottom-[88px] w-full max-w-[calc(100%-2rem)] sm:max-w-[425px] pointer-events-none flex flex-col items-center"
+            style="top: calc(50% + 90px);"
+          >
+            <div
+              class="w-full px-3 flex flex-col justify-center py-3 pointer-events-none grow-1 justify-center items-center"
+            >
               <div class="w-0.5 grow-1 bg-white"></div>
               <div
                 class="w-5 h-5 border-r-2 border-b-2 border-white rotate-45 pointer-events-none translate-y-[-50%]"
               ></div>
             </div>
           </div>
-          
+
           <!-- Button at bottom of page -->
-          <div class="fixed bottom-3 sm:bottom-8 left-4 right-4 z-[60] pointer-events-auto">
-            <div class="flex-none w-full msx w-[95%] max-w-[536px] mx-auto px-2 pt-2 pb-2 bg-white rounded-[28px]">
+          <div
+            class="fixed bottom-3 sm:bottom-8 left-4 right-4 z-[60] pointer-events-auto"
+          >
+            <div
+              class="flex-none w-full msx w-[95%] max-w-[536px] mx-auto px-2 pt-2 pb-2 bg-white rounded-[28px]"
+            >
               <Button
                 id="copy-link-button-modal"
                 onclick={async () => {
