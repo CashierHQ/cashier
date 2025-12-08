@@ -156,79 +156,32 @@ jobs:
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
-          set -euo pipefail
-          # Capture stdout (JSON) while preserving stderr to a log file for debugging
-          json_output=$(just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.txt 2>/tmp/orbit_token_storage_err)
-          echo "--- orbit stderr (token_storage) ---"
-          cat /tmp/orbit_token_storage_err || true
-          echo "--- orbit stdout (token_storage) ---"
-          echo "$json_output"
-          
-          # Parse JSON and write to GitHub outputs
-          if [ -n "$json_output" ]; then
-            echo "wasm_checksum=$(echo "$json_output" | jq -r '.wasm_checksum // empty')" >> $GITHUB_OUTPUT
-            echo "arg_checksum=$(echo "$json_output" | jq -r '.arg_checksum // empty')" >> $GITHUB_OUTPUT
-            echo "request_url=$(echo "$json_output" | jq -r '.request_url // empty')" >> $GITHUB_OUTPUT
-            # For multi-line arg value, use heredoc syntax
-            {
-              echo "arg<<EOF"
-              echo "$json_output" | jq -r '.arg // empty'
-              echo "EOF"
-            } >> $GITHUB_OUTPUT
-          fi
+          just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.txt | tee -a $GITHUB_OUTPUT
 
       - name: Upgrade backend canister
         id: backend
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
-          set -euo pipefail
-          json_output=$(just orbit_upgrade cashier_backend "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.txt 2>/tmp/orbit_backend_err)
-          echo "--- orbit stderr (backend) ---"
-          cat /tmp/orbit_backend_err || true
-          echo "--- orbit stdout (backend) ---"
-          echo "$json_output"
-          
-          # Parse JSON and write to GitHub outputs
-          if [ -n "$json_output" ]; then
-            echo "wasm_checksum=$(echo "$json_output" | jq -r '.wasm_checksum // empty')" >> $GITHUB_OUTPUT
-            echo "arg_checksum=$(echo "$json_output" | jq -r '.arg_checksum // empty')" >> $GITHUB_OUTPUT
-            echo "request_url=$(echo "$json_output" | jq -r '.request_url // empty')" >> $GITHUB_OUTPUT
-            # For multi-line arg value, use heredoc syntax
-            {
-              echo "arg<<EOF"
-              echo "$json_output" | jq -r '.arg // empty'
-              echo "EOF"
-            } >> $GITHUB_OUTPUT
-          fi
+          just orbit_upgrade cashier_backend "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.txt | tee -a $GITHUB_OUTPUT
 
       - name: Write Job Summary
         run: |
           cat >> "$GITHUB_STEP_SUMMARY" << EOF
           ## 🚀 Orbit Deploy Summary
 
-          - **Network**: `${{ needs.setup_environment.outputs.network }}`
-          - **Mode**: `${{ env.MODE }}`
+          - **Network**: \`${{ needs.setup_environment.outputs.network }}\`
+          - **Mode**: \`${{ env.MODE }}\`
 
           ### Token Storage Canister
-
-          **Arg**
-          ```
-          ${{ steps.token_storage.outputs.arg }}
-          ```
-          - **WASM Checksum**: `${{ steps.token_storage.outputs.wasm_checksum }}`
-          - **Arg Checksum**: `${{ steps.token_storage.outputs.arg_checksum }}`
-          - **Request URL**: `${{ steps.token_storage.outputs.request_url }}`
+          \`\`\`json
+          ${{ steps.token_storage.outputs.json }}
+          \`\`\`
 
           ### Backend Canister
-
-          **Arg**
-          ```
-          ${{ steps.backend.outputs.arg }}
-          ```
-          - **WASM Checksum**: `${{ steps.backend.outputs.wasm_checksum }}`
-          - **Arg Checksum**: `${{ steps.backend.outputs.arg_checksum }}`
-          - **Request URL**: `${{ steps.backend.outputs.request_url }}`
+          \`\`\`json
+          ${{ steps.backend.outputs.json }}
+          \`\`\`
 
           ---
           *Deployed at: $(date -u "+%Y-%m-%d %H:%M:%S UTC")*
