@@ -1,21 +1,29 @@
 <script lang="ts">
+  import { LinkType } from "$modules/links/types/link/linkType";
   import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
-  import AssetList from "./AssetList.svelte";
-  import Header from "./Header.svelte";
+  import TipCompleted from "./tiplink/Completed.svelte";
 
   const { linkDetail }: { linkDetail?: LinkDetailStore } = $props();
+
+  const linkType = $derived.by(() => {
+    return linkDetail?.link?.link_type;
+  });
 </script>
 
-{#if linkDetail?.query.isLoading}
-  Loading...
-{/if}
-
-<div class="p-4 border rounded">
-  {#if linkDetail?.link}
-    <Header title={linkDetail.link.title} />
-    <AssetList assetInfo={linkDetail.link.asset_info} />
+<div
+  class="mx-auto w-[400px] max-w-full p-5 rounded-[13px] bg-lightgreen relative flex flex-col items-center justify-center overflow-hidden my-3"
+>
+  {#if linkType === LinkType.TIP}
+    <TipCompleted {linkDetail} />
   {/if}
-
-  <h2 class="text-lg font-semibold">Completed</h2>
-  <p class="text-sm text-gray-600">Flow completed — thank you.</p>
+  <!-- TODO: Other link types will be added here -->
+  <!-- {#if linkType === LinkType.AIRDROP}
+    <AirdropCompleted {linkDetail} />
+  {/if}
+  {#if linkType === LinkType.TOKEN_BASKET}
+    <BasketCompleted {linkDetail} />
+  {/if}
+  {#if linkType === LinkType.RECEIVE_PAYMENT}
+    <PaymentCompleted {linkDetail} />
+  {/if} -->
 </div>

@@ -237,6 +237,19 @@
           "use_without_login_or_wallet": "You need to login or input your wallet",
           "unknown_action_state": "Unknown action state"
         }
+      },
+      "useLink": {
+        "receiveTo": "Receive to",
+        "connected": "Connected",
+        "youReceive": "You receive",
+        "userAddress": "User address",
+        "noAssets": "No assets",
+        "completed": {
+          "title": "Completed",
+          "message": "Congratulations, you received a tip!",
+          "claimButton": "Claim",
+          "claimedButton": "Claimed"
+        }
       }
     }
   }

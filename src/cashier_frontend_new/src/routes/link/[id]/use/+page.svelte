@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from "$app/state";
   import UseLink from "$modules/useLink/pages/use.svelte";
+  import PageLayout from "$modules/shared/components/PageLayout.svelte";
   import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
   import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
   import ProtectedValidLink from "$modules/guard/components/ProtectedValidLink.svelte";
@@ -8,6 +9,13 @@
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
 
   const id = page.params.id!;
+
+  // Track isLink state - false for ADDRESS_UNLOCKED step
+  let isLink = $state(true);
+
+  const handleIsLinkChange = (newIsLink: boolean) => {
+    isLink = newIsLink;
+  };
 </script>
 
 <RouteGuard linkId={id} storeType="userLink">
@@ -22,7 +30,9 @@
           UserLinkStep.COMPLETED,
         ]}
       >
-        <UseLink linkId={id} />
+        <PageLayout isCreateOrEditPage={true} {isLink}>
+          <UseLink onIsLinkChange={handleIsLinkChange} />
+        </PageLayout>
       </ProtectedUserState>
     </ProtectedValidLink>
   </ProtectedAuth>
