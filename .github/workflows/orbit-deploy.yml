@@ -49,6 +49,10 @@ jobs:
                 echo "network=production" >> $GITHUB_OUTPUT
               elif [[ "$TARGET_BRANCH" == "staging" ]]; then
                 echo "network=staging" >> $GITHUB_OUTPUT
+              ## Temporary: treat this feature branch as dev for testing
+              elif [[ "$TARGET_BRANCH" == "feature/orbit-cli" ]]; then
+                # Treat this feature branch as a dev network for testing
+                echo "network=staging" >> $GITHUB_OUTPUT
               else
                 # Any other branch will deploy to dev network
                 echo "network=dev" >> $GITHUB_OUTPUT
