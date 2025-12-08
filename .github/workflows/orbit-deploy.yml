@@ -1,32 +1,21 @@
 name: Orbit Deploy
 
 on:
-  workflow_dispatch:
-    inputs:
-      mode:
-        description: 'install mode (upgrade, install, reinstall)'
-        required: true
-        default: 'reinstall'
-      owner:
-        description: 'Owner principal used in candid args templates'
-        required: true
-        default: 'owner-principal'
-      backend_log_filter:
-        description: 'Optional backend log filter string'
-        required: false
-        default: ''
-      token_storage_log_filter:
-        description: 'Optional token_storage log filter string'
-        required: false
-        default: ''
-      submit_request:
-        description: 'If true, the workflow will attempt to submit the Orbit request (requires secrets)'
-        required: false
-        default: 'false'
   # Temporary: trigger on push to this feature branch for testing
   push:
     branches:
       - 'feature/orbit-cli'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Deployment mode'
+        required: true
+        default: 'upgrade'
+        type: choice
+        options:
+          - reinstall
+          - upgrade
+          - install
 
 jobs:
   setup_environment:
@@ -61,6 +50,8 @@ jobs:
   deploy:
     name: Prepare and Submit Orbit request (optional)
     needs: setup_environment
+    env:
+      MODE: ${{ github.event.inputs.mode || 'reinstall' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -136,95 +127,61 @@ jobs:
           echo "Token storage args:"
           cat token_storage_args.txt
 
-      - name: Compute checksums
-        run: |
-          echo 'WASM checksum (backend):'
-          just sha256_file target/artifacts/cashier_backend.wasm.gz || true
-          echo 'WASM checksum (token_storage):'
-          just sha256_file target/artifacts/token_storage.wasm.gz || true
-          echo 'Candid args checksum (token_storage):'
-          just sha256_encoded_candid token_storage_args.txt target/artifacts/token_storage.did || true
-
       - name: Install dfx-orbit (only when submitting request)
-        if: ${{ github.event.inputs.submit_request == 'true' }}
         run: cargo install -f --git https://github.com/dfinity/orbit.git --bin dfx-orbit
 
       - name: Upgrade token_storage canister
         id: token_storage
-        if: ${{ github.event.inputs.submit_request == 'true' }}
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
-          canister_id=$(dfx canister id token_storage --network ${{ needs.setup_environment.outputs.network }})
-          wasm_path="target/artifacts/token_storage.wasm.gz"
-          wasm_checksum=$(sha256sum "$wasm_path" | awk '{print $1}')
-          arg=$(cat token_storage_args.txt)
-          arg_checksum=$(just sha256_encoded_candid token_storage_args.txt target/artifacts/token_storage.did)
-
-          echo "=== Upgrading token_storage canister ==="
-          echo "Canister ID: $canister_id"
-          echo "WASM Checksum: $wasm_checksum"
-          echo "Arg Checksum: $arg_checksum"
-
-          output=$(dfx-orbit request canister install --mode ${{ github.event.inputs.mode }} "$canister_id" --wasm "$wasm_path" --argument "$arg" 2>&1) || true
-          echo "$output"
-          request_url=$(echo "$output" | grep -oE 'Request URL: https://[^ ]+' | sed 's/Request URL: //')
-
-          echo "wasm_checksum=$wasm_checksum" >> $GITHUB_OUTPUT
-          echo "arg_checksum=$arg_checksum" >> $GITHUB_OUTPUT
-          echo "request_url=$request_url" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          # Capture stdout (JSON) while preserving stderr to a log file for debugging
+          json_output=$(just orbit_upgrade token_storage "${{ github.event.inputs.mode }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.txt 2>/tmp/orbit_token_storage_err) || true
+          echo "--- orbit stderr (token_storage) ---"
+          cat /tmp/orbit_token_storage_err || true
+          echo "--- orbit stdout (token_storage) ---"
+          echo "$json_output"
 
       - name: Upgrade backend canister
         id: backend
-        if: ${{ github.event.inputs.submit_request == 'true' }}
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
-          canister_id=$(dfx canister id cashier_backend --network ${{ needs.setup_environment.outputs.network }})
-          wasm_path="target/artifacts/cashier_backend.wasm.gz"
-          wasm_checksum=$(sha256sum "$wasm_path" | awk '{print $1}')
-          arg=$(cat backend_args.txt)
-          arg_checksum=$(just sha256_encoded_candid backend_args.txt target/artifacts/cashier_backend.did)
-
-          echo "=== Upgrading backend canister ==="
-          echo "Canister ID: $canister_id"
-          echo "WASM Checksum: $wasm_checksum"
-          echo "Arg Checksum: $arg_checksum"
-
-          output=$(dfx-orbit request canister install --mode ${{ github.event.inputs.mode }} "$canister_id" --wasm "$wasm_path" --argument "$arg" 2>&1) || true
-          echo "$output"
-          request_url=$(echo "$output" | grep -oE 'Request URL: https://[^ ]+' | sed 's/Request URL: //')
-
-          echo "wasm_checksum=$wasm_checksum" >> $GITHUB_OUTPUT
-          echo "arg_checksum=$arg_checksum" >> $GITHUB_OUTPUT
-          echo "request_url=$request_url" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          json_output=$(just orbit_upgrade cashier_backend "${{ github.event.inputs.mode }}" "${{ needs.setup_environment.outputs.network }}" backend_args.txt 2>/tmp/orbit_backend_err) || true
+          echo "--- orbit stderr (backend) ---"
+          cat /tmp/orbit_backend_err || true
+          echo "--- orbit stdout (backend) ---"
+          echo "$json_output"
 
       - name: Write Job Summary
-        if: ${{ github.event.inputs.submit_request == 'true' }}
         run: |
           cat >> "$GITHUB_STEP_SUMMARY" << EOF
           ## 🚀 Orbit Deploy Summary
 
-          | Parameter | Value |
-          |-----------|-------|
-          | **Network** | \`${{ needs.setup_environment.outputs.network }}\` |
-          | **Mode** | \`${{ github.event.inputs.mode }}\` |
+          - **Network**: `${{ needs.setup_environment.outputs.network }}`
+          - **Mode**: `${{ github.event.inputs.mode }}`
 
           ### Token Storage Canister
 
-          | Field | Value |
-          |-------|-------|
-          | **WASM Checksum** | \`${{ steps.token_storage.outputs.wasm_checksum }}\` |
-          | **Arg Checksum** | \`${{ steps.token_storage.outputs.arg_checksum }}\` |
-          | **Request URL** | ${{ steps.token_storage.outputs.request_url }} |
+          **Arg**
+          ```
+          ${{ steps.token_storage.outputs.arg }}
+          ```
+          - **WASM Checksum**: `${{ steps.token_storage.outputs.wasm_checksum }}`
+          - **Arg Checksum**: `${{ steps.token_storage.outputs.arg_checksum }}`
+          - **Request URL**: `${{ steps.token_storage.outputs.request_url }}`
 
           ### Backend Canister
 
-          | Field | Value |
-          |-------|-------|
-          | **WASM Checksum** | \`${{ steps.backend.outputs.wasm_checksum }}\` |
-          | **Arg Checksum** | \`${{ steps.backend.outputs.arg_checksum }}\` |
-          | **Request URL** | ${{ steps.backend.outputs.request_url }} |
+          **Arg**
+          ```
+          ${{ steps.backend.outputs.arg }}
+          ```
+          - **WASM Checksum**: `${{ steps.backend.outputs.wasm_checksum }}`
+          - **Arg Checksum**: `${{ steps.backend.outputs.arg_checksum }}`
+          - **Request URL**: `${{ steps.backend.outputs.request_url }}`
 
           ---
           *Deployed at: $(date -u "+%Y-%m-%d %H:%M:%S UTC")*
