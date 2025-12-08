@@ -25,12 +25,21 @@
   import { toast } from "svelte-sonner";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import { page } from "$app/state";
   import {
     calculateFeesBreakdown,
     calculateTotalFeesUsd,
     getLinkCreationFeeFromBreakdown,
     calculateAssetsWithTokenInfo,
   } from "$modules/links/utils/feesBreakdown";
+  import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogPortal,
+  } from "$lib/shadcn/components/ui/dialog";
 
   //let { linkStore }: { linkStore: LinkDetailStore } = $props();
   let {
@@ -53,6 +62,19 @@
   let isCreatingWithdraw = $state(false);
   let showFirstEndLinkConfirm = $state(false);
   let showSecondEndLinkConfirm = $state(false);
+  let showCongratulationsDrawer = $state(false);
+
+  // Check if we should show congratulations drawer on mount
+  $effect(() => {
+    const createdParam = page.url.searchParams.get("created");
+    if (createdParam === "true") {
+      showCongratulationsDrawer = true;
+      // Remove the query parameter from URL without reload
+      const newUrl = new URL(page.url);
+      newUrl.searchParams.delete("created");
+      goto(newUrl.pathname + newUrl.search, { replaceState: true, noScroll: true });
+    }
+  });
 
   function handleImageError(address: string) {
     failedImageLoads.add(address);
@@ -174,13 +196,17 @@
     showFeeInfoDescriptionDrawer = true;
   }
 
-  async function copyLink() {
+  async function copyLink(closeDialog?: boolean) {
     try {
       const linkUrl = `${window.location.origin}/link/${linkStore.link?.id}`;
       await navigator.clipboard.writeText(linkUrl);
       showCopied = true;
       toast.success(locale.t("links.linkForm.detail.copied"));
       setTimeout(() => (showCopied = false), 1500);
+      
+      if (closeDialog) {
+        showCongratulationsDrawer = false;
+      }
     } catch (err) {
       console.error("copy failed", err);
       toast.error(
@@ -210,26 +236,13 @@
     try {
       if (!linkStore.link) throw new Error("Link is missing");
       await linkStore.disableLink();
-      // Refresh to get updated link state and any withdraw action
+      // Refresh to get updated link state
       await linkStore.query.refresh();
-
-      // Wait for withdraw action to appear (if it should be created)
-      // Try up to 5 times with 200ms delay between attempts
-      let attempts = 0;
-      while (attempts < 5 && !linkStore.action) {
-        await new Promise((resolve) => setTimeout(resolve, 200));
-        await linkStore.query.refresh();
-        attempts++;
-      }
 
       const successMsg = locale.t(
         "links.linkForm.detail.messages.linkEndedSuccess",
       );
       toast.success(successMsg);
-      // If there's a withdraw action after ending the link, open txCart
-      if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
-        showTxCart = true;
-      }
     } catch (err) {
       const errorMsg =
         locale.t("links.linkForm.detail.messages.failedToEndLink") +
@@ -254,19 +267,7 @@
     isCreatingWithdraw = true;
 
     try {
-      // First, try to refresh and check if action already exists
-      // This handles the case when action was created by endLink() but hasn't loaded yet
-      let attempts = 0;
-      while (
-        attempts < 3 &&
-        (!linkStore.action || linkStore.action.type !== ActionType.WITHDRAW)
-      ) {
-        await linkStore.query.refresh();
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        attempts++;
-      }
-
-      // If action already exists, just open the drawer
+      // Check if action already exists
       if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
         showTxCart = true;
         return;
@@ -276,63 +277,25 @@
       await linkStore.createAction(ActionType.WITHDRAW);
       // Refresh query to get the newly created action
       await linkStore.query.refresh();
-      // Wait a bit for the query to update the action
-      await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Try to find the action with multiple refresh attempts
-      attempts = 0;
-      while (
-        attempts < 3 &&
-        (!linkStore.action || linkStore.action.type !== ActionType.WITHDRAW)
-      ) {
-        await linkStore.query.refresh();
-        await new Promise((resolve) => setTimeout(resolve, 300));
-        attempts++;
-      }
-
-      // Open drawer if action exists
+      // Open drawer if action exists (reactive update will handle it)
       if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
         showTxCart = true;
-      } else {
-        // If still no action, show error
-        const errorMsg =
-          locale.t(
-            "links.linkForm.detail.messages.failedToCreateWithdrawAction",
-          ) + " Action was not created";
-        errorMessage = errorMsg;
-        toast.error(errorMsg);
       }
     } catch (err) {
       const errorMessageText = err instanceof Error ? err.message : String(err);
 
       // If error is "Request lock already exists" or "Action already exists",
-      // it means action was already created, so just open the modal
-      // Don't show error in this case - action exists, we just need to wait for it to load
+      // it means action was already created, refresh and open drawer
       if (
         errorMessageText.includes("Request lock already exists") ||
         errorMessageText.includes("Action already exists") ||
         errorMessageText.includes("already exists")
       ) {
-        // Refresh to get the existing action - try multiple times with longer waits
-        let attempts = 0;
-        while (
-          attempts < 10 &&
-          (!linkStore.action || linkStore.action.type !== ActionType.WITHDRAW)
-        ) {
-          await linkStore.query.refresh();
-          await new Promise((resolve) => setTimeout(resolve, 300));
-          attempts++;
-        }
-
-        // Open modal if action exists (it should exist if we got "already exists" error)
-        if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
-          showTxCart = true;
-        } else {
-          // Even if we can't find it after many attempts, don't show error
-          // because the error "already exists" means it definitely exists on the backend
-          // Just try to open the drawer - it might work if action loads later
-          showTxCart = true;
-        }
+        // Refresh to get the existing action
+        await linkStore.query.refresh();
+        // Open drawer - reactive update will handle showing the action
+        showTxCart = true;
       } else {
         // For other errors, show error message
         const errorMsg =
@@ -383,12 +346,12 @@
   });
 </script>
 
-{#if linkStore.query.isLoading}
+{#if linkStore.query.isLoading && !linkStore.query.data}
   {locale.t("links.linkForm.detail.loading")}
 {:else if !linkStore.link}
   <!-- `DetailFlowProtected` will redirect to /links when link is missing. Show a fallback while redirect occurs. -->
   {locale.t("links.linkForm.detail.loading")}
-{:else if linkStore.query.data && linkStore.link}
+{:else if linkStore.link}
   <div class="space-y-4 flex flex-col h-full grow-1 relative">
     <DetailLinkHeader {linkStore} {onBack} />
     {#if errorMessage}
@@ -464,8 +427,11 @@
         </Button>
         <Button
           id="copy-link-button"
-          onclick={copyLink}
-          class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
+          onclick={async () => {
+            await copyLink();
+          }}
+          class="relative z-[60] rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
+          style={showCongratulationsDrawer ? "visibility: hidden;" : ""}
         >
           {showCopied
             ? locale.t("links.linkForm.detail.copied")
@@ -578,4 +544,54 @@
       </p>
     </div>
   </ConfirmDrawer>
+
+  <Dialog bind:open={showCongratulationsDrawer}>
+    <DialogContent class="sm:max-w-[425px]" showCloseButton={false}>
+      <DialogHeader class="flex flex-col items-center gap-2.5">
+        <div class="w-12 h-12 rounded-full bg-[#E8F2EE] flex items-center justify-center mx-auto">
+          <img src="/congratulations.svg" alt="Congratulations" width="24" height="24" />
+        </div>
+        <DialogTitle class="text-xl font-semibold">
+          {locale.t("links.linkForm.detail.congratulations.title")}
+        </DialogTitle>
+        <DialogDescription class="text-[14px] leading-[20px] text-[#475467]">
+          {locale.t("links.linkForm.detail.congratulations.description")}
+        </DialogDescription>
+      </DialogHeader>
+    </DialogContent>
+    
+    <!-- Arrow and button on the same level as modal, positioned at bottom of page -->
+    {#if showCongratulationsDrawer}
+      <DialogPortal>
+        <div class="fixed inset-0 z-[60] pointer-events-none">
+          <!-- Arrow pointing down to the button -->
+          <div class="fixed start-[50%] z-[60] translate-x-[-50%] bottom-16 sm:bottom-[88px] w-full max-w-[calc(100%-2rem)] sm:max-w-[425px] pointer-events-none flex flex-col items-center" style="top: calc(50% + 90px);">
+            <div class="w-full px-3 flex flex-col justify-center py-3 pointer-events-none grow-1 justify-center items-center">
+              <div class="w-0.5 grow-1 bg-white"></div>
+              <div
+                class="w-5 h-5 border-r-2 border-b-2 border-white rotate-45 pointer-events-none translate-y-[-50%]"
+              ></div>
+            </div>
+          </div>
+          
+          <!-- Button at bottom of page -->
+          <div class="fixed bottom-3 sm:bottom-8 left-4 right-4 z-[60] pointer-events-auto">
+            <div class="flex-none w-full msx w-[95%] max-w-[536px] mx-auto px-2 pt-2 pb-2 bg-white rounded-[28px]">
+              <Button
+                id="copy-link-button-modal"
+                onclick={async () => {
+                  await copyLink(true);
+                }}
+                class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
+              >
+                {showCopied
+                  ? locale.t("links.linkForm.detail.copied")
+                  : locale.t("links.linkForm.detail.copyLink")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogPortal>
+    {/if}
+  </Dialog>
 {/if}
