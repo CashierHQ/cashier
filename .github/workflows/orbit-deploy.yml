@@ -158,7 +158,7 @@ jobs:
         run: |
           set -euo pipefail
           # Capture stdout (JSON) while preserving stderr to a log file for debugging
-          json_output=$(just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.txt 2>/tmp/orbit_token_storage_err) || true
+          json_output=$(just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.txt 2>/tmp/orbit_token_storage_err)
           echo "--- orbit stderr (token_storage) ---"
           cat /tmp/orbit_token_storage_err || true
           echo "--- orbit stdout (token_storage) ---"
@@ -183,7 +183,7 @@ jobs:
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
           set -euo pipefail
-          json_output=$(just orbit_upgrade cashier_backend "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.txt 2>/tmp/orbit_backend_err) || true
+          json_output=$(just orbit_upgrade cashier_backend "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.txt 2>/tmp/orbit_backend_err)
           echo "--- orbit stderr (backend) ---"
           cat /tmp/orbit_backend_err || true
           echo "--- orbit stdout (backend) ---"
