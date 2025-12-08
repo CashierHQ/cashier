@@ -163,6 +163,19 @@ jobs:
           cat /tmp/orbit_token_storage_err || true
           echo "--- orbit stdout (token_storage) ---"
           echo "$json_output"
+          
+          # Parse JSON and write to GitHub outputs
+          if [ -n "$json_output" ]; then
+            echo "wasm_checksum=$(echo "$json_output" | jq -r '.wasm_checksum // empty')" >> $GITHUB_OUTPUT
+            echo "arg_checksum=$(echo "$json_output" | jq -r '.arg_checksum // empty')" >> $GITHUB_OUTPUT
+            echo "request_url=$(echo "$json_output" | jq -r '.request_url // empty')" >> $GITHUB_OUTPUT
+            # For multi-line arg value, use heredoc syntax
+            {
+              echo "arg<<EOF"
+              echo "$json_output" | jq -r '.arg // empty'
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
+          fi
 
       - name: Upgrade backend canister
         id: backend
@@ -175,6 +188,19 @@ jobs:
           cat /tmp/orbit_backend_err || true
           echo "--- orbit stdout (backend) ---"
           echo "$json_output"
+          
+          # Parse JSON and write to GitHub outputs
+          if [ -n "$json_output" ]; then
+            echo "wasm_checksum=$(echo "$json_output" | jq -r '.wasm_checksum // empty')" >> $GITHUB_OUTPUT
+            echo "arg_checksum=$(echo "$json_output" | jq -r '.arg_checksum // empty')" >> $GITHUB_OUTPUT
+            echo "request_url=$(echo "$json_output" | jq -r '.request_url // empty')" >> $GITHUB_OUTPUT
+            # For multi-line arg value, use heredoc syntax
+            {
+              echo "arg<<EOF"
+              echo "$json_output" | jq -r '.arg // empty'
+              echo "EOF"
+            } >> $GITHUB_OUTPUT
+          fi
 
       - name: Write Job Summary
         run: |
