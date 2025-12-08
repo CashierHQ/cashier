@@ -28,7 +28,8 @@ orbit_upgrade canister_name mode network arg_file:
     output=$(dfx-orbit request canister install --mode {{mode}} "$canister_id" --wasm "$wasm_path" 2>&1)
   fi
   echo "$output" >&2
-  request_url=$(echo "$output" | grep -oE 'Request URL: https://[^ ]+' | sed 's/Request URL: //')
+  # Use || true to prevent grep from failing if no match (grep returns exit code 1 on no match)
+  request_url=$(echo "$output" | grep -oE 'Request URL: https://[^ ]+' | sed 's/Request URL: //' || true)
   
   # Output JSON result to stdout
   printf '{"wasm_checksum":"%s","arg":"%s","arg_checksum":"%s","request_url":"%s"}\n' \
