@@ -156,14 +156,14 @@ jobs:
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
-          just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.txt | tee -a $GITHUB_OUTPUT
+          just orbit_upgrade token_storage ${{ env.MODE }} ${{ needs.setup_environment.outputs.network }} token_storage_args.txt | tee -a $GITHUB_OUTPUT
 
       - name: Upgrade backend canister
         id: backend
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
-          just orbit_upgrade cashier_backend "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.txt | tee -a $GITHUB_OUTPUT
+          just orbit_upgrade cashier_backend ${{ env.MODE }} ${{ needs.setup_environment.outputs.network }} backend_args.txt | tee -a $GITHUB_OUTPUT
 
       - name: Write Job Summary
         run: |
