@@ -3,10 +3,6 @@ name: Orbit Deploy
 on:
   workflow_dispatch:
     inputs:
-      network:
-        description: 'dfx network (staging, production)'
-        required: true
-        default: 'staging'
       mode:
         description: 'install mode (upgrade, install, reinstall)'
         required: true
@@ -27,6 +23,10 @@ on:
         description: 'If true, the workflow will attempt to submit the Orbit request (requires secrets)'
         required: false
         default: 'false'
+  # Temporary: trigger on push to this feature branch for testing
+  push:
+    branches:
+      - 'feature/orbit-cli'
 
 jobs:
   setup_environment:
@@ -56,6 +56,7 @@ jobs:
 
   deploy:
     name: Prepare and Submit Orbit request (optional)
+    needs: setup_environment
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -114,7 +115,7 @@ jobs:
       - name: Set log filter
         id: log_filter
         run: |
-          if [ "${{ github.event.inputs.network }}" = "production" ]; then
+          if [ "${{ needs.setup_environment.outputs.network }}" = "production" ]; then
             echo "filter=global,cashier=info,token_storage=info" >> $GITHUB_OUTPUT
           else
             echo "filter=global,cashier=debug,token_storage=debug" >> $GITHUB_OUTPUT
@@ -150,7 +151,7 @@ jobs:
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
-          canister_id=$(dfx canister id token_storage --network ${{ github.event.inputs.network }})
+          canister_id=$(dfx canister id token_storage --network ${{ needs.setup_environment.outputs.network }})
           wasm_path="target/artifacts/token_storage.wasm.gz"
           wasm_checksum=$(sha256sum "$wasm_path" | awk '{print $1}')
           arg=$(cat token_storage_args.txt)
@@ -175,7 +176,7 @@ jobs:
         env:
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
-          canister_id=$(dfx canister id cashier_backend --network ${{ github.event.inputs.network }})
+          canister_id=$(dfx canister id cashier_backend --network ${{ needs.setup_environment.outputs.network }})
           wasm_path="target/artifacts/cashier_backend.wasm.gz"
           wasm_checksum=$(sha256sum "$wasm_path" | awk '{print $1}')
           arg=$(cat backend_args.txt)
@@ -202,7 +203,7 @@ jobs:
 
           | Parameter | Value |
           |-----------|-------|
-          | **Network** | \`${{ github.event.inputs.network }}\` |
+          | **Network** | \`${{ needs.setup_environment.outputs.network }}\` |
           | **Mode** | \`${{ github.event.inputs.mode }}\` |
 
           ### Token Storage Canister
