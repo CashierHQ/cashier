@@ -22,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
         network: ${{ steps.set-env.outputs.network }}
+        mode: ${{ steps.set-mode.outputs.mode }}
     steps:
         - name: Set deployment network
           id: set-env
@@ -47,12 +48,23 @@ jobs:
                 echo "network=dev" >> $GITHUB_OUTPUT
               fi
 
+        - name: Set deployment mode
+          id: set-mode
+          run: |
+              # Use input mode if provided (workflow_dispatch), otherwise default to 'upgrade'
+              INPUT_MODE="${{ github.event.inputs.mode }}"
+              if [[ -n "$INPUT_MODE" ]]; then
+                echo "mode=$INPUT_MODE" >> $GITHUB_OUTPUT
+              else
+                echo "mode=upgrade" >> $GITHUB_OUTPUT
+              fi
+
   deploy:
     name: Prepare and Submit Orbit request (optional)
     needs: setup_environment
     environment: ${{ needs.setup_environment.outputs.network }}
     env:
-      MODE: ${{ github.event.inputs.mode || 'reinstall' }}
+      MODE: ${{ needs.setup_environment.outputs.mode }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -146,7 +158,7 @@ jobs:
         run: |
           set -euo pipefail
           # Capture stdout (JSON) while preserving stderr to a log file for debugging
-          json_output=$(just orbit_upgrade token_storage "${{ github.event.inputs.mode }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.txt 2>/tmp/orbit_token_storage_err) || true
+          json_output=$(just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.txt 2>/tmp/orbit_token_storage_err) || true
           echo "--- orbit stderr (token_storage) ---"
           cat /tmp/orbit_token_storage_err || true
           echo "--- orbit stdout (token_storage) ---"
@@ -158,7 +170,7 @@ jobs:
           DFX_WARNING: -mainnet_plaintext_identity
         run: |
           set -euo pipefail
-          json_output=$(just orbit_upgrade cashier_backend "${{ github.event.inputs.mode }}" "${{ needs.setup_environment.outputs.network }}" backend_args.txt 2>/tmp/orbit_backend_err) || true
+          json_output=$(just orbit_upgrade cashier_backend "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.txt 2>/tmp/orbit_backend_err) || true
           echo "--- orbit stderr (backend) ---"
           cat /tmp/orbit_backend_err || true
           echo "--- orbit stdout (backend) ---"
@@ -170,7 +182,7 @@ jobs:
           ## 🚀 Orbit Deploy Summary
 
           - **Network**: `${{ needs.setup_environment.outputs.network }}`
-          - **Mode**: `${{ github.event.inputs.mode }}`
+          - **Mode**: `${{ env.MODE }}`
 
           ### Token Storage Canister
 
