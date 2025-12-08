@@ -108,6 +108,19 @@
       );
     }
 
+    if (action.type === ActionType.RECEIVE || action.type === ActionType.USE) {
+      // For RECEIVE/USE, show assets that user will receive (fee already paid by sender)
+      const assets = action.intents.map((intent) => ({
+        address: intent.type.payload.asset.address.toString(),
+        amount: intent.type.payload.amount, // Amount to be received
+      }));
+
+      return calculateAssetsWithTokenInfo(
+        assets,
+        walletStore.findTokenByAddress.bind(walletStore),
+      );
+    }
+
     return [];
   });
 
@@ -163,6 +176,11 @@
   // Check if this is a withdraw action
   const isWithdraw = $derived.by(() => {
     return action.type === ActionType.WITHDRAW;
+  });
+
+  // Check if this is a receive/use action (user claiming from link)
+  const isReceive = $derived.by(() => {
+    return action.type === ActionType.RECEIVE || action.type === ActionType.USE;
   });
 
   /**
@@ -272,6 +290,17 @@
             {/if}
 
             {#if isWithdraw && assetsWithTokenInfo.length > 0}
+              <YouSendSection
+                {assetsWithTokenInfo}
+                {failedImageLoads}
+                onImageError={handleImageError}
+                {isProcessing}
+                isReceive={true}
+                hasError={!!errorMessage}
+              />
+            {/if}
+
+            {#if isReceive && assetsWithTokenInfo.length > 0}
               <YouSendSection
                 {assetsWithTokenInfo}
                 {failedImageLoads}
