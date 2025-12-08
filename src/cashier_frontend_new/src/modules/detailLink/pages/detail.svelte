@@ -72,7 +72,7 @@
       // Remove the query parameter from URL without reload
       const newUrl = new URL(page.url);
       newUrl.searchParams.delete("created");
-      goto(newUrl.pathname + newUrl.search, {
+      goto(resolve(`/link/detail/${id}`), {
         replaceState: true,
         noScroll: true,
       });
