@@ -156,15 +156,39 @@ jobs:
         id: token_storage
         env:
           DFX_WARNING: -mainnet_plaintext_identity
+        shell: bash
         run: |
-          just orbit_upgrade token_storage ${{ env.MODE }} ${{ needs.setup_environment.outputs.network }} token_storage_args.txt | tee -a $GITHUB_OUTPUT
+          set -o pipefail
+          OUTFILE=token_storage_output.txt
+          # Run the command, capture stdout+stderr and tee to a file
+          just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.txt 2>&1 | tee "$OUTFILE"
+          rc=${PIPESTATUS[0]}
+          # Put full output into the step output named `json` (preserves newlines)
+          echo "json<<EOF" >> $GITHUB_OUTPUT
+          cat "$OUTFILE" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          if [ "$rc" -ne 0 ]; then
+            echo "::error ::orbit_upgrade failed with exit code $rc. Full output is available in step output 'json'."
+            exit $rc
+          fi
 
       - name: Upgrade backend canister
         id: backend
         env:
           DFX_WARNING: -mainnet_plaintext_identity
+        shell: bash
         run: |
-          just orbit_upgrade cashier_backend ${{ env.MODE }} ${{ needs.setup_environment.outputs.network }} backend_args.txt | tee -a $GITHUB_OUTPUT
+          set -o pipefail
+          OUTFILE=backend_output.txt
+          just orbit_upgrade cashier_backend "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.txt 2>&1 | tee "$OUTFILE"
+          rc=${PIPESTATUS[0]}
+          echo "json<<EOF" >> $GITHUB_OUTPUT
+          cat "$OUTFILE" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          if [ "$rc" -ne 0 ]; then
+            echo "::error ::orbit_upgrade failed with exit code $rc. Full output is available in step output 'json'."
+            exit $rc
+          fi
 
       - name: Write Job Summary
         run: |
