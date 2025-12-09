@@ -12,9 +12,14 @@
 
   // Track isLink state - false for ADDRESS_UNLOCKED step
   let isLink = $state(true);
+  let showFooter = $state(false);
 
   const handleIsLinkChange = (newIsLink: boolean) => {
     isLink = newIsLink;
+  };
+
+  const handleShowFooterChange = (newShowFooter: boolean) => {
+    showFooter = newShowFooter;
   };
 </script>
 
@@ -30,8 +35,11 @@
           UserLinkStep.COMPLETED,
         ]}
       >
-        <PageLayout isCreateOrEditPage={true} {isLink}>
-          <UseLink onIsLinkChange={handleIsLinkChange} />
+        <PageLayout isCreateOrEditPage={true} {isLink} {showFooter}>
+          <UseLink
+            onIsLinkChange={handleIsLinkChange}
+            onShowFooterChange={handleShowFooterChange}
+          />
         </PageLayout>
       </ProtectedUserState>
     </ProtectedValidLink>

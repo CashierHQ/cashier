@@ -1,13 +1,16 @@
 <script lang="ts">
   import AppHeader from "./AppHeader.svelte";
+  import Footer from "$modules/home/components/Footer.svelte";
 
   const {
     isCreateOrEditPage = false,
     isLink = false,
+    showFooter = false,
     children,
   }: {
     isCreateOrEditPage?: boolean;
     isLink?: boolean;
+    showFooter?: boolean;
     children: import("svelte").Snippet;
   } = $props();
 </script>
@@ -36,4 +39,7 @@
       </div>
     </div>
   </div>
+  {#if showFooter}
+    <Footer />
+  {/if}
 </div>

@@ -6,7 +6,8 @@ import { parseBalanceUnits } from "$modules/shared/utils/converter";
 export interface FirstAssetDisplayInfo {
   tokenAddress: string;
   symbol: string;
-  amount: string;
+  amount: number; // Changed to number for proper formatting
+  decimals: number;
 }
 
 /**
@@ -37,15 +38,19 @@ export function getFirstAssetDisplayInfo(
     return null;
   }
 
-  // Get symbol (prefer walletToken, then tokenMeta, then label, then default)
-  // tokenMeta.symbol is an array ([] | [string]), so we take the first element
-  const symbol =
-    walletToken?.symbol ??
-    (Array.isArray(tokenMeta?.symbol) && tokenMeta.symbol.length > 0
-      ? tokenMeta.symbol[0]
-      : null) ??
-    assetInfo.label ??
-    "TOKEN";
+  // Get symbol (prefer walletToken, then tokenMeta, then default)
+  // tokenMeta.symbol can be an array ([] | [string]) or a string
+  // Do NOT use assetInfo.label as it may contain link type (tip, airdrop) instead of currency symbol
+  let tokenMetaSymbol: string | null = null;
+  if (tokenMeta?.symbol) {
+    if (Array.isArray(tokenMeta.symbol) && tokenMeta.symbol.length > 0) {
+      tokenMetaSymbol = tokenMeta.symbol[0];
+    } else if (typeof tokenMeta.symbol === "string") {
+      tokenMetaSymbol = tokenMeta.symbol;
+    }
+  }
+
+  const symbol = walletToken?.symbol ?? tokenMetaSymbol ?? "TOKEN";
 
   // Get decimals (prefer walletToken, then tokenMeta, then default to 8)
   // tokenMeta.decimals is an array ([] | [number]), so we take the first element
@@ -58,16 +63,16 @@ export function getFirstAssetDisplayInfo(
       : null) ??
     8;
 
-  // Get amount (parse and format, removing trailing zeros)
-  const parsed = parseBalanceUnits(
+  // Get amount as number (will be formatted in component with proper decimals)
+  const amount = parseBalanceUnits(
     assetInfo.amount_per_link_use_action,
     decimals,
   );
-  const amount = parsed.toString().replace(/\.?0+$/, "");
 
   return {
     tokenAddress,
     symbol,
     amount,
+    decimals,
   };
 }

@@ -22,12 +22,12 @@ describe("getFirstAssetDisplayInfo", () => {
     priceUSD: 1.0,
   };
 
-  const mockTokenMeta: IcrcTokenMetadata = {
+  const mockTokenMeta = {
     symbol: ["META"],
     name: ["Meta Token"],
     decimals: [6],
     fee: [10000n],
-  };
+  } as unknown as IcrcTokenMetadata;
 
   it("returns null when assetInfo is null", () => {
     const result = getFirstAssetDisplayInfo(null);
@@ -40,12 +40,21 @@ describe("getFirstAssetDisplayInfo", () => {
   });
 
   it("returns null when tokenAddress cannot be derived", () => {
+    // Create an asset with undefined address
     const assetWithoutAddress = new AssetInfo(
-      new Asset("IC", undefined),
+      Asset.IC(mockPrincipal),
       1000000n,
       "Test",
     );
-    const result = getFirstAssetDisplayInfo(assetWithoutAddress);
+    // Mock the address to be undefined by overriding the asset
+    const assetWithUndefinedAddress = {
+      ...assetWithoutAddress,
+      asset: {
+        ...assetWithoutAddress.asset,
+        address: undefined,
+      },
+    };
+    const result = getFirstAssetDisplayInfo(assetWithUndefinedAddress);
     expect(result).toBeNull();
   });
 
@@ -59,7 +68,7 @@ describe("getFirstAssetDisplayInfo", () => {
     expect(result).not.toBeNull();
     expect(result?.tokenAddress).toBe("aaaaa-aa");
     expect(result?.symbol).toBe("TKN");
-    expect(result?.amount).toBe("0.01");
+    expect(result?.amount).toBe(0.01);
   });
 
   it("falls back to tokenMeta symbol and decimals when walletToken is not available", () => {
@@ -68,19 +77,19 @@ describe("getFirstAssetDisplayInfo", () => {
     expect(result).not.toBeNull();
     expect(result?.tokenAddress).toBe("aaaaa-aa");
     expect(result?.symbol).toBe("META");
-    expect(result?.amount).toBe("1");
+    expect(result?.amount).toBe(1);
   });
 
-  it("falls back to assetInfo label when neither walletToken nor tokenMeta is available", () => {
+  it("falls back to default 'TOKEN' when neither walletToken nor tokenMeta is available", () => {
     const result = getFirstAssetDisplayInfo(mockAssetInfo, null, null);
 
     expect(result).not.toBeNull();
     expect(result?.tokenAddress).toBe("aaaaa-aa");
-    expect(result?.symbol).toBe("Test Token");
-    expect(result?.amount).toBe("0.01"); // default decimals is 8
+    expect(result?.symbol).toBe("TOKEN");
+    expect(result?.amount).toBe(0.01); // default decimals is 8
   });
 
-  it("removes trailing zeros from amount", () => {
+  it("returns correct amount for exact values", () => {
     const assetWithExactAmount = new AssetInfo(
       mockAsset,
       100000000n, // 1.0 with 8 decimals
@@ -92,7 +101,7 @@ describe("getFirstAssetDisplayInfo", () => {
       null,
     );
 
-    expect(result?.amount).toBe("1");
+    expect(result?.amount).toBe(1);
   });
 
   it("handles amounts with decimals correctly", () => {
@@ -107,7 +116,7 @@ describe("getFirstAssetDisplayInfo", () => {
       null,
     );
 
-    expect(result?.amount).toBe("1.23456789");
+    expect(result?.amount).toBeCloseTo(1.23456789);
   });
 
   it("prefers walletToken over tokenMeta when both are available", () => {
@@ -118,6 +127,6 @@ describe("getFirstAssetDisplayInfo", () => {
     );
 
     expect(result?.symbol).toBe("TKN"); // from walletToken, not tokenMeta
-    expect(result?.amount).toBe("0.01"); // using walletToken decimals (8)
+    expect(result?.amount).toBe(0.01); // using walletToken decimals (8)
   });
 });

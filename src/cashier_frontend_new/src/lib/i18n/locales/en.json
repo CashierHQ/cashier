@@ -248,6 +248,9 @@
         "youReceive": "You receive",
         "userAddress": "User address",
         "noAssets": "No assets",
+        "loading": "Loading...",
+        "claimButton": "Claim",
+        "loginToContinue": "Login to Continue",
         "completed": {
           "title": "Completed",
           "message": "Congratulations, you received a tip!",
