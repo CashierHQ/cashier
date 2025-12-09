@@ -210,11 +210,11 @@
       if (closeDialog) {
         showCongratulationsDrawer = false;
       }
-      
+
       const copiedMessage = locale.t("links.linkForm.detail.copied");
       // Show toast first, before closing dialog
       toast.success(copiedMessage);
-      
+
       setTimeout(() => (showCopied = false), 2500);
     } catch (err) {
       console.error("copy failed", err);
@@ -625,11 +625,11 @@
     </div>
   </ConfirmDrawer>
 
-  <Dialog bind:open={showCongratulationsDrawer} onOpenChange={handleCongratulationsDialogClose}>
-    <DialogContent 
-      class="sm:max-w-[425px]" 
-      showCloseButton={false}
-    >
+  <Dialog
+    bind:open={showCongratulationsDrawer}
+    onOpenChange={handleCongratulationsDialogClose}
+  >
+    <DialogContent class="sm:max-w-[425px]" showCloseButton={false}>
       <DialogHeader class="flex flex-col items-center gap-2.5">
         <div
           class="w-12 h-12 rounded-full bg-[#E8F2EE] flex items-center justify-center mx-auto"
