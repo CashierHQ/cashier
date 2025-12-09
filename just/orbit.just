@@ -10,6 +10,7 @@ upload_asset canister_id:
 orbit_upgrade canister_name mode network arg_file:
   #!/usr/bin/env bash
   set -euo pipefail
+  set -x
   canister_id=$(just get_canister_id {{canister_name}} {{network}})
   if [ -z "$canister_id" ]; then
     echo "Error: canister_id is empty for {{canister_name}} on {{network}}" >&2
