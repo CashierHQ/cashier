@@ -168,7 +168,6 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          set -x
           OUTFILE=token_storage_output.txt
           # Run the command, capture stdout+stderr and tee to a file
           just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.txt 2>&1 | tee "$OUTFILE"
