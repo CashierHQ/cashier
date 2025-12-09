@@ -123,12 +123,17 @@ jobs:
       # DANGEROUS: Do not echo the private key to the console
 
       - name: Install dfx-orbit (only when submitting request)
-        run: cargo install -f --git https://github.com/dfinity/orbit.git --bin dfx-orbit
+        run: |
+          # Install dfx-orbit from specific tag
+          git clone https://github.com/dfinity/orbit.git
+          # Checkout specific version
+          git checkout @orbit/control-panel-v0.4.0
+          # Install dfx-orbit
+          cargo install -f --path tools/dfx-orbit/
   
       - name: Setup station
         run: |
           dfx-orbit station add cashier --station-id ${{ vars.ORBIT_STATION_ID }} --network ic
-          dfx-orbit me
       
       - name: Set log filter
         id: log_filter
