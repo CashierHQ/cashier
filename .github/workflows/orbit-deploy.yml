@@ -116,22 +116,20 @@ jobs:
 
       # DANGEROUS: This is a plaintext identity import
       - name: Import identity
-        run: dfx identity import deployer private_key.pem --storage-mode=plaintext
-      # DANGEROUS: Do not echo the private key to the console
-
-      - name: Use deployer identity
         run: |
+          dfx identity import deployer private_key.pem --storage-mode=plaintext
+          dfx identity use deployer
           echo "Deployer principal: $(dfx identity get-principal)"
+      # DANGEROUS: Do not echo the private key to the console
 
       - name: Install dfx-orbit (only when submitting request)
         run: cargo install -f --git https://github.com/dfinity/orbit.git --bin dfx-orbit
   
       - name: Setup station
-        run: dfx-orbit station add cashier --station-id ${{ vars.ORBIT_STATION_ID }} --network ic
+        run: |
+          dfx-orbit station add cashier --station-id ${{ vars.ORBIT_STATION_ID }} --network ic
+          dfx-orbit me
       
-      - name: Authenticate station
-        run: dfx-orbit me
-
       - name: Set log filter
         id: log_filter
         run: |
