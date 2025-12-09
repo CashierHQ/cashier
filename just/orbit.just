@@ -2,7 +2,10 @@
 [group('orbit')]
 upload_asset canister_id:
     just check_permission {{canister_id}}
-    dfx-orbit request asset upload {{canister_id}} --files {{FRONTEND_DIR_NEW}}/build || true
+    output=$(dfx-orbit request asset upload {{canister_id}} --files {{FRONTEND_DIR_NEW}}/build 2>&1)
+    # Use || true to prevent grep from failing if no match (grep returns exit code 1 on no match)
+    request_url=$(echo "$output" | grep -oE 'Request URL: https://[^ ]+' | sed 's/Request URL: //' || true)
+    printf '{"request_url":"%s"}\n' "$request_url"
 
 # General canister upgrade request to orbit
 # Returns JSON with: wasm_checksum, arg, arg_checksum, request_url
