@@ -63,6 +63,7 @@
   let showFirstEndLinkConfirm = $state(false);
   let showSecondEndLinkConfirm = $state(false);
   let showCongratulationsDrawer = $state(false);
+  let lastClickWasOnButton = $state(false);
 
   // Check if we should show congratulations drawer on mount
   $effect(() => {
@@ -70,9 +71,9 @@
     if (createdParam === "true") {
       showCongratulationsDrawer = true;
       // Remove the query parameter from URL without reload
-      const newUrl = new URL(page.url);
-      newUrl.searchParams.delete("created");
-      goto(resolve(`/link/detail/${id}`), {
+      const pathname = page.url.pathname;
+      // @ts-expect-error - dynamic route path
+      goto(resolve(pathname), {
         replaceState: true,
         noScroll: true,
       });
@@ -204,17 +205,38 @@
       const linkUrl = `${window.location.origin}/link/${linkStore.link?.id}`;
       await navigator.clipboard.writeText(linkUrl);
       showCopied = true;
-      toast.success(locale.t("links.linkForm.detail.copied"));
-      setTimeout(() => (showCopied = false), 1500);
 
+      // Close dialog after showing toast with a small delay
       if (closeDialog) {
         showCongratulationsDrawer = false;
       }
+      
+      const copiedMessage = locale.t("links.linkForm.detail.copied");
+      // Show toast first, before closing dialog
+      toast.success(copiedMessage);
+      
+      setTimeout(() => (showCopied = false), 2500);
     } catch (err) {
       console.error("copy failed", err);
       toast.error(
         locale.t("links.linkForm.detail.copyFailed") || "Failed to copy link",
       );
+    }
+  }
+
+  function handleCongratulationsDialogClose(open: boolean) {
+    if (!open) {
+      // Dialog is closing
+      if (lastClickWasOnButton) {
+        // User clicked the button, so copy link after dialog closes
+        setTimeout(() => {
+          copyLink(false);
+          lastClickWasOnButton = false;
+        }, 0);
+      } else {
+        // Dialog closed without button click, just reset flag
+        lastClickWasOnButton = false;
+      }
     }
   }
 
@@ -239,13 +261,26 @@
     try {
       if (!linkStore.link) throw new Error("Link is missing");
       await linkStore.disableLink();
-      // Refresh to get updated link state
+      // Refresh to get updated link state and any withdraw action
       await linkStore.query.refresh();
+
+      // Wait for withdraw action to appear (if it should be created)
+      // Try up to 5 times with 200ms delay between attempts
+      let attempts = 0;
+      while (attempts < 5 && !linkStore.action) {
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        await linkStore.query.refresh();
+        attempts++;
+      }
 
       const successMsg = locale.t(
         "links.linkForm.detail.messages.linkEndedSuccess",
       );
       toast.success(successMsg);
+      // If there's a withdraw action after ending the link, open txCart
+      if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
+        showTxCart = true;
+      }
     } catch (err) {
       const errorMsg =
         locale.t("links.linkForm.detail.messages.failedToEndLink") +
@@ -270,7 +305,19 @@
     isCreatingWithdraw = true;
 
     try {
-      // Check if action already exists
+      // First, try to refresh and check if action already exists
+      // This handles the case when action was created by endLink() but hasn't loaded yet
+      let attempts = 0;
+      while (
+        attempts < 3 &&
+        (!linkStore.action || linkStore.action.type !== ActionType.WITHDRAW)
+      ) {
+        await linkStore.query.refresh();
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        attempts++;
+      }
+
+      // If action already exists, just open the drawer
       if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
         showTxCart = true;
         return;
@@ -280,25 +327,63 @@
       await linkStore.createAction(ActionType.WITHDRAW);
       // Refresh query to get the newly created action
       await linkStore.query.refresh();
+      // Wait a bit for the query to update the action
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
-      // Open drawer if action exists (reactive update will handle it)
+      // Try to find the action with multiple refresh attempts
+      attempts = 0;
+      while (
+        attempts < 3 &&
+        (!linkStore.action || linkStore.action.type !== ActionType.WITHDRAW)
+      ) {
+        await linkStore.query.refresh();
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        attempts++;
+      }
+
+      // Open drawer if action exists
       if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
         showTxCart = true;
+      } else {
+        // If still no action, show error
+        const errorMsg =
+          locale.t(
+            "links.linkForm.detail.messages.failedToCreateWithdrawAction",
+          ) + " Action was not created";
+        errorMessage = errorMsg;
+        toast.error(errorMsg);
       }
     } catch (err) {
       const errorMessageText = err instanceof Error ? err.message : String(err);
 
       // If error is "Request lock already exists" or "Action already exists",
-      // it means action was already created, refresh and open drawer
+      // it means action was already created, so just open the modal
+      // Don't show error in this case - action exists, we just need to wait for it to load
       if (
         errorMessageText.includes("Request lock already exists") ||
         errorMessageText.includes("Action already exists") ||
         errorMessageText.includes("already exists")
       ) {
-        // Refresh to get the existing action
-        await linkStore.query.refresh();
-        // Open drawer - reactive update will handle showing the action
-        showTxCart = true;
+        // Refresh to get the existing action - try multiple times with longer waits
+        let attempts = 0;
+        while (
+          attempts < 10 &&
+          (!linkStore.action || linkStore.action.type !== ActionType.WITHDRAW)
+        ) {
+          await linkStore.query.refresh();
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          attempts++;
+        }
+
+        // Open modal if action exists (it should exist if we got "already exists" error)
+        if (linkStore.action && linkStore.action.type === ActionType.WITHDRAW) {
+          showTxCart = true;
+        } else {
+          // Even if we can't find it after many attempts, don't show error
+          // because the error "already exists" means it definitely exists on the backend
+          // Just try to open the drawer - it might work if action loads later
+          showTxCart = true;
+        }
       } else {
         // For other errors, show error message
         const errorMsg =
@@ -364,14 +449,6 @@
         {errorMessage}
       </div>
     {/if}
-
-    <!-- {#if successMessage}
-      <div
-        class="mb-4 p-3 text-sm text-green-700 bg-green-100 rounded border border-green-200"
-      >
-        {successMessage}
-      </div>
-    {/if} -->
 
     {#if linkStore.link}
       <!-- Block 1: Link Info -->
@@ -548,8 +625,11 @@
     </div>
   </ConfirmDrawer>
 
-  <Dialog bind:open={showCongratulationsDrawer}>
-    <DialogContent class="sm:max-w-[425px]" showCloseButton={false}>
+  <Dialog bind:open={showCongratulationsDrawer} onOpenChange={handleCongratulationsDialogClose}>
+    <DialogContent 
+      class="sm:max-w-[425px]" 
+      showCloseButton={false}
+    >
       <DialogHeader class="flex flex-col items-center gap-2.5">
         <div
           class="w-12 h-12 rounded-full bg-[#E8F2EE] flex items-center justify-center mx-auto"
@@ -573,10 +653,10 @@
     <!-- Arrow and button on the same level as modal, positioned at bottom of page -->
     {#if showCongratulationsDrawer}
       <DialogPortal>
-        <div class="fixed inset-0 z-[60] pointer-events-none">
+        <div class="fixed inset-0 z-[600] pointer-events-none">
           <!-- Arrow pointing down to the button -->
           <div
-            class="fixed start-[50%] z-[60] translate-x-[-50%] bottom-16 sm:bottom-[88px] w-full max-w-[calc(100%-2rem)] sm:max-w-[425px] pointer-events-none flex flex-col items-center"
+            class="fixed start-[50%] z-[600] translate-x-[-50%] bottom-16 sm:bottom-[88px] w-full max-w-[calc(100%-2rem)] sm:max-w-[425px] pointer-events-none flex flex-col items-center"
             style="top: calc(50% + 90px);"
           >
             <div
@@ -591,15 +671,15 @@
 
           <!-- Button at bottom of page -->
           <div
-            class="fixed bottom-3 sm:bottom-8 left-4 right-4 z-[60] pointer-events-auto"
+            class="fixed bottom-3 sm:bottom-8 left-4 right-4 z-[70] pointer-events-auto"
           >
             <div
               class="flex-none w-full msx w-[95%] max-w-[536px] mx-auto px-2 pt-2 pb-2 bg-white rounded-[28px]"
             >
               <Button
                 id="copy-link-button-modal"
-                onclick={async () => {
-                  await copyLink(true);
+                onmousedown={() => {
+                  lastClickWasOnButton = true;
                 }}
                 class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
               >
