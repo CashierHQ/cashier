@@ -54,6 +54,7 @@
     tokenAddress={displayInfo.tokenAddress}
     amount={displayInfo.amount}
     symbol={displayInfo.symbol}
+    decimals={displayInfo.decimals}
     message={locale.t("links.linkForm.useLink.completed.message")}
   />
 {/if}

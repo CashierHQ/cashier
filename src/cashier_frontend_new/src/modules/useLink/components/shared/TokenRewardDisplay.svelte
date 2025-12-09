@@ -1,15 +1,18 @@
 <script lang="ts">
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+  import { formatNumber } from "$modules/shared/utils/formatNumber";
 
   const {
     tokenAddress,
     amount,
     symbol,
+    decimals,
     message,
   }: {
     tokenAddress: string;
-    amount: string;
+    amount: number;
     symbol: string;
+    decimals: number;
     message: string;
   } = $props();
 
@@ -17,6 +20,9 @@
   let imageError = $state(false);
 
   const firstLetter = $derived(symbol?.[0]?.toUpperCase() ?? "?");
+
+  // Format amount with proper decimal places based on token decimals
+  const formattedAmount = $derived(formatNumber(amount, { tofixed: decimals }));
 
   function handleImageError() {
     imageError = true;
@@ -44,7 +50,7 @@
   <div
     class="text-center mb-1.5 text-gray-900 text-[16px] font-semibold leading-[120%]"
   >
-    {amount}
+    {formattedAmount}
     {symbol}
   </div>
 

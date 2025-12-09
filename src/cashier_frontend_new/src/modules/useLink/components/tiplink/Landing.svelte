@@ -4,6 +4,7 @@
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { Button } from "$lib/shadcn/components/ui/button";
+  import { locale } from "$lib/i18n";
   import TokenRewardDisplay from "../shared/TokenRewardDisplay.svelte";
   import { getFirstAssetDisplayInfo } from "../../utils/getFirstAssetDisplayInfo";
 
@@ -52,7 +53,7 @@
 </script>
 
 {#if userLink.linkDetail?.query.isLoading}
-  Loading...
+  {locale.t("links.linkForm.useLink.loading")}
 {/if}
 
 {#if displayInfo}
@@ -60,7 +61,8 @@
     tokenAddress={displayInfo.tokenAddress}
     amount={displayInfo.amount}
     symbol={displayInfo.symbol}
-    message="Congratulations, you received a tip!"
+    decimals={displayInfo.decimals}
+    message={locale.t("links.linkForm.useLink.completed.message")}
   />
 {/if}
 
@@ -71,7 +73,7 @@
       class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none h-[44px] px-4 w-full"
       onclick={() => userLink.goNext()}
     >
-      Claim
+      {locale.t("links.linkForm.useLink.claimButton")}
     </Button>
   </div>
 {:else}
@@ -81,7 +83,7 @@
       class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none h-[44px] px-4 w-full"
       onclick={openLoginModal}
     >
-      Login to Continue
+      {locale.t("links.linkForm.useLink.loginToContinue")}
     </Button>
   </div>
 {/if}

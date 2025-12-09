@@ -10,8 +10,10 @@
 
   const {
     onIsLinkChange,
+    onShowFooterChange,
   }: {
     onIsLinkChange?: (isLink: boolean) => void;
+    onShowFooterChange?: (showFooter: boolean) => void;
   } = $props();
 
   // Get userLinkStore from context (created by RouteGuard)
@@ -50,7 +52,6 @@
         await userStore.createAction(actionType);
 
         successMessage = "Action created successfully.";
-        // Refresh query state to update the derived link with new action
         userStore.query?.refresh();
       }
     } catch (err) {
@@ -70,6 +71,16 @@
       const step = userStore.state?.step ?? userStore.step;
       const isLink = step !== UserLinkStep.ADDRESS_UNLOCKED;
       onIsLinkChange(isLink);
+    }
+  });
+
+  // Notify parent about showFooter changes based on current step
+  $effect(() => {
+    if (onShowFooterChange) {
+      const isLanding = userStore.step === UserLinkStep.LANDING;
+      const isCompleted = userStore.state?.step === UserLinkStep.COMPLETED;
+      const showFooter = isLanding || isCompleted;
+      onShowFooterChange(showFooter);
     }
   });
 </script>
