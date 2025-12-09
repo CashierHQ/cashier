@@ -1,0 +1,233 @@
+name: Orbit Deploy
+
+on:
+  # Temporary: trigger on push to this feature branch for testing
+  push:
+    branches:
+      - 'feature/orbit-cli'
+    paths:
+      - 'src/cashier_backend/**'
+      - 'src/token_storage/**'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Deployment mode'
+        required: true
+        default: 'upgrade'
+        type: choice
+        options:
+          - reinstall
+          - upgrade
+          - install
+
+jobs:
+  setup_environment:
+    runs-on: ubuntu-latest
+    outputs:
+        network: ${{ steps.set-env.outputs.network }}
+        mode: ${{ steps.set-mode.outputs.mode }}
+    steps:
+        - name: Set deployment network
+          id: set-env
+          run: |
+              # For pull requests, use base_ref, for pushes use ref_name
+              if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+                TARGET_BRANCH="${{ github.base_ref }}"
+              else
+                TARGET_BRANCH="${{ github.ref_name }}"
+              fi
+              echo "Detected branch: $TARGET_BRANCH"
+
+              if [[ "$TARGET_BRANCH" == "main" ]]; then
+                echo "network=production" >> $GITHUB_OUTPUT
+              elif [[ "$TARGET_BRANCH" == "staging" ]]; then
+                echo "network=staging" >> $GITHUB_OUTPUT
+              ## Temporary: treat this feature branch as dev for testing
+              elif [[ "$TARGET_BRANCH" == "feature/orbit-cli" ]]; then
+                # Treat this feature branch as a dev network for testing
+                echo "network=staging" >> $GITHUB_OUTPUT
+              else
+                # Any other branch will deploy to dev network
+                echo "network=dev" >> $GITHUB_OUTPUT
+              fi
+
+        - name: Set deployment mode
+          id: set-mode
+          run: |
+              # Use input mode if provided (workflow_dispatch), otherwise default to 'upgrade'
+              INPUT_MODE="${{ github.event.inputs.mode }}"
+              if [[ -n "$INPUT_MODE" ]]; then
+                echo "mode=$INPUT_MODE" >> $GITHUB_OUTPUT
+              else
+                echo "mode=upgrade" >> $GITHUB_OUTPUT
+              fi
+
+  deploy:
+    name: Prepare and Submit Orbit request (optional)
+    needs: setup_environment
+    environment: ${{ needs.setup_environment.outputs.network }}
+    env:
+      MODE: ${{ needs.setup_environment.outputs.mode }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+          targets: wasm32-unknown-unknown
+
+      - name: Setup environment
+        run: |
+          export RUST_BACKTRACE="full"
+
+      - name: Install dfx
+        uses: dfinity/setup-dfx@main
+
+      - name: Confirm successful installation
+        run: dfx --version
+
+      - name: Install ic-wasm
+        run: |
+          wget https://github.com/dfinity/ic-wasm/releases/download/0.9.8/ic-wasm-linux64 -O /usr/local/bin/ic-wasm
+          chmod +x /usr/local/bin/ic-wasm
+
+      - name: Install candid-extractor
+        run: |
+          wget https://github.com/dfinity/candid-extractor/releases/download/0.1.6/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -O /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz
+          tar -xvf /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -C /usr/local/bin
+          chmod +x /usr/local/bin/candid-extractor
+
+      - name: Install didc
+        run: |
+          wget https://github.com/dfinity/candid/releases/download/2025-10-16/didc-linux64 -O /usr/local/bin/didc
+          chmod +x /usr/local/bin/didc
+
+      - name: Install Just command runner
+        uses: extractions/setup-just@v1
+
+      - name: Create private key file
+        run: |
+          echo "${{ secrets.DEPLOYER }}" > private_key.pem
+
+      # DANGEROUS: This is a plaintext identity import
+      - name: Import identity
+        run: |
+          dfx identity import deployer private_key.pem --storage-mode=plaintext
+          dfx identity use deployer
+          echo "Deployer principal: $(dfx identity get-principal)"
+      # DANGEROUS: Do not echo the private key to the console
+
+      - name: Install dfx-orbit
+        run: |
+          # Install dfx-orbit from specific tag
+          git clone https://github.com/dfinity/orbit.git
+          # Navigate into orbit directory
+          cd orbit
+          # Checkout specific version
+          git checkout @orbit/control-panel-v0.4.0
+          # Install dfx-orbit
+          cargo install -f --path tools/dfx-orbit/
+  
+      - name: Setup station
+        run: |
+          dfx-orbit station add cashier --station-id ${{ vars.ORBIT_STATION_ID }} --network ic
+      
+      - name: Set log filter
+        id: log_filter
+        run: |
+          if [ "${{ needs.setup_environment.outputs.network }}" = "production" ]; then
+            echo "filter=global,cashier=info,token_storage=info" >> $GITHUB_OUTPUT
+          else
+            echo "filter=global,cashier=debug,token_storage=debug" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build candid args (single run)
+        run: |
+          owner=${{ vars.ORBIT_STATION_ID }}
+          just build_backend_args "$owner" "${{ steps.log_filter.outputs.filter }}" backend_args.txt
+          just build_token_storage_args "$owner" "${{ steps.log_filter.outputs.filter }}" token_storage_args.txt
+          echo "Backend args:"
+          cat backend_args.txt
+          echo ""
+          echo ""
+          echo "Token storage args:"
+          cat token_storage_args.txt
+
+      - name: Build canisters
+        run: just build
+
+      - name: Upgrade token_storage canister
+        id: token_storage
+        env:
+          DFX_WARNING: -mainnet_plaintext_identity
+        shell: bash
+        run: |
+          set -o pipefail
+          # Capture JSON output (last line from orbit_upgrade)
+          output=$(just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.txt 2>&1 | tail -1)
+          rc=${PIPESTATUS[0]}
+          
+          # Parse JSON fields
+          echo "wasm_checksum=$(echo "$output" | jq -r '.wasm_checksum')" >> $GITHUB_OUTPUT
+          echo "arg_checksum=$(echo "$output" | jq -r '.arg_checksum')" >> $GITHUB_OUTPUT
+          echo "arg=$(echo "$output" | jq -r '.arg')" >> $GITHUB_OUTPUT
+          echo "request_url=$(echo "$output" | jq -r '.arg')" >> $GITHUB_OUTPUT
+          
+          if [ "$rc" -ne 0 ]; then
+            echo "::error ::orbit_upgrade failed with exit code $rc"
+            exit $rc
+          fi
+
+      - name: Upgrade backend canister
+        id: backend
+        env:
+          DFX_WARNING: -mainnet_plaintext_identity
+        shell: bash
+        run: |
+          set -o pipefail
+          # Capture JSON output (last line from orbit_upgrade)
+          output=$(just orbit_upgrade cashier_backend "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.txt 2>&1 | tail -1)
+          rc=${PIPESTATUS[0]}
+          
+          # Parse JSON fields
+          echo "wasm_checksum=$(echo "$output" | jq -r '.wasm_checksum')" >> $GITHUB_OUTPUT
+          echo "arg_checksum=$(echo "$output" | jq -r '.arg_checksum')" >> $GITHUB_OUTPUT
+          echo "arg=$(echo "$output" | jq -r '.arg')" >> $GITHUB_OUTPUT
+          echo "request_url=$(echo "$output" | jq -r '.request_url')" >> $GITHUB_OUTPUT
+          
+          if [ "$rc" -ne 0 ]; then
+            echo "::error ::orbit_upgrade failed with exit code $rc"
+            exit $rc
+          fi
+
+      - name: Write Job Summary
+        run: |
+          echo "## 🚀 Orbit Deploy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Network**: \`${{ needs.setup_environment.outputs.network }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Mode**: \`${{ env.MODE }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Token Storage Canister" >> $GITHUB_STEP_SUMMARY
+          echo "Arg: "
+          echo "```" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.token_storage.outputs.arg }}" >> $GITHUB_STEP_SUMMARY
+          echo "```" >> $GITHUB_STEP_SUMMARY
+          echo "**WASM Checksum:** \`${{ steps.token_storage.outputs.wasm_checksum }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Arg Checksum:** \`${{ steps.token_storage.outputs.arg_checksum }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Request URL:** ${{ steps.token_storage.outputs.request_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Backend Canister" >> $GITHUB_STEP_SUMMARY
+          echo "Arg: "
+          echo "```" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.backend.outputs.arg }}" >> $GITHUB_STEP_SUMMARY
+          echo "```" >> $GITHUB_STEP_SUMMARY
+          echo "**WASM Checksum:** \`${{ steps.backend.outputs.wasm_checksum }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Arg Checksum:** \`${{ steps.backend.outputs.arg_checksum }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Request URL:** ${{ steps.backend.outputs.request_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Deployed at: $(date -u "+%Y-%m-%d %H:%M:%S UTC")*" >> $GITHUB_STEP_SUMMARY

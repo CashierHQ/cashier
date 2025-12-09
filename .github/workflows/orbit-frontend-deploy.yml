@@ -1,4 +1,4 @@
-name: Orbit Deploy
+name: Orbit Frontend Deploy
 
 on:
   # Temporary: trigger on push to this feature branch for testing
@@ -6,8 +6,7 @@ on:
     branches:
       - 'feature/orbit-cli'
     paths:
-      - 'src/cashier_backend/**'
-      - 'src/token_storage/**'
+      - 'src/cashier_frontend_new/**'
   workflow_dispatch:
     inputs:
       mode:
@@ -139,74 +138,14 @@ jobs:
       - name: Setup station
         run: |
           dfx-orbit station add cashier --station-id ${{ vars.ORBIT_STATION_ID }} --network ic
-      
-      - name: Set log filter
-        id: log_filter
-        run: |
-          if [ "${{ needs.setup_environment.outputs.network }}" = "production" ]; then
-            echo "filter=global,cashier=info,token_storage=info" >> $GITHUB_OUTPUT
-          else
-            echo "filter=global,cashier=debug,token_storage=debug" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Build candid args (single run)
-        run: |
-          owner=${{ vars.ORBIT_STATION_ID }}
-          just build_backend_args "$owner" "${{ steps.log_filter.outputs.filter }}" backend_args.txt
-          just build_token_storage_args "$owner" "${{ steps.log_filter.outputs.filter }}" token_storage_args.txt
-          echo "Backend args:"
-          cat backend_args.txt
-          echo ""
-          echo ""
-          echo "Token storage args:"
-          cat token_storage_args.txt
 
       - name: Build canisters
         run: just build
 
-      - name: Upgrade token_storage canister
-        id: token_storage
-        env:
-          DFX_WARNING: -mainnet_plaintext_identity
-        shell: bash
+      - name: Deploy frontend
         run: |
-          set -o pipefail
-          # Capture JSON output (last line from orbit_upgrade)
-          output=$(just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.txt 2>&1 | tail -1)
-          rc=${PIPESTATUS[0]}
-          
-          # Parse JSON fields
-          echo "wasm_checksum=$(echo "$output" | jq -r '.wasm_checksum')" >> $GITHUB_OUTPUT
-          echo "arg_checksum=$(echo "$output" | jq -r '.arg_checksum')" >> $GITHUB_OUTPUT
-          echo "arg=$(echo "$output" | jq -r '.arg')" >> $GITHUB_OUTPUT
-          echo "request_url=$(echo "$output" | jq -r '.arg')" >> $GITHUB_OUTPUT
-          
-          if [ "$rc" -ne 0 ]; then
-            echo "::error ::orbit_upgrade failed with exit code $rc"
-            exit $rc
-          fi
-
-      - name: Upgrade backend canister
-        id: backend
-        env:
-          DFX_WARNING: -mainnet_plaintext_identity
-        shell: bash
-        run: |
-          set -o pipefail
-          # Capture JSON output (last line from orbit_upgrade)
-          output=$(just orbit_upgrade cashier_backend "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.txt 2>&1 | tail -1)
-          rc=${PIPESTATUS[0]}
-          
-          # Parse JSON fields
-          echo "wasm_checksum=$(echo "$output" | jq -r '.wasm_checksum')" >> $GITHUB_OUTPUT
-          echo "arg_checksum=$(echo "$output" | jq -r '.arg_checksum')" >> $GITHUB_OUTPUT
-          echo "arg=$(echo "$output" | jq -r '.arg')" >> $GITHUB_OUTPUT
-          echo "request_url=$(echo "$output" | jq -r '.request_url')" >> $GITHUB_OUTPUT
-          
-          if [ "$rc" -ne 0 ]; then
-            echo "::error ::orbit_upgrade failed with exit code $rc"
-            exit $rc
-          fi
+          canister_id=$(just get_canister_id frontend --network ${{ needs.setup_environment.outputs.network }})
+          just upload_asset ${canister_id}
 
       - name: Write Job Summary
         run: |
