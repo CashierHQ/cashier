@@ -224,6 +224,7 @@ jobs:
           echo "**Arg Checksum:** \`${{ steps.token_storage.outputs.arg_checksum }}\`" >> $GITHUB_STEP_SUMMARY
           echo "**Request URL:** ${{ steps.token_storage.outputs.request_url }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          
           echo "### Backend Canister" >> $GITHUB_STEP_SUMMARY
           echo "Arg: "
           echo "```" >> $GITHUB_STEP_SUMMARY
