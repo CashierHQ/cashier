@@ -44,7 +44,7 @@
       linkDetailStore.link &&
       linkDetailStore.link.state === LinkState.ACTIVE
     ) {
-      goto(resolve(`/link/detail/${linkDetailStore.id}`));
+      goto(resolve(`/link/detail/${linkDetailStore.id}?created=true`));
     }
   });
 

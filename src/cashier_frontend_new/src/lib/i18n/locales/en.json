@@ -166,7 +166,7 @@
         "userClaims": "User claims",
         "maxUse": "Max use",
         "transactionLock": "Transaction lock",
-        "transactionLockUnlock": "Unlock",
+        "transactionLockUnlock": "Unlocked",
         "transactionLockLock": "Lock",
         "transactionLockEnded": "Ended",
         "youSend": "You send",
@@ -236,6 +236,10 @@
         "error": {
           "use_without_login_or_wallet": "You need to login or input your wallet",
           "unknown_action_state": "Unknown action state"
+        },
+        "congratulations": {
+          "title": "Congratulations!",
+          "description": "You've created a link. Copy the link address, and share it others."
         }
       },
       "useLink": {
