@@ -170,7 +170,7 @@ jobs:
           set -o pipefail
           OUTFILE=token_storage_output.txt
           # Run the command, capture stdout+stderr and tee to a file
-          just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.txt 2>&1 | tee "$OUTFILE"
+          just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.txt | tee "$OUTFILE"
           rc=${PIPESTATUS[0]}
           # Put full output into the step output named `json` (preserves newlines)
           echo "json<<EOF" >> $GITHUB_OUTPUT
@@ -190,7 +190,7 @@ jobs:
           set -o pipefail
           set -x
           OUTFILE=backend_output.txt
-          just orbit_upgrade cashier_backend "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.txt 2>&1 | tee "$OUTFILE"
+          just orbit_upgrade cashier_backend "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.txt | tee "$OUTFILE"
           rc=${PIPESTATUS[0]}
           echo "json<<EOF" >> $GITHUB_OUTPUT
           cat "$OUTFILE" >> $GITHUB_OUTPUT
@@ -209,14 +209,14 @@ jobs:
           - **Mode**: \`${{ env.MODE }}\`
 
           ### Token Storage Canister
-          \`\`\`json
+          ```
           ${{ steps.token_storage.outputs.json }}
-          \`\`\`
+          ```
 
           ### Backend Canister
-          \`\`\`json
+          ```
           ${{ steps.backend.outputs.json }}
-          \`\`\`
+          ```
 
           ---
           *Deployed at: $(date -u "+%Y-%m-%d %H:%M:%S UTC")*

@@ -10,6 +10,7 @@ upload_asset canister_id:
 orbit_upgrade canister_name mode network arg_file:
   #!/usr/bin/env bash
   set -euo pipefail
+  set -x
   canister_id=$(just get_canister_id {{canister_name}} {{network}})
   if [ -z "$canister_id" ]; then
     echo "Error: canister_id is empty for {{canister_name}} on {{network}}" >&2
@@ -21,13 +22,10 @@ orbit_upgrade canister_name mode network arg_file:
   arg_checksum=$(just sha256_encoded_candid {{arg_file}} {{ARTIFACTS_DIR}}/{{canister_name}}.did)
 
   if [ -n "$arg" ]; then
-    echo "Running: dfx-orbit request canister install --mode {{mode}} \"${canister_id}\" --wasm \"${wasm_path}\" --argument '${arg}'"
     output=$(dfx-orbit request canister install --mode {{mode}} "$canister_id" --wasm "$wasm_path" --argument "$arg" 2>&1)
   else
-    echo "Running: dfx-orbit request canister install --mode {{mode}} \"${canister_id}\" --wasm \"${wasm_path}\""
     output=$(dfx-orbit request canister install --mode {{mode}} "$canister_id" --wasm "$wasm_path" 2>&1)
   fi
-  echo "$output" >&2
   # Use || true to prevent grep from failing if no match (grep returns exit code 1 on no match)
   request_url=$(echo "$output" | grep -oE 'Request URL: https://[^ ]+' | sed 's/Request URL: //' || true)
   
