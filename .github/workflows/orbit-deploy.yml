@@ -168,16 +168,17 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          OUTFILE=token_storage_output.txt
-          # Run the command, capture stdout+stderr and tee to a file
-          just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.txt | tee "$OUTFILE"
+          # Capture JSON output (last line from orbit_upgrade)
+          output=$(just orbit_upgrade token_storage "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" token_storage_args.txt 2>&1 | tail -1)
           rc=${PIPESTATUS[0]}
-          # Put full output into the step output named `json` (preserves newlines)
-          echo "json<<EOF" >> $GITHUB_OUTPUT
-          cat "$OUTFILE" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Parse JSON fields
+          echo "wasm_checksum=$(echo "$output" | jq -r '.wasm_checksum')" >> $GITHUB_OUTPUT
+          echo "arg_checksum=$(echo "$output" | jq -r '.arg_checksum')" >> $GITHUB_OUTPUT
+          echo "request_url=$(echo "$output" | jq -r '.request_url')" >> $GITHUB_OUTPUT
+          
           if [ "$rc" -ne 0 ]; then
-            echo "::error ::orbit_upgrade failed with exit code $rc. Full output is available in step output 'json'."
+            echo "::error ::orbit_upgrade failed with exit code $rc"
             exit $rc
           fi
 
@@ -188,36 +189,36 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          set -x
-          OUTFILE=backend_output.txt
-          just orbit_upgrade cashier_backend "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.txt | tee "$OUTFILE"
+          # Capture JSON output (last line from orbit_upgrade)
+          output=$(just orbit_upgrade cashier_backend "${{ env.MODE }}" "${{ needs.setup_environment.outputs.network }}" backend_args.txt 2>&1 | tail -1)
           rc=${PIPESTATUS[0]}
-          echo "json<<EOF" >> $GITHUB_OUTPUT
-          cat "$OUTFILE" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Parse JSON fields
+          echo "wasm_checksum=$(echo "$output" | jq -r '.wasm_checksum')" >> $GITHUB_OUTPUT
+          echo "arg_checksum=$(echo "$output" | jq -r '.arg_checksum')" >> $GITHUB_OUTPUT
+          echo "request_url=$(echo "$output" | jq -r '.request_url')" >> $GITHUB_OUTPUT
+          
           if [ "$rc" -ne 0 ]; then
-            echo "::error ::orbit_upgrade failed with exit code $rc. Full output is available in step output 'json'."
+            echo "::error ::orbit_upgrade failed with exit code $rc"
             exit $rc
           fi
 
       - name: Write Job Summary
         run: |
-          cat >> "$GITHUB_STEP_SUMMARY" << EOF
-          ## 🚀 Orbit Deploy Summary
-
-          - **Network**: \`${{ needs.setup_environment.outputs.network }}\`
-          - **Mode**: \`${{ env.MODE }}\`
-
-          ### Token Storage Canister
-          ```
-          ${{ steps.token_storage.outputs.json }}
-          ```
-
-          ### Backend Canister
-          ```
-          ${{ steps.backend.outputs.json }}
-          ```
-
-          ---
-          *Deployed at: $(date -u "+%Y-%m-%d %H:%M:%S UTC")*
-          EOF
+          echo "## 🚀 Orbit Deploy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Network**: \`${{ needs.setup_environment.outputs.network }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Mode**: \`${{ env.MODE }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Token Storage Canister" >> $GITHUB_STEP_SUMMARY
+          echo "**WASM Checksum:** \`${{ steps.token_storage.outputs.wasm_checksum }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Arg Checksum:** \`${{ steps.token_storage.outputs.arg_checksum }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Request URL:** ${{ steps.token_storage.outputs.request_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Backend Canister" >> $GITHUB_STEP_SUMMARY
+          echo "**WASM Checksum:** \`${{ steps.backend.outputs.wasm_checksum }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Arg Checksum:** \`${{ steps.backend.outputs.arg_checksum }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Request URL:** ${{ steps.backend.outputs.request_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Deployed at: $(date -u "+%Y-%m-%d %H:%M:%S UTC")*" >> $GITHUB_STEP_SUMMARY
