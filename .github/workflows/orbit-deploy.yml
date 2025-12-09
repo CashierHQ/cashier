@@ -122,10 +122,12 @@ jobs:
           echo "Deployer principal: $(dfx identity get-principal)"
       # DANGEROUS: Do not echo the private key to the console
 
-      - name: Install dfx-orbit (only when submitting request)
+      - name: Install dfx-orbit
         run: |
           # Install dfx-orbit from specific tag
           git clone https://github.com/dfinity/orbit.git
+          # Navigate into orbit directory
+          cd orbit
           # Checkout specific version
           git checkout @orbit/control-panel-v0.4.0
           # Install dfx-orbit
