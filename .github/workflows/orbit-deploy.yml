@@ -5,6 +5,9 @@ on:
   push:
     branches:
       - 'feature/orbit-cli'
+    paths:
+      - 'src/cashier_backend/**'
+      - 'src/token_storage/**'
   workflow_dispatch:
     inputs:
       mode:
@@ -213,7 +216,7 @@ jobs:
           echo "- **Mode**: \`${{ env.MODE }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Token Storage Canister" >> $GITHUB_STEP_SUMMARY
-          echp "Arg: "
+          echo "Arg: "
           echo "```" >> $GITHUB_STEP_SUMMARY
           echo "${{ steps.token_storage.outputs.arg }}" >> $GITHUB_STEP_SUMMARY
           echo "```" >> $GITHUB_STEP_SUMMARY
