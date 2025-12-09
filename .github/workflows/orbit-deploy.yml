@@ -121,9 +121,16 @@ jobs:
 
       - name: Use deployer identity
         run: |
-          dfx identity use deployer
-          owner=$(dfx identity get-principal) || true
-          echo "owner=$owner"
+          echo "Deployer principal: $(dfx identity get-principal)"
+
+      - name: Install dfx-orbit (only when submitting request)
+        run: cargo install -f --git https://github.com/dfinity/orbit.git --bin dfx-orbit
+  
+      - name: Setup station
+        run: dfx-orbit station add cashier --station-id ${{ vars.ORBIT_STATION_ID }} --network ic
+      
+      - name: Authenticate station
+        run: dfx-orbit me
 
       - name: Set log filter
         id: log_filter
@@ -136,7 +143,7 @@ jobs:
 
       - name: Build candid args (single run)
         run: |
-          owner=$(dfx identity get-principal)
+          owner=${{ vars.ORBIT_STATION_ID }}
           just build_backend_args "$owner" "${{ steps.log_filter.outputs.filter }}" backend_args.txt
           just build_token_storage_args "$owner" "${{ steps.log_filter.outputs.filter }}" token_storage_args.txt
           echo "Backend args:"
@@ -145,9 +152,6 @@ jobs:
           echo ""
           echo "Token storage args:"
           cat token_storage_args.txt
-
-      - name: Install dfx-orbit (only when submitting request)
-        run: cargo install -f --git https://github.com/dfinity/orbit.git --bin dfx-orbit
 
       - name: Build canisters
         run: just build
