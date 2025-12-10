@@ -92,7 +92,7 @@
           tx: Number(runeTx)
         },
         amount: BigInt(importAmount),
-        feeRate: 10,
+        feeRate: 1,
         network: 'mainnet'
       });
       
