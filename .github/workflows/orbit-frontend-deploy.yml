@@ -1,10 +1,10 @@
 name: Orbit Frontend Deploy
 
 on:
-  # Temporary: trigger on push to this feature branch for testing
   push:
     branches:
-      - 'feature/orbit-cli'
+      - main
+      - staging
     paths:
       - 'src/cashier_frontend_new/**'
   workflow_dispatch:
@@ -18,6 +18,9 @@ on:
           - reinstall
           - upgrade
           - install
+
+permissions:
+  contents: read
 
 jobs:
   setup_environment:
@@ -40,10 +43,6 @@ jobs:
               if [[ "$TARGET_BRANCH" == "main" ]]; then
                 echo "network=production" >> $GITHUB_OUTPUT
               elif [[ "$TARGET_BRANCH" == "staging" ]]; then
-                echo "network=staging" >> $GITHUB_OUTPUT
-              ## Temporary: treat this feature branch as dev for testing
-              elif [[ "$TARGET_BRANCH" == "feature/orbit-cli" ]]; then
-                # Treat this feature branch as a dev network for testing
                 echo "network=staging" >> $GITHUB_OUTPUT
               else
                 # Any other branch will deploy to dev network
