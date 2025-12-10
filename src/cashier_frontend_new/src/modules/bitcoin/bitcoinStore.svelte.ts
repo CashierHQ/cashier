@@ -21,6 +21,20 @@ export class BitcoinStore {
   async getBtcAddress(principalId: string): Promise<string> {
     return await omnityHubService.getBitcoinAddress(principalId);
   }
+
+  async generateTicket(
+    txid: string,
+    principalId: string,
+    amount: bigint,
+    runeId: string,
+  ) {
+    return await omnityHubService.generateTicket(
+      txid,
+      principalId,
+      amount,
+      runeId,
+    );
+  }
 }
 
 export const bitcoinStore = new BitcoinStore();

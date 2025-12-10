@@ -1,12 +1,15 @@
 import * as omnityHub from "$lib/generated/omnity_hub/omnity_hub.did";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { OMNITY_HUB_BITCOIN_CANISTER_ID } from "$modules/bitcoin/constants";
+import { Ok, type Result } from "ts-results-es";
 import type { OmnityRuneToken } from "../types";
 
 /**
  * Service for interacting with the Omnity Hub canister.
  */
 class OmnityHubService {
+  readonly #targetChainId = "eICP";
+
   /**
    * Get the authenticated omnityHub actor for the current user.
    *
@@ -57,13 +60,36 @@ class OmnityHubService {
       throw new Error("User is not authenticated");
     }
 
-    const targetChainId = "eICP";
-
     const response = await actor.get_btc_address({
-      target_chain_id: targetChainId,
+      target_chain_id: this.#targetChainId,
       receiver: principalId,
     });
     return response;
+  }
+
+  async generateTicket(
+    txid: string,
+    principalId: string,
+    amount: bigint,
+    runeId: string,
+  ): Promise<Result<string, string>> {
+    const actor = this.#getActor({ anonymous: false });
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
+
+    const ticketArgs = {
+      txid,
+      target_chain_id: this.#targetChainId,
+      amount,
+      receiver: principalId,
+      rune_id: runeId,
+    };
+
+    const result = await actor.generate_ticket(ticketArgs);
+    console.log("Generated ticket result:", result);
+
+    return Ok("Ticket generated successfully");
   }
 }
 

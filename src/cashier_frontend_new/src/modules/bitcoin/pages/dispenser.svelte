@@ -23,6 +23,31 @@
     }
   })
 
+  async function handleGenerateTicket() {
+    const txid = '7ebb05748c080b59f22e0676be1f4778e98e6c0522667af1e5ffb608ba620ab5';
+    const runeId = '840000:3';
+    const importAmount = 100;
+
+    try {
+      const result = await bitcoinStore.generateTicket(
+        txid,
+        receiverPrincipalId,
+        BigInt(importAmount),
+        runeId
+      );
+      console.log('🎟️ Ticket generated:', result);
+      successMessage = `🎉 Ticket generated successfully!\n\n` +
+        `Rune ID: ${runeId}\n` +
+        `Amount: ${importAmount}\n` +
+        `To: ${btcDepositAddress.slice(0, 12)}...${btcDepositAddress.slice(-8)}\n` +
+        `TXID: ${txid}\n\n` +
+        `View: https://mempool.space/mainnet/tx/${txid}`;
+    } catch (error) {
+      console.error('❌ Ticket generation failed:', error);
+      errorMessage = `❌ Ticket generation failed: ${error}`;
+    }
+  }
+
   async function handleImport() {
     if (!btcDepositAddress) {
       alert('Please enter recipient address');
@@ -173,5 +198,6 @@
     <input bind:value={importAmount} type="number" min="0" style="border: 1px solid #ccc;" />
   </div>
     <button onclick={handleImport} style="border: 1px solid #ccc;">Import Runes</button>
+    <button onclick={handleGenerateTicket} style="border: 1px solid #ccc; margin-left: 10px;">Generate Ticket</button>
   {/if}
 </div>
