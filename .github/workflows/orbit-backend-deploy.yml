@@ -1,10 +1,10 @@
 name: Orbit Backend Deploy
 
 on:
-  # Temporary: trigger on push to this feature branch for testing
   push:
     branches:
-      - 'feature/orbit-cli'
+      - main
+      - staging
     paths:
       - 'src/cashier_backend/**'
       - 'src/token_storage/**'
@@ -19,6 +19,9 @@ on:
           - reinstall
           - upgrade
           - install
+
+permissions:
+  contents: read
 
 jobs:
   setup_environment:
@@ -41,10 +44,6 @@ jobs:
               if [[ "$TARGET_BRANCH" == "main" ]]; then
                 echo "network=production" >> $GITHUB_OUTPUT
               elif [[ "$TARGET_BRANCH" == "staging" ]]; then
-                echo "network=staging" >> $GITHUB_OUTPUT
-              ## Temporary: treat this feature branch as dev for testing
-              elif [[ "$TARGET_BRANCH" == "feature/orbit-cli" ]]; then
-                # Treat this feature branch as a dev network for testing
                 echo "network=staging" >> $GITHUB_OUTPUT
               else
                 # Any other branch will deploy to dev network
@@ -159,7 +158,7 @@ jobs:
           cat token_storage_args.txt
 
       - name: Build canisters
-        run: just build
+        run: just build ${{ needs.setup_environment.outputs.network }}
 
       - name: Upgrade token_storage canister
         id: token_storage
