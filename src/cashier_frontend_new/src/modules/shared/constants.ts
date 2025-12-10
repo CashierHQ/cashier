@@ -6,7 +6,6 @@ import {
   PUBLIC_SHARED_HOST_ICP_MAINNET,
   PUBLIC_SHARED_IC_INTERNET_IDENTITY_PROVIDER,
   PUBLIC_SHARED_TOKEN_STORAGE_CANISTER_ID,
-  PUBLIC_,
 } from "$env/static/public";
 
 type BuildType = "dev" | "local" | "staging" | "production";
