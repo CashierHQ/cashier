@@ -1,10 +1,14 @@
 <script lang="ts">
   import { authState } from '$modules/auth/state/auth.svelte';
-  import { type UTXO } from '$modules/bitcoin/utils/pbst-builder';
+  import { createTransferPSBT, type UTXO } from '$modules/bitcoin/utils/pbst-builder';
   import { bitcoinStore } from '../bitcoinStore.svelte';
 
   let btcWalletAddress = $state('');
   let isConnected = $state(false);
+  let isTransferring = $state(false);
+  let importAmount = $state(0);
+  let successMessage = $state('');
+  let errorMessage = $state('');
 
   let receiverPrincipalId: string = $derived.by(() => {
       return authState.account?.owner || "No principal";
@@ -20,7 +24,83 @@
   })
 
   async function handleImport() {
-    console.log("Importing runes for", receiverPrincipalId, "to BTC address", btcDepositAddress);
+    if (!btcDepositAddress) {
+      alert('Please enter recipient address');
+      return;
+    }
+    
+    if (!importAmount || Number(importAmount) <= 0) {
+      alert('Please enter a valid amount');
+      return;
+    }
+    
+    isTransferring = true;
+    
+    try {
+      const unisat = getUnisat();
+      
+      const runeBlock = '840000';
+      const runeTx = '3';
+      const runeId = `${runeBlock}:${runeTx}`; // DOG TO THE MOON
+      
+      // Get UTXOs
+      const utxos = await getUTXOs();
+      
+      if (utxos.length === 0) {
+        throw new Error('No UTXOs available. You need testnet BTC.');
+      }
+      
+      // Select UTXO with enough value
+      const selectedUtxo = utxos.find(u => u.value > 20000) || utxos[0];
+      
+      if (selectedUtxo.value < 20000) {
+        throw new Error('Insufficient BTC. Need at least 20,000 sats for transfer.');
+      }
+      
+      // Create transfer PSBT using builder
+      const psbtBase64 = await createTransferPSBT({
+        utxos: [selectedUtxo],
+        fromAddress: btcWalletAddress,
+        toAddress: btcDepositAddress,
+        runeId: {
+          block: BigInt(runeBlock),
+          tx: Number(runeTx)
+        },
+        amount: BigInt(importAmount),
+        feeRate: 10,
+        network: 'mainnet'
+      });
+      
+      console.log('✍️ Requesting signature...');
+      
+      // Sign with Unisat
+      const signedPsbt = await unisat.signPsbt(psbtBase64, {
+        autoFinalized: true,
+      });
+      
+      console.log('📡 Broadcasting...');
+      
+      // Broadcast
+      const txid = await unisat.pushPsbt(signedPsbt);
+      
+      console.log('✅ Transfer successful! TXID:', txid);
+
+      successMessage = `🎉 Runes transferred successfully!\n\n` +
+        `Rune ID: ${runeId}\n` +
+        `Amount: ${importAmount}\n` +
+        `To: ${btcDepositAddress.slice(0, 12)}...${btcDepositAddress.slice(-8)}\n` +
+        `TXID: ${txid}\n\n` +
+        `View: https://mempool.space/mainnet/tx/${txid}`
+      
+      // Reset form
+      importAmount = 0;
+      
+    } catch (error) {
+      console.error('❌ Transfer failed:', error);
+      errorMessage = `❌ Transfer failed: ${error}`;
+    } finally {
+      isTransferring = false;
+    }
   }
 
   function getUnisat() {
@@ -60,6 +140,17 @@
 </script>
 
 <div>
+  <h1>Bitcoin Rune Dispenser</h1>
+  {#if successMessage}
+    <div style="border: 1px solid green; padding: 10px; margin: 10px 0; white-space: pre-wrap;">
+      {successMessage}
+    </div>
+  {/if}
+  {#if errorMessage}
+    <div style="border: 1px solid red; padding: 10px; margin: 10px 0; white-space: pre-wrap;">
+      {errorMessage}
+    </div>
+  {/if}
   <p>PrincipalID: {receiverPrincipalId}</p>
   <p>Bitcoin Deposit Address: {btcDepositAddress}</p>
   {#if !isConnected}
@@ -79,7 +170,7 @@
       {/each}
     </select>
     <p>Amount:</p>
-    <input type="number" min="0" style="border: 1px solid #ccc;" />
+    <input bind:value={importAmount} type="number" min="0" style="border: 1px solid #ccc;" />
   </div>
     <button onclick={handleImport} style="border: 1px solid #ccc;">Import Runes</button>
   {/if}
