@@ -7,6 +7,7 @@
   import Landing from "../components/Landing.svelte";
   import Unlocked from "../components/Unlocked.svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
+  import { locale } from "$lib/i18n";
 
   const {
     onIsLinkChange,
@@ -25,6 +26,7 @@
   }
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
+  let isCreatingAction = $state(false);
 
   let showTxCart: boolean = $derived.by(() => {
     return !!(
@@ -41,13 +43,20 @@
     successMessage = null;
 
     try {
-      if (!userStore?.link) throw new Error("Link detail is missing");
+      if (!userStore?.link) {
+        throw new Error(
+          locale.t("links.linkForm.useLink.errors.linkDetailMissing"),
+        );
+      }
       if (userStore.action) {
         showTxCart = true;
       } else {
+        isCreatingAction = true;
         const actionType = userStore.findUseActionType();
         if (!actionType) {
-          throw new Error("No applicable action type found for this link");
+          throw new Error(
+            locale.t("links.linkForm.useLink.errors.noActionTypeFound"),
+          );
         }
         await userStore.createAction(actionType);
 
@@ -55,9 +64,14 @@
         userStore.query?.refresh();
       }
     } catch (err) {
-      errorMessage = `Failed to create action. ${
+      const errorPrefix = locale.t(
+        "links.linkForm.useLink.errors.failedToCreateAction",
+      );
+      errorMessage = `${errorPrefix} ${
         err instanceof Error ? err.message : ""
       }`;
+    } finally {
+      isCreatingAction = false;
     }
   };
 
@@ -112,6 +126,8 @@
         <Unlocked
           linkDetail={userStore.linkDetail}
           onCreateUseAction={handleCreateUseAction}
+          {isCreatingAction}
+          hasAction={!!userStore.action}
         />
         {#if showTxCart && userStore?.link && userStore?.action}
           <TxCart

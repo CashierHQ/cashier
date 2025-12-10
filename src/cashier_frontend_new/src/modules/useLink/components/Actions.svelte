@@ -6,9 +6,10 @@
   interface Props {
     link: Link;
     onCreateUseAction?: () => Promise<void>;
+    disabled?: boolean;
   }
 
-  let { link, onCreateUseAction }: Props = $props();
+  let { link, onCreateUseAction, disabled = false }: Props = $props();
 </script>
 
 {#if link?.state === LinkState.ACTIVE}
@@ -17,10 +18,16 @@
   >
     <Button
       onclick={onCreateUseAction}
+      {disabled}
       class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
       type="button"
     >
-      {locale.t("links.linkForm.chooseType.preview.claimButton")}
+      {#if disabled}
+        <div
+          class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"
+        ></div>
+      {/if}
+      {locale.t("links.linkForm.useLink.claimButton")}
     </Button>
   </div>
 {/if}

@@ -24,7 +24,7 @@
             LinkStep.CREATED,
           ]}
         >
-          <PageLayout isCreateOrEditPage={true}>
+          <PageLayout isLinkFormPage={true}>
             <div class="w-full grow-1 flex flex-col">
               <CreateLink tempLinkId={id} />
             </div>

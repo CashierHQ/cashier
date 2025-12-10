@@ -6,20 +6,24 @@
   const {
     linkDetail,
     onCreateUseAction,
+    isCreatingAction = false,
+    hasAction = false,
   }: {
     linkDetail: LinkDetailStore;
     onCreateUseAction?: () => Promise<void>;
+    isCreatingAction?: boolean;
+    hasAction?: boolean;
   } = $props();
 </script>
-
-{#if linkDetail?.query.isLoading}
-  Loading...
-{/if}
 
 {#if linkDetail?.link}
   <div class="w-full grow-1 flex flex-col justify-between">
     <AssetList assetInfo={linkDetail.link.asset_info} />
 
-    <Actions link={linkDetail.link} {onCreateUseAction} />
+    <Actions
+      link={linkDetail.link}
+      {onCreateUseAction}
+      disabled={isCreatingAction && !hasAction}
+    />
   </div>
 {/if}

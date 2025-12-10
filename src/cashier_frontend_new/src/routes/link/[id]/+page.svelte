@@ -29,10 +29,11 @@
 </script>
 
 <main class="flex flex-col h-screen">
-  <Header onLoginClick={openLoginModal} />
   <RouteGuard linkId={id} storeType="userLink">
+
     <ProtectedValidLink>
       <ProtectedUserState allowedStates={[UserLinkStep.LANDING]}>
+        <Header onLoginClick={openLoginModal} />
         <Landing linkId={id} {openLoginModal} />
       </ProtectedUserState>
     </ProtectedValidLink>

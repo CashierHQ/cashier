@@ -40,7 +40,7 @@
             LinkStep.ENDED,
           ]}
         >
-          <PageLayout isCreateOrEditPage={true}>
+          <PageLayout isLinkFormPage={true}>
             <DetailLink {id} onBack={handleBack} />
           </PageLayout>
         </ProtectedLinkState>
