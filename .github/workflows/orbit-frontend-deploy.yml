@@ -118,10 +118,12 @@ jobs:
 
       # DANGEROUS: This is a plaintext identity import
       - name: Import identity
+        id: identity
         run: |
           dfx identity import deployer private_key.pem --storage-mode=plaintext
           dfx identity use deployer
           echo "Deployer principal: $(dfx identity get-principal)"
+          echo "operator=$(dfx identity get-principal)" >> $GITHUB_OUTPUT
       # DANGEROUS: Do not echo the private key to the console
 
       - name: Install dfx-orbit
@@ -174,7 +176,7 @@ jobs:
           - **Network**: `${{ needs.setup_environment.outputs.network }}`
           - **Mode**: `${{ env.MODE }}`
           - **Canister id**: `${{ steps.frontend.outputs.canister_id }}`
-          - **Operator Principal**: `$(dfx identity get-principal)`
+          - **Operator Principal**: `${{ steps.identity.outputs.operator }}`
 
           ### Frontend Canister
           | Field | Value |
