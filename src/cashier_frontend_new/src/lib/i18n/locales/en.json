@@ -256,6 +256,11 @@
           "message": "Congratulations, you received a tip!",
           "claimButton": "Claim",
           "claimedButton": "Claimed"
+        },
+        "errors": {
+          "linkDetailMissing": "Link detail is missing",
+          "noActionTypeFound": "No applicable action type found for this link",
+          "failedToCreateAction": "Failed to create action"
         }
       }
     }

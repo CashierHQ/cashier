@@ -108,8 +108,7 @@
       );
     }
 
-    if (action.type === ActionType.RECEIVE || action.type === ActionType.USE) {
-      // For RECEIVE/USE, show assets that user will receive (fee already paid by sender)
+    if (action.type === ActionType.RECEIVE) {
       const assets = action.intents.map((intent) => ({
         address: intent.type.payload.asset.address.toString(),
         amount: intent.type.payload.amount, // Amount to be received
@@ -178,9 +177,9 @@
     return action.type === ActionType.WITHDRAW;
   });
 
-  // Check if this is a receive/use action (user claiming from link)
+  // Check if this is a receive action (user claiming from link)
   const isReceive = $derived.by(() => {
-    return action.type === ActionType.RECEIVE || action.type === ActionType.USE;
+    return action.type === ActionType.RECEIVE;
   });
 
   /**

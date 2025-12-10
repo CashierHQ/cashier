@@ -13,11 +13,11 @@
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
 
   type Props = {
-    isCreateOrEditPage?: boolean;
+    isLinkFormPage?: boolean;
     linkName?: string;
   };
 
-  let { isCreateOrEditPage = false, linkName }: Props = $props();
+  let { isLinkFormPage = false, linkName }: Props = $props();
 
   function handleWalletClick() {
     goto(resolve("/wallet"));
@@ -56,7 +56,7 @@
     const storeHeaderName = appHeaderStore.getHeaderName();
     if (storeHeaderName) return storeHeaderName;
 
-    if (!isCreateOrEditPage) return "";
+    if (!isLinkFormPage) return "";
 
     if (currentPath?.startsWith("/link/create")) {
       return locale.t("links.linkForm.header.linkName");
@@ -90,8 +90,8 @@
 <div
   class="w-full flex justify-between items-center lg:px-8 px-4 py-3 sm:pt-3 pt-4 bg-white"
 >
-  {#if isCreateOrEditPage}
-    <!-- Mobile header for create/edit pages -->
+  {#if isLinkFormPage}
+    <!-- Mobile header for link form pages (create, detail, use) -->
     <div class="md:hidden w-full flex items-center justify-center relative">
       {#if showBackButton}
         <button

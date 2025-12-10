@@ -4,15 +4,14 @@
   import { locale } from "$lib/i18n";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
-  import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import {
     formatNumber,
     formatUsdAmount,
   } from "$modules/shared/utils/formatNumber";
-  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { SvelteSet } from "svelte/reactivity";
+  import { getAssetWithTokenInfo } from "$modules/useLink/utils/getAssetWithTokenInfo";
 
   interface Props {
     assetInfo: AssetInfo[];
@@ -37,46 +36,26 @@
     failedImageLoads.add(address);
   }
 
-  // Process assets to get token info
-  function getAssetWithTokenInfo(assetInfoItem: AssetInfo) {
-    const address =
+  // Extract address from asset (helper to avoid duplication)
+  function getAssetAddress(assetInfoItem: AssetInfo): string {
+    return (
       assetInfoItem.asset.address?.toText?.() ??
       assetInfoItem.asset.address?.toString?.() ??
-      "";
+      ""
+    );
+  }
+
+  // Process assets to get token info using utility function
+  function processAssetInfo(assetInfoItem: AssetInfo) {
+    const address = getAssetAddress(assetInfoItem);
 
     const walletToken = walletStore.query.data?.find(
       (t) => t.address === address,
     );
-    const tokenMeta = address ? tokenMetadataQuery(address) : null;
+    const tokenMetaState = address ? tokenMetadataQuery(address) : null;
+    const tokenMeta = tokenMetaState?.data;
 
-    const symbol =
-      walletToken?.symbol ??
-      tokenMeta?.data?.symbol ??
-      assetInfoItem.label ??
-      "TOKEN";
-
-    const decimals = walletToken?.decimals ?? tokenMeta?.data?.decimals ?? 8;
-
-    const priceUSD = walletToken?.priceUSD;
-
-    const amount = parseBalanceUnits(
-      assetInfoItem.amount_per_link_use_action,
-      decimals,
-    );
-
-    const usdValue = priceUSD ? amount * priceUSD : 0;
-
-    const logo = getTokenLogo(address);
-
-    return {
-      address,
-      amount,
-      symbol,
-      decimals,
-      priceUSD,
-      usdValue,
-      logo,
-    };
+    return getAssetWithTokenInfo(assetInfoItem, walletToken, tokenMeta);
   }
 </script>
 
@@ -112,8 +91,8 @@
       <div
         class="border-[1px] rounded-lg border-lightgreen px-4 py-3 flex flex-col gap-3"
       >
-        {#each assetInfo as assetInfoItem (assetInfoItem.asset.address?.toText?.() ?? assetInfoItem.label)}
-          {@const assetData = getAssetWithTokenInfo(assetInfoItem)}
+        {#each assetInfo as assetInfoItem (getAssetAddress(assetInfoItem) || assetInfoItem.label)}
+          {@const assetData = processAssetInfo(assetInfoItem)}
           <div class="flex justify-between items-center">
             <div class="flex items-center gap-1.5">
               {#if !failedImageLoads.has(assetData.address)}

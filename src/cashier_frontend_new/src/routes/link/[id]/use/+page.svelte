@@ -35,7 +35,7 @@
           UserLinkStep.COMPLETED,
         ]}
       >
-        <PageLayout isCreateOrEditPage={true} {isLink} {showFooter}>
+        <PageLayout isLinkFormPage={true} {isLink} {showFooter}>
           <UseLink
             onIsLinkChange={handleIsLinkChange}
             onShowFooterChange={handleShowFooterChange}

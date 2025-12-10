@@ -3,12 +3,12 @@
   import Footer from "$modules/home/components/Footer.svelte";
 
   const {
-    isCreateOrEditPage = false,
+    isLinkFormPage = false,
     isLink = false,
     showFooter = false,
     children,
   }: {
-    isCreateOrEditPage?: boolean;
+    isLinkFormPage?: boolean;
     isLink?: boolean;
     showFooter?: boolean;
     children: import("svelte").Snippet;
@@ -18,7 +18,7 @@
 <div
   class="flex flex-col min-h-screen {isLink ? '' : 'sm:bg-lightgreen'} bg-white"
 >
-  <AppHeader {isCreateOrEditPage} />
+  <AppHeader {isLinkFormPage} />
 
   <div
     class="flex-1 {isLink
