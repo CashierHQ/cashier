@@ -149,7 +149,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          canister_id=$(just get_canister_id frontend ${{ needs.setup_environment.outputs.network }})
+          canister_id=$(just get_canister_id cashier_frontend ${{ needs.setup_environment.outputs.network }})
           # Capture JSON output (last line from upload_asset)
           output=$(just upload_asset ${canister_id} 2>&1 | tail -1)
           rc=${PIPESTATUS[0]}
