@@ -7,6 +7,7 @@
   type Props = {
     totalFeesUsd: number;
     isClickable?: boolean;
+    disabled?: boolean; // Disable button when processing
     onInfoClick?: () => void; // Handler for info icon button click
     onBreakdownClick?: () => void; // Handler for breakdown button click (with ChevronRight)
   };
@@ -14,6 +15,7 @@
   let {
     totalFeesUsd,
     isClickable = false,
+    disabled = false,
     onInfoClick,
     onBreakdownClick,
   }: Props = $props();
@@ -34,18 +36,25 @@
       </button>
     {/if}
   </div>
-  {#if isClickable && onBreakdownClick}
+  {#if onBreakdownClick}
     <button
       type="button"
-      class="border-[1px] rounded-lg border-lightgreen px-4 py-3 w-full text-left cursor-pointer hover:bg-gray-50 transition-colors"
+      class="border-[1px] rounded-lg border-lightgreen px-4 py-3 w-full text-left transition-colors"
+      class:cursor-pointer={!disabled}
+      class:cursor-not-allowed={disabled}
+      class:hover:bg-gray-50={!disabled}
+      class:opacity-50={disabled}
       onclick={onBreakdownClick}
+      {disabled}
     >
       <div class="flex justify-between items-center">
         <p class="text-[14px] font-medium">
           {locale.t("links.linkForm.preview.totalFees")}
         </p>
         <div class="flex items-center gap-2">
-          <p class="text-[14px] font-normal">{formatUsdAmount(totalFeesUsd)}</p>
+          <p class="text-[14px] font-normal">
+            ~${formatUsdAmount(totalFeesUsd)}
+          </p>
           <ChevronRight size={18} />
         </div>
       </div>
@@ -57,7 +66,9 @@
           {locale.t("links.linkForm.preview.totalFees")}
         </p>
         <div class="flex items-center gap-2">
-          <p class="text-[14px] font-normal">{formatUsdAmount(totalFeesUsd)}</p>
+          <p class="text-[14px] font-normal">
+            ~${formatUsdAmount(totalFeesUsd)}
+          </p>
         </div>
       </div>
     </div>

@@ -118,7 +118,7 @@
                 </p>
               </div>
               <p class="text-[10px] medium-font text-[#b6b6b6]">
-                {formatUsdAmount(assetData.usdValue)}
+                ~${formatUsdAmount(assetData.usdValue)}
               </p>
             </div>
           </div>

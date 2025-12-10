@@ -14,15 +14,20 @@
   import YouSendSection from "$modules/creationLink/components/previewSections/YouSendSection.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import FeeBreakdown from "./feeBreakdown.svelte";
+  import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import { X } from "lucide-svelte";
   import { ActionType } from "$modules/links/types/action/actionType";
   import IntentTask from "$modules/links/types/action/intentTask";
   import { locale } from "$lib/i18n";
-  import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
+  import {
+    calculateAssetsWithTokenInfo,
+    type FeeBreakdownItem,
+  } from "$modules/links/utils/feesBreakdown";
+  import { FeeType } from "$modules/links/types/fee";
 
   let {
     action,
-    isOpen,
+    isOpen: isOpenProp,
     onCloseDrawer,
     handleProcessAction,
     isProcessing: externalIsProcessing,
@@ -35,6 +40,16 @@
   } = $props();
 
   const txCartStore = new TransactionCartStore(action, handleProcessAction);
+
+  // Local state for managing drawer open/close
+  // eslint-disable-next-line svelte/prefer-writable-derived
+  let isOpen = $state(isOpenProp);
+
+  // Sync isOpen prop with local state
+  $effect(() => {
+    isOpen = isOpenProp;
+  });
+
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let isProcessingLocally: boolean = $state(false);
@@ -68,6 +83,7 @@
   });
 
   let showFeeBreakdown = $state(false);
+  let showFeeInfoDrawer = $state(false);
   let failedImageLoads = $state<Set<string>>(new Set());
 
   function handleImageError(address: string) {
@@ -182,6 +198,60 @@
     return action.type === ActionType.RECEIVE;
   });
 
+  // Convert assetAndFeeList to feesBreakdown format for FeeInfoDrawer
+  const feesBreakdown = $derived.by((): FeeBreakdownItem[] => {
+    const breakdown: FeeBreakdownItem[] = [];
+
+    for (const item of assetAndFeeList) {
+      if (!item.fee) continue;
+
+      const token = walletStore.query.data?.find(
+        (t) => t.address === item.asset.address,
+      );
+      if (!token) continue;
+
+      // Parse fee amount from string to bigint
+      const feeAmountStr = item.fee.amount.replace(/,/g, "");
+      const feeAmount = parseFloat(feeAmountStr);
+      const feeAmountBigInt = BigInt(
+        Math.round(feeAmount * Math.pow(10, token.decimals)),
+      );
+
+      // Determine fee name based on fee type
+      const feeName =
+        item.fee.feeType === FeeType.CREATE_LINK_FEE
+          ? "Link creation fee"
+          : "Network fees";
+
+      breakdown.push({
+        name: feeName,
+        amount: feeAmountBigInt,
+        tokenAddress: item.asset.address,
+        tokenSymbol: token.symbol,
+        tokenDecimals: token.decimals,
+        usdAmount: item.fee.usdValue || 0,
+      });
+    }
+
+    return breakdown;
+  });
+
+  // Handle fee breakdown click - close txCart and show FeeInfoDrawer
+  function handleFeeBreakdownClick() {
+    // Don't open drawer if processing
+    if (isProcessing) {
+      return;
+    }
+    isOpen = false;
+    showFeeInfoDrawer = true;
+  }
+
+  // Handle back button in FeeInfoDrawer - close FeeInfoDrawer and reopen txCart
+  function handleFeeInfoDrawerBack() {
+    showFeeInfoDrawer = false;
+    isOpen = true;
+  }
+
   /**
    * Handle confirm button click.
    */
@@ -283,8 +353,8 @@
 
               <FeesBreakdownSection
                 {totalFeesUsd}
-                isClickable={false}
-                onInfoClick={() => (showFeeBreakdown = true)}
+                onBreakdownClick={handleFeeBreakdownClick}
+                disabled={isProcessing}
               />
             {/if}
 
@@ -332,4 +402,14 @@
       {/if}
     </Drawer.Content>
   </Drawer.Root>
+
+  <!-- FeeInfoDrawer for showing fees breakdown -->
+  <FeeInfoDrawer
+    bind:open={showFeeInfoDrawer}
+    onClose={() => {
+      showFeeInfoDrawer = false;
+    }}
+    onBack={handleFeeInfoDrawerBack}
+    {feesBreakdown}
+  />
 {/if}
