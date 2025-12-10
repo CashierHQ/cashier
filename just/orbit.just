@@ -1,12 +1,23 @@
 # Prepare frontend statis assets and submit commit request to orbit
+# Returns JSON with: batch_id, evidence, request_url
 [group('orbit')]
 upload_asset canister_id:
-    just check_permission {{canister_id}}
-    output=$(dfx-orbit request asset upload {{canister_id}} --files {{FRONTEND_DIR_NEW}}/build 2>&1)
-    # Use || true to prevent grep from failing if no match (grep returns exit code 1 on no match)
-    request_url=$(echo "$output" | grep -oE 'Request URL: https://[^ ]+' | sed 's/Request URL: //' || true)
-    printf '{"request_url":"%s"}\n' "$request_url"
-
+  #!/usr/bin/env bash
+  set -euo pipefail
+  set -x
+  just check_permission {{canister_id}}
+  output=$(dfx-orbit request asset upload {{canister_id}} --files {{FRONTEND_DIR_NEW}}/build 2>&1)
+  
+  # Parse batch_id, evidence, and request_url from output
+  batch_id=$(echo "$output" | grep -oE 'Batch id: [0-9]+' | sed 's/Batch id: //' || true)
+  evidence=$(echo "$output" | grep -oE 'Evidence: [a-f0-9]+' | sed 's/Evidence: //' || true)
+  request_url=$(echo "$output" | grep -oE 'Request URL: https://[^ ]+' | sed 's/Request URL: //' || true)
+  
+  # Output JSON result to stdout
+  printf '{"batch_id":"%s","evidence":"%s","request_url":"%s"}\n' \
+    "$batch_id" \
+    "$evidence" \
+    "$request_url"
 # General canister upgrade request to orbit
 # Returns JSON with: wasm_checksum, arg, arg_checksum, request_url
 [group('orbit')]
@@ -25,9 +36,18 @@ orbit_upgrade canister_name mode network arg_file:
   arg_checksum=$(just sha256_encoded_candid {{arg_file}} {{ARTIFACTS_DIR}}/{{canister_name}}.did)
 
   if [ -n "$arg" ]; then
-    output=$(dfx-orbit request canister install --mode {{mode}} "$canister_id" --wasm "$wasm_path" --argument "$arg" 2>&1)
+    output=$(dfx-orbit request canister install \
+      --mode {{mode}} \
+      "$canister_id" \
+      --wasm "$wasm_path" \
+      --argument "$arg" \
+      2>&1)
   else
-    output=$(dfx-orbit request canister install --mode {{mode}} "$canister_id" --wasm "$wasm_path" 2>&1)
+    output=$(dfx-orbit request canister install \
+      --mode {{mode}} \
+      "$canister_id" \
+      --wasm "$wasm_path" \
+      2>&1)
   fi
   # Use || true to prevent grep from failing if no match (grep returns exit code 1 on no match)
   request_url=$(echo "$output" | grep -oE 'Request URL: https://[^ ]+' | sed 's/Request URL: //' || true)

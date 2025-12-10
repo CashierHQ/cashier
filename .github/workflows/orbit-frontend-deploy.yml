@@ -140,38 +140,45 @@ jobs:
           dfx-orbit station add cashier --station-id ${{ vars.ORBIT_STATION_ID }} --network ic
 
       - name: Build canisters
-        run: just build
+        run: just build ${{ needs.setup_environment.outputs.network }}
 
       - name: Deploy frontend
+        id: frontend
+        env:
+          DFX_WARNING: -mainnet_plaintext_identity
+        shell: bash
         run: |
-          canister_id=$(just get_canister_id frontend --network ${{ needs.setup_environment.outputs.network }})
-          just upload_asset ${canister_id}
+          set -o pipefail
+          canister_id=$(just get_canister_id frontend ${{ needs.setup_environment.outputs.network }})
+          # Capture JSON output (last line from upload_asset)
+          output=$(just upload_asset ${canister_id} 2>&1 | tail -1)
+          rc=${PIPESTATUS[0]}
+          
+          # Parse JSON fields
+          echo "batch_id=$(echo "$output" | jq -r '.batch_id')" >> $GITHUB_OUTPUT
+          echo "evidence=$(echo "$output" | jq -r '.evidence')" >> $GITHUB_OUTPUT
+          echo "request_url=$(echo "$output" | jq -r '.request_url')" >> $GITHUB_OUTPUT
+          
+          if [ "$rc" -ne 0 ]; then
+            echo "::error ::upload_asset failed with exit code $rc"
+            exit $rc
+          fi
 
       - name: Write Job Summary
         run: |
-          echo "## 🚀 Orbit Deploy Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Network**: \`${{ needs.setup_environment.outputs.network }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Mode**: \`${{ env.MODE }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Token Storage Canister" >> $GITHUB_STEP_SUMMARY
-          echo "Arg: "
-          echo "```" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.token_storage.outputs.arg }}" >> $GITHUB_STEP_SUMMARY
-          echo "```" >> $GITHUB_STEP_SUMMARY
-          echo "**WASM Checksum:** \`${{ steps.token_storage.outputs.wasm_checksum }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Arg Checksum:** \`${{ steps.token_storage.outputs.arg_checksum }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Request URL:** ${{ steps.token_storage.outputs.request_url }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+          cat >> "$GITHUB_STEP_SUMMARY" << 'EOF'
+          ## 🚀 Orbit Frontend Deploy Summary
 
-          echo "### Backend Canister" >> $GITHUB_STEP_SUMMARY
-          echo "Arg: "
-          echo "```" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.backend.outputs.arg }}" >> $GITHUB_STEP_SUMMARY
-          echo "```" >> $GITHUB_STEP_SUMMARY
-          echo "**WASM Checksum:** \`${{ steps.backend.outputs.wasm_checksum }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Arg Checksum:** \`${{ steps.backend.outputs.arg_checksum }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Request URL:** ${{ steps.backend.outputs.request_url }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "*Deployed at: $(date -u "+%Y-%m-%d %H:%M:%S UTC")*" >> $GITHUB_STEP_SUMMARY
+          - **Network**: `${{ needs.setup_environment.outputs.network }}`
+          - **Mode**: `${{ env.MODE }}`
+
+          ### Frontend Canister
+          | Field | Value |
+          |-------|-------|
+          | Batch ID | `${{ steps.frontend.outputs.batch_id }}` |
+          | Evidence | `${{ steps.frontend.outputs.evidence }}` |
+          | Request URL | ${{ steps.frontend.outputs.request_url }} |
+
+          ---
+          EOF
+          echo "*Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')*" >> "$GITHUB_STEP_SUMMARY"
