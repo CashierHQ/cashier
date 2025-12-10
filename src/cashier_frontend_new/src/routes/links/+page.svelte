@@ -30,7 +30,7 @@
           class="w-full sm:max-w-[600px] max-w-full sm:p-8 px-4 grow-1 bg-white sm:rounded-xl overflow-hidden"
         >
           <div
-            class="sm:max-h-[calc(100vh-156px)] max-h-[calc(100vh-78px)] overflow-y-auto scrollbar-hide"
+            class="sm:max-h-[calc(100vh-158px)] max-h-[calc(100vh-78px)] overflow-y-auto scrollbar-hide"
           >
             <LinksPage />
           </div>
