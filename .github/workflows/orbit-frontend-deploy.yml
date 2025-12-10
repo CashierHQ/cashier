@@ -149,6 +149,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
+          set -x
           canister_id=$(just get_canister_id cashier_frontend ${{ needs.setup_environment.outputs.network }})
           # Capture JSON output (last line from upload_asset)
           output=$(just upload_asset ${canister_id} 2>&1 | tail -1)
@@ -158,6 +159,7 @@ jobs:
           echo "batch_id=$(echo "$output" | jq -r '.batch_id')" >> $GITHUB_OUTPUT
           echo "evidence=$(echo "$output" | jq -r '.evidence')" >> $GITHUB_OUTPUT
           echo "request_url=$(echo "$output" | jq -r '.request_url')" >> $GITHUB_OUTPUT
+          echo "canister_id=$canister_id" >> $GITHUB_OUTPUT
           
           if [ "$rc" -ne 0 ]; then
             echo "::error ::upload_asset failed with exit code $rc"
@@ -171,6 +173,7 @@ jobs:
 
           - **Network**: `${{ needs.setup_environment.outputs.network }}`
           - **Mode**: `${{ env.MODE }}`
+          - **Canister id**: `${{ steps.frontend.outputs.canister_id }}`
 
           ### Frontend Canister
           | Field | Value |
