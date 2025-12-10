@@ -17,6 +17,11 @@ export class BitcoinStore {
   get query() {
     return this.#tokenListQuery;
   }
+
+  async getBtcAddress(principalId: string): Promise<string> {
+    const btcAddress = await omnityHubService.getBitcoinAddress(principalId);
+    return btcAddress;
+  }
 }
 
 export const bitcoinStore = new BitcoinStore();

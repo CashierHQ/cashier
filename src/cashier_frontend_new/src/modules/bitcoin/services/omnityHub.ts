@@ -50,6 +50,21 @@ class OmnityHubService {
 
     return result;
   }
+
+  async getBitcoinAddress(principalId: string): Promise<string> {
+    const actor = this.#getActor({ anonymous: true });
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
+
+    const targetChainId = "eICP";
+
+    const response = await actor.get_btc_address({
+      target_chain_id: targetChainId,
+      receiver: principalId,
+    });
+    return response;
+  }
 }
 
 export const omnityHubService = new OmnityHubService();
