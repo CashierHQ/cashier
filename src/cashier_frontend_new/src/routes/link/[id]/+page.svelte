@@ -30,9 +30,9 @@
 
 <main class="flex flex-col h-screen">
   <RouteGuard linkId={id} storeType="userLink">
+    <Header onLoginClick={openLoginModal} />
     <ProtectedValidLink>
       <ProtectedUserState allowedStates={[UserLinkStep.LANDING]}>
-        <Header onLoginClick={openLoginModal} />
         <Landing linkId={id} {openLoginModal} />
       </ProtectedUserState>
     </ProtectedValidLink>
