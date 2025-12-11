@@ -36,6 +36,6 @@
   });
 </script>
 
-<div class="w-full mx-auto mt-4">
+<div class="w-full mx-auto">
   {@render children?.()}
 </div>

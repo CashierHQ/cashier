@@ -27,13 +27,29 @@
   type Props = {
     open?: boolean;
     onClose?: () => void;
+    onBack?: () => void; // Callback for back button click
     feesBreakdown: FeeBreakdownItem[];
   };
 
-  let { open = $bindable(false), onClose, feesBreakdown }: Props = $props();
+  let {
+    open = $bindable(false),
+    onClose,
+    onBack,
+    feesBreakdown,
+  }: Props = $props();
 
   function handleClose() {
     open = false;
+    if (onClose) {
+      onClose();
+    }
+  }
+
+  function handleBack() {
+    open = false;
+    if (onBack) {
+      onBack();
+    }
     if (onClose) {
       onClose();
     }
@@ -64,7 +80,7 @@
       <div class="flex justify-center items-center relative relative">
         <button
           class="flex items-center gap-1 cursor-pointer"
-          onclick={handleClose}
+          onclick={handleBack}
           type="button"
         >
           <ChevronLeft size={20} />
@@ -103,7 +119,7 @@
           </div>
           <div class="flex justify-end">
             <p class="text-[10px] font-normal text-[#b6b6b6]">
-              {fee.usdFormatted}
+              ~${fee.usdFormatted}
             </p>
           </div>
         </div>
@@ -125,7 +141,7 @@
           </div>
           <div class="flex justify-end">
             <p class="text-[10px] font-normal text-[#b6b6b6]">
-              {linkCreationFeeView.usdFormatted}
+              ~${linkCreationFeeView.usdFormatted}
             </p>
           </div>
         </div>

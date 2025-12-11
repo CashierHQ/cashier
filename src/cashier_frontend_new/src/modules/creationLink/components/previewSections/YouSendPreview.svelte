@@ -114,8 +114,8 @@
           </div>
           {#if asset.usdValueStr}
             <p class="text-[10px] medium-font text-[#b6b6b6]">
-              {formatUsdAmount(parseFloat(asset.usdValueStr))}
-            </p>
+            ~${formatUsdAmount(asset.usdValueStr)}
+          </p>
           {/if}
         </div>
       </div>
@@ -151,12 +151,12 @@
                 {linkCreationFeeItem.fee.amount}
               </p>
             </div>
+
             {#if linkCreationFeeItem.fee.usdValueStr}
-              <p class="text-[10px] font-normal text-[#b6b6b6]">
-                {formatUsdAmount(
-                  parseFloat(linkCreationFeeItem.fee.usdValueStr),
-                )}
-              </p>
+
+            <p class="text-[10px] font-normal text-[#b6b6b6]">
+              ~${ parseFloat(linkCreationFeeItem.fee.usdValueStr)}
+            </p>
             {/if}
           </div>
         </div>
