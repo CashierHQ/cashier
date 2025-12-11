@@ -6,21 +6,18 @@
     isSendLinkType,
     isPaymentLinkType,
   } from "$modules/links/utils/linkItemHelpers";
-  import FeeInfoDrawer from "./drawers/FeeInfoDrawer.svelte";
-  import FeeInfoDescriptionDrawer from "./drawers/FeeInfoDescriptionDrawer.svelte";
   import { toast } from "svelte-sonner";
   import YouSendPreview from "./previewSections/YouSendPreview.svelte";
-  import FeesBreakdownSection from "./previewSections/FeesBreakdownSection.svelte";
   import LinkInfoSection from "./previewSections/LinkInfoSection.svelte";
   import TransactionLockSection from "./previewSections/TransactionLockSection.svelte";
+  import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
   import {
-    calculateFeesBreakdown,
-    calculateTotalFeesUsd,
-    getLinkCreationFeeFromBreakdown,
-    calculateAssetsWithTokenInfo,
-  } from "$modules/links/utils/feesBreakdown";
-  import { feeService } from "$modules/shared/services/feeService";
-  import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
+    feeService,
+    type ForecastAssetAndFee,
+  } from "$modules/shared/services/feeService";
+  import Label from "$lib/shadcn/components/ui/label/label.svelte";
+  import { locale } from "$lib/i18n";
+  import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
 
   const {
     link,
@@ -68,7 +65,7 @@
   });
 
   // Forecast link creation fees for preview
-  const forecastLinkCreationFees = $derived.by(() => {
+  const forecastLinkCreationFees: ForecastAssetAndFee[] = $derived.by(() => {
     if (!link.createLinkData.assets || link.createLinkData.assets.length === 0)
       return [];
 
@@ -83,27 +80,12 @@
     );
   });
 
-  // Calculate fees breakdown
-  const feesBreakdown = $derived.by(() => {
-    const assetAddresses =
-      link.createLinkData.assets?.map((asset) => asset.address) || [];
-    const maxUse = link.createLinkData.maxUse || 1;
-
-    return calculateFeesBreakdown(
-      assetAddresses,
-      maxUse,
-      walletStore.findTokenByAddress.bind(walletStore),
-    );
-  });
-
   // Calculate total fees in USD
   const totalFeesUsd = $derived.by(() => {
-    return calculateTotalFeesUsd(feesBreakdown);
-  });
-
-  // Get link creation fee from breakdown
-  const linkCreationFee = $derived.by(() => {
-    return getLinkCreationFeeFromBreakdown(feesBreakdown);
+    return forecastLinkCreationFees.reduce(
+      (total, item) => total + (item.fee?.usdValue || 0),
+      0,
+    );
   });
 
   // Transaction lock status (currently always "Unlock" for preview links)
@@ -178,25 +160,21 @@
   {/if}
 
   <!-- Block 4: Fees Breakdown -->
-  <FeesBreakdownSection
-    {totalFeesUsd}
-    isClickable={true}
-    onInfoClick={handleFeeInfoClick}
-    onBreakdownClick={handleFeeBreakdownClick}
-  />
-
-  <!-- Drawer Components -->
-  <FeeInfoDrawer
-    bind:open={showFeeInfoDrawer}
-    onClose={() => {
-      showFeeInfoDrawer = false;
-    }}
-    {feesBreakdown}
-  />
-  <FeeInfoDescriptionDrawer
-    bind:open={showFeeInfoDescriptionDrawer}
-    onClose={() => {
-      showFeeInfoDescriptionDrawer = false;
-    }}
-  />
+  <div class="input-label-field-container">
+    <div class="flex items-center w-full justify-between mb-2">
+      <Label class="font-medium text-sm"
+        >{locale.t("links.linkForm.preview.feesBreakdown")}</Label
+      >
+    </div>
+    <div class="border-[1px] rounded-lg border-lightgreen px-4 py-3">
+      <div class="flex justify-between items-center">
+        <p class="text-[14px] font-medium">
+          {locale.t("links.linkForm.preview.totalFees")}
+        </p>
+        <div class="flex items-center gap-2">
+          <p class="text-[14px] font-normal">{formatUsdAmount(totalFeesUsd)}</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
