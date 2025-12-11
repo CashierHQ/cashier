@@ -136,7 +136,7 @@
             </p>
           </div>
           <p class="text-[10px] medium-font text-[#b6b6b6]">
-            {formatUsdAmount(asset.usdValue)}
+            ~${formatUsdAmount(asset.usdValue)}
           </p>
         </div>
       </div>
@@ -171,7 +171,7 @@
               </p>
             </div>
             <p class="text-[10px] font-normal text-[#b6b6b6]">
-              {formatUsdAmount(linkCreationFeeDisplay.usdAmount)}
+              ~${formatUsdAmount(linkCreationFeeDisplay.usdAmount)}
             </p>
           </div>
         </div>

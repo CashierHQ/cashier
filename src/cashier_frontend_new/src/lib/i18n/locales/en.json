@@ -241,6 +241,27 @@
           "title": "Congratulations!",
           "description": "You've created a link. Copy the link address, and share it others."
         }
+      },
+      "useLink": {
+        "receiveTo": "Receive to",
+        "connected": "Connected",
+        "youReceive": "You receive",
+        "userAddress": "User address",
+        "noAssets": "No assets",
+        "loading": "Loading...",
+        "claimButton": "Claim",
+        "loginToContinue": "Login to Continue",
+        "completed": {
+          "title": "Completed",
+          "message": "Congratulations, you received a tip!",
+          "claimButton": "Claim",
+          "claimedButton": "Claimed"
+        },
+        "errors": {
+          "linkDetailMissing": "Link detail is missing",
+          "noActionTypeFound": "No applicable action type found for this link",
+          "failedToCreateAction": "Failed to create action"
+        }
       }
     }
   }
