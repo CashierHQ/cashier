@@ -1,7 +1,7 @@
 import Action from "$modules/links/types/action/action";
 import { ActionType } from "$modules/links/types/action/actionType";
 import IntentTask from "$modules/links/types/action/intentTask";
-import { parseBalanceUnits } from "$modules/shared/utils/converter";
+import type { IntentStateValue } from "$modules/links/types/action/intentState";
 import { formatNumber } from "$modules/shared/utils/formatNumber";
 import {
   ICP_LEDGER_FEE,
@@ -21,8 +21,8 @@ import {
   AssetProcessState,
   type AssetItem,
 } from "$modules/transactionCart/types/txCart";
-import type { IntentStateValue } from "$modules/links/types/action/intentState";
 import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
+import { parseBalanceUnits } from "$modules/shared/utils/converter";
 
 // Type for paired AssetItem and FeeItem
 export type AssetAndFee = {

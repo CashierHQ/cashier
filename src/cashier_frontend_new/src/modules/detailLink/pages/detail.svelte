@@ -61,6 +61,7 @@
   let showFirstEndLinkConfirm = $state(false);
   let showSecondEndLinkConfirm = $state(false);
   let showCongratulationsDrawer = $state(false);
+  let lastClickWasOnButton = $state(false);
 
   // Check if we should show congratulations drawer on mount
   $effect(() => {
@@ -211,6 +212,25 @@
     }
   }
 
+  function handleCongratulationsDialogClose(open: boolean) {
+    if (!open) {
+      // Dialog is closing
+      if (lastClickWasOnButton) {
+        const wasOnButton = lastClickWasOnButton;
+        lastClickWasOnButton = false;
+        // Execute copy in next tick to ensure dialog closes first
+        setTimeout(() => {
+          if (wasOnButton) {
+            copyLink(false);
+          }
+        }, 0);
+      } else {
+        // Dialog closed without button click, just reset flag
+        lastClickWasOnButton = false;
+      }
+    }
+  }
+
   function openEndLinkConfirm() {
     showFirstEndLinkConfirm = true;
   }
@@ -357,14 +377,6 @@
         {errorMessage}
       </div>
     {/if}
-
-    <!-- {#if successMessage}
-      <div
-        class="mb-4 p-3 text-sm text-green-700 bg-green-100 rounded border border-green-200"
-      >
-        {successMessage}
-      </div>
-    {/if} -->
 
     {#if linkStore.link}
       <!-- Block 1: Link Info -->
@@ -530,7 +542,10 @@
     </div>
   </ConfirmDrawer>
 
-  <Dialog bind:open={showCongratulationsDrawer}>
+  <Dialog
+    bind:open={showCongratulationsDrawer}
+    onOpenChange={handleCongratulationsDialogClose}
+  >
     <DialogContent class="sm:max-w-[425px]" showCloseButton={false}>
       <DialogHeader class="flex flex-col items-center gap-2.5">
         <div
@@ -546,7 +561,9 @@
         <DialogTitle class="text-xl font-semibold">
           {locale.t("links.linkForm.detail.congratulations.title")}
         </DialogTitle>
-        <DialogDescription class="text-[14px] leading-[20px] text-[#475467]">
+        <DialogDescription
+          class="text-[14px] leading-[20px] text-center text-lightblack"
+        >
           {locale.t("links.linkForm.detail.congratulations.description")}
         </DialogDescription>
       </DialogHeader>
@@ -580,8 +597,8 @@
             >
               <Button
                 id="copy-link-button-modal"
-                onclick={async () => {
-                  await copyLink(true);
+                onmousedown={() => {
+                  lastClickWasOnButton = true;
                 }}
                 class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
               >
