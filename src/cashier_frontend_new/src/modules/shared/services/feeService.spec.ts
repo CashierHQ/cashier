@@ -248,7 +248,7 @@ describe("FeeService", () => {
         priceUSD: 3.01,
       } as unknown as TokenWithPriceAndBalance;
 
-      const tokensMap = { [token.address]: token }
+      const tokensMap = { [token.address]: token };
       const useAmount = 100_000_000n;
 
       const pairs = svc.forecastLinkCreationFees(
@@ -263,7 +263,10 @@ describe("FeeService", () => {
       const assetPair = pairs[0];
       expect(assetPair.asset.symbol).toBe("ICP");
 
-      const expectedTotal = parseBalanceUnits(useAmount + LEDGER_FEE + LEDGER_FEE, token.decimals);
+      const expectedTotal = parseBalanceUnits(
+        useAmount + LEDGER_FEE + LEDGER_FEE,
+        token.decimals,
+      );
       expect(assetPair.asset.amount).toBe(formatNumber(expectedTotal));
 
       const linkFee = pairs.find((p) => p.asset.label === "Create link fee");
@@ -285,7 +288,7 @@ describe("FeeService", () => {
         priceUSD: 3.01,
       } as unknown as TokenWithPriceAndBalance;
 
-      const tokensMap = { [token.address]: token }
+      const tokensMap = { [token.address]: token };
       const useAmount = 100_000_000n;
       const maxUse = 5;
 
@@ -298,7 +301,10 @@ describe("FeeService", () => {
       const assetPair = pairs[0];
       expect(assetPair.asset.symbol).toBe("ICP");
 
-      const expectedTotal = parseBalanceUnits(useAmount + (LEDGER_FEE * BigInt(maxUse)) + LEDGER_FEE, token.decimals);
+      const expectedTotal = parseBalanceUnits(
+        useAmount + LEDGER_FEE * BigInt(maxUse) + LEDGER_FEE,
+        token.decimals,
+      );
       expect(assetPair.asset.amount).toBe(formatNumber(expectedTotal));
 
       const linkFee = pairs.find((p) => p.asset.label === "Create link fee");
@@ -371,7 +377,10 @@ describe("FeeService", () => {
       // Expected formula per asset: asset_amount + (max_use * ledger_fee) + ledger_fee
       if (a) {
         const expectedA = formatNumber(
-          parseBalanceUnits(useA + BigInt(maxUse) * tokenA.fee + tokenA.fee, tokenA.decimals),
+          parseBalanceUnits(
+            useA + BigInt(maxUse) * tokenA.fee + tokenA.fee,
+            tokenA.decimals,
+          ),
         );
         expect(a.asset.amount).toBe(expectedA);
         expect(a.fee).toBeDefined();
@@ -383,7 +392,10 @@ describe("FeeService", () => {
 
       if (b) {
         const expectedB = formatNumber(
-          parseBalanceUnits(useB + BigInt(maxUse) * tokenB.fee + tokenB.fee, tokenB.decimals),
+          parseBalanceUnits(
+            useB + BigInt(maxUse) * tokenB.fee + tokenB.fee,
+            tokenB.decimals,
+          ),
         );
         expect(b.asset.amount).toBe(expectedB);
         expect(b.fee).toBeDefined();
@@ -395,7 +407,10 @@ describe("FeeService", () => {
 
       if (c) {
         const expectedC = formatNumber(
-          parseBalanceUnits(useC + BigInt(maxUse) * tokenC.fee + tokenC.fee, tokenC.decimals),
+          parseBalanceUnits(
+            useC + BigInt(maxUse) * tokenC.fee + tokenC.fee,
+            tokenC.decimals,
+          ),
         );
         expect(c.asset.amount).toBe(expectedC);
         expect(c.fee).toBeDefined();
@@ -452,7 +467,9 @@ describe("FeeService", () => {
       expect(p.asset.symbol).toBe("ICP");
       expect(p.fee).toBeDefined();
       if (p.fee) {
-        expect(p.fee.amount).toBe(formatNumber(parseBalanceUnits(30_000n, token.decimals)));
+        expect(p.fee.amount).toBe(
+          formatNumber(parseBalanceUnits(30_000n, token.decimals)),
+        );
       }
     });
   });
