@@ -53,7 +53,7 @@
         </div>
         {#if isDevelopmentExpanded}
           <p
-            class="text-[10px] lg:text-[12px] text-[#475467] text-center transition-all duration-300 ease-in-out"
+            class="text-[10px] lg:text-[12px] text-lightblack text-center transition-all duration-300 ease-in-out"
           >
             {locale.t("home.homePage.developmentDisclaimer")}
           </p>
@@ -104,7 +104,7 @@
         </h1>
 
         <p
-          class="text-[14px] md:text-[18px] font-light text-[#475467] px-4 md:px-8 lg:px-0 lg:text-[20px] text-center md:text-center lg:text-left"
+          class="text-[14px] md:text-[18px] font-light text-lightblack px-4 md:px-8 lg:px-0 lg:text-[20px] text-center md:text-center lg:text-left"
         >
           {locale.t("home.homePage.subtitle")}
         </p>
@@ -117,7 +117,7 @@
           >
             <div class="w-2 h-2 bg-primary rounded-full"></div>
             <p
-              class="text-[10px] md:text-[14px] text-[#475467] lg:text-[16px] text-left font-light"
+              class="text-[10px] md:text-[14px] text-lightblack lg:text-[16px] text-left font-light"
             >
               {locale.t("home.homePage.feature1")}
             </p>
@@ -127,7 +127,7 @@
           >
             <div class="w-2 h-2 bg-primary rounded-full"></div>
             <p
-              class="text-[10px] md:text-[14px] text-[#475467] lg:text-[16px] text-left font-light"
+              class="text-[10px] md:text-[14px] text-lightblack lg:text-[16px] text-left font-light"
             >
               {locale.t("home.homePage.feature2")}
             </p>
@@ -137,7 +137,7 @@
           >
             <div class="w-2 h-2 bg-primary rounded-full"></div>
             <p
-              class="text-[10px] md:text-[14px] text-[#475467] lg:text-[16px] text-left font-light"
+              class="text-[10px] md:text-[14px] text-lightblack lg:text-[16px] text-left font-light"
             >
               {locale.t("home.homePage.feature3")}
             </p>

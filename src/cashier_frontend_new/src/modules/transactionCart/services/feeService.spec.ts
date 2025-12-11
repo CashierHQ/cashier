@@ -15,7 +15,13 @@ import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Ed25519KeyIdentity } from "@dfinity/identity";
 import { Principal } from "@dfinity/principal";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { FeeService } from "./feeService";
+import {
+  FeeService,
+  type AssetAndFee,
+  type AssetAndFeeList,
+} from "./feeService";
+import { FeeType } from "$modules/links/types/fee";
+import { AssetProcessState } from "$modules/transactionCart/types/txCart";
 
 const from = Ed25519KeyIdentity.generate();
 const fromWallet = new Wallet(from.getPrincipal(), []);
@@ -233,6 +239,591 @@ describe("FeeService", () => {
       const feeInfo2 = svc.getLinkCreationFee();
 
       expect(feeInfo1).toEqual(feeInfo2);
+    });
+  });
+
+  describe("convertAssetAndFeeListToFeesBreakdown", () => {
+    it("should convert AssetAndFeeList to FeeBreakdownItem[] correctly", () => {
+      const tokenAddress = assets[0].address.toString();
+      const token: TokenWithPriceAndBalance = {
+        address: tokenAddress,
+        decimals: 8,
+        fee: 1_0000n,
+        symbol: "ICP",
+        priceUSD: 3.01,
+      } as unknown as TokenWithPriceAndBalance;
+
+      const assetAndFeeList: AssetAndFee[] = [
+        {
+          asset: {
+            state: AssetProcessState.PENDING,
+            label: "",
+            symbol: "ICP",
+            address: tokenAddress,
+            amount: formatNumber(1.0001),
+            usdValueStr: formatNumber(3.010301),
+          },
+          fee: {
+            feeType: FeeType.NETWORK_FEE,
+            amount: formatNumber(0.0001),
+            symbol: "ICP",
+            price: 3.01,
+            usdValue: 0.000301,
+            usdValueStr: formatNumber(0.000301),
+          },
+        },
+        {
+          asset: {
+            state: AssetProcessState.PENDING,
+            label: "Create link fee",
+            symbol: "ICP",
+            address: tokenAddress,
+            amount: formatNumber(0.0002),
+            usdValueStr: formatNumber(0.000602),
+          },
+          fee: {
+            feeType: FeeType.CREATE_LINK_FEE,
+            amount: formatNumber(0.0002),
+            symbol: "ICP",
+            price: 3.01,
+            usdValue: 0.000602,
+            usdValueStr: formatNumber(0.000602),
+          },
+        },
+      ];
+
+      const tokensMap: Record<string, TokenWithPriceAndBalance> = {
+        [tokenAddress]: token,
+      };
+
+      const result = svc.convertAssetAndFeeListToFeesBreakdown(
+        assetAndFeeList,
+        tokensMap,
+      );
+
+      expect(result).toHaveLength(2);
+
+      // Check network fee
+      expect(result[0]).toEqual({
+        name: "Network fees",
+        amount: 1_0000n, // 0.0001 ICP in e8s
+        tokenAddress: tokenAddress,
+        tokenSymbol: "ICP",
+        tokenDecimals: 8,
+        usdAmount: 0.000301,
+      });
+
+      // Check link creation fee
+      expect(result[1]).toEqual({
+        name: "Link creation fee",
+        amount: 2_0000n, // 0.0002 ICP in e8s
+        tokenAddress: tokenAddress,
+        tokenSymbol: "ICP",
+        tokenDecimals: 8,
+        usdAmount: 0.000602,
+      });
+    });
+
+    it("should skip items without fees", () => {
+      const tokenAddress = assets[0].address.toString();
+      const token: TokenWithPriceAndBalance = {
+        address: tokenAddress,
+        decimals: 8,
+        fee: 1_0000n,
+        symbol: "ICP",
+        priceUSD: 3.01,
+      } as unknown as TokenWithPriceAndBalance;
+
+      const assetAndFeeList: AssetAndFee[] = [
+        {
+          asset: {
+            state: AssetProcessState.PENDING,
+            label: "",
+            symbol: "ICP",
+            address: tokenAddress,
+            amount: formatNumber(1.0),
+            usdValueStr: formatNumber(3.01),
+          },
+          fee: undefined, // No fee
+        },
+        {
+          asset: {
+            state: AssetProcessState.PENDING,
+            label: "",
+            symbol: "ICP",
+            address: tokenAddress,
+            amount: formatNumber(0.0001),
+            usdValueStr: formatNumber(0.000301),
+          },
+          fee: {
+            feeType: FeeType.NETWORK_FEE,
+            amount: formatNumber(0.0001),
+            symbol: "ICP",
+            price: 3.01,
+            usdValue: 0.000301,
+            usdValueStr: formatNumber(0.000301),
+          },
+        },
+      ];
+
+      const tokensMap: Record<string, TokenWithPriceAndBalance> = {
+        [tokenAddress]: token,
+      };
+
+      const result = svc.convertAssetAndFeeListToFeesBreakdown(
+        assetAndFeeList,
+        tokensMap,
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe("Network fees");
+    });
+
+    it("should skip items when token is not found", () => {
+      const tokenAddress = assets[0].address.toString();
+      // Use anonymous principal as unknown address (different from assets[0])
+      const unknownAddress = Principal.anonymous().toString();
+
+      const assetAndFeeList: AssetAndFee[] = [
+        {
+          asset: {
+            state: AssetProcessState.PENDING,
+            label: "",
+            symbol: "UNKNOWN",
+            address: unknownAddress,
+            amount: formatNumber(1.0),
+            usdValueStr: undefined,
+          },
+          fee: {
+            feeType: FeeType.NETWORK_FEE,
+            amount: formatNumber(0.0001),
+            symbol: "UNKNOWN",
+            usdValue: 0,
+            usdValueStr: undefined,
+          },
+        },
+      ];
+
+      const tokensMap: Record<string, TokenWithPriceAndBalance> = {
+        [tokenAddress]: {
+          address: tokenAddress,
+          decimals: 8,
+          fee: 1_0000n,
+          symbol: "ICP",
+          priceUSD: 3.01,
+        } as unknown as TokenWithPriceAndBalance,
+      };
+
+      const result = svc.convertAssetAndFeeListToFeesBreakdown(
+        assetAndFeeList,
+        tokensMap,
+      );
+
+      expect(result).toHaveLength(0);
+    });
+
+    it("should handle fees with zero USD value", () => {
+      const tokenAddress = assets[0].address.toString();
+      const token: TokenWithPriceAndBalance = {
+        address: tokenAddress,
+        decimals: 8,
+        fee: 1_0000n,
+        symbol: "ICP",
+        priceUSD: undefined, // No price
+      } as unknown as TokenWithPriceAndBalance;
+
+      const assetAndFeeList: AssetAndFee[] = [
+        {
+          asset: {
+            state: AssetProcessState.PENDING,
+            label: "",
+            symbol: "ICP",
+            address: tokenAddress,
+            amount: formatNumber(0.0001),
+            usdValueStr: undefined,
+          },
+          fee: {
+            feeType: FeeType.NETWORK_FEE,
+            amount: formatNumber(0.0001),
+            symbol: "ICP",
+            price: undefined,
+            usdValue: undefined,
+            usdValueStr: undefined,
+          },
+        },
+      ];
+
+      const tokensMap: Record<string, TokenWithPriceAndBalance> = {
+        [tokenAddress]: token,
+      };
+
+      const result = svc.convertAssetAndFeeListToFeesBreakdown(
+        assetAndFeeList,
+        tokensMap,
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].usdAmount).toBe(0);
+    });
+
+    it("should handle formatted numbers with commas", () => {
+      const tokenAddress = assets[0].address.toString();
+      const token: TokenWithPriceAndBalance = {
+        address: tokenAddress,
+        decimals: 8,
+        fee: 1_0000n,
+        symbol: "ICP",
+        priceUSD: 3.01,
+      } as unknown as TokenWithPriceAndBalance;
+
+      const assetAndFeeList: AssetAndFee[] = [
+        {
+          asset: {
+            state: AssetProcessState.PENDING,
+            label: "",
+            symbol: "ICP",
+            address: tokenAddress,
+            amount: "1,000.0001",
+            usdValueStr: "3,010.000301",
+          },
+          fee: {
+            feeType: FeeType.NETWORK_FEE,
+            amount: "1,000.0001", // Formatted with commas
+            symbol: "ICP",
+            price: 3.01,
+            usdValue: 3010.000301,
+            usdValueStr: formatNumber(3010.000301),
+          },
+        },
+      ];
+
+      const tokensMap: Record<string, TokenWithPriceAndBalance> = {
+        [tokenAddress]: token,
+      };
+
+      const result = svc.convertAssetAndFeeListToFeesBreakdown(
+        assetAndFeeList,
+        tokensMap,
+      );
+
+      expect(result).toHaveLength(1);
+      // Should parse correctly: 1000.0001 * 10^8 = 100000010000n
+      expect(result[0].amount).toBe(100_000_010_000n);
+    });
+  });
+
+  describe("buildFeesBreakdownFromAssetAndFeeList", () => {
+    it("builds breakdown using tokens array and skips entries without fees or tokens", () => {
+      const tokenAddress = assets[0].address.toString();
+      const token: TokenWithPriceAndBalance = {
+        address: tokenAddress,
+        decimals: 8,
+        fee: 1_0000n,
+        symbol: "ICP",
+        priceUSD: 3.01,
+      } as unknown as TokenWithPriceAndBalance;
+
+      const assetAndFeeList: AssetAndFeeList = [
+        {
+          asset: {
+            state: AssetProcessState.PENDING,
+            label: "",
+            symbol: "ICP",
+            address: tokenAddress,
+            amount: formatNumber(0.0001),
+            usdValueStr: formatNumber(0.000301),
+          },
+          fee: {
+            feeType: FeeType.NETWORK_FEE,
+            amount: formatNumber(0.0001),
+            symbol: "ICP",
+            price: 3.01,
+            usdValue: 0.000301,
+            usdValueStr: formatNumber(0.000301),
+          },
+        },
+        {
+          // fee is missing -> should be skipped
+          asset: {
+            state: AssetProcessState.PENDING,
+            label: "",
+            symbol: "ICP",
+            address: tokenAddress,
+            amount: formatNumber(1),
+            usdValueStr: formatNumber(3.01),
+          },
+          fee: undefined,
+        },
+        {
+          // token not in list -> should be skipped
+          asset: {
+            state: AssetProcessState.PENDING,
+            label: "",
+            symbol: "UNKNOWN",
+            address: Principal.anonymous().toString(),
+            amount: formatNumber(0.0001),
+            usdValueStr: undefined,
+          },
+          fee: {
+            feeType: FeeType.NETWORK_FEE,
+            amount: formatNumber(0.0001),
+            symbol: "UNKNOWN",
+            usdValue: 0,
+            usdValueStr: undefined,
+          },
+        },
+      ];
+
+      const result = svc.buildFeesBreakdownFromAssetAndFeeList(
+        assetAndFeeList,
+        [token] as unknown as TokenWithPriceAndBalance[],
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        name: "Network fees",
+        amount: 1_0000n,
+        tokenAddress,
+        tokenSymbol: "ICP",
+        tokenDecimals: 8,
+        usdAmount: 0.000301,
+      });
+    });
+  });
+
+  describe("buildFeesBreakdownFromAssetAndFeeList (standalone function)", () => {
+    it("should convert AssetAndFeeList to FeeBreakdownItem[] format", () => {
+      const tokenAddress = assets[0].address.toString();
+      const token: TokenWithPriceAndBalance = {
+        address: tokenAddress,
+        decimals: 8,
+        fee: 1_0000n,
+        symbol: "ICP",
+        priceUSD: 3.01,
+      } as unknown as TokenWithPriceAndBalance;
+
+      const assetAndFeeList: AssetAndFeeList = [
+        {
+          asset: {
+            state: AssetProcessState.PENDING,
+            label: "",
+            symbol: "ICP",
+            address: tokenAddress,
+            amount: formatNumber(0.0001),
+            usdValueStr: formatNumber(0.000301),
+          },
+          fee: {
+            feeType: FeeType.NETWORK_FEE,
+            amount: formatNumber(0.0001),
+            symbol: "ICP",
+            price: 3.01,
+            usdValue: 0.000301,
+            usdValueStr: formatNumber(0.000301),
+          },
+        },
+        {
+          asset: {
+            state: AssetProcessState.PENDING,
+            label: "",
+            symbol: "ICP",
+            address: tokenAddress,
+            amount: formatNumber(0.0002),
+            usdValueStr: formatNumber(0.000602),
+          },
+          fee: {
+            feeType: FeeType.CREATE_LINK_FEE,
+            amount: formatNumber(0.0002),
+            symbol: "ICP",
+            price: 3.01,
+            usdValue: 0.000602,
+            usdValueStr: formatNumber(0.000602),
+          },
+        },
+      ];
+
+      const result = svc.buildFeesBreakdownFromAssetAndFeeList(
+        assetAndFeeList,
+        [token] as unknown as TokenWithPriceAndBalance[],
+      );
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toEqual({
+        name: "Network fees",
+        amount: 1_0000n,
+        tokenAddress,
+        tokenSymbol: "ICP",
+        tokenDecimals: 8,
+        usdAmount: 0.000301,
+      });
+      expect(result[1]).toEqual({
+        name: "Link creation fee",
+        amount: 2_0000n,
+        tokenAddress,
+        tokenSymbol: "ICP",
+        tokenDecimals: 8,
+        usdAmount: 0.000602,
+      });
+    });
+
+    it("should skip entries without fees", () => {
+      const tokenAddress = assets[0].address.toString();
+      const token: TokenWithPriceAndBalance = {
+        address: tokenAddress,
+        decimals: 8,
+        fee: 1_0000n,
+        symbol: "ICP",
+        priceUSD: 3.01,
+      } as unknown as TokenWithPriceAndBalance;
+
+      const assetAndFeeList: AssetAndFeeList = [
+        {
+          asset: {
+            state: AssetProcessState.PENDING,
+            label: "",
+            symbol: "ICP",
+            address: tokenAddress,
+            amount: formatNumber(0.0001),
+            usdValueStr: formatNumber(0.000301),
+          },
+          fee: undefined, // No fee -> should be skipped
+        },
+      ];
+
+      const result = svc.buildFeesBreakdownFromAssetAndFeeList(
+        assetAndFeeList,
+        [token] as unknown as TokenWithPriceAndBalance[],
+      );
+
+      expect(result).toHaveLength(0);
+    });
+
+    it("should skip entries with tokens not found in tokens array", () => {
+      const tokenAddress = assets[0].address.toString();
+      // Use anonymous principal as unknown address (different from assets[0])
+      const unknownAddress = Principal.anonymous().toString();
+      const token: TokenWithPriceAndBalance = {
+        address: tokenAddress,
+        decimals: 8,
+        fee: 1_0000n,
+        symbol: "ICP",
+        priceUSD: 3.01,
+      } as unknown as TokenWithPriceAndBalance;
+
+      const assetAndFeeList: AssetAndFeeList = [
+        {
+          asset: {
+            state: AssetProcessState.PENDING,
+            label: "",
+            symbol: "UNKNOWN",
+            address: unknownAddress,
+            amount: formatNumber(0.0001),
+            usdValueStr: undefined,
+          },
+          fee: {
+            feeType: FeeType.NETWORK_FEE,
+            amount: formatNumber(0.0001),
+            symbol: "UNKNOWN",
+            usdValue: 0,
+            usdValueStr: undefined,
+          },
+        },
+      ];
+
+      const result = svc.buildFeesBreakdownFromAssetAndFeeList(
+        assetAndFeeList,
+        [token] as unknown as TokenWithPriceAndBalance[],
+      );
+
+      expect(result).toHaveLength(0);
+    });
+
+    it("should handle empty assetAndFeeList", () => {
+      const token: TokenWithPriceAndBalance = {
+        address: assets[0].address.toString(),
+        decimals: 8,
+        fee: 1_0000n,
+        symbol: "ICP",
+        priceUSD: 3.01,
+      } as unknown as TokenWithPriceAndBalance;
+
+      const result = svc.buildFeesBreakdownFromAssetAndFeeList([], [
+        token,
+      ] as unknown as TokenWithPriceAndBalance[]);
+
+      expect(result).toHaveLength(0);
+    });
+
+    it("should handle empty tokens array", () => {
+      const tokenAddress = assets[0].address.toString();
+      const assetAndFeeList: AssetAndFeeList = [
+        {
+          asset: {
+            state: AssetProcessState.PENDING,
+            label: "",
+            symbol: "ICP",
+            address: tokenAddress,
+            amount: formatNumber(0.0001),
+            usdValueStr: formatNumber(0.000301),
+          },
+          fee: {
+            feeType: FeeType.NETWORK_FEE,
+            amount: formatNumber(0.0001),
+            symbol: "ICP",
+            price: 3.01,
+            usdValue: 0.000301,
+            usdValueStr: formatNumber(0.000301),
+          },
+        },
+      ];
+
+      const result = svc.buildFeesBreakdownFromAssetAndFeeList(
+        assetAndFeeList,
+        [],
+      );
+
+      expect(result).toHaveLength(0);
+    });
+
+    it("should correctly parse fee amounts with commas", () => {
+      const tokenAddress = assets[0].address.toString();
+      const token: TokenWithPriceAndBalance = {
+        address: tokenAddress,
+        decimals: 8,
+        fee: 1_0000n,
+        symbol: "ICP",
+        priceUSD: 3.01,
+      } as unknown as TokenWithPriceAndBalance;
+
+      const assetAndFeeList: AssetAndFeeList = [
+        {
+          asset: {
+            state: AssetProcessState.PENDING,
+            label: "",
+            symbol: "ICP",
+            address: tokenAddress,
+            amount: formatNumber(1.234567),
+            usdValueStr: formatNumber(3.716045),
+          },
+          fee: {
+            feeType: FeeType.NETWORK_FEE,
+            amount: formatNumber(1.234567), // May contain commas
+            symbol: "ICP",
+            price: 3.01,
+            usdValue: 3.716045,
+            usdValueStr: formatNumber(3.716045),
+          },
+        },
+      ];
+
+      const result = svc.buildFeesBreakdownFromAssetAndFeeList(
+        assetAndFeeList,
+        [token] as unknown as TokenWithPriceAndBalance[],
+      );
+
+      expect(result).toHaveLength(1);
+      // Verify that the amount is correctly parsed (1.234567 * 10^8 = 123456700)
+      expect(result[0].amount).toBeGreaterThan(0n);
+      expect(result[0].usdAmount).toBe(3.716045);
     });
   });
 });
