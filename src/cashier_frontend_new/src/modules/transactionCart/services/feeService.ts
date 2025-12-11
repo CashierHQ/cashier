@@ -173,7 +173,7 @@ export class FeeService {
 
         asset = {
           state: AccessProcessStateMapper.fromIntentState(
-            intent.state as unknown as IntentStateValue,
+            intent.state as IntentStateValue,
           ),
           label,
           symbol: token.symbol,
@@ -280,23 +280,3 @@ export class FeeService {
 }
 
 export const feeService = new FeeService();
-
-/**
- * Convert AssetAndFeeList to FeeBreakdownItem[] format for FeeInfoDrawer.
- * This is a standalone utility function that can be used in UI components
- * without requiring a FeeService instance.
- *
- * @param assetAndFeeList - List of assets with their associated fees
- * @param tokens - Array of tokens with price and balance information
- * @returns Array of fee breakdown items
- */
-export function buildFeesBreakdownFromAssetAndFeeList(
-  assetAndFeeList: AssetAndFeeList,
-  tokens: TokenWithPriceAndBalance[],
-): FeeBreakdownItem[] {
-  const tokensMap = Object.fromEntries(tokens.map((t) => [t.address, t]));
-  return feeService.convertAssetAndFeeListToFeesBreakdown(
-    assetAndFeeList,
-    tokensMap,
-  );
-}

@@ -7,7 +7,6 @@
   import {
     feeService,
     type AssetAndFee,
-    buildFeesBreakdownFromAssetAndFeeList,
   } from "$modules/transactionCart/services/feeService";
   import { onMount } from "svelte";
   import { TransactionCartStore } from "../state/txCartStore.svelte";
@@ -200,7 +199,7 @@
 
   // Convert assetAndFeeList to feesBreakdown format for FeeInfoDrawer
   const feesBreakdown = $derived.by((): FeeBreakdownItem[] => {
-    return buildFeesBreakdownFromAssetAndFeeList(
+    return feeService.buildFeesBreakdownFromAssetAndFeeList(
       assetAndFeeList,
       walletStore.query.data ?? [],
     );
