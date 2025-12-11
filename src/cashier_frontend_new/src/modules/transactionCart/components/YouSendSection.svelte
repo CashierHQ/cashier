@@ -4,7 +4,7 @@
   import { locale } from "$lib/i18n";
   import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
-  import AssetTransferInfoDrawer from "../drawers/AssetTransferInfoDrawer.svelte";
+  import AssetTransferInfoDrawer from "../../creationLink/components/drawers/AssetTransferInfoDrawer.svelte";
   import { feeService } from "$modules/shared/services/feeService";
   import type Action from "$modules/links/types/action/action";
   import { walletStore } from "$modules/token/state/walletStore.svelte";

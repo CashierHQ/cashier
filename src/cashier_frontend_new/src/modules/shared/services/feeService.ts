@@ -30,16 +30,16 @@ export type AssetAndFee = {
   fee?: FeeItem;
 };
 
-export type ForeCastAssetAndFee = {
+export type ForecastAssetAndFee = {
   asset: {
-      label: string;
-      symbol: string;
-      address: string;
-      /** in formmated string */
-      amount: string;
-      /** in formmated string */
-      usdValueStr?: string;
-  }
+    label: string;
+    symbol: string;
+    address: string;
+    /** in formmated string */
+    amount: string;
+    /** in formmated string */
+    usdValueStr?: string;
+  };
   fee?: FeeItem;
 };
 
@@ -249,15 +249,11 @@ export class FeeService {
     linkAssets: Array<CreateLinkAsset>,
     maxUse: number,
     tokens: Record<string, TokenWithPriceAndBalance>,
-  ): ForeCastAssetAndFee[] {
-    const pairs: ForeCastAssetAndFee[] = [];
-
-    console.log("token map in forecastLinkCreationFees:", tokens);
-
+  ): ForecastAssetAndFee[] {
+    const pairs: ForecastAssetAndFee[] = [];
 
     for (const assetData of linkAssets) {
       const token = tokens[assetData.address];
-      console.log("Forecasting fee for asset:", assetData, "with token:", token);
 
       if (!token) {
         console.error("Failed to resolve token for asset:", assetData.address);
@@ -282,11 +278,23 @@ export class FeeService {
       } else {
         const tokenFee = token.fee ?? ICP_LEDGER_FEE;
         // For CREATE_LINK preview: amount = payload.amount + (ledgerFee * maxUse) + ledgerFee
-        const totalAmount = assetData.useAmount + (BigInt(maxUse) * tokenFee) + tokenFee;
+        const totalAmount =
+          assetData.useAmount + BigInt(maxUse) * tokenFee + tokenFee;
         const totalAmountUi = parseBalanceUnits(totalAmount, token.decimals);
-        const totalUsd = token.priceUSD ? totalAmountUi * token.priceUSD : undefined;
+        const totalUsd = token.priceUSD
+          ? totalAmountUi * token.priceUSD
+          : undefined;
         const feeAmountUi = parseBalanceUnits(tokenFee, token.decimals);
-        const feeUsd = token.priceUSD ? feeAmountUi * token.priceUSD : undefined;
+        const feeUsd = token.priceUSD
+          ? feeAmountUi * token.priceUSD
+          : undefined;
+
+        console.log(
+          "totalAmount",
+          totalAmount.toString(),
+          "ui:",
+          totalAmountUi,
+        );
 
         pairs.push({
           asset: {
@@ -314,8 +322,13 @@ export class FeeService {
     if (linkFeeToken) {
       // For CREATE_LINK preview: amount = ledgerFee*2 + linkFeeInfo.amount
       const linkCreationFeeTotal = ICP_LEDGER_FEE * 2n + linkFeeInfo.amount;
-      const linkFeeFormatted = parseBalanceUnits(linkCreationFeeTotal, linkFeeToken.decimals);
-      const linkFeeUsd = linkFeeToken.priceUSD ? linkFeeFormatted * linkFeeToken.priceUSD : undefined;
+      const linkFeeFormatted = parseBalanceUnits(
+        linkCreationFeeTotal,
+        linkFeeToken.decimals,
+      );
+      const linkFeeUsd = linkFeeToken.priceUSD
+        ? linkFeeFormatted * linkFeeToken.priceUSD
+        : undefined;
 
       pairs.push({
         asset: {

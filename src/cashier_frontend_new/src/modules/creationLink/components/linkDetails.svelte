@@ -166,7 +166,7 @@
   <!-- Block 3: You Send -->
   {#if isSendLink}
     <YouSendPreview
-      assetAndFeeList={forecastLinkCreationFees}
+      forecastAssetAndFee={forecastLinkCreationFees}
       {failedImageLoads}
       onImageError={handleImageError}
       isClickable={true}
