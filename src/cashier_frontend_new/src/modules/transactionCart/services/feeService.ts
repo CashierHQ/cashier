@@ -1,7 +1,7 @@
 import Action from "$modules/links/types/action/action";
 import { ActionType } from "$modules/links/types/action/actionType";
 import IntentTask from "$modules/links/types/action/intentTask";
-import { parseBalanceUnits } from "$modules/shared/utils/converter";
+import type { IntentStateValue } from "$modules/links/types/action/intentState";
 import { formatNumber } from "$modules/shared/utils/formatNumber";
 import {
   ICP_LEDGER_FEE,
@@ -21,6 +21,8 @@ import {
   AssetProcessState,
   type AssetItem,
 } from "$modules/transactionCart/types/txCart";
+import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
+import { parseBalanceUnits } from "$modules/shared/utils/converter";
 
 // Type for paired AssetItem and FeeItem
 export type AssetAndFee = {
@@ -170,7 +172,9 @@ export class FeeService {
           : undefined;
 
         asset = {
-          state: AccessProcessStateMapper.fromIntentState(intent.state),
+          state: AccessProcessStateMapper.fromIntentState(
+            intent.state as IntentStateValue,
+          ),
           label,
           symbol: token.symbol,
           address,
@@ -218,6 +222,60 @@ export class FeeService {
       symbol: "ICP",
       decimals: 8,
     };
+  }
+
+  /**
+   * Convert AssetAndFeeList to FeeBreakdownItem[] format for FeeInfoDrawer.
+   */
+  convertAssetAndFeeListToFeesBreakdown(
+    assetAndFeeList: AssetAndFeeList,
+    tokens: Record<string, TokenWithPriceAndBalance>,
+  ): FeeBreakdownItem[] {
+    const breakdown: FeeBreakdownItem[] = [];
+
+    for (const item of assetAndFeeList) {
+      if (!item.fee) continue;
+
+      const token = tokens[item.asset.address];
+      if (!token) continue;
+
+      const feeAmountStr = item.fee.amount.replace(/,/g, "");
+      const feeAmount = parseFloat(feeAmountStr);
+      const feeAmountBigInt = BigInt(
+        Math.round(feeAmount * Math.pow(10, token.decimals)),
+      );
+
+      const feeName =
+        item.fee.feeType === FeeType.CREATE_LINK_FEE
+          ? "Link creation fee"
+          : "Network fees";
+
+      breakdown.push({
+        name: feeName,
+        amount: feeAmountBigInt,
+        tokenAddress: item.asset.address,
+        tokenSymbol: token.symbol,
+        tokenDecimals: token.decimals,
+        usdAmount: item.fee.usdValue || 0,
+      });
+    }
+
+    return breakdown;
+  }
+
+  /**
+   * Utility to derive FeeBreakdownItem[] from AssetAndFeeList using an array of tokens.
+   * Encapsulates the map creation so UI components stay rendering-only.
+   */
+  buildFeesBreakdownFromAssetAndFeeList(
+    assetAndFeeList: AssetAndFeeList,
+    tokens: TokenWithPriceAndBalance[],
+  ): FeeBreakdownItem[] {
+    const tokensMap = Object.fromEntries(tokens.map((t) => [t.address, t]));
+    return this.convertAssetAndFeeListToFeesBreakdown(
+      assetAndFeeList,
+      tokensMap,
+    );
   }
 }
 

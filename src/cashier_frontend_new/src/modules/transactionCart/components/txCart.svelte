@@ -14,15 +14,19 @@
   import YouSendSection from "$modules/creationLink/components/previewSections/YouSendSection.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import FeeBreakdown from "./feeBreakdown.svelte";
+  import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import { X } from "lucide-svelte";
   import { ActionType } from "$modules/links/types/action/actionType";
   import IntentTask from "$modules/links/types/action/intentTask";
   import { locale } from "$lib/i18n";
-  import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
+  import {
+    calculateAssetsWithTokenInfo,
+    type FeeBreakdownItem,
+  } from "$modules/links/utils/feesBreakdown";
 
   let {
     action,
-    isOpen,
+    isOpen: isOpenProp,
     onCloseDrawer,
     handleProcessAction,
     isProcessing: externalIsProcessing,
@@ -35,6 +39,16 @@
   } = $props();
 
   const txCartStore = new TransactionCartStore(action, handleProcessAction);
+
+  // Local state for managing drawer open/close
+  // eslint-disable-next-line svelte/prefer-writable-derived
+  let isOpen = $state(isOpenProp);
+
+  // Sync isOpen prop with local state
+  $effect(() => {
+    isOpen = isOpenProp;
+  });
+
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let isProcessingLocally: boolean = $state(false);
@@ -68,6 +82,7 @@
   });
 
   let showFeeBreakdown = $state(false);
+  let showFeeInfoDrawer = $state(false);
   let failedImageLoads = $state<Set<string>>(new Set());
 
   function handleImageError(address: string) {
@@ -100,6 +115,18 @@
       const assets = action.intents.map((intent) => ({
         address: intent.type.payload.asset.address.toString(),
         amount: intent.type.payload.amount, // Amount to be returned
+      }));
+
+      return calculateAssetsWithTokenInfo(
+        assets,
+        walletStore.findTokenByAddress.bind(walletStore),
+      );
+    }
+
+    if (action.type === ActionType.RECEIVE) {
+      const assets = action.intents.map((intent) => ({
+        address: intent.type.payload.asset.address.toString(),
+        amount: intent.type.payload.amount, // Amount to be received
       }));
 
       return calculateAssetsWithTokenInfo(
@@ -164,6 +191,35 @@
   const isWithdraw = $derived.by(() => {
     return action.type === ActionType.WITHDRAW;
   });
+
+  // Check if this is a receive action (user claiming from link)
+  const isReceive = $derived.by(() => {
+    return action.type === ActionType.RECEIVE;
+  });
+
+  // Convert assetAndFeeList to feesBreakdown format for FeeInfoDrawer
+  const feesBreakdown = $derived.by((): FeeBreakdownItem[] => {
+    return feeService.buildFeesBreakdownFromAssetAndFeeList(
+      assetAndFeeList,
+      walletStore.query.data ?? [],
+    );
+  });
+
+  // Handle fee breakdown click - close txCart and show FeeInfoDrawer
+  function handleFeeBreakdownClick() {
+    // Don't open drawer if processing
+    if (isProcessing) {
+      return;
+    }
+    isOpen = false;
+    showFeeInfoDrawer = true;
+  }
+
+  // Handle back button in FeeInfoDrawer - close FeeInfoDrawer and reopen txCart
+  function handleFeeInfoDrawerBack() {
+    showFeeInfoDrawer = false;
+    isOpen = true;
+  }
 
   /**
    * Handle confirm button click.
@@ -266,12 +322,23 @@
 
               <FeesBreakdownSection
                 {totalFeesUsd}
-                isClickable={false}
-                onInfoClick={() => (showFeeBreakdown = true)}
+                onBreakdownClick={handleFeeBreakdownClick}
+                disabled={isProcessing}
               />
             {/if}
 
             {#if isWithdraw && assetsWithTokenInfo.length > 0}
+              <YouSendSection
+                {assetsWithTokenInfo}
+                {failedImageLoads}
+                onImageError={handleImageError}
+                {isProcessing}
+                isReceive={true}
+                hasError={!!errorMessage}
+              />
+            {/if}
+
+            {#if isReceive && assetsWithTokenInfo.length > 0}
               <YouSendSection
                 {assetsWithTokenInfo}
                 {failedImageLoads}
@@ -304,4 +371,14 @@
       {/if}
     </Drawer.Content>
   </Drawer.Root>
+
+  <!-- FeeInfoDrawer for showing fees breakdown -->
+  <FeeInfoDrawer
+    bind:open={showFeeInfoDrawer}
+    onClose={() => {
+      showFeeInfoDrawer = false;
+    }}
+    onBack={handleFeeInfoDrawerBack}
+    {feesBreakdown}
+  />
 {/if}
