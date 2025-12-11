@@ -7,6 +7,7 @@
   import {
     feeService,
     type AssetAndFee,
+    buildFeesBreakdownFromAssetAndFeeList,
   } from "$modules/transactionCart/services/feeService";
   import { onMount } from "svelte";
   import { TransactionCartStore } from "../state/txCartStore.svelte";
@@ -23,7 +24,6 @@
     calculateAssetsWithTokenInfo,
     type FeeBreakdownItem,
   } from "$modules/links/utils/feesBreakdown";
-  import { FeeType } from "$modules/links/types/fee";
 
   let {
     action,
@@ -200,40 +200,10 @@
 
   // Convert assetAndFeeList to feesBreakdown format for FeeInfoDrawer
   const feesBreakdown = $derived.by((): FeeBreakdownItem[] => {
-    const breakdown: FeeBreakdownItem[] = [];
-
-    for (const item of assetAndFeeList) {
-      if (!item.fee) continue;
-
-      const token = walletStore.query.data?.find(
-        (t) => t.address === item.asset.address,
-      );
-      if (!token) continue;
-
-      // Parse fee amount from string to bigint
-      const feeAmountStr = item.fee.amount.replace(/,/g, "");
-      const feeAmount = parseFloat(feeAmountStr);
-      const feeAmountBigInt = BigInt(
-        Math.round(feeAmount * Math.pow(10, token.decimals)),
-      );
-
-      // Determine fee name based on fee type
-      const feeName =
-        item.fee.feeType === FeeType.CREATE_LINK_FEE
-          ? "Link creation fee"
-          : "Network fees";
-
-      breakdown.push({
-        name: feeName,
-        amount: feeAmountBigInt,
-        tokenAddress: item.asset.address,
-        tokenSymbol: token.symbol,
-        tokenDecimals: token.decimals,
-        usdAmount: item.fee.usdValue || 0,
-      });
-    }
-
-    return breakdown;
+    return buildFeesBreakdownFromAssetAndFeeList(
+      assetAndFeeList,
+      walletStore.query.data ?? [],
+    );
   });
 
   // Handle fee breakdown click - close txCart and show FeeInfoDrawer
