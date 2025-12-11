@@ -9,7 +9,7 @@
   import FeeInfoDrawer from "./drawers/FeeInfoDrawer.svelte";
   import FeeInfoDescriptionDrawer from "./drawers/FeeInfoDescriptionDrawer.svelte";
   import { toast } from "svelte-sonner";
-  import YouSendSection from "./previewSections/YouSendSection.svelte";
+  import YouSendPreview from "./previewSections/YouSendPreview.svelte";
   import FeesBreakdownSection from "./previewSections/FeesBreakdownSection.svelte";
   import LinkInfoSection from "./previewSections/LinkInfoSection.svelte";
   import TransactionLockSection from "./previewSections/TransactionLockSection.svelte";
@@ -19,6 +19,8 @@
     getLinkCreationFeeFromBreakdown,
     calculateAssetsWithTokenInfo,
   } from "$modules/links/utils/feesBreakdown";
+  import { feeService } from "$modules/shared/services/feeService";
+  import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
 
   const {
     link,
@@ -63,6 +65,18 @@
       assets,
       walletStore.findTokenByAddress.bind(walletStore),
     );
+  });
+
+  // Forecast link creation fees for preview
+  const forecastLinkCreationFees = $derived.by(() => {
+    if (!link.createLinkData.assets || link.createLinkData.assets.length === 0)
+      return [];
+
+    const tokens = Object.fromEntries(
+      (walletStore.query.data ?? []).map((t) => [t.address, t]),
+    );
+
+    return feeService.forecastLinkCreationFees(link.createLinkData.assets, link.createLinkData.maxUse, tokens);
   });
 
   // Calculate fees breakdown
@@ -151,11 +165,10 @@
 
   <!-- Block 3: You Send -->
   {#if isSendLink}
-    <YouSendSection
-      {assetsWithTokenInfo}
+    <YouSendPreview
+      assetAndFeeList={forecastLinkCreationFees}
       {failedImageLoads}
       onImageError={handleImageError}
-      {linkCreationFee}
       isClickable={true}
     />
   {/if}

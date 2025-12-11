@@ -5,14 +5,10 @@
   import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import AssetTransferInfoDrawer from "../drawers/AssetTransferInfoDrawer.svelte";
-  import { feeService } from "$modules/shared/services/feeService";
-  import type Action from "$modules/links/types/action/action";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { AssetProcessState } from "$modules/transactionCart/types/txCart";
   import { FeeType } from "$modules/links/types/fee";
 
   type Props = {
-    action: Action;
+    assetAndFeeList: Array<{ asset: any; fee?: any }>;
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
     isProcessing?: boolean;
@@ -23,7 +19,7 @@
   };
 
   let {
-    action,
+    assetAndFeeList,
     failedImageLoads,
     onImageError,
     isProcessing = false,
@@ -32,6 +28,8 @@
     onInfoClick,
     hasError = false,
   }: Props = $props();
+
+  console.log("assetAndFeeList in YouSendPreview:", assetAndFeeList);
 
   let assetTransferInfoDrawerOpen = $state(false);
 
@@ -43,38 +41,15 @@
     }
   }
 
-  // Use feeService to derive asset and fee list
-  const assetAndFeeList = $derived.by(() => {
-    const list = feeService.mapActionToAssetAndFeeList(
-      action,
-      Object.fromEntries(
-        (walletStore.query.data ?? []).map((t) => [t.address, t]),
-      ),
-    );
-
-    if (isProcessing) {
-      return list.map((item) => ({
-        ...item,
-        asset: {
-          ...item.asset,
-          state: AssetProcessState.PROCESSING,
-        },
-      }));
-    }
-
-    return list;
-  });
-
-  // Separate assets and link creation fee for display
   const assetsToDisplay = $derived.by(() => {
-    return assetAndFeeList.filter(
-      (item) => item.fee?.feeType !== FeeType.CREATE_LINK_FEE
+    return (assetAndFeeList || []).filter(
+      (item) => item.fee?.feeType !== FeeType.CREATE_LINK_FEE,
     );
   });
 
   const linkCreationFeeItem = $derived.by(() => {
-    return assetAndFeeList.find(
-      (item) => item.fee?.feeType === FeeType.CREATE_LINK_FEE
+    return (assetAndFeeList || []).find(
+      (item) => item.fee?.feeType === FeeType.CREATE_LINK_FEE,
     );
   });
 </script>

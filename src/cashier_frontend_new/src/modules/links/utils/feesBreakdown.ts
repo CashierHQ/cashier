@@ -1,12 +1,12 @@
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
-import { feeService } from "$modules/transactionCart/services/feeService";
 import type { Result } from "ts-results-es";
 import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
 import {
   formatNumber,
   formatUsdAmount,
 } from "$modules/shared/utils/formatNumber";
+import { feeService } from "$modules/shared/services/feeService";
 
 export type FeeBreakdownItem = {
   name: string;
@@ -159,7 +159,9 @@ export function calculateAssetsWithTokenInfo(
 
 export type FeeBreakdownItemView = FeeBreakdownItem & {
   tokenLogo: string;
+  // amount for showing in UI derived from amount and tokenDecimals (eg: 1_000_000 with decimals=6 -> 1.0)
   feeAmount: number;
+  // string representation of feeAmount formatted for display (eg: 1e-7 -> "0.0(7)1")
   feeAmountFormatted: string;
   usdFormatted: string;
 };
@@ -193,27 +195,4 @@ export function formatLinkCreationFeeView(
 ): FeeBreakdownItemView | null {
   if (!fee) return null;
   return formatFeeBreakdownItem(fee);
-}
-
-export type LinkCreationFeeDisplay = {
-  amount: number;
-  symbol: string;
-  usdAmount: number;
-};
-
-/**
- * Format link creation fee for simple display (used in YouSendSection)
- * @param fee - Link creation fee item or undefined
- * @returns Formatted fee display or null
- */
-export function formatLinkCreationFeeDisplay(
-  fee: FeeBreakdownItem | undefined,
-): LinkCreationFeeDisplay | null {
-  if (!fee) return null;
-  const feeAmount = parseBalanceUnits(fee.amount, fee.tokenDecimals);
-  return {
-    amount: feeAmount,
-    symbol: fee.tokenSymbol,
-    usdAmount: fee.usdAmount,
-  };
 }
