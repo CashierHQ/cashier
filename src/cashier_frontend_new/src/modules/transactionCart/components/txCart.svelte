@@ -7,7 +7,7 @@
   import { onMount } from "svelte";
   import { TransactionCartStore } from "../state/txCartStore.svelte";
   import { AssetProcessState } from "../types/txCart";
-  import YouSendSection from "$modules/creationLink/components/previewSections/YouSendSection.svelte";
+  import YouSendSection from "$modules/transactionCart/components/YouSendSection.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import FeeBreakdown from "./feeBreakdown.svelte";
   import { X } from "lucide-svelte";

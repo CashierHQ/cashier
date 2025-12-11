@@ -6,9 +6,10 @@
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import AssetTransferInfoDrawer from "../drawers/AssetTransferInfoDrawer.svelte";
   import { FeeType } from "$modules/links/types/fee";
+    import type { ForecastAssetAndFee } from "$modules/shared/services/feeService";
 
   type Props = {
-    assetAndFeeList: Array<{ asset: any; fee?: any }>;
+    forecastAssetAndFee: Array<ForecastAssetAndFee>;
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
     isProcessing?: boolean;
@@ -19,7 +20,7 @@
   };
 
   let {
-    assetAndFeeList,
+    forecastAssetAndFee: forecastAssetAndFee,
     failedImageLoads,
     onImageError,
     isProcessing = false,
@@ -28,8 +29,6 @@
     onInfoClick,
     hasError = false,
   }: Props = $props();
-
-  console.log("assetAndFeeList in YouSendPreview:", assetAndFeeList);
 
   let assetTransferInfoDrawerOpen = $state(false);
 
@@ -42,13 +41,13 @@
   }
 
   const assetsToDisplay = $derived.by(() => {
-    return (assetAndFeeList || []).filter(
+    return (forecastAssetAndFee || []).filter(
       (item) => item.fee?.feeType !== FeeType.CREATE_LINK_FEE,
     );
   });
 
   const linkCreationFeeItem = $derived.by(() => {
-    return (assetAndFeeList || []).find(
+    return (forecastAssetAndFee || []).find(
       (item) => item.fee?.feeType === FeeType.CREATE_LINK_FEE,
     );
   });
