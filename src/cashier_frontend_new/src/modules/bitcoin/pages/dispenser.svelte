@@ -2,6 +2,7 @@
   import { authState } from '$modules/auth/state/auth.svelte';
   import { createTransferPSBT, type UTXO } from '$modules/bitcoin/utils/pbst-builder';
   import { bitcoinStore } from '../bitcoinStore.svelte';
+  import { REDEEM_FEE } from '../constants';
 
   let btcWalletAddress = $state('');
   let isConnected = $state(false);
@@ -24,9 +25,9 @@
   })
 
   async function handleGenerateTicket() {
-    const txid = '7ebb05748c080b59f22e0676be1f4778e98e6c0522667af1e5ffb608ba620ab5';
+    const txid = '8614e7bcb11c52836333749b98ab9fbe35724d9a14fc7021ba198866b3656e2a';
     const runeId = '840000:3';
-    const importAmount = 100;
+    const importAmount = 100_00000;
 
     try {
       const result = await bitcoinStore.generateTicket(
@@ -128,6 +129,27 @@
     }
   }
 
+  async function handleExport() {
+    const receiverAddress = "bc1qhfll8v852vu6a4zjgcpqpv3uqxrsjpvm75vam0";
+    const runeId = "840000:3";
+    // find runes info from store
+    const runeToken =bitcoinStore.query.data?.find(token => token.rune_id === runeId);
+    if (!runeToken) {
+      alert(`Rune token with ID ${runeId} not found in store.`);
+      return;
+    }
+
+    console.log("Exporting rune token:", $state.snapshot(runeToken));
+
+    const amount = BigInt(10_00000);
+    await bitcoinStore.exportRunes(
+      receiverAddress,
+      runeToken.token_id,
+      amount,
+      REDEEM_FEE,
+    );
+  }
+
   function getUnisat() {
     if (typeof window.unisat !== 'undefined') {
       return window.unisat;
@@ -197,7 +219,14 @@
     <p>Amount:</p>
     <input bind:value={importAmount} type="number" min="0" style="border: 1px solid #ccc;" />
   </div>
+  <div>
     <button onclick={handleImport} style="border: 1px solid #ccc;">Import Runes</button>
-    <button onclick={handleGenerateTicket} style="border: 1px solid #ccc; margin-left: 10px;">Generate Ticket</button>
+  </div>
+  <div>
+    <button onclick={handleGenerateTicket} style="border: 1px solid #ccc;margin-top: 10px;">Generate Ticket</button>
+  </div>
+  <div>
+    <button onclick={handleExport} style="border: 1px solid #ccc; margin-top: 10px;">Export Runes</button>
+  </div>
   {/if}
 </div>

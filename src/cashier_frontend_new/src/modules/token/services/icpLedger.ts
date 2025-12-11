@@ -96,6 +96,34 @@ class IcpLedgerService {
 
     return result.Ok;
   }
+
+  async approve(spender: string, amount: bigint): Promise<bigint> {
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
+
+    const result = await actor.icrc2_approve({
+      amount: amount,
+      fee: [],
+      memo: [],
+      from_subaccount: [],
+      created_at_time: [],
+      spender: {
+        owner: Principal.fromText(spender),
+        subaccount: [],
+      },
+      expected_allowance: [],
+      expires_at: [],
+    });
+    console.log("ICP approve result:", result);
+
+    if ("Err" in result) {
+      throw new Error(`Approve failed: ${JSON.stringify(result.Err)}`);
+    }
+
+    return result.Ok;
+  }
 }
 
 /**
