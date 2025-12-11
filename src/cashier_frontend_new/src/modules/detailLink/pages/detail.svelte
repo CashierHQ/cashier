@@ -10,6 +10,7 @@
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
   import YouSendSection from "$modules/creationLink/components/previewSections/YouSendSection.svelte";
+  import YouSendPreview from "$modules/creationLink/components/previewSections/YouSendPreview.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import FeeInfoDescriptionDrawer from "$modules/creationLink/components/drawers/FeeInfoDescriptionDrawer.svelte";
@@ -32,6 +33,8 @@
     getLinkCreationFeeFromBreakdown,
     calculateAssetsWithTokenInfo,
   } from "$modules/links/utils/feesBreakdown";
+  import { feeService } from "$modules/shared/services/feeService";
+  import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
   import {
     Dialog,
     DialogContent,
@@ -107,6 +110,7 @@
       walletStore.findTokenByAddress.bind(walletStore),
     );
   });
+
 
   // Check if link type is send type (TIP, AIRDROP, TOKEN_BASKET)
   const isSendLink = $derived.by(() => {
@@ -390,17 +394,6 @@
         {transactionLockStatus}
         isEnded={isTransactionLockEnded}
       />
-
-      <!-- Block 3: You Send -->
-      {#if isSendLink}
-        <YouSendSection
-          {assetsWithTokenInfo}
-          {failedImageLoads}
-          onImageError={handleImageError}
-          {linkCreationFee}
-          isClickable={true}
-        />
-      {/if}
 
       <!-- Block 4: Fees Breakdown -->
       <FeesBreakdownSection
