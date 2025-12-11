@@ -6,7 +6,6 @@ on:
       - main
       - staging
       - dev
-      - fixbug/orbit-cli  # TEMP: for testing workflow_dispatch
     paths:
       - 'src/cashier_frontend_new/**'
   workflow_dispatch:
