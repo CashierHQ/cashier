@@ -6,7 +6,9 @@
   import Completed from "../components/Completed.svelte";
   import Landing from "../components/Landing.svelte";
   import Unlocked from "../components/Unlocked.svelte";
+  import { onDestroy, onMount } from "svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
+  import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { locale } from "$lib/i18n";
 
   const {
@@ -96,6 +98,24 @@
       const showFooter = isLanding || isCompleted;
       onShowFooterChange(showFooter);
     }
+  });
+
+  // Register back handler for AppHeader on the use flow
+  const handleBack = async () => {
+    if (userStore.step === UserLinkStep.ADDRESS_UNLOCKED) {
+      await userStore.goBack();
+      return;
+    }
+
+    await appHeaderStore.triggerBack();
+  };
+
+  onMount(() => {
+    appHeaderStore.setBackHandler(handleBack);
+  });
+
+  onDestroy(() => {
+    appHeaderStore.clearBackHandler();
   });
 </script>
 

@@ -73,17 +73,9 @@
     return userLinkStep === UserLinkStep.ADDRESS_UNLOCKED;
   });
 
-  // Handle back button for mobile
+  // Handle back button for mobile (delegates to appHeaderStore back handler)
   async function handleMobileBack() {
-    if (
-      isUsePage &&
-      userLinkStep === UserLinkStep.ADDRESS_UNLOCKED &&
-      userLinkStore
-    ) {
-      await userLinkStore.goBack();
-    } else {
-      await appHeaderStore.triggerBack();
-    }
+    await appHeaderStore.triggerBack();
   }
 </script>
 
