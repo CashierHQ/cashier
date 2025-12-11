@@ -1,6 +1,15 @@
 name: Orbit Backend Deploy
 
 on:
+  push:
+    branches:
+      - main
+      - staging
+      - dev
+      - fixbug/orbit-cli  # TEMP: for testing workflow_dispatch
+    paths:
+      - 'src/cashier_backend/**'
+      - 'src/token_storage/**'
   workflow_dispatch:
     inputs:
       mode:
