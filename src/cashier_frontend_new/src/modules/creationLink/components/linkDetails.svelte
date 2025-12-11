@@ -98,21 +98,8 @@
   // Track failed image loads
   let failedImageLoads = $state<Set<string>>(new Set());
 
-  // Drawer states
-  let showFeeInfoDrawer = $state(false); // For breakdown button (with ChevronRight)
-  let showFeeInfoDescriptionDrawer = $state(false); // For info icon button
-
   function handleImageError(address: string) {
     failedImageLoads.add(address);
-  }
-
-  // Handlers for info drawers
-  function handleFeeBreakdownClick() {
-    showFeeInfoDrawer = true;
-  }
-
-  function handleFeeInfoClick() {
-    showFeeInfoDescriptionDrawer = true;
   }
 
   // Show toast notifications for error and success messages

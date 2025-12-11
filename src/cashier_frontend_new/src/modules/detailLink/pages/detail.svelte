@@ -28,11 +28,8 @@
   import {
     calculateFeesBreakdown,
     calculateTotalFeesUsd,
-    getLinkCreationFeeFromBreakdown,
     calculateAssetsWithTokenInfo,
   } from "$modules/links/utils/feesBreakdown";
-  import { feeService } from "$modules/shared/services/feeService";
-  import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
   import {
     Dialog,
     DialogContent,
@@ -159,11 +156,6 @@
   // Calculate total fees in USD
   const totalFeesUsd = $derived.by(() => {
     return calculateTotalFeesUsd(feesBreakdown);
-  });
-
-  // Get link creation fee from breakdown
-  const linkCreationFee = $derived.by(() => {
-    return getLinkCreationFeeFromBreakdown(feesBreakdown);
   });
 
   // Transaction lock status based on link state
