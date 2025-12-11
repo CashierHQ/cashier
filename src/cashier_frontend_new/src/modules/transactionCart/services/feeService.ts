@@ -21,6 +21,7 @@ import {
   AssetProcessState,
   type AssetItem,
 } from "$modules/transactionCart/types/txCart";
+import type { IntentStateValue } from "$modules/links/types/action/intentState";
 
 // Type for paired AssetItem and FeeItem
 export type AssetAndFee = {
@@ -35,17 +36,21 @@ export class FeeService {
    * Compute both the final amount (what will be shown as the asset amount)
    * and an optional fee (undefined when there is no fee to display) based
    * on the provided rules.
-   *
-   * Rules implemented (assumption: the 4th rule refers to ActionType.Receive)
-   * 1) CreateLink + TransferWalletToTreasury: amount = ledgerFee*2 + payload.amount
-   *    fee = ledgerFee*2 + payload.amount
-   * 2) CreateLink + other intent: amount = ledgerFee + payload.amount
-   *    fee = ledgerFee
-   * 3) Withdraw: amount = payload.amount - ledgerFee
-   *    fee = ledgerFee
-      import type Intent from "$modules/links/types/action/intent";
-   * 4) Receive: amount = payload.amount
-   *    fee = undefined
+   * 1) CreateLink + TransferWalletToTreasury:
+   *    - amount = ledgerFee*2 + payload.amount
+   *    - fee = ledgerFee*2 + payload.amount
+   * 2) CreateLink + other intent:
+   *    - amount = ledgerFee + payload.amount
+   *    - fee = ledgerFee
+   * 3) Withdraw:
+   *    - amount = payload.amount - ledgerFee
+   *    - fee = ledgerFee
+   * 4) Receive:
+   *    - amount = payload.amount
+   *    - fee = undefined
+   * 5) Send:
+   *    - amount = payload.amount + ledgerFee
+   *    - fee = ledgerFee
    */
   computeAmountAndFee({
     intent,
@@ -80,12 +85,11 @@ export class FeeService {
       case ActionType.RECEIVE:
         output = { amount: intent.type.payload.amount, fee: undefined };
         break;
-      case ActionType.USE:
-        output = { amount: intent.type.payload.amount, fee: undefined };
-        break;
       default:
-        return assertUnreachable(actionType as never);
+        return assertUnreachable(actionType);
     }
+
+    console.log("Computed amount and fee:", output);
 
     return output;
   }
@@ -170,7 +174,9 @@ export class FeeService {
           : undefined;
 
         asset = {
-          state: AccessProcessStateMapper.fromIntentState(intent.state),
+          state: AccessProcessStateMapper.fromIntentState(
+            intent.state as IntentStateValue,
+          ),
           label,
           symbol: token.symbol,
           address,

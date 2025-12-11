@@ -97,7 +97,7 @@ describe("FeeService", () => {
         actionType: ActionType.WITHDRAW,
       });
 
-      // amount = payload.amount - ledgerFee, fee = ledgerFee
+      // amount = payload.amount, fee = ledgerFee
       expect(res.amount).toBe(100_000_000n);
       expect(res.fee).toBe(LEDGER_FEE);
     });
