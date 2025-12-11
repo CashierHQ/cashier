@@ -13,7 +13,10 @@
   import { X } from "lucide-svelte";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { locale } from "$lib/i18n";
-  import { feeService, type AssetAndFee } from "$modules/shared/services/feeService";
+  import {
+    feeService,
+    type AssetAndFee,
+  } from "$modules/shared/services/feeService";
 
   let {
     action,

@@ -109,7 +109,6 @@
     );
   });
 
-
   // Check if link type is send type (TIP, AIRDROP, TOKEN_BASKET)
   const isSendLink = $derived.by(() => {
     if (!linkStore.link) return false;

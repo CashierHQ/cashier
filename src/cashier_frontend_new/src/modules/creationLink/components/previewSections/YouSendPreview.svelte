@@ -6,7 +6,7 @@
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import AssetTransferInfoDrawer from "../drawers/AssetTransferInfoDrawer.svelte";
   import { FeeType } from "$modules/links/types/fee";
-    import type { ForecastAssetAndFee } from "$modules/shared/services/feeService";
+  import type { ForecastAssetAndFee } from "$modules/shared/services/feeService";
 
   type Props = {
     forecastAssetAndFee: Array<ForecastAssetAndFee>;
@@ -138,7 +138,9 @@
               alt={linkCreationFeeItem.asset.symbol}
               class="w-5 h-5 rounded-full overflow-hidden"
             />
-            <p class="text-[14px] font-medium">{linkCreationFeeItem.asset.symbol}</p>
+            <p class="text-[14px] font-medium">
+              {linkCreationFeeItem.asset.symbol}
+            </p>
             <p class="text-[12px] font-normal text-[#b6b6b6] pt-0.5">
               {locale.t("links.linkForm.preview.linkCreationFee")}
             </p>
@@ -151,7 +153,9 @@
             </div>
             {#if linkCreationFeeItem.fee.usdValueStr}
               <p class="text-[10px] font-normal text-[#b6b6b6]">
-                {formatUsdAmount(parseFloat(linkCreationFeeItem.fee.usdValueStr))}
+                {formatUsdAmount(
+                  parseFloat(linkCreationFeeItem.fee.usdValueStr),
+                )}
               </p>
             {/if}
           </div>

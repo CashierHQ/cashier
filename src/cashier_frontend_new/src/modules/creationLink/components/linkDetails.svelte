@@ -76,7 +76,11 @@
       (walletStore.query.data ?? []).map((t) => [t.address, t]),
     );
 
-    return feeService.forecastLinkCreationFees(link.createLinkData.assets, link.createLinkData.maxUse, tokens);
+    return feeService.forecastLinkCreationFees(
+      link.createLinkData.assets,
+      link.createLinkData.maxUse,
+      tokens,
+    );
   });
 
   // Calculate fees breakdown
