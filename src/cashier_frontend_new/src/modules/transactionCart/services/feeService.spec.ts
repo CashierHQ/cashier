@@ -19,7 +19,6 @@ import {
   FeeService,
   type AssetAndFee,
   type AssetAndFeeList,
-  buildFeesBreakdownFromAssetAndFeeList,
 } from "./feeService";
 import { FeeType } from "$modules/links/types/fee";
 import { AssetProcessState } from "$modules/transactionCart/types/txCart";
@@ -642,9 +641,10 @@ describe("FeeService", () => {
         },
       ];
 
-      const result = buildFeesBreakdownFromAssetAndFeeList(assetAndFeeList, [
-        token,
-      ] as unknown as TokenWithPriceAndBalance[]);
+      const result = svc.buildFeesBreakdownFromAssetAndFeeList(
+        assetAndFeeList,
+        [token] as unknown as TokenWithPriceAndBalance[],
+      );
 
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
@@ -689,9 +689,10 @@ describe("FeeService", () => {
         },
       ];
 
-      const result = buildFeesBreakdownFromAssetAndFeeList(assetAndFeeList, [
-        token,
-      ] as unknown as TokenWithPriceAndBalance[]);
+      const result = svc.buildFeesBreakdownFromAssetAndFeeList(
+        assetAndFeeList,
+        [token] as unknown as TokenWithPriceAndBalance[],
+      );
 
       expect(result).toHaveLength(0);
     });
@@ -728,9 +729,10 @@ describe("FeeService", () => {
         },
       ];
 
-      const result = buildFeesBreakdownFromAssetAndFeeList(assetAndFeeList, [
-        token,
-      ] as unknown as TokenWithPriceAndBalance[]);
+      const result = svc.buildFeesBreakdownFromAssetAndFeeList(
+        assetAndFeeList,
+        [token] as unknown as TokenWithPriceAndBalance[],
+      );
 
       expect(result).toHaveLength(0);
     });
@@ -744,7 +746,7 @@ describe("FeeService", () => {
         priceUSD: 3.01,
       } as unknown as TokenWithPriceAndBalance;
 
-      const result = buildFeesBreakdownFromAssetAndFeeList([], [
+      const result = svc.buildFeesBreakdownFromAssetAndFeeList([], [
         token,
       ] as unknown as TokenWithPriceAndBalance[]);
 
@@ -774,7 +776,10 @@ describe("FeeService", () => {
         },
       ];
 
-      const result = buildFeesBreakdownFromAssetAndFeeList(assetAndFeeList, []);
+      const result = svc.buildFeesBreakdownFromAssetAndFeeList(
+        assetAndFeeList,
+        [],
+      );
 
       expect(result).toHaveLength(0);
     });
@@ -810,9 +815,10 @@ describe("FeeService", () => {
         },
       ];
 
-      const result = buildFeesBreakdownFromAssetAndFeeList(assetAndFeeList, [
-        token,
-      ] as unknown as TokenWithPriceAndBalance[]);
+      const result = svc.buildFeesBreakdownFromAssetAndFeeList(
+        assetAndFeeList,
+        [token] as unknown as TokenWithPriceAndBalance[],
+      );
 
       expect(result).toHaveLength(1);
       // Verify that the amount is correctly parsed (1.234567 * 10^8 = 123456700)
