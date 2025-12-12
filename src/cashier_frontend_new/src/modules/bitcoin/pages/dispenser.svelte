@@ -2,7 +2,7 @@
   import { authState } from '$modules/auth/state/auth.svelte';
   import { bitcoinStore } from '../bitcoinStore.svelte';
   import { REDEEM_FEE } from '../constants';
-  import type { AvailableUTXO, RuneBalanceInfo, UTXOWithRunes } from '../types';
+  import type { RuneBalanceInfo } from '../types';
 
   let btcWalletAddress = $state('');
   let isConnected = $state(false);
@@ -210,34 +210,6 @@
   function disconnect() {
     btcWalletAddress = '';
     isConnected = false;
-  }
-
-  async function getUTXOsWithRunes(): Promise<UTXOWithRunes[]> {
-    if (!btcWalletAddress) {
-      throw new Error('Wallet not connected.');
-    }
-    
-    const utxosWithRunes = await bitcoinStore.getUTXOsWithRunes(
-      btcWalletAddress,
-      unisatApiKey,
-      'mainnet'
-    );
-    console.log('UTXOs with runes:', utxosWithRunes);
-    return utxosWithRunes;
-  }
-
-  async function getAvailableUTXOs(): Promise<AvailableUTXO[]> {
-    if (!btcWalletAddress) {
-      throw new Error('Wallet not connected.');
-    }
-    
-    const availableUtxos = await bitcoinStore.getAvailableUTXOs(
-      btcWalletAddress,
-      unisatApiKey,
-      'mainnet',
-    );
-    console.log('Available UTXOs:', availableUtxos);
-    return availableUtxos;
   }
 </script>
 
