@@ -18,7 +18,7 @@
     feeService,
     type AssetAndFee,
   } from "$modules/shared/services/feeService";
-    import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
+  import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 
   let {
     action,
@@ -110,7 +110,7 @@
 
   // Convert assetAndFeeList to feesBreakdown format for FeeInfoDrawer
   const feesBreakdown = $derived.by((): FeeBreakdownItem[] => {
-    const breakdown =  feeService.buildFeesBreakdownFromAssetAndFeeList(
+    const breakdown = feeService.buildFeesBreakdownFromAssetAndFeeList(
       assetAndFeeList,
       walletStore.query.data ?? [],
     );

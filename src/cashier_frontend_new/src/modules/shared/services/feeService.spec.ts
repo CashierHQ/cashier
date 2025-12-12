@@ -16,9 +16,7 @@ import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Ed25519KeyIdentity } from "@dfinity/identity";
 import { Principal } from "@dfinity/principal";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  FeeService,
-} from "./feeService";
+import { FeeService } from "./feeService";
 
 const from = Ed25519KeyIdentity.generate();
 const fromWallet = new Wallet(from.getPrincipal(), []);

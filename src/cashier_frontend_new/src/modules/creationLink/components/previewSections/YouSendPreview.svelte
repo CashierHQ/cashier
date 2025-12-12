@@ -1,6 +1,6 @@
 <script lang="ts">
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import { Info, X } from "lucide-svelte";
+  import { Info } from "lucide-svelte";
   import { locale } from "$lib/i18n";
   import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
@@ -15,7 +15,6 @@
     isReceive?: boolean;
     isClickable?: boolean;
     onInfoClick?: () => void;
-    hasError?: boolean;
   };
 
   let {
@@ -25,7 +24,6 @@
     isReceive = false,
     isClickable = false,
     onInfoClick,
-    hasError = false,
   }: Props = $props();
 
   let assetTransferInfoDrawerOpen = $state(false);
@@ -105,8 +103,8 @@
           </div>
           {#if asset.usdValueStr}
             <p class="text-[10px] medium-font text-[#b6b6b6]">
-            ~${formatUsdAmount(asset.usdValueStr)}
-          </p>
+              ~${formatUsdAmount(asset.usdValueStr)}
+            </p>
           {/if}
         </div>
       </div>
@@ -137,10 +135,9 @@
             </div>
 
             {#if linkCreationFeeItem.fee.usdValueStr}
-
-            <p class="text-[10px] font-normal text-[#b6b6b6]">
-              ~${ parseFloat(linkCreationFeeItem.fee.usdValueStr)}
-            </p>
+              <p class="text-[10px] font-normal text-[#b6b6b6]">
+                ~${parseFloat(linkCreationFeeItem.fee.usdValueStr)}
+              </p>
             {/if}
           </div>
         </div>
