@@ -62,6 +62,8 @@
     }
     
     isImporting = true;
+    errorMessage = '';
+    successMessage = '';
     
     try {
       const unisat = getUnisat();
@@ -113,10 +115,13 @@
       alert('Please enter a valid amount for ticket generation');
       return;
     }
-    
+
     const amount = BigInt(importAmount) * BigInt(100_000);
 
     isImporting = true;
+    errorMessage = '';
+    successMessage = '';
+
     try {
       await generateTicket(txid, runeId, amount);
     } catch (error) {
@@ -159,6 +164,9 @@
 
     try {
       isExporting = true;
+      errorMessage = '';
+      successMessage = '';
+      
       const amount = BigInt(exportAmount) * BigInt(100_000); // Convert to sats
       const ticketId =  await bitcoinStore.exportRunes(
         btcWalletAddress,
