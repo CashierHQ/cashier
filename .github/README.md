@@ -16,6 +16,8 @@ This folder contains GitHub Actions workflow definitions used for continuous int
 
 - `orbit-frontend-deploy.yml` — Builds frontend assets and submits Orbit asset upload / deployment requests for the selected network.
 
+- `deploy-canisters-dev.yml` — Deploys canisters to the development environment (dev). This workflow is intended for installing or upgrading canisters on the dev network and can be triggered manually or by pushes to branches mapped to the development environment.
+
 ## Key Points
 
 - Branch mapping: `main` → production, `staging` → staging, other branches → dev.
