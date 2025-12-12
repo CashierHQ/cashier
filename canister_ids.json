@@ -1,16 +1,21 @@
 {
   "cashier_backend": {
-    "ic": "eyuy4-gqaaa-aaaam-aekrq-cai",
+    "production": "eyuy4-gqaaa-aaaam-aekrq-cai",
     "staging": "jjio5-5aaaa-aaaam-adhaq-cai",
     "dev": "edrez-4iaaa-aaaam-aekta-cai"
   },
   "cashier_frontend": {
-    "ic": "jg57n-xyaaa-aaaam-admqq-cai",
+    "production": "jg57n-xyaaa-aaaam-admqq-cai",
+    "staging": "iqwhg-ciaaa-aaaam-admvq-cai",
+    "dev": "ynjts-uyaaa-aaaam-aeqka-cai"
+  },
+  "cashier_frontend_new": {
+    "production": "jg57n-xyaaa-aaaam-admqq-cai",
     "staging": "iqwhg-ciaaa-aaaam-admvq-cai",
     "dev": "bepcz-nyaaa-aaaam-aekoa-cai"
   },
   "token_storage": {
-    "ic": "d2fvt-giaaa-aaaam-aen4q-cai",
+    "production": "d2fvt-giaaa-aaaam-aen4q-cai",
     "staging": "o4l23-2iaaa-aaaam-aehga-cai",
     "dev": "hmrnm-pqaaa-aaaam-aenea-cai"
   }

@@ -8,7 +8,10 @@ import { ACTION_TYPE } from "@/services/types/enum";
 import { UpdateLinkParams } from "./useLinkMutations";
 import { groupLinkListByDate } from "@/utils";
 import { LinkModel } from "@/services/types/link.service.types";
-import { mapLinkDetailModelToCreateLinkInput } from "@/services/types/mapper/link.service.mapper";
+import {
+  mapLinkDetailModelToCreateLinkInput,
+  mapLinkDetailModelToDto,
+} from "@/services/types/mapper/link.service.mapper";
 import LinkLocalStorageServiceV2, {
   LOCAL_lINK_ID_PREFIX,
 } from "@/services/link/link-local-storage.service.v2";
@@ -126,7 +129,7 @@ export function useUpdateLinkMutation() {
           identity.getPrincipal().toString(),
         );
 
-        return Promise.resolve(localStorageLink);
+        return mapLinkDetailModelToDto(localStorageLink);
       } else {
         const updated_link = await linkService.updateLink(
           data.linkId,
@@ -167,6 +170,8 @@ export function useCreateNewLinkMutation() {
       );
 
       const link = linkLocalStorageService.getLink(localLinkId);
+
+      console.log("Creating link from local:", link);
 
       const input = mapLinkDetailModelToCreateLinkInput(link);
 

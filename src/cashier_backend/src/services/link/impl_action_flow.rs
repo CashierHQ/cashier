@@ -54,7 +54,8 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
             // Create temp action with default state
             let default_link_user_state = match input.action_type {
-                ActionType::Use => Some(LinkUserState::Address),
+                ActionType::Receive => Some(LinkUserState::Address),
+                ActionType::Send => Some(LinkUserState::Address),
                 _ => None,
             };
 
@@ -206,7 +207,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         let wallet_principal = input.wallet_address;
 
         // check action type is claim
-        if input.action_type != ActionType::Use {
+        if matches!(input.action_type, ActionType::Receive | ActionType::Send) {
             return Err(CanisterError::ValidationErrors(
                 "Invalid action type, only Claim or Use action type is allowed".to_string(),
             ));
@@ -250,7 +251,8 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
 
             // Create temp action with default state
             let default_link_user_state = match input.action_type {
-                ActionType::Use => Some(LinkUserState::Address),
+                ActionType::Send => Some(LinkUserState::Address),
+                ActionType::Receive => Some(LinkUserState::Address),
                 _ => None,
             };
 
@@ -304,7 +306,7 @@ impl<E: 'static + IcEnvironment + Clone, R: 'static + Repositories> ActionFlow
         input: &ProcessActionAnonymousInput,
     ) -> Result<ActionDto, CanisterError> {
         // check action type is claim
-        if input.action_type != ActionType::Use {
+        if matches!(input.action_type, ActionType::Receive | ActionType::Send) {
             return Err(CanisterError::ValidationErrors(
                 "Invalid action type, only Claim or Use action type is allowed".to_string(),
             ));

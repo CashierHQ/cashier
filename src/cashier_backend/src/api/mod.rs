@@ -3,12 +3,11 @@
 
 use cashier_common::build_data::BuildData;
 
-pub mod action;
 pub mod admin;
 pub mod icrc;
 pub mod init_and_upgrade;
 mod inspect_message;
-pub mod link;
+pub mod link_v2;
 mod state;
 
 use candid::Principal;
@@ -17,6 +16,7 @@ use cashier_backend_types::dto::action::*;
 use cashier_backend_types::dto::link::*;
 use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::init::CashierBackendInitData;
+use cashier_backend_types::link_v2::dto::*;
 use cashier_backend_types::service::link::*;
 use cashier_common::icrc::*;
 

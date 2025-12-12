@@ -1,7 +1,10 @@
+use std::borrow::Cow;
+
 use candid::CandidType;
 use cashier_macros::storable;
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{DefaultMemoryImpl, StableCell, memory_manager::VirtualMemory};
+use ic_mple_structures::{CellStructure, RefCodec, VersionedStableCell};
+use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
 /// The canister settings
 #[derive(Debug, CandidType, Clone, PartialEq, Eq)]
@@ -19,7 +22,25 @@ impl Default for Settings {
     }
 }
 
-pub type SettingsRepositoryStorage = StableCell<Settings, VirtualMemory<DefaultMemoryImpl>>;
+#[storable]
+pub enum SettingsCodec {
+    V1(Settings),
+}
+
+impl RefCodec<Settings> for SettingsCodec {
+    fn decode_ref(source: &Self) -> Cow<'_, Settings> {
+        match source {
+            SettingsCodec::V1(link) => Cow::Borrowed(link),
+        }
+    }
+
+    fn encode(dest: Settings) -> Self {
+        SettingsCodec::V1(dest)
+    }
+}
+
+pub type SettingsRepositoryStorage =
+    VersionedStableCell<Settings, SettingsCodec, VirtualMemory<DefaultMemoryImpl>>;
 
 /// The settings repository
 pub struct SettingsRepository<S: Storage<SettingsRepositoryStorage>> {
@@ -44,7 +65,7 @@ impl<S: Storage<SettingsRepositoryStorage>> SettingsRepository<S> {
     where
         for<'a> F: FnOnce(&'a Settings) -> T,
     {
-        self.storage.with_borrow(|store| f(store.get()))
+        self.storage.with_borrow(|store| f(store.get().as_ref()))
     }
 
     /// Helper to update the settings
@@ -53,7 +74,7 @@ impl<S: Storage<SettingsRepositoryStorage>> SettingsRepository<S> {
         for<'a> F: FnOnce(&'a mut Settings) -> T,
     {
         self.storage.with_borrow_mut(|store| {
-            let mut new_settings = store.get().clone();
+            let mut new_settings = store.get().into_owned();
             let result = f(&mut new_settings);
             store.set(new_settings);
             result

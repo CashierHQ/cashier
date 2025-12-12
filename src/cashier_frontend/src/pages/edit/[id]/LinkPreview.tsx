@@ -193,8 +193,8 @@ function LinkPreview({
         };
       });
       setEnhancedAssets(enhanced);
-    } else if (userInputData && userInputData.assets && tokenMap) {
-      const enhanced = userInputData.assets.map((asset) => {
+    } else if (userInputData && userInputData.asset_info && tokenMap) {
+      const enhanced = userInputData.asset_info.map((asset) => {
         const matchingToken = tokenMap[asset.address];
         return {
           address: asset.address,
@@ -396,10 +396,7 @@ function LinkPreview({
   ].includes(link.linkType);
 
   const isPaymentLink = (): boolean => {
-    return (
-      link.linkType === LINK_TYPE.RECEIVE_PAYMENT ||
-      link.linkType === LINK_TYPE.RECEIVE_MULTI_PAYMENT
-    );
+    return link.linkType === LINK_TYPE.RECEIVE_PAYMENT;
   };
 
   // Helper method to check if this is a send-type link
@@ -407,8 +404,7 @@ function LinkPreview({
     return (
       link.linkType === LINK_TYPE.SEND_TIP ||
       link.linkType === LINK_TYPE.SEND_AIRDROP ||
-      link.linkType === LINK_TYPE.SEND_TOKEN_BASKET ||
-      link.linkType === LINK_TYPE.NFT_CREATE_AND_AIRDROP
+      link.linkType === LINK_TYPE.SEND_TOKEN_BASKET
     );
   };
 

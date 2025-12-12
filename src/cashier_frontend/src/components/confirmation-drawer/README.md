@@ -6,11 +6,11 @@ The `ConfirmationDrawerV2` is an enhanced confirmation drawer component that han
 
 ## Key Features
 
--   **Unified Interface**: Works with all three confirmation hooks (`useUseConfirmation`, `useWithdrawConfirmation`, `useCreateConfirmation`)
--   **Smart Button Management**: Automatically manages button text and disabled states based on action state
--   **Auto-Continue**: 5-second countdown timer for successful transactions
--   **Error Handling**: Retry functionality for failed transactions
--   **Loading States**: Skeleton loading when action data is not available
+- **Unified Interface**: Works with all three confirmation hooks (`useUseConfirmation`, `useWithdrawConfirmation`, `useCreateConfirmation`)
+- **Smart Button Management**: Automatically manages button text and disabled states based on action state
+- **Auto-Continue**: 5-second countdown timer for successful transactions
+- **Error Handling**: Retry functionality for failed transactions
+- **Loading States**: Skeleton loading when action data is not available
 
 ## Button State Management
 
@@ -55,12 +55,12 @@ The confirmation drawer manages button states intelligently based on various con
 ```typescript
 // 0.5s delay when drawer opens
 useEffect(() => {
-    if (open) {
-        setButton((prev) => ({ ...prev, disabled: true }));
-        setTimeout(() => {
-            setButton((prev) => ({ ...prev, disabled: false }));
-        }, 500);
-    }
+  if (open) {
+    setButton((prev) => ({ ...prev, disabled: true }));
+    setTimeout(() => {
+      setButton((prev) => ({ ...prev, disabled: false }));
+    }, 500);
+  }
 }, [open]);
 ```
 
@@ -69,7 +69,7 @@ useEffect(() => {
 ```typescript
 // 5-second countdown starts on SUCCESS
 if (action?.state === ACTION_STATE.SUCCESS && open) {
-    setCountdown(5); // Starts 5-second timer
+  setCountdown(5); // Starts 5-second timer
 }
 
 // Button states during countdown:
@@ -86,7 +86,7 @@ if (hasClickedOnSuccessContinue) return;
 
 // Set flag when user manually clicks in SUCCESS state
 if (action?.state === ACTION_STATE.SUCCESS) {
-    setHasClickedOnSuccessContinue(true);
+  setHasClickedOnSuccessContinue(true);
 }
 ```
 
@@ -94,16 +94,16 @@ if (action?.state === ACTION_STATE.SUCCESS) {
 
 ```typescript
 interface ConfirmationDrawerV2Props {
-    link: LinkDetailModel;
-    action?: ActionModel;
-    open: boolean;
-    onClose?: () => void;
-    onInfoClick?: () => void;
-    onActionResult?: (action: ActionModel) => void;
-    onCashierError?: (error: Error) => void;
-    handleConfirmTransaction: () => Promise<void>;
-    handleSuccessContinue?: () => Promise<void>;
-    maxActionNumber?: number;
+  link: LinkDetailModel;
+  action?: ActionModel;
+  open: boolean;
+  onClose?: () => void;
+  onInfoClick?: () => void;
+  onActionResult?: (action: ActionModel) => void;
+  onCashierError?: (error: Error) => void;
+  handleConfirmTransaction: () => Promise<void>;
+  handleSuccessContinue?: () => Promise<void>;
+  maxActionNumber?: number;
 }
 ```
 
@@ -214,9 +214,9 @@ The drawer handles errors gracefully:
 
 ## Performance Considerations
 
--   **Memoization**: Consider memoizing the component if re-renders are frequent
--   **Cleanup**: All timers are properly cleaned up to prevent memory leaks
--   **State Management**: Internal state is minimal and focused on UI concerns
+- **Memoization**: Consider memoizing the component if re-renders are frequent
+- **Cleanup**: All timers are properly cleaned up to prevent memory leaks
+- **State Management**: Internal state is minimal and focused on UI concerns
 
 ## Testing Scenarios
 

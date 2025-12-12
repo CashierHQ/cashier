@@ -217,9 +217,9 @@ export const SendAirdropForm = ({
       const formAssets = getValues("assets");
 
       // Only update if we have both input and form assets
-      if (input && input.assets && formAssets && formAssets.length > 0) {
+      if (input && input.asset_info && formAssets && formAssets.length > 0) {
         // Don't update if they match in length to avoid unnecessary rerenders
-        if (input.assets.length !== formAssets.length) {
+        if (input.asset_info.length !== formAssets.length) {
           // Map the current form values to the store
           const storeAssets = formAssets.map((asset) => {
             // Create a properly formatted asset for the store
@@ -234,7 +234,7 @@ export const SendAirdropForm = ({
           });
 
           updateUserInput(link.id, {
-            assets: storeAssets,
+            asset_info: storeAssets,
           });
         }
       }
@@ -334,7 +334,7 @@ export const SendAirdropForm = ({
 
   // Helper functions
   function getInitialFormValues(input: Partial<UserInputItem> | undefined) {
-    if (!input?.assets || input.assets.length === 0) {
+    if (!input?.asset_info || input.asset_info.length === 0) {
       // If link has assets but no user input, check if we have link data directly
       if (link?.asset_info && link.asset_info.length > 0) {
         return {
@@ -352,7 +352,7 @@ export const SendAirdropForm = ({
     }
 
     return {
-      assets: input.assets.map((asset) => ({
+      assets: input.asset_info.map((asset) => ({
         tokenAddress: asset.address,
         amount: asset.linkUseAmount,
         label: asset.label,
@@ -426,7 +426,7 @@ export const SendAirdropForm = ({
     };
 
     updateUserInput(link.id, {
-      assets: [initialAsset],
+      asset_info: [initialAsset],
     });
   }
 

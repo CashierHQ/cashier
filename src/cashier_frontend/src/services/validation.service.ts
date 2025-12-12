@@ -153,8 +153,6 @@ export class ValidationService {
         return "token basket";
       case LINK_TYPE.RECEIVE_PAYMENT:
         return "payment request";
-      case LINK_TYPE.RECEIVE_MULTI_PAYMENT:
-        return "multi-payment request";
       default:
         return "link";
     }

@@ -1,0 +1,109 @@
+import { describe, it, expect } from "vitest";
+import { Principal } from "@dfinity/principal";
+import IntentType, {
+  IntentTypeMapper,
+  TransferDataMapper,
+  TransferFromDataMapper,
+  TransferData,
+} from "./intentType";
+import type {
+  TransferData as BackendTransferData,
+  TransferFromData as BackendTransferFromData,
+} from "$lib/generated/cashier_backend/cashier_backend.did";
+
+describe("IntentType payloads", () => {
+  it("constructs TransferData correctly", () => {
+    const p = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+    const to: BackendTransferData["to"] = {
+      IC: { address: p, subaccount: [] },
+    };
+    const from: BackendTransferData["from"] = {
+      IC: { address: p, subaccount: [] },
+    };
+    const asset: BackendTransferData["asset"] = { IC: { address: p } };
+
+    const td = TransferDataMapper.fromBackendType({
+      to,
+      asset,
+      from,
+      amount: 10n,
+    });
+    expect(td.amount).toBe(10n);
+    expect(td.to.address.toText()).toBe(p.toText());
+  });
+
+  it("constructs TransferFromData correctly", () => {
+    const p = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+    const to: BackendTransferFromData["to"] = {
+      IC: { address: p, subaccount: [] },
+    };
+    const from: BackendTransferFromData["from"] = {
+      IC: { address: p, subaccount: [] },
+    };
+    const asset: BackendTransferFromData["asset"] = { IC: { address: p } };
+    const spender: BackendTransferFromData["spender"] = {
+      IC: { address: p, subaccount: [] },
+    };
+
+    const tfd = TransferFromDataMapper.fromBackendType({
+      to,
+      asset,
+      from,
+      actual_amount: [5n],
+      amount: 10n,
+      approve_amount: [2n],
+      spender,
+    });
+
+    expect(tfd.amount).toBe(10n);
+    expect(tfd.actual_amount).toBe(5n);
+    expect(tfd.approve_amount).toBe(2n);
+  });
+
+  it("serializes and deserializes TransferData via serde", () => {
+    const p = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+    const to: BackendTransferData["to"] = {
+      IC: { address: p, subaccount: [] },
+    };
+    const from: BackendTransferData["from"] = {
+      IC: { address: p, subaccount: [] },
+    };
+    const asset: BackendTransferData["asset"] = { IC: { address: p } };
+
+    const td = TransferDataMapper.fromBackendType({
+      to,
+      asset,
+      from,
+      amount: 42n,
+    });
+    const serialized = TransferDataMapper.serde.serialize.TransferData(td);
+    const deserialized =
+      TransferDataMapper.serde.deserialize.TransferData(serialized);
+    expect(deserialized.amount).toBe(42n);
+    expect(deserialized.to.address.toText()).toBe(p.toText());
+  });
+
+  it("serializes and deserializes IntentType containing TransferData", () => {
+    const p = Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai");
+    const to: BackendTransferData["to"] = {
+      IC: { address: p, subaccount: [] },
+    };
+    const from: BackendTransferData["from"] = {
+      IC: { address: p, subaccount: [] },
+    };
+    const asset: BackendTransferData["asset"] = { IC: { address: p } };
+
+    const td = TransferDataMapper.fromBackendType({
+      to,
+      asset,
+      from,
+      amount: 7n,
+    });
+    const intentType = new IntentType(td);
+    const ser = IntentTypeMapper.serde.serialize.IntentType(intentType);
+    const des = IntentTypeMapper.serde.deserialize.IntentType(ser);
+    expect(des.payload).toBeDefined();
+    // payload should be TransferData with same amount
+    expect((des.payload as TransferData).amount).toBe(7n);
+  });
+});

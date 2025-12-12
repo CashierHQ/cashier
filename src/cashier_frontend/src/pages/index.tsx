@@ -5,7 +5,11 @@ import { useAuth, useIdentity } from "@nfid/identitykit/react";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { LINK_STATE, LINK_TYPE } from "@/services/types/enum";
+import {
+  FRONTEND_LINK_STATE,
+  LINK_STATE,
+  LINK_TYPE,
+} from "@/services/types/enum";
 import { useLinkCreationFormStore } from "@/stores/linkCreationFormStore";
 import { MainAppLayout } from "@/components/ui/main-app-layout";
 import { useLinksListQuery } from "@/hooks/link-hooks";
@@ -50,10 +54,9 @@ export default function HomePage() {
 
       addUserInput(linkId, {
         linkId: linkId,
-        state: LINK_STATE.CHOOSE_TEMPLATE,
         title: "",
         linkType: LINK_TYPE.SEND_TIP,
-        assets: [],
+        asset_info: [],
       });
 
       navigate(`/edit/${linkId}`);
@@ -87,8 +90,8 @@ export default function HomePage() {
 
   useEffect(() => {
     const draftLinkStates = [
-      LINK_STATE.ADD_ASSET,
-      LINK_STATE.CHOOSE_TEMPLATE,
+      FRONTEND_LINK_STATE.ADD_ASSET,
+      FRONTEND_LINK_STATE.CHOOSE_TEMPLATE,
       LINK_STATE.CREATE_LINK,
     ];
     if (linkData) {
@@ -110,10 +113,9 @@ export default function HomePage() {
 
               addUserInput(link.id, {
                 linkId: link.id,
-                state: link.state,
                 title: link.title,
                 linkType: link.linkType,
-                assets: processedAssets,
+                asset_info: processedAssets,
               });
             }
           }

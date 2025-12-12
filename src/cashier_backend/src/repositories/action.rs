@@ -1,12 +1,16 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::repository::{action::v1::Action, keys::ActionKey};
+use cashier_backend_types::repository::{
+    action::v1::{Action, ActionCodec},
+    keys::ActionKey,
+};
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
+use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
 pub type ActionRepositoryStorage =
-    StableBTreeMap<ActionKey, Action, VirtualMemory<DefaultMemoryImpl>>;
+    VersionedBTreeMap<ActionKey, Action, ActionCodec, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
 pub struct ActionRepository<S: Storage<ActionRepositoryStorage>> {

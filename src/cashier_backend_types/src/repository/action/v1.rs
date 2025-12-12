@@ -4,6 +4,7 @@
 use candid::{CandidType, Principal};
 use cashier_macros::storable;
 use derive_more::Display;
+use ic_mple_structures::Codec;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
@@ -16,11 +17,29 @@ pub struct Action {
     pub link_id: String,
 }
 
+#[storable]
+pub enum ActionCodec {
+    V1(Action),
+}
+
+impl Codec<Action> for ActionCodec {
+    fn decode(source: Self) -> Action {
+        match source {
+            ActionCodec::V1(link) => link,
+        }
+    }
+
+    fn encode(dest: Action) -> Self {
+        ActionCodec::V1(dest)
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Display)]
 pub enum ActionType {
     CreateLink,
     Withdraw,
-    Use,
+    Receive,
+    Send,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, CandidType, PartialEq, Eq, Display)]
