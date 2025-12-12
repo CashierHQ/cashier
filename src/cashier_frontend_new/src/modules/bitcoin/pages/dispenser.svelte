@@ -259,6 +259,10 @@
   {:else}
     <p>Connected BTC Address: {btcWalletAddress}</p>
     <button onclick={disconnect} style="border: 1px solid #ccc; margin-top: 10px;">Disconnect Wallet</button>
+  {/if}
+
+  <div>
+    <h2>Import Runes</h2>
     {#if runeBalanceInfos.length > 0}
       <div>
         <h3>Your Runes:</h3>
@@ -281,9 +285,10 @@
     {:else}
       <p>No runes found in your wallet.</p>
     {/if}
-  {/if}
+  </div>
 
   <div>
+    <h2>Export Runes</h2>
     <p>PrincipalID: {receiverPrincipalId}</p>
     <p>Bitcoin Deposit Address: {btcDepositAddress}</p>
     <p>Wrapped Runes Balance: {wrappedRunesBalance}</p>
