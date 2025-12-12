@@ -18,7 +18,6 @@ permissions:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
-    needs: setup_environment
     environment: dev
 
     steps:
