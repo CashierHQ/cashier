@@ -1,7 +1,7 @@
 import * as omnityExecution from "$lib/generated/omnity_execution/omnity_execution.did";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { OMNITY_EXECUTION_CANISTER_ID } from "$modules/bitcoin/constants";
-import { Err, Ok, type Result } from "ts-results-es";
+import { Ok, type Result } from "ts-results-es";
 
 (BigInt.prototype as any).toJSON = function () {
   return this.toString();
@@ -55,8 +55,8 @@ class OmnityExecutionService {
     console.log("generateTicketV2 result:", result);
 
     if ("Err" in result) {
-      return Err(
-        new Error(`Failed to generate ticket: ${JSON.stringify(result.Err)}`),
+      throw new Error(
+        `Ticket generation failed: ${JSON.stringify(result.Err)}`,
       );
     }
 

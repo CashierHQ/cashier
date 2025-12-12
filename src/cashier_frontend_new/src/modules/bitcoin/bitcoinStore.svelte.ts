@@ -78,9 +78,9 @@ export class BitcoinStore {
       amount,
     );
 
-    if (ticketResult.isErr()) {
-      throw ticketResult.unwrapErr();
-    }
+    // if (ticketResult.isErr()) {
+    //   throw new Error(`Ticket generation failed: ${ticketResult.unwrapErr()}`);
+    // }
 
     const ticketId = ticketResult.unwrap();
     return ticketId;
