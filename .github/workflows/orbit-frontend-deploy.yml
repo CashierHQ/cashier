@@ -1,0 +1,189 @@
+name: Orbit Frontend Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+    paths:
+      - 'src/cashier_frontend_new/**'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Deployment mode'
+        required: true
+        default: 'upgrade'
+        type: choice
+        options:
+          - reinstall
+          - upgrade
+          - install
+
+permissions:
+  contents: read
+
+jobs:
+  setup_environment:
+    runs-on: ubuntu-latest
+    outputs:
+        network: ${{ steps.set-env.outputs.network }}
+        mode: ${{ steps.set-mode.outputs.mode }}
+    steps:
+        - name: Set deployment network
+          id: set-env
+          run: |
+              # For pull requests, use base_ref, for pushes use ref_name
+              if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+                TARGET_BRANCH="${{ github.base_ref }}"
+              else
+                TARGET_BRANCH="${{ github.ref_name }}"
+              fi
+              echo "Detected branch: $TARGET_BRANCH"
+
+              if [[ "$TARGET_BRANCH" == "main" ]]; then
+                echo "network=production" >> $GITHUB_OUTPUT
+              elif [[ "$TARGET_BRANCH" == "staging" ]]; then
+                echo "network=staging" >> $GITHUB_OUTPUT
+              else
+                # Any other branch will deploy to dev network
+                echo "network=dev" >> $GITHUB_OUTPUT
+              fi
+
+        - name: Set deployment mode
+          id: set-mode
+          run: |
+              # Use input mode if provided (workflow_dispatch), otherwise default to 'upgrade'
+              INPUT_MODE="${{ github.event.inputs.mode }}"
+              if [[ -n "$INPUT_MODE" ]]; then
+                echo "mode=$INPUT_MODE" >> $GITHUB_OUTPUT
+              else
+                echo "mode=upgrade" >> $GITHUB_OUTPUT
+              fi
+
+  deploy:
+    name: Prepare and Submit Orbit request (optional)
+    needs: setup_environment
+    environment: ${{ needs.setup_environment.outputs.network }}
+    env:
+      MODE: ${{ needs.setup_environment.outputs.mode }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+          targets: wasm32-unknown-unknown
+
+      - name: Setup environment
+        run: |
+          export RUST_BACKTRACE="full"
+
+      - name: Install dfx
+        uses: dfinity/setup-dfx@main
+
+      - name: Confirm successful installation
+        run: dfx --version
+
+      - name: Install ic-wasm
+        run: |
+          wget https://github.com/dfinity/ic-wasm/releases/download/0.9.8/ic-wasm-linux64 -O /usr/local/bin/ic-wasm
+          chmod +x /usr/local/bin/ic-wasm
+
+      - name: Install candid-extractor
+        run: |
+          wget https://github.com/dfinity/candid-extractor/releases/download/0.1.6/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -O /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz
+          tar -xvf /tmp/candid-extractor-x86_64-unknown-linux-gnu.tar.gz -C /usr/local/bin
+          chmod +x /usr/local/bin/candid-extractor
+
+      - name: Install didc
+        run: |
+          wget https://github.com/dfinity/candid/releases/download/2025-10-16/didc-linux64 -O /usr/local/bin/didc
+          chmod +x /usr/local/bin/didc
+
+      - name: Install Just command runner
+        uses: extractions/setup-just@v1
+
+      - name: Create Deployer private key file
+        run: |
+          echo "${{ secrets.DEPLOYER }}" > private_key.pem
+
+      # DANGEROUS: This is a plaintext identity import
+      - name: Import Deployer identity
+        id: identity
+        run: |
+          dfx identity import deployer private_key.pem --storage-mode=plaintext
+          dfx identity use deployer
+          echo "Deployer principal: $(dfx identity get-principal)"
+          echo "operator=$(dfx identity get-principal)" >> $GITHUB_OUTPUT
+      # DANGEROUS: Do not echo the private key to the console
+
+      - name: Install dfx-orbit
+        run: |
+          # Install dfx-orbit from specific tag
+          git clone https://github.com/dfinity/orbit.git
+          # Navigate into orbit directory
+          cd orbit
+          # Checkout specific version
+          git checkout @orbit/control-panel-v0.4.0
+          # Install dfx-orbit
+          cargo install -f --path tools/dfx-orbit/
+  
+      - name: Setup station
+        run: |
+          dfx-orbit station add cashier --station-id ${{ vars.ORBIT_STATION_ID }} --network ic
+
+      - name: Build canisters
+        run: just build ${{ needs.setup_environment.outputs.network }}
+
+      - name: Deploy frontend
+        id: frontend
+        env:
+          DFX_WARNING: -mainnet_plaintext_identity
+        shell: bash
+        run: |
+          set -o pipefail
+          set -x
+          canister_id=$(just get_canister_id cashier_frontend ${{ needs.setup_environment.outputs.network }})
+          # Capture JSON output (last line from upload_asset)
+          output=$(just upload_asset ${canister_id} 2>&1 | tail -1)
+          rc=${PIPESTATUS[0]}
+          
+          # Parse JSON fields
+          echo "batch_id=$(echo "$output" | jq -r '.batch_id')" >> $GITHUB_OUTPUT
+          echo "evidence=$(echo "$output" | jq -r '.evidence')" >> $GITHUB_OUTPUT
+          echo "request_url=$(echo "$output" | jq -r '.request_url')" >> $GITHUB_OUTPUT
+          echo "canister_id=$canister_id" >> $GITHUB_OUTPUT
+          
+          if [ "$rc" -ne 0 ]; then
+            echo "::error ::upload_asset failed with exit code $rc"
+            exit $rc
+          fi
+
+      - name: Write Job Summary
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" << 'EOF'
+          ## 🚀 Orbit Frontend Deploy Summary
+
+          - **Network**: `${{ needs.setup_environment.outputs.network }}`
+          - **Mode**: `${{ env.MODE }}`
+          - **Canister id**: `${{ steps.frontend.outputs.canister_id }}`
+          - **Operator Principal**: `${{ steps.identity.outputs.operator }}`
+
+          ### Frontend Canister
+          | Field | Value |
+          |-------|-------|
+          | Batch ID | `${{ steps.frontend.outputs.batch_id }}` |
+          | Evidence | `${{ steps.frontend.outputs.evidence }}` |
+          | Request URL | ${{ steps.frontend.outputs.request_url }} |
+
+          ---
+          EOF
+          echo "*Deployed at: $(date -u '+%Y-%m-%d %H:%M:%S UTC')*" >> "$GITHUB_STEP_SUMMARY"
