@@ -1,9 +1,5 @@
 name: Deploy all canisters to dev
 on:
-  # For main and staging branches, only trigger on closed PRs
-  push:
-      branches:
-          - feature/orbit-cli # temp branch for testing
   pull_request:
       branches:
           - dev
