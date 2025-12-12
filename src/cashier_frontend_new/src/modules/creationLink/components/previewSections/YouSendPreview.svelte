@@ -12,7 +12,6 @@
     forecastAssetAndFee: Array<ForecastAssetAndFee>;
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
-    isProcessing?: boolean;
     isReceive?: boolean;
     isClickable?: boolean;
     onInfoClick?: () => void;
@@ -23,7 +22,6 @@
     forecastAssetAndFee: forecastAssetAndFee,
     failedImageLoads,
     onImageError,
-    isProcessing = false,
     isReceive = false,
     isClickable = false,
     onInfoClick,
@@ -83,13 +81,6 @@
     {#each assetsToDisplay as { asset } (asset.address)}
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-1.5">
-          {#if hasError}
-            <X size={16} class="text-red-600" stroke-width={2.5} />
-          {:else if isProcessing}
-            <div
-              class="w-4 h-4 border-2 border-green border-t-transparent rounded-full animate-spin"
-            ></div>
-          {/if}
           {#if !failedImageLoads.has(asset.address)}
             <img
               src={getTokenLogo(asset.address)}
@@ -126,13 +117,6 @@
       <div class="flex flex-col gap-3">
         <div class="flex justify-between items-center">
           <div class="flex items-center gap-1.5">
-            {#if hasError}
-              <X size={16} class="text-red-600" stroke-width={2.5} />
-            {:else if isProcessing}
-              <div
-                class="w-4 h-4 border-2 border-green border-t-transparent rounded-full animate-spin"
-              ></div>
-            {/if}
             <img
               src={getTokenLogo(linkCreationFeeItem.asset.address)}
               alt={linkCreationFeeItem.asset.symbol}
@@ -148,7 +132,7 @@
           <div class="flex flex-col items-end">
             <div class="flex items-center gap-1">
               <p class="text-[14px] font-normal">
-                {linkCreationFeeItem.fee.amount}
+                {linkCreationFeeItem.fee.amountUi}
               </p>
             </div>
 

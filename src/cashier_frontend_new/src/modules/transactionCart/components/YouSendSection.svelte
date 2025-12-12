@@ -135,12 +135,12 @@
         <div class="flex flex-col items-end">
           <div class="flex items-center gap-1">
             <p class="text-[14px] font-normal">
-              {asset.amount}
+              {asset.amountUi}
             </p>
           </div>
           {#if asset.usdValueStr}
             <p class="text-[10px] medium-font text-[#b6b6b6]">
-              {formatUsdAmount(parseFloat(asset.usdValueStr))}
+              ~${formatUsdAmount(parseFloat(asset.usdValueStr))}
             </p>
           {/if}
         </div>
@@ -174,12 +174,12 @@
           <div class="flex flex-col items-end">
             <div class="flex items-center gap-1">
               <p class="text-[14px] font-normal">
-                {linkCreationFeeItem.fee.amount}
+                {linkCreationFeeItem.fee.amountUi}
               </p>
             </div>
             {#if linkCreationFeeItem.fee.usdValueStr}
               <p class="text-[10px] font-normal text-[#b6b6b6]">
-                {formatUsdAmount(
+                ~${formatUsdAmount(
                   parseFloat(linkCreationFeeItem.fee.usdValueStr),
                 )}
               </p>

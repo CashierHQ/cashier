@@ -164,7 +164,7 @@ describe("FeeService", () => {
       expect(p.asset.symbol).toBe("N/A");
       if (p.fee) {
         expect(p.fee.symbol).toBe("N/A");
-        expect(typeof p.fee.amount).toBe("string");
+        expect(typeof p.fee.amountUi).toBe("string");
       }
     });
 
@@ -205,13 +205,13 @@ describe("FeeService", () => {
       // amount should be a formatted string, and for our simple values should equal formatNumber(12)
       // compute expected: payload 10 + token.fee 2 -> amount 12
       const expectedAmountStr = formatNumber(1.0001);
-      expect(p.asset.amount).toBe(expectedAmountStr);
+      expect(p.asset.amountUi).toBe(expectedAmountStr);
 
       // fee should exist and be formatted from token fee
       expect(p.fee).toBeDefined();
       if (p.fee) {
         expect(p.fee.symbol).toBe("ICP");
-        expect(p.fee.amount).toBe(formatNumber(0.0001));
+        expect(p.fee.amountUi).toBe(formatNumber(0.0001));
         // price should be propagated
         expect(p.fee.price).toBe(3.01);
         // usdValue should be 0.0001 * 3.01 =
@@ -388,7 +388,7 @@ describe("FeeService", () => {
         expect(a.fee).toBeDefined();
         if (a.fee) {
           expect(a.fee.symbol).toBe("TKNA");
-          expect(typeof a.fee.amount).toBe("string");
+          expect(typeof a.fee.amountUi).toBe("string");
         }
       }
 
@@ -403,7 +403,7 @@ describe("FeeService", () => {
         expect(b.fee).toBeDefined();
         if (b.fee) {
           expect(b.fee.symbol).toBe("TKNB");
-          expect(typeof b.fee.amount).toBe("string");
+          expect(typeof b.fee.amountUi).toBe("string");
         }
       }
 
@@ -418,7 +418,7 @@ describe("FeeService", () => {
         expect(c.fee).toBeDefined();
         if (c.fee) {
           expect(c.fee.symbol).toBe("TKNC");
-          expect(typeof c.fee.amount).toBe("string");
+          expect(typeof c.fee.amountUi).toBe("string");
         }
       }
     });
@@ -442,7 +442,7 @@ describe("FeeService", () => {
       expect(p.asset.amount).toBe(expectedTotal.toString());
       expect(p.fee).toBeDefined();
       if (p.fee) {
-        expect(p.fee.amount).toBe(parseBalanceUnits(10_000n, 8).toString());
+        expect(p.fee.amountUi).toBe(parseBalanceUnits(10_000n, 8).toString());
         expect(p.fee.symbol).toBe("N/A");
       }
     });
@@ -469,7 +469,7 @@ describe("FeeService", () => {
       expect(p.asset.symbol).toBe("ICP");
       expect(p.fee).toBeDefined();
       if (p.fee) {
-        expect(p.fee.amount).toBe(
+        expect(p.fee.amountUi).toBe(
           formatNumber(parseBalanceUnits(30_000n, token.decimals)),
         );
       }

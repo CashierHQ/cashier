@@ -110,10 +110,13 @@
 
   // Convert assetAndFeeList to feesBreakdown format for FeeInfoDrawer
   const feesBreakdown = $derived.by((): FeeBreakdownItem[] => {
-    return feeService.buildFeesBreakdownFromAssetAndFeeList(
+    const breakdown =  feeService.buildFeesBreakdownFromAssetAndFeeList(
       assetAndFeeList,
       walletStore.query.data ?? [],
     );
+
+    console.log("Fees breakdown for drawer:", breakdown);
+    return breakdown;
   });
 
   // Handle fee breakdown click - close txCart and show FeeInfoDrawer
