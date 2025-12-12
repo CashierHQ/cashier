@@ -159,7 +159,9 @@
           {locale.t("links.linkForm.preview.totalFees")}
         </p>
         <div class="flex items-center gap-2">
-          <p class="text-[14px] font-normal">~${formatUsdAmount(totalFeesUsd)}</p>
+          <p class="text-[14px] font-normal">
+            ~${formatUsdAmount(totalFeesUsd)}
+          </p>
         </div>
       </div>
     </div>
