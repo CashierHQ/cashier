@@ -65,46 +65,6 @@
     try {
       const unisat = getUnisat();
       const transferAmount = BigInt(importAmount) * BigInt(100_000); // Convert to sats
-      
-      
-      // Get UTXOs
-      /*
-      const utxos = await getUTXOs();
-      
-      if (utxos.length === 0) {
-        throw new Error('No UTXOs available. You need testnet BTC.');
-      }
-      
-      // Select UTXO with enough value
-      const selectedUtxo = utxos.find(u => u.value > 20000) || utxos[0];
-      
-      if (selectedUtxo.value < 20000) {
-        throw new Error('Insufficient BTC. Need at least 20,000 sats for transfer.');
-      }
-      
-      // Create transfer PSBT using builder
-      const psbtBase64 = await createTransferPSBTSimple(
-        btcWalletAddress,
-        btcDepositAddress,
-        runeId,
-        transferAmount,
-        1,
-        unisatApiKey,
-        "mainnet"
-      );
-      
-      console.log('✍️ Requesting signature...');
-      
-      // Sign with Unisat
-      const signedPsbt = await unisat.signPsbt(psbtBase64, {
-        autoFinalized: true,
-      });
-      
-      console.log('📡 Broadcasting...');
-      
-      // Broadcast
-      const txid = await unisat.pushPsbt(signedPsbt);
-      */
 
       // Use Unisat's native sendRunes API
       const txid = await unisat.sendRunes(
@@ -132,7 +92,11 @@
       importAmount = 0;
     } catch (error) {
       console.log('Import failed:', error);
-      errorMessage = `❌ Import failed: ${error}`;
+      if (error instanceof Object) {
+        errorMessage = `❌ Import failed: ${JSON.stringify(error)}`;
+      } else {
+        errorMessage = `❌ Import failed: ${error}`;
+      }
     } finally {
       isImporting = false;
     }
@@ -186,7 +150,12 @@
       successMessage = `🎉 Export successful! Ticket ID: ${ticketId}`;
       exportAmount = 0;
     } catch (error) {
-      errorMessage = `❌ Export failed: ${error}`;
+      console.log('Export failed:', error);
+      if (error instanceof Object) {
+        errorMessage = `❌ Export failed: ${JSON.stringify(error)}`;
+      } else {
+        errorMessage = `❌ Export failed: ${error}`;
+      }
     } finally {
       isExporting = false;
     }
