@@ -10,6 +10,7 @@
   let isExporting = $state(false);
   let importAmount = $state(0);
   let exportAmount = $state(0);
+  let txid = $state('');
   let successMessage = $state('');
   let errorMessage = $state('');
 
@@ -103,7 +104,16 @@
   }
 
   async function handleGenerateTicket() {
-    const txid = '9292de1b2e29570b503fd1ae2f72629b6aa829ccbb441d5cf433ab9589aefd4d';
+    if (!txid) {
+      alert('Please enter a valid txid to generate ticket');
+      return;
+    }
+
+    if (!importAmount || Number(importAmount) <= 0) {
+      alert('Please enter a valid amount for ticket generation');
+      return;
+    }
+    
     const amount = BigInt(importAmount) * BigInt(100_000);
 
     isImporting = true;
@@ -376,6 +386,17 @@
           />
         </div>
 
+        <div class="form-group">
+          <label for="import-txid">Txid:</label>
+          <input 
+            id="import-txid"
+            bind:value={txid} 
+            type="text" 
+            placeholder="Enter txid"
+            class="input-field"
+          />
+        </div>
+
         <div class="button-group">
           <button class="btn btn-primary" onclick={handleImport}>
             {#if isImporting}
@@ -389,7 +410,7 @@
                 <line x1="12" y1="12" x2="12" y2="21"></line>
                 <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"></path>
               </svg>
-              Import Runes
+                Import Runes
             {/if}
           </button>
           <button class="btn btn-outline" onclick={handleGenerateTicket}>
