@@ -4,8 +4,17 @@ import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { DOG_LEDGER_CANISTER_ID, OMNITY_ROUTER_CANISTER_ID } from "./constants";
 import { omnityExecutionService } from "./services/omnityExecution";
 import { omnityHubService } from "./services/omnityHub";
-import type { AvailableUTXO, OmnityRuneToken, UTXOWithRunes } from "./types";
-import { getAvailableUTXOs, getUTXOsWithRunes } from "./utils/query-builder";
+import type {
+  AvailableUTXO,
+  OmnityRuneToken,
+  RuneBalanceInfo,
+  UTXOWithRunes,
+} from "./types";
+import {
+  getAvailableUTXOs,
+  getRunesList,
+  getUTXOsWithRunes,
+} from "./utils/query-builder";
 
 export class BitcoinStore {
   readonly #tokenListQuery;
@@ -63,12 +72,17 @@ export class BitcoinStore {
 
     await this.#dogLedgerCanister.approve(OMNITY_ROUTER_CANISTER_ID, amount);
 
-    const ticketId = await omnityExecutionService.generateTicketV2(
+    const ticketResult = await omnityExecutionService.generateTicketV2(
       receiver,
       runeId,
       amount,
     );
 
+    if (ticketResult.isErr()) {
+      throw ticketResult.unwrapErr();
+    }
+
+    const ticketId = ticketResult.unwrap();
     return ticketId;
   }
 
@@ -87,6 +101,17 @@ export class BitcoinStore {
     withLowFee: boolean = false,
   ): Promise<AvailableUTXO[]> {
     return await getAvailableUTXOs(address, apiKey, network, withLowFee);
+  }
+
+  async getRunesList(
+    address: string,
+    apiKey: string,
+  ): Promise<RuneBalanceInfo[]> {
+    return await getRunesList(address, apiKey);
+  }
+
+  async getWrappedRunesBalance(): Promise<bigint> {
+    return this.#dogLedgerCanister.getBalance();
   }
 }
 

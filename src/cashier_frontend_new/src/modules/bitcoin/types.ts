@@ -126,3 +126,12 @@ export interface AvailableUTXOResponse {
     utxo: AvailableUTXO[];
   };
 }
+
+export interface RuneBalanceInfo {
+  rune: string;
+  runeid: string;
+  spacedRune: string;
+  balance: number;
+  symbol: string;
+  divisibility: number;
+}

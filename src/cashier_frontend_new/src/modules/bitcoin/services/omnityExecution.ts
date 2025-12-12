@@ -1,6 +1,11 @@
 import * as omnityExecution from "$lib/generated/omnity_execution/omnity_execution.did";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { OMNITY_EXECUTION_CANISTER_ID } from "$modules/bitcoin/constants";
+import { Err, Ok, type Result } from "ts-results-es";
+
+(BigInt.prototype as any).toJSON = function () {
+  return this.toString();
+};
 
 /**
  * Service for interacting with the Omnity Hub canister.
@@ -31,7 +36,7 @@ class OmnityExecutionService {
     receiver: string,
     runeId: string,
     amount: bigint,
-  ): Promise<string> {
+  ): Promise<Result<string, Error>> {
     const actor = this.#getActor({ anonymous: false });
     if (!actor) {
       throw new Error("User is not authenticated");
@@ -50,12 +55,12 @@ class OmnityExecutionService {
     console.log("generateTicketV2 result:", result);
 
     if ("Err" in result) {
-      throw new Error(
-        `Failed to generate ticket: ${JSON.stringify(result.Err)}`,
+      return Err(
+        new Error(`Failed to generate ticket: ${JSON.stringify(result.Err)}`),
       );
     }
 
-    return result.Ok.ticket_id;
+    return Ok(result.Ok.ticket_id);
   }
 }
 

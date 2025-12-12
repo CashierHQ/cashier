@@ -1,6 +1,7 @@
 import type {
   AvailableUTXO,
   AvailableUTXOResponse,
+  RuneBalanceInfo,
   UnisatUTXOResponse,
   UTXOWithRunes,
 } from "../types";
@@ -9,15 +10,7 @@ export async function getRunesList(
   address: string,
   apiKey: string,
   network: "mainnet" | "testnet" = "mainnet",
-): Promise<
-  Array<{
-    runeid: string;
-    rune: string;
-    spacedRune: string;
-    symbol: string;
-    divisibility: number;
-  }>
-> {
+): Promise<RuneBalanceInfo[]> {
   const baseUrl =
     network === "mainnet"
       ? "https://open-api.unisat.io"
@@ -46,9 +39,19 @@ export async function getRunesList(
       throw new Error(`Unisat API error: ${data.msg || "Unknown error"}`);
     }
 
-    console.log(`📋 Found ${data.data?.detail?.length || 0} rune types`);
+    const runeBalanceInfos: RuneBalanceInfo[] =
+      data.data?.detail.map((rune: any) => ({
+        rune: rune.rune,
+        runeid: rune.runeid,
+        spacedRune: rune.spacedRune,
+        balance: Number(BigInt(rune.amount) / BigInt(10 ** rune.divisibility)),
+        symbol: rune.symbol,
+        divisibility: rune.divisibility,
+      })) || [];
 
-    return data.data?.detail || [];
+    console.log(`📋 Found ${runeBalanceInfos.length} rune types`);
+
+    return runeBalanceInfos;
   } catch (error) {
     console.error("Error fetching runes list:", error);
     return [];
