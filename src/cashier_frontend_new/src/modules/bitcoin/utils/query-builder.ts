@@ -44,12 +44,10 @@ export async function getRunesList(
         rune: rune.rune,
         runeid: rune.runeid,
         spacedRune: rune.spacedRune,
-        balance: Number(BigInt(rune.amount) / BigInt(10 ** rune.divisibility)),
+        balance: Number(rune.amount) / 10 ** rune.divisibility,
         symbol: rune.symbol,
         divisibility: rune.divisibility,
       })) || [];
-
-    console.log(`📋 Found ${runeBalanceInfos.length} rune types`);
 
     return runeBalanceInfos;
   } catch (error) {

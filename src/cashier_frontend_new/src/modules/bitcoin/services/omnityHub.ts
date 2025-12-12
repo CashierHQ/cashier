@@ -89,6 +89,12 @@ class OmnityHubService {
     const result = await actor.generate_ticket(ticketArgs);
     console.log("Generated ticket result:", result);
 
+    if ("Err" in result) {
+      throw new Error(
+        `Ticket generation failed: ${JSON.stringify(result.Err)}`,
+      );
+    }
+
     return Ok("Ticket generated successfully");
   }
 }

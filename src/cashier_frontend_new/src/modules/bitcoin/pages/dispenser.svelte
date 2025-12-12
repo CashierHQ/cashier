@@ -120,7 +120,7 @@
       console.log('✅ Transfer successful! TXID:', txid);
       await generateTicket(txid, runeId, transferAmount);
 
-      successMessage = `🎉 Ticket generated successfully!\n\n` +
+      successMessage = `🎉 Import successful!\n\n` +
         `Rune ID: ${runeId}\n` +
         `Amount: ${importAmount}\n` +
         `To: ${btcDepositAddress.slice(0, 12)}...${btcDepositAddress.slice(-8)}\n` +
@@ -131,7 +131,8 @@
       // Reset form
       importAmount = 0;
     } catch (error) {
-      errorMessage = `❌ Transfer failed: ${JSON.stringify(error)}`;
+      console.log('Import failed:', error);
+      errorMessage = `❌ Import failed: ${error}`;
     } finally {
       isImporting = false;
     }
@@ -183,6 +184,7 @@
         REDEEM_FEE,
       );
       successMessage = `🎉 Export successful! Ticket ID: ${ticketId}`;
+      exportAmount = 0;
     } catch (error) {
       errorMessage = `❌ Export failed: ${error}`;
     } finally {
@@ -382,7 +384,7 @@
           <select id="rune-select" class="input-field">
             {#each runeBalanceInfos as rune (rune.runeid)}
               <option value={rune.runeid}>
-                {rune.symbol} Balance: {rune.balance} (ID: {rune.runeid})
+                {rune.symbol} Balance: {parseFloat(rune.balance.toFixed(3))} (ID: {rune.runeid})
               </option>
             {/each}
           </select>
@@ -456,7 +458,7 @@
       <div class="info-grid">
         <div class="info-item">
           <label>Wrapped Balance:</label>
-          <code class="value balance-highlight">{wrappedRunesBalance} 🐕</code>
+          <code class="value balance-highlight">{parseFloat(wrappedRunesBalance.toFixed(3))} 🐕</code>
         </div>
       </div>
 

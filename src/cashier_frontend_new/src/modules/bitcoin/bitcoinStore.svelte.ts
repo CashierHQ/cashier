@@ -69,7 +69,6 @@ export class BitcoinStore {
     redeemFee: bigint,
   ): Promise<string> {
     await icpLedgerService.approve(OMNITY_ROUTER_CANISTER_ID, redeemFee);
-
     await this.#dogLedgerCanister.approve(OMNITY_ROUTER_CANISTER_ID, amount);
 
     const ticketResult = await omnityExecutionService.generateTicketV2(
@@ -77,10 +76,6 @@ export class BitcoinStore {
       runeId,
       amount,
     );
-
-    // if (ticketResult.isErr()) {
-    //   throw new Error(`Ticket generation failed: ${ticketResult.unwrapErr()}`);
-    // }
 
     const ticketId = ticketResult.unwrap();
     return ticketId;
