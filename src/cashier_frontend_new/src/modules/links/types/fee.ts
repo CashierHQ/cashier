@@ -17,8 +17,11 @@ export interface FeeItem {
 
   symbol: string;
   price?: number;
-  /** in formmated string */
-  amount: string;
+  amount: bigint;
+  /** in formmated string
+   * DO NOT parse this string for calculations, use `amount` field instead
+   */
+  amountUi: string;
   /** in formmated string */
   usdValueStr?: string;
   /** number usd value */

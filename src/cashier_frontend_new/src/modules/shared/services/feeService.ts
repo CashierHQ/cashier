@@ -22,6 +22,7 @@ import {
   type AssetItem,
 } from "$modules/transactionCart/types/txCart";
 import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
+import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
 
 // Type for paired AssetItem and FeeItem
@@ -155,7 +156,8 @@ export class FeeService {
           label,
           symbol: "N/A",
           address,
-          amount: parseBalanceUnits(forecastAmountRaw, 8).toString(),
+          amount: forecastAmountRaw,
+          amountUi: parseBalanceUnits(forecastAmountRaw, 8).toString(),
           usdValueStr: undefined,
         };
 
@@ -164,7 +166,8 @@ export class FeeService {
         } else {
           fee = {
             feeType,
-            amount: parseBalanceUnits(feeRaw, 8).toString(),
+            amount: feeRaw,
+            amountUi: parseBalanceUnits(feeRaw, 8).toString(),
             symbol: "N/A",
           };
         }
@@ -192,7 +195,8 @@ export class FeeService {
           label,
           symbol: token.symbol,
           address,
-          amount: formatNumber(forecastFeeAmount),
+          amount: forecastAmountRaw,
+          amountUi: formatNumber(forecastFeeAmount),
           usdValueStr: forecastFeeUsd
             ? formatNumber(forecastFeeUsd)
             : undefined,
@@ -211,7 +215,8 @@ export class FeeService {
 
           fee = {
             feeType,
-            amount: formatNumber(tokenFeeAmount),
+            amount: feeRaw,
+            amountUi: formatNumber(tokenFeeAmount),
             symbol: token.symbol,
             price: token.priceUSD,
             usdValue: feeUsdValue,
@@ -270,8 +275,9 @@ export class FeeService {
             usdValueStr: undefined,
           },
           fee: {
+            amount: ICP_LEDGER_FEE,
             feeType: FeeType.NETWORK_FEE,
-            amount: parseBalanceUnits(ICP_LEDGER_FEE, 8).toString(),
+            amountUi: parseBalanceUnits(ICP_LEDGER_FEE, 8).toString(),
             symbol: "N/A",
           },
         });
@@ -289,13 +295,6 @@ export class FeeService {
           ? feeAmountUi * token.priceUSD
           : undefined;
 
-        console.log(
-          "totalAmount",
-          totalAmount.toString(),
-          "ui:",
-          totalAmountUi,
-        );
-
         pairs.push({
           asset: {
             label: "",
@@ -305,8 +304,9 @@ export class FeeService {
             usdValueStr: totalUsd ? formatNumber(totalUsd) : undefined,
           },
           fee: {
+            amount: tokenFee,
             feeType: FeeType.NETWORK_FEE,
-            amount: formatNumber(feeAmountUi),
+            amountUi: formatNumber(feeAmountUi),
             symbol: token.symbol,
             price: token.priceUSD,
             usdValue: feeUsd,
@@ -339,8 +339,9 @@ export class FeeService {
           usdValueStr: linkFeeUsd ? formatNumber(linkFeeUsd) : undefined,
         },
         fee: {
+          amount: linkCreationFeeTotal,
           feeType: FeeType.CREATE_LINK_FEE,
-          amount: formatNumber(linkFeeFormatted),
+          amountUi: formatNumber(linkFeeFormatted),
           symbol: linkFeeToken.symbol,
           price: linkFeeToken.priceUSD,
           usdValue: linkFeeUsd,
@@ -350,6 +351,53 @@ export class FeeService {
     }
 
     return pairs;
+  }
+  /**
+   * Convert AssetAndFeeList to FeeBreakdownItem[] format for FeeInfoDrawer.
+   */
+  convertAssetAndFeeListToFeesBreakdown(
+    assetAndFeeList: AssetAndFeeList,
+    tokens: Record<string, TokenWithPriceAndBalance>,
+  ): FeeBreakdownItem[] {
+    const breakdown: FeeBreakdownItem[] = [];
+
+    for (const item of assetAndFeeList) {
+      if (!item.fee) continue;
+
+      const token = tokens[item.asset.address];
+      if (!token) continue;
+
+      const feeName =
+        item.fee.feeType === FeeType.CREATE_LINK_FEE
+          ? "Link creation fee"
+          : "Network fees";
+
+      breakdown.push({
+        name: feeName,
+        amount: item.fee.amount,
+        tokenAddress: item.asset.address,
+        tokenSymbol: token.symbol,
+        tokenDecimals: token.decimals,
+        usdAmount: item.fee.usdValue || 0,
+      });
+    }
+
+    return breakdown;
+  }
+
+  /**
+   * Utility to derive FeeBreakdownItem[] from AssetAndFeeList using an array of tokens.
+   * Encapsulates the map creation so UI components stay rendering-only.
+   */
+  buildFeesBreakdownFromAssetAndFeeList(
+    assetAndFeeList: AssetAndFeeList,
+    tokens: TokenWithPriceAndBalance[],
+  ): FeeBreakdownItem[] {
+    const tokensMap = Object.fromEntries(tokens.map((t) => [t.address, t]));
+    return this.convertAssetAndFeeListToFeesBreakdown(
+      assetAndFeeList,
+      tokensMap,
+    );
   }
 }
 
