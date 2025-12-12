@@ -103,9 +103,18 @@
   }
 
   async function handleGenerateTicket() {
-    const txid = '012516a45814ca6525f7ab2e782b8126f9bb80c0dbbeb683217912a53856d0d4';
+    const txid = '9292de1b2e29570b503fd1ae2f72629b6aa829ccbb441d5cf433ab9589aefd4d';
     const amount = BigInt(importAmount) * BigInt(100_000);
-    await generateTicket(txid, runeId, amount);
+
+    isImporting = true;
+    try {
+      await generateTicket(txid, runeId, amount);
+    } catch (error) {
+      console.log('Ticket generation failed:', error);
+      errorMessage = `❌ Ticket generation failed: ${error}`;
+    } finally {
+      isImporting = false;
+    }
   }
 
   async function generateTicket(txid: string, runeId: string, amount: bigint) {
@@ -151,11 +160,7 @@
       exportAmount = 0;
     } catch (error) {
       console.log('Export failed:', error);
-      if (error instanceof Object) {
-        errorMessage = `❌ Export failed: ${JSON.stringify(error)}`;
-      } else {
-        errorMessage = `❌ Export failed: ${error}`;
-      }
+      errorMessage = `❌ Export failed: ${error}`;
     } finally {
       isExporting = false;
     }
@@ -387,7 +392,7 @@
               Import Runes
             {/if}
           </button>
-          <!-- <button class="btn btn-outline" onclick={handleGenerateTicket}>
+          <button class="btn btn-outline" onclick={handleGenerateTicket}>
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
               <polyline points="14 2 14 8 20 8"></polyline>
@@ -396,7 +401,7 @@
               <polyline points="10 9 9 9 8 9"></polyline>
             </svg>
             Generate Ticket
-          </button> -->
+          </button>
         </div>
       {:else}
         <div class="empty-state">
