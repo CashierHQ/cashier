@@ -1,8 +1,9 @@
 <script lang="ts">
   import { authState } from '$modules/auth/state/auth.svelte';
-  import { createTransferPSBT, type UTXO } from '$modules/bitcoin/utils/pbst-builder';
   import { bitcoinStore } from '../bitcoinStore.svelte';
   import { REDEEM_FEE } from '../constants';
+  import type { AvailableUTXO, UTXOWithRunes } from '../types';
+  import { createTransferPSBTSimple } from '../utils/transfer-psbt-builder';
 
   let btcWalletAddress = $state('');
   let isConnected = $state(false);
@@ -10,6 +11,7 @@
   let importAmount = $state(0);
   let successMessage = $state('');
   let errorMessage = $state('');
+  const unisatApiKey = '2f77b9bfb762985b3923223384b77a04c24231400035bf6579a6912c44831613';
 
   let receiverPrincipalId: string = $derived.by(() => {
       return authState.account?.owner || "No principal";
@@ -25,7 +27,7 @@
   })
 
   async function handleGenerateTicket() {
-    const txid = '8614e7bcb11c52836333749b98ab9fbe35724d9a14fc7021ba198866b3656e2a';
+    const txid = 'be3578f64ed40332ee1eada55fdbb8b79d44806d261b08d0c65a30b724db098b';
     const runeId = '840000:3';
     const importAmount = 100_00000;
 
@@ -65,6 +67,7 @@
     try {
       const unisat = getUnisat();
       
+      const transferAmount = BigInt(importAmount) * BigInt(100_000); // Convert to sats
       const runeBlock = '840000';
       const runeTx = '3';
       const runeId = `${runeBlock}:${runeTx}`; // DOG TO THE MOON
@@ -84,18 +87,15 @@
       }
       
       // Create transfer PSBT using builder
-      const psbtBase64 = await createTransferPSBT({
-        utxos: [selectedUtxo],
-        fromAddress: btcWalletAddress,
-        toAddress: btcDepositAddress,
-        runeId: {
-          block: BigInt(runeBlock),
-          tx: Number(runeTx)
-        },
-        amount: BigInt(importAmount),
-        feeRate: 1,
-        network: 'mainnet'
-      });
+      const psbtBase64 = await createTransferPSBTSimple(
+        btcWalletAddress,
+        btcDepositAddress,
+        runeId,
+        transferAmount,
+        1,
+        unisatApiKey,
+        "mainnet"
+      );
       
       console.log('✍️ Requesting signature...');
       
@@ -176,6 +176,7 @@
   async function getUTXOs(): Promise<UTXO[]> {
     const unisat = getUnisat();
     const utxos = await unisat.getBitcoinUtxos();
+    console.log('Fetched UTXOs:', utxos);
     
     return utxos.map((utxo: any) => ({
       txid: utxo.txid,
@@ -183,6 +184,34 @@
       value: utxo.satoshis || utxo.value,
       scriptPubKey: utxo.scriptPk
     }));
+  }
+
+  async function getUTXOsWithRunes(): Promise<UTXOWithRunes[]> {
+    if (!btcWalletAddress) {
+      throw new Error('Wallet not connected.');
+    }
+    
+    const utxosWithRunes = await bitcoinStore.getUTXOsWithRunes(
+      btcWalletAddress,
+      unisatApiKey,
+      'mainnet'
+    );
+    console.log('UTXOs with runes:', utxosWithRunes);
+    return utxosWithRunes;
+  }
+
+  async function getAvailableUTXOs(): Promise<AvailableUTXO[]> {
+    if (!btcWalletAddress) {
+      throw new Error('Wallet not connected.');
+    }
+    
+    const availableUtxos = await bitcoinStore.getAvailableUTXOs(
+      btcWalletAddress,
+      unisatApiKey,
+      'mainnet',
+    );
+    console.log('Available UTXOs:', availableUtxos);
+    return availableUtxos;
   }
 </script>
 
@@ -227,6 +256,15 @@
   </div>
   <div>
     <button onclick={handleExport} style="border: 1px solid #ccc; margin-top: 10px;">Export Runes</button>
+  </div>
+  <div>
+    <button onclick={getUTXOs} style="border: 1px solid #ccc; margin-top: 10px;">Fetch UTXOs</button>
+  </div>
+  <div>
+    <button onclick={getUTXOsWithRunes} style="border: 1px solid #ccc; margin-top: 10px;">Fetch UTXOs with Runes</button>
+  </div>
+  <div>
+    <button onclick={getAvailableUTXOs} style="border: 1px solid #ccc; margin-top: 10px;">Fetch Available UTXOs</button>
   </div>
   {/if}
 </div>

@@ -4,7 +4,8 @@ import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { DOG_LEDGER_CANISTER_ID, OMNITY_ROUTER_CANISTER_ID } from "./constants";
 import { omnityExecutionService } from "./services/omnityExecution";
 import { omnityHubService } from "./services/omnityHub";
-import type { OmnityRuneToken } from "./types";
+import type { AvailableUTXO, OmnityRuneToken, UTXOWithRunes } from "./types";
+import { getAvailableUTXOs, getUTXOsWithRunes } from "./utils/query-builder";
 
 export class BitcoinStore {
   readonly #tokenListQuery;
@@ -69,6 +70,23 @@ export class BitcoinStore {
     );
 
     return ticketId;
+  }
+
+  async getUTXOsWithRunes(
+    address: string,
+    apiKey: string,
+    network: "mainnet" | "testnet",
+  ): Promise<UTXOWithRunes[]> {
+    return await getUTXOsWithRunes(address, apiKey, network);
+  }
+
+  async getAvailableUTXOs(
+    address: string,
+    apiKey: string,
+    network: "mainnet" | "testnet" = "mainnet",
+    withLowFee: boolean = false,
+  ): Promise<AvailableUTXO[]> {
+    return await getAvailableUTXOs(address, apiKey, network, withLowFee);
   }
 }
 
