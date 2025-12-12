@@ -205,25 +205,65 @@ export async function createTransferPSBT(
   // Encode runestone
   const runestoneEncoded = encodeRunestone(transferSpec);
 
+  // DEBUG: Check what we got
+  console.log("🔍 Runestone encoded type:", typeof runestoneEncoded);
+  console.log("🔍 Runestone encoded value:", runestoneEncoded);
+
+  // FIX: Extract the actual encoded data
+  let runestoneData: Uint8Array | Buffer;
+
+  if (runestoneEncoded && typeof runestoneEncoded === "object") {
+    // Check if it has the encodedRunestone property
+    if (
+      "encodedRunestone" in runestoneEncoded &&
+      runestoneEncoded.encodedRunestone
+    ) {
+      runestoneData = runestoneEncoded.encodedRunestone;
+      console.log("✅ Extracted encodedRunestone property");
+    } else {
+      runestoneData = runestoneEncoded;
+      console.log("✅ Using runestoneEncoded directly");
+    }
+  } else {
+    runestoneData = runestoneEncoded;
+  }
+
+  console.log("🔍 Runestone data type:", typeof runestoneData);
+  console.log(
+    "🔍 Runestone is Uint8Array?",
+    runestoneData instanceof Uint8Array,
+  );
+  console.log("🔍 Runestone is Buffer?", Buffer.isBuffer(runestoneData));
+  console.log("🔍 Runestone length:", runestoneData?.length);
+
+  if (runestoneData && runestoneData.length > 0) {
+    console.log("🔍 First 10 bytes:", Array.from(runestoneData.slice(0, 10)));
+  }
+
+  // Validate we have data
+  if (!runestoneData || runestoneData.length === 0) {
+    throw new Error("Failed to encode runestone - got empty result");
+  }
+
   // Convert to Buffer
   let runestoneBuffer: Buffer;
-  if (runestoneEncoded instanceof Uint8Array) {
-    runestoneBuffer = Buffer.from(runestoneEncoded);
-  } else if (Buffer.isBuffer(runestoneEncoded)) {
-    runestoneBuffer = runestoneEncoded;
-  } else if (Array.isArray(runestoneEncoded)) {
-    runestoneBuffer = Buffer.from(runestoneEncoded);
-  } else if (runestoneEncoded?.buffer) {
-    runestoneBuffer = Buffer.from(runestoneEncoded.buffer);
-  } else if (typeof runestoneEncoded === "object") {
-    const arr = Object.keys(runestoneEncoded)
+  if (runestoneData instanceof Uint8Array) {
+    runestoneBuffer = Buffer.from(runestoneData);
+  } else if (Buffer.isBuffer(runestoneData)) {
+    runestoneBuffer = runestoneData;
+  } else if (Array.isArray(runestoneData)) {
+    runestoneBuffer = Buffer.from(runestoneData);
+  } else if (runestoneData?.buffer) {
+    runestoneBuffer = Buffer.from(runestoneData.buffer);
+  } else if (typeof runestoneData === "object") {
+    const arr = Object.keys(runestoneData)
       .filter((k) => !isNaN(Number(k)))
       .sort((a, b) => Number(a) - Number(b))
-      .map((k) => runestoneEncoded[k]);
+      .map((k) => runestoneData[k]);
     runestoneBuffer = Buffer.from(arr);
   } else {
     throw new Error(
-      `Unexpected runestone encoding type: ${typeof runestoneEncoded}`,
+      `Unexpected runestone encoding type: ${typeof runestoneData}`,
     );
   }
 

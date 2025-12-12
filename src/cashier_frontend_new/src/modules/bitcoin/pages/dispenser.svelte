@@ -3,7 +3,6 @@
   import { bitcoinStore } from '../bitcoinStore.svelte';
   import { REDEEM_FEE } from '../constants';
   import type { AvailableUTXO, UTXOWithRunes } from '../types';
-  import { createTransferPSBTSimple } from '../utils/transfer-psbt-builder';
 
   let btcWalletAddress = $state('');
   let isConnected = $state(false);
@@ -73,6 +72,7 @@
       const runeId = `${runeBlock}:${runeTx}`; // DOG TO THE MOON
       
       // Get UTXOs
+      /*
       const utxos = await getUTXOs();
       
       if (utxos.length === 0) {
@@ -108,6 +108,18 @@
       
       // Broadcast
       const txid = await unisat.pushPsbt(signedPsbt);
+      */
+     // Use Unisat's native sendRunes API
+    const txid = await unisat.sendRunes(
+      btcDepositAddress,           // toAddress
+      runeId,                  // runeId  
+      transferAmount.toString(),    // amount (as string, human-readable)
+      {
+        feeRate: 1 // optional fee rate
+      }
+    );
+    
+    console.log('✅ Transfer successful! TXID:', txid);
       
       console.log('✅ Transfer successful! TXID:', txid);
 
