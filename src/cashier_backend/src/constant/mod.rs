@@ -2,7 +2,6 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Principal;
-use log::error;
 
 // This is the slice of the ICP canister ID ryjl3-tyaaa-aaaaa-aaaba-cai
 const ICP_CANISTER_SLICE: [u8; 10] = [0, 0, 0, 0, 0, 0, 0, 2, 1, 1];
@@ -15,23 +14,7 @@ const FEE_TREASURY_SLICE: [u8; 29] = [
 ];
 pub const FEE_TREASURY_PRINCIPAL: Principal = Principal::from_slice(&FEE_TREASURY_SLICE);
 
-pub const TX_TIMEOUT_IN_SECONDS: &str = match option_env!("TX_TIMEOUT") {
-    Some(val) => val,
-    None => "300",
-};
-
-pub fn get_tx_timeout_seconds() -> u64 {
-    TX_TIMEOUT_IN_SECONDS.parse::<u64>().unwrap_or_else(|_| {
-        // Log the error
-        error!(
-                "Warning: Could not parse TX_TIMEOUT '{TX_TIMEOUT_IN_SECONDS}'. Using default value of 300 seconds."        );
-        300
-    })
-}
-
-pub fn get_tx_timeout_nano_seconds() -> u64 {
-    get_tx_timeout_seconds() * 1_000_000_000
-}
+pub const ICRC_TRANSACTION_TIME_WINDOW_NANOSECS: u64 = 24 * 3600 * 1_000_000_000; // 24 hours
 
 #[cfg(test)]
 pub mod dfd {

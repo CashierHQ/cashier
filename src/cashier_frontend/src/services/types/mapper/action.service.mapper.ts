@@ -1,17 +1,17 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+import { fromNullable } from "@dfinity/utils";
+import { assertNever, getKeyVariant } from ".";
 import {
   ActionDto,
   ActionType,
   IntentState,
 } from "../../../generated/cashier_backend/cashier_backend.did";
-import { ACTION_STATE, ACTION_TYPE } from "../enum";
 import { ActionModel } from "../action.service.types";
+import { ACTION_STATE, ACTION_TYPE } from "../enum";
 import { mapIntentDtoToIntentModel } from "./intent.service.mapper";
 import { mapICRC112Request } from "./transaction.service.mapper";
-import { fromNullable } from "@dfinity/utils";
-import { assertNever, getKeyVariant } from ".";
 
 // Back-end ActionState variant
 type ActionState = IntentState;
@@ -20,12 +20,14 @@ type ActionState = IntentState;
 const mapActionTypeToEnum = (actionType: ActionType): ACTION_TYPE => {
   const key = getKeyVariant(actionType);
   switch (key) {
-    case "Use":
-      return ACTION_TYPE.USE;
     case "Withdraw":
       return ACTION_TYPE.WITHDRAW;
     case "CreateLink":
       return ACTION_TYPE.CREATE_LINK;
+    case "Receive":
+      return ACTION_TYPE.RECEIVE;
+    case "Send":
+      return ACTION_TYPE.SEND;
     default:
       assertNever(key);
   }
@@ -53,12 +55,17 @@ export const mapFrontendActionTypeToActionType = (
   actionType: ACTION_TYPE,
 ): ActionType => {
   switch (actionType) {
-    case ACTION_TYPE.USE:
-      return { Use: null };
     case ACTION_TYPE.WITHDRAW:
       return { Withdraw: null };
     case ACTION_TYPE.CREATE_LINK:
       return { CreateLink: null };
+    case ACTION_TYPE.RECEIVE:
+      return { Receive: null };
+    case ACTION_TYPE.SEND:
+      return { Send: null };
+    // temporarily ignore USE action type, as it's no longer used
+    case ACTION_TYPE.USE:
+      return { Send: null };
     default:
       assertNever(actionType);
   }

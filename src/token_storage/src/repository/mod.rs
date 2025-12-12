@@ -13,19 +13,23 @@ use std::collections::HashMap;
 use std::thread::LocalKey;
 
 use candid::Principal;
+use cashier_macros::storable;
 use ic_mple_log::LogSettings;
 use ic_mple_log::service::LoggerServiceStorage;
+use ic_mple_structures::{Codec, VersionedBTreeMap, VersionedStableCell};
 use ic_mple_utils::store::Storage;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 use token_storage_types::TokenId;
-use token_storage_types::token::RegistryToken;
-use token_storage_types::user::UserPreference;
+use token_storage_types::token::{RegistryToken, RegistryTokenCodec};
+use token_storage_types::user::{UserPreference, UserPreferenceCodec};
 
 use crate::repository::balance_cache::{
     BalanceCacheRepository, BalanceCacheRepositoryStorage, ThreadlocalBalanceCacheRepositoryStorage,
 };
-use crate::repository::settings::{Settings, SettingsRepository, SettingsRepositoryStorage};
+use crate::repository::settings::{
+    Settings, SettingsCodec, SettingsRepository, SettingsRepositoryStorage,
+};
 use crate::repository::token_registry::{
     ThreadlocalTokenRegistryRepositoryStorage, TokenRegistryRepository,
     TokenRegistryRepositoryStorage,
@@ -42,11 +46,32 @@ use crate::repository::user_token::{
     ThreadlocalUserTokenRepositoryStorage, UserTokenRepository, UserTokenRepositoryStorage,
 };
 use crate::services::auth::AuthServiceStorage;
-use crate::types::{Candid, TokenBalance, TokenRegistryMetadata, UserTokenList};
+use crate::types::{
+    TokenBalance, TokenRegistryMetadata, TokenRegistryMetadataCodec, UserTokenList,
+    UserTokenListCodec,
+};
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
 
-pub type BalanceCache = Candid<HashMap<TokenId, TokenBalance>>;
+#[storable]
+pub struct BalanceCache(HashMap<TokenId, TokenBalance>);
+
+#[storable]
+pub enum BalanceCacheCodec {
+    V1(BalanceCache),
+}
+
+impl Codec<BalanceCache> for BalanceCacheCodec {
+    fn decode(source: Self) -> BalanceCache {
+        match source {
+            BalanceCacheCodec::V1(link) => link,
+        }
+    }
+
+    fn encode(dest: BalanceCache) -> Self {
+        BalanceCacheCodec::V1(dest)
+    }
+}
 
 const LOG_SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(0);
 const TOKEN_MEMORY_ID: MemoryId = MemoryId::new(1);
@@ -144,51 +169,52 @@ thread_local! {
 
     // Store user's token references (not full token data)
     // user enable list
-    static USER_TOKEN_STORE: RefCell<StableBTreeMap<Principal, UserTokenList, Memory>> =
+    static USER_TOKEN_STORE: RefCell<VersionedBTreeMap<Principal, UserTokenList, UserTokenListCodec, Memory>> =
         RefCell::new(
-            StableBTreeMap::init(
+            VersionedBTreeMap::init(
                 MEMORY_MANAGER.with_borrow(|m| m.get(TOKEN_MEMORY_ID)),
             )
         );
 
     // Store user preferences
-    static USER_PREFERENCE_STORE: RefCell<StableBTreeMap<Principal, UserPreference, Memory>> =
+    static USER_PREFERENCE_STORE: RefCell<VersionedBTreeMap<Principal, UserPreference, UserPreferenceCodec, Memory>> =
         RefCell::new(
-            StableBTreeMap::init(
+            VersionedBTreeMap::init(
                 MEMORY_MANAGER.with_borrow(|m| m.get(USER_PREFERENCE_MEMORY_ID)),
             )
         );
 
     // Centralized token registry
-    static TOKEN_REGISTRY_STORE: RefCell<StableBTreeMap<TokenId, RegistryToken, Memory>> =
+    static TOKEN_REGISTRY_STORE: RefCell<VersionedBTreeMap<TokenId, RegistryToken,RegistryTokenCodec, Memory>> =
         RefCell::new(
-            StableBTreeMap::init(
+            VersionedBTreeMap::init(
                 MEMORY_MANAGER.with_borrow(|m| m.get(TOKEN_REGISTRY_MEMORY_ID)),
             )
         );
 
     // Store registry metadata including version
-    static TOKEN_REGISTRY_METADATA_STORE: RefCell<StableCell<TokenRegistryMetadata, Memory>> =
+    static TOKEN_REGISTRY_METADATA_STORE: RefCell<VersionedStableCell<TokenRegistryMetadata, TokenRegistryMetadataCodec, Memory>> =
     RefCell::new(
-        StableCell::init(
+        VersionedStableCell::init(
             MEMORY_MANAGER.with_borrow(|m| m.get(TOKEN_REGISTRY_METADATA_ID)),
             TokenRegistryMetadata::default()
         )
     );
 
     // Balance cache for users
-    static BALANCE_CACHE_STORE: RefCell<StableBTreeMap<Principal, BalanceCache, Memory>> =
+    static BALANCE_CACHE_STORE: RefCell<VersionedBTreeMap<Principal, BalanceCache, BalanceCacheCodec, Memory>> =
         RefCell::new(
-            StableBTreeMap::init(
+            VersionedBTreeMap::init(
                 MEMORY_MANAGER.with_borrow(|m| m.get(BALANCE_CACHE_MEMORY_ID)),
             )
         );
 
-        static SETTINGS_STORE: RefCell<StableCell<
+        static SETTINGS_STORE: RefCell<VersionedStableCell<
         Settings,
+        SettingsCodec,
         Memory
     >> = RefCell::new(
-        StableCell::init(
+        VersionedStableCell::init(
             MEMORY_MANAGER.with_borrow(|m| m.get(SETTINGS_MEMORY_ID)),
             Settings::default(),
         )
@@ -220,35 +246,43 @@ pub mod tests {
         pub fn new() -> Self {
             let mm = MemoryManager::init(DefaultMemoryImpl::default());
             Self {
-                balance_cache: Rc::new(RefCell::new(StableBTreeMap::init(
+                balance_cache: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(BALANCE_CACHE_MEMORY_ID),
                 ))),
-                settings: Rc::new(RefCell::new(StableCell::init(
+                settings: Rc::new(RefCell::new(VersionedStableCell::init(
                     mm.get(SETTINGS_MEMORY_ID),
                     Settings::default(),
                 ))),
-                token_registry: Rc::new(RefCell::new(StableBTreeMap::init(
+                token_registry: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(TOKEN_REGISTRY_MEMORY_ID),
                 ))),
-                token_registry_metadata: Rc::new(RefCell::new(StableCell::init(
+                token_registry_metadata: Rc::new(RefCell::new(VersionedStableCell::init(
                     mm.get(TOKEN_REGISTRY_METADATA_ID),
                     TokenRegistryMetadata::default(),
                 ))),
-                user_preference: Rc::new(RefCell::new(StableBTreeMap::init(
+                user_preference: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(USER_PREFERENCE_MEMORY_ID),
                 ))),
-                user_token: Rc::new(RefCell::new(StableBTreeMap::init(mm.get(TOKEN_MEMORY_ID)))),
+                user_token: Rc::new(RefCell::new(VersionedBTreeMap::init(
+                    mm.get(TOKEN_MEMORY_ID),
+                ))),
             }
         }
     }
 
     impl Repositories for TestRepositories {
-        type BalanceCache = Rc<RefCell<StableBTreeMap<Principal, BalanceCache, Memory>>>;
-        type Settings = Rc<RefCell<StableCell<Settings, Memory>>>;
-        type TokenRegistryMetadata = Rc<RefCell<StableCell<TokenRegistryMetadata, Memory>>>;
-        type TokenRegistry = Rc<RefCell<StableBTreeMap<TokenId, RegistryToken, Memory>>>;
-        type UserPreference = Rc<RefCell<StableBTreeMap<Principal, UserPreference, Memory>>>;
-        type UserToken = Rc<RefCell<StableBTreeMap<Principal, UserTokenList, Memory>>>;
+        type BalanceCache =
+            Rc<RefCell<VersionedBTreeMap<Principal, BalanceCache, BalanceCacheCodec, Memory>>>;
+        type Settings = Rc<RefCell<VersionedStableCell<Settings, SettingsCodec, Memory>>>;
+        type TokenRegistryMetadata = Rc<
+            RefCell<VersionedStableCell<TokenRegistryMetadata, TokenRegistryMetadataCodec, Memory>>,
+        >;
+        type TokenRegistry =
+            Rc<RefCell<VersionedBTreeMap<TokenId, RegistryToken, RegistryTokenCodec, Memory>>>;
+        type UserPreference =
+            Rc<RefCell<VersionedBTreeMap<Principal, UserPreference, UserPreferenceCodec, Memory>>>;
+        type UserToken =
+            Rc<RefCell<VersionedBTreeMap<Principal, UserTokenList, UserTokenListCodec, Memory>>>;
 
         fn balance_cache(&self) -> BalanceCacheRepository<Self::BalanceCache> {
             BalanceCacheRepository::new(self.balance_cache.clone())

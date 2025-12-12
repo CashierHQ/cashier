@@ -19,11 +19,11 @@
 ```typescript
 // Formula: asset.amount + networkFee (× maxActionNumber for airdrops)
 const result = ValidationService.validateAssetsWithFees(formAssets, tokenMap, {
-    useCase: "create",
-    linkType: LINK_TYPE.SEND_TIP,
-    maxActionNumber: 1,
-    includeLinkCreationFee: false,
-    skipBalanceCheck: false,
+  useCase: "create",
+  linkType: LINK_TYPE.SEND_TIP,
+  maxActionNumber: 1,
+  includeLinkCreationFee: false,
+  skipBalanceCheck: false,
 });
 ```
 
@@ -32,11 +32,11 @@ const result = ValidationService.validateAssetsWithFees(formAssets, tokenMap, {
 ```typescript
 // Formula: asset.amount + networkFee + linkCreationFee
 const result = ValidationService.validateAssetsWithFees(formAssets, tokenMap, {
-    useCase: "create",
-    linkType: link.linkType as LINK_TYPE,
-    maxActionNumber: actionNum,
-    includeLinkCreationFee: true,
-    skipBalanceCheck: false,
+  useCase: "create",
+  linkType: link.linkType as LINK_TYPE,
+  maxActionNumber: actionNum,
+  includeLinkCreationFee: true,
+  skipBalanceCheck: false,
 });
 ```
 
@@ -44,11 +44,15 @@ const result = ValidationService.validateAssetsWithFees(formAssets, tokenMap, {
 
 ```typescript
 // Formula: asset.amount + networkFee
-const result = ValidationService.validateLinkDetailsAssets(formAssets, undefined, {
+const result = ValidationService.validateLinkDetailsAssets(
+  formAssets,
+  undefined,
+  {
     isAirdrop: false,
     maxActionNumber: 1,
     skipCheckingBalance: false,
-});
+  },
+);
 ```
 
 ## Error Message Templates
@@ -141,36 +145,36 @@ export const MyValidationComponent = () => {
 
 ```typescript
 export const useCustomValidation = () => {
-    const { createTokenMap } = useTokens();
-    const { t } = useTranslation();
+  const { createTokenMap } = useTokens();
+  const { t } = useTranslation();
 
-    const validateCustom = (assets, options) => {
-        const tokenMap = createTokenMap();
+  const validateCustom = (assets, options) => {
+    const tokenMap = createTokenMap();
 
-        const result = ValidationService.validateAssetsWithFees(assets, tokenMap, {
-            useCase: options.useCase,
-            linkType: options.linkType,
-            maxActionNumber: options.maxActionNumber,
-            includeLinkCreationFee: options.includeLinkCreationFee,
-            skipBalanceCheck: options.skipBalanceCheck,
-        });
+    const result = ValidationService.validateAssetsWithFees(assets, tokenMap, {
+      useCase: options.useCase,
+      linkType: options.linkType,
+      maxActionNumber: options.maxActionNumber,
+      includeLinkCreationFee: options.includeLinkCreationFee,
+      skipBalanceCheck: options.skipBalanceCheck,
+    });
 
-        // Handle template-based errors
-        if (!result.isValid) {
-            result.errors.forEach((error) => {
-                if (error.metadata && error.message.startsWith("error.")) {
-                    const message = t(error.message, error.metadata);
-                    toast.error(message);
-                } else {
-                    toast.error(error.message);
-                }
-            });
+    // Handle template-based errors
+    if (!result.isValid) {
+      result.errors.forEach((error) => {
+        if (error.metadata && error.message.startsWith("error.")) {
+          const message = t(error.message, error.metadata);
+          toast.error(message);
+        } else {
+          toast.error(error.message);
         }
+      });
+    }
 
-        return result;
-    };
+    return result;
+  };
 
-    return { validateCustom };
+  return { validateCustom };
 };
 ```
 
@@ -196,7 +200,11 @@ const validation2 = validateBalance(assets);
 const validation3 = validateFees(assets);
 
 // ✅ Good: Single unified validation
-const result = ValidationService.validateAssetsWithFees(assets, tokenMap, options);
+const result = ValidationService.validateAssetsWithFees(
+  assets,
+  tokenMap,
+  options,
+);
 ```
 
 ### Error Handling Efficiency
@@ -207,6 +215,6 @@ errors.forEach((error) => toast.error(error.message));
 
 // ✅ Good: Batch error handling
 if (errors.length > 0) {
-    showValidationErrorToast(errors);
+  showValidationErrorToast(errors);
 }
 ```

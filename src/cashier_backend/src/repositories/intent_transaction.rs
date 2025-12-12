@@ -1,12 +1,19 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::repository::intent_transaction::v1::IntentTransaction;
+use cashier_backend_types::repository::intent_transaction::v1::{
+    IntentTransaction, IntentTransactionCodec,
+};
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
+use ic_mple_structures::{BTreeMapIteratorStructure, BTreeMapStructure, VersionedBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
-pub type IntentTransactionRepositoryStorage =
-    StableBTreeMap<String, IntentTransaction, VirtualMemory<DefaultMemoryImpl>>;
+pub type IntentTransactionRepositoryStorage = VersionedBTreeMap<
+    String,
+    IntentTransaction,
+    IntentTransactionCodec,
+    VirtualMemory<DefaultMemoryImpl>,
+>;
 
 struct IntentTransactionKey<'a> {
     pub intent_id: &'a str,
@@ -64,25 +71,8 @@ impl<S: Storage<IntentTransactionRepositoryStorage>> IntentTransactionRepository
 
             store
                 .range(prefix.clone()..)
-                .filter(|entry| entry.key().starts_with(&prefix))
-                .map(|entry| entry.value())
-                .collect()
-        })
-    }
-
-    pub fn get_by_transaction_id(&self, transaction_id: &str) -> Vec<IntentTransaction> {
-        self.storage.with_borrow(|store| {
-            let key = IntentTransactionKey {
-                intent_id: "",
-                transaction_id,
-            };
-
-            let prefix = key.to_str_reverse();
-
-            store
-                .range(prefix.clone()..)
-                .filter(|entry| entry.key().starts_with(&prefix))
-                .map(|entry| entry.value())
+                .filter(|entry| entry.0.starts_with(&prefix))
+                .map(|entry| entry.1)
                 .collect()
         })
     }
@@ -95,41 +85,6 @@ mod tests {
         repositories::{Repositories, tests::TestRepositories},
         utils::test_utils::random_id_string,
     };
-
-    #[test]
-    fn it_should_batch_create_intent_actions() {
-        // Arrange
-        let mut repo = TestRepositories::new().intent_transaction();
-        let intent_id1 = random_id_string();
-        let transaction_id1 = random_id_string();
-        let intent_id2 = random_id_string();
-        let transaction_id2 = random_id_string();
-        let intent_transactions = vec![
-            IntentTransaction {
-                intent_id: intent_id1.clone(),
-                transaction_id: transaction_id1.clone(),
-            },
-            IntentTransaction {
-                intent_id: intent_id2.clone(),
-                transaction_id: transaction_id2.clone(),
-            },
-        ];
-
-        // Act
-        repo.batch_create(intent_transactions);
-
-        // Assert
-        let transactions = repo.get_by_intent_id(&intent_id1);
-        assert_eq!(transactions.len(), 1);
-        assert_eq!(
-            transactions.first().unwrap().transaction_id,
-            transaction_id1
-        );
-
-        let transactions = repo.get_by_transaction_id(&transaction_id2);
-        assert_eq!(transactions.len(), 1);
-        assert_eq!(transactions.first().unwrap().intent_id, intent_id2);
-    }
 
     #[test]
     fn it_should_get_intent_action_by_intent_id() {
@@ -158,31 +113,5 @@ mod tests {
             transactions.first().unwrap().transaction_id,
             transaction_id1
         );
-    }
-
-    #[test]
-    fn it_should_get_intent_action_by_transaction_id() {
-        // Arrange
-        let mut repo = TestRepositories::new().intent_transaction();
-        let intent_id1 = random_id_string();
-        let transaction_id1 = random_id_string();
-        let intent_id2 = random_id_string();
-        let transaction_id2 = random_id_string();
-        let intent_transaction1 = IntentTransaction {
-            intent_id: intent_id1.clone(),
-            transaction_id: transaction_id1.clone(),
-        };
-        let intent_transaction2 = IntentTransaction {
-            intent_id: intent_id2,
-            transaction_id: transaction_id2,
-        };
-        repo.batch_create(vec![intent_transaction1, intent_transaction2]);
-
-        // Act
-        let transactions = repo.get_by_transaction_id(&transaction_id1);
-
-        // Assert
-        assert_eq!(transactions.len(), 1);
-        assert_eq!(transactions.first().unwrap().intent_id, intent_id1);
     }
 }

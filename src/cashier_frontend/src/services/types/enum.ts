@@ -1,15 +1,13 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-export enum TEMPLATE {
-  CENTRAL = "Central",
-}
-
-export enum LINK_STATE {
-  // allow edit
+export enum FRONTEND_LINK_STATE {
   CHOOSE_TEMPLATE = "Link_state_choose_link_type",
   ADD_ASSET = "Link_state_add_assets",
   PREVIEW = "Link_state_preview",
+}
+
+export enum LINK_STATE {
   CREATE_LINK = "Link_state_create_link",
   // not allow edit
   ACTIVE = "Link_state_active",
@@ -41,13 +39,13 @@ export enum FEE_TYPE {
   LINK_CREATION = "LinkCreation",
 }
 
-export function getLinkLabel(state: LINK_STATE): string {
+export function getLinkLabel(state: LINK_STATE | FRONTEND_LINK_STATE): string {
   switch (state) {
-    case LINK_STATE.CHOOSE_TEMPLATE:
+    case FRONTEND_LINK_STATE.CHOOSE_TEMPLATE:
       return "Draft"; // User left on step 1
-    case LINK_STATE.ADD_ASSET:
+    case FRONTEND_LINK_STATE.ADD_ASSET:
       return "Draft"; // User left on step 2
-    case LINK_STATE.PREVIEW:
+    case FRONTEND_LINK_STATE.PREVIEW:
       return "Draft"; // User left on step 3
     case LINK_STATE.CREATE_LINK:
       return "Draft"; // not Show on UI but should be draft here
@@ -62,14 +60,16 @@ export function getLinkLabel(state: LINK_STATE): string {
   }
 }
 
-export function mapStringToLinkState(state: string): LINK_STATE {
+export function mapStringToLinkState(
+  state: string,
+): LINK_STATE | FRONTEND_LINK_STATE {
   switch (state) {
     case "Link_state_choose_link_type":
-      return LINK_STATE.CHOOSE_TEMPLATE;
+      return FRONTEND_LINK_STATE.CHOOSE_TEMPLATE;
     case "Link_state_add_assets":
-      return LINK_STATE.ADD_ASSET;
+      return FRONTEND_LINK_STATE.ADD_ASSET;
     case "Link_state_preview":
-      return LINK_STATE.PREVIEW;
+      return FRONTEND_LINK_STATE.PREVIEW;
     case "Link_state_create_link":
       return LINK_STATE.CREATE_LINK;
     case "Link_state_active":
@@ -85,33 +85,21 @@ export function mapStringToLinkState(state: string): LINK_STATE {
 
 export enum LINK_TYPE {
   SEND_TIP = "SendTip",
-  NFT_CREATE_AND_AIRDROP = "NftCreateAndAirdrop",
   SEND_AIRDROP = "SendAirdrop",
   SEND_TOKEN_BASKET = "SendTokenBasket",
   RECEIVE_PAYMENT = "ReceivePayment",
-  RECEIVE_MULTI_PAYMENT = "ReceiveMultiPayment",
-  SWAP_SINGLE_ASSET = "SwapSingleAsset",
-  SWAP_MULTI_ASSET = "SwapMultiAsset",
 }
 
 export function getLinkTypeString(type: string): string {
   switch (type) {
     case LINK_TYPE.SEND_TIP:
       return "Send Tip";
-    case LINK_TYPE.NFT_CREATE_AND_AIRDROP:
-      return "NFT Create and Airdrop";
     case LINK_TYPE.SEND_AIRDROP:
       return "Send Airdrop";
     case LINK_TYPE.SEND_TOKEN_BASKET:
       return "Send Token Basket";
     case LINK_TYPE.RECEIVE_PAYMENT:
       return "Receive Payment";
-    case LINK_TYPE.RECEIVE_MULTI_PAYMENT:
-      return "Receive Multi Payment";
-    case LINK_TYPE.SWAP_SINGLE_ASSET:
-      return "Swap Single Asset";
-    case LINK_TYPE.SWAP_MULTI_ASSET:
-      return "Swap Multi Asset";
     default:
       throw new Error(`Unknown link type: ${type}`);
   }
@@ -123,20 +111,12 @@ export function mapStringToLinkType(
   switch (type) {
     case "SendTip":
       return LINK_TYPE.SEND_TIP;
-    case "NftCreateAndAirdrop":
-      return LINK_TYPE.NFT_CREATE_AND_AIRDROP;
     case "SendAirdrop":
       return LINK_TYPE.SEND_AIRDROP;
     case "SendTokenBasket":
       return LINK_TYPE.SEND_TOKEN_BASKET;
     case "ReceivePayment":
       return LINK_TYPE.RECEIVE_PAYMENT;
-    case "ReceiveMultiPayment":
-      return LINK_TYPE.RECEIVE_MULTI_PAYMENT;
-    case "SwapSingleAsset":
-      return LINK_TYPE.SWAP_SINGLE_ASSET;
-    case "SwapMultiAsset":
-      return LINK_TYPE.SWAP_MULTI_ASSET;
     default:
       return undefined; // Return undefined for unknown types
   }
@@ -156,6 +136,8 @@ export enum ACTION_TYPE {
   CREATE_LINK = "CreateLink",
   WITHDRAW = "Withdraw",
   USE = "Use",
+  RECEIVE = "Receive",
+  SEND = "Send",
 }
 
 export enum LINK_INTENT_ASSET_LABEL {

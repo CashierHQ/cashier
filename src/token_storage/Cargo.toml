@@ -16,6 +16,7 @@ futures = { workspace = true, features = ["async-await"] }
 ic-cdk = { workspace = true }
 ic_mple_auth = { workspace = true }
 ic_mple_log = { workspace = true }
+ic_mple_structures = { workspace = true }
 ic_mple_utils = { workspace = true }
 ic-stable-structures = { workspace = true }
 log = { workspace = true }

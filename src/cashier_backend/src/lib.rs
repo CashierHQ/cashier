@@ -18,11 +18,13 @@
 #![warn(clippy::box_collection)]
 #![warn(clippy::redundant_allocation)]
 #![warn(clippy::rc_buffer)]
+#![warn(clippy::type_complexity)]
 
 mod api;
 mod build_data;
 mod constant;
 mod domains;
+mod link_v2;
 mod repositories;
 mod services;
 mod utils;

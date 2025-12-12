@@ -15,3 +15,4 @@ pub mod request_lock;
 pub mod transaction;
 pub mod user_action;
 pub mod user_link;
+pub mod user_link_action;

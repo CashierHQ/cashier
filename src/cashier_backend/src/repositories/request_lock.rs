@@ -1,12 +1,20 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::repository::{keys::RequestLockKey, request_lock::RequestLock};
+use cashier_backend_types::repository::{
+    keys::RequestLockKey,
+    request_lock::{RequestLock, RequestLockCodec},
+};
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
+use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
-pub type RequestLockRepositoryStorage =
-    StableBTreeMap<RequestLockKey, RequestLock, VirtualMemory<DefaultMemoryImpl>>;
+pub type RequestLockRepositoryStorage = VersionedBTreeMap<
+    RequestLockKey,
+    RequestLock,
+    RequestLockCodec,
+    VirtualMemory<DefaultMemoryImpl>,
+>;
 
 pub struct RequestLockRepository<S: Storage<RequestLockRepositoryStorage>> {
     storage: S,
@@ -51,10 +59,10 @@ mod tests {
         let link_id = random_id_string();
         let action_id = random_id_string();
         let request_lock = RequestLock {
-            key: RequestLockKey::UserLinkAction {
+            key: RequestLockKey::CreateAction {
                 user_principal: user_principal_id,
                 link_id,
-                action_id,
+                action_type: action_id,
             },
             timestamp: 1622547800,
         };
@@ -82,10 +90,10 @@ mod tests {
         let link_id = random_id_string();
         let action_id = random_id_string();
         let request_lock = RequestLock {
-            key: RequestLockKey::UserLinkAction {
+            key: RequestLockKey::CreateAction {
                 user_principal: user_principal_id,
                 link_id,
-                action_id,
+                action_type: action_id,
             },
             timestamp: 1622547800,
         };
@@ -107,10 +115,10 @@ mod tests {
         let link_id = random_id_string();
         let action_id = random_id_string();
         let request_lock = RequestLock {
-            key: RequestLockKey::UserLinkAction {
+            key: RequestLockKey::CreateAction {
                 user_principal: user_principal_id,
                 link_id,
-                action_id,
+                action_type: action_id,
             },
             timestamp: 1622547800,
         };
