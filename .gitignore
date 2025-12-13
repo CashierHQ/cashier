@@ -40,3 +40,7 @@ CLAUDE.md
 logs/*
 .cursor
 private_key.pem
+
+.repomixignore
+/.claude
+/plans
