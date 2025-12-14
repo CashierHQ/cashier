@@ -44,6 +44,38 @@ export class Icrc112RequestMapper {
       nonce: nonceArray as ArrayBuffer | undefined,
     };
   }
+
+  // Devalue serde for Icrc112Request
+  static serde = {
+    serialize: {
+      Icrc112Request: (value: unknown) => {
+        if (!(value instanceof Object)) return undefined;
+        const r = value as Icrc112Request;
+        return {
+          arg: Array.from(new Uint8Array(r.arg)),
+          method: r.method,
+          canister_id: r.canister_id.toString(),
+          nonce: r.nonce ? Array.from(new Uint8Array(r.nonce)) : undefined,
+        };
+      },
+    },
+    deserialize: {
+      Icrc112Request: (obj: unknown) => {
+        const s = obj as {
+          arg: number[];
+          method: string;
+          canister_id: string;
+          nonce?: number[];
+        };
+        return new Icrc112Request(
+          new Uint8Array(s.arg).buffer,
+          s.method,
+          Principal.fromText(s.canister_id),
+          s.nonce ? new Uint8Array(s.nonce).buffer : undefined,
+        );
+      },
+    },
+  };
 }
 
 export type Icrc112ExecutionResult = {
