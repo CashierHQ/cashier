@@ -55,7 +55,7 @@ jobs:
         run: |
           just check_code
 
-      - name: Frontend - Check code style
+      - name: Frontend - Lint and type check
         run: |
           just frontend_check_code
 
