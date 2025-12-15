@@ -3,7 +3,6 @@
   import { ChevronDown } from "lucide-svelte";
   import { locale } from "$lib/i18n";
   import QRCode from "qrcode";
-  import { onMount } from "svelte";
 
   type Props = {
     link: string;
@@ -49,11 +48,7 @@
 </script>
 
 <div class="input-label-field-container">
-  <button
-    type="button"
-    class="w-full"
-    onclick={toggleAccordion}
-  >
+  <button type="button" class="w-full" onclick={toggleAccordion}>
     <div class="flex items-center w-full justify-between mb-2">
       <Label class="font-medium text-sm cursor-pointer">
         {locale.t("links.linkForm.detail.shareLink") || "Share your link"}

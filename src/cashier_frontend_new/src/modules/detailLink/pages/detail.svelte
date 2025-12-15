@@ -38,7 +38,7 @@
     DialogDescription,
     DialogPortal,
   } from "$lib/shadcn/components/ui/dialog";
-    import ShareLinkSection from "$modules/creationLink/components/previewSections/ShareLinkSection.svelte";
+  import ShareLinkSection from "$modules/creationLink/components/previewSections/ShareLinkSection.svelte";
 
   //let { linkStore }: { linkStore: LinkDetailStore } = $props();
   let {
@@ -194,7 +194,7 @@
     showFeeInfoDescriptionDrawer = true;
   }
 
-  const link = $derived(`${window.location.origin}/link/${linkStore.link?.id}`)
+  const link = $derived(`${window.location.origin}/link/${linkStore.link?.id}`);
 
   async function copyLink(closeDialog?: boolean) {
     try {
@@ -408,7 +408,7 @@
       />
 
       <!-- Block 5: Share Link -->
-      <ShareLinkSection link={link} />
+      <ShareLinkSection {link} />
     {/if}
 
     <div
