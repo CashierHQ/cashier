@@ -39,8 +39,9 @@ export interface AssetItem {
   label: string;
   symbol: string;
   address: string;
+  amount: bigint;
   /** in formmated string */
-  amount: string;
+  amountFormattedStr: string;
   /** in formmated string */
   usdValueStr?: string;
 }

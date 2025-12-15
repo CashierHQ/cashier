@@ -40,7 +40,7 @@ describe("Action.fromBackendType", () => {
       icrc_112_requests: [[[backendIcrc]]],
       creator: principal,
       intents: [intentDto],
-      type: { Use: null },
+      type: { Send: null },
       state: { Created: null },
     };
 

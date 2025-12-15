@@ -1,4 +1,4 @@
-import type { ActionType } from "$modules/links/types/action/actionType";
+import type { ActionTypeValue } from "$modules/links/types/action/actionType";
 import type Intent from "$modules/links/types/action/intent";
 
 /**
@@ -17,8 +17,11 @@ export interface FeeItem {
 
   symbol: string;
   price?: number;
-  /** in formmated string */
-  amount: string;
+  amount: bigint;
+  /** in formmated string
+   * DO NOT parse this string for calculations, use `amount` field instead
+   */
+  amountFormattedStr: string;
   /** in formmated string */
   usdValueStr?: string;
   /** number usd value */
@@ -31,7 +34,7 @@ export interface FeeItem {
 export type ComputeAmountAndFeeInput = {
   intent: Intent;
   ledgerFee: bigint;
-  actionType: ActionType;
+  actionType: ActionTypeValue;
 };
 /**
  * Output type for computeAmountAndFee function in FeeService
