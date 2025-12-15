@@ -6,8 +6,13 @@ import type { UnifiedLinkList } from "../types/linkList";
 import { UnifiedLinkItemMapper } from "../types/linkList";
 import { tempLinkRepository } from "$modules/creationLink/repositories/tempLinkRepository";
 
+/**
+ * Store managing the list of links
+ * This is persisted in localStorage and auto-refetched every 15 seconds
+ * Clear on logout/login to avoid data leakage between users
+ */
 export class LinkListStore {
-  readonly #linkListQuery;
+  #linkListQuery;
   constructor() {
     this.#linkListQuery = managedState<Link[]>({
       queryFn: async () => {
@@ -22,9 +27,9 @@ export class LinkListStore {
         const links = res.unwrap().map((b) => LinkMapper.fromBackendType(b));
         return links;
       },
-      watch: [() => authState.account?.owner],
+      watch: [() => authState.account],
       refetchInterval: 15 * 1000, // 15 seconds
-      persistedKey: ["linkList", authState.account?.owner ?? "anon"],
+      persistedKey: ["linkList"],
       storageType: "localStorage",
       serde: LinkMapper.serde,
     });
