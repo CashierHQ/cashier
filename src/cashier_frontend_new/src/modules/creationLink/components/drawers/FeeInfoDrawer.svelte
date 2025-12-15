@@ -27,7 +27,8 @@
   type Props = {
     open?: boolean;
     onClose?: () => void;
-    onBack?: () => void; // Callback for back button click
+    onBack?: () => void;
+    onOpenChange?: (open: boolean) => void;
     feesBreakdown: FeeBreakdownItem[];
   };
 
@@ -35,6 +36,7 @@
     open = $bindable(false),
     onClose,
     onBack,
+    onOpenChange,
     feesBreakdown,
   }: Props = $props();
 
@@ -74,7 +76,7 @@
   );
 </script>
 
-<Drawer bind:open>
+<Drawer bind:open {onOpenChange}>
   <DrawerContent class="max-w-full w-[400px] mx-auto p-3">
     <DrawerHeader class="pt-2">
       <div class="flex justify-center items-center relative relative">
