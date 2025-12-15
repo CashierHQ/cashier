@@ -10,13 +10,17 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { AssetProcessState } from "$modules/transactionCart/types/txCart";
   import { FeeType } from "$modules/links/types/fee";
+  import {
+    ActionType,
+    type ActionTypeValue,
+  } from "$modules/links/types/action/actionType";
+  import { assertUnreachable } from "$lib/rsMatch";
 
   type Props = {
     action: Action;
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
     isProcessing?: boolean;
-    isReceive?: boolean;
     isClickable?: boolean;
     onInfoClick?: () => void;
     hasError?: boolean;
@@ -27,13 +31,32 @@
     failedImageLoads,
     onImageError,
     isProcessing = false,
-    isReceive = false,
     isClickable = false,
     onInfoClick,
     hasError = false,
   }: Props = $props();
 
   let assetTransferInfoDrawerOpen = $state(false);
+
+  /**
+   * Determine if action type represents receiving tokens.
+   * Uses exhaustive switch for type safety.
+   */
+  function getIsReceive(actionType: ActionTypeValue): boolean {
+    switch (actionType) {
+      case ActionType.RECEIVE:
+      case ActionType.WITHDRAW:
+        return true;
+      case ActionType.SEND:
+      case ActionType.CREATE_LINK:
+        return false;
+      default:
+        return assertUnreachable(actionType);
+    }
+  }
+
+  // Derive isReceive using exhaustive switch
+  const isReceive = $derived(getIsReceive(action.type));
 
   function handleInfoClick() {
     if (onInfoClick) {
@@ -77,6 +100,9 @@
       (item) => item.fee?.feeType === FeeType.CREATE_LINK_FEE,
     );
   });
+
+  // Derive hasFees from assetAndFeeList
+  const hasFees = $derived(assetAndFeeList.some((item) => item.fee !== undefined));
 </script>
 
 <div class="input-label-field-container">
@@ -87,7 +113,7 @@
           ? locale.t("links.linkForm.preview.youReceive")
           : locale.t("links.linkForm.preview.youSend")}
       </Label>
-      {#if !isReceive}
+      {#if hasFees}
         <span class="text-[#b6b6b6] text-[10px] medium-font">
           {locale.t("links.linkForm.preview.includingNetworkFees")}
         </span>
