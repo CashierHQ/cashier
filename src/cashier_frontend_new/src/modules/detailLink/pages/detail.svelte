@@ -9,7 +9,6 @@
   import DetailLinkHeader from "../components/detailLinkHeader.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
-  import YouSendSection from "$modules/creationLink/components/previewSections/YouSendSection.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import FeeInfoDescriptionDrawer from "$modules/creationLink/components/drawers/FeeInfoDescriptionDrawer.svelte";
@@ -29,7 +28,6 @@
   import {
     calculateFeesBreakdown,
     calculateTotalFeesUsd,
-    getLinkCreationFeeFromBreakdown,
     calculateAssetsWithTokenInfo,
   } from "$modules/links/utils/feesBreakdown";
   import {
@@ -159,11 +157,6 @@
   // Calculate total fees in USD
   const totalFeesUsd = $derived.by(() => {
     return calculateTotalFeesUsd(feesBreakdown);
-  });
-
-  // Get link creation fee from breakdown
-  const linkCreationFee = $derived.by(() => {
-    return getLinkCreationFeeFromBreakdown(feesBreakdown);
   });
 
   // Transaction lock status based on link state
@@ -402,17 +395,6 @@
         {transactionLockStatus}
         isEnded={isTransactionLockEnded}
       />
-
-      <!-- Block 3: You Send -->
-      {#if isSendLink}
-        <YouSendSection
-          {assetsWithTokenInfo}
-          {failedImageLoads}
-          onImageError={handleImageError}
-          {linkCreationFee}
-          isClickable={true}
-        />
-      {/if}
 
       <!-- Block 4: Fees Breakdown -->
       <FeesBreakdownSection

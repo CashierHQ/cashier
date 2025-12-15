@@ -2,49 +2,30 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { Info, X } from "lucide-svelte";
   import { locale } from "$lib/i18n";
-  import {
-    formatNumber,
-    formatUsdAmount,
-  } from "$modules/shared/utils/formatNumber";
+  import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
-  import { formatLinkCreationFeeDisplay } from "$modules/links/utils/feesBreakdown";
-  import AssetTransferInfoDrawer from "../drawers/AssetTransferInfoDrawer.svelte";
-
-  type AssetWithTokenInfo = {
-    address: string;
-    amount: number;
-    token: {
-      symbol: string;
-      decimals: number;
-      priceUSD?: number;
-    };
-    usdValue: number;
-    logo: string;
-  };
+  import AssetTransferInfoDrawer from "../../creationLink/components/drawers/AssetTransferInfoDrawer.svelte";
+  import { feeService } from "$modules/shared/services/feeService";
+  import type Action from "$modules/links/types/action/action";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { AssetProcessState } from "$modules/transactionCart/types/txCart";
+  import { FeeType } from "$modules/links/types/fee";
 
   type Props = {
-    assetsWithTokenInfo: AssetWithTokenInfo[];
+    action: Action;
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
-    linkCreationFee?: {
-      amount: bigint;
-      tokenAddress: string;
-      tokenSymbol: string;
-      tokenDecimals: number;
-      usdAmount: number;
-    };
     isProcessing?: boolean;
-    isReceive?: boolean; // If true, show "You receive" instead of "You send"
-    isClickable?: boolean; // If false, hide info buttons
-    onInfoClick?: () => void; // Handler for info button click
-    hasError?: boolean; // If true, show error icon instead of spinner
+    isReceive?: boolean;
+    isClickable?: boolean;
+    onInfoClick?: () => void;
+    hasError?: boolean;
   };
 
   let {
-    assetsWithTokenInfo,
+    action,
     failedImageLoads,
     onImageError,
-    linkCreationFee,
     isProcessing = false,
     isReceive = false,
     isClickable = false,
@@ -62,17 +43,39 @@
     }
   }
 
-  // Calculate link creation fee display
-  const linkCreationFeeDisplay = $derived.by(() => {
-    if (!linkCreationFee) return null;
-    return formatLinkCreationFeeDisplay({
-      name: "Link creation fee",
-      amount: linkCreationFee.amount,
-      tokenAddress: linkCreationFee.tokenAddress,
-      tokenSymbol: linkCreationFee.tokenSymbol,
-      tokenDecimals: linkCreationFee.tokenDecimals,
-      usdAmount: linkCreationFee.usdAmount,
-    });
+  // Use feeService to derive asset and fee list
+  const assetAndFeeList = $derived.by(() => {
+    const list = feeService.mapActionToAssetAndFeeList(
+      action,
+      Object.fromEntries(
+        (walletStore.query.data ?? []).map((t) => [t.address, t]),
+      ),
+    );
+
+    if (isProcessing) {
+      return list.map((item) => ({
+        ...item,
+        asset: {
+          ...item.asset,
+          state: AssetProcessState.PROCESSING,
+        },
+      }));
+    }
+
+    return list;
+  });
+
+  // Separate assets and link creation fee for display
+  const assetsToDisplay = $derived.by(() => {
+    return assetAndFeeList.filter(
+      (item) => item.fee?.feeType !== FeeType.CREATE_LINK_FEE,
+    );
+  });
+
+  const linkCreationFeeItem = $derived.by(() => {
+    return assetAndFeeList.find(
+      (item) => item.fee?.feeType === FeeType.CREATE_LINK_FEE,
+    );
   });
 </script>
 
@@ -103,7 +106,7 @@
   <div
     class="border-[1px] rounded-lg border-lightgreen px-4 py-3 flex flex-col gap-3"
   >
-    {#each assetsWithTokenInfo as asset (asset.address)}
+    {#each assetsToDisplay as { asset } (asset.address)}
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-1.5">
           {#if hasError}
@@ -115,8 +118,8 @@
           {/if}
           {#if !failedImageLoads.has(asset.address)}
             <img
-              src={asset.logo}
-              alt={asset.token.symbol}
+              src={getTokenLogo(asset.address)}
+              alt={asset.symbol}
               class="w-5 h-5 rounded-full overflow-hidden"
               onerror={() => onImageError(asset.address)}
             />
@@ -124,26 +127,28 @@
             <div
               class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs overflow-hidden"
             >
-              {asset.token.symbol[0]?.toUpperCase() || "?"}
+              {asset.symbol[0]?.toUpperCase() || "?"}
             </div>
           {/if}
-          <p class="text-[14px] font-medium">{asset.token.symbol}</p>
+          <p class="text-[14px] font-medium">{asset.symbol}</p>
         </div>
         <div class="flex flex-col items-end">
           <div class="flex items-center gap-1">
             <p class="text-[14px] font-normal">
-              {formatNumber(asset.amount)}
+              {asset.amountFormattedStr}
             </p>
           </div>
-          <p class="text-[10px] medium-font text-[#b6b6b6]">
-            ~${formatUsdAmount(asset.usdValue)}
-          </p>
+          {#if asset.usdValueStr}
+            <p class="text-[10px] medium-font text-[#b6b6b6]">
+              ~${formatUsdAmount(parseFloat(asset.usdValueStr))}
+            </p>
+          {/if}
         </div>
       </div>
     {/each}
 
     <!-- Link Creation Fee -->
-    {#if linkCreationFee && linkCreationFeeDisplay}
+    {#if linkCreationFeeItem && linkCreationFeeItem.fee}
       <div class="flex flex-col gap-3">
         <div class="flex justify-between items-center">
           <div class="flex items-center gap-1.5">
@@ -155,11 +160,13 @@
               ></div>
             {/if}
             <img
-              src={getTokenLogo(linkCreationFee.tokenAddress)}
-              alt={linkCreationFee.tokenSymbol}
+              src={getTokenLogo(linkCreationFeeItem.asset.address)}
+              alt={linkCreationFeeItem.asset.symbol}
               class="w-5 h-5 rounded-full overflow-hidden"
             />
-            <p class="text-[14px] font-medium">{linkCreationFee.tokenSymbol}</p>
+            <p class="text-[14px] font-medium">
+              {linkCreationFeeItem.asset.symbol}
+            </p>
             <p class="text-[12px] font-normal text-[#b6b6b6] pt-0.5">
               {locale.t("links.linkForm.preview.linkCreationFee")}
             </p>
@@ -167,12 +174,16 @@
           <div class="flex flex-col items-end">
             <div class="flex items-center gap-1">
               <p class="text-[14px] font-normal">
-                {formatNumber(linkCreationFeeDisplay.amount)}
+                {linkCreationFeeItem.fee.amountFormattedStr}
               </p>
             </div>
-            <p class="text-[10px] font-normal text-[#b6b6b6]">
-              ~${formatUsdAmount(linkCreationFeeDisplay.usdAmount)}
-            </p>
+            {#if linkCreationFeeItem.fee.usdValueStr}
+              <p class="text-[10px] font-normal text-[#b6b6b6]">
+                ~${formatUsdAmount(
+                  parseFloat(linkCreationFeeItem.fee.usdValueStr),
+                )}
+              </p>
+            {/if}
           </div>
         </div>
       </div>

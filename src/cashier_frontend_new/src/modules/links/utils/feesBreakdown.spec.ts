@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Ok, Err } from "ts-results-es";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
-import { feeService } from "$modules/transactionCart/services/feeService";
 import {
   calculateFeesBreakdown,
   calculateTotalFeesUsd,
@@ -10,9 +9,9 @@ import {
   calculateAssetsWithTokenInfo,
   formatFeeBreakdownItem,
   formatLinkCreationFeeView,
-  formatLinkCreationFeeDisplay,
   type FeeBreakdownItem,
 } from "./feesBreakdown";
+import { feeService } from "$modules/shared/services/feeService";
 
 // Standard ICP Ledger Canister ID (use this if ICP_LEDGER_CANISTER_ID is undefined in tests)
 const MOCK_ICP_LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
@@ -567,31 +566,6 @@ describe("feesBreakdown", () => {
 
     it("should return null if fee is undefined", () => {
       const formatted = formatLinkCreationFeeView(undefined);
-      expect(formatted).toBeNull();
-    });
-  });
-
-  describe("formatLinkCreationFeeDisplay", () => {
-    it("should format link creation fee for simple display", () => {
-      const fee: FeeBreakdownItem = {
-        name: "Link creation fee",
-        amount: 10_000n,
-        tokenAddress: TEST_ICP_LEDGER_CANISTER_ID,
-        tokenSymbol: "ICP",
-        tokenDecimals: 8,
-        usdAmount: 0.5,
-      };
-
-      const formatted = formatLinkCreationFeeDisplay(fee);
-
-      expect(formatted).toBeDefined();
-      expect(formatted?.amount).toBe(0.0001);
-      expect(formatted?.symbol).toBe("ICP");
-      expect(formatted?.usdAmount).toBe(0.5);
-    });
-
-    it("should return null if fee is undefined", () => {
-      const formatted = formatLinkCreationFeeDisplay(undefined);
       expect(formatted).toBeNull();
     });
   });
