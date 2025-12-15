@@ -8,6 +8,7 @@
   import AmountActionButtons from "./AmountActionButtons.svelte";
   import type { Snippet } from "svelte";
   import { formatDisplayValue } from "$modules/creationLink/utils/formatDisplayValue";
+  import { sanitizeNumericInput } from "$modules/creationLink/utils/sanitize-numeric-input";
 
   type PresetButton = {
     content: string;
@@ -35,8 +36,8 @@
   let {
     text,
     children,
-    tokenValue = "",
-    usdValue = "",
+    tokenValue = $bindable(""),
+    usdValue = $bindable(""),
     onInputChange,
     isUsd = false,
     token,
@@ -50,17 +51,8 @@
     maxBalanceWithFee = 0,
   }: Props = $props();
 
+  // Display value derived from bound props - no local state needed
   const displayValue = $derived(isUsd ? usdValue : tokenValue);
-
-  let localInputValue = $state(displayValue || "");
-  let previousDisplayValue = $state(displayValue);
-
-  $effect(() => {
-    if (displayValue !== previousDisplayValue) {
-      localInputValue = displayValue || "";
-      previousDisplayValue = displayValue;
-    }
-  });
 
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -92,7 +84,7 @@
     }
 
     const char = e.key;
-    const currentValue = localInputValue;
+    const currentValue = displayValue;
     const hasDecimal = currentValue.includes(".") || currentValue.includes(",");
 
     if (!/[0-9]/.test(char) && char !== "." && char !== ",") {
@@ -110,27 +102,22 @@
     token?.balance ? parseBalanceUnits(token.balance, token.decimals) : 0,
   );
 
-  function handleInputChange(value: string) {
-    if (value.startsWith("-")) {
-      value = value.replace(/^-+/, "");
+  // Update bound value directly, debounce side effects
+  function updateValue(sanitized: string) {
+    if (isUsd) {
+      usdValue = sanitized;
+    } else {
+      tokenValue = sanitized;
     }
+  }
 
-    let sanitized = "";
-    let hasDecimal = false;
+  function handleInput(value: string) {
+    const sanitized = sanitizeNumericInput(value);
 
-    for (let i = 0; i < value.length; i++) {
-      const char = value[i];
+    // Update bound value immediately for responsive UI
+    updateValue(sanitized);
 
-      if (/[0-9]/.test(char)) {
-        sanitized += char;
-      } else if ((char === "." || char === ",") && !hasDecimal) {
-        sanitized += ".";
-        hasDecimal = true;
-      }
-    }
-
-    localInputValue = sanitized;
-
+    // Debounce callback for side effects (conversion, persistence)
     if (debounceTimer) {
       clearTimeout(debounceTimer);
     }
@@ -148,9 +135,9 @@
   );
 
   function handleBlur() {
-    if (!token || !localInputValue) return;
+    if (!token || !displayValue) return;
 
-    const inputValue = parseFloat(localInputValue);
+    const inputValue = parseFloat(displayValue);
     if (isNaN(inputValue) || inputValue <= 0) return;
 
     const hasInsufficientFunds =
@@ -182,7 +169,7 @@
     }
 
     if (exceedsBalance) {
-      localInputValue = maxValueStr;
+      updateValue(maxValueStr);
 
       if (debounceTimer) {
         clearTimeout(debounceTimer);
@@ -201,7 +188,7 @@
   }
 
   const inputWidth = $derived(
-    `${Math.max((formatDisplayValue(localInputValue) || "").length * 9, 30)}px`,
+    `${Math.max((formatDisplayValue(displayValue) || "").length * 9, 30)}px`,
   );
 
   const balanceDisplay = $derived(
@@ -243,8 +230,8 @@
               {/if}
               <input
                 id="asset-input-{token?.address || 'default'}"
-                value={formatDisplayValue(localInputValue)}
-                oninput={(e) => handleInputChange(e.currentTarget.value)}
+                value={formatDisplayValue(displayValue)}
+                oninput={(e) => handleInput(e.currentTarget.value)}
                 onkeydown={handleKeyDown}
                 onblur={handleBlur}
                 type="number"
