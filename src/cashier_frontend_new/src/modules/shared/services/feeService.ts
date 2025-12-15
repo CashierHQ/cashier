@@ -24,27 +24,7 @@ import {
 import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
-
-// Type for paired AssetItem and FeeItem
-export type AssetAndFee = {
-  asset: AssetItem;
-  fee?: FeeItem;
-};
-
-export type ForecastAssetAndFee = {
-  asset: {
-    label: string;
-    symbol: string;
-    address: string;
-    /** in formmated string */
-    amount: string;
-    /** in formmated string */
-    usdValueStr?: string;
-  };
-  fee?: FeeItem;
-};
-
-export type AssetAndFeeList = AssetAndFee[];
+import type { AssetAndFeeList, ForecastAssetAndFee } from "../types/feeService";
 
 export class FeeService {
   /**
@@ -58,7 +38,7 @@ export class FeeService {
    *    - amount = ledgerFee + payload.amount
    *    - fee = ledgerFee
    * 3) Withdraw:
-   *    - amount = payload.amount - ledgerFee
+   *    - amount = payload.amount
    *    - fee = ledgerFee
    * 4) Receive:
    *    - amount = payload.amount
@@ -167,7 +147,7 @@ export class FeeService {
           fee = {
             feeType,
             amount: feeRaw,
-            amountUi: parseBalanceUnits(feeRaw, 8).toString(),
+            amountFormattedStr: parseBalanceUnits(feeRaw, 8).toString(),
             symbol: "N/A",
           };
         }
@@ -216,7 +196,7 @@ export class FeeService {
           fee = {
             feeType,
             amount: feeRaw,
-            amountUi: formatNumber(tokenFeeAmount),
+            amountFormattedStr: formatNumber(tokenFeeAmount),
             symbol: token.symbol,
             price: token.priceUSD,
             usdValue: feeUsdValue,
@@ -277,7 +257,7 @@ export class FeeService {
           fee: {
             amount: ICP_LEDGER_FEE,
             feeType: FeeType.NETWORK_FEE,
-            amountUi: parseBalanceUnits(ICP_LEDGER_FEE, 8).toString(),
+            amountFormattedStr: parseBalanceUnits(ICP_LEDGER_FEE, 8).toString(),
             symbol: "N/A",
           },
         });
@@ -306,7 +286,7 @@ export class FeeService {
           fee: {
             amount: tokenFee,
             feeType: FeeType.NETWORK_FEE,
-            amountUi: formatNumber(feeAmountUi),
+            amountFormattedStr: formatNumber(feeAmountUi),
             symbol: token.symbol,
             price: token.priceUSD,
             usdValue: feeUsd,
@@ -341,7 +321,7 @@ export class FeeService {
         fee: {
           amount: linkCreationFeeTotal,
           feeType: FeeType.CREATE_LINK_FEE,
-          amountUi: formatNumber(linkFeeFormatted),
+          amountFormattedStr: formatNumber(linkFeeFormatted),
           symbol: linkFeeToken.symbol,
           price: linkFeeToken.priceUSD,
           usdValue: linkFeeUsd,

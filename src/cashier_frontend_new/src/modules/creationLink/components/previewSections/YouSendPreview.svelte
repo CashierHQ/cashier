@@ -130,7 +130,7 @@
           <div class="flex flex-col items-end">
             <div class="flex items-center gap-1">
               <p class="text-[14px] font-normal">
-                {linkCreationFeeItem.fee.amountUi}
+                {linkCreationFeeItem.fee.amountFormattedStr}
               </p>
             </div>
 

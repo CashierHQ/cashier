@@ -37,7 +37,7 @@
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
-        amountUie cx="12" cy="12" r="10" fill="url(#g)" />
+        <circle cx="12" cy="12" r="10" fill="url(#g)" />
         <defs>
           <linearGradient id="g" x1="0" x2="1">
             <stop offset="0" stop-color="#FF6B6B" />
