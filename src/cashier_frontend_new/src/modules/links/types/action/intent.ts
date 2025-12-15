@@ -1,5 +1,5 @@
 import type { IntentDto } from "$lib/generated/cashier_backend/cashier_backend.did";
-import IntentState, { IntentStateMapper } from "./intentState";
+import IntentStateValue, { IntentStateMapper } from "./intentState";
 import IntentTask, { IntentTaskMapper } from "./intentTask";
 import IntentType, { IntentTypeMapper } from "./intentType";
 
@@ -10,7 +10,7 @@ class Intent {
     public task: IntentTask,
     public type: IntentType,
     public created_at: bigint,
-    public state: IntentState,
+    public state: IntentStateValue,
   ) {}
 }
 

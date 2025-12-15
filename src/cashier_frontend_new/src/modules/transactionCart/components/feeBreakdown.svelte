@@ -1,8 +1,8 @@
 <script lang="ts">
   import { assertUnreachable } from "$lib/rsMatch";
   import { FeeType, type FeeItem } from "$modules/links/types/fee";
+  import type { AssetAndFee } from "$modules/shared/types/feeService";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
-  import type { AssetAndFee } from "../services/feeService";
 
   let {
     assetAndFeeList,
@@ -20,7 +20,7 @@
   // total token amount (derived)
   let totalAmount = $derived(() => {
     return assetAndFeeList.reduce(
-      (acc, f) => acc + (parseFloat(f.fee?.amount || "0") || 0),
+      (acc, f) => acc + (Number(f.fee?.amount) || 0),
       0,
     );
   });

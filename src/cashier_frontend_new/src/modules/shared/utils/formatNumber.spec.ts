@@ -9,9 +9,10 @@ describe("formatNumber", () => {
   it("formats regular numbers", () => {
     expect(formatNumber(123.456)).toBe("123.456");
     expect(formatNumber(12.3456)).toBe("12.3456");
-    expect(formatNumber(1.23456789)).toBe("1.23457");
+    expect(formatNumber(1.23456789)).toBe("1.23456789");
     expect(formatNumber(0.12345)).toBe("0.12345");
     expect(formatNumber(0.1)).toBe("0.1");
+    expect(formatNumber(0.0005002)).toBe("0.0005002");
   });
 
   it("formats large numbers", () => {
