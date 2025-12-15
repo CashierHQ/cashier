@@ -18,8 +18,6 @@ export function getHeadingFromActionType(actionType?: ActionTypeValue): string {
     case ActionType.WITHDRAW:
     case ActionType.RECEIVE:
       return "You receive";
-    case ActionType.USE:
-      return "You use";
     default:
       assertUnreachable(actionType);
   }

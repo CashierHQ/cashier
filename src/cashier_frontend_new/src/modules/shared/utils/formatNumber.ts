@@ -25,9 +25,9 @@ export const formatNumber = (
     return amount.toLocaleString();
   }
 
-  // show up to 5 decimal places, trimming trailing zeros
-  // e.g. 0.0230097375 -> "0.02301", and 0.1 -> "0.1" (no zero-padding)
-  return amount.toFixed(options?.tofixed ?? 5).replace(/\.?0+$/, "");
+  // show up to 8 decimal places, trimming trailing zeros
+  // e.g. 0.0230097375 -> "0.023009738", 0.0005002 -> "0.0005002", and 0.1 -> "0.1" (no zero-padding)
+  return amount.toFixed(options?.tofixed ?? 8).replace(/\.?0+$/, "");
 };
 
 /**
