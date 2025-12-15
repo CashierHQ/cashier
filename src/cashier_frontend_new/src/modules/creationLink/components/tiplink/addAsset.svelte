@@ -356,8 +356,8 @@
     <div>
       <AssetButton
         text={locale.t("links.linkForm.addAsset.chooseAsset")}
-        tokenValue={localTokenAmount}
-        usdValue={localUsdAmount}
+        bind:tokenValue={localTokenAmount}
+        bind:usdValue={localUsdAmount}
         onInputChange={handleAmountChange}
         {isUsd}
         onToggleUsd={handleToggleUsd}
