@@ -12,7 +12,6 @@
   import FeeBreakdown from "./feeBreakdown.svelte";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import { X } from "lucide-svelte";
-  import { ActionType } from "$modules/links/types/action/actionType";
   import { locale } from "$lib/i18n";
   import { feeService } from "$modules/shared/services/feeService";
   import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
@@ -20,7 +19,7 @@
 
   let {
     action,
-    isOpen: isOpenProp,
+    isOpen = $bindable(false),
     onCloseDrawer,
     handleProcessAction,
     isProcessing: externalIsProcessing,
@@ -33,15 +32,6 @@
   } = $props();
 
   const txCartStore = new TransactionCartStore(action, handleProcessAction);
-
-  // Local state for managing drawer open/close
-  // eslint-disable-next-line svelte/prefer-writable-derived
-  let isOpen = $state(isOpenProp);
-
-  // Sync isOpen prop with local state
-  $effect(() => {
-    isOpen = isOpenProp;
-  });
 
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
@@ -89,21 +79,6 @@
       (total, item) => total + (item.fee?.usdValue || 0),
       0,
     );
-  });
-
-  // Check if this is a send link (CREATE_LINK action)
-  const isSendLink = $derived.by(() => {
-    return action.type === ActionType.CREATE_LINK;
-  });
-
-  // Check if this is a withdraw action
-  const isWithdraw = $derived.by(() => {
-    return action.type === ActionType.WITHDRAW;
-  });
-
-  // Check if this is a receive action (user claiming from link)
-  const isReceive = $derived.by(() => {
-    return action.type === ActionType.RECEIVE;
   });
 
   // Convert assetAndFeeList to feesBreakdown format for FeeInfoDrawer
@@ -159,10 +134,11 @@
 
   /**
    * Handle drawer open state changes.
+   * Skip onCloseDrawer when transitioning to FeeInfoDrawer to keep component mounted.
    * @param open
    */
   function handleOpenChange(open: boolean) {
-    if (!open) {
+    if (!open && !showFeeInfoDrawer) {
       onCloseDrawer();
     }
   }
@@ -221,41 +197,19 @@
           {/if}
 
           <div class="mt-2 space-y-4">
-            {#if isSendLink}
-              <YouSendSection
-                {action}
-                {failedImageLoads}
-                onImageError={handleImageError}
-                {isProcessing}
-                hasError={!!errorMessage}
-              />
+            <YouSendSection
+              {action}
+              {failedImageLoads}
+              onImageError={handleImageError}
+              {isProcessing}
+              hasError={!!errorMessage}
+            />
 
+            {#if totalFeesUsd > 0}
               <FeesBreakdownSection
                 {totalFeesUsd}
                 onBreakdownClick={handleFeeBreakdownClick}
                 disabled={isProcessing}
-              />
-            {/if}
-
-            {#if isWithdraw}
-              <YouSendSection
-                {action}
-                {failedImageLoads}
-                onImageError={handleImageError}
-                {isProcessing}
-                isReceive={false}
-                hasError={!!errorMessage}
-              />
-            {/if}
-
-            {#if isReceive}
-              <YouSendSection
-                {action}
-                {failedImageLoads}
-                onImageError={handleImageError}
-                {isProcessing}
-                isReceive={true}
-                hasError={!!errorMessage}
               />
             {/if}
 
@@ -285,8 +239,10 @@
   <!-- FeeInfoDrawer for showing fees breakdown -->
   <FeeInfoDrawer
     bind:open={showFeeInfoDrawer}
-    onClose={() => {
-      showFeeInfoDrawer = false;
+    onOpenChange={(open) => {
+      if (!open) {
+        isOpen = true;
+      }
     }}
     onBack={handleFeeInfoDrawerBack}
     {feesBreakdown}
