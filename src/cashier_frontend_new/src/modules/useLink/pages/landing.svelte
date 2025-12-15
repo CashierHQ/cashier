@@ -3,7 +3,7 @@
   import { LinkUserState } from "$modules/links/types/link/linkUserState";
   import Ended from "../components/Ended.svelte";
   import Landing from "../components/Landing.svelte";
-  import UserLinkStore from "../state/userLinkStore.svelte";
+  import { UserLinkStore } from "../state/userLinkStore.svelte";
 
   const {
     linkId,
