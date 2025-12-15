@@ -41,7 +41,7 @@ export interface AssetItem {
   address: string;
   amount: bigint;
   /** in formmated string */
-  amountUi: string;
+  amountFormattedStr: string;
   /** in formmated string */
   usdValueStr?: string;
 }

@@ -203,7 +203,7 @@ describe("FeeService", () => {
       // amount should be a formatted string, and for our simple values should equal formatNumber(12)
       // compute expected: payload 10 + token.fee 2 -> amount 12
       const expectedAmountStr = formatNumber(1.0001);
-      expect(p.asset.amountUi).toBe(expectedAmountStr);
+      expect(p.asset.amountFormattedStr).toBe(expectedAmountStr);
 
       // fee should exist and be formatted from token fee
       expect(p.fee).toBeDefined();
