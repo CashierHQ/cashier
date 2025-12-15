@@ -58,7 +58,7 @@ describe("LinkActionMapper", () => {
     return new Action(
       id,
       principal,
-      ActionType.USE,
+      ActionType.RECEIVE,
       ActionState.CREATED,
       [intent],
       undefined,

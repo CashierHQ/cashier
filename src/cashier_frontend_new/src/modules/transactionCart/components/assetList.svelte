@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { AssetAndFee } from "../services/feeService";
+    import type { AssetAndFee } from "$modules/shared/types/feeService";
   import AssetItem from "./assetItem.svelte";
 
   const {

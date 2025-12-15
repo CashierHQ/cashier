@@ -1,7 +1,7 @@
 <script lang="ts">
+    import type { AssetAndFee } from "$modules/shared/types/feeService";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
   import { ChevronRight } from "lucide-svelte";
-  import type { AssetAndFee } from "../services/feeService";
   let {
     assetAndFeeList,
     onOpen,
