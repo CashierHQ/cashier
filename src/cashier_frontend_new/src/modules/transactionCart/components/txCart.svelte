@@ -16,9 +16,9 @@
   import { locale } from "$lib/i18n";
   import {
     feeService,
-    type AssetAndFee,
   } from "$modules/shared/services/feeService";
   import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
+    import type { AssetAndFee } from "$modules/shared/types/feeService";
 
   let {
     action,
@@ -115,7 +115,6 @@
       walletStore.query.data ?? [],
     );
 
-    console.log("Fees breakdown for drawer:", breakdown);
     return breakdown;
   });
 
