@@ -102,7 +102,9 @@
   });
 
   // Derive hasFees from assetAndFeeList
-  const hasFees = $derived(assetAndFeeList.some((item) => item.fee !== undefined));
+  const hasFees = $derived(
+    assetAndFeeList.some((item) => item.fee !== undefined),
+  );
 </script>
 
 <div class="input-label-field-container">
