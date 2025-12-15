@@ -11,9 +11,7 @@
   import LinkInfoSection from "./previewSections/LinkInfoSection.svelte";
   import TransactionLockSection from "./previewSections/TransactionLockSection.svelte";
   import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
-  import {
-    feeService,
-  } from "$modules/shared/services/feeService";
+  import { feeService } from "$modules/shared/services/feeService";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { locale } from "$lib/i18n";
   import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
