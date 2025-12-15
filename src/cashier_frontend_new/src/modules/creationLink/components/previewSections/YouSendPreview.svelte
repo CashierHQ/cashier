@@ -6,7 +6,7 @@
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import AssetTransferInfoDrawer from "../drawers/AssetTransferInfoDrawer.svelte";
   import { FeeType } from "$modules/links/types/fee";
-  import type { ForecastAssetAndFee } from "$modules/shared/services/feeService";
+    import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
 
   type Props = {
     forecastAssetAndFee: Array<ForecastAssetAndFee>;
