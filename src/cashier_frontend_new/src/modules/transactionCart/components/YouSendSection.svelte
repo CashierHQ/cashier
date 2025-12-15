@@ -135,7 +135,7 @@
         <div class="flex flex-col items-end">
           <div class="flex items-center gap-1">
             <p class="text-[14px] font-normal">
-              {asset.amountUi}
+              {asset.amountFormattedStr}
             </p>
           </div>
           {#if asset.usdValueStr}

@@ -137,7 +137,10 @@ export class FeeService {
           symbol: "N/A",
           address,
           amount: forecastAmountRaw,
-          amountUi: parseBalanceUnits(forecastAmountRaw, 8).toString(),
+          amountFormattedStr: parseBalanceUnits(
+            forecastAmountRaw,
+            8,
+          ).toString(),
           usdValueStr: undefined,
         };
 
@@ -176,7 +179,7 @@ export class FeeService {
           symbol: token.symbol,
           address,
           amount: forecastAmountRaw,
-          amountUi: formatNumber(forecastFeeAmount),
+          amountFormattedStr: formatNumber(forecastFeeAmount),
           usdValueStr: forecastFeeUsd
             ? formatNumber(forecastFeeUsd)
             : undefined,
