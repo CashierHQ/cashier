@@ -1,7 +1,7 @@
 <script lang="ts">
   import { assertUnreachable } from "$lib/rsMatch";
   import { FeeType, type FeeItem } from "$modules/links/types/fee";
-    import type { AssetAndFee } from "$modules/shared/types/feeService";
+  import type { AssetAndFee } from "$modules/shared/types/feeService";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
 
   let {
