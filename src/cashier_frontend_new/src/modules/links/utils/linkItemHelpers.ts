@@ -16,8 +16,9 @@ export function getStatusLabel(
     case LinkState.CHOOSING_TYPE:
     case LinkState.ADDING_ASSET:
     case LinkState.PREVIEW:
-    case LinkState.CREATE_LINK:
       return t("links.status.draft");
+    case LinkState.CREATE_LINK:
+      return t("links.status.transferPending");
     case LinkState.ACTIVE:
       return t("links.status.active");
     case LinkState.INACTIVE:
