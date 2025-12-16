@@ -20,9 +20,7 @@
 
   const context = getGuardContext();
 
-  type CombinedStore = LinkDetailStore | UserLinkStore | LinkCreationStore;
-
-  const linkStore = $derived.by<CombinedStore | null>(() => {
+  const linkStore = $derived.by<LinkDetailStore | UserLinkStore | LinkCreationStore | null>(() => {
     return (
       context.linkDetailStore ||
       context.userLinkStore ||
