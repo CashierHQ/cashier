@@ -20,14 +20,16 @@
 
   type CombinedStore = LinkDetailStore | UserLinkStore | LinkCreationStore;
 
-  const linkStore = $derived<CombinedStore | null>(
-    context.linkDetailStore ||
+  const linkStore = $derived.by<CombinedStore | null>(() => {
+    return (
+      context.linkDetailStore ||
       context.userLinkStore ||
       context.linkCreationStore ||
-      null,
-  );
+      null
+    );
+  });
 
-  const isLoading = $derived(() => {
+  const isLoading = $derived.by(() => {
     if (!linkStore) return !context.hasTempLinkLoadAttempted;
     if ("query" in linkStore && linkStore.query) {
       return linkStore.query.isLoading;
@@ -38,7 +40,7 @@
     return false;
   });
 
-  const hasLink = $derived(() => {
+  const hasLink = $derived.by(() => {
     if (!linkStore) return false;
     if (context.linkCreationStore) return true;
     // Check UserLinkStore first (has linkDetail)
@@ -55,18 +57,30 @@
     return false;
   });
 
-  const isValid = $derived(
-    !linkStore ? false : isLoading() ? false : hasLink(),
-  );
+  const isValid = $derived.by(() => {
+    if (!linkStore) return false;
+    if (isLoading) return false;
+    return hasLink;
+  });
 
-  const isReadyToCheck = $derived(!isLoading() && linkStore !== null);
+  const isReadyToCheck = $derived.by(() => {
+    return !isLoading && linkStore !== null;
+  });
 
-  const shouldRedirect = $derived(
-    (isReadyToCheck && !hasLink()) ||
-      (context.authState.isReady &&
-        context.hasTempLinkLoadAttempted &&
-        !linkStore),
-  );
+  const shouldRedirect = $derived.by(() => {
+    // Ready to check and no valid link found
+    if (isReadyToCheck && !hasLink) {
+      return true;
+    }
+
+    // Auth is ready, temp link load attempted, but no store exists
+    const tempLinkLoadFailed =
+      context.authState.isReady &&
+      context.hasTempLinkLoadAttempted &&
+      !linkStore;
+
+    return tempLinkLoadFailed;
+  });
 
   $effect(() => {
     if (shouldRedirect) {
@@ -77,7 +91,7 @@
   });
 </script>
 
-{#if isLoading()}
+{#if isLoading}
   <ProtectionProcessingState message="Loading..." />
 {:else if isValid}
   {@render children()}
