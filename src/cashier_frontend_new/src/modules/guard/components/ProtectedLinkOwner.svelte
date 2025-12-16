@@ -22,14 +22,16 @@
 
   type CombinedStore = LinkDetailStore | UserLinkStore | LinkCreationStore;
 
-  const linkStore = $derived<CombinedStore | null>(
-    context.linkDetailStore ||
+  const linkStore = $derived.by<CombinedStore | null>(() => {
+    return (
+      context.linkDetailStore ||
       context.userLinkStore ||
       context.linkCreationStore ||
-      null,
-  );
+      null
+    );
+  });
 
-  const link = $derived(() => {
+  const link = $derived.by(() => {
     if (!linkStore) return null;
     if ("link" in linkStore && linkStore.link) {
       return linkStore.link;
@@ -40,15 +42,18 @@
     return null;
   });
 
-  const isOwner = $derived(
-    context.linkCreationStore
-      ? true
-      : link()?.creator != null &&
-          context.authState.account?.owner != null &&
-          link()!.creator.toString() === context.authState.account.owner,
-  );
+  const isOwner = $derived.by(() => {
+    if (context.linkCreationStore) {
+      return true;
+    }
+    return (
+      link?.creator != null &&
+      context.authState.account?.owner != null &&
+      link.creator.toString() === context.authState.account.owner
+    );
+  });
 
-  const isLoading = $derived(() => {
+  const isLoading = $derived.by(() => {
     if (!linkStore) return false;
     if ("query" in linkStore && linkStore.query) {
       return linkStore.query.isLoading;
@@ -59,15 +64,22 @@
     return false;
   });
 
-  const isReady = $derived(
-    !context.authState.isReady || !linkStore
-      ? false
-      : context.linkCreationStore
-        ? true
-        : !isLoading(),
-  );
+  const isReady = $derived.by(() => {
+    if (!context.authState.isReady || !linkStore) {
+      return false;
+    }
+    if (context.linkCreationStore) {
+      return true;
+    }
+    return !isLoading;
+  });
 
-  const shouldShow = $derived(isReady && (mustBeOwner ? isOwner : !isOwner));
+  const shouldShow = $derived.by(() => {
+    if (!isReady) {
+      return false;
+    }
+    return mustBeOwner ? isOwner : !isOwner;
+  });
 
   $effect(() => {
     if (isReady) {
