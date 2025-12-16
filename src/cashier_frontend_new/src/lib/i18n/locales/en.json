@@ -215,6 +215,7 @@
         "usageInfo": "Usage info",
         "assetsInLink": "Assets in link",
         "withdrawAssets": "Withdraw assets",
+        "shareLink": "Share your link",
         "messages": {
           "linkEndedSuccess": "Link ended successfully.",
           "failedToEndLink": "Failed to end link.",
@@ -251,7 +252,7 @@
         "noAssets": "No assets",
         "loading": "Loading...",
         "claimButton": "Claim",
-        "loginToContinue": "Login to Continue",
+        "continueButton": "Continue",
         "completed": {
           "title": "Completed",
           "message": "Congratulations, you received a tip!",
