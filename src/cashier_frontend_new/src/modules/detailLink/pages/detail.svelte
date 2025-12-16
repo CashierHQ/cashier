@@ -38,6 +38,7 @@
     DialogDescription,
     DialogPortal,
   } from "$lib/shadcn/components/ui/dialog";
+  import ShareLinkSection from "$modules/creationLink/components/previewSections/ShareLinkSection.svelte";
 
   //let { linkStore }: { linkStore: LinkDetailStore } = $props();
   let {
@@ -193,9 +194,11 @@
     showFeeInfoDescriptionDrawer = true;
   }
 
+  const link = $derived(`${window.location.origin}/link/${linkStore.link?.id}`);
+
   async function copyLink(closeDialog?: boolean) {
     try {
-      const linkUrl = `${window.location.origin}/link/${linkStore.link?.id}`;
+      const linkUrl = link;
       await navigator.clipboard.writeText(linkUrl);
       showCopied = true;
       toast.success(locale.t("links.linkForm.detail.copied"));
@@ -403,6 +406,9 @@
         onInfoClick={handleFeeInfoClick}
         onBreakdownClick={handleFeeBreakdownClick}
       />
+
+      <!-- Block 5: Share Link -->
+      <ShareLinkSection {link} />
     {/if}
 
     <div
