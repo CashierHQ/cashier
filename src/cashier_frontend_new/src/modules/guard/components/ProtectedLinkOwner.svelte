@@ -20,7 +20,9 @@
 
   const context = getGuardContext();
 
-  const linkStore = $derived.by<LinkDetailStore | UserLinkStore | LinkCreationStore | null>(() => {
+  const linkStore = $derived.by<
+    LinkDetailStore | UserLinkStore | LinkCreationStore | null
+  >(() => {
     return (
       context.linkDetailStore ||
       context.userLinkStore ||
