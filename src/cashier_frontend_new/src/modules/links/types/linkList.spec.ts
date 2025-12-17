@@ -53,8 +53,6 @@ describe("UnifiedLinkItemMapper", () => {
 
     const mapped = UnifiedLinkItemMapper.fromTempLink(tempLink);
 
-    console.log(mapped);
-
     expect(mapped).toEqual({
       id: "t-1",
       title: "Temp Title",

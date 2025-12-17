@@ -84,7 +84,6 @@ export class IcrcLedgerService {
       created_at_time: [],
       from_subaccount: [],
     });
-    console.log("Transfer result:", result);
 
     if ("Err" in result) {
       throw parseIcrcTransferResultError(result.Err);
