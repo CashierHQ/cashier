@@ -16,55 +16,22 @@
 
   const context = getGuardContext();
 
-  const linkStore = $derived.by(() => {
-    return context.getLinkStore()
-  });
+  const linkStore = $derived(context.getLinkStore());
 
-  const isLoading = $derived.by(() => {
-    return context.isLoading({ checkTempLinkLoad: true });
-  });
+  const isLoading = $derived(context.isLoading({ checkTempLinkLoad: true }));
 
-  const hasLink = $derived.by(() => {
-    if (!linkStore) return false;
-    if (context.linkCreationStore) return true;
-    // Check UserLinkStore first (has linkDetail)
-    if ("linkDetail" in linkStore) {
-      const store = linkStore as UserLinkStore;
-      return (
-        store.linkDetail?.link !== null && store.linkDetail?.link !== undefined
-      );
-    }
-    // LinkDetailStore and LinkCreationStore both have link
-    if ("link" in linkStore) {
-      return linkStore.link !== null && linkStore.link !== undefined;
-    }
-    return false;
-  });
+  const hasLink = $derived(context.hasLink());
 
-  const isValid = $derived.by(() => {
-    if (!linkStore) return false;
-    if (isLoading) return false;
-    return hasLink;
-  });
+  const isValid = $derived(!linkStore ? false : isLoading ? false : hasLink);
 
-  const isReadyToCheck = $derived.by(() => {
-    return !isLoading && linkStore !== null;
-  });
+  const isReadyToCheck = $derived(!isLoading && linkStore !== null);
 
-  const shouldRedirect = $derived.by(() => {
-    // Ready to check and no valid link found
-    if (isReadyToCheck && !hasLink) {
-      return true;
-    }
-
-    // Auth is ready, temp link load attempted, but no store exists
-    const tempLinkLoadFailed =
-      context.authState.isReady &&
-      context.hasTempLinkLoadAttempted &&
-      !linkStore;
-
-    return tempLinkLoadFailed;
-  });
+  const shouldRedirect = $derived(
+    (isReadyToCheck && !hasLink) ||
+      (context.authState.isReady &&
+        context.hasTempLinkLoadAttempted &&
+        !linkStore),
+  );
 
   $effect(() => {
     if (shouldRedirect) {
