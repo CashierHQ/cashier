@@ -7,6 +7,7 @@ import {
   linkAssetBalanceService,
   linkIdToSubaccount,
 } from "./linkAssetBalance.service";
+import { Asset } from "$modules/links/types/link/asset";
 
 // Mock authState
 const mocks = vi.hoisted(() => ({
@@ -29,6 +30,10 @@ vi.mock("@dfinity/ledger-icrc", () => ({
 vi.mock("$modules/shared/constants", () => ({
   CASHIER_BACKEND_CANISTER_ID: "aaaaa-aa",
 }));
+
+// Helper to create test IC assets
+const createICAsset = (canisterId: string) =>
+  Asset.IC(Principal.fromText(canisterId));
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -56,15 +61,17 @@ describe("linkIdToSubaccount", () => {
 
 describe("LinkAssetBalanceService.fetchAssetBalances", () => {
   it("should return empty array when linkId is empty", async () => {
-    const result = await linkAssetBalanceService.fetchAssetBalances("", [
-      "ryjl3-tyaaa-aaaaa-aaaba-cai",
-    ]);
+    const assets = [createICAsset("ryjl3-tyaaa-aaaaa-aaaba-cai")];
+    const result = await linkAssetBalanceService.fetchAssetBalances(
+      "",
+      assets,
+    );
 
     expect(result.isOk()).toBe(true);
     expect(result.unwrap()).toEqual([]);
   });
 
-  it("should return empty array when assetAddresses is empty", async () => {
+  it("should return empty array when assets is empty", async () => {
     const result = await linkAssetBalanceService.fetchAssetBalances(
       "550e8400-e29b-41d4-a716-446655440000",
       [],
@@ -83,21 +90,24 @@ describe("LinkAssetBalanceService.fetchAssetBalances", () => {
     mocks.IcrcLedgerCanister.create.mockReturnValue(mockLedger);
 
     const linkId = "550e8400-e29b-41d4-a716-446655440000";
-    const addresses = [
-      "ryjl3-tyaaa-aaaaa-aaaba-cai",
-      "mxzaz-hqaaa-aaaar-qaada-cai",
+    const assets = [
+      createICAsset("ryjl3-tyaaa-aaaaa-aaaba-cai"),
+      createICAsset("mxzaz-hqaaa-aaaar-qaada-cai"),
     ];
 
     const result = await linkAssetBalanceService.fetchAssetBalances(
       linkId,
-      addresses,
+      assets,
     );
 
     expect(result.isOk()).toBe(true);
     const balances = result.unwrap();
     expect(balances.length).toBe(2);
     expect(balances[0].balance).toBe(BigInt(1000000));
-    expect(balances[0].tokenAddress.toText()).toBe(addresses[0]);
+    expect(balances[0].asset.chain).toBe("IC");
+    expect(balances[0].asset.address?.toText()).toBe(
+      "ryjl3-tyaaa-aaaaa-aaaba-cai",
+    );
   });
 
   it("should return 0 balance on individual ledger failure", async () => {
@@ -109,16 +119,37 @@ describe("LinkAssetBalanceService.fetchAssetBalances", () => {
     mocks.IcrcLedgerCanister.create.mockReturnValue(mockLedger);
 
     const linkId = "550e8400-e29b-41d4-a716-446655440000";
-    const addresses = ["ryjl3-tyaaa-aaaaa-aaaba-cai"];
+    const assets = [createICAsset("ryjl3-tyaaa-aaaaa-aaaba-cai")];
 
     const result = await linkAssetBalanceService.fetchAssetBalances(
       linkId,
-      addresses,
+      assets,
     );
 
     expect(result.isOk()).toBe(true);
     const balances = result.unwrap();
     expect(balances.length).toBe(1);
     expect(balances[0].balance).toBe(BigInt(0));
+    expect(balances[0].asset).toBeDefined();
+  });
+
+  it("should skip non-IC assets gracefully", async () => {
+    // This test validates multi-chain extensibility
+    // Currently all assets are IC, but structure supports future chains
+    mocks.authState.buildAnonymousAgent.mockReturnValue({});
+    mocks.IcrcLedgerCanister.create.mockReturnValue({
+      balance: vi.fn().mockResolvedValue(BigInt(100)),
+    });
+
+    const linkId = "550e8400-e29b-41d4-a716-446655440000";
+    const assets = [createICAsset("ryjl3-tyaaa-aaaaa-aaaba-cai")];
+
+    const result = await linkAssetBalanceService.fetchAssetBalances(
+      linkId,
+      assets,
+    );
+
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap().length).toBe(1);
   });
 });

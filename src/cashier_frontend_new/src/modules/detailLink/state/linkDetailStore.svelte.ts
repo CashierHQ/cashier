@@ -2,6 +2,8 @@ import { managedState } from "$lib/managedState";
 import { assertUnreachable } from "$lib/rsMatch";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { detailLinkService } from "$modules/detailLink/services/detailLink";
+import { linkAssetBalanceService } from "$modules/detailLink/services/linkAssetBalance.service";
+import type { AssetBalance } from "$modules/detailLink/types/balanceTypes";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
 import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
@@ -18,6 +20,7 @@ import { LinkInactiveState } from "./linkDetailStates/inactive";
  */
 export class LinkDetailStore {
   #linkDetailQuery;
+  #balancesQuery;
   #id: string;
 
   constructor({ id }: { id: string }) {
@@ -34,6 +37,22 @@ export class LinkDetailStore {
         return linkDetail.value;
       },
       watch: true,
+    });
+
+    // Balance query - refetches when link data changes
+    this.#balancesQuery = managedState<AssetBalance[]>({
+      queryFn: async () => {
+        const link = this.link;
+        if (!link) return [];
+        const assets = link.asset_info.map((info) => info.asset);
+        const result = await linkAssetBalanceService.fetchAssetBalances(
+          this.#id,
+          assets,
+        );
+        if (result.isErr()) throw result.error;
+        return result.value;
+      },
+      watch: () => this.link,
     });
   }
 
@@ -90,6 +109,41 @@ export class LinkDetailStore {
    */
   get id() {
     return this.#id;
+  }
+
+  /**
+   * Get balances query for direct access to loading/error states
+   */
+  get balancesQuery() {
+    return this.#balancesQuery;
+  }
+
+  /**
+   * Get asset balances for the link
+   */
+  get balances(): AssetBalance[] {
+    return this.#balancesQuery.data ?? [];
+  }
+
+  /**
+   * Check if balances are loading
+   */
+  get balancesLoading(): boolean {
+    return this.#balancesQuery.isLoading;
+  }
+
+  /**
+   * Get balance fetch error if any
+   */
+  get balancesError(): unknown {
+    return this.#balancesQuery.error;
+  }
+
+  /**
+   * Refresh asset balances
+   */
+  refreshBalances(): void {
+    this.#balancesQuery.refresh();
   }
 
   /**
