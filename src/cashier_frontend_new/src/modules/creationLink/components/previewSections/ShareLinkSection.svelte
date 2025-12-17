@@ -51,7 +51,7 @@
   <button type="button" class="w-full" onclick={toggleAccordion}>
     <div class="flex items-center w-full justify-between mb-2">
       <Label class="font-medium text-sm cursor-pointer">
-        {locale.t("links.linkForm.detail.shareLink") || "Share your link"}
+        {locale.t("links.linkForm.detail.shareLink")}
       </Label>
       <div
         class="transition-transform duration-300 ease-in-out"
