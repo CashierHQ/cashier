@@ -1,4 +1,3 @@
-
 <script lang="ts">
   import type { AssetBalance } from "$modules/detailLink/types/balanceTypes";
 
