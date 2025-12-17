@@ -3,6 +3,7 @@ import {
   formatNumber,
   formatTokenPrice,
   formatUsdAmount,
+  formatFeeAmount,
 } from "./formatNumber";
 
 describe("formatNumber", () => {
@@ -112,21 +113,26 @@ describe("formatTokenPrice", () => {
 });
 
 describe("formatUsdAmount", () => {
-  it("formats numbers without trailing zeros", () => {
+  it("formats numbers with max 2 decimal places, removing trailing zeros", () => {
     expect(formatUsdAmount(5)).toBe("5");
     expect(formatUsdAmount(5.0)).toBe("5");
     expect(formatUsdAmount(5.1)).toBe("5.1");
     expect(formatUsdAmount(5.12)).toBe("5.12");
-    expect(formatUsdAmount(5.123)).toBe("5.123");
-    expect(formatUsdAmount(5.1234)).toBe("5.1234");
+    expect(formatUsdAmount(5.123)).toBe("5.12"); // rounded to 2 decimals
+    expect(formatUsdAmount(5.1234)).toBe("5.12"); // rounded to 2 decimals
+    expect(formatUsdAmount(26.0)).toBe("26");
+    expect(formatUsdAmount(26.0)).toBe("26");
+    expect(formatUsdAmount(52.25985)).toBe("52.26");
   });
 
-  it("formats strings without trailing zeros", () => {
+  it("formats strings with max 2 decimal places, removing trailing zeros", () => {
     expect(formatUsdAmount("5")).toBe("5");
     expect(formatUsdAmount("5.0")).toBe("5");
     expect(formatUsdAmount("5.1000000")).toBe("5.1");
     expect(formatUsdAmount("5.1200000")).toBe("5.12");
-    expect(formatUsdAmount("5.1230000")).toBe("5.123");
+    expect(formatUsdAmount("5.1230000")).toBe("5.12"); // rounded to 2 decimals
+    expect(formatUsdAmount("26.00")).toBe("26");
+    expect(formatUsdAmount("52.25985")).toBe("52.26");
   });
 
   it("handles NaN", () => {
@@ -141,29 +147,113 @@ describe("formatUsdAmount", () => {
     expect(formatUsdAmount("0")).toBe("0");
   });
 
-  it("handles negative numbers", () => {
+  it("handles negative numbers with max 2 decimal places", () => {
     expect(formatUsdAmount(-5)).toBe("-5");
     expect(formatUsdAmount(-5.1)).toBe("-5.1");
     expect(formatUsdAmount(-5.12)).toBe("-5.12");
-    expect(formatUsdAmount("-5.123")).toBe("-5.123");
+    expect(formatUsdAmount("-5.123")).toBe("-5.12"); // rounded to 2 decimals
   });
 
-  it("preserves significant digits up to 7 decimal places", () => {
-    expect(formatUsdAmount(5.1234567)).toBe("5.1234567");
-    expect(formatUsdAmount(5.12345678)).toBe("5.1234568");
-    expect(formatUsdAmount(0.0000001)).toBe("0.0000001");
-    expect(formatUsdAmount(0.00000001)).toBe("0");
+  it("rounds to 2 decimal places (cents)", () => {
+    expect(formatUsdAmount(5.1234567)).toBe("5.12"); // rounded
+    expect(formatUsdAmount(5.12345678)).toBe("5.12"); // rounded
+    expect(formatUsdAmount(5.125)).toBe("5.13"); // rounded up
+    expect(formatUsdAmount(5.124)).toBe("5.12"); // rounded down
   });
 
-  it("handles large numbers", () => {
+  it("handles large numbers with max 2 decimal places", () => {
     expect(formatUsdAmount(1000000)).toBe("1000000");
     expect(formatUsdAmount(1000000.0)).toBe("1000000");
-    expect(formatUsdAmount(1000000.123)).toBe("1000000.123");
+    expect(formatUsdAmount(1000000.123)).toBe("1000000.12"); // rounded to 2 decimals
   });
 
-  it("handles very small numbers", () => {
-    expect(formatUsdAmount(0.0000001)).toBe("0.0000001");
-    expect(formatUsdAmount(0.00000001)).toBe("0");
-    expect(formatUsdAmount(0.000001)).toBe("0.000001");
+  it("handles very small numbers, rounding to 2 decimals or showing 0", () => {
+    expect(formatUsdAmount(0.001)).toBe("0"); // rounds to 0.00 -> "0"
+    expect(formatUsdAmount(0.01)).toBe("0.01");
+    expect(formatUsdAmount(0.005)).toBe("0.01"); // rounds up
+    expect(formatUsdAmount(0.004)).toBe("0"); // rounds down to 0.00 -> "0"
+  });
+});
+
+describe("formatFeeAmount", () => {
+  it("formats small fees (< 0.02) with 4 decimal places", () => {
+    expect(formatFeeAmount(0.001)).toBe("0.001");
+    expect(formatFeeAmount(0.0012)).toBe("0.0012");
+    expect(formatFeeAmount(0.00123)).toBe("0.0012");
+    expect(formatFeeAmount(0.001234)).toBe("0.0012");
+    expect(formatFeeAmount(0.0012345)).toBe("0.0012"); // rounded to 4 decimals
+    expect(formatFeeAmount(0.01)).toBe("0.01");
+    expect(formatFeeAmount(0.015)).toBe("0.015");
+    expect(formatFeeAmount(0.0156)).toBe("0.0156");
+    expect(formatFeeAmount(0.01567)).toBe("0.0157"); // rounded to 4 decimals
+    expect(formatFeeAmount(0.01999)).toBe("0.02"); // rounded to 4 decimals, but >= 0.02 threshold
+  });
+
+  it("formats larger fees (>= 0.02) with 2 decimal places like formatUsdAmount", () => {
+    expect(formatFeeAmount(0.02)).toBe("0.02");
+    expect(formatFeeAmount(0.021)).toBe("0.02");
+    expect(formatFeeAmount(0.025)).toBe("0.03"); // rounded to 2 decimals
+    expect(formatFeeAmount(0.1)).toBe("0.1");
+    expect(formatFeeAmount(0.12)).toBe("0.12");
+    expect(formatFeeAmount(5)).toBe("5");
+    expect(formatFeeAmount(5.1)).toBe("5.1");
+    expect(formatFeeAmount(5.12)).toBe("5.12");
+    expect(formatFeeAmount(5.123)).toBe("5.12"); // rounded to 2 decimals
+    expect(formatFeeAmount(52.25985)).toBe("52.26");
+  });
+
+  it("formats strings with adaptive decimal places", () => {
+    expect(formatFeeAmount("0.001")).toBe("0.001");
+    expect(formatFeeAmount("0.001234")).toBe("0.0012");
+    expect(formatFeeAmount("0.02")).toBe("0.02");
+    expect(formatFeeAmount("5.123")).toBe("5.12");
+    expect(formatFeeAmount("52.25985")).toBe("52.26");
+  });
+
+  it("handles NaN", () => {
+    expect(formatFeeAmount(NaN)).toBe("0");
+    expect(formatFeeAmount("invalid")).toBe("0");
+    expect(formatFeeAmount("")).toBe("0");
+  });
+
+  it("handles zero", () => {
+    expect(formatFeeAmount(0)).toBe("0");
+    expect(formatFeeAmount(0.0)).toBe("0");
+    expect(formatFeeAmount("0")).toBe("0");
+  });
+
+  it("handles negative numbers with adaptive decimal places", () => {
+    expect(formatFeeAmount(-0.001)).toBe("-0.001");
+    expect(formatFeeAmount(-0.0012)).toBe("-0.0012");
+    expect(formatFeeAmount(-0.01567)).toBe("-0.0157");
+    expect(formatFeeAmount(-0.02)).toBe("-0.02");
+    expect(formatFeeAmount(-5.123)).toBe("-5.12");
+  });
+
+  it("rounds small amounts to 4 decimal places", () => {
+    expect(formatFeeAmount(0.0012345)).toBe("0.0012"); // rounded
+    expect(formatFeeAmount(0.00123456)).toBe("0.0012"); // rounded
+    expect(formatFeeAmount(0.00125)).toBe("0.0013"); // rounded up
+    expect(formatFeeAmount(0.00124)).toBe("0.0012"); // rounded down
+    expect(formatFeeAmount(0.015678)).toBe("0.0157"); // rounded up
+  });
+
+  it("handles boundary value at 0.02 threshold", () => {
+    expect(formatFeeAmount(0.01999)).toBe("0.02"); // rounds to 0.02, which is >= threshold
+    expect(formatFeeAmount(0.0199)).toBe("0.0199"); // < 0.02, shows 4 decimals
+    expect(formatFeeAmount(0.02)).toBe("0.02"); // exactly at threshold
+    expect(formatFeeAmount(0.02001)).toBe("0.02"); // just above threshold
+  });
+
+  it("handles very small amounts that round to zero", () => {
+    expect(formatFeeAmount(0.00001)).toBe("0");
+    expect(formatFeeAmount(0.00005)).toBe("0.0001"); // rounds up
+    expect(formatFeeAmount(0.00004)).toBe("0"); // rounds down to 0
+  });
+
+  it("handles large numbers with 2 decimal places", () => {
+    expect(formatFeeAmount(1000000)).toBe("1000000");
+    expect(formatFeeAmount(1000000.0)).toBe("1000000");
+    expect(formatFeeAmount(1000000.123)).toBe("1000000.12"); // rounded to 2 decimals
   });
 });

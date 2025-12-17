@@ -1,6 +1,9 @@
 <script lang="ts">
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
-  import { formatTokenPrice } from "$modules/shared/utils/formatNumber";
+  import {
+    formatTokenPrice,
+    formatUsdAmount,
+  } from "$modules/shared/utils/formatNumber";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
 
@@ -37,7 +40,7 @@
       return "-";
     }
     const usdValue = parsedBalance * priceUSD;
-    return `$${usdValue.toFixed(2)}`;
+    return `~$${formatUsdAmount(usdValue)}`;
   }
 
   const tokenLogo = getTokenLogo(token.address);
