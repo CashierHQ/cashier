@@ -26,7 +26,6 @@
   import { page } from "$app/state";
   import {
     calculateFeesBreakdown,
-    calculateTotalFeesUsd,
     calculateAssetsWithTokenInfo,
   } from "$modules/links/utils/feesBreakdown";
   import {
@@ -154,11 +153,6 @@
     );
   });
 
-  // Calculate total fees in USD
-  const totalFeesUsd = $derived.by(() => {
-    return calculateTotalFeesUsd(feesBreakdown);
-  });
-
   // Transaction lock status based on link state
   // ACTIVE -> Unlock (can end link, copy link)
   // INACTIVE -> Lock (can withdraw)
@@ -184,14 +178,6 @@
   const isTransactionLockEnded = $derived.by(() => {
     return linkStore.link?.state === LinkState.INACTIVE_ENDED;
   });
-
-  function handleFeeBreakdownClick() {
-    showFeeInfoDrawer = true;
-  }
-
-  function handleFeeInfoClick() {
-    showFeeInfoDescriptionDrawer = true;
-  }
 
   const link = $derived(`${window.location.origin}/link/${linkStore.link?.id}`);
 
@@ -400,9 +386,6 @@
 
       <!-- Block 5: Usage Info -->
       <UsageInfoSection
-        {assetsWithTokenInfo}
-        {failedImageLoads}
-        onImageError={handleImageError}
         linkUseActionCounter={linkStore.link.link_use_action_counter}
         balances={linkStore.balances}
         balancesLoading={linkStore.balancesLoading}

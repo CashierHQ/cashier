@@ -62,10 +62,7 @@ describe("linkIdToSubaccount", () => {
 describe("LinkAssetBalanceService.fetchAssetBalances", () => {
   it("should return empty array when linkId is empty", async () => {
     const assets = [createICAsset("ryjl3-tyaaa-aaaaa-aaaba-cai")];
-    const result = await linkAssetBalanceService.fetchAssetBalances(
-      "",
-      assets,
-    );
+    const result = await linkAssetBalanceService.fetchAssetBalances("", assets);
 
     expect(result.isOk()).toBe(true);
     expect(result.unwrap()).toEqual([]);

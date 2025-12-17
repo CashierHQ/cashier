@@ -2,49 +2,26 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { locale } from "$lib/i18n";
   import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
-  import type { AssetWithTokenInfo } from "$modules/links/utils/feesBreakdown";
   import type { AssetBalance } from "$modules/detailLink/types/balanceTypes";
 
   type Props = {
-    assetsWithTokenInfo: AssetWithTokenInfo[];
-    failedImageLoads: Set<string>;
-    onImageError: (address: string) => void;
     linkUseActionCounter: bigint;
     balances: AssetBalance[];
     balancesLoading: boolean;
   };
 
-  let {
-    assetsWithTokenInfo,
-    failedImageLoads,
-    onImageError,
-    linkUseActionCounter,
-    balances,
-    balancesLoading,
-  }: Props = $props();
+  let { linkUseActionCounter, balances, balancesLoading }: Props = $props();
 
-  // Create balance map for efficient O(1) lookup by address
-  const balanceMap = $derived.by(() => {
-    const map = new Map<string, string>();
-    for (const b of balances) {
-      if (b.asset.address) {
-        map.set(b.asset.address.toString(), b.formattedBalance);
-      }
-    }
-    return map;
-  });
+  // Track failed image loads
+  let failedImageLoads = $state<Set<string>>(new Set());
 
-  // Get formatted balance for an asset
-  function getFormattedBalance(address: string): string {
-    return balanceMap.get(address) ?? "-";
+  function handleImageError(address: string) {
+    failedImageLoads.add(address);
   }
 
-  // Calculate total USD value of all assets
+  // Calculate total USD value from balances
   const totalUsdValue = $derived.by(() => {
-    return assetsWithTokenInfo.reduce(
-      (total, asset) => total + asset.usdValue,
-      0,
-    );
+    return balances.reduce((total, b) => total + b.usdValue, 0);
   });
 </script>
 
@@ -60,29 +37,28 @@
         {locale.t("links.linkForm.detail.assetsInLink")}
       </p>
       <div class="flex flex-col items-end gap-2">
-        {#if assetsWithTokenInfo.length > 0}
-          {#each assetsWithTokenInfo as asset (asset.address)}
+        {#if balancesLoading}
+          <div class="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+        {:else if balances.length > 0}
+          {#each balances as balance (balance.asset.address?.toString())}
+            {@const address = balance.asset.address?.toString() ?? ""}
             <div class="flex items-center gap-2">
-              {#if balancesLoading}
-                <div class="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
-              {:else}
-                <p class="text-sm">
-                  {getFormattedBalance(asset.address)}
-                  {asset.token.symbol}
-                </p>
-              {/if}
-              {#if !failedImageLoads.has(asset.address)}
+              <p class="text-sm">
+                {balance.formattedBalance}
+                {balance.symbol}
+              </p>
+              {#if balance.logo && !failedImageLoads.has(address)}
                 <img
-                  src={asset.logo}
-                  alt={asset.token.symbol}
+                  src={balance.logo}
+                  alt={balance.symbol}
                   class="w-4 h-4 rounded-full"
-                  onerror={() => onImageError(asset.address)}
+                  onerror={() => handleImageError(address)}
                 />
               {:else}
                 <div
                   class="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center text-xs"
                 >
-                  {asset.token.symbol[0]?.toUpperCase() || "?"}
+                  {balance.symbol[0]?.toUpperCase() || "?"}
                 </div>
               {/if}
             </div>

@@ -13,6 +13,7 @@ import { type LinkAction } from "$modules/links/types/linkAndAction";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import { formatNumber } from "$modules/shared/utils/formatNumber";
+import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
 import type { LinkDetailState } from "./linkDetailStates";
 import { LinkActiveState } from "./linkDetailStates/active";
 import { LinkCreatedState } from "./linkDetailStates/created";
@@ -54,19 +55,38 @@ export class LinkDetailStore {
         );
         if (result.isErr()) throw result.error;
 
-        // Format balances with token decimals
-        return result.value.map((item) => {
+        // Enrich balances with token metadata
+        return result.value.map((item): AssetBalance => {
           const address = item.asset.address?.toString();
           if (!address) {
-            return { ...item, formattedBalance: "-" };
+            return {
+              ...item,
+              formattedBalance: "-",
+              symbol: "?",
+              logo: "",
+              usdValue: 0,
+            };
           }
           const tokenResult = walletStore.findTokenByAddress(address);
           if (tokenResult.isErr()) {
-            return { ...item, formattedBalance: "-" };
+            return {
+              ...item,
+              formattedBalance: "-",
+              symbol: "?",
+              logo: getTokenLogo(address),
+              usdValue: 0,
+            };
           }
           const token = tokenResult.value;
           const parsed = parseBalanceUnits(item.balance, token.decimals);
-          return { ...item, formattedBalance: formatNumber(parsed) };
+          const usdValue = token.priceUSD ? parsed * token.priceUSD : 0;
+          return {
+            ...item,
+            formattedBalance: formatNumber(parsed),
+            symbol: token.symbol,
+            logo: getTokenLogo(address),
+            usdValue,
+          };
         });
       },
       watch: () => this.link,
