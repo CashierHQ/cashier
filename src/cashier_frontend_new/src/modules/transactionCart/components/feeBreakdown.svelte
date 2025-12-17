@@ -2,7 +2,10 @@
   import { assertUnreachable } from "$lib/rsMatch";
   import { FeeType, type FeeItem } from "$modules/links/types/fee";
   import type { AssetAndFee } from "$modules/shared/types/feeService";
-  import { formatNumber } from "$modules/shared/utils/formatNumber";
+  import {
+    formatNumber,
+    formatUsdAmount,
+  } from "$modules/shared/utils/formatNumber";
 
   let {
     assetAndFeeList,
@@ -111,7 +114,7 @@
         </div>
       {/if}
       <div class="text-xs text-muted-foreground">
-        {`~$${formatNumber(totalUsd())}`}
+        {`~$${formatUsdAmount(totalUsd())}`}
       </div>
     </div>
   </div>

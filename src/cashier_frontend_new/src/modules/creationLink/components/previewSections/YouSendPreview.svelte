@@ -136,7 +136,7 @@
 
             {#if linkCreationFeeItem.fee.usdValueStr}
               <p class="text-[10px] font-normal text-[#b6b6b6]">
-                ~${parseFloat(linkCreationFeeItem.fee.usdValueStr)}
+                ~${formatUsdAmount(linkCreationFeeItem.fee.usdValueStr)}
               </p>
             {/if}
           </div>

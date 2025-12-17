@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { AssetAndFee } from "$modules/shared/types/feeService";
-  import { formatNumber } from "$modules/shared/utils/formatNumber";
+  import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
   import { ChevronRight } from "lucide-svelte";
   let {
     assetAndFeeList,
@@ -48,7 +48,7 @@
     <!-- Right: amount + chevron -->
     <div class="flex items-center gap-3 text-gray-700">
       <span class="text-base font-medium"
-        >{`~$${formatNumber(totalUsd())}`}</span
+        >{`~$${formatUsdAmount(totalUsd())}`}</span
       >
       <ChevronRight class="w-4 h-4" />
     </div>
