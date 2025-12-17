@@ -170,17 +170,13 @@ export const formatUsdAmount = (amount: number | string): string => {
  * @param amount - fee amount in USD as number or string
  * @returns formatted fee string with appropriate decimal places, without trailing zeros
  */
-export const formatFeeAmount = (amount: number | string): string => {
-  const num = typeof amount === "string" ? parseFloat(amount) : amount;
-
-  if (isNaN(num)) return "0";
-
+export const formatFeeAmount = (amount: number): string => {
   // For amounts less than 0.02, use 4 decimal places
-  if (Math.abs(num) < 0.02) {
-    const rounded = Math.round(num * 10000) / 10000;
+  if (Math.abs(amount) < 0.02) {
+    const rounded = Math.round(amount * 10000) / 10000;
     return rounded.toFixed(4).replace(/\.?0+$/, "");
   }
 
   // For amounts >= 0.02, use standard formatUsdAmount (2 decimal places)
-  return formatUsdAmount(num);
+  return formatUsdAmount(amount);
 };
