@@ -133,23 +133,50 @@ export const formatTokenPrice = (price: number): string => {
 };
 
 /**
- * Format USD amount with automatic trailing zero removal.
- * Rounds to whole number if possible, then to tenths, hundredths, etc.
+ * Format USD amount with exactly 2 decimal places (cents), removing ".00" for whole numbers.
  * Examples:
  * - 5.0000000 -> "5"
  * - 5.1000000 -> "5.1"
  * - 5.1200000 -> "5.12"
- * - 5.1230000 -> "5.123"
+ * - 5.1230000 -> "5.12" (rounded to 2 decimals)
+ * - 26.00 -> "26"
+ * - 52.25985 -> "52.26"
  *
  * @param amount - USD amount as number or string
- * @returns formatted USD string without trailing zeros
+ * @returns formatted USD string with max 2 decimal places, without trailing zeros
  */
 export const formatUsdAmount = (amount: number | string): string => {
   const num = typeof amount === "string" ? parseFloat(amount) : amount;
 
   if (isNaN(num)) return "0";
 
-  // Convert to string with enough decimal places (up to 7), then remove trailing zeros
-  // This ensures we capture all significant digits before removing zeros
-  return num.toFixed(7).replace(/\.?0+$/, "");
+  // Round to 2 decimal places (cents) and format
+  const rounded = Math.round(num * 100) / 100;
+
+  // Format with 2 decimal places, then remove trailing zeros and decimal point if needed
+  return rounded.toFixed(2).replace(/\.?0+$/, "");
+};
+
+/**
+ * Format fee amount with adaptive decimal places based on value.
+ * For small fees (< 0.02), shows 4 decimal places to display very small amounts.
+ * For larger fees (>= 0.02), uses standard 2 decimal places format.
+ * Examples:
+ * - 0.001234 -> "0.0012" (4 decimals for small amounts)
+ * - 0.015678 -> "0.0157" (4 decimals for small amounts)
+ * - 0.02 -> "0.02" (2 decimals for larger amounts)
+ * - 5.12 -> "5.12" (2 decimals for larger amounts)
+ *
+ * @param amount - fee amount in USD as number or string
+ * @returns formatted fee string with appropriate decimal places, without trailing zeros
+ */
+export const formatFeeAmount = (amount: number): string => {
+  // For amounts less than 0.02, use 4 decimal places
+  if (Math.abs(amount) < 0.02) {
+    const rounded = Math.round(amount * 10000) / 10000;
+    return rounded.toFixed(4).replace(/\.?0+$/, "");
+  }
+
+  // For amounts >= 0.02, use standard formatUsdAmount (2 decimal places)
+  return formatUsdAmount(amount);
 };

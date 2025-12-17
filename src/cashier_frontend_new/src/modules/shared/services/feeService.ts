@@ -2,7 +2,10 @@ import Action from "$modules/links/types/action/action";
 import { ActionType } from "$modules/links/types/action/actionType";
 import IntentTask from "$modules/links/types/action/intentTask";
 import type { IntentStateValue } from "$modules/links/types/action/intentState";
-import { formatNumber } from "$modules/shared/utils/formatNumber";
+import {
+  formatNumber,
+  formatUsdAmount,
+} from "$modules/shared/utils/formatNumber";
 import {
   ICP_LEDGER_FEE,
   ICP_LEDGER_CANISTER_ID,
@@ -181,7 +184,7 @@ export class FeeService {
           amount: forecastAmountRaw,
           amountFormattedStr: formatNumber(forecastFeeAmount),
           usdValueStr: forecastFeeUsd
-            ? formatNumber(forecastFeeUsd)
+            ? formatUsdAmount(forecastFeeUsd)
             : undefined,
         };
 
@@ -193,7 +196,7 @@ export class FeeService {
             ? tokenFeeAmount * token.priceUSD
             : undefined;
           const feeUsdValueStr = feeUsdValue
-            ? formatNumber(feeUsdValue)
+            ? formatUsdAmount(feeUsdValue)
             : undefined;
 
           fee = {
@@ -284,7 +287,7 @@ export class FeeService {
             symbol: token.symbol,
             address: assetData.address,
             amount: formatNumber(totalAmountUi),
-            usdValueStr: totalUsd ? formatNumber(totalUsd) : undefined,
+            usdValueStr: totalUsd ? formatUsdAmount(totalUsd) : undefined,
           },
           fee: {
             amount: tokenFee,
@@ -293,7 +296,7 @@ export class FeeService {
             symbol: token.symbol,
             price: token.priceUSD,
             usdValue: feeUsd,
-            usdValueStr: feeUsd ? formatNumber(feeUsd) : undefined,
+            usdValueStr: feeUsd ? formatUsdAmount(feeUsd) : undefined,
           },
         });
       }
@@ -319,7 +322,7 @@ export class FeeService {
           symbol: linkFeeToken.symbol,
           address: linkFeeInfo.tokenAddress,
           amount: formatNumber(linkFeeFormatted),
-          usdValueStr: linkFeeUsd ? formatNumber(linkFeeUsd) : undefined,
+          usdValueStr: linkFeeUsd ? formatUsdAmount(linkFeeUsd) : undefined,
         },
         fee: {
           amount: linkCreationFeeTotal,
@@ -328,7 +331,7 @@ export class FeeService {
           symbol: linkFeeToken.symbol,
           price: linkFeeToken.priceUSD,
           usdValue: linkFeeUsd,
-          usdValueStr: linkFeeUsd ? formatNumber(linkFeeUsd) : undefined,
+          usdValueStr: linkFeeUsd ? formatUsdAmount(linkFeeUsd) : undefined,
         },
       });
     }
