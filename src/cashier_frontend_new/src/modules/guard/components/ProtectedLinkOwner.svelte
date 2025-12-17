@@ -17,34 +17,21 @@
 
   const context = getGuardContext();
 
-  const linkStore = $derived.by(() => {
-    return context.getLinkStore();
-  });
+  const linkStore = $derived(context.getLinkStore());
 
-  const isOwner = $derived.by(() => {
-    return context.isOwner();
-  });
+  const isOwner = $derived(context.isOwner());
 
-  const isLoading = $derived.by(() => {
-    return context.isLoading({ checkTempLinkLoad: false });
-  });
+  const isLoading = $derived(context.isLoading({ checkTempLinkLoad: false }));
 
-  const isReady = $derived.by(() => {
-    if (!context.authState.isReady || !linkStore) {
-      return false;
-    }
-    if (context.linkCreationStore) {
-      return true;
-    }
-    return !isLoading;
-  });
+  const isReady = $derived(
+    !context.authState.isReady || !linkStore
+      ? false
+      : context.linkCreationStore
+        ? true
+        : !isLoading,
+  );
 
-  const shouldShow = $derived.by(() => {
-    if (!isReady) {
-      return false;
-    }
-    return mustBeOwner ? isOwner : !isOwner;
-  });
+  const shouldShow = $derived(isReady && (mustBeOwner ? isOwner : !isOwner));
 
   $effect(() => {
     if (isReady) {
