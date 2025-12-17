@@ -83,7 +83,7 @@
       class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none h-[44px] px-4 w-full"
       onclick={openLoginModal}
     >
-      {locale.t("links.linkForm.useLink.loginToContinue")}
+      {locale.t("links.linkForm.useLink.continueButton")}
     </Button>
   </div>
 {/if}
