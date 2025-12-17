@@ -1,5 +1,5 @@
 import { ManagedState, managedState } from "$lib/managedState/managedState.svelte";
-import { TokenHistoryService } from "../services/tokenHistory";
+import { tokenHistoryService } from "../services/tokenHistory";
 import type { TokenTransaction, IcrcAccount } from "../types";
 
 /**
@@ -13,11 +13,9 @@ export function tokenHistoryQuery(
   account: IcrcAccount,
   options?: { staleTime?: number; maxResults?: bigint },
 ): ManagedState<TokenTransaction[]> {
-  const service = new TokenHistoryService(indexId);
-
   return managedState({
     queryFn: async () => {
-      const result = await service.getTransactions({
+      const result = await tokenHistoryService.getTransactions(indexId, {
         account,
         maxResults: options?.maxResults ?? BigInt(50),
       });
