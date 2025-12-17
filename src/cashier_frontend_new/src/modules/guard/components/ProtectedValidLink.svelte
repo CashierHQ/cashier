@@ -4,9 +4,7 @@
   import type { Snippet } from "svelte";
   import { getGuardContext } from "../context.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
-  import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
 
   let {
     redirectTo,
@@ -18,26 +16,12 @@
 
   const context = getGuardContext();
 
-  type CombinedStore = LinkDetailStore | UserLinkStore | LinkCreationStore;
-
-  const linkStore = $derived.by<CombinedStore | null>(() => {
-    return (
-      context.linkDetailStore ||
-      context.userLinkStore ||
-      context.linkCreationStore ||
-      null
-    );
+  const linkStore = $derived.by(() => {
+    return context.getLinkStore()
   });
 
   const isLoading = $derived.by(() => {
-    if (!linkStore) return !context.hasTempLinkLoadAttempted;
-    if ("query" in linkStore && linkStore.query) {
-      return linkStore.query.isLoading;
-    }
-    if ("linkDetail" in linkStore && linkStore.linkDetail?.query) {
-      return linkStore.linkDetail.query.isLoading;
-    }
-    return false;
+    return context.isLoading({ checkTempLinkLoad: true });
   });
 
   const hasLink = $derived.by(() => {

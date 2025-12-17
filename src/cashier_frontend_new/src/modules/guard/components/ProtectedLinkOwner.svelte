@@ -4,9 +4,6 @@
   import type { Snippet } from "svelte";
   import { getGuardContext } from "../context.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
-  import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
-  import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
 
   let {
     mustBeOwner = true,
@@ -20,48 +17,16 @@
 
   const context = getGuardContext();
 
-  const linkStore = $derived.by<
-    LinkDetailStore | UserLinkStore | LinkCreationStore | null
-  >(() => {
-    return (
-      context.linkDetailStore ||
-      context.userLinkStore ||
-      context.linkCreationStore ||
-      null
-    );
-  });
-
-  const link = $derived.by(() => {
-    if (!linkStore) return null;
-    if ("link" in linkStore && linkStore.link) {
-      return linkStore.link;
-    }
-    if ("linkDetail" in linkStore && linkStore.linkDetail?.link) {
-      return linkStore.linkDetail.link;
-    }
-    return null;
+  const linkStore = $derived.by(() => {
+    return context.getLinkStore()
   });
 
   const isOwner = $derived.by(() => {
-    if (context.linkCreationStore) {
-      return true;
-    }
-    return (
-      link?.creator != null &&
-      context.authState.account?.owner != null &&
-      link.creator.toString() === context.authState.account.owner
-    );
+    return context.isOwner();
   });
 
   const isLoading = $derived.by(() => {
-    if (!linkStore) return false;
-    if ("query" in linkStore && linkStore.query) {
-      return linkStore.query.isLoading;
-    }
-    if ("linkDetail" in linkStore && linkStore.linkDetail?.query) {
-      return linkStore.linkDetail.query.isLoading;
-    }
-    return false;
+    return context.isLoading({ checkTempLinkLoad: false });
   });
 
   const isReady = $derived.by(() => {

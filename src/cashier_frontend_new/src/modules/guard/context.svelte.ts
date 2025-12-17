@@ -13,7 +13,9 @@ export class GuardContext {
   linkDetailStore = $state<LinkDetailStore | null>(null);
   userLinkStore = $state<UserLinkStore | null>(null);
   linkCreationStore = $state<LinkCreationStore | null>(null);
+  // Indicates whether the guard check process has completed
   isGuardCheckComplete = $state(false);
+  // Indicates whether an attempt to load a temporary link has been made
   hasTempLinkLoadAttempted = $state(false);
 
   constructor(config?: {
@@ -50,6 +52,76 @@ export class GuardContext {
 
   setHasTempLinkLoadAttempted(attempted: boolean) {
     this.hasTempLinkLoadAttempted = attempted;
+  }
+
+  /**
+   * Get the first available link store
+   * @returns LinkDetailStore | UserLinkStore | LinkCreationStore | null
+   */
+  getLinkStore() {
+    return (
+      this.linkDetailStore ||
+      this.userLinkStore ||
+      this.linkCreationStore ||
+      null
+    );
+  }
+
+  /**
+   * Get the link from the first available link store
+   * @returns Link | undefined
+   */
+  getLink() {
+    if (this.linkDetailStore) {
+      return this.linkDetailStore.link;
+    }
+    if (this.userLinkStore) {
+      return this.userLinkStore.link;
+    }
+    if (this.linkCreationStore) {
+      return this.linkCreationStore.link;
+    }
+    return undefined;
+  }
+
+  /**
+   * Check if any link store is loading
+   * @param options - Configuration options
+   * @param options.checkTempLinkLoad - If true, returns !hasTempLinkLoadAttempted when no store exists. If false, returns false.
+   * @returns boolean
+   */
+  isLoading(options?: { checkTempLinkLoad?: boolean }) {
+    const checkTempLinkLoad = options?.checkTempLinkLoad ?? true;
+
+    if (this.linkDetailStore) {
+      return this.linkDetailStore.query.isLoading;
+    }
+
+    if (this.userLinkStore) {
+      return this.userLinkStore.linkDetail?.query?.isLoading ?? false;
+    }
+
+    if (this.linkCreationStore) {
+      return checkTempLinkLoad ? !this.hasTempLinkLoadAttempted : false;
+    }
+
+    // No store exists
+    return checkTempLinkLoad ? !this.hasTempLinkLoadAttempted : false;
+  }
+
+  /**
+   * Check if the current user is the owner of the link
+   * @returns boolean
+   */
+  isOwner() {
+    // always return if link creation store exists
+    if (this.linkCreationStore) return true;
+
+    // else check ownership for other stores
+    if (!this.authState.account) return false;
+    const link = this.getLink();
+    if (!link?.creator) return false;
+    return link.creator.toString() === this.authState.account.owner;
   }
 }
 
