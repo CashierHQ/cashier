@@ -39,6 +39,7 @@
     DialogPortal,
   } from "$lib/shadcn/components/ui/dialog";
   import ShareLinkSection from "$modules/creationLink/components/previewSections/ShareLinkSection.svelte";
+  import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
 
   //let { linkStore }: { linkStore: LinkDetailStore } = $props();
   let {
@@ -407,7 +408,15 @@
         onBreakdownClick={handleFeeBreakdownClick}
       />
 
-      <!-- Block 5: Share Link -->
+      <!-- Block 5: Usage Info -->
+      <UsageInfoSection
+        {assetsWithTokenInfo}
+        {failedImageLoads}
+        onImageError={handleImageError}
+        linkUseActionCounter={linkStore.link.link_use_action_counter}
+      />
+
+      <!-- Block 6: Share Link -->
       <ShareLinkSection {link} />
     {/if}
 
