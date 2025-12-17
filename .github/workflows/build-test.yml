@@ -7,7 +7,7 @@ on:
     paths-ignore:
       - "**/README.md"
   push:
-    branches: [main, dev, staging, feature/github-action]
+    branches: [main, dev, staging]
     tags:
       - "v*"
     paths-ignore:
