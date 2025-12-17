@@ -123,6 +123,32 @@ export class GuardContext {
     if (!link?.creator) return false;
     return link.creator.toString() === this.authState.account.owner;
   }
+
+  /**
+   * Check if a link exists in the current link store
+   * @returns boolean
+   */
+  hasLink() {
+    const store = this.getLinkStore();
+    if (!store) return false;
+
+    if (this.linkCreationStore) return true;
+
+    if (this.linkDetailStore) {
+      return (
+        this.linkDetailStore.link !== null &&
+        this.linkDetailStore.link !== undefined
+      );
+    }
+
+    if (this.userLinkStore) {
+      return (
+        this.userLinkStore.link !== null &&
+        this.userLinkStore.link !== undefined
+      );
+    }
+    return false;
+  }
 }
 
 export function setGuardContext(context: GuardContext): GuardContext {

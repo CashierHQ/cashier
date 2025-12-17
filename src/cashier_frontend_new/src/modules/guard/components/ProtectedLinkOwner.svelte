@@ -18,7 +18,7 @@
   const context = getGuardContext();
 
   const linkStore = $derived.by(() => {
-    return context.getLinkStore()
+    return context.getLinkStore();
   });
 
   const isOwner = $derived.by(() => {

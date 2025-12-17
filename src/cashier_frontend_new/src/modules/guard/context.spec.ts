@@ -34,7 +34,7 @@ describe("GuardContext", () => {
     mockAuthState.isLoggedIn = false;
     mockAuthState.account = null;
     mockUserProfile.isLoggedIn = () => false;
-    
+
     context = new GuardContext();
   });
 
@@ -48,21 +48,24 @@ describe("GuardContext", () => {
     });
 
     it("should initialize with provided linkDetailStore", () => {
-      const mockStore = { link: null, query: { isLoading: false } } as unknown as LinkDetailStore;
+      const mockStore = {
+        link: null,
+        query: { isLoading: false },
+      } as unknown as LinkDetailStore;
       const ctx = new GuardContext({ linkDetailStore: mockStore });
-      
+
       expect(ctx.linkDetailStore).toBe(mockStore);
       expect(ctx.userLinkStore).toBeNull();
       expect(ctx.linkCreationStore).toBeNull();
     });
 
     it("should initialize with provided userLinkStore", () => {
-      const mockStore = { 
-        link: null, 
-        linkDetail: { link: null, query: { isLoading: false } } 
+      const mockStore = {
+        link: null,
+        linkDetail: { link: null, query: { isLoading: false } },
       } as unknown as UserLinkStore;
       const ctx = new GuardContext({ userLinkStore: mockStore });
-      
+
       expect(ctx.userLinkStore).toBe(mockStore);
       expect(ctx.linkDetailStore).toBeNull();
       expect(ctx.linkCreationStore).toBeNull();
@@ -71,17 +74,20 @@ describe("GuardContext", () => {
     it("should initialize with provided linkCreationStore", () => {
       const mockStore = { link: null } as unknown as LinkCreationStore;
       const ctx = new GuardContext({ linkCreationStore: mockStore });
-      
+
       expect(ctx.linkCreationStore).toBe(mockStore);
       expect(ctx.linkDetailStore).toBeNull();
       expect(ctx.userLinkStore).toBeNull();
     });
 
     it("should initialize with all stores provided", () => {
-      const mockDetailStore = { link: null, query: { isLoading: false } } as unknown as LinkDetailStore;
-      const mockUserStore = { 
-        link: null, 
-        linkDetail: { link: null, query: { isLoading: false } } 
+      const mockDetailStore = {
+        link: null,
+        query: { isLoading: false },
+      } as unknown as LinkDetailStore;
+      const mockUserStore = {
+        link: null,
+        linkDetail: { link: null, query: { isLoading: false } },
       } as unknown as UserLinkStore;
       const mockCreationStore = { link: null } as unknown as LinkCreationStore;
 
@@ -90,7 +96,7 @@ describe("GuardContext", () => {
         userLinkStore: mockUserStore,
         linkCreationStore: mockCreationStore,
       });
-      
+
       expect(ctx.linkDetailStore).toBe(mockDetailStore);
       expect(ctx.userLinkStore).toBe(mockUserStore);
       expect(ctx.linkCreationStore).toBe(mockCreationStore);
@@ -99,21 +105,24 @@ describe("GuardContext", () => {
 
   describe("setLinkDetailStore", () => {
     it("should set linkDetailStore", () => {
-      const mockStore = { link: null, query: { isLoading: false } } as unknown as LinkDetailStore;
+      const mockStore = {
+        link: null,
+        query: { isLoading: false },
+      } as unknown as LinkDetailStore;
       context.setLinkDetailStore(mockStore);
-      
+
       expect(context.linkDetailStore).toBe(mockStore);
     });
   });
 
   describe("setUserLinkStore", () => {
     it("should set userLinkStore", () => {
-      const mockStore = { 
-        link: null, 
-        linkDetail: { link: null, query: { isLoading: false } } 
+      const mockStore = {
+        link: null,
+        linkDetail: { link: null, query: { isLoading: false } },
       } as unknown as UserLinkStore;
       context.setUserLinkStore(mockStore);
-      
+
       expect(context.userLinkStore).toBe(mockStore);
     });
   });
@@ -122,7 +131,7 @@ describe("GuardContext", () => {
     it("should set linkCreationStore", () => {
       const mockStore = { link: null } as unknown as LinkCreationStore;
       context.setLinkCreationStore(mockStore);
-      
+
       expect(context.linkCreationStore).toBe(mockStore);
     });
   });
@@ -157,62 +166,71 @@ describe("GuardContext", () => {
     });
 
     it("should return linkDetailStore when only it is set", () => {
-      const mockStore = { link: null, query: { isLoading: false } } as unknown as LinkDetailStore;
+      const mockStore = {
+        link: null,
+        query: { isLoading: false },
+      } as unknown as LinkDetailStore;
       context.setLinkDetailStore(mockStore);
-      
+
       expect(context.getLinkStore()).toBe(mockStore);
     });
 
     it("should return userLinkStore when only it is set", () => {
-      const mockStore = { 
-        link: null, 
-        linkDetail: { link: null, query: { isLoading: false } } 
+      const mockStore = {
+        link: null,
+        linkDetail: { link: null, query: { isLoading: false } },
       } as unknown as UserLinkStore;
       context.setUserLinkStore(mockStore);
-      
+
       expect(context.getLinkStore()).toBe(mockStore);
     });
 
     it("should return linkCreationStore when only it is set", () => {
       const mockStore = { link: null } as unknown as LinkCreationStore;
       context.setLinkCreationStore(mockStore);
-      
+
       expect(context.getLinkStore()).toBe(mockStore);
     });
 
     it("should prioritize linkDetailStore over userLinkStore", () => {
-      const mockDetailStore = { link: null, query: { isLoading: false } } as unknown as LinkDetailStore;
-      const mockUserStore = { 
-        link: null, 
-        linkDetail: { link: null, query: { isLoading: false } } 
+      const mockDetailStore = {
+        link: null,
+        query: { isLoading: false },
+      } as unknown as LinkDetailStore;
+      const mockUserStore = {
+        link: null,
+        linkDetail: { link: null, query: { isLoading: false } },
       } as unknown as UserLinkStore;
-      
+
       context.setLinkDetailStore(mockDetailStore);
       context.setUserLinkStore(mockUserStore);
-      
+
       expect(context.getLinkStore()).toBe(mockDetailStore);
     });
 
     it("should prioritize linkDetailStore over linkCreationStore", () => {
-      const mockDetailStore = { link: null, query: { isLoading: false } } as unknown as LinkDetailStore;
+      const mockDetailStore = {
+        link: null,
+        query: { isLoading: false },
+      } as unknown as LinkDetailStore;
       const mockCreationStore = { link: null } as unknown as LinkCreationStore;
-      
+
       context.setLinkDetailStore(mockDetailStore);
       context.setLinkCreationStore(mockCreationStore);
-      
+
       expect(context.getLinkStore()).toBe(mockDetailStore);
     });
 
     it("should prioritize userLinkStore over linkCreationStore", () => {
-      const mockUserStore = { 
-        link: null, 
-        linkDetail: { link: null, query: { isLoading: false } } 
+      const mockUserStore = {
+        link: null,
+        linkDetail: { link: null, query: { isLoading: false } },
       } as unknown as UserLinkStore;
       const mockCreationStore = { link: null } as unknown as LinkCreationStore;
-      
+
       context.setUserLinkStore(mockUserStore);
       context.setLinkCreationStore(mockCreationStore);
-      
+
       expect(context.getLinkStore()).toBe(mockUserStore);
     });
   });
@@ -224,23 +242,23 @@ describe("GuardContext", () => {
 
     it("should return link from linkDetailStore", () => {
       const mockLink = { id: "123", creator: "principal-123" };
-      const mockStore = { 
-        link: mockLink, 
-        query: { isLoading: false } 
+      const mockStore = {
+        link: mockLink,
+        query: { isLoading: false },
       } as unknown as LinkDetailStore;
       context.setLinkDetailStore(mockStore);
-      
+
       expect(context.getLink()).toBe(mockLink);
     });
 
     it("should return link from userLinkStore", () => {
       const mockLink = { id: "456", creator: "principal-456" };
-      const mockStore = { 
+      const mockStore = {
         link: mockLink,
-        linkDetail: { link: null, query: { isLoading: false } } 
+        linkDetail: { link: null, query: { isLoading: false } },
       } as unknown as UserLinkStore;
       context.setUserLinkStore(mockStore);
-      
+
       expect(context.getLink()).toBe(mockLink);
     });
 
@@ -248,7 +266,7 @@ describe("GuardContext", () => {
       const mockLink = { id: "789", creator: "principal-789" };
       const mockStore = { link: mockLink } as unknown as LinkCreationStore;
       context.setLinkCreationStore(mockStore);
-      
+
       expect(context.getLink()).toBe(mockLink);
     });
 
@@ -257,17 +275,22 @@ describe("GuardContext", () => {
       const userLink = { id: "user" };
       const creationLink = { id: "creation" };
 
-      const mockDetailStore = { link: detailLink, query: { isLoading: false } } as unknown as LinkDetailStore;
-      const mockUserStore = { 
+      const mockDetailStore = {
+        link: detailLink,
+        query: { isLoading: false },
+      } as unknown as LinkDetailStore;
+      const mockUserStore = {
         link: userLink,
-        linkDetail: { link: null, query: { isLoading: false } } 
+        linkDetail: { link: null, query: { isLoading: false } },
       } as unknown as UserLinkStore;
-      const mockCreationStore = { link: creationLink } as unknown as LinkCreationStore;
+      const mockCreationStore = {
+        link: creationLink,
+      } as unknown as LinkCreationStore;
 
       context.setLinkDetailStore(mockDetailStore);
       context.setUserLinkStore(mockUserStore);
       context.setLinkCreationStore(mockCreationStore);
-      
+
       expect(context.getLink()).toBe(detailLink);
     });
   });
@@ -287,7 +310,7 @@ describe("GuardContext", () => {
       it("should return false when checkTempLinkLoad is false regardless of hasTempLinkLoadAttempted", () => {
         context.setHasTempLinkLoadAttempted(false);
         expect(context.isLoading({ checkTempLinkLoad: false })).toBe(false);
-        
+
         context.setHasTempLinkLoadAttempted(true);
         expect(context.isLoading({ checkTempLinkLoad: false })).toBe(false);
       });
@@ -295,73 +318,73 @@ describe("GuardContext", () => {
 
     describe("with linkDetailStore", () => {
       it("should return true when linkDetailStore query is loading", () => {
-        const mockStore = { 
-          link: null, 
-          query: { isLoading: true } 
+        const mockStore = {
+          link: null,
+          query: { isLoading: true },
         } as unknown as LinkDetailStore;
         context.setLinkDetailStore(mockStore);
-        
+
         expect(context.isLoading()).toBe(true);
       });
 
       it("should return false when linkDetailStore query is not loading", () => {
-        const mockStore = { 
-          link: null, 
-          query: { isLoading: false } 
+        const mockStore = {
+          link: null,
+          query: { isLoading: false },
         } as unknown as LinkDetailStore;
         context.setLinkDetailStore(mockStore);
-        
+
         expect(context.isLoading()).toBe(false);
       });
     });
 
     describe("with userLinkStore", () => {
       it("should return true when userLinkStore linkDetail query is loading", () => {
-        const mockStore = { 
+        const mockStore = {
           link: null,
-          linkDetail: { 
-            link: null, 
-            query: { isLoading: true } 
-          } 
+          linkDetail: {
+            link: null,
+            query: { isLoading: true },
+          },
         } as unknown as UserLinkStore;
         context.setUserLinkStore(mockStore);
-        
+
         expect(context.isLoading()).toBe(true);
       });
 
       it("should return false when userLinkStore linkDetail query is not loading", () => {
-        const mockStore = { 
+        const mockStore = {
           link: null,
-          linkDetail: { 
-            link: null, 
-            query: { isLoading: false } 
-          } 
+          linkDetail: {
+            link: null,
+            query: { isLoading: false },
+          },
         } as unknown as UserLinkStore;
         context.setUserLinkStore(mockStore);
-        
+
         expect(context.isLoading()).toBe(false);
       });
 
       it("should return false when userLinkStore linkDetail is null", () => {
-        const mockStore = { 
+        const mockStore = {
           link: null,
-          linkDetail: null
+          linkDetail: null,
         } as unknown as UserLinkStore;
         context.setUserLinkStore(mockStore);
-        
+
         expect(context.isLoading()).toBe(false);
       });
 
       it("should return false when userLinkStore linkDetail query is undefined", () => {
-        const mockStore = { 
+        const mockStore = {
           link: null,
-          linkDetail: { 
-            link: null, 
-            query: undefined 
-          } 
+          linkDetail: {
+            link: null,
+            query: undefined,
+          },
         } as unknown as UserLinkStore;
         context.setUserLinkStore(mockStore);
-        
+
         // Should safely handle undefined query with optional chaining
         expect(context.isLoading()).toBe(false);
       });
@@ -372,7 +395,7 @@ describe("GuardContext", () => {
         const mockStore = { link: null } as unknown as LinkCreationStore;
         context.setLinkCreationStore(mockStore);
         context.setHasTempLinkLoadAttempted(false);
-        
+
         expect(context.isLoading()).toBe(true);
         expect(context.isLoading({ checkTempLinkLoad: true })).toBe(true);
       });
@@ -381,7 +404,7 @@ describe("GuardContext", () => {
         const mockStore = { link: null } as unknown as LinkCreationStore;
         context.setLinkCreationStore(mockStore);
         context.setHasTempLinkLoadAttempted(true);
-        
+
         expect(context.isLoading()).toBe(false);
         expect(context.isLoading({ checkTempLinkLoad: true })).toBe(false);
       });
@@ -390,41 +413,176 @@ describe("GuardContext", () => {
         const mockStore = { link: null } as unknown as LinkCreationStore;
         context.setLinkCreationStore(mockStore);
         context.setHasTempLinkLoadAttempted(false);
-        
+
         expect(context.isLoading({ checkTempLinkLoad: false })).toBe(false);
       });
     });
 
     describe("priority checks", () => {
       it("should check linkDetailStore first even if other stores exist", () => {
-        const mockDetailStore = { link: null, query: { isLoading: true } } as unknown as LinkDetailStore;
-        const mockUserStore = { 
+        const mockDetailStore = {
           link: null,
-          linkDetail: { link: null, query: { isLoading: false } } 
+          query: { isLoading: true },
+        } as unknown as LinkDetailStore;
+        const mockUserStore = {
+          link: null,
+          linkDetail: { link: null, query: { isLoading: false } },
         } as unknown as UserLinkStore;
-        const mockCreationStore = { link: null } as unknown as LinkCreationStore;
+        const mockCreationStore = {
+          link: null,
+        } as unknown as LinkCreationStore;
 
         context.setLinkDetailStore(mockDetailStore);
         context.setUserLinkStore(mockUserStore);
         context.setLinkCreationStore(mockCreationStore);
-        
+
         // Should return linkDetailStore's loading state (true)
         expect(context.isLoading()).toBe(true);
       });
 
       it("should check userLinkStore second if linkDetailStore doesn't exist", () => {
-        const mockUserStore = { 
+        const mockUserStore = {
           link: null,
-          linkDetail: { link: null, query: { isLoading: true } } 
+          linkDetail: { link: null, query: { isLoading: true } },
         } as unknown as UserLinkStore;
-        const mockCreationStore = { link: null } as unknown as LinkCreationStore;
+        const mockCreationStore = {
+          link: null,
+        } as unknown as LinkCreationStore;
 
         context.setUserLinkStore(mockUserStore);
         context.setLinkCreationStore(mockCreationStore);
-        
+
         // Should return userLinkStore's loading state (true), not check linkCreationStore
         expect(context.isLoading()).toBe(true);
       });
+    });
+  });
+
+  describe("hasLink", () => {
+    it("should return false when no stores exist", () => {
+      expect(context.hasLink()).toBe(false);
+    });
+
+    it("should return true when linkCreationStore exists", () => {
+      const mockStore = { link: null } as unknown as LinkCreationStore;
+      context.setLinkCreationStore(mockStore);
+
+      expect(context.hasLink()).toBe(true);
+    });
+
+    it("should return true when linkDetailStore has a link", () => {
+      const mockLink = { id: "123", creator: "principal-123" };
+      const mockStore = {
+        link: mockLink,
+        query: { isLoading: false },
+      } as unknown as LinkDetailStore;
+      context.setLinkDetailStore(mockStore);
+
+      expect(context.hasLink()).toBe(true);
+    });
+
+    it("should return false when linkDetailStore link is null", () => {
+      const mockStore = {
+        link: null,
+        query: { isLoading: false },
+      } as unknown as LinkDetailStore;
+      context.setLinkDetailStore(mockStore);
+
+      expect(context.hasLink()).toBe(false);
+    });
+
+    it("should return false when linkDetailStore link is undefined", () => {
+      const mockStore = {
+        link: undefined,
+        query: { isLoading: false },
+      } as unknown as LinkDetailStore;
+      context.setLinkDetailStore(mockStore);
+
+      expect(context.hasLink()).toBe(false);
+    });
+
+    it("should return true when userLinkStore has a link", () => {
+      const mockLink = { id: "456", creator: "principal-456" };
+      const mockStore = {
+        link: mockLink,
+        linkDetail: { link: null, query: { isLoading: false } },
+      } as unknown as UserLinkStore;
+      context.setUserLinkStore(mockStore);
+
+      expect(context.hasLink()).toBe(true);
+    });
+
+    it("should return false when userLinkStore link is null", () => {
+      const mockStore = {
+        link: null,
+        linkDetail: { link: null, query: { isLoading: false } },
+      } as unknown as UserLinkStore;
+      context.setUserLinkStore(mockStore);
+
+      expect(context.hasLink()).toBe(false);
+    });
+
+    it("should return false when userLinkStore link is undefined", () => {
+      const mockStore = {
+        link: undefined,
+        linkDetail: { link: null, query: { isLoading: false } },
+      } as unknown as UserLinkStore;
+      context.setUserLinkStore(mockStore);
+
+      expect(context.hasLink()).toBe(false);
+    });
+
+    it("should prioritize linkCreationStore and return true even if other stores have no links", () => {
+      const mockCreationStore = { link: null } as unknown as LinkCreationStore;
+      const mockDetailStore = {
+        link: null,
+        query: { isLoading: false },
+      } as unknown as LinkDetailStore;
+      const mockUserStore = {
+        link: null,
+        linkDetail: { link: null, query: { isLoading: false } },
+      } as unknown as UserLinkStore;
+
+      context.setLinkCreationStore(mockCreationStore);
+      context.setLinkDetailStore(mockDetailStore);
+      context.setUserLinkStore(mockUserStore);
+
+      // Should return true because linkCreationStore exists
+      expect(context.hasLink()).toBe(true);
+    });
+
+    it("should check linkDetailStore before userLinkStore", () => {
+      const detailLink = { id: "detail" };
+      const mockDetailStore = {
+        link: detailLink,
+        query: { isLoading: false },
+      } as unknown as LinkDetailStore;
+      const mockUserStore = {
+        link: null,
+        linkDetail: { link: null, query: { isLoading: false } },
+      } as unknown as UserLinkStore;
+
+      context.setLinkDetailStore(mockDetailStore);
+      context.setUserLinkStore(mockUserStore);
+
+      // Should return true based on linkDetailStore, not check userLinkStore
+      expect(context.hasLink()).toBe(true);
+    });
+
+    it("should return false when linkDetailStore has no link but userLinkStore also has no link", () => {
+      const mockDetailStore = {
+        link: null,
+        query: { isLoading: false },
+      } as unknown as LinkDetailStore;
+      const mockUserStore = {
+        link: null,
+        linkDetail: { link: null, query: { isLoading: false } },
+      } as unknown as UserLinkStore;
+
+      context.setLinkDetailStore(mockDetailStore);
+      context.setUserLinkStore(mockUserStore);
+
+      expect(context.hasLink()).toBe(false);
     });
   });
 
@@ -432,88 +590,88 @@ describe("GuardContext", () => {
     it("should return true if linkCreationStore exists", () => {
       const mockStore = { link: null } as unknown as LinkCreationStore;
       context.setLinkCreationStore(mockStore);
-      
+
       expect(context.isOwner()).toBe(true);
     });
 
     it("should return false if no account in authState", () => {
-      const mockLink = { 
-        id: "123", 
-        creator: { toString: () => "principal-123" } 
+      const mockLink = {
+        id: "123",
+        creator: { toString: () => "principal-123" },
       };
-      const mockStore = { 
-        link: mockLink, 
-        query: { isLoading: false } 
+      const mockStore = {
+        link: mockLink,
+        query: { isLoading: false },
       } as unknown as LinkDetailStore;
       context.setLinkDetailStore(mockStore);
       mockAuthState.account = null;
-      
+
       expect(context.isOwner()).toBe(false);
     });
 
     it("should return false if link has no creator", () => {
       const mockLink = { id: "123", creator: null };
-      const mockStore = { 
-        link: mockLink, 
-        query: { isLoading: false } 
+      const mockStore = {
+        link: mockLink,
+        query: { isLoading: false },
       } as unknown as LinkDetailStore;
       context.setLinkDetailStore(mockStore);
       mockAuthState.account = { owner: "principal-456" };
-      
+
       expect(context.isOwner()).toBe(false);
     });
 
     it("should return false if getLink returns undefined", () => {
       mockAuthState.account = { owner: "principal-456" };
-      
+
       expect(context.isOwner()).toBe(false);
     });
 
     it("should return true if creator matches account owner", () => {
-      const mockLink = { 
-        id: "123", 
-        creator: { toString: () => "principal-123" } 
+      const mockLink = {
+        id: "123",
+        creator: { toString: () => "principal-123" },
       };
-      const mockStore = { 
-        link: mockLink, 
-        query: { isLoading: false } 
+      const mockStore = {
+        link: mockLink,
+        query: { isLoading: false },
       } as unknown as LinkDetailStore;
       context.setLinkDetailStore(mockStore);
       mockAuthState.account = { owner: "principal-123" };
-      
+
       expect(context.isOwner()).toBe(true);
     });
 
     it("should return false if creator does not match account owner", () => {
-      const mockLink = { 
-        id: "123", 
-        creator: { toString: () => "principal-123" } 
+      const mockLink = {
+        id: "123",
+        creator: { toString: () => "principal-123" },
       };
-      const mockStore = { 
-        link: mockLink, 
-        query: { isLoading: false } 
+      const mockStore = {
+        link: mockLink,
+        query: { isLoading: false },
       } as unknown as LinkDetailStore;
       context.setLinkDetailStore(mockStore);
       mockAuthState.account = { owner: "principal-456" };
-      
+
       expect(context.isOwner()).toBe(false);
     });
 
     it("should prioritize linkCreationStore existence over ownership check", () => {
       const mockCreationStore = { link: null } as unknown as LinkCreationStore;
-      const mockLink = { 
-        id: "123", 
-        creator: { toString: () => "principal-999" } 
+      const mockLink = {
+        id: "123",
+        creator: { toString: () => "principal-999" },
       };
-      const mockDetailStore = { 
-        link: mockLink, 
-        query: { isLoading: false } 
+      const mockDetailStore = {
+        link: mockLink,
+        query: { isLoading: false },
       } as unknown as LinkDetailStore;
-      
+
       context.setLinkCreationStore(mockCreationStore);
       context.setLinkDetailStore(mockDetailStore);
       mockAuthState.account = { owner: "principal-123" };
-      
+
       // Should return true because linkCreationStore exists
       expect(context.isOwner()).toBe(true);
     });
