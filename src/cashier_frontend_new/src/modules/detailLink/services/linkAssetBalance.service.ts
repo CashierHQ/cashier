@@ -51,13 +51,14 @@ class LinkAssetBalanceService {
     );
 
     // Create balance fetch tasks for each asset
-    const tasks = icAssets.map(async (asset) => {
+    const tasks = icAssets.map(async (asset): Promise<AssetBalance> => {
       const ledger = IcrcLedgerCanister.create({
         agent,
         canisterId: asset.address!, // we already filtered for address presence
       });
       const balance = await ledger.balance(account);
-      return { asset, balance };
+      // formattedBalance is set to "-" here, store will override with proper formatting
+      return { asset, balance, formattedBalance: "-" };
     });
 
     // Use allSettled to handle individual failures gracefully
@@ -67,7 +68,7 @@ class LinkAssetBalanceService {
         return result.value;
       }
       // Return 0 balance on individual ledger failure
-      return { asset: icAssets[index], balance: BigInt(0) };
+      return { asset: icAssets[index], balance: BigInt(0), formattedBalance: "-" };
     });
 
     return Ok(results);

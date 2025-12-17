@@ -10,4 +10,6 @@ import type { Asset } from "$modules/links/types/link/asset";
 export type AssetBalance = {
   asset: Asset;
   balance: bigint;
+  /** Pre-formatted balance string for display (e.g., "1,234.56") */
+  formattedBalance: string;
 };

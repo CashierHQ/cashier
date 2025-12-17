@@ -10,6 +10,9 @@ import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { type ActionTypeValue } from "$modules/links/types/action/actionType";
 import { LinkState } from "$modules/links/types/link/linkState";
 import { type LinkAction } from "$modules/links/types/linkAndAction";
+import { walletStore } from "$modules/token/state/walletStore.svelte";
+import { parseBalanceUnits } from "$modules/shared/utils/converter";
+import { formatNumber } from "$modules/shared/utils/formatNumber";
 import type { LinkDetailState } from "./linkDetailStates";
 import { LinkActiveState } from "./linkDetailStates/active";
 import { LinkCreatedState } from "./linkDetailStates/created";
@@ -50,7 +53,21 @@ export class LinkDetailStore {
           assets,
         );
         if (result.isErr()) throw result.error;
-        return result.value;
+
+        // Format balances with token decimals
+        return result.value.map((item) => {
+          const address = item.asset.address?.toString();
+          if (!address) {
+            return { ...item, formattedBalance: "-" };
+          }
+          const tokenResult = walletStore.findTokenByAddress(address);
+          if (tokenResult.isErr()) {
+            return { ...item, formattedBalance: "-" };
+          }
+          const token = tokenResult.value;
+          const parsed = parseBalanceUnits(item.balance, token.decimals);
+          return { ...item, formattedBalance: formatNumber(parsed) };
+        });
       },
       watch: () => this.link,
     });

@@ -9,7 +9,6 @@
   import DetailLinkHeader from "../components/detailLinkHeader.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
-  import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import FeeInfoDescriptionDrawer from "$modules/creationLink/components/drawers/FeeInfoDescriptionDrawer.svelte";
   import ConfirmDrawer from "$modules/creationLink/components/drawers/ConfirmDrawer.svelte";
@@ -41,7 +40,6 @@
   import ShareLinkSection from "$modules/creationLink/components/previewSections/ShareLinkSection.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
 
-  //let { linkStore }: { linkStore: LinkDetailStore } = $props();
   let {
     id,
     onBack,
@@ -400,20 +398,14 @@
         isEnded={isTransactionLockEnded}
       />
 
-      <!-- Block 4: Fees Breakdown -->
-      <FeesBreakdownSection
-        {totalFeesUsd}
-        isClickable={true}
-        onInfoClick={handleFeeInfoClick}
-        onBreakdownClick={handleFeeBreakdownClick}
-      />
-
       <!-- Block 5: Usage Info -->
       <UsageInfoSection
         {assetsWithTokenInfo}
         {failedImageLoads}
         onImageError={handleImageError}
         linkUseActionCounter={linkStore.link.link_use_action_counter}
+        balances={linkStore.balances}
+        balancesLoading={linkStore.balancesLoading}
       />
 
       <!-- Block 6: Share Link -->

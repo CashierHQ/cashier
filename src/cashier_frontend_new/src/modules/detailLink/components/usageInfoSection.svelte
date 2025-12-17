@@ -1,17 +1,17 @@
 <script lang="ts">
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { locale } from "$lib/i18n";
-  import {
-    formatNumber,
-    formatUsdAmount,
-  } from "$modules/shared/utils/formatNumber";
+  import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
   import type { AssetWithTokenInfo } from "$modules/links/utils/feesBreakdown";
+  import type { AssetBalance } from "$modules/detailLink/types/balanceTypes";
 
   type Props = {
     assetsWithTokenInfo: AssetWithTokenInfo[];
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
     linkUseActionCounter: bigint;
+    balances: AssetBalance[];
+    balancesLoading: boolean;
   };
 
   let {
@@ -19,7 +19,25 @@
     failedImageLoads,
     onImageError,
     linkUseActionCounter,
+    balances,
+    balancesLoading,
   }: Props = $props();
+
+  // Create balance map for efficient O(1) lookup by address
+  const balanceMap = $derived.by(() => {
+    const map = new Map<string, string>();
+    for (const b of balances) {
+      if (b.asset.address) {
+        map.set(b.asset.address.toString(), b.formattedBalance);
+      }
+    }
+    return map;
+  });
+
+  // Get formatted balance for an asset
+  function getFormattedBalance(address: string): string {
+    return balanceMap.get(address) ?? "-";
+  }
 
   // Calculate total USD value of all assets
   const totalUsdValue = $derived.by(() => {
@@ -45,10 +63,14 @@
         {#if assetsWithTokenInfo.length > 0}
           {#each assetsWithTokenInfo as asset (asset.address)}
             <div class="flex items-center gap-2">
-              <p class="text-sm">
-                {formatNumber(asset.amount)}
-                {asset.token.symbol}
-              </p>
+              {#if balancesLoading}
+                <div class="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+              {:else}
+                <p class="text-sm">
+                  {getFormattedBalance(asset.address)}
+                  {asset.token.symbol}
+                </p>
+              {/if}
               {#if !failedImageLoads.has(asset.address)}
                 <img
                   src={asset.logo}
