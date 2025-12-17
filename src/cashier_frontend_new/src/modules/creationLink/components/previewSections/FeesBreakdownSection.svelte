@@ -2,7 +2,7 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { Info, ChevronRight } from "lucide-svelte";
   import { locale } from "$lib/i18n";
-  import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
+  import { formatFeeAmount } from "$modules/shared/utils/formatNumber";
 
   type Props = {
     totalFeesUsd: number;
@@ -53,7 +53,7 @@
         </p>
         <div class="flex items-center gap-2">
           <p class="text-[14px] font-normal">
-            ~${formatUsdAmount(totalFeesUsd)}
+            ~${formatFeeAmount(totalFeesUsd)}
           </p>
           <ChevronRight size={18} />
         </div>
@@ -67,7 +67,7 @@
         </p>
         <div class="flex items-center gap-2">
           <p class="text-[14px] font-normal">
-            ~${formatUsdAmount(totalFeesUsd)}
+            ~${formatFeeAmount(totalFeesUsd)}
           </p>
         </div>
       </div>

@@ -14,7 +14,7 @@
   import { feeService } from "$modules/shared/services/feeService";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { locale } from "$lib/i18n";
-  import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
+  import { formatFeeAmount } from "$modules/shared/utils/formatNumber";
   import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
 
   const {
@@ -158,7 +158,7 @@
         </p>
         <div class="flex items-center gap-2">
           <p class="text-[14px] font-normal">
-            ~${formatUsdAmount(totalFeesUsd)}
+            ~${formatFeeAmount(totalFeesUsd)}
           </p>
         </div>
       </div>
