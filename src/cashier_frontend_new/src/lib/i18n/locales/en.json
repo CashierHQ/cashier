@@ -81,6 +81,7 @@
       "copyPrincipal": "Copy principal"
     },
     "status": {
+      "transferPending": "Transfer Pending",
       "draft": "Draft",
       "active": "Active",
       "inactive": "Inactive",
