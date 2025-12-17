@@ -1,7 +1,10 @@
 <script lang="ts">
   import { Repeat2 } from "lucide-svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import { formatNumber } from "$modules/shared/utils/formatNumber";
+  import {
+    formatNumber,
+    formatUsdAmount,
+  } from "$modules/shared/utils/formatNumber";
   import { locale } from "$lib/i18n";
 
   type Props = {
@@ -11,7 +14,6 @@
     isUsd: boolean;
     canConvert?: boolean;
     onToggle: (isUsd: boolean) => void;
-    usdDecimals?: number;
   };
 
   let {
@@ -21,7 +23,6 @@
     amount = 0,
     symbol = "",
     canConvert = false,
-    usdDecimals = 2,
   }: Props = $props();
 
   // Calculate USD value from token amount
@@ -47,7 +48,7 @@
       return "~$0";
     }
 
-    return `~$${formatNumber(usdValue, { tofixed: usdDecimals })}`;
+    return `~$${formatUsdAmount(usdValue)}`;
   });
 </script>
 

@@ -289,7 +289,6 @@
           {isUsd}
           onToggle={onToggleUsd}
           {canConvert}
-          usdDecimals={2}
         />
       {/if}
     </div>
