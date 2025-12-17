@@ -21,7 +21,9 @@
 
   const isOwner = $derived.by(() => context.isOwner());
 
-  const isLoading = $derived.by(() => context.isLoading({ checkTempLinkLoad: false }));
+  const isLoading = $derived.by(() =>
+    context.isLoading({ checkTempLinkLoad: false }),
+  );
 
   const isReady = $derived(
     !context.authState.isReady || !linkStore
