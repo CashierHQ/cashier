@@ -18,3 +18,53 @@ export type TokenWithPriceAndBalance = TokenMetadata & {
   balance: bigint;
   priceUSD: number;
 };
+
+// =============================================================================
+// Transaction History Types (ICRC Index Canister)
+// =============================================================================
+
+/**
+ * Transaction types from ICRC Index Canister
+ */
+export type TransactionKind = "mint" | "transfer" | "burn" | "approve";
+
+/**
+ * ICRC Account (owner principal + optional subaccount)
+ */
+export type IcrcAccount = {
+  owner: string;
+  subaccount?: Uint8Array;
+};
+
+/**
+ * Transaction record from index canister
+ */
+export type TokenTransaction = {
+  id: bigint;
+  kind: TransactionKind;
+  timestamp: bigint;
+  from?: IcrcAccount;
+  to?: IcrcAccount;
+  amount: bigint;
+  fee?: bigint;
+  memo?: Uint8Array;
+  spender?: IcrcAccount;
+};
+
+/**
+ * Params for getTransactions query
+ */
+export type GetTransactionsParams = {
+  account: IcrcAccount;
+  maxResults?: bigint;
+  start?: bigint;
+};
+
+/**
+ * Result from getTransactions
+ */
+export type GetTransactionsResult = {
+  transactions: TokenTransaction[];
+  oldestTxId?: bigint;
+  balance: bigint;
+};
