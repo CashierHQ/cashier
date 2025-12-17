@@ -4,7 +4,6 @@
   import type { Snippet } from "svelte";
   import { getGuardContext } from "../context.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
-  import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
 
   let {
     redirectTo,
