@@ -2,7 +2,7 @@
   import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
   import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
-  import ReceivePage from "$modules/token/pages/receive.svelte";
+  import ImportPage from "$modules/token/pages/import.svelte";
 </script>
 
 <RouteGuard>
@@ -19,7 +19,7 @@
           <div
             class="sm:max-h-[calc(100vh-156px)] max-h-[calc(100vh-78px)] flex flex-col grow-1 overflow-y-auto scrollbar-hide"
           >
-            <ReceivePage />
+            <ImportPage />
           </div>
         </div>
       </div>
