@@ -29,19 +29,4 @@ export class ActionStateMapper {
       Fail: () => ActionState.FAIL,
     });
   }
-
-  // Devalue serde for ActionState: persist as string
-  static serde = {
-    serialize: {
-      ActionState: (value: unknown) => {
-        if (typeof value !== "string") return undefined;
-        return value;
-      },
-    },
-    deserialize: {
-      ActionState: (obj: unknown) => {
-        return obj as ActionStateValue;
-      },
-    },
-  };
 }

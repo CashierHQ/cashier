@@ -8,11 +8,4 @@ describe("IntentTask.fromBackendType", () => {
     const t = IntentTaskMapper.fromBackendType(b);
     expect(t).toBe(IntentTask.TRANSFER_WALLET_TO_LINK);
   });
-
-  it("serializes and deserializes IntentTask via serde", () => {
-    const v = IntentTask.TRANSFER_LINK_TO_WALLET;
-    const ser = IntentTaskMapper.serde.serialize.IntentTask(v);
-    const des = IntentTaskMapper.serde.deserialize.IntentTask(ser);
-    expect(des).toBe(v);
-  });
 });
