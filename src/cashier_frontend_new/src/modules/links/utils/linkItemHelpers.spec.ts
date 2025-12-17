@@ -14,6 +14,7 @@ describe("linkItemHelpers", () => {
   const mockT = (key: string): string => {
     const translations: Record<string, string> = {
       "links.status.draft": "Draft",
+      "links.status.transferPending": "Transfer Pending",
       "links.status.active": "Active",
       "links.status.inactive": "Inactive",
       "links.status.ended": "Ended",
@@ -26,7 +27,12 @@ describe("linkItemHelpers", () => {
       expect(getStatusLabel(LinkState.CHOOSING_TYPE, mockT)).toBe("Draft");
       expect(getStatusLabel(LinkState.ADDING_ASSET, mockT)).toBe("Draft");
       expect(getStatusLabel(LinkState.PREVIEW, mockT)).toBe("Draft");
-      expect(getStatusLabel(LinkState.CREATE_LINK, mockT)).toBe("Draft");
+    });
+
+    it("should return transfer pending label for create link state", () => {
+      expect(getStatusLabel(LinkState.CREATE_LINK, mockT)).toBe(
+        "Transfer Pending",
+      );
     });
 
     it("should return active label for active state", () => {
