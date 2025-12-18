@@ -77,6 +77,28 @@
   async function handleMobileBack() {
     await appHeaderStore.triggerBack();
   }
+
+  // Handle logo click - uses goToLanding on link pages, otherwise navigates to /links
+  async function handleLogoClick() {
+    if (userLinkStore) {
+      try {
+        await userLinkStore.goToLanding();
+      } catch (error) {
+        // goToLanding throws if action exists or invalid state
+        // Stay on current page - do nothing
+        console.warn("goToLanding blocked:", error);
+      }
+      return;
+    }
+    // No userLinkStore = not on link page, navigate to /links
+    goto(resolve("/links"));
+  }
+
+  // Determine if custom logo handler should be used
+  const useCustomLogoHandler = $derived.by(() => {
+    // Use custom handler on /link/<id>/* routes when userLinkStore available
+    return userLinkStore !== null && currentPath?.match(/^\/link\/[^/]+/);
+  });
 </script>
 
 <div
@@ -96,7 +118,10 @@
         </button>
       {:else}
         <div class="mr-auto">
-          <CashierLogo href={resolve("/links")} />
+          <CashierLogo
+            href={resolve("/links")}
+            onclick={useCustomLogoHandler ? handleLogoClick : undefined}
+          />
         </div>
       {/if}
       <h4
@@ -107,11 +132,17 @@
     </div>
     <!-- Desktop: show logo -->
     <div class="hidden md:block">
-      <CashierLogo href={resolve("/links")} />
+      <CashierLogo
+        href={resolve("/links")}
+        onclick={useCustomLogoHandler ? handleLogoClick : undefined}
+      />
     </div>
   {:else}
     <!-- Default header with logo -->
-    <CashierLogo href={resolve("/links")} />
+    <CashierLogo
+      href={resolve("/links")}
+      onclick={useCustomLogoHandler ? handleLogoClick : undefined}
+    />
   {/if}
 
   {#if userProfile.isLoggedIn()}
