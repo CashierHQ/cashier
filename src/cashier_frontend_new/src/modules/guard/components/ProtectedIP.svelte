@@ -1,6 +1,6 @@
 <script lang="ts">
   import ProtectionProcessingState from "$modules/guard/components/ProtectionProcessingState.svelte";
-  import { userIPStore } from '$modules/guard/state/userIPStore.svelte';
+  import { userIPStore } from "$modules/guard/state/userIPStore.svelte";
   import { type Snippet } from "svelte";
 
   let {
@@ -14,7 +14,7 @@
   $effect(() => {
     if (userIPStore.countryCode && userIPStore.isBlacklisted()) {
       alert(
-        "Sorry for the inconvenience, access from your location is restricted."
+        "Sorry for the inconvenience, access from your location is restricted.",
       );
       shouldShow = false;
     } else {
