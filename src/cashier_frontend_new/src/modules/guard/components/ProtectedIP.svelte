@@ -10,11 +10,14 @@
   } = $props();
 
   let shouldShow = $state(false);
-  const BLACK_LISTED_COUNTRY_CODES = ['US'];
 
   $effect(() => {
-    if (userIPStore.countryCode) {
-      console.log('User country code from store:', userIPStore.countryCode);
+    if (userIPStore.countryCode && userIPStore.isBlacklisted()) {
+      alert(
+        "Sorry for the inconvenience, access from your location is restricted."
+      );
+      shouldShow = false;
+    } else {
       shouldShow = true;
     }
   });
