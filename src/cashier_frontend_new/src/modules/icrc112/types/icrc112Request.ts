@@ -1,5 +1,5 @@
 import type { Icrc112Request as BackendIcrc112Request } from "$lib/generated/cashier_backend/cashier_backend.did";
-import { Principal } from "@dfinity/principal";
+import type { Principal } from "@dfinity/principal";
 import { fromNullable } from "@dfinity/utils";
 
 // Frontend representation of an ICRC-112 request

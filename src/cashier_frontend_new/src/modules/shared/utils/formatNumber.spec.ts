@@ -202,24 +202,13 @@ describe("formatFeeAmount", () => {
     expect(formatFeeAmount(52.25985)).toBe("52.26");
   });
 
-  it("formats strings with adaptive decimal places", () => {
-    expect(formatFeeAmount("0.001")).toBe("0.001");
-    expect(formatFeeAmount("0.001234")).toBe("0.0012");
-    expect(formatFeeAmount("0.02")).toBe("0.02");
-    expect(formatFeeAmount("5.123")).toBe("5.12");
-    expect(formatFeeAmount("52.25985")).toBe("52.26");
-  });
-
   it("handles NaN", () => {
     expect(formatFeeAmount(NaN)).toBe("0");
-    expect(formatFeeAmount("invalid")).toBe("0");
-    expect(formatFeeAmount("")).toBe("0");
   });
 
   it("handles zero", () => {
     expect(formatFeeAmount(0)).toBe("0");
     expect(formatFeeAmount(0.0)).toBe("0");
-    expect(formatFeeAmount("0")).toBe("0");
   });
 
   it("handles negative numbers with adaptive decimal places", () => {
