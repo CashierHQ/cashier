@@ -32,9 +32,8 @@ describe("ProtectedIP Guard Logic", () => {
     global.alert = alertSpy as any;
 
     // Get the mocked store
-    const { userIPStore } = await import(
-      "$modules/guard/state/userIPStore.svelte"
-    );
+    const { userIPStore } =
+      await import("$modules/guard/state/userIPStore.svelte");
     mockStore = userIPStore as any;
   });
 

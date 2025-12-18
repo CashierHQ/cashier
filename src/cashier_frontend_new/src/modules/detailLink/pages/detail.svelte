@@ -179,11 +179,12 @@
     return linkStore.link?.state === LinkState.INACTIVE_ENDED;
   });
 
-  const link = $derived(`${window.location.origin}/link/${linkStore.link?.id}`);
+  const linkUrl = $derived(
+    `${window.location.origin}/link/${linkStore.link?.id}`,
+  );
 
   async function copyLink(closeDialog?: boolean) {
     try {
-      const linkUrl = link;
       await navigator.clipboard.writeText(linkUrl);
       showCopied = true;
       toast.success(locale.t("links.linkForm.detail.copied"));
@@ -392,7 +393,7 @@
       />
 
       <!-- Block 6: Share Link -->
-      <ShareLinkSection {link} />
+      <ShareLinkSection link={linkUrl} />
     {/if}
 
     <div
