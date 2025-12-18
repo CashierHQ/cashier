@@ -2,6 +2,7 @@
   import { Lock, Feather, Zap, ChevronDown, ChevronUp } from "lucide-svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
   import { locale } from "$lib/i18n";
+  import { getMobileImageHeight } from "$modules/shared/utils/getMobileImageHeight";
 
   type Props = {
     onLoginClick?: () => void;
@@ -11,17 +12,6 @@
 
   let isDevelopmentExpanded = $state(false);
   let isImageLoading = $state(true);
-
-  // Calculate dynamic height for mobile: 100vh - 426px, min 200px for mobile
-  function getMobileImageHeight() {
-    if (typeof window === "undefined") return "200px";
-    // Only apply for mobile (below md breakpoint, typically 768px)
-    const isMobile = window.innerWidth < 768;
-    if (!isMobile) return null;
-    const vh = window.innerHeight;
-    const calculatedHeight = vh - 426;
-    return `${Math.max(200, calculatedHeight)}px`;
-  }
 
   let mobileImageHeight = $state(getMobileImageHeight());
 
