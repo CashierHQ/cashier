@@ -23,9 +23,12 @@ check_code:
     just clippy "-- -D warnings"
 
 
-# Runs prettier and lint checks on the frontend code
+# Runs prettier, lint, and type checks on the frontend code
 [group('code_check')]
 frontend_check_code: install_frontend_deps
     cd {{FRONTEND_DIR_NEW}} && npm run lint
+    # Copy .env.dev for svelte-check type generation, run check, cleanup
+    cd {{FRONTEND_DIR_NEW}} && cp .env.dev .env && npm run check || (rm -f .env && exit 1)
+    rm -f {{FRONTEND_DIR_NEW}}/.env
     # To be enabled when frontend new code is ready
     # cd {{FRONTEND_DIR_NEW}} && npm run knip
