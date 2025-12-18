@@ -3,12 +3,20 @@
 
   type Props = {
     href?: string;
+    onclick?: () => void;
   };
 
-  let { href = resolve("/links") }: Props = $props();
+  let { href = resolve("/links"), onclick }: Props = $props();
+
+  function handleClick(e: MouseEvent) {
+    if (onclick) {
+      e.preventDefault();
+      onclick();
+    }
+  }
 </script>
 
-<a {href}>
+<a {href} onclick={handleClick}>
   <img
     alt="Cashier logo"
     class="max-w-[130px] cursor-pointer"
