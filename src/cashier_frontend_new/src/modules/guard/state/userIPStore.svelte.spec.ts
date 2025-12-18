@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as ipResolver from "$modules/guard/services/ip_resolver";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { UserIPStore } from "./userIPStore.svelte";
@@ -54,7 +55,7 @@ describe("UserIPStore", () => {
     });
 
     it("should not query location when disabled", async () => {
-      const querySpy = vi.spyOn(ipResolver, "queryUserCountryLocation");
+      vi.spyOn(ipResolver, "queryUserCountryLocation");
 
       const store = new UserIPStore(false);
       await new Promise((resolve) => setTimeout(resolve, 10));
@@ -206,6 +207,7 @@ describe("UserIPStore", () => {
       );
 
       const store = new UserIPStore(true);
+      expect(store.enabled).toBe(true);
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -226,6 +228,7 @@ describe("UserIPStore", () => {
       );
 
       const store = new UserIPStore(false);
+      expect(store.enabled).toBe(false);
       await new Promise((resolve) => setTimeout(resolve, 10));
 
       expect(consoleErrorSpy).not.toHaveBeenCalled();

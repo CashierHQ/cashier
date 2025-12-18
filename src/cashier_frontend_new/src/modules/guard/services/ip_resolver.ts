@@ -40,7 +40,7 @@ const getLocationFromIpSb = async (): Promise<CountryCode> => {
 export const queryUserCountryLocation = async (): Promise<CountryCode> => {
   try {
     return await getLocationFromIpLocation();
-  } catch (_) {
+  } catch {
     return await getLocationFromIpSb();
   }
 };

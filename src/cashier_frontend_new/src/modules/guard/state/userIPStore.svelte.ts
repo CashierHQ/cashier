@@ -25,7 +25,7 @@ export class UserIPStore {
           return null;
         }
       },
-      refetchInterval: 15_000, // Refresh every 15 seconds to keep location up-to-date
+      refetchInterval: 60_000, // Refresh every 60 seconds to keep location up-to-date
       persistedKey: ["ipLocationQuery"],
       storageType: "sessionStorage",
     });
