@@ -47,11 +47,11 @@
     if (!walletStore.query.data) return 0;
 
     return walletStore.query.data
-      .filter((token) => token.enabled)
+      .filter((token) => token.enabled && token.balance !== undefined)
       .reduce((total, token) => {
         return (
           total +
-          balanceToUSDValue(token.balance, token.decimals, token.priceUSD)
+          balanceToUSDValue(token.balance!, token.decimals, token.priceUSD)
         );
       }, 0);
   };
@@ -191,7 +191,7 @@
           <div class="text-[32px]/[100%] font-bold text-black">
             {#if isBalanceVisible}
               {parseBalanceUnits(
-                currentToken.balance,
+                currentToken.balance ?? BigInt(0),
                 currentToken.decimals,
               ).toFixed(5)}
               {currentToken.symbol}
@@ -218,7 +218,7 @@
         <div class="text-gray-500 text-xs mt-1 font-semibold">
           {#if isBalanceVisible}
             ${balanceToUSDValue(
-              currentToken.balance,
+              currentToken.balance ?? BigInt(0),
               currentToken.decimals,
               currentToken.priceUSD,
             ).toFixed(2)}

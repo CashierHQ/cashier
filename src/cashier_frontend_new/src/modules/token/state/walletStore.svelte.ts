@@ -22,12 +22,12 @@ class WalletStore {
   constructor() {
     this.#walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
       queryFn: async () => {
-        // fetch list user's tokens (only enabled ones)
+        // fetch all user's tokens (enabled and disabled)
         const allTokens = await tokenStorageService.listTokens();
-        const tokens = allTokens.filter((token) => token.enabled);
+        const enabledTokens = allTokens.filter((token) => token.enabled);
 
         // fetch token balances for enabled tokens only
-        const balanceRequests = tokens.map((token) => {
+        const balanceRequests = enabledTokens.map((token) => {
           if (token.address === ICP_LEDGER_CANISTER_ID) {
             return icpLedgerService.getBalance();
           } else {
@@ -37,14 +37,21 @@ class WalletStore {
         });
         const balances: bigint[] = await Promise.all(balanceRequests);
 
+        // create balance map for enabled tokens
+        const balanceMap: Record<string, bigint> = {};
+        enabledTokens.forEach((token, index) => {
+          balanceMap[token.address] = balances[index];
+        });
+
         // fetch token prices
         const prices = tokenPriceStore.query.data
           ? tokenPriceStore.query.data
           : {};
 
-        const enrichedTokens = tokens.map((token, index) => ({
+        // enrich all tokens, balance only for enabled ones
+        const enrichedTokens = allTokens.map((token) => ({
           ...token,
-          balance: balances[index],
+          balance: token.enabled ? balanceMap[token.address] : undefined,
           priceUSD: prices[token.address] || 0,
         }));
 

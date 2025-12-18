@@ -19,9 +19,10 @@ export type TokenMetadata = {
 
 /**
  * Type definition for a token with additional price and balance information
+ * balance is optional - only fetched for enabled tokens
  */
 export type TokenWithPriceAndBalance = TokenMetadata & {
-  balance: bigint;
+  balance?: bigint;
   priceUSD: number;
 };
 
@@ -38,12 +39,13 @@ export type SerializedTokenWithPriceAndBalance = {
   fee: string; // bigint as string
   is_default: boolean;
   indexId?: string; // Principal as string
-  balance: string; // bigint as string
+  balance?: string; // bigint as string, optional for disabled tokens
   priceUSD: number;
 };
 
 /**
  * Type guard to check if value is TokenWithPriceAndBalance
+ * balance is optional for disabled tokens
  */
 function isTokenWithPriceAndBalance(
   value: unknown,
@@ -57,7 +59,7 @@ function isTokenWithPriceAndBalance(
     typeof token.decimals === "number" &&
     typeof token.enabled === "boolean" &&
     typeof token.fee === "bigint" &&
-    typeof token.balance === "bigint" &&
+    (token.balance === undefined || typeof token.balance === "bigint") &&
     typeof token.priceUSD === "number"
   );
 }
@@ -86,7 +88,7 @@ export const TokenWithPriceAndBalanceSerde = {
         fee: value.fee.toString(),
         is_default: value.is_default,
         indexId: indexIdStr,
-        balance: value.balance.toString(),
+        balance: value.balance?.toString(),
         priceUSD: value.priceUSD,
       };
     },
@@ -103,7 +105,7 @@ export const TokenWithPriceAndBalanceSerde = {
         fee: BigInt(s.fee),
         is_default: s.is_default,
         indexId: s.indexId ? Principal.fromText(s.indexId) : undefined,
-        balance: BigInt(s.balance),
+        balance: s.balance !== undefined ? BigInt(s.balance) : undefined,
         priceUSD: s.priceUSD,
       };
     },
@@ -257,8 +259,12 @@ export class TxOperationMapper {
       kind = "transfer"; // fallback
     }
 
-    // Convert timestamp: ICP uses nanoseconds in created_at_time
-    const timestamp = transaction.created_at_time?.[0]?.timestamp_nanos ?? BigInt(0);
+    // Convert timestamp: ICP uses nanoseconds
+    // Try created_at_time first, fallback to block timestamp
+    const timestamp =
+      transaction.created_at_time?.[0]?.timestamp_nanos ??
+      transaction.timestamp?.[0]?.timestamp_nanos ??
+      BigInt(0);
 
     return {
       id,

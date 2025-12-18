@@ -43,12 +43,12 @@
   }
 
   const tokenLogo = getTokenLogo(token.address);
-  const formattedBalance = formatBalance(token.balance, token.decimals);
-  const formattedUSD = formatUSDValue(
-    token.balance,
-    token.decimals,
-    token.priceUSD,
-  );
+  const formattedBalance = token.balance !== undefined
+    ? formatBalance(token.balance, token.decimals)
+    : "-";
+  const formattedUSD = token.balance !== undefined
+    ? formatUSDValue(token.balance, token.decimals, token.priceUSD)
+    : "-";
 
   function handleImageError() {
     onImageError(token.address);

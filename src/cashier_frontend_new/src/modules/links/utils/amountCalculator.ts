@@ -51,6 +51,10 @@ export function maxAmountForAsset(
     );
   }
 
+  if (token.balance === undefined) {
+    return Err(new Error(`Balance not available for token ${tokenAddress}`));
+  }
+
   const maxAmount =
     (token.balance - token.fee * (BigInt(1) + BigInt(maxUse))) / BigInt(maxUse);
 

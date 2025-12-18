@@ -45,10 +45,10 @@ class ValidationService {
         );
       }
 
-      if (token.balance < amount) {
+      if (token.balance === undefined || token.balance < amount) {
         return Err(
           new Error(
-            `Insufficient amount for asset ${address}, required: ${amount}, available: ${token.balance}`,
+            `Insufficient amount for asset ${address}, required: ${amount}, available: ${token.balance ?? 0n}`,
           ),
         );
       }

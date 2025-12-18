@@ -72,7 +72,7 @@
 
   let amount: number = $state(0);
   let maxAmount: number = $derived.by(() => {
-    if (!selectedTokenObj) return 0;
+    if (!selectedTokenObj || selectedTokenObj.balance === undefined) return 0;
     return parseBalanceUnits(
       selectedTokenObj.balance,
       selectedTokenObj.decimals,

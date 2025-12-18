@@ -4,11 +4,13 @@ import type { TokenWithPriceAndBalance } from "../types";
 
 /**
  * Sorts an array of wallet tokens with the following criteria:
- * 1. Tokens with USD value > 0 come first, sorted by USD value descending
- * 2. Tokens with USD value = 0 come last, sorted by:
- *    2.1. ICP token first
- *    2.2. Then by default tokens (is_default = true)
- *    2.3. Within same group (both default or both non-default), sort by address
+ * 1. Enabled tokens come first, disabled tokens last
+ * 2. Within enabled tokens: tokens with USD value > 0 first, sorted by USD value descending
+ * 3. Within enabled tokens with USD value = 0:
+ *    3.1. ICP token first
+ *    3.2. Then by default tokens (is_default = true)
+ *    3.3. Within same group (both default or both non-default), sort by address
+ * 4. Disabled tokens sorted by: default first, then by address
  * @param enrichedTokens Array of tokens with price and balance information
  * @return Sorted array of tokens
  */
@@ -16,8 +18,28 @@ export function sortWalletTokens(
   enrichedTokens: TokenWithPriceAndBalance[],
 ): TokenWithPriceAndBalance[] {
   return [...enrichedTokens].sort((a, b) => {
-    const aUSDValue = balanceToUSDValue(a.balance, a.decimals, a.priceUSD);
-    const bUSDValue = balanceToUSDValue(b.balance, b.decimals, b.priceUSD);
+    // Enabled tokens come first
+    if (a.enabled && !b.enabled) return -1;
+    if (!a.enabled && b.enabled) return 1;
+
+    // Both disabled - sort by default first, then by address
+    if (!a.enabled && !b.enabled) {
+      if (a.is_default && !b.is_default) return -1;
+      if (!a.is_default && b.is_default) return 1;
+      return a.address.localeCompare(b.address);
+    }
+
+    // Both enabled - use balance for USD value calculation
+    const aUSDValue = balanceToUSDValue(
+      a.balance ?? BigInt(0),
+      a.decimals,
+      a.priceUSD,
+    );
+    const bUSDValue = balanceToUSDValue(
+      b.balance ?? BigInt(0),
+      b.decimals,
+      b.priceUSD,
+    );
 
     // Tokens with USD value > 0 come first
     if (aUSDValue > 0 && bUSDValue > 0) {
