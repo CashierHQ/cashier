@@ -1,6 +1,6 @@
 import { managedState } from "$lib/managedState";
 import countryBlacklist from "$modules/guard/data/blacklist.json";
-import { queryUserCountryLocation } from "../services/ip_resolver";
+import { queryUserCountryLocation } from "$modules/guard/services/ip_resolver";
 
 export class UserIPStore {
   #ipLocationQuery;
