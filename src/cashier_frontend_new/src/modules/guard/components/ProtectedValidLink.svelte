@@ -15,11 +15,13 @@
 
   const context = getGuardContext();
 
-  const linkStore = $derived(context.getLinkStore());
+  const linkStore = $derived.by(() => context.getLinkStore());
 
-  const isLoading = $derived(context.isLoading({ checkTempLinkLoad: true }));
+  const isLoading = $derived.by(() =>
+    context.isLoading({ checkTempLinkLoad: true }),
+  );
 
-  const hasLink = $derived(context.hasLink());
+  const hasLink = $derived(() => context.hasLink());
 
   const isValid = $derived(!linkStore ? false : isLoading ? false : hasLink);
 

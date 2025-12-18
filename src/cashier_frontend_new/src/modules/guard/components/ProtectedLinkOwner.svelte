@@ -17,11 +17,13 @@
 
   const context = getGuardContext();
 
-  const linkStore = $derived(context.getLinkStore());
+  const linkStore = $derived.by(() => context.getLinkStore());
 
-  const isOwner = $derived(context.isOwner());
+  const isOwner = $derived.by(() => context.isOwner());
 
-  const isLoading = $derived(context.isLoading({ checkTempLinkLoad: false }));
+  const isLoading = $derived.by(() =>
+    context.isLoading({ checkTempLinkLoad: false }),
+  );
 
   const isReady = $derived(
     !context.authState.isReady || !linkStore
