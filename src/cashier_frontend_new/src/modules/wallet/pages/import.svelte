@@ -9,38 +9,11 @@
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import NetworkSelector from "$modules/creationLink/components/shared/NetworkSelector.svelte";
   import { resolve } from "$app/paths";
-
-  const SECURITY_LEARN_MORE_URL = "https://example.com";
-
-  // TODO: Remove mock data
-  const AVAILABLE_NETWORKS = [
-    {
-      id: "icp",
-      name: "Internet Computer",
-      iconUrl: "https://cryptologos.cc/logos/internet-computer-icp-logo.png",
-    },
-    {
-      id: "base",
-      name: "Base",
-      iconUrl:
-        "https://altcoinsbox.com/wp-content/uploads/2023/03/base-logo.png",
-    },
-    {
-      id: "eth",
-      name: "Ethereum",
-      iconUrl: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-    },
-    {
-      id: "sol",
-      name: "Solana",
-      iconUrl: "https://cryptologos.cc/logos/solana-sol-logo.png",
-    },
-    {
-      id: "bnb",
-      name: "BNB Chain",
-      iconUrl: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
-    },
-  ];
+  import {
+    MOCK_NETWORKS,
+    MOCK_TOKEN_DATA,
+    SECURITY_LEARN_MORE_URL,
+  } from "../constants/mock";
 
   let isReview = $state(false);
   let selectedNetwork = $state("icp");
@@ -49,12 +22,7 @@
   let isLoading = $state(false);
 
   // TODO: Fetch from API based on contract address
-  let tokenData = $state({
-    name: "Kinic",
-    symbol: "KINIC",
-    logo: null as string | null,
-    address: "",
-  });
+  let tokenData = $state({ ...MOCK_TOKEN_DATA });
 
   let imageLoadFailed = $state(false);
   let networkIconLoadFailed = $state(false);
@@ -70,13 +38,11 @@
   );
 
   const selectedNetworkName = $derived.by(() => {
-    return AVAILABLE_NETWORKS.find((n) => n.id === selectedNetwork)?.name || "";
+    return MOCK_NETWORKS.find((n) => n.id === selectedNetwork)?.name || "";
   });
 
   const selectedNetworkIcon = $derived.by(() => {
-    return (
-      AVAILABLE_NETWORKS.find((n) => n.id === selectedNetwork)?.iconUrl || ""
-    );
+    return MOCK_NETWORKS.find((n) => n.id === selectedNetwork)?.iconUrl || "";
   });
 
   // TODO: remove when connected to API

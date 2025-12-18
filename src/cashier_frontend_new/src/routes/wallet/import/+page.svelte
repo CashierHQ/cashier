@@ -2,7 +2,7 @@
   import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
   import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
   import AppHeader from "$modules/shared/components/AppHeader.svelte";
-  import ImportPage from "$modules/token/pages/import.svelte";
+  import ImportPage from "$modules/wallet/pages/import.svelte";
 </script>
 
 <RouteGuard>

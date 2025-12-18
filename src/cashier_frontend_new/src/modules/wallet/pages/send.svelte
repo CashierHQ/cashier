@@ -1,6 +1,5 @@
 <script lang="ts">
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import {
     formatBalanceUnits,
     parseBalanceUnits,
@@ -15,24 +14,25 @@
   import NavBar from "$modules/token/components/navBar.svelte";
   import { locale } from "$lib/i18n";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import SelectedAssetButtonInfo from "$modules/creationLink/components/tiplink/SelectedAssetButtonInfo.svelte";
-  import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
   import { Clipboard } from "lucide-svelte";
   import { toast } from "svelte-sonner";
   import { page } from "$app/state";
   import ConfirmSendDrawer from "../components/confirmSendDrawer.svelte";
   import { validate } from "../utils/send";
-    import InputAmount from "$modules/creationLink/components/inputAmount/inputAmount.svelte";
+  import InputAmount from "$modules/creationLink/components/inputAmount/inputAmount.svelte";
 
   let selectedToken: string = $state("");
   let receiveAddress: string = $state("");
   let receiveType: number = $state(PRINCIPAL_TYPE);
 
-  let showAssetDrawer = $state(false);
-  let tokenAmount: bigint = $state(0n);
-
   let showConfirmDrawer = $state(false);
   let txState: "confirm" | "pending" | "success" | "error" = $state("confirm");
+
+  let amount: number = $state(0);
+  let tokenAmount: string = $state("");
+  let usdAmount: string = $state("");
+
+  let isInitialLoad = $state(true);
 
   $effect(() => {
     const tokenParam = page.url.searchParams.get("token");
@@ -43,6 +43,10 @@
         selectedToken = walletStore.query.data[0].address;
       }
     }
+
+    if (walletStore.query.data) {
+      isInitialLoad = false;
+    }
   });
 
   let selectedTokenObj: TokenWithPriceAndBalance | null = $derived.by(() => {
@@ -50,11 +54,6 @@
     const token = walletStore.findTokenByAddress(selectedToken);
     if (token.isErr()) return null;
     return token.unwrap();
-  });
-
-  let amount: number = $derived.by(() => {
-    if (!selectedTokenObj || tokenAmount === 0n) return 0;
-    return parseBalanceUnits(tokenAmount, selectedTokenObj.decimals);
   });
 
   let maxAmount: number = $derived.by(() => {
@@ -78,18 +77,18 @@
     }
   });
 
-  $effect(() => {
-    if (selectedTokenObj) {
-      tokenAmount = 0n;
-    }
-  });
-
   let errorMessage: string = $state("");
   let isSending: boolean = $state(false);
+  const isMaxAvailable = $derived.by(() => maxAmount > 0 && !isSending);
+
+  const isLoading = $derived.by(() => {
+    return (
+      walletStore.query.isLoading || (isInitialLoad && !walletStore.query.data)
+    );
+  });
 
   function handleSelectToken(address: string) {
     selectedToken = address;
-    showAssetDrawer = false;
   }
 
   async function handlePasteFromClipboard() {
@@ -127,19 +126,20 @@
 
     try {
       const token = walletStore.findTokenByAddress(selectedToken).unwrap();
+      const balanceAmount = formatBalanceUnits(amount, token.decimals);
 
       if (receiveType === PRINCIPAL_TYPE) {
         const receivePrincipal = Principal.fromText(receiveAddress);
         await walletStore.transferTokenToPrincipal(
           selectedToken,
           receivePrincipal,
-          tokenAmount,
+          balanceAmount,
         );
       } else if (
         receiveType === ACCOUNT_ID_TYPE &&
         selectedToken === ICP_LEDGER_CANISTER_ID
       ) {
-        await walletStore.transferICPToAccount(receiveAddress, tokenAmount);
+        await walletStore.transferICPToAccount(receiveAddress, balanceAmount);
       } else {
         throw new Error(locale.t("wallet.send.errors.invalidReceiveType"));
       }
@@ -156,26 +156,30 @@
     showConfirmDrawer = false;
     if (txState === "success") {
       receiveAddress = "";
-      tokenAmount = 0n;
+      amount = 0;
+      tokenAmount = "";
+      usdAmount = "";
     }
     txState = "confirm";
   }
 
   const networkFee = $derived.by(() => {
-    // TODO: Parse actual network fee from backend
     return "0.0001 ICP";
   });
 
   const transactionLink = $derived.by(() => {
-    // TODO: Get actual transaction link
-    return `https:example.com/transaction`;
+    return `https://example.com/transaction`;
   });
 </script>
 
 <NavBar />
 
 <div class="px-4 grow-1 flex flex-col">
-  {#if walletStore.query.data}
+  {#if isLoading}
+    <div class="text-center py-8">
+      <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
+    </div>
+  {:else if walletStore.query.data}
     <div class="space-y-4 grow-1 flex flex-col">
       {#if errorMessage}
         <div
@@ -185,44 +189,16 @@
         </div>
       {/if}
 
-      <div class="input-label-field-container space-y-1">
-        <div class="flex w-full items-center">
-          <Label>{locale.t("wallet.send.selectTokenLabel")}</Label>
-        </div>
-
-        <div>
-          <button
-            onclick={() => (showAssetDrawer = true)}
-            class="w-full p-3 border border-gray-300 rounded-lg hover:border-gray-400 transition-colors text-left"
-          >
-            {#if selectedTokenObj}
-              <SelectedAssetButtonInfo
-                selectedToken={selectedTokenObj}
-                onOpenDrawer={() => (showAssetDrawer = true)}
-              />
-            {:else}
-              <span class="text-gray-500">
-                {locale.t("links.linkForm.addAsset.chooseAsset")}
-              </span>
-            {/if}
-          </button>
-
-          <TokenSelectorDrawer
-            bind:open={showAssetDrawer}
-            selectedAddress={selectedToken}
-            onSelectToken={handleSelectToken}
-          />
-        </div>
-      </div>
-
-      {#if selectedTokenObj}
-        <div class="input-label-field-container space-y-1">
-          <InputAmount
-            token={selectedTokenObj}
-            bind:tokenAmount={tokenAmount}
-          />
-        </div>
-      {/if}
+      <InputAmount
+        bind:selectedToken
+        bind:amount
+        bind:tokenAmount
+        bind:usdAmount
+        {selectedTokenObj}
+        {maxAmount}
+        {isMaxAvailable}
+        onSelectToken={handleSelectToken}
+      />
 
       <div>
         <label
@@ -304,10 +280,6 @@
         {locale.t("wallet.errorMsg")}
         {walletStore.query.error}
       </p>
-    </div>
-  {:else}
-    <div class="text-center py-8">
-      <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
     </div>
   {/if}
 </div>

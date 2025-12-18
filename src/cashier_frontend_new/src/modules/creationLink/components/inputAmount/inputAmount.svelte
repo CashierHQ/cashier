@@ -1,186 +1,165 @@
 <script lang="ts">
-  import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import { validationService } from "$modules/links/services/validationService";
-  import {
-    computeAmountFromInput,
-    parseDisplayNumber,
-    sanitizeInput,
-    trimNumber,
-  } from "$modules/links/utils/inputAmount";
-  import { USD_DISPLAY_DECIMALS } from "$modules/shared/constants";
-  import { parseBalanceUnits } from "$modules/shared/utils/converter";
-  import { formatNumber } from "$modules/shared/utils/formatNumber";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { locale } from "$lib/i18n";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
+  import AssetButton from "$modules/creationLink/components/tiplink/AssetButton.svelte";
+  import SelectedAssetButtonInfo from "$modules/creationLink/components/tiplink/SelectedAssetButtonInfo.svelte";
+  import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
+  import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
+
+  interface Props {
+    selectedToken: string;
+    selectedTokenObj: TokenWithPriceAndBalance | null;
+    maxAmount: number;
+    amount?: number;
+    tokenAmount?: string;
+    usdAmount?: string;
+    isMaxAvailable?: boolean;
+    onSelectToken: (address: string) => void;
+    label?: string;
+  }
 
   let {
-    token,
-    tokenAmount = $bindable<bigint>(0n),
-  }: {
-    token: TokenWithPriceAndBalance;
-    tokenAmount: bigint;
-  } = $props();
+    selectedToken = $bindable(),
+    selectedTokenObj,
+    maxAmount,
+    amount = $bindable(0),
+    tokenAmount = $bindable(""),
+    usdAmount = $bindable(""),
+    isMaxAvailable = true,
+    onSelectToken,
+    label = locale.t("wallet.send.selectTokenLabel"),
+  }: Props = $props();
 
-  // read-only input string derived from `tokenAmount`
-  let mode: string = $state("amount");
-  let userInput: string = $state("");
+  let showAssetDrawer = $state(false);
+  let localTokenAmount = $state("");
+  let localUsdAmount = $state("");
+  let isUsd = $state(false);
 
-  let formattedValue: string = $derived.by(() => {
-    if (tokenAmount != null && tokenAmount !== undefined) {
-      const asAmount: number = parseBalanceUnits(tokenAmount, token.decimals);
-      if (mode === "amount") {
-        return String(asAmount);
+  const tokenUsdPrice = $derived.by(() => {
+    return selectedTokenObj?.priceUSD;
+  });
+
+  const canConvert = $derived.by(() => {
+    return tokenUsdPrice !== undefined && tokenUsdPrice > 0;
+  });
+
+  // Синхронізуємо локальні значення з зовнішніми
+  $effect(() => {
+    tokenAmount = localTokenAmount;
+  });
+
+  $effect(() => {
+    usdAmount = localUsdAmount;
+  });
+
+  $effect(() => {
+    if (localTokenAmount) {
+      const num = parseFloat(localTokenAmount);
+      if (!isNaN(num) && num > 0) {
+        amount = num;
       } else {
-        if (token.priceUSD && token.priceUSD > 0) {
-          // trim floating-point precision for USD display to avoid extremely long decimal strings
-          return trimNumber(asAmount * token.priceUSD, USD_DISPLAY_DECIMALS);
-        }
+        amount = 0;
+      }
+    } else {
+      amount = 0;
+    }
+  });
+
+  $effect(() => {
+    if (selectedTokenObj && localTokenAmount === "") {
+      localTokenAmount = "";
+      localUsdAmount = "";
+      amount = 0;
+    }
+  });
+
+  function handleSelectToken(address: string) {
+    selectedToken = address;
+    onSelectToken(address);
+    showAssetDrawer = false;
+  }
+
+  function handleAmountChange(value: string) {
+    if (isUsd) {
+      localUsdAmount = value;
+
+      if (canConvert && tokenUsdPrice && !isNaN(parseFloat(value))) {
+        const tokenValue = parseFloat(value) / tokenUsdPrice;
+        localTokenAmount = tokenValue.toString();
+      } else {
+        localTokenAmount = "";
+      }
+    } else {
+      localTokenAmount = value;
+
+      if (canConvert && tokenUsdPrice && !isNaN(parseFloat(value))) {
+        const usdValue = parseFloat(value) * tokenUsdPrice;
+        const roundedUsdValue = Math.round(usdValue * 10000) / 10000;
+        localUsdAmount = formatUsdAmount(roundedUsdValue);
+      } else {
+        localUsdAmount = "";
       }
     }
-    return "";
-  });
-
-  // reset userInput when token changes
-  $effect(() => {
-    if (token) {
-      userInput = formattedValue;
-    }
-  });
-
-  // converted value: if mode === 'amount' -> USD equivalent, else -> token equivalent
-  let converted = $derived.by(() => {
-    const parsed = parseDisplayNumber(userInput);
-    if (parsed == null) return 0;
-    if (!token.priceUSD || token.priceUSD <= 0) return 0;
-    if (mode === "amount") {
-      // mode 'amount' means the input is token amount -> show USD
-      return parsed * token.priceUSD;
-    } else {
-      // mode 'usd' means the input is USD amount -> show tokens
-      return parsed / token.priceUSD;
-    }
-  });
-
-  // Handle input events and keep numeric displayNumber
-  function handleInput(e: Event) {
-    const t = e.target as HTMLInputElement;
-    // sanitize input (removes invalid chars) and parse
-    const sanitizedInput = sanitizeInput(t.value);
-    if (sanitizedInput !== t.value) {
-      // update input field if sanitization changed the value
-      t.value = sanitizedInput;
-    }
-
-    userInput = sanitizedInput;
-    const parsed = parseDisplayNumber(sanitizedInput);
-
-    if (parsed == null) {
-      // empty or invalid
-      tokenAmount = 0n;
-    } else {
-      tokenAmount = computeAmountFromInput({
-        num: parsed,
-        mode,
-        priceUsd: token.priceUSD,
-        decimals: token.decimals,
-      });
-    }
   }
 
-  // Toggle mode (external callers can set `mode` prop too)
-  function handleToggleMode(m: "amount" | "usd") {
-    // disallow switching to USD when price is not provided
-    if (m === "usd" && !token.priceUSD) return;
-    mode = m;
-
-    const parsed = parseDisplayNumber(userInput);
-    if (parsed == null || parsed <= 0) {
-      userInput = "";
-      return;
-    }
-
-    if (mode === "usd") {
-      userInput = (parsed * token.priceUSD).toFixed(5);
-    } else {
-      userInput = (parsed / token.priceUSD).toFixed(5);
-    }
+  function handleToggleUsd(value: boolean) {
+    isUsd = value;
   }
 
-  // Set max amount based on wallet balance and validation service
-  function handleSetMax() {
-    if (!walletStore.query.data) {
-      return;
-    }
+  function handleMaxClick() {
+    if (!isMaxAvailable || !selectedTokenObj) return;
+    amount = maxAmount;
+    localTokenAmount = maxAmount.toString();
 
-    const maxUse = 1; // TipLink has maxUse = 1 per asset
-    const maxAmountForAsset = validationService.maxAmountForAsset(
-      token.address,
-      maxUse,
-      walletStore.query.data,
-    );
-    if (maxAmountForAsset.isErr()) {
-      return;
+    if (canConvert && tokenUsdPrice) {
+      const usdValue = maxAmount * tokenUsdPrice;
+      const roundedUsdValue = Math.round(usdValue * 10000) / 10000;
+      localUsdAmount = formatUsdAmount(roundedUsdValue);
     }
-
-    tokenAmount = maxAmountForAsset.unwrap();
-    userInput = formattedValue;
   }
 </script>
 
-<div class="flex flex-col space-y-1">
-  <div class="flex items-center justify-between">
-    <Label>Amount</Label>
-    <div class="space-x-2">
-      <Button
-        type="button"
-        class={`px-2 py-1 border rounded text-sm ${mode === "amount" ? "bg-blue-600 text-white border-blue-600" : ""}`}
-        aria-pressed={mode === "amount"}
-        onclick={() => handleToggleMode("amount")}
+<div class="input-label-field-container space-y-1">
+  <div class="flex w-full items-center">
+    <Label>{label}</Label>
+    {#if selectedTokenObj}
+      <button
+        onclick={handleMaxClick}
+        disabled={!isMaxAvailable}
+        class="ml-auto text-[12px] font-medium transition-colors {isMaxAvailable
+          ? 'text-[#36A18B] cursor-pointer hover:text-[#2d8a75]'
+          : 'text-gray-400 cursor-not-allowed'}"
       >
-        Amount
-      </Button>
-      <Button
-        type="button"
-        class={`px-2 py-1 border rounded text-sm ${mode === "usd" ? "bg-blue-600 text-white border-blue-600" : ""}`}
-        aria-pressed={mode === "usd"}
-        onclick={() => handleToggleMode("usd")}
-        disabled={!token.priceUSD}
-      >
-        USD
-      </Button>
-      <Button class="px-2 py-1 border rounded text-sm" onclick={handleSetMax}>
-        Max
-      </Button>
-    </div>
+        {locale.t("links.linkForm.addAsset.max")}
+      </button>
+    {/if}
   </div>
 
-  <Input
-    value={userInput}
-    type="text"
-    inputmode="decimal"
-    step="any"
-    min="0"
-    placeholder={mode === "amount" ? "0.00" : "0.00 USD"}
-    oninput={handleInput}
-    aria-label={mode === "amount" ? "token amount" : "usd amount"}
-  />
+  <div>
+    <AssetButton
+      text={locale.t("links.linkForm.addAsset.chooseAsset")}
+      tokenValue={localTokenAmount}
+      usdValue={localUsdAmount}
+      onInputChange={handleAmountChange}
+      {isUsd}
+      onToggleUsd={handleToggleUsd}
+      token={selectedTokenObj}
+      {canConvert}
+      maxBalanceWithFee={maxAmount}
+    >
+      {#if selectedTokenObj}
+        <SelectedAssetButtonInfo
+          selectedToken={selectedTokenObj}
+          onOpenDrawer={() => (showAssetDrawer = true)}
+        />
+      {/if}
+    </AssetButton>
 
-  <div class="text-sm text-gray-500">
-    {#if token.priceUSD}
-      1 token = {token.priceUSD} USD
-    {:else}
-      Price not available
-    {/if}
-    {#if converted != null}
-      <div class="text-sm text-gray-700 mt-1">
-        {#if mode === "amount"}
-          ≈ ${formatNumber(converted)} USD
-        {:else}
-          ≈ {formatNumber(converted)} tokens
-        {/if}
-      </div>
-    {/if}
+    <TokenSelectorDrawer
+      bind:open={showAssetDrawer}
+      selectedAddress={selectedToken}
+      onSelectToken={handleSelectToken}
+    />
   </div>
 </div>

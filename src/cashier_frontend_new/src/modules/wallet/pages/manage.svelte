@@ -8,35 +8,7 @@
   import { locale } from "$lib/i18n";
   import { LoaderCircle, RefreshCw, Search, Plus } from "lucide-svelte";
   import { resolve } from "$app/paths";
-
-  // TODO: Remove mock data - get network from token data
-  const AVAILABLE_NETWORKS = [
-    {
-      id: "icp",
-      name: "Internet Computer",
-      iconUrl: "/icpLogo.png",
-    },
-    {
-      id: "base",
-      name: "Base",
-      iconUrl: "https://avatars.githubusercontent.com/u/108554348?s=280&v=4",
-    },
-    {
-      id: "eth",
-      name: "Ethereum",
-      iconUrl: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-    },
-    {
-      id: "sol",
-      name: "Solana",
-      iconUrl: "https://cryptologos.cc/logos/solana-sol-logo.png",
-    },
-    {
-      id: "bnb",
-      name: "BNB Chain",
-      iconUrl: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
-    },
-  ];
+  import { MOCK_NETWORKS } from "../constants/mock";
 
   let searchQuery: string = $state("");
   let failedImageLoads: Set<string> = $state(new Set());
@@ -91,8 +63,8 @@
   function getTokenNetwork(token: TokenWithPriceAndBalance) {
     // Default to ICP for now
     return token.address.startsWith("icp")
-      ? AVAILABLE_NETWORKS[0]
-      : AVAILABLE_NETWORKS[0];
+      ? MOCK_NETWORKS[0]
+      : MOCK_NETWORKS[0];
   }
 
   const filteredTokens = $derived(
