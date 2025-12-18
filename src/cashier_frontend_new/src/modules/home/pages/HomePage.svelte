@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { Lock, Feather, Zap, ChevronDown, ChevronUp } from "lucide-svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
   import { locale } from "$lib/i18n";
@@ -15,15 +16,12 @@
 
   let mobileImageHeight = $state(getMobileImageHeight());
 
-  // Update height on window resize using $effect
-  $effect(() => {
-    if (typeof window === "undefined") return;
-
+  // Update height on window resize
+  onMount(() => {
     function updateHeight() {
       mobileImageHeight = getMobileImageHeight();
     }
 
-    updateHeight(); // Initial calculation
     window.addEventListener("resize", updateHeight);
 
     return () => {
