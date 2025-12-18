@@ -3,6 +3,7 @@ name: "Build Test"
 on:
   pull_request:
     branches: [main, dev, staging]
+    types: [opened, synchronize, reopened, ready_for_review]
     paths-ignore:
       - "**/README.md"
   push:
@@ -21,6 +22,7 @@ concurrency:
 jobs:
   code-check:
     name: Checks the code style
+    if: github.event.pull_request.draft == false || github.event_name == 'push'
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -55,12 +57,13 @@ jobs:
         run: |
           just check_code
 
-      - name: Frontend - Check code style
+      - name: Frontend - Lint and type check
         run: |
           just frontend_check_code
 
   build-test:
     name: Build and Test
+    if: github.event.pull_request.draft == false || github.event_name == 'push'
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -113,6 +116,7 @@ jobs:
 
   build-test-i686:
     name: Test for the i686 architecture
+    if: github.event.pull_request.draft == false || github.event_name == 'push'
     permissions:
       contents: read
     runs-on: ubuntu-latest
