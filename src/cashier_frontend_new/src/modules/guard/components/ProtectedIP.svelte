@@ -1,7 +1,7 @@
 <script lang="ts">
+  import ProtectionProcessingState from "$modules/guard/components/ProtectionProcessingState.svelte";
+  import { userIPStore } from '$modules/guard/state/userIPStore.svelte';
   import { type Snippet } from "svelte";
-  import { userIPStore } from '../state/userIPStore.svelte';
-  import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
 
   let {
     children,
