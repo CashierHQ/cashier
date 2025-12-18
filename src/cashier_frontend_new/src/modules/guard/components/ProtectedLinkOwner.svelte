@@ -17,38 +17,12 @@
 
   const context = getGuardContext();
 
-  const linkStore = $derived(
-    context.linkDetailStore ||
-      context.userLinkStore ||
-      context.linkCreationStore,
-  );
+  const linkStore = $derived.by(() => context.getLinkStore());
 
-  const link = $derived(
-    !linkStore
-      ? null
-      : "link" in linkStore
-        ? linkStore.link
-        : "linkDetail" in linkStore && linkStore.linkDetail
-          ? linkStore.linkDetail.link
-          : null,
-  );
+  const isOwner = $derived.by(() => context.isOwner());
 
-  const isOwner = $derived(
-    context.linkCreationStore
-      ? true
-      : link?.creator != null &&
-          context.authState.account?.owner != null &&
-          link.creator.toString() === context.authState.account.owner,
-  );
-
-  const isLoading = $derived(
-    !linkStore
-      ? false
-      : "query" in linkStore
-        ? linkStore.query.isLoading
-        : "linkDetail" in linkStore && linkStore.linkDetail?.query
-          ? linkStore.linkDetail.query.isLoading
-          : false,
+  const isLoading = $derived.by(() =>
+    context.isLoading({ checkTempLinkLoad: false }),
   );
 
   const isReady = $derived(

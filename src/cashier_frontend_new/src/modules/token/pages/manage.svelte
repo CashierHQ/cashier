@@ -14,13 +14,12 @@
     {
       id: "icp",
       name: "Internet Computer",
-      iconUrl: "https://cryptologos.cc/logos/internet-computer-icp-logo.png",
+      iconUrl: "/icpLogo.png",
     },
     {
       id: "base",
       name: "Base",
-      iconUrl:
-        "https://altcoinsbox.com/wp-content/uploads/2023/03/base-logo.png",
+      iconUrl: "https://avatars.githubusercontent.com/u/108554348?s=280&v=4",
     },
     {
       id: "eth",
@@ -187,7 +186,7 @@
                     <img
                       src={tokenLogo}
                       alt={token.symbol}
-                      class="w-6 h-6 rounded-full object-cover"
+                      class="w-7 h-7 rounded-full object-cover"
                       onerror={() => handleImageError(token.address)}
                     />
                   {:else}
@@ -198,7 +197,7 @@
                 </div>
                 <!-- Network Badge -->
                 <div
-                  class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-white flex items-center justify-center"
+                  class="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-white flex items-center justify-center"
                   style="padding: 1px;"
                 >
                   {#if network.iconUrl && !failedNetworkIconLoads.has(token.address)}

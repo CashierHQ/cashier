@@ -31,13 +31,12 @@
     {
       id: "icp",
       name: "Internet Computer",
-      iconUrl: "https://cryptologos.cc/logos/internet-computer-icp-logo.png",
+      iconUrl: "/icpLogo.png",
     },
     {
       id: "base",
       name: "Base",
-      iconUrl:
-        "https://altcoinsbox.com/wp-content/uploads/2023/03/base-logo.png",
+      iconUrl: "https://avatars.githubusercontent.com/u/108554348?s=280&v=4",
     },
     {
       id: "eth",

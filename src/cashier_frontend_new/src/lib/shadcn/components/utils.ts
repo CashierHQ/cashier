@@ -37,3 +37,9 @@ export function cn(...inputs: ClassValue[]) {
 export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & {
   ref?: U | null;
 };
+
+/**
+ * Utility type that removes 'children' and 'child' props from a component type.
+ * Used for components that manage their own children rendering.
+ */
+export type WithoutChildrenOrChild<T> = Omit<T, "children" | "child">;
