@@ -1,6 +1,7 @@
 import {
   PUBLIC_TOKEN_ICPSWAP_INDEX_CANISTER_ID,
   PUBLIC_TOKEN_ICP_LEDGER_CANISTER_ID,
+  PUBLIC_TOKEN_ICP_INDEX_CANISTER_ID,
   PUBLIC_TOKEN_IC_EXPLORER_BASE_URL,
   PUBLIC_TOKEN_KONGSWAP_INDEX_CANISTER_ID,
 } from "$env/static/public";
@@ -19,6 +20,10 @@ export const IC_EXPLORER_BASE_URL = PUBLIC_TOKEN_IC_EXPLORER_BASE_URL;
 export const ICP_LEDGER_CANISTER_ID =
   PUBLIC_TOKEN_ICP_LEDGER_CANISTER_ID || "ryjl3-tyaaa-aaaaa-aaaba-cai";
 export const ICP_LEDGER_FEE = 10_000n;
+
+// The ICP Index canister id (uses nat64 types, different from ICRC index canisters)
+export const ICP_INDEX_CANISTER_ID =
+  PUBLIC_TOKEN_ICP_INDEX_CANISTER_ID || "qhbym-qaaaa-aaaaa-aaafq-cai";
 
 // Address type
 export const PRINCIPAL_TYPE = 0;

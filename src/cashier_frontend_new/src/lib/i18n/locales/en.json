@@ -287,7 +287,9 @@
       "received": "Received",
       "to": "To",
       "from": "From",
-      "noDetails": "No details found for this token."
+      "noDetails": "No details found for this token.",
+      "historyError": "Failed to load transaction history.",
+      "noTransactions": "No transactions yet."
     },
     "nftMessage": "NFT Coming soon! Included in Release 3.",
     "manageTokensBtn": "+Manage tokens",

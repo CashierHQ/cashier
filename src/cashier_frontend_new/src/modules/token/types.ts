@@ -1,5 +1,6 @@
-import type { Principal } from "@dfinity/principal";
+import { Principal } from "@dfinity/principal";
 import type { IcrcIndexNgTransactionWithId } from "@dfinity/ledger-icrc";
+import type { TransactionWithId } from "@dfinity/ledger-icp";
 import { fromNullable } from "@dfinity/utils";
 
 /**
@@ -13,6 +14,7 @@ export type TokenMetadata = {
   enabled: boolean;
   fee: bigint;
   is_default: boolean;
+  indexId?: Principal; // Optional index canister ID for transaction history
 };
 
 /**
@@ -21,6 +23,91 @@ export type TokenMetadata = {
 export type TokenWithPriceAndBalance = TokenMetadata & {
   balance: bigint;
   priceUSD: number;
+};
+
+/**
+ * Serialized form of TokenWithPriceAndBalance for localStorage
+ * Converts bigint to string and Principal to string
+ */
+export type SerializedTokenWithPriceAndBalance = {
+  name: string;
+  symbol: string;
+  address: string;
+  decimals: number;
+  enabled: boolean;
+  fee: string; // bigint as string
+  is_default: boolean;
+  indexId?: string; // Principal as string
+  balance: string; // bigint as string
+  priceUSD: number;
+};
+
+/**
+ * Type guard to check if value is TokenWithPriceAndBalance
+ */
+function isTokenWithPriceAndBalance(
+  value: unknown,
+): value is TokenWithPriceAndBalance {
+  if (!value || typeof value !== "object") return false;
+  const token = value as Record<string, unknown>;
+  return (
+    typeof token.address === "string" &&
+    typeof token.name === "string" &&
+    typeof token.symbol === "string" &&
+    typeof token.decimals === "number" &&
+    typeof token.enabled === "boolean" &&
+    typeof token.fee === "bigint" &&
+    typeof token.balance === "bigint" &&
+    typeof token.priceUSD === "number"
+  );
+}
+
+/**
+ * Serde for TokenWithPriceAndBalance[] to handle bigint and Principal in localStorage
+ * Uses devalue's reducer pattern: return false to skip, truthy to handle
+ */
+export const TokenWithPriceAndBalanceSerde = {
+  serialize: {
+    TokenWithPriceAndBalance: (
+      value: unknown,
+    ): SerializedTokenWithPriceAndBalance | false => {
+      if (!isTokenWithPriceAndBalance(value)) return false;
+      // indexId may be Principal or already string depending on source
+      const indexIdStr =
+        typeof value.indexId === "string"
+          ? value.indexId
+          : (value.indexId?.toText?.() ?? undefined);
+      return {
+        name: value.name,
+        symbol: value.symbol,
+        address: value.address,
+        decimals: value.decimals,
+        enabled: value.enabled,
+        fee: value.fee.toString(),
+        is_default: value.is_default,
+        indexId: indexIdStr,
+        balance: value.balance.toString(),
+        priceUSD: value.priceUSD,
+      };
+    },
+  },
+  deserialize: {
+    TokenWithPriceAndBalance: (obj: unknown): TokenWithPriceAndBalance => {
+      const s = obj as SerializedTokenWithPriceAndBalance;
+      return {
+        name: s.name,
+        symbol: s.symbol,
+        address: s.address,
+        decimals: s.decimals,
+        enabled: s.enabled,
+        fee: BigInt(s.fee),
+        is_default: s.is_default,
+        indexId: s.indexId ? Principal.fromText(s.indexId) : undefined,
+        balance: BigInt(s.balance),
+        priceUSD: s.priceUSD,
+      };
+    },
+  },
 };
 
 // =============================================================================
@@ -91,11 +178,12 @@ export type TxOperation = {
 // =============================================================================
 
 /**
- * Mapper for converting ICRC index canister transactions to TokenTransaction
+ * Mapper for converting index canister transactions to TokenTransaction
+ * Handles both ICRC (nat types) and ICP (nat64 types) index canisters
  */
 export class TxOperationMapper {
   /**
-   * Map index canister transaction to TokenTransaction
+   * Map ICRC index canister transaction to TokenTransaction
    */
   static mapTransaction(tx: IcrcIndexNgTransactionWithId): TokenTransaction {
     const { id, transaction } = tx;
@@ -114,9 +202,78 @@ export class TxOperationMapper {
       amount: op?.amount ?? BigInt(0),
       from: op?.from ? TxOperationMapper.mapAccount(op.from) : undefined,
       to: op?.to ? TxOperationMapper.mapAccount(op.to) : undefined,
-      spender: op?.spender ? TxOperationMapper.mapAccount(op.spender) : undefined,
+      spender: op?.spender
+        ? TxOperationMapper.mapAccount(op.spender)
+        : undefined,
       fee: op?.fee ? fromNullable(op.fee) : undefined,
-      memo: op?.memo ? TxOperationMapper.toUint8Array(fromNullable(op.memo)) : undefined,
+      memo: op?.memo
+        ? TxOperationMapper.toUint8Array(fromNullable(op.memo))
+        : undefined,
+    };
+  }
+
+  /**
+   * Map ICP index canister transaction to TokenTransaction
+   * ICP uses AccountIdentifier (hex strings) instead of Principal+subaccount
+   */
+  static mapIcpTransaction(tx: TransactionWithId): TokenTransaction {
+    const { id, transaction } = tx;
+
+    // Determine transaction kind and extract operation data
+    const transfer = "Transfer" in transaction.operation ? transaction.operation.Transfer : undefined;
+    const mint = "Mint" in transaction.operation ? transaction.operation.Mint : undefined;
+    const burn = "Burn" in transaction.operation ? transaction.operation.Burn : undefined;
+    const approve = "Approve" in transaction.operation ? transaction.operation.Approve : undefined;
+
+    let kind: TransactionKind;
+    let amount = BigInt(0);
+    let from: IcrcAccount | undefined;
+    let to: IcrcAccount | undefined;
+    let fee: bigint | undefined;
+    let spender: IcrcAccount | undefined;
+
+    if (transfer) {
+      kind = "transfer";
+      amount = transfer.amount.e8s;
+      from = { owner: transfer.from };
+      to = { owner: transfer.to };
+      fee = transfer.fee.e8s;
+    } else if (mint) {
+      kind = "mint";
+      amount = mint.amount.e8s;
+      to = { owner: mint.to };
+    } else if (burn) {
+      kind = "burn";
+      amount = burn.amount.e8s;
+      from = burn.from ? { owner: burn.from } : undefined;
+      spender = burn.spender?.[0] ? { owner: burn.spender[0] } : undefined;
+    } else if (approve) {
+      kind = "approve";
+      amount = approve.allowance.e8s;
+      from = { owner: approve.from };
+      spender = { owner: approve.spender };
+      fee = approve.fee.e8s;
+    } else {
+      kind = "transfer"; // fallback
+    }
+
+    // Convert timestamp: ICP uses nanoseconds in created_at_time
+    const timestamp = transaction.created_at_time?.[0]?.timestamp_nanos ?? BigInt(0);
+
+    return {
+      id,
+      kind,
+      timestamp,
+      amount,
+      from,
+      to,
+      spender,
+      fee,
+      memo: transaction.memo
+        ? TxOperationMapper.toUint8Array(
+            new Uint8Array(new BigUint64Array([transaction.memo]).buffer),
+          )
+        : undefined,
     };
   }
 

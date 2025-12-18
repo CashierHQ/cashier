@@ -1,6 +1,7 @@
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
 import { rsMatch } from "$lib/rsMatch";
 import type { TokenMetadata } from "$modules/token/types";
+import { fromNullable } from "@dfinity/utils";
 
 /**
  * Parse the list of tokens from the Token Storage canister response.
@@ -18,7 +19,8 @@ export function parseListTokens(
   if (result.tokens && result.tokens.length > 0) {
     return result.tokens.map((token) => {
       return rsMatch(token.id, {
-        IC: (data) => {
+        IC: (data): TokenMetadata => {
+          const indexId = fromNullable(token.details.IC.index_id);
           return {
             address: data.ledger_id.toText(),
             name: token.name,
@@ -27,6 +29,7 @@ export function parseListTokens(
             enabled: token.enabled,
             fee: token.details.IC.fee,
             is_default: token.is_default,
+            indexId,
           };
         },
       });

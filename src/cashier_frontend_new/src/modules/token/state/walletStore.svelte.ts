@@ -6,7 +6,10 @@ import {
 } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
-import type { TokenWithPriceAndBalance } from "$modules/token/types";
+import {
+  TokenWithPriceAndBalanceSerde,
+  type TokenWithPriceAndBalance,
+} from "$modules/token/types";
 import { Principal } from "@dfinity/principal";
 import { Err, Ok, type Result } from "ts-results-es";
 import { ICP_LEDGER_CANISTER_ID } from "../constants";
@@ -19,10 +22,11 @@ class WalletStore {
   constructor() {
     this.#walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
       queryFn: async () => {
-        // fetch list user's tokens
-        const tokens = await tokenStorageService.listTokens();
+        // fetch list user's tokens (only enabled ones)
+        const allTokens = await tokenStorageService.listTokens();
+        const tokens = allTokens.filter((token) => token.enabled);
 
-        // fetch token balances
+        // fetch token balances for enabled tokens only
         const balanceRequests = tokens.map((token) => {
           if (token.address === ICP_LEDGER_CANISTER_ID) {
             return icpLedgerService.getBalance();
@@ -49,6 +53,7 @@ class WalletStore {
       refetchInterval: 15_000, // Refresh every 15 seconds to keep balances up-to-date
       persistedKey: ["walletTokensQuery"],
       storageType: "localStorage",
+      serde: TokenWithPriceAndBalanceSerde,
     });
 
     $effect.root(() => {
