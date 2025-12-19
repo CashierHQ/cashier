@@ -47,7 +47,7 @@ describe("AddressUnlockedState", () => {
     });
 
     describe("goBack", () => {
-      it("should transition to LandingState", async () => {
+      it("should transition to LandingState when no action exists", async () => {
         await state.goBack();
 
         expect(mockStore.state).toBeInstanceOf(LandingState);
@@ -59,6 +59,56 @@ describe("AddressUnlockedState", () => {
         const newState = mockStore.state as LandingState;
         expect(newState).toBeDefined();
         expect(newState.step).toBe(UserLinkStep.LANDING);
+      });
+
+      it("should throw error when action exists", async () => {
+        const storeWithAction = {
+          state: null,
+          action: { id: "test-action" } as Action,
+          linkDetail: {
+            id: "test-link-id",
+            createAction: mockCreateAction,
+            processAction: mockProcessAction,
+          },
+        } as unknown as UserLinkStore;
+        const stateWithAction = new AddressUnlockedState(storeWithAction);
+
+        await expect(stateWithAction.goBack()).rejects.toThrow(
+          "Cannot go back: action already exists",
+        );
+      });
+    });
+
+    describe("goToLanding", () => {
+      it("should transition to LandingState when no action exists", async () => {
+        await state.goToLanding();
+
+        expect(mockStore.state).toBeInstanceOf(LandingState);
+      });
+
+      it("should pass the store to the new state", async () => {
+        await state.goToLanding();
+
+        const newState = mockStore.state as LandingState;
+        expect(newState).toBeDefined();
+        expect(newState.step).toBe(UserLinkStep.LANDING);
+      });
+
+      it("should throw error when action exists", async () => {
+        const storeWithAction = {
+          state: null,
+          action: { id: "test-action" } as Action,
+          linkDetail: {
+            id: "test-link-id",
+            createAction: mockCreateAction,
+            processAction: mockProcessAction,
+          },
+        } as unknown as UserLinkStore;
+        const stateWithAction = new AddressUnlockedState(storeWithAction);
+
+        await expect(stateWithAction.goToLanding()).rejects.toThrow(
+          "Cannot return to Landing: action already exists",
+        );
       });
     });
   });

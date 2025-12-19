@@ -30,5 +30,4 @@ frontend_check_code: install_frontend_deps
     # Copy .env.dev for svelte-check type generation, run check, cleanup
     cd {{FRONTEND_DIR_NEW}} && cp .env.dev .env && npm run check || (rm -f .env && exit 1)
     rm -f {{FRONTEND_DIR_NEW}}/.env
-    # To be enabled when frontend new code is ready
-    # cd {{FRONTEND_DIR_NEW}} && npm run knip
+    cd {{FRONTEND_DIR_NEW}} && npm run knip
