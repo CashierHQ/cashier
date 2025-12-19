@@ -181,5 +181,3 @@ export class UserLinkStore {
     return findUseActionTypeFromLinkType(this.link.link_type);
   }
 }
-
-export default UserLinkStore;

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
-  import type UserLinkStore from "$modules/useLink/state/userLinkStore.svelte";
+  import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { Button } from "$lib/shadcn/components/ui/button";

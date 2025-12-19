@@ -6,7 +6,7 @@ import { AddressUnlockedState } from "../state/useLinkStates/addressUnlocked";
 import { CompletedState } from "../state/useLinkStates/completed";
 import { GateState } from "../state/useLinkStates/gate";
 import { LandingState } from "../state/useLinkStates/landing";
-import type UserLinkStore from "../state/userLinkStore.svelte";
+import type { UserLinkStore } from "../state/userLinkStore.svelte";
 
 // Map a UserLinkStep to the corresponding UserLinkState instance
 export const userLinkStateFromStep = (
