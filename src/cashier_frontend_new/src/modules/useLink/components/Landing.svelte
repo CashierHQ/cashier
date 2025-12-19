@@ -1,6 +1,6 @@
 <script lang="ts">
   import { LinkType } from "$modules/links/types/link/linkType";
-  import type UserLinkStore from "$modules/useLink/state/userLinkStore.svelte";
+  import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
   import TipLanding from "./tiplink/Landing.svelte";
 
   const {

@@ -1,4 +1,4 @@
-import TempLink, { TempLinkMapper } from "$modules/links/types/tempLink";
+import { TempLink, TempLinkMapper } from "$modules/links/types/tempLink";
 import * as devalue from "devalue";
 import { TEMP_LINKS_STORAGE_KEY_PREFIX } from "$modules/shared/constants";
 import type { CreateLinkData } from "../types/createLinkData";

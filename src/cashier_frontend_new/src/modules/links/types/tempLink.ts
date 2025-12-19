@@ -129,5 +129,3 @@ export class TempLinkMapper {
     },
   };
 }
-
-export default TempLink;
