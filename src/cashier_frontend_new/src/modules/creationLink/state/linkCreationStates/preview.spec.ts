@@ -12,7 +12,7 @@ import { LinkCreationStore } from "../linkCreationStore.svelte";
 import { AddAssetTipLinkState } from "./tiplink/addAsset";
 import { tempLinkRepository } from "../../repositories/tempLinkRepository";
 import { cashierBackendService } from "$modules/links/services/cashierBackend";
-import TempLink from "$modules/links/types/tempLink";
+import { TempLink } from "$modules/links/types/tempLink";
 import { LinkState } from "$modules/links/types/link/linkState";
 import {
   CreateLinkAsset,

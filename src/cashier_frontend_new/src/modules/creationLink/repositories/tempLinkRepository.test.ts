@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { tempLinkRepository } from "./tempLinkRepository";
 import { CreateLinkData, CreateLinkAsset } from "../types/createLinkData";
 import { LinkState } from "$modules/links/types/link/linkState";
-import TempLink from "$modules/links/types/tempLink";
+import { TempLink } from "$modules/links/types/tempLink";
 import { LinkType } from "$modules/links/types/link/linkType";
 
 // Use jsdom's localStorage (vitest provides it). Clear before each test.

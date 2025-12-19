@@ -41,5 +41,3 @@ export function groupAndSortByDate(allLinks: UnifiedLinkList): GroupedLink[] {
       return { date: ns, links: dateLinks };
     });
 }
-
-export default groupAndSortByDate;

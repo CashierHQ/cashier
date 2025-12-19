@@ -38,8 +38,6 @@ class IcExplorerTokenPriceService implements TokenPriceService {
       size: 300,
     });
 
-    console.log("getListToken response", response.data.data.list);
-
     return response.data.data.list;
   }
 

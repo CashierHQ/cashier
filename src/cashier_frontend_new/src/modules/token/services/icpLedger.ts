@@ -88,7 +88,6 @@ class IcpLedgerService {
       from_subaccount: [],
       created_at_time: [],
     });
-    console.log("Transfer result:", result);
 
     if ("Err" in result) {
       throw parseICPTransferResultError(result.Err);

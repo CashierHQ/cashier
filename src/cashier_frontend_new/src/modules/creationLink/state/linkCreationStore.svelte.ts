@@ -8,7 +8,7 @@ import {
 } from "$modules/links/types/link/linkState";
 import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkStep } from "$modules/links/types/linkStep";
-import TempLink from "$modules/links/types/tempLink";
+import { TempLink } from "$modules/links/types/tempLink";
 import { Err, Ok, type Result } from "ts-results-es";
 import type { LinkCreationState } from "../../creationLink/state/linkCreationStates";
 import { AddAssetState } from "../../creationLink/state/linkCreationStates/addAsset";
