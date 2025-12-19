@@ -40,10 +40,6 @@ class AppHeaderStore {
     this.#logoClickHandler = handler;
   }
 
-  getLogoClickHandler() {
-    return this.#logoClickHandler;
-  }
-
   clearLogoClickHandler() {
     this.#logoClickHandler = null;
   }

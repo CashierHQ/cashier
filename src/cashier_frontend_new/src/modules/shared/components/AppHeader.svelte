@@ -112,10 +112,11 @@
         </button>
       {:else}
         <div class="mr-auto">
-          <CashierLogo
-            href={resolve("/links")}
-            onclick={useCustomLogoHandler ? handleLogoClick : undefined}
-          />
+          {#if useCustomLogoHandler}
+            <CashierLogo onclick={handleLogoClick} />
+          {:else}
+            <CashierLogo href={resolve("/links")} />
+          {/if}
         </div>
       {/if}
       <h4
@@ -126,17 +127,19 @@
     </div>
     <!-- Desktop: show logo -->
     <div class="hidden md:block">
-      <CashierLogo
-        href={resolve("/links")}
-        onclick={useCustomLogoHandler ? handleLogoClick : undefined}
-      />
+      {#if useCustomLogoHandler}
+        <CashierLogo onclick={handleLogoClick} />
+      {:else}
+        <CashierLogo href={resolve("/links")} />
+      {/if}
     </div>
   {:else}
     <!-- Default header with logo -->
-    <CashierLogo
-      href={resolve("/links")}
-      onclick={useCustomLogoHandler ? handleLogoClick : undefined}
-    />
+    {#if useCustomLogoHandler}
+      <CashierLogo onclick={handleLogoClick} />
+    {:else}
+      <CashierLogo href={resolve("/links")} />
+    {/if}
   {/if}
 
   {#if userProfile.isLoggedIn()}
