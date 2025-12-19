@@ -9,9 +9,6 @@
   import DetailLinkHeader from "../components/detailLinkHeader.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
-  import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
-  import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
-  import FeeInfoDescriptionDrawer from "$modules/creationLink/components/drawers/FeeInfoDescriptionDrawer.svelte";
   import ConfirmDrawer from "$modules/creationLink/components/drawers/ConfirmDrawer.svelte";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import {
@@ -25,11 +22,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
-  import {
-    calculateFeesBreakdown,
-    calculateTotalFeesUsd,
-    calculateAssetsWithTokenInfo,
-  } from "$modules/links/utils/feesBreakdown";
+  import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
   import {
     Dialog,
     DialogContent,
@@ -55,8 +48,6 @@
   let showCopied: boolean = $state(false);
   let errorMessage: string | null = $state(null);
   let showTxCart: boolean = $state(false);
-  let showFeeInfoDrawer = $state(false); // For breakdown button (with ChevronRight)
-  let showFeeInfoDescriptionDrawer = $state(false); // For info icon button
   let failedImageLoads = $state<Set<string>>(new Set());
   let isEndingLink = $state(false);
   let isCreatingWithdraw = $state(false);
@@ -139,28 +130,6 @@
     }
   });
 
-  // Calculate fees breakdown
-  const feesBreakdown = $derived.by(() => {
-    if (!linkStore.link) return [];
-
-    const assetAddresses =
-      linkStore.link.asset_info
-        ?.map((assetInfo) => assetInfo.asset.address?.toString())
-        .filter((addr): addr is string => !!addr) || [];
-    const maxUse = Number(linkStore.link.link_use_action_max_count) || 1;
-
-    return calculateFeesBreakdown(
-      assetAddresses,
-      maxUse,
-      walletStore.findTokenByAddress.bind(walletStore),
-    );
-  });
-
-  // Calculate total fees in USD
-  const totalFeesUsd = $derived.by(() => {
-    return calculateTotalFeesUsd(feesBreakdown);
-  });
-
   // Transaction lock status based on link state
   // ACTIVE -> Unlock (can end link, copy link)
   // INACTIVE -> Lock (can withdraw)
@@ -186,14 +155,6 @@
   const isTransactionLockEnded = $derived.by(() => {
     return linkStore.link?.state === LinkState.INACTIVE_ENDED;
   });
-
-  function handleFeeBreakdownClick() {
-    showFeeInfoDrawer = true;
-  }
-
-  function handleFeeInfoClick() {
-    showFeeInfoDescriptionDrawer = true;
-  }
 
   const link = $derived(`${window.location.origin}/link/${linkStore.link?.id}`);
 
@@ -400,14 +361,6 @@
         isEnded={isTransactionLockEnded}
       />
 
-      <!-- Block 4: Fees Breakdown -->
-      <FeesBreakdownSection
-        {totalFeesUsd}
-        isClickable={true}
-        onInfoClick={handleFeeInfoClick}
-        onBreakdownClick={handleFeeBreakdownClick}
-      />
-
       <!-- Block 5: Usage Info -->
       <UsageInfoSection
         {assetsWithTokenInfo}
@@ -502,20 +455,6 @@
 {/if}
 
 {#if linkStore.link}
-  <FeeInfoDrawer
-    bind:open={showFeeInfoDrawer}
-    onClose={() => {
-      showFeeInfoDrawer = false;
-    }}
-    {feesBreakdown}
-  />
-  <FeeInfoDescriptionDrawer
-    bind:open={showFeeInfoDescriptionDrawer}
-    onClose={() => {
-      showFeeInfoDescriptionDrawer = false;
-    }}
-  />
-
   <ConfirmDrawer
     bind:open={showFirstEndLinkConfirm}
     title={locale.t("links.linkForm.detail.endLinkConfirm.title")}
