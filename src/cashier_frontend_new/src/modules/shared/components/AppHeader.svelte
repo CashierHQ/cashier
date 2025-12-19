@@ -78,19 +78,13 @@
     await appHeaderStore.triggerBack();
   }
 
-  // Handle logo click - uses goToLanding on link pages, otherwise navigates to /links
+  // Handle logo click - delegates to appHeaderStore if handler is set, otherwise navigates to /links
   async function handleLogoClick() {
-    if (userLinkStore) {
-      try {
-        await userLinkStore.goToLanding();
-      } catch (error) {
-        // goToLanding throws if action exists or invalid state
-        // Stay on current page - do nothing
-        console.warn("goToLanding blocked:", error);
-      }
+    if (appHeaderStore.hasLogoClickHandler()) {
+      await appHeaderStore.triggerLogoClick();
       return;
     }
-    // No userLinkStore = not on link page, navigate to /links
+    // No handler set = navigate to /links
     goto(resolve("/links"));
   }
 
