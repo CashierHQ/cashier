@@ -36,6 +36,8 @@
   function onImageLoaded() {
     isImageLoading = false;
   }
+
+  const isLoggedIn = $derived(userProfile.isLoggedIn());
 </script>
 
 <div
@@ -81,7 +83,7 @@
     </div>
   </div>
 
-  {#if userProfile.isLoggedIn()}
+  {#if isLoggedIn}
     <!-- Logged in content -->
     <div class="w-full lg:w-1/3 mx-auto mt-4 px-4">Logged in</div>
   {:else}

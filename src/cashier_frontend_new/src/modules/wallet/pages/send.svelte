@@ -32,8 +32,6 @@
   let tokenAmount: string = $state("");
   let usdAmount: string = $state("");
 
-  let isInitialLoad = $state(true);
-
   $effect(() => {
     const tokenParam = page.url.searchParams.get("token");
     if (tokenParam) {
@@ -42,10 +40,6 @@
       if (!selectedToken) {
         selectedToken = walletStore.query.data[0].address;
       }
-    }
-
-    if (walletStore.query.data) {
-      isInitialLoad = false;
     }
   });
 
@@ -64,8 +58,8 @@
     );
   });
 
-  let shouldShowAddressTypeSelector: boolean = $derived.by(
-    () => selectedToken === ICP_LEDGER_CANISTER_ID,
+  let shouldShowAddressTypeSelector: boolean = $derived(
+    selectedToken === ICP_LEDGER_CANISTER_ID,
   );
 
   $effect(() => {
@@ -79,13 +73,12 @@
 
   let errorMessage: string = $state("");
   let isSending: boolean = $state(false);
-  const isMaxAvailable = $derived.by(() => maxAmount > 0 && !isSending);
+  const isMaxAvailable = $derived(maxAmount > 0 && !isSending);
 
-  const isLoading = $derived.by(() => {
-    return (
-      walletStore.query.isLoading || (isInitialLoad && !walletStore.query.data)
-    );
-  });
+  // Only show loading on initial load, not during background refreshes
+  const isLoading = $derived(
+    !walletStore.query.data && walletStore.query.isLoading,
+  );
 
   function handleSelectToken(address: string) {
     selectedToken = address;
@@ -163,13 +156,9 @@
     txState = "confirm";
   }
 
-  const networkFee = $derived.by(() => {
-    return "0.0001 ICP";
-  });
+  const networkFee = $derived("0.0001 ICP");
 
-  const transactionLink = $derived.by(() => {
-    return `https://example.com/transaction`;
-  });
+  const transactionLink = $derived("https://example.com/transaction");
 </script>
 
 <NavBar />

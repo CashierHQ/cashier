@@ -43,14 +43,14 @@
   const userLinkStore = $derived.by(() => guardContext?.userLinkStore ?? null);
 
   // Get current user link step
-  const userLinkStep = $derived.by(() => userLinkStore?.step ?? null);
+  const userLinkStep = $derived(userLinkStore?.step ?? null);
 
   // Check if we're on /use page
-  const isUsePage = $derived.by(() => currentPath?.endsWith("/use") ?? false);
+  const isUsePage = $derived(currentPath?.endsWith("/use") ?? false);
 
-  const isWalletPage = $derived.by(() => {
-    return currentPath?.startsWith("/wallet");
-  });
+  const isWalletPage = $derived(currentPath?.startsWith("/wallet") ?? false);
+
+  const isLoggedIn = $derived(userProfile.isLoggedIn());
 
   // Get display name for mobile header
   const displayName = $derived.by(() => {
@@ -131,7 +131,7 @@
     <CashierLogo onclick={handleLogoClick} />
   {/if}
 
-  {#if userProfile.isLoggedIn() && !isWalletPage}
+  {#if isLoggedIn && !isWalletPage}
     <div class="flex items-center py-px">
       <WalletButton onClick={handleWalletClick} />
       <MenuButton />

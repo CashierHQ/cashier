@@ -21,6 +21,7 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
 
   let selectedToken: string = $state("");
   let showTokenSelector = $state(false);
@@ -45,22 +46,23 @@
     return token.unwrap();
   });
 
-  let shouldShowAddressTypeInfo: boolean = $derived.by(
-    () => selectedToken === ICP_LEDGER_CANISTER_ID,
+  let shouldShowAddressTypeInfo = $derived(
+    selectedToken === ICP_LEDGER_CANISTER_ID,
   );
 
-  let principalAddress: string = $derived.by(() => {
-    return authState.account?.owner || "";
-  });
+  let principalAddress: string = $derived(authState.account?.owner || "");
 
-  let accountIdAddress: string = $derived.by(() => {
-    if (selectedToken === ICP_LEDGER_CANISTER_ID) {
-      return walletStore.icpAccountID() || "";
-    }
-    return "";
-  });
+  const shortenedPrincipalAddress = $derived(
+    transformShortAddress(principalAddress),
+  );
 
-  const tokenLogo = $derived(
+  let accountIdAddress: string = $derived(
+    selectedToken === ICP_LEDGER_CANISTER_ID
+      ? walletStore.icpAccountID() || ""
+      : "",
+  );
+
+  const tokenLogo = $derived.by(() =>
     selectedTokenObj ? getTokenLogo(selectedTokenObj.address) : null,
   );
 
@@ -181,7 +183,7 @@
         <div class="relative">
           <input
             type="text"
-            value={principalAddress}
+            value={shortenedPrincipalAddress}
             readonly
             class="w-full p-3 pr-12 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none text-sm font-mono break-all"
           />

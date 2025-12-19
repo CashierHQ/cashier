@@ -9,6 +9,7 @@
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import NetworkSelector from "$modules/creationLink/components/shared/NetworkSelector.svelte";
   import { resolve } from "$app/paths";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
     MOCK_NETWORKS,
     MOCK_TOKEN_DATA,
@@ -45,11 +46,6 @@
     return MOCK_NETWORKS.find((n) => n.id === selectedNetwork)?.iconUrl || "";
   });
 
-  // TODO: remove when connected to API
-  async function sleep(ms: number) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
   async function handlePaste(field: "contract" | "index") {
     try {
       const text = await navigator.clipboard.readText();
@@ -74,12 +70,8 @@
 
     try {
       // TODO: Validate contract address format
-      await sleep(500);
-
-      // TODO: Fetch token data from API
+      // TODO: Fetch token data from API to populate tokenData
       tokenData.address = contractAddress;
-
-      await sleep(500);
 
       isReview = true;
       // Reset network icon error state when entering review
@@ -97,11 +89,18 @@
   }
 
   async function handleImport() {
+    if (!contractAddress.trim()) {
+      toast.error(locale.t("wallet.import.errors.enterContractAddress"));
+      return;
+    }
+
     isLoading = true;
 
     try {
-      // TODO: Call API to import token
-      await sleep(500);
+      await walletStore.addToken(
+        contractAddress.trim(),
+        indexCanisterId.trim() || undefined,
+      );
 
       toast.success(locale.t("wallet.import.success"));
 

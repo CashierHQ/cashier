@@ -17,7 +17,9 @@
   // TODO: get actual data from api !!
   const transactions = MOCK_TRANSACTIONS;
 
-  const transactionsByDate = $derived(groupTransactionsByDate(transactions));
+  const transactionsByDate = $derived.by(() =>
+    groupTransactionsByDate(transactions),
+  );
 
   function copyToClipboard(text: string) {
     navigator.clipboard.writeText(text);
