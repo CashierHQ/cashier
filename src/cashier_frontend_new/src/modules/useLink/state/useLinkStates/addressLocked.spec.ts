@@ -1,3 +1,4 @@
+import type Action from "$modules/links/types/action/action";
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import { beforeEach, describe, expect, it } from "vitest";
 import type { UserLinkStore } from "../userLinkStore.svelte";
@@ -13,6 +14,7 @@ describe("AddressLockedState", () => {
     // Create a mock store with minimal required properties
     mockStore = {
       state: null,
+      action: null,
       linkDetail: {
         id: "test-link-id",
       },
@@ -49,7 +51,7 @@ describe("AddressLockedState", () => {
   });
 
   describe("goBack", () => {
-    it("should transition to LandingState", async () => {
+    it("should transition to LandingState when no action exists", async () => {
       await state.goBack();
 
       expect(mockStore.state).toBeInstanceOf(LandingState);
@@ -61,6 +63,48 @@ describe("AddressLockedState", () => {
       const newState = mockStore.state as LandingState;
       expect(newState).toBeDefined();
       expect(newState.step).toBe(UserLinkStep.LANDING);
+    });
+
+    it("should throw error when action exists", async () => {
+      const storeWithAction = {
+        state: null,
+        action: { id: "test-action" } as Action,
+        linkDetail: { id: "test-link-id" },
+      } as unknown as UserLinkStore;
+      const stateWithAction = new AddressLockedState(storeWithAction);
+
+      await expect(stateWithAction.goBack()).rejects.toThrow(
+        "Cannot go back: action already exists",
+      );
+    });
+  });
+
+  describe("goToLanding", () => {
+    it("should transition to LandingState when no action exists", async () => {
+      await state.goToLanding();
+
+      expect(mockStore.state).toBeInstanceOf(LandingState);
+    });
+
+    it("should pass the store to the new state", async () => {
+      await state.goToLanding();
+
+      const newState = mockStore.state as LandingState;
+      expect(newState).toBeDefined();
+      expect(newState.step).toBe(UserLinkStep.LANDING);
+    });
+
+    it("should throw error when action exists", async () => {
+      const storeWithAction = {
+        state: null,
+        action: { id: "test-action" } as Action,
+        linkDetail: { id: "test-link-id" },
+      } as unknown as UserLinkStore;
+      const stateWithAction = new AddressLockedState(storeWithAction);
+
+      await expect(stateWithAction.goToLanding()).rejects.toThrow(
+        "Cannot return to Landing: action already exists",
+      );
     });
   });
 

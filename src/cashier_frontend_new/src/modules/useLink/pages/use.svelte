@@ -110,12 +110,25 @@
     await appHeaderStore.triggerBack();
   };
 
+  // Register logo click handler for AppHeader on the use flow
+  const handleLogoClick = async () => {
+    try {
+      await userStore.goToLanding();
+    } catch (error) {
+      // goToLanding throws if action exists or invalid state
+      // Stay on current page - do nothing
+      console.warn("goToLanding blocked:", error);
+    }
+  };
+
   onMount(() => {
     appHeaderStore.setBackHandler(handleBack);
+    appHeaderStore.setLogoClickHandler(handleLogoClick);
   });
 
   onDestroy(() => {
     appHeaderStore.clearBackHandler();
+    appHeaderStore.clearLogoClickHandler();
   });
 </script>
 
