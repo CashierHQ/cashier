@@ -32,6 +32,14 @@ describe("CompletedState", () => {
     });
   });
 
+  describe("goToLanding", () => {
+    it("should throw error (final state)", async () => {
+      await expect(state.goToLanding()).rejects.toThrow(
+        "Completed is final state, cannot go to Landing",
+      );
+    });
+  });
+
   describe("action capabilities", () => {
     it("should not have createAction method", () => {
       expect("createAction" in state).toBe(false);
