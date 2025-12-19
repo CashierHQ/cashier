@@ -22,6 +22,16 @@ export class AddressUnlockedState implements UserActionCapableState {
   }
 
   async goBack(): Promise<void> {
+    if (this.#store.action) {
+      throw new Error("Cannot go back: action already exists");
+    }
+    this.#store.state = new LandingState(this.#store);
+  }
+
+  async goToLanding(): Promise<void> {
+    if (this.#store.action) {
+      throw new Error("Cannot return to Landing: action already exists");
+    }
     this.#store.state = new LandingState(this.#store);
   }
 

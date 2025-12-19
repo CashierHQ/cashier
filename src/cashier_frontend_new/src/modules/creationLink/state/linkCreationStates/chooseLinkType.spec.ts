@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { LinkCreationStore } from "../linkCreationStore.svelte";
 import { AddAssetTipLinkState } from "./tiplink/addAsset";
 import { CreateLinkData } from "../../types/createLinkData";
-import TempLink from "$modules/links/types/tempLink";
+import { TempLink } from "$modules/links/types/tempLink";
 import { LinkState } from "$modules/links/types/link/linkState";
 import { LinkStep } from "$modules/links/types/linkStep";
 

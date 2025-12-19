@@ -19,4 +19,8 @@ export class LandingState implements UserLinkState {
   async goBack(): Promise<void> {
     throw new Error("Cannot go back from Landing state.");
   }
+
+  async goToLanding(): Promise<void> {
+    throw new Error("Already at Landing state.");
+  }
 }

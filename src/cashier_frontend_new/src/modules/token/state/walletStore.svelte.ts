@@ -53,10 +53,6 @@ class WalletStore {
 
     $effect.root(() => {
       $effect(() => {
-        console.log(
-          "Account state changed, refreshing tokens...",
-          $state.snapshot(authState.account),
-        );
         // Reset the wallet tokens data when user logs out
         if (authState.account == null) {
           this.#walletTokensQuery.reset();
@@ -72,7 +68,6 @@ class WalletStore {
         // This ensures the effect runs when prices are updated
         const prices = tokenPriceStore.query.data;
         if (prices) {
-          console.log("Token prices updated, refreshing wallet tokens...");
           this.#walletTokensQuery.refresh();
         }
       });
