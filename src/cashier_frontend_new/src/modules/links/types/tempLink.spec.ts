@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import TempLink, { TempLinkMapper, type SerializedTempLink } from "./tempLink";
+import { TempLink, TempLinkMapper, type SerializedTempLink } from "./tempLink";
 import { LinkState } from "./link/linkState";
 import { LinkType } from "./link/linkType";
 import * as devalue from "devalue";

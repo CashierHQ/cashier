@@ -84,6 +84,16 @@
   async function handleMobileBack() {
     await appHeaderStore.triggerBack();
   }
+
+  // Handle logo click - delegates to appHeaderStore if handler is set, otherwise navigates to /links
+  async function handleLogoClick() {
+    if (appHeaderStore.hasLogoClickHandler()) {
+      await appHeaderStore.triggerLogoClick();
+      return;
+    }
+    // No handler set = navigate to /links
+    goto(resolve("/links"));
+  }
 </script>
 
 <div
@@ -103,7 +113,7 @@
         </button>
       {:else}
         <div class="mr-auto">
-          <CashierLogo href={resolve("/links")} />
+          <CashierLogo onclick={handleLogoClick} />
         </div>
       {/if}
       <h4
@@ -114,11 +124,11 @@
     </div>
     <!-- Desktop: show logo -->
     <div class="hidden md:block">
-      <CashierLogo href={resolve("/links")} />
+      <CashierLogo onclick={handleLogoClick} />
     </div>
   {:else}
     <!-- Default header with logo -->
-    <CashierLogo href={resolve("/links")} />
+    <CashierLogo onclick={handleLogoClick} />
   {/if}
 
   {#if userProfile.isLoggedIn() && !isWalletPage}

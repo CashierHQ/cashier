@@ -1,7 +1,7 @@
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { describe, expect, it, vi } from "vitest";
 import { LinkCreationStore } from "../linkCreationStore.svelte";
-import TempLink from "$modules/links/types/tempLink";
+import { TempLink } from "$modules/links/types/tempLink";
 import { LinkState } from "$modules/links/types/link/linkState";
 import {
   CreateLinkAsset,

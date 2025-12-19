@@ -55,6 +55,14 @@ describe("LandingState", () => {
     });
   });
 
+  describe("goToLanding", () => {
+    it("should throw error (already at Landing)", async () => {
+      await expect(state.goToLanding()).rejects.toThrow(
+        "Already at Landing state.",
+      );
+    });
+  });
+
   describe("action capabilities", () => {
     it("should not have createAction method", () => {
       expect("createAction" in state).toBe(false);

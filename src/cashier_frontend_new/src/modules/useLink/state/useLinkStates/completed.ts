@@ -11,4 +11,8 @@ export class CompletedState implements UserLinkState {
   async goBack(): Promise<void> {
     throw new Error("Completed is final state, cannot go back");
   }
+
+  async goToLanding(): Promise<void> {
+    throw new Error("Completed is final state, cannot go to Landing");
+  }
 }
