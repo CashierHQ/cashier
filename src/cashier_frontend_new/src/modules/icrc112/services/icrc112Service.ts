@@ -82,47 +82,25 @@ class Icrc112Service<T extends Transport> {
             sequenceResponses: Array<Record<string, unknown>>,
             sequenceIndex: number,
           ) => {
-            console.log(
-              `Sequence ${sequenceIndex} responses:`,
-              sequenceResponses.length,
-            );
-
             sequenceResponses.forEach(
               (
                 parallelResponse: Record<string, unknown>,
                 parallelIndex: number,
               ) => {
                 if (
+                  parallelResponse &&
                   typeof parallelResponse === "object" &&
-                  parallelResponse !== null &&
-                  "result" in parallelResponse
-                ) {
-                  const resObj = parallelResponse as {
-                    result: {
-                      contentMap?: unknown;
-                      certificate?: { length?: number };
-                    };
-                  };
-                  console.log(`  ✅ Parallel ${parallelIndex} - Success:`, {
-                    contentMap: resObj.result.contentMap,
-                    certificateLength: resObj.result.certificate?.length,
-                  });
-                } else if (
-                  typeof parallelResponse === "object" &&
-                  parallelResponse !== null &&
                   "error" in parallelResponse
                 ) {
-                  const errObj = parallelResponse as { error?: unknown };
+                  const { error } = parallelResponse;
                   console.error(
-                    `  ❌ Parallel ${parallelIndex} - Error:`,
-                    errObj.error,
+                    `  ❌ Sequence ${sequenceIndex} Parallel ${parallelIndex} - Error:`,
+                    error,
                   );
                   isSuccess = false;
                   errors.push(
                     `Sequence ${sequenceIndex} Parallel ${parallelIndex} Error: ${
-                      errObj.error
-                        ? JSON.stringify(errObj.error)
-                        : "Unknown error"
+                      error ? JSON.stringify(error) : "Unknown error"
                     }`,
                   );
                 }

@@ -306,13 +306,11 @@ const BroadcastMessageLogout = "Logout";
 broadcastChannel.onMessage((message) => {
   switch (message) {
     case BroadcastMessageLogin:
-      console.log("Broadcast login received");
       if (walletConnect.current.id) {
         inner_login(walletConnect.current.id);
       }
       break;
     case BroadcastMessageLogout:
-      console.log("Broadcast logout received");
       inner_logout();
       break;
     default:

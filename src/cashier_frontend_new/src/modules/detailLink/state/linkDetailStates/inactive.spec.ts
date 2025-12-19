@@ -186,8 +186,6 @@ describe("LinkInactiveState", () => {
 
       mocks.processActionV2.mockResolvedValueOnce(Ok({}));
 
-      console.log("store action:", store.action);
-
       // Act
       await state.processAction();
 

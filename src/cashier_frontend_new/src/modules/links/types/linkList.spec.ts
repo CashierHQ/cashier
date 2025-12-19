@@ -8,7 +8,7 @@ import { Link } from "./link/link";
 import { LinkState } from "./link/linkState";
 import { LinkType } from "./link/linkType";
 import { UnifiedLinkItemMapper } from "./linkList";
-import TempLink from "./tempLink";
+import { TempLink } from "./tempLink";
 
 describe("UnifiedLinkItemMapper", () => {
   it("maps from real Link instance", () => {
@@ -52,8 +52,6 @@ describe("UnifiedLinkItemMapper", () => {
     );
 
     const mapped = UnifiedLinkItemMapper.fromTempLink(tempLink);
-
-    console.log(mapped);
 
     expect(mapped).toEqual({
       id: "t-1",
