@@ -87,12 +87,6 @@
     // No handler set = navigate to /links
     goto(resolve("/links"));
   }
-
-  // Determine if custom logo handler should be used
-  const useCustomLogoHandler = $derived.by(() => {
-    // Use custom handler on /link/<id>/* routes when userLinkStore available
-    return userLinkStore !== null && currentPath?.match(/^\/link\/[^/]+/);
-  });
 </script>
 
 <div
@@ -112,11 +106,7 @@
         </button>
       {:else}
         <div class="mr-auto">
-          {#if useCustomLogoHandler}
-            <CashierLogo onclick={handleLogoClick} />
-          {:else}
-            <CashierLogo href={resolve("/links")} />
-          {/if}
+          <CashierLogo onclick={handleLogoClick} />
         </div>
       {/if}
       <h4
@@ -127,19 +117,11 @@
     </div>
     <!-- Desktop: show logo -->
     <div class="hidden md:block">
-      {#if useCustomLogoHandler}
-        <CashierLogo onclick={handleLogoClick} />
-      {:else}
-        <CashierLogo href={resolve("/links")} />
-      {/if}
+      <CashierLogo onclick={handleLogoClick} />
     </div>
   {:else}
     <!-- Default header with logo -->
-    {#if useCustomLogoHandler}
-      <CashierLogo onclick={handleLogoClick} />
-    {:else}
-      <CashierLogo href={resolve("/links")} />
-    {/if}
+    <CashierLogo onclick={handleLogoClick} />
   {/if}
 
   {#if userProfile.isLoggedIn()}
