@@ -18,6 +18,7 @@
   } from "lucide-svelte";
   import { toast } from "svelte-sonner";
   import { locale } from "$lib/i18n";
+  import { getPageTitle } from "../utils/getPageTitle";
 
   type Props = {
     activeTab?: "tokens" | "nfts";
@@ -37,13 +38,13 @@
   let tokenParam = $derived(page.params.token);
   let failedImageLoad = $state(false);
 
-  const toggleBalanceVisibility = () => {
+  function toggleBalanceVisibility() {
     if (onToggleBalance) {
       onToggleBalance();
     }
-  };
+  }
 
-  const calculateTotalBalance = () => {
+  function calculateTotalBalance() {
     if (!walletStore.query.data) return 0;
 
     return walletStore.query.data
@@ -54,9 +55,9 @@
           balanceToUSDValue(token.balance, token.decimals, token.priceUSD)
         );
       }, 0);
-  };
+  }
 
-  let totalBalance = $derived(calculateTotalBalance());
+  let totalBalance = $derived.by(() => calculateTotalBalance());
 
   // Get token details if we're on a token page
   let currentToken = $derived(
@@ -65,11 +66,11 @@
       : null,
   );
 
-  let tokenLogo = $derived(
+  let tokenLogo = $derived.by(() =>
     currentToken ? getTokenLogo(currentToken.address) : null,
   );
 
-  const handleSend = () =>
+  function handleSend() {
     goto(
       resolve(
         isTokenPage && currentToken
@@ -77,7 +78,8 @@
           : "/wallet/send",
       ),
     );
-  const handleReceive = () =>
+  }
+  function handleReceive() {
     goto(
       resolve(
         isTokenPage && currentToken
@@ -85,38 +87,31 @@
           : "/wallet/receive",
       ),
     );
-  const handleSwap = () => console.log("Swap clicked");
+  }
+  function handleSwap() {
+    // TODO: Implement swap functionality
+  }
 
-  const handleTokensTab = () => {
+  function handleTokensTab() {
     activeTab = "tokens";
-  };
+  }
 
-  const handleNFTsTab = () => {
+  function handleNFTsTab() {
     toast.info(locale.t("wallet.nftMessage"));
-  };
+  }
 
-  const handleBack = () => {
+  function handleBack() {
     if (currentPath === "/wallet/import") {
       goto(resolve("/wallet/manage"));
       return;
     }
 
     goto(resolve("/wallet"));
-  };
+  }
 
-  const getPageTitle = (path: string): string => {
-    if (header) return header;
-
-    if (path === "/wallet/send") return "Send";
-    if (path === "/wallet/receive") return "Receive";
-    if (path === "/wallet/swap") return "Swap";
-    if (path === "/wallet/manage") return "Manage tokens";
-    if (path === "/wallet/import") return "Import manually";
-    return "";
-  };
-
-  const showBackButton = $derived(
-    currentPath !== "/wallet" &&
+  const showBackButton = $derived.by(
+    () =>
+      currentPath !== "/wallet" &&
       (currentPath === "/wallet/send" ||
         currentPath === "/wallet/receive" ||
         currentPath === "/wallet/swap" ||
@@ -125,17 +120,18 @@
   );
 
   // Check if we're on a token details page
-  const isTokenPage = $derived(
-    currentPath.startsWith("/wallet/") &&
+  const isTokenPage = $derived.by(
+    () =>
+      currentPath.startsWith("/wallet/") &&
       tokenParam &&
       !["send", "receive", "swap", "manage", "import"].includes(tokenParam),
   );
 
-  const pageTitle = $derived(getPageTitle(currentPath));
+  const pageTitle = $derived(getPageTitle(currentPath, header));
 
-  const handleImageError = () => {
+  function handleImageError() {
     failedImageLoad = true;
-  };
+  }
 </script>
 
 <div class="bg-white">
@@ -238,7 +234,7 @@
           >
             <ArrowUp size={20} />
           </div>
-          <span class="text-sm text-gray-600 font-medium"
+          <span class="text-xs text-gray-600 font-medium"
             >{locale.t("wallet.navBar.sendBtn")}</span
           >
         </button>
@@ -252,7 +248,7 @@
           >
             <ArrowDown size={20} />
           </div>
-          <span class="text-sm text-gray-600 font-medium"
+          <span class="text-xs text-gray-600 font-medium"
             >{locale.t("wallet.navBar.receiveBtn")}</span
           >
         </button>
@@ -266,7 +262,7 @@
           >
             <ArrowUpDown size={20} />
           </div>
-          <span class="text-sm text-gray-600 font-medium"
+          <span class="text-xs text-gray-600 font-medium"
             >{locale.t("wallet.navBar.swapBtn")}</span
           >
         </button>
@@ -301,42 +297,42 @@
       <div class="flex justify-center gap-6 max-w-md mx-auto">
         <button
           onclick={handleSend}
-          class="flex flex-col items-center gap-2 transition-transform active:scale-95"
+          class="flex flex-col items-center gap-2 transition-transform active:scale-95 cursor-pointer"
         >
           <div
             class="w-9 h-9 rounded-full bg-lightgreen transition-colors flex items-center justify-center"
           >
             <ArrowUp size={20} />
           </div>
-          <span class="text-sm text-gray-600 font-medium"
+          <span class="text-xs text-gray-600 font-medium"
             >{locale.t("wallet.navBar.sendBtn")}</span
           >
         </button>
 
         <button
           onclick={handleReceive}
-          class="flex flex-col items-center gap-2 transition-transform active:scale-95"
+          class="flex flex-col items-center gap-2 transition-transform active:scale-95 cursor-pointer"
         >
           <div
             class="w-9 h-9 rounded-full bg-lightgreen transition-colors flex items-center justify-center"
           >
             <ArrowDown size={20} />
           </div>
-          <span class="text-sm text-gray-600 font-medium"
+          <span class="text-xs text-gray-600 font-medium"
             >{locale.t("wallet.navBar.receiveBtn")}</span
           >
         </button>
 
         <button
           onclick={handleSwap}
-          class="flex flex-col items-center gap-2 transition-transform active:scale-95"
+          class="flex flex-col items-center gap-2 transition-transform active:scale-95 cursor-pointer"
         >
           <div
             class="w-9 h-9 rounded-full bg-lightgreen transition-colors flex items-center justify-center"
           >
             <ArrowUpDown size={20} />
           </div>
-          <span class="text-sm text-gray-600 font-medium"
+          <span class="text-xs text-gray-600 font-medium"
             >{locale.t("wallet.navBar.swapBtn")}</span
           >
         </button>

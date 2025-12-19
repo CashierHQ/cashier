@@ -36,15 +36,11 @@
   let localUsdAmount = $state("");
   let isUsd = $state(false);
 
-  const tokenUsdPrice = $derived.by(() => {
-    return selectedTokenObj?.priceUSD;
-  });
+  const tokenUsdPrice = $derived(selectedTokenObj?.priceUSD);
 
-  const canConvert = $derived.by(() => {
-    return tokenUsdPrice !== undefined && tokenUsdPrice > 0;
-  });
+  const canConvert = $derived(tokenUsdPrice !== undefined && tokenUsdPrice > 0);
 
-  // Синхронізуємо локальні значення з зовнішніми
+  // Sync local values with external values
   $effect(() => {
     tokenAmount = localTokenAmount;
   });
@@ -66,11 +62,20 @@
     }
   });
 
+  // Track previous token address to detect actual token changes (not just object updates)
+  let previousTokenAddress = $state<string | null>(null);
+
   $effect(() => {
-    if (selectedTokenObj && localTokenAmount === "") {
+    const currentTokenAddress = selectedTokenObj?.address;
+
+    // Only reset values when token address actually changes, not when object is refreshed
+    if (currentTokenAddress && currentTokenAddress !== previousTokenAddress) {
       localTokenAmount = "";
       localUsdAmount = "";
       amount = 0;
+      previousTokenAddress = currentTokenAddress;
+    } else if (!currentTokenAddress) {
+      previousTokenAddress = null;
     }
   });
 

@@ -50,6 +50,8 @@
       tokenMeta?.data ?? null,
     );
   });
+
+  const isLoggedIn = $derived(userProfile.isLoggedIn());
 </script>
 
 {#if userLink.linkDetail?.query.isLoading}
@@ -66,7 +68,7 @@
   />
 {/if}
 
-{#if userProfile.isLoggedIn()}
+{#if isLoggedIn}
   <div class="mt-4 flex gap-2 w-[95%] mx-auto">
     <Button
       variant="default"

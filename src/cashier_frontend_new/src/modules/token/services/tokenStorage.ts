@@ -61,15 +61,16 @@ class TokenStorageService {
   /**
    * Add a new token to the user wallet
    * @param address The principal address of the token to add.
+   * @param indexId Optional index canister ID for the token.
    */
-  public async addToken(address: Principal): Promise<void> {
+  public async addToken(address: Principal, indexId?: string): Promise<void> {
     const actor = this.#getActor();
     if (!actor) {
       throw new Error("User is not authenticated");
     }
     const res = await actor.user_add_token({
       token_id: { IC: { ledger_id: address } },
-      index_id: [],
+      index_id: indexId ? [indexId] : [],
     });
     if ("Err" in res) {
       throw new Error(`Error adding token: ${res.Err}`);

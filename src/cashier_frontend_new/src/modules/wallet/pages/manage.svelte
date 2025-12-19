@@ -67,12 +67,13 @@
       : MOCK_NETWORKS[0];
   }
 
-  const filteredTokens = $derived(
-    walletStore.query.data?.filter(
-      (token) =>
-        token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        token.symbol.toLowerCase().includes(searchQuery.toLowerCase()),
-    ) || [],
+  const filteredTokens = $derived.by(
+    () =>
+      walletStore.query.data?.filter(
+        (token) =>
+          token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          token.symbol.toLowerCase().includes(searchQuery.toLowerCase()),
+      ) || [],
   );
 </script>
 

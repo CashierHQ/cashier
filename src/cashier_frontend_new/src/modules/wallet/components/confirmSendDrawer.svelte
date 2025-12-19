@@ -12,6 +12,7 @@
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import { shortenAddress } from "../utils/address";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
+  import { formatNumber } from "$modules/shared/utils/formatNumber";
 
   interface Props {
     open: boolean;
@@ -43,6 +44,12 @@
   let imageLoadFailed = $state(false);
 
   let networkImageLoadFailed = $state(false);
+
+  // Format amount with proper decimal places based on token decimals
+  const formattedAmount = $derived.by(() => {
+    if (!selectedToken) return amount.toString();
+    return formatNumber(amount, { tofixed: selectedToken.decimals });
+  });
 </script>
 
 <Drawer bind:open>
@@ -75,7 +82,7 @@
               {locale.t("wallet.send.confirmDrawer.youWillSend")}
             </div>
             <div class="text-4xl font-bold text-ellipsis overflow-hidden">
-              {amount}
+              {formattedAmount}
               {selectedToken?.symbol || ""}
             </div>
           </div>
@@ -146,14 +153,14 @@
 
           <div class="bg-gray-50 rounded-lg p-4">
             <div class="flex justify-between items-center">
-              <span class="font-medium"
+              <span class="font-medium whitespace-nowrap"
                 >{locale.t("wallet.send.confirmDrawer.totalFees")}</span
               >
-              <div class="flex items-center gap-2">
+              <div class="flex flex-wrap items-center gap-2 justify-end">
                 {#if selectedToken}
                   <div class="flex items-center gap-1">
                     <span class="font-medium"
-                      >{amount} {selectedToken.symbol}</span
+                      >{formattedAmount} {selectedToken.symbol}</span
                     >
                     <div
                       class="relative flex shrink-0 overflow-hidden rounded-full w-4 h-4"

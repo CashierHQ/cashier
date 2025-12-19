@@ -9,12 +9,7 @@
   } from "$lib/shadcn/components/ui/drawer";
   import { X } from "lucide-svelte";
   import { locale } from "$lib/i18n";
-
-  type Network = {
-    id: string;
-    name: string;
-    iconUrl: string;
-  };
+  import { AVAILABLE_NETWORKS } from "$modules/shared/data/networks";
 
   type Props = {
     selectedNetworkId: string;
@@ -25,35 +20,6 @@
 
   let showDrawer = $state(false);
   let failedImageLoads = $state(new Set<string>());
-
-  // TODO: Replace with real API data
-  const AVAILABLE_NETWORKS: Network[] = [
-    {
-      id: "icp",
-      name: "Internet Computer",
-      iconUrl: "/icpLogo.png",
-    },
-    {
-      id: "base",
-      name: "Base",
-      iconUrl: "https://avatars.githubusercontent.com/u/108554348?s=280&v=4",
-    },
-    {
-      id: "eth",
-      name: "Ethereum",
-      iconUrl: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-    },
-    {
-      id: "sol",
-      name: "Solana",
-      iconUrl: "https://cryptologos.cc/logos/solana-sol-logo.png",
-    },
-    {
-      id: "bnb",
-      name: "BNB Chain",
-      iconUrl: "https://cryptologos.cc/logos/bnb-bnb-logo.png",
-    },
-  ];
 
   const selectedNetwork = $derived(
     AVAILABLE_NETWORKS.find((n) => n.id === selectedNetworkId),
