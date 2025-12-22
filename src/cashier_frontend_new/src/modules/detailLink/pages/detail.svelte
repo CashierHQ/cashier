@@ -373,15 +373,13 @@
       <ShareLinkSection {link} />
     {/if}
 
-    <div
-      class="flex-none w-full w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10 mt-auto pt-4"
-    >
+    <div class="flex-none w-full w-[95%] mx-auto px-2 mt-auto pt-4 mb-0">
       {#if linkStore.link.state === LinkState.ACTIVE}
         <Button
           variant="outline"
           onclick={openEndLinkConfirm}
           disabled={isEndingLink}
-          class="w-full h-11 border border-red-200 text-red-600 rounded-full mb-3 cursor-pointer hover:bg-red-50 hover:text-red-700 hover:border-red-400 transition-colors disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          class="w-full h-11 border border-red-200 text-red-600 rounded-full cursor-pointer hover:bg-red-50 hover:text-red-700 hover:border-red-400 transition-colors disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {#if isEndingLink}
             <div
@@ -390,6 +388,22 @@
           {/if}
           {locale.t("links.linkForm.detail.endLink")}
         </Button>
+      {/if}
+
+      {#if linkStore.link.state === LinkState.INACTIVE_ENDED}
+        <Button
+          onclick={goToLinks}
+          class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
+        >
+          {locale.t("links.linkForm.detail.goToLinks")}
+        </Button>
+      {/if}
+    </div>
+
+    <div
+      class="flex-none w-full w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10 pt-4"
+    >
+      {#if linkStore.link.state === LinkState.ACTIVE}
         <Button
           id="copy-link-button"
           onclick={async () => {
@@ -423,12 +437,6 @@
           class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen mb-3"
         >
           {locale.t("links.status.ended")}
-        </Button>
-        <Button
-          onclick={goToLinks}
-          class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
-        >
-          {locale.t("links.linkForm.detail.goToLinks")}
         </Button>
       {/if}
       {#if linkStore.link.state === LinkState.CREATE_LINK}
