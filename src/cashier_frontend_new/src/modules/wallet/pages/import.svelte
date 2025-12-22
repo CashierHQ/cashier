@@ -14,7 +14,7 @@
     MOCK_NETWORKS,
     MOCK_TOKEN_DATA,
     SECURITY_LEARN_MORE_URL,
-  } from "../constants/mock";
+  } from "../mock/mock";
 
   let isReview = $state(false);
   let selectedNetwork = $state("icp");

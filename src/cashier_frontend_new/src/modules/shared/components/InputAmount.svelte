@@ -5,7 +5,11 @@
   import AssetButton from "$modules/creationLink/components/tiplink/AssetButton.svelte";
   import SelectedAssetButtonInfo from "$modules/creationLink/components/tiplink/SelectedAssetButtonInfo.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
-  import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
+  import {
+    convertUsdToToken,
+    convertTokenToUsd,
+    parseTokenAmount,
+  } from "$modules/links/utils/amountConversion";
 
   interface Props {
     selectedToken: string;
@@ -37,29 +41,13 @@
   let isUsd = $state(false);
 
   const tokenUsdPrice = $derived(selectedTokenObj?.priceUSD);
-
   const canConvert = $derived(tokenUsdPrice !== undefined && tokenUsdPrice > 0);
 
-  // Sync local values with external values
+  // Sync local values with external bindable props
   $effect(() => {
     tokenAmount = localTokenAmount;
-  });
-
-  $effect(() => {
     usdAmount = localUsdAmount;
-  });
-
-  $effect(() => {
-    if (localTokenAmount) {
-      const num = parseFloat(localTokenAmount);
-      if (!isNaN(num) && num > 0) {
-        amount = num;
-      } else {
-        amount = 0;
-      }
-    } else {
-      amount = 0;
-    }
+    amount = parseTokenAmount(localTokenAmount);
   });
 
   // Track previous token address to detect actual token changes (not just object updates)
@@ -88,23 +76,10 @@
   function handleAmountChange(value: string) {
     if (isUsd) {
       localUsdAmount = value;
-
-      if (canConvert && tokenUsdPrice && !isNaN(parseFloat(value))) {
-        const tokenValue = parseFloat(value) / tokenUsdPrice;
-        localTokenAmount = tokenValue.toString();
-      } else {
-        localTokenAmount = "";
-      }
+      localTokenAmount = convertUsdToToken(value, tokenUsdPrice);
     } else {
       localTokenAmount = value;
-
-      if (canConvert && tokenUsdPrice && !isNaN(parseFloat(value))) {
-        const usdValue = parseFloat(value) * tokenUsdPrice;
-        const roundedUsdValue = Math.round(usdValue * 10000) / 10000;
-        localUsdAmount = formatUsdAmount(roundedUsdValue);
-      } else {
-        localUsdAmount = "";
-      }
+      localUsdAmount = convertTokenToUsd(value, tokenUsdPrice);
     }
   }
 
@@ -116,12 +91,7 @@
     if (!isMaxAvailable || !selectedTokenObj) return;
     amount = maxAmount;
     localTokenAmount = maxAmount.toString();
-
-    if (canConvert && tokenUsdPrice) {
-      const usdValue = maxAmount * tokenUsdPrice;
-      const roundedUsdValue = Math.round(usdValue * 10000) / 10000;
-      localUsdAmount = formatUsdAmount(roundedUsdValue);
-    }
+    localUsdAmount = convertTokenToUsd(maxAmount, tokenUsdPrice);
   }
 </script>
 

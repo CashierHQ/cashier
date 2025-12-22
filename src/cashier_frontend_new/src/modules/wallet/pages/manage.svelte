@@ -8,7 +8,7 @@
   import { locale } from "$lib/i18n";
   import { LoaderCircle, RefreshCw, Search, Plus } from "lucide-svelte";
   import { resolve } from "$app/paths";
-  import { MOCK_NETWORKS } from "../constants/mock";
+  import { MOCK_NETWORKS } from "../mock/mock";
 
   let searchQuery: string = $state("");
   let failedImageLoads: Set<string> = $state(new Set());
