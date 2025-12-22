@@ -6,8 +6,9 @@
   import { toast } from "svelte-sonner";
   import { Copy, ArrowUpRight, ArrowDownLeft } from "lucide-svelte";
   import { shortenAddress } from "$modules/wallet/utils/address";
-  import { MOCK_TRANSACTIONS } from "../constants/mock";
+  import { MOCK_TRANSACTIONS } from "../mock/mock";
   import { groupTransactionsByDate } from "../utils/date";
+  import Loader2 from "lucide-svelte/icons/loader-2";
 
   let token = page.params.token || "empty";
   let tokenDetails = $derived(
@@ -35,7 +36,12 @@
 <NavBar />
 
 <div class="px-4 pb-6">
-  {#if tokenDetails}
+  {#if walletStore.query.isLoading && !walletStore.query.data}
+    <div class="text-center py-12 space-y-4">
+      <Loader2 class="w-10 h-10 animate-spin mx-auto mb-4" />
+      <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
+    </div>
+  {:else if tokenDetails}
     <div class="space-y-6">
       <div class="pt-4">
         <h1 class="text-lg font-normal text-green mb-2">

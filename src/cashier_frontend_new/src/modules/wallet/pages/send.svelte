@@ -19,7 +19,9 @@
   import { page } from "$app/state";
   import ConfirmSendDrawer from "../components/confirmSendDrawer.svelte";
   import { validate } from "../utils/send";
-  import InputAmount from "$modules/creationLink/components/inputAmount/inputAmount.svelte";
+  import InputAmount from "$modules/shared/components/InputAmount.svelte";
+  import { maxAmountForAsset } from "$modules/links/utils/amountCalculator";
+  import { calculateNetworkFeeInfo } from "../utils/networkFee";
 
   let selectedToken: string = $state("");
   let receiveAddress: string = $state("");
@@ -51,11 +53,18 @@
   });
 
   let maxAmount: number = $derived.by(() => {
-    if (!selectedTokenObj) return 0;
-    return parseBalanceUnits(
-      selectedTokenObj.balance,
-      selectedTokenObj.decimals,
+    if (!selectedTokenObj || !walletStore.query.data) return 0;
+
+    const maxAmountResult = maxAmountForAsset(
+      selectedTokenObj.address,
+      1,
+      walletStore.query.data,
     );
+
+    if (maxAmountResult.isErr()) return 0;
+
+    const maxAmountBigInt = maxAmountResult.unwrap();
+    return parseBalanceUnits(maxAmountBigInt, selectedTokenObj.decimals);
   });
 
   let shouldShowAddressTypeSelector: boolean = $derived(
@@ -156,7 +165,7 @@
     txState = "confirm";
   }
 
-  const networkFee = $derived("0.0001 ICP");
+  const networkFee = $derived(calculateNetworkFeeInfo(selectedTokenObj));
 
   const transactionLink = $derived("https://example.com/transaction");
 </script>
