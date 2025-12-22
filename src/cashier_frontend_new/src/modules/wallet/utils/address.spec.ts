@@ -30,8 +30,8 @@ describe("shortenAddress", () => {
     const veryLongAddress = "0x1234567890abcdef1234567890abcdef1234567890";
     const result = shortenAddress(veryLongAddress);
 
-    expect(result).toBe("0x123456.....bcdef0");
-    expect(result.length).toBe(20); // 8 + 5 dots + 6 + 1 (0x prefix counted)
+    expect(result).toBe("0x123456.....567890");
+    expect(result.length).toBe(19); // 8 (0x123456) + 5 (.....) + 6 (567890)
   });
 
   it("should handle empty string", () => {
