@@ -207,4 +207,134 @@ impl IntentAdapterTrait for IcIntentAdapter {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use candid::Nat;
+    use cashier_backend_types::repository::common::{Asset, Wallet};
+    use cashier_common::test_utils::random_principal_id;
+
+    #[test]
+    fn test_assemble_icrc1_wallet_transfer() {
+        // Arrange
+        let adapter = IcIntentAdapter;
+        let ts = 1_632_144_000; // Example timestamp
+        let from = Wallet::new(random_principal_id());
+        let to = Wallet::new(random_principal_id());
+        let asset = Asset::default();
+        let amount = Nat::from(100_000u64);
+
+        let transfer_intent = TransferData {
+            from,
+            to,
+            asset,
+            amount: amount.clone(),
+        };
+
+        // Act
+        let result = adapter
+            .assemble_icrc1_wallet_transfer(ts, transfer_intent.clone())
+            .unwrap();
+
+        // Assert
+        assert_eq!(result.len(), 1);
+        let tx = &result[0];
+        assert_eq!(tx.created_at, ts);
+        assert_eq!(tx.state, TransactionState::Created);
+        let protocol = match &tx.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => icrc1_transfer,
+            _ => panic!("Expected Icrc1Transfer"),
+        };
+        assert_eq!(protocol.amount, amount);
+        assert_eq!(protocol.from, transfer_intent.from);
+        assert_eq!(protocol.to, transfer_intent.to);
+    }
+
+    #[test]
+    fn test_assemble_icrc2_wallet_transfer() {
+        // Arrange
+        let adapter = IcIntentAdapter;
+        let ts = 1_632_144_000; // Example timestamp
+        let from = Wallet::new(random_principal_id());
+        let to = Wallet::new(random_principal_id());
+        let spender = Wallet::new(random_principal_id());
+        let asset = Asset::default();
+        let amount = Nat::from(200_000u64);
+        let approve_amount = Nat::from(150_000u64);
+        let actual_amount = Nat::from(100_000u64);
+
+        let transfer_intent = TransferFromData {
+            from,
+            to,
+            spender,
+            asset,
+            amount: amount.clone(),
+            approve_amount: Some(approve_amount.clone()),
+            actual_amount: Some(actual_amount.clone()),
+        };
+
+        // Act
+        let result = adapter
+            .assemble_icrc2_wallet_transfer(ts, transfer_intent.clone())
+            .unwrap();
+
+        // Assert
+        assert_eq!(result.len(), 2);
+        let approve_tx = &result[0];
+        assert_eq!(approve_tx.created_at, ts);
+        assert_eq!(approve_tx.state, TransactionState::Created);
+        let approve_protocol = match &approve_tx.protocol {
+            Protocol::IC(IcTransaction::Icrc2Approve(icrc2_approve)) => icrc2_approve,
+            _ => panic!("Expected Icrc2Approve"),
+        };
+        assert_eq!(approve_protocol.amount, approve_amount);
+        assert_eq!(approve_protocol.from, transfer_intent.from);
+        assert_eq!(approve_protocol.spender, transfer_intent.spender);
+
+        let transfer_from_tx = &result[1];
+        assert_eq!(transfer_from_tx.created_at, ts);
+        assert_eq!(transfer_from_tx.state, TransactionState::Created);
+        let transfer_from_protocol = match &transfer_from_tx.protocol {
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(icrc2_transfer_from)) => {
+                icrc2_transfer_from
+            }
+            _ => panic!("Expected Icrc2TransferFrom"),
+        };
+        assert_eq!(transfer_from_protocol.amount, actual_amount);
+        assert_eq!(transfer_from_protocol.from, transfer_intent.from);
+        assert_eq!(transfer_from_protocol.to, transfer_intent.to);
+        assert_eq!(transfer_from_protocol.spender, transfer_intent.spender);
+    }
+
+    #[test]
+    fn test_assemble_icrc1_canister_transfer() {
+        // Arrange
+        let adapter = IcIntentAdapter;
+        let ts = 1_632_144_000; // Example timestamp
+        let from = Wallet::new(random_principal_id());
+        let to = Wallet::new(random_principal_id());
+        let asset = Asset::default();
+        let amount = Nat::from(100_000u64);
+        let transfer_intent = TransferData {
+            from,
+            to,
+            asset,
+            amount: amount.clone(),
+        };
+
+        // Act
+        let result = adapter
+            .assemble_icrc1_canister_transfer(ts, transfer_intent.clone())
+            .unwrap();
+
+        // Assert
+        assert_eq!(result.len(), 1);
+        let tx = &result[0];
+        assert_eq!(tx.created_at, ts);
+        assert_eq!(tx.state, TransactionState::Created);
+        let protocol = match &tx.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => icrc1_transfer,
+            _ => panic!("Expected Icrc1Transfer"),
+        };
+        assert_eq!(protocol.amount, amount);
+        assert_eq!(protocol.from, transfer_intent.from);
+        assert_eq!(protocol.to, transfer_intent.to);
+    }
 }
