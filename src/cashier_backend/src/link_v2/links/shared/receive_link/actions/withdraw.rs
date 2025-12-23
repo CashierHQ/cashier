@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::link_v2::intents::transfer_link_to_wallet::TransferLinkToWalletIntent;
 use candid::{Nat, Principal};
 use cashier_backend_types::repository::common::Asset;
 use cashier_backend_types::{
@@ -13,8 +12,11 @@ use cashier_backend_types::{
         link::v1::Link,
     },
 };
-use transaction_manager::icrc_token::utils::{
-    get_batch_tokens_balance_for_link, get_batch_tokens_fee_for_link, get_link_account,
+use transaction_manager::{
+    icrc_token::utils::{
+        get_batch_tokens_balance_for_link, get_batch_tokens_fee_for_link, get_link_account,
+    },
+    intents::transfer_link_to_wallet::TransferLinkToWalletIntent,
 };
 use uuid::Uuid;
 
