@@ -9,6 +9,7 @@ use cashier_backend_types::{
 };
 use std::rc::Rc;
 
+#[derive(Clone)]
 pub struct ExecutorService<E: TransactionExecutor> {
     executor: Rc<E>,
 }
