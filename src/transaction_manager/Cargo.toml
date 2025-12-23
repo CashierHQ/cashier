@@ -1,0 +1,21 @@
+[package]
+name = "transaction_manager"
+edition.workspace = true
+license.workspace = true
+version.workspace = true
+
+[dependencies]
+candid = { workspace = true }
+cashier_backend_types = { workspace = true }
+cashier_common = { workspace = true }
+futures = { workspace = true }
+ic-cdk = { workspace = true }
+ic-cdk-timers = { workspace = true }
+icrc_112_utils = { workspace = true }
+icrc-ledger-types = { workspace = true }
+serde = { workspace = true }
+serde_bytes = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
