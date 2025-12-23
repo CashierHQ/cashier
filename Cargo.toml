@@ -12,7 +12,8 @@ members = [
     "src/lib/icrc_112_utils",
     "src/token_storage",
     "src/token_storage_client",
-    "src/token_storage_types",
+    "src/token_storage_types", 
+    "src/transaction_manager",
 ]
 resolver = "2"
 

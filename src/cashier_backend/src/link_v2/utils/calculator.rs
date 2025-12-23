@@ -1,9 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::{constant::ICP_CANISTER_PRINCIPAL, domains::fee::Fee};
 use candid::{Nat, Principal};
 use cashier_backend_types::repository::{asset_info::AssetInfo, common::Asset};
+use cashier_common::constant::{CREATE_LINK_FEE, ICP_CANISTER_PRINCIPAL};
 use std::collections::HashMap;
 
 /// Calculate the token balance required for the link
@@ -43,7 +43,7 @@ pub fn calculate_link_balance_map(
 /// # Returns
 /// * `(actual_amount: Nat, approved_amount: Nat)` - A tuple containing the actual fee amount and the approved fee amount
 pub fn calculate_create_link_fee(fee_map: &HashMap<Principal, Nat>) -> (Nat, Nat) {
-    let create_link_fee = Nat::from(Fee::CreateTipLinkFeeIcp.as_u64());
+    let create_link_fee = Nat::from(CREATE_LINK_FEE);
     let default_fee = Nat::from(0u64);
     let fee_in_nat = fee_map.get(&ICP_CANISTER_PRINCIPAL).unwrap_or(&default_fee);
     (

@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::constant::FEE_TREASURY_PRINCIPAL;
 use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,
@@ -10,6 +9,7 @@ use cashier_backend_types::{
         intent::v1::{Intent, IntentState, IntentTask, IntentType},
     },
 };
+use cashier_common::constant::FEE_TREASURY_PRINCIPAL;
 use icrc_ledger_types::icrc1::account::Account;
 use uuid::Uuid;
 
