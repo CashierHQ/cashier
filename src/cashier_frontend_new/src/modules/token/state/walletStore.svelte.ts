@@ -19,18 +19,20 @@ class WalletStore {
   constructor() {
     this.#walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
       queryFn: async () => {
-        // fetch list user's tokens
+        // fetch list user's tokens (only enabled tokens)
         const tokens = await tokenStorageService.listTokens();
 
-        // fetch token balances
-        const balanceRequests = tokens.map((token) => {
-          if (token.address === ICP_LEDGER_CANISTER_ID) {
-            return icpLedgerService.getBalance();
-          } else {
-            const icrcLedgerService = new IcrcLedgerService(token);
-            return icrcLedgerService.getBalance();
-          }
-        });
+        // fetch token balances only for enabled tokens
+        const balanceRequests = tokens
+          .filter((token) => token.enabled)
+          .map((token) => {
+            if (token.address === ICP_LEDGER_CANISTER_ID) {
+              return icpLedgerService.getBalance();
+            } else {
+              const icrcLedgerService = new IcrcLedgerService(token);
+              return icrcLedgerService.getBalance();
+            }
+          });
         const balances: bigint[] = await Promise.all(balanceRequests);
 
         // fetch token prices
@@ -40,7 +42,7 @@ class WalletStore {
 
         const enrichedTokens = tokens.map((token, index) => ({
           ...token,
-          balance: balances[index],
+          balance: balances[index] ?? 0,
           priceUSD: prices[token.address] || 0,
         }));
 
@@ -94,10 +96,11 @@ class WalletStore {
   /**
    * Add a new token to the wallet
    * @param address Token canister ID
+   * @param indexId Optional index canister ID for the token
    */
-  async addToken(address: string) {
+  async addToken(address: string, indexId?: string) {
     const token = Principal.fromText(address);
-    const addRes = await tokenStorageService.addToken(token);
+    const addRes = await tokenStorageService.addToken(token, indexId);
     // Refresh the wallet tokens data after adding a new token
     this.#walletTokensQuery.refresh();
     return addRes;
