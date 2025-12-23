@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
 use cashier_backend_types::{
     error::CanisterError,
     link_v2::action_result::{CreateActionResult, ProcessActionResult},
