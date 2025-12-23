@@ -1,14 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::link_v2::{
-    links::{
-        shared::send_link::states::{
-            active::ActiveState, created::CreatedState, inactive::InactiveState,
-        },
-        traits::{LinkV2, LinkV2State},
+use crate::link_v2::links::{
+    shared::send_link::states::{
+        active::ActiveState, created::CreatedState, inactive::InactiveState,
     },
-    transaction_manager::traits::TransactionManager,
+    traits::{LinkV2, LinkV2State},
 };
 use candid::Principal;
 use cashier_backend_types::{
@@ -23,6 +20,7 @@ use cashier_backend_types::{
     },
 };
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
+use transaction_manager::traits::TransactionManager;
 use uuid::Uuid;
 
 pub struct TokenBasketLink<M: TransactionManager + 'static> {
