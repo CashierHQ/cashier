@@ -46,8 +46,7 @@
   <!-- Development Disclaimer -->
   <!-- Hidden -->
   <div
-    hidden
-    class="mx-auto px-4 py-2 bg-[#ECFEF3] border rounded-xl border-[#ACEFC6] w-10/12 lg:fixed lg:top-10 lg:w-96 lg:left-1/2 lg:-translate-x-1/2 transition-all duration-300 ease-in-out"
+    class="mx-auto px-4 py-2 bg-[#ECFEF3] border rounded-xl border-[#ACEFC6] w-10/12 lg:fixed z-10 lg:top-10 lg:w-96 lg:left-1/2 lg:-translate-x-1/2 transition-all duration-300 ease-in-out"
   >
     <div class="max-w-[1200px] mx-auto">
       <div
@@ -167,7 +166,7 @@
 
         <button
           onclick={() => onLoginClick?.()}
-          class="items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-primary text-primary-foreground shadow hover:bg-primary/90 px-4 hidden md:block lg:block h-[48px] text-[1rem] w-[248px] rounded-full mt-[48px] md:mt-8 lg:mt-[48px]"
+          class="items-center sticky bottom-2 justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-primary text-primary-foreground shadow hover:bg-primary/90 px-4 hidden md:block lg:block h-[48px] text-[1rem] w-[248px] rounded-full mt-[48px] md:mt-8 lg:mt-[48px]"
           type="button"
         >
           {locale.t("home.homePage.getStarted")}

@@ -21,7 +21,12 @@
 <NavBar />
 
 <div class="px-4 pb-6">
-  {#if tokenDetails}
+  {#if walletStore.query.isLoading && !walletStore.query.data}
+    <div class="text-center py-12 space-y-4">
+      <Loader2 class="w-10 h-10 animate-spin mx-auto mb-4" />
+      <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
+    </div>
+  {:else if tokenDetails}
     <div class="space-y-6">
       <div class="pt-4">
         <h1 class="text-lg font-normal text-green mb-2">

@@ -13,6 +13,8 @@
   import { shortenAddress } from "../utils/address";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
+  import type { NetworkFeeInfo } from "../utils/networkFee";
+  import { getNetworkName, getNetworkLogo } from "../services/networkService";
 
   interface Props {
     open: boolean;
@@ -20,7 +22,7 @@
     amount: number;
     selectedToken: TokenWithPriceAndBalance | null;
     receiveAddress: string;
-    networkFee: string;
+    networkFee: NetworkFeeInfo;
     transactionLink: string;
     onClose: () => void;
     onConfirm: () => void;
@@ -43,7 +45,16 @@
   );
   let imageLoadFailed = $state(false);
 
+  // Network information (always Internet Computer for all tokens)
+  const networkName = $derived(getNetworkName(selectedToken));
+  const networkLogo = $derived(getNetworkLogo(selectedToken));
   let networkImageLoadFailed = $state(false);
+
+  // Network fee token logo (same as selected token since ICRC uses token's own fee)
+  const networkFeeTokenLogo = $derived(
+    selectedToken ? getTokenLogo(selectedToken.address) : null,
+  );
+  let networkFeeImageLoadFailed = $state(false);
 
   // Format amount with proper decimal places based on token decimals
   const formattedAmount = $derived.by(() => {
@@ -100,17 +111,16 @@
               <span class="text-gray-600"
                 >{locale.t("wallet.send.confirmDrawer.network")}</span
               >
-              <!-- TODO: Add actual network loading from api -->
               <div class="flex items-center gap-1">
-                <span>ICP</span>
+                <span>{networkName}</span>
                 <div
                   class="relative flex shrink-0 overflow-hidden rounded-full w-4 h-4"
                 >
-                  {#if !networkImageLoadFailed}
+                  {#if !networkImageLoadFailed && networkLogo}
                     <img
-                      alt="ICP Network"
+                      alt={networkName}
                       class="w-full h-full object-cover rounded-full"
-                      src="/icpLogo.png"
+                      src={networkLogo}
                       onerror={() => (networkImageLoadFailed = true)}
                     />
                   {:else}
@@ -127,23 +137,35 @@
               <span class="text-gray-600"
                 >{locale.t("wallet.send.confirmDrawer.networkFee")}</span
               >
-              <div class="flex items-center gap-1">
-                <span>{networkFee}</span>
-                <div
-                  class="relative flex shrink-0 overflow-hidden rounded-full w-4 h-4"
-                >
-                  {#if !imageLoadFailed}
+              <!-- Network fee display in transaction card style -->
+              <div class="flex justify-end gap-2 w-full max-w-[60%]">
+                <div class="flex flex-col items-end">
+                  <div class="flex items-center gap-1">
+                    <p class="text-[14px] font-normal">
+                      {networkFee.amountFormatted}
+                    </p>
+                  </div>
+                  {#if networkFee.usdValueFormatted}
+                    <p class="text-[10px] font-normal text-[#b6b6b6]">
+                      ~${networkFee.usdValueFormatted}
+                    </p>
+                  {/if}
+                </div>
+
+                <div class="flex gap-1.5">
+                  <p class="text-[14px] font-medium">{networkFee.symbol}</p>
+                  {#if !networkFeeImageLoadFailed && networkFeeTokenLogo}
                     <img
-                      alt="ICP Network"
-                      class="w-full h-full object-cover rounded-full"
-                      src={tokenLogo}
-                      onerror={() => (imageLoadFailed = true)}
+                      src={networkFeeTokenLogo}
+                      alt={networkFee.symbol}
+                      class="w-4 h-4 mt-0.5 rounded-full overflow-hidden"
+                      onerror={() => (networkFeeImageLoadFailed = true)}
                     />
                   {:else}
                     <div
-                      class="w-full h-full flex items-center justify-center bg-gray-200 rounded-full text-[8px]"
+                      class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs overflow-hidden"
                     >
-                      {selectedToken?.symbol[0]?.toUpperCase() || "?"}
+                      {networkFee.symbol[0]?.toUpperCase() || "?"}
                     </div>
                   {/if}
                 </div>
@@ -152,11 +174,13 @@
           </div>
 
           <div class="bg-gray-50 rounded-lg p-4">
-            <div class="flex justify-between items-center">
+            <div class="flex justify-between items-center gap-x-0.5">
               <span class="font-medium whitespace-nowrap"
                 >{locale.t("wallet.send.confirmDrawer.totalFees")}</span
               >
-              <div class="flex flex-wrap items-center gap-2 justify-end">
+              <div
+                class="flex flex-wrap items-center gap-y-0.5 gap-x-2 justify-end"
+              >
                 {#if selectedToken}
                   <div class="flex items-center gap-1">
                     <span class="font-medium"
@@ -184,22 +208,24 @@
                   <span class="font-medium">+</span>
                 {/if}
                 <div class="flex items-center gap-1">
-                  <span class="font-medium">{networkFee}</span>
+                  <span class="font-medium"
+                    >{networkFee.amountFormatted} {networkFee.symbol}</span
+                  >
                   <div
                     class="relative flex shrink-0 overflow-hidden rounded-full w-4 h-4"
                   >
-                    {#if !imageLoadFailed}
+                    {#if !networkFeeImageLoadFailed && networkFeeTokenLogo}
                       <img
-                        alt="ICP Network"
+                        alt={networkFee.symbol}
                         class="w-full h-full object-cover rounded-full"
-                        src={tokenLogo}
-                        onerror={() => (imageLoadFailed = true)}
+                        src={networkFeeTokenLogo}
+                        onerror={() => (networkFeeImageLoadFailed = true)}
                       />
                     {:else}
                       <div
                         class="w-full h-full flex items-center justify-center bg-gray-200 rounded-full text-[8px]"
                       >
-                        {selectedToken?.symbol[0]?.toUpperCase() || "?"}
+                        {networkFee.symbol[0]?.toUpperCase() || "?"}
                       </div>
                     {/if}
                   </div>
