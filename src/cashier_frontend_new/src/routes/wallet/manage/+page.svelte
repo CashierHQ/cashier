@@ -36,7 +36,7 @@
           {/if}
           <div>
             <ul>
-              {#each walletStore.query.data as token (token.address)}
+              {#each walletStore.allTokensQuery.data as token (token.address)}
                 <li>
                   <strong>{token.symbol}</strong> - {token.name} <br />
                   Address: {token.address} <br />
