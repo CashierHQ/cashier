@@ -1,8 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::link_v2::links::{
-    shared::send_link::actions::receive::ReceiveAction, traits::LinkV2State,
+use crate::apps::link_v2::links::{
+    shared::receive_link::actions::withdraw::WithdrawAction, traits::LinkV2State,
 };
 use candid::Principal;
 use cashier_backend_types::{
@@ -18,13 +18,13 @@ use cashier_backend_types::{
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
 use transaction_manager::traits::TransactionManager;
 
-pub struct ActiveState<M: TransactionManager + 'static> {
+pub struct InactiveState<M: TransactionManager + 'static> {
     pub link: Link,
     pub canister_id: Principal,
     pub transaction_manager: Rc<M>,
 }
 
-impl<M: TransactionManager + 'static> ActiveState<M> {
+impl<M: TransactionManager + 'static> InactiveState<M> {
     pub fn new(link: &Link, canister_id: Principal, transaction_manager: Rc<M>) -> Self {
         Self {
             link: link.clone(),
@@ -33,24 +33,30 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
         }
     }
 
-    /// Create RECEIVE action for the tip link
+    /// Create WITHDRAW action for the inactive tip link
     /// # Arguments
     /// * `caller` - The principal of the user creating the action
     /// * `link` - The tip link for which the action is being created
     /// * `canister_id` - The canister ID of the backend canister
     /// * `transaction_manager` - The transaction manager to handle action creation
     /// # Returns
-    /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the RECEIVE action
-    pub async fn create_receive_action(
+    /// * `Result<LinkCreateActionResult, CanisterError>` - The result of creating the WITHDRAW action
+    pub async fn create_withdraw_action(
         caller: Principal,
         link: Link,
         canister_id: Principal,
         transaction_manager: Rc<M>,
     ) -> Result<LinkCreateActionResult, CanisterError> {
-        let receive_action = ReceiveAction::create(&link, caller, canister_id).await?;
+        if caller != link.creator {
+            return Err(CanisterError::Unauthorized(
+                "Only the creator can create WITHDRAW action on this link".to_string(),
+            ));
+        }
+
+        let withdraw_action = WithdrawAction::create(&link, canister_id).await?;
         let create_action_result = transaction_manager.create_action(
-            receive_action.action,
-            receive_action.intents,
+            withdraw_action.action,
+            withdraw_action.intents,
             None,
         )?;
 
@@ -60,22 +66,29 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
         })
     }
 
-    /// Process a RECEIVE action on the active tip link
+    /// Process a WITHDRAW action on the inactive tip link
     /// # Arguments
-    /// * `link` - The tip link being received
-    /// * `action` - The receive action to be processed
+    /// * `link` - The tip link being withdrawn
+    /// * `action` - The withdraw action to be processed
     /// * `intents` - The intents associated with the action
     /// * `intent_txs_map` - A mapping of intent IDs to their associated transactions
     /// * `transaction_manager` - The transaction manager to handle the action processing
     /// # Returns
-    /// * `Result<LinkProcessActionResult, CanisterError>` - The result of processing the receive action
-    pub async fn receive(
-        link: &Link,
+    /// * `Result<LinkProcessActionResult, CanisterError>` - The result of processing the withdraw action
+    pub async fn withdraw(
+        caller: Principal,
+        link: Link,
         action: Action,
         intents: Vec<Intent>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
         transaction_manager: Rc<M>,
     ) -> Result<LinkProcessActionResult, CanisterError> {
+        if caller != link.creator {
+            return Err(CanisterError::Unauthorized(
+                "Only the creator can process WITHDRAW action on this link".to_string(),
+            ));
+        }
+
         let mut link = link.clone();
 
         let process_action_result = transaction_manager
@@ -83,10 +96,7 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
             .await?;
 
         if process_action_result.is_success {
-            link.link_use_action_counter += 1;
-            if link.link_use_action_counter >= link.link_use_action_max_count {
-                link.state = LinkState::InactiveEnded;
-            }
+            link.state = LinkState::InactiveEnded;
         }
 
         Ok(LinkProcessActionResult {
@@ -96,7 +106,7 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
     }
 }
 
-impl<M: TransactionManager + 'static> LinkV2State for ActiveState<M> {
+impl<M: TransactionManager + 'static> LinkV2State for InactiveState<M> {
     fn create_action(
         &self,
         caller: Principal,
@@ -108,14 +118,18 @@ impl<M: TransactionManager + 'static> LinkV2State for ActiveState<M> {
 
         Box::pin(async move {
             match action_type {
-                ActionType::Receive => {
-                    let create_action_result =
-                        Self::create_receive_action(caller, link, canister_id, transaction_manager)
-                            .await?;
+                ActionType::Withdraw => {
+                    let create_action_result = Self::create_withdraw_action(
+                        caller,
+                        link,
+                        canister_id,
+                        transaction_manager,
+                    )
+                    .await?;
                     Ok(create_action_result)
                 }
                 _ => Err(CanisterError::ValidationErrors(
-                    "Unsupported action type for ActiveState".to_string(),
+                    "Unsupported action type for InactiveState".to_string(),
                 )),
             }
         })
@@ -123,24 +137,30 @@ impl<M: TransactionManager + 'static> LinkV2State for ActiveState<M> {
 
     fn process_action(
         &self,
-        _caller: Principal,
+        caller: Principal,
         action: Action,
         intents: Vec<Intent>,
-        intent_txs_map: HashMap<String, Vec<Transaction>>,
+        intent_txs_map: std::collections::HashMap<String, Vec<Transaction>>,
     ) -> Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>> {
         let link = self.link.clone();
         let transaction_manager = self.transaction_manager.clone();
 
         Box::pin(async move {
             match action.r#type {
-                ActionType::Receive => {
-                    let receive_result =
-                        Self::receive(&link, action, intents, intent_txs_map, transaction_manager)
-                            .await?;
-                    Ok(receive_result)
+                ActionType::Withdraw => {
+                    let withdraw_result = Self::withdraw(
+                        caller,
+                        link,
+                        action,
+                        intents,
+                        intent_txs_map,
+                        transaction_manager,
+                    )
+                    .await?;
+                    Ok(withdraw_result)
                 }
                 _ => Err(CanisterError::ValidationErrors(
-                    "Unsupported action type for ActiveState".to_string(),
+                    "Unsupported action type for InactiveState".to_string(),
                 )),
             }
         })
