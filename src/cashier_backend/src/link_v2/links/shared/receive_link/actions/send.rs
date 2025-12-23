@@ -1,7 +1,6 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::link_v2::utils::calculator::calculate_link_balance_map;
 use candid::Principal;
 use cashier_backend_types::{
     constant::INTENT_LABEL_SEND_TIP_ASSET,
@@ -16,6 +15,7 @@ use cashier_backend_types::{
 use transaction_manager::{
     icrc_token::utils::{get_batch_tokens_fee_for_link, get_link_account},
     intents::transfer_wallet_to_link::TransferWalletToLinkIntent,
+    utils::calculator::calculate_link_balance_map,
 };
 use uuid::Uuid;
 
