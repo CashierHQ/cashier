@@ -55,29 +55,34 @@ type MockQueryInstance = {
 const mockQueryInstances: MockQueryInstance[] = [];
 
 vi.mock("$lib/managedState", () => ({
-  managedState: vi.fn().mockImplementation((config: { queryFn: () => Promise<unknown> }) => {
-    managedStateCallCount++;
-    const instance: MockQueryInstance = {
-      isLoading: false,
-      error: undefined,
-      refresh: vi.fn(),
-      _queryFn: config.queryFn,
-      _invokeQueryFn: async () => {
-        if (config.queryFn) {
-          await config.queryFn();
-        }
-      },
-    };
-    mockQueryInstances.push(instance);
-    return instance;
-  }),
+  managedState: vi
+    .fn()
+    .mockImplementation((config: { queryFn: () => Promise<unknown> }) => {
+      managedStateCallCount++;
+      const instance: MockQueryInstance = {
+        isLoading: false,
+        error: undefined,
+        refresh: vi.fn(),
+        _queryFn: config.queryFn,
+        _invokeQueryFn: async () => {
+          if (config.queryFn) {
+            await config.queryFn();
+          }
+        },
+      };
+      mockQueryInstances.push(instance);
+      return instance;
+    }),
 }));
 
 // Import store after mocks are set up (vi.mock is hoisted)
 import { walletHistoryStore } from "./walletHistoryStore.svelte";
 
 // Helper to create mock transactions
-const createMockTx = (id: bigint, timestampMs = Date.now()): TokenTransaction => ({
+const createMockTx = (
+  id: bigint,
+  timestampMs = Date.now(),
+): TokenTransaction => ({
   id,
   kind: "transfer",
   amount: 100n,
