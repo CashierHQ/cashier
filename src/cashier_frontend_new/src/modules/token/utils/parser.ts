@@ -20,8 +20,8 @@ export function parseListTokens(
     return result.tokens.map((token) => {
       return rsMatch(token.id, {
         IC: (data) => {
-          const maybeIndexId = fromNullable(token.details.IC.index_id);
-          const indexId = maybeIndexId ? maybeIndexId.toText() : undefined;
+          const indexId =
+            fromNullable(token.details.IC.index_id)?.toText() ?? undefined;
           return {
             address: data.ledger_id.toText(),
             name: token.name,
