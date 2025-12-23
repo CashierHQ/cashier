@@ -1,11 +1,11 @@
 use crate::{
     apps::{
-        auth::{AuthService, AuthServiceStorage},
-        link_v2::service::LinkV2Service,
-        request_lock::RequestLockService,
+        auth::AuthService, link_v2::service::LinkV2Service, request_lock::RequestLockService,
         settings::SettingsService,
     },
-    repositories::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
+    repositories::{
+        AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories, auth::AuthServiceStorage,
+    },
 };
 use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
