@@ -19,9 +19,13 @@ import type { ManagedState } from "$lib/managedState/managedState.svelte";
 
 /**
  * WalletStore manages user's token list with optimized balance fetching.
+ *
+ * Architecture:
  * - allTokensQuery: Fetches ALL tokens metadata (60s interval, no balances)
  * - enabledTokens: Derived filtered list of enabled tokens
  * - enabledTokensWithBalances: Enabled tokens with balances (15s refresh)
+ *
+ * Performance: Only fetches balances for enabled tokens (~10-20) instead of all (~200-300)
  */
 class WalletStore {
   // Layer 1: All tokens metadata (no balances) - 60s refresh
@@ -172,6 +176,7 @@ class WalletStore {
    * Access all tokens metadata (for token management UI)
    */
   get allTokensQuery(): ManagedState<TokenMetadata[]> {
+    console.log("allTokensQuery", this.#allTokensQuery.data);
     return this.#allTokensQuery;
   }
 
