@@ -208,8 +208,14 @@ impl IntentAdapterTrait for IcIntentAdapter {
 mod tests {
     use super::*;
     use candid::Nat;
-    use cashier_backend_types::repository::common::{Asset, Wallet};
-    use cashier_common::test_utils::random_principal_id;
+    use cashier_backend_types::repository::{
+        common::{Asset, Wallet},
+        intent::v1::IntentState,
+    };
+    use cashier_common::{
+        chain::Chain,
+        test_utils::{random_id_string, random_principal_id},
+    };
 
     #[test]
     fn test_assemble_icrc1_wallet_transfer() {
@@ -323,6 +329,162 @@ mod tests {
         let result = adapter
             .assemble_icrc1_canister_transfer(ts, transfer_intent.clone())
             .unwrap();
+
+        // Assert
+        assert_eq!(result.len(), 1);
+        let tx = &result[0];
+        assert_eq!(tx.created_at, ts);
+        assert_eq!(tx.state, TransactionState::Created);
+        let protocol = match &tx.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => icrc1_transfer,
+            _ => panic!("Expected Icrc1Transfer"),
+        };
+        assert_eq!(protocol.amount, amount);
+        assert_eq!(protocol.from, transfer_intent.from);
+        assert_eq!(protocol.to, transfer_intent.to);
+    }
+
+    #[test]
+    fn test_intent_to_transactions_transfer_wallet_to_link() {
+        // Arrange
+        let adapter = IcIntentAdapter;
+        let ts = 1_632_144_000; // Example timestamp
+        let from = Wallet::new(random_principal_id());
+        let to = Wallet::new(random_principal_id());
+        let asset = Asset::default();
+        let amount = Nat::from(100_000u64);
+
+        let transfer_intent = TransferData {
+            from,
+            to,
+            asset,
+            amount: amount.clone(),
+        };
+
+        let intent_id = random_id_string();
+        let intent = Intent {
+            id: intent_id,
+            created_at: ts,
+            task: IntentTask::TransferWalletToLink,
+            r#type: IntentType::Transfer(transfer_intent.clone()),
+            state: IntentState::Created,
+            dependency: vec![],
+            chain: Chain::IC,
+            label: "Test Intent".to_string(),
+        };
+
+        // Act
+        let result = adapter.intent_to_transactions(ts, &intent).unwrap();
+
+        // Assert
+        assert_eq!(result.len(), 1);
+        let tx = &result[0];
+        assert_eq!(tx.created_at, ts);
+        assert_eq!(tx.state, TransactionState::Created);
+        let protocol = match &tx.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(icrc1_transfer)) => icrc1_transfer,
+            _ => panic!("Expected Icrc1Transfer"),
+        };
+        assert_eq!(protocol.amount, amount);
+        assert_eq!(protocol.from, transfer_intent.from);
+        assert_eq!(protocol.to, transfer_intent.to);
+    }
+
+    #[test]
+    fn test_intent_to_transactions_transfer_wallet_to_treasury() {
+        // Arrange
+        let adapter = IcIntentAdapter;
+        let ts = 1_632_144_000; // Example timestamp
+        let from = Wallet::new(random_principal_id());
+        let to = Wallet::new(random_principal_id());
+        let spender = Wallet::new(random_principal_id());
+        let asset = Asset::default();
+        let amount = Nat::from(200_000u64);
+        let approve_amount = Nat::from(150_000u64);
+        let actual_amount = Nat::from(100_000u64);
+
+        let transfer_intent = TransferFromData {
+            from,
+            to,
+            spender,
+            asset,
+            amount: amount.clone(),
+            approve_amount: Some(approve_amount.clone()),
+            actual_amount: Some(actual_amount.clone()),
+        };
+
+        let intent_id = random_id_string();
+        let intent = Intent {
+            id: intent_id,
+            created_at: ts,
+            task: IntentTask::TransferWalletToTreasury,
+            r#type: IntentType::TransferFrom(transfer_intent.clone()),
+            state: IntentState::Created,
+            dependency: vec![],
+            chain: Chain::IC,
+            label: "Test Intent".to_string(),
+        };
+
+        // Act
+        let result = adapter.intent_to_transactions(ts, &intent).unwrap();
+
+        // Assert
+        assert_eq!(result.len(), 2);
+        let approve_tx = &result[0];
+        assert_eq!(approve_tx.created_at, ts);
+        assert_eq!(approve_tx.state, TransactionState::Created);
+        let approve_protocol = match &approve_tx.protocol {
+            Protocol::IC(IcTransaction::Icrc2Approve(icrc2_approve)) => icrc2_approve,
+            _ => panic!("Expected Icrc2Approve"),
+        };
+        assert_eq!(approve_protocol.amount, approve_amount);
+        assert_eq!(approve_protocol.from, transfer_intent.from);
+        assert_eq!(approve_protocol.spender, transfer_intent.spender);
+
+        let transfer_from_tx = &result[1];
+        assert_eq!(transfer_from_tx.created_at, ts);
+        assert_eq!(transfer_from_tx.state, TransactionState::Created);
+        let transfer_from_protocol = match &transfer_from_tx.protocol {
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(icrc2_transfer_from)) => {
+                icrc2_transfer_from
+            }
+            _ => panic!("Expected Icrc2TransferFrom"),
+        };
+        assert_eq!(transfer_from_protocol.amount, actual_amount);
+        assert_eq!(transfer_from_protocol.from, transfer_intent.from);
+        assert_eq!(transfer_from_protocol.to, transfer_intent.to);
+        assert_eq!(transfer_from_protocol.spender, transfer_intent.spender);
+    }
+
+    #[test]
+    fn test_intent_to_transactions_transfer_link_to_wallet() {
+        // Arrange
+        let adapter = IcIntentAdapter;
+        let ts = 1_632_144_000; // Example timestamp
+        let from = Wallet::new(random_principal_id());
+        let to = Wallet::new(random_principal_id());
+        let asset = Asset::default();
+        let amount = Nat::from(100_000u64);
+        let transfer_intent = TransferData {
+            from,
+            to,
+            asset,
+            amount: amount.clone(),
+        };
+        let intent_id = random_id_string();
+        let intent = Intent {
+            id: intent_id,
+            created_at: ts,
+            task: IntentTask::TransferLinkToWallet,
+            r#type: IntentType::Transfer(transfer_intent.clone()),
+            state: IntentState::Created,
+            dependency: vec![],
+            chain: Chain::IC,
+            label: "Test Intent".to_string(),
+        };
+
+        // Act
+        let result = adapter.intent_to_transactions(ts, &intent).unwrap();
 
         // Assert
         assert_eq!(result.len(), 1);
