@@ -48,11 +48,9 @@ impl<S: Storage<LinkRepositoryStorage>> LinkRepository<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        repositories::{Repositories, tests::TestRepositories},
-        utils::test_utils::*,
-    };
+    use crate::repositories::{Repositories, tests::TestRepositories};
     use cashier_backend_types::repository::link::v1::{LinkState, LinkType};
+    use cashier_common::test_utils::{random_id_string, random_principal_id};
 
     #[test]
     fn it_should_create_a_link() {

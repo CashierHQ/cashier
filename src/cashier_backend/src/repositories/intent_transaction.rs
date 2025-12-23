@@ -81,10 +81,8 @@ impl<S: Storage<IntentTransactionRepositoryStorage>> IntentTransactionRepository
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        repositories::{Repositories, tests::TestRepositories},
-        utils::test_utils::random_id_string,
-    };
+    use crate::repositories::{Repositories, tests::TestRepositories};
+    use cashier_common::test_utils::random_id_string;
 
     #[test]
     fn it_should_get_intent_action_by_intent_id() {
