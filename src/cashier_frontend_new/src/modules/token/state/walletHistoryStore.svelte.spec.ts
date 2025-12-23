@@ -66,6 +66,7 @@ vi.mock("$lib/managedState", () => ({
 // Import store after mocks
 import {
   createWalletHistoryStore,
+  clearWalletHistoryCache,
   WalletHistoryStore,
 } from "./walletHistoryStore.svelte";
 
@@ -90,6 +91,7 @@ describe("WalletHistoryStore", () => {
     mockAuthAccount = { owner: "aaaaa-aa" };
     managedStateCallCount = 0;
     mockQueryInstances.length = 0;
+    clearWalletHistoryCache(); // Clear cache between tests
     store = createWalletHistoryStore(TEST_INDEX_ID);
   });
 
@@ -104,10 +106,82 @@ describe("WalletHistoryStore", () => {
   });
 
   describe("factory function", () => {
-    it("should create new instance", () => {
+    it("should create new instance for new indexId", () => {
       const newStore = createWalletHistoryStore("different-index-id");
       expect(newStore).toBeInstanceOf(WalletHistoryStore);
       expect(newStore.indexId).toBe("different-index-id");
+    });
+
+    it("should return cached instance for same indexId", () => {
+      const initialCount = managedStateCallCount;
+      const sameStore = createWalletHistoryStore(TEST_INDEX_ID);
+
+      expect(sameStore).toBe(store);
+      expect(managedStateCallCount).toBe(initialCount); // No new managedState created
+    });
+
+    it("should create separate instances for different indexIds", () => {
+      const store1 = createWalletHistoryStore("index-1");
+      const store2 = createWalletHistoryStore("index-2");
+
+      expect(store1).not.toBe(store2);
+      expect(store1.indexId).toBe("index-1");
+      expect(store2.indexId).toBe("index-2");
+    });
+  });
+
+  describe("clearWalletHistoryCache", () => {
+    it("should reset all cached stores", async () => {
+      // Populate store with transactions
+      mockGetTransactions.mockResolvedValueOnce({
+        transactions: [createMockTx(1n)],
+        balance: 1000n,
+      });
+      await mockQueryInstances[0]._invokeQueryFn();
+      expect(store.transactions.length).toBeGreaterThan(0);
+
+      clearWalletHistoryCache();
+
+      // Store should be reset
+      expect(store.transactions).toEqual([]);
+      expect(store.hasMore).toBe(true);
+    });
+
+    it("should clear cache so new stores are created", () => {
+      const initialCount = managedStateCallCount;
+
+      clearWalletHistoryCache();
+      const newStore = createWalletHistoryStore(TEST_INDEX_ID);
+
+      expect(newStore).not.toBe(store);
+      expect(managedStateCallCount).toBe(initialCount + 1); // New managedState created
+    });
+
+    it("should reset multiple stores", async () => {
+      // Use valid principal format for second store
+      const store2 = createWalletHistoryStore("ryjl3-tyaaa-aaaaa-aaaba-cai");
+
+      // Populate both stores
+      mockGetTransactions
+        .mockResolvedValueOnce({
+          transactions: [createMockTx(1n)],
+          balance: 1000n,
+        })
+        .mockResolvedValueOnce({
+          transactions: [createMockTx(2n)],
+          balance: 2000n,
+        });
+
+      await mockQueryInstances[0]._invokeQueryFn();
+      await mockQueryInstances[1]._invokeQueryFn();
+
+      expect(store.transactions.length).toBeGreaterThan(0);
+      expect(store2.transactions.length).toBeGreaterThan(0);
+
+      clearWalletHistoryCache();
+
+      expect(store.transactions).toEqual([]);
+      expect(store2.transactions).toEqual([]);
     });
   });
 

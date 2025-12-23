@@ -1,10 +1,17 @@
 import { managedState, type ManagedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { Principal } from "@dfinity/principal";
-import { SvelteSet } from "svelte/reactivity";
+import { SvelteMap, SvelteSet } from "svelte/reactivity";
 import { TokenIndexService } from "../services/tokenIndexService";
-import { DEFAULT_TX_PAGE_SIZE, TX_STALE_TIME_MS, TX_REFETCH_INTERVAL_MS } from "../constants";
+import {
+  DEFAULT_TX_PAGE_SIZE,
+  TX_STALE_TIME_MS,
+  TX_REFETCH_INTERVAL_MS,
+} from "../constants";
 import type { TokenTransaction, GetTransactionsResult } from "../types";
+
+// Cache stores by indexId to preserve transaction history across token switches
+const storeCache = new SvelteMap<string, WalletHistoryStore>();
 
 /**
  * Store for managing single-token transaction history.
@@ -59,7 +66,8 @@ class WalletHistoryStore {
 
     // Only update hasMore on initial load (empty state)
     if (this.#transactions.length <= result.transactions.length) {
-      this.#hasMore = result.transactions.length >= Number(DEFAULT_TX_PAGE_SIZE);
+      this.#hasMore =
+        result.transactions.length >= Number(DEFAULT_TX_PAGE_SIZE);
     }
 
     return result;
@@ -152,7 +160,8 @@ class WalletHistoryStore {
 }
 
 /**
- * Factory function to create a WalletHistoryStore for a single token.
+ * Factory function to get or create a WalletHistoryStore for a single token.
+ * Uses cache to preserve transaction history across token switches (prevents flickering).
  * @param indexId - Index canister ID for the token
  * @example
  * const store = createWalletHistoryStore("qhbym-qaaaa-aaaaa-aaafq-cai");
@@ -160,7 +169,20 @@ class WalletHistoryStore {
  * console.log(store.transactions);
  */
 export function createWalletHistoryStore(indexId: string): WalletHistoryStore {
-  return new WalletHistoryStore(indexId);
+  let store = storeCache.get(indexId);
+  if (!store) {
+    store = new WalletHistoryStore(indexId);
+    storeCache.set(indexId, store);
+  }
+  return store;
+}
+
+/**
+ * Clear all cached stores (e.g., on logout)
+ */
+export function clearWalletHistoryCache(): void {
+  storeCache.forEach((store) => store.reset());
+  storeCache.clear();
 }
 
 export { WalletHistoryStore };
