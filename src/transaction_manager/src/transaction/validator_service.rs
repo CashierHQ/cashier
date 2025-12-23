@@ -15,7 +15,6 @@ use cashier_backend_types::{
 };
 use std::{collections::HashMap, rc::Rc};
 
-#[derive(Clone)]
 pub struct ValidatorService<V: TransactionValidator> {
     validator: Rc<V>,
 }
