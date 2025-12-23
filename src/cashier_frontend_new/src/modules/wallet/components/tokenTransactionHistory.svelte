@@ -103,7 +103,7 @@
     <p class="text-gray-500 text-center py-4">
       {locale.t("wallet.tokenInfo.noHistoryAvailable")}
     </p>
-  {:else if historyStore?.isLoading && transactions.length === 0}
+  {:else if historyStore?.isLoading && transactions.length === 0 && !historyStore?.error}
     <div class="flex items-center justify-center py-8">
       <LoaderCircle class="w-6 h-6 text-green animate-spin" />
     </div>

@@ -45,7 +45,9 @@ const LABEL_KEY_MAP: Record<DisplayTransactionTypeValue, string> = {
  * Get i18n key for transaction type label
  * @returns key like "wallet.tokenInfo.sent"
  */
-export function getTransactionLabelKey(type: DisplayTransactionTypeValue): string {
+export function getTransactionLabelKey(
+  type: DisplayTransactionTypeValue,
+): string {
   return `wallet.tokenInfo.${LABEL_KEY_MAP[type]}`;
 }
 
@@ -60,6 +62,8 @@ const OUTGOING_TYPES: Set<DisplayTransactionTypeValue> = new Set([
  * Check if transaction type is outgoing (debit)
  * Used to determine +/- sign prefix
  */
-export function isOutgoingTransaction(type: DisplayTransactionTypeValue): boolean {
+export function isOutgoingTransaction(
+  type: DisplayTransactionTypeValue,
+): boolean {
   return OUTGOING_TYPES.has(type);
 }

@@ -4,10 +4,7 @@ import {
   getTransactionLabelKey,
   isOutgoingTransaction,
 } from "./transaction-display-type";
-import {
-  DisplayTransactionType,
-  TransactionKind,
-} from "$modules/token/types";
+import { DisplayTransactionType, TransactionKind } from "$modules/token/types";
 
 const USER_PRINCIPAL = "aaaaa-aa";
 const OTHER_PRINCIPAL = "bbbbb-bb";
@@ -172,7 +169,9 @@ describe("getTransactionLabelKey", () => {
 describe("isOutgoingTransaction", () => {
   it("should return true for outgoing types", () => {
     expect(isOutgoingTransaction(DisplayTransactionType.SENT)).toBe(true);
-    expect(isOutgoingTransaction(DisplayTransactionType.TRANSFER_FROM)).toBe(true);
+    expect(isOutgoingTransaction(DisplayTransactionType.TRANSFER_FROM)).toBe(
+      true,
+    );
     expect(isOutgoingTransaction(DisplayTransactionType.BURN)).toBe(true);
   });
 
