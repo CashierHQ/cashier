@@ -67,3 +67,50 @@ impl TransferLinkToWalletIntent {
         Ok(Self::new(intent))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cashier_common::test_utils::random_principal_id;
+
+    #[test]
+    fn test_create_transfer_link_to_wallet_intent() {
+        // Arrange
+        let label = "Test Intent".to_string();
+        let asset = Asset::default();
+        let sending_amount = Nat::from(100u64);
+        let receiver_id = random_principal_id();
+        let link_account = Account {
+            owner: random_principal_id(),
+            subaccount: None,
+        };
+        let created_at_ts = 0;
+
+        // Act
+        let intent_result = TransferLinkToWalletIntent::create(
+            label.clone(),
+            asset.clone(),
+            sending_amount.clone(),
+            receiver_id,
+            link_account,
+            created_at_ts,
+        );
+
+        // Assert
+        assert!(intent_result.is_ok());
+        let intent = intent_result.unwrap();
+        assert_eq!(intent.intent.label, label);
+        assert_eq!(intent.intent.created_at, created_at_ts);
+        assert_eq!(intent.intent.state, IntentState::Created);
+        assert_eq!(intent.intent.chain, Chain::IC);
+
+        let intent_type = match intent.intent.r#type {
+            IntentType::Transfer(transfer_intent) => transfer_intent,
+            _ => panic!("Expected Transfer intent type"),
+        };
+        assert_eq!(intent_type.amount, sending_amount);
+        assert_eq!(intent_type.asset, asset);
+        assert_eq!(intent_type.to, Wallet::new(receiver_id));
+        assert_eq!(intent_type.from, link_account.into());
+    }
+}

@@ -193,3 +193,191 @@ pub fn convert_tx_to_icrc_112_request(
         )),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use candid::Nat;
+    use cashier_backend_types::repository::{
+        common::Wallet,
+        transaction::v1::{Icrc1Transfer, Icrc2Approve},
+    };
+    use cashier_common::test_utils::{random_id_string, random_principal_id};
+    use icrc_ledger_types::icrc1::transfer::Memo;
+
+    #[test]
+    fn test_convert_tx_to_icrc_112_request_for_icrc1_transfer() {
+        // Arrange
+        let created_at = 1_632_192_000_000_000_000u64; // Example timestamp
+        let start_ts = 1_632_192_100_000_000_000u64; // Current timestamp
+        let asset = Asset::default();
+        let amount = Nat::from(1000u64);
+        let from = Wallet::new(random_principal_id());
+        let to = Wallet::new(random_principal_id());
+        let memo = Some(Memo::default());
+
+        let mut tx = Transaction {
+            id: random_id_string(),
+            from_call_type: FromCallType::Wallet,
+            state: TransactionState::Created,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from,
+                to,
+                asset,
+                amount: amount.clone(),
+                memo,
+                ts: Some(start_ts),
+            })),
+            dependency: None,
+            created_at,
+            start_ts: Some(start_ts),
+            group: 1u16,
+        };
+
+        let link_account = Account {
+            owner: random_principal_id(),
+            subaccount: None,
+        };
+        let canister_id = random_principal_id();
+        let current_ts = 1_632_192_100_000_000_000;
+
+        // Act
+        let icrc_112_request =
+            convert_tx_to_icrc_112_request(&mut tx, link_account, canister_id, current_ts).unwrap();
+
+        // Assert
+        assert_eq!(
+            icrc_112_request.canister_id,
+            match &tx.protocol {
+                Protocol::IC(IcTransaction::Icrc1Transfer(tx_transfer)) =>
+                    match tx_transfer.asset {
+                        Asset::IC { address } => address,
+                    },
+                _ => panic!("Unexpected protocol type"),
+            }
+        );
+        assert_eq!(icrc_112_request.method, "icrc1_transfer");
+    }
+
+    #[test]
+    fn test_convert_tx_to_icrc_112_request_for_icrc2_approve() {
+        // Arrange
+        let created_at = 1_632_192_000_000_000_000u64; // Example timestamp
+        let start_ts = 1_632_192_100_000_000_000u64; // Current timestamp
+        let asset = Asset::default();
+        let amount = Nat::from(500u64);
+        let from = Wallet::new(random_principal_id());
+        let spender = Wallet::new(random_principal_id());
+        let memo = Some(Memo::default());
+
+        let mut tx = Transaction {
+            id: random_id_string(),
+            from_call_type: FromCallType::Wallet,
+            state: TransactionState::Created,
+            protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
+                from,
+                spender,
+                asset,
+                amount: amount.clone(),
+                memo,
+                ts: Some(start_ts),
+            })),
+            dependency: None,
+            created_at,
+            start_ts: Some(start_ts),
+            group: 1u16,
+        };
+
+        let link_account = Account {
+            owner: random_principal_id(),
+            subaccount: None,
+        };
+        let canister_id = random_principal_id();
+        let current_ts = 1_632_192_100_000_000_000;
+
+        // Act
+        let icrc_112_request =
+            convert_tx_to_icrc_112_request(&mut tx, link_account, canister_id, current_ts).unwrap();
+
+        // Assert
+        assert_eq!(
+            icrc_112_request.canister_id,
+            match &tx.protocol {
+                Protocol::IC(IcTransaction::Icrc2Approve(tx_approve)) => match tx_approve.asset {
+                    Asset::IC { address } => address,
+                },
+                _ => panic!("Unexpected protocol type"),
+            }
+        );
+        assert_eq!(icrc_112_request.method, "icrc2_approve");
+    }
+
+    #[test]
+    fn test_create_icrc112_requests_from_icrc1_transfer_and_icrc2_approve() {
+        // Arrange
+        let created_at = 1_632_192_000_000_000_000u64; // Example timestamp
+        let start_ts = 1_632_192_100_000_000_000u64; // Current timestamp
+        let asset1 = Asset::default();
+        let asset2 = Asset::default();
+        let amount1 = Nat::from(1000u64);
+        let amount2 = Nat::from(500u64);
+        let from1 = Wallet::new(random_principal_id());
+        let to1 = Wallet::new(random_principal_id());
+        let spender2 = Wallet::new(random_principal_id());
+        let memo = Some(Memo::default());
+
+        let tx1 = Transaction {
+            id: random_id_string(),
+            from_call_type: FromCallType::Wallet,
+            state: TransactionState::Created,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: from1,
+                to: to1,
+                asset: asset1,
+                amount: amount1.clone(),
+                memo: memo.clone(),
+                ts: Some(start_ts),
+            })),
+            dependency: None,
+            created_at,
+            start_ts: Some(start_ts),
+            group: 1u16,
+        };
+
+        let tx2 = Transaction {
+            id: random_id_string(),
+            from_call_type: FromCallType::Wallet,
+            state: TransactionState::Created,
+            protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
+                from: Wallet::new(random_principal_id()),
+                spender: spender2,
+                asset: asset2,
+                amount: amount2.clone(),
+                memo: memo.clone(),
+                ts: Some(start_ts),
+            })),
+            dependency: None,
+            created_at,
+            start_ts: Some(start_ts),
+            group: 1u16,
+        };
+
+        let mut transactions = vec![tx1.clone(), tx2.clone()];
+
+        let link_account = Account {
+            owner: random_principal_id(),
+            subaccount: None,
+        };
+        let canister_id = random_principal_id();
+        let current_ts = 1_632_192_100_000_000_000;
+
+        // Act
+        let icrc_112_requests =
+            create_icrc_112_requests(&mut transactions, link_account, canister_id, current_ts)
+                .unwrap();
+
+        // Assert
+        assert_eq!(icrc_112_requests.len(), 1);
+        assert_eq!(icrc_112_requests[0].len(), 2);
+    }
+}

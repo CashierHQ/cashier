@@ -66,3 +66,51 @@ impl TransferWalletToLinkIntent {
         Ok(Self::new(intent))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cashier_common::test_utils::random_principal_id;
+
+    #[test]
+    fn test_create_wallet_to_link_intent() {
+        // Arrange
+        let label = "Test Intent".to_string();
+        let asset = Asset::default();
+        let amount = Nat::from(1000u64);
+        let sender_id = random_principal_id();
+        let link_account = Account {
+            owner: random_principal_id(),
+            subaccount: None,
+        };
+        let ts = 1_632_192_100_000_000_000;
+
+        // Act
+        let intent_result = TransferWalletToLinkIntent::create(
+            label.clone(),
+            asset.clone(),
+            amount.clone(),
+            sender_id,
+            link_account,
+            ts,
+        );
+
+        // Assert
+        assert!(intent_result.is_ok());
+        let transfer_intent = intent_result.unwrap().intent;
+        assert_eq!(transfer_intent.label, label);
+        assert_eq!(transfer_intent.created_at, ts);
+        assert_eq!(transfer_intent.state, IntentState::Created);
+        assert_eq!(transfer_intent.chain, Chain::IC);
+
+        let transfer_data = transfer_intent
+            .r#type
+            .as_transfer()
+            .expect("Expected transfer data");
+
+        assert_eq!(transfer_data.amount, amount);
+        assert_eq!(transfer_data.asset, asset);
+        assert_eq!(transfer_data.from, Wallet::new(sender_id));
+        assert_eq!(transfer_data.to, link_account.into());
+    }
+}
