@@ -1,23 +1,20 @@
 import { SvelteMap } from "svelte/reactivity";
-
-export interface Transaction {
-  timestamp: number;
-  amount: number;
-  type: "sent" | "received";
-  address: string;
-}
-
-export interface TransactionGroup {
-  date: string;
-  transactions: Transaction[];
-}
+import type {
+  DisplayTransaction,
+  TransactionGroup,
+} from "$modules/token/types";
 
 /**
  * Formats a timestamp into a readable date string
  * @param timestamp - Unix timestamp in milliseconds
- * @returns Formatted date string (e.g., "Jan 15, 2024")
+ * @returns Formatted date string (e.g., "Jan 15, 2024") or "Unknown" for invalid timestamps
  */
 export function formatDate(timestamp: number): string {
+  // Handle invalid/missing timestamps (0 = Unix epoch = Jan 1, 1970)
+  if (!timestamp || timestamp < 1000000000000) {
+    // Less than year 2001 in ms - likely invalid
+    return "Unknown";
+  }
   const date = new Date(timestamp);
   return date.toLocaleDateString("en-US", {
     year: "numeric",
@@ -29,9 +26,12 @@ export function formatDate(timestamp: number): string {
 /**
  * Generates a unique date key for grouping transactions
  * @param timestamp - Unix timestamp in milliseconds
- * @returns Date key in format "YYYY-M-D"
+ * @returns Date key in format "YYYY-M-D" or "unknown" for invalid timestamps
  */
 export function getDateKey(timestamp: number): string {
+  if (!timestamp || timestamp < 1000000000000) {
+    return "unknown";
+  }
   const date = new Date(timestamp);
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 }
@@ -42,9 +42,9 @@ export function getDateKey(timestamp: number): string {
  * @returns Array of transaction groups sorted by date (newest first)
  */
 export function groupTransactionsByDate(
-  transactions: Transaction[],
+  transactions: DisplayTransaction[],
 ): TransactionGroup[] {
-  const grouped = new SvelteMap<string, Transaction[]>();
+  const grouped = new SvelteMap<string, DisplayTransaction[]>();
   const sorted = [...transactions].sort((a, b) => b.timestamp - a.timestamp);
 
   sorted.forEach((tx) => {

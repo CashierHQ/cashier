@@ -1,10 +1,6 @@
 import { describe, it, expect } from "vitest";
-import {
-  formatDate,
-  getDateKey,
-  groupTransactionsByDate,
-  type Transaction,
-} from "./date";
+import { formatDate, getDateKey, groupTransactionsByDate } from "./date";
+import { DisplayTransactionType, type DisplayTransaction } from "$modules/token/types";
 
 describe("formatDate", () => {
   it("should format timestamp to readable date string", () => {
@@ -51,30 +47,26 @@ describe("getDateKey", () => {
 });
 
 describe("groupTransactionsByDate", () => {
-  const mockTransactions: Transaction[] = [
+  const mockTransactions: DisplayTransaction[] = [
     {
       timestamp: new Date("2024-01-15T10:00:00Z").getTime(),
       amount: 100,
-      type: "received",
-      address: "addr1",
+      type: DisplayTransactionType.RECEIVED,
     },
     {
       timestamp: new Date("2024-01-15T14:00:00Z").getTime(),
       amount: 50,
-      type: "sent",
-      address: "addr2",
+      type: DisplayTransactionType.SENT,
     },
     {
       timestamp: new Date("2024-01-16T09:00:00Z").getTime(),
       amount: 200,
-      type: "received",
-      address: "addr3",
+      type: DisplayTransactionType.RECEIVED,
     },
     {
       timestamp: new Date("2024-01-14T18:00:00Z").getTime(),
       amount: 75,
-      type: "sent",
-      address: "addr4",
+      type: DisplayTransactionType.SENT,
     },
   ];
 
@@ -110,12 +102,11 @@ describe("groupTransactionsByDate", () => {
   });
 
   it("should handle single transaction", () => {
-    const singleTx: Transaction[] = [
+    const singleTx: DisplayTransaction[] = [
       {
         timestamp: new Date("2024-01-15T10:00:00Z").getTime(),
         amount: 100,
-        type: "received",
-        address: "addr1",
+        type: DisplayTransactionType.RECEIVED,
       },
     ];
 
@@ -136,24 +127,21 @@ describe("groupTransactionsByDate", () => {
       expect(tx).toHaveProperty("timestamp");
       expect(tx).toHaveProperty("amount");
       expect(tx).toHaveProperty("type");
-      expect(tx).toHaveProperty("address");
     });
   });
 
   it("should handle transactions with same timestamp", () => {
     const sameTimestamp = new Date("2024-01-15T10:00:00Z").getTime();
-    const txs: Transaction[] = [
+    const txs: DisplayTransaction[] = [
       {
         timestamp: sameTimestamp,
         amount: 100,
-        type: "received",
-        address: "addr1",
+        type: DisplayTransactionType.RECEIVED,
       },
       {
         timestamp: sameTimestamp,
         amount: 50,
-        type: "sent",
-        address: "addr2",
+        type: DisplayTransactionType.SENT,
       },
     ];
 
