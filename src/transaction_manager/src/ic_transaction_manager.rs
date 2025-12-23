@@ -38,7 +38,7 @@ pub struct IcTransactionManager<E: IcEnvironment> {
 #[allow(clippy::too_many_arguments)]
 impl<E: IcEnvironment> IcTransactionManager<E> {
     pub fn new(ic_env: E) -> Self {
-        let intent_adapter = IcIntentAdapter::default();
+        let intent_adapter = IcIntentAdapter;
         let dependency_analyzer = DependencyAnalyzer;
 
         Self {

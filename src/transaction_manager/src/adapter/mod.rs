@@ -9,6 +9,12 @@ use cashier_backend_types::{
 };
 
 pub trait IntentAdapterTrait {
+    /// Converts an intent into a list of transactions based on its type.
+    /// # Arguments
+    /// * `ts` - The timestamp for the transactions.
+    /// * `intent` - The intent to be converted.
+    /// # Returns
+    /// * `Result<Vec<Transaction>, CanisterError>` - A vector of transactions or an error.
     fn intent_to_transactions(
         &self,
         ts: u64,
