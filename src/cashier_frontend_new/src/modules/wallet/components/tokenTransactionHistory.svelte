@@ -9,7 +9,11 @@
     LoaderCircle,
   } from "lucide-svelte";
   import { groupTransactionsByDate } from "../utils/date";
-  import { getDisplayType } from "../utils/transaction-display-type";
+  import {
+    getDisplayType,
+    getTransactionLabelKey,
+    isOutgoingTransaction,
+  } from "../utils/transaction-display-type";
   import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
   import {
     DisplayTransactionType,
@@ -115,26 +119,10 @@
             <div class="flex-1 min-w-0 flex flex-col justify-between h-full">
               <div class="flex justify-between items-start mb-1">
                 <p class="text-[#222222]">
-                  {#if tx.type === DisplayTransactionType.SENT}
-                    {locale.t("wallet.tokenInfo.sent")}
-                  {:else if tx.type === DisplayTransactionType.TRANSFER_FROM}
-                    {locale.t("wallet.tokenInfo.transferFrom")}
-                  {:else if tx.type === DisplayTransactionType.APPROVE}
-                    {locale.t("wallet.tokenInfo.approve")}
-                  {:else if tx.type === DisplayTransactionType.MINT}
-                    {locale.t("wallet.tokenInfo.mint")}
-                  {:else if tx.type === DisplayTransactionType.BURN}
-                    {locale.t("wallet.tokenInfo.burn")}
-                  {:else}
-                    {locale.t("wallet.tokenInfo.received")}
-                  {/if}
+                  {locale.t(getTransactionLabelKey(tx.type))}
                 </p>
                 <p class="text-[#222222] text-right">
-                  {tx.type === DisplayTransactionType.SENT ||
-                  tx.type === DisplayTransactionType.TRANSFER_FROM ||
-                  tx.type === DisplayTransactionType.BURN
-                    ? "-"
-                    : "+"}{tx.amount}
+                  {isOutgoingTransaction(tx.type) ? "-" : "+"}{tx.amount}
                 </p>
               </div>
               <div class="flex justify-between items-start">

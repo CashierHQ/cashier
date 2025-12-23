@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { getDisplayType } from "./transaction-display-type";
+import {
+  getDisplayType,
+  getTransactionLabelKey,
+  isOutgoingTransaction,
+} from "./transaction-display-type";
 import {
   DisplayTransactionType,
   TransactionKind,
@@ -139,5 +143,42 @@ describe("getDisplayType", () => {
       // Both from and to are user, but incoming check comes before SENT fallback
       expect(result).toBe(DisplayTransactionType.RECEIVED);
     });
+  });
+});
+
+describe("getTransactionLabelKey", () => {
+  it("should return correct i18n key for each type", () => {
+    expect(getTransactionLabelKey(DisplayTransactionType.SENT)).toBe(
+      "wallet.tokenInfo.sent",
+    );
+    expect(getTransactionLabelKey(DisplayTransactionType.RECEIVED)).toBe(
+      "wallet.tokenInfo.received",
+    );
+    expect(getTransactionLabelKey(DisplayTransactionType.TRANSFER_FROM)).toBe(
+      "wallet.tokenInfo.transferFrom",
+    );
+    expect(getTransactionLabelKey(DisplayTransactionType.APPROVE)).toBe(
+      "wallet.tokenInfo.approve",
+    );
+    expect(getTransactionLabelKey(DisplayTransactionType.MINT)).toBe(
+      "wallet.tokenInfo.mint",
+    );
+    expect(getTransactionLabelKey(DisplayTransactionType.BURN)).toBe(
+      "wallet.tokenInfo.burn",
+    );
+  });
+});
+
+describe("isOutgoingTransaction", () => {
+  it("should return true for outgoing types", () => {
+    expect(isOutgoingTransaction(DisplayTransactionType.SENT)).toBe(true);
+    expect(isOutgoingTransaction(DisplayTransactionType.TRANSFER_FROM)).toBe(true);
+    expect(isOutgoingTransaction(DisplayTransactionType.BURN)).toBe(true);
+  });
+
+  it("should return false for incoming types", () => {
+    expect(isOutgoingTransaction(DisplayTransactionType.RECEIVED)).toBe(false);
+    expect(isOutgoingTransaction(DisplayTransactionType.MINT)).toBe(false);
+    expect(isOutgoingTransaction(DisplayTransactionType.APPROVE)).toBe(false);
   });
 });
