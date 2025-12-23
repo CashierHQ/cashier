@@ -9,13 +9,12 @@
     LoaderCircle,
   } from "lucide-svelte";
   import { groupTransactionsByDate } from "../utils/date";
+  import { getDisplayType } from "../utils/transaction-display-type";
   import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
   import {
     DisplayTransactionType,
-    TransactionKind,
     type TokenWithPriceAndBalance,
     type DisplayTransaction,
-    type DisplayTransactionTypeValue,
   } from "$modules/token/types";
 
   interface Props {
@@ -41,30 +40,6 @@
       walletHistoryStore.load(address);
     }
   });
-
-  // Determine display type from transaction kind, direction, and spender
-  function getDisplayType(
-    kind: string,
-    from: string | undefined,
-    to: string | undefined,
-    spender: string | undefined,
-    userPrincipal: string | undefined,
-  ): DisplayTransactionTypeValue {
-    if (kind === TransactionKind.APPROVE) return DisplayTransactionType.APPROVE;
-    if (kind === TransactionKind.MINT) return DisplayTransactionType.MINT;
-    if (kind === TransactionKind.BURN) return DisplayTransactionType.BURN;
-
-    // For transfers, check direction based on `to` field (more reliable for ICRC)
-    const isIncoming = to === userPrincipal;
-    const isOutgoing = from === userPrincipal;
-
-    // TransferFrom: tokens sent from current user's account by a spender
-    if (isOutgoing && spender) return DisplayTransactionType.TRANSFER_FROM;
-    // If user is recipient, it's received
-    if (isIncoming) return DisplayTransactionType.RECEIVED;
-    // If user is sender (or neither matched - fallback), it's sent
-    return DisplayTransactionType.SENT;
-  }
 
   // Transform TokenTransaction[] to DisplayTransaction[] for groupTransactionsByDate
   const transactions = $derived.by((): DisplayTransaction[] => {
