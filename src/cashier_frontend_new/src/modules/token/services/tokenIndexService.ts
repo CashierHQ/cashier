@@ -38,19 +38,23 @@ export class TokenIndexService {
   /**
    * Fetch transactions from index canister
    */
-  async getTransactions(params: GetTransactionsParams): Promise<GetTransactionsResult> {
+  async getTransactions(
+    params: GetTransactionsParams,
+  ): Promise<GetTransactionsResult> {
     const isIcp = this.#canisterId.toText() === ICP_INDEX_CANISTER_ID;
 
     if (isIcp) {
-      return this.#getIcpTransactions(params);
+      return this.getIcpTransactions(params);
     }
-    return this.#getIcrcTransactions(params);
+    return this.getIcrcTransactions(params);
   }
 
   /**
    * ICP Index Canister (uses AccountIdentifier)
    */
-  async #getIcpTransactions(params: GetTransactionsParams): Promise<GetTransactionsResult> {
+  async getIcpTransactions(
+    params: GetTransactionsParams,
+  ): Promise<GetTransactionsResult> {
     const agent = authState.buildAnonymousAgent();
 
     const indexCanister = IndexCanister.create({
@@ -69,14 +73,16 @@ export class TokenIndexService {
     });
 
     const response = await indexCanister.getTransactions({
-      certified: false,  // Query call for speed
+      certified: false, // Query call for speed
       accountIdentifier: accountIdentifier.toHex(),
-      start: undefined,
+      start: params.start,
       maxResults: params.maxResults ?? DEFAULT_PAGE_SIZE,
     });
 
     return {
-      transactions: response.transactions.map((tx) => this.#mapIcpTransaction(tx)),
+      transactions: response.transactions.map((tx) =>
+        this.mapIcpTransaction(tx),
+      ),
       balance: response.balance,
       oldestTxId: fromNullable(response.oldest_tx_id),
     };
@@ -85,7 +91,9 @@ export class TokenIndexService {
   /**
    * ICRC Index-NG Canister (uses Principal + subaccount)
    */
-  async #getIcrcTransactions(params: GetTransactionsParams): Promise<GetTransactionsResult> {
+  async getIcrcTransactions(
+    params: GetTransactionsParams,
+  ): Promise<GetTransactionsResult> {
     const agent = authState.buildAnonymousAgent();
 
     const indexCanister = IcrcIndexNgCanister.create({
@@ -104,7 +112,9 @@ export class TokenIndexService {
     });
 
     return {
-      transactions: response.transactions.map((tx) => this.#mapIcrcTransaction(tx)),
+      transactions: response.transactions.map((tx) =>
+        this.mapIcrcTransaction(tx),
+      ),
       balance: response.balance,
       oldestTxId: fromNullable(response.oldest_tx_id),
     };
@@ -114,13 +124,13 @@ export class TokenIndexService {
    * Map ICP TransactionWithId to unified TokenTransaction type
    * ICP uses Operation union type: { Transfer: {...} } | { Mint: {...} } | etc.
    */
-  #mapIcpTransaction(tx: TransactionWithId): TokenTransaction {
+  mapIcpTransaction(tx: TransactionWithId): TokenTransaction {
     const { id, transaction } = tx;
     const operation = transaction.operation;
 
     // Extract kind and operation data from discriminated union
-    const kind = this.#getIcpOperationKind(operation);
-    const opData = this.#getIcpOperationData(operation);
+    const kind = this.getIcpOperationKind(operation);
+    const opData = this.getIcpOperationData(operation);
 
     // ICP timestamp: try timestamp first, fallback to created_at_time
     const timestampNanos =
@@ -145,7 +155,7 @@ export class TokenIndexService {
   /**
    * Extract kind from ICP Operation union type
    */
-  #getIcpOperationKind(operation: Operation): TransactionKindValue {
+  getIcpOperationKind(operation: Operation): TransactionKindValue {
     if ("Transfer" in operation) return TransactionKind.TRANSFER;
     if ("Mint" in operation) return TransactionKind.MINT;
     if ("Burn" in operation) return TransactionKind.BURN;
@@ -158,7 +168,7 @@ export class TokenIndexService {
    * Extract operation data from ICP Operation union type
    * Note: Transfer and Burn have optional spender field ([] | [string]) for transferFrom
    */
-  #getIcpOperationData(operation: Operation): {
+  getIcpOperationData(operation: Operation): {
     amount?: { e8s: bigint };
     fee?: { e8s: bigint };
     from?: string;
@@ -201,7 +211,7 @@ export class TokenIndexService {
    * Map ICRC IcrcIndexNgTransactionWithId to unified TokenTransaction type
    * ICRC uses optional fields: { transfer?: [...], mint?: [...], burn?: [...], approve?: [...] }
    */
-  #mapIcrcTransaction(tx: IcrcIndexNgTransactionWithId): TokenTransaction {
+  mapIcrcTransaction(tx: IcrcIndexNgTransactionWithId): TokenTransaction {
     const { id, transaction } = tx;
     const kind = transaction.kind as TransactionKindValue;
 
@@ -226,13 +236,28 @@ export class TokenIndexService {
     return {
       id,
       kind,
-      amount: transfer?.amount ?? mint?.amount ?? burn?.amount ?? approve?.amount ?? 0n,
-      fee: (transfer?.fee && fromNullable(transfer.fee)) ?? (approve?.fee && fromNullable(approve.fee)),
+      amount:
+        transfer?.amount ??
+        mint?.amount ??
+        burn?.amount ??
+        approve?.amount ??
+        0n,
+      fee:
+        (transfer?.fee && fromNullable(transfer.fee)) ??
+        (approve?.fee && fromNullable(approve.fee)),
       timestampMs,
-      from: transfer?.from?.owner?.toText() ?? burn?.from?.owner?.toText() ?? approve?.from?.owner?.toText(),
+      from:
+        transfer?.from?.owner?.toText() ??
+        burn?.from?.owner?.toText() ??
+        approve?.from?.owner?.toText(),
       to: transfer?.to?.owner?.toText() ?? mint?.to?.owner?.toText(),
       spender: spenderAccount?.owner?.toText(),
-      memo: ((transfer?.memo && fromNullable(transfer.memo)) ?? (mint?.memo && fromNullable(mint.memo)) ?? (burn?.memo && fromNullable(burn.memo)) ?? (approve?.memo && fromNullable(approve.memo))) as Uint8Array | undefined,
+      memo: ((transfer?.memo && fromNullable(transfer.memo)) ??
+        (mint?.memo && fromNullable(mint.memo)) ??
+        (burn?.memo && fromNullable(burn.memo)) ??
+        (approve?.memo && fromNullable(approve.memo))) as
+        | Uint8Array
+        | undefined,
     };
   }
 }

@@ -4,7 +4,7 @@
   import NavBar from "$modules/token/components/navBar.svelte";
   import { locale } from "$lib/i18n";
   import { toast } from "svelte-sonner";
-  import { Copy } from "lucide-svelte";
+  import { Copy, LoaderCircle } from "lucide-svelte";
   import TokenTransactionHistory from "../components/tokenTransactionHistory.svelte";
 
   let token = $derived(page.params.token || "empty");
@@ -23,7 +23,7 @@
 <div class="px-4 pb-6">
   {#if walletStore.query.isLoading && !walletStore.query.data}
     <div class="text-center py-12 space-y-4">
-      <Loader2 class="w-10 h-10 animate-spin mx-auto mb-4" />
+      <LoaderCircle class="w-10 h-10 animate-spin mx-auto mb-4" />
       <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
     </div>
   {:else if tokenDetails}
