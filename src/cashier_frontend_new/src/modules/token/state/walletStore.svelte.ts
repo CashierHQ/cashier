@@ -96,10 +96,11 @@ class WalletStore {
   /**
    * Add a new token to the wallet
    * @param address Token canister ID
+   * @param indexId Optional index canister ID for the token
    */
-  async addToken(address: string) {
+  async addToken(address: string, indexId?: string) {
     const token = Principal.fromText(address);
-    const addRes = await tokenStorageService.addToken(token);
+    const addRes = await tokenStorageService.addToken(token, indexId);
     // Refresh the wallet tokens data after adding a new token
     this.#walletTokensQuery.refresh();
     return addRes;
