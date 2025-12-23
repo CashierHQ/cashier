@@ -1,6 +1,6 @@
 <script lang="ts">
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import type { TokenWithPriceAndBalance } from "$modules/token/types";
+  import type { TokenMetadata } from "$modules/token/types";
   import RouteGuard from "$modules/guard/components/RouteGuard.svelte";
   import ProtectedAuth from "$modules/guard/components/ProtectedAuth.svelte";
   import NavBar from "$modules/token/components/navBar.svelte";
@@ -8,7 +8,7 @@
   let errorMessage: string = $state("");
   let successMessage: string = $state("");
 
-  async function handleToggle(token: TokenWithPriceAndBalance) {
+  async function handleToggle(token: TokenMetadata) {
     errorMessage = "";
     successMessage = "";
 
@@ -25,7 +25,7 @@
   <ProtectedAuth>
     <NavBar />
     <div>
-      {#if walletStore.query.data}
+      {#if walletStore.allTokensQuery.data}
         <h2>Manage tokens</h2>
         <div class="py-4">
           {#if errorMessage}
@@ -55,12 +55,12 @@
             </ul>
           </div>
         </div>
-      {:else if walletStore.query.isSuccess}
+      {:else if walletStore.allTokensQuery.isSuccess}
         <p style="color: red">No tokens found in wallet.</p>
-      {:else if walletStore.query.error}
+      {:else if walletStore.allTokensQuery.error}
         <p style="color: red;">
           An error has occurred:
-          {walletStore.query.error}
+          {walletStore.allTokensQuery.error}
         </p>
       {:else}
         Loading...
