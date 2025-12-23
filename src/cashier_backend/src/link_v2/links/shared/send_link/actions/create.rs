@@ -8,7 +8,6 @@ use crate::link_v2::{
     },
     utils::calculator::{calculate_create_link_fee, calculate_link_balance_map},
 };
-use crate::utils::helper::convert_nat_to_u64;
 use candid::Principal;
 use cashier_backend_types::{
     constant::{INTENT_LABEL_LINK_CREATION_FEE, INTENT_LABEL_SEND_TIP_ASSET},
@@ -20,7 +19,7 @@ use cashier_backend_types::{
         link::v1::Link,
     },
 };
-use cashier_common::constant::ICP_CANISTER_PRINCIPAL;
+use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::convert_nat_to_u64};
 use icrc_ledger_types::icrc1::account::Account;
 use transaction_manager::icrc_token::utils::{get_batch_tokens_fee_for_link, get_link_account};
 use uuid::Uuid;
