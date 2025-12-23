@@ -5,7 +5,7 @@ import type {
 } from "$modules/token/types";
 
 /**
- * Formats a timestamp into a readable date string
+ * Formats a timestamp into a readable date string (UTC)
  * @param timestamp - Unix timestamp in milliseconds
  * @returns Formatted date string (e.g., "Jan 15, 2024") or "Unknown" for invalid timestamps
  */
@@ -20,11 +20,12 @@ export function formatDate(timestamp: number): string {
     year: "numeric",
     month: "short",
     day: "numeric",
+    timeZone: "UTC",
   });
 }
 
 /**
- * Generates a unique date key for grouping transactions
+ * Generates a unique date key for grouping transactions (UTC)
  * @param timestamp - Unix timestamp in milliseconds
  * @returns Date key in format "YYYY-M-D" or "unknown" for invalid timestamps
  */
@@ -33,7 +34,7 @@ export function getDateKey(timestamp: number): string {
     return "unknown";
   }
   const date = new Date(timestamp);
-  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  return `${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate()}`;
 }
 
 /**
