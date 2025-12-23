@@ -51,3 +51,56 @@ pub fn calculate_create_link_fee(fee_map: &HashMap<Principal, Nat>) -> (Nat, Nat
         create_link_fee + fee_in_nat.clone(),
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_calculate_link_balance_map() {
+        // Arrange
+        let asset = Asset::default();
+        let label = "Test Asset1".to_string();
+        let amount_per_link_use_action = Nat::from(10u64);
+
+        let asset_info = AssetInfo {
+            asset: asset.clone(),
+            label: label.clone(),
+            amount_per_link_use_action: amount_per_link_use_action.clone(),
+        };
+
+        let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(2u64))]
+            .into_iter()
+            .collect();
+
+        let max_use_count = 3u64;
+
+        // Act
+        let balance_map = calculate_link_balance_map(&[asset_info], &fee_map, max_use_count);
+
+        // Assert
+        let expected_sending_amount = amount_per_link_use_action * Nat::from(3u64);
+        let address = match &asset {
+            Asset::IC { address } => address,
+        };
+        assert_eq!(
+            balance_map.get(address).cloned().unwrap(),
+            expected_sending_amount
+        );
+    }
+
+    #[test]
+    fn test_calculate_create_link_fee() {
+        // Arrange
+        let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(5u64))]
+            .into_iter()
+            .collect();
+
+        // Act
+        let (actual_amount, approved_amount) = calculate_create_link_fee(&fee_map);
+
+        // Assert
+        assert_eq!(actual_amount, Nat::from(CREATE_LINK_FEE));
+        assert_eq!(approved_amount, Nat::from(CREATE_LINK_FEE + 5u64));
+    }
+}
