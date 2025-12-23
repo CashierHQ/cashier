@@ -3,10 +3,7 @@
 
 use crate::link_v2::{
     intents::transfer_wallet_to_link::TransferWalletToLinkIntent,
-    utils::{
-        calculator::calculate_link_balance_map,
-        icrc_token::{get_batch_tokens_fee_for_link, get_link_account},
-    },
+    utils::calculator::calculate_link_balance_map,
 };
 use candid::Principal;
 use cashier_backend_types::{
@@ -19,6 +16,7 @@ use cashier_backend_types::{
         link::v1::Link,
     },
 };
+use transaction_manager::icrc_token::utils::{get_batch_tokens_fee_for_link, get_link_account};
 use uuid::Uuid;
 
 #[derive(Debug)]
