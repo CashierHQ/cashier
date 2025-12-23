@@ -43,10 +43,7 @@ impl<S: Storage<TransactionRepositoryStorage>> TransactionRepository<S> {
 #[cfg(test)]
 mod tests {
 
-    use crate::{
-        repositories::{Repositories, tests::TestRepositories},
-        utils::test_utils::{random_id_string, random_principal_id},
-    };
+    use crate::repositories::{Repositories, tests::TestRepositories};
     use candid::Nat;
     use cashier_backend_types::repository::{
         common::{Asset, Wallet},
@@ -54,6 +51,7 @@ mod tests {
             FromCallType, IcTransaction, Icrc1Transfer, Protocol, Transaction, TransactionState,
         },
     };
+    use cashier_common::test_utils::{random_id_string, random_principal_id};
     use std::str::FromStr;
 
     #[test]

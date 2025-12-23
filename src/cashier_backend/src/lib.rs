@@ -21,10 +21,6 @@
 #![warn(clippy::type_complexity)]
 
 mod api;
+mod apps;
 mod build_data;
-mod constant;
-mod domains;
-mod link_v2;
 mod repositories;
-mod services;
-mod utils;

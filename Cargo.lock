@@ -292,6 +292,7 @@ dependencies = [
  "serde_json",
  "thiserror 2.0.17",
  "tokio",
+ "transaction_manager",
  "uuid",
  "vergen-gitcl",
 ]
@@ -339,6 +340,7 @@ dependencies = [
  "ic-cdk",
  "ic-cdk-timers",
  "ic-stable-structures 0.7.2",
+ "icrc-ledger-types",
  "rand 0.8.5",
  "serde",
  "serde_bytes",
@@ -2924,6 +2926,24 @@ dependencies = [
  "tracing-core",
  "tracing-log",
  "tracing-serde",
+]
+
+[[package]]
+name = "transaction_manager"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "cashier_backend_types",
+ "cashier_common",
+ "futures",
+ "ic-cdk",
+ "ic-cdk-timers",
+ "icrc-ledger-types",
+ "icrc_112_utils",
+ "serde",
+ "serde_bytes",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]

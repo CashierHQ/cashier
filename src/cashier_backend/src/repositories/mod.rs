@@ -30,6 +30,7 @@ use cashier_backend_types::repository::{
 
 use crate::repositories::action::{ActionRepository, ActionRepositoryStorage};
 use crate::repositories::action_intent::{ActionIntentRepository, ActionIntentRepositoryStorage};
+use crate::repositories::auth::AuthServiceStorage;
 use crate::repositories::intent::{IntentRepository, IntentRepositoryStorage};
 use crate::repositories::intent_transaction::{
     IntentTransactionRepository, IntentTransactionRepositoryStorage,
@@ -46,10 +47,10 @@ use crate::repositories::user_link::{UserLinkRepository, UserLinkRepositoryStora
 use crate::repositories::user_link_action::{
     UserLinkActionRepository, UserLinkActionRepositoryStorage,
 };
-use crate::services::auth::AuthServiceStorage;
 
 pub mod action;
 pub mod action_intent;
+pub mod auth;
 pub mod intent;
 pub mod intent_transaction;
 pub mod link;
