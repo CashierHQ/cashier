@@ -13,6 +13,7 @@
     onSelect: (address: string) => void;
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
+    isBalanceHidden?: boolean;
   };
 
   let {
@@ -21,6 +22,7 @@
     onSelect,
     failedImageLoads,
     onImageError,
+    isBalanceHidden = false,
   }: Props = $props();
 
   // Format token balance
@@ -98,11 +100,11 @@
       </div>
 
       <div>
-        <div class="text-sm text-gray-500">
-          {formattedBalance}
+        <div class="text-sm text-gray-500 text-right">
+          {isBalanceHidden ? "*****" : formattedBalance}
         </div>
-        <div class="text-sm text-gray-500">
-          {formattedUSD}
+        <div class="text-sm text-gray-500 text-right">
+          {isBalanceHidden ? "*****" : formattedUSD}
         </div>
       </div>
     </div>

@@ -47,7 +47,8 @@
     "exploreCashier": "Explore Cashier",
     "projectOverview": "Cashier project overview",
     "faq": "FAQ",
-    "contactEmail": "Contact Email"
+    "contactEmail": "Contact Email",
+    "copiedToClipboard": "Copied to clipboard"
   },
   "links": {
     "page": {
@@ -265,6 +266,128 @@
           "noActionTypeFound": "No applicable action type found for this link",
           "failedToCreateAction": "Failed to create action"
         }
+      }
+    }
+  },
+  "wallet": {
+    "navBar": {
+      "sendBtn": "Send",
+      "receiveBtn": "Receive",
+      "swapBtn": "Swap",
+      "tokensTabBtn": "Tokens",
+      "nftsTabBtn": "NFT's"
+    },
+    "tokenInfo": {
+      "aboutToken": "About",
+      "tokenName": "Token Name",
+      "network": "Network",
+      "internetComputer": "Internet Computer",
+      "contract": "Contract",
+      "copyContract": "Copy contract address",
+      "sent": "Sent",
+      "received": "Received",
+      "to": "To",
+      "from": "From",
+      "noDetails": "No details found for this token."
+    },
+    "nftMessage": "NFT Coming soon! Included in Release 3.",
+    "manageTokensBtn": "+Manage tokens",
+    "noTokensMsg": "No tokens found in wallet.",
+    "errorMsg": "An error occured:",
+    "loadingMsg": "Loading...",
+    "send": {
+      "selectTokenLabel": "Asset",
+      "amountLabel": "Amount: (max {{max}})",
+      "receiveAddressLabel": "Send address",
+      "principalId": "Principal ID",
+      "accountId": "Account ID",
+      "addressPlaceholder": "Enter address",
+      "addressPrincipleExample": "Ex.: vhdn3-gcbqj-i27ca-vg4kt-jtbj5-3lfzj-ysxcd-dfzkf-es17h-tr1yk-lbe",
+      "addressAccountExample": "Ex.: 5b0bc7f314b8e2c0c46cababdffd5235e9eb1c0972664a027714b81369a17884",
+      "sending": "Sending...",
+      "sendButton": "Send",
+      "continueButton": "Continue",
+      "pasteSuccess": "Address pasted from clipboard",
+      "pasteError": "Failed to paste from clipboard",
+      "successMessage": "Token sent successfully!",
+      "errorMessagePrefix": "Send token error:",
+      "errors": {
+        "selectToken": "Please select a token to send.",
+        "enterAddress": "Please enter a valid receive address.",
+        "amountGreaterThanZero": "Amount must be greater than zero.",
+        "amountExceedsMax": "Amount exceeds maximum balance of {{max}}",
+        "invalidReceiveType": "Invalid receive type selected."
+      },
+      "confirmDrawer": {
+        "title": "Send transaction",
+        "youWillSend": "You will send",
+        "to": "To",
+        "network": "Network",
+        "networkFee": "Network fee",
+        "totalFees": "Total fees",
+        "agreementText": "By confirming you agree execute the transaction above and agree to the terms of service",
+        "confirmButton": "Confirm"
+      },
+      "pendingDrawer": {
+        "title": "Your transaction is in progress.",
+        "description": "It may take some time for the balance to appear in the recipient's wallet.",
+        "viewTransaction": "View transaction",
+        "statusText": "Transaction in progress..."
+      },
+      "successDrawer": {
+        "title": "Congratulations,",
+        "description": "your transactions was successful!",
+        "viewTransaction": "View transaction",
+        "closeButton": "Close"
+      }
+    },
+    "receive": {
+      "selectTokenLabel": "Receive Token",
+      "selectToken": "Select token",
+      "receiveAddressLabel": "Receive {{token}} Address",
+      "copySuccess": "Address copied to clipboard",
+      "copyError": "Failed to copy address",
+      "copyTooltip": "Copy to clipboard",
+      "useAccountId": "Use Account ID instead",
+      "icpAddressInfo": "{{token}} uses two address formats, account id and principle id. Centralized exchanges use the account id, so we encourage you to use the account id to avoid sending or receiving to wallets that do not support principle ids.",
+      "icpAddressInfoSecond": "In case you'd like to use a Account ID, you can use the address below.",
+      "closeButton": "Close",
+      "warning": "Send {{token}} to this wallet to begin using Cashier. Ensure that you are only sending assets that are {{highlighted}}, otherwise you could lose them forever.",
+      "warningHighlighted": "meant for this address"
+    },
+    "manage": {
+      "searchPlaceholder": "Search a token",
+      "importButtonAria": "Import token",
+      "refreshButtonAria": "Refresh tokens",
+      "refreshError": "Failed to refresh tokens",
+      "toggleSuccess": "Token toggled successfully!",
+      "toggleError": "Failed to toggle token",
+      "emptyTitle": "Missing a token?",
+      "importManually": "+ Import manually",
+      "toggleAria": "Toggle {{token}}",
+      "errorMessage": "An error has occurred"
+    },
+    "import": {
+      "title": "Import manually",
+      "review": "Review",
+      "network": "Network:",
+      "contractAddress": "Contract Address",
+      "indexCanisterId": "Index Canister ID:",
+      "optional": "Optional",
+      "token": "Token",
+      "continue": "Continue",
+      "import": "Import",
+      "selectNetwork": "Select Network",
+      "pasteSuccess": "Pasted from clipboard",
+      "pasteError": "Failed to paste from clipboard",
+      "ledgerIndexInfo": "Ledger and Index canister IDs are on the project's website.",
+      "indexCanisterInfo": "The Index canister ID is optional, but without it, Cashier can't display transactions.",
+      "securityWarning": "Make sure you trust the token you are adding. If the token you are adding is controlled by a malicious party, they could try and scam you e.g., by making you believe you received a significant amount of tokens in order to trick you into sending them tokens in return or perform other undesired actions. Learn more about scams and security risks e.g.",
+      "learnMore": "here",
+      "success": "Token imported successfully",
+      "error": "Failed to import token:",
+      "errors": {
+        "enterContractAddress": "Please enter a contract address"
       }
     }
   }
