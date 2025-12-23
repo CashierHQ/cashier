@@ -22,8 +22,7 @@ export const ICP_LEDGER_CANISTER_ID =
 export const ICP_LEDGER_FEE = 10_000n;
 
 // The ICP Index canister id (for transaction history)
-export const ICP_INDEX_CANISTER_ID =
-  PUBLIC_TOKEN_ICP_INDEX_CANISTER_ID || "qhbym-qaaaa-aaaaa-aaafq-cai";
+export const ICP_INDEX_CANISTER_ID = PUBLIC_TOKEN_ICP_INDEX_CANISTER_ID;
 
 // Address type
 export const PRINCIPAL_TYPE = 0;
