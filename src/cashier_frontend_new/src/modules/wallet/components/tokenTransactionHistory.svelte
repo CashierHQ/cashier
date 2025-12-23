@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { walletHistoryStore } from "$modules/token/state/walletHistoryStore.svelte";
+  import {
+    createWalletHistoryStore,
+    type WalletHistoryStore,
+  } from "$modules/token/state/walletHistoryStore.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { locale } from "$lib/i18n";
   import {
@@ -14,7 +17,10 @@
     getTransactionLabelKey,
     isOutgoingTransaction,
   } from "../utils/transaction-display-type";
-  import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
+  import {
+    ICP_LEDGER_CANISTER_ID,
+    ICP_INDEX_CANISTER_ID,
+  } from "$modules/token/constants";
   import {
     DisplayTransactionType,
     type TokenWithPriceAndBalance,
@@ -28,6 +34,17 @@
 
   let { tokenAddress, tokenDetails }: Props = $props();
 
+  // Resolve indexId for token (ICP uses constant, others use tokenDetails.indexId)
+  function getIndexId(
+    address: string,
+    details: TokenWithPriceAndBalance | undefined,
+  ): string | undefined {
+    if (address === ICP_LEDGER_CANISTER_ID) {
+      return ICP_INDEX_CANISTER_ID;
+    }
+    return details?.indexId;
+  }
+
   // Check if token has index canister (ICP always has one)
   let hasIndexCanister = $derived.by(() => {
     if (!tokenDetails) return false;
@@ -36,20 +53,23 @@
     );
   });
 
-  // Load transaction history when token address changes or token details become available
+  // Create store when indexId is available, recreate when token changes
+  let historyStore = $state<WalletHistoryStore | null>(null);
+
   $effect(() => {
-    // Track tokenAddress explicitly to ensure effect re-runs on navigation
-    const address = tokenAddress;
-    if (address && tokenDetails && hasIndexCanister) {
-      walletHistoryStore.load(address);
+    const indexId = getIndexId(tokenAddress, tokenDetails);
+    if (indexId) {
+      historyStore = createWalletHistoryStore(indexId);
+    } else {
+      historyStore = null;
     }
   });
 
   // Transform TokenTransaction[] to DisplayTransaction[] for groupTransactionsByDate
   const transactions = $derived.by((): DisplayTransaction[] => {
-    if (!tokenDetails) return [];
+    if (!tokenDetails || !historyStore) return [];
 
-    const rawTxs = walletHistoryStore.transactions;
+    const rawTxs = historyStore.transactions;
     const userPrincipal = authState.account?.owner;
 
     return rawTxs.map((tx) => {
@@ -83,11 +103,11 @@
     <p class="text-gray-500 text-center py-4">
       {locale.t("wallet.tokenInfo.noHistoryAvailable")}
     </p>
-  {:else if walletHistoryStore.isLoading && transactions.length === 0}
+  {:else if historyStore?.isLoading && transactions.length === 0}
     <div class="flex items-center justify-center py-8">
       <LoaderCircle class="w-6 h-6 text-green animate-spin" />
     </div>
-  {:else if walletHistoryStore.error}
+  {:else if historyStore?.error}
     <p class="text-red-500 text-center py-4">
       {locale.t("wallet.tokenInfo.errorLoadingHistory")}
     </p>
@@ -145,14 +165,14 @@
       </div>
     {/each}
 
-    {#if walletHistoryStore.hasMore}
+    {#if historyStore?.hasMore}
       <div class="flex justify-center pt-4">
         <button
-          onclick={() => walletHistoryStore.loadMore()}
-          disabled={walletHistoryStore.isLoadingMore}
+          onclick={() => historyStore?.loadMore()}
+          disabled={historyStore?.isLoadingMore}
           class="px-4 py-2 text-sm text-green border border-green rounded-lg hover:bg-green/10 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          {#if walletHistoryStore.isLoadingMore}
+          {#if historyStore?.isLoadingMore}
             <LoaderCircle class="w-4 h-4 animate-spin" />
             {locale.t("wallet.tokenInfo.loading")}
           {:else}
