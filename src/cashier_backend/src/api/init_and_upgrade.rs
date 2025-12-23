@@ -6,7 +6,7 @@ use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::info;
 
 use crate::api::state::get_state;
-use crate::services::auth::Permission;
+use crate::apps::auth::Permission;
 use cashier_common::random::init_ic_rand;
 
 #[init]

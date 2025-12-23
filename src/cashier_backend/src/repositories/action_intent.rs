@@ -70,10 +70,9 @@ impl<S: Storage<ActionIntentRepositoryStorage>> ActionIntentRepository<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        repositories::{Repositories, tests::TestRepositories},
-        utils::test_utils::random_id_string,
-    };
+    use crate::repositories::{Repositories, tests::TestRepositories};
+    use cashier_common::test_utils::random_id_string;
+
     #[test]
     fn it_should_get_by_action_id() {
         // Arrange
