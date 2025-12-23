@@ -43,7 +43,6 @@ export type TransactionKindValue =
 
 /**
  * Unified transaction type for both ICP and ICRC tokens
- * Note: ICRC timestamp is required (bigint), ICP timestamp is optional
  * We store as milliseconds for UI convenience
  */
 export type TokenTransaction = {
