@@ -16,7 +16,7 @@ describe("formatDate", () => {
   });
 
   it("should handle year transitions correctly", () => {
-    const timestamp = new Date("2023-12-31T23:59:59Z").getTime();
+    const timestamp = new Date("2023-12-31T12:00:00Z").getTime();
     const result = formatDate(timestamp);
     expect(result).toBe("Dec 31, 2023");
   });

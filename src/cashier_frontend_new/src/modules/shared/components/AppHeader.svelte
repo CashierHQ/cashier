@@ -19,7 +19,6 @@
     class?: string;
   };
 
-  // let { isCreateOrEditPage = false, linkName, class: className }: Props = $props();
   let { isLinkFormPage = false, linkName, class: className }: Props = $props();
 
   function handleWalletClick() {
