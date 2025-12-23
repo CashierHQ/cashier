@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::topological_sort::kahn_topological_sort;
+use crate::utils::topological_sort::kahn_topological_sort;
 use cashier_backend_types::{
     error::CanisterError,
     link_v2::graph::Graph,

@@ -4,15 +4,16 @@
 use crate::icrc112::create_icrc_112_requests;
 use crate::{
     adapter::IntentAdapterImpl,
-    dependency_analyzer::DependencyAnalyzer,
-    executor_service::ExecutorService,
     icrc_token::utils::get_link_account,
     traits::TransactionManager,
+    transaction::{
+        dependency_analyzer::DependencyAnalyzer, executor_service::ExecutorService,
+        validator_service::ValidatorService,
+    },
     transaction::{
         ic_transaction_executor::IcTransactionExecutor,
         ic_transaction_validator::IcTransactionValidator,
     },
-    validator_service::ValidatorService,
 };
 use cashier_backend_types::{
     error::CanisterError,

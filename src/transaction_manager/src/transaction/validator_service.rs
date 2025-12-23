@@ -1,5 +1,5 @@
 use crate::{
-    topological_sort::kahn_topological_sort_flat, transaction::traits::TransactionValidator,
+    transaction::traits::TransactionValidator, utils::topological_sort::kahn_topological_sort_flat,
 };
 use cashier_backend_types::{
     error::CanisterError,
