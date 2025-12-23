@@ -1,5 +1,5 @@
 import { Principal } from "@dfinity/principal";
-import { describe, expect, it, vi, beforeEach, type Mock } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { TokenIndexService } from "./tokenIndexService";
 import { TransactionKind } from "../types";
 

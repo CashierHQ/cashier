@@ -28,3 +28,8 @@ export const ICP_INDEX_CANISTER_ID =
 // Address type
 export const PRINCIPAL_TYPE = 0;
 export const ACCOUNT_ID_TYPE = 1;
+
+// Transaction history constants
+export const DEFAULT_TX_PAGE_SIZE = 10n;
+export const TX_STALE_TIME_MS = 30000; // 30s stale time for auto-revalidate
+export const TX_REFETCH_INTERVAL_MS = 30000; // 60s auto-refresh interval

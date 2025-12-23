@@ -81,8 +81,12 @@ describe("parseListTokens", () => {
 
   it("should parse token with indexId correctly", () => {
     // Arrange
-    const mockLedgerPrincipal = Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai");
-    const mockIndexPrincipal = Principal.fromText("qhbym-qaaaa-aaaaa-aaafq-cai");
+    const mockLedgerPrincipal = Principal.fromText(
+      "rrkah-fqaaa-aaaaa-aaaaq-cai",
+    );
+    const mockIndexPrincipal = Principal.fromText(
+      "qhbym-qaaaa-aaaaa-aaafq-cai",
+    );
     const response: tokenStorage.Result_5 = {
       Ok: {
         need_update_version: false,

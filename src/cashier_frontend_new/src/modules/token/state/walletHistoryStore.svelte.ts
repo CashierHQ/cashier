@@ -1,66 +1,44 @@
-import { managedState } from "$lib/managedState";
+import { managedState, type ManagedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { Principal } from "@dfinity/principal";
 import { TokenIndexService } from "../services/tokenIndexService";
-import { ICP_LEDGER_CANISTER_ID, ICP_INDEX_CANISTER_ID } from "../constants";
+import {
+  ICP_LEDGER_CANISTER_ID,
+  ICP_INDEX_CANISTER_ID,
+  DEFAULT_TX_PAGE_SIZE,
+  TX_STALE_TIME_MS,
+  TX_REFETCH_INTERVAL_MS,
+} from "../constants";
 import type { TokenTransaction, GetTransactionsResult } from "../types";
 import { walletStore } from "./walletStore.svelte";
-
-const DEFAULT_PAGE_SIZE = 100n;
+import { SvelteMap } from "svelte/reactivity";
 
 /**
- * Store for managing token transaction history.
- * Call load(tokenAddress) to fetch history for a specific token.
+ * Per-token history state with caching support
+ * Using $state for reactive properties
+ */
+class TokenHistoryState {
+  query: ManagedState<GetTransactionsResult>;
+  transactions = $state<TokenTransaction[]>([]);
+  hasMore = $state(true);
+  isLoadingMore = $state(false);
+
+  constructor(query: ManagedState<GetTransactionsResult>) {
+    this.query = query;
+  }
+}
+
+/**
+ * Store for managing token transaction history with per-token caching.
+ * Implements stale-while-revalidate: shows cached data immediately, refreshes in background.
  */
 class WalletHistoryStore {
   // Current token address being viewed
   #currentTokenAddress = $state<string | null>(null);
 
-  // Transaction history query
-  #historyQuery;
-
-  // Pagination state
-  #hasMore = $state(true);
-  #isLoadingMore = $state(false);
-  #allTransactions = $state<TokenTransaction[]>([]);
-
-  constructor() {
-    this.#historyQuery = managedState<GetTransactionsResult>({
-      queryFn: async () => {
-        const tokenAddress = this.#currentTokenAddress;
-        if (!tokenAddress) {
-          return { transactions: [], balance: 0n };
-        }
-
-        const account = authState.account;
-        if (!account) {
-          return { transactions: [], balance: 0n };
-        }
-
-        // Get index canister ID: ICP uses special ID, others use token's indexId
-        const indexId = this.#getIndexId(tokenAddress);
-        console.warn("[walletHistoryStore] queryFn running for token:", tokenAddress, "indexId:", indexId);
-        if (!indexId) {
-          console.warn("[walletHistoryStore] No indexId found for token:", tokenAddress);
-          return { transactions: [], balance: 0n };
-        }
-
-        const service = new TokenIndexService(Principal.fromText(indexId));
-        const result = await service.getTransactions({
-          account: { owner: account.owner },
-          maxResults: DEFAULT_PAGE_SIZE,
-        });
-
-        console.warn("[walletHistoryStore] Loaded transactions:", result.transactions.length);
-
-        // Update pagination state
-        this.#allTransactions = result.transactions;
-        this.#hasMore = result.transactions.length >= Number(DEFAULT_PAGE_SIZE);
-
-        return result;
-      },
-    });
-  }
+  // Per-token cache: each token gets its own managed state
+  // Using SvelteMap for reactive Map operations
+  #cache = new SvelteMap<string, TokenHistoryState>();
 
   /**
    * Get index canister ID for a token
@@ -76,25 +54,99 @@ class WalletHistoryStore {
   }
 
   /**
-   * Load transaction history for a token
+   * Fetch transactions for a token (used by managedState queryFn)
+   * Merges new transactions with existing cache to preserve pagination progress
    */
-  load(tokenAddress: string): void {
-    console.warn("[walletHistoryStore] load() called with:", tokenAddress, "current:", this.#currentTokenAddress);
-    // Reset state for new token
-    if (this.#currentTokenAddress !== tokenAddress) {
-      this.#currentTokenAddress = tokenAddress;
-      this.#allTransactions = [];
-      this.#hasMore = true;
-      console.warn("[walletHistoryStore] Refreshing query for new token");
-      this.#historyQuery.refresh();
+  async #fetchTransactions(
+    tokenAddress: string,
+    indexId: string,
+  ): Promise<GetTransactionsResult> {
+    const account = authState.account;
+    if (!account) {
+      return { transactions: [], balance: 0n };
     }
+
+    const service = new TokenIndexService(Principal.fromText(indexId));
+    const result = await service.getTransactions({
+      account: { owner: account.owner },
+      maxResults: DEFAULT_TX_PAGE_SIZE,
+    });
+
+    // Merge new transactions with existing cache (preserve pagination progress)
+    const state = this.#cache.get(tokenAddress);
+    if (state) {
+      // Merge: add new transactions while keeping existing ones
+      const existingIds = new Set(state.transactions.map((tx) => tx.id));
+      const newTxs = result.transactions.filter(
+        (tx) => !existingIds.has(tx.id),
+      );
+
+      if (state.transactions.length === 0) {
+        // Initial load: just set the transactions
+        state.transactions = result.transactions;
+      } else if (newTxs.length > 0) {
+        // Refresh with new transactions: merge and sort
+        state.transactions = [...newTxs, ...state.transactions].sort((a, b) =>
+          Number(b.id - a.id),
+        );
+      }
+      // Only update hasMore on initial load (empty state)
+      if (state.transactions.length <= result.transactions.length) {
+        state.hasMore =
+          result.transactions.length >= Number(DEFAULT_TX_PAGE_SIZE);
+      }
+    }
+
+    return result;
   }
 
   /**
-   * Load more transactions (pagination)
+   * Get or create history state for a token
+   */
+  #getOrCreateState(tokenAddress: string): TokenHistoryState | null {
+    // Return existing cache entry
+    if (this.#cache.has(tokenAddress)) {
+      return this.#cache.get(tokenAddress)!;
+    }
+
+    // Get index ID for new token
+    const indexId = this.#getIndexId(tokenAddress);
+    if (!indexId) {
+      return null;
+    }
+
+    // Create new state with managedState for this token
+    const query = managedState<GetTransactionsResult>({
+      queryFn: () => this.#fetchTransactions(tokenAddress, indexId),
+      staleTime: TX_STALE_TIME_MS,
+      refetchInterval: TX_REFETCH_INTERVAL_MS,
+    });
+
+    const state = new TokenHistoryState(query);
+    this.#cache.set(tokenAddress, state);
+    return state;
+  }
+
+  /**
+   * Load transaction history for a token.
+   * Shows cached data immediately if available, refreshes in background if stale.
+   */
+  load(tokenAddress: string): void {
+    this.#currentTokenAddress = tokenAddress;
+    // Create state if not exists, managedState handles stale/refresh logic
+    this.#getOrCreateState(tokenAddress);
+  }
+
+  /**
+   * Load more transactions (pagination) for current token
+   * Uses oldest transaction ID as cursor for next page
    */
   async loadMore(): Promise<void> {
-    if (!this.#currentTokenAddress || this.#isLoadingMore || !this.#hasMore) return;
+    if (!this.#currentTokenAddress) return;
+
+    const state = this.#cache.get(this.#currentTokenAddress);
+    if (!state || state.isLoadingMore || !state.hasMore) return;
+    if (state.transactions.length === 0) return;
 
     const account = authState.account;
     if (!account) return;
@@ -102,63 +154,77 @@ class WalletHistoryStore {
     const indexId = this.#getIndexId(this.#currentTokenAddress);
     if (!indexId) return;
 
-    this.#isLoadingMore = true;
+    state.isLoadingMore = true;
 
     try {
+      // Find oldest transaction ID to use as cursor
+      const oldestTxId = state.transactions.reduce(
+        (min, tx) => (tx.id < min ? tx.id : min),
+        state.transactions[0].id,
+      );
+
       const service = new TokenIndexService(Principal.fromText(indexId));
       const result = await service.getTransactions({
         account: { owner: account.owner },
-        start: BigInt(this.#allTransactions.length),
-        maxResults: DEFAULT_PAGE_SIZE,
+        start: oldestTxId,
+        maxResults: DEFAULT_TX_PAGE_SIZE,
       });
 
       // Merge new transactions, avoiding duplicates
-      const existingIds = new Set(this.#allTransactions.map(tx => tx.id));
-      const newTxs = result.transactions.filter(tx => !existingIds.has(tx.id));
-      this.#allTransactions = [...this.#allTransactions, ...newTxs].sort(
-        (a, b) => Number(b.id - a.id)
+      const existingIds = new Set(state.transactions.map((tx) => tx.id));
+      const newTxs = result.transactions.filter(
+        (tx) => !existingIds.has(tx.id),
       );
-      this.#hasMore = result.transactions.length >= Number(DEFAULT_PAGE_SIZE);
+      state.transactions = [...state.transactions, ...newTxs].sort((a, b) =>
+        Number(b.id - a.id),
+      );
+      state.hasMore = newTxs.length > 0;
     } catch (e) {
       console.error("Failed to load more transactions:", e);
     } finally {
-      this.#isLoadingMore = false;
+      state.isLoadingMore = false;
     }
   }
 
   /**
-   * Clear history (e.g., when navigating away)
+   * Clear current token selection (keeps cache for future visits)
    */
   clear(): void {
     this.#currentTokenAddress = null;
-    this.#allTransactions = [];
-    this.#hasMore = true;
-    this.#historyQuery.reset();
   }
 
-  // Getters
-  get query() {
-    return this.#historyQuery;
+  /**
+   * Clear all cached data (e.g., on logout)
+   */
+  clearAll(): void {
+    this.#cache.clear();
+    this.#currentTokenAddress = null;
   }
 
+  // Getters - read from current token's cached state
   get transactions(): TokenTransaction[] {
-    return this.#allTransactions;
+    if (!this.#currentTokenAddress) return [];
+    return this.#cache.get(this.#currentTokenAddress)?.transactions ?? [];
   }
 
   get isLoading(): boolean {
-    return this.#historyQuery.isLoading;
+    if (!this.#currentTokenAddress) return false;
+    return this.#cache.get(this.#currentTokenAddress)?.query.isLoading ?? false;
   }
 
   get isLoadingMore(): boolean {
-    return this.#isLoadingMore;
+    if (!this.#currentTokenAddress) return false;
+    return this.#cache.get(this.#currentTokenAddress)?.isLoadingMore ?? false;
   }
 
   get hasMore(): boolean {
-    return this.#hasMore;
+    if (!this.#currentTokenAddress) return false;
+    return this.#cache.get(this.#currentTokenAddress)?.hasMore ?? false;
   }
 
   get error(): unknown {
-    return this.#historyQuery.error;
+    if (!this.#currentTokenAddress) return undefined;
+    return this.#cache.get(this.#currentTokenAddress)?.query.error;
   }
 
   get currentTokenAddress(): string | null {
