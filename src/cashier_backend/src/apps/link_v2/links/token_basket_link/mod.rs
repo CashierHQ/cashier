@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::link_v2::links::{
+use crate::apps::link_v2::links::{
     shared::send_link::states::{
         active::ActiveState, created::CreatedState, inactive::InactiveState,
     },
@@ -23,13 +23,13 @@ use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
 use transaction_manager::traits::TransactionManager;
 use uuid::Uuid;
 
-pub struct AirdropLink<M: TransactionManager + 'static> {
+pub struct TokenBasketLink<M: TransactionManager + 'static> {
     pub link: Link,
     pub canister_id: Principal,
     pub transaction_manager: Rc<M>,
 }
 
-impl<M: TransactionManager + 'static> AirdropLink<M> {
+impl<M: TransactionManager + 'static> TokenBasketLink<M> {
     pub fn new(link: Link, canister_id: Principal, transaction_manager: Rc<M>) -> Self {
         Self {
             link,
@@ -38,17 +38,15 @@ impl<M: TransactionManager + 'static> AirdropLink<M> {
         }
     }
 
-    /// Create a new AirdropLink instance
+    /// Create a new TokenBasketLink instance
     /// # Arguments
     /// * `creator` - The principal of the user creating the link
     /// * `title` - The title of the link
     /// * `asset_info` - The asset information associated with the link
     /// * `max_use` - The maximum number of times the link can be used
     /// * `created_at_ts` - The timestamp when the link is created
-    /// * `canister_id` - The canister ID of the backend canister
-    /// * `transaction_manager` - The transaction manager to handle link actions
     /// # Returns
-    /// * `AirdropLink` - The newly created AirdropLink instance
+    /// * `TokenBasketLink` - The newly created TokenBasketLink instance
     pub fn create(
         creator: Principal,
         title: String,
@@ -60,7 +58,7 @@ impl<M: TransactionManager + 'static> AirdropLink<M> {
     ) -> Self {
         let new_link = Link {
             id: Uuid::new_v4().to_string(),
-            link_type: LinkType::SendAirdrop,
+            link_type: LinkType::SendTokenBasket,
             title,
             asset_info,
             link_use_action_counter: 0,
@@ -76,7 +74,7 @@ impl<M: TransactionManager + 'static> AirdropLink<M> {
     /// Get the appropriate state handler for the current link state
     /// # Arguments
     /// * `link` - The Link model
-    /// * `canister_id` - The canister ID of the backend canister
+    /// * `canister_id` - The canister ID of the token contract
     /// * `fee_map` - A map of canister principals to their corresponding fees
     /// # Returns
     /// * `Result<Box<dyn LinkV2State>, CanisterError>` - The resulting state handler or an error if the state is unsupported
@@ -108,10 +106,10 @@ impl<M: TransactionManager + 'static> AirdropLink<M> {
     }
 }
 
-impl<M: TransactionManager + 'static> LinkV2 for AirdropLink<M> {
-    /// Creates an action for the AirdropLink.
+impl<M: TransactionManager + 'static> LinkV2 for TokenBasketLink<M> {
+    /// Creates an action for the TokenBasketLink.
     /// # Arguments
-    /// * `caller` - The caller principal.
+    /// * `canister_id` - The canister ID of the token contract.
     /// * `action_type` - The type of action to be created.
     /// # Returns
     /// * `Pin<Box<dyn Future<Output = Result<CreateActionResult, CanisterError>>>>` - A future that resolves to the resulting action or an error if the creation fails.
@@ -125,20 +123,13 @@ impl<M: TransactionManager + 'static> LinkV2 for AirdropLink<M> {
         let transaction_manager = self.transaction_manager.clone();
 
         Box::pin(async move {
-            let state = AirdropLink::get_state_handler(&link, canister_id, transaction_manager)?;
+            let state =
+                TokenBasketLink::get_state_handler(&link, canister_id, transaction_manager)?;
             let create_action_result = state.create_action(caller, action_type).await?;
             Ok(create_action_result)
         })
     }
 
-    /// Processes an action for the AirdropLink.
-    /// # Arguments
-    /// * `caller` - The caller principal.
-    /// * `action` - The action to be processed.
-    /// * `intents` - The intents associated with the action.
-    /// * `intent_txs_map` - A map of intent IDs to their corresponding transactions.
-    /// # Returns
-    /// * `Pin<Box<dyn Future<Output = Result<LinkProcessActionResult, CanisterError>>>>` - A future that resolves to the resulting action or an error if the processing fails.
     fn process_action(
         &self,
         caller: Principal,
@@ -151,7 +142,8 @@ impl<M: TransactionManager + 'static> LinkV2 for AirdropLink<M> {
         let transaction_manager = self.transaction_manager.clone();
 
         Box::pin(async move {
-            let state = AirdropLink::get_state_handler(&link, canister_id, transaction_manager)?;
+            let state =
+                TokenBasketLink::get_state_handler(&link, canister_id, transaction_manager)?;
             let process_action_result = state
                 .process_action(caller, action, intents, intent_txs_map)
                 .await?;

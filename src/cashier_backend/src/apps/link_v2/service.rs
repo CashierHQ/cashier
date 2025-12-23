@@ -1,10 +1,10 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::link_v2::links::factory::LinkFactory;
+use crate::apps::action::ActionService;
+use crate::apps::link_v2::links::factory::LinkFactory;
 use crate::repositories;
 use crate::repositories::Repositories;
-use crate::services::action::ActionService;
 use candid::Principal;
 use cashier_backend_types::dto::link::{GetLinkOptions, GetLinkResp, LinkUserStateDto};
 use cashier_backend_types::link_v2::dto::{CreateLinkDto, ProcessActionDto};

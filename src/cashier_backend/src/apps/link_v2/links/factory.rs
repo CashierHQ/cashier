@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::link_v2::links::{
+use crate::apps::link_v2::links::{
     airdrop_link::AirdropLink, payment_link::PaymentLink, tip_link::TipLink,
     token_basket_link::TokenBasketLink, traits::LinkV2,
 };

@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::link_v2::links::{
+use crate::apps::link_v2::links::{
     shared::receive_link::states::{
         active::ActiveState, created::CreatedState, inactive::InactiveState,
     },

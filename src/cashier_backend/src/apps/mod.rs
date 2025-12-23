@@ -3,5 +3,6 @@
 
 pub mod action;
 pub mod auth;
+pub mod link_v2;
 pub mod request_lock;
 pub mod settings;
