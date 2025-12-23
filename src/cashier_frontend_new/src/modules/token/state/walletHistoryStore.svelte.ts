@@ -1,6 +1,7 @@
 import { managedState, type ManagedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { Principal } from "@dfinity/principal";
+import { SvelteSet } from "svelte/reactivity";
 import { TokenIndexService } from "../services/tokenIndexService";
 import { DEFAULT_TX_PAGE_SIZE, TX_STALE_TIME_MS, TX_REFETCH_INTERVAL_MS } from "../constants";
 import type { TokenTransaction, GetTransactionsResult } from "../types";
@@ -43,7 +44,7 @@ class WalletHistoryStore {
     });
 
     // Merge new transactions with existing (preserve pagination progress)
-    const existingIds = new Set(this.#transactions.map((tx) => tx.id));
+    const existingIds = new SvelteSet(this.#transactions.map((tx) => tx.id));
     const newTxs = result.transactions.filter((tx) => !existingIds.has(tx.id));
 
     if (this.#transactions.length === 0) {
@@ -92,8 +93,10 @@ class WalletHistoryStore {
       });
 
       // Merge new transactions, avoiding duplicates
-      const existingIds = new Set(this.#transactions.map((tx) => tx.id));
-      const newTxs = result.transactions.filter((tx) => !existingIds.has(tx.id));
+      const existingIds = new SvelteSet(this.#transactions.map((tx) => tx.id));
+      const newTxs = result.transactions.filter(
+        (tx) => !existingIds.has(tx.id),
+      );
       this.#transactions = [...this.#transactions, ...newTxs].sort((a, b) =>
         Number(b.id - a.id),
       );
