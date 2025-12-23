@@ -78,3 +78,52 @@ impl TransferWalletToTreasuryIntent {
         Ok(Self::new(intent))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use cashier_common::test_utils::random_principal_id;
+
+    #[test]
+    fn test_create_transfer_wallet_to_treasury_intent() {
+        // Arrange
+        let label = "Test Intent".to_string();
+        let asset = Asset::default();
+        let actual_amount = 100u64;
+        let approval_amount = 150u64;
+        let sender_id = random_principal_id();
+        let spender_account = Account {
+            owner: random_principal_id(),
+            subaccount: None,
+        };
+        let created_at_ts = 0;
+
+        // Act
+        let intent_result = TransferWalletToTreasuryIntent::create(
+            label.clone(),
+            asset.clone(),
+            actual_amount,
+            approval_amount,
+            sender_id,
+            spender_account,
+            created_at_ts,
+        );
+
+        // Assert
+        assert!(intent_result.is_ok());
+        let intent = intent_result.unwrap().intent;
+        assert_eq!(intent.label, label);
+        assert_eq!(intent.created_at, created_at_ts);
+        assert_eq!(intent.state, IntentState::Created);
+        assert_eq!(intent.chain, Chain::IC);
+        let intent_type = match intent.r#type {
+            IntentType::TransferFrom(transfer_from_intent) => transfer_from_intent,
+            _ => panic!("Expected TransferFrom intent type"),
+        };
+        assert_eq!(intent_type.amount, Nat::from(actual_amount));
+        assert_eq!(intent_type.approve_amount, Some(Nat::from(approval_amount)));
+        assert_eq!(intent_type.actual_amount, Some(Nat::from(actual_amount)));
+        assert_eq!(intent_type.asset, asset);
+        assert_eq!(intent_type.from, Wallet::new(sender_id));
+    }
+}
