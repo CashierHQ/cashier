@@ -15,14 +15,10 @@ use cashier_backend_types::{
 use cashier_common::utils::to_memo;
 use uuid::Uuid;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct IcIntentAdapter;
 
 impl IcIntentAdapter {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     fn assemble_icrc1_wallet_transfer(
         &self,
         ts: u64,

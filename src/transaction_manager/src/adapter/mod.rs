@@ -18,13 +18,10 @@ pub trait IntentAdapter {
     ) -> Result<Vec<Transaction>, CanisterError>;
 }
 
+#[derive(Default)]
 pub struct IntentAdapterImpl {}
 
 impl IntentAdapterImpl {
-    pub fn new() -> Self {
-        Self {}
-    }
-
     pub fn intent_to_transactions(
         &self,
         chain: &Chain,
@@ -33,7 +30,7 @@ impl IntentAdapterImpl {
     ) -> Result<Vec<Transaction>, CanisterError> {
         match chain {
             Chain::IC => {
-                let ic_intent_adapter = IcIntentAdapter::new();
+                let ic_intent_adapter = IcIntentAdapter;
                 ic_intent_adapter.intent_to_transactions(ts, intent)
             }
         }

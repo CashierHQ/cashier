@@ -22,6 +22,8 @@ use cashier_backend_types::{
 use cashier_common::runtime::IcEnvironment;
 use std::{
     collections::{HashMap, HashSet},
+    future::Future,
+    pin::Pin,
     rc::Rc,
 };
 
@@ -36,7 +38,7 @@ pub struct IcTransactionManager<E: IcEnvironment> {
 #[allow(clippy::too_many_arguments)]
 impl<E: IcEnvironment> IcTransactionManager<E> {
     pub fn new(ic_env: E) -> Self {
-        let intent_adapter = IntentAdapterImpl::new();
+        let intent_adapter = IntentAdapterImpl::default();
         let transaction_validator = Rc::new(IcTransactionValidator);
         let transaction_executor = Rc::new(IcTransactionExecutor);
         let dependency_analyzer = DependencyAnalyzer;
@@ -61,7 +63,7 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
     /// * `intents` - The intents associated with the action
     /// # Returns
     /// * `Result<CreateActionResult, CanisterError>` - The result of creating the action
-    async fn create_action(
+    fn create_action(
         &self,
         action: Action,
         intents: Vec<Intent>,
@@ -71,7 +73,6 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
 
         // assemble intent transactions
         let mut transactions = Vec::<Transaction>::new();
-
         let mut intent_txs_map = if let Some(map) = intent_txs_map {
             map
         } else {
@@ -134,12 +135,12 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
     /// * `intent_txs_map` - A mapping of intent IDs to their associated transactions
     /// # Returns
     /// * `Result<ProcessActionResult, CanisterError>` - The result of processing the action
-    async fn process_action(
+    fn process_action(
         &self,
         action: Action,
         intents: Vec<Intent>,
         intent_txs_map: HashMap<String, Vec<Transaction>>,
-    ) -> Result<ProcessActionResult, CanisterError> {
+    ) -> Pin<Box<dyn Future<Output = Result<ProcessActionResult, CanisterError>>>> {
         let current_ts = self.ic_env.time();
 
         // extract all transactions from intent_txs_map, these transactions are fulfilled with dependencies
@@ -153,73 +154,77 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
             }
         }
 
-        // validate and update transactions dependencies and states
-        let validate_transactions_result = self
-            .validator_service
-            .validate_action_transactions(&transactions)
-            .await?;
-        errors.extend(validate_transactions_result.errors.clone());
-
-        processed_transactions.extend(validate_transactions_result.wallet_transactions);
-        is_success &= validate_transactions_result.is_success;
-
-        // execute canister transactions if all dependencies are resolved
-        if validate_transactions_result.is_success {
-            let executed_transactions_result = self
-                .executor_service
-                .execute_transactions(&validate_transactions_result.canister_transactions)
-                .await?;
-
-            processed_transactions.extend(executed_transactions_result.transactions);
-            errors.extend(executed_transactions_result.errors);
-            is_success &= executed_transactions_result.is_success;
-        } else {
-            processed_transactions.extend(validate_transactions_result.canister_transactions);
-        }
-
         // create ICRC112 requests from transactions
         let canister_id = self.ic_env.id();
-        let link_account = get_link_account(&action.link_id, canister_id)?;
-        let icrc112_requests = create_icrc_112_requests(
-            &mut processed_transactions,
-            link_account,
-            canister_id,
-            current_ts,
-        )?;
+        let link_id = action.link_id.clone();
+        let validator_service = ValidatorService::new(Rc::new(IcTransactionValidator));
+        let executor_service = ExecutorService::new(Rc::new(IcTransactionExecutor));
 
-        // update intent_txs_map with processed transactions
-        let mut updated_intent_txs_map = HashMap::<String, Vec<Transaction>>::new();
-        for intent in intents.iter() {
-            let tx_ids = intent_txs_map
-                .get(&intent.id)
-                .unwrap()
-                .iter()
-                .map(|tx| tx.id.clone())
-                .collect::<HashSet<String>>();
+        Box::pin(async move {
+            // validate and update transactions dependencies and states
+            let validate_transactions_result = validator_service
+                .validate_action_transactions(&transactions)
+                .await?;
+            errors.extend(validate_transactions_result.errors.clone());
 
-            let updated_txs = processed_transactions
-                .iter()
-                .filter(|tx| tx_ids.contains(&tx.id))
-                .cloned()
-                .collect::<Vec<Transaction>>();
+            processed_transactions.extend(validate_transactions_result.wallet_transactions);
+            is_success &= validate_transactions_result.is_success;
 
-            updated_intent_txs_map.insert(intent.id.clone(), updated_txs);
-        }
+            // execute canister transactions if all dependencies are resolved
+            if validate_transactions_result.is_success {
+                let executed_transactions_result = executor_service
+                    .execute_transactions(&validate_transactions_result.canister_transactions)
+                    .await?;
 
-        // rollup action and intents states from processed transactions
-        let rollup_action_state_result = self.validator_service.rollup_action_state(
-            action.clone(),
-            &intents,
-            updated_intent_txs_map.clone(),
-        )?;
+                processed_transactions.extend(executed_transactions_result.transactions);
+                errors.extend(executed_transactions_result.errors);
+                is_success &= executed_transactions_result.is_success;
+            } else {
+                processed_transactions.extend(validate_transactions_result.canister_transactions);
+            }
 
-        Ok(ProcessActionResult {
-            action: rollup_action_state_result.action,
-            intents: rollup_action_state_result.intents,
-            intent_txs_map: updated_intent_txs_map,
-            icrc112_requests: Some(icrc112_requests),
-            is_success,
-            errors,
+            let link_account = get_link_account(&link_id, canister_id)?;
+            let icrc112_requests = create_icrc_112_requests(
+                &mut processed_transactions,
+                link_account,
+                canister_id,
+                current_ts,
+            )?;
+
+            // update intent_txs_map with processed transactions
+            let mut updated_intent_txs_map = HashMap::<String, Vec<Transaction>>::new();
+            for intent in intents.iter() {
+                let tx_ids = intent_txs_map
+                    .get(&intent.id)
+                    .unwrap()
+                    .iter()
+                    .map(|tx| tx.id.clone())
+                    .collect::<HashSet<String>>();
+
+                let updated_txs = processed_transactions
+                    .iter()
+                    .filter(|tx| tx_ids.contains(&tx.id))
+                    .cloned()
+                    .collect::<Vec<Transaction>>();
+
+                updated_intent_txs_map.insert(intent.id.clone(), updated_txs);
+            }
+
+            // rollup action and intents states from processed transactions
+            let rollup_action_state_result = validator_service.rollup_action_state(
+                action.clone(),
+                &intents,
+                updated_intent_txs_map.clone(),
+            )?;
+
+            Ok(ProcessActionResult {
+                action: rollup_action_state_result.action,
+                intents: rollup_action_state_result.intents,
+                intent_txs_map: updated_intent_txs_map,
+                icrc112_requests: Some(icrc112_requests),
+                is_success,
+                errors,
+            })
         })
     }
 }
@@ -265,9 +270,7 @@ mod tests {
         });
 
         // Act
-        let res = manager
-            .create_action(action.clone(), vec![intent.clone()], None)
-            .await;
+        let res = manager.create_action(action.clone(), vec![intent.clone()], None);
         println!("Create action result: {:?}", res);
 
         // Assert
