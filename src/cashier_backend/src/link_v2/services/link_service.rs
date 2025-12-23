@@ -2,7 +2,6 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::link_v2::links::factory::LinkFactory;
-use crate::link_v2::transaction_manager::traits::TransactionManager;
 use crate::repositories;
 use crate::repositories::Repositories;
 use crate::services::action::ActionService;
@@ -21,6 +20,7 @@ use cashier_backend_types::{
     service::action::ActionData,
 };
 use std::rc::Rc;
+use transaction_manager::traits::TransactionManager;
 
 pub struct LinkV2Service<R: Repositories, M: TransactionManager + 'static> {
     pub link_repository: repositories::link::LinkRepository<R::Link>,
@@ -303,10 +303,11 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
                 .get_action_data(&action.id)
                 .map_err(|_e| CanisterError::NotFound("Action not found".to_string()))?;
 
-            let create_action_result = self
-                .transaction_manager
-                .create_action(action, action_data.intents, Some(action_data.intent_txs))
-                .await?;
+            let create_action_result = self.transaction_manager.create_action(
+                action,
+                action_data.intents,
+                Some(action_data.intent_txs),
+            )?;
 
             Some(create_action_result.into())
         } else {

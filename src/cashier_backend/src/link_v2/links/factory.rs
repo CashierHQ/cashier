@@ -1,14 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use std::rc::Rc;
-
-use crate::link_v2::{
-    links::{
-        airdrop_link::AirdropLink, payment_link::PaymentLink, tip_link::TipLink,
-        token_basket_link::TokenBasketLink, traits::LinkV2,
-    },
-    transaction_manager::traits::TransactionManager,
+use crate::link_v2::links::{
+    airdrop_link::AirdropLink, payment_link::PaymentLink, tip_link::TipLink,
+    token_basket_link::TokenBasketLink, traits::LinkV2,
 };
 use candid::Principal;
 use cashier_backend_types::{
@@ -19,6 +14,8 @@ use cashier_backend_types::{
         link::v1::{Link, LinkType},
     },
 };
+use std::rc::Rc;
+use transaction_manager::traits::TransactionManager;
 
 pub struct LinkFactory<M: TransactionManager + 'static> {
     pub transaction_manager: Rc<M>,

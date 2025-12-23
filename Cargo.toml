@@ -62,6 +62,7 @@ thiserror = "2.0"
 token_storage_client = { path = "src/token_storage_client" }
 token_storage_types = { path = "src/token_storage_types" }
 tokio = { version = "1", features = ["rt", "macros"] }
+transaction_manager = { path = "src/transaction_manager" }
 # Use fixed uuid version to avoid getrandom incompatibility. To be fixed.
 uuid = { version = "=1.12.1", features = ["v4"] }
 vergen-gitcl = { version = "1", default-features = false, features = [

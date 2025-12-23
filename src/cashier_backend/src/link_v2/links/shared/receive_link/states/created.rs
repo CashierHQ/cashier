@@ -1,9 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::link_v2::{
-    links::{shared::receive_link::actions::create::CreateAction, traits::LinkV2State},
-    transaction_manager::traits::TransactionManager,
+use crate::link_v2::links::{
+    shared::receive_link::actions::create::CreateAction, traits::LinkV2State,
 };
 use candid::Principal;
 use cashier_backend_types::{
@@ -17,6 +16,7 @@ use cashier_backend_types::{
     },
 };
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
+use transaction_manager::traits::TransactionManager;
 
 pub struct CreatedState<M: TransactionManager + 'static> {
     pub link: Link,
@@ -55,9 +55,8 @@ impl<M: TransactionManager + 'static> CreatedState<M> {
         }
 
         let create_action = CreateAction::create(&link, canister_id).await?;
-        let create_action_result = transaction_manager
-            .create_action(create_action.action, create_action.intents, None)
-            .await?;
+        let create_action_result =
+            transaction_manager.create_action(create_action.action, create_action.intents, None)?;
 
         Ok(LinkCreateActionResult {
             link: link.clone(),
