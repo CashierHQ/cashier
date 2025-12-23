@@ -7,6 +7,7 @@ pub mod executor_service;
 pub mod ic_transaction_manager;
 pub mod icrc112;
 pub mod icrc_token;
+pub mod intents;
 pub mod topological_sort;
 pub mod traits;
 pub mod transaction;
