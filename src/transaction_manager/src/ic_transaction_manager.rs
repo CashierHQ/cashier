@@ -1,9 +1,10 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::adapter::IntentAdapterTrait;
 use crate::icrc112::create_icrc_112_requests;
 use crate::{
-    adapter::IntentAdapterImpl,
+    adapter::ic::intent::IcIntentAdapter,
     icrc_token::utils::get_link_account,
     traits::TransactionManager,
     transaction::{
@@ -30,28 +31,20 @@ use std::{
 
 pub struct IcTransactionManager<E: IcEnvironment> {
     pub ic_env: E,
-    pub intent_adapter: IntentAdapterImpl,
+    pub intent_adapter: IcIntentAdapter,
     pub dependency_analyzer: DependencyAnalyzer,
-    pub validator_service: ValidatorService<IcTransactionValidator>,
-    pub executor_service: ExecutorService<IcTransactionExecutor>,
 }
 
 #[allow(clippy::too_many_arguments)]
 impl<E: IcEnvironment> IcTransactionManager<E> {
     pub fn new(ic_env: E) -> Self {
-        let intent_adapter = IntentAdapterImpl::default();
-        let transaction_validator = Rc::new(IcTransactionValidator);
-        let transaction_executor = Rc::new(IcTransactionExecutor);
+        let intent_adapter = IcIntentAdapter::default();
         let dependency_analyzer = DependencyAnalyzer;
-        let validator_service = ValidatorService::new(Rc::clone(&transaction_validator));
-        let executor_service = ExecutorService::new(Rc::clone(&transaction_executor));
 
         Self {
             ic_env,
             intent_adapter,
             dependency_analyzer,
-            validator_service,
-            executor_service,
         }
     }
 }
@@ -80,10 +73,9 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
             let mut intent_txs_map = HashMap::<String, Vec<Transaction>>::new();
 
             for intent in intents.iter() {
-                let chain = intent.chain.clone();
                 let intent_transactions = self
                     .intent_adapter
-                    .intent_to_transactions(&chain, current_ts, intent)?;
+                    .intent_to_transactions(current_ts, intent)?;
                 transactions.extend(intent_transactions.clone());
                 intent_txs_map.insert(intent.id.clone(), intent_transactions);
             }

@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::adapter::IntentAdapter;
+use crate::adapter::IntentAdapterTrait;
 use cashier_backend_types::{
     error::CanisterError,
     repository::{
@@ -19,6 +19,12 @@ use uuid::Uuid;
 pub struct IcIntentAdapter;
 
 impl IcIntentAdapter {
+    /// Assembles ICRC1 wallet transfer transactions from the given transfer intent.
+    /// # Arguments
+    /// * `ts` - The timestamp for the transaction.
+    /// * `transfer_intent` - The transfer intent containing transfer details.
+    /// # Returns
+    /// * `Result<Vec<Transaction>, CanisterError>` - A vector of assembled transactions or an error.
     fn assemble_icrc1_wallet_transfer(
         &self,
         ts: u64,
@@ -53,6 +59,12 @@ impl IcIntentAdapter {
         Ok(vec![transaction])
     }
 
+    /// Assembles ICRC2 wallet transfer transactions from the given transfer intent.
+    /// # Arguments
+    /// * `ts` - The timestamp for the transaction.
+    /// * `transfer_intent` - The transfer intent containing transfer details.
+    /// # Returns
+    /// * `Result<Vec<Transaction>, CanisterError>` - A vector of assembled transactions or an error.
     fn assemble_icrc2_wallet_transfer(
         &self,
         ts: u64,
@@ -129,6 +141,12 @@ impl IcIntentAdapter {
         Ok(vec![approve_tx, transfer_from_tx])
     }
 
+    /// Assembles ICRC1 canister transfer transactions from the given transfer intent.
+    /// # Arguments
+    /// * `ts` - The timestamp for the transaction.
+    /// * `transfer_intent` - The transfer intent containing transfer details.
+    /// # Returns
+    /// * `Result<Vec<Transaction>, CanisterError>` - A vector of assembled transactions or an error.
     fn assemble_icrc1_canister_transfer(
         &self,
         ts: u64,
@@ -163,7 +181,7 @@ impl IcIntentAdapter {
     }
 }
 
-impl IntentAdapter for IcIntentAdapter {
+impl IntentAdapterTrait for IcIntentAdapter {
     fn intent_to_transactions(
         &self,
         ts: u64,
@@ -184,4 +202,9 @@ impl IntentAdapter for IcIntentAdapter {
             )),
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
 }
