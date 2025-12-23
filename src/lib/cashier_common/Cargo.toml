@@ -12,6 +12,7 @@ getrandom = { workspace = true, features = ["custom"] }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
+icrc-ledger-types = { workspace = true }
 rand = { workspace = true, features = ["getrandom"] }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

@@ -45,11 +45,9 @@ impl<S: Storage<ActionRepositoryStorage>> ActionRepository<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        repositories::{Repositories, tests::TestRepositories},
-        utils::test_utils::{random_id_string, random_principal_id},
-    };
+    use crate::repositories::{Repositories, tests::TestRepositories};
     use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
+    use cashier_common::test_utils::{random_id_string, random_principal_id};
 
     #[test]
     fn it_should_create_an_action() {

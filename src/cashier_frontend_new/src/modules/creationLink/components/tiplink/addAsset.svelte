@@ -144,7 +144,7 @@
     showAssetDrawer = false;
   }
 
-  function handleAmountChange(value: string) {
+  function handleAmountChange(value: string, forceUpdate = false) {
     if (isUsd) {
       localUsdAmount = value;
 
@@ -152,7 +152,7 @@
         const tokenValue = parseFloat(value) / tokenUsdPrice;
         localTokenAmount = tokenValue.toString();
         setUsdAmount(value);
-      } else {
+      } else if (forceUpdate) {
         setUsdAmount(value);
       }
     } else {
@@ -164,7 +164,7 @@
         const roundedUsdValue = Math.round(usdValue * 10000) / 10000;
         localUsdAmount = formatUsdAmount(roundedUsdValue);
         setTokenAmount(value);
-      } else {
+      } else if (forceUpdate) {
         setTokenAmount(value);
       }
     }
@@ -328,6 +328,7 @@
   // Navigate to next Preview step
   async function goNext() {
     try {
+      handleAmountChange(isUsd ? localUsdAmount : localTokenAmount, true);
       await link.goNext();
     } catch (e) {
       // Error is already formatted in the state, just show it
