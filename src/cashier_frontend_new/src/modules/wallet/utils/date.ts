@@ -7,14 +7,9 @@ import type {
 /**
  * Formats a timestamp into a readable date string
  * @param timestamp - Unix timestamp in milliseconds
- * @returns Formatted date string (e.g., "Jan 15, 2024") or "Unknown" for invalid timestamps
+ * @returns Formatted date string (e.g., "Jan 15, 2024")
  */
 export function formatDate(timestamp: number): string {
-  // Handle invalid/missing timestamps (0 = Unix epoch = Jan 1, 1970)
-  if (!timestamp || timestamp < 1000000000000) {
-    // Less than year 2001 in ms - likely invalid
-    return "Unknown";
-  }
   const date = new Date(timestamp);
   return date.toLocaleDateString("en-US", {
     year: "numeric",
@@ -26,12 +21,9 @@ export function formatDate(timestamp: number): string {
 /**
  * Generates a unique date key for grouping transactions
  * @param timestamp - Unix timestamp in milliseconds
- * @returns Date key in format "YYYY-M-D" or "unknown" for invalid timestamps
+ * @returns Date key in format "YYYY-M-D"
  */
 export function getDateKey(timestamp: number): string {
-  if (!timestamp || timestamp < 1000000000000) {
-    return "unknown";
-  }
   const date = new Date(timestamp);
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
 }

@@ -36,9 +36,9 @@ class WalletHistoryStore {
   // Current token address being viewed
   #currentTokenAddress = $state<string | null>(null);
 
-  // Per-token cache: each token gets its own managed state
+  // Per-token histories: each token gets its own managed state
   // Using SvelteMap for reactive Map operations
-  #cache = new SvelteMap<string, TokenHistoryState>();
+  #histories = new SvelteMap<string, TokenHistoryState>();
 
   /**
    * Get index canister ID for a token
@@ -72,8 +72,8 @@ class WalletHistoryStore {
       maxResults: DEFAULT_TX_PAGE_SIZE,
     });
 
-    // Merge new transactions with existing cache (preserve pagination progress)
-    const state = this.#cache.get(tokenAddress);
+    // Merge new transactions with existing history (preserve pagination progress)
+    const state = this.#histories.get(tokenAddress);
     if (state) {
       // Merge: add new transactions while keeping existing ones
       const existingIds = new Set(state.transactions.map((tx) => tx.id));
@@ -104,9 +104,9 @@ class WalletHistoryStore {
    * Get or create history state for a token
    */
   #getOrCreateState(tokenAddress: string): TokenHistoryState | null {
-    // Return existing cache entry
-    if (this.#cache.has(tokenAddress)) {
-      return this.#cache.get(tokenAddress)!;
+    // Return existing history entry
+    if (this.#histories.has(tokenAddress)) {
+      return this.#histories.get(tokenAddress)!;
     }
 
     // Get index ID for new token
@@ -123,7 +123,7 @@ class WalletHistoryStore {
     });
 
     const state = new TokenHistoryState(query);
-    this.#cache.set(tokenAddress, state);
+    this.#histories.set(tokenAddress, state);
     return state;
   }
 
@@ -144,7 +144,7 @@ class WalletHistoryStore {
   async loadMore(): Promise<void> {
     if (!this.#currentTokenAddress) return;
 
-    const state = this.#cache.get(this.#currentTokenAddress);
+    const state = this.#histories.get(this.#currentTokenAddress);
     if (!state || state.isLoadingMore || !state.hasMore) return;
     if (state.transactions.length === 0) return;
 
@@ -176,6 +176,7 @@ class WalletHistoryStore {
         (tx) => !existingIds.has(tx.id),
       );
       state.transactions = [...state.transactions, ...newTxs].sort((a, b) =>
+        // id is block number - go by order
         Number(b.id - a.id),
       );
       state.hasMore = newTxs.length > 0;
@@ -187,44 +188,48 @@ class WalletHistoryStore {
   }
 
   /**
-   * Clear current token selection (keeps cache for future visits)
+   * Clear current token selection (keeps history for future visits)
    */
   clear(): void {
     this.#currentTokenAddress = null;
   }
 
   /**
-   * Clear all cached data (e.g., on logout)
+   * Clear all history data (e.g., on logout)
    */
   clearAll(): void {
-    this.#cache.clear();
+    this.#histories.clear();
     this.#currentTokenAddress = null;
   }
 
-  // Getters - read from current token's cached state
+  // Getters - read from current token's history state
   get transactions(): TokenTransaction[] {
     if (!this.#currentTokenAddress) return [];
-    return this.#cache.get(this.#currentTokenAddress)?.transactions ?? [];
+    return this.#histories.get(this.#currentTokenAddress)?.transactions ?? [];
   }
 
   get isLoading(): boolean {
     if (!this.#currentTokenAddress) return false;
-    return this.#cache.get(this.#currentTokenAddress)?.query.isLoading ?? false;
+    return (
+      this.#histories.get(this.#currentTokenAddress)?.query.isLoading ?? false
+    );
   }
 
   get isLoadingMore(): boolean {
     if (!this.#currentTokenAddress) return false;
-    return this.#cache.get(this.#currentTokenAddress)?.isLoadingMore ?? false;
+    return (
+      this.#histories.get(this.#currentTokenAddress)?.isLoadingMore ?? false
+    );
   }
 
   get hasMore(): boolean {
     if (!this.#currentTokenAddress) return false;
-    return this.#cache.get(this.#currentTokenAddress)?.hasMore ?? false;
+    return this.#histories.get(this.#currentTokenAddress)?.hasMore ?? false;
   }
 
   get error(): unknown {
     if (!this.#currentTokenAddress) return undefined;
-    return this.#cache.get(this.#currentTokenAddress)?.query.error;
+    return this.#histories.get(this.#currentTokenAddress)?.query.error;
   }
 
   get currentTokenAddress(): string | null {
