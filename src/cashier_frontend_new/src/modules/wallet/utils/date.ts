@@ -1,16 +1,8 @@
 import { SvelteMap } from "svelte/reactivity";
-
-export interface Transaction {
-  timestamp: number;
-  amount: number;
-  type: "sent" | "received";
-  address: string;
-}
-
-export interface TransactionGroup {
-  date: string;
-  transactions: Transaction[];
-}
+import type {
+  DisplayTransaction,
+  TransactionGroup,
+} from "$modules/token/types";
 
 /**
  * Formats a timestamp into a readable date string
@@ -42,9 +34,9 @@ export function getDateKey(timestamp: number): string {
  * @returns Array of transaction groups sorted by date (newest first)
  */
 export function groupTransactionsByDate(
-  transactions: Transaction[],
+  transactions: DisplayTransaction[],
 ): TransactionGroup[] {
-  const grouped = new SvelteMap<string, Transaction[]>();
+  const grouped = new SvelteMap<string, DisplayTransaction[]>();
   const sorted = [...transactions].sort((a, b) => b.timestamp - a.timestamp);
 
   sorted.forEach((tx) => {
