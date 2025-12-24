@@ -60,6 +60,11 @@ download_artifacts: pre_build
   just download_if_not_exists {{ARTIFACTS_DIR}}/ledger-suite-icrc.wasm.gz "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-06-19/ic-icrc1-ledger.wasm.gz"
   just download_if_not_exists {{ARTIFACTS_DIR}}/internet_identity.did "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did"
   just download_if_not_exists {{ARTIFACTS_DIR}}/internet_identity.wasm.gz "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz"
+  # Index canisters
+  just download_if_not_exists {{ARTIFACTS_DIR}}/icp-index.did "https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-08-29/index.did"
+  just download_if_not_exists {{ARTIFACTS_DIR}}/icp-index.wasm.gz "https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-08-29/ic-icp-index-canister.wasm.gz"
+  just download_if_not_exists {{ARTIFACTS_DIR}}/icrc-index-ng.did "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-10-27/index.did"
+  just download_if_not_exists {{ARTIFACTS_DIR}}/icrc-index-ng.wasm.gz "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-10-27/ic-icrc1-index-ng.wasm.gz"
 
 
 [private]

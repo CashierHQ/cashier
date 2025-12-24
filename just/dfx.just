@@ -51,11 +51,18 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
 
   dfx deploy internet_identity
 
+  # Deploy ledgers first
   just dfx_local_deploy_icp_ledger
   just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckBTC" "Chain Key Bitcoin" "ckBTC" "mxzaz-hqaaa-aaaar-qaada-cai" 8 10
   just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckETH" "Chain Key Ethereum" "ckETH" "ss2fx-dyaaa-aaaar-qacoq-cai" 18 2000000000000
   just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckUSDC" "Chain Key USD Coin" "ckUSDC" "xevnm-gaaaa-aaaar-qafnq-cai" 8 10000
   just dfx_local_deploy_icrc1_ledger "${OWNER}" "DOGE" "Test Token" "DOGE" "x5qut-viaaa-aaaar-qajda-cai" 8 10000
+
+  # Deploy index canisters AFTER ledgers
+  just dfx_local_deploy_icp_index
+  just dfx_local_deploy_icrc_index "ckBTC_index" "mxzaz-hqaaa-aaaar-qaada-cai" "n5wcd-faaaa-aaaar-qaaea-cai"
+  just dfx_local_deploy_icrc_index "ckETH_index" "ss2fx-dyaaa-aaaar-qacoq-cai" "s3zol-vqaaa-aaaar-qacpa-cai"
+  just dfx_local_deploy_icrc_index "ckUSDC_index" "xevnm-gaaaa-aaaar-qafnq-cai" "xrs4b-hiaaa-aaaar-qafoa-cai"
 
 [group('dfx')]
 dfx_local_deploy_token canister_name name symbol canister_id decimals fee:
@@ -72,18 +79,29 @@ dfx_local_deploy_token canister_name name symbol canister_id decimals fee:
 dfx_local_info:
   #!/usr/bin/env bash
   set -e
-  
+
   dfx_webserver_port=$(dfx info webserver-port)
   cashier_backend_id=$(dfx canister id cashier_backend)
   token_storage_id=$(dfx canister id token_storage)
   internet_identity_id=$(dfx canister id internet_identity)
   gate_service_id=$(dfx canister id gate_service)
 
+  # Index canister IDs (may not be deployed yet)
+  icp_index_id=$(dfx canister id icp_index 2>/dev/null || echo "not deployed")
+  ckbtc_index_id=$(dfx canister id ckBTC_index 2>/dev/null || echo "not deployed")
+  cketh_index_id=$(dfx canister id ckETH_index 2>/dev/null || echo "not deployed")
+  ckusdc_index_id=$(dfx canister id ckUSDC_index 2>/dev/null || echo "not deployed")
+
   echo "webserver-port: $dfx_webserver_port"
   echo "cashier_backend id: $cashier_backend_id"
   echo "token_storage id: $token_storage_id"
   echo "internet_identity id: $internet_identity_id"
   echo "gate_service_id: $gate_service_id"
+
+  echo "icp_index id: $icp_index_id"
+  echo "ckBTC_index id: $ckbtc_index_id"
+  echo "ckETH_index id: $cketh_index_id"
+  echo "ckUSDC_index id: $ckusdc_index_id"
 
   echo "cashier_backend url: http://$cashier_backend_id.raw.localhost:$dfx_webserver_port"
   echo "token_storage url: http://$token_storage_id.raw.localhost:$dfx_webserver_port"
@@ -263,6 +281,27 @@ dfx_local_deploy_icp_ledger:
     }
   })
   "
+
+
+[private]
+dfx_local_deploy_icp_index:
+  #!/usr/bin/env bash
+  set -e
+
+  dfx deploy icp_index --argument "(record {
+    ledger_id = principal \"ryjl3-tyaaa-aaaaa-aaaba-cai\";
+  })" --specified-id qhbym-qaaaa-aaaaa-aaafq-cai
+
+
+[private]
+dfx_local_deploy_icrc_index canister_name ledger_id index_id:
+  #!/usr/bin/env bash
+  set -e
+
+  dfx deploy {{canister_name}} --argument "(opt variant { Init = record {
+    ledger_id = principal \"{{ledger_id}}\";
+    retrieve_blocks_from_ledger_interval_seconds = opt 10;
+  } })" --specified-id {{index_id}}
 
 
 [private]
