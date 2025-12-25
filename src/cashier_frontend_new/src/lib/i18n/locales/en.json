@@ -321,6 +321,8 @@
       "errors": {
         "selectToken": "Please select a token to send.",
         "enterAddress": "Please enter a valid receive address.",
+        "invalidPrincipal": "Invalid Principal address format.",
+        "invalidAccountId": "Invalid Account Identifier format.",
         "amountGreaterThanZero": "Amount must be greater than zero.",
         "amountExceedsMax": "Amount exceeds maximum balance of {{max}}",
         "invalidReceiveType": "Invalid receive type selected."

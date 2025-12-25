@@ -27,7 +27,13 @@ import {
 import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
-import type { AssetAndFeeList, ForecastAssetAndFee } from "../types/feeService";
+import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+import { shortenAddress } from "$modules/wallet/utils/address";
+import type {
+  AssetAndFeeList,
+  ForecastAssetAndFee,
+  SendFeeOutput,
+} from "../types/feeService";
 
 export class FeeService {
   /**
@@ -226,6 +232,88 @@ export class FeeService {
       tokenAddress: ICP_LEDGER_CANISTER_ID,
       symbol: "ICP",
       decimals: 8,
+    };
+  }
+
+  /**
+   * Compute send fee for wallet transfers
+   * Simple calculation without Intent/Action complexity
+   * @param sendAmount - Amount to send (in smallest units)
+   * @param token - Token with fee, decimals, priceUSD
+   * @param receiveAddress - Recipient address for display
+   * @returns SendFeeOutput with raw and formatted values
+   */
+  computeSendFee(
+    sendAmount: bigint,
+    token: TokenWithPriceAndBalance,
+    receiveAddress: string,
+  ): SendFeeOutput {
+    const fee = token.fee ?? ICP_LEDGER_FEE;
+    const totalAmount = sendAmount + fee;
+
+    // Convert to display units
+    const sendAmountUi = parseBalanceUnits(sendAmount, token.decimals);
+    const feeUi = parseBalanceUnits(fee, token.decimals);
+    const totalAmountUi = parseBalanceUnits(totalAmount, token.decimals);
+
+    // Format for display
+    const sendAmountFormatted = formatNumber(sendAmountUi, {
+      tofixed: token.decimals,
+    });
+    const feeFormatted = formatNumber(feeUi, { tofixed: token.decimals });
+    const totalAmountFormatted = formatNumber(totalAmountUi, {
+      tofixed: token.decimals,
+    });
+
+    // Token display info
+    const tokenAddress = token.address;
+    const tokenLogo = getTokenLogo(token.address);
+
+    // Recipient display
+    const receiveAddressShortened = shortenAddress(receiveAddress);
+
+    // Network info (always ICP)
+    const networkName = "Internet Computer";
+    const networkLogo = "/icpLogo.png";
+
+    // USD calculations (optional)
+    let sendAmountUsd: number | undefined;
+    let feeUsd: number | undefined;
+    let totalAmountUsd: number | undefined;
+    let sendAmountUsdFormatted: string | undefined;
+    let feeUsdFormatted: string | undefined;
+    let totalAmountUsdFormatted: string | undefined;
+
+    if (token.priceUSD) {
+      sendAmountUsd = sendAmountUi * token.priceUSD;
+      feeUsd = feeUi * token.priceUSD;
+      totalAmountUsd = totalAmountUi * token.priceUSD;
+      sendAmountUsdFormatted = formatUsdAmount(sendAmountUsd);
+      feeUsdFormatted = formatUsdAmount(feeUsd);
+      totalAmountUsdFormatted = formatUsdAmount(totalAmountUsd);
+    }
+
+    return {
+      sendAmount,
+      fee,
+      totalAmount,
+      symbol: token.symbol,
+      decimals: token.decimals,
+      tokenAddress,
+      tokenLogo,
+      receiveAddress,
+      receiveAddressShortened,
+      networkName,
+      networkLogo,
+      sendAmountFormatted,
+      feeFormatted,
+      totalAmountFormatted,
+      sendAmountUsd,
+      feeUsd,
+      totalAmountUsd,
+      sendAmountUsdFormatted,
+      feeUsdFormatted,
+      totalAmountUsdFormatted,
     };
   }
 
