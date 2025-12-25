@@ -1,18 +1,12 @@
 <script lang="ts">
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import {
-    formatBalanceUnits,
-    parseBalanceUnits,
-  } from "$modules/shared/utils/converter";
-  import {
-    ACCOUNT_ID_TYPE,
     ICP_LEDGER_CANISTER_ID,
     ICP_INDEX_CANISTER_ID,
-    PRINCIPAL_TYPE,
   } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { createWalletHistoryStore } from "$modules/token/state/walletHistoryStore.svelte";
-  import { Principal } from "@dfinity/principal";
   import NavBar from "$modules/token/components/navBar.svelte";
   import { locale } from "$lib/i18n";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
@@ -20,36 +14,47 @@
   import { toast } from "svelte-sonner";
   import { page } from "$app/state";
   import ConfirmSendDrawer from "../components/confirmSendDrawer.svelte";
-  import { validate } from "../utils/send";
   import InputAmount from "$modules/shared/components/InputAmount.svelte";
   import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
-  import { calculateNetworkFeeInfo } from "../utils/networkFee";
+  import { walletSendStore } from "../state/walletSendStore.svelte";
+  import { ReceiveAddressType, TxState } from "../types/walletSendStore";
 
-  let selectedToken: string = $state("");
-  let receiveAddress: string = $state("");
-  let receiveType: number = $state(PRINCIPAL_TYPE);
-
-  let showConfirmDrawer = $state(false);
-  let txState: "confirm" | "pending" | "success" | "error" = $state("confirm");
-
-  let amount: number = $state(0);
-  let tokenAmount: string = $state("");
-  let usdAmount: string = $state("");
-
+  // URL param effect - set token from URL or default to first token
   $effect(() => {
     const tokenParam = page.url.searchParams.get("token");
     if (tokenParam) {
-      selectedToken = tokenParam;
+      walletSendStore.setSelectedToken(tokenParam);
     } else if (walletStore.query.data && walletStore.query.data.length > 0) {
-      if (!selectedToken) {
-        selectedToken = walletStore.query.data[0].address;
+      if (!walletSendStore.selectedToken) {
+        walletSendStore.setSelectedToken(walletStore.query.data[0].address);
       }
     }
   });
 
+  // Reset receiveType when token changes (non-ICP can't use AccountId)
+  $effect(() => {
+    if (
+      walletSendStore.selectedToken !== ICP_LEDGER_CANISTER_ID &&
+      walletSendStore.receiveType === ReceiveAddressType.ACCOUNT_ID
+    ) {
+      walletSendStore.setReceiveType(ReceiveAddressType.PRINCIPAL);
+    }
+  });
+
+  // Watch errorMessage and show toast on ERROR state
+  $effect(() => {
+    if (
+      walletSendStore.errorMessage &&
+      walletSendStore.txState === TxState.ERROR
+    ) {
+      toast.error(walletSendStore.errorMessage);
+    }
+  });
+
+  // Derived values - component specific
   let selectedTokenObj: TokenWithPriceAndBalance | null = $derived.by(() => {
-    if (!selectedToken || !walletStore.query.data) return null;
-    const token = walletStore.findTokenByAddress(selectedToken);
+    if (!walletSendStore.selectedToken || !walletStore.query.data) return null;
+    const token = walletStore.findTokenByAddress(walletSendStore.selectedToken);
     if (token.isErr()) return null;
     return token.unwrap();
   });
@@ -69,26 +74,17 @@
   });
 
   let shouldShowAddressTypeSelector: boolean = $derived(
-    selectedToken === ICP_LEDGER_CANISTER_ID,
+    walletSendStore.selectedToken === ICP_LEDGER_CANISTER_ID,
   );
 
-  $effect(() => {
-    if (
-      selectedToken !== ICP_LEDGER_CANISTER_ID &&
-      receiveType === ACCOUNT_ID_TYPE
-    ) {
-      receiveType = PRINCIPAL_TYPE;
-    }
-  });
-
-  let errorMessage: string = $state("");
-  let isSending: boolean = $state(false);
-  const isMaxAvailable = $derived(maxAmount > 0 && !isSending);
-
-  // Only show loading on initial load, not during background refreshes
+  const isMaxAvailable = $derived(maxAmount > 0 && !walletSendStore.isSending);
   const isLoading = $derived(
     !walletStore.query.data && walletStore.query.isLoading,
   );
+
+  // Derived from store
+  const sendFeeOutput = $derived(walletSendStore.getSendFeeOutput());
+  const transactionLink = $derived("https://example.com/transaction");
 
   /**
    * Resolve indexId for token (ICP uses constant, others use token.indexId)
@@ -107,7 +103,7 @@
    * Refresh transaction history for selected token (background, non-blocking)
    */
   function refreshTransactionHistory(): void {
-    const indexId = getIndexId(selectedToken, selectedTokenObj);
+    const indexId = getIndexId(walletSendStore.selectedToken, selectedTokenObj);
     if (!indexId) return;
 
     const historyStore = createWalletHistoryStore(indexId);
@@ -115,13 +111,13 @@
   }
 
   function handleSelectToken(address: string) {
-    selectedToken = address;
+    walletSendStore.setSelectedToken(address);
   }
 
   async function handlePasteFromClipboard() {
     try {
       const text = await navigator.clipboard.readText();
-      receiveAddress = text.trim();
+      walletSendStore.receiveAddress = text.trim();
       toast.success(locale.t("wallet.send.pasteSuccess"));
     } catch (err) {
       toast.error(locale.t("wallet.send.pasteError") + ": " + err);
@@ -129,71 +125,18 @@
   }
 
   function handleContinue() {
-    errorMessage = "";
-
-    const validationResult = validate({
-      selectedToken,
-      receiveAddress,
-      amount,
-      maxAmount,
-    });
-
-    if (!validationResult.success) {
-      errorMessage = validationResult.errorMessage;
-      return;
-    }
-
-    txState = "confirm";
-    showConfirmDrawer = true;
+    walletSendStore.prepareSend(maxAmount);
   }
 
   async function handleConfirmSend() {
-    errorMessage = "";
-    txState = "pending";
-
-    try {
-      const token = walletStore.findTokenByAddress(selectedToken).unwrap();
-      const balanceAmount = formatBalanceUnits(amount, token.decimals);
-
-      if (receiveType === PRINCIPAL_TYPE) {
-        const receivePrincipal = Principal.fromText(receiveAddress);
-        await walletStore.transferTokenToPrincipal(
-          selectedToken,
-          receivePrincipal,
-          balanceAmount,
-        );
-      } else if (
-        receiveType === ACCOUNT_ID_TYPE &&
-        selectedToken === ICP_LEDGER_CANISTER_ID
-      ) {
-        await walletStore.transferICPToAccount(receiveAddress, balanceAmount);
-      } else {
-        throw new Error(locale.t("wallet.send.errors.invalidReceiveType"));
-      }
-
-      txState = "success";
+    await walletSendStore.executeSend(() => {
       refreshTransactionHistory();
-    } catch (error) {
-      txState = "error";
-      toast.error(`${locale.t("wallet.send.errorMessagePrefix")} ${error}`);
-      showConfirmDrawer = false;
-    }
+    });
   }
 
   function handleCloseDrawer() {
-    showConfirmDrawer = false;
-    if (txState === "success") {
-      receiveAddress = "";
-      amount = 0;
-      tokenAmount = "";
-      usdAmount = "";
-    }
-    txState = "confirm";
+    walletSendStore.closeDrawer();
   }
-
-  const networkFee = $derived(calculateNetworkFeeInfo(selectedTokenObj));
-
-  const transactionLink = $derived("https://example.com/transaction");
 </script>
 
 <NavBar />
@@ -205,19 +148,19 @@
     </div>
   {:else if walletStore.query.data}
     <div class="space-y-4 grow-1 flex flex-col">
-      {#if errorMessage}
+      {#if walletSendStore.errorMessage}
         <div
           class="p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
         >
-          {errorMessage}
+          {walletSendStore.errorMessage}
         </div>
       {/if}
 
       <InputAmount
-        bind:selectedToken
-        bind:amount
-        bind:tokenAmount
-        bind:usdAmount
+        bind:selectedToken={walletSendStore.selectedToken}
+        bind:amount={walletSendStore.amount}
+        bind:tokenAmount={walletSendStore.tokenAmount}
+        bind:usdAmount={walletSendStore.usdAmount}
         {selectedTokenObj}
         {maxAmount}
         {isMaxAvailable}
@@ -235,18 +178,18 @@
         {#if shouldShowAddressTypeSelector}
           <div class="flex gap-1.5 mb-2">
             <button
-              onclick={() => (receiveType = PRINCIPAL_TYPE)}
-              class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {receiveType ===
-              PRINCIPAL_TYPE
+              onclick={() => walletSendStore.setReceiveType(ReceiveAddressType.PRINCIPAL)}
+              class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {walletSendStore.receiveType ===
+              ReceiveAddressType.PRINCIPAL
                 ? 'border-[#36A18B] bg-green-50'
                 : 'border-gray-300 hover:border-gray-400'}"
             >
               {locale.t("wallet.send.principalId")}
             </button>
             <button
-              onclick={() => (receiveType = ACCOUNT_ID_TYPE)}
-              class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {receiveType ===
-              ACCOUNT_ID_TYPE
+              onclick={() => walletSendStore.setReceiveType(ReceiveAddressType.ACCOUNT_ID)}
+              class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {walletSendStore.receiveType ===
+              ReceiveAddressType.ACCOUNT_ID
                 ? 'border-[#36A18B] bg-green-50'
                 : 'border-gray-300 hover:border-gray-400'}"
             >
@@ -259,7 +202,7 @@
           <input
             id="receive-address-input"
             type="text"
-            bind:value={receiveAddress}
+            bind:value={walletSendStore.receiveAddress}
             class="w-full p-2 pr-24 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green"
             placeholder={locale.t("wallet.send.addressPlaceholder")}
           />
@@ -274,7 +217,7 @@
           class="text-xs text-gray-500 mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
         >
           {locale.t(
-            receiveType === PRINCIPAL_TYPE
+            walletSendStore.receiveType === ReceiveAddressType.PRINCIPAL
               ? "wallet.send.addressPrincipleExample"
               : "wallet.send.addressAccountExample",
           )}
@@ -286,7 +229,7 @@
       >
         <Button
           onclick={handleContinue}
-          disabled={isSending}
+          disabled={walletSendStore.isSending}
           class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
           type="button"
         >
@@ -309,12 +252,9 @@
 </div>
 
 <ConfirmSendDrawer
-  bind:open={showConfirmDrawer}
-  {txState}
-  {amount}
-  selectedToken={selectedTokenObj}
-  {receiveAddress}
-  {networkFee}
+  bind:open={walletSendStore.showConfirmDrawer}
+  txState={walletSendStore.txState}
+  {sendFeeOutput}
   {transactionLink}
   onClose={handleCloseDrawer}
   onConfirm={handleConfirmSend}

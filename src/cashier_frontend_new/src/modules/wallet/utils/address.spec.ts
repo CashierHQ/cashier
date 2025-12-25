@@ -1,50 +1,125 @@
-import { describe, expect, it } from "vitest";
-import { shortenAddress } from "./address";
+import { describe, it, expect } from "vitest";
+import { isValidPrincipal, isValidAccountId, shortenAddress } from "./address";
+
+describe("isValidPrincipal", () => {
+  it("should return Ok with Principal for valid principal", () => {
+    const validPrincipal = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+    const result = isValidPrincipal(validPrincipal);
+
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap().toText()).toBe(validPrincipal);
+  });
+
+  it("should return Ok for anonymous principal", () => {
+    const anonymousPrincipal = "2vxsx-fae";
+    const result = isValidPrincipal(anonymousPrincipal);
+
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap().toText()).toBe(anonymousPrincipal);
+  });
+
+  it("should return Err for empty string", () => {
+    const result = isValidPrincipal("");
+
+    expect(result.isErr()).toBe(true);
+    expect(result.error).toBe("Invalid Principal address");
+  });
+
+  it("should return Err for invalid principal format", () => {
+    const result = isValidPrincipal("invalid-principal");
+
+    expect(result.isErr()).toBe(true);
+    expect(result.error).toBe("Invalid Principal address");
+  });
+
+  it("should return Err for random string", () => {
+    const result = isValidPrincipal("abc123xyz");
+
+    expect(result.isErr()).toBe(true);
+    expect(result.error).toBe("Invalid Principal address");
+  });
+
+  it("should return Err for account id format (hex string)", () => {
+    const accountId =
+      "5c66192f65e0bacc2c9e34a0c0eb1ebfe52da1a5b8c11ddfa74e4e4f67e8c6b2";
+    const result = isValidPrincipal(accountId);
+
+    expect(result.isErr()).toBe(true);
+  });
+});
+
+describe("isValidAccountId", () => {
+  it("should return Ok with AccountIdentifier for valid account id", () => {
+    // This is the ICP ledger account - a known valid account identifier
+    const validAccountId =
+      "d3e13d4777e22367532053190b6c6ccf57444a61337e996242b1abfb52cf92c8";
+    const result = isValidAccountId(validAccountId);
+
+    expect(result.isOk()).toBe(true);
+  });
+
+  it("should return Err for empty string", () => {
+    const result = isValidAccountId("");
+
+    expect(result.isErr()).toBe(true);
+    expect(result.error).toBe("Invalid Account Identifier");
+  });
+
+  it("should return Err for invalid hex string", () => {
+    const result = isValidAccountId("not-a-hex-string");
+
+    expect(result.isErr()).toBe(true);
+    expect(result.error).toBe("Invalid Account Identifier");
+  });
+
+  it("should return Err for too short hex string", () => {
+    const result = isValidAccountId("5c66192f65e0bacc");
+
+    expect(result.isErr()).toBe(true);
+    expect(result.error).toBe("Invalid Account Identifier");
+  });
+
+  it("should return Err for principal format", () => {
+    const result = isValidAccountId("ryjl3-tyaaa-aaaaa-aaaba-cai");
+
+    expect(result.isErr()).toBe(true);
+    expect(result.error).toBe("Invalid Account Identifier");
+  });
+
+  it("should return Err for invalid checksum", () => {
+    const invalidChecksum =
+      "0000000000000000000000000000000000000000000000000000000000000000";
+    const result = isValidAccountId(invalidChecksum);
+
+    expect(result.isErr()).toBe(true);
+  });
+});
 
 describe("shortenAddress", () => {
-  it("should return the original address if length is 16 or less", () => {
-    const shortAddress = "abc123def456";
-    expect(shortenAddress(shortAddress)).toBe("abc123def456");
+  it("should return full address if 16 chars or less", () => {
+    const shortAddress = "abc123";
+    expect(shortenAddress(shortAddress)).toBe(shortAddress);
   });
 
-  it("should return the original address if length is exactly 16", () => {
-    const address = "1234567890123456";
-    expect(shortenAddress(address)).toBe("1234567890123456");
-  });
-
-  it("should shorten address longer than 16 characters", () => {
-    const longAddress = "rrkah-fqaaa-aaaaa-aaaaq-cai";
+  it("should shorten address longer than 16 chars", () => {
+    const longAddress = "ryjl3-tyaaa-aaaaa-aaaba-cai";
     const result = shortenAddress(longAddress);
 
-    expect(result).toBe("rrkah-fq.....aq-cai");
+    // First 8 chars + ".....'" + last 6 chars
+    expect(result).toBe("ryjl3-ty.....ba-cai");
+    expect(result.length).toBe(19);
   });
 
-  it("should correctly format a typical canister ID", () => {
-    const canisterId = "mxzaz-hqaaa-aaaar-qaada-cai";
-    const result = shortenAddress(canisterId);
-
-    expect(result).toBe("mxzaz-hq.....da-cai");
+  it("should handle exactly 16 char address", () => {
+    const address = "1234567890123456";
+    expect(shortenAddress(address)).toBe(address);
   });
 
-  it("should handle very long addresses", () => {
-    const veryLongAddress = "0x1234567890abcdef1234567890abcdef1234567890";
-    const result = shortenAddress(veryLongAddress);
-
-    expect(result).toBe("0x123456.....567890");
-    expect(result.length).toBe(19); // 8 (0x123456) + 5 (.....) + 6 (567890)
-  });
-
-  it("should handle empty string", () => {
-    const emptyAddress = "";
-    expect(shortenAddress(emptyAddress)).toBe("");
-  });
-
-  it("should preserve first 8 and last 6 characters", () => {
-    const address = "abcdefghijklmnopqrstuvwxyz";
+  it("should handle 17 char address", () => {
+    const address = "12345678901234567";
     const result = shortenAddress(address);
 
-    expect(result.startsWith("abcdefgh")).toBe(true);
-    expect(result.endsWith("uvwxyz")).toBe(true);
-    expect(result).toBe("abcdefgh.....uvwxyz");
+    // First 8 + ".....'" + last 6
+    expect(result).toBe("12345678.....234567");
   });
 });
