@@ -396,7 +396,9 @@
       "success": "Token imported successfully",
       "error": "Failed to import token:",
       "errors": {
-        "enterContractAddress": "Please enter a contract address"
+        "enterContractAddress": "Please enter a contract address",
+        "invalidContractAddress": "Please enter a valid canister id",
+        "invalidIndexCanisterId": "Please enter a valid index canister ID"
       }
     }
   }

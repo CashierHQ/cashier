@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { isValidPrincipal, isValidAccountId, shortenAddress } from "./address";
+import { Ed25519KeyIdentity } from "@dfinity/identity";
 
 describe("isValidPrincipal", () => {
   it("should return Ok with Principal for valid principal", () => {
@@ -22,21 +23,21 @@ describe("isValidPrincipal", () => {
     const result = isValidPrincipal("");
 
     expect(result.isErr()).toBe(true);
-    expect(result.error).toBe("Invalid Principal address");
+    expect(result.unwrapErr()).toBe("Invalid Principal address");
   });
 
   it("should return Err for invalid principal format", () => {
     const result = isValidPrincipal("invalid-principal");
 
     expect(result.isErr()).toBe(true);
-    expect(result.error).toBe("Invalid Principal address");
+    expect(result.unwrapErr()).toBe("Invalid Principal address");
   });
 
   it("should return Err for random string", () => {
     const result = isValidPrincipal("abc123xyz");
 
     expect(result.isErr()).toBe(true);
-    expect(result.error).toBe("Invalid Principal address");
+    expect(result.unwrapErr()).toBe("Invalid Principal address");
   });
 
   it("should return Err for account id format (hex string)", () => {
@@ -45,6 +46,19 @@ describe("isValidPrincipal", () => {
     const result = isValidPrincipal(accountId);
 
     expect(result.isErr()).toBe(true);
+  });
+
+  it("should return Ok for principal with valid addresses", () => {
+    const canisterId = "ghsi2-tqaaa-aaaan-aaaca-cai";
+    const randomPid = Ed25519KeyIdentity.generate().getPrincipal().toText();
+
+    const result = isValidPrincipal(canisterId);
+    const result2 = isValidPrincipal(randomPid);
+
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap().toText()).toBe(canisterId);
+    expect(result2.isOk()).toBe(true);
+    expect(result2.unwrap().toText()).toBe(randomPid);
   });
 });
 
@@ -62,28 +76,28 @@ describe("isValidAccountId", () => {
     const result = isValidAccountId("");
 
     expect(result.isErr()).toBe(true);
-    expect(result.error).toBe("Invalid Account Identifier");
+    expect(result.unwrapErr()).toBe("Invalid Account Identifier");
   });
 
   it("should return Err for invalid hex string", () => {
     const result = isValidAccountId("not-a-hex-string");
 
     expect(result.isErr()).toBe(true);
-    expect(result.error).toBe("Invalid Account Identifier");
+    expect(result.unwrapErr()).toBe("Invalid Account Identifier");
   });
 
   it("should return Err for too short hex string", () => {
     const result = isValidAccountId("5c66192f65e0bacc");
 
     expect(result.isErr()).toBe(true);
-    expect(result.error).toBe("Invalid Account Identifier");
+    expect(result.unwrapErr()).toBe("Invalid Account Identifier");
   });
 
   it("should return Err for principal format", () => {
     const result = isValidAccountId("ryjl3-tyaaa-aaaaa-aaaba-cai");
 
     expect(result.isErr()).toBe(true);
-    expect(result.error).toBe("Invalid Account Identifier");
+    expect(result.unwrapErr()).toBe("Invalid Account Identifier");
   });
 
   it("should return Err for invalid checksum", () => {
