@@ -2,7 +2,7 @@ import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { describe, expect, it } from "vitest";
 import {
   calculateRequiredAssetAmount,
-  maxAmountForAsset,
+  calculateMaxAmountForAsset,
 } from "./amountCalculator";
 import { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 
@@ -94,7 +94,11 @@ describe("maxAmountForAsset", () => {
       },
     ];
 
-    const maxAmountResult = maxAmountForAsset("0xtoken1", 1, mockWalletTokens);
+    const maxAmountResult = calculateMaxAmountForAsset(
+      "0xtoken1",
+      1,
+      mockWalletTokens,
+    );
     expect(maxAmountResult.isOk()).toBe(true);
     const maxAmount = maxAmountResult.unwrap();
     expect(maxAmount).toBe(1_000_000_000n - 2n * fee);
@@ -103,7 +107,7 @@ describe("maxAmountForAsset", () => {
   it("should return error if token is not found", () => {
     const mockWalletTokens: TokenWithPriceAndBalance[] = [];
 
-    const maxAmountResult = maxAmountForAsset(
+    const maxAmountResult = calculateMaxAmountForAsset(
       "nonexistentToken",
       1,
       mockWalletTokens,
