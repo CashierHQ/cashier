@@ -7,9 +7,11 @@
   import {
     ACCOUNT_ID_TYPE,
     ICP_LEDGER_CANISTER_ID,
+    ICP_INDEX_CANISTER_ID,
     PRINCIPAL_TYPE,
   } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { createWalletHistoryStore } from "$modules/token/state/walletHistoryStore.svelte";
   import { Principal } from "@dfinity/principal";
   import NavBar from "$modules/token/components/navBar.svelte";
   import { locale } from "$lib/i18n";
@@ -20,7 +22,7 @@
   import ConfirmSendDrawer from "../components/confirmSendDrawer.svelte";
   import { validate } from "../utils/send";
   import InputAmount from "$modules/shared/components/InputAmount.svelte";
-  import { maxAmountForAsset } from "$modules/links/utils/amountCalculator";
+  import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
   import { calculateNetworkFeeInfo } from "../utils/networkFee";
 
   let selectedToken: string = $state("");
@@ -55,9 +57,8 @@
   let maxAmount: number = $derived.by(() => {
     if (!selectedTokenObj || !walletStore.query.data) return 0;
 
-    const maxAmountResult = maxAmountForAsset(
+    const maxAmountResult = calculateMaxSendAmount(
       selectedTokenObj.address,
-      1,
       walletStore.query.data,
     );
 
@@ -88,6 +89,30 @@
   const isLoading = $derived(
     !walletStore.query.data && walletStore.query.isLoading,
   );
+
+  /**
+   * Resolve indexId for token (ICP uses constant, others use token.indexId)
+   */
+  function getIndexId(
+    address: string,
+    tokenObj: TokenWithPriceAndBalance | null,
+  ): string | undefined {
+    if (address === ICP_LEDGER_CANISTER_ID) {
+      return ICP_INDEX_CANISTER_ID;
+    }
+    return tokenObj?.indexId;
+  }
+
+  /**
+   * Refresh transaction history for selected token (background, non-blocking)
+   */
+  function refreshTransactionHistory(): void {
+    const indexId = getIndexId(selectedToken, selectedTokenObj);
+    if (!indexId) return;
+
+    const historyStore = createWalletHistoryStore(indexId);
+    historyStore.refresh();
+  }
 
   function handleSelectToken(address: string) {
     selectedToken = address;
@@ -147,6 +172,7 @@
       }
 
       txState = "success";
+      refreshTransactionHistory();
     } catch (error) {
       txState = "error";
       toast.error(`${locale.t("wallet.send.errorMessagePrefix")} ${error}`);
