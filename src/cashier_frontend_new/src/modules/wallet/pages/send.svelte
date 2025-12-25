@@ -178,7 +178,8 @@
         {#if shouldShowAddressTypeSelector}
           <div class="flex gap-1.5 mb-2">
             <button
-              onclick={() => walletSendStore.setReceiveType(ReceiveAddressType.PRINCIPAL)}
+              onclick={() =>
+                walletSendStore.setReceiveType(ReceiveAddressType.PRINCIPAL)}
               class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {walletSendStore.receiveType ===
               ReceiveAddressType.PRINCIPAL
                 ? 'border-[#36A18B] bg-green-50'
@@ -187,7 +188,8 @@
               {locale.t("wallet.send.principalId")}
             </button>
             <button
-              onclick={() => walletSendStore.setReceiveType(ReceiveAddressType.ACCOUNT_ID)}
+              onclick={() =>
+                walletSendStore.setReceiveType(ReceiveAddressType.ACCOUNT_ID)}
               class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {walletSendStore.receiveType ===
               ReceiveAddressType.ACCOUNT_ID
                 ? 'border-[#36A18B] bg-green-50'

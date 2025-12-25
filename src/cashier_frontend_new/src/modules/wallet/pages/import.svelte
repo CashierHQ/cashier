@@ -15,7 +15,7 @@
     MOCK_TOKEN_DATA,
     SECURITY_LEARN_MORE_URL,
   } from "../mock/mock";
-    import { isValidPrincipal } from "../utils/address";
+  import { isValidPrincipal } from "../utils/address";
 
   let isReview = $state(false);
   let selectedNetwork = $state("icp");
@@ -67,7 +67,7 @@
       return;
     }
 
-    if(isValidPrincipal(contractAddress).isErr()) {
+    if (isValidPrincipal(contractAddress).isErr()) {
       toast.error(locale.t("wallet.import.errors.invalidContractAddress"));
       return;
     }
