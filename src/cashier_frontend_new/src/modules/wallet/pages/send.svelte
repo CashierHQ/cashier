@@ -16,13 +16,9 @@
   import ConfirmSendDrawer from "../components/confirmSendDrawer.svelte";
   import InputAmount from "$modules/shared/components/InputAmount.svelte";
   import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
-  import { ReceiveAddressType, TxState } from "$modules/wallet/types/walletSendStore";
-  import {
-    validateSend,
-    computeSendFee,
-    executeSend,
-    getTransactionLink,
-  } from "$modules/wallet/services/walletSendService";
+  import { TxState } from "$modules/wallet/types/walletSendStore";
+  import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
+  import { ReceiveAddressType } from "../types";
 
   // Form state (local)
   let selectedToken = $state("");
@@ -34,7 +30,6 @@
   // UI state (local)
   let receiveType = $state<ReceiveAddressType>(ReceiveAddressType.PRINCIPAL);
   let showConfirmDrawer = $state(false);
-  let txState = $state<TxState>(TxState.CONFIRM);
   let isSending = $state(false);
   let lastBlockId = $state<bigint | null>(null);
 
@@ -91,16 +86,18 @@
     !walletStore.query.data && walletStore.query.isLoading,
   );
 
-  // Derived from service functions
+  // Derived from store methods
   const sendFeeResult = $derived(
-    computeSendFee({ selectedToken, amount, receiveAddress }),
+    walletSendStore.computeSendFee({ selectedToken, amount, receiveAddress }),
   );
   const sendFeeOutput = $derived(
     sendFeeResult.isOk() ? sendFeeResult.value : null,
   );
 
   const transactionLink = $derived(
-    lastBlockId !== null ? getTransactionLink(selectedToken, lastBlockId) : null,
+    lastBlockId !== null
+      ? walletSendStore.getTransactionLink(selectedToken, lastBlockId)
+      : null,
   );
 
   /**
@@ -150,7 +147,7 @@
   }
 
   function handleContinue() {
-    const result = validateSend({
+    const result = walletSendStore.validateSend({
       selectedToken,
       receiveAddress,
       amount,
@@ -160,16 +157,16 @@
     if (result.isErr()) {
       toast.error(result.error);
     } else {
-      txState = TxState.CONFIRM;
+      walletSendStore.txState = TxState.CONFIRM;
       showConfirmDrawer = true;
     }
   }
 
   async function handleConfirmSend() {
-    txState = TxState.PENDING;
+    walletSendStore.txState = TxState.PENDING;
     isSending = true;
 
-    const result = await executeSend({
+    const result = await walletSendStore.executeSend({
       selectedToken,
       receiveAddress,
       amount,
@@ -178,10 +175,10 @@
 
     if (result.isOk()) {
       lastBlockId = result.value;
-      txState = TxState.SUCCESS;
+      walletSendStore.txState = TxState.SUCCESS;
       refreshTransactionHistory();
     } else {
-      txState = TxState.ERROR;
+      walletSendStore.txState = TxState.ERROR;
       showConfirmDrawer = false;
       toast.error(result.error);
     }
@@ -191,14 +188,14 @@
 
   function handleCloseDrawer() {
     showConfirmDrawer = false;
-    if (txState === TxState.SUCCESS) {
+    if (walletSendStore.txState === TxState.SUCCESS) {
       // Reset form
       receiveAddress = "";
       amount = 0;
       tokenAmount = "";
       usdAmount = "";
     }
-    txState = TxState.CONFIRM;
+    walletSendStore.txState = TxState.CONFIRM;
   }
 </script>
 
@@ -212,10 +209,10 @@
   {:else if walletStore.query.data}
     <div class="space-y-4 grow-1 flex flex-col">
       <InputAmount
-        bind:selectedToken={selectedToken}
-        bind:amount={amount}
-        bind:tokenAmount={tokenAmount}
-        bind:usdAmount={usdAmount}
+        bind:selectedToken
+        bind:amount
+        bind:tokenAmount
+        bind:usdAmount
         {selectedTokenObj}
         {maxAmount}
         {isMaxAvailable}
@@ -308,7 +305,7 @@
 
 <ConfirmSendDrawer
   bind:open={showConfirmDrawer}
-  {txState}
+  txState={walletSendStore.txState}
   {sendFeeOutput}
   {transactionLink}
   onClose={handleCloseDrawer}
