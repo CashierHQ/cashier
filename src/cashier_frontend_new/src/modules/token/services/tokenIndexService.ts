@@ -211,44 +211,25 @@ export class TokenIndexService {
    * Map ICRC kind string to unified TransactionKindValue
    * ICRC canisters may use various kind formats: "xfer", "transfer", "icrc1_transfer", etc.
    */
-  getIcrcKind(
-    icrcKind: string,
-    transaction: IcrcIndexNgTransactionWithId["transaction"],
-  ): TransactionKindValue {
+  getIcrcKind(icrcKind: string): TransactionKindValue {
     const lowerKind = icrcKind.toLowerCase();
-
-    // Check for transfer variants
-    if (
-      lowerKind === "transfer" ||
-      lowerKind === "xfer" ||
-      lowerKind.includes("transfer")
-    ) {
-      return TransactionKind.TRANSFER;
+    switch (lowerKind) {
+      case "transfer":
+      case "xfer":
+      case "icrc1_transfer":
+        return TransactionKind.TRANSFER;
+      case "mint":
+      case "icrc1_mint":
+        return TransactionKind.MINT;
+      case "burn":
+      case "icrc1_burn":
+        return TransactionKind.BURN;
+      case "approve":
+      case "icrc1_approve":
+        return TransactionKind.APPROVE;
+      default:
+        assertUnreachable(lowerKind as never);
     }
-    // Check for mint variants
-    if (lowerKind === "mint" || lowerKind.includes("mint")) {
-      return TransactionKind.MINT;
-    }
-    // Check for burn variants
-    if (lowerKind === "burn" || lowerKind.includes("burn")) {
-      return TransactionKind.BURN;
-    }
-    // Check for approve variants
-    if (lowerKind === "approve" || lowerKind.includes("approve")) {
-      return TransactionKind.APPROVE;
-    }
-
-    // Fallback: infer from which optional field is populated
-    if (fromNullable(transaction.transfer)) return TransactionKind.TRANSFER;
-    if (fromNullable(transaction.mint)) return TransactionKind.MINT;
-    if (fromNullable(transaction.burn)) return TransactionKind.BURN;
-    if (fromNullable(transaction.approve)) return TransactionKind.APPROVE;
-
-    // Default to transfer if can't determine
-    console.warn(
-      `Unknown ICRC transaction kind: ${icrcKind}, defaulting to transfer`,
-    );
-    return TransactionKind.TRANSFER;
   }
 
   /**
@@ -257,7 +238,7 @@ export class TokenIndexService {
    */
   mapIcrcTransaction(tx: IcrcIndexNgTransactionWithId): TokenTransaction {
     const { id, transaction } = tx;
-    const kind = this.getIcrcKind(transaction.kind, transaction);
+    const kind = this.getIcrcKind(transaction.kind);
 
     // Extract from optional array fields using fromNullable
     const transfer = fromNullable(transaction.transfer);
