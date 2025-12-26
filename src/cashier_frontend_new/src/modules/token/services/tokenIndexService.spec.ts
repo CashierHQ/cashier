@@ -685,6 +685,83 @@ describe("TokenIndexService", () => {
     });
   });
 
+  describe("getIcrcKind", () => {
+    const service = new TokenIndexService(
+      Principal.fromText("mxzaz-hqaaa-aaaar-qaada-cai"),
+    );
+
+    describe("transfer variants", () => {
+      it.each(["transfer", "Transfer", "TRANSFER"])(
+        "should map '%s' to TRANSFER",
+        (kind) => {
+          expect(service.getIcrcKind(kind)).toBe(TransactionKind.TRANSFER);
+        },
+      );
+
+      it.each(["xfer", "Xfer", "XFER"])(
+        "should map '%s' to TRANSFER",
+        (kind) => {
+          expect(service.getIcrcKind(kind)).toBe(TransactionKind.TRANSFER);
+        },
+      );
+
+      it.each(["icrc1_transfer", "Icrc1_Transfer", "ICRC1_TRANSFER"])(
+        "should map '%s' to TRANSFER",
+        (kind) => {
+          expect(service.getIcrcKind(kind)).toBe(TransactionKind.TRANSFER);
+        },
+      );
+    });
+
+    describe("mint variants", () => {
+      it.each(["mint", "Mint", "MINT"])("should map '%s' to MINT", (kind) => {
+        expect(service.getIcrcKind(kind)).toBe(TransactionKind.MINT);
+      });
+
+      it.each(["icrc1_mint", "Icrc1_Mint", "ICRC1_MINT"])(
+        "should map '%s' to MINT",
+        (kind) => {
+          expect(service.getIcrcKind(kind)).toBe(TransactionKind.MINT);
+        },
+      );
+    });
+
+    describe("burn variants", () => {
+      it.each(["burn", "Burn", "BURN"])("should map '%s' to BURN", (kind) => {
+        expect(service.getIcrcKind(kind)).toBe(TransactionKind.BURN);
+      });
+
+      it.each(["icrc1_burn", "Icrc1_Burn", "ICRC1_BURN"])(
+        "should map '%s' to BURN",
+        (kind) => {
+          expect(service.getIcrcKind(kind)).toBe(TransactionKind.BURN);
+        },
+      );
+    });
+
+    describe("approve variants", () => {
+      it.each(["approve", "Approve", "APPROVE"])(
+        "should map '%s' to APPROVE",
+        (kind) => {
+          expect(service.getIcrcKind(kind)).toBe(TransactionKind.APPROVE);
+        },
+      );
+
+      it.each(["icrc1_approve", "Icrc1_Approve", "ICRC1_APPROVE"])(
+        "should map '%s' to APPROVE",
+        (kind) => {
+          expect(service.getIcrcKind(kind)).toBe(TransactionKind.APPROVE);
+        },
+      );
+    });
+
+    describe("unknown kind", () => {
+      it("should throw for unknown kind", () => {
+        expect(() => service.getIcrcKind("unknown")).toThrow();
+      });
+    });
+  });
+
   describe("pagination", () => {
     it("should use default page size when maxResults not specified", async () => {
       // Arrange
