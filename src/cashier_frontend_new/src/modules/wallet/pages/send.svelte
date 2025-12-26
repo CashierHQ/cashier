@@ -114,6 +114,14 @@
     walletSendStore.setSelectedToken(address);
   }
 
+  function handleSetReceiveTypePrincipal() {
+    walletSendStore.setReceiveType(ReceiveAddressType.PRINCIPAL);
+  }
+
+  function handleSetReceiveTypeAccountId() {
+    walletSendStore.setReceiveType(ReceiveAddressType.ACCOUNT_ID);
+  }
+
   async function handlePasteFromClipboard() {
     try {
       const text = await navigator.clipboard.readText();
@@ -178,8 +186,7 @@
         {#if shouldShowAddressTypeSelector}
           <div class="flex gap-1.5 mb-2">
             <button
-              onclick={() =>
-                walletSendStore.setReceiveType(ReceiveAddressType.PRINCIPAL)}
+              onclick={handleSetReceiveTypePrincipal}
               class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {walletSendStore.receiveType ===
               ReceiveAddressType.PRINCIPAL
                 ? 'border-[#36A18B] bg-green-50'
@@ -188,8 +195,7 @@
               {locale.t("wallet.send.principalId")}
             </button>
             <button
-              onclick={() =>
-                walletSendStore.setReceiveType(ReceiveAddressType.ACCOUNT_ID)}
+              onclick={handleSetReceiveTypeAccountId}
               class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {walletSendStore.receiveType ===
               ReceiveAddressType.ACCOUNT_ID
                 ? 'border-[#36A18B] bg-green-50'
