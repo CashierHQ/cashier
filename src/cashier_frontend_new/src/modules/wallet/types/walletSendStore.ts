@@ -1,12 +1,4 @@
-import { type Result } from "ts-results-es";
-
-/**
- * Receive address type enum
- */
-export enum ReceiveAddressType {
-  PRINCIPAL = "PRINCIPAL",
-  ACCOUNT_ID = "ACCOUNT_ID",
-}
+import type { ReceiveAddressType } from ".";
 
 /**
  * Transaction state enum
@@ -19,8 +11,23 @@ export enum TxState {
   ERROR = "ERROR",
 }
 
-/**
- * Validation result using ts-results-es
- * Ok(true) = valid, Err(errorMessage) = invalid
- */
-export type ValidationResult = Result<true, string>;
+export interface ValidateSendParams {
+  selectedToken: string;
+  receiveAddress: string;
+  amount: number;
+  receiveType: ReceiveAddressType;
+  maxAmount: number;
+}
+
+export interface ComputeSendFeeParams {
+  selectedToken: string;
+  amount: number;
+  receiveAddress: string;
+}
+
+export interface ExecuteSendParams {
+  selectedToken: string;
+  receiveAddress: string;
+  amount: number;
+  receiveType: ReceiveAddressType;
+}
