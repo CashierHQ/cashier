@@ -18,7 +18,7 @@
   import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
   import { TxState } from "$modules/wallet/types/walletSendStore";
   import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
-  import { ReceiveAddressType } from "../types";
+  import { ReceiveAddressType } from "$modules/wallet/types";
 
   // Form state (local)
   let selectedToken = $state("");
@@ -87,18 +87,22 @@
   );
 
   // Derived from store methods
-  const sendFeeResult = $derived(
-    walletSendStore.computeSendFee({ selectedToken, amount, receiveAddress }),
-  );
-  const sendFeeOutput = $derived(
-    sendFeeResult.isOk() ? sendFeeResult.value : null,
-  );
+  const sendFeeResult = $derived.by(() => {
+    return walletSendStore.computeSendFee({
+      selectedToken,
+      amount,
+      receiveAddress,
+    });
+  });
+  const sendFeeOutput = $derived.by(() => {
+    return sendFeeResult.isOk() ? sendFeeResult.value : null;
+  });
 
-  const transactionLink = $derived(
-    lastBlockId !== null
+  const transactionLink = $derived.by(() => {
+    return lastBlockId !== null
       ? walletSendStore.getTransactionLink(selectedToken, lastBlockId)
-      : null,
-  );
+      : null;
+  });
 
   /**
    * Resolve indexId for token (ICP uses constant, others use token.indexId)
