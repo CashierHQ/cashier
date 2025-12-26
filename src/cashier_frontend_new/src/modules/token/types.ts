@@ -79,32 +79,13 @@ export type GetTransactionsResult = {
 };
 
 /**
- * Display transaction type enum-like class (user perspective)
- */
-export class DisplayTransactionType {
-  private constructor() {}
-  static readonly SENT = "sent";
-  static readonly RECEIVED = "received";
-  static readonly APPROVE = "approve";
-  static readonly TRANSFER_FROM = "transferFrom"; // Tokens transferred by a spender
-  static readonly MINT = "mint"; // Tokens created (received from minting)
-  static readonly BURN = "burn"; // Tokens destroyed
-}
-
-export type DisplayTransactionTypeValue =
-  | typeof DisplayTransactionType.SENT
-  | typeof DisplayTransactionType.RECEIVED
-  | typeof DisplayTransactionType.APPROVE
-  | typeof DisplayTransactionType.TRANSFER_FROM
-  | typeof DisplayTransactionType.MINT
-  | typeof DisplayTransactionType.BURN;
-
-/**
- * Display-friendly transaction type for UI rendering
- * Derived from TokenTransaction with user-perspective fields
+ * Display-friendly transaction for UI rendering
+ * Uses kind + isOutgoing directly (KISS principle)
  */
 export type DisplayTransaction = {
-  type: DisplayTransactionTypeValue;
+  kind: TransactionKindValue;
+  /** True if outgoing (debit, shows "-"), false if incoming (credit, shows "+") */
+  isOutgoing: boolean;
   amount: number;
   timestamp: number;
 };
