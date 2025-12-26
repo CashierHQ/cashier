@@ -14,14 +14,20 @@
   import NavBar from "$modules/token/components/navBar.svelte";
   import { locale } from "$lib/i18n";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import { Clipboard } from "lucide-svelte";
+  import { Clipboard, Info } from "lucide-svelte";
   import { toast } from "svelte-sonner";
-  import { page } from "$app/state";
   import ConfirmSendDrawer from "../components/confirmSendDrawer.svelte";
   import { validate } from "../utils/send";
   import InputAmount from "$modules/shared/components/InputAmount.svelte";
   import { maxAmountForAsset } from "$modules/links/utils/amountCalculator";
   import { calculateNetworkFeeInfo } from "../utils/networkFee";
+
+  type Props = {
+    initialToken?: string;
+    onNavigateBack: () => void;
+  };
+
+  let { initialToken, onNavigateBack }: Props = $props();
 
   let selectedToken: string = $state("");
   let receiveAddress: string = $state("");
@@ -35,9 +41,8 @@
   let usdAmount: string = $state("");
 
   $effect(() => {
-    const tokenParam = page.url.searchParams.get("token");
-    if (tokenParam) {
-      selectedToken = tokenParam;
+    if (initialToken) {
+      selectedToken = initialToken;
     } else if (walletStore.query.data && walletStore.query.data.length > 0) {
       if (!selectedToken) {
         selectedToken = walletStore.query.data[0].address;
@@ -84,7 +89,6 @@
   let isSending: boolean = $state(false);
   const isMaxAvailable = $derived(maxAmount > 0 && !isSending);
 
-  // Only show loading on initial load, not during background refreshes
   const isLoading = $derived(
     !walletStore.query.data && walletStore.query.isLoading,
   );
@@ -170,7 +174,11 @@
   const transactionLink = $derived("https://example.com/transaction");
 </script>
 
-<NavBar />
+<NavBar
+  mode="back-only"
+  title={locale.t("wallet.send.header")}
+  onBack={onNavigateBack}
+/>
 
 <div class="px-4 grow-1 flex flex-col">
   {#if isLoading}
@@ -253,6 +261,14 @@
               : "wallet.send.addressAccountExample",
           )}
         </div>
+        {#if receiveType === PRINCIPAL_TYPE && shouldShowAddressTypeSelector}
+          <div class="flex items-start gap-1.5 mt-2">
+            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
+            <div class="text-sm text-green">
+              {locale.t("wallet.send.principleIdInfoText")}
+            </div>
+          </div>
+        {/if}
       </div>
 
       <div

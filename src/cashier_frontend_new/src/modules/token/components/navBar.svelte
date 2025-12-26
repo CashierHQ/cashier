@@ -1,7 +1,4 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
-  import { page } from "$app/state";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
     balanceToUSDValue,
@@ -18,24 +15,55 @@
   } from "lucide-svelte";
   import { toast } from "svelte-sonner";
   import { locale } from "$lib/i18n";
-  import { getPageTitle } from "../utils/getPageTitle";
+
+  type Token = {
+    address: string;
+    symbol: string;
+    balance: bigint;
+    decimals: number;
+    priceUSD: number;
+    enabled: boolean;
+  };
 
   type Props = {
-    activeTab?: "tokens" | "nfts";
-    header?: string;
+    // View mode
+    mode?: "default" | "token" | "back-only";
+
+    // Token data (for token view)
+    token?: Token;
+
+    // Balance visibility
     isBalanceVisible?: boolean;
     onToggleBalance?: () => void;
+
+    // Actions
+    onSend?: () => void;
+    onReceive?: () => void;
+    onSwap?: () => void;
+    onBack?: () => void;
+
+    // Tabs (for default view)
+    activeTab?: "tokens" | "nfts";
+    onTabChange?: (tab: "tokens" | "nfts") => void;
+
+    // Header (for back-only mode)
+    title?: string;
   };
 
   let {
-    activeTab = $bindable("tokens"),
-    header,
+    mode = "default",
+    token,
     isBalanceVisible = true,
     onToggleBalance,
+    onSend,
+    onReceive,
+    onSwap,
+    onBack,
+    activeTab = "tokens",
+    onTabChange,
+    title = "",
   }: Props = $props();
 
-  let currentPath = $derived.by(() => page.url.pathname);
-  let tokenParam = $derived(page.params.token);
   let failedImageLoad = $state(false);
 
   function toggleBalanceVisibility() {
@@ -59,75 +87,34 @@
 
   let totalBalance = $derived.by(() => calculateTotalBalance());
 
-  // Get token details if we're on a token page
-  let currentToken = $derived(
-    tokenParam && walletStore.query.data
-      ? walletStore.query.data.find((t) => t.address === tokenParam)
-      : null,
-  );
-
   let tokenLogo = $derived.by(() =>
-    currentToken ? getTokenLogo(currentToken.address) : null,
+    token ? getTokenLogo(token.address) : null,
   );
 
   function handleSend() {
-    goto(
-      resolve(
-        isTokenPage && currentToken
-          ? `/wallet/send?token=${currentToken.address}`
-          : "/wallet/send",
-      ),
-    );
+    onSend?.();
   }
+
   function handleReceive() {
-    goto(
-      resolve(
-        isTokenPage && currentToken
-          ? `/wallet/send?token=${currentToken.address}`
-          : "/wallet/receive",
-      ),
-    );
+    onReceive?.();
   }
+
   function handleSwap() {
-    // TODO: Implement swap functionality
+    onSwap?.();
+  }
+
+  function handleBack() {
+    onBack?.();
   }
 
   function handleTokensTab() {
-    activeTab = "tokens";
+    onTabChange?.("tokens");
   }
 
   function handleNFTsTab() {
     toast.info(locale.t("wallet.nftMessage"));
+    onTabChange?.("nfts");
   }
-
-  function handleBack() {
-    if (currentPath === "/wallet/import") {
-      goto(resolve("/wallet/manage"));
-      return;
-    }
-
-    goto(resolve("/wallet"));
-  }
-
-  const showBackButton = $derived.by(
-    () =>
-      currentPath !== "/wallet" &&
-      (currentPath === "/wallet/send" ||
-        currentPath === "/wallet/receive" ||
-        currentPath === "/wallet/swap" ||
-        currentPath === "/wallet/manage" ||
-        currentPath === "/wallet/import"),
-  );
-
-  // Check if we're on a token details page
-  const isTokenPage = $derived.by(
-    () =>
-      currentPath.startsWith("/wallet/") &&
-      tokenParam &&
-      !["send", "receive", "swap", "manage", "import"].includes(tokenParam),
-  );
-
-  const pageTitle = $derived(getPageTitle(currentPath, header));
 
   function handleImageError() {
     failedImageLoad = true;
@@ -135,22 +122,23 @@
 </script>
 
 <div class="bg-white">
-  {#if showBackButton}
-    <div class="px-6 pt-6 pb-4">
+  {#if mode === "back-only"}
+    <!-- Back button with title -->
+    <div class="pb-4">
       <div class="flex items-center">
         <button
           onclick={handleBack}
           class="p-2 -ml-2 hover:bg-gray-100 rounded-full transition-colors"
-          aria-label="Back to wallet"
+          aria-label="Back"
         >
           <ChevronLeft size={24} />
         </button>
-        <h1 class="flex-1 text-center text-xl font-bold pr-10">{pageTitle}</h1>
+        <h1 class="flex-1 text-center text-xl font-bold pr-10">{title}</h1>
       </div>
     </div>
-  {:else if isTokenPage && currentToken}
+  {:else if mode === "token" && token}
     <!-- Token Details View -->
-    <div class="px-6 pt-6 pb-4">
+    <div class="pb-4">
       <div class="flex items-center mb-2">
         <button
           onclick={handleBack}
@@ -167,7 +155,7 @@
           {#if tokenLogo && !failedImageLoad}
             <div class="w-[30px] h-[30px] rounded-full overflow-hidden">
               <img
-                alt={currentToken.symbol}
+                alt={token.symbol}
                 class="w-full h-full object-cover"
                 src={tokenLogo}
                 onerror={handleImageError}
@@ -177,7 +165,7 @@
             <div
               class="w-16 h-16 flex items-center justify-center bg-gray-200 rounded-full text-2xl font-semibold"
             >
-              {currentToken.symbol[0]?.toUpperCase() || "?"}
+              {token.symbol[0]?.toUpperCase() || "?"}
             </div>
           {/if}
         </div>
@@ -186,37 +174,32 @@
         <div class="mx-auto w-fit gap-3 relative">
           <div class="text-[32px]/[100%] font-bold text-black">
             {#if isBalanceVisible}
-              {parseBalanceUnits(
-                currentToken.balance,
-                currentToken.decimals,
-              ).toFixed(5)}
-              {currentToken.symbol}
+              {parseBalanceUnits(token.balance, token.decimals).toFixed(5)}
+              {token.symbol}
             {:else}
               ****
             {/if}
           </div>
-          {#if currentPath === "/wallet"}
-            <button
-              onclick={toggleBalanceVisibility}
-              class="text-gray-500 hover:text-gray-700 transition-colors active:scale-95 absolute top-1/2 -translate-y-1/2 right-[-36px]"
-              aria-label="Toggle balance visibility"
-            >
-              {#if isBalanceVisible}
-                <Eye size={24} />
-              {:else}
-                <EyeOff size={24} />
-              {/if}
-            </button>
-          {/if}
+          <button
+            onclick={toggleBalanceVisibility}
+            class="text-gray-500 hover:text-gray-700 transition-colors active:scale-95 absolute top-1/2 -translate-y-1/2 right-[-36px]"
+            aria-label="Toggle balance visibility"
+          >
+            {#if isBalanceVisible}
+              <Eye size={24} />
+            {:else}
+              <EyeOff size={24} />
+            {/if}
+          </button>
         </div>
 
         <!-- USD Value -->
         <div class="text-gray-500 text-xs mt-1 font-semibold">
           {#if isBalanceVisible}
             ${balanceToUSDValue(
-              currentToken.balance,
-              currentToken.decimals,
-              currentToken.priceUSD,
+              token.balance,
+              token.decimals,
+              token.priceUSD,
             ).toFixed(2)}
           {:else}
             ****
@@ -270,7 +253,7 @@
     </div>
   {:else}
     <!-- Default Wallet View -->
-    <div class="p-6">
+    <div class="pb-6">
       <div class="text-center mb-8">
         <div class="mx-auto w-fit gap-3 relative">
           <div class="text-[32px]/[100%] font-bold text-black">

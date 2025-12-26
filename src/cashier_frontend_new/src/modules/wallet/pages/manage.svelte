@@ -2,13 +2,18 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import NavBar from "$modules/token/components/navBar.svelte";
-  import { goto } from "$app/navigation";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import { toast } from "svelte-sonner";
   import { locale } from "$lib/i18n";
   import { LoaderCircle, RefreshCw, Search, Plus } from "lucide-svelte";
-  import { resolve } from "$app/paths";
   import { MOCK_NETWORKS } from "../mock/mock";
+
+  type Props = {
+    onNavigateBack: () => void;
+    onNavigateToImport: () => void;
+  };
+
+  let { onNavigateBack, onNavigateToImport }: Props = $props();
 
   let searchQuery: string = $state("");
   let failedImageLoads: Set<string> = $state(new Set());
@@ -46,7 +51,7 @@
   }
 
   function handleImport() {
-    goto(resolve("/wallet/import"));
+    onNavigateToImport();
   }
 
   function handleImageError(address: string) {
@@ -77,7 +82,11 @@
   );
 </script>
 
-<NavBar />
+<NavBar
+  mode="back-only"
+  title={locale.t("wallet.manage.header")}
+  onBack={onNavigateBack}
+/>
 
 <div>
   <!-- Header -->

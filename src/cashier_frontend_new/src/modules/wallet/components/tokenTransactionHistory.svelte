@@ -112,7 +112,7 @@
       {locale.t("wallet.tokenInfo.errorLoadingHistory")}
     </p>
   {:else if transactions.length === 0}
-    <p class="text-gray-500 text-center py-4">
+    <p class="text-center py-4 font-medium">
       {locale.t("wallet.tokenInfo.noTransactions")}
     </p>
   {:else}
