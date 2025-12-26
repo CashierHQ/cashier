@@ -17,10 +17,12 @@
   import InputAmount from "$modules/shared/components/InputAmount.svelte";
   import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
   import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
-  import {
-    ReceiveAddressType,
-    TxState,
-  } from "$modules/wallet/types/walletSendStore";
+  import { ReceiveAddressType } from "$modules/wallet/types/walletSendStore";
+
+  let receiveType = $state<ReceiveAddressType>(
+    ReceiveAddressType.PRINCIPAL
+  );
+
 
   // URL param effect - set token from URL or default to first token
   $effect(() => {
@@ -38,19 +40,9 @@
   $effect(() => {
     if (
       walletSendStore.selectedToken !== ICP_LEDGER_CANISTER_ID &&
-      walletSendStore.receiveType === ReceiveAddressType.ACCOUNT_ID
+      receiveType === ReceiveAddressType.ACCOUNT_ID
     ) {
-      walletSendStore.setReceiveType(ReceiveAddressType.PRINCIPAL);
-    }
-  });
-
-  // Watch errorMessage and show toast on ERROR state
-  $effect(() => {
-    if (
-      walletSendStore.errorMessage &&
-      walletSendStore.txState === TxState.ERROR
-    ) {
-      toast.error(walletSendStore.errorMessage);
+      receiveType = ReceiveAddressType.PRINCIPAL;
     }
   });
 
@@ -118,11 +110,11 @@
   }
 
   function handleSetReceiveTypePrincipal() {
-    walletSendStore.setReceiveType(ReceiveAddressType.PRINCIPAL);
+    receiveType = ReceiveAddressType.PRINCIPAL;
   }
 
   function handleSetReceiveTypeAccountId() {
-    walletSendStore.setReceiveType(ReceiveAddressType.ACCOUNT_ID);
+    receiveType = ReceiveAddressType.ACCOUNT_ID;
   }
 
   async function handlePasteFromClipboard() {
@@ -136,13 +128,19 @@
   }
 
   function handleContinue() {
-    walletSendStore.prepareSend(maxAmount);
+    const result = walletSendStore.prepareSend(receiveType, maxAmount);
+    if (result.isErr()) {
+      toast.error(result.error);
+    }
   }
 
   async function handleConfirmSend() {
-    await walletSendStore.executeSend(() => {
+    const result = await walletSendStore.executeSend(receiveType, () => {
       refreshTransactionHistory();
     });
+    if (result.isErr()) {
+      toast.error(result.error);
+    }
   }
 
   function handleCloseDrawer() {
@@ -159,14 +157,6 @@
     </div>
   {:else if walletStore.query.data}
     <div class="space-y-4 grow-1 flex flex-col">
-      {#if walletSendStore.errorMessage}
-        <div
-          class="p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
-        >
-          {walletSendStore.errorMessage}
-        </div>
-      {/if}
-
       <InputAmount
         bind:selectedToken={walletSendStore.selectedToken}
         bind:amount={walletSendStore.amount}
@@ -190,7 +180,7 @@
           <div class="flex gap-1.5 mb-2">
             <button
               onclick={handleSetReceiveTypePrincipal}
-              class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {walletSendStore.receiveType ===
+              class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {receiveType ===
               ReceiveAddressType.PRINCIPAL
                 ? 'border-[#36A18B] bg-green-50'
                 : 'border-gray-300 hover:border-gray-400'}"
@@ -199,7 +189,7 @@
             </button>
             <button
               onclick={handleSetReceiveTypeAccountId}
-              class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {walletSendStore.receiveType ===
+              class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {receiveType ===
               ReceiveAddressType.ACCOUNT_ID
                 ? 'border-[#36A18B] bg-green-50'
                 : 'border-gray-300 hover:border-gray-400'}"
@@ -228,7 +218,7 @@
           class="text-xs text-gray-500 mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
         >
           {locale.t(
-            walletSendStore.receiveType === ReceiveAddressType.PRINCIPAL
+            receiveType === ReceiveAddressType.PRINCIPAL
               ? "wallet.send.addressPrincipleExample"
               : "wallet.send.addressAccountExample",
           )}

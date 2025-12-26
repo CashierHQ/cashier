@@ -21,7 +21,6 @@ class WalletSendStore {
   // Form state
   selectedToken = $state("");
   receiveAddress = $state("");
-  receiveType = $state<ReceiveAddressType>(ReceiveAddressType.PRINCIPAL);
   amount = $state(0);
   tokenAmount = $state("");
   usdAmount = $state("");
@@ -29,7 +28,6 @@ class WalletSendStore {
   // UI state
   showConfirmDrawer = $state(false);
   txState = $state<TxState>(TxState.CONFIRM);
-  errorMessage = $state("");
   isSending = $state(false);
   lastBlockId = $state<bigint | null>(null);
 
@@ -38,7 +36,10 @@ class WalletSendStore {
    * @param maxAmount - max amount from component (derived from balance)
    * @returns Ok(true) if valid, Err(errorMessage) if invalid
    */
-  validateSend(maxAmount: number): ValidationResult {
+  validateSend(
+    receiveType: ReceiveAddressType,
+    maxAmount: number,
+  ): ValidationResult {
     if (!this.selectedToken || this.selectedToken.trim() === "") {
       return Err(locale.t("wallet.send.errors.selectToken"));
     }
@@ -48,12 +49,12 @@ class WalletSendStore {
     }
 
     // Validate address format based on receive type
-    if (this.receiveType === ReceiveAddressType.PRINCIPAL) {
+    if (receiveType === ReceiveAddressType.PRINCIPAL) {
       const principalResult = isValidPrincipal(this.receiveAddress);
       if (principalResult.isErr()) {
         return Err(locale.t("wallet.send.errors.invalidPrincipal"));
       }
-    } else if (this.receiveType === ReceiveAddressType.ACCOUNT_ID) {
+    } else if (receiveType === ReceiveAddressType.ACCOUNT_ID) {
       const accountResult = isValidAccountId(this.receiveAddress);
       if (accountResult.isErr()) {
         return Err(locale.t("wallet.send.errors.invalidAccountId"));
@@ -78,18 +79,18 @@ class WalletSendStore {
   /**
    * Prepare send - validate and open confirmation drawer
    * @param maxAmount - max amount from component
+   * @returns ValidationResult for caller to show toast on error
    */
-  prepareSend(maxAmount: number): void {
-    this.errorMessage = "";
-
-    const validationResult = this.validateSend(maxAmount);
-    if (validationResult.isErr()) {
-      this.errorMessage = validationResult.error;
-      return;
+  prepareSend(
+    receiveType: ReceiveAddressType,
+    maxAmount: number,
+  ): ValidationResult {
+    const validationResult = this.validateSend(receiveType, maxAmount);
+    if (validationResult.isOk()) {
+      this.txState = TxState.CONFIRM;
+      this.showConfirmDrawer = true;
     }
-
-    this.txState = TxState.CONFIRM;
-    this.showConfirmDrawer = true;
+    return validationResult;
   }
 
   /**
@@ -111,8 +112,11 @@ class WalletSendStore {
   /**
    * Execute transfer based on receive type
    */
-  private async transfer(amount: bigint): Promise<bigint> {
-    if (this.receiveType === ReceiveAddressType.PRINCIPAL) {
+  private async transfer(
+    receiveType: ReceiveAddressType,
+    amount: bigint,
+  ): Promise<bigint> {
+    if (receiveType === ReceiveAddressType.PRINCIPAL) {
       return walletStore.transferTokenToPrincipal(
         this.selectedToken,
         Principal.fromText(this.receiveAddress),
@@ -121,7 +125,7 @@ class WalletSendStore {
     }
 
     if (
-      this.receiveType === ReceiveAddressType.ACCOUNT_ID &&
+      receiveType === ReceiveAddressType.ACCOUNT_ID &&
       this.selectedToken === ICP_LEDGER_CANISTER_ID
     ) {
       return walletStore.transferICPToAccount(this.receiveAddress, amount);
@@ -133,8 +137,10 @@ class WalletSendStore {
   /**
    * Execute the send transaction
    */
-  async executeSend(onSuccess?: () => void): Promise<Result<bigint, string>> {
-    this.errorMessage = "";
+  async executeSend(
+    receiveType: ReceiveAddressType,
+    onSuccess?: () => void,
+  ): Promise<Result<bigint, string>> {
     this.txState = TxState.PENDING;
     this.isSending = true;
 
@@ -146,7 +152,7 @@ class WalletSendStore {
 
       const token = tokenResult.unwrap();
       const amount = formatBalanceUnits(this.amount, token.decimals);
-      const blockId = await this.transfer(amount);
+      const blockId = await this.transfer(receiveType, amount);
 
       this.lastBlockId = blockId;
       this.txState = TxState.SUCCESS;
@@ -154,9 +160,8 @@ class WalletSendStore {
       return Ok(blockId);
     } catch (error) {
       this.txState = TxState.ERROR;
-      this.errorMessage = `${locale.t("wallet.send.errorMessagePrefix")} ${error}`;
       this.showConfirmDrawer = false;
-      return Err(this.errorMessage);
+      return Err(`${locale.t("wallet.send.errorMessagePrefix")} ${error}`);
     } finally {
       this.isSending = false;
     }
@@ -189,13 +194,11 @@ class WalletSendStore {
   reset(): void {
     this.selectedToken = "";
     this.receiveAddress = "";
-    this.receiveType = ReceiveAddressType.PRINCIPAL;
     this.amount = 0;
     this.tokenAmount = "";
     this.usdAmount = "";
     this.showConfirmDrawer = false;
     this.txState = TxState.CONFIRM;
-    this.errorMessage = "";
     this.isSending = false;
     this.lastBlockId = null;
   }
@@ -205,13 +208,6 @@ class WalletSendStore {
    */
   setSelectedToken(token: string): void {
     this.selectedToken = token;
-  }
-
-  /**
-   * Set receive type
-   */
-  setReceiveType(type: ReceiveAddressType): void {
-    this.receiveType = type;
   }
 
   /**
