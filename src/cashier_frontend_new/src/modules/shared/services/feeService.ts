@@ -27,7 +27,13 @@ import {
 import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
-import type { AssetAndFeeList, ForecastAssetAndFee } from "../types/feeService";
+import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+import { shortenAddress } from "$modules/wallet/utils/address";
+import type {
+  AssetAndFeeList,
+  ForecastAssetAndFee,
+  SendFeeOutput,
+} from "../types/feeService";
 
 export class FeeService {
   /**
@@ -226,6 +232,54 @@ export class FeeService {
       tokenAddress: ICP_LEDGER_CANISTER_ID,
       symbol: "ICP",
       decimals: 8,
+    };
+  }
+
+  /**
+   * Compute send fee for wallet transfers
+   */
+  computeSendFee(
+    sendAmount: bigint,
+    token: TokenWithPriceAndBalance,
+    receiveAddress: string,
+  ): SendFeeOutput {
+    const fee = token.fee ?? ICP_LEDGER_FEE;
+    const totalAmount = sendAmount + fee;
+    const { decimals, priceUSD } = token;
+
+    const sendAmountUi = parseBalanceUnits(sendAmount, decimals);
+    const feeUi = parseBalanceUnits(fee, decimals);
+    const totalAmountUi = parseBalanceUnits(totalAmount, decimals);
+
+    const sendAmountUsd = priceUSD ? sendAmountUi * priceUSD : undefined;
+    const feeUsd = priceUSD ? feeUi * priceUSD : undefined;
+    const totalAmountUsd = priceUSD ? totalAmountUi * priceUSD : undefined;
+
+    return {
+      sendAmount,
+      fee,
+      totalAmount,
+      symbol: token.symbol,
+      decimals,
+      tokenAddress: token.address,
+      tokenLogo: getTokenLogo(token.address),
+      receiveAddress,
+      receiveAddressShortened: shortenAddress(receiveAddress),
+      networkName: "Internet Computer",
+      networkLogo: "/icpLogo.png",
+      sendAmountFormatted: formatNumber(sendAmountUi, { tofixed: decimals }),
+      feeFormatted: formatNumber(feeUi, { tofixed: decimals }),
+      totalAmountFormatted: formatNumber(totalAmountUi, { tofixed: decimals }),
+      sendAmountUsd,
+      feeUsd,
+      totalAmountUsd,
+      sendAmountUsdFormatted: sendAmountUsd
+        ? formatUsdAmount(sendAmountUsd)
+        : undefined,
+      feeUsdFormatted: feeUsd ? formatUsdAmount(feeUsd) : undefined,
+      totalAmountUsdFormatted: totalAmountUsd
+        ? formatUsdAmount(totalAmountUsd)
+        : undefined,
     };
   }
 

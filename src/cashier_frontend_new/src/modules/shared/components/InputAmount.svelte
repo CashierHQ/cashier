@@ -50,6 +50,14 @@
     amount = parseTokenAmount(localTokenAmount);
   });
 
+  // Sync external reset back to local (when parent resets values)
+  $effect(() => {
+    if (amount === 0 && localTokenAmount !== "") {
+      localTokenAmount = "";
+      localUsdAmount = "";
+    }
+  });
+
   // Track previous token address to detect actual token changes (not just object updates)
   let previousTokenAddress = $state<string | null>(null);
 
