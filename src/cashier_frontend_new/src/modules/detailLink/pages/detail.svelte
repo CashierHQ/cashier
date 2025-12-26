@@ -373,7 +373,9 @@
       <ShareLinkSection {link} />
     {/if}
 
-    <div class="flex-none w-full w-[95%] mx-auto px-2 mt-auto pt-4 mb-0">
+    <div
+      class="flex-none w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10 mt-auto pt-4"
+    >
       {#if linkStore.link.state === LinkState.ACTIVE}
         <Button
           variant="outline"
@@ -555,7 +557,7 @@
             class="fixed bottom-3 sm:bottom-8 left-4 right-4 z-[60] pointer-events-auto"
           >
             <div
-              class="flex-none w-full msx w-[95%] max-w-[536px] mx-auto px-2 pt-2 pb-2 bg-white rounded-[28px]"
+              class="flex-none msx w-[95%] max-w-[516px] mx-auto px-2 pt-2 pb-2 bg-white rounded-[28px]"
             >
               <Button
                 id="copy-link-button-modal"

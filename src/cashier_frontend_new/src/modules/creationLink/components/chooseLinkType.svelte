@@ -249,7 +249,7 @@
   </div>
 
   <div
-    class="flex-none w-full w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"
+    class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"
   >
     <Button
       onclick={goNext}
