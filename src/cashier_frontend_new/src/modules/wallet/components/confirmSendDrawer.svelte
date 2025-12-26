@@ -9,21 +9,14 @@
   } from "$lib/shadcn/components/ui/drawer";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { locale } from "$lib/i18n";
-  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
-  import { shortenAddress } from "../utils/address";
-  import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import { formatNumber } from "$modules/shared/utils/formatNumber";
-  import type { NetworkFeeInfo } from "../utils/networkFee";
-  import { getNetworkName, getNetworkLogo } from "../services/networkService";
+  import type { SendFeeOutput } from "$modules/shared/types/feeService";
+  import { TxState } from "$modules/wallet/types/walletSendStore";
 
   interface Props {
     open: boolean;
-    txState: "confirm" | "pending" | "success" | "error";
-    amount: number;
-    selectedToken: TokenWithPriceAndBalance | null;
-    receiveAddress: string;
-    networkFee: NetworkFeeInfo;
-    transactionLink: string;
+    txState: TxState;
+    sendFeeOutput: SendFeeOutput | null;
+    transactionLink: string | null;
     onClose: () => void;
     onConfirm: () => void;
   }
@@ -31,36 +24,15 @@
   let {
     open = $bindable(),
     txState,
-    amount,
-    selectedToken,
-    receiveAddress,
-    networkFee,
+    sendFeeOutput,
     transactionLink,
     onClose,
     onConfirm,
   }: Props = $props();
 
-  const tokenLogo = $derived(
-    selectedToken ? getTokenLogo(selectedToken.address) : null,
-  );
+  // Image load error states
   let imageLoadFailed = $state(false);
-
-  // Network information (always Internet Computer for all tokens)
-  const networkName = $derived(getNetworkName(selectedToken));
-  const networkLogo = $derived(getNetworkLogo(selectedToken));
   let networkImageLoadFailed = $state(false);
-
-  // Network fee token logo (same as selected token since ICRC uses token's own fee)
-  const networkFeeTokenLogo = $derived(
-    selectedToken ? getTokenLogo(selectedToken.address) : null,
-  );
-  let networkFeeImageLoadFailed = $state(false);
-
-  // Format amount with proper decimal places based on token decimals
-  const formattedAmount = $derived.by(() => {
-    if (!selectedToken) return amount.toString();
-    return formatNumber(amount, { tofixed: selectedToken.decimals });
-  });
 </script>
 
 <Drawer bind:open>
@@ -72,7 +44,7 @@
         >
           {locale.t("wallet.send.confirmDrawer.title")}
         </DrawerTitle>
-        {#if txState === "confirm"}
+        {#if txState === TxState.CONFIRM}
           <DrawerClose>
             <X
               size={24}
@@ -86,41 +58,46 @@
     </DrawerHeader>
 
     <div class="px-4 pb-4">
-      {#if txState === "confirm"}
+      {#if txState === TxState.CONFIRM}
         <div class="space-y-4">
+          <!-- You Will Send Section -->
           <div class="text-center">
             <div class="text-sm text-gray-600 mb-2">
               {locale.t("wallet.send.confirmDrawer.youWillSend")}
             </div>
             <div class="text-4xl font-bold text-ellipsis overflow-hidden">
-              {formattedAmount}
-              {selectedToken?.symbol || ""}
+              {sendFeeOutput?.sendAmountFormatted || "0"}
+              {sendFeeOutput?.symbol || ""}
             </div>
           </div>
 
+          <!-- Transaction Details Card -->
           <div class="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+            <!-- To Address -->
             <div class="flex justify-between items-center">
               <span class="text-gray-600"
                 >{locale.t("wallet.send.confirmDrawer.to")}</span
               >
               <span class="text-sm font-mono truncate ml-2 max-w-[200px]"
-                >{shortenAddress(receiveAddress)}</span
+                >{sendFeeOutput?.receiveAddressShortened || ""}</span
               >
             </div>
+
+            <!-- Network -->
             <div class="flex justify-between items-center">
               <span class="text-gray-600"
                 >{locale.t("wallet.send.confirmDrawer.network")}</span
               >
               <div class="flex items-center gap-1">
-                <span>{networkName}</span>
+                <span>{sendFeeOutput?.networkName || ""}</span>
                 <div
                   class="relative flex shrink-0 overflow-hidden rounded-full w-4 h-4"
                 >
-                  {#if !networkImageLoadFailed && networkLogo}
+                  {#if !networkImageLoadFailed && sendFeeOutput?.networkLogo}
                     <img
-                      alt={networkName}
+                      alt={sendFeeOutput?.networkName || ""}
                       class="w-full h-full object-cover rounded-full"
-                      src={networkLogo}
+                      src={sendFeeOutput.networkLogo}
                       onerror={() => (networkImageLoadFailed = true)}
                     />
                   {:else}
@@ -133,106 +110,90 @@
                 </div>
               </div>
             </div>
-            <div class="flex justify-between items-center">
-              <span class="text-gray-600"
-                >{locale.t("wallet.send.confirmDrawer.networkFee")}</span
-              >
-              <!-- Network fee display in transaction card style -->
-              <div class="flex justify-end gap-2 w-full max-w-[60%]">
-                <div class="flex flex-col items-end">
-                  <div class="flex items-center gap-1">
-                    <p class="text-[14px] font-normal">
-                      {networkFee.amountFormatted}
-                    </p>
-                  </div>
-                  {#if networkFee.usdValueFormatted}
-                    <p class="text-[10px] font-normal text-[#b6b6b6]">
-                      ~${networkFee.usdValueFormatted}
-                    </p>
-                  {/if}
-                </div>
 
-                <div class="flex gap-1.5">
-                  <p class="text-[14px] font-medium">{networkFee.symbol}</p>
-                  {#if !networkFeeImageLoadFailed && networkFeeTokenLogo}
-                    <img
-                      src={networkFeeTokenLogo}
-                      alt={networkFee.symbol}
-                      class="w-4 h-4 mt-0.5 rounded-full overflow-hidden"
-                      onerror={() => (networkFeeImageLoadFailed = true)}
-                    />
-                  {:else}
-                    <div
-                      class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs overflow-hidden"
-                    >
-                      {networkFee.symbol[0]?.toUpperCase() || "?"}
+            <!-- Network Fee (conditional: only show if fee > 0) -->
+            {#if sendFeeOutput && sendFeeOutput.fee > 0n}
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600"
+                  >{locale.t("wallet.send.confirmDrawer.networkFee")}</span
+                >
+                <div class="flex justify-end gap-2 w-full max-w-[60%]">
+                  <div class="flex flex-col items-end">
+                    <div class="flex items-center gap-1">
+                      <p class="text-[14px] font-normal">
+                        {sendFeeOutput.feeFormatted}
+                      </p>
                     </div>
-                  {/if}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-gray-50 rounded-lg p-4">
-            <div class="flex justify-between items-center gap-x-0.5">
-              <span class="font-medium whitespace-nowrap"
-                >{locale.t("wallet.send.confirmDrawer.totalFees")}</span
-              >
-              <div
-                class="flex flex-wrap items-center gap-y-0.5 gap-x-2 justify-end"
-              >
-                {#if selectedToken}
-                  <div class="flex items-center gap-1">
-                    <span class="font-medium"
-                      >{formattedAmount} {selectedToken.symbol}</span
-                    >
-                    <div
-                      class="relative flex shrink-0 overflow-hidden rounded-full w-4 h-4"
-                    >
-                      {#if tokenLogo && !imageLoadFailed}
-                        <img
-                          alt={selectedToken.symbol}
-                          class="w-full h-full object-cover rounded-full"
-                          src={tokenLogo}
-                          onerror={() => (imageLoadFailed = true)}
-                        />
-                      {:else}
-                        <div
-                          class="w-full h-full flex items-center justify-center bg-gray-200 rounded-full text-[8px]"
-                        >
-                          {selectedToken.symbol[0]?.toUpperCase() || "?"}
-                        </div>
-                      {/if}
-                    </div>
+                    {#if sendFeeOutput.feeUsdFormatted}
+                      <p class="text-[10px] font-normal text-[#b6b6b6]">
+                        ~${sendFeeOutput.feeUsdFormatted}
+                      </p>
+                    {/if}
                   </div>
-                  <span class="font-medium">+</span>
-                {/if}
-                <div class="flex items-center gap-1">
-                  <span class="font-medium"
-                    >{networkFee.amountFormatted} {networkFee.symbol}</span
-                  >
-                  <div
-                    class="relative flex shrink-0 overflow-hidden rounded-full w-4 h-4"
-                  >
-                    {#if !networkFeeImageLoadFailed && networkFeeTokenLogo}
+
+                  <div class="flex gap-1.5">
+                    <p class="text-[14px] font-medium">
+                      {sendFeeOutput.symbol}
+                    </p>
+                    {#if !imageLoadFailed && sendFeeOutput.tokenLogo}
                       <img
-                        alt={networkFee.symbol}
-                        class="w-full h-full object-cover rounded-full"
-                        src={networkFeeTokenLogo}
-                        onerror={() => (networkFeeImageLoadFailed = true)}
+                        src={sendFeeOutput.tokenLogo}
+                        alt={sendFeeOutput.symbol}
+                        class="w-4 h-4 mt-0.5 rounded-full overflow-hidden"
+                        onerror={() => (imageLoadFailed = true)}
                       />
                     {:else}
                       <div
-                        class="w-full h-full flex items-center justify-center bg-gray-200 rounded-full text-[8px]"
+                        class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs overflow-hidden"
                       >
-                        {networkFee.symbol[0]?.toUpperCase() || "?"}
+                        {sendFeeOutput.symbol[0]?.toUpperCase() || "?"}
                       </div>
                     {/if}
                   </div>
                 </div>
               </div>
-            </div>
+            {/if}
           </div>
+
+          <!-- Total Fees Section -->
+          {#if sendFeeOutput}
+            <div class="bg-gray-50 rounded-lg p-4">
+              <div class="flex justify-between items-center gap-x-0.5">
+                <span class="font-medium whitespace-nowrap"
+                  >{locale.t("wallet.send.confirmDrawer.totalFees")}</span
+                >
+                <div class="flex items-center gap-1">
+                  <span class="font-medium">
+                    {sendFeeOutput.totalAmountFormatted}
+                    {sendFeeOutput.symbol}
+                  </span>
+                  <div
+                    class="relative flex shrink-0 overflow-hidden rounded-full w-4 h-4"
+                  >
+                    {#if sendFeeOutput.tokenLogo && !imageLoadFailed}
+                      <img
+                        alt={sendFeeOutput.symbol}
+                        class="w-full h-full object-cover rounded-full"
+                        src={sendFeeOutput.tokenLogo}
+                        onerror={() => (imageLoadFailed = true)}
+                      />
+                    {:else}
+                      <div
+                        class="w-full h-full flex items-center justify-center bg-gray-200 rounded-full text-[8px]"
+                      >
+                        {sendFeeOutput.symbol[0]?.toUpperCase() || "?"}
+                      </div>
+                    {/if}
+                  </div>
+                </div>
+              </div>
+              {#if sendFeeOutput.totalAmountUsdFormatted}
+                <div class="text-right text-[10px] text-[#b6b6b6] mt-1">
+                  ~${sendFeeOutput.totalAmountUsdFormatted}
+                </div>
+              {/if}
+            </div>
+          {/if}
 
           <div class="text-xs text-gray-600 text-center">
             {locale.t("wallet.send.confirmDrawer.agreementText")}
@@ -245,7 +206,7 @@
             {locale.t("wallet.send.confirmDrawer.confirmButton")}
           </Button>
         </div>
-      {:else if txState === "pending"}
+      {:else if txState === TxState.PENDING}
         <div class="text-center py-8 space-y-4">
           <div class="flex justify-center">
             <div
@@ -262,19 +223,11 @@
               {locale.t("wallet.send.pendingDrawer.description")}
             </div>
           </div>
-          <a
-            href={transactionLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-[#36A18B] text-sm font-medium inline-block cursor-pointer"
-          >
-            {locale.t("wallet.send.pendingDrawer.viewTransaction")}
-          </a>
           <div class="text-gray-400 text-sm">
             {locale.t("wallet.send.pendingDrawer.statusText")}
           </div>
         </div>
-      {:else if txState === "success"}
+      {:else if txState === TxState.SUCCESS}
         <div class="text-center py-8 space-y-4">
           <div class="flex justify-center">
             <div
@@ -291,14 +244,16 @@
               {locale.t("wallet.send.successDrawer.description")}
             </div>
           </div>
-          <a
-            href={transactionLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-[#36A18B] text-sm font-medium inline-block cursor-pointer"
-          >
-            {locale.t("wallet.send.pendingDrawer.viewTransaction")}
-          </a>
+          {#if transactionLink}
+            <a
+              href={transactionLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-[#36A18B] text-sm font-medium inline-block cursor-pointer"
+            >
+              {locale.t("wallet.send.pendingDrawer.viewTransaction")}
+            </a>
+          {/if}
           <Button
             onclick={onClose}
             class="w-full rounded-full bg-[#36A18B] hover:bg-[#2d8a75] text-white h-[44px]"

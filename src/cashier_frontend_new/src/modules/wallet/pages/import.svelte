@@ -13,6 +13,7 @@
     MOCK_TOKEN_DATA,
     SECURITY_LEARN_MORE_URL,
   } from "../mock/mock";
+  import { isValidPrincipal } from "$modules/wallet/utils/address";
 
   type Props = {
     onNavigateBack: () => void;
@@ -69,6 +70,18 @@
     if (!contractAddress.trim()) {
       toast.error(locale.t("wallet.import.errors.enterContractAddress"));
       return;
+    }
+
+    if (isValidPrincipal(contractAddress).isErr()) {
+      toast.error(locale.t("wallet.import.errors.invalidContractAddress"));
+      return;
+    }
+
+    if (indexCanisterId.trim()) {
+      if (isValidPrincipal(indexCanisterId).isErr()) {
+        toast.error(locale.t("wallet.import.errors.invalidIndexCanisterId"));
+        return;
+      }
     }
 
     isLoading = true;
