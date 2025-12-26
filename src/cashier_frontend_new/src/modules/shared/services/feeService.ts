@@ -33,7 +33,7 @@ import type {
   AssetAndFeeList,
   ForecastAssetAndFee,
   SendFeeOutput,
-} from "../types/feeService";
+} from "$modules/shared/types/feeService";
 
 export class FeeService {
   /**
@@ -98,40 +98,23 @@ export class FeeService {
 
   /**
    * Map an Action to a list of paired AssetItem and FeeItem for each intent.
-   * @param action
-   * @returns Array of Asset and Fee pairs
    */
-  // Now accepts a tokens map keyed by token address. This removes any
-  // dependence on WalletStore inside this method — callers should pass the
-  // current tokens (e.g. from `walletStore.query.data`) as a record.
   mapActionToAssetAndFeeList(
     action: Action,
     tokens: Record<string, TokenWithPriceAndBalance>,
   ): AssetAndFeeList {
-    const pairs: AssetAndFeeList = action.intents.map((intent) => {
+    return action.intents.map((intent) => {
       const address = intent.type.payload.asset.address.toString();
-
-      // Determine fee type
-      let feeType = FeeType.NETWORK_FEE;
-      if (
+      const isCreateLinkTreasury =
         action.type === ActionType.CREATE_LINK &&
-        intent.task === IntentTask.TRANSFER_WALLET_TO_TREASURY
-      ) {
-        feeType = FeeType.CREATE_LINK_FEE;
-      }
-
-      const label =
-        intent.task === IntentTask.TRANSFER_WALLET_TO_TREASURY
-          ? "Create link fee"
-          : "";
+        intent.task === IntentTask.TRANSFER_WALLET_TO_TREASURY;
+      const feeType = isCreateLinkTreasury
+        ? FeeType.CREATE_LINK_FEE
+        : FeeType.NETWORK_FEE;
+      const label = isCreateLinkTreasury ? "Create link fee" : "";
       const token = tokens[address];
 
-      // compute adjusted amount (uses token fee when token found, otherwise ICP fallback)
-      let asset: AssetItem;
-      let fee: FeeItem | undefined;
-
       if (!token) {
-        // Token not found: fallback to ICP
         console.error("Failed to resolve token for asset:", address);
         const { amount: forecastAmountRaw, fee: feeRaw } =
           this.computeAmountAndFee({
@@ -140,86 +123,72 @@ export class FeeService {
             actionType: action.type,
           });
 
-        asset = {
-          state: AssetProcessState.PENDING,
-          label,
-          symbol: "N/A",
-          address,
-          amount: forecastAmountRaw,
-          amountFormattedStr: parseBalanceUnits(
-            forecastAmountRaw,
-            8,
-          ).toString(),
-          usdValueStr: undefined,
-        };
-
-        if (feeRaw === undefined) {
-          fee = undefined;
-        } else {
-          fee = {
-            feeType,
-            amount: feeRaw,
-            amountFormattedStr: parseBalanceUnits(feeRaw, 8).toString(),
+        return {
+          asset: {
+            state: AssetProcessState.PENDING,
+            label,
             symbol: "N/A",
-          };
-        }
-      } else {
-        const tokenFee = token.fee ?? ICP_LEDGER_FEE;
-        const { amount: forecastAmountRaw, fee: feeRaw } =
-          this.computeAmountAndFee({
-            intent,
-            ledgerFee: tokenFee,
-            actionType: action.type,
-          });
-
-        const forecastFeeAmount = parseBalanceUnits(
-          forecastAmountRaw,
-          token.decimals,
-        );
-        const forecastFeeUsd = token.priceUSD
-          ? forecastFeeAmount * token.priceUSD
-          : undefined;
-
-        asset = {
-          state: AccessProcessStateMapper.fromIntentState(
-            intent.state as IntentStateValue,
-          ),
-          label,
-          symbol: token.symbol,
-          address,
-          amount: forecastAmountRaw,
-          amountFormattedStr: formatNumber(forecastFeeAmount),
-          usdValueStr: forecastFeeUsd
-            ? formatUsdAmount(forecastFeeUsd)
+            address,
+            amount: forecastAmountRaw,
+            amountFormattedStr: parseBalanceUnits(forecastAmountRaw, 8).toString(),
+            usdValueStr: undefined,
+          },
+          fee: feeRaw
+            ? {
+                feeType,
+                amount: feeRaw,
+                amountFormattedStr: parseBalanceUnits(feeRaw, 8).toString(),
+                symbol: "N/A",
+              }
             : undefined,
         };
-
-        if (feeRaw === undefined) {
-          fee = undefined;
-        } else {
-          const tokenFeeAmount = parseBalanceUnits(feeRaw, token.decimals);
-          const feeUsdValue = token.priceUSD
-            ? tokenFeeAmount * token.priceUSD
-            : undefined;
-          const feeUsdValueStr = feeUsdValue
-            ? formatUsdAmount(feeUsdValue)
-            : undefined;
-
-          fee = {
-            feeType,
-            amount: feeRaw,
-            amountFormattedStr: formatNumber(tokenFeeAmount),
-            symbol: token.symbol,
-            price: token.priceUSD,
-            usdValue: feeUsdValue,
-            usdValueStr: feeUsdValueStr,
-          };
-        }
       }
+
+      const tokenFee = token.fee ?? ICP_LEDGER_FEE;
+      const { amount: forecastAmountRaw, fee: feeRaw } = this.computeAmountAndFee(
+        { intent, ledgerFee: tokenFee, actionType: action.type },
+      );
+
+      const forecastFeeAmount = parseBalanceUnits(
+        forecastAmountRaw,
+        token.decimals,
+      );
+      const forecastFeeUsd = token.priceUSD
+        ? forecastFeeAmount * token.priceUSD
+        : undefined;
+
+      const asset: AssetItem = {
+        state: AccessProcessStateMapper.fromIntentState(
+          intent.state as IntentStateValue,
+        ),
+        label,
+        symbol: token.symbol,
+        address,
+        amount: forecastAmountRaw,
+        amountFormattedStr: formatNumber(forecastFeeAmount),
+        usdValueStr: forecastFeeUsd ? formatUsdAmount(forecastFeeUsd) : undefined,
+      };
+
+      let fee: FeeItem | undefined;
+      if (feeRaw !== undefined) {
+        const tokenFeeAmount = parseBalanceUnits(feeRaw, token.decimals);
+        const feeUsdValue = token.priceUSD
+          ? tokenFeeAmount * token.priceUSD
+          : undefined;
+
+        fee = {
+          feeType,
+          amount: feeRaw,
+          amountFormattedStr: formatNumber(tokenFeeAmount),
+          symbol: token.symbol,
+          price: token.priceUSD,
+          usdValue: feeUsdValue,
+          usdValueStr: feeUsdValue ? formatUsdAmount(feeUsdValue) : undefined,
+        };
+      }
+
       return { asset, fee };
     });
-
-    return pairs;
   }
 
   /**
@@ -237,11 +206,6 @@ export class FeeService {
 
   /**
    * Compute send fee for wallet transfers
-   * Simple calculation without Intent/Action complexity
-   * @param sendAmount - Amount to send (in smallest units)
-   * @param token - Token with fee, decimals, priceUSD
-   * @param receiveAddress - Recipient address for display
-   * @returns SendFeeOutput with raw and formatted values
    */
   computeSendFee(
     sendAmount: bigint,
@@ -250,102 +214,64 @@ export class FeeService {
   ): SendFeeOutput {
     const fee = token.fee ?? ICP_LEDGER_FEE;
     const totalAmount = sendAmount + fee;
+    const { decimals, priceUSD } = token;
 
-    // Convert to display units
-    const sendAmountUi = parseBalanceUnits(sendAmount, token.decimals);
-    const feeUi = parseBalanceUnits(fee, token.decimals);
-    const totalAmountUi = parseBalanceUnits(totalAmount, token.decimals);
+    const sendAmountUi = parseBalanceUnits(sendAmount, decimals);
+    const feeUi = parseBalanceUnits(fee, decimals);
+    const totalAmountUi = parseBalanceUnits(totalAmount, decimals);
 
-    // Format for display
-    const sendAmountFormatted = formatNumber(sendAmountUi, {
-      tofixed: token.decimals,
-    });
-    const feeFormatted = formatNumber(feeUi, { tofixed: token.decimals });
-    const totalAmountFormatted = formatNumber(totalAmountUi, {
-      tofixed: token.decimals,
-    });
-
-    // Token display info
-    const tokenAddress = token.address;
-    const tokenLogo = getTokenLogo(token.address);
-
-    // Recipient display
-    const receiveAddressShortened = shortenAddress(receiveAddress);
-
-    // Network info (always ICP)
-    const networkName = "Internet Computer";
-    const networkLogo = "/icpLogo.png";
-
-    // USD calculations (optional)
-    let sendAmountUsd: number | undefined;
-    let feeUsd: number | undefined;
-    let totalAmountUsd: number | undefined;
-    let sendAmountUsdFormatted: string | undefined;
-    let feeUsdFormatted: string | undefined;
-    let totalAmountUsdFormatted: string | undefined;
-
-    if (token.priceUSD) {
-      sendAmountUsd = sendAmountUi * token.priceUSD;
-      feeUsd = feeUi * token.priceUSD;
-      totalAmountUsd = totalAmountUi * token.priceUSD;
-      sendAmountUsdFormatted = formatUsdAmount(sendAmountUsd);
-      feeUsdFormatted = formatUsdAmount(feeUsd);
-      totalAmountUsdFormatted = formatUsdAmount(totalAmountUsd);
-    }
+    const sendAmountUsd = priceUSD ? sendAmountUi * priceUSD : undefined;
+    const feeUsd = priceUSD ? feeUi * priceUSD : undefined;
+    const totalAmountUsd = priceUSD ? totalAmountUi * priceUSD : undefined;
 
     return {
       sendAmount,
       fee,
       totalAmount,
       symbol: token.symbol,
-      decimals: token.decimals,
-      tokenAddress,
-      tokenLogo,
+      decimals,
+      tokenAddress: token.address,
+      tokenLogo: getTokenLogo(token.address),
       receiveAddress,
-      receiveAddressShortened,
-      networkName,
-      networkLogo,
-      sendAmountFormatted,
-      feeFormatted,
-      totalAmountFormatted,
+      receiveAddressShortened: shortenAddress(receiveAddress),
+      networkName: "Internet Computer",
+      networkLogo: "/icpLogo.png",
+      sendAmountFormatted: formatNumber(sendAmountUi, { tofixed: decimals }),
+      feeFormatted: formatNumber(feeUi, { tofixed: decimals }),
+      totalAmountFormatted: formatNumber(totalAmountUi, { tofixed: decimals }),
       sendAmountUsd,
       feeUsd,
       totalAmountUsd,
-      sendAmountUsdFormatted,
-      feeUsdFormatted,
-      totalAmountUsdFormatted,
+      sendAmountUsdFormatted: sendAmountUsd
+        ? formatUsdAmount(sendAmountUsd)
+        : undefined,
+      feeUsdFormatted: feeUsd ? formatUsdAmount(feeUsd) : undefined,
+      totalAmountUsdFormatted: totalAmountUsd
+        ? formatUsdAmount(totalAmountUsd)
+        : undefined,
     };
   }
 
   /**
    * Forecast asset and fee list for link creation preview (before Action exists)
-   * @param linkAssets - Array of assets in the link
-   * @param maxUse - Maximum uses of the link
-   * @param tokens - Token lookup by address
-   * @returns AssetAndFeeList formatted for display
    */
   forecastLinkCreationFees(
     linkAssets: Array<CreateLinkAsset>,
     maxUse: number,
     tokens: Record<string, TokenWithPriceAndBalance>,
   ): ForecastAssetAndFee[] {
-    const pairs: ForecastAssetAndFee[] = [];
-
-    for (const assetData of linkAssets) {
+    const pairs: ForecastAssetAndFee[] = linkAssets.map((assetData) => {
       const token = tokens[assetData.address];
 
       if (!token) {
         console.error("Failed to resolve token for asset:", assetData.address);
-        // Fallback to ICP values
         const totalAmount = assetData.useAmount + ICP_LEDGER_FEE;
-        const amountStr = parseBalanceUnits(totalAmount, 8).toString();
-
-        pairs.push({
+        return {
           asset: {
             label: "",
             symbol: "N/A",
             address: assetData.address,
-            amount: amountStr,
+            amount: parseBalanceUnits(totalAmount, 8).toString(),
             usdValueStr: undefined,
           },
           fee: {
@@ -354,47 +280,43 @@ export class FeeService {
             amountFormattedStr: parseBalanceUnits(ICP_LEDGER_FEE, 8).toString(),
             symbol: "N/A",
           },
-        });
-      } else {
-        const tokenFee = token.fee ?? ICP_LEDGER_FEE;
-        // For CREATE_LINK preview: amount = payload.amount + (ledgerFee * maxUse) + ledgerFee
-        const totalAmount =
-          assetData.useAmount + BigInt(maxUse) * tokenFee + tokenFee;
-        const totalAmountUi = parseBalanceUnits(totalAmount, token.decimals);
-        const totalUsd = token.priceUSD
-          ? totalAmountUi * token.priceUSD
-          : undefined;
-        const feeAmountUi = parseBalanceUnits(tokenFee, token.decimals);
-        const feeUsd = token.priceUSD
-          ? feeAmountUi * token.priceUSD
-          : undefined;
-
-        pairs.push({
-          asset: {
-            label: "",
-            symbol: token.symbol,
-            address: assetData.address,
-            amount: formatNumber(totalAmountUi),
-            usdValueStr: totalUsd ? formatUsdAmount(totalUsd) : undefined,
-          },
-          fee: {
-            amount: tokenFee,
-            feeType: FeeType.NETWORK_FEE,
-            amountFormattedStr: formatNumber(feeAmountUi),
-            symbol: token.symbol,
-            price: token.priceUSD,
-            usdValue: feeUsd,
-            usdValueStr: feeUsd ? formatUsdAmount(feeUsd) : undefined,
-          },
-        });
+        };
       }
-    }
 
-    // Add link creation fee item (use ICP fee token)
+      const tokenFee = token.fee ?? ICP_LEDGER_FEE;
+      const totalAmount =
+        assetData.useAmount + BigInt(maxUse) * tokenFee + tokenFee;
+      const totalAmountUi = parseBalanceUnits(totalAmount, token.decimals);
+      const feeAmountUi = parseBalanceUnits(tokenFee, token.decimals);
+      const totalUsd = token.priceUSD
+        ? totalAmountUi * token.priceUSD
+        : undefined;
+      const feeUsd = token.priceUSD ? feeAmountUi * token.priceUSD : undefined;
+
+      return {
+        asset: {
+          label: "",
+          symbol: token.symbol,
+          address: assetData.address,
+          amount: formatNumber(totalAmountUi),
+          usdValueStr: totalUsd ? formatUsdAmount(totalUsd) : undefined,
+        },
+        fee: {
+          amount: tokenFee,
+          feeType: FeeType.NETWORK_FEE,
+          amountFormattedStr: formatNumber(feeAmountUi),
+          symbol: token.symbol,
+          price: token.priceUSD,
+          usdValue: feeUsd,
+          usdValueStr: feeUsd ? formatUsdAmount(feeUsd) : undefined,
+        },
+      };
+    });
+
+    // Add link creation fee item
     const linkFeeInfo = this.getLinkCreationFee();
     const linkFeeToken = tokens[linkFeeInfo.tokenAddress];
     if (linkFeeToken) {
-      // For CREATE_LINK preview: amount = ledgerFee*2 + linkFeeInfo.amount
       const linkCreationFeeTotal = ICP_LEDGER_FEE * 2n + linkFeeInfo.amount;
       const linkFeeFormatted = parseBalanceUnits(
         linkCreationFeeTotal,

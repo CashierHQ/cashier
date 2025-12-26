@@ -10,13 +10,13 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { locale } from "$lib/i18n";
   import type { SendFeeOutput } from "$modules/shared/types/feeService";
-  import { TxState } from "../types/walletSendStore";
+  import { TxState } from "$modules/wallet/types/walletSendStore";
 
   interface Props {
     open: boolean;
     txState: TxState;
     sendFeeOutput: SendFeeOutput | null;
-    transactionLink: string;
+    transactionLink: string | null;
     onClose: () => void;
     onConfirm: () => void;
   }
@@ -223,14 +223,6 @@
               {locale.t("wallet.send.pendingDrawer.description")}
             </div>
           </div>
-          <a
-            href={transactionLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-[#36A18B] text-sm font-medium inline-block cursor-pointer"
-          >
-            {locale.t("wallet.send.pendingDrawer.viewTransaction")}
-          </a>
           <div class="text-gray-400 text-sm">
             {locale.t("wallet.send.pendingDrawer.statusText")}
           </div>
@@ -252,14 +244,16 @@
               {locale.t("wallet.send.successDrawer.description")}
             </div>
           </div>
-          <a
-            href={transactionLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-[#36A18B] text-sm font-medium inline-block cursor-pointer"
-          >
-            {locale.t("wallet.send.pendingDrawer.viewTransaction")}
-          </a>
+          {#if transactionLink}
+            <a
+              href={transactionLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-[#36A18B] text-sm font-medium inline-block cursor-pointer"
+            >
+              {locale.t("wallet.send.pendingDrawer.viewTransaction")}
+            </a>
+          {/if}
           <Button
             onclick={onClose}
             class="w-full rounded-full bg-[#36A18B] hover:bg-[#2d8a75] text-white h-[44px]"

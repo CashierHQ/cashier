@@ -16,8 +16,8 @@
   import ConfirmSendDrawer from "../components/confirmSendDrawer.svelte";
   import InputAmount from "$modules/shared/components/InputAmount.svelte";
   import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
-  import { walletSendStore } from "../state/walletSendStore.svelte";
-  import { ReceiveAddressType, TxState } from "../types/walletSendStore";
+  import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
+  import { ReceiveAddressType, TxState } from "$modules/wallet/types/walletSendStore";
 
   // URL param effect - set token from URL or default to first token
   $effect(() => {
@@ -84,7 +84,7 @@
 
   // Derived from store
   const sendFeeOutput = $derived(walletSendStore.getSendFeeOutput());
-  const transactionLink = $derived("https://example.com/transaction");
+  const transactionLink = $derived(walletSendStore.getTransactionLink());
 
   /**
    * Resolve indexId for token (ICP uses constant, others use token.indexId)
