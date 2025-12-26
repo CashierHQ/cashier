@@ -39,7 +39,7 @@ export function calculateRequiredAssetAmount(
  * @param walletTokens - The list of tokens in the user's wallet
  * @returns A Result containing the maximum amount or an error
  */
-export function maxAmountForAsset(
+export function calculateMaxAmountForAsset(
   tokenAddress: string,
   maxUse: number,
   walletTokens: TokenWithPriceAndBalance[],
@@ -53,6 +53,28 @@ export function maxAmountForAsset(
 
   const maxAmount =
     (token.balance - token.fee * (BigInt(1) + BigInt(maxUse))) / BigInt(maxUse);
+
+  return Ok(maxAmount);
+}
+
+/**
+ * Calculate the max send amount for send token
+ * @param tokenAddress - The address of the token to calculate the max amount for
+ * @param walletTokens - The list of tokens in the user's wallet
+ * @returns A Result containing the maximum amount or an error
+ */
+export function calculateMaxSendAmount(
+  tokenAddress: string,
+  walletTokens: TokenWithPriceAndBalance[],
+): Result<bigint, Error> {
+  const token = walletTokens.find((t) => t.address === tokenAddress);
+  if (!token) {
+    return Err(
+      new Error(`Token with address ${tokenAddress} not found in wallet`),
+    );
+  }
+
+  const maxAmount = token.balance - token.fee;
 
   return Ok(maxAmount);
 }

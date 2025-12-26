@@ -1,7 +1,7 @@
 import type { CreateLinkData } from "$modules/creationLink/types/createLinkData";
 import {
   calculateRequiredAssetAmount,
-  maxAmountForAsset,
+  calculateMaxAmountForAsset,
 } from "$modules/links/utils/amountCalculator";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Err, Ok, type Result } from "ts-results-es";
@@ -73,7 +73,7 @@ class ValidationService {
       return Err(new Error("Wallet tokens data is not available"));
     }
 
-    return maxAmountForAsset(tokenAddress, maxUse, walletTokens);
+    return calculateMaxAmountForAsset(tokenAddress, maxUse, walletTokens);
   }
 }
 
