@@ -1,16 +1,12 @@
 <script lang="ts">
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
+  import { parseBalanceUnits } from "$modules/shared/utils/converter";
   import {
-    formatBalanceUnits,
-    parseBalanceUnits,
-  } from "$modules/shared/utils/converter";
-  import {
-    ACCOUNT_ID_TYPE,
     ICP_LEDGER_CANISTER_ID,
-    PRINCIPAL_TYPE,
+    ICP_INDEX_CANISTER_ID,
   } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { Principal } from "@dfinity/principal";
+  import { createWalletHistoryStore } from "$modules/token/state/walletHistoryStore.svelte";
   import NavBar from "$modules/token/components/navBar.svelte";
   import { locale } from "$lib/i18n";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
@@ -18,22 +14,26 @@
   import { toast } from "svelte-sonner";
   import { page } from "$app/state";
   import ConfirmSendDrawer from "../components/confirmSendDrawer.svelte";
-  import { validate } from "../utils/send";
   import InputAmount from "$modules/shared/components/InputAmount.svelte";
-  import { maxAmountForAsset } from "$modules/links/utils/amountCalculator";
-  import { calculateNetworkFeeInfo } from "../utils/networkFee";
+  import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
+  import { TxState } from "$modules/wallet/types/walletSendStore";
+  import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
+  import { ReceiveAddressType } from "$modules/wallet/types";
 
-  let selectedToken: string = $state("");
-  let receiveAddress: string = $state("");
-  let receiveType: number = $state(PRINCIPAL_TYPE);
+  // Form state (local)
+  let selectedToken = $state("");
+  let receiveAddress = $state("");
+  let amount = $state(0);
+  let tokenAmount = $state("");
+  let usdAmount = $state("");
 
+  // UI state (local)
+  let receiveType = $state<ReceiveAddressType>(ReceiveAddressType.PRINCIPAL);
   let showConfirmDrawer = $state(false);
-  let txState: "confirm" | "pending" | "success" | "error" = $state("confirm");
+  let isSending = $state(false);
+  let lastBlockId = $state<bigint | null>(null);
 
-  let amount: number = $state(0);
-  let tokenAmount: string = $state("");
-  let usdAmount: string = $state("");
-
+  // URL param effect - set token from URL or default to first token
   $effect(() => {
     const tokenParam = page.url.searchParams.get("token");
     if (tokenParam) {
@@ -45,6 +45,17 @@
     }
   });
 
+  // Reset receiveType when token changes (non-ICP can't use AccountId)
+  $effect(() => {
+    if (
+      selectedToken !== ICP_LEDGER_CANISTER_ID &&
+      receiveType === ReceiveAddressType.ACCOUNT_ID
+    ) {
+      receiveType = ReceiveAddressType.PRINCIPAL;
+    }
+  });
+
+  // Derived values - component specific
   let selectedTokenObj: TokenWithPriceAndBalance | null = $derived.by(() => {
     if (!selectedToken || !walletStore.query.data) return null;
     const token = walletStore.findTokenByAddress(selectedToken);
@@ -55,9 +66,8 @@
   let maxAmount: number = $derived.by(() => {
     if (!selectedTokenObj || !walletStore.query.data) return 0;
 
-    const maxAmountResult = maxAmountForAsset(
+    const maxAmountResult = calculateMaxSendAmount(
       selectedTokenObj.address,
-      1,
       walletStore.query.data,
     );
 
@@ -71,26 +81,63 @@
     selectedToken === ICP_LEDGER_CANISTER_ID,
   );
 
-  $effect(() => {
-    if (
-      selectedToken !== ICP_LEDGER_CANISTER_ID &&
-      receiveType === ACCOUNT_ID_TYPE
-    ) {
-      receiveType = PRINCIPAL_TYPE;
-    }
-  });
-
-  let errorMessage: string = $state("");
-  let isSending: boolean = $state(false);
   const isMaxAvailable = $derived(maxAmount > 0 && !isSending);
-
-  // Only show loading on initial load, not during background refreshes
   const isLoading = $derived(
     !walletStore.query.data && walletStore.query.isLoading,
   );
 
+  // Derived from store methods
+  const sendFeeResult = $derived.by(() => {
+    return walletSendStore.computeSendFee({
+      selectedToken,
+      amount,
+      receiveAddress,
+    });
+  });
+  const sendFeeOutput = $derived.by(() => {
+    return sendFeeResult.isOk() ? sendFeeResult.value : null;
+  });
+
+  const transactionLink = $derived.by(() => {
+    return lastBlockId !== null
+      ? walletSendStore.getTransactionLink(selectedToken, lastBlockId)
+      : null;
+  });
+
+  /**
+   * Resolve indexId for token (ICP uses constant, others use token.indexId)
+   */
+  function getIndexId(
+    address: string,
+    tokenObj: TokenWithPriceAndBalance | null,
+  ): string | undefined {
+    if (address === ICP_LEDGER_CANISTER_ID) {
+      return ICP_INDEX_CANISTER_ID;
+    }
+    return tokenObj?.indexId;
+  }
+
+  /**
+   * Refresh transaction history for selected token (background, non-blocking)
+   */
+  function refreshTransactionHistory(): void {
+    const indexId = getIndexId(selectedToken, selectedTokenObj);
+    if (!indexId) return;
+
+    const historyStore = createWalletHistoryStore(indexId);
+    historyStore.refresh();
+  }
+
   function handleSelectToken(address: string) {
     selectedToken = address;
+  }
+
+  function handleSetReceiveTypePrincipal() {
+    receiveType = ReceiveAddressType.PRINCIPAL;
+  }
+
+  function handleSetReceiveTypeAccountId() {
+    receiveType = ReceiveAddressType.ACCOUNT_ID;
   }
 
   async function handlePasteFromClipboard() {
@@ -104,70 +151,56 @@
   }
 
   function handleContinue() {
-    errorMessage = "";
-
-    const validationResult = validate({
+    const result = walletSendStore.validateSend({
       selectedToken,
       receiveAddress,
       amount,
+      receiveType,
       maxAmount,
     });
-
-    if (!validationResult.success) {
-      errorMessage = validationResult.errorMessage;
-      return;
+    if (result.isErr()) {
+      toast.error(result.error);
+    } else {
+      walletSendStore.txState = TxState.CONFIRM;
+      showConfirmDrawer = true;
     }
-
-    txState = "confirm";
-    showConfirmDrawer = true;
   }
 
   async function handleConfirmSend() {
-    errorMessage = "";
-    txState = "pending";
+    walletSendStore.txState = TxState.PENDING;
+    isSending = true;
 
-    try {
-      const token = walletStore.findTokenByAddress(selectedToken).unwrap();
-      const balanceAmount = formatBalanceUnits(amount, token.decimals);
+    const result = await walletSendStore.executeSend({
+      selectedToken,
+      receiveAddress,
+      amount,
+      receiveType,
+    });
 
-      if (receiveType === PRINCIPAL_TYPE) {
-        const receivePrincipal = Principal.fromText(receiveAddress);
-        await walletStore.transferTokenToPrincipal(
-          selectedToken,
-          receivePrincipal,
-          balanceAmount,
-        );
-      } else if (
-        receiveType === ACCOUNT_ID_TYPE &&
-        selectedToken === ICP_LEDGER_CANISTER_ID
-      ) {
-        await walletStore.transferICPToAccount(receiveAddress, balanceAmount);
-      } else {
-        throw new Error(locale.t("wallet.send.errors.invalidReceiveType"));
-      }
-
-      txState = "success";
-    } catch (error) {
-      txState = "error";
-      toast.error(`${locale.t("wallet.send.errorMessagePrefix")} ${error}`);
+    if (result.isOk()) {
+      lastBlockId = result.value;
+      walletSendStore.txState = TxState.SUCCESS;
+      refreshTransactionHistory();
+    } else {
+      walletSendStore.txState = TxState.ERROR;
       showConfirmDrawer = false;
+      toast.error(result.error);
     }
+
+    isSending = false;
   }
 
   function handleCloseDrawer() {
     showConfirmDrawer = false;
-    if (txState === "success") {
+    if (walletSendStore.txState === TxState.SUCCESS) {
+      // Reset form
       receiveAddress = "";
       amount = 0;
       tokenAmount = "";
       usdAmount = "";
     }
-    txState = "confirm";
+    walletSendStore.txState = TxState.CONFIRM;
   }
-
-  const networkFee = $derived(calculateNetworkFeeInfo(selectedTokenObj));
-
-  const transactionLink = $derived("https://example.com/transaction");
 </script>
 
 <NavBar />
@@ -179,14 +212,6 @@
     </div>
   {:else if walletStore.query.data}
     <div class="space-y-4 grow-1 flex flex-col">
-      {#if errorMessage}
-        <div
-          class="p-3 text-sm text-red-700 bg-red-100 rounded border border-red-200"
-        >
-          {errorMessage}
-        </div>
-      {/if}
-
       <InputAmount
         bind:selectedToken
         bind:amount
@@ -209,18 +234,18 @@
         {#if shouldShowAddressTypeSelector}
           <div class="flex gap-1.5 mb-2">
             <button
-              onclick={() => (receiveType = PRINCIPAL_TYPE)}
+              onclick={handleSetReceiveTypePrincipal}
               class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {receiveType ===
-              PRINCIPAL_TYPE
+              ReceiveAddressType.PRINCIPAL
                 ? 'border-[#36A18B] bg-green-50'
                 : 'border-gray-300 hover:border-gray-400'}"
             >
               {locale.t("wallet.send.principalId")}
             </button>
             <button
-              onclick={() => (receiveType = ACCOUNT_ID_TYPE)}
+              onclick={handleSetReceiveTypeAccountId}
               class="flex-1 p-2 border rounded-lg text-sm font-medium transition-colors {receiveType ===
-              ACCOUNT_ID_TYPE
+              ReceiveAddressType.ACCOUNT_ID
                 ? 'border-[#36A18B] bg-green-50'
                 : 'border-gray-300 hover:border-gray-400'}"
             >
@@ -248,7 +273,7 @@
           class="text-xs text-gray-500 mt-1 max-w-full whitespace-nowrap overflow-hidden text-ellipsis"
         >
           {locale.t(
-            receiveType === PRINCIPAL_TYPE
+            receiveType === ReceiveAddressType.PRINCIPAL
               ? "wallet.send.addressPrincipleExample"
               : "wallet.send.addressAccountExample",
           )}
@@ -284,11 +309,8 @@
 
 <ConfirmSendDrawer
   bind:open={showConfirmDrawer}
-  {txState}
-  {amount}
-  selectedToken={selectedTokenObj}
-  {receiveAddress}
-  {networkFee}
+  txState={walletSendStore.txState}
+  {sendFeeOutput}
   {transactionLink}
   onClose={handleCloseDrawer}
   onConfirm={handleConfirmSend}
