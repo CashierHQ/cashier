@@ -12,6 +12,6 @@ export function deriveAccountId(userPrincipal: string): Result<string, Error> {
     });
     return Ok(accountId.toHex());
   } catch {
-    return Err(new Error("Failed to derive accountId from principal") );
+    return Err(new Error("Failed to derive accountId from principal"));
   }
 }

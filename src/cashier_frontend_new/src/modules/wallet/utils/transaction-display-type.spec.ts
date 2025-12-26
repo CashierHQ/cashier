@@ -14,11 +14,7 @@ const USER_PRINCIPAL = "aaaaa-aa";
 const OTHER_PRINCIPAL = "bbbbb-bb";
 
 // Helper to create minimal TokenTransaction
-function createTx(
-  kind: string,
-  from?: string,
-  to?: string,
-): TokenTransaction {
+function createTx(kind: string, from?: string, to?: string): TokenTransaction {
   return {
     id: 1n,
     kind: kind as TokenTransaction["kind"],

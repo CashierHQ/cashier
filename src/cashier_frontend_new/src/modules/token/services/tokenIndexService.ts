@@ -245,7 +245,9 @@ export class TokenIndexService {
     if (fromNullable(transaction.approve)) return TransactionKind.APPROVE;
 
     // Default to transfer if can't determine
-    console.warn(`Unknown ICRC transaction kind: ${icrcKind}, defaulting to transfer`);
+    console.warn(
+      `Unknown ICRC transaction kind: ${icrcKind}, defaulting to transfer`,
+    );
     return TransactionKind.TRANSFER;
   }
 

@@ -27,8 +27,10 @@ describe("deriveAccountId", () => {
   });
 
   it("should return different accountIds for different principals", () => {
-    const principal1 = "3wkbq-hp6r5-hb7gw-gni7g-e7kab-mcugd-jtyuu-5hcy4-krkx7-a2ltk-qqe";
-    const principal2 = "uncgt-rut24-e62tj-catlu-i243k-y4bwo-qifeu-azhm3-k6zcs-xizfk-cae";
+    const principal1 =
+      "3wkbq-hp6r5-hb7gw-gni7g-e7kab-mcugd-jtyuu-5hcy4-krkx7-a2ltk-qqe";
+    const principal2 =
+      "uncgt-rut24-e62tj-catlu-i243k-y4bwo-qifeu-azhm3-k6zcs-xizfk-cae";
     const result1 = deriveAccountId(principal1);
     const result2 = deriveAccountId(principal2);
 
