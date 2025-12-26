@@ -611,8 +611,7 @@ describe("FeeService", () => {
         symbol: "TKN",
       } as TokenWithPriceAndBalance;
 
-      const longAddress =
-        "abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmno";
+      const longAddress = "abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmno";
 
       const result = svc.computeSendFee(100_000_000n, token, longAddress);
 

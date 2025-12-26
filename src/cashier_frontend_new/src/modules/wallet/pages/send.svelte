@@ -17,7 +17,10 @@
   import InputAmount from "$modules/shared/components/InputAmount.svelte";
   import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
   import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
-  import { ReceiveAddressType, TxState } from "$modules/wallet/types/walletSendStore";
+  import {
+    ReceiveAddressType,
+    TxState,
+  } from "$modules/wallet/types/walletSendStore";
 
   // URL param effect - set token from URL or default to first token
   $effect(() => {

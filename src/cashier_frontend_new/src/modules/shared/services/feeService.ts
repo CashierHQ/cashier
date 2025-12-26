@@ -130,7 +130,10 @@ export class FeeService {
             symbol: "N/A",
             address,
             amount: forecastAmountRaw,
-            amountFormattedStr: parseBalanceUnits(forecastAmountRaw, 8).toString(),
+            amountFormattedStr: parseBalanceUnits(
+              forecastAmountRaw,
+              8,
+            ).toString(),
             usdValueStr: undefined,
           },
           fee: feeRaw
@@ -145,9 +148,12 @@ export class FeeService {
       }
 
       const tokenFee = token.fee ?? ICP_LEDGER_FEE;
-      const { amount: forecastAmountRaw, fee: feeRaw } = this.computeAmountAndFee(
-        { intent, ledgerFee: tokenFee, actionType: action.type },
-      );
+      const { amount: forecastAmountRaw, fee: feeRaw } =
+        this.computeAmountAndFee({
+          intent,
+          ledgerFee: tokenFee,
+          actionType: action.type,
+        });
 
       const forecastFeeAmount = parseBalanceUnits(
         forecastAmountRaw,
@@ -166,7 +172,9 @@ export class FeeService {
         address,
         amount: forecastAmountRaw,
         amountFormattedStr: formatNumber(forecastFeeAmount),
-        usdValueStr: forecastFeeUsd ? formatUsdAmount(forecastFeeUsd) : undefined,
+        usdValueStr: forecastFeeUsd
+          ? formatUsdAmount(forecastFeeUsd)
+          : undefined,
       };
 
       let fee: FeeItem | undefined;
