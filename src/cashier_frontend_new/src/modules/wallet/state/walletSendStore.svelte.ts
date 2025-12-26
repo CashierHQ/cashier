@@ -4,7 +4,7 @@ import { feeService } from "$modules/shared/services/feeService";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
 import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
 import { Principal } from "@dfinity/principal";
-import { Err, Ok } from "ts-results-es";
+import { Err, Ok, Result } from "ts-results-es";
 import {
   ReceiveAddressType,
   TxState,
@@ -31,6 +31,7 @@ class WalletSendStore {
   txState = $state<TxState>(TxState.CONFIRM);
   errorMessage = $state("");
   isSending = $state(false);
+  lastBlockId = $state<bigint | null>(null);
 
   /**
    * Validate send form input
@@ -108,10 +109,31 @@ class WalletSendStore {
   }
 
   /**
-   * Execute the send transaction
-   * @param onSuccess - callback after success (e.g., refresh history)
+   * Execute transfer based on receive type
    */
-  async executeSend(onSuccess?: () => void): Promise<void> {
+  private async transfer(amount: bigint): Promise<bigint> {
+    if (this.receiveType === ReceiveAddressType.PRINCIPAL) {
+      return walletStore.transferTokenToPrincipal(
+        this.selectedToken,
+        Principal.fromText(this.receiveAddress),
+        amount,
+      );
+    }
+
+    if (
+      this.receiveType === ReceiveAddressType.ACCOUNT_ID &&
+      this.selectedToken === ICP_LEDGER_CANISTER_ID
+    ) {
+      return walletStore.transferICPToAccount(this.receiveAddress, amount);
+    }
+
+    throw new Error(locale.t("wallet.send.errors.invalidReceiveType"));
+  }
+
+  /**
+   * Execute the send transaction
+   */
+  async executeSend(onSuccess?: () => void): Promise<Result<bigint, string>> {
     this.errorMessage = "";
     this.txState = TxState.PENDING;
     this.isSending = true;
@@ -119,37 +141,22 @@ class WalletSendStore {
     try {
       const tokenResult = walletStore.findTokenByAddress(this.selectedToken);
       if (tokenResult.isErr()) {
-        throw new Error(locale.t("wallet.send.errors.tokenNotFound"));
+        return Err(locale.t("wallet.send.errors.tokenNotFound"));
       }
+
       const token = tokenResult.unwrap();
+      const amount = formatBalanceUnits(this.amount, token.decimals);
+      const blockId = await this.transfer(amount);
 
-      const balanceAmount = formatBalanceUnits(this.amount, token.decimals);
-
-      if (this.receiveType === ReceiveAddressType.PRINCIPAL) {
-        const receivePrincipal = Principal.fromText(this.receiveAddress);
-        await walletStore.transferTokenToPrincipal(
-          this.selectedToken,
-          receivePrincipal,
-          balanceAmount,
-        );
-      } else if (
-        this.receiveType === ReceiveAddressType.ACCOUNT_ID &&
-        this.selectedToken === ICP_LEDGER_CANISTER_ID
-      ) {
-        await walletStore.transferICPToAccount(
-          this.receiveAddress,
-          balanceAmount,
-        );
-      } else {
-        throw new Error(locale.t("wallet.send.errors.invalidReceiveType"));
-      }
-
+      this.lastBlockId = blockId;
       this.txState = TxState.SUCCESS;
       onSuccess?.();
+      return Ok(blockId);
     } catch (error) {
       this.txState = TxState.ERROR;
       this.errorMessage = `${locale.t("wallet.send.errorMessagePrefix")} ${error}`;
       this.showConfirmDrawer = false;
+      return Err(this.errorMessage);
     } finally {
       this.isSending = false;
     }
@@ -190,6 +197,7 @@ class WalletSendStore {
     this.txState = TxState.CONFIRM;
     this.errorMessage = "";
     this.isSending = false;
+    this.lastBlockId = null;
   }
 
   /**
@@ -204,6 +212,24 @@ class WalletSendStore {
    */
   setReceiveType(type: ReceiveAddressType): void {
     this.receiveType = type;
+  }
+
+  /**
+   * Get transaction link for IC Dashboard
+   * ICP: https://dashboard.internetcomputer.org/transaction/<blockId>
+   * SNS: https://dashboard.internetcomputer.org/sns/<canister>/transaction/<blockId>
+   */
+  getTransactionLink(): string | null {
+    if (this.lastBlockId === null) return null;
+
+    const baseUrl = "https://dashboard.internetcomputer.org";
+
+    if (this.selectedToken === ICP_LEDGER_CANISTER_ID) {
+      return `${baseUrl}/transaction/${this.lastBlockId}`;
+    }
+
+    // For SNS/other tokens, use the canister address
+    return `${baseUrl}/sns/${this.selectedToken}/transaction/${this.lastBlockId}`;
   }
 }
 

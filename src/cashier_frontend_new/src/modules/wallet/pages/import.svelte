@@ -15,7 +15,7 @@
     MOCK_TOKEN_DATA,
     SECURITY_LEARN_MORE_URL,
   } from "../mock/mock";
-  import { isValidPrincipal } from "../utils/address";
+  import { isValidPrincipal } from "$modules/wallet/utils/address";
 
   let isReview = $state(false);
   let selectedNetwork = $state("icp");
