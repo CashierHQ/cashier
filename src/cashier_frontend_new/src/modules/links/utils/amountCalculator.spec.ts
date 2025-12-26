@@ -2,7 +2,8 @@ import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { describe, expect, it } from "vitest";
 import {
   calculateRequiredAssetAmount,
-  maxAmountForAsset,
+  calculateMaxAmountForAsset,
+  calculateMaxSendAmount,
 } from "./amountCalculator";
 import { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 
@@ -94,7 +95,11 @@ describe("maxAmountForAsset", () => {
       },
     ];
 
-    const maxAmountResult = maxAmountForAsset("0xtoken1", 1, mockWalletTokens);
+    const maxAmountResult = calculateMaxAmountForAsset(
+      "0xtoken1",
+      1,
+      mockWalletTokens,
+    );
     expect(maxAmountResult.isOk()).toBe(true);
     const maxAmount = maxAmountResult.unwrap();
     expect(maxAmount).toBe(1_000_000_000n - 2n * fee);
@@ -103,11 +108,108 @@ describe("maxAmountForAsset", () => {
   it("should return error if token is not found", () => {
     const mockWalletTokens: TokenWithPriceAndBalance[] = [];
 
-    const maxAmountResult = maxAmountForAsset(
+    const maxAmountResult = calculateMaxAmountForAsset(
       "nonexistentToken",
       1,
       mockWalletTokens,
     );
     expect(maxAmountResult.isErr()).toBe(true);
+  });
+});
+
+describe("calculateMaxSendAmount", () => {
+  const createMockToken = (
+    overrides: Partial<TokenWithPriceAndBalance> = {},
+  ): TokenWithPriceAndBalance => ({
+    name: "token1",
+    symbol: "TKN1",
+    address: "0xtoken1",
+    decimals: 8,
+    enabled: true,
+    fee: 10_000n,
+    is_default: false,
+    balance: 1_000_000_000n,
+    priceUSD: 1.0,
+    ...overrides,
+  });
+
+  it("should return balance minus fee for valid token", () => {
+    const fee = 10_000n;
+    const balance = 1_000_000_000n;
+    const mockWalletTokens = [createMockToken({ fee, balance })];
+
+    const result = calculateMaxSendAmount("0xtoken1", mockWalletTokens);
+
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap()).toBe(balance - fee);
+  });
+
+  it("should return error if token not found", () => {
+    const mockWalletTokens: TokenWithPriceAndBalance[] = [];
+
+    const result = calculateMaxSendAmount(
+      "nonexistent-token",
+      mockWalletTokens,
+    );
+
+    expect(result.isErr()).toBe(true);
+    if (result.isErr()) {
+      expect(result.error.message).toBe(
+        "Token with address nonexistent-token not found in wallet",
+      );
+    }
+  });
+
+  it("should handle zero balance", () => {
+    const mockWalletTokens = [createMockToken({ balance: 0n, fee: 10_000n })];
+
+    const result = calculateMaxSendAmount("0xtoken1", mockWalletTokens);
+
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap()).toBe(-10_000n);
+  });
+
+  it("should handle balance equal to fee", () => {
+    const fee = 10_000n;
+    const mockWalletTokens = [createMockToken({ balance: fee, fee })];
+
+    const result = calculateMaxSendAmount("0xtoken1", mockWalletTokens);
+
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap()).toBe(0n);
+  });
+
+  it("should handle zero fee", () => {
+    const balance = 1_000_000n;
+    const mockWalletTokens = [createMockToken({ balance, fee: 0n })];
+
+    const result = calculateMaxSendAmount("0xtoken1", mockWalletTokens);
+
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap()).toBe(balance);
+  });
+
+  it("should find correct token from multiple tokens", () => {
+    const mockWalletTokens = [
+      createMockToken({ address: "0xtoken1", balance: 100n, fee: 10n }),
+      createMockToken({ address: "0xtoken2", balance: 200n, fee: 20n }),
+      createMockToken({ address: "0xtoken3", balance: 300n, fee: 30n }),
+    ];
+
+    const result = calculateMaxSendAmount("0xtoken2", mockWalletTokens);
+
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap()).toBe(180n); // 200 - 20
+  });
+
+  it("should handle large amounts", () => {
+    const balance = 999_999_999_999_999_999n;
+    const fee = 10_000n;
+    const mockWalletTokens = [createMockToken({ balance, fee })];
+
+    const result = calculateMaxSendAmount("0xtoken1", mockWalletTokens);
+
+    expect(result.isOk()).toBe(true);
+    expect(result.unwrap()).toBe(balance - fee);
   });
 });

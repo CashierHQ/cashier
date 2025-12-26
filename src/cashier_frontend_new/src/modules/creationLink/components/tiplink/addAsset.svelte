@@ -10,7 +10,7 @@
   } from "$modules/shared/utils/formatNumber";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import { maxAmountForAsset } from "$modules/links/utils/amountCalculator";
+  import { calculateMaxAmountForAsset } from "$modules/links/utils/amountCalculator";
   import { locale } from "$lib/i18n";
   import AssetButton from "./AssetButton.svelte";
   import SelectedAssetButtonInfo from "./SelectedAssetButtonInfo.svelte";
@@ -237,7 +237,7 @@
   const maxTokenBalance = $derived.by(() => {
     if (!selectedToken || !walletStore.query.data) return 0;
 
-    const maxAmountResult = maxAmountForAsset(
+    const maxAmountResult = calculateMaxAmountForAsset(
       selectedToken.address,
       link.createLinkData.maxUse,
       walletStore.query.data,
@@ -290,7 +290,7 @@
     )
       return 0;
 
-    const maxAmountResult = maxAmountForAsset(
+    const maxAmountResult = calculateMaxAmountForAsset(
       selectedToken.address,
       link.createLinkData.maxUse,
       walletStore.query.data,
