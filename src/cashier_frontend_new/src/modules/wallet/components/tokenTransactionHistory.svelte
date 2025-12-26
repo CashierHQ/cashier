@@ -13,16 +13,15 @@
   } from "lucide-svelte";
   import { groupTransactionsByDate } from "../utils/date";
   import {
-    getDisplayType,
     getTransactionLabelKey,
-    isOutgoingTransaction,
+    isTransactionOutgoing,
   } from "../utils/transaction-display-type";
   import {
     ICP_LEDGER_CANISTER_ID,
     ICP_INDEX_CANISTER_ID,
   } from "$modules/token/constants";
   import {
-    DisplayTransactionType,
+    TransactionKind,
     type TokenWithPriceAndBalance,
     type DisplayTransaction,
   } from "$modules/token/types";
@@ -65,7 +64,7 @@
     }
   });
 
-  // Transform TokenTransaction[] to DisplayTransaction[] for groupTransactionsByDate
+  // Transform TokenTransaction[] to DisplayTransaction[]
   const transactions = $derived.by((): DisplayTransaction[] => {
     if (!tokenDetails || !historyStore) return [];
 
@@ -73,19 +72,19 @@
     const userPrincipal = authState.account?.owner;
 
     return rawTxs.map((tx) => {
-      const type = getDisplayType(
-        tx.kind,
-        tx.from,
-        tx.to,
-        tx.spender,
-        userPrincipal,
-      );
+      console.log("Processing transaction:", tx);
+      const isOutgoing = isTransactionOutgoing(tx, userPrincipal);
       return {
-        type,
+        kind: tx.kind,
+        isOutgoing,
         amount: Number(tx.amount) / Math.pow(10, tokenDetails?.decimals ?? 8),
         timestamp: tx.timestampMs,
       };
     });
+  });
+
+  $effect(() => {
+    console.log("Transactions:", transactions);
   });
 
   const transactionsByDate = $derived.by(() =>
@@ -127,10 +126,10 @@
             <div
               class="w-9 h-9 rounded-full bg-lightgreen flex items-center justify-center flex-shrink-0 mt-1"
             >
-              {#if tx.type === DisplayTransactionType.SENT || tx.type === DisplayTransactionType.TRANSFER_FROM || tx.type === DisplayTransactionType.BURN}
-                <ArrowUpRight class="w-5 h-5 text-gray-700" />
-              {:else if tx.type === DisplayTransactionType.APPROVE}
+              {#if tx.kind === TransactionKind.APPROVE}
                 <Check class="w-5 h-5 text-gray-700" />
+              {:else if tx.isOutgoing}
+                <ArrowUpRight class="w-5 h-5 text-gray-700" />
               {:else}
                 <ArrowDownLeft class="w-5 h-5 text-gray-700" />
               {/if}
@@ -139,10 +138,10 @@
             <div class="flex-1 min-w-0 flex flex-col justify-between h-full">
               <div class="flex justify-between items-start mb-1">
                 <p class="text-[#222222]">
-                  {locale.t(getTransactionLabelKey(tx.type))}
+                  {locale.t(getTransactionLabelKey(tx.kind, tx.isOutgoing))}
                 </p>
                 <p class="text-[#222222] text-right">
-                  {isOutgoingTransaction(tx.type) ? "-" : "+"}{tx.amount}
+                  {tx.isOutgoing ? "-" : "+"}{tx.amount}
                 </p>
               </div>
               <div class="flex justify-between items-start">

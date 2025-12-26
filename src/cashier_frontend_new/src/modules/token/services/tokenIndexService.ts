@@ -208,12 +208,54 @@ export class TokenIndexService {
   }
 
   /**
+   * Map ICRC kind string to unified TransactionKindValue
+   * ICRC canisters may use various kind formats: "xfer", "transfer", "icrc1_transfer", etc.
+   */
+  getIcrcKind(
+    icrcKind: string,
+    transaction: IcrcIndexNgTransactionWithId["transaction"],
+  ): TransactionKindValue {
+    const lowerKind = icrcKind.toLowerCase();
+
+    // Check for transfer variants
+    if (
+      lowerKind === "transfer" ||
+      lowerKind === "xfer" ||
+      lowerKind.includes("transfer")
+    ) {
+      return TransactionKind.TRANSFER;
+    }
+    // Check for mint variants
+    if (lowerKind === "mint" || lowerKind.includes("mint")) {
+      return TransactionKind.MINT;
+    }
+    // Check for burn variants
+    if (lowerKind === "burn" || lowerKind.includes("burn")) {
+      return TransactionKind.BURN;
+    }
+    // Check for approve variants
+    if (lowerKind === "approve" || lowerKind.includes("approve")) {
+      return TransactionKind.APPROVE;
+    }
+
+    // Fallback: infer from which optional field is populated
+    if (fromNullable(transaction.transfer)) return TransactionKind.TRANSFER;
+    if (fromNullable(transaction.mint)) return TransactionKind.MINT;
+    if (fromNullable(transaction.burn)) return TransactionKind.BURN;
+    if (fromNullable(transaction.approve)) return TransactionKind.APPROVE;
+
+    // Default to transfer if can't determine
+    console.warn(`Unknown ICRC transaction kind: ${icrcKind}, defaulting to transfer`);
+    return TransactionKind.TRANSFER;
+  }
+
+  /**
    * Map ICRC IcrcIndexNgTransactionWithId to unified TokenTransaction type
    * ICRC uses optional fields: { transfer?: [...], mint?: [...], burn?: [...], approve?: [...] }
    */
   mapIcrcTransaction(tx: IcrcIndexNgTransactionWithId): TokenTransaction {
     const { id, transaction } = tx;
-    const kind = transaction.kind as TransactionKindValue;
+    const kind = this.getIcrcKind(transaction.kind, transaction);
 
     // Extract from optional array fields using fromNullable
     const transfer = fromNullable(transaction.transfer);
