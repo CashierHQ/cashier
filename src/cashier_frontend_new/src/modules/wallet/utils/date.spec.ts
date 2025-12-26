@@ -1,9 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { formatDate, getDateKey, groupTransactionsByDate } from "./date";
-import {
-  TransactionKind,
-  type DisplayTransaction,
-} from "$modules/token/types";
+import { TransactionKind, type DisplayTransaction } from "$modules/token/types";
 
 describe("formatDate", () => {
   it("should format timestamp to readable date string", () => {

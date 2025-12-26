@@ -71,20 +71,23 @@
     const rawTxs = historyStore.transactions;
     const userPrincipal = authState.account?.owner;
 
+    if (!userPrincipal) return [];
+
     return rawTxs.map((tx) => {
-      console.log("Processing transaction:", tx);
-      const isOutgoing = isTransactionOutgoing(tx, userPrincipal);
+      const isOutgoing = isTransactionOutgoing(tx, tokenDetails, userPrincipal);
+      if (isOutgoing === null) {
+        console.warn(
+          "Could not determine if transaction is outgoing or incoming:",
+          tx,
+        );
+      }
       return {
         kind: tx.kind,
-        isOutgoing,
+        isOutgoing: isOutgoing.unwrapOr(false),
         amount: Number(tx.amount) / Math.pow(10, tokenDetails?.decimals ?? 8),
         timestamp: tx.timestampMs,
       };
     });
-  });
-
-  $effect(() => {
-    console.log("Transactions:", transactions);
   });
 
   const transactionsByDate = $derived.by(() =>
