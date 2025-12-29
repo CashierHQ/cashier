@@ -1,0 +1,61 @@
+name: "Frontend CI"
+
+on:
+  pull_request:
+    branches: [main, dev, staging]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'src/cashier_frontend_new/**'
+      - '!src/cashier_frontend_new/src/lib/generated/**'
+    paths-ignore:
+      - '**/README.md'
+  push:
+    branches: [feature/reduce-github-action-time]
+
+concurrency:
+  group: frontend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  frontend-check:
+    name: "Frontend Code Check"
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false || github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Setup Just
+        uses: extractions/setup-just@v1
+
+      - name: Run frontend code check
+        run: just frontend_check_code
+
+  frontend-test:
+    name: "Frontend Tests"
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false || github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+
+      - name: Setup Just
+        uses: extractions/setup-just@v1
+
+      - name: Run frontend tests
+        run: just test_frontend
