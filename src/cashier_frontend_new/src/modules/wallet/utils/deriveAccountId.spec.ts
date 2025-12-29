@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { deriveAccountId } from "./deriveAccountId";
+import { deriveAccountId } from "$modules/wallet/utils/deriveAccountId";
 
 describe("deriveAccountId", () => {
   it("should derive accountId from valid principal", () => {

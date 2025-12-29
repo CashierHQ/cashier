@@ -7,11 +7,15 @@ import {
   type TransactionKindValue,
 } from "$modules/token/types";
 import { Err, Ok, type Result } from "ts-results-es";
-import { deriveAccountId } from "./deriveAccountId";
+import { deriveAccountId } from "$modules/wallet/utils/deriveAccountId";
 
 /**
  * Check if address matches user (handles both principal and accountId formats)
  * Automatically derives accountId from principal for ICP token support
+ * @param address - Address to check (principal or accountId)
+ * @param userPrincipal - User's principal string
+ * @param userAccountId - User's accountId string (if available)
+ * @returns True if address matches user, false otherwise
  */
 function isUserAddress(
   address: string | undefined,
@@ -32,7 +36,9 @@ function isUserAddress(
  * Handles both ICRC (principal) and ICP (accountId) address formats automatically.
  *
  * @param tx - Token transaction
+ * @param token - Token info (to check if ICP)
  * @param userPrincipal - User's principal string
+ * @returns Result with boolean (true if outgoing) or Error if unable to determine
  */
 export function isTransactionOutgoing(
   tx: TokenTransaction,
@@ -86,7 +92,9 @@ const LABEL_KEY_MAP: Record<
 
 /**
  * Get i18n key for transaction label based on kind + direction
- * @returns key like "wallet.tokenInfo.sent"
+ * @param kind - Transaction kind
+ * @param isOutgoing - True if outgoing (debit), false if incoming (credit)
+ * @returns i18n key string
  */
 export function getTransactionLabelKey(
   kind: TransactionKindValue,

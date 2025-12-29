@@ -23,6 +23,21 @@ export default defineConfig([
       // Warn on console.log statements to prevent debug code in production
       // Allow console.error and console.warn for legitimate error handling
       "no-console": ["warn", { allow: ["warn", "error"] }],
+      // Enforce absolute imports using path aliases ($lib, $modules) instead of relative parent imports
+      // Allows: ./ for same-directory imports, $lib/*, $modules/*
+      // Disallows: ../*, ../../* etc.
+      "no-restricted-imports": [
+        "warn",
+        {
+          patterns: [
+            {
+              group: ["../*"],
+              message:
+                "Use path aliases ($lib, $modules) instead of relative parent imports",
+            },
+          ],
+        },
+      ],
     },
   },
   {

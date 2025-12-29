@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   getTransactionLabelKey,
   isTransactionOutgoing,
-} from "./transaction-display-type";
+} from "$modules/wallet/utils/transaction-display-type";
 import {
   TransactionKind,
   type TokenTransaction,

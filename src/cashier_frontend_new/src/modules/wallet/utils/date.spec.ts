@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { formatDate, getDateKey, groupTransactionsByDate } from "./date";
 import { TransactionKind, type DisplayTransaction } from "$modules/token/types";
+import {
+  formatDate,
+  getDateKey,
+  groupTransactionsByDate,
+} from "$modules/wallet/utils/date";
 
 describe("formatDate", () => {
   it("should format timestamp to readable date string", () => {
