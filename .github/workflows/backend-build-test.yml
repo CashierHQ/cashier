@@ -1,4 +1,4 @@
-name: "Backend CI"
+name: "Build test backend"
 
 on:
   pull_request:
