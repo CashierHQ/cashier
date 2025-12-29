@@ -11,6 +11,7 @@ export type DisplayTransaction = {
   kind: TransactionKindValue;
   /** True if outgoing (debit, shows "-"), false if incoming (credit, shows "+") */
   isOutgoing: boolean;
+  /** UI amount (100000000 => 1 e8s) */
   amount: number;
   timestamp: number;
 };
@@ -48,10 +49,13 @@ export class DisplayTransactionMapper {
           tx,
         );
       }
+
+      const parsedNumber = Number(tx.amount) / 10 ** tokenDetails.decimals;
+
       return {
         kind: tx.kind,
         isOutgoing: outgoingResult.unwrapOr(false),
-        amount: Number(tx.amount),
+        amount: parsedNumber,
         timestamp: tx.timestampMs,
       };
     });
