@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { X } from "lucide-svelte";
+  import { X, LoaderCircle } from "lucide-svelte";
   import WalletPage from "$modules/wallet/pages/wallet.svelte";
   import TokenInfoPage from "$modules/wallet/pages/tokenInfo.svelte";
   import ReceivePage from "$modules/wallet/pages/receive.svelte";
@@ -22,6 +22,7 @@
   let { open = $bindable(false) }: Props = $props();
 
   let currentView = $state<WalletView>({ type: "main" });
+  let isToggling = $state(false);
 
   function handleClose() {
     open = false;
@@ -66,7 +67,7 @@
 
 {#if open}
   <div
-    class="fixed inset-0 z-40 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
+    class="fixed inset-0 z-[30] bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
     onclick={handleOverlayClick}
     role="presentation"
   ></div>
@@ -76,7 +77,7 @@
     aria-describedby="wallet-description"
     aria-labelledby="wallet-title"
     data-state={open ? "open" : "closed"}
-    class="fixed z-[60] gap-4 bg-white shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out inset-y-0 right-0 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm w-full flex flex-col h-full"
+    class="fixed z-[40] gap-4 bg-white shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out inset-y-0 right-0 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm w-full flex flex-col h-full"
     tabindex="-1"
   >
     <div class="absolute right-4 top-4 z-10">
@@ -92,6 +93,17 @@
         <span class="sr-only">Close wallet</span>
       </button>
     </div>
+
+    <!-- Loading overlay for entire wallet -->
+    {#if isToggling}
+      <div
+        class="absolute inset-0 bg-black/20 flex items-center justify-center z-50 rounded-r-lg"
+      >
+        <div class="bg-white rounded-2xl p-8 shadow-xl">
+          <LoaderCircle class="h-10 w-10 text-green animate-spin" />
+        </div>
+      </div>
+    {/if}
 
     <div
       class="flex-1 flex flex-col overflow-y-auto p-4 {currentView.type ===
@@ -134,6 +146,7 @@
         <ManagePage
           onNavigateBack={navigateToMain}
           onNavigateToImport={navigateToImport}
+          bind:isToggling
         />
       {/if}
     </div>

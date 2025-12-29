@@ -19,6 +19,13 @@
   import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
   import { ReceiveAddressType } from "$modules/wallet/types";
 
+  type Props = {
+    initialToken?: string;
+    onNavigateBack: () => void;
+  };
+
+  let { initialToken, onNavigateBack }: Props = $props();
+
   // Form state (local)
   let selectedToken = $state("");
   let receiveAddress = $state("");
@@ -280,7 +287,7 @@
               : "wallet.send.addressAccountExample",
           )}
         </div>
-        {#if receiveType === PRINCIPAL_TYPE && shouldShowAddressTypeSelector}
+        {#if receiveType === ReceiveAddressType.PRINCIPAL && shouldShowAddressTypeSelector}
           <div class="flex items-start gap-1.5 mt-2">
             <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
             <div class="text-sm text-green">
