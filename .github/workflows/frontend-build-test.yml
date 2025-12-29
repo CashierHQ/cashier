@@ -7,8 +7,6 @@ on:
     paths:
       - 'src/cashier_frontend_new/**'
       - '!src/cashier_frontend_new/src/lib/generated/**'
-    paths-ignore:
-      - '**/README.md'
   push:
     branches: [feature/reduce-github-action-time]
 
