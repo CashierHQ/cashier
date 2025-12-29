@@ -1,3 +1,5 @@
+import { isTransactionOutgoing } from "$modules/wallet/utils/transaction-display-type";
+import type { TokenWithPriceAndBalance } from "./tokenMetadata";
 import type { TokenTransaction } from "./tokenTransaction";
 import type { TransactionKindValue } from "./transactionKind";
 
@@ -14,31 +16,44 @@ export type DisplayTransaction = {
 };
 
 /**
- * Context required for mapping TokenTransaction to DisplayTransaction
- */
-export type DisplayTransactionMapperContext = {
-  decimals: number;
-  /** Result of isTransactionOutgoing check */
-  isOutgoing: boolean;
-};
-
-/**
  * Mapper for DisplayTransaction
  */
 export class DisplayTransactionMapper {
   /**
    * Map TokenTransaction to DisplayTransaction
    * Extracts kind, direction, formats amount, and preserves timestamp
+   * @param tx - Token transaction
+   * @param userPrincipal - User's principal string
+   * @param tokenDetails - Token info (to check if ICP)
+   * @returns DisplayTransaction array
    */
   static fromTokenTransaction(
-    tx: TokenTransaction,
-    ctx: DisplayTransactionMapperContext,
-  ): DisplayTransaction {
-    return {
-      kind: tx.kind,
-      isOutgoing: ctx.isOutgoing,
-      amount: Number(tx.amount) / Math.pow(10, ctx.decimals),
-      timestamp: tx.timestampMs,
-    };
+    txs: TokenTransaction[],
+    userPrincipal?: string,
+    tokenDetails?: TokenWithPriceAndBalance,
+  ): DisplayTransaction[] {
+    if (!tokenDetails) return [];
+
+    if (!userPrincipal) return [];
+
+    return txs.map((tx) => {
+      const outgoingResult = isTransactionOutgoing(
+        tx,
+        tokenDetails,
+        userPrincipal,
+      );
+      if (outgoingResult.isErr()) {
+        console.warn(
+          "Could not determine if transaction is outgoing or incoming:",
+          tx,
+        );
+      }
+      return {
+        kind: tx.kind,
+        isOutgoing: outgoingResult.unwrapOr(false),
+        amount: Number(tx.amount),
+        timestamp: tx.timestampMs,
+      };
+    });
   }
 }
