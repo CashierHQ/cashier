@@ -12,10 +12,7 @@ export type {
 } from "./tokenTransaction";
 
 // Display transaction types with mapper
-export type {
-  DisplayTransaction,
-  DisplayTransactionMapperContext,
-} from "./displayTransaction";
+export type { DisplayTransaction } from "./displayTransaction";
 export { DisplayTransactionMapper } from "./displayTransaction";
 
 // Transaction group type
