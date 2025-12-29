@@ -25,7 +25,7 @@ export class UserIPStore {
           return null;
         }
       },
-      refetchInterval: 60_000, // Refresh every 60 seconds to keep location up-to-date
+      // Check only once on app mount, not repeatedly
       persistedKey: ["ipLocationQuery"],
       storageType: "sessionStorage",
     });
