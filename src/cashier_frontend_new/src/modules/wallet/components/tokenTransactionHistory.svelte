@@ -11,11 +11,11 @@
     Check,
     LoaderCircle,
   } from "lucide-svelte";
-  import { groupTransactionsByDate } from "../utils/date";
+  import { groupTransactionsByDate } from "$modules/wallet/utils/date";
   import {
     getTransactionLabelKey,
     isTransactionOutgoing,
-  } from "../utils/transaction-display-type";
+  } from "$modules/wallet/utils/transaction-display-type";
   import {
     ICP_LEDGER_CANISTER_ID,
     ICP_INDEX_CANISTER_ID,
@@ -24,7 +24,8 @@
     TransactionKind,
     type TokenWithPriceAndBalance,
     type DisplayTransaction,
-  } from "$modules/token/types";
+    DisplayTransactionMapper,
+  } from "$modules/token/types/index";
 
   interface Props {
     tokenAddress: string;
@@ -74,19 +75,21 @@
     if (!userPrincipal) return [];
 
     return rawTxs.map((tx) => {
-      const isOutgoing = isTransactionOutgoing(tx, tokenDetails, userPrincipal);
-      if (isOutgoing === null) {
+      const outgoingResult = isTransactionOutgoing(
+        tx,
+        tokenDetails,
+        userPrincipal,
+      );
+      if (outgoingResult.isErr()) {
         console.warn(
           "Could not determine if transaction is outgoing or incoming:",
           tx,
         );
       }
-      return {
-        kind: tx.kind,
-        isOutgoing: isOutgoing.unwrapOr(false),
-        amount: Number(tx.amount) / Math.pow(10, tokenDetails?.decimals ?? 8),
-        timestamp: tx.timestampMs,
-      };
+      return DisplayTransactionMapper.fromTokenTransaction(tx, {
+        decimals: tokenDetails.decimals,
+        isOutgoing: outgoingResult.unwrapOr(false),
+      });
     });
   });
 

@@ -3,10 +3,10 @@ import { Err, Ok } from "ts-results-es";
 import { Principal } from "@dfinity/principal";
 import {
   TxState,
-  type ValidateSendParams,
   type ComputeSendFeeParams,
   type ExecuteSendParams,
 } from "$modules/wallet/types/walletSendStore";
+import type { ValidateSendParams } from "$modules/wallet/utils/validate-send";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 
 // Mock dependencies
