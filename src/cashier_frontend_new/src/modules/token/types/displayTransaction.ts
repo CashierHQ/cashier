@@ -37,27 +37,27 @@ export class DisplayTransactionMapper {
 
     if (!userPrincipal) return [];
 
-    return txs.map((tx) => {
+    return txs.flatMap((tx) => {
       const outgoingResult = isTransactionOutgoing(
         tx,
         tokenDetails,
         userPrincipal,
       );
       if (outgoingResult.isErr()) {
-        console.warn(
-          "Could not determine if transaction is outgoing or incoming:",
-          tx,
-        );
+        // Skip transactions where direction cannot be determined
+        return [];
       }
 
       const parsedNumber = Number(tx.amount) / 10 ** tokenDetails.decimals;
 
-      return {
-        kind: tx.kind,
-        isOutgoing: outgoingResult.unwrapOr(false),
-        amount: parsedNumber,
-        timestamp: tx.timestampMs,
-      };
+      return [
+        {
+          kind: tx.kind,
+          isOutgoing: outgoingResult.value,
+          amount: parsedNumber,
+          timestamp: tx.timestampMs,
+        },
+      ];
     });
   }
 }
