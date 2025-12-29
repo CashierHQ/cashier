@@ -12,10 +12,7 @@
     LoaderCircle,
   } from "lucide-svelte";
   import { groupTransactionsByDate } from "$modules/wallet/utils/date";
-  import {
-    getTransactionLabelKey,
-    isTransactionOutgoing,
-  } from "$modules/wallet/utils/transaction-display-type";
+  import { getTransactionLabelKey } from "$modules/wallet/utils/transaction-display-type";
   import {
     ICP_LEDGER_CANISTER_ID,
     ICP_INDEX_CANISTER_ID,
@@ -67,30 +64,11 @@
 
   // Transform TokenTransaction[] to DisplayTransaction[]
   const transactions = $derived.by((): DisplayTransaction[] => {
-    if (!tokenDetails || !historyStore) return [];
-
-    const rawTxs = historyStore.transactions;
-    const userPrincipal = authState.account?.owner;
-
-    if (!userPrincipal) return [];
-
-    return rawTxs.map((tx) => {
-      const outgoingResult = isTransactionOutgoing(
-        tx,
-        tokenDetails,
-        userPrincipal,
-      );
-      if (outgoingResult.isErr()) {
-        console.warn(
-          "Could not determine if transaction is outgoing or incoming:",
-          tx,
-        );
-      }
-      return DisplayTransactionMapper.fromTokenTransaction(tx, {
-        decimals: tokenDetails.decimals,
-        isOutgoing: outgoingResult.unwrapOr(false),
-      });
-    });
+    return DisplayTransactionMapper.fromTokenTransaction(
+      historyStore?.transactions || [],
+      authState.account?.owner,
+      tokenDetails,
+    );
   });
 
   const transactionsByDate = $derived.by(() =>
