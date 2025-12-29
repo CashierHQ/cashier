@@ -102,10 +102,13 @@ jobs:
           shared-key: ${{ github.repository }}
           save-if: ${{ github.ref_type != 'tag' }}
 
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
       - name: Setup environment
         run: |
           export RUST_BACKTRACE="full"
-         
+
       - name: Build
         run: |
           just build
@@ -138,6 +141,9 @@ jobs:
         with:
           shared-key: ${{ github.repository }}
           save-if: ${{ github.ref_type != 'tag' }}
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
 
       - name: Setup environment
         run: |

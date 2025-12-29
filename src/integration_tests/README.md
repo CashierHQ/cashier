@@ -13,7 +13,7 @@ just build
 ## Execute integration tests
 
 ```bash
-cargo test -p integration_tests
+cargo nextest run -p integration_tests
 ```
 
 ## Execute benchmarks
@@ -21,7 +21,7 @@ cargo test -p integration_tests
 - Benchmarks tests aim to determine the cycles consumption of canister actions, such as create-link, use-link, add-gate, etc
 
 ```bash
-cargo test -p integration_tests -- --ignored --nocapture
+cargo nextest run -p integration_tests -- --ignored --nocapture
 ```
 
 The cycles consumption is printed out in console.

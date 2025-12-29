@@ -7,19 +7,19 @@ test_all: test test_frontend
 [group('test')]
 test_unit test_name="":
   # Unit tests for all the packages
-  cargo test {{test_name}} --lib --bins
+  cargo nextest run {{test_name}} --lib --bins
 
 
 # Run unit and integration tests
 [group('test')]
 test test_name="": download_artifacts build_canisters
-  cargo test {{test_name}}
+  cargo nextest run {{test_name}}
 
 
 # Run unit tests for the i686 target
 [group('test')]
 test_unit_i686 test_name="":
-  cargo test {{test_name}} --lib --bins --target i686-unknown-linux-gnu
+  cargo nextest run {{test_name}} --lib --bins --target i686-unknown-linux-gnu
 
 
 # Run the frontend tests
