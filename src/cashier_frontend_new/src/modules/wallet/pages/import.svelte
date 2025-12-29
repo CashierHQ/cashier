@@ -15,7 +15,7 @@
     validateIndexCanister,
     type ValidationErrorType,
   } from "$modules/token/services/canister-validation";
-  import { MOCK_NETWORKS, SECURITY_LEARN_MORE_URL } from "../mock/mock";
+  import { MOCK_NETWORKS, SECURITY_LEARN_MORE_URL } from "$modules/wallet/mock/mock";
   import { isValidPrincipal } from "$modules/wallet/utils/address";
     import { assertUnreachable } from "$lib/rsMatch";
 
