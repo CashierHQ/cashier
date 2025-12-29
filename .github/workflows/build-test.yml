@@ -7,7 +7,7 @@ on:
     paths-ignore:
       - "**/README.md"
   push:
-    branches: [main, dev, staging]
+    branches: [main, dev, staging, feature/reduce-github-time-consume]
     tags:
       - "v*"
     paths-ignore:
