@@ -20,8 +20,6 @@ on:
       - 'src/cashier_frontend_new/src/lib/generated/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
-    paths-ignore:
-      - '**/README.md'
   push:
     branches: [feature/reduce-github-action-time]
 
