@@ -25,9 +25,6 @@ export class UserIPStore {
           return null;
         }
       },
-      // Check only once on app mount, not repeatedly
-      persistedKey: ["ipLocationQuery"],
-      storageType: "sessionStorage",
     });
   }
 
