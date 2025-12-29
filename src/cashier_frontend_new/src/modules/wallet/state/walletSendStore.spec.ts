@@ -5,8 +5,8 @@ import {
   TxState,
   type ComputeSendFeeParams,
   type ExecuteSendParams,
+  type ValidateSendParams,
 } from "$modules/wallet/types/walletSendStore";
-import type { ValidateSendParams } from "$modules/wallet/utils/validate-send";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 
 // Mock dependencies
