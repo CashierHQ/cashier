@@ -105,6 +105,9 @@ jobs:
       - name: Install cargo-nextest
         uses: taiki-e/install-action@nextest
 
+      - name: Setup PocketIC
+        uses: dfinity/pocketic@main
+
       - name: Setup environment
         run: |
           export RUST_BACKTRACE="full"
