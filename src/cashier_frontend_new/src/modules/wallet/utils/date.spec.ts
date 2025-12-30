@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { formatDate, getDateKey, groupTransactionsByDate } from "./date";
+import { TransactionKind, type DisplayTransaction } from "$modules/token/types";
 import {
-  DisplayTransactionType,
-  type DisplayTransaction,
-} from "$modules/token/types";
+  formatDate,
+  getDateKey,
+  groupTransactionsByDate,
+} from "$modules/wallet/utils/date";
 
 describe("formatDate", () => {
   it("should format timestamp to readable date string", () => {
@@ -54,22 +55,26 @@ describe("groupTransactionsByDate", () => {
     {
       timestamp: new Date("2024-01-15T10:00:00Z").getTime(),
       amount: 100,
-      type: DisplayTransactionType.RECEIVED,
+      kind: TransactionKind.TRANSFER,
+      isOutgoing: false,
     },
     {
       timestamp: new Date("2024-01-15T14:00:00Z").getTime(),
       amount: 50,
-      type: DisplayTransactionType.SENT,
+      kind: TransactionKind.TRANSFER,
+      isOutgoing: true,
     },
     {
       timestamp: new Date("2024-01-16T09:00:00Z").getTime(),
       amount: 200,
-      type: DisplayTransactionType.RECEIVED,
+      kind: TransactionKind.TRANSFER,
+      isOutgoing: false,
     },
     {
       timestamp: new Date("2024-01-14T18:00:00Z").getTime(),
       amount: 75,
-      type: DisplayTransactionType.SENT,
+      kind: TransactionKind.TRANSFER,
+      isOutgoing: true,
     },
   ];
 
@@ -109,7 +114,8 @@ describe("groupTransactionsByDate", () => {
       {
         timestamp: new Date("2024-01-15T10:00:00Z").getTime(),
         amount: 100,
-        type: DisplayTransactionType.RECEIVED,
+        kind: TransactionKind.TRANSFER,
+        isOutgoing: false,
       },
     ];
 
@@ -129,7 +135,7 @@ describe("groupTransactionsByDate", () => {
     allTransactions.forEach((tx) => {
       expect(tx).toHaveProperty("timestamp");
       expect(tx).toHaveProperty("amount");
-      expect(tx).toHaveProperty("type");
+      expect(tx).toHaveProperty("kind");
     });
   });
 
@@ -139,12 +145,14 @@ describe("groupTransactionsByDate", () => {
       {
         timestamp: sameTimestamp,
         amount: 100,
-        type: DisplayTransactionType.RECEIVED,
+        kind: TransactionKind.TRANSFER,
+        isOutgoing: false,
       },
       {
         timestamp: sameTimestamp,
         amount: 50,
-        type: DisplayTransactionType.SENT,
+        kind: TransactionKind.TRANSFER,
+        isOutgoing: true,
       },
     ];
 
