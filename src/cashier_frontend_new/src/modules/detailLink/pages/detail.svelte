@@ -19,6 +19,7 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { transactionCartService } from "$modules/transactionCart/services/transactionCartService";
   import { locale } from "$lib/i18n";
+  import { authState } from "$modules/auth/state/auth.svelte";
   import { toast } from "svelte-sonner";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
@@ -333,7 +334,8 @@
     const tokens = Object.fromEntries(
       (walletStore.query.data ?? []).map((t) => [t.address, t]),
     );
-    const currentWallet = linkStore.action.creator.toString();
+    const currentWallet = authState.account?.owner;
+    if (!currentWallet) return [];
     return transactionCartService.fromAction(
       linkStore.action,
       currentWallet,

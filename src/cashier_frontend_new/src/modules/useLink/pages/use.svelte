@@ -12,6 +12,7 @@
   import { transactionCartService } from "$modules/transactionCart/services/transactionCartService";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { locale } from "$lib/i18n";
+  import { authState } from "$modules/auth/state/auth.svelte";
 
   const {
     onIsLinkChange,
@@ -89,7 +90,8 @@
     const tokens = Object.fromEntries(
       (walletStore.query.data ?? []).map((t) => [t.address, t]),
     );
-    const currentWallet = userStore.action.creator.toString();
+    const currentWallet = authState.account?.owner;
+    if (!currentWallet) return [];
     return transactionCartService.fromAction(
       userStore.action,
       currentWallet,
