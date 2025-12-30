@@ -33,9 +33,12 @@ export class AccessProcessStateMapper {
 
 /**
  * Asset item representation
+ * @property isOutgoing - true if user is sender (debit), false if receiver (credit)
  */
 export interface AssetItem {
   state: AssetProcessState;
+  /** true if outgoing (user sends), false if incoming (user receives) */
+  isOutgoing: boolean;
   label: string;
   symbol: string;
   address: string;

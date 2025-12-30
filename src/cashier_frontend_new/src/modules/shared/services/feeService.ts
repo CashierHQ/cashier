@@ -142,6 +142,7 @@ export class FeeService {
 
         asset = {
           state: AssetProcessState.PENDING,
+          isOutgoing: true, // default, overridden by transactionCartService
           label,
           symbol: "N/A",
           address,
@@ -184,6 +185,7 @@ export class FeeService {
           state: AccessProcessStateMapper.fromIntentState(
             intent.state as IntentStateValue,
           ),
+          isOutgoing: true, // default, overridden by transactionCartService
           label,
           symbol: token.symbol,
           address,
@@ -308,6 +310,7 @@ export class FeeService {
 
         pairs.push({
           asset: {
+            isOutgoing: true, // link creation = user sending
             label: "",
             symbol: "N/A",
             address: assetData.address,
@@ -337,6 +340,7 @@ export class FeeService {
 
         pairs.push({
           asset: {
+            isOutgoing: true, // link creation = user sending
             label: "",
             symbol: token.symbol,
             address: assetData.address,
@@ -372,6 +376,7 @@ export class FeeService {
 
       pairs.push({
         asset: {
+          isOutgoing: true, // link creation fee = user sending
           label: "Create link fee",
           symbol: linkFeeToken.symbol,
           address: linkFeeInfo.tokenAddress,

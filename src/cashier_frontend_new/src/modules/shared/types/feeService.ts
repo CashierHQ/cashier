@@ -9,6 +9,8 @@ export type AssetAndFee = {
 
 export type ForecastAssetAndFee = {
   asset: {
+    /** true if outgoing (user sends), false if incoming (user receives) */
+    isOutgoing: boolean;
     label: string;
     symbol: string;
     address: string;
