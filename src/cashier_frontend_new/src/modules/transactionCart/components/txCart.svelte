@@ -15,7 +15,10 @@
   import { locale } from "$lib/i18n";
   import { feeService } from "$modules/shared/services/feeService";
   import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
-  import type { AssetAndFee, AssetAndFeeList } from "$modules/shared/types/feeService";
+  import type {
+    AssetAndFee,
+    AssetAndFeeList,
+  } from "$modules/shared/types/feeService";
 
   let {
     action,

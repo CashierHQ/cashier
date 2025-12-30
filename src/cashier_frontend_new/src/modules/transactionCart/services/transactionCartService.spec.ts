@@ -4,7 +4,9 @@ import { ActionType } from "$modules/links/types/action/actionType";
 import Intent from "$modules/links/types/action/intent";
 import IntentState from "$modules/links/types/action/intentState";
 import IntentTask from "$modules/links/types/action/intentTask";
-import IntentType, { TransferData } from "$modules/links/types/action/intentType";
+import IntentType, {
+  TransferData,
+} from "$modules/links/types/action/intentType";
 import Asset from "$modules/links/types/asset";
 import Wallet from "$modules/links/types/wallet";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
