@@ -35,6 +35,7 @@ export class CreateLinkAssetMapper {
       asset: Asset.IC(Principal.fromText(asset.address)).toBackend(),
       amount_per_link_use_action: BigInt(asset.useAmount),
       label,
+      amount_available: 0n,
     };
   }
 }

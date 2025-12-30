@@ -19,6 +19,7 @@ export interface AssetInfoDto {
   'asset' : Asset,
   'amount_per_link_use_action' : bigint,
   'label' : string,
+  'amount_available' : bigint,
 }
 export interface BuildData {
   'rustc_semver' : string,
@@ -72,7 +73,7 @@ export interface CreateActionInput {
 export interface CreateLinkDto { 'action' : ActionDto, 'link' : LinkDto }
 export interface CreateLinkInput {
   'title' : string,
-  'asset_info' : Array<AssetInfoDto>,
+  'asset_info' : Array<LinkDetailUpdateAssetInfoInput>,
   'link_type' : LinkType,
   'link_use_action_max_count' : bigint,
 }
@@ -183,6 +184,11 @@ export type IntentTask = { 'TransferWalletToLink' : null } |
   { 'TransferWalletToTreasury' : null };
 export type IntentType = { 'Transfer' : TransferData } |
   { 'TransferFrom' : TransferFromData };
+export interface LinkDetailUpdateAssetInfoInput {
+  'asset' : Asset,
+  'amount_per_link_use_action' : bigint,
+  'label' : string,
+}
 export interface LinkDto {
   'id' : string,
   'title' : string,

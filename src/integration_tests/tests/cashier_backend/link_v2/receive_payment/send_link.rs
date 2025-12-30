@@ -162,6 +162,14 @@ async fn it_should_succeed_send_icp_token_payment_linkv2() {
         assert_eq!(link_dto.link_use_action_max_count, 1);
         assert_eq!(link_dto.state, LinkState::Active);
 
+        // Assert: amount_available should equal amount_per_use after Send
+        assert!(!link_dto.asset_info.is_empty());
+        let asset = &link_dto.asset_info[0];
+        assert_eq!(
+            asset.amount_available, amounts[0],
+            "amount_available should equal amount_per_use after Send"
+        );
+
         let action_dto = process_action_result.action;
         assert_eq!(action_dto.state, ActionState::Success);
         let intents = action_dto.intents;
@@ -320,6 +328,14 @@ async fn it_should_succeed_send_icrc_token_payment_linkv2() {
         assert_eq!(link_dto.link_use_action_counter, 0);
         assert_eq!(link_dto.link_use_action_max_count, 1);
         assert_eq!(link_dto.state, LinkState::Active);
+
+        // Assert: amount_available should equal amount_per_use after Send
+        assert!(!link_dto.asset_info.is_empty());
+        let asset = &link_dto.asset_info[0];
+        assert_eq!(
+            asset.amount_available, amounts[0],
+            "amount_available should equal amount_per_use after Send"
+        );
 
         let action_dto = process_action_result.action;
         assert_eq!(action_dto.state, ActionState::Success);

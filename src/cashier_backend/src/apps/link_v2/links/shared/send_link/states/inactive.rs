@@ -4,7 +4,7 @@
 use crate::apps::link_v2::links::{
     shared::send_link::actions::withdraw::WithdrawAction, traits::LinkV2State,
 };
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,
     link_v2::link_result::{LinkCreateActionResult, LinkProcessActionResult},
@@ -97,6 +97,11 @@ impl<M: TransactionManager + 'static> InactiveState<M> {
 
         if process_action_result.is_success {
             link.state = LinkState::InactiveEnded;
+
+            // Reset amount_available to 0 for all assets
+            for asset_info in link.asset_info.iter_mut() {
+                asset_info.amount_available = Nat::from(0u64);
+            }
         }
 
         Ok(LinkProcessActionResult {

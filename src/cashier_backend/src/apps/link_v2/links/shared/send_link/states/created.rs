@@ -10,13 +10,18 @@ use cashier_backend_types::{
     link_v2::link_result::{LinkCreateActionResult, LinkProcessActionResult},
     repository::{
         action::v1::{Action, ActionType},
+        common::Asset,
         intent::v1::Intent,
         link::v1::{Link, LinkState},
         transaction::v1::Transaction,
     },
 };
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
-use transaction_manager::traits::TransactionManager;
+use transaction_manager::{
+    icrc_token::utils::get_batch_tokens_fee_for_link,
+    traits::TransactionManager,
+    utils::calculator::calculate_link_balance_map,
+};
 
 pub struct CreatedState<M: TransactionManager + 'static> {
     pub link: Link,
@@ -97,6 +102,23 @@ impl<M: TransactionManager + 'static> CreatedState<M> {
         // if process action succeeds, activate the link
         if process_action_result.is_success {
             link.state = LinkState::Active;
+
+            // Calculate and set amount_available for each asset
+            let fee_map = get_batch_tokens_fee_for_link(&link).await?;
+            let balance_map = calculate_link_balance_map(
+                &link.asset_info,
+                &fee_map,
+                link.link_use_action_max_count,
+            );
+
+            for asset_info in link.asset_info.iter_mut() {
+                let address = match &asset_info.asset {
+                    Asset::IC { address } => *address,
+                };
+                if let Some(amount) = balance_map.get(&address) {
+                    asset_info.amount_available = amount.clone();
+                }
+            }
         }
 
         Ok(LinkProcessActionResult {

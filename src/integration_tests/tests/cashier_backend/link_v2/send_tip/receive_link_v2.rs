@@ -192,6 +192,15 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
         assert_eq!(link_dto.link_use_action_max_count, 1);
         assert_eq!(link_dto.state, LinkState::InactiveEnded);
 
+        // Assert: amount_available should be 0 after final receive (max_use=1)
+        assert!(!link_dto.asset_info.is_empty());
+        let asset = &link_dto.asset_info[0];
+        assert_eq!(
+            asset.amount_available,
+            Nat::from(0u64),
+            "amount_available should be 0 after final receive"
+        );
+
         let action_dto = process_action_result.action;
         assert_eq!(action_dto.state, ActionState::Success);
         let intents = action_dto.intents;
@@ -319,6 +328,15 @@ async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
         assert_eq!(link_dto.link_use_action_counter, 1);
         assert_eq!(link_dto.link_use_action_max_count, 1);
         assert_eq!(link_dto.state, LinkState::InactiveEnded);
+
+        // Assert: amount_available should be 0 after final receive (max_use=1)
+        assert!(!link_dto.asset_info.is_empty());
+        let asset = &link_dto.asset_info[0];
+        assert_eq!(
+            asset.amount_available,
+            Nat::from(0u64),
+            "amount_available should be 0 after final receive"
+        );
 
         let action_dto = process_action_result.action;
         assert_eq!(action_dto.state, ActionState::Success);

@@ -73,12 +73,21 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
         intent_txs_map: HashMap<String, Vec<Transaction>>,
         transaction_manager: Rc<M>,
     ) -> Result<LinkProcessActionResult, CanisterError> {
+        let mut link = link.clone();
+
         let process_action_result = transaction_manager
             .process_action(action, intents, intent_txs_map)
             .await?;
 
+        if process_action_result.is_success {
+            // Increment amount_available for each asset: amount_per_use only (no fee)
+            for asset_info in link.asset_info.iter_mut() {
+                asset_info.amount_available += asset_info.amount_per_link_use_action.clone();
+            }
+        }
+
         Ok(LinkProcessActionResult {
-            link: link.clone(),
+            link,
             process_action_result,
         })
     }

@@ -67,6 +67,7 @@ mod tests {
             asset: asset.clone(),
             label: label.clone(),
             amount_per_link_use_action: amount_per_link_use_action.clone(),
+            amount_available: Nat::from(0u64),
         };
 
         let fee_map: HashMap<Principal, Nat> = vec![(ICP_CANISTER_PRINCIPAL, Nat::from(2u64))]

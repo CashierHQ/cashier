@@ -38,11 +38,18 @@ export class AssetInfo {
   asset: Asset;
   amount_per_link_use_action: bigint;
   label: string;
+  amount_available: bigint;
 
-  constructor(asset: Asset, amount_per_link_use_action: bigint, label: string) {
+  constructor(
+    asset: Asset,
+    amount_per_link_use_action: bigint,
+    label: string,
+    amount_available: bigint = 0n,
+  ) {
     this.asset = asset;
     this.amount_per_link_use_action = amount_per_link_use_action;
     this.label = label;
+    this.amount_available = amount_available;
   }
 }
 
@@ -52,6 +59,7 @@ export class AssetInfoMapper {
       asset: AssetMapper.toBackendType(asseInfo.asset),
       amount_per_link_use_action: asseInfo.amount_per_link_use_action,
       label: asseInfo.label,
+      amount_available: asseInfo.amount_available,
     };
   }
 
@@ -60,6 +68,7 @@ export class AssetInfoMapper {
       AssetMapper.fromBackendType(b.asset),
       b.amount_per_link_use_action,
       b.label,
+      b.amount_available,
     );
   }
 }

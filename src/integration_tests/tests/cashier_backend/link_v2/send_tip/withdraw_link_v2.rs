@@ -182,6 +182,16 @@ async fn it_should_withdraw_icp_token_tip_linkv2_successfully() {
         let process_action_dto = process_action_result.unwrap();
         let link_dto = process_action_dto.link;
         assert_eq!(link_dto.state, LinkState::InactiveEnded);
+
+        // Assert: amount_available should be 0 after withdraw
+        assert!(!link_dto.asset_info.is_empty());
+        let asset = &link_dto.asset_info[0];
+        assert_eq!(
+            asset.amount_available,
+            Nat::from(0u64),
+            "amount_available should be 0 after withdraw"
+        );
+
         let action_dto = process_action_dto.action;
         assert_eq!(action_dto.state, ActionState::Success);
 
@@ -300,6 +310,16 @@ async fn it_should_withdraw_icrc_token_tip_linkv2_successfully() {
         let process_action_dto = process_action_result.unwrap();
         let link_dto = process_action_dto.link;
         assert_eq!(link_dto.state, LinkState::InactiveEnded);
+
+        // Assert: amount_available should be 0 after withdraw
+        assert!(!link_dto.asset_info.is_empty());
+        let asset = &link_dto.asset_info[0];
+        assert_eq!(
+            asset.amount_available,
+            Nat::from(0u64),
+            "amount_available should be 0 after withdraw"
+        );
+
         let action_dto = process_action_dto.action;
         assert_eq!(action_dto.state, ActionState::Success);
 
