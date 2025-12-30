@@ -3,9 +3,9 @@ import { Err, Ok } from "ts-results-es";
 import { Principal } from "@dfinity/principal";
 import {
   TxState,
-  type ValidateSendParams,
   type ComputeSendFeeParams,
   type ExecuteSendParams,
+  type ValidateSendParams,
 } from "$modules/wallet/types/walletSendStore";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 
