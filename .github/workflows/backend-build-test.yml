@@ -1,27 +1,33 @@
-name: "Build Test"
+name: "Build test backend"
 
 on:
   pull_request:
     branches: [main, dev, staging]
     types: [opened, synchronize, reopened, ready_for_review]
-    paths-ignore:
-      - "**/README.md"
-  push:
-    branches: [main, dev, staging]
-    tags:
-      - "v*"
-    paths-ignore:
-      - "**/README.md"
-
+    paths:
+      - 'src/cashier_backend/**'
+      - 'src/cashier_backend_client/**'
+      - 'src/cashier_backend_types/**'
+      - 'src/gate_service/**'
+      - 'src/gate_service_client/**'
+      - 'src/gate_service_types/**'
+      - 'src/token_storage/**'
+      - 'src/token_storage_client/**'
+      - 'src/token_storage_types/**'
+      - 'src/transaction_manager/**'
+      - 'src/integration_tests/**'
+      - 'src/lib/**'
+      - 'src/cashier_frontend_new/src/lib/generated/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: backend-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-
 jobs:
-  code-check:
-    name: Checks the code style
+  rust-check:
+    name: "Rust Code Check"
     if: github.event.pull_request.draft == false || github.event_name == 'push'
     permissions:
       contents: read
@@ -37,11 +43,6 @@ jobs:
       - name: Install Just command runner
         uses: extractions/setup-just@v1
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-            node-version: "22.x"
-
       - name: Configure Rust Cache
         uses: swatinem/rust-cache@v2
         if: ${{ (github.event.pull_request.base.ref != 'main') && (github.ref_name != 'main') }}
@@ -49,20 +50,12 @@ jobs:
           shared-key: ${{ github.repository }}
           save-if: ${{ github.ref_type != 'tag' }}
 
-      - name: Setup environment
-        run: |
-          export RUST_BACKTRACE="full"
-
       - name: Rust - Check code style
         run: |
           just check_code
 
-      - name: Frontend - Lint and type check
-        run: |
-          just frontend_check_code
-
-  build-test:
-    name: Build and Test
+  backend-test:
+    name: "Backend Build and Test"
     if: github.event.pull_request.draft == false || github.event_name == 'push'
     permissions:
       contents: read
@@ -81,7 +74,7 @@ jobs:
 
       - name: Install dfx
         uses: dfinity/setup-dfx@main
-        with: 
+        with:
           dfx-version: "0.29.2"
 
       - name: Install ic-wasm
@@ -96,26 +89,22 @@ jobs:
           chmod +x /usr/local/bin/candid-extractor
 
       - name: Configure Rust Cache
-        uses: Swatinem/rust-cache@v2
+        uses: swatinem/rust-cache@v2
         if: ${{ (github.event.pull_request.base.ref != 'main') && (github.ref_name != 'main') }}
         with:
           shared-key: ${{ github.repository }}
           save-if: ${{ github.ref_type != 'tag' }}
 
-      - name: Setup environment
-        run: |
-          export RUST_BACKTRACE="full"
-         
       - name: Build
         run: |
           just build
 
       - name: Test
         run: |
-          just test_all
+          just test
 
-  build-test-i686:
-    name: Test for the i686 architecture
+  backend-test-i686:
+    name: "Backend Test (i686)"
     if: github.event.pull_request.draft == false || github.event_name == 'push'
     permissions:
       contents: read
@@ -133,7 +122,7 @@ jobs:
         uses: extractions/setup-just@v1
 
       - name: Configure Rust Cache
-        uses: Swatinem/rust-cache@v2
+        uses: swatinem/rust-cache@v2
         if: ${{ (github.event.pull_request.base.ref != 'main') && (github.ref_name != 'main') }}
         with:
           shared-key: ${{ github.repository }}
@@ -148,4 +137,3 @@ jobs:
       - name: Test - 32 bits
         run: |
           just test_unit_i686
-
