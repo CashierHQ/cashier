@@ -5,10 +5,8 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { Clipboard, Info, LoaderCircle } from "lucide-svelte";
   import { toast } from "svelte-sonner";
-  import { goto } from "$app/navigation";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import NetworkSelector from "$modules/creationLink/components/shared/NetworkSelector.svelte";
-  import { resolve } from "$app/paths";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
     validateLedgerCanister,
@@ -42,6 +40,13 @@
     }
   }
 
+  type Props = {
+    onNavigateBack: () => void;
+    onNavigateToToken: (token: string) => void;
+  };
+
+  let { onNavigateBack, onNavigateToToken }: Props = $props();
+
   let isReview = $state(false);
   let selectedNetwork = $state("icp");
   let contractAddress = $state("");
@@ -57,7 +62,7 @@
   const pageTitle = $derived(
     isReview
       ? locale.t("wallet.import.review")
-      : locale.t("wallet.import.title"),
+      : locale.t("wallet.import.header"),
   );
 
   const tokenLogo = $derived(
@@ -169,8 +174,8 @@
 
       toast.success(locale.t("wallet.import.success"));
 
-      // Redirect to token page
-      goto(resolve(`/wallet/${contractAddress}`));
+      // Navigate to token page
+      onNavigateToToken(contractAddress);
     } catch (error) {
       toast.error(`${locale.t("wallet.import.error")} ${error}`);
     } finally {
@@ -187,7 +192,7 @@
   }
 </script>
 
-<NavBar header={pageTitle} />
+<NavBar mode="back-only" title={pageTitle} onBack={onNavigateBack} />
 
 <div class="px-4 grow-1 flex flex-col">
   {#if !isReview}

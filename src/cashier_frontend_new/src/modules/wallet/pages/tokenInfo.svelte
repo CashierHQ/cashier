@@ -1,13 +1,45 @@
 <script lang="ts">
-  import { page } from "$app/state";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import NavBar from "$modules/token/components/navBar.svelte";
   import { locale } from "$lib/i18n";
   import { toast } from "svelte-sonner";
   import { Copy, LoaderCircle } from "lucide-svelte";
-  import TokenTransactionHistory from "../components/tokenTransactionHistory.svelte";
+  import TokenTransactionHistory from "$modules/wallet/components/tokenTransactionHistory.svelte";
 
-  let token = $derived(page.params.token || "empty");
+  type Props = {
+    token: string;
+    onNavigateBack: () => void;
+    onNavigateToSend: (token: string) => void;
+    onNavigateToReceive: (token: string) => void;
+    onNavigateToSwap: (token: string) => void;
+  };
+
+  let {
+    token,
+    onNavigateBack,
+    onNavigateToSend,
+    onNavigateToReceive,
+    onNavigateToSwap,
+  }: Props = $props();
+
+  const BALANCE_VISIBILITY_KEY = "wallet_balance_visible";
+  let balanceVisible = $state(
+    typeof window !== "undefined" &&
+      localStorage.getItem(BALANCE_VISIBILITY_KEY) !== null
+      ? localStorage.getItem(BALANCE_VISIBILITY_KEY) === "true"
+      : true,
+  );
+
+  $effect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(BALANCE_VISIBILITY_KEY, String(balanceVisible));
+    }
+  });
+
+  function handleToggle() {
+    balanceVisible = !balanceVisible;
+  }
+
   let tokenDetails = $derived(
     walletStore.query.data?.find((t) => t.address === token),
   );
@@ -18,7 +50,16 @@
   }
 </script>
 
-<NavBar />
+<NavBar
+  mode="token"
+  token={tokenDetails}
+  isBalanceVisible={balanceVisible}
+  onToggleBalance={handleToggle}
+  onSend={() => onNavigateToSend(token)}
+  onReceive={() => onNavigateToReceive(token)}
+  onSwap={() => onNavigateToSwap(token)}
+  onBack={onNavigateBack}
+/>
 
 <div class="px-4 pb-6">
   {#if walletStore.query.isLoading && !walletStore.query.data}

@@ -4,24 +4,22 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import NavBar from "$modules/token/components/navBar.svelte";
   import { locale } from "$lib/i18n";
-  import { Copy, Info, ChevronDown, X } from "lucide-svelte";
+  import { Copy, Info, ChevronDown } from "lucide-svelte";
   import { toast } from "svelte-sonner";
-  import { page } from "$app/state";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import { authState } from "$modules/auth/state/auth.svelte";
-  import {
-    Drawer,
-    DrawerContent,
-    DrawerHeader,
-    DrawerTitle,
-    DrawerClose,
-  } from "$lib/shadcn/components/ui/drawer";
   import { Dialog, DialogContent } from "$lib/shadcn/components/ui/dialog";
   import { SvelteSet } from "svelte/reactivity";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
+  import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
+
+  type Props = {
+    initialToken?: string;
+    onNavigateBack: () => void;
+  };
+
+  let { initialToken, onNavigateBack }: Props = $props();
 
   let selectedToken: string = $state("");
   let showTokenSelector = $state(false);
@@ -29,9 +27,8 @@
   let imageLoadFailures = new SvelteSet<string>();
 
   $effect(() => {
-    const tokenParam = page.url.searchParams.get("token");
-    if (tokenParam) {
-      selectedToken = tokenParam;
+    if (initialToken) {
+      selectedToken = initialToken;
     } else if (walletStore.query.data && walletStore.query.data.length > 0) {
       if (!selectedToken) {
         selectedToken = walletStore.query.data[0].address;
@@ -101,12 +98,15 @@
   }
 </script>
 
-<NavBar />
+<NavBar
+  mode="back-only"
+  title={locale.t("wallet.receive.header")}
+  onBack={onNavigateBack}
+/>
 
 <div class="px-4 grow-1 flex flex-col">
   {#if walletStore.query.data}
     <div class="space-y-4 grow-1 flex flex-col">
-      <!-- Warning Banner -->
       <div class="flex items-start gap-1.5">
         <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
         <div class="text-sm text-green">
@@ -124,7 +124,6 @@
         </div>
       </div>
 
-      <!-- Token Selector -->
       <div class="space-y-2">
         <Label class="text-base font-semibold"
           >{locale.t("wallet.receive.selectTokenLabel")}</Label
@@ -166,7 +165,6 @@
         </button>
       </div>
 
-      <!-- Address Display -->
       <div class="space-y-2">
         <Label class="text-base font-semibold">
           {#if selectedTokenObj}
@@ -210,7 +208,7 @@
 
       <div class="flex-grow-1 flex flex-col justify-end items-center">
         <Button
-          onclick={() => goto(resolve("/wallet"))}
+          onclick={onNavigateBack}
           class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
           type="button"
         >
@@ -236,66 +234,12 @@
   {/if}
 </div>
 
-<!-- Token Selector Drawer -->
-<Drawer bind:open={showTokenSelector}>
-  <DrawerContent class="max-w-full w-[400px] mx-auto">
-    <DrawerHeader>
-      <div class="flex justify-center items-center relative mb-2">
-        <DrawerTitle class="text-lg font-semibold">
-          {locale.t("wallet.receive.selectToken")}
-        </DrawerTitle>
-        <DrawerClose>
-          <X
-            size={24}
-            stroke-width={2}
-            class="absolute right-2 cursor-pointer top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100"
-            aria-hidden="true"
-          />
-        </DrawerClose>
-      </div>
-    </DrawerHeader>
+<TokenSelectorDrawer
+  bind:open={showTokenSelector}
+  selectedAddress={selectedToken}
+  onSelectToken={handleSelectToken}
+/>
 
-    <div class="px-4 pb-4 max-h-[60vh] overflow-y-auto">
-      {#if walletStore.query.data}
-        <div class="space-y-2">
-          {#each walletStore.query.data as token (token.address)}
-            {#if token.enabled}
-              <button
-                onclick={() => handleSelectToken(token.address)}
-                class="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors {selectedToken ===
-                token.address
-                  ? 'bg-green-50 border border-[#36A18B]'
-                  : 'border border-transparent'}"
-              >
-                <div
-                  class="relative flex shrink-0 overflow-hidden rounded-full w-10 h-10"
-                >
-                  {#if getTokenLogo(token.address) && !hasImageFailed(token.address)}
-                    <img
-                      alt={token.symbol}
-                      class="w-full h-full object-cover rounded-full"
-                      src={getTokenLogo(token.address)}
-                      onerror={() => handleImageError(token.address)}
-                    />
-                  {:else}
-                    <div
-                      class="w-full h-full flex items-center justify-center bg-gray-200 rounded-full text-sm font-medium"
-                    >
-                      {token.symbol[0]?.toUpperCase() || "?"}
-                    </div>
-                  {/if}
-                </div>
-                <span class="font-medium text-left">{token.symbol}</span>
-              </button>
-            {/if}
-          {/each}
-        </div>
-      {/if}
-    </div>
-  </DrawerContent>
-</Drawer>
-
-<!-- Account ID Modal -->
 <Dialog bind:open={showAccountIdModal}>
   <DialogContent class="max-w-[400px]">
     <div class="space-y-4">
@@ -311,7 +255,6 @@
       <p class="text-sm text-gray-700">
         {locale.t("wallet.receive.icpAddressInfoSecond")}
       </p>
-
       <div class="flex gap-1.5 text-green items-start">
         <span class="text-sm font-semibold break-all">{accountIdAddress}</span>
         <button
