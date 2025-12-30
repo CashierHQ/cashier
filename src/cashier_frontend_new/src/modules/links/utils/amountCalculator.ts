@@ -74,7 +74,7 @@ export function calculateMaxSendAmount(
     );
   }
 
-  const maxAmount = token.balance - token.fee;
+  const maxAmount = BigInt(token.balance) - BigInt(token.fee);
 
   return Ok(maxAmount);
 }
