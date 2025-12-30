@@ -1,5 +1,6 @@
 import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
+import type { ValidationErrorType } from "$modules/token/services/canister-validation";
 import {
   encodeAccountID,
   icpLedgerService,
@@ -94,16 +95,33 @@ class WalletStore {
   }
 
   /**
-   * Add a new token to the wallet
+   * Add a new token to the wallet with validation
    * @param address Token canister ID
    * @param indexId Optional index canister ID for the token
+   * @returns Result with void on success or ValidationError on failure
    */
-  async addToken(address: string, indexId?: string) {
+  async addToken(
+    address: string,
+    indexId?: string,
+  ): Promise<Result<void, ValidationErrorType>> {
     const token = Principal.fromText(address);
-    const addRes = await tokenStorageService.addToken(token, indexId);
-    // Refresh the wallet tokens data after adding a new token
-    this.#walletTokensQuery.refresh();
-    return addRes;
+
+    // Get existing token addresses for duplicate check
+    const existingTokens =
+      this.#walletTokensQuery.data?.map((t) => t.address) ?? [];
+
+    const result = await tokenStorageService.addToken(
+      token,
+      indexId,
+      existingTokens,
+    );
+
+    if (result.isOk()) {
+      // Refresh the wallet tokens data after adding a new token
+      this.#walletTokensQuery.refresh();
+    }
+
+    return result;
   }
 
   /**
