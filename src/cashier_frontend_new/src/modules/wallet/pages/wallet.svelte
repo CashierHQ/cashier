@@ -1,22 +1,49 @@
 <script lang="ts">
-  import { goto } from "$app/navigation";
-  import { resolve } from "$app/paths";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import NavBar from "$modules/token/components/navBar.svelte";
   import { SvelteSet } from "svelte/reactivity";
   import TokenItem from "$modules/creationLink/components/shared/TokenItem.svelte";
   import { locale } from "$lib/i18n";
 
+  type Props = {
+    onNavigateToToken: (token: string) => void;
+    onNavigateToManage: () => void;
+    onNavigateToSend: () => void;
+    onNavigateToReceive: () => void;
+    onNavigateToSwap: () => void;
+  };
+
+  let {
+    onNavigateToToken,
+    onNavigateToManage,
+    onNavigateToSend,
+    onNavigateToReceive,
+    onNavigateToSwap,
+  }: Props = $props();
+
   let failedImageLoads = new SvelteSet<string>();
   let currentTab = $state<"tokens" | "nfts">("tokens");
-  let balanceVisible = $state(true);
+
+  const BALANCE_VISIBILITY_KEY = "wallet_balance_visible";
+  let balanceVisible = $state(
+    typeof window !== "undefined" &&
+      localStorage.getItem(BALANCE_VISIBILITY_KEY) !== null
+      ? localStorage.getItem(BALANCE_VISIBILITY_KEY) === "true"
+      : true,
+  );
+
+  $effect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem(BALANCE_VISIBILITY_KEY, String(balanceVisible));
+    }
+  });
 
   function handleToggle() {
     balanceVisible = !balanceVisible;
   }
 
   function handleSelectToken(address: string) {
-    goto(resolve(`/wallet/${address}`));
+    onNavigateToToken(address);
   }
 
   function handleImageError(address: string) {
@@ -24,7 +51,13 @@
   }
 
   function handleManageTokens() {
-    goto(resolve("/wallet/manage"));
+    onNavigateToManage();
+  }
+
+  function handleTabChange(tab: "tokens" | "nfts") {
+    // TODO: uncomment when tabs are implemented
+    // currentTab = tab;
+    console.warn(tab);
   }
 
   const enabledTokens = $derived.by(() => {
@@ -34,9 +67,14 @@
 </script>
 
 <NavBar
-  bind:activeTab={currentTab}
+  mode="default"
+  activeTab={currentTab}
   isBalanceVisible={balanceVisible}
   onToggleBalance={handleToggle}
+  onSend={onNavigateToSend}
+  onReceive={onNavigateToReceive}
+  onSwap={onNavigateToSwap}
+  onTabChange={handleTabChange}
 />
 
 <div class="px-4 pb-6">
