@@ -3,6 +3,7 @@
   import { authState } from "$modules/auth/state/auth.svelte";
   import { locale } from "$lib/i18n";
   import { II_SIGNER_WALLET_ID } from "$modules/shared/constants";
+  import { Info } from "lucide-svelte";
 
   type Props = {
     open: boolean;
@@ -61,7 +62,7 @@
     aria-describedby="login-dialog-description"
     aria-labelledby="login-dialog-title"
     data-state={open ? "open" : "closed"}
-    class="fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-12px)] !max-w-[343px] translate-x-[-50%] translate-y-[-50%] gap-6 border bg-background p-5 pb-6 duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg sm:w-full sm:max-w-sm !rounded-[2rem] border-none shadow-2xl overflow-hidden"
+    class="fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-12px)] !max-w-[343px] translate-x-[-50%] translate-y-[-50%] gap-6 border bg-background p-5 duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 rounded-3xl sm:w-full sm:max-w-sm border-none shadow-2xl overflow-hidden"
     tabindex="-1"
   >
     <div class="flex flex-col space-y-1.5 text-center sm:text-left">
@@ -124,6 +125,15 @@
             </span>
           </span>
         </button>
+
+        <div class="flex gap-1.5 mt-6">
+          <div class="w-5 h-5 min-w-5 flex items-center justify-center">
+            <Info size={14} class="text-primary" />
+          </div>
+          <p class="text-xs text-grey-800 italic leading-[16px]">
+            {locale.t("home.loginModal.regionDisclaimer")}
+          </p>
+        </div>
       </div>
     </div>
 
