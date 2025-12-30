@@ -29,13 +29,15 @@
       "getStarted": "Get started"
     },
     "loginModal": {
-      "title": "Choose your wallet",
+      "title": "Connect your wallet",
       "connecting": "Connecting...",
       "internetIdentity": "Internet Identity",
       "quickLogins": "Quick logins",
       "otherWallets": "Other wallets",
       "successMessage": "Successfully logged in",
-      "errorMessage": "Failed to connect wallet. Please try again."
+      "errorMessage": "Failed to connect wallet. Please try again.",
+      "regionDisclaimer": "By continuing, you represent and warrant that you are not a resident of, located in, or accessing this product from the United States or the European Union.",
+      "regionUnavailable": "This product is currently unavailable in your region due to regulatory requirements. We apologize for the inconvenience."
     }
   },
   "constants": {
