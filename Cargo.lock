@@ -265,7 +265,7 @@ dependencies = [
 
 [[package]]
 name = "cashier_backend"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "candid",
@@ -299,7 +299,7 @@ dependencies = [
 
 [[package]]
 name = "cashier_backend_client"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "candid",
  "cashier_backend_types",
@@ -311,7 +311,7 @@ dependencies = [
 
 [[package]]
 name = "cashier_backend_types"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "candid",
  "cashier_common",
@@ -331,7 +331,7 @@ dependencies = [
 
 [[package]]
 name = "cashier_common"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "candid",
  "cashier_macros",
@@ -349,7 +349,7 @@ dependencies = [
 
 [[package]]
 name = "cashier_macros"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -786,7 +786,7 @@ dependencies = [
 
 [[package]]
 name = "gate_service"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "argon2",
  "candid",
@@ -806,7 +806,7 @@ dependencies = [
 
 [[package]]
 name = "gate_service_client"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "candid",
  "cashier_common",
@@ -816,7 +816,7 @@ dependencies = [
 
 [[package]]
 name = "gate_service_types"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "candid",
  "cashier_macros",
@@ -1317,7 +1317,7 @@ dependencies = [
 
 [[package]]
 name = "icrc_112_utils"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "candid",
  "icrc-ledger-types",
@@ -1458,7 +1458,7 @@ dependencies = [
 
 [[package]]
 name = "integration_tests"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "candid",
  "cashier_backend_client",
@@ -2691,7 +2691,7 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "token_storage"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "candid",
@@ -2718,7 +2718,7 @@ dependencies = [
 
 [[package]]
 name = "token_storage_client"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "candid",
  "cashier_common",
@@ -2728,7 +2728,7 @@ dependencies = [
 
 [[package]]
 name = "token_storage_types"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "candid",
  "cashier_common",
@@ -2930,7 +2930,7 @@ dependencies = [
 
 [[package]]
 name = "transaction_manager"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "candid",
  "cashier_backend_types",
