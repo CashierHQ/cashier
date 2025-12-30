@@ -12,7 +12,7 @@
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import { Clipboard, Info } from "lucide-svelte";
   import { toast } from "svelte-sonner";
-  import ConfirmSendDrawer from "../components/confirmSendDrawer.svelte";
+  import ConfirmSendDrawer from "$modules/wallet/components/confirmSendDrawer.svelte";
   import InputAmount from "$modules/shared/components/InputAmount.svelte";
   import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
   import { TxState } from "$modules/wallet/types/walletSendStore";

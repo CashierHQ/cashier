@@ -6,7 +6,7 @@
   import { toast } from "svelte-sonner";
   import { locale } from "$lib/i18n";
   import { LoaderCircle, RefreshCw, Search, Plus } from "lucide-svelte";
-  import { MOCK_NETWORKS } from "../mock/mock";
+  import { MOCK_NETWORKS } from "$modules/wallet/mock/mock";
 
   type Props = {
     onNavigateBack: () => void;

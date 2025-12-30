@@ -6,14 +6,10 @@
   import SendPage from "$modules/wallet/pages/send.svelte";
   import ImportPage from "$modules/wallet/pages/import.svelte";
   import ManagePage from "$modules/wallet/pages/manage.svelte";
-
-  type WalletView =
-    | { type: "main" }
-    | { type: "token"; token: string }
-    | { type: "receive"; token?: string }
-    | { type: "send"; token?: string }
-    | { type: "import" }
-    | { type: "manage" };
+  import {
+    WalletViewType,
+    type WalletView,
+  } from "$modules/shared/types/wallet";
 
   type Props = {
     open?: boolean;
@@ -21,12 +17,12 @@
 
   let { open = $bindable(false) }: Props = $props();
 
-  let currentView = $state<WalletView>({ type: "main" });
+  let currentView = $state<WalletView>({ type: WalletViewType.MAIN });
   let isToggling = $state(false);
 
   function handleClose() {
     open = false;
-    currentView = { type: "main" };
+    currentView = { type: WalletViewType.MAIN };
   }
 
   function handleOverlayClick(event: MouseEvent) {
@@ -36,7 +32,7 @@
   }
 
   function navigateToToken(token: string) {
-    currentView = { type: "token", token };
+    currentView = { type: WalletViewType.TOKEN, token };
   }
 
   function navigateToSwap(token?: string) {
@@ -45,23 +41,23 @@
   }
 
   function navigateToReceive(token?: string) {
-    currentView = { type: "receive", token };
+    currentView = { type: WalletViewType.RECEIVE, token };
   }
 
   function navigateToSend(token?: string) {
-    currentView = { type: "send", token };
+    currentView = { type: WalletViewType.SEND, token };
   }
 
   function navigateToImport() {
-    currentView = { type: "import" };
+    currentView = { type: WalletViewType.IMPORT };
   }
 
   function navigateToManage() {
-    currentView = { type: "manage" };
+    currentView = { type: WalletViewType.MANAGE };
   }
 
   function navigateToMain() {
-    currentView = { type: "main" };
+    currentView = { type: WalletViewType.MAIN };
   }
 </script>
 
@@ -111,7 +107,7 @@
         ? 'pt-10'
         : ''}"
     >
-      {#if currentView.type === "main"}
+      {#if currentView.type === WalletViewType.MAIN}
         <WalletPage
           onNavigateToToken={navigateToToken}
           onNavigateToManage={navigateToManage}
@@ -119,7 +115,7 @@
           onNavigateToReceive={navigateToReceive}
           onNavigateToSwap={navigateToSwap}
         />
-      {:else if currentView.type === "token"}
+      {:else if currentView.type === WalletViewType.TOKEN}
         <TokenInfoPage
           token={currentView.token}
           onNavigateBack={navigateToMain}
@@ -127,22 +123,22 @@
           onNavigateToReceive={(token) => navigateToReceive(token)}
           onNavigateToSwap={(token) => navigateToSwap(token)}
         />
-      {:else if currentView.type === "receive"}
+      {:else if currentView.type === WalletViewType.RECEIVE}
         <ReceivePage
           initialToken={currentView.token}
           onNavigateBack={navigateToMain}
         />
-      {:else if currentView.type === "send"}
+      {:else if currentView.type === WalletViewType.SEND}
         <SendPage
           initialToken={currentView.token}
           onNavigateBack={navigateToMain}
         />
-      {:else if currentView.type === "import"}
+      {:else if currentView.type === WalletViewType.IMPORT}
         <ImportPage
           onNavigateBack={navigateToMain}
           onNavigateToToken={navigateToToken}
         />
-      {:else if currentView.type === "manage"}
+      {:else if currentView.type === WalletViewType.MANAGE}
         <ManagePage
           onNavigateBack={navigateToMain}
           onNavigateToImport={navigateToImport}
