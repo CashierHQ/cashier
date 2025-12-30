@@ -15,16 +15,18 @@
   import { locale } from "$lib/i18n";
   import { feeService } from "$modules/shared/services/feeService";
   import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
-  import type { AssetAndFee } from "$modules/shared/types/feeService";
+  import type { AssetAndFee, AssetAndFeeList } from "$modules/shared/types/feeService";
 
   let {
     action,
+    assetAndFeeList: inputAssetAndFeeList,
     isOpen = $bindable(false),
     onCloseDrawer,
     handleProcessAction,
     isProcessing: externalIsProcessing,
   }: {
     action: Action;
+    assetAndFeeList: AssetAndFeeList;
     isOpen: boolean;
     onCloseDrawer: () => void;
     handleProcessAction: () => Promise<ProcessActionResult>;
@@ -42,18 +44,10 @@
     return isProcessingLocally || (externalIsProcessing ?? false);
   });
 
+  // Apply processing state overlay to input assetAndFeeList
   const assetAndFeeList: AssetAndFee[] = $derived.by(() => {
-    const list = feeService.mapActionToAssetAndFeeList(
-      action,
-      // build a record keyed by token address for the service
-      Object.fromEntries(
-        (walletStore.query.data ?? []).map((t) => [t.address, t]),
-      ),
-    );
-
     if (isProcessing) {
-      // when processing, we want to show all assets as processing
-      return list.map((item) => ({
+      return inputAssetAndFeeList.map((item) => ({
         ...item,
         asset: {
           ...item.asset,
@@ -61,8 +55,7 @@
         },
       }));
     }
-
-    return list;
+    return inputAssetAndFeeList;
   });
 
   let showFeeBreakdown = $state(false);
@@ -198,7 +191,7 @@
 
           <div class="mt-2 space-y-4">
             <YouSendSection
-              {action}
+              {assetAndFeeList}
               {failedImageLoads}
               onImageError={handleImageError}
               {isProcessing}

@@ -8,13 +8,16 @@
   import { LinkState } from "$modules/links/types/link/linkState";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import { onMount } from "svelte";
+  import type { AssetAndFeeList } from "$modules/shared/types/feeService";
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
   import LinkDetails from "./linkDetails.svelte";
   import { locale } from "$lib/i18n";
   const {
     link,
+    assetAndFeeList,
   }: {
     link: LinkCreationStore;
+    assetAndFeeList: AssetAndFeeList;
   } = $props();
 
   let linkDetailStore = $state<LinkDetailStore | null>(null);
@@ -79,6 +82,7 @@
   <TxCart
     isOpen={showTxCart}
     action={linkDetailStore.action}
+    {assetAndFeeList}
     {onCloseDrawer}
     {handleProcessAction}
   />

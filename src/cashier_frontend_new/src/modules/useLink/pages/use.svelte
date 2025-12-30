@@ -8,6 +8,8 @@
   import Unlocked from "../components/Unlocked.svelte";
   import { onDestroy, onMount } from "svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { transactionCartService } from "$modules/transactionCart/services/transactionCartService";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { locale } from "$lib/i18n";
 
@@ -80,6 +82,20 @@
   const handleProcessAction = async (): Promise<ProcessActionResult> => {
     return await userStore.processAction();
   };
+
+  // Compute assetAndFeeList for TxCart
+  const txCartAssetAndFeeList = $derived.by(() => {
+    if (!userStore?.action) return [];
+    const tokens = Object.fromEntries(
+      (walletStore.query.data ?? []).map((t) => [t.address, t]),
+    );
+    const currentWallet = userStore.action.creator.toString();
+    return transactionCartService.fromAction(
+      userStore.action,
+      currentWallet,
+      tokens,
+    );
+  });
 
   // Notify parent about isLink changes based on current step
   $effect(() => {
@@ -166,6 +182,7 @@
           <TxCart
             isOpen={showTxCart}
             action={userStore.action}
+            assetAndFeeList={txCartAssetAndFeeList}
             {onCloseDrawer}
             {handleProcessAction}
           />

@@ -7,6 +7,8 @@
   import Preview from "../components/preview.svelte";
   import { LinkCreationStore } from "../state/linkCreationStore.svelte";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { transactionCartService } from "$modules/transactionCart/services/transactionCartService";
 
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
@@ -42,6 +44,20 @@
       appHeaderStore.clearBackHandler();
     };
   });
+
+  // Compute assetAndFeeList for CreatedLink's TxCart
+  const createdLinkAssetAndFeeList = $derived.by(() => {
+    if (!linkStore.action) return [];
+    const tokens = Object.fromEntries(
+      (walletStore.query.data ?? []).map((t) => [t.address, t]),
+    );
+    const currentWallet = linkStore.action.creator.toString();
+    return transactionCartService.fromAction(
+      linkStore.action,
+      currentWallet,
+      tokens,
+    );
+  });
 </script>
 
 <div class="grow-1 flex flex-col mt-2 sm:mt-0">
@@ -54,6 +70,6 @@
   {:else if linkStore.state.step === LinkStep.PREVIEW}
     <Preview link={linkStore} />
   {:else if linkStore.state.step === LinkStep.CREATED}
-    <CreatedLink link={linkStore} />
+    <CreatedLink link={linkStore} assetAndFeeList={createdLinkAssetAndFeeList} />
   {/if}
 </div>

@@ -17,6 +17,7 @@
     isPaymentLinkType,
   } from "$modules/links/utils/linkItemHelpers";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { transactionCartService } from "$modules/transactionCart/services/transactionCartService";
   import { locale } from "$lib/i18n";
   import { toast } from "svelte-sonner";
   import { goto } from "$app/navigation";
@@ -325,6 +326,20 @@
       }
     }
   });
+
+  // Compute assetAndFeeList for TxCart
+  const txCartAssetAndFeeList = $derived.by(() => {
+    if (!linkStore.action) return [];
+    const tokens = Object.fromEntries(
+      (walletStore.query.data ?? []).map((t) => [t.address, t]),
+    );
+    const currentWallet = linkStore.action.creator.toString();
+    return transactionCartService.fromAction(
+      linkStore.action,
+      currentWallet,
+      tokens,
+    );
+  });
 </script>
 
 {#if linkStore.query.isLoading && !linkStore.query.data}
@@ -458,6 +473,7 @@
   <TxCart
     isOpen={showTxCart}
     action={linkStore.action}
+    assetAndFeeList={txCartAssetAndFeeList}
     {onCloseDrawer}
     {handleProcessAction}
     isProcessing={isCreatingWithdraw}
