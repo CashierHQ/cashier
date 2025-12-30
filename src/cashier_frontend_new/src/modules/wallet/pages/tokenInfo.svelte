@@ -4,7 +4,7 @@
   import { locale } from "$lib/i18n";
   import { toast } from "svelte-sonner";
   import { Copy, LoaderCircle } from "lucide-svelte";
-  import TokenTransactionHistory from "../components/tokenTransactionHistory.svelte";
+  import TokenTransactionHistory from "$modules/wallet/components/tokenTransactionHistory.svelte";
 
   type Props = {
     token: string;

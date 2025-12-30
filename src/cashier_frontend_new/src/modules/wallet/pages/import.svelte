@@ -12,7 +12,7 @@
     MOCK_NETWORKS,
     MOCK_TOKEN_DATA,
     SECURITY_LEARN_MORE_URL,
-  } from "../mock/mock";
+  } from "$modules/wallet/mock/mock";
   import { isValidPrincipal } from "$modules/wallet/utils/address";
 
   type Props = {

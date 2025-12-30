@@ -9,7 +9,7 @@
   import MenuButton from "./MenuButton.svelte";
   import WalletButton from "./WalletButton.svelte";
   import { X } from "lucide-svelte";
-  import { userProfile } from "../services/userProfile.svelte";
+  import { userProfile } from "$modules/shared/services/userProfile.svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import WalletDrawer from "./WalletDrawer.svelte";
