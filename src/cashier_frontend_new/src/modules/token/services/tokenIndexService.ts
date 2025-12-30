@@ -208,12 +208,37 @@ export class TokenIndexService {
   }
 
   /**
+   * Map ICRC kind string to unified TransactionKindValue
+   * ICRC canisters may use various kind formats: "xfer", "transfer", "icrc1_transfer", etc.
+   */
+  getIcrcKind(icrcKind: string): TransactionKindValue {
+    const lowerKind = icrcKind.toLowerCase();
+    switch (lowerKind) {
+      case "transfer":
+      case "xfer":
+      case "icrc1_transfer":
+        return TransactionKind.TRANSFER;
+      case "mint":
+      case "icrc1_mint":
+        return TransactionKind.MINT;
+      case "burn":
+      case "icrc1_burn":
+        return TransactionKind.BURN;
+      case "approve":
+      case "icrc1_approve":
+        return TransactionKind.APPROVE;
+      default:
+        assertUnreachable(lowerKind as never);
+    }
+  }
+
+  /**
    * Map ICRC IcrcIndexNgTransactionWithId to unified TokenTransaction type
    * ICRC uses optional fields: { transfer?: [...], mint?: [...], burn?: [...], approve?: [...] }
    */
   mapIcrcTransaction(tx: IcrcIndexNgTransactionWithId): TokenTransaction {
     const { id, transaction } = tx;
-    const kind = transaction.kind as TransactionKindValue;
+    const kind = this.getIcrcKind(transaction.kind);
 
     // Extract from optional array fields using fromNullable
     const transfer = fromNullable(transaction.transfer);
