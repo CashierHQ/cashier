@@ -11,34 +11,13 @@
   import {
     validateLedgerCanister,
     validateIndexCanister,
-    type ValidationErrorType,
   } from "$modules/token/services/canister-validation";
   import {
     MOCK_NETWORKS,
     SECURITY_LEARN_MORE_URL,
   } from "$modules/wallet/mock/mock";
   import { isValidPrincipal } from "$modules/wallet/utils/address";
-  import { assertUnreachable } from "$lib/rsMatch";
-
-  /**
-   * Map validation error types to i18n error message keys
-   */
-  function getErrorMessage(error: ValidationErrorType): string {
-    switch (error) {
-      case "INVALID_LEDGER":
-        return locale.t("wallet.import.errors.invalidLedgerCanister");
-      case "INVALID_INDEX":
-        return locale.t("wallet.import.errors.invalidIndexCanister");
-      case "INDEX_LEDGER_MISMATCH":
-        return locale.t("wallet.import.errors.indexLedgerMismatch");
-      case "TOKEN_EXISTS":
-        return locale.t("wallet.import.errors.tokenAlreadyExists");
-      case "BACKEND_ERROR":
-        return locale.t("wallet.import.errors.backendError");
-      default:
-        assertUnreachable(error);
-    }
-  }
+  import { getValidationErrorMessage } from "$modules/wallet/utils/validation-error-message";
 
   type Props = {
     onNavigateBack: () => void;
@@ -115,7 +94,7 @@
       // Validate ledger canister and fetch metadata
       const ledgerResult = await validateLedgerCanister(contractAddress.trim());
       if (ledgerResult.isErr()) {
-        toast.error(getErrorMessage(ledgerResult.error));
+        toast.error(getValidationErrorMessage(ledgerResult.error));
         return;
       }
 
@@ -126,7 +105,7 @@
           contractAddress.trim(),
         );
         if (indexResult.isErr()) {
-          toast.error(getErrorMessage(indexResult.error));
+          toast.error(getValidationErrorMessage(indexResult.error));
           return;
         }
       }
@@ -168,7 +147,7 @@
       );
 
       if (result.isErr()) {
-        toast.error(getErrorMessage(result.error));
+        toast.error(getValidationErrorMessage(result.error));
         return;
       }
 
