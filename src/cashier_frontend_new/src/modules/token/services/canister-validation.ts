@@ -28,6 +28,8 @@ export type ValidationErrorType =
 
 /**
  * Validate canister is valid ICRC-1 ledger by calling icrc1_metadata
+ * @param canisterId The canister ID to validate
+ * @returns Result with IcrcTokenMetadata on success or ValidationError on failure
  */
 export async function validateLedgerCanister(
   canisterId: string,
@@ -58,6 +60,9 @@ export async function validateLedgerCanister(
 /**
  * Validate canister is valid ICRC index by calling ledger_id
  * and verify it matches the expected ledger canister
+ * @param canisterId The index canister ID to validate
+ * @param expectedLedgerId The expected ledger canister ID
+ * @returns Result with Principal of ledger ID on success or ValidationError on failure
  */
 export async function validateIndexCanister(
   canisterId: string,

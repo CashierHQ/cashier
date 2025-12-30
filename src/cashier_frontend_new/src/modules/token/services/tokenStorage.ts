@@ -4,13 +4,13 @@ import { TOKEN_STORAGE_CANISTER_ID } from "$modules/shared/constants";
 import type { TokenMetadata } from "$modules/token/types";
 import { Principal } from "@dfinity/principal";
 import { Err, Ok, type Result } from "ts-results-es";
-import { parseListTokens } from "../utils/parser";
+import { parseListTokens } from "$modules/token/utils/parser";
 import {
   validateLedgerCanister,
   validateIndexCanister,
   ValidationError,
   type ValidationErrorType,
-} from "./canister-validation";
+} from "$modules/token/services/canister-validation";
 
 /**
  * Service for interacting with the Token Storage canister
