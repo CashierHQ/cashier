@@ -178,7 +178,10 @@ describe("validateIndexCanister", () => {
       >,
     );
 
-    const result = await validateIndexCanister(VALID_CANISTER_ID, VALID_LEDGER_ID);
+    const result = await validateIndexCanister(
+      VALID_CANISTER_ID,
+      VALID_LEDGER_ID,
+    );
 
     expect(result.isOk()).toBe(true);
     expect(result.unwrap().toText()).toBe(VALID_LEDGER_ID);
@@ -198,7 +201,10 @@ describe("validateIndexCanister", () => {
       >,
     );
 
-    const result = await validateIndexCanister(VALID_CANISTER_ID, VALID_LEDGER_ID);
+    const result = await validateIndexCanister(
+      VALID_CANISTER_ID,
+      VALID_LEDGER_ID,
+    );
 
     expect(result.isErr()).toBe(true);
     expect(result.unwrapErr()).toBe(ValidationError.INDEX_LEDGER_MISMATCH);
@@ -214,7 +220,10 @@ describe("validateIndexCanister", () => {
       >,
     );
 
-    const result = await validateIndexCanister(VALID_CANISTER_ID, VALID_LEDGER_ID);
+    const result = await validateIndexCanister(
+      VALID_CANISTER_ID,
+      VALID_LEDGER_ID,
+    );
 
     expect(result.isErr()).toBe(true);
     expect(result.unwrapErr()).toBe(ValidationError.INVALID_INDEX);
@@ -244,7 +253,10 @@ describe("validateIndexCanister", () => {
       >,
     );
 
-    const result = await validateIndexCanister(VALID_CANISTER_ID, VALID_LEDGER_ID);
+    const result = await validateIndexCanister(
+      VALID_CANISTER_ID,
+      VALID_LEDGER_ID,
+    );
 
     expect(result.isErr()).toBe(true);
     expect(result.unwrapErr()).toBe(ValidationError.INVALID_INDEX);
