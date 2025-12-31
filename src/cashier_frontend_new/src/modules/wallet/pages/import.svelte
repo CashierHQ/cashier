@@ -5,17 +5,26 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { Clipboard, Info, LoaderCircle } from "lucide-svelte";
   import { toast } from "svelte-sonner";
-  import { goto } from "$app/navigation";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import NetworkSelector from "$modules/creationLink/components/shared/NetworkSelector.svelte";
-  import { resolve } from "$app/paths";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
+    validateLedgerCanister,
+    validateIndexCanister,
+  } from "$modules/token/services/canister-validation";
+  import {
     MOCK_NETWORKS,
-    MOCK_TOKEN_DATA,
     SECURITY_LEARN_MORE_URL,
-  } from "../mock/mock";
+  } from "$modules/wallet/mock/mock";
   import { isValidPrincipal } from "$modules/wallet/utils/address";
+  import { getValidationErrorMessage } from "$modules/wallet/utils/validation-error-message";
+
+  type Props = {
+    onNavigateBack: () => void;
+    onNavigateToToken: (token: string) => void;
+  };
+
+  let { onNavigateBack, onNavigateToToken }: Props = $props();
 
   let isReview = $state(false);
   let selectedNetwork = $state("icp");
@@ -23,8 +32,8 @@
   let indexCanisterId = $state("");
   let isLoading = $state(false);
 
-  // TODO: Fetch from API based on contract address
-  let tokenData = $state({ ...MOCK_TOKEN_DATA });
+  // Token metadata fetched from ledger canister
+  let tokenData = $state({ name: "", symbol: "", address: "" });
 
   let imageLoadFailed = $state(false);
   let networkIconLoadFailed = $state(false);
@@ -32,7 +41,7 @@
   const pageTitle = $derived(
     isReview
       ? locale.t("wallet.import.review")
-      : locale.t("wallet.import.title"),
+      : locale.t("wallet.import.header"),
   );
 
   const tokenLogo = $derived(
@@ -82,12 +91,34 @@
     isLoading = true;
 
     try {
-      // TODO: Validate contract address format
-      // TODO: Fetch token data from API to populate tokenData
-      tokenData.address = contractAddress;
+      // Validate ledger canister and fetch metadata
+      const ledgerResult = await validateLedgerCanister(contractAddress.trim());
+      if (ledgerResult.isErr()) {
+        toast.error(getValidationErrorMessage(ledgerResult.error));
+        return;
+      }
+
+      // Validate index canister if provided - must match the ledger
+      if (indexCanisterId.trim()) {
+        const indexResult = await validateIndexCanister(
+          indexCanisterId.trim(),
+          contractAddress.trim(),
+        );
+        if (indexResult.isErr()) {
+          toast.error(getValidationErrorMessage(indexResult.error));
+          return;
+        }
+      }
+
+      // Populate token data from metadata
+      const metadata = ledgerResult.value;
+      tokenData = {
+        name: metadata.name,
+        symbol: metadata.symbol,
+        address: contractAddress.trim(),
+      };
 
       isReview = true;
-      // Reset network icon error state when entering review
       networkIconLoadFailed = false;
     } catch (error) {
       toast.error(`${locale.t("wallet.import.error")} ${error}`);
@@ -110,15 +141,20 @@
     isLoading = true;
 
     try {
-      await walletStore.addToken(
+      const result = await walletStore.addToken(
         contractAddress.trim(),
         indexCanisterId.trim() || undefined,
       );
 
+      if (result.isErr()) {
+        toast.error(getValidationErrorMessage(result.error));
+        return;
+      }
+
       toast.success(locale.t("wallet.import.success"));
 
-      // Redirect to token page
-      goto(resolve(`/wallet/${contractAddress}`));
+      // Navigate to token page
+      onNavigateToToken(contractAddress);
     } catch (error) {
       toast.error(`${locale.t("wallet.import.error")} ${error}`);
     } finally {
@@ -135,7 +171,7 @@
   }
 </script>
 
-<NavBar header={pageTitle} />
+<NavBar mode="back-only" title={pageTitle} onBack={onNavigateBack} />
 
 <div class="px-4 grow-1 flex flex-col">
   {#if !isReview}

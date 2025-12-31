@@ -3,7 +3,14 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { TOKEN_STORAGE_CANISTER_ID } from "$modules/shared/constants";
 import type { TokenMetadata } from "$modules/token/types";
 import { Principal } from "@dfinity/principal";
-import { parseListTokens } from "../utils/parser";
+import { Err, Ok, type Result } from "ts-results-es";
+import { parseListTokens } from "$modules/token/utils/parser";
+import {
+  validateLedgerCanister,
+  validateIndexCanister,
+  ValidationError,
+  type ValidationErrorType,
+} from "$modules/token/services/canister-validation";
 
 /**
  * Service for interacting with the Token Storage canister
@@ -59,21 +66,57 @@ class TokenStorageService {
   }
 
   /**
-   * Add a new token to the user wallet
+   * Add a new token to the user wallet with validation
    * @param address The principal address of the token to add.
    * @param indexId Optional index canister ID for the token.
+   * @param existingTokens List of existing token addresses for duplicate check.
+   * @returns Result with void on success or ValidationError on failure.
    */
-  public async addToken(address: Principal, indexId?: string): Promise<void> {
+  public async addToken(
+    address: Principal,
+    indexId?: string,
+    existingTokens?: string[],
+  ): Promise<Result<void, ValidationErrorType>> {
     const actor = this.#getActor();
     if (!actor) {
-      throw new Error("User is not authenticated");
+      return Err(ValidationError.BACKEND_ERROR);
     }
-    const res = await actor.user_add_token({
-      token_id: { IC: { ledger_id: address } },
-      index_id: indexId ? [indexId] : [],
-    });
-    if ("Err" in res) {
-      throw new Error(`Error adding token: ${res.Err}`);
+
+    const addressStr = address.toText();
+
+    // 1. Check if token already exists
+    if (existingTokens?.includes(addressStr)) {
+      return Err(ValidationError.TOKEN_EXISTS);
+    }
+
+    // 2. Validate ledger canister
+    const ledgerResult = await validateLedgerCanister(addressStr);
+    if (ledgerResult.isErr()) {
+      return Err(ValidationError.INVALID_LEDGER);
+    }
+
+    // 3. Validate index canister if provided - must match ledger
+    if (indexId) {
+      const indexResult = await validateIndexCanister(indexId, addressStr);
+      if (indexResult.isErr()) {
+        return Err(indexResult.error);
+      }
+    }
+
+    // 4. Call backend
+    try {
+      const res = await actor.user_add_token({
+        token_id: { IC: { ledger_id: address } },
+        index_id: indexId ? [indexId] : [],
+      });
+
+      if ("Err" in res) {
+        return Err(ValidationError.BACKEND_ERROR);
+      }
+
+      return Ok(undefined);
+    } catch {
+      return Err(ValidationError.BACKEND_ERROR);
     }
   }
 }

@@ -9,9 +9,10 @@
   import MenuButton from "./MenuButton.svelte";
   import WalletButton from "./WalletButton.svelte";
   import { X } from "lucide-svelte";
-  import { userProfile } from "../services/userProfile.svelte";
+  import { userProfile } from "$modules/shared/services/userProfile.svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
+  import WalletDrawer from "./WalletDrawer.svelte";
 
   type Props = {
     isLinkFormPage?: boolean;
@@ -21,8 +22,10 @@
 
   let { isLinkFormPage = false, linkName, class: className }: Props = $props();
 
+  let walletDrawerOpen = $state(false);
+
   function handleWalletClick() {
-    goto(resolve("/wallet"));
+    walletDrawerOpen = true;
   }
 
   // Get current path to determine if it's create or edit
@@ -141,3 +144,5 @@
     </button>
   {/if}
 </div>
+
+<WalletDrawer bind:open={walletDrawerOpen} />
