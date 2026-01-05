@@ -150,6 +150,15 @@ async fn it_should_withdraw_icp_token_basket_linkv2_successfully() {
         let action_dto = process_action_dto.action;
         assert_eq!(action_dto.state, ActionState::Success);
 
+        // Assert: amount_available should be 0 after withdraw
+        assert!(!link_dto.asset_info.is_empty());
+        let asset = &link_dto.asset_info[0];
+        assert_eq!(
+            asset.amount_available,
+            Nat::from(0u64),
+            "amount_available should be 0 after withdraw"
+        );
+
         // Assert: creator balance increased
         let icp_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
         assert_eq!(
@@ -269,6 +278,15 @@ async fn it_should_withdraw_icrc_token_basket_linkv2_successfully() {
         assert_eq!(link_dto.state, LinkState::InactiveEnded);
         let action_dto = process_action_dto.action;
         assert_eq!(action_dto.state, ActionState::Success);
+
+        // Assert: amount_available should be 0 after withdraw
+        assert!(!link_dto.asset_info.is_empty());
+        let asset = &link_dto.asset_info[0];
+        assert_eq!(
+            asset.amount_available,
+            Nat::from(0u64),
+            "amount_available should be 0 after withdraw"
+        );
 
         // Assert: creator balance increased
         let ckbtc_balance_after = ckbtc_ledger_client

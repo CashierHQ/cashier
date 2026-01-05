@@ -178,14 +178,23 @@ async fn it_should_succeed_activate_icp_token_basket_linkv2() {
         let icp_link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
         let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
 
+        let expected_amount_available = test_utils::calculate_amount_for_wallet_to_link_transfer(
+            amounts[0].clone(),
+            icp_ledger_fee.clone(),
+            1,
+        );
+
         assert_eq!(
-            icp_link_balance,
-            test_utils::calculate_amount_for_wallet_to_link_transfer(
-                amounts[0].clone(),
-                icp_ledger_fee,
-                1
-            ),
+            icp_link_balance, expected_amount_available,
             "Link balance is incorrect"
+        );
+
+        // Assert: amount_available is set correctly after activation
+        assert!(!result.link.asset_info.is_empty());
+        let asset = &result.link.asset_info[0];
+        assert_eq!(
+            asset.amount_available, expected_amount_available,
+            "amount_available should equal deposited amount after activation"
         );
 
         // Assert: Fee treasury balance after activation
@@ -248,14 +257,23 @@ async fn it_should_succeed_activate_icrc_token_basket_linkv2() {
         let ckbtc_link_balance = ckbtc_ledger_client.balance_of(&link_account).await.unwrap();
         let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
 
+        let expected_amount_available = test_utils::calculate_amount_for_wallet_to_link_transfer(
+            amounts[0].clone(),
+            ckbtc_ledger_fee.clone(),
+            1,
+        );
+
         assert_eq!(
-            ckbtc_link_balance,
-            test_utils::calculate_amount_for_wallet_to_link_transfer(
-                amounts[0].clone(),
-                ckbtc_ledger_fee,
-                1
-            ),
+            ckbtc_link_balance, expected_amount_available,
             "Link balance is incorrect"
+        );
+
+        // Assert: amount_available is set correctly after activation
+        assert!(!result.link.asset_info.is_empty());
+        let asset = &result.link.asset_info[0];
+        assert_eq!(
+            asset.amount_available, expected_amount_available,
+            "amount_available should equal deposited amount after activation"
         );
 
         // Assert: Fee treasury balance after activation

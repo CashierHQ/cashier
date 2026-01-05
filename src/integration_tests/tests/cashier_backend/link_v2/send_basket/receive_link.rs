@@ -200,6 +200,15 @@ async fn it_should_succeed_receive_icp_token_basket_linkv2() {
         let intent1 = &intents[0];
         assert_eq!(intent1.state, IntentState::Success);
 
+        // Assert: amount_available should be 0 after final receive (max_use=1)
+        assert!(!link_dto.asset_info.is_empty());
+        let asset = &link_dto.asset_info[0];
+        assert_eq!(
+            asset.amount_available,
+            Nat::from(0u64),
+            "amount_available should be 0 after final receive"
+        );
+
         // Assert: receiveer's ICP balance increased
         let icp_balance_after = icp_ledger_client
             .balance_of(&receiver_account)
@@ -327,6 +336,15 @@ async fn it_should_succeed_receive_icrc_token_basket_linkv2() {
         assert_eq!(intents.len(), 1);
         let intent1 = &intents[0];
         assert_eq!(intent1.state, IntentState::Success);
+
+        // Assert: amount_available should be 0 after final receive (max_use=1)
+        assert!(!link_dto.asset_info.is_empty());
+        let asset = &link_dto.asset_info[0];
+        assert_eq!(
+            asset.amount_available,
+            Nat::from(0u64),
+            "amount_available should be 0 after final receive"
+        );
 
         // Assert: receiveer's CKBTC balance increased
         let ckbtc_balance_after = ckbtc_ledger_client
