@@ -39,7 +39,6 @@ export class AssetInfo {
   amount_per_link_use_action: bigint;
   label: string;
   amount_available: bigint;
-
   constructor(
     asset: Asset,
     amount_per_link_use_action: bigint,
