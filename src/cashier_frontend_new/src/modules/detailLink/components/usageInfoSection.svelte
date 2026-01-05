@@ -16,8 +16,12 @@
     linkUseActionCounter: bigint;
   };
 
-  let { assetInfo, failedImageLoads, onImageError, linkUseActionCounter }: Props =
-    $props();
+  let {
+    assetInfo,
+    failedImageLoads,
+    onImageError,
+    linkUseActionCounter,
+  }: Props = $props();
 
   // Compute assetsWithTokenInfo using amount_available
   const assetsWithTokenInfo = $derived.by(() => {
@@ -29,7 +33,9 @@
         if (!address) return null;
         return { address, amount: info.amount_available };
       })
-      .filter((item): item is { address: string; amount: bigint } => item !== null);
+      .filter(
+        (item): item is { address: string; amount: bigint } => item !== null,
+      );
 
     return calculateAssetsWithTokenInfo(
       assets,

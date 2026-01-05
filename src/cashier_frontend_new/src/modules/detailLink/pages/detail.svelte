@@ -335,7 +335,9 @@
 
       <!-- Block 2: Transaction Lock -->
       <TransactionLockSection
-        transactionLockStatus={locale.t(getTransactionLockStatusKey(linkStore.link?.state))}
+        transactionLockStatus={locale.t(
+          getTransactionLockStatusKey(linkStore.link?.state),
+        )}
         isEnded={isTransactionLockEnded}
       />
 

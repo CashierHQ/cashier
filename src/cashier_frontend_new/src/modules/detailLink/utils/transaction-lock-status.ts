@@ -1,4 +1,7 @@
-import { LinkState, type LinkStateValue } from "$modules/links/types/link/linkState";
+import {
+  LinkState,
+  type LinkStateValue,
+} from "$modules/links/types/link/linkState";
 
 /**
  * Get transaction lock status translation key based on link state
@@ -7,7 +10,9 @@ import { LinkState, type LinkStateValue } from "$modules/links/types/link/linkSt
  * CREATE_LINK -> Unlock (can create)
  * INACTIVE_ENDED -> Ended
  */
-export function getTransactionLockStatusKey(state: LinkStateValue | undefined): string {
+export function getTransactionLockStatusKey(
+  state: LinkStateValue | undefined,
+): string {
   if (!state) return "links.linkForm.preview.transactionLockUnlock";
 
   switch (state) {
