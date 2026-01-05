@@ -160,7 +160,8 @@
     "ICRC7NFT": {
       "type": "custom",
       "candid": "./target/artifacts/icrc7_nft_canister.did",
-      "wasm": "./target/artifacts/icrc7_nft_canister.wasm.gz"
+      "wasm": "./target/artifacts/icrc7_nft_canister.wasm.gz",
+      "specified_id": "cvvmr-dyaaa-aaaai-q32oq-cai"
     }
   },
   "defaults": {

@@ -64,6 +64,9 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
   just dfx_local_deploy_icrc_index "ckETH_index" "ss2fx-dyaaa-aaaar-qacoq-cai" "s3zol-vqaaa-aaaar-qacpa-cai"
   just dfx_local_deploy_icrc_index "ckUSDC_index" "xevnm-gaaaa-aaaar-qafnq-cai" "xrs4b-hiaaa-aaaar-qafoa-cai"
 
+  # Deploy ICRC7 NFT ledger
+  just dfx_local_deploy_icrc7_ledger "${OWNER}" "ICRC7NFT" "CashierDev collection" "CashierDev" "This collection is for development purpose"
+
 [group('dfx')]
 dfx_local_deploy_token canister_name name symbol canister_id decimals fee:
   #!/usr/bin/env bash
@@ -92,6 +95,9 @@ dfx_local_info:
   cketh_index_id=$(dfx canister id ckETH_index 2>/dev/null || echo "not deployed")
   ckusdc_index_id=$(dfx canister id ckUSDC_index 2>/dev/null || echo "not deployed")
 
+  # ICRC7 NFT ledger
+  icrc7_nft_id=$(dfx canister id ICRC7NFT 2>/dev/null || echo "not deployed")
+
   echo "webserver-port: $dfx_webserver_port"
   echo "cashier_backend id: $cashier_backend_id"
   echo "token_storage id: $token_storage_id"
@@ -102,6 +108,7 @@ dfx_local_info:
   echo "ckBTC_index id: $ckbtc_index_id"
   echo "ckETH_index id: $cketh_index_id"
   echo "ckUSDC_index id: $ckusdc_index_id"
+  echo "icrc7_nft_id: $icrc7_nft_id"
 
   echo "cashier_backend url: http://$cashier_backend_id.raw.localhost:$dfx_webserver_port"
   echo "token_storage url: http://$token_storage_id.raw.localhost:$dfx_webserver_port"
@@ -302,6 +309,59 @@ dfx_local_deploy_icrc_index canister_name ledger_id index_id:
     ledger_id = principal \"{{ledger_id}}\";
     retrieve_blocks_from_ledger_interval_seconds = opt 10;
   } })" --specified-id {{index_id}}
+
+[private]
+dfx_local_deploy_icrc7_ledger minter_id canister_name collection_name collection_symbol collection_description:
+  #!/usr/bin/env bash
+  set -e
+
+  dfx deploy {{canister_name}} --argument "(
+        variant {
+            Init = record {
+                permissions = record {
+                    user_permissions = vec {
+                        record {
+                            principal \"{{minter_id}}\";
+                            vec {
+                                variant { UpdateMetadata };
+                                variant { Minting };
+                                variant { UpdateCollectionMetadata };
+                                variant { UpdateUploads };
+                                variant { ManageAuthorities };
+                                variant { ReadUploads };
+                            };
+                        };
+                    };
+                };
+                supply_cap = null;
+                tx_window = null;
+                test_mode = false;
+                default_take_value = null;
+                max_canister_storage_threshold = null;
+                logo = null;
+                permitted_drift = null;
+                name = \"{{collection_name}}\";
+                description = opt \"{{collection_description}}\";
+                version = record {
+                    major = 1 : nat32;
+                    minor = 1 : nat32;
+                    patch = 1 : nat32;
+                };
+                max_take_value = null;
+                max_update_batch_size = null;
+                max_query_batch_size = null;
+                commit_hash = \"$(git rev-parse HEAD 2>/dev/null || echo 'aaa')\";
+                max_memo_size = null;
+                atomic_batch_transfers = null;
+                collection_metadata = vec {};
+                symbol = \"{{collection_symbol}}\";
+                approval_init = record {
+                    max_approvals_per_token_or_collection = null;
+                    max_revoke_approvals = null;
+                };
+            }
+        }
+    )"
 
 
 [private]
