@@ -115,8 +115,8 @@
     },
     "icp_index": {
       "type": "custom",
-      "candid": "./target/artifacts/icp-index.did",
-      "wasm": "./target/artifacts/icp-index.wasm.gz",
+      "candid": "./target/artifacts/icp_index.did",
+      "wasm": "./target/artifacts/icp_index.wasm.gz",
       "specified_id": "qhbym-qaaaa-aaaaa-aaafq-cai",
       "remote": {
         "id": {
@@ -126,8 +126,8 @@
     },
     "ckBTC_index": {
       "type": "custom",
-      "candid": "./target/artifacts/icrc-index-ng.did",
-      "wasm": "./target/artifacts/icrc-index-ng.wasm.gz",
+      "candid": "./target/artifacts/icrc_index_ng.did",
+      "wasm": "./target/artifacts/icrc_index_ng.wasm.gz",
       "specified_id": "n5wcd-faaaa-aaaar-qaaea-cai",
       "remote": {
         "id": {
@@ -137,8 +137,8 @@
     },
     "ckETH_index": {
       "type": "custom",
-      "candid": "./target/artifacts/icrc-index-ng.did",
-      "wasm": "./target/artifacts/icrc-index-ng.wasm.gz",
+      "candid": "./target/artifacts/icrc_index_ng.did",
+      "wasm": "./target/artifacts/icrc_index_ng.wasm.gz",
       "specified_id": "s3zol-vqaaa-aaaar-qacpa-cai",
       "remote": {
         "id": {
@@ -148,14 +148,19 @@
     },
     "ckUSDC_index": {
       "type": "custom",
-      "candid": "./target/artifacts/icrc-index-ng.did",
-      "wasm": "./target/artifacts/icrc-index-ng.wasm.gz",
+      "candid": "./target/artifacts/icrc_index_ng.did",
+      "wasm": "./target/artifacts/icrc_index_ng.wasm.gz",
       "specified_id": "xrs4b-hiaaa-aaaar-qafoa-cai",
       "remote": {
         "id": {
           "ic": "xrs4b-hiaaa-aaaar-qafoa-cai"
         }
       }
+    },
+    "ICRC7NFT": {
+      "type": "custom",
+      "candid": "./target/artifacts/icrc7_nft_canister.did",
+      "wasm": "./target/artifacts/icrc7_nft_canister.wasm.gz"
     }
   },
   "defaults": {
