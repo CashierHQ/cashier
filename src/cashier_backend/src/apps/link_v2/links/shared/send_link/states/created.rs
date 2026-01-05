@@ -18,8 +18,7 @@ use cashier_backend_types::{
 };
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
 use transaction_manager::{
-    icrc_token::utils::get_batch_tokens_fee_for_link,
-    traits::TransactionManager,
+    icrc_token::utils::get_batch_tokens_fee_for_link, traits::TransactionManager,
     utils::calculator::calculate_link_balance_map,
 };
 
