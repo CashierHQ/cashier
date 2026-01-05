@@ -120,6 +120,8 @@ dfx_local_info:
 dfx_local_airdrop target_principal:
   #!/usr/bin/env bash
   set -e
+
+  echo "Airdrop ICP"
   dfx canister call icp_ledger_canister icrc1_transfer "(record { 
         to = record { 
             owner = principal \"{{target_principal}}\";
@@ -130,11 +132,19 @@ dfx_local_airdrop target_principal:
         from_subaccount = null;
         amount = 10000000000;
         fee = null
-  })" 
+  })"
+
+  echo "Airdrop ICRC tokens"
   just dfx_local_airdrop_token {{target_principal}} mxzaz-hqaaa-aaaar-qaada-cai 1000000
   just dfx_local_airdrop_token {{target_principal}} ss2fx-dyaaa-aaaar-qacoq-cai 100000000000000000
   just dfx_local_airdrop_token {{target_principal}} xevnm-gaaaa-aaaar-qafnq-cai 10000000000
   just dfx_local_airdrop_token {{target_principal}} x5qut-viaaa-aaaar-qajda-cai 10000000000
+
+  # mint ICRC7 NFT
+  echo "Airdrop NFT"
+  just dfx_local_mint_nft {{target_principal}} cvvmr-dyaaa-aaaai-q32oq-cai "NFT1" "First nft for testing"
+  just dfx_local_mint_nft {{target_principal}} cvvmr-dyaaa-aaaai-q32oq-cai "NFT2" "Second nft for testing"
+  just dfx_local_mint_nft {{target_principal}} cvvmr-dyaaa-aaaai-q32oq-cai "NFT3" "Third nft for testing"
 
 
 # Tails the local dfx logs
@@ -380,3 +390,24 @@ dfx_local_airdrop_token target_principal canister_id amount:
         amount = {{amount}};
         fee = null
   })" 
+
+[private]
+dfx_local_mint_nft target_principal canister_id nft_name nft_description:
+  #!/usr/bin/env bash
+  set -e
+
+  dfx canister call {{canister_id}} mint "(record {
+        mint_requests = vec {
+          record {
+            token_owner = record {
+              owner = principal \"{{target_principal}}\";
+              subaccount = null;
+            };
+            metadata = vec {
+              record { \"name\"; variant { Text = \"{{nft_name}}\" } };
+              record { \"description\"; variant { Text = \"{{nft_description}}\" } };
+            };
+            memo = null;
+          }
+        }
+  })"
