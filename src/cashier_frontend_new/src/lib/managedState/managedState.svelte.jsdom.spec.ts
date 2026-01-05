@@ -473,6 +473,41 @@ describe("ManagedState - LocalStorage", () => {
     expect(store.data).toEqual(undefined);
     expect(localStorage.getItem("test_key_5")).toEqual(null);
   });
+
+  it("should preserve BigInt through localStorage round-trip", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(6000);
+
+    const bigIntData = {
+      balance: 123456789012345678901234567890n,
+      fee: 10000n,
+    };
+
+    const store = managedState<{ balance: bigint; fee: bigint }>({
+      queryFn: () => Promise.resolve(bigIntData),
+      persistedKey: ["test_bigint_key"],
+      storageType: "localStorage",
+    });
+
+    await vi.advanceTimersByTimeAsync(10);
+    expect(store.data?.balance).toEqual(123456789012345678901234567890n);
+    expect(store.data?.fee).toEqual(10000n);
+    expect(typeof store.data?.balance).toBe("bigint");
+    expect(typeof store.data?.fee).toBe("bigint");
+
+    // Simulate page reload by creating new store with same key
+    const store2 = managedState<{ balance: bigint; fee: bigint }>({
+      queryFn: () => Promise.resolve({ balance: 0n, fee: 0n }),
+      persistedKey: ["test_bigint_key"],
+      storageType: "localStorage",
+    });
+
+    // Should restore from localStorage, not call queryFn
+    expect(store2.data?.balance).toEqual(123456789012345678901234567890n);
+    expect(store2.data?.fee).toEqual(10000n);
+    expect(typeof store2.data?.balance).toBe("bigint");
+    expect(typeof store2.data?.fee).toBe("bigint");
+  });
 });
 
 describe("ManagedState - SessionStorage", () => {

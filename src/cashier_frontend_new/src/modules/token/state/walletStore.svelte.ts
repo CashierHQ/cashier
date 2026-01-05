@@ -43,7 +43,7 @@ class WalletStore {
 
         const enrichedTokens = tokens.map((token, index) => ({
           ...token,
-          balance: balances[index] ?? 0,
+          balance: balances[index] ?? 0n,
           priceUSD: prices[token.address] || 0,
         }));
 
