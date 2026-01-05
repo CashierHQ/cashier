@@ -67,7 +67,7 @@ download_artifacts: pre_build
   just download_if_not_exists {{ARTIFACTS_DIR}}/icrc_index_ng.wasm.gz "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-10-27/ic-icrc1-index-ng.wasm.gz"
   # ICRC7 NFT ledger
   just download_if_not_exists {{ARTIFACTS_DIR}}/icrc7_nft_canister.did "https://github.com/ORIGYN-SA/nft/releases/download/v2025.12.08-0fc224f/core_nft_canister.did"
-  just download_if_not_exists {{ARTIFACTS_DIR}}/icrc7_nft_canister.wasm "https://github.com/ORIGYN-SA/nft/releases/download/v2025.12.08-0fc224f/core_nft_canister.wasm.gz"
+  just download_if_not_exists {{ARTIFACTS_DIR}}/icrc7_nft_canister.wasm.gz "https://github.com/ORIGYN-SA/nft/releases/download/v2025.12.08-0fc224f/core_nft_canister.wasm.gz"
 
 
 [private]
