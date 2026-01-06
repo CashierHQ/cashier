@@ -41,15 +41,27 @@ impl<S: Storage<UserNftRepositoryStorage>> UserNftRepository<S> {
     /// Get NFTs by user_id
     /// # Arguments
     /// * `user_id` - The Principal of the user
+    /// * `start` - Optional start index for pagination
+    /// * `limit` - Optional limit for pagination
     /// # Returns
     /// * `Vec<Nft>` - List of NFTs owned by the user
-    pub fn get_nfts(&self, user_id: &Principal) -> Vec<Nft> {
-        self.nft_store.with_borrow(|store| {
+    pub fn get_nfts(
+        &self,
+        user_id: &Principal,
+        start: Option<u32>,
+        limit: Option<u32>,
+    ) -> Vec<Nft> {
+        let nfts = self.nft_store.with_borrow(|store| {
             store
                 .get(user_id)
                 .map(|nft_set| nft_set.into_iter().collect())
                 .unwrap_or_else(Vec::new)
-        })
+        });
+
+        let start_idx = start.unwrap_or(0) as usize;
+        let limit = limit.unwrap_or(nfts.len() as u32) as usize;
+
+        nfts.into_iter().skip(start_idx).take(limit).collect()
     }
 }
 
@@ -73,8 +85,33 @@ mod tests {
         repo.add_nft(user_id, nft.clone()).unwrap();
 
         // Assert
-        let nfts = repo.get_nfts(&user_id);
+        let nfts = repo.get_nfts(&user_id, None, None);
         assert_eq!(nfts.len(), 1);
         assert_eq!(nfts[0], nft);
+    }
+
+    #[test]
+    fn it_should_paginate_user_nfts() {
+        // Arrange
+        let mut repo = TestRepositories::new().user_nft();
+        let user_id = random_principal_id();
+        for _ in 0..10 {
+            let nft = Nft {
+                collection_id: random_principal_id(),
+                token_id: random_id_string(),
+            };
+            repo.add_nft(user_id, nft).unwrap();
+        }
+
+        // Act
+        let nfts_page_1 = repo.get_nfts(&user_id, Some(0), Some(5));
+        let nfts_page_2 = repo.get_nfts(&user_id, Some(5), Some(5));
+        let nfts_page_3 = repo.get_nfts(&user_id, Some(10), Some(5));
+
+        // Assert
+        assert_eq!(nfts_page_1.len(), 5);
+        assert_eq!(nfts_page_2.len(), 5);
+        assert_eq!(nfts_page_3.len(), 0);
+        assert_ne!(nfts_page_1, nfts_page_2);
     }
 }
