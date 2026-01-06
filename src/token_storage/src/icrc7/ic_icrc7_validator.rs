@@ -14,7 +14,7 @@ impl Icrc7ValidatorTrait for ICIcrc7Validator {
         ledger_id: &Principal,
         token_id: &Nat,
     ) -> Result<bool, token_storage_types::error::CanisterError> {
-        let client = crate::icrc7::client::Icrc7Client::new(*ledger_id);
+        let client = Icrc7Client::new(*ledger_id);
         let owners_account = client.owner_of(token_id.clone()).await?;
         if owners_account.is_empty() {
             return Ok(false);
@@ -52,7 +52,7 @@ pub mod tests {
         /// * `owner` - The principal of the owner
         pub fn set_ownership(&mut self, ledger_id: &Principal, token_id: &Nat, owner: Principal) {
             self.ownership_map
-                .insert((ledger_id.clone(), token_id.clone()), owner);
+                .insert((*ledger_id, token_id.clone()), owner);
         }
     }
 

@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::{Nat, Principal};
+use candid::Principal;
 use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
 use ic_mple_utils::store::Storage;
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
@@ -69,7 +69,8 @@ impl<S: Storage<UserNftRepositoryStorage>> UserNftRepository<S> {
 mod tests {
     use super::*;
     use crate::repository::{Repositories, tests::TestRepositories};
-    use cashier_common::test_utils::{random_id_string, random_principal_id};
+    use candid::Nat;
+    use cashier_common::test_utils::random_principal_id;
 
     #[test]
     fn it_should_add_and_get_user_nft() {

@@ -3,7 +3,7 @@ use std::{cell::RefCell, thread::LocalKey};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 
 use crate::{
-    icrc7::ic_icrc7_validator::{self, ICIcrc7Validator},
+    icrc7::ic_icrc7_validator::ICIcrc7Validator,
     repository::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
     services::{
         auth::{AuthService, AuthServiceStorage},

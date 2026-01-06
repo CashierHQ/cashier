@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::{Nat, Principal};
+use candid::Principal;
 use token_storage_types::{
     dto::nft::{NftDto, UserNftDto},
     error::CanisterError,
@@ -76,6 +76,7 @@ mod tests {
     use super::*;
     use crate::icrc7::ic_icrc7_validator::tests::MockIcrc7Validator;
     use crate::repository::tests::TestRepositories;
+    use candid::Nat;
     use cashier_common::test_utils::random_principal_id;
 
     fn user_nft_service_fixture() -> UserNftService<TestRepositories, MockIcrc7Validator> {

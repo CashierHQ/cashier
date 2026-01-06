@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::{CandidType, Nat, Principal};
+use candid::{Nat, Principal};
 use ic_cdk::call::{Call, CandidDecodeFailed};
 use token_storage_types::error::CanisterError;
 
