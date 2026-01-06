@@ -1,6 +1,9 @@
 <script lang="ts">
   import { parseBalanceUnits } from "$modules/shared/utils/converter";
-  import { formatTokenPrice } from "$modules/shared/utils/formatNumber";
+  import {
+    formatTokenPrice,
+    formatUsdAmount,
+  } from "$modules/shared/utils/formatNumber";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
 
@@ -10,6 +13,7 @@
     onSelect: (address: string) => void;
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
+    isBalanceHidden?: boolean;
   };
 
   let {
@@ -18,6 +22,7 @@
     onSelect,
     failedImageLoads,
     onImageError,
+    isBalanceHidden = false,
   }: Props = $props();
 
   // Format token balance
@@ -37,7 +42,7 @@
       return "-";
     }
     const usdValue = parsedBalance * priceUSD;
-    return `$${usdValue.toFixed(2)}`;
+    return `~$${formatUsdAmount(usdValue)}`;
   }
 
   const tokenLogo = getTokenLogo(token.address);
@@ -95,11 +100,11 @@
       </div>
 
       <div>
-        <div class="text-sm text-gray-500">
-          {formattedBalance}
+        <div class="text-sm text-gray-500 text-right">
+          {isBalanceHidden ? "*****" : formattedBalance}
         </div>
-        <div class="text-sm text-gray-500">
-          {formattedUSD}
+        <div class="text-sm text-gray-500 text-right">
+          {isBalanceHidden ? "*****" : formattedUSD}
         </div>
       </div>
     </div>

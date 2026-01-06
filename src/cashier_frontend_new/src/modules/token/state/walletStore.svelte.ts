@@ -1,5 +1,6 @@
 import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
+import type { ValidationErrorType } from "$modules/token/services/canister-validation";
 import {
   encodeAccountID,
   icpLedgerService,
@@ -19,18 +20,20 @@ class WalletStore {
   constructor() {
     this.#walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
       queryFn: async () => {
-        // fetch list user's tokens
+        // fetch list user's tokens (only enabled tokens)
         const tokens = await tokenStorageService.listTokens();
 
-        // fetch token balances
-        const balanceRequests = tokens.map((token) => {
-          if (token.address === ICP_LEDGER_CANISTER_ID) {
-            return icpLedgerService.getBalance();
-          } else {
-            const icrcLedgerService = new IcrcLedgerService(token);
-            return icrcLedgerService.getBalance();
-          }
-        });
+        // fetch token balances only for enabled tokens
+        const balanceRequests = tokens
+          .filter((token) => token.enabled)
+          .map((token) => {
+            if (token.address === ICP_LEDGER_CANISTER_ID) {
+              return icpLedgerService.getBalance();
+            } else {
+              const icrcLedgerService = new IcrcLedgerService(token);
+              return icrcLedgerService.getBalance();
+            }
+          });
         const balances: bigint[] = await Promise.all(balanceRequests);
 
         // fetch token prices
@@ -40,7 +43,7 @@ class WalletStore {
 
         const enrichedTokens = tokens.map((token, index) => ({
           ...token,
-          balance: balances[index],
+          balance: balances[index] ?? 0n,
           priceUSD: prices[token.address] || 0,
         }));
 
@@ -53,10 +56,6 @@ class WalletStore {
 
     $effect.root(() => {
       $effect(() => {
-        console.log(
-          "Account state changed, refreshing tokens...",
-          $state.snapshot(authState.account),
-        );
         // Reset the wallet tokens data when user logs out
         if (authState.account == null) {
           this.#walletTokensQuery.reset();
@@ -72,7 +71,6 @@ class WalletStore {
         // This ensures the effect runs when prices are updated
         const prices = tokenPriceStore.query.data;
         if (prices) {
-          console.log("Token prices updated, refreshing wallet tokens...");
           this.#walletTokensQuery.refresh();
         }
       });
@@ -97,15 +95,33 @@ class WalletStore {
   }
 
   /**
-   * Add a new token to the wallet
+   * Add a new token to the wallet with validation
    * @param address Token canister ID
+   * @param indexId Optional index canister ID for the token
+   * @returns Result with void on success or ValidationError on failure
    */
-  async addToken(address: string) {
+  async addToken(
+    address: string,
+    indexId?: string,
+  ): Promise<Result<void, ValidationErrorType>> {
     const token = Principal.fromText(address);
-    const addRes = await tokenStorageService.addToken(token);
-    // Refresh the wallet tokens data after adding a new token
-    this.#walletTokensQuery.refresh();
-    return addRes;
+
+    // Get existing token addresses for duplicate check
+    const existingTokens =
+      this.#walletTokensQuery.data?.map((t) => t.address) ?? [];
+
+    const result = await tokenStorageService.addToken(
+      token,
+      indexId,
+      existingTokens,
+    );
+
+    if (result.isOk()) {
+      // Refresh the wallet tokens data after adding a new token
+      this.#walletTokensQuery.refresh();
+    }
+
+    return result;
   }
 
   /**

@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { Lock, Feather, Zap, ChevronDown, ChevronUp } from "lucide-svelte";
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
   import { locale } from "$lib/i18n";
+  import { getMobileImageHeight } from "$modules/shared/utils/getMobileImageHeight";
 
   type Props = {
     onLoginClick?: () => void;
@@ -12,6 +14,21 @@
   let isDevelopmentExpanded = $state(false);
   let isImageLoading = $state(true);
 
+  let mobileImageHeight = $state(getMobileImageHeight());
+
+  // Update height on window resize
+  onMount(() => {
+    function updateHeight() {
+      mobileImageHeight = getMobileImageHeight();
+    }
+
+    window.addEventListener("resize", updateHeight);
+
+    return () => {
+      window.removeEventListener("resize", updateHeight);
+    };
+  });
+
   function toggleDevelopment() {
     isDevelopmentExpanded = !isDevelopmentExpanded;
   }
@@ -19,14 +36,17 @@
   function onImageLoaded() {
     isImageLoading = false;
   }
+
+  const isLoggedIn = $derived(userProfile.isLoggedIn());
 </script>
 
 <div
   class="lg:bg-[url('/LandingPageBackgroundPattern.svg')] lg:bg-cover lg:bg-center lg:w-full lg:pt-[12vh] flex-1"
 >
   <!-- Development Disclaimer -->
+  <!-- Hidden -->
   <div
-    class="mx-auto px-4 py-2 bg-[#ECFEF3] border rounded-xl border-[#ACEFC6] w-10/12 lg:fixed lg:top-10 lg:w-96 lg:left-1/2 lg:-translate-x-1/2 transition-all duration-300 ease-in-out"
+    class="mx-auto px-4 py-2 bg-[#ECFEF3] border rounded-xl border-[#ACEFC6] w-10/12 lg:fixed z-10 lg:top-10 lg:w-96 lg:left-1/2 lg:-translate-x-1/2 transition-all duration-300 ease-in-out"
   >
     <div class="max-w-[1200px] mx-auto">
       <div
@@ -62,13 +82,13 @@
     </div>
   </div>
 
-  {#if userProfile.isLoggedIn()}
+  {#if isLoggedIn}
     <!-- Logged in content -->
     <div class="w-full lg:w-1/3 mx-auto mt-4 px-4">Logged in</div>
   {:else}
     <!-- Main content for unauthenticated users -->
     <div
-      class="flex flex-col lg:flex-row lg:w-full lg:justify-center lg:px-[200px] md:px-8 pb-8"
+      class="flex flex-col lg:flex-row lg:w-full lg:justify-center lg:px-[200px] md:px-8 pb-8 relative"
     >
       <div
         class="flex flex-col items-center md:items-center lg:items-start lg:justify-center lg:w-[60%] md:text-center lg:text-left"
@@ -146,7 +166,7 @@
 
         <button
           onclick={() => onLoginClick?.()}
-          class="items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-primary text-primary-foreground shadow hover:bg-primary/90 px-4 hidden md:block lg:block h-[48px] text-[1rem] w-[248px] rounded-full mt-[48px] md:mt-8 lg:mt-[48px]"
+          class="items-center sticky bottom-2 justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-primary text-primary-foreground shadow hover:bg-primary/90 px-4 hidden md:block lg:block h-[48px] text-[1rem] w-[248px] rounded-full mt-[48px] md:mt-8 lg:mt-[48px]"
           type="button"
         >
           {locale.t("home.homePage.getStarted")}
@@ -158,13 +178,19 @@
       >
         {#if isImageLoading}
           <div
-            class="animate-pulse bg-[#ECFEF3] rounded-xl mx-auto w-[55%] h-[40vh] min-h-[40vh] max-h-[40vh] lg:min-h-[50vh] lg:max-h-[50vh] lg:w-[70%] lg:max-w-[400px]"
+            class="animate-pulse bg-[#ECFEF3] rounded-xl mx-auto w-[55%] md:h-[40vh] md:min-h-[40vh] md:max-h-[40vh] lg:min-h-[50vh] lg:max-h-[50vh] lg:w-[70%] lg:max-w-[400px]"
+            style={mobileImageHeight
+              ? `height: ${mobileImageHeight}; min-height: ${mobileImageHeight}; max-height: ${mobileImageHeight};`
+              : ""}
           ></div>
         {/if}
 
         <img
           class:hidden={isImageLoading}
-          class="mx-auto w-[55%] max-w-[300px] h-[40vh] max-h-[40vh] object-contain lg:w-[70%] lg:h-[50vh] lg:max-w-[400px] lg:max-h-[50vh]"
+          class="mx-auto w-[55%] max-w-[300px] object-contain md:h-[40vh] md:max-h-[40vh] lg:w-[70%] lg:h-[50vh] lg:max-w-[400px] lg:max-h-[50vh]"
+          style={mobileImageHeight
+            ? `height: ${mobileImageHeight}; max-height: ${mobileImageHeight};`
+            : ""}
           src="/LandingPageMainImage.png"
           alt="Cashier landing page illustration"
           onload={onImageLoaded}
@@ -172,7 +198,7 @@
         <!-- Get started button - Mobile -->
         <button
           onclick={() => onLoginClick?.()}
-          class="inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-primary text-primary-foreground shadow hover:bg-primary/90 px-4 h-11 text-[1rem] w-[90%] max-w-[350px] rounded-full mx-auto mt-6 mb-8 md:hidden"
+          class="sticky bottom-2 inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-primary text-primary-foreground shadow hover:bg-primary/90 px-4 h-11 text-[1rem] w-[90%] max-w-[350px] rounded-full mx-auto mt-6 mb-8 md:hidden"
           type="button"
         >
           {locale.t("home.homePage.getStarted")}

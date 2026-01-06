@@ -1,6 +1,6 @@
 <script lang="ts">
   import { userProfile } from "$modules/shared/services/userProfile.svelte";
-  import type UserLinkStore from "$modules/useLink/state/userLinkStore.svelte";
+  import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
   import { tokenMetadataQuery } from "$modules/token/state/tokenStore.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { Button } from "$lib/shadcn/components/ui/button";
@@ -50,6 +50,8 @@
       tokenMeta?.data ?? null,
     );
   });
+
+  const isLoggedIn = $derived(userProfile.isLoggedIn());
 </script>
 
 {#if userLink.linkDetail?.query.isLoading}
@@ -66,7 +68,7 @@
   />
 {/if}
 
-{#if userProfile.isLoggedIn()}
+{#if isLoggedIn}
   <div class="mt-4 flex gap-2 w-[95%] mx-auto">
     <Button
       variant="default"
@@ -83,7 +85,7 @@
       class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none h-[44px] px-4 w-full"
       onclick={openLoginModal}
     >
-      {locale.t("links.linkForm.useLink.loginToContinue")}
+      {locale.t("links.linkForm.useLink.continueButton")}
     </Button>
   </div>
 {/if}

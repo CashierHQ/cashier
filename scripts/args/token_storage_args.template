@@ -47,7 +47,7 @@
       }};
       symbol = "ckUSDC";
       name = "Chain Key USD Coin";
-      decimals = 8;
+      decimals = 6;
       enabled_by_default = true;
     };
   };

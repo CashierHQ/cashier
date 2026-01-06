@@ -1,8 +1,10 @@
 type BackHandler = () => Promise<void>;
+type LogoClickHandler = () => Promise<void>;
 
 class AppHeaderStore {
   #backHandler = $state<BackHandler | null>(null);
   #headerName = $state<string | null>(null);
+  #logoClickHandler = $state<LogoClickHandler | null>(null);
 
   setBackHandler(handler: BackHandler) {
     this.#backHandler = handler;
@@ -32,6 +34,24 @@ class AppHeaderStore {
     if (this.#backHandler) {
       await this.#backHandler();
     }
+  }
+
+  setLogoClickHandler(handler: LogoClickHandler) {
+    this.#logoClickHandler = handler;
+  }
+
+  clearLogoClickHandler() {
+    this.#logoClickHandler = null;
+  }
+
+  async triggerLogoClick() {
+    if (this.#logoClickHandler) {
+      await this.#logoClickHandler();
+    }
+  }
+
+  hasLogoClickHandler() {
+    return this.#logoClickHandler !== null;
   }
 }
 

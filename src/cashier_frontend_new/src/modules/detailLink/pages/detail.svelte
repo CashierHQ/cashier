@@ -9,10 +9,6 @@
   import DetailLinkHeader from "../components/detailLinkHeader.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
-  import YouSendSection from "$modules/creationLink/components/previewSections/YouSendSection.svelte";
-  import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
-  import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
-  import FeeInfoDescriptionDrawer from "$modules/creationLink/components/drawers/FeeInfoDescriptionDrawer.svelte";
   import ConfirmDrawer from "$modules/creationLink/components/drawers/ConfirmDrawer.svelte";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import {
@@ -26,12 +22,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
-  import {
-    calculateFeesBreakdown,
-    calculateTotalFeesUsd,
-    getLinkCreationFeeFromBreakdown,
-    calculateAssetsWithTokenInfo,
-  } from "$modules/links/utils/feesBreakdown";
+  import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
   import {
     Dialog,
     DialogContent,
@@ -40,6 +31,8 @@
     DialogDescription,
     DialogPortal,
   } from "$lib/shadcn/components/ui/dialog";
+  import ShareLinkSection from "$modules/creationLink/components/previewSections/ShareLinkSection.svelte";
+  import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
 
   //let { linkStore }: { linkStore: LinkDetailStore } = $props();
   let {
@@ -55,8 +48,6 @@
   let showCopied: boolean = $state(false);
   let errorMessage: string | null = $state(null);
   let showTxCart: boolean = $state(false);
-  let showFeeInfoDrawer = $state(false); // For breakdown button (with ChevronRight)
-  let showFeeInfoDescriptionDrawer = $state(false); // For info icon button
   let failedImageLoads = $state<Set<string>>(new Set());
   let isEndingLink = $state(false);
   let isCreatingWithdraw = $state(false);
@@ -139,33 +130,6 @@
     }
   });
 
-  // Calculate fees breakdown
-  const feesBreakdown = $derived.by(() => {
-    if (!linkStore.link) return [];
-
-    const assetAddresses =
-      linkStore.link.asset_info
-        ?.map((assetInfo) => assetInfo.asset.address?.toString())
-        .filter((addr): addr is string => !!addr) || [];
-    const maxUse = Number(linkStore.link.link_use_action_max_count) || 1;
-
-    return calculateFeesBreakdown(
-      assetAddresses,
-      maxUse,
-      walletStore.findTokenByAddress.bind(walletStore),
-    );
-  });
-
-  // Calculate total fees in USD
-  const totalFeesUsd = $derived.by(() => {
-    return calculateTotalFeesUsd(feesBreakdown);
-  });
-
-  // Get link creation fee from breakdown
-  const linkCreationFee = $derived.by(() => {
-    return getLinkCreationFeeFromBreakdown(feesBreakdown);
-  });
-
   // Transaction lock status based on link state
   // ACTIVE -> Unlock (can end link, copy link)
   // INACTIVE -> Lock (can withdraw)
@@ -192,17 +156,11 @@
     return linkStore.link?.state === LinkState.INACTIVE_ENDED;
   });
 
-  function handleFeeBreakdownClick() {
-    showFeeInfoDrawer = true;
-  }
-
-  function handleFeeInfoClick() {
-    showFeeInfoDescriptionDrawer = true;
-  }
+  const link = $derived(`${window.location.origin}/link/${linkStore.link?.id}`);
 
   async function copyLink(closeDialog?: boolean) {
     try {
-      const linkUrl = `${window.location.origin}/link/${linkStore.link?.id}`;
+      const linkUrl = link;
       await navigator.clipboard.writeText(linkUrl);
       showCopied = true;
       toast.success(locale.t("links.linkForm.detail.copied"));
@@ -403,35 +361,27 @@
         isEnded={isTransactionLockEnded}
       />
 
-      <!-- Block 3: You Send -->
-      {#if isSendLink}
-        <YouSendSection
-          {assetsWithTokenInfo}
-          {failedImageLoads}
-          onImageError={handleImageError}
-          {linkCreationFee}
-          isClickable={true}
-        />
-      {/if}
-
-      <!-- Block 4: Fees Breakdown -->
-      <FeesBreakdownSection
-        {totalFeesUsd}
-        isClickable={true}
-        onInfoClick={handleFeeInfoClick}
-        onBreakdownClick={handleFeeBreakdownClick}
+      <!-- Block 5: Usage Info -->
+      <UsageInfoSection
+        {assetsWithTokenInfo}
+        {failedImageLoads}
+        onImageError={handleImageError}
+        linkUseActionCounter={linkStore.link.link_use_action_counter}
       />
+
+      <!-- Block 6: Share Link -->
+      <ShareLinkSection {link} />
     {/if}
 
     <div
-      class="flex-none w-full w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10 mt-auto pt-4"
+      class="flex-none w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10 mt-auto pt-4"
     >
       {#if linkStore.link.state === LinkState.ACTIVE}
         <Button
           variant="outline"
           onclick={openEndLinkConfirm}
           disabled={isEndingLink}
-          class="w-full h-11 border border-red-200 text-red-600 rounded-full mb-3 cursor-pointer hover:bg-red-50 hover:text-red-700 hover:border-red-400 transition-colors disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          class="w-full h-11 border border-red-200 text-red-600 rounded-full cursor-pointer hover:bg-red-50 hover:text-red-700 hover:border-red-400 transition-colors disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {#if isEndingLink}
             <div
@@ -440,6 +390,22 @@
           {/if}
           {locale.t("links.linkForm.detail.endLink")}
         </Button>
+      {/if}
+
+      {#if linkStore.link.state === LinkState.INACTIVE_ENDED}
+        <Button
+          onclick={goToLinks}
+          class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
+        >
+          {locale.t("links.linkForm.detail.goToLinks")}
+        </Button>
+      {/if}
+    </div>
+
+    <div
+      class="flex-none w-full w-[95%] mx-auto px-2 sticky bottom-0 left-0 right-0 z-10 pt-4"
+    >
+      {#if linkStore.link.state === LinkState.ACTIVE}
         <Button
           id="copy-link-button"
           onclick={async () => {
@@ -474,12 +440,6 @@
         >
           {locale.t("links.status.ended")}
         </Button>
-        <Button
-          onclick={goToLinks}
-          class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
-        >
-          {locale.t("links.linkForm.detail.goToLinks")}
-        </Button>
       {/if}
       {#if linkStore.link.state === LinkState.CREATE_LINK}
         <Button
@@ -505,20 +465,6 @@
 {/if}
 
 {#if linkStore.link}
-  <FeeInfoDrawer
-    bind:open={showFeeInfoDrawer}
-    onClose={() => {
-      showFeeInfoDrawer = false;
-    }}
-    {feesBreakdown}
-  />
-  <FeeInfoDescriptionDrawer
-    bind:open={showFeeInfoDescriptionDrawer}
-    onClose={() => {
-      showFeeInfoDescriptionDrawer = false;
-    }}
-  />
-
   <ConfirmDrawer
     bind:open={showFirstEndLinkConfirm}
     title={locale.t("links.linkForm.detail.endLinkConfirm.title")}
@@ -611,7 +557,7 @@
             class="fixed bottom-3 sm:bottom-8 left-4 right-4 z-[60] pointer-events-auto"
           >
             <div
-              class="flex-none w-full msx w-[95%] max-w-[536px] mx-auto px-2 pt-2 pb-2 bg-white rounded-[28px]"
+              class="flex-none msx w-[95%] max-w-[516px] mx-auto px-2 pt-2 pb-2 bg-white rounded-[28px]"
             >
               <Button
                 id="copy-link-button-modal"

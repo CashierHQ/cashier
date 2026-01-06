@@ -19,6 +19,11 @@ export interface UserLinkState {
    * Method to transition to the previous state
    */
   goBack(): Promise<void>;
+
+  /**
+   * Method to transition directly to Landing state
+   */
+  goToLanding(): Promise<void>;
 }
 
 export interface UserActionCapableState extends UserLinkState {

@@ -1,7 +1,7 @@
 import type { Link } from "./link/link";
 import type { LinkStateValue } from "./link/linkState";
 import type { LinkTypeValue } from "./link/linkType";
-import type TempLink from "./tempLink";
+import type { TempLink } from "./tempLink";
 
 export type GroupedLink = {
   date: bigint;

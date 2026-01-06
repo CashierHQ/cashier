@@ -4,7 +4,7 @@ use cashier_common::build_data::BuildData;
 use ic_cdk::{api::msg_caller, query, update};
 use log::debug;
 
-use crate::{api::state::get_state, build_data::canister_build_data, services::auth::Permission};
+use crate::{api::state::get_state, apps::auth::Permission, build_data::canister_build_data};
 
 /// Returns the build data of the canister.
 #[query]

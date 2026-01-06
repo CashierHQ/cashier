@@ -68,7 +68,7 @@ const makeActionDto = (): ActionDto => ({
   icrc_112_requests: [] as [],
   creator: Principal.fromText("aaaaa-aa"),
   intents: [],
-  type: { Use: null },
+  type: { Send: null },
   state: { Created: null },
 });
 

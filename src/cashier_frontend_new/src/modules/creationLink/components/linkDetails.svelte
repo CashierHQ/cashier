@@ -6,19 +6,16 @@
     isSendLinkType,
     isPaymentLinkType,
   } from "$modules/links/utils/linkItemHelpers";
-  import FeeInfoDrawer from "./drawers/FeeInfoDrawer.svelte";
-  import FeeInfoDescriptionDrawer from "./drawers/FeeInfoDescriptionDrawer.svelte";
   import { toast } from "svelte-sonner";
-  import YouSendSection from "./previewSections/YouSendSection.svelte";
-  import FeesBreakdownSection from "./previewSections/FeesBreakdownSection.svelte";
+  import YouSendPreview from "./previewSections/YouSendPreview.svelte";
   import LinkInfoSection from "./previewSections/LinkInfoSection.svelte";
   import TransactionLockSection from "./previewSections/TransactionLockSection.svelte";
-  import {
-    calculateFeesBreakdown,
-    calculateTotalFeesUsd,
-    getLinkCreationFeeFromBreakdown,
-    calculateAssetsWithTokenInfo,
-  } from "$modules/links/utils/feesBreakdown";
+  import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
+  import { feeService } from "$modules/shared/services/feeService";
+  import Label from "$lib/shadcn/components/ui/label/label.svelte";
+  import { locale } from "$lib/i18n";
+  import { formatFeeAmount } from "$modules/shared/utils/formatNumber";
+  import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
 
   const {
     link,
@@ -65,27 +62,28 @@
     );
   });
 
-  // Calculate fees breakdown
-  const feesBreakdown = $derived.by(() => {
-    const assetAddresses =
-      link.createLinkData.assets?.map((asset) => asset.address) || [];
-    const maxUse = link.createLinkData.maxUse || 1;
+  // Forecast link creation fees for preview
+  const forecastLinkCreationFees: ForecastAssetAndFee[] = $derived.by(() => {
+    if (!link.createLinkData.assets || link.createLinkData.assets.length === 0)
+      return [];
 
-    return calculateFeesBreakdown(
-      assetAddresses,
-      maxUse,
-      walletStore.findTokenByAddress.bind(walletStore),
+    const tokens = Object.fromEntries(
+      (walletStore.query.data ?? []).map((t) => [t.address, t]),
+    );
+
+    return feeService.forecastLinkCreationFees(
+      link.createLinkData.assets,
+      link.createLinkData.maxUse,
+      tokens,
     );
   });
 
   // Calculate total fees in USD
   const totalFeesUsd = $derived.by(() => {
-    return calculateTotalFeesUsd(feesBreakdown);
-  });
-
-  // Get link creation fee from breakdown
-  const linkCreationFee = $derived.by(() => {
-    return getLinkCreationFeeFromBreakdown(feesBreakdown);
+    return forecastLinkCreationFees.reduce(
+      (total, item) => total + (item.fee?.usdValue || 0),
+      0,
+    );
   });
 
   // Transaction lock status (currently always "Unlock" for preview links)
@@ -98,21 +96,8 @@
   // Track failed image loads
   let failedImageLoads = $state<Set<string>>(new Set());
 
-  // Drawer states
-  let showFeeInfoDrawer = $state(false); // For breakdown button (with ChevronRight)
-  let showFeeInfoDescriptionDrawer = $state(false); // For info icon button
-
   function handleImageError(address: string) {
     failedImageLoads.add(address);
-  }
-
-  // Handlers for info drawers
-  function handleFeeBreakdownClick() {
-    showFeeInfoDrawer = true;
-  }
-
-  function handleFeeInfoClick() {
-    showFeeInfoDescriptionDrawer = true;
   }
 
   // Show toast notifications for error and success messages
@@ -151,35 +136,32 @@
 
   <!-- Block 3: You Send -->
   {#if isSendLink}
-    <YouSendSection
-      {assetsWithTokenInfo}
+    <YouSendPreview
+      forecastAssetAndFee={forecastLinkCreationFees}
       {failedImageLoads}
       onImageError={handleImageError}
-      {linkCreationFee}
       isClickable={true}
     />
   {/if}
 
   <!-- Block 4: Fees Breakdown -->
-  <FeesBreakdownSection
-    {totalFeesUsd}
-    isClickable={true}
-    onInfoClick={handleFeeInfoClick}
-    onBreakdownClick={handleFeeBreakdownClick}
-  />
-
-  <!-- Drawer Components -->
-  <FeeInfoDrawer
-    bind:open={showFeeInfoDrawer}
-    onClose={() => {
-      showFeeInfoDrawer = false;
-    }}
-    {feesBreakdown}
-  />
-  <FeeInfoDescriptionDrawer
-    bind:open={showFeeInfoDescriptionDrawer}
-    onClose={() => {
-      showFeeInfoDescriptionDrawer = false;
-    }}
-  />
+  <div class="input-label-field-container">
+    <div class="flex items-center w-full justify-between mb-2">
+      <Label class="font-medium text-sm"
+        >{locale.t("links.linkForm.preview.feesBreakdown")}</Label
+      >
+    </div>
+    <div class="border-[1px] rounded-lg border-lightgreen px-4 py-3">
+      <div class="flex justify-between items-center">
+        <p class="text-[14px] font-medium">
+          {locale.t("links.linkForm.preview.totalFees")}
+        </p>
+        <div class="flex items-center gap-2">
+          <p class="text-[14px] font-normal">
+            ~${formatFeeAmount(totalFeesUsd)}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

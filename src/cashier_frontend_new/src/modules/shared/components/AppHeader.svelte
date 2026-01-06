@@ -8,19 +8,24 @@
   import { ChevronLeft } from "lucide-svelte";
   import MenuButton from "./MenuButton.svelte";
   import WalletButton from "./WalletButton.svelte";
-  import { userProfile } from "../services/userProfile.svelte";
+  import { X } from "lucide-svelte";
+  import { userProfile } from "$modules/shared/services/userProfile.svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
+  import WalletDrawer from "./WalletDrawer.svelte";
 
   type Props = {
     isLinkFormPage?: boolean;
     linkName?: string;
+    class?: string;
   };
 
-  let { isLinkFormPage = false, linkName }: Props = $props();
+  let { isLinkFormPage = false, linkName, class: className }: Props = $props();
+
+  let walletDrawerOpen = $state(false);
 
   function handleWalletClick() {
-    goto(resolve("/wallet"));
+    walletDrawerOpen = true;
   }
 
   // Get current path to determine if it's create or edit
@@ -40,10 +45,14 @@
   const userLinkStore = $derived.by(() => guardContext?.userLinkStore ?? null);
 
   // Get current user link step
-  const userLinkStep = $derived.by(() => userLinkStore?.step ?? null);
+  const userLinkStep = $derived(userLinkStore?.step ?? null);
 
   // Check if we're on /use page
-  const isUsePage = $derived.by(() => currentPath?.endsWith("/use") ?? false);
+  const isUsePage = $derived(currentPath?.endsWith("/use") ?? false);
+
+  const isWalletPage = $derived(currentPath?.startsWith("/wallet") ?? false);
+
+  const isLoggedIn = $derived(userProfile.isLoggedIn());
 
   // Get display name for mobile header
   const displayName = $derived.by(() => {
@@ -77,10 +86,20 @@
   async function handleMobileBack() {
     await appHeaderStore.triggerBack();
   }
+
+  // Handle logo click - delegates to appHeaderStore if handler is set, otherwise navigates to /links
+  async function handleLogoClick() {
+    if (appHeaderStore.hasLogoClickHandler()) {
+      await appHeaderStore.triggerLogoClick();
+      return;
+    }
+    // No handler set = navigate to /links
+    goto(resolve("/links"));
+  }
 </script>
 
 <div
-  class="w-full flex justify-between items-center lg:px-8 px-4 py-3 sm:pt-3 pt-4 bg-white"
+  class="w-full flex justify-between items-center lg:px-8 px-4 py-3 sm:pt-3 pt-4 bg-white {className}"
 >
   {#if isLinkFormPage}
     <!-- Mobile header for link form pages (create, detail, use) -->
@@ -96,7 +115,7 @@
         </button>
       {:else}
         <div class="mr-auto">
-          <CashierLogo href={resolve("/links")} />
+          <CashierLogo onclick={handleLogoClick} />
         </div>
       {/if}
       <h4
@@ -107,17 +126,23 @@
     </div>
     <!-- Desktop: show logo -->
     <div class="hidden md:block">
-      <CashierLogo href={resolve("/links")} />
+      <CashierLogo onclick={handleLogoClick} />
     </div>
   {:else}
     <!-- Default header with logo -->
-    <CashierLogo href={resolve("/links")} />
+    <CashierLogo onclick={handleLogoClick} />
   {/if}
 
-  {#if userProfile.isLoggedIn()}
+  {#if isLoggedIn && !isWalletPage}
     <div class="flex items-center py-px">
       <WalletButton onClick={handleWalletClick} />
       <MenuButton />
     </div>
+  {:else if isWalletPage}
+    <button onclick={() => goto(resolve("/links"))}>
+      <X class="h-6 w-6" />
+    </button>
   {/if}
 </div>
+
+<WalletDrawer bind:open={walletDrawerOpen} />

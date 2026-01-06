@@ -134,12 +134,12 @@
     />
   </div>
 
-  <div class="input-label-field-container mt-4">
+  <div class="input-label-field-container sm:mt-4 mt-2">
     <Label for="linkType" class="input-label mb-2 block"
       >{locale.t("links.linkForm.chooseType.linkType")}</Label
     >
     <div
-      class="flex flex-col items-center justify-center bg-lightgreen rounded-[16px] py-3 h-fit"
+      class="flex flex-col items-center justify-center bg-lightgreen rounded-[16px] sm:py-3 py-2 h-fit"
     >
       <div class="relative w-full overflow-hidden h-full">
         <button
@@ -166,15 +166,17 @@
               class="flex-shrink-0 flex flex-col justify-center items-center px-2 h-[100%]"
               style="width: 25%;"
             >
-              <div class="flex flex-col items-center justify-center mb-2 gap-0">
+              <div
+                class="flex flex-col items-center justify-center sm:mb-2 gap-0"
+              >
                 <p class="text-[14px] font-medium uppercase">{info.label}</p>
                 <p class="text-sm text-gray-500"></p>
               </div>
               <div class="relative h-fit">
                 <div
-                  class="flex flex-col items-center justify-center mb-0 mt-4"
+                  class="flex flex-col items-center justify-center mb-0 sm:mt-4 mt-2"
                 >
-                  <div class="relative h-[320px] aspect-[9/16]">
+                  <div class="relative sm:h-[320px] h-[286px] aspect-[9/16]">
                     <div
                       class="absolute top-0 left-1/2 transform -translate-x-1/2 w-1/3 h-5 bg-gray-700 rounded-b-lg z-10"
                     ></div>
@@ -187,14 +189,14 @@
                         alt="Logo"
                       />
                       <div
-                        class="bg-lightgreen px-2 py-4 rounded-xl flex flex-col items-center justify-center w-full"
+                        class="bg-lightgreen px-2 sm:py-4 py-2 rounded-xl flex flex-col items-center justify-center w-full"
                       >
                         <img
                           alt={info.title}
                           class="w-[50%] object-contain"
                           src={info.image}
                         />
-                        <div class="flex-1 p-4 flex flex-col">
+                        <div class="flex-1 sm:p-4 p-2 flex flex-col">
                           <h3 class="font-semibold mb-2 text-center">
                             {info.title}
                           </h3>
@@ -227,9 +229,7 @@
           <ChevronRight class="w-6 h-6 text-green" aria-hidden="true" />
         </button>
 
-        <div
-          class="flex gap-4 items-center justify-center w-full mt-10 md:mt-0"
-        >
+        <div class="flex gap-4 items-center justify-center w-full mt-2 md:mt-0">
           <div class="flex gap-4 bg-white/50 px-2 py-2 rounded-full">
             {#each linkTypes, index (index)}
               <button
@@ -249,7 +249,7 @@
   </div>
 
   <div
-    class="flex-none w-full w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10"
+    class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"
   >
     <Button
       onclick={goNext}

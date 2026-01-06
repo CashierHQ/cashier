@@ -112,6 +112,50 @@
           "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
         }
       }
+    },
+    "icp_index": {
+      "type": "custom",
+      "candid": "./target/artifacts/icp-index.did",
+      "wasm": "./target/artifacts/icp-index.wasm.gz",
+      "specified_id": "qhbym-qaaaa-aaaaa-aaafq-cai",
+      "remote": {
+        "id": {
+          "ic": "qhbym-qaaaa-aaaaa-aaafq-cai"
+        }
+      }
+    },
+    "ckBTC_index": {
+      "type": "custom",
+      "candid": "./target/artifacts/icrc-index-ng.did",
+      "wasm": "./target/artifacts/icrc-index-ng.wasm.gz",
+      "specified_id": "n5wcd-faaaa-aaaar-qaaea-cai",
+      "remote": {
+        "id": {
+          "ic": "n5wcd-faaaa-aaaar-qaaea-cai"
+        }
+      }
+    },
+    "ckETH_index": {
+      "type": "custom",
+      "candid": "./target/artifacts/icrc-index-ng.did",
+      "wasm": "./target/artifacts/icrc-index-ng.wasm.gz",
+      "specified_id": "s3zol-vqaaa-aaaar-qacpa-cai",
+      "remote": {
+        "id": {
+          "ic": "s3zol-vqaaa-aaaar-qacpa-cai"
+        }
+      }
+    },
+    "ckUSDC_index": {
+      "type": "custom",
+      "candid": "./target/artifacts/icrc-index-ng.did",
+      "wasm": "./target/artifacts/icrc-index-ng.wasm.gz",
+      "specified_id": "xrs4b-hiaaa-aaaar-qafoa-cai",
+      "remote": {
+        "id": {
+          "ic": "xrs4b-hiaaa-aaaar-qafoa-cai"
+        }
+      }
     }
   },
   "defaults": {

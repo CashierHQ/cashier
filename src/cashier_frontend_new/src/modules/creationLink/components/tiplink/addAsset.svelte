@@ -10,7 +10,7 @@
   } from "$modules/shared/utils/formatNumber";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import { maxAmountForAsset } from "$modules/links/utils/amountCalculator";
+  import { calculateMaxAmountForAsset } from "$modules/links/utils/amountCalculator";
   import { locale } from "$lib/i18n";
   import AssetButton from "./AssetButton.svelte";
   import SelectedAssetButtonInfo from "./SelectedAssetButtonInfo.svelte";
@@ -144,7 +144,7 @@
     showAssetDrawer = false;
   }
 
-  function handleAmountChange(value: string) {
+  function handleAmountChange(value: string, forceUpdate = false) {
     if (isUsd) {
       localUsdAmount = value;
 
@@ -152,7 +152,7 @@
         const tokenValue = parseFloat(value) / tokenUsdPrice;
         localTokenAmount = tokenValue.toString();
         setUsdAmount(value);
-      } else {
+      } else if (forceUpdate) {
         setUsdAmount(value);
       }
     } else {
@@ -164,7 +164,7 @@
         const roundedUsdValue = Math.round(usdValue * 10000) / 10000;
         localUsdAmount = formatUsdAmount(roundedUsdValue);
         setTokenAmount(value);
-      } else {
+      } else if (forceUpdate) {
         setTokenAmount(value);
       }
     }
@@ -237,7 +237,7 @@
   const maxTokenBalance = $derived.by(() => {
     if (!selectedToken || !walletStore.query.data) return 0;
 
-    const maxAmountResult = maxAmountForAsset(
+    const maxAmountResult = calculateMaxAmountForAsset(
       selectedToken.address,
       link.createLinkData.maxUse,
       walletStore.query.data,
@@ -290,7 +290,7 @@
     )
       return 0;
 
-    const maxAmountResult = maxAmountForAsset(
+    const maxAmountResult = calculateMaxAmountForAsset(
       selectedToken.address,
       link.createLinkData.maxUse,
       walletStore.query.data,
@@ -328,6 +328,7 @@
   // Navigate to next Preview step
   async function goNext() {
     try {
+      handleAmountChange(isUsd ? localUsdAmount : localTokenAmount, true);
       await link.goNext();
     } catch (e) {
       // Error is already formatted in the state, just show it
@@ -356,8 +357,8 @@
     <div>
       <AssetButton
         text={locale.t("links.linkForm.addAsset.chooseAsset")}
-        tokenValue={localTokenAmount}
-        usdValue={localUsdAmount}
+        bind:tokenValue={localTokenAmount}
+        bind:usdValue={localUsdAmount}
         onInputChange={handleAmountChange}
         {isUsd}
         onToggleUsd={handleToggleUsd}

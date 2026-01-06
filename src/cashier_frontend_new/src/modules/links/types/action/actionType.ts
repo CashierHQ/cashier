@@ -7,7 +7,6 @@ export class ActionType {
   private constructor() {}
 
   static readonly CREATE_LINK = "CREATE_LINK";
-  static readonly USE = "USE";
   static readonly WITHDRAW = "WITHDRAW";
   static readonly RECEIVE = "RECEIVE";
   static readonly SEND = "SEND";
@@ -15,7 +14,6 @@ export class ActionType {
 
 export type ActionTypeValue =
   | typeof ActionType.CREATE_LINK
-  | typeof ActionType.USE
   | typeof ActionType.WITHDRAW
   | typeof ActionType.RECEIVE
   | typeof ActionType.SEND;
@@ -28,8 +26,6 @@ export class ActionTypeMapper {
     switch (value) {
       case ActionType.CREATE_LINK:
         return { CreateLink: null };
-      case ActionType.USE:
-        return { Use: null };
       case ActionType.WITHDRAW:
         return { Withdraw: null };
       case ActionType.SEND:
@@ -47,7 +43,6 @@ export class ActionTypeMapper {
   static fromBackendType(b: BackendActionType): ActionTypeValue {
     return rsMatch(b, {
       CreateLink: () => ActionType.CREATE_LINK,
-      Use: () => ActionType.USE,
       Withdraw: () => ActionType.WITHDRAW,
       Receive: () => ActionType.RECEIVE,
       Send: () => ActionType.SEND,
@@ -66,19 +61,4 @@ export class ActionTypeMapper {
         return assertUnreachable(a);
     }
   }
-
-  // Devalue serde for ActionType (store as string)
-  static serde = {
-    serialize: {
-      ActionType: (value: unknown) => {
-        if (typeof value !== "string") return undefined;
-        return value;
-      },
-    },
-    deserialize: {
-      ActionType: (obj: unknown) => {
-        return obj as ActionTypeValue;
-      },
-    },
-  };
 }

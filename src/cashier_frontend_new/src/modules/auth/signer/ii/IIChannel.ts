@@ -427,7 +427,6 @@ export class IIChannel implements Channel {
                         [IDL.Variant({ Err: IDL.Reserved })],
                         reply.value as ArrayBuffer,
                       );
-                      console.log("[Decoded value for validation:]", value);
                       if ("Err" in value) {
                         batchFailed = true;
                         return {
@@ -460,12 +459,8 @@ export class IIChannel implements Channel {
                         : [],
                     };
 
-                    console.log("ICRC-114 validation args:", icrc114Args);
-
                     const isValid =
                       await validationActor[ICRC_114_METHOD_NAME](icrc114Args);
-
-                    console.log("Validation result:", isValid);
 
                     if (!isValid) {
                       batchFailed = true;

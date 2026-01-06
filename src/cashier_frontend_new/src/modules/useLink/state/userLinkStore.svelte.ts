@@ -126,6 +126,14 @@ export class UserLinkStore {
   }
 
   /**
+   * Method to transition directly to Landing state
+   * Only allowed if no action exists
+   */
+  async goToLanding(): Promise<void> {
+    await this.#state.goToLanding();
+  }
+
+  /**
    * Create an action
    * @param actionType The type of action to create
    * @returns The action created
@@ -173,5 +181,3 @@ export class UserLinkStore {
     return findUseActionTypeFromLinkType(this.link.link_type);
   }
 }
-
-export default UserLinkStore;

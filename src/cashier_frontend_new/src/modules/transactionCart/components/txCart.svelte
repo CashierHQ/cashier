@@ -4,29 +4,22 @@
   import type Action from "$modules/links/types/action/action";
   import type { ProcessActionResult } from "$modules/links/types/action/action";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import {
-    feeService,
-    type AssetAndFee,
-  } from "$modules/transactionCart/services/feeService";
   import { onMount } from "svelte";
   import { TransactionCartStore } from "../state/txCartStore.svelte";
   import { AssetProcessState } from "../types/txCart";
-  import YouSendSection from "$modules/creationLink/components/previewSections/YouSendSection.svelte";
+  import YouSendSection from "$modules/transactionCart/components/YouSendSection.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import FeeBreakdown from "./feeBreakdown.svelte";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import { X } from "lucide-svelte";
-  import { ActionType } from "$modules/links/types/action/actionType";
-  import IntentTask from "$modules/links/types/action/intentTask";
   import { locale } from "$lib/i18n";
-  import {
-    calculateAssetsWithTokenInfo,
-    type FeeBreakdownItem,
-  } from "$modules/links/utils/feesBreakdown";
+  import { feeService } from "$modules/shared/services/feeService";
+  import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
+  import type { AssetAndFee } from "$modules/shared/types/feeService";
 
   let {
     action,
-    isOpen: isOpenProp,
+    isOpen = $bindable(false),
     onCloseDrawer,
     handleProcessAction,
     isProcessing: externalIsProcessing,
@@ -39,15 +32,6 @@
   } = $props();
 
   const txCartStore = new TransactionCartStore(action, handleProcessAction);
-
-  // Local state for managing drawer open/close
-  // eslint-disable-next-line svelte/prefer-writable-derived
-  let isOpen = $state(isOpenProp);
-
-  // Sync isOpen prop with local state
-  $effect(() => {
-    isOpen = isOpenProp;
-  });
 
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
@@ -89,55 +73,6 @@
     failedImageLoads.add(address);
   }
 
-  // Convert action.intents to assetsWithTokenInfo format for YouSendSection
-  const assetsWithTokenInfo = $derived.by(() => {
-    if (action.type === ActionType.CREATE_LINK) {
-      // Get assets directly from intents, excluding link creation fee
-      const assets = action.intents
-        .filter((intent) => {
-          // Exclude TRANSFER_WALLET_TO_TREASURY (link creation fee)
-          return intent.task !== IntentTask.TRANSFER_WALLET_TO_TREASURY;
-        })
-        .map((intent) => ({
-          address: intent.type.payload.asset.address.toString(),
-          amount: intent.type.payload.amount,
-        }));
-
-      return calculateAssetsWithTokenInfo(
-        assets,
-        walletStore.findTokenByAddress.bind(walletStore),
-      );
-    }
-
-    if (action.type === ActionType.WITHDRAW) {
-      // For WITHDRAW, intent.amount is already the amount to be returned (after backend fee deduction)
-      // We show this amount and the network fee separately
-      const assets = action.intents.map((intent) => ({
-        address: intent.type.payload.asset.address.toString(),
-        amount: intent.type.payload.amount, // Amount to be returned
-      }));
-
-      return calculateAssetsWithTokenInfo(
-        assets,
-        walletStore.findTokenByAddress.bind(walletStore),
-      );
-    }
-
-    if (action.type === ActionType.RECEIVE) {
-      const assets = action.intents.map((intent) => ({
-        address: intent.type.payload.asset.address.toString(),
-        amount: intent.type.payload.amount, // Amount to be received
-      }));
-
-      return calculateAssetsWithTokenInfo(
-        assets,
-        walletStore.findTokenByAddress.bind(walletStore),
-      );
-    }
-
-    return [];
-  });
-
   // Calculate total fees in USD
   const totalFeesUsd = $derived.by(() => {
     return assetAndFeeList.reduce(
@@ -146,63 +81,14 @@
     );
   });
 
-  // Find link creation fee from fees
-  const linkCreationFee = $derived.by(() => {
-    // Find fee with CREATE_LINK_FEE type or TRANSFER_WALLET_TO_TREASURY task
-    const linkCreationFeeItem = assetAndFeeList.find(
-      (item) =>
-        item.fee?.feeType === "CREATE_LINK_FEE" ||
-        action.intents.some(
-          (intent) =>
-            intent.task === IntentTask.TRANSFER_WALLET_TO_TREASURY &&
-            intent.type.payload.asset.address.toString() === item.asset.address,
-        ),
-    );
-
-    if (!linkCreationFeeItem?.fee) return null;
-
-    const token = walletStore.query.data?.find(
-      (t) => t.address === linkCreationFeeItem.asset.address,
-    );
-    if (!token) return null;
-
-    // Parse fee amount from string
-    const feeAmountStr = linkCreationFeeItem.fee.amount.replace(/,/g, "");
-    const feeAmount = parseFloat(feeAmountStr);
-    const feeAmountBigInt = BigInt(
-      Math.round(feeAmount * Math.pow(10, token.decimals)),
-    );
-
-    return {
-      amount: feeAmountBigInt,
-      tokenAddress: linkCreationFeeItem.asset.address,
-      tokenSymbol: token.symbol,
-      tokenDecimals: token.decimals,
-      usdAmount: linkCreationFeeItem.fee.usdValue || 0,
-    };
-  });
-
-  // Check if this is a send link (CREATE_LINK action)
-  const isSendLink = $derived.by(() => {
-    return action.type === ActionType.CREATE_LINK;
-  });
-
-  // Check if this is a withdraw action
-  const isWithdraw = $derived.by(() => {
-    return action.type === ActionType.WITHDRAW;
-  });
-
-  // Check if this is a receive action (user claiming from link)
-  const isReceive = $derived.by(() => {
-    return action.type === ActionType.RECEIVE;
-  });
-
   // Convert assetAndFeeList to feesBreakdown format for FeeInfoDrawer
   const feesBreakdown = $derived.by((): FeeBreakdownItem[] => {
-    return feeService.buildFeesBreakdownFromAssetAndFeeList(
+    const breakdown = feeService.buildFeesBreakdownFromAssetAndFeeList(
       assetAndFeeList,
       walletStore.query.data ?? [],
     );
+
+    return breakdown;
   });
 
   // Handle fee breakdown click - close txCart and show FeeInfoDrawer
@@ -248,10 +134,11 @@
 
   /**
    * Handle drawer open state changes.
+   * Skip onCloseDrawer when transitioning to FeeInfoDrawer to keep component mounted.
    * @param open
    */
   function handleOpenChange(open: boolean) {
-    if (!open) {
+    if (!open && !showFeeInfoDrawer) {
       onCloseDrawer();
     }
   }
@@ -310,42 +197,19 @@
           {/if}
 
           <div class="mt-2 space-y-4">
-            {#if isSendLink && assetsWithTokenInfo.length > 0}
-              <YouSendSection
-                {assetsWithTokenInfo}
-                {failedImageLoads}
-                onImageError={handleImageError}
-                linkCreationFee={linkCreationFee || undefined}
-                {isProcessing}
-                hasError={!!errorMessage}
-              />
+            <YouSendSection
+              {action}
+              {failedImageLoads}
+              onImageError={handleImageError}
+              {isProcessing}
+              hasError={!!errorMessage}
+            />
 
+            {#if totalFeesUsd > 0}
               <FeesBreakdownSection
                 {totalFeesUsd}
                 onBreakdownClick={handleFeeBreakdownClick}
                 disabled={isProcessing}
-              />
-            {/if}
-
-            {#if isWithdraw && assetsWithTokenInfo.length > 0}
-              <YouSendSection
-                {assetsWithTokenInfo}
-                {failedImageLoads}
-                onImageError={handleImageError}
-                {isProcessing}
-                isReceive={true}
-                hasError={!!errorMessage}
-              />
-            {/if}
-
-            {#if isReceive && assetsWithTokenInfo.length > 0}
-              <YouSendSection
-                {assetsWithTokenInfo}
-                {failedImageLoads}
-                onImageError={handleImageError}
-                {isProcessing}
-                isReceive={true}
-                hasError={!!errorMessage}
               />
             {/if}
 
@@ -375,8 +239,10 @@
   <!-- FeeInfoDrawer for showing fees breakdown -->
   <FeeInfoDrawer
     bind:open={showFeeInfoDrawer}
-    onClose={() => {
-      showFeeInfoDrawer = false;
+    onOpenChange={(open) => {
+      if (!open) {
+        isOpen = true;
+      }
     }}
     onBack={handleFeeInfoDrawerBack}
     {feesBreakdown}
