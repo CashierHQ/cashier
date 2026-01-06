@@ -40,7 +40,7 @@ export interface LogServiceSettings {
   'enable_console' : [] | [boolean],
   'max_record_length' : [] | [bigint],
 }
-export interface Nft { 'token_id' : string, 'collection_id' : Principal }
+export interface Nft { 'token_id' : bigint, 'collection_id' : Principal }
 export type Permission = { 'Admin' : null };
 export interface RegistryStats {
   'total_enabled_default' : bigint,
@@ -53,21 +53,21 @@ export interface RegistryToken {
   'details' : ChainTokenDetails,
   'symbol' : string,
 }
-export type Result = { 'Ok' : UserNftDto } |
-  { 'Err' : CanisterError };
-export type Result_1 = { 'Ok' : RegistryStats } |
+export type Result = { 'Ok' : RegistryStats } |
   { 'Err' : string };
-export type Result_2 = { 'Ok' : Array<[TokenId, bigint]> } |
+export type Result_1 = { 'Ok' : Array<[TokenId, bigint]> } |
   { 'Err' : string };
-export type Result_3 = { 'Ok' : UserTokens } |
+export type Result_2 = { 'Ok' : UserTokens } |
+  { 'Err' : string };
+export type Result_3 = { 'Ok' : null } |
   { 'Err' : string };
 export type Result_4 = { 'Ok' : null } |
-  { 'Err' : string };
-export type Result_5 = { 'Ok' : null } |
   { 'Err' : CanisterError };
-export type Result_6 = { 'Ok' : TokenListResponse } |
+export type Result_5 = { 'Ok' : TokenListResponse } |
   { 'Err' : string };
-export type Result_7 = { 'Ok' : Array<Permission> } |
+export type Result_6 = { 'Ok' : Array<Permission> } |
+  { 'Err' : CanisterError };
+export type Result_7 = { 'Ok' : UserNftDto } |
   { 'Err' : CanisterError };
 export interface TokenDto {
   'id' : TokenId,
@@ -116,28 +116,27 @@ export interface UserTokens {
   'enabled' : bigint,
 }
 export interface _SERVICE {
-  'add_user_nft' : ActorMethod<[AddUserNftInput], Result>,
   /**
    * Gets the full metadata of the token registry
    * Includes version number and last updated timestamp
    */
   'admin_get_registry_metadata' : ActorMethod<[], TokenRegistryMetadata>,
   'admin_get_registry_tokens' : ActorMethod<[boolean], Array<TokenDto>>,
-  'admin_get_stats' : ActorMethod<[], Result_1>,
-  'admin_get_user_balance' : ActorMethod<[Principal], Result_2>,
-  'admin_get_user_tokens' : ActorMethod<[Principal], Result_3>,
-  'admin_initialize_registry' : ActorMethod<[], Result_4>,
+  'admin_get_stats' : ActorMethod<[], Result>,
+  'admin_get_user_balance' : ActorMethod<[Principal], Result_1>,
+  'admin_get_user_tokens' : ActorMethod<[Principal], Result_2>,
+  'admin_initialize_registry' : ActorMethod<[], Result_3>,
   /**
    * Enables/disables the inspect message.
    */
-  'admin_inspect_message_enable' : ActorMethod<[boolean], Result_5>,
-  'admin_list_tokens_by_wallet' : ActorMethod<[Principal], Result_6>,
+  'admin_inspect_message_enable' : ActorMethod<[boolean], Result_4>,
+  'admin_list_tokens_by_wallet' : ActorMethod<[Principal], Result_5>,
   /**
    * Adds permissions to a principal and returns the principal permissions.
    */
   'admin_permissions_add' : ActorMethod<
     [Principal, Array<Permission>],
-    Result_7
+    Result_6
   >,
   /**
    * Returns the permissions of a principal.
@@ -148,13 +147,12 @@ export interface _SERVICE {
    */
   'admin_permissions_remove' : ActorMethod<
     [Principal, Array<Permission>],
-    Result_7
+    Result_6
   >,
   /**
    * Returns the build data of the canister.
    */
   'get_canister_build_data' : ActorMethod<[], BuildData>,
-  'get_user_nfts' : ActorMethod<[GetUserNftInput], Array<Nft>>,
   /**
    * Returns the inspect message status.
    */
@@ -162,27 +160,43 @@ export interface _SERVICE {
   /**
    * Lists the tokens in the registry for the caller
    */
-  'list_tokens' : ActorMethod<[], Result_6>,
-  'user_add_token' : ActorMethod<[AddTokenInput], Result_4>,
+  'list_tokens' : ActorMethod<[], Result_5>,
+  /**
+   * Adds a new NFT to the user's collection
+   * # Arguments
+   * * `input` - The input containing the NFT to be added
+   * # Returns
+   * * `UserNftDto` - The added NFT with user information
+   */
+  'user_add_nft' : ActorMethod<[AddUserNftInput], Result_7>,
+  'user_add_token' : ActorMethod<[AddTokenInput], Result_3>,
   /**
    * Add multiple tokens to the user's list
    * 
    * ToDo: this function is not atomic can leave the state in an inconsistent state
    */
-  'user_add_token_batch' : ActorMethod<[AddTokensInput], Result_4>,
-  'user_sync_token_list' : ActorMethod<[], Result_4>,
+  'user_add_token_batch' : ActorMethod<[AddTokensInput], Result_3>,
+  /**
+   * Retrieves the NFTs owned by the calling user
+   * # Arguments
+   * * `input` - The input containing pagination parameters
+   * # Returns
+   * * `Vec<NftDto>` - List of NFTs owned by the user
+   */
+  'user_get_nfts' : ActorMethod<[GetUserNftInput], Array<Nft>>,
+  'user_sync_token_list' : ActorMethod<[], Result_3>,
   'user_update_token_balance' : ActorMethod<
     [Array<UpdateTokenBalanceInput>],
-    Result_4
+    Result_3
   >,
-  'user_update_token_enable' : ActorMethod<[UpdateTokenInput], Result_4>,
-  'user_update_token_registry' : ActorMethod<[AddTokenInput], Result_4>,
+  'user_update_token_enable' : ActorMethod<[UpdateTokenInput], Result_3>,
+  'user_update_token_registry' : ActorMethod<[AddTokenInput], Result_3>,
   /**
    * Update the metadata for multiple tokens
    * 
    * ToDo: this function is not atomic can leave the state in an inconsistent state
    */
-  'user_update_token_registry_batch' : ActorMethod<[AddTokensInput], Result_4>,
+  'user_update_token_registry_batch' : ActorMethod<[AddTokensInput], Result_3>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];
