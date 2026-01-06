@@ -11,6 +11,13 @@ pub struct Account {
     pub subaccount: Option<SubAccount>,
 }
 
+#[derive(CandidType, Deserialize, Debug, Clone)]
+pub struct NftMetadata {
+    pub name: String,
+    pub description: Option<String>,
+    pub image: Option<String>,
+}
+
 pub type Icrc7OwnerOfResponse = Vec<Option<Account>>;
 
 #[derive(CandidType, Deserialize)]
@@ -96,4 +103,27 @@ pub struct InitApprovalsArg {
 pub struct UpgradeArgs {
     pub version: BuildVersion,
     pub commit_hash: String,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct MintArgs {
+    pub mint_requests: Vec<MintRequest>,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct MintRequest {
+    pub metadata: Vec<(String, Box<Icrc3Value>)>,
+    pub memo: Option<serde_bytes::ByteBuf>,
+    pub token_owner: Account,
+}
+
+pub type MintResult = Result<Nat, MintError>;
+
+#[derive(CandidType, Deserialize, Debug)]
+pub enum MintError {
+    TokenAlreadyExists,
+    StorageCanisterError(String),
+    ExceedMaxAllowedSupplyCap,
+    InvalidMemo,
+    ConcurrentManagementCall,
 }
