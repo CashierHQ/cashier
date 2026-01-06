@@ -5,15 +5,13 @@ use candid::{Nat, Principal};
 use cashier_common::test_utils::random_principal_id;
 use ic_mple_client::CanisterClientError;
 use std::sync::Arc;
-use token_storage_types::{
-    dto::nft::AddUserNftInput, error::CanisterError, icrc7::NftMetadata, nft::Nft,
-};
+use token_storage_types::{dto::nft::AddUserNftInput, error::CanisterError, nft::Nft};
 
 use crate::token_storage::nft::fixture::UserNftFixture;
 use crate::utils::{principal::TestUser, with_pocket_ic_context};
 
 #[tokio::test]
-async fn it_should_fail_user_add_nft_due_to_anonymous() {
+async fn it_should_fail_user_add_nft_due_to_anonymous_caller() {
     with_pocket_ic_context::<_, ()>(async move |ctx| {
         // Arrange
         let token_storage_client = ctx.new_token_storage_client(Principal::anonymous());
