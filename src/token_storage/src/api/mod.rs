@@ -4,13 +4,16 @@
 pub mod admin;
 mod init_and_upgrade;
 mod inspect_message;
+pub mod nft;
 mod state;
 pub mod token;
 
+use crate::types::error::CanisterError;
 use crate::types::*;
 use candid::Principal;
 use cashier_common::build_data::BuildData;
 use token_storage_types::auth::*;
+use token_storage_types::dto::nft::{AddUserNftInput, UserNftDto};
 use token_storage_types::error::*;
 use token_storage_types::init::*;
 use token_storage_types::token::*;

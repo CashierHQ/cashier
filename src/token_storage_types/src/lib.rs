@@ -4,6 +4,7 @@
 use candid::Principal;
 
 pub mod auth;
+pub mod dto;
 pub mod error;
 pub mod init;
 pub mod nft;
