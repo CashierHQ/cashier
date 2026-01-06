@@ -5,6 +5,7 @@
   import { getGuardContext } from "../context.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
+  import { LinkState } from "$modules/links/types/link/linkState";
 
   const allStates = [
     UserLinkStep.LANDING,
@@ -36,11 +37,21 @@
       : false,
   );
 
+  const link = $derived(() => context.getLink());
+
+  const isLinkInactive = $derived(
+    link?.state === LinkState.INACTIVE ||
+      link?.state === LinkState.INACTIVE_ENDED,
+  );
+
   const isStateValid = $derived(
     currentStep !== null && allowedStates.includes(currentStep),
   );
 
-  const shouldRedirect = $derived(userLinkStore && !isLoading && !isStateValid);
+  const shouldRedirect = $derived(
+    (userLinkStore && !isLoading && !isStateValid) ||
+      (userLinkStore && !isLoading && isLinkInactive && currentStep !== UserLinkStep.LANDING),
+  );
 
   $effect(() => {
     if (shouldRedirect) {

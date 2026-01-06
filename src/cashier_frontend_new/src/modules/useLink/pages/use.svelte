@@ -2,6 +2,7 @@
   import type { ProcessActionResult } from "$modules/links/types/action/action";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
+  import { LinkState } from "$modules/links/types/link/linkState";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import Completed from "../components/Completed.svelte";
   import Landing from "../components/Landing.svelte";
@@ -45,11 +46,23 @@
     successMessage = null;
 
     try {
+      // Refetch link data to ensure we have the latest state before creating action
+      await userStore.linkDetail.query.refresh();
+
       if (!userStore?.link) {
         throw new Error(
           locale.t("links.linkForm.useLink.errors.linkDetailMissing"),
         );
       }
+
+      // Check if link is inactive before proceeding
+      if (
+        userStore.link.state === LinkState.INACTIVE ||
+        userStore.link.state === LinkState.INACTIVE_ENDED
+      ) {
+        throw new Error("Link is no longer available");
+      }
+
       if (userStore.action) {
         showTxCart = true;
       } else {

@@ -8,6 +8,7 @@ import { UserLinkStep } from "$modules/links/types/userLinkStep";
 import type { UserActionCapableState } from ".";
 import type { UserLinkStore } from "../userLinkStore.svelte";
 import { LandingState } from "./landing";
+import { LinkState } from "$modules/links/types/link/linkState";
 
 export class AddressUnlockedState implements UserActionCapableState {
   readonly step = UserLinkStep.ADDRESS_UNLOCKED;
@@ -40,6 +41,17 @@ export class AddressUnlockedState implements UserActionCapableState {
       throw new Error(
         `Action type ${actionType} not supported in AddressUnlocked state.`,
       );
+    }
+
+    // Refetch link data to ensure we have the latest state before creating action
+    await this.#store.linkDetail.query.refresh();
+
+    const link = this.#store.link;
+    if (
+      link?.state === LinkState.INACTIVE ||
+      link?.state === LinkState.INACTIVE_ENDED
+    ) {
+      throw new Error("Link is no longer available");
     }
 
     return await this.#store.linkDetail.createAction(actionType);
