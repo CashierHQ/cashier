@@ -7,5 +7,6 @@ pub mod disable_link;
 pub mod fixture;
 pub mod get_link_details;
 pub mod get_links;
+pub mod partial_success;
 pub mod receive_link;
 pub mod withdraw_link;

@@ -2,6 +2,7 @@ use crate::{
     dto::action::{ActionDto, Icrc112Requests, IntentDto, TransactionDto},
     repository::{action::v1::Action, intent::v1::Intent, transaction::v1::Transaction},
 };
+use candid::{Nat, Principal};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
@@ -54,6 +55,9 @@ pub struct ProcessActionResult {
     pub icrc112_requests: Option<Icrc112Requests>,
     pub is_success: bool,
     pub errors: Vec<String>,
+    /// Actual amounts transferred per asset (from successful txs only)
+    /// Key: asset principal, Value: total transferred amount
+    pub actual_transferred_amounts: HashMap<Principal, Nat>,
 }
 
 impl From<ProcessActionResult> for ActionDto {

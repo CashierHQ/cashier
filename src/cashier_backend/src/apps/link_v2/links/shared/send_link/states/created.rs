@@ -4,6 +4,7 @@
 use crate::apps::link_v2::links::{
     shared::send_link::actions::create::CreateAction, traits::LinkV2State,
 };
+use candid::Nat;
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
@@ -19,7 +20,6 @@ use cashier_backend_types::{
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
 use transaction_manager::{
     icrc_token::utils::get_batch_tokens_fee_for_link, traits::TransactionManager,
-    utils::calculator::calculate_link_balance_map,
 };
 
 pub struct CreatedState<M: TransactionManager + 'static> {
@@ -98,26 +98,27 @@ impl<M: TransactionManager + 'static> CreatedState<M> {
             .process_action(action, intents, intent_txs_map)
             .await?;
 
-        // if process action succeeds, activate the link
-        if process_action_result.is_success {
-            link.state = LinkState::Active;
-
-            // Calculate and set amount_available for each asset
-            let fee_map = get_batch_tokens_fee_for_link(&link).await?;
-            let balance_map = calculate_link_balance_map(
-                &link.asset_info,
-                &fee_map,
-                link.link_use_action_max_count,
-            );
-
-            for asset_info in link.asset_info.iter_mut() {
-                let address = match &asset_info.asset {
-                    Asset::IC { address } => *address,
-                };
-                if let Some(amount) = balance_map.get(&address) {
-                    asset_info.amount_available = amount.clone();
+        // Update amount_available based on actual transferred amounts (handles partial success)
+        let fee_map = get_batch_tokens_fee_for_link(&link).await?;
+        for asset_info in link.asset_info.iter_mut() {
+            let address = match &asset_info.asset {
+                Asset::IC { address } => *address,
+            };
+            if let Some(transferred) = process_action_result
+                .actual_transferred_amounts
+                .get(&address)
+            {
+                // Subtract fee from transferred amount to get net balance
+                let fee = fee_map.get(&address).cloned().unwrap_or(Nat::from(0u64));
+                if *transferred >= fee {
+                    asset_info.amount_available = transferred.clone() - fee;
                 }
             }
+        }
+
+        // Only transition to Active if ALL succeeded
+        if process_action_result.is_success {
+            link.state = LinkState::Active;
         }
 
         Ok(LinkProcessActionResult {

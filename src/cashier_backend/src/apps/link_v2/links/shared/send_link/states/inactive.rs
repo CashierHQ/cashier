@@ -10,13 +10,16 @@ use cashier_backend_types::{
     link_v2::link_result::{LinkCreateActionResult, LinkProcessActionResult},
     repository::{
         action::v1::{Action, ActionType},
+        common::Asset,
         intent::v1::Intent,
         link::v1::{Link, LinkState},
         transaction::v1::Transaction,
     },
 };
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
-use transaction_manager::traits::TransactionManager;
+use transaction_manager::{
+    icrc_token::utils::get_batch_tokens_fee_for_link, traits::TransactionManager,
+};
 
 pub struct InactiveState<M: TransactionManager + 'static> {
     pub link: Link,
@@ -95,13 +98,32 @@ impl<M: TransactionManager + 'static> InactiveState<M> {
             .process_action(action, intents, intent_txs_map)
             .await?;
 
+        // Decrement amount_available based on actual withdrawn amounts (handles partial success)
+        // Note: Withdraw action creates transfer for (balance - fee), so we need to add fee back
+        let fee_map = get_batch_tokens_fee_for_link(&link).await?;
+        for asset_info in link.asset_info.iter_mut() {
+            let address = match &asset_info.asset {
+                Asset::IC { address } => *address,
+            };
+            if let Some(withdrawn) = process_action_result
+                .actual_transferred_amounts
+                .get(&address)
+            {
+                let fee = fee_map.get(&address).cloned().unwrap_or(Nat::from(0u64));
+                let decrement = withdrawn.clone() + fee;
+
+                // Safe subtraction
+                if asset_info.amount_available >= decrement {
+                    asset_info.amount_available -= decrement;
+                } else {
+                    asset_info.amount_available = Nat::from(0u64);
+                }
+            }
+        }
+
+        // Only transition to InactiveEnded if ALL succeeded
         if process_action_result.is_success {
             link.state = LinkState::InactiveEnded;
-
-            // Reset amount_available to 0 for all assets
-            for asset_info in link.asset_info.iter_mut() {
-                asset_info.amount_available = Nat::from(0u64);
-            }
         }
 
         Ok(LinkProcessActionResult {

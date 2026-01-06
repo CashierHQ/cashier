@@ -85,20 +85,19 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
             .process_action(action, intents, intent_txs_map)
             .await?;
 
-        if process_action_result.is_success {
-            link.link_use_action_counter += 1;
-            if link.link_use_action_counter >= link.link_use_action_max_count {
-                link.state = LinkState::InactiveEnded;
-            }
+        // Decrement amount_available based on actual transferred amounts (handles partial success)
+        let fee_map = get_batch_tokens_fee_for_link(&link).await?;
+        for asset_info in link.asset_info.iter_mut() {
+            let address = match &asset_info.asset {
+                Asset::IC { address } => *address,
+            };
 
-            // Decrement amount_available for each asset: amount_per_use + fee
-            let fee_map = get_batch_tokens_fee_for_link(&link).await?;
-            for asset_info in link.asset_info.iter_mut() {
-                let address = match &asset_info.asset {
-                    Asset::IC { address } => *address,
-                };
+            if let Some(transferred) = process_action_result
+                .actual_transferred_amounts
+                .get(&address)
+            {
                 let fee = fee_map.get(&address).cloned().unwrap_or(Nat::from(0u64));
-                let decrement = asset_info.amount_per_link_use_action.clone() + fee;
+                let decrement = transferred.clone() + fee;
 
                 // Safe subtraction (Nat is unsigned)
                 if asset_info.amount_available >= decrement {
@@ -106,6 +105,14 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
                 } else {
                     asset_info.amount_available = Nat::from(0u64);
                 }
+            }
+        }
+
+        // Only increment counter and check end state if ALL successful
+        if process_action_result.is_success {
+            link.link_use_action_counter += 1;
+            if link.link_use_action_counter >= link.link_use_action_max_count {
+                link.state = LinkState::InactiveEnded;
             }
         }
 

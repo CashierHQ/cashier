@@ -2,7 +2,11 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::{Nat, Principal};
-use cashier_backend_types::repository::{asset_info::AssetInfo, common::Asset};
+use cashier_backend_types::repository::{
+    asset_info::AssetInfo,
+    common::Asset,
+    transaction::v1::{IcTransaction, Protocol, Transaction, TransactionState},
+};
 use cashier_common::constant::{CREATE_LINK_FEE, ICP_CANISTER_PRINCIPAL};
 use std::collections::HashMap;
 
@@ -52,9 +56,56 @@ pub fn calculate_create_link_fee(fee_map: &HashMap<Principal, Nat>) -> (Nat, Nat
     )
 }
 
+/// Calculate total amount successfully transferred per asset from transactions
+/// Only counts Icrc1Transfer and Icrc2TransferFrom with Success state
+/// Icrc2Approve is skipped as it doesn't transfer tokens
+/// # Arguments
+/// * `transactions` - A slice of transactions to analyze
+/// # Returns
+/// * `HashMap<Principal, Nat>` - asset address -> total transferred amount
+pub fn calculate_successful_transfer_amounts(
+    transactions: &[Transaction],
+) -> HashMap<Principal, Nat> {
+    let mut amounts: HashMap<Principal, Nat> = HashMap::new();
+
+    for tx in transactions {
+        if tx.state != TransactionState::Success {
+            continue;
+        }
+
+        let (address, amount) = match &tx.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(t)) => {
+                let addr = match &t.asset {
+                    Asset::IC { address } => *address,
+                };
+                (addr, t.amount.clone())
+            }
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(t)) => {
+                let addr = match &t.asset {
+                    Asset::IC { address } => *address,
+                };
+                (addr, t.amount.clone())
+            }
+            // Icrc2Approve doesn't transfer tokens, skip
+            Protocol::IC(IcTransaction::Icrc2Approve(_)) => continue,
+        };
+
+        amounts
+            .entry(address)
+            .and_modify(|a| *a += amount.clone())
+            .or_insert(amount);
+    }
+
+    amounts
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use cashier_backend_types::repository::{
+        common::Wallet,
+        transaction::v1::{FromCallType, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom},
+    };
 
     #[test]
     fn test_calculate_link_balance_map() {
@@ -103,5 +154,208 @@ mod tests {
         // Assert
         assert_eq!(actual_amount, Nat::from(CREATE_LINK_FEE));
         assert_eq!(approved_amount, Nat::from(CREATE_LINK_FEE + 5u64));
+    }
+
+    fn create_test_icrc1_transfer_tx(
+        id: &str,
+        amount: u64,
+        state: TransactionState,
+        asset: Asset,
+    ) -> Transaction {
+        Transaction {
+            id: id.to_string(),
+            created_at: 0,
+            state,
+            dependency: None,
+            group: 0,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset,
+                amount: Nat::from(amount),
+                memo: None,
+                ts: None,
+            })),
+            start_ts: None,
+        }
+    }
+
+    fn create_test_icrc2_approve_tx(
+        id: &str,
+        amount: u64,
+        state: TransactionState,
+        asset: Asset,
+    ) -> Transaction {
+        Transaction {
+            id: id.to_string(),
+            created_at: 0,
+            state,
+            dependency: None,
+            group: 0,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
+                from: Wallet::default(),
+                spender: Wallet::default(),
+                asset,
+                amount: Nat::from(amount),
+                memo: None,
+                ts: None,
+            })),
+            start_ts: None,
+        }
+    }
+
+    fn create_test_icrc2_transfer_from_tx(
+        id: &str,
+        amount: u64,
+        state: TransactionState,
+        asset: Asset,
+    ) -> Transaction {
+        Transaction {
+            id: id.to_string(),
+            created_at: 0,
+            state,
+            dependency: None,
+            group: 0,
+            from_call_type: FromCallType::Canister,
+            protocol: Protocol::IC(IcTransaction::Icrc2TransferFrom(Icrc2TransferFrom {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                spender: Wallet::default(),
+                asset,
+                amount: Nat::from(amount),
+                memo: None,
+                ts: None,
+            })),
+            start_ts: None,
+        }
+    }
+
+    #[test]
+    fn test_calculate_successful_transfer_amounts_empty() {
+        let result = calculate_successful_transfer_amounts(&[]);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_calculate_successful_transfer_amounts_all_success() {
+        let asset = Asset::default();
+        let address = match &asset {
+            Asset::IC { address } => *address,
+        };
+
+        let txs = vec![
+            create_test_icrc1_transfer_tx("tx1", 100, TransactionState::Success, asset.clone()),
+            create_test_icrc1_transfer_tx("tx2", 50, TransactionState::Success, asset.clone()),
+        ];
+
+        let result = calculate_successful_transfer_amounts(&txs);
+
+        assert_eq!(result.get(&address).cloned().unwrap(), Nat::from(150u64));
+    }
+
+    #[test]
+    fn test_calculate_successful_transfer_amounts_partial() {
+        let asset = Asset::default();
+        let address = match &asset {
+            Asset::IC { address } => *address,
+        };
+
+        // 3 txs: 2 success (100 + 50), 1 fail (200)
+        let txs = vec![
+            create_test_icrc1_transfer_tx("tx1", 100, TransactionState::Success, asset.clone()),
+            create_test_icrc1_transfer_tx("tx2", 50, TransactionState::Success, asset.clone()),
+            create_test_icrc1_transfer_tx("tx3", 200, TransactionState::Fail, asset.clone()),
+        ];
+
+        let result = calculate_successful_transfer_amounts(&txs);
+
+        // Only 150 (100 + 50), not 350
+        assert_eq!(result.get(&address).cloned().unwrap(), Nat::from(150u64));
+    }
+
+    #[test]
+    fn test_calculate_successful_transfer_amounts_all_fail() {
+        let asset = Asset::default();
+
+        let txs = vec![
+            create_test_icrc1_transfer_tx("tx1", 100, TransactionState::Fail, asset.clone()),
+            create_test_icrc1_transfer_tx("tx2", 50, TransactionState::Fail, asset.clone()),
+        ];
+
+        let result = calculate_successful_transfer_amounts(&txs);
+
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_calculate_successful_transfer_amounts_ignores_approve() {
+        let asset = Asset::default();
+        let address = match &asset {
+            Asset::IC { address } => *address,
+        };
+
+        // Icrc2Approve success should NOT be counted
+        let txs = vec![
+            create_test_icrc1_transfer_tx("tx1", 100, TransactionState::Success, asset.clone()),
+            create_test_icrc2_approve_tx("tx2", 500, TransactionState::Success, asset.clone()),
+        ];
+
+        let result = calculate_successful_transfer_amounts(&txs);
+
+        // Only 100 (transfer), not 600 (transfer + approve)
+        assert_eq!(result.get(&address).cloned().unwrap(), Nat::from(100u64));
+    }
+
+    #[test]
+    fn test_calculate_successful_transfer_amounts_icrc2_transfer_from() {
+        let asset = Asset::default();
+        let address = match &asset {
+            Asset::IC { address } => *address,
+        };
+
+        let txs = vec![
+            create_test_icrc1_transfer_tx("tx1", 100, TransactionState::Success, asset.clone()),
+            create_test_icrc2_transfer_from_tx(
+                "tx2",
+                200,
+                TransactionState::Success,
+                asset.clone(),
+            ),
+        ];
+
+        let result = calculate_successful_transfer_amounts(&txs);
+
+        // 100 + 200 = 300
+        assert_eq!(result.get(&address).cloned().unwrap(), Nat::from(300u64));
+    }
+
+    #[test]
+    fn test_calculate_successful_transfer_amounts_multi_asset() {
+        let asset1 = Asset::IC {
+            address: Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+        };
+        let asset2 = Asset::IC {
+            address: Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
+        };
+
+        let addr1 = match &asset1 {
+            Asset::IC { address } => *address,
+        };
+        let addr2 = match &asset2 {
+            Asset::IC { address } => *address,
+        };
+
+        let txs = vec![
+            create_test_icrc1_transfer_tx("tx1", 100, TransactionState::Success, asset1.clone()),
+            create_test_icrc1_transfer_tx("tx2", 200, TransactionState::Success, asset2.clone()),
+            create_test_icrc1_transfer_tx("tx3", 50, TransactionState::Fail, asset1.clone()),
+        ];
+
+        let result = calculate_successful_transfer_amounts(&txs);
+
+        assert_eq!(result.get(&addr1).cloned().unwrap(), Nat::from(100u64));
+        assert_eq!(result.get(&addr2).cloned().unwrap(), Nat::from(200u64));
     }
 }

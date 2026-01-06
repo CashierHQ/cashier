@@ -10,6 +10,7 @@ use cashier_backend_types::{
     link_v2::link_result::{LinkCreateActionResult, LinkProcessActionResult},
     repository::{
         action::v1::{Action, ActionType},
+        common::Asset,
         intent::v1::Intent,
         link::v1::Link,
         transaction::v1::Transaction,
@@ -79,10 +80,16 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
             .process_action(action, intents, intent_txs_map)
             .await?;
 
-        if process_action_result.is_success {
-            // Increment amount_available for each asset: amount_per_use only (no fee)
-            for asset_info in link.asset_info.iter_mut() {
-                asset_info.amount_available += asset_info.amount_per_link_use_action.clone();
+        // Update amount_available based on actual transferred amounts (handles partial success)
+        for asset_info in link.asset_info.iter_mut() {
+            let address = match &asset_info.asset {
+                Asset::IC { address } => *address,
+            };
+            if let Some(transferred) = process_action_result
+                .actual_transferred_amounts
+                .get(&address)
+            {
+                asset_info.amount_available += transferred.clone();
             }
         }
 
