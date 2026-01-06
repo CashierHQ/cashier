@@ -5,6 +5,7 @@ pub mod balance_cache;
 pub mod settings;
 pub mod token_registry;
 pub mod token_registry_metadata;
+pub mod user_nft;
 pub mod user_preference;
 pub mod user_token;
 
