@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::{CandidType, Principal};
+use candid::{CandidType, Nat, Principal};
 use cashier_macros::storable;
 use ic_mple_structures::Codec;
 use std::collections::HashSet;
@@ -10,7 +10,7 @@ use std::collections::HashSet;
 #[storable]
 pub struct Nft {
     pub collection_id: Principal,
-    pub token_id: String,
+    pub token_id: Nat,
 }
 
 #[storable]

@@ -1,10 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-mod api;
-mod build_data;
-mod ext;
-mod icrc7;
-mod repository;
-mod services;
-mod types;
+pub mod client;
+pub mod ic_icrc7_validator;
+pub mod traits;
+pub mod types;

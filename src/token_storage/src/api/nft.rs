@@ -8,13 +8,23 @@ use token_storage_types::{
     error::CanisterError,
 };
 
+/// Adds a new NFT to the user's collection
+/// # Arguments
+/// * `input` - The input containing the NFT to be added
+/// # Returns
+/// * `UserNftDto` - The added NFT with user information
 #[update]
-pub fn add_user_nft(input: AddUserNftInput) -> Result<UserNftDto, CanisterError> {
+pub async fn add_user_nft(input: AddUserNftInput) -> Result<UserNftDto, CanisterError> {
     let mut state = get_state();
     let user = msg_caller();
-    state.user_nft.add_nft(user, input.nft)
+    state.user_nft.add_nft(user, input.nft).await
 }
 
+/// Retrieves the NFTs owned by the calling user
+/// # Arguments
+/// * `input` - The input containing pagination parameters
+/// # Returns
+/// * `Vec<NftDto>` - List of NFTs owned by the user
 #[query]
 pub fn get_user_nfts(input: GetUserNftInput) -> Vec<NftDto> {
     let state = get_state();
