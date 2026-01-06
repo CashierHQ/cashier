@@ -1,12 +1,16 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::repository::{keys::UserActionKey, user_action::v1::UserAction};
+use cashier_backend_types::repository::{
+    keys::UserActionKey,
+    user_action::v1::{UserAction, UserActionCodec},
+};
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
+use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
 pub type UserActionRepositoryStorage =
-    StableBTreeMap<String, UserAction, VirtualMemory<DefaultMemoryImpl>>;
+    VersionedBTreeMap<String, UserAction, UserActionCodec, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
 pub struct UserActionRepository<S: Storage<UserActionRepositoryStorage>> {
@@ -32,10 +36,8 @@ impl<S: Storage<UserActionRepositoryStorage>> UserActionRepository<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        repositories::{Repositories, tests::TestRepositories},
-        utils::test_utils::*,
-    };
+    use crate::repositories::{Repositories, tests::TestRepositories};
+    use cashier_common::test_utils::{random_id_string, random_principal_id};
 
     #[test]
     fn it_should_create_an_user_action() {

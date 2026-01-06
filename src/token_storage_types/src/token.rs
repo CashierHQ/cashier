@@ -3,6 +3,7 @@ use std::fmt::Display;
 use candid::CandidType;
 use cashier_common::chain::Chain;
 use cashier_macros::storable;
+use ic_mple_structures::Codec;
 use serde::{Deserialize, Serialize};
 
 use crate::{IndexId, LedgerId, user::UserPreference};
@@ -81,6 +82,23 @@ pub struct RegistryToken {
     pub enabled_by_default: bool, // Indicates if the token is enabled by default
 }
 
+#[storable]
+pub enum RegistryTokenCodec {
+    V1(RegistryToken),
+}
+
+impl Codec<RegistryToken> for RegistryTokenCodec {
+    fn decode(source: Self) -> RegistryToken {
+        match source {
+            RegistryTokenCodec::V1(link) => link,
+        }
+    }
+
+    fn encode(dest: RegistryToken) -> Self {
+        RegistryTokenCodec::V1(dest)
+    }
+}
+
 impl From<RegistryToken> for TokenDto {
     fn from(token: RegistryToken) -> Self {
         let token_id = token.details.token_id();
@@ -94,6 +112,7 @@ impl From<RegistryToken> for TokenDto {
             enabled: token.enabled_by_default,
             balance: None,
             details: token.details, // Directly use the enum
+            is_default: token.enabled_by_default,
         }
     }
 }
@@ -112,6 +131,7 @@ pub struct TokenDto {
     pub enabled: bool,
     pub balance: Option<u128>,
     pub details: ChainTokenDetails, // Use the enum for chain-specific details
+    pub is_default: bool,
 }
 
 #[derive(CandidType, Deserialize, Serialize, Clone, Debug)]
@@ -134,7 +154,7 @@ pub struct UpdateTokenInput {
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-#[derive(CandidType, Deserialize, Clone)]
+#[derive(CandidType, Deserialize, Clone, Debug)]
 pub struct TokenListResponse {
     pub tokens: Vec<TokenDto>,
     pub need_update_version: bool,

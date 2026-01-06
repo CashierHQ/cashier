@@ -1,0 +1,24 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "project": ["src/**"],
+  "ignore": [
+    "src/lib/generated/**",
+    "src/lib/paraglide/**",
+    "src/lib/shadcn/**"
+  ],
+  "ignoreDependencies": [
+    "@eslint/compat",
+    "@tailwindcss/forms",
+    "@tailwindcss/typography",
+    "@vitest/coverage-v8",
+    "cross-fetch",
+    "tw-animate-css",
+    "vitest-browser-svelte"
+  ],
+  "ignoreUnresolved": ["\\$env/.+"],
+  "rules": {
+    "exports": "off",
+    "types": "off"
+  },
+  "ignoreExportsUsedInFile": true
+}

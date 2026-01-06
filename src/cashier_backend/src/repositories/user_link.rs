@@ -3,14 +3,15 @@
 
 use candid::Principal;
 use cashier_backend_types::{
-    repository::user_link::v1::UserLink,
+    repository::user_link::v1::{UserLink, UserLinkCodec},
     service::link::{PaginateInput, PaginateResult, PaginateResultMetadata},
 };
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
+use ic_mple_structures::{BTreeMapIteratorStructure, BTreeMapStructure, VersionedBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
 pub type UserLinkRepositoryStorage =
-    StableBTreeMap<String, UserLink, VirtualMemory<DefaultMemoryImpl>>;
+    VersionedBTreeMap<String, UserLink, UserLinkCodec, VirtualMemory<DefaultMemoryImpl>>;
 
 struct UserLinkKey<'a> {
     pub user_id: &'a Principal,
@@ -43,15 +44,6 @@ impl<S: Storage<UserLinkRepositoryStorage>> UserLinkRepository<S> {
         });
     }
 
-    pub fn delete(&mut self, id: &UserLink) {
-        let id = UserLinkKey {
-            user_id: &id.user_id,
-            link_id: &id.link_id,
-        };
-        self.storage
-            .with_borrow_mut(|store| store.remove(&id.to_str()));
-    }
-
     pub fn get_links_by_user_id(
         &self,
         user_id: &Principal,
@@ -66,8 +58,8 @@ impl<S: Storage<UserLinkRepositoryStorage>> UserLinkRepository<S> {
             let prefix = user_link_key.to_str();
             let all_links: Vec<UserLink> = store
                 .range(prefix.to_string()..)
-                .take_while(|entry| entry.key().starts_with(&prefix))
-                .map(|entry| entry.value())
+                .take_while(|(key, _value)| key.starts_with(&prefix))
+                .map(|(_key, value)| value)
                 .collect();
 
             let total = all_links.len();
@@ -96,10 +88,8 @@ impl<S: Storage<UserLinkRepositoryStorage>> UserLinkRepository<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        repositories::{Repositories, tests::TestRepositories},
-        utils::test_utils::*,
-    };
+    use crate::repositories::{Repositories, tests::TestRepositories};
+    use cashier_common::test_utils::{random_id_string, random_principal_id};
 
     #[test]
     fn test_link_to_str() {
@@ -134,25 +124,6 @@ mod tests {
         assert_eq!(links.data.len(), 1);
         assert_eq!(links.data.first().unwrap().link_id, link_id);
         assert_eq!(links.data.first().unwrap().user_id, user_id);
-    }
-
-    #[test]
-    fn it_should_delete_a_user_link() {
-        // Arrange
-        let mut repo = TestRepositories::new().user_link();
-        let user_id = random_principal_id();
-        let link_id = random_id_string();
-
-        let user_link = UserLink { user_id, link_id };
-
-        repo.create(user_link.clone());
-
-        // Act
-        repo.delete(&user_link);
-
-        // Assert
-        let links = repo.get_links_by_user_id(&user_id, &PaginateInput::default());
-        assert!(links.data.is_empty());
     }
 
     #[test]

@@ -19,16 +19,21 @@ pub fn calculate_amount_for_create_link(ledger_fee: &Nat) -> u64 {
     CREATE_LINK_FEE + ledger_fee_u64 * 2
 }
 
+/// Calculate the approval amount for creating a link with respect to the ledger fee.
+pub fn calculate_approval_amount_for_create_link(ledger_fee: &Nat) -> u64 {
+    let ledger_fee_u64 = convert_nat_to_u64(ledger_fee).unwrap_or(0);
+
+    CREATE_LINK_FEE + ledger_fee_u64
+}
+
 /// Calculate the transfer amount from wallet to the link
 /// with respect to the ledger fee and max use count.
 pub fn calculate_amount_for_wallet_to_link_transfer(
-    amount: u64,
-    ledger_fee: &Nat,
+    amount: Nat,
+    ledger_fee: Nat,
     max_use_count: u64,
-) -> u64 {
-    let ledger_fee_u64 = convert_nat_to_u64(ledger_fee).unwrap_or(0);
-
-    (amount + ledger_fee_u64) * max_use_count
+) -> Nat {
+    (amount + ledger_fee) * Nat::from(max_use_count)
 }
 
 /// Generate a random UUID string.

@@ -6,8 +6,7 @@ use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::info;
 
 use crate::api::state::get_state;
-use crate::services::auth::Permission;
-use crate::services::transaction_manager::traits::TimeoutHandler;
+use crate::apps::auth::Permission;
 use cashier_common::random::init_ic_rand;
 
 #[init]
@@ -41,7 +40,4 @@ fn post_upgrade() {
     info!("[post_upgrade] Starting Cashier Backend");
 
     init_ic_rand();
-
-    let tx_manager_service = get_state().transaction_manager_service;
-    tx_manager_service.restart_processing_transactions();
 }

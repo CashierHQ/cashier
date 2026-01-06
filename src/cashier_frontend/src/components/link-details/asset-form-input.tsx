@@ -154,7 +154,7 @@ export const AssetFormInput: FC<AssetFormInputProps> = ({
 
     // Update the store with the latest values
     updateUserInput(linkId, {
-      assets: storeAssets,
+      asset_info: storeAssets,
     });
   };
 

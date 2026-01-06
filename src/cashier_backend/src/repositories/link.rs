@@ -1,11 +1,16 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::repository::{keys::LinkKey, link::v1::Link};
+use cashier_backend_types::repository::{
+    keys::LinkKey,
+    link::v1::{Link, LinkCodec},
+};
 use ic_mple_log::service::Storage;
-use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, memory_manager::VirtualMemory};
+use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
+use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
-pub type LinkRepositoryStorage = StableBTreeMap<LinkKey, Link, VirtualMemory<DefaultMemoryImpl>>;
+pub type LinkRepositoryStorage =
+    VersionedBTreeMap<String, Link, LinkCodec, VirtualMemory<DefaultMemoryImpl>>;
 
 #[derive(Clone)]
 pub struct LinkRepository<S: Storage<LinkRepositoryStorage>> {
@@ -38,22 +43,14 @@ impl<S: Storage<LinkRepositoryStorage>> LinkRepository<S> {
             store.insert(id, link);
         });
     }
-
-    pub fn delete(&mut self, id: &LinkKey) {
-        self.storage.with_borrow_mut(|store| {
-            store.remove(id);
-        });
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{
-        repositories::{Repositories, tests::TestRepositories},
-        utils::test_utils::*,
-    };
+    use crate::repositories::{Repositories, tests::TestRepositories};
     use cashier_backend_types::repository::link::v1::{LinkState, LinkType};
+    use cashier_common::test_utils::{random_id_string, random_principal_id};
 
     #[test]
     fn it_should_create_a_link() {
@@ -63,15 +60,12 @@ mod tests {
         let creator_id = random_principal_id();
         let link = Link {
             id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Test Link".to_string()),
-            description: Some("This is a test link".to_string()),
-            link_type: Some(LinkType::SendTip),
+            state: LinkState::CreateLink,
+            title: "Test Link".to_string(),
+            link_type: LinkType::SendTip,
             asset_info: vec![],
-            template: None,
             creator: creator_id,
             create_at: 1622547800,
-            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 10,
         };
@@ -95,15 +89,12 @@ mod tests {
         let creator_id2 = random_principal_id();
         let link = Link {
             id: link_id.clone(),
-            state: LinkState::ChooseLinkType,
-            title: Some("Test Link".to_string()),
-            description: Some("This is a test link".to_string()),
-            link_type: Some(LinkType::SendTip),
+            state: LinkState::CreateLink,
+            title: "Test Link".to_string(),
+            link_type: LinkType::SendTip,
             asset_info: vec![],
-            template: None,
             creator: creator_id1,
             create_at: 1622547800,
-            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 10,
         };
@@ -112,14 +103,11 @@ mod tests {
         let updated_link = Link {
             id: link_id,
             state: LinkState::Active,
-            title: Some("Updated Test Link".to_string()),
-            description: Some("This is an updated test link".to_string()),
-            link_type: Some(LinkType::ReceivePayment),
+            title: "Updated Test Link".to_string(),
+            link_type: LinkType::ReceivePayment,
             asset_info: vec![],
-            template: None,
             creator: creator_id2,
             create_at: 1622547800,
-            metadata: Default::default(),
             link_use_action_counter: 1,
             link_use_action_max_count: 20,
         };
@@ -136,36 +124,6 @@ mod tests {
     }
 
     #[test]
-    fn it_should_delete_a_link() {
-        // Arrange
-        let mut repo = TestRepositories::new().link();
-        let link_id = random_id_string();
-        let creator_id = random_principal_id();
-        let link = Link {
-            id: link_id,
-            state: LinkState::ChooseLinkType,
-            title: Some("Test Link".to_string()),
-            description: Some("This is a test link".to_string()),
-            link_type: Some(LinkType::SendTip),
-            asset_info: vec![],
-            template: None,
-            creator: creator_id,
-            create_at: 1622547800,
-            metadata: Default::default(),
-            link_use_action_counter: 0,
-            link_use_action_max_count: 10,
-        };
-        repo.create(link.clone());
-
-        // Act
-        repo.delete(&link.id);
-
-        // Assert
-        let fetched_link = repo.get(&link.id);
-        assert!(fetched_link.is_none());
-    }
-
-    #[test]
     fn it_should_get_batch_of_links() {
         // Arrange
         let mut repo = TestRepositories::new().link();
@@ -175,29 +133,23 @@ mod tests {
         let creator2 = random_principal_id();
         let link1 = Link {
             id: link_id1.clone(),
-            state: LinkState::ChooseLinkType,
-            title: Some("Test Link 1".to_string()),
-            description: Some("This is a test link 1".to_string()),
-            link_type: Some(LinkType::SendTip),
+            state: LinkState::Active,
+            title: "Test Link 1".to_string(),
+            link_type: LinkType::SendTip,
             asset_info: vec![],
-            template: None,
             creator: creator1,
             create_at: 1622547800,
-            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 10,
         };
         let link2 = Link {
             id: link_id2.clone(),
-            state: LinkState::Active,
-            title: Some("Test Link 2".to_string()),
-            description: Some("This is a test link 2".to_string()),
-            link_type: Some(LinkType::ReceivePayment),
+            state: LinkState::CreateLink,
+            title: "Test Link 2".to_string(),
+            link_type: LinkType::ReceivePayment,
             asset_info: vec![],
-            template: None,
             creator: creator2,
             create_at: 1622547800,
-            metadata: Default::default(),
             link_use_action_counter: 1,
             link_use_action_max_count: 20,
         };
@@ -223,15 +175,12 @@ mod tests {
         let creator_id = random_principal_id();
         let link = Link {
             id: link_id.clone(),
-            state: LinkState::ChooseLinkType,
-            title: Some("Test Link".to_string()),
-            description: Some("This is a test link".to_string()),
-            link_type: Some(LinkType::SendTip),
+            state: LinkState::CreateLink,
+            title: "Test Link".to_string(),
+            link_type: LinkType::SendTip,
             asset_info: vec![],
-            template: None,
             creator: creator_id,
             create_at: 1622547800,
-            metadata: Default::default(),
             link_use_action_counter: 0,
             link_use_action_max_count: 10,
         };

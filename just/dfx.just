@@ -16,7 +16,21 @@ dfx_local_start: dfx_prepare_env dfx_local_stop
 [group('dfx')]
 dfx_local_stop:
   dfx stop
-  
+
+
+# Deploys the canisters to the specified network - eg: just dfx_deploy --network=dev
+# params owner: principal id of the owner, for canister initialization
+# network: dfx network flag, e.g. --network=dev
+# backend_log_filter: log filter string for the backend canister
+# token_storage_log_filter: log filter string for the token_storage canister
+[group('dfx')]
+dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="": 
+  #!/usr/bin/env bash
+  just dfx_deploy_token_storage {{owner}} {{network}} {{token_storage_log_filter}}
+
+  just dfx_deploy_backend {{owner}} {{network}} {{backend_log_filter}}
+
+  dfx deploy cashier_frontend_new {{network}}
 
 # Starts the local dfx server and deploys the canisters
 [group('dfx')]
@@ -26,12 +40,7 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
 
   export OWNER=$(dfx identity get-principal)
 
-  just dfx_local_deploy_token_storage "${OWNER}"
-
-  dfx deploy cashier_backend --argument "(record {
-      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
-      owner=principal \"${OWNER}\";
-  })"
+  just dfx_deploy "${OWNER}"
 
   cashier_backend_id=$(dfx canister id cashier_backend)
   dfx deploy gate_service --argument "(record {
@@ -42,30 +51,57 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
 
   dfx deploy internet_identity
 
+  # Deploy ledgers first
   just dfx_local_deploy_icp_ledger
   just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckBTC" "Chain Key Bitcoin" "ckBTC" "mxzaz-hqaaa-aaaar-qaada-cai" 8 10
-  just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckETH" "Chain Key Ethereum" "ckETH" "ss2fx-dyaaa-aaaar-qacoq-cai" 18 2000000000000000000
+  just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckETH" "Chain Key Ethereum" "ckETH" "ss2fx-dyaaa-aaaar-qacoq-cai" 18 2000000000000
   just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckUSDC" "Chain Key USD Coin" "ckUSDC" "xevnm-gaaaa-aaaar-qafnq-cai" 8 10000
   just dfx_local_deploy_icrc1_ledger "${OWNER}" "DOGE" "Test Token" "DOGE" "x5qut-viaaa-aaaar-qajda-cai" 8 10000
 
+  # Deploy index canisters AFTER ledgers
+  just dfx_local_deploy_icp_index
+  just dfx_local_deploy_icrc_index "ckBTC_index" "mxzaz-hqaaa-aaaar-qaada-cai" "n5wcd-faaaa-aaaar-qaaea-cai"
+  just dfx_local_deploy_icrc_index "ckETH_index" "ss2fx-dyaaa-aaaar-qacoq-cai" "s3zol-vqaaa-aaaar-qacpa-cai"
+  just dfx_local_deploy_icrc_index "ckUSDC_index" "xevnm-gaaaa-aaaar-qafnq-cai" "xrs4b-hiaaa-aaaar-qafoa-cai"
+
+[group('dfx')]
+dfx_local_deploy_token canister_name name symbol canister_id decimals fee:
+  #!/usr/bin/env bash
+  set -e
+
+  export OWNER=$(dfx identity get-principal)
+
+  echo "owner: $OWNER"
+  just dfx_local_deploy_icrc1_ledger "${OWNER}" {{canister_name}} {{name}} {{symbol}} {{canister_id}}  {{decimals}} {{fee}}
 
 # Prints dfx info of the local deployment
 [group('dfx')]
 dfx_local_info:
   #!/usr/bin/env bash
   set -e
-  
+
   dfx_webserver_port=$(dfx info webserver-port)
   cashier_backend_id=$(dfx canister id cashier_backend)
   token_storage_id=$(dfx canister id token_storage)
   internet_identity_id=$(dfx canister id internet_identity)
   gate_service_id=$(dfx canister id gate_service)
 
+  # Index canister IDs (may not be deployed yet)
+  icp_index_id=$(dfx canister id icp_index 2>/dev/null || echo "not deployed")
+  ckbtc_index_id=$(dfx canister id ckBTC_index 2>/dev/null || echo "not deployed")
+  cketh_index_id=$(dfx canister id ckETH_index 2>/dev/null || echo "not deployed")
+  ckusdc_index_id=$(dfx canister id ckUSDC_index 2>/dev/null || echo "not deployed")
+
   echo "webserver-port: $dfx_webserver_port"
   echo "cashier_backend id: $cashier_backend_id"
   echo "token_storage id: $token_storage_id"
   echo "internet_identity id: $internet_identity_id"
   echo "gate_service_id: $gate_service_id"
+
+  echo "icp_index id: $icp_index_id"
+  echo "ckBTC_index id: $ckbtc_index_id"
+  echo "ckETH_index id: $cketh_index_id"
+  echo "ckUSDC_index id: $ckusdc_index_id"
 
   echo "cashier_backend url: http://$cashier_backend_id.raw.localhost:$dfx_webserver_port"
   echo "token_storage url: http://$token_storage_id.raw.localhost:$dfx_webserver_port"
@@ -89,7 +125,7 @@ dfx_local_airdrop target_principal:
         fee = null
   })" 
   just dfx_local_airdrop_token {{target_principal}} mxzaz-hqaaa-aaaar-qaada-cai 1000000
-  just dfx_local_airdrop_token {{target_principal}} ss2fx-dyaaa-aaaar-qacoq-cai 1000000000000000
+  just dfx_local_airdrop_token {{target_principal}} ss2fx-dyaaa-aaaar-qacoq-cai 100000000000000000
   just dfx_local_airdrop_token {{target_principal}} xevnm-gaaaa-aaaar-qafnq-cai 10000000000
   just dfx_local_airdrop_token {{target_principal}} x5qut-viaaa-aaaar-qajda-cai 10000000000
 
@@ -111,13 +147,29 @@ create_canisters network cycles:
   dfx canister --network={{network}} create --with-cycles={{cycles}} --all
 
 
+# Deploys the backend canister
+# params owner: principal id of the owner
+# network: dfx network flag, e.g. --network=dev
+# log_filter: log filter string (default for local and dev)
 [private]
-dfx_local_deploy_token_storage owner:
+dfx_deploy_backend owner network="" log_filter="global,cashier=debug":
+  #!/usr/bin/env bash
+  dfx deploy cashier_backend --argument "(record {
+      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"{{log_filter}}\"; };
+      owner=principal \"{{owner}}\";
+  })" {{network}}
+
+# Deploys the token_storage canister
+# params owner: principal id of the owner
+# network: dfx network flag, e.g. --network=dev
+# log_filter: log filter string (default for local and dev)
+[private]
+dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token_storage=debug":
   #!/usr/bin/env bash
   set -e
 
   dfx deploy token_storage --argument "(record {
-      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug,token_storage=debug\"; };
+      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"{{log_filter}}\"; };
       owner=principal \"{{owner}}\";
       tokens = opt vec {
         record {
@@ -168,19 +220,8 @@ dfx_local_deploy_token_storage owner:
           decimals = 8;
           enabled_by_default = true;
         };
-        record {
-          details = variant { IC = record {
-              ledger_id = principal \"x5qut-viaaa-aaaar-qajda-cai\";
-              fee = 10_000 : nat;
-            }
-          };
-          symbol = \"tICP\";
-          name = \"Test Internet Computer\";
-          decimals = 8;
-          enabled_by_default = true;
-        };
       };
-  })"
+  })" {{network}}
 
 
 [private]
@@ -240,6 +281,27 @@ dfx_local_deploy_icp_ledger:
     }
   })
   "
+
+
+[private]
+dfx_local_deploy_icp_index:
+  #!/usr/bin/env bash
+  set -e
+
+  dfx deploy icp_index --argument "(record {
+    ledger_id = principal \"ryjl3-tyaaa-aaaaa-aaaba-cai\";
+  })" --specified-id qhbym-qaaaa-aaaaa-aaafq-cai
+
+
+[private]
+dfx_local_deploy_icrc_index canister_name ledger_id index_id:
+  #!/usr/bin/env bash
+  set -e
+
+  dfx deploy {{canister_name}} --argument "(opt variant { Init = record {
+    ledger_id = principal \"{{ledger_id}}\";
+    retrieve_blocks_from_ledger_interval_seconds = opt 10;
+  } })" --specified-id {{index_id}}
 
 
 [private]
