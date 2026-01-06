@@ -3,7 +3,7 @@ use cashier_common::build_data::BuildData;
 use ic_mple_client::{CanisterClient, CanisterClientResult};
 use token_storage_types::{
     auth::Permission,
-    error::TokenStorageError,
+    error::CanisterError,
     token::{AddTokenInput, TokenListResponse, UpdateTokenInput},
 };
 
@@ -41,7 +41,7 @@ impl<C: CanisterClient> TokenStorageClient<C> {
         &self,
         principal: Principal,
         permissions: Vec<Permission>,
-    ) -> CanisterClientResult<Result<Vec<Permission>, TokenStorageError>> {
+    ) -> CanisterClientResult<Result<Vec<Permission>, CanisterError>> {
         self.client
             .update("admin_permissions_add", (principal, permissions))
             .await
@@ -52,7 +52,7 @@ impl<C: CanisterClient> TokenStorageClient<C> {
         &self,
         principal: Principal,
         permissions: Vec<Permission>,
-    ) -> CanisterClientResult<Result<Vec<Permission>, TokenStorageError>> {
+    ) -> CanisterClientResult<Result<Vec<Permission>, CanisterError>> {
         self.client
             .update("admin_permissions_remove", (principal, permissions))
             .await
@@ -62,7 +62,7 @@ impl<C: CanisterClient> TokenStorageClient<C> {
     pub async fn admin_inspect_message_enable(
         &self,
         inspect_message_enabled: bool,
-    ) -> CanisterClientResult<Result<(), TokenStorageError>> {
+    ) -> CanisterClientResult<Result<(), CanisterError>> {
         self.client
             .update("admin_inspect_message_enable", (inspect_message_enabled,))
             .await
