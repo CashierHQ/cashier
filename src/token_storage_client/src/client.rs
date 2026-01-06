@@ -3,6 +3,7 @@ use cashier_common::build_data::BuildData;
 use ic_mple_client::{CanisterClient, CanisterClientResult};
 use token_storage_types::{
     auth::Permission,
+    dto::nft::{AddUserNftInput, GetUserNftInput, NftDto, UserNftDto},
     error::CanisterError,
     token::{AddTokenInput, TokenListResponse, UpdateTokenInput},
 };
@@ -99,5 +100,26 @@ impl<C: CanisterClient> TokenStorageClient<C> {
         input: AddTokenInput,
     ) -> CanisterClientResult<Result<(), String>> {
         self.client.update("user_add_token", (input,)).await
+    }
+
+    /// Adds a new NFT to the user's collection
+    /// # Arguments
+    /// * `input` - The input containing the NFT to be added
+    /// # Returns
+    /// * `UserNftDto` - The added NFT with user information, or a CanisterError
+    pub async fn user_add_nft(
+        &self,
+        input: AddUserNftInput,
+    ) -> CanisterClientResult<Result<UserNftDto, CanisterError>> {
+        self.client.update("user_add_nft", (input,)).await
+    }
+
+    /// Retrieves the NFTs owned by the calling user
+    /// # Arguments
+    /// * `input` - The input containing pagination parameters
+    /// # Returns
+    /// * `Vec<NftDto>` - List of NFTs owned by the user
+    pub async fn user_get_nfts(&self, input: GetUserNftInput) -> CanisterClientResult<Vec<NftDto>> {
+        self.client.query("user_get_nfts", (input,)).await
     }
 }
