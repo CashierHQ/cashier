@@ -22,9 +22,9 @@
     context.isLoading({ checkTempLinkLoad: true }),
   );
 
-  const hasLink = $derived(() => context.hasLink());
+  const hasLink = $derived.by(() => context.hasLink());
 
-  const link = $derived(() => context.getLink());
+  const link = $derived.by(() => context.getLink());
 
   const isLinkInactive = $derived(
     link?.state === LinkState.INACTIVE ||

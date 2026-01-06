@@ -37,7 +37,7 @@
       : false,
   );
 
-  const link = $derived(() => context.getLink());
+  const link = $derived.by(() => context.getLink());
 
   const isLinkInactive = $derived(
     link?.state === LinkState.INACTIVE ||
