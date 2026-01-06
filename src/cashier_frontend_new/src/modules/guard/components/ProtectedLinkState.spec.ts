@@ -141,7 +141,8 @@ describe("ProtectedLinkState Guard Logic", () => {
       // Transfer Pending should always be allowed, even if not in allowedStates
       const currentStep = mockContext.linkCreationStore?.state.step;
       const isTransferPending = currentStep === LinkStep.CREATED;
-      const isStateValid = isTransferPending || allowedStates.includes(currentStep as LinkStep);
+      const isStateValid =
+        isTransferPending || allowedStates.includes(currentStep as LinkStep);
 
       expect(isStateValid).toBe(true);
       expect(goto).not.toHaveBeenCalled();
@@ -177,7 +178,11 @@ describe("ProtectedLinkState Guard Logic", () => {
       const isTransferPending =
         mockContext.linkDetailStore?.link?.state === "CREATE_LINK" &&
         mockContext.linkDetailStore?.state.step === LinkStep.CREATED;
-      const isStateValid = isTransferPending || allowedStates.includes(mockContext.linkDetailStore?.state.step as LinkStep);
+      const isStateValid =
+        isTransferPending ||
+        allowedStates.includes(
+          mockContext.linkDetailStore?.state.step as LinkStep,
+        );
 
       expect(isStateValid).toBe(true);
       expect(goto).not.toHaveBeenCalled();
@@ -220,7 +225,9 @@ describe("ProtectedLinkState Guard Logic", () => {
         state: { step: LinkStep.ACTIVE },
       } as any;
 
-      const currentStep = mockContext.linkDetailStore?.link ? mockContext.linkDetailStore?.state.step : null;
+      const currentStep = mockContext.linkDetailStore?.link
+        ? mockContext.linkDetailStore?.state.step
+        : null;
       const shouldRedirect = currentStep !== null && false; // isStateValid would be false
 
       expect(currentStep).toBe(null);
