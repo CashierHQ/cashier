@@ -1,5 +1,5 @@
 import { UserLinkStep } from "$modules/links/types/userLinkStep";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { UserLinkStore } from "../userLinkStore.svelte";
 import { AddressUnlockedState } from "./addressUnlocked";
 import { LandingState } from "./landing";
@@ -12,8 +12,12 @@ describe("LandingState", () => {
     // Create a mock store with minimal required properties
     mockStore = {
       state: null,
+      link: { id: "test-link-id", state: "active" },
       linkDetail: {
         id: "test-link-id",
+        query: {
+          refresh: vi.fn().mockResolvedValue(undefined),
+        },
       },
     } as unknown as UserLinkStore;
 
