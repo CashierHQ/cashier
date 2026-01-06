@@ -4,6 +4,8 @@
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
   import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+  import { detailLinkService } from "$modules/detailLink/services/detailLink";
+  import { LinkState } from "$modules/links/types/link/linkState";
 
   let {
     linkId,
@@ -34,10 +36,33 @@
         context.setLinkCreationStore(
           new LinkCreationStore(tempLinkResult.value),
         );
+        context.setHasTempLinkLoadAttempted(true);
       } else {
-        context.linkCreationStore = null;
+        // Temp link not found - might be Transfer Pending (temp link was deleted)
+        // Try to load from backend
+        void (async () => {
+          try {
+            const linkDetail = await detailLinkService.fetchLinkDetail({
+              id: tempLinkId,
+              anonymous: !context.authState.isLoggedIn,
+            });
+            if (
+              linkDetail.isOk() &&
+              linkDetail.value.link.state === LinkState.CREATE_LINK
+            ) {
+              // It's Transfer Pending - create LinkDetailStore
+              context.setLinkDetailStore(
+                new LinkDetailStore({ id: tempLinkId }),
+              );
+            }
+          } catch (e) {
+            // Link doesn't exist in backend either
+            console.error("Link not found in backend:", e);
+          } finally {
+            context.setHasTempLinkLoadAttempted(true);
+          }
+        })();
       }
-      context.setHasTempLinkLoadAttempted(true);
     } else if (!tempLinkId) {
       context.setHasTempLinkLoadAttempted(true);
     }

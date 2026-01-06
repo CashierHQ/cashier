@@ -7,6 +7,7 @@
     UnifiedLinkItem,
   } from "$modules/links/types/linkList";
   import { formatDate } from "$modules/shared/utils/formatDate";
+  import { LinkState } from "$modules/links/types/link/linkState";
 
   const {
     groupedLinks,
@@ -15,9 +16,14 @@
   } = $props();
 
   function handleLinkClick(link: UnifiedLinkItem) {
-    if (link.isCreated) {
+    // If link is in CREATE_LINK state (Transfer Pending), show creation page
+    if (link.state === LinkState.CREATE_LINK) {
+      goto(resolve(`/link/create/${link.id}`));
+    } else if (link.isCreated) {
+      // If link is created and not in CREATE_LINK state, show detail page
       goto(resolve(`/link/detail/${link.id}`));
     } else {
+      // Otherwise, show creation page (for temp links)
       goto(resolve(`/link/create/${link.id}`));
     }
   }

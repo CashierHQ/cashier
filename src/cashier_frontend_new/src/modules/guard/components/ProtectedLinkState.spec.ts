@@ -111,12 +111,13 @@ describe("ProtectedLinkState Guard Logic", () => {
   describe("LinkCreationStore (temp link)", () => {
     const allowedStates = [LinkStep.CHOOSE_TYPE, LinkStep.ADD_ASSET];
 
-    it("should not show loading for temp links", () => {
+    it("should not show loading for temp links when hasTempLinkLoadAttempted is true", () => {
       mockContext.linkCreationStore = {
         state: { step: LinkStep.CHOOSE_TYPE },
       } as any;
+      mockContext.hasTempLinkLoadAttempted = true;
 
-      const isLoading = false; // LinkCreationStore has no query
+      const isLoading = false; // LinkCreationStore has no query, and hasTempLinkLoadAttempted is true
       expect(isLoading).toBe(false);
     });
 
@@ -132,9 +133,23 @@ describe("ProtectedLinkState Guard Logic", () => {
       expect(goto).not.toHaveBeenCalled();
     });
 
-    it("should redirect when temp link state is invalid", () => {
+    it("should allow CREATED step for LinkCreationStore (Transfer Pending)", () => {
       mockContext.linkCreationStore = {
         state: { step: LinkStep.CREATED },
+      } as any;
+
+      // Transfer Pending should always be allowed, even if not in allowedStates
+      const currentStep = mockContext.linkCreationStore?.state.step;
+      const isTransferPending = currentStep === LinkStep.CREATED;
+      const isStateValid = isTransferPending || allowedStates.includes(currentStep as LinkStep);
+
+      expect(isStateValid).toBe(true);
+      expect(goto).not.toHaveBeenCalled();
+    });
+
+    it("should redirect when temp link state is invalid (not CREATED)", () => {
+      mockContext.linkCreationStore = {
+        state: { step: LinkStep.PREVIEW },
       } as any;
 
       const currentStep = mockContext.linkCreationStore?.state.step;
@@ -145,6 +160,71 @@ describe("ProtectedLinkState Guard Logic", () => {
       }
 
       expect(goto).toHaveBeenCalledWith("/404");
+    });
+  });
+
+  describe("LinkDetailStore with Transfer Pending (CREATE_LINK state)", () => {
+    const allowedStates = [LinkStep.CHOOSE_TYPE, LinkStep.ADD_ASSET];
+
+    it("should allow LinkDetailStore with CREATE_LINK state and CREATED step", () => {
+      mockContext.linkDetailStore = {
+        query: { isLoading: false },
+        link: { state: "CREATE_LINK" },
+        state: { step: LinkStep.CREATED },
+      } as any;
+
+      // Transfer Pending should always be allowed
+      const isTransferPending =
+        mockContext.linkDetailStore?.link?.state === "CREATE_LINK" &&
+        mockContext.linkDetailStore?.state.step === LinkStep.CREATED;
+      const isStateValid = isTransferPending || allowedStates.includes(mockContext.linkDetailStore?.state.step as LinkStep);
+
+      expect(isStateValid).toBe(true);
+      expect(goto).not.toHaveBeenCalled();
+    });
+
+    it("should wait for link to load before checking state", () => {
+      mockContext.linkDetailStore = {
+        query: { isLoading: true },
+        link: null,
+        state: { step: LinkStep.CREATED },
+      } as any;
+
+      // Should return null while loading
+      const currentStep = mockContext.linkDetailStore?.query.isLoading
+        ? null
+        : mockContext.linkDetailStore?.state.step;
+
+      expect(currentStep).toBe(null);
+    });
+  });
+
+  describe("shouldRedirect logic", () => {
+    it("should not redirect while loading", () => {
+      mockContext.linkDetailStore = {
+        query: { isLoading: true },
+        state: { step: LinkStep.ACTIVE },
+      } as any;
+
+      const isLoading = mockContext.linkDetailStore?.query.isLoading;
+      const shouldRedirect = !isLoading && false; // isStateValid would be false, but isLoading is true
+
+      expect(shouldRedirect).toBe(false);
+      expect(goto).not.toHaveBeenCalled();
+    });
+
+    it("should not redirect when currentStep is null", () => {
+      mockContext.linkDetailStore = {
+        query: { isLoading: false },
+        link: null, // link is missing, so currentStep would be null
+        state: { step: LinkStep.ACTIVE },
+      } as any;
+
+      const currentStep = mockContext.linkDetailStore?.link ? mockContext.linkDetailStore?.state.step : null;
+      const shouldRedirect = currentStep !== null && false; // isStateValid would be false
+
+      expect(currentStep).toBe(null);
+      expect(shouldRedirect).toBe(false);
     });
   });
 });

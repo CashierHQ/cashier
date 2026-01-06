@@ -14,10 +14,15 @@
   const {
     link,
   }: {
-    link: LinkCreationStore;
+    link: LinkCreationStore | LinkDetailStore;
   } = $props();
 
-  let linkDetailStore = $state<LinkDetailStore | null>(null);
+  // Check if link is LinkDetailStore (for Transfer Pending)
+  const isLinkDetailStore = link instanceof LinkDetailStore;
+
+  let linkDetailStore = $state<LinkDetailStore | null>(
+    isLinkDetailStore ? (link as LinkDetailStore) : null,
+  );
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let showTxCart: boolean = $state(false);
@@ -46,16 +51,36 @@
     ) {
       goto(resolve(`/link/detail/${linkDetailStore.id}?created=true`));
     }
+
+    // Auto-open modal for Transfer Pending (CREATE_LINK) links
+    if (
+      linkDetailStore &&
+      linkDetailStore.link &&
+      linkDetailStore.link.state === LinkState.CREATE_LINK &&
+      linkDetailStore.action &&
+      !linkDetailStore.query.isLoading
+    ) {
+      showTxCart = true;
+    }
   });
 
   onMount(() => {
-    // Initialize LinkDetailStore with the created link ID
-    if (link.id) {
-      linkDetailStore = new LinkDetailStore({ id: link.id });
-    }
+    // If link is LinkDetailStore, use it directly
+    if (isLinkDetailStore) {
+      linkDetailStore = link as LinkDetailStore;
+    } else {
+      // Initialize LinkDetailStore with the created link ID from LinkCreationStore
+      const linkCreationStore = link as LinkCreationStore;
+      if (linkCreationStore.id) {
+        linkDetailStore = new LinkDetailStore({ id: linkCreationStore.id });
+      }
 
-    if (link.action && link.action.state !== ActionState.SUCCESS) {
-      showTxCart = true;
+      if (
+        linkCreationStore.action &&
+        linkCreationStore.action.state !== ActionState.SUCCESS
+      ) {
+        showTxCart = true;
+      }
     }
   });
 </script>

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
+  import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import {
     getLinkTypeText,
     isSendLinkType,
@@ -22,49 +23,102 @@
     errorMessage,
     successMessage,
   }: {
-    link: LinkCreationStore;
+    link: LinkCreationStore | LinkDetailStore;
     errorMessage: string | null;
     successMessage: string | null;
   } = $props();
 
+  // Check if link is LinkDetailStore
+  const isLinkDetailStore = link instanceof LinkDetailStore;
+
+  // Get link type from appropriate source
+  const linkType = $derived.by(() => {
+    if (isLinkDetailStore) {
+      return (link as LinkDetailStore).link?.link_type;
+    } else {
+      return (link as LinkCreationStore).createLinkData.linkType;
+    }
+  });
+
   // Check if link type is send type (TIP, AIRDROP, TOKEN_BASKET)
   const isSendLink = $derived.by(() => {
-    return isSendLinkType(link.createLinkData.linkType);
+    if (!linkType) return false;
+    return isSendLinkType(linkType);
   });
 
   // Check if link type is receive link
   const isPaymentLink = $derived.by(() => {
-    return isPaymentLinkType(link.createLinkData.linkType);
+    if (!linkType) return false;
+    return isPaymentLinkType(linkType);
   });
 
   // Get link type text
   const linkTypeText = $derived.by(() => {
-    return getLinkTypeText(link.createLinkData.linkType);
+    if (!linkType) return "";
+    return getLinkTypeText(linkType);
   });
 
   // Get assets with token info
   const assetsWithTokenInfo = $derived.by(() => {
-    if (
-      !link.createLinkData.assets ||
-      link.createLinkData.assets.length === 0
-    ) {
-      return [];
+    if (isLinkDetailStore) {
+      const linkDetailStore = link as LinkDetailStore;
+      if (
+        !linkDetailStore.link?.asset_info ||
+        linkDetailStore.link.asset_info.length === 0
+      ) {
+        return [];
+      }
+
+      const assets = linkDetailStore.link.asset_info
+        .map((assetInfo) => {
+          const assetAddress = assetInfo.asset.address?.toString();
+          if (!assetAddress) return null;
+          return {
+            address: assetAddress,
+            amount: assetInfo.amount_per_link_use_action,
+          };
+        })
+        .filter(
+          (item): item is { address: string; amount: bigint } => item !== null,
+        );
+
+      return calculateAssetsWithTokenInfo(
+        assets,
+        walletStore.findTokenByAddress.bind(walletStore),
+      );
+    } else {
+      const linkCreationStore = link as LinkCreationStore;
+      if (
+        !linkCreationStore.createLinkData.assets ||
+        linkCreationStore.createLinkData.assets.length === 0
+      ) {
+        return [];
+      }
+
+      const assets = linkCreationStore.createLinkData.assets.map((asset) => ({
+        address: asset.address,
+        amount: asset.useAmount,
+      }));
+
+      return calculateAssetsWithTokenInfo(
+        assets,
+        walletStore.findTokenByAddress.bind(walletStore),
+      );
     }
-
-    const assets = link.createLinkData.assets.map((asset) => ({
-      address: asset.address,
-      amount: asset.useAmount,
-    }));
-
-    return calculateAssetsWithTokenInfo(
-      assets,
-      walletStore.findTokenByAddress.bind(walletStore),
-    );
   });
 
   // Forecast link creation fees for preview
   const forecastLinkCreationFees: ForecastAssetAndFee[] = $derived.by(() => {
-    if (!link.createLinkData.assets || link.createLinkData.assets.length === 0)
+    if (isLinkDetailStore) {
+      // For LinkDetailStore, we don't forecast fees (link is already created)
+      return [];
+    }
+
+    const linkCreationStore = link as LinkCreationStore;
+    if (
+      !linkCreationStore.createLinkData.assets ||
+      linkCreationStore.createLinkData.assets.length === 0
+    )
       return [];
 
     const tokens = Object.fromEntries(
@@ -72,8 +126,8 @@
     );
 
     return feeService.forecastLinkCreationFees(
-      link.createLinkData.assets,
-      link.createLinkData.maxUse,
+      linkCreationStore.createLinkData.assets,
+      linkCreationStore.createLinkData.maxUse,
       tokens,
     );
   });
@@ -128,7 +182,9 @@
     onImageError={handleImageError}
     {isPaymentLink}
     {isSendLink}
-    maxUse={link.createLinkData.maxUse}
+    maxUse={isLinkDetailStore
+      ? Number((link as LinkDetailStore).link?.link_use_action_max_count ?? 1n)
+      : (link as LinkCreationStore).createLinkData.maxUse}
   />
 
   <!-- Block 2: Transaction Lock -->
