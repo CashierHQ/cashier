@@ -3,6 +3,7 @@ use std::{cell::RefCell, thread::LocalKey};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 
 use crate::{
+    icrc7::ic_icrc7_validator::{self, ICIcrc7Validator},
     repository::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
     services::{
         auth::{AuthService, AuthServiceStorage},
@@ -22,13 +23,15 @@ pub struct CanisterState {
     pub token_registry: TokenRegistryService<ThreadlocalRepositories>,
     pub user_preference: UserPreferenceService<ThreadlocalRepositories>,
     pub user_token: UserTokenService<ThreadlocalRepositories>,
-    pub user_nft: UserNftService<ThreadlocalRepositories>,
+    pub user_nft: UserNftService<ThreadlocalRepositories, ICIcrc7Validator>,
 }
 
 impl CanisterState {
     /// Creates a new CanisterState
     pub fn new() -> Self {
         let repo = ThreadlocalRepositories;
+        let ic_icrc7_validator = ICIcrc7Validator;
+
         CanisterState {
             auth_service: AuthService::new(&AUTH_SERVICE_STORE),
             log_service: LoggerConfigService::new(&LOGGER_SERVICE_STORE),
@@ -36,7 +39,7 @@ impl CanisterState {
             token_registry: TokenRegistryService::new(&repo),
             user_preference: UserPreferenceService::new(&repo),
             user_token: UserTokenService::new(&repo),
-            user_nft: UserNftService::new(&repo),
+            user_nft: UserNftService::new(&repo, ic_icrc7_validator),
         }
     }
 }

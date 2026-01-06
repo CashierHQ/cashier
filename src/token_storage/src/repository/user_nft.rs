@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::Principal;
+use candid::{Nat, Principal};
 use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
 use ic_mple_utils::store::Storage;
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
@@ -78,7 +78,7 @@ mod tests {
         let user_id = random_principal_id();
         let nft = Nft {
             collection_id: random_principal_id(),
-            token_id: random_id_string(),
+            token_id: Nat::from(0u32),
         };
 
         // Act
@@ -95,10 +95,10 @@ mod tests {
         // Arrange
         let mut repo = TestRepositories::new().user_nft();
         let user_id = random_principal_id();
-        for _ in 0..10 {
+        for i in 0..10 {
             let nft = Nft {
                 collection_id: random_principal_id(),
-                token_id: random_id_string(),
+                token_id: Nat::from(i as u32),
             };
             repo.add_nft(user_id, nft).unwrap();
         }

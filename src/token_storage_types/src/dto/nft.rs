@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::nft::Nft;
-use candid::{CandidType, Principal};
+use candid::{CandidType, Nat, Principal};
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -19,7 +19,7 @@ pub struct UserNftDto {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct NftDto {
     pub collection_id: Principal,
-    pub token_id: String,
+    pub token_id: Nat,
 }
 
 impl From<Nft> for NftDto {

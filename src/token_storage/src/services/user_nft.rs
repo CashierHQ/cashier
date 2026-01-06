@@ -1,23 +1,26 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::Principal;
+use candid::{Nat, Principal};
 use token_storage_types::{
     dto::nft::{NftDto, UserNftDto},
     error::CanisterError,
     nft::Nft,
 };
 
+use crate::icrc7::traits::Icrc7ValidatorTrait;
 use crate::repository::{Repositories, user_nft::UserNftRepository};
 
-pub struct UserNftService<R: Repositories> {
-    user_nft_repository: UserNftRepository<R::UserNft>,
+pub struct UserNftService<R: Repositories, V: Icrc7ValidatorTrait> {
+    pub user_nft_repository: UserNftRepository<R::UserNft>,
+    pub icrc7_validator: V,
 }
 
-impl<R: Repositories> UserNftService<R> {
-    pub fn new(repo: &R) -> Self {
+impl<R: Repositories, V: Icrc7ValidatorTrait> UserNftService<R, V> {
+    pub fn new(repo: &R, icrc7_validator: V) -> Self {
         Self {
             user_nft_repository: repo.user_nft(),
+            icrc7_validator,
         }
     }
 
@@ -27,7 +30,22 @@ impl<R: Repositories> UserNftService<R> {
     /// * `nft` - The NFT to add
     /// # Returns
     /// * `Result<(), String>` - Ok if successful, Err with message if failed
-    pub fn add_nft(&mut self, user_id: Principal, nft: Nft) -> Result<UserNftDto, CanisterError> {
+    pub async fn add_nft(
+        &mut self,
+        user_id: Principal,
+        nft: Nft,
+    ) -> Result<UserNftDto, CanisterError> {
+        let is_owner = self
+            .icrc7_validator
+            .validate_owner_of(&user_id, &nft.collection_id, &nft.token_id)
+            .await?;
+
+        if !is_owner {
+            return Err(CanisterError::ValidationErrors(
+                "User is not the owner of the specified NFT".to_string(),
+            ));
+        }
+
         self.user_nft_repository
             .add_nft(user_id, nft.clone())
             .map_err(CanisterError::StorageError)?;
@@ -56,26 +74,28 @@ impl<R: Repositories> UserNftService<R> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repository::{Repositories, tests::TestRepositories};
+    use crate::icrc7::ic_icrc7_validator::tests::MockIcrc7Validator;
+    use crate::repository::tests::TestRepositories;
     use cashier_common::test_utils::{random_id_string, random_principal_id};
 
-    fn user_nft_service_fixture() -> UserNftService<TestRepositories> {
+    fn user_nft_service_fixture() -> UserNftService<TestRepositories, MockIcrc7Validator> {
         let repo = TestRepositories::new();
-        UserNftService::new(&repo)
+        let validator = MockIcrc7Validator::new();
+        UserNftService::new(&repo, validator)
     }
 
-    #[test]
-    fn it_should_add_and_get_nft() {
+    #[tokio::test]
+    async fn it_should_add_and_get_nft() {
         // Arrange
         let mut service = user_nft_service_fixture();
         let user_id = random_principal_id();
         let nft = Nft {
             collection_id: random_principal_id(),
-            token_id: random_id_string(),
+            token_id: Nat::from(0u32),
         };
 
         // Act
-        service.add_nft(user_id, nft.clone()).unwrap();
+        service.add_nft(user_id, nft.clone()).await.unwrap();
 
         // Assert
         let nfts = service.get_nfts(&user_id, None, None);
@@ -83,17 +103,17 @@ mod tests {
         assert_eq!(nfts[0], NftDto::from(nft));
     }
 
-    #[test]
-    fn it_should_get_nfts_with_pagination() {
+    #[tokio::test]
+    async fn it_should_get_nfts_with_pagination() {
         // Arrange
         let mut service = user_nft_service_fixture();
         let user_id = random_principal_id();
         for _ in 0..10 {
             let nft = Nft {
                 collection_id: random_principal_id(),
-                token_id: random_id_string(),
+                token_id: Nat::from(0u32),
             };
-            service.add_nft(user_id, nft).unwrap();
+            service.add_nft(user_id, nft).await.unwrap();
         }
 
         // Act
