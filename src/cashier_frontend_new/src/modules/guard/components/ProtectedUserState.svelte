@@ -50,7 +50,10 @@
 
   const shouldRedirect = $derived(
     (userLinkStore && !isLoading && !isStateValid) ||
-      (userLinkStore && !isLoading && isLinkInactive && currentStep !== UserLinkStep.LANDING),
+      (userLinkStore &&
+        !isLoading &&
+        isLinkInactive &&
+        currentStep !== UserLinkStep.LANDING),
   );
 
   $effect(() => {
