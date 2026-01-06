@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import { page } from "$app/state";
   import type { Snippet } from "svelte";
   import { getGuardContext } from "../context.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
@@ -92,6 +93,20 @@
     // Don't redirect if currentStep is null (still determining state)
     const step = currentStep;
     if (step === null) return false;
+
+    // Special case: If link becomes ACTIVE on create page (Transfer Pending),
+    // don't redirect to 404 - let the component handle the redirect to detail page
+    const isCreatePage = page.url.pathname.startsWith("/link/create/");
+    if (
+      isCreatePage &&
+      step === LinkStep.ACTIVE &&
+      linkStore === context.linkDetailStore &&
+      context.linkDetailStore?.link?.state === LinkState.ACTIVE
+    ) {
+      // This is Transfer Pending case where link just became ACTIVE on create page
+      // Give component time to handle redirect (don't redirect to 404)
+      return false;
+    }
 
     // Only redirect if state is invalid
     const valid = isStateValid;

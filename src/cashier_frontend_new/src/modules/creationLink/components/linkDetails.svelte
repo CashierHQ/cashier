@@ -17,6 +17,8 @@
   import { locale } from "$lib/i18n";
   import { formatFeeAmount } from "$modules/shared/utils/formatNumber";
   import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
+  import { CreateLinkAsset } from "../types/createLinkData";
+  import { LinkState } from "$modules/links/types/link/linkState";
 
   const {
     link,
@@ -110,8 +112,44 @@
   // Forecast link creation fees for preview
   const forecastLinkCreationFees: ForecastAssetAndFee[] = $derived.by(() => {
     if (isLinkDetailStore) {
-      // For LinkDetailStore, we don't forecast fees (link is already created)
-      return [];
+      // For LinkDetailStore with CREATE_LINK state, forecast fees from asset_info
+      const linkDetailStore = link as LinkDetailStore;
+      if (
+        !linkDetailStore.link ||
+        linkDetailStore.link.state !== LinkState.CREATE_LINK ||
+        !linkDetailStore.link.asset_info ||
+        linkDetailStore.link.asset_info.length === 0
+      ) {
+        return [];
+      }
+
+      // Convert asset_info to CreateLinkAsset format
+      const createLinkAssets = linkDetailStore.link.asset_info
+        .map((assetInfo) => {
+          const assetAddress = assetInfo.asset.address?.toString();
+          if (!assetAddress) return null;
+          return new CreateLinkAsset(
+            assetAddress,
+            assetInfo.amount_per_link_use_action,
+          );
+        })
+        .filter((item): item is CreateLinkAsset => item !== null);
+
+      if (createLinkAssets.length === 0) return [];
+
+      const tokens = Object.fromEntries(
+        (walletStore.query.data ?? []).map((t) => [t.address, t]),
+      );
+
+      const maxUse = Number(
+        linkDetailStore.link.link_use_action_max_count ?? 1n,
+      );
+
+      return feeService.forecastLinkCreationFees(
+        createLinkAssets,
+        maxUse,
+        tokens,
+      );
     }
 
     const linkCreationStore = link as LinkCreationStore;

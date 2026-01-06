@@ -39,17 +39,40 @@
     if (!linkDetailStore) {
       throw new Error("LinkDetailStore is not initialized");
     }
-    return await linkDetailStore.processAction();
+    const result = await linkDetailStore.processAction();
+
+    // After successful processAction for CREATE_LINK, the link becomes ACTIVE
+    // We can redirect immediately - the new page will load the correct state
+    if (result.isSuccess) {
+      const linkId = linkDetailStore.id;
+      // Redirect immediately after successful processAction
+      // The link is now ACTIVE on the backend, even if refresh() hasn't completed yet
+      goto(resolve(`/link/detail/${linkId}?created=true`), {
+        invalidateAll: true,
+      });
+    }
+
+    return result;
   }
 
   $effect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
     // Redirect to detail page if the link is active
     if (
       linkDetailStore &&
       linkDetailStore.link &&
-      linkDetailStore.link.state === LinkState.ACTIVE
+      linkDetailStore.link.state === LinkState.ACTIVE &&
+      !linkDetailStore.query.isLoading
     ) {
-      goto(resolve(`/link/detail/${linkDetailStore.id}?created=true`));
+      const linkId = linkDetailStore.id;
+      // Use setTimeout to ensure the redirect happens after state updates
+      // and before ProtectedLinkState checks the state
+      timeoutId = setTimeout(() => {
+        goto(resolve(`/link/detail/${linkId}?created=true`), {
+          invalidateAll: true,
+        });
+      }, 100);
     }
 
     // Auto-open modal for Transfer Pending (CREATE_LINK) links
@@ -62,6 +85,12 @@
     ) {
       showTxCart = true;
     }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
   });
 
   onMount(() => {
