@@ -8,7 +8,7 @@ use token_storage_types::icrc7::{
     BuildVersion, CanisterLifecycleArgs, InitApprovalsArg, InitArgs, Permission, PermissionManager,
 };
 
-use crate::utils::{TestUser, deploy_canister_with_id, load_canister_bytecode};
+use crate::utils::{deploy_canister_with_id, load_canister_bytecode, principal::TestUser};
 
 /// Deploys an ICRC7 NFT canister with the specified parameters.
 /// # Arguments
