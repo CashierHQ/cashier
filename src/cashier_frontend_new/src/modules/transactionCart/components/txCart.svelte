@@ -31,7 +31,11 @@
     isProcessing?: boolean;
   } = $props();
 
-  const txCartStore = new TransactionCartStore(action, handleProcessAction);
+  const txCartStore = new TransactionCartStore({
+    type: "action",
+    action,
+    handleProcessAction,
+  });
 
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
@@ -116,7 +120,7 @@
     successMessage = null;
 
     try {
-      const processActionResult = await txCartStore.processAction();
+      const processActionResult = await txCartStore.execute();
       if (processActionResult.isSuccess) {
         successMessage = locale.t(
           "links.linkForm.drawers.txCart.successMessage",

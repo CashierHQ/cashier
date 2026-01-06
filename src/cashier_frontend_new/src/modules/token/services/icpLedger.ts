@@ -16,7 +16,7 @@ if (typeof window !== "undefined" && !window.Buffer) {
 /**
  * Service for interacting with ICP Ledger canister for a specific token
  */
-class IcpLedgerService {
+export class IcpLedgerService {
   #canisterId: string;
   #fee: bigint;
 
