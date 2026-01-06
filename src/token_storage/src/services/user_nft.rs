@@ -76,7 +76,7 @@ mod tests {
     use super::*;
     use crate::icrc7::ic_icrc7_validator::tests::MockIcrc7Validator;
     use crate::repository::tests::TestRepositories;
-    use cashier_common::test_utils::{random_id_string, random_principal_id};
+    use cashier_common::test_utils::random_principal_id;
 
     fn user_nft_service_fixture() -> UserNftService<TestRepositories, MockIcrc7Validator> {
         let repo = TestRepositories::new();
@@ -85,7 +85,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn it_should_add_and_get_nft() {
+    async fn it_should_fail_add_nft_due_to_no_ownership() {
         // Arrange
         let mut service = user_nft_service_fixture();
         let user_id = random_principal_id();
@@ -95,12 +95,62 @@ mod tests {
         };
 
         // Act
-        service.add_nft(user_id, nft.clone()).await.unwrap();
+        let result = service.add_nft(user_id, nft.clone()).await;
 
         // Assert
+        assert!(result.is_err());
+        match result {
+            Err(CanisterError::ValidationErrors(msg)) => {
+                assert_eq!(msg, "User is not the owner of the specified NFT");
+            }
+            _ => panic!("Expected ValidationErrors"),
+        }
+    }
+
+    #[tokio::test]
+    async fn it_should_add_nft_successfully() {
+        // Arrange
+        let mut service = user_nft_service_fixture();
+        let user_id = random_principal_id();
+        let nft = Nft {
+            collection_id: random_principal_id(),
+            token_id: Nat::from(0u32),
+        };
+        service
+            .icrc7_validator
+            .set_ownership(&nft.collection_id, &nft.token_id, user_id);
+
+        // Act
+        let result = service.add_nft(user_id, nft.clone()).await;
+
+        // Assert
+        assert!(result.is_ok());
+        let user_nft_dto = result.unwrap();
+        assert_eq!(user_nft_dto.user, user_id);
+        assert_eq!(user_nft_dto.nft, nft);
+    }
+
+    #[tokio::test]
+    async fn it_should_get_nfts_for_user() {
+        // Arrange
+        let mut service = user_nft_service_fixture();
+        let user_id = random_principal_id();
+        let nft = Nft {
+            collection_id: random_principal_id(),
+            token_id: Nat::from(0u32),
+        };
+        service
+            .icrc7_validator
+            .set_ownership(&nft.collection_id, &nft.token_id, user_id);
+        let _ = service.add_nft(user_id, nft.clone()).await;
+
+        // Act
         let nfts = service.get_nfts(&user_id, None, None);
+
+        // Assert
         assert_eq!(nfts.len(), 1);
-        assert_eq!(nfts[0], NftDto::from(nft));
+        assert_eq!(nfts[0].collection_id, nft.collection_id);
+        assert_eq!(nfts[0].token_id, nft.token_id);
     }
 
     #[tokio::test]
@@ -108,12 +158,18 @@ mod tests {
         // Arrange
         let mut service = user_nft_service_fixture();
         let user_id = random_principal_id();
-        for _ in 0..10 {
+        let collection_id = random_principal_id();
+
+        for i in 0..10 {
             let nft = Nft {
-                collection_id: random_principal_id(),
-                token_id: Nat::from(0u32),
+                collection_id,
+                token_id: Nat::from(i as u32),
             };
-            service.add_nft(user_id, nft).await.unwrap();
+            service
+                .icrc7_validator
+                .set_ownership(&nft.collection_id, &nft.token_id, user_id);
+
+            let _ = service.add_nft(user_id, nft).await;
         }
 
         // Act

@@ -50,8 +50,9 @@ pub mod tests {
         /// * `ledger_id` - The ledger canister ID
         /// * `token_id` - The token ID
         /// * `owner` - The principal of the owner
-        pub fn set_ownership(&mut self, ledger_id: Principal, token_id: Nat, owner: Principal) {
-            self.ownership_map.insert((ledger_id, token_id), owner);
+        pub fn set_ownership(&mut self, ledger_id: &Principal, token_id: &Nat, owner: Principal) {
+            self.ownership_map
+                .insert((ledger_id.clone(), token_id.clone()), owner);
         }
     }
 
