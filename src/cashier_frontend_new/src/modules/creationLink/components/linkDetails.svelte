@@ -141,6 +141,8 @@
       {failedImageLoads}
       onImageError={handleImageError}
       isClickable={true}
+      maxUse={link.createLinkData.maxUse}
+      linkType={link.createLinkData.linkType}
     />
   {/if}
 

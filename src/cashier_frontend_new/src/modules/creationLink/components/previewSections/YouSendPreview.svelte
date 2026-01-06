@@ -2,11 +2,16 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { Info } from "lucide-svelte";
   import { locale } from "$lib/i18n";
-  import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
+  import {
+    formatUsdAmount,
+    formatNumber,
+  } from "$modules/shared/utils/formatNumber";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import AssetTransferInfoDrawer from "../drawers/AssetTransferInfoDrawer.svelte";
   import { FeeType } from "$modules/links/types/fee";
   import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
+  import { LinkType } from "$modules/links/types/link/linkType";
+  import { SvelteMap } from "svelte/reactivity";
 
   type Props = {
     forecastAssetAndFee: Array<ForecastAssetAndFee>;
@@ -15,6 +20,8 @@
     isReceive?: boolean;
     isClickable?: boolean;
     onInfoClick?: () => void;
+    maxUse?: number;
+    linkType?: string;
   };
 
   let {
@@ -24,6 +31,8 @@
     isReceive = false,
     isClickable = false,
     onInfoClick,
+    maxUse = 1,
+    linkType,
   }: Props = $props();
 
   let assetTransferInfoDrawerOpen = $state(false);
@@ -46,6 +55,45 @@
     return (forecastAssetAndFee || []).find(
       (item) => item.fee?.feeType === FeeType.CREATE_LINK_FEE,
     );
+  });
+
+  // Calculate display amount for each asset (multiply by maxUse for airdrop)
+  const displayAmounts = $derived.by(() => {
+    const amounts = new SvelteMap<string, string>();
+    const usdAmounts = new SvelteMap<string, string>();
+
+    for (const { asset } of assetsToDisplay) {
+      if (linkType === LinkType.AIRDROP && maxUse > 1) {
+        // Parse the formatted amount, multiply by maxUse, and format again
+        const amountStr = asset.amount.replace(/[^\d.-]/g, "");
+        const amountNum = parseFloat(amountStr);
+        if (!isNaN(amountNum)) {
+          const totalAmount = amountNum * maxUse;
+          amounts.set(asset.address, formatNumber(totalAmount));
+        } else {
+          amounts.set(asset.address, asset.amount);
+        }
+
+        // Also multiply USD value by maxUse
+        if (asset.usdValueStr) {
+          const usdStr = asset.usdValueStr.replace(/[^\d.-]/g, "");
+          const usdNum = parseFloat(usdStr);
+          if (!isNaN(usdNum)) {
+            const totalUsd = usdNum * maxUse;
+            usdAmounts.set(asset.address, totalUsd.toString());
+          } else {
+            usdAmounts.set(asset.address, asset.usdValueStr);
+          }
+        }
+      } else {
+        amounts.set(asset.address, asset.amount);
+        if (asset.usdValueStr) {
+          usdAmounts.set(asset.address, asset.usdValueStr);
+        }
+      }
+    }
+
+    return { amounts, usdAmounts };
   });
 </script>
 
@@ -98,12 +146,15 @@
         <div class="flex flex-col items-end">
           <div class="flex items-center gap-1">
             <p class="text-[14px] font-normal">
-              {asset.amount}
+              {displayAmounts.amounts.get(asset.address) || asset.amount}
             </p>
           </div>
           {#if asset.usdValueStr}
             <p class="text-[10px] medium-font text-[#b6b6b6]">
-              ~${formatUsdAmount(asset.usdValueStr)}
+              ~${formatUsdAmount(
+                displayAmounts.usdAmounts.get(asset.address) ||
+                  asset.usdValueStr,
+              )}
             </p>
           {/if}
         </div>
