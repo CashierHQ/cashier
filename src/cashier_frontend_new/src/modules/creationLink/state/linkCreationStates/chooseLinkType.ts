@@ -21,13 +21,18 @@ export class ChooseLinkTypeState implements LinkCreationState {
       throw new Error("Title is required to proceed");
     }
 
-    if (this.#link.createLinkData.linkType !== LinkType.TIP) {
-      throw new Error("Only Tip link type is supported currently");
+    const currentType = this.#link.createLinkData.linkType;
+
+    // Only TIP and AIRDROP are supported at this step for now
+    if (currentType !== LinkType.TIP && currentType !== LinkType.AIRDROP) {
+      throw new Error(
+        "Only Tip and Airdrop link types are supported currently",
+      );
     }
 
-    if (this.#link.createLinkData.linkType === LinkType.TIP) {
+    if (currentType === LinkType.TIP) {
       this.#link.state = new AddAssetTipLinkState(this.#link);
-    } else {
+    } else if (currentType === LinkType.AIRDROP) {
       this.#link.state = new AddAssetState(this.#link);
     }
   }

@@ -12,6 +12,7 @@
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
     linkUseActionCounter: bigint;
+    maxUse: number;
   };
 
   let {
@@ -19,14 +20,23 @@
     failedImageLoads,
     onImageError,
     linkUseActionCounter,
+    maxUse,
   }: Props = $props();
 
-  // Calculate total USD value of all assets
+  // Calculate remaining uses
+  const remainingUses = $derived.by(() => {
+    const used = Number(linkUseActionCounter);
+    const max = maxUse || 1;
+    return Math.max(0, max - used);
+  });
+
+  // Calculate total USD value of all assets multiplied by remaining uses
   const totalUsdValue = $derived.by(() => {
-    return assetsWithTokenInfo.reduce(
+    const baseTotal = assetsWithTokenInfo.reduce(
       (total, asset) => total + asset.usdValue,
       0,
     );
+    return baseTotal * remainingUses;
   });
 </script>
 
@@ -46,7 +56,7 @@
           {#each assetsWithTokenInfo as asset (asset.address)}
             <div class="flex items-center gap-2">
               <p class="text-sm">
-                {formatNumber(asset.amount)}
+                {formatNumber(asset.amount * remainingUses)}
                 {asset.token.symbol}
               </p>
               {#if !failedImageLoads.has(asset.address)}

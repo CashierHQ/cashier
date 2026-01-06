@@ -82,7 +82,7 @@
       onkeydown={handleOpenDrawerKeyDown}
     >
       <div
-        class="text-[14px] font-normal whitespace-nowrap overflow-hidden text-ellipsis"
+        class="text-[14px] font-normal leading-[1.1] whitespace-nowrap overflow-hidden text-ellipsis"
       >
         {selectedToken.name}
       </div>

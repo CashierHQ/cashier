@@ -161,7 +161,9 @@
         },
         "noPriceAvailable": "No price available",
         "switchToTokenAmount": "Switch to token amount",
-        "switchToUsdAmount": "Switch to USD amount"
+        "switchToUsdAmount": "Switch to USD amount",
+        "uses": "Uses",
+        "amountTotal": "Amount total"
       },
       "preview": {
         "linkInfo": "Link info",

@@ -16,7 +16,7 @@
   import SelectedAssetButtonInfo from "../shared/SelectedAssetButtonInfo.svelte";
   import TokenSelectorDrawer from "../shared/TokenSelectorDrawer.svelte";
   import { toast } from "svelte-sonner";
-  import { USD_AMOUNT_PRESETS } from "$modules/creationLink/constants/amountPresets";
+  import { Minus, Plus } from "lucide-svelte";
 
   const {
     link,
@@ -187,6 +187,41 @@
       return;
     }
 
+    // Validate total amount (perUse * maxUse) doesn't exceed maxTotalAmount
+    const uses = link.createLinkData.maxUse || 0;
+    const calculatedTotal = num * uses;
+    if (uses > 0 && calculatedTotal > maxTotalAmount) {
+      // Adjust to max allowed per use
+      const maxPerUse = maxTotalAmount / uses;
+      const adjustedValue = maxPerUse.toString();
+      localTokenAmount = adjustedValue;
+
+      if (canConvert && tokenUsdPrice) {
+        const usdValue = maxPerUse * tokenUsdPrice;
+        const roundedUsdValue = Math.round(usdValue * 10000) / 10000;
+        localUsdAmount = formatUsdAmount(roundedUsdValue);
+      }
+
+      const amount = formatBalanceUnits(maxPerUse, decimals);
+      link.createLinkData = {
+        ...link.createLinkData,
+        assets: [
+          {
+            address: selectedToken.address,
+            useAmount: amount,
+          },
+        ],
+      };
+
+      const message = locale
+        .t("links.linkForm.addAsset.errors.insufficientBalance")
+        .replace("{{required}}", formatNumber(calculatedTotal))
+        .replace("{{tokenSymbol}}", selectedToken.symbol)
+        .replace("{{available}}", formatNumber(maxTotalAmount));
+      toast.info(message, { duration: 3000 });
+      return;
+    }
+
     const amount = formatBalanceUnits(num, decimals);
     link.createLinkData = {
       ...link.createLinkData,
@@ -217,6 +252,37 @@
     }
 
     const tokenValue = num / tokenUsdPrice;
+
+    // Validate total amount (perUse * maxUse) doesn't exceed maxTotalAmount
+    const uses = link.createLinkData.maxUse || 0;
+    const calculatedTotal = tokenValue * uses;
+    if (uses > 0 && calculatedTotal > maxTotalAmount) {
+      // Adjust to max allowed per use
+      const maxPerUse = maxTotalAmount / uses;
+      const maxPerUseUsd = maxPerUse * tokenUsdPrice;
+      localUsdAmount = formatUsdAmount(maxPerUseUsd);
+      localTokenAmount = maxPerUse.toString();
+
+      const amount = formatBalanceUnits(maxPerUse, decimals);
+      link.createLinkData = {
+        ...link.createLinkData,
+        assets: [
+          {
+            address: selectedToken.address,
+            useAmount: amount,
+          },
+        ],
+      };
+
+      const message = locale
+        .t("links.linkForm.addAsset.errors.insufficientBalance")
+        .replace("{{required}}", formatNumber(calculatedTotal))
+        .replace("{{tokenSymbol}}", selectedToken.symbol)
+        .replace("{{available}}", formatNumber(maxTotalAmount));
+      toast.info(message, { duration: 3000 });
+      return;
+    }
+
     const amount = formatBalanceUnits(tokenValue, decimals);
     link.createLinkData = {
       ...link.createLinkData,
@@ -280,54 +346,44 @@
     setTokenAmount(maxTokenAmount.toString());
   }
 
-  // Calculate max available USD balance with fee consideration
-  const maxUsdBalance = $derived.by(() => {
-    if (
-      !selectedToken ||
-      !canConvert ||
-      !tokenUsdPrice ||
-      !walletStore.query.data
-    )
-      return 0;
-
-    const maxAmountResult = calculateMaxAmountForAsset(
-      selectedToken.address,
-      link.createLinkData.maxUse,
-      walletStore.query.data,
-    );
-
-    if (maxAmountResult.isErr()) {
-      return 0;
-    }
-
-    const maxAmountBigInt = maxAmountResult.unwrap();
-    const maxTokenAmount = parseBalanceUnits(maxAmountBigInt, decimals);
-    return maxTokenAmount * tokenUsdPrice;
+  // Total amount = per-link amount * uses
+  const totalAmount = $derived.by(() => {
+    const perUse = parseFloat(localTokenAmount || "0");
+    const uses = link.createLinkData.maxUse || 0;
+    if (isNaN(perUse) || uses <= 0) return 0;
+    return perUse * uses;
   });
 
-  function isUsdAmountAvailable(usdAmount: number): boolean {
-    return maxUsdBalance >= usdAmount;
-  }
+  // Calculate max total amount (max per use * uses)
+  const maxTotalAmount = $derived.by(() => {
+    if (!selectedToken || !walletStore.query.data) return 0;
+    const uses = link.createLinkData.maxUse || 0;
+    if (uses <= 0) return 0;
+    return maxTokenBalance * uses;
+  });
 
-  function handleUsdPreset(usdAmount: number) {
-    if (!selectedToken || !canConvert || !tokenUsdPrice) return;
-
-    if (!isUsdAmountAvailable(usdAmount)) return;
-
-    const tokenAmountNeeded = usdAmount / tokenUsdPrice;
-    // Format token amount to avoid excessive decimal places
-    const formattedTokenAmount = formatNumber(tokenAmountNeeded, {
-      tofixed: 8,
-    });
-
-    localTokenAmount = formattedTokenAmount;
-    localUsdAmount = formatUsdAmount(usdAmount);
-    setTokenAmount(formattedTokenAmount);
-  }
+  // Check if total amount exceeds available balance
+  const isTotalAmountValid = $derived.by(() => {
+    if (!selectedToken || totalAmount <= 0) return true; // Allow empty/zero
+    return totalAmount <= maxTotalAmount;
+  });
 
   // Navigate to next Preview step
   async function goNext() {
     try {
+      // Validate total amount before proceeding
+      if (!isTotalAmountValid) {
+        const maxTotal = maxTotalAmount;
+        const tokenSymbol = selectedToken?.symbol || "";
+        const message = locale
+          .t("links.linkForm.addAsset.errors.insufficientBalance")
+          .replace("{{required}}", formatNumber(totalAmount))
+          .replace("{{tokenSymbol}}", tokenSymbol)
+          .replace("{{available}}", formatNumber(maxTotal));
+        toast.error(message);
+        return;
+      }
+
       handleAmountChange(isUsd ? localUsdAmount : localTokenAmount, true);
       await link.goNext();
     } catch (e) {
@@ -381,23 +437,97 @@
       />
     </div>
 
-    {#if selectedToken && canConvert && tokenUsdPrice}
-      <div class="flex justify-between items-center gap-2 mt-6">
-        {#each USD_AMOUNT_PRESETS as usdAmount, key (key)}
-          {@const isDisabled = !isUsdAmountAvailable(usdAmount)}
+    <!-- Uses & Amount total row -->
+    <div class="mt-4 grid grid-cols-2 gap-3">
+      <div class="flex flex-col space-y-1.5">
+        <Label>{locale.t("links.linkForm.addAsset.uses")}</Label>
+        <div class="flex items-center gap-2.5">
           <button
             type="button"
-            onclick={() => handleUsdPreset(usdAmount)}
-            disabled={isDisabled}
-            class="flex-1 px-3 py-6 text-sm font-medium rounded-md border transition-colors {isDisabled
-              ? 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed'
-              : 'border-gray-300 cursor-pointer hover:bg-gray-50 hover:border-[#36A18B] hover:text-[#36A18B]'}"
+            onclick={() => {
+              if (link.createLinkData.maxUse > 1) {
+                link.createLinkData.maxUse = link.createLinkData.maxUse - 1;
+              }
+            }}
+            disabled={link.createLinkData.maxUse <= 1}
+            class="flex items-center justify-center cursor-pointer min-w-6 w-6 h-6 rounded-full bg-lightgreen disabled:bg-lightgreen disabled:text-gray-400 disabled:cursor-not-allowed disabled:border-gray-200 text-gray-700 hover:bg-gray-200 focus:outline-none outline-none transition-colors"
+            aria-label="Decrease uses"
           >
-            {usdAmount} USD
+            <Minus
+              class="w-3.5 h-3.5 {link.createLinkData.maxUse <= 1
+                ? 'text-gray-400'
+                : 'text-[#36A18B]'}"
+            />
           </button>
-        {/each}
+          <input
+            type="number"
+            min="1"
+            step="1"
+            class="max-w-20 sm:max-w-24 rounded-md border border-gray-300 px-3 py-2 text-sm text-center focus:outline-none focus:ring-1 focus:ring-green focus:border-green [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            bind:value={link.createLinkData.maxUse}
+            oninput={(e) => {
+              const value = e.currentTarget.value;
+              // Remove any non-digit characters
+              const cleaned = value.replace(/[^0-9]/g, "");
+
+              if (cleaned === "") {
+                // Set to 1 if empty
+                link.createLinkData.maxUse = 1;
+                e.currentTarget.value = "1";
+                return;
+              }
+
+              // Only allow positive integers
+              const numValue = parseInt(cleaned, 10);
+              if (isNaN(numValue) || numValue < 1) {
+                link.createLinkData.maxUse = 1;
+                e.currentTarget.value = "1";
+              } else {
+                link.createLinkData.maxUse = numValue;
+              }
+            }}
+            onblur={(e) => {
+              // Ensure value is valid integer on blur
+              const numValue = parseInt(e.currentTarget.value, 10);
+              if (isNaN(numValue) || numValue < 1) {
+                link.createLinkData.maxUse = 1;
+                e.currentTarget.value = "1";
+              } else {
+                link.createLinkData.maxUse = numValue;
+                e.currentTarget.value = numValue.toString();
+              }
+            }}
+          />
+          <button
+            type="button"
+            onclick={() => {
+              link.createLinkData.maxUse = link.createLinkData.maxUse + 1;
+            }}
+            class="flex items-center justify-center min-w-6 w-6 h-6 cursor-pointer rounded-full bg-lightgreen text-gray-700 hover:bg-gray-200 focus:outline-none outline-none transition-colors"
+            aria-label="Increase uses"
+          >
+            <Plus class="w-3.5 h-3.5 text-[#36A18B]" />
+          </button>
+        </div>
       </div>
-    {/if}
+      <div class="flex flex-col space-y-1.5">
+        <Label>{locale.t("links.linkForm.addAsset.amountTotal")}</Label>
+        <div
+          class="w-full rounded-md px-3 py-2 border border-transparent text-sm flex items-center justify-between bg-lightgreen"
+        >
+          <span>
+            {#if totalAmount > 0}
+              {formatNumber(totalAmount, { tofixed: 8 })}
+            {:else}
+              0
+            {/if}
+          </span>
+          {#if selectedToken}
+            <span class="text-xs text-gray-500">{selectedToken.symbol}</span>
+          {/if}
+        </div>
+      </div>
+    </div>
   </div>
 
   <div
