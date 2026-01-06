@@ -4,4 +4,3 @@
 pub mod client;
 pub mod ic_icrc7_validator;
 pub mod traits;
-pub mod types;

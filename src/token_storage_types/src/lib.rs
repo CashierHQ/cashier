@@ -6,6 +6,7 @@ use candid::Principal;
 pub mod auth;
 pub mod dto;
 pub mod error;
+pub mod icrc7;
 pub mod init;
 pub mod nft;
 pub mod token;
