@@ -23,9 +23,14 @@ impl<S: Storage<UserNftRepositoryStorage>> UserNftRepository<S> {
     }
 
     /// Add NFT to user's NFT list
+    /// # Arguments
+    /// * `user_id` - The Principal of the user
+    /// * `nft` - The Nft to be added
+    /// # Returns
+    /// * `Result<(), String>` - Ok if successful, Err with message if failed
     pub fn add_nft(&mut self, user_id: Principal, nft: Nft) -> Result<(), String> {
         self.nft_store.with_borrow_mut(|store| {
-            let mut user_nft_list = store.get(&user_id).unwrap_or_else(|| HashSet::new());
+            let mut user_nft_list = store.get(&user_id).unwrap_or_else(HashSet::new);
 
             user_nft_list.insert(nft);
             store.insert(user_id, user_nft_list);
@@ -33,6 +38,11 @@ impl<S: Storage<UserNftRepositoryStorage>> UserNftRepository<S> {
         })
     }
 
+    /// Get NFTs by user_id
+    /// # Arguments
+    /// * `user_id` - The Principal of the user
+    /// # Returns
+    /// * `Vec<Nft>` - List of NFTs owned by the user
     pub fn get_nfts(&self, user_id: &Principal) -> Vec<Nft> {
         self.nft_store.with_borrow(|store| {
             store
@@ -46,6 +56,25 @@ impl<S: Storage<UserNftRepositoryStorage>> UserNftRepository<S> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repository::tests::TestRepositories;
+    use crate::repository::{Repositories, tests::TestRepositories};
     use cashier_common::test_utils::{random_id_string, random_principal_id};
+
+    #[test]
+    fn it_should_add_and_get_user_nft() {
+        // Arrange
+        let mut repo = TestRepositories::new().user_nft();
+        let user_id = random_principal_id();
+        let nft = Nft {
+            collection_id: random_principal_id(),
+            token_id: random_id_string(),
+        };
+
+        // Act
+        repo.add_nft(user_id, nft.clone()).unwrap();
+
+        // Assert
+        let nfts = repo.get_nfts(&user_id);
+        assert_eq!(nfts.len(), 1);
+        assert_eq!(nfts[0], nft);
+    }
 }
