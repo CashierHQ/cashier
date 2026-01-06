@@ -10,7 +10,7 @@ pub mod user_preference;
 pub mod user_token;
 
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::thread::LocalKey;
 
 use candid::Principal;
@@ -21,9 +21,12 @@ use ic_mple_structures::{Codec, VersionedBTreeMap, VersionedStableCell};
 use ic_mple_utils::store::Storage;
 use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemory};
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
-use token_storage_types::TokenId;
-use token_storage_types::token::{RegistryToken, RegistryTokenCodec};
-use token_storage_types::user::{UserPreference, UserPreferenceCodec};
+use token_storage_types::{
+    TokenId,
+    nft::{Nft, UserNftCodec},
+    token::{RegistryToken, RegistryTokenCodec},
+    user::{UserPreference, UserPreferenceCodec},
+};
 
 use crate::repository::balance_cache::{
     BalanceCacheRepository, BalanceCacheRepositoryStorage, ThreadlocalBalanceCacheRepositoryStorage,
@@ -38,6 +41,9 @@ use crate::repository::token_registry::{
 use crate::repository::token_registry_metadata::{
     ThreadlocalTokenRegistryMetadataRepositoryStorage, TokenRegistryMetadataRepository,
     TokenRegistryMetadataRepositoryStorage,
+};
+use crate::repository::user_nft::{
+    ThreadlocalUserNftRepositoryStorage, UserNftRepository, UserNftRepositoryStorage,
 };
 use crate::repository::user_preference::{
     ThreadlocalUserPreferenceRepositoryStorage, UserPreferenceRepository,
@@ -82,6 +88,7 @@ const BALANCE_CACHE_MEMORY_ID: MemoryId = MemoryId::new(4);
 const TOKEN_REGISTRY_METADATA_ID: MemoryId = MemoryId::new(5);
 const AUTH_SERVICE_MEMORY_ID: MemoryId = MemoryId::new(6);
 const SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(7);
+const USER_NFT_MEMORY_ID: MemoryId = MemoryId::new(8);
 
 /// A trait for accessing repositories
 pub trait Repositories {
@@ -91,6 +98,7 @@ pub trait Repositories {
     type TokenRegistry: Storage<TokenRegistryRepositoryStorage>;
     type UserPreference: Storage<UserPreferenceRepositoryStorage>;
     type UserToken: Storage<UserTokenRepositoryStorage>;
+    type UserNft: Storage<UserNftRepositoryStorage>;
 
     /// Get the balance cache repository
     fn balance_cache(&self) -> BalanceCacheRepository<Self::BalanceCache>;
@@ -106,6 +114,8 @@ pub trait Repositories {
     fn user_preference(&self) -> UserPreferenceRepository<Self::UserPreference>;
     /// Get the user token repository
     fn user_token(&self) -> UserTokenRepository<Self::UserToken>;
+    /// Get the user nft repository
+    fn user_nft(&self) -> UserNftRepository<Self::UserNft>;
 }
 
 /// A factory for creating repositories backed by thread-local storage
@@ -118,6 +128,7 @@ impl Repositories for ThreadlocalRepositories {
     type TokenRegistry = ThreadlocalTokenRegistryRepositoryStorage;
     type UserPreference = ThreadlocalUserPreferenceRepositoryStorage;
     type UserToken = ThreadlocalUserTokenRepositoryStorage;
+    type UserNft = ThreadlocalUserNftRepositoryStorage;
 
     fn balance_cache(&self) -> BalanceCacheRepository<Self::BalanceCache> {
         BalanceCacheRepository::new(&BALANCE_CACHE_STORE)
@@ -144,6 +155,10 @@ impl Repositories for ThreadlocalRepositories {
     fn user_token(&self) -> UserTokenRepository<Self::UserToken> {
         UserTokenRepository::new(&USER_TOKEN_STORE)
     }
+
+    fn user_nft(&self) -> UserNftRepository<Self::UserNft> {
+        UserNftRepository::new(&USER_NFT_STORE)
+    }
 }
 
 thread_local! {
@@ -152,12 +167,12 @@ thread_local! {
     );
 
     /// Store for the auth service
-        pub static AUTH_SERVICE_STORE: RefCell<AuthServiceStorage> =
-        RefCell::new(
-            StableBTreeMap::init(
-                MEMORY_MANAGER.with_borrow(|m| m.get(AUTH_SERVICE_MEMORY_ID)),
-            )
-        );
+    pub static AUTH_SERVICE_STORE: RefCell<AuthServiceStorage> =
+    RefCell::new(
+        StableBTreeMap::init(
+            MEMORY_MANAGER.with_borrow(|m| m.get(AUTH_SERVICE_MEMORY_ID)),
+        )
+    );
 
     // Store for the logger settings
     pub static LOGGER_SERVICE_STORE: RefCell<LoggerServiceStorage> =
@@ -220,6 +235,14 @@ thread_local! {
             Settings::default(),
         )
     );
+
+    // Store for user's NFTs
+    static USER_NFT_STORE: RefCell<VersionedBTreeMap<Principal, HashSet<Nft>, UserNftCodec, Memory>> =
+        RefCell::new(
+            VersionedBTreeMap::init(
+                MEMORY_MANAGER.with_borrow(|m| m.get(USER_NFT_MEMORY_ID)),
+            )
+        );
 }
 
 #[cfg(test)]
@@ -237,6 +260,7 @@ pub mod tests {
         token_registry_metadata: Rc<RefCell<TokenRegistryMetadataRepositoryStorage>>,
         user_preference: Rc<RefCell<UserPreferenceRepositoryStorage>>,
         user_token: Rc<RefCell<UserTokenRepositoryStorage>>,
+        user_nft: Rc<RefCell<UserNftRepositoryStorage>>,
     }
 
     impl TestRepositories {
@@ -267,6 +291,9 @@ pub mod tests {
                 user_token: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(TOKEN_MEMORY_ID),
                 ))),
+                user_nft: Rc::new(RefCell::new(VersionedBTreeMap::init(
+                    mm.get(USER_NFT_MEMORY_ID),
+                ))),
             }
         }
     }
@@ -284,6 +311,8 @@ pub mod tests {
             Rc<RefCell<VersionedBTreeMap<Principal, UserPreference, UserPreferenceCodec, Memory>>>;
         type UserToken =
             Rc<RefCell<VersionedBTreeMap<Principal, UserTokenList, UserTokenListCodec, Memory>>>;
+        type UserNft =
+            Rc<RefCell<VersionedBTreeMap<Principal, HashSet<Nft>, UserNftCodec, Memory>>>;
 
         fn balance_cache(&self) -> BalanceCacheRepository<Self::BalanceCache> {
             BalanceCacheRepository::new(self.balance_cache.clone())
@@ -309,6 +338,10 @@ pub mod tests {
 
         fn user_token(&self) -> UserTokenRepository<Self::UserToken> {
             UserTokenRepository::new(self.user_token.clone())
+        }
+
+        fn user_nft(&self) -> UserNftRepository<Rc<RefCell<UserNftRepositoryStorage>>> {
+            UserNftRepository::new(self.user_nft.clone())
         }
     }
 }
