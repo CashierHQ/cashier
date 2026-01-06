@@ -348,6 +348,21 @@
         </div>
       </div>
 
+      <!-- Index Canister ID (only show if provided) -->
+      {#if indexCanisterId.trim()}
+        <div class="space-y-1">
+          <Label class="text-sm font-medium"
+            >{locale.t("wallet.import.indexCanisterId")}</Label
+          >
+
+          <div
+            class="p-3 border border-gray-300 rounded-lg bg-white break-all text-sm font-mono"
+          >
+            {indexCanisterId}
+          </div>
+        </div>
+      {/if}
+
       <!-- Security Warning -->
       <div class="flex items-start gap-1.5">
         <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
