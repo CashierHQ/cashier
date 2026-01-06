@@ -24,6 +24,17 @@ export const idlFactory = ({ IDL }) => {
     'tokens' : IDL.Opt(IDL.Vec(RegistryToken)),
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
+  const Nft = IDL.Record({
+    'token_id' : IDL.Text,
+    'collection_id' : IDL.Principal,
+  });
+  const AddUserNftInput = IDL.Record({ 'nft' : Nft });
+  const UserNftDto = IDL.Record({ 'nft' : Nft, 'user' : IDL.Principal });
+  const CanisterError = IDL.Variant({
+    'CandidDecodeFailed' : IDL.Text,
+    'UnboundedError' : IDL.Text,
+  });
+  const Result = IDL.Variant({ 'Ok' : UserNftDto, 'Err' : CanisterError });
   const TokenRegistryMetadata = IDL.Record({
     'last_updated' : IDL.Nat64,
     'version' : IDL.Nat64,
@@ -48,8 +59,8 @@ export const idlFactory = ({ IDL }) => {
     'total_enabled_default' : IDL.Nat64,
     'total_tokens' : IDL.Nat64,
   });
-  const Result = IDL.Variant({ 'Ok' : RegistryStats, 'Err' : IDL.Text });
-  const Result_1 = IDL.Variant({
+  const Result_1 = IDL.Variant({ 'Ok' : RegistryStats, 'Err' : IDL.Text });
+  const Result_2 = IDL.Variant({
     'Ok' : IDL.Vec(IDL.Tuple(TokenId, IDL.Nat)),
     'Err' : IDL.Text,
   });
@@ -58,10 +69,9 @@ export const idlFactory = ({ IDL }) => {
     'version' : IDL.Nat64,
     'enabled' : IDL.Nat64,
   });
-  const Result_2 = IDL.Variant({ 'Ok' : UserTokens, 'Err' : IDL.Text });
-  const Result_3 = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text });
-  const TokenStorageError = IDL.Variant({ 'AuthError' : IDL.Text });
-  const Result_4 = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : TokenStorageError });
+  const Result_3 = IDL.Variant({ 'Ok' : UserTokens, 'Err' : IDL.Text });
+  const Result_4 = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text });
+  const Result_5 = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : CanisterError });
   const UserPreference = IDL.Record({
     'hide_zero_balance' : IDL.Bool,
     'selected_chain' : IDL.Vec(Chain),
@@ -72,11 +82,11 @@ export const idlFactory = ({ IDL }) => {
     'tokens' : IDL.Vec(TokenDto),
     'perference' : IDL.Opt(UserPreference),
   });
-  const Result_5 = IDL.Variant({ 'Ok' : TokenListResponse, 'Err' : IDL.Text });
+  const Result_6 = IDL.Variant({ 'Ok' : TokenListResponse, 'Err' : IDL.Text });
   const Permission = IDL.Variant({ 'Admin' : IDL.Null });
-  const Result_6 = IDL.Variant({
+  const Result_7 = IDL.Variant({
     'Ok' : IDL.Vec(Permission),
-    'Err' : TokenStorageError,
+    'Err' : CanisterError,
   });
   const BuildData = IDL.Record({
     'rustc_semver' : IDL.Text,
@@ -89,6 +99,10 @@ export const idlFactory = ({ IDL }) => {
     'build_timestamp' : IDL.Text,
     'git_sha' : IDL.Text,
     'git_commit_timestamp' : IDL.Text,
+  });
+  const GetUserNftInput = IDL.Record({
+    'limit' : IDL.Opt(IDL.Nat32),
+    'start' : IDL.Opt(IDL.Nat32),
   });
   const AddTokenInput = IDL.Record({
     'token_id' : TokenId,
@@ -104,6 +118,7 @@ export const idlFactory = ({ IDL }) => {
     'is_enabled' : IDL.Bool,
   });
   return IDL.Service({
+    'add_user_nft' : IDL.Func([AddUserNftInput], [Result], []),
     'admin_get_registry_metadata' : IDL.Func(
         [],
         [TokenRegistryMetadata],
@@ -114,19 +129,19 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(TokenDto)],
         ['query'],
       ),
-    'admin_get_stats' : IDL.Func([], [Result], ['query']),
-    'admin_get_user_balance' : IDL.Func([IDL.Principal], [Result_1], ['query']),
-    'admin_get_user_tokens' : IDL.Func([IDL.Principal], [Result_2], ['query']),
-    'admin_initialize_registry' : IDL.Func([], [Result_3], []),
-    'admin_inspect_message_enable' : IDL.Func([IDL.Bool], [Result_4], []),
+    'admin_get_stats' : IDL.Func([], [Result_1], ['query']),
+    'admin_get_user_balance' : IDL.Func([IDL.Principal], [Result_2], ['query']),
+    'admin_get_user_tokens' : IDL.Func([IDL.Principal], [Result_3], ['query']),
+    'admin_initialize_registry' : IDL.Func([], [Result_4], []),
+    'admin_inspect_message_enable' : IDL.Func([IDL.Bool], [Result_5], []),
     'admin_list_tokens_by_wallet' : IDL.Func(
         [IDL.Principal],
-        [Result_5],
+        [Result_6],
         ['query'],
       ),
     'admin_permissions_add' : IDL.Func(
         [IDL.Principal, IDL.Vec(Permission)],
-        [Result_6],
+        [Result_7],
         [],
       ),
     'admin_permissions_get' : IDL.Func(
@@ -136,25 +151,26 @@ export const idlFactory = ({ IDL }) => {
       ),
     'admin_permissions_remove' : IDL.Func(
         [IDL.Principal, IDL.Vec(Permission)],
-        [Result_6],
+        [Result_7],
         [],
       ),
     'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),
+    'get_user_nfts' : IDL.Func([GetUserNftInput], [IDL.Vec(Nft)], ['query']),
     'is_inspect_message_enabled' : IDL.Func([], [IDL.Bool], ['query']),
-    'list_tokens' : IDL.Func([], [Result_5], ['query']),
-    'user_add_token' : IDL.Func([AddTokenInput], [Result_3], []),
-    'user_add_token_batch' : IDL.Func([AddTokensInput], [Result_3], []),
-    'user_sync_token_list' : IDL.Func([], [Result_3], []),
+    'list_tokens' : IDL.Func([], [Result_6], ['query']),
+    'user_add_token' : IDL.Func([AddTokenInput], [Result_4], []),
+    'user_add_token_batch' : IDL.Func([AddTokensInput], [Result_4], []),
+    'user_sync_token_list' : IDL.Func([], [Result_4], []),
     'user_update_token_balance' : IDL.Func(
         [IDL.Vec(UpdateTokenBalanceInput)],
-        [Result_3],
+        [Result_4],
         [],
       ),
-    'user_update_token_enable' : IDL.Func([UpdateTokenInput], [Result_3], []),
-    'user_update_token_registry' : IDL.Func([AddTokenInput], [Result_3], []),
+    'user_update_token_enable' : IDL.Func([UpdateTokenInput], [Result_4], []),
+    'user_update_token_registry' : IDL.Func([AddTokenInput], [Result_4], []),
     'user_update_token_registry_batch' : IDL.Func(
         [AddTokensInput],
-        [Result_3],
+        [Result_4],
         [],
       ),
   });

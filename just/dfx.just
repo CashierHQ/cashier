@@ -142,9 +142,9 @@ dfx_local_airdrop target_principal:
 
   # mint ICRC7 NFT
   echo "Airdrop NFT"
-  just dfx_local_mint_nft {{target_principal}} cvvmr-dyaaa-aaaai-q32oq-cai "NFT1" "First nft for testing"
-  just dfx_local_mint_nft {{target_principal}} cvvmr-dyaaa-aaaai-q32oq-cai "NFT2" "Second nft for testing"
-  just dfx_local_mint_nft {{target_principal}} cvvmr-dyaaa-aaaai-q32oq-cai "NFT3" "Third nft for testing"
+  just dfx_local_mint_nft {{target_principal}} cvvmr-dyaaa-aaaai-q32oq-cai "NFT1" "First nft for testing" "https://dev.cashierapp.io/logo.svg"
+  just dfx_local_mint_nft {{target_principal}} cvvmr-dyaaa-aaaai-q32oq-cai "NFT2" "Second nft for testing" "https://dev.cashierapp.io/logo.svg"
+  just dfx_local_mint_nft {{target_principal}} cvvmr-dyaaa-aaaai-q32oq-cai "NFT3" "Third nft for testing" "https://dev.cashierapp.io/logo.svg"
 
 
 # Tails the local dfx logs
@@ -392,7 +392,7 @@ dfx_local_airdrop_token target_principal canister_id amount:
   })" 
 
 [private]
-dfx_local_mint_nft target_principal canister_id nft_name nft_description:
+dfx_local_mint_nft target_principal canister_id nft_name nft_description nft_image:
   #!/usr/bin/env bash
   set -e
 
@@ -406,6 +406,7 @@ dfx_local_mint_nft target_principal canister_id nft_name nft_description:
             metadata = vec {
               record { \"name\"; variant { Text = \"{{nft_name}}\" } };
               record { \"description\"; variant { Text = \"{{nft_description}}\" } };
+              record { \"image\"; variant { Text = \"{{nft_image}}\" } }
             };
             memo = null;
           }
