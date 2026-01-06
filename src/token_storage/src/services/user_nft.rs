@@ -1,8 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::{CandidType, Principal};
-use token_storage_types::nft::{Nft, UserNftCodec};
+use candid::Principal;
+use token_storage_types::{dto::nft::UserNftDto, nft::Nft};
 
 use crate::repository::{Repositories, user_nft::UserNftRepository};
 
@@ -23,9 +23,10 @@ impl<R: Repositories> UserNftService<R> {
     /// * `nft` - The NFT to add
     /// # Returns
     /// * `Result<(), String>` - Ok if successful, Err with message if failed
-    pub fn add_nft(&mut self, user_id: Principal, nft: Nft) -> Result<(), String> {
-        self.user_nft_repository.add_nft(user_id, nft)?;
-        Ok(())
+    pub fn add_nft(&mut self, user_id: Principal, nft: Nft) -> Result<UserNftDto, String> {
+        self.user_nft_repository.add_nft(user_id, nft.clone())?;
+
+        Ok(UserNftDto { user: user_id, nft })
     }
 
     /// Retrieves the list of NFTs owned by the user

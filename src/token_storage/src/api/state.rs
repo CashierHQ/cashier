@@ -8,6 +8,7 @@ use crate::{
         auth::{AuthService, AuthServiceStorage},
         settings::SettingsService,
         token_registry::TokenRegistryService,
+        user_nft::UserNftService,
         user_preference::UserPreferenceService,
         user_token::UserTokenService,
     },
@@ -21,6 +22,7 @@ pub struct CanisterState {
     pub token_registry: TokenRegistryService<ThreadlocalRepositories>,
     pub user_preference: UserPreferenceService<ThreadlocalRepositories>,
     pub user_token: UserTokenService<ThreadlocalRepositories>,
+    pub user_nft: UserNftService<ThreadlocalRepositories>,
 }
 
 impl CanisterState {
@@ -34,6 +36,7 @@ impl CanisterState {
             token_registry: TokenRegistryService::new(&repo),
             user_preference: UserPreferenceService::new(&repo),
             user_token: UserTokenService::new(&repo),
+            user_nft: UserNftService::new(&repo),
         }
     }
 }
