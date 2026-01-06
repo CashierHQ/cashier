@@ -4,5 +4,6 @@
 pub mod auth;
 pub mod settings;
 pub mod token_registry;
+pub mod user_nft;
 pub mod user_preference;
 pub mod user_token;
