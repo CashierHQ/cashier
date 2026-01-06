@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Principal } from "@dfinity/principal";
-import type { ActionSource, WalletSource } from "../types/transaction-source";
+import {
+  type ActionSource,
+  type WalletSource,
+  TransactionSourceType,
+} from "../types/transaction-source";
 import type { TokenMetadata } from "$modules/token/types";
 import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
@@ -120,7 +124,7 @@ function createMockToken(isIcp = false): TokenMetadata {
 
 function createActionSource(withIcrc112Requests = false): ActionSource {
   return {
-    type: "action",
+    type: TransactionSourceType.ACTION,
     action: createMockAction(withIcrc112Requests),
     handleProcessAction: vi.fn().mockResolvedValue({
       action: createMockAction(),
@@ -132,7 +136,7 @@ function createActionSource(withIcrc112Requests = false): ActionSource {
 
 function createWalletSource(isIcp = false, withAccountId = false): WalletSource {
   return {
-    type: "wallet",
+    type: TransactionSourceType.WALLET,
     token: createMockToken(isIcp),
     to: Principal.fromText("aaaaa-aa"),
     toAccountId: withAccountId ? "abc123def456" : undefined,

@@ -7,6 +7,7 @@
   import { onMount } from "svelte";
   import { TransactionCartStore } from "../state/txCartStore.svelte";
   import { AssetProcessState } from "../types/txCart";
+  import { TransactionSourceType } from "../types/transaction-source";
   import YouSendSection from "$modules/transactionCart/components/YouSendSection.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import FeeBreakdown from "./feeBreakdown.svelte";
@@ -32,7 +33,7 @@
   } = $props();
 
   const txCartStore = new TransactionCartStore({
-    type: "action",
+    type: TransactionSourceType.ACTION,
     action,
     handleProcessAction,
   });

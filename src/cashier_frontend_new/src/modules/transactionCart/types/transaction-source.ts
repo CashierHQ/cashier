@@ -5,10 +5,18 @@ import type { ReceiveAddressType } from "$modules/wallet/types";
 import type { Principal } from "@dfinity/principal";
 
 /**
+ * Transaction source type discriminator enum
+ */
+export enum TransactionSourceType {
+  ACTION = "action",
+  WALLET = "wallet",
+}
+
+/**
  * Action-based transaction source (ICRC-112 batch execution)
  */
 export type ActionSource = {
-  type: "action";
+  type: TransactionSourceType.ACTION;
   action: Action;
   handleProcessAction: () => Promise<ProcessActionResult>;
 };
@@ -17,7 +25,7 @@ export type ActionSource = {
  * Wallet-based transaction source (direct ICRC/ICP transfer)
  */
 export type WalletSource = {
-  type: "wallet";
+  type: TransactionSourceType.WALLET;
   token: TokenMetadata;
   to: Principal;
   toAccountId?: string; // For ICP account transfers
@@ -45,7 +53,7 @@ export type ExecuteResult<T extends TransactionSource> = T extends ActionSource
 export function isActionSource(
   source: TransactionSource,
 ): source is ActionSource {
-  return source.type === "action";
+  return source.type === TransactionSourceType.ACTION;
 }
 
 /**
@@ -54,5 +62,5 @@ export function isActionSource(
 export function isWalletSource(
   source: TransactionSource,
 ): source is WalletSource {
-  return source.type === "wallet";
+  return source.type === TransactionSourceType.WALLET;
 }
