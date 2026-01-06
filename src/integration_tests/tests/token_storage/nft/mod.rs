@@ -3,3 +3,4 @@
 
 pub mod fixture;
 pub mod user_add_nft;
+pub mod user_get_nfts;
