@@ -6,8 +6,6 @@ use icrc_ledger_types::icrc1::transfer::TransferError;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 
-pub mod icrc7;
-
 /// Result type for ICRC1 transfer operations
 /// Returns either a block index on success or a transfer error on failure
 pub type Icrc1TransferResult = std::result::Result<BlockIndex, TransferError>;

@@ -1,5 +1,5 @@
 use crate::{
-    constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL},
+    constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL, ICRC7_NFT_PRINCIPAL},
     utils::{principal::TestUser, token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
 };
 use candid::{CandidType, Decode, Encode, Nat, Principal, utils::ArgumentEncoder};
@@ -203,6 +203,16 @@ where
     icrc_token_map.insert("ckUSDC".to_string(), ck_usdc_principal);
     icrc_token_map.insert("DOGE".to_string(), doge_principal);
 
+    // deploy ICRC7 NFT canister
+    let icrc7_ledger_principal = nft_icrc7::deploy_icrc7_ledger_canister(
+        &client,
+        "TestCollection",
+        "ICRC7TEST",
+        "For testing",
+        Principal::from_text(ICRC7_NFT_PRINCIPAL).unwrap(),
+    )
+    .await;
+
     let result = f(&PocketIcTestContext {
         client: client.clone(),
         token_storage_principal,
@@ -210,6 +220,7 @@ where
         gate_service_principal,
         icp_ledger_principal,
         icrc_token_map,
+        icrc7_ledger_principal,
     })
     .await;
 
@@ -229,6 +240,7 @@ pub struct PocketIcTestContext {
     pub gate_service_principal: Principal,
     pub icp_ledger_principal: Principal,
     pub icrc_token_map: HashMap<String, Principal>,
+    pub icrc7_ledger_principal: Principal,
 }
 
 impl PocketIcTestContext {
