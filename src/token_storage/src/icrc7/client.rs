@@ -3,9 +3,7 @@
 
 use candid::{Nat, Principal};
 use ic_cdk::call::{Call, CandidDecodeFailed};
-use token_storage_types::error::CanisterError;
-
-use crate::icrc7::types::Icrc7OwnerOfResponse;
+use token_storage_types::{error::CanisterError, icrc7::Icrc7OwnerOfResponse};
 
 pub struct Icrc7Client {
     ledger_id: Principal,

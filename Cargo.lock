@@ -2740,6 +2740,7 @@ dependencies = [
  "ic_mple_log",
  "ic_mple_structures",
  "serde",
+ "serde_bytes",
  "thiserror 2.0.17",
 ]
 

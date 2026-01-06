@@ -15,4 +15,5 @@ ic_mple_log = { workspace = true }
 ic_mple_structures = { workspace = true }
 ic-stable-structures = { workspace = true }
 serde = { workspace = true }
+serde_bytes = { workspace = true }
 thiserror = { workspace = true }
