@@ -3,7 +3,7 @@
   import { LinkState } from "$modules/links/types/link/linkState";
   import AddAsset from "../components/addAsset.svelte";
   import ChooseLinkType from "../components/chooseLinkType.svelte";
-  import CreatedLink from "../components/createdLink.svelte";
+  import CreatedLink from "$modules/shared/components/CreatedLink.svelte";
   import CreateLinkHeader from "../components/createLinkHeader.svelte";
   import Preview from "../components/preview.svelte";
   import { LinkCreationStore } from "../state/linkCreationStore.svelte";
