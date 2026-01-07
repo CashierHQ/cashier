@@ -19,7 +19,7 @@ pub async fn drain_link_token_balance(ctx: &PocketIcTestContext, link_id: &str, 
     let ledger_client = ctx.new_icrc_ledger_client(token_name, ctx.cashier_backend_principal);
     let current_balance = ledger_client.balance_of(&link_account).await.unwrap();
 
-    if current_balance == Nat::from(0u64) {
+    if current_balance == 0u64 {
         return; // Nothing to drain
     }
 

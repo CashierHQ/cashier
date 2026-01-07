@@ -96,7 +96,7 @@ async fn it_should_partial_activate_multi_token_basket_linkv2() {
 
         // ICP should have amount_available (minus fee)
         assert!(
-            icp_asset.amount_available > Nat::from(0u64),
+            icp_asset.amount_available > 0u64,
             "ICP amount_available should be > 0, got {}",
             icp_asset.amount_available
         );
@@ -197,12 +197,9 @@ async fn it_should_receive_multi_token_basket_linkv2() {
             .unwrap();
 
         // Both should have non-zero amounts after full activation
+        assert!(icp_asset.amount_available > 0u64, "ICP should be deposited");
         assert!(
-            icp_asset.amount_available > Nat::from(0u64),
-            "ICP should be deposited"
-        );
-        assert!(
-            ckbtc_asset.amount_available > Nat::from(0u64),
+            ckbtc_asset.amount_available > 0u64,
             "CKBTC should be deposited"
         );
 
@@ -299,7 +296,7 @@ async fn it_should_partial_receive_multi_token_basket_linkv2() {
             .clone();
 
         // Drain CKBTC from link account to simulate insufficient balance
-        drain_link_token_balance(&ctx, &link_id, CKBTC_ICRC_TOKEN).await;
+        drain_link_token_balance(ctx, &link_id, CKBTC_ICRC_TOKEN).await;
 
         // Act: create & process RECEIVE action
         let receiver = TestUser::User2.get_principal();
@@ -371,7 +368,7 @@ async fn it_should_partial_receive_multi_token_basket_linkv2() {
         let icp_client = ctx.new_icp_ledger_client(receiver);
         let receiver_icp_balance = icp_client.balance_of(&receiver_account).await.unwrap();
         assert!(
-            receiver_icp_balance > Nat::from(0u64),
+            receiver_icp_balance > 0u64,
             "Receiver should have received ICP"
         );
 
@@ -455,7 +452,7 @@ async fn it_should_partial_withdraw_multi_token_basket_linkv2() {
         assert_eq!(disable_result.unwrap().state, LinkState::Inactive);
 
         // Drain CKBTC from link account to simulate insufficient balance
-        drain_link_token_balance(&ctx, &link_id, CKBTC_ICRC_TOKEN).await;
+        drain_link_token_balance(ctx, &link_id, CKBTC_ICRC_TOKEN).await;
 
         // Act: create & process WITHDRAW action (as creator)
         let create_action_input = CreateActionInput {
@@ -500,7 +497,7 @@ async fn it_should_partial_withdraw_multi_token_basket_linkv2() {
             .find(|a| matches!(&a.asset, Asset::IC { address } if *address == ctx.icp_ledger_principal))
             .unwrap();
         assert!(
-            icp_asset.amount_available <= Nat::from(10000u64),
+            icp_asset.amount_available <= 10000u64,
             "ICP amount_available should be 0 or fee after successful withdraw, got {}",
             icp_asset.amount_available
         );

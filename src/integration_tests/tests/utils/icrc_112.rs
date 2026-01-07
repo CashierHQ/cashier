@@ -103,6 +103,7 @@ pub async fn execute_icrc112_request(
 /// * `ctx` - The test context containing the client for canister calls
 /// # Returns
 /// * `Result<Vec<Vec<CanisterCallResponse>>, String>` - A vector of vectors of CanisterCallResponse or an error message
+///
 /// Execute ICRC112 requests selectively, skipping requests to specified canisters.
 /// Useful for testing partial success scenarios where only some token transfers complete.
 /// # Arguments
