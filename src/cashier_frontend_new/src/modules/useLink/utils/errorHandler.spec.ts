@@ -15,17 +15,17 @@ import { Principal } from "@dfinity/principal";
 
 // Helper to create a mock link
 function createMockLink(state: LinkState = LinkState.ACTIVE): Link {
-  return {
-    id: "test-link-id",
-    creator: Principal.anonymous(),
-    link_type: "Tip" as const,
+  return new Link(
+    "test-link-id",
+    "Test Link",
+    Principal.anonymous(),
+    [],
+    "Tip" as const,
+    BigInt(0),
     state,
-    link_use_action_counter: 0n,
-    link_use_action_max_count: 1n,
-    asset_info: [],
-    created_at: BigInt(0),
-    updated_at: BigInt(0),
-  } as Link;
+    1n,
+    0n,
+  );
 }
 
 // Helper to create a mock action
@@ -34,7 +34,7 @@ function createMockAction() {
     "test-action-id",
     Principal.anonymous(),
     ActionType.RECEIVE,
-    ActionState.PENDING,
+    ActionState.CREATED,
     [],
   );
 }
