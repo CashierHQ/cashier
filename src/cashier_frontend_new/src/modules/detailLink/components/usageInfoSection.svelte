@@ -6,22 +6,25 @@
     formatUsdAmount,
   } from "$modules/shared/utils/formatNumber";
   import type { AssetWithTokenInfo } from "$modules/links/utils/feesBreakdown";
+  import type { Link } from "$modules/links/types/link/link";
 
   type Props = {
     assetsWithTokenInfo: AssetWithTokenInfo[];
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
-    linkUseActionCounter: bigint;
-    maxUse: number;
+    link?: Link;
   };
 
-  let {
-    assetsWithTokenInfo,
-    failedImageLoads,
-    onImageError,
-    linkUseActionCounter,
-    maxUse,
-  }: Props = $props();
+  let { assetsWithTokenInfo, failedImageLoads, onImageError, link }: Props =
+    $props();
+
+  const linkUseActionCounter = $derived.by(
+    () => link?.link_use_action_counter ?? 0n,
+  );
+
+  const maxUse = $derived.by(() =>
+    link ? Number(link.link_use_action_max_count) : 1,
+  );
 
   // Calculate remaining uses
   const remainingUses = $derived.by(() => {

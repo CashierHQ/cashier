@@ -2,16 +2,14 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { Info } from "lucide-svelte";
   import { locale } from "$lib/i18n";
-  import {
-    formatUsdAmount,
-    formatNumber,
-  } from "$modules/shared/utils/formatNumber";
+  import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import AssetTransferInfoDrawer from "../drawers/AssetTransferInfoDrawer.svelte";
   import { FeeType } from "$modules/links/types/fee";
   import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
-  import { LinkType } from "$modules/links/types/link/linkType";
   import { SvelteMap } from "svelte/reactivity";
+  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+  import { calculateDisplayAmounts } from "$modules/links/utils/displayAmounts";
 
   type Props = {
     forecastAssetAndFee: Array<ForecastAssetAndFee>;
@@ -20,8 +18,7 @@
     isReceive?: boolean;
     isClickable?: boolean;
     onInfoClick?: () => void;
-    maxUse?: number;
-    linkType?: string;
+    link?: LinkCreationStore;
   };
 
   let {
@@ -31,9 +28,11 @@
     isReceive = false,
     isClickable = false,
     onInfoClick,
-    maxUse = 1,
-    linkType,
+    link,
   }: Props = $props();
+
+  const maxUse = $derived.by(() => link?.createLinkData.maxUse ?? 1);
+  const linkType = $derived.by(() => link?.createLinkData.linkType);
 
   let assetTransferInfoDrawerOpen = $state(false);
 
@@ -59,39 +58,19 @@
 
   // Calculate display amount for each asset (multiply by maxUse for airdrop)
   const displayAmounts = $derived.by(() => {
+    const result = calculateDisplayAmounts(assetsToDisplay, linkType, maxUse);
+
+    // Convert Maps to SvelteMaps for reactivity
     const amounts = new SvelteMap<string, string>();
     const usdAmounts = new SvelteMap<string, string>();
 
-    for (const { asset } of assetsToDisplay) {
-      if (linkType === LinkType.AIRDROP && maxUse > 1) {
-        // Parse the formatted amount, multiply by maxUse, and format again
-        const amountStr = asset.amount.replace(/[^\d.-]/g, "");
-        const amountNum = parseFloat(amountStr);
-        if (!isNaN(amountNum)) {
-          const totalAmount = amountNum * maxUse;
-          amounts.set(asset.address, formatNumber(totalAmount));
-        } else {
-          amounts.set(asset.address, asset.amount);
-        }
+    result.amounts.forEach((value, key) => {
+      amounts.set(key, value);
+    });
 
-        // Also multiply USD value by maxUse
-        if (asset.usdValueStr) {
-          const usdStr = asset.usdValueStr.replace(/[^\d.-]/g, "");
-          const usdNum = parseFloat(usdStr);
-          if (!isNaN(usdNum)) {
-            const totalUsd = usdNum * maxUse;
-            usdAmounts.set(asset.address, totalUsd.toString());
-          } else {
-            usdAmounts.set(asset.address, asset.usdValueStr);
-          }
-        }
-      } else {
-        amounts.set(asset.address, asset.amount);
-        if (asset.usdValueStr) {
-          usdAmounts.set(asset.address, asset.usdValueStr);
-        }
-      }
-    }
+    result.usdAmounts.forEach((value, key) => {
+      usdAmounts.set(key, value);
+    });
 
     return { amounts, usdAmounts };
   });
