@@ -100,17 +100,18 @@ impl<M: TransactionManager + 'static> InactiveState<M> {
 
         // Decrement amount_available based on actual withdrawn amounts (handles partial success)
         // Note: Withdraw action creates transfer for (balance - fee), so we need to add fee back
+        // Withdraw action: link -> wallet, so use link_to_wallet amounts
         let fee_map = get_batch_tokens_fee_for_link(&link).await?;
         for asset_info in link.asset_info.iter_mut() {
             let address = match &asset_info.asset {
                 Asset::IC { address } => *address,
             };
-            if let Some(withdrawn) = process_action_result
-                .actual_transferred_amounts
-                .get(&address)
-            {
+            let withdrawn = process_action_result
+                .transfer_amounts
+                .get_link_to_wallet(&address);
+            if withdrawn > 0u64 {
                 let fee = fee_map.get(&address).cloned().unwrap_or(Nat::from(0u64));
-                let decrement = withdrawn.clone() + fee;
+                let decrement = withdrawn + fee;
 
                 // Safe subtraction
                 if asset_info.amount_available >= decrement {

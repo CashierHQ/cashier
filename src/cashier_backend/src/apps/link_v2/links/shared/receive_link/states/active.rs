@@ -81,15 +81,16 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
             .await?;
 
         // Update amount_available based on actual transferred amounts (handles partial success)
+        // Send action: wallet -> link, so use wallet_to_link amounts
         for asset_info in link.asset_info.iter_mut() {
             let address = match &asset_info.asset {
                 Asset::IC { address } => *address,
             };
-            if let Some(transferred) = process_action_result
-                .actual_transferred_amounts
-                .get(&address)
-            {
-                asset_info.amount_available += transferred.clone();
+            let transferred = process_action_result
+                .transfer_amounts
+                .get_wallet_to_link(&address);
+            if transferred > 0u64 {
+                asset_info.amount_available += transferred;
             }
         }
 

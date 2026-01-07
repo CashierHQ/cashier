@@ -86,18 +86,19 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
             .await?;
 
         // Decrement amount_available based on actual transferred amounts (handles partial success)
+        // Use action: link -> wallet, so use link_to_wallet amounts
         let fee_map = get_batch_tokens_fee_for_link(&link).await?;
         for asset_info in link.asset_info.iter_mut() {
             let address = match &asset_info.asset {
                 Asset::IC { address } => *address,
             };
 
-            if let Some(transferred) = process_action_result
-                .actual_transferred_amounts
-                .get(&address)
-            {
+            let transferred = process_action_result
+                .transfer_amounts
+                .get_link_to_wallet(&address);
+            if transferred > 0u64 {
                 let fee = fee_map.get(&address).cloned().unwrap_or(Nat::from(0u64));
-                let decrement = transferred.clone() + fee;
+                let decrement = transferred + fee;
 
                 // Safe subtraction (Nat is unsigned)
                 if asset_info.amount_available >= decrement {

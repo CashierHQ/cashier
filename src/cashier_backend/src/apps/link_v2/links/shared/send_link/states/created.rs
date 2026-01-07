@@ -4,7 +4,6 @@
 use crate::apps::link_v2::links::{
     shared::send_link::actions::create::CreateAction, traits::LinkV2State,
 };
-use candid::Nat;
 use candid::Principal;
 use cashier_backend_types::{
     error::CanisterError,
@@ -18,9 +17,7 @@ use cashier_backend_types::{
     },
 };
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
-use transaction_manager::{
-    icrc_token::utils::get_batch_tokens_fee_for_link, traits::TransactionManager,
-};
+use transaction_manager::traits::TransactionManager;
 
 pub struct CreatedState<M: TransactionManager + 'static> {
     pub link: Link,
@@ -99,20 +96,16 @@ impl<M: TransactionManager + 'static> CreatedState<M> {
             .await?;
 
         // Update amount_available based on actual transferred amounts (handles partial success)
-        let fee_map = get_batch_tokens_fee_for_link(&link).await?;
+        // Create action: wallet -> link, so use wallet_to_link amounts
         for asset_info in link.asset_info.iter_mut() {
             let address = match &asset_info.asset {
                 Asset::IC { address } => *address,
             };
-            if let Some(transferred) = process_action_result
-                .actual_transferred_amounts
-                .get(&address)
-            {
-                // Subtract fee from transferred amount to get net balance
-                let fee = fee_map.get(&address).cloned().unwrap_or(Nat::from(0u64));
-                if *transferred >= fee {
-                    asset_info.amount_available = transferred.clone() - fee;
-                }
+            let transferred = process_action_result
+                .transfer_amounts
+                .get_wallet_to_link(&address);
+            if transferred > 0u64 {
+                asset_info.amount_available = transferred;
             }
         }
 

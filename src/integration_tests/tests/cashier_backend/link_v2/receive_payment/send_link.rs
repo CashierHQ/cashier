@@ -20,7 +20,6 @@ use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, Int
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::repository::link_action::v1::LinkUserState;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
-use cashier_common::test_utils;
 use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]
@@ -111,11 +110,7 @@ async fn it_should_succeed_send_icp_token_payment_linkv2() {
                 assert_eq!(transfer.to, link_id_to_account(ctx, &link_id).into());
                 assert_eq!(
                     transfer.amount,
-                    test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        amounts[0].clone(),
-                        ledger_fee.clone(),
-                        1
-                    ),
+                    amounts[0].clone(),
                     "Transfer amount does not match"
                 );
             }
@@ -129,11 +124,7 @@ async fn it_should_succeed_send_icp_token_payment_linkv2() {
                 assert_eq!(data.to, link_id_to_account(ctx, &link_id).into());
                 assert_eq!(
                     data.amount,
-                    test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        amounts[0].clone(),
-                        ledger_fee.clone(),
-                        1
-                    ),
+                    amounts[0].clone(),
                     "Icrc1Transfer amount does not match"
                 );
                 assert!(data.memo.is_some());
@@ -181,13 +172,7 @@ async fn it_should_succeed_send_icp_token_payment_linkv2() {
         let icp_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
         assert_eq!(
             icp_balance_after,
-            icp_balance_before
-                - test_utils::calculate_amount_for_wallet_to_link_transfer(
-                    amounts[0].clone(),
-                    ledger_fee.clone(),
-                    1
-                )
-                - ledger_fee.clone(),
+            icp_balance_before - amounts[0].clone() - ledger_fee.clone(),
             "Sender's ICP balance should decrease by transfer amount and tip"
         );
 
@@ -196,11 +181,7 @@ async fn it_should_succeed_send_icp_token_payment_linkv2() {
         let link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
         assert_eq!(
             link_balance,
-            test_utils::calculate_amount_for_wallet_to_link_transfer(
-                amounts[0].clone(),
-                ledger_fee.clone(),
-                1
-            ),
+            amounts[0].clone(),
             "Link balance should be correct"
         );
 
@@ -278,11 +259,7 @@ async fn it_should_succeed_send_icrc_token_payment_linkv2() {
                 assert_eq!(transfer.to, link_id_to_account(ctx, &link_id).into());
                 assert_eq!(
                     transfer.amount,
-                    test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        amounts[0].clone(),
-                        ledger_fee.clone(),
-                        1
-                    ),
+                    amounts[0].clone(),
                     "Transfer amount does not match"
                 );
             }
@@ -296,11 +273,7 @@ async fn it_should_succeed_send_icrc_token_payment_linkv2() {
                 assert_eq!(data.to, link_id_to_account(ctx, &link_id).into());
                 assert_eq!(
                     data.amount,
-                    test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        amounts[0].clone(),
-                        ledger_fee.clone(),
-                        1
-                    ),
+                    amounts[0].clone(),
                     "Icrc1Transfer amount does not match"
                 );
                 assert!(data.memo.is_some());
@@ -351,13 +324,7 @@ async fn it_should_succeed_send_icrc_token_payment_linkv2() {
             .unwrap();
         assert_eq!(
             ckbtc_balance_after,
-            ckbtc_balance_before
-                - test_utils::calculate_amount_for_wallet_to_link_transfer(
-                    amounts[0].clone(),
-                    ledger_fee.clone(),
-                    1
-                )
-                - ledger_fee.clone(),
+            ckbtc_balance_before - amounts[0].clone() - ledger_fee.clone(),
             "Sender's CKBTC balance should decrease by tip amount"
         );
 
@@ -366,11 +333,7 @@ async fn it_should_succeed_send_icrc_token_payment_linkv2() {
         let link_balance = ckbtc_ledger_client.balance_of(&link_account).await.unwrap();
         assert_eq!(
             link_balance,
-            test_utils::calculate_amount_for_wallet_to_link_transfer(
-                amounts[0].clone(),
-                ledger_fee.clone(),
-                1
-            ),
+            amounts[0].clone(),
             "Link balance should be correct"
         );
 
