@@ -21,14 +21,10 @@ describe("AddressUnlockedState", () => {
     mockStore = {
       state: null,
       action: null,
-      link: { id: "test-link-id", state: "active" },
       linkDetail: {
         id: "test-link-id",
         createAction: mockCreateAction,
         processAction: mockProcessAction,
-        query: {
-          refresh: vi.fn().mockResolvedValue(undefined),
-        },
       },
     } as unknown as UserLinkStore;
 
@@ -69,14 +65,10 @@ describe("AddressUnlockedState", () => {
         const storeWithAction = {
           state: null,
           action: { id: "test-action" } as Action,
-          link: { id: "test-link-id", state: "active" },
           linkDetail: {
             id: "test-link-id",
             createAction: mockCreateAction,
             processAction: mockProcessAction,
-            query: {
-              refresh: vi.fn().mockResolvedValue(undefined),
-            },
           },
         } as unknown as UserLinkStore;
         const stateWithAction = new AddressUnlockedState(storeWithAction);
@@ -106,14 +98,10 @@ describe("AddressUnlockedState", () => {
         const storeWithAction = {
           state: null,
           action: { id: "test-action" } as Action,
-          link: { id: "test-link-id", state: "active" },
           linkDetail: {
             id: "test-link-id",
             createAction: mockCreateAction,
             processAction: mockProcessAction,
-            query: {
-              refresh: vi.fn().mockResolvedValue(undefined),
-            },
           },
         } as unknown as UserLinkStore;
         const stateWithAction = new AddressUnlockedState(storeWithAction);
@@ -155,14 +143,10 @@ describe("AddressUnlockedState", () => {
           id: "action-1",
           type: ActionType.RECEIVE,
         } as Action,
-        link: { id: "test-link-id", state: "active" },
         linkDetail: {
           id: "test-link-id",
           createAction: mockCreateAction,
           processAction: mockProcessAction,
-          query: {
-            refresh: vi.fn().mockResolvedValue(undefined),
-          },
         },
       } as unknown as UserLinkStore;
 
@@ -189,14 +173,10 @@ describe("AddressUnlockedState", () => {
           id: "action-1",
           type: ActionType.SEND,
         } as Action,
-        link: { id: "test-link-id", state: "active" },
         linkDetail: {
           id: "test-link-id",
           createAction: mockCreateAction,
           processAction: mockProcessAction,
-          query: {
-            refresh: vi.fn().mockResolvedValue(undefined),
-          },
         },
       } as unknown as UserLinkStore;
       state = new AddressUnlockedState(mockStore);
@@ -246,14 +226,10 @@ describe("AddressUnlockedState", () => {
           id: "action-1",
           type: ActionType.RECEIVE,
         } as Action,
-        link: { id: "test-link-id", state: "active" },
         linkDetail: {
           id: "test-link-id",
           createAction: mockCreateAction,
           processAction: mockProcessAction,
-          query: {
-            refresh: vi.fn().mockResolvedValue(undefined),
-          },
         },
       } as unknown as UserLinkStore;
 

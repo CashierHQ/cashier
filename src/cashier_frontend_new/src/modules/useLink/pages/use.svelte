@@ -2,7 +2,6 @@
   import type { ProcessActionResult } from "$modules/links/types/action/action";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
-  import { LinkState } from "$modules/links/types/link/linkState";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import Completed from "../components/Completed.svelte";
   import Landing from "../components/Landing.svelte";
@@ -11,6 +10,12 @@
   import { getGuardContext } from "$modules/guard/context.svelte";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { locale } from "$lib/i18n";
+  import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
+  import {
+    shouldRedirectTo404,
+    shouldRedirectErrorTo404,
+  } from "../utils/errorHandler";
 
   const {
     onIsLinkChange,
@@ -46,23 +51,11 @@
     successMessage = null;
 
     try {
-      // Refetch link data to ensure we have the latest state before creating action
-      await userStore.linkDetail.query.refresh();
-
       if (!userStore?.link) {
         throw new Error(
           locale.t("links.linkForm.useLink.errors.linkDetailMissing"),
         );
       }
-
-      // Check if link is inactive before proceeding
-      if (
-        userStore.link.state === LinkState.INACTIVE ||
-        userStore.link.state === LinkState.INACTIVE_ENDED
-      ) {
-        throw new Error("Link is no longer available");
-      }
-
       if (userStore.action) {
         showTxCart = true;
       } else {
@@ -79,6 +72,13 @@
         userStore.query?.refresh();
       }
     } catch (err) {
+      // Check if error requires redirect to 404
+      if (shouldRedirectErrorTo404(err, userStore.link ?? undefined)) {
+        // Redirect to error page instead of showing toast
+        goto(resolve("/404"));
+        return;
+      }
+
       const errorPrefix = locale.t(
         "links.linkForm.useLink.errors.failedToCreateAction",
       );
@@ -91,7 +91,34 @@
   };
 
   const handleProcessAction = async (): Promise<ProcessActionResult> => {
-    return await userStore.processAction();
+    try {
+      const result = await userStore.processAction();
+
+      // Check if result requires redirect to 404
+      if (shouldRedirectTo404(result, userStore.link ?? undefined)) {
+        goto(resolve("/404"));
+        return result;
+      }
+
+      return result;
+    } catch (err) {
+      // Check if error requires redirect to 404
+      if (shouldRedirectErrorTo404(err, userStore.link ?? undefined)) {
+        goto(resolve("/404"));
+        // Return a result with the current action if it exists
+        if (!userStore.action) {
+          throw new Error("Action already exists but no action found in store");
+        }
+        return {
+          action: userStore.action,
+          isSuccess: false,
+          errors: [err instanceof Error ? err.message : String(err)],
+        };
+      }
+
+      // Re-throw other errors to be handled by TxCart
+      throw err;
+    }
   };
 
   // Notify parent about isLink changes based on current step

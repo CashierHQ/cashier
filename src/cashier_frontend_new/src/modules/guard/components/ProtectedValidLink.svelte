@@ -4,7 +4,6 @@
   import type { Snippet } from "svelte";
   import { getGuardContext } from "../context.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
-  import { LinkState } from "$modules/links/types/link/linkState";
 
   let {
     redirectTo,
@@ -22,14 +21,7 @@
     context.isLoading({ checkTempLinkLoad: true }),
   );
 
-  const hasLink = $derived.by(() => context.hasLink());
-
-  const link = $derived.by(() => context.getLink());
-
-  const isLinkInactive = $derived(
-    link?.state === LinkState.INACTIVE ||
-      link?.state === LinkState.INACTIVE_ENDED,
-  );
+  const hasLink = $derived(() => context.hasLink());
 
   const isValid = $derived(!linkStore ? false : isLoading ? false : hasLink);
 
@@ -39,8 +31,7 @@
     (isReadyToCheck && !hasLink) ||
       (context.authState.isReady &&
         context.hasTempLinkLoadAttempted &&
-        !linkStore) ||
-      (isReadyToCheck && isLinkInactive),
+        !linkStore),
   );
 
   $effect(() => {
