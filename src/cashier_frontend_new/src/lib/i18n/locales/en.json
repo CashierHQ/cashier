@@ -114,6 +114,7 @@
         "continue": "Continue",
         "create": "Create",
         "failedToProceed": "Failed to proceed to next step",
+        "airdropDescription": "Congratulations, you received an airdrop!",
         "preview": {
           "tip": {
             "title": "Tipping crypto",
@@ -262,6 +263,7 @@
         "completed": {
           "title": "Completed",
           "message": "Congratulations, you received a tip!",
+          "airdropMessage": "Congratulations, you received an airdrop!",
           "claimButton": "Claim",
           "claimedButton": "Claimed"
         },

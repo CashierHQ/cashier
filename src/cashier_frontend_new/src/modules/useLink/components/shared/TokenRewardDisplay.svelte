@@ -8,12 +8,16 @@
     symbol,
     decimals,
     message,
+    claimedCount,
+    totalCount,
   }: {
     tokenAddress: string;
     amount: number;
     symbol: string;
     decimals: number;
     message: string;
+    claimedCount?: number;
+    totalCount?: number;
   } = $props();
 
   const tokenLogo = $derived(getTokenLogo(tokenAddress));
@@ -29,7 +33,21 @@
   }
 </script>
 
-<div class="flex flex-col items-center">
+<div
+  class="flex flex-col items-center {claimedCount !== undefined &&
+  totalCount !== undefined
+    ? 'pt-10'
+    : ''}"
+>
+  <!-- Progress bar for airdrop (if claimedCount and totalCount are provided) -->
+  {#if claimedCount !== undefined && totalCount !== undefined}
+    <div class="w-full bg-greenwhite px-2.5 8y-/1.2solute sopiboldft-0 right-0">
+      <div class="text-center text-white text-[18px/1.2] font-semibold">
+        {claimedCount}/{totalCount} claimed
+      </div>
+    </div>
+  {/if}
+
   <!-- Token Image or Fallback -->
   {#if imageError}
     <span
