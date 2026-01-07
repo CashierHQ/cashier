@@ -366,8 +366,7 @@
         {assetsWithTokenInfo}
         {failedImageLoads}
         onImageError={handleImageError}
-        linkUseActionCounter={linkStore.link.link_use_action_counter}
-        maxUse={Number(linkStore.link.link_use_action_max_count)}
+        link={linkStore.link}
       />
 
       <!-- Block 6: Share Link -->
