@@ -1,10 +1,10 @@
 import { LinkType } from "$modules/links/types/link/linkType";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { describe, expect, it, vi } from "vitest";
-import { LinkCreationStore } from "../linkCreationStore.svelte";
-import { AddAssetTipLinkState } from "./tiplink/addAsset";
-import { AddAssetState } from "./addAsset";
-import { CreateLinkData } from "../../types/createLinkData";
+import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+import { AddAssetTipLinkState } from "$modules/creationLink/state/linkCreationStates/tiplink/addAsset";
+import { AddAssetAirdropState } from "$modules/creationLink/state/linkCreationStates/airdrop/addAsset";
+import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
 import { TempLink } from "$modules/links/types/tempLink";
 import { LinkState } from "$modules/links/types/link/linkState";
 import { LinkStep } from "$modules/links/types/linkStep";
@@ -152,6 +152,6 @@ describe("ChooseLinkTypeState", () => {
 
     // Assert
     expect(store.state.step).toEqual(LinkStep.ADD_ASSET);
-    expect(store.state).toBeInstanceOf(AddAssetState);
+    expect(store.state).toBeInstanceOf(AddAssetAirdropState);
   });
 });

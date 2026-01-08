@@ -17,9 +17,7 @@
   } = $props();
 
   // Get first asset from asset_info
-  const firstAsset = $derived.by(() => {
-    return userLink.linkDetail?.link?.asset_info?.[0];
-  });
+  const firstAsset = $derived(userLink.linkDetail?.link?.asset_info?.[0]);
 
   // Get token from wallet store
   const walletToken = $derived.by(() => {
@@ -43,26 +41,26 @@
   });
 
   // Get display info using utility
-  const displayInfo = $derived.by(() => {
-    return getFirstAssetDisplayInfo(
+  const displayInfo = $derived(
+    getFirstAssetDisplayInfo(
       firstAsset ?? null,
       walletToken ?? null,
       tokenMeta?.data ?? null,
-    );
-  });
+    ),
+  );
 
   // Get airdrop progress info
-  const claimedCount = $derived.by(() => {
-    const link = userLink.linkDetail?.link;
-    if (!link) return undefined;
-    return Number(link.link_use_action_counter ?? 0n);
-  });
+  const claimedCount = $derived(
+    userLink.linkDetail?.link
+      ? Number(userLink.linkDetail.link.link_use_action_counter ?? 0n)
+      : undefined,
+  );
 
-  const totalCount = $derived.by(() => {
-    const link = userLink.linkDetail?.link;
-    if (!link) return undefined;
-    return Number(link.link_use_action_max_count ?? 1n);
-  });
+  const totalCount = $derived(
+    userLink.linkDetail?.link
+      ? Number(userLink.linkDetail.link.link_use_action_max_count ?? 1n)
+      : undefined,
+  );
 
   const isLoggedIn = $derived(userProfile.isLoggedIn());
 </script>

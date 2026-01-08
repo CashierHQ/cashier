@@ -8,8 +8,8 @@
   import { LinkState } from "$modules/links/types/link/linkState";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import { onMount } from "svelte";
-  import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
-  import LinkDetails from "./linkDetails.svelte";
+  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+  import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
   import { locale } from "$lib/i18n";
   const {
     link,

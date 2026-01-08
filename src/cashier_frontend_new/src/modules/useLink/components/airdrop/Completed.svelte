@@ -4,8 +4,8 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { Button } from "$lib/shadcn/components/ui/button";
   import { locale } from "$lib/i18n";
-  import TokenRewardDisplay from "../shared/TokenRewardDisplay.svelte";
-  import { getFirstAssetDisplayInfo } from "../../utils/getFirstAssetDisplayInfo";
+  import TokenRewardDisplay from "$modules/useLink/components/shared/TokenRewardDisplay.svelte";
+  import { getFirstAssetDisplayInfo } from "$modules/useLink/utils/getFirstAssetDisplayInfo";
 
   const { linkDetail }: { linkDetail?: LinkDetailStore } = $props();
 

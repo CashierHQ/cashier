@@ -18,29 +18,20 @@
   let { assetsWithTokenInfo, failedImageLoads, onImageError, link }: Props =
     $props();
 
-  const linkUseActionCounter = $derived.by(
-    () => link?.link_use_action_counter ?? 0n,
-  );
+  const linkUseActionCounter = $derived(link?.link_use_action_counter ?? 0n);
 
-  const maxUse = $derived.by(() =>
-    link ? Number(link.link_use_action_max_count) : 1,
-  );
+  const maxUse = $derived(link ? Number(link.link_use_action_max_count) : 1);
 
   // Calculate remaining uses
-  const remainingUses = $derived.by(() => {
-    const used = Number(linkUseActionCounter);
-    const max = maxUse || 1;
-    return Math.max(0, max - used);
-  });
+  const remainingUses = $derived(
+    Math.max(0, (maxUse || 1) - Number(linkUseActionCounter)),
+  );
 
   // Calculate total USD value of all assets multiplied by remaining uses
-  const totalUsdValue = $derived.by(() => {
-    const baseTotal = assetsWithTokenInfo.reduce(
-      (total, asset) => total + asset.usdValue,
-      0,
-    );
-    return baseTotal * remainingUses;
-  });
+  const totalUsdValue = $derived(
+    assetsWithTokenInfo.reduce((total, asset) => total + asset.usdValue, 0) *
+      remainingUses,
+  );
 </script>
 
 <div>

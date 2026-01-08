@@ -1,15 +1,11 @@
-import { validationService } from "$modules/links/services/validationService";
 import { LinkStep } from "$modules/links/types/linkStep";
-import { walletStore } from "$modules/token/state/walletStore.svelte";
-import type { LinkCreationState } from ".";
-import type { LinkCreationStore } from "../linkCreationStore.svelte";
-import { ChooseLinkTypeState } from "./chooseLinkType";
-import { PreviewState } from "./preview";
-import { parseBalanceUnits } from "$modules/shared/utils/converter";
-import { formatNumber } from "$modules/shared/utils/formatNumber";
+import type { LinkCreationState } from "$modules/creationLink/state/linkCreationStates";
+import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+import { ChooseLinkTypeState } from "$modules/creationLink/state/linkCreationStates/chooseLinkType";
+import { PreviewState } from "$modules/creationLink/state/linkCreationStates/preview";
 import { locale } from "$lib/i18n";
 
-// State when the user is adding asset details for the tip link
+// Default state when user is adding asset details for the link
 export class AddAssetState implements LinkCreationState {
   readonly step = LinkStep.ADD_ASSET;
   #link: LinkCreationStore;
@@ -40,49 +36,6 @@ export class AddAssetState implements LinkCreationState {
       throw new Error(
         locale.t("links.linkForm.addAsset.errors.amountMustBeGreaterThanZero"),
       );
-    }
-
-    // validate required amounts (for airdrop, this checks totalAmount = useAmount * maxUse)
-    const validationResult = validationService.validateRequiredAmount(
-      this.#link.createLinkData,
-      walletStore.query.data || [],
-    );
-
-    if (validationResult.isErr()) {
-      const errorMessage = validationResult.error.message;
-
-      // Check if it's an insufficient amount error
-      const insufficientAmountMatch = errorMessage.match(
-        /Insufficient amount for asset ([^,]+), required: (\d+), available: (\d+)/,
-      );
-
-      if (insufficientAmountMatch && walletStore.query.data) {
-        const [, address, requiredStr, availableStr] = insufficientAmountMatch;
-        const required = BigInt(requiredStr);
-        const available = BigInt(availableStr);
-
-        // Find the token to get symbol and decimals
-        const token = walletStore.query.data.find((t) => t.address === address);
-
-        if (token) {
-          const requiredAmount = parseBalanceUnits(required, token.decimals);
-          const availableAmount = parseBalanceUnits(available, token.decimals);
-
-          // Format the error message using locale
-          const template = locale.t(
-            "links.linkForm.addAsset.errors.insufficientBalance",
-          );
-          const formattedMessage = template
-            .replace("{{required}}", formatNumber(requiredAmount))
-            .replace("{{tokenSymbol}}", token.symbol)
-            .replace("{{available}}", formatNumber(availableAmount));
-
-          throw new Error(formattedMessage);
-        }
-      }
-
-      // For other errors, throw the original message
-      throw new Error(`Validation failed: ${errorMessage}`);
     }
 
     this.#link.state = new PreviewState(this.#link);

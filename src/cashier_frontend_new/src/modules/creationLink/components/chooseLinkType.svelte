@@ -2,8 +2,8 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import Input from "$lib/shadcn/components/ui/input/input.svelte";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
-  import { getLinkTemplateInfo } from "../utils/linkTemplateInfo";
+  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+  import { getLinkTemplateInfo } from "$modules/creationLink/utils/linkTemplateInfo";
   import {
     LinkType,
     type LinkTypeValue,
