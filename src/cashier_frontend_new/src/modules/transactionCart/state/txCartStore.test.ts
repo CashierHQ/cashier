@@ -82,7 +82,8 @@ vi.mock("$modules/shared/services/feeService", () => ({
     computeAmountAndFee: mockComputeAmountAndFee,
     computeWalletFee: mockComputeWalletFee,
     mapActionToAssetAndFeeList: mockMapActionToAssetAndFeeList,
-    convertAssetAndFeeListToFeesBreakdown: mockConvertAssetAndFeeListToFeesBreakdown,
+    convertAssetAndFeeListToFeesBreakdown:
+      mockConvertAssetAndFeeListToFeesBreakdown,
   },
 }));
 

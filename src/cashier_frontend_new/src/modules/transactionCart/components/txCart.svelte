@@ -67,9 +67,11 @@
   }
 
   // Get fees breakdown from store, derive total from it
-  const feesBreakdown = $derived.by(() => txCartStore.getFeesBreakdown(tokensMap));
-  const totalFeesUsd = $derived.by(
-   () =>  feesBreakdown.reduce((sum, item) => sum + item.usdAmount, 0)
+  const feesBreakdown = $derived.by(() =>
+    txCartStore.getFeesBreakdown(tokensMap),
+  );
+  const totalFeesUsd = $derived.by(() =>
+    feesBreakdown.reduce((sum, item) => sum + item.usdAmount, 0),
   );
 
   // Handle fee breakdown click - close txCart and show FeeInfoDrawer
