@@ -240,7 +240,14 @@ dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token
       };
   })" {{network}}
 
-
+# Deploy ICRC1 token ledger
+# params minter: principal ID of the ledger minter
+# canister_name: canister name
+# name: token name
+# symbol: token symbol
+# canister_id: specified canister ID
+# decimals: token decimals, e.g. 8
+# transfer_fee: ledger fee, e.g. 10000
 [private]
 dfx_local_deploy_icrc1_ledger minter canister_name name symbol canister_id decimals transfer_fee:
   #!/usr/bin/env bash
@@ -299,7 +306,6 @@ dfx_local_deploy_icp_ledger:
   })
   "
 
-
 [private]
 dfx_local_deploy_icp_index:
   #!/usr/bin/env bash
@@ -309,7 +315,10 @@ dfx_local_deploy_icp_index:
     ledger_id = principal \"ryjl3-tyaaa-aaaaa-aaaba-cai\";
   })" --specified-id qhbym-qaaaa-aaaaa-aaafq-cai
 
-
+# Deploy the token indexer canister
+# params canister_name: name of canister
+# ledger_id: the token ledger canister id
+# index_id: the canister id of indexer
 [private]
 dfx_local_deploy_icrc_index canister_name ledger_id index_id:
   #!/usr/bin/env bash
@@ -320,6 +329,11 @@ dfx_local_deploy_icrc_index canister_name ledger_id index_id:
     retrieve_blocks_from_ledger_interval_seconds = opt 10;
   } })" --specified-id {{index_id}}
 
+# Deploy ICRC7 NFT canister
+# params minter_id: principal ID of the ledger minter
+# canister_name: canister name string
+# collection_name: name of the NFT collection
+# collection_symbol: symbol of the NFT collection
 [private]
 dfx_local_deploy_icrc7_ledger minter_id canister_name collection_name collection_symbol collection_description:
   #!/usr/bin/env bash
@@ -373,7 +387,10 @@ dfx_local_deploy_icrc7_ledger minter_id canister_name collection_name collection
         }
     )"
 
-
+# Airdrop ICRC token
+# params target_principal: principal ID of the receiver
+# canister_id: canister ID of the token ledger
+# amount: airdrop amount
 [private]
 dfx_local_airdrop_token target_principal canister_id amount:
   #!/usr/bin/env bash
@@ -391,6 +408,12 @@ dfx_local_airdrop_token target_principal canister_id amount:
         fee = null
   })" 
 
+# Airdrop (mint) NFT
+# params target_principal: principal ID of the receiver
+# canister_id: canister ID of the ledger
+# nft_name: name of NFT
+# nft_description: description of NFT
+# nft_image: image of NFT
 [private]
 dfx_local_mint_nft target_principal canister_id nft_name nft_description nft_image:
   #!/usr/bin/env bash
