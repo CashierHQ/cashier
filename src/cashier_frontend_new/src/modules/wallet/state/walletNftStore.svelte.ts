@@ -1,5 +1,6 @@
 import { managedState } from "$lib/managedState";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
+import { NFT_PAGE_SIZE } from "$modules/wallet/constants";
 import { Icrc7Service } from "$modules/wallet/services/icrc7Service";
 import type {
   CollectionMetadata,
@@ -11,11 +12,22 @@ import type { Principal } from "@dfinity/principal";
 class WalletNftStore {
   #walletNftQuery;
   collectionMetadataCache: Map<string, CollectionMetadata> = new Map();
+  #currentPage: number = 0;
+  #allNfts: EnrichedNFT[] = [];
+  #hasMore: boolean = true;
 
   constructor() {
     this.#walletNftQuery = managedState<EnrichedNFT[]>({
       queryFn: async () => {
-        const nfts: NFT[] = await tokenStorageService.getNfts(0, 10);
+        const start = this.#currentPage * NFT_PAGE_SIZE;
+        const nfts: NFT[] = await tokenStorageService.getNfts(
+          start,
+          NFT_PAGE_SIZE,
+        );
+
+        if (nfts.length < NFT_PAGE_SIZE) {
+          this.#hasMore = false;
+        }
 
         // collect metadata for each NFT
         const metadataRequests = nfts.map((nft) => {
@@ -40,9 +52,9 @@ class WalletNftStore {
           ...collectionMetadatas[index],
         }));
 
-        console.log("Enriched NFTs:", enrichedNfts);
+        this.#allNfts = [...this.#allNfts, ...enrichedNfts];
 
-        return enrichedNfts;
+        return this.#allNfts;
       },
       refetchInterval: 15_000, // Refresh every 15 seconds to keep NFTs up-to-date
       persistedKey: ["walletNftQuery"],
@@ -52,6 +64,32 @@ class WalletNftStore {
 
   get query() {
     return this.#walletNftQuery;
+  }
+
+  get hasMore() {
+    return this.#hasMore;
+  }
+
+  /**
+   * Load more NFTs for pagination
+   * @returns
+   */
+  public loadMore() {
+    if (!this.#hasMore) {
+      return;
+    }
+    this.#currentPage += 1;
+    this.#walletNftQuery.refresh();
+  }
+
+  /**
+   * Reset the NFT store to initial state
+   */
+  public reset() {
+    this.#currentPage = 0;
+    this.#allNfts = [];
+    this.#hasMore = true;
+    this.#walletNftQuery.reset();
   }
 
   /**
