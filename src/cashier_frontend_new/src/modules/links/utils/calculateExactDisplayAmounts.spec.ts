@@ -26,7 +26,7 @@ describe("calculateExactDisplayAmounts", () => {
   const createMockToken = (
     address: string,
     decimals: number = 8,
-    priceUSD?: number,
+    priceUSD: number = 0,
   ): TokenWithPriceAndBalance => ({
     name: "Test Token",
     symbol: "TEST",
@@ -140,7 +140,7 @@ describe("calculateExactDisplayAmounts", () => {
     it("should handle missing USD value when priceUSD is not available", () => {
       const assetsToDisplay = [createMockAsset("0xtoken1", "10")];
       const linkAssets = [new CreateLinkAsset("0xtoken1", 1000000000n)];
-      const walletTokens = [createMockToken("0xtoken1", 8, undefined)];
+      const walletTokens = [createMockToken("0xtoken1", 8, 0)];
       const maxUse = 2;
 
       const result = calculateExactDisplayAmounts({
@@ -152,6 +152,7 @@ describe("calculateExactDisplayAmounts", () => {
       });
 
       expect(result.amounts.get("0xtoken1")).toBe("20");
+      // When priceUSD is 0 and no usdValueStr, USD amount is not set
       expect(result.usdAmounts.get("0xtoken1")).toBeUndefined();
     });
 
