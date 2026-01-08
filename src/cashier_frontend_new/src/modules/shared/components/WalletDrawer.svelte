@@ -34,6 +34,10 @@
     }
   }
 
+  function handleSwitchMainTab(tab: WalletTab) {
+    currentMainTab = tab;
+  }
+
   function navigateToToken(token: string) {
     currentView = { type: WalletViewType.TOKEN, token };
   }
@@ -129,6 +133,7 @@
           onNavigateToReceive={navigateToReceive}
           onNavigateToSwap={navigateToSwap}
           onNavigateToAddNft={navigateToAddNft}
+          onTabChange={handleSwitchMainTab}
         />
       {:else if currentView.type === WalletViewType.TOKEN}
         <TokenInfoPage
