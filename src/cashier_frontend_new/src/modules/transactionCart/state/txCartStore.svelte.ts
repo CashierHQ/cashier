@@ -16,7 +16,10 @@ import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import type { Signer } from "@slide-computer/signer";
-import { AssetProcessState, type AssetItem } from "../types/txCart";
+import {
+  AssetProcessState,
+  type AssetItem,
+} from "$modules/transactionCart/types/txCart";
 import { assertUnreachable } from "$lib/rsMatch";
 import {
   type ExecuteResult,
