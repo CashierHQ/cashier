@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Link } from "$modules/links/types/link/link";
+import { Link } from "$modules/links/types/link/link";
 import { LinkState } from "$modules/links/types/link/linkState";
 import {
   isActionAlreadyExistsError,
