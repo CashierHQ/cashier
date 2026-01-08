@@ -1,14 +1,14 @@
 <script lang="ts">
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
-  import type Action from "$modules/links/types/action/action";
   import type { ProcessActionResult } from "$modules/links/types/action/action";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { onMount } from "svelte";
   import { TransactionCartStore } from "$modules/transactionCart/state/txCartStore.svelte";
   import {
     FlowDirection,
-    TransactionSourceType,
+    isActionSource,
+    type TransactionSource,
   } from "$modules/transactionCart/types/transaction-source";
   import YouSendSection from "$modules/transactionCart/components/YouSendSection.svelte";
   import YouReceiveSection from "$modules/transactionCart/components/YouReceiveSection.svelte";
@@ -19,33 +19,25 @@
   import { feeService } from "$modules/shared/services/feeService";
 
   let {
-    action,
+    source,
     isOpen = $bindable(false),
     onCloseDrawer,
-    handleProcessAction,
-    isProcessing: externalIsProcessing,
+    onSuccess,
   }: {
-    action: Action;
+    source: TransactionSource;
     isOpen: boolean;
     onCloseDrawer: () => void;
-    handleProcessAction: () => Promise<ProcessActionResult>;
-    isProcessing?: boolean;
+    onSuccess?: (result: bigint | ProcessActionResult) => void;
   } = $props();
 
-  const txCartStore = new TransactionCartStore({
-    type: TransactionSourceType.ACTION,
-    action,
-    handleProcessAction,
-  });
+  const txCartStore = new TransactionCartStore(source);
 
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let isProcessingLocally: boolean = $state(false);
 
-  // Combine local processing state with external processing state
-  const isProcessing = $derived.by(() => {
-    return isProcessingLocally || (externalIsProcessing ?? false);
-  });
+  // Processing state (internal only now)
+  const isProcessing = $derived.by(() => isProcessingLocally);
 
   // Build tokens map from walletStore
   const tokensMap = $derived.by(() =>
@@ -100,6 +92,7 @@
 
   /**
    * Handle confirm button click.
+   * Supports both ActionSource (ProcessActionResult) and WalletSource (bigint) results.
    */
   async function handleConfirm() {
     isProcessingLocally = true;
@@ -107,14 +100,27 @@
     successMessage = null;
 
     try {
-      const processActionResult = await txCartStore.execute();
-      if (processActionResult.isSuccess) {
+      const result = await txCartStore.execute();
+
+      if (isActionSource(source)) {
+        // ActionSource: result is ProcessActionResult
+        const actionResult = result as ProcessActionResult;
+        if (actionResult.isSuccess) {
+          successMessage = locale.t(
+            "links.linkForm.drawers.txCart.successMessage",
+          );
+          onSuccess?.(actionResult);
+          onCloseDrawer?.();
+        } else {
+          errorMessage = `${locale.t("links.linkForm.drawers.txCart.errorMessagePrefix")} ${actionResult.errors.join(", ")}`;
+        }
+      } else {
+        // WalletSource: result is blockId (bigint)
         successMessage = locale.t(
           "links.linkForm.drawers.txCart.successMessage",
         );
+        onSuccess?.(result as bigint);
         onCloseDrawer?.();
-      } else {
-        errorMessage = `${locale.t("links.linkForm.drawers.txCart.errorMessagePrefix")} ${processActionResult.errors.join(", ")}`;
       }
     } catch (e) {
       errorMessage = `${locale.t("links.linkForm.drawers.txCart.errorMessagePrefix")} ${(e as Error).message}`;
@@ -141,7 +147,7 @@
   });
 </script>
 
-{#if action}
+{#if source}
   <Drawer.Root bind:open={isOpen} onOpenChange={handleOpenChange}>
     <Drawer.Content class="max-w-full w-[400px] mx-auto p-3">
       <Drawer.Header>

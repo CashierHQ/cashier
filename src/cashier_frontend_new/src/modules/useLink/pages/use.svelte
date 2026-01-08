@@ -3,6 +3,7 @@
   import { ActionState } from "$modules/links/types/action/actionState";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
+  import { TransactionSourceType } from "$modules/transactionCart/types/transaction-source";
   import Completed from "../components/Completed.svelte";
   import Landing from "../components/Landing.svelte";
   import Unlocked from "../components/Unlocked.svelte";
@@ -165,9 +166,12 @@
         {#if showTxCart && userStore?.link && userStore?.action}
           <TxCart
             isOpen={showTxCart}
-            action={userStore.action}
+            source={{
+              type: TransactionSourceType.ACTION,
+              action: userStore.action,
+              handleProcessAction,
+            }}
             {onCloseDrawer}
-            {handleProcessAction}
           />
         {/if}
       </div>
