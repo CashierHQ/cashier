@@ -6,6 +6,7 @@
   import NftList from '$modules/wallet/components/nft/nftList.svelte';
   import TokenList from "$modules/wallet/components/token/tokenList.svelte";
   import { WalletTab } from "$modules/wallet/types";
+  import { toast } from 'svelte-sonner';
   import { SvelteSet } from "svelte/reactivity";
   import { walletNftStore } from '../state/walletNftStore.svelte';
 
@@ -71,13 +72,9 @@
     currentTab = tab;
   }
 
-  function handleSelectNft(collectionAddress: string, tokenId: bigint) {
+  function handleSelectNft(collectionId: string, tokenId: bigint) {
     // Handle NFT selection (e.g., navigate to NFT details)
-  }
-
-  function handleNFTImageError(collectionAddress: string, tokenId: bigint) {
-    const key = `${collectionAddress}-${tokenId.toString()}`;
-    failedImageLoads.add(key);
+    toast.info("Selected NFT: " + collectionId + " #" + tokenId.toString());
   }
 
   function handleAddNft() {
@@ -131,13 +128,9 @@
     {#if walletNftStore.query.data}
       <NftList
         nfts={walletNftStore.query.data}
-        onSelectNFT={(collectionAddress, tokenId) => {
-          handleSelectNft(collectionAddress, tokenId);
-        }}
-        onNFTImageError={(collectionAddress, tokenId) => {
-          handleNFTImageError(collectionAddress, tokenId);
-        }}
-        {failedImageLoads}
+        onSelectNFT={(collectionId, tokenId) => {
+          handleSelectNft(collectionId, tokenId);
+        }}        
       />
 
       <div class="mt-6 text-center">

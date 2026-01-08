@@ -3,35 +3,24 @@
 
   interface Props {
     item: EnrichedNFT;
-    onSelect: (collectionAddress: string, tokenId: bigint) => void;
-    failedImageLoads: Set<string>;
-    onImageError: (address: string, tokenId: bigint) => void;
+    onSelect: (collectionId: string, tokenId: bigint) => void;
   }
 
   let {
     item,
     onSelect,
-    failedImageLoads,
-    onImageError,
-  }: Props = $props();
-
-  function handleImageError() {
-    onImageError(item.collectionId, item.tokenId);
-  }
-
+  }: Props = $props()
 </script>
-
-  <button
-    type="button"
-    class="w-full flex items-center p-4 hover:bg-gray-100 rounded-lg text-left"
-    onclick={() => onSelect(item.collectionId, item.tokenId)}
+<button
+  type="button"
+  class="w-full flex items-center p-4 hover:bg-gray-100 rounded-lg text-left"
+  onclick={() => onSelect(item.collectionId, item.tokenId)}
   >
-    <div class="relative w-full aspect-square">
+  <div class="relative w-full aspect-square">
     <img
       src={item.imageUrl}
       alt={item.name}
       class="w-full h-full object-cover"
-      onerror={handleImageError}
     />
     <!-- Overlay with gradient background -->
     <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none">
@@ -41,5 +30,5 @@
       </div>
     </div>
   </div>
-  </button>
+</button>
 

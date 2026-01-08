@@ -5,16 +5,12 @@
 
   interface Props {
     nfts: EnrichedNFT[];
-    onSelectNFT: (collectionAddress: string, tokenId: bigint) => void;
-    onNFTImageError: (collectionAddress: string, tokenId: bigint) => void;
-    failedImageLoads: Set<string>;
+    onSelectNFT: (collectionId: string, tokenId: bigint) => void;
   }
 
   let {
     nfts,
     onSelectNFT,
-    onNFTImageError,
-    failedImageLoads,
   }: Props = $props();
 </script>
 <div>
@@ -30,8 +26,6 @@
         <NFTItem
           item={nft}
           onSelect={onSelectNFT}
-          {failedImageLoads}
-          onImageError={onNFTImageError}
         />
       {/each}
     </div>
