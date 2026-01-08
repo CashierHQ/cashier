@@ -10,6 +10,7 @@
   import SendPage from "$modules/wallet/pages/send.svelte";
   import TokenInfoPage from "$modules/wallet/pages/tokenInfo.svelte";
   import WalletPage from "$modules/wallet/pages/wallet.svelte";
+  import { WalletTab } from "$modules/wallet/types";
   import { LoaderCircle, X } from "lucide-svelte";
 
   type Props = {
@@ -19,6 +20,7 @@
   let { open = $bindable(false) }: Props = $props();
 
   let currentView = $state<WalletView>({ type: WalletViewType.MAIN });
+  let currentMainTab = $state<WalletTab>(WalletTab.TOKENS);
   let isToggling = $state(false);
 
   function handleClose() {
@@ -59,10 +61,16 @@
 
   function navigateToMain() {
     currentView = { type: WalletViewType.MAIN };
+    currentMainTab = WalletTab.TOKENS;
   }
 
   function navigateToAddNft() {
     currentView = { type: WalletViewType.ADD_NFT };
+  }
+
+  function navigateToMainNft() {
+    currentView = { type: WalletViewType.MAIN };
+    currentMainTab = WalletTab.NFTS;
   }
 </script>
 
@@ -114,6 +122,7 @@
     >
       {#if currentView.type === WalletViewType.MAIN}
         <WalletPage
+          activeTab={currentMainTab}
           onNavigateToToken={navigateToToken}
           onNavigateToManage={navigateToManage}
           onNavigateToSend={navigateToSend}
@@ -152,8 +161,7 @@
         />
       {:else if currentView.type === WalletViewType.ADD_NFT}
         <ImportNftPage
-          onNavigateBack={navigateToMain}
-          onNavigateToToken={navigateToToken}
+          onNavigateBack={navigateToMainNft}
         />
       {/if}
     </div>
