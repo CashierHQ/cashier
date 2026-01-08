@@ -10,13 +10,16 @@
   } from "$modules/shared/utils/formatNumber";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import { calculateMaxAmountForAsset } from "$modules/links/utils/amountCalculator";
+  import { validationService } from "$modules/links/services/validationService";
   import { locale } from "$lib/i18n";
   import AssetButton from "$modules/creationLink/components/shared/AssetButton.svelte";
   import SelectedAssetButtonInfo from "$modules/creationLink/components/shared/SelectedAssetButtonInfo.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
   import { toast } from "svelte-sonner";
   import { Minus, Plus } from "lucide-svelte";
+  import { syncAssetFormState } from "$modules/creationLink/utils/syncAssetFormState";
+  import { validateTotalAmount } from "$modules/creationLink/utils/validateTotalAmount";
+  import { convertUsdToToken } from "$modules/creationLink/utils/convertUsdToToken";
 
   const {
     link,
@@ -62,17 +65,11 @@
     return token.unwrap();
   });
 
-  const tokenUsdPrice = $derived.by(() => {
-    return selectedToken?.priceUSD;
-  });
+  const tokenUsdPrice = $derived(selectedToken?.priceUSD);
 
-  const canConvert = $derived.by(() => {
-    return tokenUsdPrice !== undefined && tokenUsdPrice > 0;
-  });
+  const canConvert = $derived(tokenUsdPrice !== undefined && tokenUsdPrice > 0);
 
-  const decimals = $derived.by(() => {
-    return selectedToken?.decimals || 8;
-  });
+  const decimals = $derived(selectedToken?.decimals || 8);
 
   // Track previous token address and amount to detect changes
   let previousTokenAddress = $state<string | undefined>(undefined);
@@ -84,8 +81,9 @@
     const asset = link.createLinkData.assets[0];
     const currentUseAmount = asset?.useAmount;
 
-    const addressChanged =
-      currentAddress && currentAddress !== previousTokenAddress;
+    const addressChanged = Boolean(
+      currentAddress && currentAddress !== previousTokenAddress,
+    );
     const amountChanged =
       currentUseAmount !== undefined && currentUseAmount !== previousUseAmount;
 
@@ -100,29 +98,20 @@
     }
 
     if (selectedToken && link.createLinkData.assets.length > 0 && asset) {
-      if (asset.useAmount !== undefined && asset.useAmount !== 0n) {
-        const tokenAmountNumber = parseBalanceUnits(asset.useAmount, decimals);
+      const syncResult = syncAssetFormState({
+        assetUseAmount: asset.useAmount,
+        decimals: decimals,
+        tokenUsdPrice: tokenUsdPrice,
+        canConvert: canConvert,
+        addressChanged,
+        amountChanged,
+        previousUseAmount,
+        isUsd,
+      });
 
-        if (tokenAmountNumber > 0) {
-          // Only update if we're not in USD mode (to avoid overwriting user input)
-          if (
-            addressChanged ||
-            amountChanged ||
-            (previousUseAmount === undefined && !isUsd)
-          ) {
-            localTokenAmount = tokenAmountNumber.toString();
-
-            if (canConvert && tokenUsdPrice) {
-              const usdValue = tokenAmountNumber * tokenUsdPrice;
-              // Round to 4 decimal places to avoid floating point precision errors
-              const roundedUsdValue = Math.round(usdValue * 10000) / 10000;
-              localUsdAmount = formatUsdAmount(roundedUsdValue);
-            }
-          }
-        }
-      } else if (asset.useAmount === 0n && addressChanged) {
-        localTokenAmount = "";
-        localUsdAmount = "";
+      if (syncResult.shouldUpdate) {
+        localTokenAmount = syncResult.localTokenAmount;
+        localUsdAmount = syncResult.localUsdAmount;
       }
 
       if (!addressChanged) {
@@ -149,7 +138,7 @@
       localUsdAmount = value;
 
       if (canConvert && tokenUsdPrice && !isNaN(parseFloat(value))) {
-        const tokenValue = parseFloat(value) / tokenUsdPrice;
+        const tokenValue = convertUsdToToken(parseFloat(value), tokenUsdPrice);
         localTokenAmount = tokenValue.toString();
         setUsdAmount(value);
       } else if (forceUpdate) {
@@ -189,20 +178,24 @@
 
     // Validate total amount (perUse * maxUse) doesn't exceed maxTotalAmount
     const uses = link.createLinkData.maxUse || 0;
-    const calculatedTotal = num * uses;
-    if (uses > 0 && calculatedTotal > maxTotalAmount) {
+    const validationResult = validateTotalAmount({
+      perUseAmount: num,
+      maxUse: uses,
+      maxTotalAmount: maxTotalAmount,
+    });
+
+    if (validationResult.exceedsLimit) {
       // Adjust to max allowed per use
-      const maxPerUse = maxTotalAmount / uses;
-      const adjustedValue = maxPerUse.toString();
+      const adjustedValue = validationResult.maxPerUse.toString();
       localTokenAmount = adjustedValue;
 
       if (canConvert && tokenUsdPrice) {
-        const usdValue = maxPerUse * tokenUsdPrice;
+        const usdValue = validationResult.maxPerUse * tokenUsdPrice;
         const roundedUsdValue = Math.round(usdValue * 10000) / 10000;
         localUsdAmount = formatUsdAmount(roundedUsdValue);
       }
 
-      const amount = formatBalanceUnits(maxPerUse, decimals);
+      const amount = formatBalanceUnits(validationResult.maxPerUse, decimals);
       link.createLinkData = {
         ...link.createLinkData,
         assets: [
@@ -215,7 +208,7 @@
 
       const message = locale
         .t("links.linkForm.addAsset.errors.insufficientBalance")
-        .replace("{{required}}", formatNumber(calculatedTotal))
+        .replace("{{required}}", formatNumber(validationResult.calculatedTotal))
         .replace("{{tokenSymbol}}", selectedToken.symbol)
         .replace("{{available}}", formatNumber(maxTotalAmount));
       toast.info(message, { duration: 3000 });
@@ -251,19 +244,23 @@
       return;
     }
 
-    const tokenValue = num / tokenUsdPrice;
+    const tokenValue = convertUsdToToken(num, tokenUsdPrice);
 
     // Validate total amount (perUse * maxUse) doesn't exceed maxTotalAmount
     const uses = link.createLinkData.maxUse || 0;
-    const calculatedTotal = tokenValue * uses;
-    if (uses > 0 && calculatedTotal > maxTotalAmount) {
-      // Adjust to max allowed per use
-      const maxPerUse = maxTotalAmount / uses;
-      const maxPerUseUsd = maxPerUse * tokenUsdPrice;
-      localUsdAmount = formatUsdAmount(maxPerUseUsd);
-      localTokenAmount = maxPerUse.toString();
+    const validationResult = validateTotalAmount({
+      perUseAmount: tokenValue,
+      maxUse: uses,
+      maxTotalAmount: maxTotalAmount,
+    });
 
-      const amount = formatBalanceUnits(maxPerUse, decimals);
+    if (validationResult.exceedsLimit) {
+      // Adjust to max allowed per use
+      const maxPerUseUsd = validationResult.maxPerUse * tokenUsdPrice;
+      localUsdAmount = formatUsdAmount(maxPerUseUsd);
+      localTokenAmount = validationResult.maxPerUse.toString();
+
+      const amount = formatBalanceUnits(validationResult.maxPerUse, decimals);
       link.createLinkData = {
         ...link.createLinkData,
         assets: [
@@ -276,7 +273,7 @@
 
       const message = locale
         .t("links.linkForm.addAsset.errors.insufficientBalance")
-        .replace("{{required}}", formatNumber(calculatedTotal))
+        .replace("{{required}}", formatNumber(validationResult.calculatedTotal))
         .replace("{{tokenSymbol}}", selectedToken.symbol)
         .replace("{{available}}", formatNumber(maxTotalAmount));
       toast.info(message, { duration: 3000 });
@@ -299,11 +296,11 @@
     isUsd = value;
   }
 
-  // Calculate max available token balance with fee consideration
+  // Calculate max available token balance with fee consideration using validationService
   const maxTokenBalance = $derived.by(() => {
     if (!selectedToken || !walletStore.query.data) return 0;
 
-    const maxAmountResult = calculateMaxAmountForAsset(
+    const maxAmountResult = validationService.maxAmountForAsset(
       selectedToken.address,
       link.createLinkData.maxUse,
       walletStore.query.data,
@@ -347,6 +344,7 @@
   }
 
   // Total amount = per-link amount * uses
+  // This is calculated from user input, but maxTotalAmount uses validationService
   const totalAmount = $derived.by(() => {
     const perUse = parseFloat(localTokenAmount || "0");
     const uses = link.createLinkData.maxUse || 0;
@@ -355,8 +353,8 @@
   });
 
   // Calculate max total amount (max per use * uses)
+  // maxTokenBalance already uses validationService.maxAmountForAsset
   const maxTotalAmount = $derived.by(() => {
-    if (!selectedToken || !walletStore.query.data) return 0;
     const uses = link.createLinkData.maxUse || 0;
     if (uses <= 0) return 0;
     return maxTokenBalance * uses;
@@ -385,10 +383,110 @@
       }
 
       handleAmountChange(isUsd ? localUsdAmount : localTokenAmount, true);
+
+      // Validate required amounts using validationService
+      const validationResult = validationService.validateRequiredAmount(
+        link.createLinkData,
+        walletStore.query.data || [],
+      );
+
+      if (validationResult.isErr()) {
+        const errorMessage = validationResult.error.message;
+
+        // Check if it's an insufficient amount error
+        const insufficientAmountMatch = errorMessage.match(
+          /Insufficient amount for asset ([^,]+), required: (\d+), available: (\d+)/,
+        );
+
+        if (insufficientAmountMatch && walletStore.query.data) {
+          const [, address, requiredStr, availableStr] =
+            insufficientAmountMatch;
+          const required = BigInt(requiredStr);
+          const available = BigInt(availableStr);
+
+          // Find the token to get symbol and decimals
+          const token = walletStore.query.data.find(
+            (t) => t.address === address,
+          );
+
+          if (token) {
+            const requiredAmount = parseBalanceUnits(required, token.decimals);
+            const availableAmount = parseBalanceUnits(
+              available,
+              token.decimals,
+            );
+
+            // Format the error message using locale
+            const template = locale.t(
+              "links.linkForm.addAsset.errors.insufficientBalance",
+            );
+            const formattedMessage = template
+              .replace("{{required}}", formatNumber(requiredAmount))
+              .replace("{{tokenSymbol}}", token.symbol)
+              .replace("{{available}}", formatNumber(availableAmount));
+
+            toast.error(formattedMessage);
+            return;
+          }
+        }
+
+        // For other errors, show the original message
+        toast.error(`Validation failed: ${errorMessage}`);
+        return;
+      }
+
       await link.goNext();
     } catch (e) {
       // Error is already formatted in the state, just show it
       toast.error(String(e));
+    }
+  }
+
+  function handleDecreaseUses() {
+    if (link.createLinkData.maxUse > 1) {
+      link.createLinkData.maxUse = link.createLinkData.maxUse - 1;
+    }
+  }
+
+  function handleIncreaseUses() {
+    link.createLinkData.maxUse = link.createLinkData.maxUse + 1;
+  }
+
+  function handleMaxUseInput(
+    e: Event & { currentTarget: EventTarget & HTMLInputElement },
+  ) {
+    const value = e.currentTarget.value;
+    // Remove any non-digit characters
+    const cleaned = value.replace(/[^0-9]/g, "");
+
+    if (cleaned === "") {
+      // Set to 1 if empty
+      link.createLinkData.maxUse = 1;
+      e.currentTarget.value = "1";
+      return;
+    }
+
+    // Only allow positive integers
+    const numValue = parseInt(cleaned, 10);
+    if (isNaN(numValue) || numValue < 1) {
+      link.createLinkData.maxUse = 1;
+      e.currentTarget.value = "1";
+    } else {
+      link.createLinkData.maxUse = numValue;
+    }
+  }
+
+  function handleMaxUseBlur(
+    e: Event & { currentTarget: EventTarget & HTMLInputElement },
+  ) {
+    // Ensure value is valid integer on blur
+    const numValue = parseInt(e.currentTarget.value, 10);
+    if (isNaN(numValue) || numValue < 1) {
+      link.createLinkData.maxUse = 1;
+      e.currentTarget.value = "1";
+    } else {
+      link.createLinkData.maxUse = numValue;
+      e.currentTarget.value = numValue.toString();
     }
   }
 </script>
@@ -444,11 +542,7 @@
         <div class="flex items-center gap-2.5">
           <button
             type="button"
-            onclick={() => {
-              if (link.createLinkData.maxUse > 1) {
-                link.createLinkData.maxUse = link.createLinkData.maxUse - 1;
-              }
-            }}
+            onclick={handleDecreaseUses}
             disabled={link.createLinkData.maxUse <= 1}
             class="flex items-center justify-center cursor-pointer min-w-6 w-6 h-6 rounded-full bg-lightgreen disabled:bg-lightgreen disabled:text-gray-400 disabled:cursor-not-allowed disabled:border-gray-200 text-gray-700 hover:bg-gray-200 focus:outline-none outline-none transition-colors"
             aria-label="Decrease uses"
@@ -465,44 +559,12 @@
             step="1"
             class="max-w-20 sm:max-w-24 rounded-md border border-gray-300 px-3 py-2 text-sm text-center focus:outline-none focus:ring-1 focus:ring-green focus:border-green [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             bind:value={link.createLinkData.maxUse}
-            oninput={(e) => {
-              const value = e.currentTarget.value;
-              // Remove any non-digit characters
-              const cleaned = value.replace(/[^0-9]/g, "");
-
-              if (cleaned === "") {
-                // Set to 1 if empty
-                link.createLinkData.maxUse = 1;
-                e.currentTarget.value = "1";
-                return;
-              }
-
-              // Only allow positive integers
-              const numValue = parseInt(cleaned, 10);
-              if (isNaN(numValue) || numValue < 1) {
-                link.createLinkData.maxUse = 1;
-                e.currentTarget.value = "1";
-              } else {
-                link.createLinkData.maxUse = numValue;
-              }
-            }}
-            onblur={(e) => {
-              // Ensure value is valid integer on blur
-              const numValue = parseInt(e.currentTarget.value, 10);
-              if (isNaN(numValue) || numValue < 1) {
-                link.createLinkData.maxUse = 1;
-                e.currentTarget.value = "1";
-              } else {
-                link.createLinkData.maxUse = numValue;
-                e.currentTarget.value = numValue.toString();
-              }
-            }}
+            oninput={handleMaxUseInput}
+            onblur={handleMaxUseBlur}
           />
           <button
             type="button"
-            onclick={() => {
-              link.createLinkData.maxUse = link.createLinkData.maxUse + 1;
-            }}
+            onclick={handleIncreaseUses}
             class="flex items-center justify-center min-w-6 w-6 h-6 cursor-pointer rounded-full bg-lightgreen text-gray-700 hover:bg-gray-200 focus:outline-none outline-none transition-colors"
             aria-label="Increase uses"
           >

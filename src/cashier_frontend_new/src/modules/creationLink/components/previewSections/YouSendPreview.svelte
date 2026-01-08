@@ -31,8 +31,8 @@
     link,
   }: Props = $props();
 
-  const maxUse = $derived.by(() => link?.createLinkData.maxUse ?? 1);
-  const linkType = $derived.by(() => link?.createLinkData.linkType);
+  const maxUse = $derived(link?.createLinkData.maxUse ?? 1);
+  const linkType = $derived(link?.createLinkData.linkType);
 
   let assetTransferInfoDrawerOpen = $state(false);
 
@@ -44,17 +44,17 @@
     }
   }
 
-  const assetsToDisplay = $derived.by(() => {
-    return (forecastAssetAndFee || []).filter(
+  const assetsToDisplay = $derived(
+    (forecastAssetAndFee || []).filter(
       (item) => item.fee?.feeType !== FeeType.CREATE_LINK_FEE,
-    );
-  });
+    ),
+  );
 
-  const linkCreationFeeItem = $derived.by(() => {
-    return (forecastAssetAndFee || []).find(
+  const linkCreationFeeItem = $derived(
+    (forecastAssetAndFee || []).find(
       (item) => item.fee?.feeType === FeeType.CREATE_LINK_FEE,
-    );
-  });
+    ),
+  );
 
   // Calculate display amount for each asset (multiply by maxUse for airdrop)
   const displayAmounts = $derived.by(() => {

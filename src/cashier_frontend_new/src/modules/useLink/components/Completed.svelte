@@ -1,8 +1,8 @@
 <script lang="ts">
   import { LinkType } from "$modules/links/types/link/linkType";
   import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
-  import TipCompleted from "./tiplink/Completed.svelte";
-  import AirdropCompleted from "./airdrop/Completed.svelte";
+  import TipCompleted from "$modules/useLink/components/tiplink/Completed.svelte";
+  import AirdropCompleted from "$modules/useLink/components/airdrop/Completed.svelte";
 
   const { linkDetail }: { linkDetail?: LinkDetailStore } = $props();
 

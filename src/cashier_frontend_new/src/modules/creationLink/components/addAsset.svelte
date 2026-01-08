@@ -1,8 +1,8 @@
 <script lang="ts">
   import { LinkType } from "$modules/links/types/link/linkType";
-  import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
-  import TipLinkAddAsset from "./tiplink/addAsset.svelte";
-  import AirDropAddAsset from "./airdrop/addAsset.svelte";
+  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+  import TipLinkAddAsset from "$modules/creationLink/components/tiplink/addAsset.svelte";
+  import AirDropAddAsset from "$modules/creationLink/components/airdrop/addAsset.svelte";
 
   const {
     link,

@@ -1,8 +1,8 @@
 <script lang="ts">
   import { LinkType } from "$modules/links/types/link/linkType";
   import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
-  import TipLanding from "./tiplink/Landing.svelte";
-  import AirdropLanding from "./airdrop/Landing.svelte";
+  import TipLanding from "$modules/useLink/components/tiplink/Landing.svelte";
+  import AirdropLanding from "$modules/useLink/components/airdrop/Landing.svelte";
 
   const {
     userLink,
