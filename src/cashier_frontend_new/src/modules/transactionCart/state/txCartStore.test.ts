@@ -5,7 +5,6 @@ import {
   type WalletSource,
   TransactionSourceType,
   FlowDirection,
-  FlowDirectionError,
 } from "$modules/transactionCart/types/transaction-source";
 import type {
   TokenMetadata,
@@ -27,10 +26,7 @@ const {
   mockSendBatchRequest,
   mockTransferToAccount,
   mockTransferToPrincipal,
-  mockComputeAmountAndFee,
-  mockComputeWalletFee,
   mockMapActionToAssetAndFeeList,
-  mockConvertAssetAndFeeListToFeesBreakdown,
   mockGetSigner,
   MockIcrc112Service,
   MockIcpLedgerService,
@@ -44,10 +40,7 @@ const {
     mockSendBatchRequest,
     mockTransferToAccount,
     mockTransferToPrincipal,
-    mockComputeAmountAndFee: vi.fn(),
-    mockComputeWalletFee: vi.fn(),
     mockMapActionToAssetAndFeeList: vi.fn(),
-    mockConvertAssetAndFeeListToFeesBreakdown: vi.fn(),
     mockGetSigner: vi.fn(),
     MockIcrc112Service: vi.fn(() => ({
       sendBatchRequest: mockSendBatchRequest,
@@ -79,11 +72,7 @@ vi.mock("$modules/shared/constants", () => ({
 
 vi.mock("$modules/shared/services/feeService", () => ({
   feeService: {
-    computeAmountAndFee: mockComputeAmountAndFee,
-    computeWalletFee: mockComputeWalletFee,
     mapActionToAssetAndFeeList: mockMapActionToAssetAndFeeList,
-    convertAssetAndFeeListToFeesBreakdown:
-      mockConvertAssetAndFeeListToFeesBreakdown,
   },
 }));
 
@@ -176,45 +165,6 @@ function createWalletSource(
   };
 }
 
-// Helper to create action with configurable from/to principals for flow direction tests
-function createMockActionWithIntents(
-  fromPrincipal: string,
-  toPrincipal: string,
-): Action {
-  const fromWallet = {
-    address: { toText: () => fromPrincipal },
-    subaccount: null,
-  };
-  const toWallet = {
-    address: { toText: () => toPrincipal },
-    subaccount: null,
-  };
-
-  return {
-    id: "test-action-id",
-    creator: Principal.fromText("aaaaa-aa"),
-    type: "SEND",
-    state: "CREATED",
-    intents: [
-      {
-        id: "intent-1",
-        task: {},
-        type: {
-          payload: {
-            from: fromWallet,
-            to: toWallet,
-            asset: {},
-            amount: 1_000_000n,
-          },
-        },
-        created_at: 0n,
-        state: {},
-      },
-    ],
-    icrc_112_requests: undefined,
-  } as unknown as Action;
-}
-
 describe("TransactionCartStore", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -223,14 +173,6 @@ describe("TransactionCartStore", () => {
     mockSendBatchRequest.mockResolvedValue(undefined);
     mockTransferToAccount.mockResolvedValue(12345n);
     mockTransferToPrincipal.mockResolvedValue(67890n);
-    mockComputeAmountAndFee.mockReturnValue({
-      amount: 1_010_000n,
-      fee: 10_000n,
-    });
-    mockComputeWalletFee.mockReturnValue({
-      amount: 1_010_000n,
-      fee: 10_000n,
-    });
     // Reset authState account
     vi.mocked(authState).account = {
       owner: "test-principal-id",
@@ -323,36 +265,67 @@ describe("TransactionCartStore", () => {
       priceUSD: 10,
     };
 
-    it("should return FeeBreakdownItem[] for ActionSource", () => {
+    const mockTokens: Record<string, TokenWithPriceAndBalance> = {
+      [mockTokenAddress]: mockToken,
+    };
+
+    it("should return AssetAndFee[] for ActionSource", () => {
       const source = createActionSource();
       const store = new TransactionCartStore(source);
-      const tokens = { [mockTokenAddress]: mockToken };
-      const mockBreakdown = [
+      const mockAssetAndFee: AssetAndFee[] = [
         {
-          name: "Network fees",
-          amount: 10_000n,
-          tokenAddress: mockTokenAddress,
-          tokenSymbol: "TEST",
-          tokenDecimals: 8,
-          usdAmount: 0.001,
+          asset: {
+            state: AssetProcessState.PENDING,
+            label: "",
+            symbol: "TEST",
+            address: mockTokenAddress,
+            amount: 1_010_000n,
+            amountFormattedStr: "0.0101",
+            usdValueStr: "$0.10",
+            direction: FlowDirection.OUTGOING,
+          },
+          fee: {
+            feeType: FeeType.NETWORK_FEE,
+            amount: 10_000n,
+            amountFormattedStr: "0.0001",
+            symbol: "TEST",
+            usdValue: 0.001,
+          },
         },
       ];
-      mockConvertAssetAndFeeListToFeesBreakdown.mockReturnValue(mockBreakdown);
+      mockMapActionToAssetAndFeeList.mockReturnValue(mockAssetAndFee);
 
-      const result = store.computeFee(tokens);
+      const result = store.computeAssetAndFee(mockTokens);
 
-      expect(Array.isArray(result)).toBe(true);
-      expect(result).toEqual(mockBreakdown);
+      expect(mockMapActionToAssetAndFeeList).toHaveBeenCalledWith(
+        source.action,
+        mockTokens,
+        "test-principal-id",
+      );
+      expect(result).toEqual(mockAssetAndFee);
     });
 
-    it("should throw error for WalletSource", () => {
-      const source = createWalletSource();
+    it("should return AssetAndFee[] for WalletSource", () => {
+      const source = createWalletSource(false);
+      source.token = mockToken as TokenMetadata;
       const store = new TransactionCartStore(source);
-      const tokens = {};
 
-      expect(() => store.computeFee(tokens)).toThrow(
-        "computeFee not implemented for WalletSource",
-      );
+      const result = store.computeAssetAndFee(mockTokens);
+
+      expect(result.length).toBe(1);
+      expect(result[0].asset.symbol).toBe("TEST");
+      expect(result[0].asset.direction).toBe(FlowDirection.OUTGOING);
+      expect(result[0].fee?.feeType).toBe(FeeType.NETWORK_FEE);
+    });
+
+    it("should return empty array for WalletSource when token not in map", () => {
+      const source = createWalletSource(false);
+      source.token.address = "unknown-token";
+      const store = new TransactionCartStore(source);
+
+      const result = store.computeAssetAndFee(mockTokens);
+
+      expect(result).toEqual([]);
     });
   });
 
@@ -447,317 +420,6 @@ describe("TransactionCartStore", () => {
           source.amount,
         );
         expect(result).toBe(67890n);
-      });
-    });
-  });
-
-  // ─────────────────────────────────────────────────────────────
-  // getFlowDirection()
-  // ─────────────────────────────────────────────────────────────
-
-  describe("getFlowDirection", () => {
-    describe("ActionSource", () => {
-      it("should return Ok(INCOMING) when to.address matches wallet principal", () => {
-        const action = createMockActionWithIntents(
-          "other-principal",
-          "test-principal-id", // matches authState.account.owner
-        );
-        const source: ActionSource = {
-          type: TransactionSourceType.ACTION,
-          action,
-          handleProcessAction: vi.fn(),
-        };
-        const store = new TransactionCartStore(source);
-
-        const result = store.getFlowDirection();
-        expect(result.isOk()).toBe(true);
-        expect(result.unwrap()).toBe(FlowDirection.INCOMING);
-      });
-
-      it("should return Ok(OUTGOING) when from.address matches wallet principal", () => {
-        const action = createMockActionWithIntents(
-          "test-principal-id", // matches authState.account.owner
-          "other-principal",
-        );
-        const source: ActionSource = {
-          type: TransactionSourceType.ACTION,
-          action,
-          handleProcessAction: vi.fn(),
-        };
-        const store = new TransactionCartStore(source);
-
-        const result = store.getFlowDirection();
-        expect(result.isOk()).toBe(true);
-        expect(result.unwrap()).toBe(FlowDirection.OUTGOING);
-      });
-
-      it("should return Ok(OUTGOING) when neither address matches", () => {
-        const action = createMockActionWithIntents(
-          "other-principal-1",
-          "other-principal-2",
-        );
-        const source: ActionSource = {
-          type: TransactionSourceType.ACTION,
-          action,
-          handleProcessAction: vi.fn(),
-        };
-        const store = new TransactionCartStore(source);
-
-        const result = store.getFlowDirection();
-        expect(result.isOk()).toBe(true);
-        expect(result.unwrap()).toBe(FlowDirection.OUTGOING);
-      });
-
-      it("should return Err(NO_INTENT) when no intents", () => {
-        const source = createActionSource();
-        source.action = {
-          ...source.action,
-          intents: [],
-        } as unknown as Action;
-        const store = new TransactionCartStore(source);
-
-        const result = store.getFlowDirection();
-        expect(result.isErr()).toBe(true);
-        expect(result.unwrapErr()).toBe(FlowDirectionError.NO_INTENT);
-      });
-
-      it("should return Err(NOT_AUTHENTICATED) when user not authenticated", () => {
-        vi.mocked(authState).account =
-          null as unknown as typeof authState.account;
-        const action = createMockActionWithIntents(
-          "other-principal",
-          "test-principal-id",
-        );
-        const source: ActionSource = {
-          type: TransactionSourceType.ACTION,
-          action,
-          handleProcessAction: vi.fn(),
-        };
-        const store = new TransactionCartStore(source);
-
-        const result = store.getFlowDirection();
-        expect(result.isErr()).toBe(true);
-        expect(result.unwrapErr()).toBe(FlowDirectionError.NOT_AUTHENTICATED);
-      });
-    });
-
-    describe("WalletSource", () => {
-      it("should always return Ok(OUTGOING)", () => {
-        const source = createWalletSource();
-        const store = new TransactionCartStore(source);
-
-        const result = store.getFlowDirection();
-        expect(result.isOk()).toBe(true);
-        expect(result.unwrap()).toBe(FlowDirection.OUTGOING);
-      });
-    });
-  });
-
-  // ─────────────────────────────────────────────────────────────
-  // getOutgoingAssets(), getIncomingAssets(), getTotalFeeUsd()
-  // ─────────────────────────────────────────────────────────────
-
-  describe("getOutgoingAssets", () => {
-    const mockTokens: Record<string, TokenWithPriceAndBalance> = {
-      "ryjl3-tyaaa-aaaaa-aaaba-cai": {
-        address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-        name: "Internet Computer",
-        symbol: "ICP",
-        decimals: 8,
-        fee: 10_000n,
-        enabled: true,
-        is_default: true,
-        balance: 100_000_000n,
-        priceUSD: 10.0,
-      },
-      "mxzaz-hqaaa-aaaar-qaada-cai": {
-        address: "mxzaz-hqaaa-aaaar-qaada-cai",
-        name: "Test Token",
-        symbol: "TEST",
-        decimals: 8,
-        fee: 10_000n,
-        enabled: true,
-        is_default: false,
-        balance: 50_000_000n,
-        priceUSD: 5.0,
-      },
-    };
-
-    const mockAssetAndFee: AssetAndFee[] = [
-      {
-        asset: {
-          state: AssetProcessState.PENDING,
-          label: "",
-          symbol: "ICP",
-          address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-          amount: 1_010_000n,
-          amountFormattedStr: "0.0101",
-          usdValueStr: "$0.10",
-        },
-        fee: {
-          feeType: FeeType.NETWORK_FEE,
-          amount: 10_000n,
-          amountFormattedStr: "0.0001",
-          symbol: "ICP",
-          usdValue: 0.001,
-        },
-      },
-    ];
-
-    beforeEach(() => {
-      mockMapActionToAssetAndFeeList.mockReturnValue(mockAssetAndFee);
-    });
-
-    describe("ActionSource", () => {
-      it("should return assets from feeService for outgoing flow", () => {
-        const action = createMockActionWithIntents(
-          "test-principal-id", // from == wallet => outgoing
-          "other-principal",
-        );
-        const source: ActionSource = {
-          type: TransactionSourceType.ACTION,
-          action,
-          handleProcessAction: vi.fn(),
-        };
-        const store = new TransactionCartStore(source);
-
-        const result = store.getOutgoingAssets(mockTokens);
-
-        expect(mockMapActionToAssetAndFeeList).toHaveBeenCalledWith(
-          action,
-          mockTokens,
-        );
-        expect(result).toEqual(mockAssetAndFee);
-      });
-
-      it("should return empty array for incoming flow", () => {
-        const action = createMockActionWithIntents(
-          "other-principal",
-          "test-principal-id", // to == wallet => incoming
-        );
-        const source: ActionSource = {
-          type: TransactionSourceType.ACTION,
-          action,
-          handleProcessAction: vi.fn(),
-        };
-        const store = new TransactionCartStore(source);
-
-        const result = store.getOutgoingAssets(mockTokens);
-
-        expect(mockMapActionToAssetAndFeeList).not.toHaveBeenCalled();
-        expect(result).toEqual([]);
-      });
-    });
-
-    describe("WalletSource", () => {
-      it("should build asset list from wallet source", () => {
-        const source = createWalletSource(false);
-        source.token = mockTokens[
-          "mxzaz-hqaaa-aaaar-qaada-cai"
-        ] as TokenMetadata;
-        const store = new TransactionCartStore(source);
-
-        const result = store.getOutgoingAssets(mockTokens);
-
-        expect(result.length).toBe(1);
-        expect(result[0].asset.symbol).toBe("TEST");
-        expect(result[0].asset.state).toBe(AssetProcessState.PENDING);
-        expect(result[0].fee?.feeType).toBe(FeeType.NETWORK_FEE);
-      });
-
-      it("should return empty array when token not in tokens map", () => {
-        const source = createWalletSource(false);
-        source.token.address = "unknown-token-address";
-        const store = new TransactionCartStore(source);
-
-        const result = store.getOutgoingAssets(mockTokens);
-
-        expect(result).toEqual([]);
-      });
-    });
-  });
-
-  describe("getIncomingAssets", () => {
-    const mockTokens: Record<string, TokenWithPriceAndBalance> = {
-      "ryjl3-tyaaa-aaaaa-aaaba-cai": {
-        address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-        name: "Internet Computer",
-        symbol: "ICP",
-        decimals: 8,
-        fee: 10_000n,
-        enabled: true,
-        is_default: true,
-        balance: 100_000_000n,
-        priceUSD: 10.0,
-      },
-    };
-
-    const mockAssetAndFee: AssetAndFee[] = [
-      {
-        asset: {
-          state: AssetProcessState.PENDING,
-          label: "",
-          symbol: "ICP",
-          address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-          amount: 1_000_000n,
-          amountFormattedStr: "0.01",
-          usdValueStr: "$0.10",
-        },
-      },
-    ];
-
-    beforeEach(() => {
-      mockMapActionToAssetAndFeeList.mockReturnValue(mockAssetAndFee);
-    });
-
-    describe("ActionSource", () => {
-      it("should return assets from feeService for incoming flow", () => {
-        const action = createMockActionWithIntents(
-          "other-principal",
-          "test-principal-id", // to == wallet => incoming
-        );
-        const source: ActionSource = {
-          type: TransactionSourceType.ACTION,
-          action,
-          handleProcessAction: vi.fn(),
-        };
-        const store = new TransactionCartStore(source);
-
-        const result = store.getIncomingAssets(mockTokens);
-
-        expect(mockMapActionToAssetAndFeeList).toHaveBeenCalledWith(
-          action,
-          mockTokens,
-        );
-        expect(result).toEqual(mockAssetAndFee);
-      });
-
-      it("should return empty array for outgoing flow", () => {
-        const action = createMockActionWithIntents(
-          "test-principal-id", // from == wallet => outgoing
-          "other-principal",
-        );
-        const source: ActionSource = {
-          type: TransactionSourceType.ACTION,
-          action,
-          handleProcessAction: vi.fn(),
-        };
-        const store = new TransactionCartStore(source);
-
-        const result = store.getIncomingAssets(mockTokens);
-
-        expect(result).toEqual([]);
-      });
-    });
-
-    describe("WalletSource", () => {
-      it("should always return empty array (wallet transfers are never incoming)", () => {
-        const source = createWalletSource();
-        const store = new TransactionCartStore(source);
-
-        const result = store.getIncomingAssets(mockTokens);
-
-        expect(result).toEqual([]);
       });
     });
   });

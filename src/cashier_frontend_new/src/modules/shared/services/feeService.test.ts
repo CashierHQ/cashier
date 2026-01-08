@@ -3,6 +3,7 @@ import { feeService } from "./feeService";
 import { FeeType } from "$modules/links/types/fee";
 import { AssetProcessState } from "$modules/transactionCart/types/txCart";
 import type { AssetAndFeeList } from "$modules/shared/types/feeService";
+import { FlowDirection } from "$modules/transactionCart/types/transaction-source";
 
 describe("FeeService", () => {
   describe("getTotalFeeUsd", () => {
@@ -17,6 +18,7 @@ describe("FeeService", () => {
             amount: 1_010_000n,
             amountFormattedStr: "0.0101",
             usdValueStr: "$0.10",
+            direction: FlowDirection.OUTGOING,
           },
           fee: {
             feeType: FeeType.NETWORK_FEE,
@@ -35,6 +37,7 @@ describe("FeeService", () => {
             amount: 30_000n,
             amountFormattedStr: "0.0003",
             usdValueStr: "$0.003",
+            direction: FlowDirection.OUTGOING,
           },
           fee: {
             feeType: FeeType.CREATE_LINK_FEE,
@@ -60,6 +63,7 @@ describe("FeeService", () => {
             amount: 1_000_000n,
             amountFormattedStr: "0.01",
             usdValueStr: "$0.10",
+            direction: FlowDirection.OUTGOING,
           },
           // No fee
         },
@@ -83,6 +87,7 @@ describe("FeeService", () => {
             amount: 1_010_000n,
             amountFormattedStr: "0.0101",
             usdValueStr: "$0.10",
+            direction: FlowDirection.OUTGOING,
           },
           fee: {
             feeType: FeeType.NETWORK_FEE,

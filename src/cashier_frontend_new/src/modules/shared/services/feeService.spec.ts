@@ -17,6 +17,10 @@ import { Ed25519KeyIdentity } from "@dfinity/identity";
 import { Principal } from "@dfinity/principal";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FeeService } from "./feeService";
+import {
+  FlowDirection,
+  FlowDirectionError,
+} from "$modules/transactionCart/types/transaction-source";
 
 const from = Ed25519KeyIdentity.generate();
 const fromWallet = new Wallet(from.getPrincipal(), []);
@@ -26,8 +30,9 @@ const assets: Asset[] = [
   new Asset(Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai")),
 ];
 
+// TransferData constructor: (to, asset, from, amount)
 const getPayloadTransfer = (amount: bigint): IntentPayload => {
-  return new TransferData(fromWallet, assets[0], toWallet, amount);
+  return new TransferData(toWallet, assets[0], fromWallet, amount);
 };
 const createIntentWithPayload = (
   id: string,
@@ -46,6 +51,64 @@ describe("FeeService", () => {
   beforeEach(() => {
     svc = new FeeService();
     vi.resetAllMocks();
+  });
+
+  describe("getFlowDirection", () => {
+    it("returns Ok(OUTGOING) when from.address matches walletPrincipal", () => {
+      const payload = getPayloadTransfer(100_000_000n);
+      const result = svc.getFlowDirection(
+        payload,
+        from.getPrincipal().toText(),
+      );
+      expect(result.isOk()).toBe(true);
+      expect(result.unwrap()).toBe(FlowDirection.OUTGOING);
+    });
+
+    it("returns Ok(INCOMING) when only to.address matches walletPrincipal", () => {
+      const payload = getPayloadTransfer(100_000_000n);
+      const result = svc.getFlowDirection(payload, to.getPrincipal().toText());
+      expect(result.isOk()).toBe(true);
+      expect(result.unwrap()).toBe(FlowDirection.INCOMING);
+    });
+
+    it("returns Err(UNRELATED) when neither matches", () => {
+      const payload = getPayloadTransfer(100_000_000n);
+      const result = svc.getFlowDirection(payload, "unrelated-principal");
+      expect(result.isErr()).toBe(true);
+      expect(result.unwrapErr()).toBe(FlowDirectionError.UNRELATED);
+    });
+
+    it("returns Ok(OUTGOING) for self-transfer (from=to=wallet)", () => {
+      // TransferData constructor: (to, asset, from, amount)
+      const selfPayload = new TransferData(
+        fromWallet, // to
+        assets[0],
+        fromWallet, // from (same as to for self-transfer)
+        100_000_000n,
+      );
+      const result = svc.getFlowDirection(
+        selfPayload,
+        from.getPrincipal().toText(),
+      );
+      expect(result.isOk()).toBe(true);
+      expect(result.unwrap()).toBe(FlowDirection.OUTGOING);
+    });
+  });
+
+  describe("getFlowDirectionOrThrow", () => {
+    it("returns value directly when Ok", () => {
+      const payload = getPayloadTransfer(100_000_000n);
+      const result = svc.getFlowDirectionOrThrow(
+        payload,
+        from.getPrincipal().toText(),
+      );
+      expect(result).toBe(FlowDirection.OUTGOING);
+    });
+
+    it("throws on Err result", () => {
+      const payload = getPayloadTransfer(100_000_000n);
+      expect(() => svc.getFlowDirectionOrThrow(payload, "unrelated")).toThrow();
+    });
   });
 
   describe("computeAmountAndFeeRaw", () => {
@@ -155,11 +218,16 @@ describe("FeeService", () => {
         state: ActionState.CREATED,
       };
 
-      const pairs = svcWithMock.mapActionToAssetAndFeeList(action, {});
+      const pairs = svcWithMock.mapActionToAssetAndFeeList(
+        action,
+        {},
+        from.getPrincipal().toText(),
+      );
       expect(pairs).toHaveLength(1);
       const [p] = pairs;
 
       expect(p.asset.symbol).toBe("N/A");
+      expect(p.asset.direction).toBeDefined();
       if (p.fee) {
         expect(p.fee.symbol).toBe("N/A");
         expect(typeof p.fee.amountFormattedStr).toBe("string");
@@ -193,12 +261,18 @@ describe("FeeService", () => {
         string,
         TokenWithPriceAndBalance
       >;
-      const pairs = svcWithMock2.mapActionToAssetAndFeeList(action, tokensMap);
+      const pairs = svcWithMock2.mapActionToAssetAndFeeList(
+        action,
+        tokensMap,
+        from.getPrincipal().toText(),
+      );
       expect(pairs).toHaveLength(1);
       const [p] = pairs;
 
       // asset symbol comes from token
       expect(p.asset.symbol).toBe("ICP");
+      // direction should be set
+      expect(p.asset.direction).toBe(FlowDirection.OUTGOING);
 
       // amount should be a formatted string, and for our simple values should equal formatNumber(12)
       // compute expected: payload 10 + token.fee 2 -> amount 12

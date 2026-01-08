@@ -6,14 +6,17 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { onMount } from "svelte";
   import { TransactionCartStore } from "$modules/transactionCart/state/txCartStore.svelte";
-  import { TransactionSourceType } from "$modules/transactionCart/types/transaction-source";
+  import {
+    FlowDirection,
+    TransactionSourceType,
+  } from "$modules/transactionCart/types/transaction-source";
   import YouSendSection from "$modules/transactionCart/components/YouSendSection.svelte";
   import YouReceiveSection from "$modules/transactionCart/components/YouReceiveSection.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
-  import FeeBreakdown from "$modules/transactionCart/components/feeBreakdown.svelte";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import { X } from "lucide-svelte";
   import { locale } from "$lib/i18n";
+  import { feeService } from "$modules/shared/services/feeService";
 
   let {
     action,
@@ -51,14 +54,6 @@
     ),
   );
 
-  // Get outgoing/incoming assets directly from store (UI handles processing state via props)
-  const outgoingAssets = $derived(txCartStore.getOutgoingAssets(tokensMap));
-  const incomingAssets = $derived(txCartStore.getIncomingAssets(tokensMap));
-
-  // Combine all assets for fee breakdown
-  const allAssets = $derived([...outgoingAssets, ...incomingAssets]);
-
-  let showFeeBreakdown = $state(false);
   let showFeeInfoDrawer = $state(false);
   let failedImageLoads = $state<Set<string>>(new Set());
 
@@ -67,11 +62,27 @@
   }
 
   // Get fees breakdown from store, derive total from it
-  const feesBreakdown = $derived.by(() =>
-    txCartStore.getFeesBreakdown(tokensMap),
+  const assetAndFee = $derived.by(() =>
+    txCartStore.computeAssetAndFee(tokensMap),
+  );
+  const outgoingAssets = $derived.by(() =>
+    assetAndFee.filter(
+      (item) => item.asset.direction === FlowDirection.OUTGOING,
+    ),
+  );
+  const incomingAssets = $derived.by(() =>
+    assetAndFee.filter(
+      (item) => item.asset.direction === FlowDirection.INCOMING,
+    ),
   );
   const totalFeesUsd = $derived.by(() =>
-    feesBreakdown.reduce((sum, item) => sum + item.usdAmount, 0),
+    assetAndFee.reduce((sum, item) => sum + (item.fee?.usdValue ?? 0), 0),
+  );
+  const feesBreakdown = $derived.by(() =>
+    feeService.buildFeesBreakdownFromAssetAndFeeList(
+      assetAndFee,
+      walletStore.query.data ?? [],
+    ),
   );
 
   // Handle fee breakdown click - close txCart and show FeeInfoDrawer
@@ -153,77 +164,67 @@
       </Drawer.Header>
 
       <div class="px-4 pb-4 h-auto">
-        {#if showFeeBreakdown}
-          <!-- When showing breakdown, hide all other tx cart content -->
-          <FeeBreakdown
-            assetAndFeeList={allAssets}
-            onBack={() => (showFeeBreakdown = false)}
-          />
-        {:else}
-          {#if errorMessage}
-            <div
-              class="mb-3 p-2 bg-red-100 border border-red-300 text-red-700 rounded text-sm"
-            >
-              {errorMessage}
-            </div>
-          {/if}
-          {#if successMessage}
-            <div
-              class="mb-3 p-2 bg-green-100 border border-green-300 text-green-700 rounded text-sm"
-            >
-              {successMessage}
-            </div>
-          {/if}
-
-          <div class="mt-2 space-y-4">
-            {#if outgoingAssets.length > 0}
-              <YouSendSection
-                assets={outgoingAssets}
-                {failedImageLoads}
-                onImageError={handleImageError}
-                {isProcessing}
-                hasError={!!errorMessage}
-              />
-            {/if}
-
-            {#if incomingAssets.length > 0}
-              <YouReceiveSection
-                assets={incomingAssets}
-                {failedImageLoads}
-                onImageError={handleImageError}
-                {isProcessing}
-                hasError={!!errorMessage}
-              />
-            {/if}
-
-            {#if totalFeesUsd > 0}
-              <FeesBreakdownSection
-                {totalFeesUsd}
-                onBreakdownClick={handleFeeBreakdownClick}
-                disabled={isProcessing}
-              />
-            {/if}
-
-            <p class="mt-2 text-sm">
-              {locale.t("links.linkForm.drawers.txCart.termsAgreement")}
-            </p>
+        {#if errorMessage}
+          <div
+            class="mb-3 p-2 bg-red-100 border border-red-300 text-red-700 rounded text-sm"
+          >
+            {errorMessage}
           </div>
         {/if}
+        {#if successMessage}
+          <div
+            class="mb-3 p-2 bg-green-100 border border-green-300 text-green-700 rounded text-sm"
+          >
+            {successMessage}
+          </div>
+        {/if}
+
+        <div class="mt-2 space-y-4">
+          {#if outgoingAssets.length > 0}
+            <YouSendSection
+              assets={outgoingAssets}
+              {failedImageLoads}
+              onImageError={handleImageError}
+              {isProcessing}
+              hasError={!!errorMessage}
+            />
+          {/if}
+
+          {#if incomingAssets.length > 0}
+            <YouReceiveSection
+              assets={incomingAssets}
+              {failedImageLoads}
+              onImageError={handleImageError}
+              {isProcessing}
+              hasError={!!errorMessage}
+            />
+          {/if}
+
+          {#if totalFeesUsd > 0}
+            <FeesBreakdownSection
+              {totalFeesUsd}
+              onBreakdownClick={handleFeeBreakdownClick}
+              disabled={isProcessing}
+            />
+          {/if}
+
+          <p class="mt-2 text-sm">
+            {locale.t("links.linkForm.drawers.txCart.termsAgreement")}
+          </p>
+        </div>
       </div>
 
-      {#if !showFeeBreakdown}
-        <div class="px-3 mb-2">
-          <Button
-            class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
-            onclick={handleConfirm}
-            disabled={isProcessing}
-          >
-            {isProcessing
-              ? locale.t("links.linkForm.drawers.txCart.processingButton")
-              : locale.t("links.linkForm.drawers.txCart.confirmButton")}
-          </Button>
-        </div>
-      {/if}
+      <div class="px-3 mb-2">
+        <Button
+          class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
+          onclick={handleConfirm}
+          disabled={isProcessing}
+        >
+          {isProcessing
+            ? locale.t("links.linkForm.drawers.txCart.processingButton")
+            : locale.t("links.linkForm.drawers.txCart.confirmButton")}
+        </Button>
+      </div>
     </Drawer.Content>
   </Drawer.Root>
 

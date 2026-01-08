@@ -34,8 +34,67 @@ import type {
   ForecastAssetAndFee,
   SendFeeOutput,
 } from "../types/feeService";
+import {
+  FlowDirection,
+  FlowDirectionError,
+  type FlowDirectionResult,
+  type FlowDirectionValue,
+} from "$modules/transactionCart/types/transaction-source";
+import type { IntentPayload } from "$modules/links/types/action/intentType";
+import { Err, Ok } from "ts-results-es";
 
 export class FeeService {
+  /**
+   * Determine flow direction based on intent's to/from vs current wallet.
+   * - INCOMING: to == wallet AND from != wallet
+   * - OUTGOING: from == wallet (includes self-transfer)
+   * - UNRELATED error: neither to nor from matches wallet
+   * @param payload - Intent payload with to/from addresses
+   * @param walletPrincipal - Current wallet principal as string
+   * @returns FlowDirectionResult (Ok with direction or Err with error)
+   */
+  getFlowDirection(
+    payload: IntentPayload,
+    walletPrincipal: string,
+  ): FlowDirectionResult {
+    const toAddress = payload.to.address.toText();
+    const fromAddress = payload.from.address.toText();
+
+    const isToWallet = toAddress === walletPrincipal;
+    const isFromWallet = fromAddress === walletPrincipal;
+
+    // User is sender (includes self-transfer case)
+    if (isFromWallet) {
+      return Ok(FlowDirection.OUTGOING);
+    }
+
+    // User is receiver only
+    if (isToWallet) {
+      return Ok(FlowDirection.INCOMING);
+    }
+
+    // User is neither sender nor receiver
+    return Err(FlowDirectionError.UNRELATED);
+  }
+
+  /**
+   * Get flow direction value directly (throws on error).
+   * Use when you're confident the wallet is involved in the transaction.
+   * @param payload - Intent payload with to/from addresses
+   * @param walletPrincipal - Current wallet principal as string
+   * @returns FlowDirectionValue
+   * @throws Error if flow direction cannot be determined
+   */
+  getFlowDirectionOrThrow(
+    payload: IntentPayload,
+    walletPrincipal: string,
+  ): FlowDirectionValue {
+    const result = this.getFlowDirection(payload, walletPrincipal);
+    if (result.isErr()) {
+      throw new Error(`Flow direction error: ${result.error}`);
+    }
+    return result.value;
+  }
   /**
    * Compute both the final amount (what will be shown as the asset amount)
    * and an optional fee (undefined when there is no fee to display) based
@@ -107,6 +166,7 @@ export class FeeService {
   mapActionToAssetAndFeeList(
     action: Action,
     tokens: Record<string, TokenWithPriceAndBalance>,
+    walletPrincipal: string,
   ): AssetAndFeeList {
     const pairs: AssetAndFeeList = action.intents.map((intent) => {
       const address = intent.type.payload.asset.address.toString();
@@ -130,6 +190,12 @@ export class FeeService {
       let asset: AssetItem;
       let fee: FeeItem | undefined;
 
+      // Determine flow direction using centralized logic
+      const direction = this.getFlowDirectionOrThrow(
+        intent.type.payload,
+        walletPrincipal,
+      );
+
       if (!token) {
         // Token not found: fallback to ICP
         console.error("Failed to resolve token for asset:", address);
@@ -151,6 +217,7 @@ export class FeeService {
             8,
           ).toString(),
           usdValueStr: undefined,
+          direction,
         };
 
         if (feeRaw === undefined) {
@@ -192,6 +259,7 @@ export class FeeService {
           usdValueStr: forecastFeeUsd
             ? formatUsdAmount(forecastFeeUsd)
             : undefined,
+          direction,
         };
 
         if (feeRaw === undefined) {
@@ -428,6 +496,9 @@ export class FeeService {
   /**
    * Utility to derive FeeBreakdownItem[] from AssetAndFeeList using an array of tokens.
    * Encapsulates the map creation so UI components stay rendering-only.
+   * @param assetAndFeeList - List of AssetAndFee pairs
+   * @param tokens - Array of tokens for lookup
+   * @returns FeeBreakdownItem[]
    */
   buildFeesBreakdownFromAssetAndFeeList(
     assetAndFeeList: AssetAndFeeList,

@@ -25,11 +25,14 @@ export class FlowDirectionError {
   private constructor() {}
   static readonly NOT_AUTHENTICATED = "NOT_AUTHENTICATED";
   static readonly NO_INTENT = "NO_INTENT";
+  /** User is neither sender nor receiver */
+  static readonly UNRELATED = "UNRELATED";
 }
 
 export type FlowDirectionErrorValue =
   | typeof FlowDirectionError.NOT_AUTHENTICATED
-  | typeof FlowDirectionError.NO_INTENT;
+  | typeof FlowDirectionError.NO_INTENT
+  | typeof FlowDirectionError.UNRELATED;
 
 /**
  * Result type for flow direction computation

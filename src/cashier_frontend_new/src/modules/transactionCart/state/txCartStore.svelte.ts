@@ -16,21 +16,15 @@ import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import type { Signer } from "@slide-computer/signer";
-import { Err, Ok } from "ts-results-es";
 import { AssetProcessState, type AssetItem } from "../types/txCart";
 import { assertUnreachable } from "$lib/rsMatch";
 import {
-  type ActionSource,
   type ExecuteResult,
   FlowDirection,
-  FlowDirectionError,
-  type FlowDirectionResult,
   type TransactionSource,
-  TransactionSourceType,
   isActionSource,
   isWalletSource,
 } from "$modules/transactionCart/types/transaction-source";
-import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 
 /**
  * Generic transaction cart store supporting both Action-based (ICRC-112)
@@ -68,17 +62,30 @@ export class TransactionCartStore<T extends TransactionSource> {
   }
 
   /**
-   * Compute fee breakdown for ActionSource.
+   * Compute asset and fee list for the sources.
    * @param tokens - Token lookup map for conversion
-   * @throws Error if called with WalletSource
+   * @throws Error if not authenticated
    */
-  computeFee(
+  computeAssetAndFee(
     tokens: Record<string, TokenWithPriceAndBalance>,
-  ): FeeBreakdownItem[] {
-    if (isActionSource(this.#source)) {
-      return this.getFeesBreakdown(tokens);
+  ): AssetAndFee[] {
+    const walletPrincipal = authState.account?.owner;
+    if (!walletPrincipal) {
+      throw new Error("User is not authenticated.");
     }
-    throw new Error("computeFee not implemented for WalletSource");
+
+    if (isActionSource(this.#source)) {
+      return feeService.mapActionToAssetAndFeeList(
+        this.#source.action,
+        tokens,
+        walletPrincipal,
+      );
+    }
+    if (isWalletSource(this.#source)) {
+      return this.#buildWalletAssetList(tokens);
+    }
+    // Exhaustive check - should never reach here
+    return assertUnreachable(this.#source as never);
   }
 
   /**
@@ -94,83 +101,6 @@ export class TransactionCartStore<T extends TransactionSource> {
       return this.#executeAction() as unknown as ExecuteResult<T>;
     }
     return this.#executeWallet() as unknown as ExecuteResult<T>;
-  }
-
-  /**
-   * Determine flow direction based on source type and current wallet.
-   * - ActionSource: compares intent.type.payload from/to with wallet principal
-   * - WalletSource: always OUTGOING (user sending)
-   * @returns Result<FlowDirection, FlowDirectionError>
-   */
-  getFlowDirection(): FlowDirectionResult {
-    switch (this.#source.type) {
-      case TransactionSourceType.ACTION:
-        return this.#getActionFlowDirection();
-      case TransactionSourceType.WALLET:
-        return Ok(FlowDirection.OUTGOING);
-      default:
-        return assertUnreachable(this.#source as never);
-    }
-  }
-
-  /**
-   * Get assets for outgoing flow (user sends).
-   * @param tokens - Token lookup map from walletStore
-   */
-  getOutgoingAssets(
-    tokens: Record<string, TokenWithPriceAndBalance>,
-  ): AssetAndFee[] {
-    const flowResult = this.getFlowDirection();
-    if (flowResult.isErr()) return [];
-
-    switch (flowResult.value) {
-      case FlowDirection.OUTGOING:
-        return this.#getAssetsForSource(tokens);
-      case FlowDirection.INCOMING:
-        return [];
-      default:
-        return assertUnreachable(flowResult.value);
-    }
-  }
-
-  /**
-   * Get assets for incoming flow (user receives).
-   * @param tokens - Token lookup map from walletStore
-   */
-  getIncomingAssets(
-    tokens: Record<string, TokenWithPriceAndBalance>,
-  ): AssetAndFee[] {
-    const flowResult = this.getFlowDirection();
-    if (flowResult.isErr()) return [];
-
-    switch (flowResult.value) {
-      case FlowDirection.INCOMING:
-        return this.#getAssetsForSource(tokens);
-      case FlowDirection.OUTGOING:
-        return [];
-      default:
-        return assertUnreachable(flowResult.value);
-    }
-  }
-
-  /**
-   * Get fees breakdown for display.
-   * @param tokens - Token lookup map for conversion
-   */
-  getFeesBreakdown(
-    tokens: Record<string, TokenWithPriceAndBalance>,
-  ): FeeBreakdownItem[] {
-    const assets = this.#getAssetsForSource(tokens);
-    return feeService.convertAssetAndFeeListToFeesBreakdown(assets, tokens);
-  }
-
-  /**
-   * Get total fee in USD.
-   * @param tokens - Token lookup map for conversion
-   */
-  getTotalFeeUsd(tokens: Record<string, TokenWithPriceAndBalance>): number {
-    const breakdown = this.getFeesBreakdown(tokens);
-    return breakdown.reduce((total, item) => total + item.usdAmount, 0);
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -217,23 +147,11 @@ export class TransactionCartStore<T extends TransactionSource> {
     return this.#icrcLedgerService.transferToPrincipal(to, amount);
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // Private: Flow direction helpers
-  // ─────────────────────────────────────────────────────────────
-
-  #getAssetsForSource(
-    tokens: Record<string, TokenWithPriceAndBalance>,
-  ): AssetAndFee[] {
-    if (isActionSource(this.#source)) {
-      return feeService.mapActionToAssetAndFeeList(this.#source.action, tokens);
-    }
-    if (isWalletSource(this.#source)) {
-      return this.#buildWalletAssetList(tokens);
-    }
-    // Exhaustive check - should never reach here
-    return assertUnreachable(this.#source as never);
-  }
-
+  /**
+   * Build AssetAndFee list for WalletSource
+   * @param tokens - Token lookup map
+   * @returns AssetAndFee list
+   */
   #buildWalletAssetList(
     tokens: Record<string, TokenWithPriceAndBalance>,
   ): AssetAndFee[] {
@@ -258,6 +176,8 @@ export class TransactionCartStore<T extends TransactionSource> {
       usdValueStr: tokenData.priceUSD
         ? formatUsdAmount(totalAmountUi * tokenData.priceUSD)
         : undefined,
+      // WalletSource is always outgoing (user is sender)
+      direction: FlowDirection.OUTGOING,
     };
 
     const feeItem: FeeItem = {
@@ -269,28 +189,5 @@ export class TransactionCartStore<T extends TransactionSource> {
     };
 
     return [{ asset, fee: feeItem }];
-  }
-
-  #getActionFlowDirection(): FlowDirectionResult {
-    const walletPrincipal = authState.account?.owner;
-    if (!walletPrincipal) {
-      return Err(FlowDirectionError.NOT_AUTHENTICATED);
-    }
-
-    const { action } = this.#source as ActionSource;
-    const intent = action.intents[0];
-    if (!intent) {
-      return Err(FlowDirectionError.NO_INTENT);
-    }
-
-    const payload = intent.type.payload;
-    const toAddress = payload.to.address.toText();
-
-    if (toAddress === walletPrincipal) {
-      return Ok(FlowDirection.INCOMING);
-    }
-
-    // from == wallet or neither match => outgoing
-    return Ok(FlowDirection.OUTGOING);
   }
 }
