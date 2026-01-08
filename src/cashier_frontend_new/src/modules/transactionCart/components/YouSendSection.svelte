@@ -46,15 +46,11 @@
   });
 
   const linkCreationFeeItem = $derived.by(() => {
-    return assets.find(
-      (item) => item.fee?.feeType === FeeType.CREATE_LINK_FEE,
-    );
+    return assets.find((item) => item.fee?.feeType === FeeType.CREATE_LINK_FEE);
   });
 
   // Derive hasFees from assets
-  const hasFees = $derived(
-    assets.some((item) => item.fee !== undefined),
-  );
+  const hasFees = $derived(assets.some((item) => item.fee !== undefined));
 </script>
 
 <div class="input-label-field-container">

@@ -34,7 +34,10 @@ export type FlowDirectionErrorValue =
 /**
  * Result type for flow direction computation
  */
-export type FlowDirectionResult = Result<FlowDirectionValue, FlowDirectionErrorValue>;
+export type FlowDirectionResult = Result<
+  FlowDirectionValue,
+  FlowDirectionErrorValue
+>;
 
 /**
  * Transaction source type discriminator

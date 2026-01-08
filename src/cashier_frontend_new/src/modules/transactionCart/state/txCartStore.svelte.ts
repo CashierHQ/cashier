@@ -2,12 +2,19 @@ import type { IITransport } from "$modules/auth/signer/ii/IITransport";
 import { authState } from "$modules/auth/state/auth.svelte";
 import Icrc112Service from "$modules/icrc112/services/icrc112Service";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
-import { FeeType, type ComputeAmountAndFeeOutput, type FeeItem } from "$modules/links/types/fee";
+import {
+  FeeType,
+  type ComputeAmountAndFeeOutput,
+  type FeeItem,
+} from "$modules/links/types/fee";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { feeService } from "$modules/shared/services/feeService";
 import type { AssetAndFee } from "$modules/shared/types/feeService";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
-import { formatNumber, formatUsdAmount } from "$modules/shared/utils/formatNumber";
+import {
+  formatNumber,
+  formatUsdAmount,
+} from "$modules/shared/utils/formatNumber";
 import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
 import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";

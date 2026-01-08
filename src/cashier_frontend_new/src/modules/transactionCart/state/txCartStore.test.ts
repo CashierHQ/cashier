@@ -7,7 +7,10 @@ import {
   FlowDirection,
   FlowDirectionError,
 } from "../types/transaction-source";
-import type { TokenMetadata, TokenWithPriceAndBalance } from "$modules/token/types";
+import type {
+  TokenMetadata,
+  TokenWithPriceAndBalance,
+} from "$modules/token/types";
 import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { ReceiveAddressType } from "$modules/wallet/types";
@@ -114,7 +117,17 @@ function createMockAction(withIcrc112Requests = false): Action {
         },
       },
     ],
-    icrc_112_requests: withIcrc112Requests ? [[{ canister_id: Principal.fromText("aaaaa-aa"), method: "test", arg: new ArrayBuffer(0) }]] : undefined,
+    icrc_112_requests: withIcrc112Requests
+      ? [
+          [
+            {
+              canister_id: Principal.fromText("aaaaa-aa"),
+              method: "test",
+              arg: new ArrayBuffer(0),
+            },
+          ],
+        ]
+      : undefined,
   } as unknown as Action;
 }
 
@@ -142,7 +155,10 @@ function createActionSource(withIcrc112Requests = false): ActionSource {
   };
 }
 
-function createWalletSource(isIcp = false, withAccountId = false): WalletSource {
+function createWalletSource(
+  isIcp = false,
+  withAccountId = false,
+): WalletSource {
   return {
     type: TransactionSourceType.WALLET,
     token: createMockToken(isIcp),
@@ -205,7 +221,9 @@ describe("TransactionCartStore", () => {
       fee: 10_000n,
     });
     // Reset authState account
-    vi.mocked(authState).account = { owner: "test-principal-id" } as typeof authState.account;
+    vi.mocked(authState).account = {
+      owner: "test-principal-id",
+    } as typeof authState.account;
   });
 
   afterEach(() => {
@@ -341,11 +359,14 @@ describe("TransactionCartStore", () => {
 
   describe("execute", () => {
     it("should throw error when user is not authenticated", async () => {
-      vi.mocked(authState).account = null as unknown as typeof authState.account;
+      vi.mocked(authState).account =
+        null as unknown as typeof authState.account;
       const source = createActionSource();
       const store = new TransactionCartStore(source);
 
-      await expect(store.execute()).rejects.toThrow("User is not authenticated.");
+      await expect(store.execute()).rejects.toThrow(
+        "User is not authenticated.",
+      );
     });
 
     describe("ActionSource execution", () => {
@@ -354,7 +375,9 @@ describe("TransactionCartStore", () => {
         const store = new TransactionCartStore(source);
         // Don't call initialize()
 
-        await expect(store.execute()).rejects.toThrow("ICRC-112 Service is not initialized.");
+        await expect(store.execute()).rejects.toThrow(
+          "ICRC-112 Service is not initialized.",
+        );
       });
 
       it("should execute action without ICRC-112 requests", async () => {
@@ -390,7 +413,9 @@ describe("TransactionCartStore", () => {
         const store = new TransactionCartStore(source);
         // Don't call initialize()
 
-        await expect(store.execute()).rejects.toThrow("ICRC Ledger Service is not initialized.");
+        await expect(store.execute()).rejects.toThrow(
+          "ICRC Ledger Service is not initialized.",
+        );
       });
 
       it("should transfer ICP to account ID when ICP token and accountId provided", async () => {
@@ -432,7 +457,7 @@ describe("TransactionCartStore", () => {
       it("should return Ok(INCOMING) when to.address matches wallet principal", () => {
         const action = createMockActionWithIntents(
           "other-principal",
-          "test-principal-id" // matches authState.account.owner
+          "test-principal-id", // matches authState.account.owner
         );
         const source: ActionSource = {
           type: TransactionSourceType.ACTION,
@@ -449,7 +474,7 @@ describe("TransactionCartStore", () => {
       it("should return Ok(OUTGOING) when from.address matches wallet principal", () => {
         const action = createMockActionWithIntents(
           "test-principal-id", // matches authState.account.owner
-          "other-principal"
+          "other-principal",
         );
         const source: ActionSource = {
           type: TransactionSourceType.ACTION,
@@ -466,7 +491,7 @@ describe("TransactionCartStore", () => {
       it("should return Ok(OUTGOING) when neither address matches", () => {
         const action = createMockActionWithIntents(
           "other-principal-1",
-          "other-principal-2"
+          "other-principal-2",
         );
         const source: ActionSource = {
           type: TransactionSourceType.ACTION,
@@ -494,10 +519,11 @@ describe("TransactionCartStore", () => {
       });
 
       it("should return Err(NOT_AUTHENTICATED) when user not authenticated", () => {
-        vi.mocked(authState).account = null as unknown as typeof authState.account;
+        vi.mocked(authState).account =
+          null as unknown as typeof authState.account;
         const action = createMockActionWithIntents(
           "other-principal",
-          "test-principal-id"
+          "test-principal-id",
         );
         const source: ActionSource = {
           type: TransactionSourceType.ACTION,
@@ -583,7 +609,7 @@ describe("TransactionCartStore", () => {
       it("should return assets from feeService for outgoing flow", () => {
         const action = createMockActionWithIntents(
           "test-principal-id", // from == wallet => outgoing
-          "other-principal"
+          "other-principal",
         );
         const source: ActionSource = {
           type: TransactionSourceType.ACTION,
@@ -594,14 +620,17 @@ describe("TransactionCartStore", () => {
 
         const result = store.getOutgoingAssets(mockTokens);
 
-        expect(mockMapActionToAssetAndFeeList).toHaveBeenCalledWith(action, mockTokens);
+        expect(mockMapActionToAssetAndFeeList).toHaveBeenCalledWith(
+          action,
+          mockTokens,
+        );
         expect(result).toEqual(mockAssetAndFee);
       });
 
       it("should return empty array for incoming flow", () => {
         const action = createMockActionWithIntents(
           "other-principal",
-          "test-principal-id" // to == wallet => incoming
+          "test-principal-id", // to == wallet => incoming
         );
         const source: ActionSource = {
           type: TransactionSourceType.ACTION,
@@ -620,7 +649,9 @@ describe("TransactionCartStore", () => {
     describe("WalletSource", () => {
       it("should build asset list from wallet source", () => {
         const source = createWalletSource(false);
-        source.token = mockTokens["mxzaz-hqaaa-aaaar-qaada-cai"] as TokenMetadata;
+        source.token = mockTokens[
+          "mxzaz-hqaaa-aaaar-qaada-cai"
+        ] as TokenMetadata;
         const store = new TransactionCartStore(source);
 
         const result = store.getOutgoingAssets(mockTokens);
@@ -680,7 +711,7 @@ describe("TransactionCartStore", () => {
       it("should return assets from feeService for incoming flow", () => {
         const action = createMockActionWithIntents(
           "other-principal",
-          "test-principal-id" // to == wallet => incoming
+          "test-principal-id", // to == wallet => incoming
         );
         const source: ActionSource = {
           type: TransactionSourceType.ACTION,
@@ -691,14 +722,17 @@ describe("TransactionCartStore", () => {
 
         const result = store.getIncomingAssets(mockTokens);
 
-        expect(mockMapActionToAssetAndFeeList).toHaveBeenCalledWith(action, mockTokens);
+        expect(mockMapActionToAssetAndFeeList).toHaveBeenCalledWith(
+          action,
+          mockTokens,
+        );
         expect(result).toEqual(mockAssetAndFee);
       });
 
       it("should return empty array for outgoing flow", () => {
         const action = createMockActionWithIntents(
           "test-principal-id", // from == wallet => outgoing
-          "other-principal"
+          "other-principal",
         );
         const source: ActionSource = {
           type: TransactionSourceType.ACTION,
