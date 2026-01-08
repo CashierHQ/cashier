@@ -15,6 +15,7 @@
     onNavigateToSend: () => void;
     onNavigateToReceive: () => void;
     onNavigateToSwap: () => void;
+    onNavigateToAddNft: () => void;
   };
 
   let {
@@ -23,6 +24,7 @@
     onNavigateToSend,
     onNavigateToReceive,
     onNavigateToSwap,
+    onNavigateToAddNft,
   }: Props = $props();
 
   let failedImageLoads = new SvelteSet<string>();
@@ -75,6 +77,10 @@
     const key = `${collectionAddress}-${tokenId.toString()}`;
     failedImageLoads.add(key);
   }
+
+  function handleAddNft() {
+    onNavigateToAddNft();
+  }
 </script>
 
 <NavBar
@@ -123,7 +129,6 @@
     {#if walletNftStore.query.data}
       <NftList
         nfts={walletNftStore.query.data}
-        balanceVisible={balanceVisible}
         onSelectNFT={(collectionAddress, tokenId) => {
           handleSelectNft(collectionAddress, tokenId);
         }}
@@ -132,6 +137,15 @@
         }}
         {failedImageLoads}
       />
+
+      <div class="mt-6 text-center">
+        <button
+          onclick={handleAddNft}
+          class="text-green hover:text-teal-700 font-medium text-base transition-colors"
+        >
+          {locale.t("wallet.addNftBtn")}
+        </button>
+      </div>
     {:else if walletNftStore.query.error}
       <div class="text-center py-8">
         <p class="text-red-600 mb-4">

@@ -140,6 +140,36 @@ class TokenStorageService {
 
     return res.map((nft) => NFTMapper.fromTokenStorageNft(nft));
   }
+
+  /**
+   * Add a new NFT to the user's collection
+   * @param collectionAddress
+   * @param tokenId
+   */
+  public async addNft(
+    collectionAddress: Principal,
+    tokenId: bigint,
+  ): Promise<void> {
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
+
+    console.log("Adding NFT:", collectionAddress.toText(), tokenId);
+
+    const res = await actor.user_add_nft({
+      nft: {
+        collection_id: collectionAddress,
+        token_id: tokenId,
+      },
+    });
+
+    console.log("addNft result:", res);
+
+    if ("Err" in res) {
+      throw new Error(`Error adding NFT: ${res.Err}`);
+    }
+  }
 }
 
 export const tokenStorageService = new TokenStorageService();

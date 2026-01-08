@@ -15,7 +15,6 @@
       Eye,
       EyeOff,
   } from "lucide-svelte";
-  import { toast } from "svelte-sonner";
 
   type Token = {
     address: string;
@@ -113,7 +112,6 @@
   }
 
   function handleNFTsTab() {
-    toast.info(locale.t("wallet.nftMessage"));
     onTabChange?.(WalletTab.NFTS);
   }
 

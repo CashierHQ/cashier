@@ -1,15 +1,16 @@
 <script lang="ts">
-  import { X, LoaderCircle } from "lucide-svelte";
-  import WalletPage from "$modules/wallet/pages/wallet.svelte";
-  import TokenInfoPage from "$modules/wallet/pages/tokenInfo.svelte";
+  import {
+      WalletViewType,
+      type WalletView,
+  } from "$modules/shared/types/wallet";
+  import ImportPage from "$modules/wallet/pages/import.svelte";
+  import ImportNftPage from '$modules/wallet/pages/importNft.svelte';
+  import ManagePage from "$modules/wallet/pages/manage.svelte";
   import ReceivePage from "$modules/wallet/pages/receive.svelte";
   import SendPage from "$modules/wallet/pages/send.svelte";
-  import ImportPage from "$modules/wallet/pages/import.svelte";
-  import ManagePage from "$modules/wallet/pages/manage.svelte";
-  import {
-    WalletViewType,
-    type WalletView,
-  } from "$modules/shared/types/wallet";
+  import TokenInfoPage from "$modules/wallet/pages/tokenInfo.svelte";
+  import WalletPage from "$modules/wallet/pages/wallet.svelte";
+  import { LoaderCircle, X } from "lucide-svelte";
 
   type Props = {
     open?: boolean;
@@ -58,6 +59,10 @@
 
   function navigateToMain() {
     currentView = { type: WalletViewType.MAIN };
+  }
+
+  function navigateToAddNft() {
+    currentView = { type: WalletViewType.ADD_NFT };
   }
 </script>
 
@@ -114,6 +119,7 @@
           onNavigateToSend={navigateToSend}
           onNavigateToReceive={navigateToReceive}
           onNavigateToSwap={navigateToSwap}
+          onNavigateToAddNft={navigateToAddNft}
         />
       {:else if currentView.type === WalletViewType.TOKEN}
         <TokenInfoPage
@@ -143,6 +149,11 @@
           onNavigateBack={navigateToMain}
           onNavigateToImport={navigateToImport}
           bind:isToggling
+        />
+      {:else if currentView.type === WalletViewType.ADD_NFT}
+        <ImportNftPage
+          onNavigateBack={navigateToMain}
+          onNavigateToToken={navigateToToken}
         />
       {/if}
     </div>
