@@ -1,6 +1,9 @@
 <script lang="ts">
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { parseBalanceUnits } from "$modules/shared/utils/converter";
+  import {
+    parseBalanceUnits,
+    formatBalanceUnits,
+  } from "$modules/shared/utils/converter";
   import {
     ICP_LEDGER_CANISTER_ID,
     ICP_INDEX_CANISTER_ID,
@@ -12,12 +15,17 @@
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import { Clipboard, Info } from "lucide-svelte";
   import { toast } from "svelte-sonner";
-  import ConfirmSendDrawer from "$modules/wallet/components/confirmSendDrawer.svelte";
+  import TxCart from "$modules/transactionCart/components/txCart.svelte";
+  import {
+    TransactionSourceType,
+    type WalletSource,
+  } from "$modules/transactionCart/types/transaction-source";
   import InputAmount from "$modules/shared/components/InputAmount.svelte";
   import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
-  import { TxState } from "$modules/wallet/types/walletSendStore";
   import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
   import { ReceiveAddressType } from "$modules/wallet/types";
+  import { Principal } from "@dfinity/principal";
+  import type { ProcessActionResult } from "$modules/links/types/action/action";
 
   type Props = {
     initialToken?: string;
@@ -36,7 +44,6 @@
   // UI state (local)
   let receiveType = $state<ReceiveAddressType>(ReceiveAddressType.PRINCIPAL);
   let showConfirmDrawer = $state(false);
-  let isSending = $state(false);
   let lastBlockId = $state<bigint | null>(null);
 
   // URL param effect - set token from URL or default to first token
@@ -86,27 +93,48 @@
     selectedToken === ICP_LEDGER_CANISTER_ID,
   );
 
-  const isMaxAvailable = $derived(maxAmount > 0 && !isSending);
+  const isMaxAvailable = $derived(maxAmount > 0);
   const isLoading = $derived(
     !walletStore.query.data && walletStore.query.isLoading,
   );
 
-  // Derived from store methods
-  const sendFeeResult = $derived.by(() => {
-    return walletSendStore.computeSendFee({
-      selectedToken,
-      amount,
-      receiveAddress,
-    });
-  });
-  const sendFeeOutput = $derived.by(() => {
-    return sendFeeResult.isOk() ? sendFeeResult.value : null;
-  });
+  // Build WalletSource from form state for txCart
+  const walletSource = $derived.by((): WalletSource | null => {
+    if (!selectedTokenObj || !receiveAddress || amount <= 0) return null;
 
-  const transactionLink = $derived.by(() => {
-    return lastBlockId !== null
-      ? walletSendStore.getTransactionLink(selectedToken, lastBlockId)
-      : null;
+    let toPrincipal: Principal;
+    let toAccountId: string | undefined;
+
+    try {
+      if (receiveType === ReceiveAddressType.ACCOUNT_ID) {
+        toAccountId = receiveAddress;
+        toPrincipal = Principal.anonymous(); // Placeholder for account ID transfers
+      } else {
+        toPrincipal = Principal.fromText(receiveAddress);
+      }
+    } catch {
+      return null; // Invalid address format
+    }
+
+    const amountBigInt = formatBalanceUnits(amount, selectedTokenObj.decimals);
+
+    return {
+      type: TransactionSourceType.WALLET,
+      token: {
+        name: selectedTokenObj.name,
+        symbol: selectedTokenObj.symbol,
+        address: selectedTokenObj.address,
+        decimals: selectedTokenObj.decimals,
+        enabled: selectedTokenObj.enabled,
+        fee: selectedTokenObj.fee,
+        is_default: selectedTokenObj.is_default,
+        indexId: selectedTokenObj.indexId,
+      },
+      to: toPrincipal,
+      toAccountId,
+      amount: amountBigInt,
+      receiveType,
+    };
   });
 
   /**
@@ -166,45 +194,32 @@
     if (result.isErr()) {
       toast.error(result.error);
     } else {
-      walletSendStore.txState = TxState.CONFIRM;
       showConfirmDrawer = true;
     }
   }
 
-  async function handleConfirmSend() {
-    walletSendStore.txState = TxState.PENDING;
-    isSending = true;
-
-    const result = await walletSendStore.executeSend({
-      selectedToken,
-      receiveAddress,
-      amount,
-      receiveType,
-    });
-
-    if (result.isOk()) {
-      lastBlockId = result.value;
-      walletSendStore.txState = TxState.SUCCESS;
+  /**
+   * Handle successful transaction from txCart
+   * For WalletSource, result is always bigint (block index)
+   */
+  function handleTxSuccess(result: bigint | ProcessActionResult) {
+    // WalletSource always returns bigint
+    if (typeof result === "bigint") {
+      lastBlockId = result;
       refreshTransactionHistory();
-    } else {
-      walletSendStore.txState = TxState.ERROR;
-      showConfirmDrawer = false;
-      toast.error(result.error);
     }
-
-    isSending = false;
   }
 
   function handleCloseDrawer() {
     showConfirmDrawer = false;
-    if (walletSendStore.txState === TxState.SUCCESS) {
-      // Reset form
+    if (lastBlockId !== null) {
+      // Reset form after successful send
       receiveAddress = "";
       amount = 0;
       tokenAmount = "";
       usdAmount = "";
+      lastBlockId = null;
     }
-    walletSendStore.txState = TxState.CONFIRM;
   }
 </script>
 
@@ -302,7 +317,6 @@
       >
         <Button
           onclick={handleContinue}
-          disabled={isSending}
           class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
           type="button"
         >
@@ -324,11 +338,11 @@
   {/if}
 </div>
 
-<ConfirmSendDrawer
-  bind:open={showConfirmDrawer}
-  txState={walletSendStore.txState}
-  {sendFeeOutput}
-  {transactionLink}
-  onClose={handleCloseDrawer}
-  onConfirm={handleConfirmSend}
-/>
+{#if walletSource}
+  <TxCart
+    source={walletSource}
+    bind:isOpen={showConfirmDrawer}
+    onCloseDrawer={handleCloseDrawer}
+    onSuccess={handleTxSuccess}
+  />
+{/if}
