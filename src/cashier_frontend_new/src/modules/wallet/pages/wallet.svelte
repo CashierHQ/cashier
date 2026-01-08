@@ -18,6 +18,7 @@
     onNavigateToReceive: () => void;
     onNavigateToSwap: () => void;
     onNavigateToAddNft: () => void;
+    onTabChange: (tab: WalletTab) => void;
   };
 
   let {
@@ -28,6 +29,7 @@
     onNavigateToReceive,
     onNavigateToSwap,
     onNavigateToAddNft,
+    onTabChange,
   }: Props = $props();
 
   let failedImageLoads = new SvelteSet<string>();
@@ -70,6 +72,7 @@
 
   function handleTabChange(tab: WalletTab) {
     currentTab = tab;
+    onTabChange(tab);
   }
 
   function handleSelectNft(collectionId: string, tokenId: bigint) {

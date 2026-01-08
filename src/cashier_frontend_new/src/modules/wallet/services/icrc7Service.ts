@@ -6,7 +6,6 @@ import {
   type CollectionMetadata,
   type NFTMetadata,
 } from "$modules/wallet/types/nft";
-import { Principal } from "@dfinity/principal";
 
 /**
  * Service for interacting with a specific Icrc7 Ledger
@@ -28,22 +27,6 @@ export class Icrc7Service {
       canisterId: this.#canisterId,
       idlFactory: icrc7Ledger.idlFactory,
     });
-  }
-
-  /**
-   * Get the ledger account for the current authenticated user.
-   * @returns The ledger account for the current authenticated user.
-   * @throws Error if the user is not authenticated or no account is available.
-   */
-  #getAccount(): icrc7Ledger.Account {
-    if (authState.account) {
-      return {
-        owner: Principal.fromText(authState.account.owner),
-        subaccount: [],
-      };
-    } else {
-      throw new Error("User is not authenticated");
-    }
   }
 
   /**
