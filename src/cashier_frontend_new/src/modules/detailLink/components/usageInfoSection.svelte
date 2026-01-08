@@ -5,21 +5,43 @@
     formatNumber,
     formatUsdAmount,
   } from "$modules/shared/utils/formatNumber";
-  import type { AssetWithTokenInfo } from "$modules/links/utils/feesBreakdown";
+  import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
+  import type { AssetInfo } from "$modules/links/types/link/asset";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
 
   type Props = {
-    assetsWithTokenInfo: AssetWithTokenInfo[];
+    assetInfo: AssetInfo[];
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
     linkUseActionCounter: bigint;
   };
 
   let {
-    assetsWithTokenInfo,
+    assetInfo,
     failedImageLoads,
     onImageError,
     linkUseActionCounter,
   }: Props = $props();
+
+  // Compute assetsWithTokenInfo using amount_available
+  const assetsWithTokenInfo = $derived.by(() => {
+    if (!assetInfo || assetInfo.length === 0) return [];
+
+    const assets = assetInfo
+      .map((info) => {
+        const address = info.asset.address?.toString();
+        if (!address) return null;
+        return { address, amount: info.amount_available };
+      })
+      .filter(
+        (item): item is { address: string; amount: bigint } => item !== null,
+      );
+
+    return calculateAssetsWithTokenInfo(
+      assets,
+      walletStore.findTokenByAddress.bind(walletStore),
+    );
+  });
 
   // Calculate total USD value of all assets
   const totalUsdValue = $derived.by(() => {

@@ -36,6 +36,7 @@ impl LinkDetailUpdateAssetInfoInput {
             asset: self.asset.clone(),
             label: self.label.clone(),
             amount_per_link_use_action: self.amount_per_link_use_action.clone(),
+            amount_available: Nat::from(0u64), // Initial value on creation
         }
     }
 
@@ -79,6 +80,7 @@ pub struct AssetInfoDto {
     pub asset: Asset,
     pub label: String,
     pub amount_per_link_use_action: Nat,
+    pub amount_available: Nat,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -118,6 +120,7 @@ impl From<&AssetInfo> for AssetInfoDto {
             asset: input.asset.clone(),
             label: input.label.clone(),
             amount_per_link_use_action: input.amount_per_link_use_action.clone(),
+            amount_available: input.amount_available.clone(),
         }
     }
 }
@@ -146,6 +149,7 @@ impl From<&LinkDetailUpdateAssetInfoInput> for AssetInfoDto {
             asset: input.asset.clone(),
             label: input.label.clone(),
             amount_per_link_use_action: input.amount_per_link_use_action.clone(),
+            amount_available: Nat::from(0u64), // Initial value on creation
         }
     }
 }

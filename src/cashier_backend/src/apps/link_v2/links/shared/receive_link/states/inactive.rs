@@ -4,19 +4,22 @@
 use crate::apps::link_v2::links::{
     shared::receive_link::actions::withdraw::WithdrawAction, traits::LinkV2State,
 };
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,
     link_v2::link_result::{LinkCreateActionResult, LinkProcessActionResult},
     repository::{
         action::v1::{Action, ActionType},
+        common::Asset,
         intent::v1::Intent,
         link::v1::{Link, LinkState},
         transaction::v1::Transaction,
     },
 };
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
-use transaction_manager::traits::TransactionManager;
+use transaction_manager::{
+    icrc_token::utils::get_batch_tokens_fee_for_link, traits::TransactionManager,
+};
 
 pub struct InactiveState<M: TransactionManager + 'static> {
     pub link: Link,
@@ -95,6 +98,31 @@ impl<M: TransactionManager + 'static> InactiveState<M> {
             .process_action(action, intents, intent_txs_map)
             .await?;
 
+        // Decrement amount_available based on actual withdrawn amounts (handles partial success)
+        // Note: Withdraw action creates transfer for (balance - fee), so we need to add fee back
+        // Withdraw action: link -> wallet, so use link_to_wallet amounts
+        let fee_map = get_batch_tokens_fee_for_link(&link).await?;
+        for asset_info in link.asset_info.iter_mut() {
+            let address = match &asset_info.asset {
+                Asset::IC { address } => *address,
+            };
+            let withdrawn = process_action_result
+                .transfer_amounts
+                .get_link_to_wallet(&address);
+            if withdrawn > 0u64 {
+                let fee = fee_map.get(&address).cloned().unwrap_or(Nat::from(0u64));
+                let decrement = withdrawn + fee;
+
+                // Safe subtraction
+                if asset_info.amount_available >= decrement {
+                    asset_info.amount_available -= decrement;
+                } else {
+                    asset_info.amount_available = Nat::from(0u64);
+                }
+            }
+        }
+
+        // Only transition to InactiveEnded if ALL succeeded
         if process_action_result.is_success {
             link.state = LinkState::InactiveEnded;
         }

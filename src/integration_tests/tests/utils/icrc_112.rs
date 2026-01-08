@@ -103,6 +103,65 @@ pub async fn execute_icrc112_request(
 /// * `ctx` - The test context containing the client for canister calls
 /// # Returns
 /// * `Result<Vec<Vec<CanisterCallResponse>>, String>` - A vector of vectors of CanisterCallResponse or an error message
+///
+/// Execute ICRC112 requests selectively, skipping requests to specified canisters.
+/// Useful for testing partial success scenarios where only some token transfers complete.
+/// # Arguments
+/// * `icrc_112_requests` - A vector of vectors of Icrc112Request to be executed
+/// * `caller` - The Principal ID of the caller
+/// * `ctx` - The test context containing the client for canister calls
+/// * `skip_canisters` - Canister IDs to skip (e.g., ledger canisters to simulate missing deposits)
+/// # Returns
+/// * `Result<Vec<Vec<CanisterCallResponse>>, String>` - Responses for executed requests only
+pub async fn execute_icrc112_selective(
+    icrc_112_requests: &Vec<Vec<Icrc112Request>>,
+    caller: Principal,
+    ctx: &crate::utils::PocketIcTestContext,
+    skip_canisters: &[Principal],
+) -> Result<Vec<Vec<CanisterCallResponse>>, String> {
+    let mut responses: Vec<Vec<CanisterCallResponse>> = Vec::new();
+    for parallel_requests in icrc_112_requests {
+        let mut parallel_responses: Vec<CanisterCallResponse> = Vec::new();
+        for (i, request) in parallel_requests.iter().enumerate() {
+            // Skip requests to specified canisters
+            if skip_canisters.contains(&request.canister_id) {
+                continue;
+            }
+
+            let res = ctx
+                .client
+                .update_call(
+                    request.canister_id,
+                    caller,
+                    &request.method,
+                    request.arg.clone(),
+                )
+                .await;
+
+            if let Err(e) = res {
+                return Err(format!("ICRC112 request failed at index {i}: {e}"));
+            }
+
+            let res = res.unwrap();
+            let parsed = parse_response(&request.method, res.clone());
+
+            parallel_responses.push(CanisterCallResponse {
+                canister_id: request.canister_id,
+                method: request.method.clone(),
+                arg: request.arg.clone(),
+                res,
+                parsed_res: parsed,
+                nonce: request.nonce.clone(),
+            });
+        }
+        if !parallel_responses.is_empty() {
+            responses.push(parallel_responses);
+        }
+    }
+
+    Ok(responses)
+}
+
 pub async fn execute_icrc112_request_malformed(
     icrc_112_requests: &Vec<Vec<Icrc112Request>>,
     caller: Principal,

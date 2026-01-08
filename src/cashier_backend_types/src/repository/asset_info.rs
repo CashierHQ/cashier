@@ -11,4 +11,7 @@ pub struct AssetInfo {
     pub asset: Asset,
     pub label: String,
     pub amount_per_link_use_action: Nat,
+
+    #[serde(default)] // Backward compat: defaults to Nat::from(0) for old data
+    pub amount_available: Nat,
 }

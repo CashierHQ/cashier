@@ -33,8 +33,8 @@
   } from "$lib/shadcn/components/ui/dialog";
   import ShareLinkSection from "$modules/creationLink/components/previewSections/ShareLinkSection.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
+  import { getTransactionLockStatusKey } from "../utils/transaction-lock-status";
 
-  //let { linkStore }: { linkStore: LinkDetailStore } = $props();
   let {
     id,
     onBack,
@@ -127,28 +127,6 @@
       appHeaderStore.setHeaderName(name);
     } else {
       appHeaderStore.clearHeaderName();
-    }
-  });
-
-  // Transaction lock status based on link state
-  // ACTIVE -> Unlock (can end link, copy link)
-  // INACTIVE -> Lock (can withdraw)
-  // CREATE_LINK -> Unlock (can create)
-  const transactionLockStatus = $derived.by(() => {
-    if (!linkStore.link)
-      return locale.t("links.linkForm.preview.transactionLockUnlock");
-
-    switch (linkStore.link.state) {
-      case LinkState.ACTIVE:
-        return locale.t("links.linkForm.preview.transactionLockUnlock");
-      case LinkState.INACTIVE:
-        return locale.t("links.linkForm.preview.transactionLockLock");
-      case LinkState.INACTIVE_ENDED:
-        return locale.t("links.linkForm.preview.transactionLockEnded");
-      case LinkState.CREATE_LINK:
-        return locale.t("links.linkForm.preview.transactionLockUnlock");
-      default:
-        return locale.t("links.linkForm.preview.transactionLockUnlock");
     }
   });
 
@@ -357,13 +335,15 @@
 
       <!-- Block 2: Transaction Lock -->
       <TransactionLockSection
-        {transactionLockStatus}
+        transactionLockStatus={locale.t(
+          getTransactionLockStatusKey(linkStore.link?.state),
+        )}
         isEnded={isTransactionLockEnded}
       />
 
       <!-- Block 5: Usage Info -->
       <UsageInfoSection
-        {assetsWithTokenInfo}
+        assetInfo={linkStore.link.asset_info}
         {failedImageLoads}
         onImageError={handleImageError}
         linkUseActionCounter={linkStore.link.link_use_action_counter}

@@ -4,19 +4,22 @@
 use crate::apps::link_v2::links::{
     shared::send_link::actions::receive::ReceiveAction, traits::LinkV2State,
 };
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,
     link_v2::link_result::{LinkCreateActionResult, LinkProcessActionResult},
     repository::{
         action::v1::{Action, ActionType},
+        common::Asset,
         intent::v1::Intent,
         link::v1::{Link, LinkState},
         transaction::v1::Transaction,
     },
 };
 use std::{collections::HashMap, future::Future, pin::Pin, rc::Rc};
-use transaction_manager::traits::TransactionManager;
+use transaction_manager::{
+    icrc_token::utils::get_batch_tokens_fee_for_link, traits::TransactionManager,
+};
 
 pub struct ActiveState<M: TransactionManager + 'static> {
     pub link: Link,
@@ -82,6 +85,31 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
             .process_action(action, intents, intent_txs_map)
             .await?;
 
+        // Decrement amount_available based on actual transferred amounts (handles partial success)
+        // Use action: link -> wallet, so use link_to_wallet amounts
+        let fee_map = get_batch_tokens_fee_for_link(&link).await?;
+        for asset_info in link.asset_info.iter_mut() {
+            let address = match &asset_info.asset {
+                Asset::IC { address } => *address,
+            };
+
+            let transferred = process_action_result
+                .transfer_amounts
+                .get_link_to_wallet(&address);
+            if transferred > 0u64 {
+                let fee = fee_map.get(&address).cloned().unwrap_or(Nat::from(0u64));
+                let decrement = transferred + fee;
+
+                // Safe subtraction (Nat is unsigned)
+                if asset_info.amount_available >= decrement {
+                    asset_info.amount_available -= decrement;
+                } else {
+                    asset_info.amount_available = Nat::from(0u64);
+                }
+            }
+        }
+
+        // Only increment counter and check end state if ALL successful
         if process_action_result.is_success {
             link.link_use_action_counter += 1;
             if link.link_use_action_counter >= link.link_use_action_max_count {

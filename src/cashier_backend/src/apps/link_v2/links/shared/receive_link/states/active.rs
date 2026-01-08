@@ -10,6 +10,7 @@ use cashier_backend_types::{
     link_v2::link_result::{LinkCreateActionResult, LinkProcessActionResult},
     repository::{
         action::v1::{Action, ActionType},
+        common::Asset,
         intent::v1::Intent,
         link::v1::Link,
         transaction::v1::Transaction,
@@ -73,12 +74,28 @@ impl<M: TransactionManager + 'static> ActiveState<M> {
         intent_txs_map: HashMap<String, Vec<Transaction>>,
         transaction_manager: Rc<M>,
     ) -> Result<LinkProcessActionResult, CanisterError> {
+        let mut link = link.clone();
+
         let process_action_result = transaction_manager
             .process_action(action, intents, intent_txs_map)
             .await?;
 
+        // Update amount_available based on actual transferred amounts (handles partial success)
+        // Send action: wallet -> link, so use wallet_to_link amounts
+        for asset_info in link.asset_info.iter_mut() {
+            let address = match &asset_info.asset {
+                Asset::IC { address } => *address,
+            };
+            let transferred = process_action_result
+                .transfer_amounts
+                .get_wallet_to_link(&address);
+            if transferred > 0u64 {
+                asset_info.amount_available += transferred;
+            }
+        }
+
         Ok(LinkProcessActionResult {
-            link: link.clone(),
+            link,
             process_action_result,
         })
     }

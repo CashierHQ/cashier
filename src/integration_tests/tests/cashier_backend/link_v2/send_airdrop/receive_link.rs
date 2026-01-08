@@ -204,6 +204,19 @@ async fn it_should_succeed_receive_icp_token_airdrop_linkv2() {
         let intent1 = &intents[0];
         assert_eq!(intent1.state, IntentState::Success);
 
+        // Assert: amount_available decremented correctly after receive
+        assert!(!link_dto.asset_info.is_empty());
+        let asset = &link_dto.asset_info[0];
+        let expected_remaining = test_utils::calculate_amount_for_wallet_to_link_transfer(
+            amounts[0].clone(),
+            ledger_fee.clone(),
+            max_use - 1, // 9 uses remaining
+        );
+        assert_eq!(
+            asset.amount_available, expected_remaining,
+            "amount_available should be decremented after receive"
+        );
+
         // Assert: receiveer's ICP balance increased
         let icp_balance_after = icp_ledger_client
             .balance_of(&receiver_account)
@@ -337,6 +350,19 @@ async fn it_should_succeed_receive_icrc_token_airdrop_linkv2() {
         assert_eq!(intents.len(), 1);
         let intent1 = &intents[0];
         assert_eq!(intent1.state, IntentState::Success);
+
+        // Assert: amount_available decremented correctly after receive
+        assert!(!link_dto.asset_info.is_empty());
+        let asset = &link_dto.asset_info[0];
+        let expected_remaining = test_utils::calculate_amount_for_wallet_to_link_transfer(
+            amounts[0].clone(),
+            ledger_fee.clone(),
+            max_use - 1, // 9 uses remaining
+        );
+        assert_eq!(
+            asset.amount_available, expected_remaining,
+            "amount_available should be decremented after receive"
+        );
 
         // Assert: receiveer's CKBTC balance increased
         let ckbtc_balance_after = ckbtc_ledger_client

@@ -10,6 +10,7 @@ use cashier_backend_types::{
     link_v2::link_result::{LinkCreateActionResult, LinkProcessActionResult},
     repository::{
         action::v1::{Action, ActionType},
+        common::Asset,
         intent::v1::Intent,
         link::v1::{Link, LinkState},
         transaction::v1::Transaction,
@@ -94,7 +95,21 @@ impl<M: TransactionManager + 'static> CreatedState<M> {
             .process_action(action, intents, intent_txs_map)
             .await?;
 
-        // if process action succeeds, activate the link
+        // Update amount_available based on actual transferred amounts (handles partial success)
+        // Create action: wallet -> link, so use wallet_to_link amounts
+        for asset_info in link.asset_info.iter_mut() {
+            let address = match &asset_info.asset {
+                Asset::IC { address } => *address,
+            };
+            let transferred = process_action_result
+                .transfer_amounts
+                .get_wallet_to_link(&address);
+            if transferred > 0u64 {
+                asset_info.amount_available = transferred;
+            }
+        }
+
+        // Only transition to Active if ALL succeeded
         if process_action_result.is_success {
             link.state = LinkState::Active;
         }

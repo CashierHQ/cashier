@@ -3,6 +3,7 @@
 
 use crate::adapter::IntentAdapterTrait;
 use crate::icrc112::create_icrc_112_requests;
+use crate::utils::calculator::calculate_successful_transfer_amounts;
 use crate::{
     adapter::ic::intent::IcIntentAdapter,
     icrc_token::utils::get_link_account,
@@ -210,6 +211,12 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
                 updated_intent_txs_map.clone(),
             )?;
 
+            // Calculate transfer amounts grouped by direction (wallet_to_link vs link_to_wallet)
+            let transfer_amounts = calculate_successful_transfer_amounts(
+                &rollup_action_state_result.intents,
+                &updated_intent_txs_map,
+            );
+
             Ok(ProcessActionResult {
                 action: rollup_action_state_result.action,
                 intents: rollup_action_state_result.intents,
@@ -217,6 +224,7 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
                 icrc112_requests: Some(icrc112_requests),
                 is_success,
                 errors,
+                transfer_amounts,
             })
         })
     }

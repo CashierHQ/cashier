@@ -13,9 +13,9 @@ use cashier_backend_types::{
     },
 };
 use transaction_manager::{
-    icrc_token::utils::{get_batch_tokens_fee_for_link, get_link_account},
+    icrc_token::utils::get_link_account,
     intents::transfer_wallet_to_link::TransferWalletToLinkIntent,
-    utils::calculator::calculate_link_balance_map,
+    utils::calculator::calculate_link_balance_map_without_fee,
 };
 use uuid::Uuid;
 
@@ -52,12 +52,8 @@ impl SendAction {
 
         let link_account = get_link_account(&link.id, canister_id)?;
 
-        // token_fee_map
-        let token_fee_map = get_batch_tokens_fee_for_link(link).await?;
-
-        let link_token_balance_map = calculate_link_balance_map(
+        let link_token_balance_map = calculate_link_balance_map_without_fee(
             &link.asset_info,
-            &token_fee_map,
             link.link_use_action_max_count,
         );
 

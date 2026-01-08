@@ -193,6 +193,7 @@ export const idlFactory = ({ IDL }) => {
     'asset' : Asset,
     'amount_per_link_use_action' : IDL.Nat,
     'label' : IDL.Text,
+    'amount_available' : IDL.Nat,
   });
   const LinkType = IDL.Variant({
     'SendAirdrop' : IDL.Null,
@@ -287,9 +288,14 @@ export const idlFactory = ({ IDL }) => {
     'action_type' : ActionType,
   });
   const Result_4 = IDL.Variant({ 'Ok' : ActionDto, 'Err' : CanisterError });
+  const LinkDetailUpdateAssetInfoInput = IDL.Record({
+    'asset' : Asset,
+    'amount_per_link_use_action' : IDL.Nat,
+    'label' : IDL.Text,
+  });
   const CreateLinkInput = IDL.Record({
     'title' : IDL.Text,
-    'asset_info' : IDL.Vec(AssetInfoDto),
+    'asset_info' : IDL.Vec(LinkDetailUpdateAssetInfoInput),
     'link_type' : LinkType,
     'link_use_action_max_count' : IDL.Nat64,
   });
