@@ -17,5 +17,5 @@ export type TokenMetadata = {
  */
 export type TokenWithPriceAndBalance = TokenMetadata & {
   balance: bigint;
-  priceUSD: number;
+  priceUSD?: number;
 };
