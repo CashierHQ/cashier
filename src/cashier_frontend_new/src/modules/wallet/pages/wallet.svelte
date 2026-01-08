@@ -1,9 +1,11 @@
 <script lang="ts">
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import NavBar from "$modules/token/components/navBar.svelte";
-  import { SvelteSet } from "svelte/reactivity";
-  import TokenItem from "$modules/creationLink/components/shared/TokenItem.svelte";
   import { locale } from "$lib/i18n";
+  import NavBar from "$modules/token/components/navBar.svelte";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import type { TokenWithPriceAndBalance } from '$modules/token/types';
+  import TokenList from "$modules/wallet/components/token/tokenList.svelte";
+  import { WalletTab } from "$modules/wallet/types";
+  import { SvelteSet } from "svelte/reactivity";
 
   type Props = {
     onNavigateToToken: (token: string) => void;
@@ -22,8 +24,8 @@
   }: Props = $props();
 
   let failedImageLoads = new SvelteSet<string>();
-  let currentTab = $state<"tokens" | "nfts">("tokens");
-
+  let currentTab = $state<WalletTab>(WalletTab.TOKENS);
+  
   const BALANCE_VISIBILITY_KEY = "wallet_balance_visible";
   let balanceVisible = $state(
     typeof window !== "undefined" &&
@@ -54,13 +56,11 @@
     onNavigateToManage();
   }
 
-  function handleTabChange(tab: "tokens" | "nfts") {
-    // TODO: uncomment when tabs are implemented
-    // currentTab = tab;
-    console.warn(tab);
+  function handleTabChange(tab: WalletTab) {
+    currentTab = tab;
   }
 
-  const enabledTokens = $derived.by(() => {
+  const enabledTokens: TokenWithPriceAndBalance[] = $derived.by(() => {
     if (!walletStore.query.data) return [];
     return walletStore.query.data.filter((token) => token.enabled);
   });
@@ -78,19 +78,15 @@
 />
 
 <div class="px-4 pb-6">
-  {#if walletStore.query.data}
-    {#if enabledTokens.length > 0}
-      <ul class="space-y-0">
-        {#each enabledTokens as token (token.address)}
-          <TokenItem
-            {token}
-            onSelect={handleSelectToken}
-            {failedImageLoads}
-            onImageError={handleImageError}
-            isBalanceHidden={!balanceVisible}
-          />
-        {/each}
-      </ul>
+  {#if currentTab === WalletTab.TOKENS}
+    {#if walletStore.query.data}
+      <TokenList
+        tokens={enabledTokens}
+        balanceVisible={balanceVisible}
+        onSelectToken={handleSelectToken}
+        onImageError={handleImageError}
+        {failedImageLoads}
+      />
 
       <div class="mt-6 text-center">
         <button
@@ -100,29 +96,21 @@
           {locale.t("wallet.manageTokensBtn")}
         </button>
       </div>
+    {:else if walletStore.query.error}
+      <div class="text-center py-8">
+        <p class="text-red-600 mb-4">
+          {locale.t("wallet.errorMsg")}
+          {walletStore.query.error}
+        </p>
+      </div>
     {:else}
       <div class="text-center py-8">
-        <p class="text-gray-500 mb-4">
-          {locale.t("wallet.noTokensMsg")}
-        </p>
-        <button
-          onclick={handleManageTokens}
-          class="text-green hover:text-teal-700 font-medium transition-colors"
-        >
-          {locale.t("wallet.manageTokensBtn")}
-        </button>
+        <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
       </div>
     {/if}
-  {:else if walletStore.query.error}
+  {:else if currentTab === WalletTab.NFTS}
     <div class="text-center py-8">
-      <p class="text-red-600 mb-4">
-        {locale.t("wallet.errorMsg")}
-        {walletStore.query.error}
-      </p>
-    </div>
-  {:else}
-    <div class="text-center py-8">
-      <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
+      <p class="text-gray-500">{locale.t("wallet.nftMessage")}</p>
     </div>
   {/if}
 </div>
