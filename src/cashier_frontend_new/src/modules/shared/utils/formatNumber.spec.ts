@@ -97,6 +97,7 @@ describe("formatTokenPrice", () => {
     expect(formatTokenPrice(0)).toBe("-");
     expect(formatTokenPrice(-1)).toBe("-");
     expect(formatTokenPrice(-100)).toBe("-");
+    expect(formatTokenPrice(undefined)).toBe("-");
   });
 
   it("handles edge cases", () => {

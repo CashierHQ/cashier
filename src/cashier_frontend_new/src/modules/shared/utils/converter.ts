@@ -33,14 +33,14 @@ export function formatBalanceUnits(icp: number, decimals: number): bigint {
  * This USD value is used for display purposes.
  * @param balance in smallest unit (e.g., e8s for ICP)
  * @param decimals
- * @param priceUSD
+ * @param priceUSD - price in USD, defaults to 0 if undefined
  * @returns balance in USD
  */
 export function balanceToUSDValue(
   balance: bigint,
   decimals: number,
-  priceUSD: number,
+  priceUSD: number | undefined,
 ): number {
   const icpValue = parseBalanceUnits(balance, decimals);
-  return icpValue * priceUSD;
+  return icpValue * (priceUSD ?? 0);
 }
