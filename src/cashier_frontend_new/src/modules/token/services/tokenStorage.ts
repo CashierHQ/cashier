@@ -1,16 +1,18 @@
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { TOKEN_STORAGE_CANISTER_ID } from "$modules/shared/constants";
-import type { TokenMetadata } from "$modules/token/types";
-import { Principal } from "@dfinity/principal";
-import { Err, Ok, type Result } from "ts-results-es";
-import { parseListTokens } from "$modules/token/utils/parser";
 import {
-  validateLedgerCanister,
   validateIndexCanister,
+  validateLedgerCanister,
   ValidationError,
   type ValidationErrorType,
 } from "$modules/token/services/canister-validation";
+import type { TokenMetadata } from "$modules/token/types";
+import { parseListTokens } from "$modules/token/utils/parser";
+import type { NFT } from "$modules/wallet/types/nft";
+import { NFTMapper } from "$modules/wallet/types/nft";
+import { Principal } from "@dfinity/principal";
+import { Err, Ok, type Result } from "ts-results-es";
 
 /**
  * Service for interacting with the Token Storage canister
@@ -118,6 +120,25 @@ class TokenStorageService {
     } catch {
       return Err(ValidationError.BACKEND_ERROR);
     }
+  }
+
+  /**
+   * Get the NFTs owned by the user with pagination
+   * @param start
+   * @param limit
+   * @returns List of NFTs owned by the user
+   */
+  public async getNfts(start: number, limit: number): Promise<NFT[]> {
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
+    const res = await actor.user_get_nfts({
+      start: [start],
+      limit: [limit],
+    });
+
+    return res.map((nft) => NFTMapper.fromTokenStorageNft(nft));
   }
 }
 

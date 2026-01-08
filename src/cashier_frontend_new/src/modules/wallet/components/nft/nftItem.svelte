@@ -1,12 +1,11 @@
 <script lang="ts">
   import type { NFT } from '$modules/wallet/types/nft';
 
-
   interface Props {
     item: NFT;
-    onSelect: (address: string) => void;
+    onSelect: (collectionAddress: string, tokenId: bigint) => void;
     failedImageLoads: Set<string>;
-    onImageError: (address: string) => void;
+    onImageError: (address: string, tokenId: bigint) => void;
   }
 
   let {
@@ -16,7 +15,22 @@
     onImageError,
   }: Props = $props();
 
+  function handleImageError() {
+    onImageError(item.collectionAddress, item.id);
+  }
+
 </script>
-<div>
-  
-</div>
+<li>
+  <button
+    type="button"
+    class="w-full flex items-center p-4 hover:bg-gray-100 rounded-lg text-left"
+    onclick={() => onSelect(item.collectionAddress, item.id)}
+  >
+    <img
+      src={item.image}
+      alt={item.name}
+      class="w-12 h-12 rounded-md object-cover mr-4"
+      onerror={handleImageError}
+    />
+  </button>
+</li>

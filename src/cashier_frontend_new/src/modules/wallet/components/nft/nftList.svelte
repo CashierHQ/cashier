@@ -1,40 +1,39 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
-  import TokenItem from "$modules/creationLink/components/shared/TokenItem.svelte";
-  import type { TokenWithPriceAndBalance } from "$modules/token/types";
+  import NFTItem from "$modules/wallet/components/nft/nftItem.svelte";
+  import type { NFT } from '$modules/wallet/types/nft';
 
   interface Props {
-    tokens: TokenWithPriceAndBalance[];
+    nfts: NFT[];
     balanceVisible: boolean;
-    onSelectToken: (address: string) => void;
-    onImageError: (address: string) => void;
+    onSelectNFT: (collectionAddress: string, tokenId: bigint) => void;
+    onNFTImageError: (collectionAddress: string, tokenId: bigint) => void;
     failedImageLoads: Set<string>;
   }
 
   let {
-    tokens,
+    nfts,
     balanceVisible,
-    onSelectToken,
-    onImageError,
+    onSelectNFT,
+    onNFTImageError,
     failedImageLoads,
   }: Props = $props();
 </script>
 <div>
-  {#if tokens.length > 0}
+  {#if nfts.length > 0}
     <div class="text-center py-8">
       <p class="text-gray-500 mb-4">
-        {locale.t("wallet.noTokensMsg")}
+        {locale.t("wallet.noNFTsMsg")}
       </p>
     </div>
   {:else}
     <ul class="space-y-0">
-      {#each tokens as token (token.address)}
-        <TokenItem
-          {token}
-          onSelect={onSelectToken}
+      {#each nfts as nft (nft.collectionAddress + nft.id)}
+        <NFTItem
+          item={nft}
+          onSelect={onSelectNFT}
           {failedImageLoads}
-          onImageError={onImageError}
-          isBalanceHidden={!balanceVisible}
+          onImageError={onNFTImageError}
         />
       {/each}
   </ul>

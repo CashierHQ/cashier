@@ -3,9 +3,11 @@
   import NavBar from "$modules/token/components/navBar.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from '$modules/token/types';
+  import NftList from '$modules/wallet/components/nft/nftList.svelte';
   import TokenList from "$modules/wallet/components/token/tokenList.svelte";
   import { WalletTab } from "$modules/wallet/types";
   import { SvelteSet } from "svelte/reactivity";
+  import { walletNftStore } from '../state/walletNftStore.svelte';
 
   type Props = {
     onNavigateToToken: (token: string) => void;
@@ -34,6 +36,11 @@
       : true,
   );
 
+  const enabledTokens: TokenWithPriceAndBalance[] = $derived.by(() => {
+    if (!walletStore.query.data) return [];
+    return walletStore.query.data.filter((token) => token.enabled);
+  });
+
   $effect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem(BALANCE_VISIBILITY_KEY, String(balanceVisible));
@@ -60,10 +67,14 @@
     currentTab = tab;
   }
 
-  const enabledTokens: TokenWithPriceAndBalance[] = $derived.by(() => {
-    if (!walletStore.query.data) return [];
-    return walletStore.query.data.filter((token) => token.enabled);
-  });
+  function handleSelectNft(collectionAddress: string, tokenId: bigint) {
+    // Handle NFT selection (e.g., navigate to NFT details)
+  }
+
+  function handleNFTImageError(collectionAddress: string, tokenId: bigint) {
+    const key = `${collectionAddress}-${tokenId.toString()}`;
+    failedImageLoads.add(key);
+  }
 </script>
 
 <NavBar
@@ -109,8 +120,25 @@
       </div>
     {/if}
   {:else if currentTab === WalletTab.NFTS}
-    <div class="text-center py-8">
-      <p class="text-gray-500">{locale.t("wallet.nftMessage")}</p>
-    </div>
+    {#if walletNftStore.query.data}
+      <NftList
+        nfts={walletNftStore.query.data}
+        balanceVisible={balanceVisible}
+        onSelectNFT={(collectionAddress, tokenId) => {
+          handleSelectNft(collectionAddress, tokenId);
+        }}
+        onNFTImageError={(collectionAddress, tokenId) => {
+          handleNFTImageError(collectionAddress, tokenId);
+        }}
+        {failedImageLoads}
+      />
+    {:else if walletNftStore.query.error}
+      <div class="text-center py-8">
+        <p class="text-red-600 mb-4">
+          {locale.t("wallet.errorMsg")}
+          {walletNftStore.query.error}
+        </p>
+      </div>
+    {/if}
   {/if}
 </div>
