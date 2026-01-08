@@ -7,7 +7,7 @@ use ic_cdk::{api::msg_caller, query, update};
 use log::{debug, info};
 use token_storage_types::{
     TokenId,
-    error::TokenStorageError,
+    error::CanisterError,
     token::{RegistryStats, TokenDto, TokenListResponse, UserTokens},
 };
 
@@ -28,7 +28,7 @@ fn get_canister_build_data() -> BuildData {
 pub fn admin_permissions_add(
     principal: Principal,
     permissions: Vec<Permission>,
-) -> Result<Vec<Permission>, TokenStorageError> {
+) -> Result<Vec<Permission>, CanisterError> {
     let mut state = get_state();
     let caller = msg_caller();
     state
@@ -39,7 +39,7 @@ pub fn admin_permissions_add(
         .auth_service
         .add_permissions(principal, permissions)
         .map(|p| p.permissions.into_iter().collect())
-        .map_err(|e| TokenStorageError::AuthError(format!("{e:?}")))
+        .map_err(|e| CanisterError::AuthError(format!("{e:?}")))
 }
 
 /// Returns the permissions of a principal.
@@ -65,7 +65,7 @@ pub fn admin_permissions_get(principal: Principal) -> Vec<Permission> {
 pub fn admin_permissions_remove(
     principal: Principal,
     permissions: Vec<Permission>,
-) -> Result<Vec<Permission>, TokenStorageError> {
+) -> Result<Vec<Permission>, CanisterError> {
     let mut state = get_state();
     let caller = msg_caller();
     state
@@ -76,7 +76,7 @@ pub fn admin_permissions_remove(
         .auth_service
         .remove_permissions(principal, &permissions)
         .map(|p| p.permissions.into_iter().collect())
-        .map_err(|e| TokenStorageError::AuthError(format!("{e:?}")))
+        .map_err(|e| CanisterError::AuthError(format!("{e:?}")))
 }
 
 /// Gets the full metadata of the token registry
@@ -271,9 +271,7 @@ pub fn admin_get_user_balance(
 
 /// Enables/disables the inspect message.
 #[update]
-pub fn admin_inspect_message_enable(
-    inspect_message_enabled: bool,
-) -> Result<(), TokenStorageError> {
+pub fn admin_inspect_message_enable(inspect_message_enabled: bool) -> Result<(), CanisterError> {
     let mut state = get_state();
     let caller = msg_caller();
     state
