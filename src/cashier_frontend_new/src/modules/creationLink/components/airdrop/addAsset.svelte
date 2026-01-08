@@ -343,13 +343,30 @@
     setTokenAmount(maxTokenAmount.toString());
   }
 
-  // Total amount = per-link amount * uses
-  // This is calculated from user input, but maxTotalAmount uses validationService
+  // Total amount = useAmount * maxUse (derived from validationService.totalAssetAmount)
+  // This ensures consistency with backend calculations and YouSendPreview
   const totalAmount = $derived.by(() => {
-    const perUse = parseFloat(localTokenAmount || "0");
+    const asset = link.createLinkData.assets[0];
     const uses = link.createLinkData.maxUse || 0;
-    if (isNaN(perUse) || uses <= 0) return 0;
-    return perUse * uses;
+    if (!asset || !selectedToken || uses <= 0) return 0;
+
+    // Use validationService to get exact total amount (useAmount * maxUse)
+    const totalAmountsResult = validationService.totalAssetAmount(
+      link.createLinkData,
+    );
+
+    if (totalAmountsResult.isErr()) {
+      return 0;
+    }
+
+    const totalAmounts = totalAmountsResult.unwrap();
+    const totalAmountBigInt = totalAmounts[asset.address];
+
+    if (totalAmountBigInt === undefined) {
+      return 0;
+    }
+
+    return parseBalanceUnits(totalAmountBigInt, decimals);
   });
 
   // Calculate max total amount (max per use * uses)
