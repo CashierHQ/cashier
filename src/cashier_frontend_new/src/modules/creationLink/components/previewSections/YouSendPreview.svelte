@@ -10,6 +10,9 @@
   import { SvelteMap } from "svelte/reactivity";
   import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import { calculateDisplayAmounts } from "$modules/links/utils/displayAmounts";
+  import { calculateExactDisplayAmounts } from "$modules/links/utils/calculateExactDisplayAmounts";
+  import { LinkType } from "$modules/links/types/link/linkType";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
 
   type Props = {
     forecastAssetAndFee: Array<ForecastAssetAndFee>;
@@ -57,20 +60,37 @@
   );
 
   // Calculate display amount for each asset (multiply by maxUse for airdrop)
+  // Use exact values from useAmount * maxUse to avoid floating point precision errors
   const displayAmounts = $derived.by(() => {
-    const result = calculateDisplayAmounts(assetsToDisplay, linkType, maxUse);
-
-    // Convert Maps to SvelteMaps for reactivity
     const amounts = new SvelteMap<string, string>();
     const usdAmounts = new SvelteMap<string, string>();
 
-    result.amounts.forEach((value, key) => {
-      amounts.set(key, value);
-    });
+    // For AIRDROP links with link prop, use exact values from useAmount * maxUse
+    if (link && linkType === LinkType.AIRDROP && maxUse > 1) {
+      const result = calculateExactDisplayAmounts({
+        assetsToDisplay,
+        linkAssets: link.createLinkData.assets,
+        linkType,
+        maxUse,
+        walletTokens: walletStore.query.data,
+      });
 
-    result.usdAmounts.forEach((value, key) => {
-      usdAmounts.set(key, value);
-    });
+      result.amounts.forEach((value, key) => {
+        amounts.set(key, value);
+      });
+      result.usdAmounts.forEach((value, key) => {
+        usdAmounts.set(key, value);
+      });
+    } else {
+      // For other link types, use original calculation
+      const result = calculateDisplayAmounts(assetsToDisplay, linkType, maxUse);
+      result.amounts.forEach((value, key) => {
+        amounts.set(key, value);
+      });
+      result.usdAmounts.forEach((value, key) => {
+        usdAmounts.set(key, value);
+      });
+    }
 
     return { amounts, usdAmounts };
   });
