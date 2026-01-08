@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Link } from "$modules/links/types/link/link";
 import { LinkState } from "$modules/links/types/link/linkState";
+import { LinkType } from "$modules/links/types/link/linkType";
 import {
   isActionAlreadyExistsError,
   isUnsupportedLinkStateError,
@@ -20,7 +21,7 @@ function createMockLink(state: LinkState = LinkState.ACTIVE): Link {
     "Test Link",
     Principal.anonymous(),
     [],
-    "Tip" as const,
+    LinkType.TIP,
     BigInt(0),
     state,
     1n,
