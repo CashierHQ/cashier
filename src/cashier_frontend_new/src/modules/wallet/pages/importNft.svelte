@@ -16,10 +16,9 @@
 
   type Props = {
     onNavigateBack: () => void;
-    onNavigateToToken: (token: string) => void;
   };
 
-  let { onNavigateBack, onNavigateToToken }: Props = $props();
+  let { onNavigateBack }: Props = $props();
 
   let isReview = $state(false);
   let selectedNetwork = $state("icp");

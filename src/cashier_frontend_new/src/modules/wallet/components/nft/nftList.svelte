@@ -1,10 +1,10 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
   import NFTItem from "$modules/wallet/components/nft/nftItem.svelte";
-  import type { NFT } from '$modules/wallet/types/nft';
+  import type { EnrichedNFT } from '$modules/wallet/types/nft';
 
   interface Props {
-    nfts: NFT[];
+    nfts: EnrichedNFT[];
     onSelectNFT: (collectionAddress: string, tokenId: bigint) => void;
     onNFTImageError: (collectionAddress: string, tokenId: bigint) => void;
     failedImageLoads: Set<string>;
@@ -26,7 +26,7 @@
     </div>
   {:else}
     <ul class="space-y-0">
-      {#each nfts as nft (nft.collectionAddress + nft.id)}
+      {#each nfts as nft (nft.collectionId + nft.tokenId.toString())}
         <NFTItem
           item={nft}
           onSelect={onSelectNFT}

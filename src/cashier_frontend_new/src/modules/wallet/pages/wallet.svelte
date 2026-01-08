@@ -10,6 +10,7 @@
   import { walletNftStore } from '../state/walletNftStore.svelte';
 
   type Props = {
+    activeTab?: WalletTab;
     onNavigateToToken: (token: string) => void;
     onNavigateToManage: () => void;
     onNavigateToSend: () => void;
@@ -19,6 +20,7 @@
   };
 
   let {
+    activeTab = WalletTab.TOKENS,
     onNavigateToToken,
     onNavigateToManage,
     onNavigateToSend,
@@ -28,7 +30,7 @@
   }: Props = $props();
 
   let failedImageLoads = new SvelteSet<string>();
-  let currentTab = $state<WalletTab>(WalletTab.TOKENS);
+  let currentTab = $state<WalletTab>(activeTab);
   
   const BALANCE_VISIBILITY_KEY = "wallet_balance_visible";
   let balanceVisible = $state(
