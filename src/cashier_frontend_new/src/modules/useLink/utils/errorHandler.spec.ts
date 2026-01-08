@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { Link } from "$modules/links/types/link/link";
-import { LinkState } from "$modules/links/types/link/linkState";
+import {
+  LinkState,
+  type LinkStateValue,
+} from "$modules/links/types/link/linkState";
 import { LinkType } from "$modules/links/types/link/linkType";
 import {
   isActionAlreadyExistsError,
@@ -15,7 +18,7 @@ import { ActionState } from "$modules/links/types/action/actionState";
 import { Principal } from "@dfinity/principal";
 
 // Helper to create a mock link
-function createMockLink(state: LinkState = LinkState.ACTIVE): Link {
+function createMockLink(state: LinkStateValue = LinkState.ACTIVE): Link {
   return new Link(
     "test-link-id",
     "Test Link",
