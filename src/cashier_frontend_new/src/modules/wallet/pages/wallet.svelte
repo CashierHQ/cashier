@@ -2,13 +2,13 @@
   import { locale } from "$lib/i18n";
   import NavBar from "$modules/token/components/navBar.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import type { TokenWithPriceAndBalance } from '$modules/token/types';
-  import NftList from '$modules/wallet/components/nft/nftList.svelte';
+  import type { TokenWithPriceAndBalance } from "$modules/token/types";
+  import NftList from "$modules/wallet/components/nft/nftList.svelte";
   import TokenList from "$modules/wallet/components/token/tokenList.svelte";
   import { WalletTab } from "$modules/wallet/types";
-  import { toast } from 'svelte-sonner';
+  import { toast } from "svelte-sonner";
   import { SvelteSet } from "svelte/reactivity";
-  import { walletNftStore } from '../state/walletNftStore.svelte';
+  import { walletNftStore } from "../state/walletNftStore.svelte";
 
   type Props = {
     activeTab?: WalletTab;
@@ -34,7 +34,7 @@
 
   let failedImageLoads = new SvelteSet<string>();
   let currentTab = $state<WalletTab>(activeTab);
-  
+
   const BALANCE_VISIBILITY_KEY = "wallet_balance_visible";
   let balanceVisible = $state(
     typeof window !== "undefined" &&
@@ -101,7 +101,7 @@
     {#if walletStore.query.data}
       <TokenList
         tokens={enabledTokens}
-        balanceVisible={balanceVisible}
+        {balanceVisible}
         onSelectToken={handleSelectToken}
         onImageError={handleImageError}
         {failedImageLoads}
@@ -133,7 +133,7 @@
         nfts={walletNftStore.query.data}
         onSelectNFT={(collectionId, tokenId) => {
           handleSelectNft(collectionId, tokenId);
-        }}        
+        }}
       />
 
       <div class="mt-6 text-center">

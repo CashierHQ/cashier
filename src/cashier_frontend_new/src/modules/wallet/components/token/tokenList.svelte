@@ -19,6 +19,7 @@
     failedImageLoads,
   }: Props = $props();
 </script>
+
 <div>
   {#if tokens.length === 0}
     <div class="text-center py-8">
@@ -33,10 +34,10 @@
           {token}
           onSelect={onSelectToken}
           {failedImageLoads}
-          onImageError={onImageError}
+          {onImageError}
           isBalanceHidden={!balanceVisible}
         />
       {/each}
-  </ul>
+    </ul>
   {/if}
 </div>
