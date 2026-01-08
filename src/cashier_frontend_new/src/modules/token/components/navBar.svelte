@@ -1,20 +1,21 @@
 <script lang="ts">
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { locale } from "$lib/i18n";
   import {
-    balanceToUSDValue,
-    parseBalanceUnits,
+      balanceToUSDValue,
+      parseBalanceUnits,
   } from "$modules/shared/utils/converter";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { WalletTab } from "$modules/wallet/types";
   import {
-    Eye,
-    EyeOff,
-    ArrowUp,
-    ArrowDown,
-    ArrowUpDown,
-    ChevronLeft,
+      ArrowDown,
+      ArrowUp,
+      ArrowUpDown,
+      ChevronLeft,
+      Eye,
+      EyeOff,
   } from "lucide-svelte";
   import { toast } from "svelte-sonner";
-  import { locale } from "$lib/i18n";
 
   type Token = {
     address: string;
@@ -43,8 +44,8 @@
     onBack?: () => void;
 
     // Tabs (for default view)
-    activeTab?: "tokens" | "nfts";
-    onTabChange?: (tab: "tokens" | "nfts") => void;
+    activeTab?: WalletTab;
+    onTabChange?: (tab: WalletTab) => void;
 
     // Header (for back-only mode)
     title?: string;
@@ -59,7 +60,7 @@
     onReceive,
     onSwap,
     onBack,
-    activeTab = "tokens",
+    activeTab = WalletTab.TOKENS,
     onTabChange,
     title = "",
   }: Props = $props();
@@ -108,12 +109,12 @@
   }
 
   function handleTokensTab() {
-    onTabChange?.("tokens");
+    onTabChange?.(WalletTab.TOKENS);
   }
 
   function handleNFTsTab() {
     toast.info(locale.t("wallet.nftMessage"));
-    onTabChange?.("nfts");
+    onTabChange?.(WalletTab.NFTS);
   }
 
   function handleImageError() {
