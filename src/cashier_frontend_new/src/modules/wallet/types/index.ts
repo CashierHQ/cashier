@@ -6,7 +6,9 @@ export enum ReceiveAddressType {
   ACCOUNT_ID = "ACCOUNT_ID",
 }
 
-export enum WalletTab {
-  TOKENS = "tokens",
-  NFTS = "nfts",
-}
+export const WalletTab = {
+  TOKENS: "TOKENS",
+  NFTS: "NFTS",
+} as const;
+
+export type WalletTab = (typeof WalletTab)[keyof typeof WalletTab];

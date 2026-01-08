@@ -1,10 +1,10 @@
 <script lang="ts">
   import {
-      WalletViewType,
-      type WalletView,
+    WalletViewType,
+    type WalletView,
   } from "$modules/shared/types/wallet";
   import ImportPage from "$modules/wallet/pages/import.svelte";
-  import ImportNftPage from '$modules/wallet/pages/importNft.svelte';
+  import ImportNftPage from "$modules/wallet/pages/importNft.svelte";
   import ManagePage from "$modules/wallet/pages/manage.svelte";
   import ReceivePage from "$modules/wallet/pages/receive.svelte";
   import SendPage from "$modules/wallet/pages/send.svelte";
@@ -165,9 +165,7 @@
           bind:isToggling
         />
       {:else if currentView.type === WalletViewType.ADD_NFT}
-        <ImportNftPage
-          onNavigateBack={navigateToMainNft}
-        />
+        <ImportNftPage onNavigateBack={navigateToMainNft} />
       {/if}
     </div>
   </div>
