@@ -5,10 +5,10 @@
   import type { ProcessActionResult } from "$modules/links/types/action/action";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { onMount } from "svelte";
-  import { TransactionCartStore } from "../state/txCartStore.svelte";
-  import { AssetProcessState } from "../types/txCart";
+  import { TransactionCartStore } from "$modules/transactionCart/state/txCartStore.svelte";
   import { TransactionSourceType } from "../types/transaction-source";
   import YouSendSection from "$modules/transactionCart/components/YouSendSection.svelte";
+  import YouReceiveSection from "$modules/transactionCart/components/YouReceiveSection.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import FeeBreakdown from "./feeBreakdown.svelte";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
@@ -16,7 +16,6 @@
   import { locale } from "$lib/i18n";
   import { feeService } from "$modules/shared/services/feeService";
   import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
-  import type { AssetAndFee } from "$modules/shared/types/feeService";
 
   let {
     action,
@@ -47,28 +46,19 @@
     return isProcessingLocally || (externalIsProcessing ?? false);
   });
 
-  const assetAndFeeList: AssetAndFee[] = $derived.by(() => {
-    const list = feeService.mapActionToAssetAndFeeList(
-      action,
-      // build a record keyed by token address for the service
-      Object.fromEntries(
-        (walletStore.query.data ?? []).map((t) => [t.address, t]),
-      ),
-    );
+  // Build tokens map from walletStore
+  const tokensMap = $derived.by(() =>
+    Object.fromEntries(
+      (walletStore.query.data ?? []).map((t) => [t.address, t]),
+    ),
+  );
 
-    if (isProcessing) {
-      // when processing, we want to show all assets as processing
-      return list.map((item) => ({
-        ...item,
-        asset: {
-          ...item.asset,
-          state: AssetProcessState.PROCESSING,
-        },
-      }));
-    }
+  // Get outgoing/incoming assets directly from store (UI handles processing state via props)
+  const outgoingAssets = $derived(txCartStore.getOutgoingAssets(tokensMap));
+  const incomingAssets = $derived(txCartStore.getIncomingAssets(tokensMap));
 
-    return list;
-  });
+  // Combine all assets for fee breakdown
+  const allAssets = $derived([...outgoingAssets, ...incomingAssets]);
 
   let showFeeBreakdown = $state(false);
   let showFeeInfoDrawer = $state(false);
@@ -78,30 +68,20 @@
     failedImageLoads.add(address);
   }
 
-  // Calculate total fees in USD
-  const totalFeesUsd = $derived.by(() => {
-    return assetAndFeeList.reduce(
-      (total, item) => total + (item.fee?.usdValue || 0),
-      0,
-    );
-  });
+  // Calculate total fees in USD using feeService
+  const totalFeesUsd = $derived(feeService.getTotalFeeUsd(allAssets));
 
-  // Convert assetAndFeeList to feesBreakdown format for FeeInfoDrawer
+  // Convert allAssets to feesBreakdown format for FeeInfoDrawer
   const feesBreakdown = $derived.by((): FeeBreakdownItem[] => {
-    const breakdown = feeService.buildFeesBreakdownFromAssetAndFeeList(
-      assetAndFeeList,
+    return feeService.buildFeesBreakdownFromAssetAndFeeList(
+      allAssets,
       walletStore.query.data ?? [],
     );
-
-    return breakdown;
   });
 
   // Handle fee breakdown click - close txCart and show FeeInfoDrawer
   function handleFeeBreakdownClick() {
-    // Don't open drawer if processing
-    if (isProcessing) {
-      return;
-    }
+    if (isProcessing) return;
     isOpen = false;
     showFeeInfoDrawer = true;
   }
@@ -140,7 +120,6 @@
   /**
    * Handle drawer open state changes.
    * Skip onCloseDrawer when transitioning to FeeInfoDrawer to keep component mounted.
-   * @param open
    */
   function handleOpenChange(open: boolean) {
     if (!open && !showFeeInfoDrawer) {
@@ -182,7 +161,7 @@
         {#if showFeeBreakdown}
           <!-- When showing breakdown, hide all other tx cart content -->
           <FeeBreakdown
-            {assetAndFeeList}
+            assetAndFeeList={allAssets}
             onBack={() => (showFeeBreakdown = false)}
           />
         {:else}
@@ -202,13 +181,25 @@
           {/if}
 
           <div class="mt-2 space-y-4">
-            <YouSendSection
-              {action}
-              {failedImageLoads}
-              onImageError={handleImageError}
-              {isProcessing}
-              hasError={!!errorMessage}
-            />
+            {#if outgoingAssets.length > 0}
+              <YouSendSection
+                assets={outgoingAssets}
+                {failedImageLoads}
+                onImageError={handleImageError}
+                {isProcessing}
+                hasError={!!errorMessage}
+              />
+            {/if}
+
+            {#if incomingAssets.length > 0}
+              <YouReceiveSection
+                assets={incomingAssets}
+                {failedImageLoads}
+                onImageError={handleImageError}
+                {isProcessing}
+                hasError={!!errorMessage}
+              />
+            {/if}
 
             {#if totalFeesUsd > 0}
               <FeesBreakdownSection

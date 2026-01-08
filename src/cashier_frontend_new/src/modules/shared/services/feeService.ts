@@ -439,6 +439,13 @@ export class FeeService {
       tokensMap,
     );
   }
+
+  /**
+   * Calculate total fees in USD from AssetAndFee list.
+   */
+  getTotalFeeUsd(assets: AssetAndFeeList): number {
+    return assets.reduce((total, item) => total + (item.fee?.usdValue ?? 0), 0);
+  }
 }
 
 export const feeService = new FeeService();

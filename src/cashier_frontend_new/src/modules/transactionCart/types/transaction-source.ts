@@ -3,20 +3,57 @@ import type { ProcessActionResult } from "$modules/links/types/action/action";
 import type { TokenMetadata } from "$modules/token/types";
 import type { ReceiveAddressType } from "$modules/wallet/types";
 import type { Principal } from "@dfinity/principal";
+import type { Result } from "ts-results-es";
 
 /**
- * Transaction source type discriminator enum
+ * Flow direction discriminator
  */
-export enum TransactionSourceType {
-  ACTION = "action",
-  WALLET = "wallet",
+export class FlowDirection {
+  private constructor() {}
+  static readonly INCOMING = "INCOMING";
+  static readonly OUTGOING = "OUTGOING";
 }
+
+export type FlowDirectionValue =
+  | typeof FlowDirection.INCOMING
+  | typeof FlowDirection.OUTGOING;
+
+/**
+ * Error types for flow direction computation
+ */
+export class FlowDirectionError {
+  private constructor() {}
+  static readonly NOT_AUTHENTICATED = "NOT_AUTHENTICATED";
+  static readonly NO_INTENT = "NO_INTENT";
+}
+
+export type FlowDirectionErrorValue =
+  | typeof FlowDirectionError.NOT_AUTHENTICATED
+  | typeof FlowDirectionError.NO_INTENT;
+
+/**
+ * Result type for flow direction computation
+ */
+export type FlowDirectionResult = Result<FlowDirectionValue, FlowDirectionErrorValue>;
+
+/**
+ * Transaction source type discriminator
+ */
+export class TransactionSourceType {
+  private constructor() {}
+  static readonly ACTION = "ACTION";
+  static readonly WALLET = "WALLET";
+}
+
+export type TransactionSourceTypeValue =
+  | typeof TransactionSourceType.ACTION
+  | typeof TransactionSourceType.WALLET;
 
 /**
  * Action-based transaction source (ICRC-112 batch execution)
  */
 export type ActionSource = {
-  type: TransactionSourceType.ACTION;
+  type: typeof TransactionSourceType.ACTION;
   action: Action;
   handleProcessAction: () => Promise<ProcessActionResult>;
 };
@@ -25,7 +62,7 @@ export type ActionSource = {
  * Wallet-based transaction source (direct ICRC/ICP transfer)
  */
 export type WalletSource = {
-  type: TransactionSourceType.WALLET;
+  type: typeof TransactionSourceType.WALLET;
   token: TokenMetadata;
   to: Principal;
   toAccountId?: string; // For ICP account transfers
