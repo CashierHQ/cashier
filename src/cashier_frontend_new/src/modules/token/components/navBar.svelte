@@ -21,7 +21,7 @@
     symbol: string;
     balance: bigint;
     decimals: number;
-    priceUSD: number;
+    priceUSD: number | undefined;
     enabled: boolean;
   };
 

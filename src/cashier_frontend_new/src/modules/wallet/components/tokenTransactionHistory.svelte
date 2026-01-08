@@ -76,7 +76,7 @@
   );
 
   function calculateUsdValue(amount: number): number {
-    if (!tokenDetails) return 0;
+    if (!tokenDetails || !tokenDetails.priceUSD) return 0;
     return Math.abs(amount) * tokenDetails.priceUSD;
   }
 </script>

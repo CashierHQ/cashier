@@ -108,10 +108,10 @@ const formatSmallNumber = (num: number): string => {
  * - > 0.001: 5 decimal places
  * - <= 0.001: 7 decimal places
  *
- * @param price - token price in USD
+ * @param price - token price in USD, can be undefined
  * @returns formatted price string with $ prefix, or "-" if price is invalid
  */
-export const formatTokenPrice = (price: number): string => {
+export const formatTokenPrice = (price: number | undefined): string => {
   if (!price || price <= 0) return "-";
 
   let decimalPlaces: number;

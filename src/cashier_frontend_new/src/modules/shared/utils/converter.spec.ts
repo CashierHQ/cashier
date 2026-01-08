@@ -57,4 +57,9 @@ describe("balanceToUSDValue", () => {
     expect(balanceToUSDValue(250000000n, 8, 2)).toBe(5);
     expect(balanceToUSDValue(123456789n, 8, 3)).toBeCloseTo(3.70370367);
   });
+
+  it("should handle undefined priceUSD by returning 0", () => {
+    expect(balanceToUSDValue(100000000n, 8, undefined)).toBe(0);
+    expect(balanceToUSDValue(250000000n, 8, undefined)).toBe(0);
+  });
 });
