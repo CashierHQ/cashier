@@ -6,7 +6,7 @@ import {
   TransactionSourceType,
   FlowDirection,
   FlowDirectionError,
-} from "../types/transaction-source";
+} from "$modules/transactionCart/types/transaction-source";
 import type {
   TokenMetadata,
   TokenWithPriceAndBalance,
@@ -15,7 +15,7 @@ import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { ReceiveAddressType } from "$modules/wallet/types";
 import type { AssetAndFee } from "$modules/shared/types/feeService";
-import { AssetProcessState } from "../types/txCart";
+import { AssetProcessState } from "$modules/transactionCart/types/txCart";
 import { FeeType } from "$modules/links/types/fee";
 
 // Mock constants
@@ -28,7 +28,9 @@ const {
   mockTransferToAccount,
   mockTransferToPrincipal,
   mockComputeAmountAndFee,
+  mockComputeWalletFee,
   mockMapActionToAssetAndFeeList,
+  mockConvertAssetAndFeeListToFeesBreakdown,
   mockGetSigner,
   MockIcrc112Service,
   MockIcpLedgerService,
@@ -43,7 +45,9 @@ const {
     mockTransferToAccount,
     mockTransferToPrincipal,
     mockComputeAmountAndFee: vi.fn(),
+    mockComputeWalletFee: vi.fn(),
     mockMapActionToAssetAndFeeList: vi.fn(),
+    mockConvertAssetAndFeeListToFeesBreakdown: vi.fn(),
     mockGetSigner: vi.fn(),
     MockIcrc112Service: vi.fn(() => ({
       sendBatchRequest: mockSendBatchRequest,
@@ -76,7 +80,9 @@ vi.mock("$modules/shared/constants", () => ({
 vi.mock("$modules/shared/services/feeService", () => ({
   feeService: {
     computeAmountAndFee: mockComputeAmountAndFee,
+    computeWalletFee: mockComputeWalletFee,
     mapActionToAssetAndFeeList: mockMapActionToAssetAndFeeList,
+    convertAssetAndFeeListToFeesBreakdown: mockConvertAssetAndFeeListToFeesBreakdown,
   },
 }));
 
@@ -220,6 +226,10 @@ describe("TransactionCartStore", () => {
       amount: 1_010_000n,
       fee: 10_000n,
     });
+    mockComputeWalletFee.mockReturnValue({
+      amount: 1_010_000n,
+      fee: 10_000n,
+    });
     // Reset authState account
     vi.mocked(authState).account = {
       owner: "test-principal-id",
@@ -299,57 +309,49 @@ describe("TransactionCartStore", () => {
   // ─────────────────────────────────────────────────────────────
 
   describe("computeFee", () => {
-    it("should compute fee for ActionSource using feeService", () => {
+    const mockTokenAddress = "mxzaz-hqaaa-aaaar-qaada-cai";
+    const mockToken: TokenWithPriceAndBalance = {
+      address: mockTokenAddress,
+      name: "Test Token",
+      symbol: "TEST",
+      decimals: 8,
+      fee: 10_000n,
+      enabled: true,
+      is_default: false,
+      balance: 10_000_000n,
+      priceUSD: 10,
+    };
+
+    it("should return FeeBreakdownItem[] for ActionSource", () => {
       const source = createActionSource();
       const store = new TransactionCartStore(source);
+      const tokens = { [mockTokenAddress]: mockToken };
+      const mockBreakdown = [
+        {
+          name: "Network fees",
+          amount: 10_000n,
+          tokenAddress: mockTokenAddress,
+          tokenSymbol: "TEST",
+          tokenDecimals: 8,
+          usdAmount: 0.001,
+        },
+      ];
+      mockConvertAssetAndFeeListToFeesBreakdown.mockReturnValue(mockBreakdown);
 
-      const result = store.computeFee();
+      const result = store.computeFee(tokens);
 
-      expect(mockComputeAmountAndFee).toHaveBeenCalledWith({
-        intent: source.action.intents[0],
-        ledgerFee: 10_000n,
-        actionType: source.action.type,
-      });
-      expect(result).toEqual({ amount: 1_010_000n, fee: 10_000n });
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toEqual(mockBreakdown);
     });
 
-    it("should return zero amount when ActionSource has no intents", () => {
-      const source = createActionSource();
-      // Create source with empty intents via mock
-      const emptyIntentsSource: ActionSource = {
-        ...source,
-        action: {
-          ...source.action,
-          intents: [],
-        } as unknown as Action,
-      };
-      const store = new TransactionCartStore(emptyIntentsSource);
-
-      const result = store.computeFee();
-
-      expect(result).toEqual({ amount: 0n, fee: undefined });
-    });
-
-    it("should compute fee for WalletSource from token fee", () => {
+    it("should throw error for WalletSource", () => {
       const source = createWalletSource();
       const store = new TransactionCartStore(source);
+      const tokens = {};
 
-      const result = store.computeFee();
-
-      expect(result).toEqual({
-        amount: 1_000_000n + 10_000n, // amount + fee
-        fee: 10_000n,
-      });
-    });
-
-    it("should use default fee when token fee is undefined", () => {
-      const source = createWalletSource();
-      source.token.fee = undefined as unknown as bigint;
-      const store = new TransactionCartStore(source);
-
-      const result = store.computeFee();
-
-      expect(result.fee).toBe(10_000n); // default fee
+      expect(() => store.computeFee(tokens)).toThrow(
+        "computeFee not implemented for WalletSource",
+      );
     });
   });
 

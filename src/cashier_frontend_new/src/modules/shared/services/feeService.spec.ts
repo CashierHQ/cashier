@@ -654,4 +654,54 @@ describe("FeeService", () => {
       expect(typeof result.tokenLogo).toBe("string");
     });
   });
+
+  describe("computeWalletFee", () => {
+    it("should return amount+fee and fee structure", () => {
+      const amount = 100_000_000n; // 1 ICP
+      const tokenFee = 10_000n;
+
+      const result = svc.computeWalletFee(amount, tokenFee);
+
+      expect(result.amount).toBe(100_010_000n); // amount + fee
+      expect(result.fee).toBe(10_000n);
+    });
+
+    it("should use ICP_LEDGER_FEE when tokenFee is undefined", () => {
+      const amount = 50_000_000n;
+      const tokenFee = undefined;
+      const ICP_LEDGER_FEE = 10_000n;
+
+      const result = svc.computeWalletFee(amount, tokenFee);
+
+      expect(result.fee).toBe(ICP_LEDGER_FEE);
+      expect(result.amount).toBe(amount + ICP_LEDGER_FEE);
+    });
+
+    it("should handle zero amount correctly", () => {
+      const result = svc.computeWalletFee(0n, 10_000n);
+
+      expect(result.amount).toBe(10_000n);
+      expect(result.fee).toBe(10_000n);
+    });
+
+    it("should handle large amounts", () => {
+      const largeAmount = 10_000_000_000_000_000n; // 100M ICP
+      const fee = 10_000n;
+
+      const result = svc.computeWalletFee(largeAmount, fee);
+
+      expect(result.amount).toBe(largeAmount + fee);
+      expect(result.fee).toBe(fee);
+    });
+
+    it("should handle different token fees correctly", () => {
+      const amount = 1_000_000n;
+      const differentFee = 50_000n;
+
+      const result = svc.computeWalletFee(amount, differentFee);
+
+      expect(result.amount).toBe(1_050_000n);
+      expect(result.fee).toBe(50_000n);
+    });
+  });
 });

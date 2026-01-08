@@ -2,7 +2,6 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { X } from "lucide-svelte";
   import { locale } from "$lib/i18n";
-  import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import type { AssetAndFee } from "$modules/shared/types/feeService";
 
@@ -66,7 +65,7 @@
           </div>
           {#if asset.usdValueStr}
             <p class="text-[10px] medium-font text-[#b6b6b6]">
-              ~${formatUsdAmount(parseFloat(asset.usdValueStr))}
+              ~${asset.usdValueStr}
             </p>
           {/if}
         </div>

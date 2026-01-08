@@ -6,16 +6,14 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { onMount } from "svelte";
   import { TransactionCartStore } from "$modules/transactionCart/state/txCartStore.svelte";
-  import { TransactionSourceType } from "../types/transaction-source";
+  import { TransactionSourceType } from "$modules/transactionCart/types/transaction-source";
   import YouSendSection from "$modules/transactionCart/components/YouSendSection.svelte";
   import YouReceiveSection from "$modules/transactionCart/components/YouReceiveSection.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
-  import FeeBreakdown from "./feeBreakdown.svelte";
+  import FeeBreakdown from "$modules/transactionCart/components/feeBreakdown.svelte";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import { X } from "lucide-svelte";
   import { locale } from "$lib/i18n";
-  import { feeService } from "$modules/shared/services/feeService";
-  import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 
   let {
     action,
@@ -68,16 +66,11 @@
     failedImageLoads.add(address);
   }
 
-  // Calculate total fees in USD using feeService
-  const totalFeesUsd = $derived(feeService.getTotalFeeUsd(allAssets));
-
-  // Convert allAssets to feesBreakdown format for FeeInfoDrawer
-  const feesBreakdown = $derived.by((): FeeBreakdownItem[] => {
-    return feeService.buildFeesBreakdownFromAssetAndFeeList(
-      allAssets,
-      walletStore.query.data ?? [],
-    );
-  });
+  // Get fees breakdown from store, derive total from it
+  const feesBreakdown = $derived.by(() => txCartStore.getFeesBreakdown(tokensMap));
+  const totalFeesUsd = $derived.by(
+   () =>  feesBreakdown.reduce((sum, item) => sum + item.usdAmount, 0)
+  );
 
   // Handle fee breakdown click - close txCart and show FeeInfoDrawer
   function handleFeeBreakdownClick() {

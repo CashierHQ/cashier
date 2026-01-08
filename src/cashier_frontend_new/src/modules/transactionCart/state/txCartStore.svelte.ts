@@ -2,11 +2,7 @@ import type { IITransport } from "$modules/auth/signer/ii/IITransport";
 import { authState } from "$modules/auth/state/auth.svelte";
 import Icrc112Service from "$modules/icrc112/services/icrc112Service";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
-import {
-  FeeType,
-  type ComputeAmountAndFeeOutput,
-  type FeeItem,
-} from "$modules/links/types/fee";
+import { FeeType, type FeeItem } from "$modules/links/types/fee";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { feeService } from "$modules/shared/services/feeService";
 import type { AssetAndFee } from "$modules/shared/types/feeService";
@@ -33,7 +29,8 @@ import {
   TransactionSourceType,
   isActionSource,
   isWalletSource,
-} from "../types/transaction-source";
+} from "$modules/transactionCart/types/transaction-source";
+import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 
 /**
  * Generic transaction cart store supporting both Action-based (ICRC-112)
@@ -71,13 +68,17 @@ export class TransactionCartStore<T extends TransactionSource> {
   }
 
   /**
-   * Compute fee based on source type.
+   * Compute fee breakdown for ActionSource.
+   * @param tokens - Token lookup map for conversion
+   * @throws Error if called with WalletSource
    */
-  computeFee(): ComputeAmountAndFeeOutput {
+  computeFee(
+    tokens: Record<string, TokenWithPriceAndBalance>,
+  ): FeeBreakdownItem[] {
     if (isActionSource(this.#source)) {
-      return this.#computeActionFee();
+      return this.getFeesBreakdown(tokens);
     }
-    return this.#computeWalletFee();
+    throw new Error("computeFee not implemented for WalletSource");
   }
 
   /**
@@ -152,23 +153,29 @@ export class TransactionCartStore<T extends TransactionSource> {
     }
   }
 
+  /**
+   * Get fees breakdown for display.
+   * @param tokens - Token lookup map for conversion
+   */
+  getFeesBreakdown(
+    tokens: Record<string, TokenWithPriceAndBalance>,
+  ): FeeBreakdownItem[] {
+    const assets = this.#getAssetsForSource(tokens);
+    return feeService.convertAssetAndFeeListToFeesBreakdown(assets, tokens);
+  }
+
+  /**
+   * Get total fee in USD.
+   * @param tokens - Token lookup map for conversion
+   */
+  getTotalFeeUsd(tokens: Record<string, TokenWithPriceAndBalance>): number {
+    const breakdown = this.getFeesBreakdown(tokens);
+    return breakdown.reduce((total, item) => total + item.usdAmount, 0);
+  }
+
   // ─────────────────────────────────────────────────────────────
   // Private: Action execution (ICRC-112)
   // ─────────────────────────────────────────────────────────────
-
-  #computeActionFee(): ComputeAmountAndFeeOutput {
-    if (!isActionSource(this.#source)) throw new Error("Invalid source type");
-
-    const { action } = this.#source;
-    const intent = action.intents[0];
-    if (!intent) return { amount: 0n, fee: undefined };
-
-    return feeService.computeAmountAndFee({
-      intent,
-      ledgerFee: 10_000n, // Default ICP fee
-      actionType: action.type,
-    });
-  }
 
   async #executeAction(): Promise<ProcessActionResult> {
     if (!isActionSource(this.#source)) throw new Error("Invalid source type");
@@ -192,18 +199,6 @@ export class TransactionCartStore<T extends TransactionSource> {
   // ─────────────────────────────────────────────────────────────
   // Private: Wallet execution (ICRC/ICP)
   // ─────────────────────────────────────────────────────────────
-
-  #computeWalletFee(): ComputeAmountAndFeeOutput {
-    if (!isWalletSource(this.#source)) throw new Error("Invalid source type");
-
-    const { token, amount } = this.#source;
-    const fee = token.fee ?? 10_000n;
-
-    return {
-      amount: amount + fee,
-      fee,
-    };
-  }
 
   async #executeWallet(): Promise<bigint> {
     if (!isWalletSource(this.#source)) throw new Error("Invalid source type");

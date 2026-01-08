@@ -446,6 +446,21 @@ export class FeeService {
   getTotalFeeUsd(assets: AssetAndFeeList): number {
     return assets.reduce((total, item) => total + (item.fee?.usdValue ?? 0), 0);
   }
+
+  /**
+   * Compute wallet transfer fee for ICRC/ICP tokens.
+   * Returns amount+fee and fee in raw bigint format.
+   */
+  computeWalletFee(
+    amount: bigint,
+    tokenFee: bigint | undefined,
+  ): ComputeAmountAndFeeOutput {
+    const fee = tokenFee ?? ICP_LEDGER_FEE;
+    return {
+      amount: amount + fee,
+      fee,
+    };
+  }
 }
 
 export const feeService = new FeeService();
