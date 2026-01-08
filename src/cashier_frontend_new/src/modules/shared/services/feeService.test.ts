@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { feeService } from "./feeService";
 import { FeeType } from "$modules/links/types/fee";
 import { AssetProcessState } from "$modules/transactionCart/types/txCart";
-import type { AssetAndFeeList } from "../types/feeService";
+import type { AssetAndFeeList } from "$modules/shared/types/feeService";
 
 describe("FeeService", () => {
   describe("getTotalFeeUsd", () => {
