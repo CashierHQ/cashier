@@ -25,7 +25,7 @@
       </p>
     </div>
   {:else}
-    <ul class="space-y-0">
+    <div class="grid grid-cols-2 gap-4">
       {#each nfts as nft (nft.collectionId + nft.tokenId.toString())}
         <NFTItem
           item={nft}
@@ -34,6 +34,6 @@
           onImageError={onNFTImageError}
         />
       {/each}
-  </ul>
+    </div>
   {/if}
 </div>
