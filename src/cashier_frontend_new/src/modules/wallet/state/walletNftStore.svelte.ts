@@ -1,6 +1,7 @@
 import { managedState } from "$lib/managedState";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import type { NFT } from "$modules/wallet/types/nft";
+import type { Principal } from "@dfinity/principal";
 
 class WalletNftStore {
   #walletNftQuery;
@@ -19,6 +20,20 @@ class WalletNftStore {
 
   get query() {
     return this.#walletNftQuery;
+  }
+
+  /**
+   * Add a new NFT to the user's collection
+   * @param collectionAddress
+   * @param tokenId
+   */
+  public async addNft(
+    collectionAddress: Principal,
+    tokenId: bigint,
+  ): Promise<void> {
+    await tokenStorageService.addNft(collectionAddress, tokenId);
+    // Refresh the NFT list after adding a new NFT
+    this.#walletNftQuery.refresh();
   }
 }
 

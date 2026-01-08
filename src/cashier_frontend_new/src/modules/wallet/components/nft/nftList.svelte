@@ -5,7 +5,6 @@
 
   interface Props {
     nfts: NFT[];
-    balanceVisible: boolean;
     onSelectNFT: (collectionAddress: string, tokenId: bigint) => void;
     onNFTImageError: (collectionAddress: string, tokenId: bigint) => void;
     failedImageLoads: Set<string>;
@@ -13,14 +12,13 @@
 
   let {
     nfts,
-    balanceVisible,
     onSelectNFT,
     onNFTImageError,
     failedImageLoads,
   }: Props = $props();
 </script>
 <div>
-  {#if nfts.length > 0}
+  {#if nfts.length === 0}
     <div class="text-center py-8">
       <p class="text-gray-500 mb-4">
         {locale.t("wallet.noNFTsMsg")}
