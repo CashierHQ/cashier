@@ -9,6 +9,9 @@ import type {
 } from "$modules/wallet/types/nft";
 import type { Principal } from "@dfinity/principal";
 
+/**
+ * Store managing the user's wallet NFTs
+ */
 class WalletNftStore {
   #walletNftQuery;
   collectionMetadataCache: Map<string, CollectionMetadata> = new Map();
@@ -52,11 +55,17 @@ class WalletNftStore {
           ...collectionMetadatas[index],
         }));
 
-        this.#allNfts = [...this.#allNfts, ...enrichedNfts];
+        // append fetched NFTs to the existing list
+        if (this.#currentPage === 0) {
+          this.#allNfts = enrichedNfts;
+        } else {
+          const previousNfts = this.#allNfts.slice(0, start);
+          this.#allNfts = [...previousNfts, ...enrichedNfts];
+        }
 
         return this.#allNfts;
       },
-      refetchInterval: 15_000, // Refresh every 15 seconds to keep NFTs up-to-date
+      refetchInterval: 30_000, // Refresh every 30 seconds to keep NFTs up-to-date
       persistedKey: ["walletNftQuery"],
       storageType: "localStorage",
     });
@@ -119,7 +128,6 @@ class WalletNftStore {
     }
 
     const icrc7Service = new Icrc7Service(collectionId);
-
     const collectionMetadata = await icrc7Service.getCollectionMetadata();
     this.collectionMetadataCache.set(collectionId, collectionMetadata);
 

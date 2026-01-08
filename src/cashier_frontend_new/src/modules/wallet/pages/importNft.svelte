@@ -83,8 +83,6 @@
         tokenId > 0 ? tokenId : 0,
       );
 
-      console.log("Importing NFT:", collectionPrincipal.toText(), nftId);
-
       const result = await walletNftStore.addNft(
         collectionPrincipal,
         nftId,

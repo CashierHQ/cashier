@@ -155,16 +155,12 @@ class TokenStorageService {
       throw new Error("User is not authenticated");
     }
 
-    console.log("Adding NFT:", collectionAddress.toText(), tokenId);
-
     const res = await actor.user_add_nft({
       nft: {
         collection_id: collectionAddress,
         token_id: tokenId,
       },
     });
-
-    console.log("addNft result:", res);
 
     if ("Err" in res) {
       throw new Error(`Error adding NFT: ${res.Err}`);
