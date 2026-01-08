@@ -1,5 +1,6 @@
 use crate::{
-    constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL},
+    constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL, ICRC7_NFT_PRINCIPAL},
+    icrc7::{self, client::Icrc7Client},
     utils::{principal::TestUser, token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
 };
 use candid::{CandidType, Decode, Encode, Nat, Principal, utils::ArgumentEncoder};
@@ -202,6 +203,16 @@ where
     icrc_token_map.insert("ckUSDC".to_string(), ck_usdc_principal);
     icrc_token_map.insert("DOGE".to_string(), doge_principal);
 
+    // deploy ICRC7 NFT canister
+    let icrc7_ledger_principal = icrc7::utils::deploy_icrc7_ledger_canister(
+        &client,
+        "TestCollection",
+        "ICRC7TEST",
+        "For testing",
+        Principal::from_text(ICRC7_NFT_PRINCIPAL).unwrap(),
+    )
+    .await;
+
     let result = f(&PocketIcTestContext {
         client: client.clone(),
         token_storage_principal,
@@ -209,6 +220,7 @@ where
         gate_service_principal,
         icp_ledger_principal,
         icrc_token_map,
+        icrc7_ledger_principal,
     })
     .await;
 
@@ -228,6 +240,7 @@ pub struct PocketIcTestContext {
     pub gate_service_principal: Principal,
     pub icp_ledger_principal: Principal,
     pub icrc_token_map: HashMap<String, Principal>,
+    pub icrc7_ledger_principal: Principal,
 }
 
 impl PocketIcTestContext {
@@ -285,6 +298,12 @@ impl PocketIcTestContext {
     /// Gets an ICRC token principal by name
     pub fn get_icrc_token_principal(&self, token_name: &str) -> Option<Principal> {
         self.icrc_token_map.get(token_name).copied()
+    }
+
+    /// Creates a new ICRC7 ledger client from the `PocketIc` client of this context,
+    /// bound to the `icrc7_ledger_principal` and the given `caller
+    pub fn new_icrc7_ledger_client(&self, caller: Principal) -> Icrc7Client<PocketIcClient> {
+        Icrc7Client::new(self.new_client(self.icrc7_ledger_principal, caller))
     }
 
     /// Advances the time of the local IC to the given duration.
@@ -413,7 +432,7 @@ async fn deploy_canister<T: CandidType>(
     canister
 }
 
-async fn deploy_canister_with_settings<T: CandidType>(
+pub async fn deploy_canister_with_settings<T: CandidType>(
     client: &PocketIc,
     sender: Option<Principal>,
     settings: Option<CanisterSettings>,
@@ -429,7 +448,7 @@ async fn deploy_canister_with_settings<T: CandidType>(
     canister
 }
 
-async fn deploy_canister_with_id<T: CandidType>(
+pub async fn deploy_canister_with_id<T: CandidType>(
     client: &PocketIc,
     sender: Option<Principal>,
     settings: Option<CanisterSettings>,
@@ -524,7 +543,7 @@ pub fn get_icrc_ledger_canister_bytecode() -> Vec<u8> {
 /// # Panics
 ///
 /// This function will panic if the file cannot be opened or if its content cannot be read.
-fn load_canister_bytecode(wasm_name: &str) -> Vec<u8> {
+pub fn load_canister_bytecode(wasm_name: &str) -> Vec<u8> {
     let dir = PathBuf::from("../../target/artifacts");
     let path = dir.join(wasm_name);
 
