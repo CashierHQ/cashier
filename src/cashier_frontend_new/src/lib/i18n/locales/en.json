@@ -306,6 +306,7 @@
     "noNFTsMsg": "No NFTs found in wallet.",
     "errorMsg": "An error occured:",
     "loadingMsg": "Loading...",
+    "loadMore": "Load More",
     "send": {
       "header": "Send",
       "selectTokenLabel": "Asset",

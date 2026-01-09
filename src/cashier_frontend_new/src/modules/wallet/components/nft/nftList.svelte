@@ -5,10 +5,12 @@
 
   interface Props {
     nfts: EnrichedNFT[];
+    hasMore: boolean;
     onSelectNFT: (collectionId: string, tokenId: bigint) => void;
+    onLoadMore: () => void;
   }
 
-  let { nfts, onSelectNFT }: Props = $props();
+  let { nfts, hasMore, onSelectNFT, onLoadMore }: Props = $props();
 </script>
 
 <div>
@@ -24,5 +26,15 @@
         <NFTItem item={nft} onSelect={onSelectNFT} />
       {/each}
     </div>
+    {#if hasMore}
+      <div class="text-center mt-4">
+        <button
+          class="text-green hover:text-teal-700 font-medium text-base transition-colors"
+          onclick={onLoadMore}
+        >
+          {locale.t("wallet.loadMore")}
+        </button>
+      </div>
+    {/if}
   {/if}
 </div>
