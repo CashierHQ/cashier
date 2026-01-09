@@ -25,6 +25,7 @@ export type AssetAndFeeList = AssetAndFee[];
 /**
  * Output type for computeSendFee method
  * Contains both raw values and formatted display strings
+ * Used by ConfirmSendDrawer as dumb render component
  */
 export interface SendFeeOutput {
   // Raw values (bigint for calculations)

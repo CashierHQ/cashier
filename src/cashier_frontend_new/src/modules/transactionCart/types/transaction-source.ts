@@ -62,7 +62,6 @@ export type ActionSource = {
   type: typeof TransactionSourceType.ACTION;
   action: Action;
   handleProcessAction: () => Promise<ProcessActionResult>;
-  onSuccess?: (result: ProcessActionResult) => void;
 };
 
 /**
@@ -75,7 +74,6 @@ export type WalletSource = {
   toAccountId?: string; // For ICP account transfers
   amount: bigint;
   receiveType: ReceiveAddressType;
-  onSuccess?: (blockIndex: bigint) => void;
 };
 
 /**
