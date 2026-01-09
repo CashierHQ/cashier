@@ -6,6 +6,9 @@ export enum ReceiveAddressType {
   ACCOUNT_ID = "ACCOUNT_ID",
 }
 
+/**
+ * Wallet tab types
+ */
 export const WalletTab = {
   TOKENS: "TOKENS",
   NFTS: "NFTS",

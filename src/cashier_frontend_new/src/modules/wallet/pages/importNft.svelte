@@ -7,7 +7,7 @@
   import { walletNftStore } from "$modules/wallet/state/walletNftStore.svelte";
   import { isValidPrincipal } from "$modules/wallet/utils/address";
   import { Principal } from "@dfinity/principal";
-  import { Clipboard, Info, LoaderCircle } from "lucide-svelte";
+  import { Clipboard, LoaderCircle } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
   type Props = {
@@ -83,14 +83,6 @@
       />
     </div>
 
-    <!-- Info Message -->
-    <div class="flex items-start gap-1.5">
-      <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-      <div class="text-sm text-green">
-        {locale.t("wallet.import.ledgerIndexInfo")}
-      </div>
-    </div>
-
     <!-- Collection Address -->
     <div class="space-y-1">
       <Label class="text-sm font-medium"
@@ -110,14 +102,6 @@
         >
           <Clipboard size={20} />
         </button>
-      </div>
-    </div>
-
-    <!-- Info Message -->
-    <div class="flex items-start gap-1.5">
-      <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
-      <div class="text-sm text-green">
-        {locale.t("wallet.import.nftId")}
       </div>
     </div>
 

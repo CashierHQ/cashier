@@ -124,8 +124,8 @@ class TokenStorageService {
 
   /**
    * Get the NFTs owned by the user with pagination
-   * @param start
-   * @param limit
+   * @param start the starting index
+   * @param limit the maximum number of NFTs to retrieve
    * @returns List of NFTs owned by the user
    */
   public async getNfts(start: number, limit: number): Promise<NFT[]> {
@@ -143,27 +143,29 @@ class TokenStorageService {
 
   /**
    * Add a new NFT to the user's collection
-   * @param collectionAddress
-   * @param tokenId
+   * @param collectionAddress the canister Id of the NFT collection
+   * @param tokenId the token ID of the NFT
+   * @returns Result with void on success or error message on failure
    */
   public async addNft(
     collectionAddress: Principal,
     tokenId: bigint,
-  ): Promise<void> {
+  ): Promise<Result<void, string>> {
     const actor = this.#getActor();
     if (!actor) {
-      throw new Error("User is not authenticated");
+      return Err("User is not authenticated");
     }
 
-    const res = await actor.user_add_nft({
-      nft: {
-        collection_id: collectionAddress,
-        token_id: tokenId,
-      },
-    });
-
-    if ("Err" in res) {
-      throw new Error(`Error adding NFT: ${res.Err}`);
+    try {
+      await actor.user_add_nft({
+        nft: {
+          collection_id: collectionAddress,
+          token_id: tokenId,
+        },
+      });
+      return Ok(undefined);
+    } catch (err) {
+      return Err(`Error adding NFT: ${err}`);
     }
   }
 }
