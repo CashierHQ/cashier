@@ -7,6 +7,7 @@
   import { ActionState } from "$modules/links/types/action/actionState";
   import { LinkState } from "$modules/links/types/link/linkState";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
+  import { TransactionSourceType } from "$modules/transactionCart/types/transaction-source";
   import { onMount } from "svelte";
   import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
   import LinkDetails from "./linkDetails.svelte";
@@ -78,8 +79,11 @@
 {#if showTxCart && linkDetailStore && linkDetailStore.action}
   <TxCart
     isOpen={showTxCart}
-    action={linkDetailStore.action}
+    source={{
+      type: TransactionSourceType.ACTION,
+      action: linkDetailStore.action,
+      handleProcessAction,
+    }}
     {onCloseDrawer}
-    {handleProcessAction}
   />
 {/if}
