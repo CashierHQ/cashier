@@ -1,23 +1,35 @@
 import * as icrc7Ledger from "$lib/generated/icrc7_ledger/icrc7_ledger.did";
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
 
+/**
+ * NFT type representing a ICRC7 non-fungible token
+ */
 export type NFT = {
-  readonly tokenId: bigint;
   readonly collectionId: string;
+  readonly tokenId: bigint;
 };
 
+/**
+ * NFT metadata type, including name, description, and image URL
+ */
 export type NFTMetadata = {
   readonly name: string;
   readonly description: string;
   readonly imageUrl: string;
 };
 
+/**
+ * ICRC7 collection metadata type, including name, description, and symbol
+ */
 export type CollectionMetadata = {
   readonly collectionName: string;
   readonly collectionDescription: string;
   readonly collectionSymbol: string;
 };
 
+/**
+ * Enriched NFT type combining NFT data with its metadata and collection metadata
+ */
 export type EnrichedNFT = NFT & {
   readonly name: string;
   readonly description: string;
@@ -25,7 +37,15 @@ export type EnrichedNFT = NFT & {
   readonly collectionName: string;
 };
 
+/**
+ * Mapper class to convert token storage NFT data to local NFT types
+ */
 export class NFTMapper {
+  /**
+   * Map token storage NFT to local NFT type
+   * @param nft token storage NFT data
+   * @returns Local NFT type
+   */
   public static fromTokenStorageNft(nft: tokenStorage.Nft): NFT {
     return {
       tokenId: nft.token_id,
@@ -34,7 +54,15 @@ export class NFTMapper {
   }
 }
 
+/**
+ * Mapper class to convert ICRC7 ledger metadata to local NFTMetadata type
+ */
 export class NFTMetadataMapper {
+  /**
+   * Map ICRC7 ledger token metadata to local NFTMetadata type
+   * @param metadata ICRC7 ledger token metadata
+   * @returns local NFTMetadata type
+   */
   public static fromIcrc7LedgerTokenMetadata(
     metadata: [] | [[string, icrc7Ledger.ICRC3Value][]],
   ): NFTMetadata {
@@ -78,7 +106,15 @@ export class NFTMetadataMapper {
   }
 }
 
+/**
+ * Mapper class to convert ICRC7 ledger collection metadata to local CollectionMetadata type
+ */
 export class CollectionMetadataMapper {
+  /**
+   * Map ICRC7 ledger collection metadata to local CollectionMetadata type
+   * @param metadata ICRC7 ledger collection metadata
+   * @returns local CollectionMetadata type
+   */
   public static fromIcrc7LedgerCollectionMetadata(
     metadata: [string, icrc7Ledger.ICRC3Value][],
   ): CollectionMetadata {

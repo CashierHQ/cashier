@@ -119,7 +119,10 @@ class WalletNftStore {
     collectionAddress: Principal,
     tokenId: bigint,
   ): Promise<void> {
-    await tokenStorageService.addNft(collectionAddress, tokenId);
+    const result = await tokenStorageService.addNft(collectionAddress, tokenId);
+    if (result.isErr()) {
+      throw new Error(result.unwrapErr());
+    }
     // Refresh the NFT list after adding a new NFT
     this.#walletNftQuery.refresh();
   }
