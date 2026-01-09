@@ -2,8 +2,8 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { locale } from "$lib/i18n";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import AssetButton from "$modules/creationLink/components/tiplink/AssetButton.svelte";
-  import SelectedAssetButtonInfo from "$modules/creationLink/components/tiplink/SelectedAssetButtonInfo.svelte";
+  import AssetButton from "$modules/creationLink/components/shared/AssetButton.svelte";
+  import SelectedAssetButtonInfo from "$modules/creationLink/components/shared/SelectedAssetButtonInfo.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
   import {
     convertUsdToToken,
