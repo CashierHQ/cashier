@@ -89,7 +89,12 @@ pre_build:
 build_canister canister_name features output_wasm:
   echo "Building {{canister_name}} Canister with features: {{features}}"
   cargo build --target wasm32-unknown-unknown --release --package "{{canister_name}}" --features "{{features}}"
+  # Generate the candid file
+  candid-extractor "target/wasm32-unknown-unknown/release/{{canister_name}}.wasm" > "{{ARTIFACTS_DIR}}/{{output_wasm}}.did"
+  # Shrink the wasm file
   ic-wasm "target/wasm32-unknown-unknown/release/{{canister_name}}.wasm" -o "{{ARTIFACTS_DIR}}/{{output_wasm}}.wasm" shrink --keep-name-section
-  candid-extractor "{{ARTIFACTS_DIR}}/{{output_wasm}}.wasm" > "{{ARTIFACTS_DIR}}/{{output_wasm}}.did"
+  # Add the candid metadata
+  ic-wasm "{{ARTIFACTS_DIR}}/{{output_wasm}}.wasm" -o "{{ARTIFACTS_DIR}}/{{output_wasm}}.wasm" metadata candid:service -f "{{ARTIFACTS_DIR}}/{{output_wasm}}.did" -v public
+  # gzip the wasm file
   gzip -k "{{ARTIFACTS_DIR}}/{{output_wasm}}.wasm" --force
 
