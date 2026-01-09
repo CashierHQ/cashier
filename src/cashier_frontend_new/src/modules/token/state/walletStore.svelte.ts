@@ -1,10 +1,7 @@
 import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
 import type { ValidationErrorType } from "$modules/token/services/canister-validation";
-import {
-  encodeAccountID,
-  icpLedgerService,
-} from "$modules/token/services/icpLedger";
+import { icpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
@@ -13,6 +10,7 @@ import { Err, Ok, type Result } from "ts-results-es";
 import { ICP_LEDGER_CANISTER_ID } from "../constants";
 import { sortWalletTokens } from "../utils/sorter";
 import { tokenPriceStore } from "./tokenPriceStore.svelte";
+import { encodeAccountID } from "$modules/shared/utils/icp-account-id";
 
 class WalletStore {
   #walletTokensQuery;
