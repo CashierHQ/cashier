@@ -8,6 +8,7 @@
   import {
     FlowDirection,
     isActionSource,
+    isWalletSource,
     type TransactionSource,
   } from "$modules/transactionCart/types/transaction-source";
   import YouSendSection from "$modules/transactionCart/components/YouSendSection.svelte";
@@ -17,17 +18,18 @@
   import { X } from "lucide-svelte";
   import { locale } from "$lib/i18n";
   import { feeService } from "$modules/shared/services/feeService";
+  import type { AssetAndFee } from "$modules/shared/types/feeService";
+  import { assertUnreachable } from "$lib/rsMatch";
+  import { AssetProcessState } from "$modules/transactionCart/types/txCart";
 
   let {
     source,
     isOpen = $bindable(false),
     onCloseDrawer,
-    onSuccess,
   }: {
     source: TransactionSource;
     isOpen: boolean;
     onCloseDrawer: () => void;
-    onSuccess?: (result: bigint | ProcessActionResult) => void;
   } = $props();
 
   const txCartStore = new TransactionCartStore(source);
@@ -53,10 +55,22 @@
     failedImageLoads.add(address);
   }
 
-  // Get fees breakdown from store, derive total from it
-  const assetAndFee = $derived.by(() =>
-    txCartStore.computeAssetAndFee(tokensMap),
-  );
+  // Initialize wallet assets in $effect (mutations allowed here)
+  $effect(() => {
+    if (isWalletSource(source) && Object.keys(tokensMap).length > 0) {
+      txCartStore.initializeWalletAssets(tokensMap);
+    }
+  });
+
+  // Get fees breakdown from store - pure derivation (no mutations)
+  const assetAndFee = $derived.by(() => {
+    if (isWalletSource(source)) {
+      // For WalletSource, return reactive state (updated by initializeWalletAssets and execute)
+      return txCartStore.assetAndFeeList;
+    }
+    // ActionSource: compute fresh each time (stateless)
+    return txCartStore.computeAssetAndFee(tokensMap);
+  });
   const outgoingAssets = $derived.by(() =>
     assetAndFee.filter(
       (item) => item.asset.direction === FlowDirection.OUTGOING,
@@ -109,19 +123,22 @@
           successMessage = locale.t(
             "links.linkForm.drawers.txCart.successMessage",
           );
-          onSuccess?.(actionResult);
+          source.onSuccess?.(actionResult);
           onCloseDrawer?.();
         } else {
           errorMessage = `${locale.t("links.linkForm.drawers.txCart.errorMessagePrefix")} ${actionResult.errors.join(", ")}`;
         }
-      } else {
+      } else if (isWalletSource(source)) {
         // WalletSource: result is blockId (bigint)
+        // State transitions handled by store's #executeWallet
         successMessage = locale.t(
           "links.linkForm.drawers.txCart.successMessage",
         );
-        onSuccess?.(result as bigint);
+        source.onSuccess?.(result as bigint);
         onCloseDrawer?.();
       }
+
+      assertUnreachable(source as never);
     } catch (e) {
       errorMessage = `${locale.t("links.linkForm.drawers.txCart.errorMessagePrefix")} ${(e as Error).message}`;
     } finally {

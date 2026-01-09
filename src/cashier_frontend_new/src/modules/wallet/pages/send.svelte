@@ -340,9 +340,11 @@
 
 {#if walletSource}
   <TxCart
-    source={walletSource}
+    source={{
+      ...walletSource,
+      onSuccess: handleTxSuccess,
+    }}
     bind:isOpen={showConfirmDrawer}
     onCloseDrawer={handleCloseDrawer}
-    onSuccess={handleTxSuccess}
   />
 {/if}

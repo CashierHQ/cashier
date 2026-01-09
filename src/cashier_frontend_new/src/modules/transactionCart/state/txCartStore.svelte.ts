@@ -11,6 +11,7 @@ import {
   formatNumber,
   formatUsdAmount,
 } from "$modules/shared/utils/formatNumber";
+import { principalToAccountId } from "$modules/shared/utils/icp-account-id";
 import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
 import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
@@ -39,6 +40,9 @@ export class TransactionCartStore<T extends TransactionSource> {
   #icpLedgerService: IcpLedgerService | null = null;
   #icrcLedgerService: IcrcLedgerService | null = null;
 
+  /** Reactive asset list - only used for WalletSource state transitions */
+  #assetAndFeeList = $state<AssetAndFee[]>([]);
+
   constructor(source: T) {
     this.#source = source;
   }
@@ -66,6 +70,8 @@ export class TransactionCartStore<T extends TransactionSource> {
 
   /**
    * Compute asset and fee list for the sources.
+   * Pure function - does NOT mutate reactive state.
+   * For WalletSource, use initializeWalletAssets() to populate reactive state.
    * @param tokens - Token lookup map for conversion
    * @throws Error if not authenticated
    */
@@ -85,10 +91,34 @@ export class TransactionCartStore<T extends TransactionSource> {
       );
     }
     if (isWalletSource(this.#source)) {
-      return this.#buildWalletAssetList(tokens);
+      // Return existing reactive state if populated, else compute fresh
+      if (this.#assetAndFeeList.length > 0) {
+        return this.#assetAndFeeList;
+      }
+      return this.#buildWalletAssetListPure(tokens);
     }
     // Exhaustive check - should never reach here
     return assertUnreachable(this.#source as never);
+  }
+
+  /**
+   * Initialize wallet assets into reactive state.
+   * Call this from $effect, NOT from $derived.
+   * @param tokens - Token lookup map
+   */
+  initializeWalletAssets(
+    tokens: Record<string, TokenWithPriceAndBalance>,
+  ): void {
+    if (!isWalletSource(this.#source)) return;
+    if (this.#assetAndFeeList.length > 0) return; // Already initialized
+    this.#assetAndFeeList = this.#buildWalletAssetListPure(tokens);
+  }
+
+  /**
+   * Getter for reactive asset list (for UI observation)
+   */
+  get assetAndFeeList(): AssetAndFee[] {
+    return this.#assetAndFeeList;
   }
 
   /**
@@ -133,29 +163,62 @@ export class TransactionCartStore<T extends TransactionSource> {
   // Private: Wallet execution (ICRC/ICP)
   // ─────────────────────────────────────────────────────────────
 
+  /**
+   * Update wallet asset state (WalletSource only).
+   * Uses immutable update pattern for Svelte reactivity.
+   */
+  #setWalletAssetState(state: AssetProcessState): void {
+    if (!isWalletSource(this.#source)) return;
+    if (this.#assetAndFeeList.length === 0) return;
+
+    this.#assetAndFeeList = this.#assetAndFeeList.map((item, i) =>
+      i === 0 ? { ...item, asset: { ...item.asset, state } } : item,
+    );
+  }
+
   async #executeWallet(): Promise<bigint> {
     if (!isWalletSource(this.#source)) throw new Error("Invalid source type");
 
-    const { to, toAccountId, amount } = this.#source;
+    // Transition to PROCESSING state
+    this.#setWalletAssetState(AssetProcessState.PROCESSING);
 
-    // ICP to account ID
-    if (this.#icpLedgerService && toAccountId) {
-      return this.#icpLedgerService.transferToAccount(toAccountId, amount);
-    }
+    try {
+      const { to, toAccountId, amount } = this.#source;
+      let blockId: bigint;
 
-    // ICRC to principal
-    if (!this.#icrcLedgerService) {
-      throw new Error("ICRC Ledger Service is not initialized.");
+      // ICP transfer - convert principal to accountID if needed
+      if (this.#icpLedgerService) {
+        const accountId = toAccountId ?? principalToAccountId(to.toText());
+        if (!accountId) {
+          throw new Error("Failed to derive ICP account ID from principal.");
+        }
+        blockId = await this.#icpLedgerService.transferToAccount(
+          accountId,
+          amount,
+        );
+      } else if (this.#icrcLedgerService) {
+        // ICRC to principal
+        blockId = await this.#icrcLedgerService.transferToPrincipal(to, amount);
+      } else {
+        throw new Error("Ledger service is not initialized.");
+      }
+
+      // Transition to SUCCEED state
+      this.#setWalletAssetState(AssetProcessState.SUCCEED);
+      return blockId;
+    } catch (error) {
+      // Transition to FAILED state
+      this.#setWalletAssetState(AssetProcessState.FAILED);
+      throw error;
     }
-    return this.#icrcLedgerService.transferToPrincipal(to, amount);
   }
 
   /**
-   * Build AssetAndFee list for WalletSource
+   * Build AssetAndFee list for WalletSource (pure - no state mutation)
    * @param tokens - Token lookup map
    * @returns AssetAndFee list
    */
-  #buildWalletAssetList(
+  #buildWalletAssetListPure(
     tokens: Record<string, TokenWithPriceAndBalance>,
   ): AssetAndFee[] {
     if (!isWalletSource(this.#source)) return [];
@@ -170,7 +233,7 @@ export class TransactionCartStore<T extends TransactionSource> {
     const feeUi = parseBalanceUnits(fee, tokenData.decimals);
 
     const asset: AssetItem = {
-      state: AssetProcessState.PENDING,
+      state: AssetProcessState.CREATED,
       label: "",
       symbol: tokenData.symbol,
       address: token.address,
