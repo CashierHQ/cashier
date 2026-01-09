@@ -1,24 +1,24 @@
 import { TypedBroadcastChannel } from "$lib/broadcast";
 import { assertUnreachable } from "$lib/rsMatch";
 import {
+  IDLE_TIMEOUT_MILLIS_SECOND,
+  TIMEOUT_NANO_SEC,
+} from "$modules/auth/constants";
+import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
+import {
   BUILD_TYPE,
   FEATURE_FLAGS,
   HOST_ICP,
   IC_INTERNET_IDENTITY_PROVIDER,
   II_SIGNER_WALLET_ID,
 } from "$modules/shared/constants";
-import {
-  IDLE_TIMEOUT_MILLIS_SECOND,
-  TIMEOUT_NANO_SEC,
-} from "$modules/auth/constants";
-import { IISignerAdapter } from "$modules/auth/signer/ii/IISignerAdapter";
 import { Actor, HttpAgent } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
+import { DelegationIdentity } from "@dfinity/identity";
 import { Principal } from "@dfinity/principal";
 import type { BaseSignerAdapter, CreatePnpArgs } from "@windoge98/plug-n-play";
 import { createPNP, PNP, type ActorSubclass } from "@windoge98/plug-n-play";
 import { PersistedState } from "runed";
-import { DelegationIdentity } from "@dfinity/identity";
 import { SessionManager } from "../services/sessionManager";
 import { calculateDelegationExpirationMs } from "../utils/calculateDelegationExpirationMs";
 import { isSessionExpired } from "../utils/isSessionExpired";
