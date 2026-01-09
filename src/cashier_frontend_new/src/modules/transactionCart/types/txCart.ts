@@ -2,6 +2,7 @@ import { assertUnreachable } from "$lib/rsMatch";
 import IntentState, {
   type IntentStateValue,
 } from "$modules/links/types/action/intentState";
+import type { FlowDirection } from "./transaction-source";
 
 /**
  * Enumeration of asset processing states
@@ -44,4 +45,6 @@ export interface AssetItem {
   amountFormattedStr: string;
   /** in formmated string */
   usdValueStr?: string;
+  /** direction of the asset based on current user*/
+  direction: FlowDirection;
 }

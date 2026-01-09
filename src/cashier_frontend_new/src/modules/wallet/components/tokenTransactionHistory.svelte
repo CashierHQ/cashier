@@ -1,6 +1,6 @@
 <script lang="ts">
   import {
-    createWalletHistoryStore,
+    getWalletHistoryStore,
     type WalletHistoryStore,
   } from "$modules/token/state/walletHistoryStore.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
@@ -56,7 +56,7 @@
   $effect(() => {
     const indexId = getIndexId(tokenAddress, tokenDetails);
     if (indexId) {
-      historyStore = createWalletHistoryStore(indexId);
+      historyStore = getWalletHistoryStore(indexId);
     } else {
       historyStore = null;
     }

@@ -4,20 +4,12 @@
   import { locale } from "$lib/i18n";
   import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
-  import AssetTransferInfoDrawer from "../../creationLink/components/drawers/AssetTransferInfoDrawer.svelte";
-  import { feeService } from "$modules/shared/services/feeService";
-  import type Action from "$modules/links/types/action/action";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { AssetProcessState } from "$modules/transactionCart/types/txCart";
+  import AssetTransferInfoDrawer from "$modules/creationLink/components/drawers/AssetTransferInfoDrawer.svelte";
   import { FeeType } from "$modules/links/types/fee";
-  import {
-    ActionType,
-    type ActionTypeValue,
-  } from "$modules/links/types/action/actionType";
-  import { assertUnreachable } from "$lib/rsMatch";
+  import type { AssetAndFee } from "$modules/shared/types/feeService";
 
   type Props = {
-    action: Action;
+    assets: AssetAndFee[];
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
     isProcessing?: boolean;
@@ -27,7 +19,7 @@
   };
 
   let {
-    action,
+    assets,
     failedImageLoads,
     onImageError,
     isProcessing = false,
@@ -38,26 +30,6 @@
 
   let assetTransferInfoDrawerOpen = $state(false);
 
-  /**
-   * Determine if action type represents receiving tokens.
-   * Uses exhaustive switch for type safety.
-   */
-  function getIsReceive(actionType: ActionTypeValue): boolean {
-    switch (actionType) {
-      case ActionType.RECEIVE:
-      case ActionType.WITHDRAW:
-        return true;
-      case ActionType.SEND:
-      case ActionType.CREATE_LINK:
-        return false;
-      default:
-        return assertUnreachable(actionType);
-    }
-  }
-
-  // Derive isReceive using exhaustive switch
-  const isReceive = $derived(getIsReceive(action.type));
-
   function handleInfoClick() {
     if (onInfoClick) {
       onInfoClick();
@@ -66,54 +38,26 @@
     }
   }
 
-  // Use feeService to derive asset and fee list
-  const assetAndFeeList = $derived.by(() => {
-    const list = feeService.mapActionToAssetAndFeeList(
-      action,
-      Object.fromEntries(
-        (walletStore.query.data ?? []).map((t) => [t.address, t]),
-      ),
-    );
-
-    if (isProcessing) {
-      return list.map((item) => ({
-        ...item,
-        asset: {
-          ...item.asset,
-          state: AssetProcessState.PROCESSING,
-        },
-      }));
-    }
-
-    return list;
-  });
-
   // Separate assets and link creation fee for display
   const assetsToDisplay = $derived.by(() => {
-    return assetAndFeeList.filter(
+    return assets.filter(
       (item) => item.fee?.feeType !== FeeType.CREATE_LINK_FEE,
     );
   });
 
   const linkCreationFeeItem = $derived.by(() => {
-    return assetAndFeeList.find(
-      (item) => item.fee?.feeType === FeeType.CREATE_LINK_FEE,
-    );
+    return assets.find((item) => item.fee?.feeType === FeeType.CREATE_LINK_FEE);
   });
 
-  // Derive hasFees from assetAndFeeList
-  const hasFees = $derived(
-    assetAndFeeList.some((item) => item.fee !== undefined),
-  );
+  // Derive hasFees from assets
+  const hasFees = $derived(assets.some((item) => item.fee !== undefined));
 </script>
 
 <div class="input-label-field-container">
   <div class="flex items-center w-full justify-between mb-2">
     <div class="flex items-center gap-1">
       <Label class="font-medium text-sm">
-        {isReceive
-          ? locale.t("links.linkForm.preview.youReceive")
-          : locale.t("links.linkForm.preview.youSend")}
+        {locale.t("links.linkForm.preview.youSend")}
       </Label>
       {#if hasFees}
         <span class="text-[#b6b6b6] text-[10px] medium-font">
@@ -168,7 +112,7 @@
           </div>
           {#if asset.usdValueStr}
             <p class="text-[10px] medium-font text-[#b6b6b6]">
-              ~${formatUsdAmount(parseFloat(asset.usdValueStr))}
+              ~${asset.usdValueStr}
             </p>
           {/if}
         </div>
@@ -219,6 +163,4 @@
   </div>
 </div>
 
-{#if !isReceive}
-  <AssetTransferInfoDrawer bind:open={assetTransferInfoDrawerOpen} />
-{/if}
+<AssetTransferInfoDrawer bind:open={assetTransferInfoDrawerOpen} />

@@ -2,6 +2,7 @@ import * as icrcLedger from "$lib/generated/icrc_ledger/icrc_ledger.did";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { Principal } from "@dfinity/principal";
 import type { TokenMetadata } from "../types";
+import { rsMatch } from "$lib/rsMatch";
 
 /**
  * Service for interacting with Icrc Ledger canisters for a specific token
@@ -86,30 +87,34 @@ export class IcrcLedgerService {
     });
 
     if ("Err" in result) {
-      throw parseIcrcTransferResultError(result.Err);
+      return rsMatch(result.Err, {
+        GenericError: (e) => {
+          throw new Error(`${e.message} (code: ${e.error_code})`);
+        },
+        TemporarilyUnavailable: () => {
+          throw new Error("Ledger is temporarily unavailable");
+        },
+        BadBurn: (e) => {
+          throw new Error(`Bad burn amount: ${e}`);
+        },
+        Duplicate: (e) => {
+          throw new Error(`Duplicate transaction: ${e}`);
+        },
+        BadFee: (e) => {
+          throw new Error(`Bad fee: ${e}`);
+        },
+        TooOld: () => {
+          throw new Error("Transaction is too old");
+        },
+        CreatedInFuture: (e) => {
+          throw new Error(`Created in future: ${e}`);
+        },
+        InsufficientFunds: () => {
+          throw new Error("Insufficient funds");
+        },
+      });
     }
 
     return result.Ok;
   }
-}
-
-/**
- * Parse the error from ICRC Ledger icrc1_transfer operation.
- * @param result Error result from ICRC Ledger icrc1_transfer operation
- * @returns Parsed error
- */
-export function parseIcrcTransferResultError(
-  result: icrcLedger.TransferError,
-): Error {
-  if ("GenericError" in result) {
-    return new Error(`Transfer failed: ${result.GenericError.message}`);
-  } else if ("InsufficientFunds" in result) {
-    return new Error(`Transfer failed: Insufficient funds`);
-  } else if ("BadFee" in result) {
-    return new Error(
-      `Transfer failed: Bad fee, expected ${result.BadFee.expected_fee}`,
-    );
-  }
-
-  return new Error("Transfer failed: Unknown error");
 }
