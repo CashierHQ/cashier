@@ -157,6 +157,10 @@
           {walletNftStore.query.error}
         </p>
       </div>
+    {:else}
+      <div class="text-center py-8">
+        <p class="text-gray-500">{locale.t("wallet.loadingMsg")}</p>
+      </div>
     {/if}
   {/if}
 </div>

@@ -1,4 +1,5 @@
 import { managedState } from "$lib/managedState";
+import { authState } from "$modules/auth/state/auth.svelte";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import { NFT_PAGE_SIZE } from "$modules/wallet/constants";
 import { Icrc7Service } from "$modules/wallet/services/icrc7Service";
@@ -65,9 +66,21 @@ class WalletNftStore {
 
         return this.#allNfts;
       },
-      refetchInterval: 30_000, // Refresh every 30 seconds to keep NFTs up-to-date
+      refetchInterval: 15_000, // Refresh every 15 seconds to keep NFTs up-to-date
       persistedKey: ["walletNftQuery"],
       storageType: "localStorage",
+    });
+
+    $effect.root(() => {
+      $effect(() => {
+        // Reset the wallet tokens data when user logs out
+        if (authState.account == null) {
+          this.reset();
+          return;
+        }
+        // Refresh the wallet tokens data when user logs in
+        this.#walletNftQuery.refresh();
+      });
     });
   }
 
