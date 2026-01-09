@@ -1,8 +1,8 @@
-import { SvelteMap } from "svelte/reactivity";
 import type {
   DisplayTransaction,
   TransactionGroup,
 } from "$modules/token/types";
+import { SvelteMap } from "svelte/reactivity";
 
 /**
  * Formats a timestamp into a readable date string
@@ -15,6 +15,7 @@ export function formatDate(timestamp: number): string {
     year: "numeric",
     month: "short",
     day: "numeric",
+    timeZone: "UTC",
   });
 }
 
@@ -25,7 +26,7 @@ export function formatDate(timestamp: number): string {
  */
 export function getDateKey(timestamp: number): string {
   const date = new Date(timestamp);
-  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+  return `${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate()}`;
 }
 
 /**
