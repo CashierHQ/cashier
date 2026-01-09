@@ -10,7 +10,9 @@
   const { linkDetail }: { linkDetail?: LinkDetailStore } = $props();
 
   // Get first asset from asset_info
-  const firstAsset = $derived(linkDetail?.link?.asset_info?.[0] ?? null);
+  const firstAsset = $derived.by(() => {
+    return linkDetail?.link?.asset_info?.[0];
+  });
 
   // Get token from wallet store
   const walletToken = $derived.by(() => {
@@ -34,13 +36,13 @@
   });
 
   // Get display info using utility
-  const displayInfo = $derived(
-    getFirstAssetDisplayInfo(
+  const displayInfo = $derived.by(() => {
+    return getFirstAssetDisplayInfo(
       firstAsset ?? null,
       walletToken ?? null,
       tokenMeta?.data ?? null,
-    ),
-  );
+    );
+  });
 </script>
 
 {#if linkDetail?.query.isLoading}
@@ -53,7 +55,7 @@
     amount={displayInfo.amount}
     symbol={displayInfo.symbol}
     decimals={displayInfo.decimals}
-    message={locale.t("links.linkForm.useLink.completed.message")}
+    message={locale.t("links.linkForm.useLink.completed.airdropMessage")}
   />
 {/if}
 
