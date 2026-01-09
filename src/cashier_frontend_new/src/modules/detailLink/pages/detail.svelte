@@ -5,7 +5,6 @@
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
-  import { TransactionSourceType } from "$modules/transactionCart/types/transaction-source";
   import { LinkDetailStore } from "../state/linkDetailStore.svelte";
   import DetailLinkHeader from "../components/detailLinkHeader.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
@@ -458,12 +457,10 @@
 {#if showTxCart && linkStore.action && (linkStore.link?.state === LinkState.CREATE_LINK || (linkStore.link?.state === LinkState.INACTIVE && linkStore.action.type === ActionType.WITHDRAW))}
   <TxCart
     isOpen={showTxCart}
-    source={{
-      type: TransactionSourceType.ACTION,
-      action: linkStore.action,
-      handleProcessAction,
-    }}
+    action={linkStore.action}
     {onCloseDrawer}
+    {handleProcessAction}
+    isProcessing={isCreatingWithdraw}
   />
 {/if}
 

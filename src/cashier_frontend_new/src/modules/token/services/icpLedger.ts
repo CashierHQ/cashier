@@ -1,9 +1,17 @@
 import type { Account } from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { decodeAccountID } from "$modules/shared/utils/icp-account-id";
+import { AccountIdentifier } from "@dfinity/ledger-icp";
 import { Principal } from "@dfinity/principal";
 import { ICP_LEDGER_CANISTER_ID, ICP_LEDGER_FEE } from "../constants";
+
+// Polyfill for Buffer in browser environment
+// The @dfinity/ledger-icp package depends on Buffer, which is not available in browsers by default.
+// In order to use the AccountIdentifier class from the package, we need to polyfill Buffer.
+import { Buffer } from "buffer";
+if (typeof window !== "undefined" && !window.Buffer) {
+  window.Buffer = Buffer;
+}
 
 /**
  * Service for interacting with ICP Ledger canister for a specific token
@@ -86,6 +94,35 @@ export class IcpLedgerService {
     }
 
     return result.Ok;
+  }
+}
+
+/**
+ * Encode an ICP account identifier from a principal.
+ * @param principal The principal to encode
+ * @returns The encoded account identifier or null if encoding fails
+ */
+export function encodeAccountID(principal: Principal): string | null {
+  try {
+    const identifier = AccountIdentifier.fromPrincipal({ principal });
+    return identifier.toHex();
+  } catch (error) {
+    console.error("Error encoding ICP account:", error);
+    return null;
+  }
+}
+
+/**
+ * Decode an ICP account identifier from a hex string.
+ * @param account The ICP account ID in hex format string
+ * @returns The decoded account identifier as Uint8Array or null if decoding fails
+ */
+function decodeAccountID(account: string): Uint8Array | number[] {
+  try {
+    return AccountIdentifier.fromHex(account).toUint8Array();
+  } catch (error) {
+    console.error("Error decoding ICP account:", error);
+    return [];
   }
 }
 
