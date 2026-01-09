@@ -17,7 +17,7 @@ class WalletNftStore {
   collectionMetadataCache: Map<string, CollectionMetadata> = new Map();
   #currentPage: number = 0;
   #allNfts: EnrichedNFT[] = [];
-  #hasMore: boolean = true;
+  hasMore = $state<boolean>(true);
 
   constructor() {
     this.#walletNftQuery = managedState<EnrichedNFT[]>({
@@ -29,7 +29,7 @@ class WalletNftStore {
         );
 
         if (nfts.length < NFT_PAGE_SIZE) {
-          this.#hasMore = false;
+          this.hasMore = false;
         }
 
         // collect metadata for each NFT
@@ -75,16 +75,12 @@ class WalletNftStore {
     return this.#walletNftQuery;
   }
 
-  get hasMore() {
-    return this.#hasMore;
-  }
-
   /**
    * Load more NFTs for pagination
    * @returns
    */
   public loadMore() {
-    if (!this.#hasMore) {
+    if (!this.hasMore) {
       return;
     }
     this.#currentPage += 1;
@@ -97,7 +93,7 @@ class WalletNftStore {
   public reset() {
     this.#currentPage = 0;
     this.#allNfts = [];
-    this.#hasMore = true;
+    this.hasMore = true;
     this.#walletNftQuery.reset();
   }
 

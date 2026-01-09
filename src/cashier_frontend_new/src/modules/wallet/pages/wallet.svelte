@@ -83,6 +83,10 @@
   function handleAddNft() {
     onNavigateToAddNft();
   }
+
+  function handleLoadMoreNfts() {
+    walletNftStore.loadMore();
+  }
 </script>
 
 <NavBar
@@ -131,9 +135,11 @@
     {#if walletNftStore.query.data}
       <NftList
         nfts={walletNftStore.query.data}
+        hasMore={walletNftStore.hasMore}
         onSelectNFT={(collectionId, tokenId) => {
           handleSelectNft(collectionId, tokenId);
         }}
+        onLoadMore={handleLoadMoreNfts}
       />
 
       <div class="mt-6 text-center">
