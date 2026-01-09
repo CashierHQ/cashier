@@ -93,7 +93,7 @@
       >
         {#each assetInfo as assetInfoItem (getAssetAddress(assetInfoItem) || assetInfoItem.label)}
           {@const assetData = processAssetInfo(assetInfoItem)}
-          <div class="flex justify-between items-center">
+          <div class="flex justify-between items-start">
             <div class="flex items-center gap-1.5">
               {#if !failedImageLoads.has(assetData.address)}
                 <img

@@ -1,9 +1,10 @@
 import { LinkType } from "$modules/links/types/link/linkType";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { describe, expect, it, vi } from "vitest";
-import { LinkCreationStore } from "../linkCreationStore.svelte";
-import { AddAssetTipLinkState } from "./tiplink/addAsset";
-import { CreateLinkData } from "../../types/createLinkData";
+import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+import { AddAssetTipLinkState } from "$modules/creationLink/state/linkCreationStates/tiplink/addAsset";
+import { AddAssetAirdropState } from "$modules/creationLink/state/linkCreationStates/airdrop/addAsset";
+import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
 import { TempLink } from "$modules/links/types/tempLink";
 import { LinkState } from "$modules/links/types/link/linkState";
 import { LinkStep } from "$modules/links/types/linkStep";
@@ -79,7 +80,7 @@ describe("ChooseLinkTypeState", () => {
     await expect(res).rejects.toThrow("Title is required to proceed");
   });
 
-  it("should throws when link type is not TIP", async () => {
+  it("should throws when link type is not TIP or AIRDROP", async () => {
     // Arrange
     const tempLink = new TempLink(
       "test-id",
@@ -87,21 +88,21 @@ describe("ChooseLinkTypeState", () => {
       LinkState.CHOOSING_TYPE,
       new CreateLinkData({
         title: "My tip",
-        linkType: LinkType.AIRDROP,
+        linkType: LinkType.TOKEN_BASKET,
         assets: [],
         maxUse: 1,
       }),
     );
     const store = new LinkCreationStore(tempLink);
     store.createLinkData.title = "My tip";
-    store.createLinkData.linkType = LinkType.AIRDROP;
+    store.createLinkData.linkType = LinkType.TOKEN_BASKET;
 
     // Act
     const res = store.goNext();
 
     // Assert
     await expect(res).rejects.toThrow(
-      "Only Tip link type is supported currently",
+      "Only Tip and Airdrop link types are supported currently",
     );
   });
 
@@ -127,5 +128,30 @@ describe("ChooseLinkTypeState", () => {
 
     // Assert
     expect(store.state).toBeInstanceOf(AddAssetTipLinkState);
+  });
+
+  it("should transition to ADD_ASSET for AIRDROP link type", async () => {
+    // Arrange
+    const tempLink = new TempLink(
+      "test-id",
+      BigInt(Date.now()),
+      LinkState.CHOOSING_TYPE,
+      new CreateLinkData({
+        title: "My airdrop",
+        linkType: LinkType.AIRDROP,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
+    const store = new LinkCreationStore(tempLink);
+    store.createLinkData.title = "My airdrop";
+    store.createLinkData.linkType = LinkType.AIRDROP;
+
+    // Act
+    await store.goNext();
+
+    // Assert
+    expect(store.state.step).toEqual(LinkStep.ADD_ASSET);
+    expect(store.state).toBeInstanceOf(AddAssetAirdropState);
   });
 });

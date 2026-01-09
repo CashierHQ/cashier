@@ -2,6 +2,7 @@ import type { CreateLinkData } from "$modules/creationLink/types/createLinkData"
 import {
   calculateRequiredAssetAmount,
   calculateMaxAmountForAsset,
+  calculateTotalAssetAmount,
 } from "$modules/links/utils/amountCalculator";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { Err, Ok, type Result } from "ts-results-es";
@@ -74,6 +75,26 @@ class ValidationService {
     }
 
     return calculateMaxAmountForAsset(tokenAddress, maxUse, walletTokens);
+  }
+
+  /**
+   * Calculate the total amount for each asset (useAmount * maxUse) without fees
+   * This is the exact amount that will be sent, excluding network fees
+   * Uses the same calculation logic as calculateRequiredAssetAmount (useAmount * maxUse)
+   * @param createLinkData - The link creation data
+   * @returns Result containing total amounts (without fees) or error
+   */
+  totalAssetAmount(
+    createLinkData: CreateLinkData,
+  ): Result<Record<string, bigint>, Error> {
+    if (!createLinkData.assets || createLinkData.assets.length === 0) {
+      return Err(new Error("No assets provided for calculation"));
+    }
+
+    return calculateTotalAssetAmount(
+      createLinkData.assets,
+      createLinkData.maxUse,
+    );
   }
 }
 

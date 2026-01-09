@@ -5,11 +5,12 @@ import { ActionMapper } from "$modules/links/types/action/action";
 import { LinkMapper } from "$modules/links/types/link/link";
 import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkStep } from "$modules/links/types/linkStep";
-import type { LinkCreationState } from ".";
-import type { LinkCreationStore } from "../linkCreationStore.svelte";
-import { AddAssetState } from "./addAsset";
-import { LinkCreatedState } from "./created";
-import { AddAssetTipLinkState } from "./tiplink/addAsset";
+import type { LinkCreationState } from "$modules/creationLink/state/linkCreationStates";
+import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+import { AddAssetState } from "$modules/creationLink/state/linkCreationStates/addAsset";
+import { LinkCreatedState } from "$modules/creationLink/state/linkCreationStates/created";
+import { AddAssetTipLinkState } from "$modules/creationLink/state/linkCreationStates/tiplink/addAsset";
+import { AddAssetAirdropState } from "$modules/creationLink/state/linkCreationStates/airdrop/addAsset";
 
 // State when the user is previewing the link before creation
 export class PreviewState implements LinkCreationState {
@@ -48,6 +49,8 @@ export class PreviewState implements LinkCreationState {
   async goBack(): Promise<void> {
     if (this.#link.createLinkData.linkType === LinkType.TIP) {
       this.#link.state = new AddAssetTipLinkState(this.#link);
+    } else if (this.#link.createLinkData.linkType === LinkType.AIRDROP) {
+      this.#link.state = new AddAssetAirdropState(this.#link);
     } else {
       this.#link.state = new AddAssetState(this.#link);
     }
