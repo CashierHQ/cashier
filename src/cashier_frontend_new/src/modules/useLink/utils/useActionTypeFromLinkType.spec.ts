@@ -9,8 +9,13 @@ describe("findUseActionTypeFromLinkType", () => {
     expect(actionType).toBe(ActionType.RECEIVE);
   });
 
-  it("returns null for unsupported link types", () => {
+  it("returns RECEIVE for LinkType.AIRDROP", () => {
     const actionType = findUseActionTypeFromLinkType(LinkType.AIRDROP);
+    expect(actionType).toBe(ActionType.RECEIVE);
+  });
+
+  it("returns null for unsupported link types", () => {
+    const actionType = findUseActionTypeFromLinkType(LinkType.TOKEN_BASKET);
     expect(actionType).toBeNull();
   });
 });

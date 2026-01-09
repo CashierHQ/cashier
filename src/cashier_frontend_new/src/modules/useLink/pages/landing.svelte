@@ -1,9 +1,9 @@
 <script lang="ts">
   import { LinkState } from "$modules/links/types/link/linkState";
   import { LinkUserState } from "$modules/links/types/link/linkUserState";
-  import Ended from "../components/Ended.svelte";
-  import Landing from "../components/Landing.svelte";
-  import { UserLinkStore } from "../state/userLinkStore.svelte";
+  import Ended from "$modules/useLink/components/Ended.svelte";
+  import Landing from "$modules/useLink/components/Landing.svelte";
+  import { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
 
   const {
     linkId,

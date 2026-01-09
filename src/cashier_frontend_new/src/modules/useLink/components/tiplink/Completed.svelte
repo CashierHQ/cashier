@@ -4,15 +4,13 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { Button } from "$lib/shadcn/components/ui/button";
   import { locale } from "$lib/i18n";
-  import TokenRewardDisplay from "../shared/TokenRewardDisplay.svelte";
-  import { getFirstAssetDisplayInfo } from "../../utils/getFirstAssetDisplayInfo";
+  import TokenRewardDisplay from "$modules/useLink/components/shared/TokenRewardDisplay.svelte";
+  import { getFirstAssetDisplayInfo } from "$modules/useLink/utils/getFirstAssetDisplayInfo";
 
   const { linkDetail }: { linkDetail?: LinkDetailStore } = $props();
 
   // Get first asset from asset_info
-  const firstAsset = $derived.by(() => {
-    return linkDetail?.link?.asset_info?.[0];
-  });
+  const firstAsset = $derived(linkDetail?.link?.asset_info?.[0] ?? null);
 
   // Get token from wallet store
   const walletToken = $derived.by(() => {
@@ -36,13 +34,13 @@
   });
 
   // Get display info using utility
-  const displayInfo = $derived.by(() => {
-    return getFirstAssetDisplayInfo(
+  const displayInfo = $derived(
+    getFirstAssetDisplayInfo(
       firstAsset ?? null,
       walletToken ?? null,
       tokenMeta?.data ?? null,
-    );
-  });
+    ),
+  );
 </script>
 
 {#if linkDetail?.query.isLoading}

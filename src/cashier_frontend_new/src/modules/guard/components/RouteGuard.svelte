@@ -34,12 +34,10 @@
         context.setLinkCreationStore(
           new LinkCreationStore(tempLinkResult.value),
         );
-        context.setHasTempLinkLoadAttempted(true);
       } else {
-        // Temp link not found - if the link is in Transfer Pending state,
-        // we redirect to detail flow, so this logic is unnecessary
-        context.setHasTempLinkLoadAttempted(true);
+        context.linkCreationStore = null;
       }
+      context.setHasTempLinkLoadAttempted(true);
     } else if (!tempLinkId) {
       context.setHasTempLinkLoadAttempted(true);
     }

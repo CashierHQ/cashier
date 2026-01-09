@@ -114,6 +114,7 @@
         "continue": "Continue",
         "create": "Create",
         "failedToProceed": "Failed to proceed to next step",
+        "airdropDescription": "Congratulations, you received an airdrop!",
         "preview": {
           "tip": {
             "title": "Tipping crypto",
@@ -161,7 +162,9 @@
         },
         "noPriceAvailable": "No price available",
         "switchToTokenAmount": "Switch to token amount",
-        "switchToUsdAmount": "Switch to USD amount"
+        "switchToUsdAmount": "Switch to USD amount",
+        "uses": "Uses",
+        "amountTotal": "Amount total"
       },
       "preview": {
         "linkInfo": "Link info",
@@ -260,6 +263,7 @@
         "completed": {
           "title": "Completed",
           "message": "Congratulations, you received a tip!",
+          "airdropMessage": "Congratulations, you received an airdrop!",
           "claimButton": "Claim",
           "claimedButton": "Claimed"
         },
@@ -301,9 +305,12 @@
     },
     "nftMessage": "NFT Coming soon! Included in Release 3.",
     "manageTokensBtn": "+Manage tokens",
+    "addNftBtn": "+ Add NFT",
     "noTokensMsg": "No tokens found in wallet.",
+    "noNFTsMsg": "No NFTs found in wallet.",
     "errorMsg": "An error occured:",
     "loadingMsg": "Loading...",
+    "loadMore": "Load More",
     "send": {
       "header": "Send",
       "selectTokenLabel": "Asset",
@@ -384,10 +391,13 @@
     },
     "import": {
       "header": "Import manually",
+      "importNftTitle": "Import NFT",
       "review": "Review",
       "network": "Network:",
       "contractAddress": "Contract Address",
       "indexCanisterId": "Index Canister ID:",
+      "collectionAddress": "Collection Address",
+      "nftTokenId": "NFT Token ID",
       "optional": "Optional",
       "token": "Token",
       "continue": "Continue",
