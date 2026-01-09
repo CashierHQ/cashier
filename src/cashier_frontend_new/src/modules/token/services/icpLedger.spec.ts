@@ -180,7 +180,7 @@ describe("IcpLedgerService", () => {
 
       await expect(
         service.transferToAccount(accountIdHex, amount),
-      ).rejects.toThrow("Transfer failed: Transaction too old:");
+      ).rejects.toThrow("Transaction too old:");
     });
 
     it("should throw on BadFee error", async () => {
@@ -190,7 +190,7 @@ describe("IcpLedgerService", () => {
 
       await expect(
         service.transferToAccount(accountIdHex, amount),
-      ).rejects.toThrow("Transfer failed: Bad fee:");
+      ).rejects.toThrow("Bad fee:");
     });
 
     it("should throw on TxDuplicate error", async () => {
@@ -200,7 +200,7 @@ describe("IcpLedgerService", () => {
 
       await expect(
         service.transferToAccount(accountIdHex, amount),
-      ).rejects.toThrow("Transfer failed: Duplicate transaction:");
+      ).rejects.toThrow("Duplicate transaction:");
     });
 
     it("should throw on InsufficientFunds error", async () => {
@@ -210,7 +210,7 @@ describe("IcpLedgerService", () => {
 
       await expect(
         service.transferToAccount(accountIdHex, amount),
-      ).rejects.toThrow("Transfer failed: Insufficient funds");
+      ).rejects.toThrow("Insufficient funds");
     });
 
     it("should throw on TxCreatedInFuture error", async () => {
@@ -218,7 +218,7 @@ describe("IcpLedgerService", () => {
 
       await expect(
         service.transferToAccount(accountIdHex, amount),
-      ).rejects.toThrow("Transfer failed: Transaction created in future");
+      ).rejects.toThrow("Transaction created in future");
     });
 
     it("should handle zero amount transfer", async () => {
@@ -283,7 +283,7 @@ describe("IcpLedgerService", () => {
 
       await expect(
         service.transferToPrincipal(toPrincipal, amount),
-      ).rejects.toThrow("Transfer failed: Test error (code: 500)");
+      ).rejects.toThrow("Test error (code: 500)");
     });
 
     it("should throw on TemporarilyUnavailable error", async () => {
@@ -293,7 +293,7 @@ describe("IcpLedgerService", () => {
 
       await expect(
         service.transferToPrincipal(toPrincipal, amount),
-      ).rejects.toThrow("Transfer failed: Ledger is temporarily unavailable");
+      ).rejects.toThrow("Ledger is temporarily unavailable");
     });
 
     it("should throw on BadBurn error", async () => {
@@ -303,7 +303,7 @@ describe("IcpLedgerService", () => {
 
       await expect(
         service.transferToPrincipal(toPrincipal, amount),
-      ).rejects.toThrow("Transfer failed: Bad burn amount:");
+      ).rejects.toThrow("Bad burn amount:");
     });
 
     it("should throw on Duplicate error", async () => {
@@ -313,7 +313,7 @@ describe("IcpLedgerService", () => {
 
       await expect(
         service.transferToPrincipal(toPrincipal, amount),
-      ).rejects.toThrow("Transfer failed: Duplicate transaction:");
+      ).rejects.toThrow("Duplicate transaction:");
     });
 
     it("should throw on BadFee error", async () => {
@@ -323,7 +323,7 @@ describe("IcpLedgerService", () => {
 
       await expect(
         service.transferToPrincipal(toPrincipal, amount),
-      ).rejects.toThrow("Transfer failed: Bad fee:");
+      ).rejects.toThrow("Bad fee:");
     });
 
     it("should throw on TooOld error", async () => {
@@ -331,7 +331,7 @@ describe("IcpLedgerService", () => {
 
       await expect(
         service.transferToPrincipal(toPrincipal, amount),
-      ).rejects.toThrow("Transfer failed: Transaction is too old:");
+      ).rejects.toThrow("Transaction is too old:");
     });
 
     it("should throw on CreatedInFuture error", async () => {
@@ -341,7 +341,7 @@ describe("IcpLedgerService", () => {
 
       await expect(
         service.transferToPrincipal(toPrincipal, amount),
-      ).rejects.toThrow("Transfer failed: Created in future:");
+      ).rejects.toThrow("Created in future:");
     });
 
     it("should throw on InsufficientFunds error", async () => {
@@ -351,7 +351,7 @@ describe("IcpLedgerService", () => {
 
       await expect(
         service.transferToPrincipal(toPrincipal, amount),
-      ).rejects.toThrow("Transfer failed: Insufficient funds");
+      ).rejects.toThrow("Insufficient funds");
     });
 
     it("should handle large amount transfer", async () => {

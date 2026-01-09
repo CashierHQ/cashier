@@ -156,10 +156,7 @@ function createActionSource(withIcrc112Requests = false): ActionSource {
   };
 }
 
-function createWalletSource(
-  isIcp = false,
-  useAccountId = false,
-): WalletSource {
+function createWalletSource(isIcp = false, useAccountId = false): WalletSource {
   return {
     type: TransactionSourceType.WALLET,
     token: createMockToken(isIcp),
