@@ -67,6 +67,15 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
   # Deploy ICRC7 NFT ledger
   just dfx_local_deploy_icrc7_ledger "${OWNER}" "ICRC7NFT" "CashierDev collection" "CashierDev" "This collection is for development purpose"
 
+# Deploy ICRC token to local networks
+#
+# Arguments: 
+#   canister_name: name of canister in DFX json
+#   name: token name
+#   symbol: token symbol
+#   canister_id: the specified canister id in local networks
+#   decimals: token decimals, e.g. 8
+#   fee: ledger fee, e.g. 10000
 [group('dfx')]
 dfx_local_deploy_token canister_name name symbol canister_id decimals fee:
   #!/usr/bin/env bash
@@ -329,13 +338,40 @@ dfx_local_deploy_icrc_index canister_name ledger_id index_id:
     retrieve_blocks_from_ledger_interval_seconds = opt 10;
   } })" --specified-id {{index_id}}
 
+# Local deploy ICRC7 NFT canister
+# params minter: principal ID of the ledger minter
+# canister_name: canister name string
+# collection_name: name of the NFT collection
+# collection_symbol: symbol of the NFT collection
+# collection_description: description of the NFT collection
+[private]
+dfx_local_deploy_icrc7_ledger minter canister_name collection_name collection_symbol collection_description:
+  #!/usr/bin/env bash
+  set -e
+
+  just dfx_deploy_icrc7_ledger "{{minter}}" {{canister_name}} "{{collection_name}}" "{{collection_symbol}}" "{{collection_description}}"
+
+# Mainnet deploy ICRC7 NFT canister
+# collection_name: name of the NFT collection
+# collection_symbol: symbol of the NFT collection
+# collection_description: description of the NFT collection
+[group('dfx')]
+dfx_mainnet_deploy_icrc7_ledger collection_name collection_symbol collection_description:
+  #!/usr/bin/env bash
+  set -e
+
+  export OWNER=$(dfx identity get-principal)
+  echo "owner: $OWNER"
+
+  just dfx_deploy_icrc7_ledger "${OWNER}" "ICRC7NFT" "{{collection_name}}" "{{collection_symbol}}" "{{collection_description}}" "--network=ic"
+
 # Deploy ICRC7 NFT canister
-# params minter_id: principal ID of the ledger minter
+# params minter: principal ID of the ledger minter
 # canister_name: canister name string
 # collection_name: name of the NFT collection
 # collection_symbol: symbol of the NFT collection
 [private]
-dfx_local_deploy_icrc7_ledger minter_id canister_name collection_name collection_symbol collection_description:
+dfx_deploy_icrc7_ledger minter canister_name collection_name collection_symbol collection_description network="":
   #!/usr/bin/env bash
   set -e
 
@@ -345,7 +381,7 @@ dfx_local_deploy_icrc7_ledger minter_id canister_name collection_name collection
                 permissions = record {
                     user_permissions = vec {
                         record {
-                            principal \"{{minter_id}}\";
+                            principal \"{{minter}}\";
                             vec {
                                 variant { UpdateMetadata };
                                 variant { Minting };
@@ -385,7 +421,7 @@ dfx_local_deploy_icrc7_ledger minter_id canister_name collection_name collection
                 };
             }
         }
-    )"
+    )" {{network}}
 
 # Airdrop ICRC token
 # params target_principal: principal ID of the receiver
@@ -408,6 +444,35 @@ dfx_local_airdrop_token target_principal canister_id amount:
         fee = null
   })" 
 
+# Local airdrop (mint) NFT
+# params 
+# target_principal: principal ID of the receiver
+# canister_id: canister ID of the ledger
+# nft_name: name of NFT
+# nft_description: description of NFT
+# nft_image: image of NFT
+[private]
+dfx_local_mint_nft target_principal canister_id nft_name nft_description nft_image:
+  #!/usr/bin/env bash
+  set -e
+
+  just dfx_mint_nft "{{target_principal}}" "{{canister_id}}" "{{nft_name}}" "{{nft_description}}" "{{nft_image}}"
+
+
+# Mainnet airdrop (mint) NFT
+# params 
+# target_principal: principal ID of the receiver
+# canister_id: canister ID of the ledger
+# nft_name: name of NFT
+# nft_description: description of NFT
+# nft_image: image of NFT
+[group('dfx')]
+dfx_mainnet_mint_nft target_principal canister_id nft_name nft_description nft_image:
+  #!/usr/bin/env bash
+  set -e
+
+  just dfx_mint_nft "{{target_principal}}" "{{canister_id}}" "{{nft_name}}" "{{nft_description}}" "{{nft_image}}" "--network=ic"
+
 # Airdrop (mint) NFT
 # params target_principal: principal ID of the receiver
 # canister_id: canister ID of the ledger
@@ -415,7 +480,7 @@ dfx_local_airdrop_token target_principal canister_id amount:
 # nft_description: description of NFT
 # nft_image: image of NFT
 [private]
-dfx_local_mint_nft target_principal canister_id nft_name nft_description nft_image:
+dfx_mint_nft target_principal canister_id nft_name nft_description nft_image network="":
   #!/usr/bin/env bash
   set -e
 
@@ -434,4 +499,4 @@ dfx_local_mint_nft target_principal canister_id nft_name nft_description nft_ima
             memo = null;
           }
         }
-  })"
+  })" {{network}}
