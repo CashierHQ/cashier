@@ -367,7 +367,7 @@
         {assetsWithTokenInfo}
         {failedImageLoads}
         onImageError={handleImageError}
-        linkUseActionCounter={linkStore.link.link_use_action_counter}
+        link={linkStore.link}
       />
 
       <!-- Block 6: Share Link -->

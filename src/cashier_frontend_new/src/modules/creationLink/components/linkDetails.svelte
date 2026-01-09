@@ -1,15 +1,15 @@
 <script lang="ts">
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
+  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import {
     getLinkTypeText,
     isSendLinkType,
     isPaymentLinkType,
   } from "$modules/links/utils/linkItemHelpers";
   import { toast } from "svelte-sonner";
-  import YouSendPreview from "./previewSections/YouSendPreview.svelte";
-  import LinkInfoSection from "./previewSections/LinkInfoSection.svelte";
-  import TransactionLockSection from "./previewSections/TransactionLockSection.svelte";
+  import YouSendPreview from "$modules/creationLink/components/previewSections/YouSendPreview.svelte";
+  import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
+  import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
   import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
   import { feeService } from "$modules/shared/services/feeService";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";

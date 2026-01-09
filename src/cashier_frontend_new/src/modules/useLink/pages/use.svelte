@@ -4,9 +4,9 @@
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
   import { TransactionSourceType } from "$modules/transactionCart/types/transaction-source";
-  import Completed from "../components/Completed.svelte";
-  import Landing from "../components/Landing.svelte";
-  import Unlocked from "../components/Unlocked.svelte";
+  import Completed from "$modules/useLink/components/Completed.svelte";
+  import Landing from "$modules/useLink/components/Landing.svelte";
+  import Unlocked from "$modules/useLink/components/Unlocked.svelte";
   import { onDestroy, onMount } from "svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
