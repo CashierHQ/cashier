@@ -86,19 +86,19 @@ export class IcpLedgerService {
     if ("Err" in result) {
       return rsMatch(result.Err, {
         TxTooOld: (e) => {
-          throw new Error(`Transfer failed: Transaction too old: ${e}`);
+          throw new Error(`Transaction too old: ${e}`);
         },
         BadFee: (e) => {
-          throw new Error(`Transfer failed: Bad fee: ${e}`);
+          throw new Error(`Bad fee: ${e}`);
         },
         TxDuplicate: (e) => {
-          throw new Error(`Transfer failed: Duplicate transaction: ${e}`);
+          throw new Error(`Duplicate transaction: ${e}`);
         },
         InsufficientFunds: () => {
-          throw new Error(`Transfer failed: Insufficient funds`);
+          throw new Error(`Insufficient funds`);
         },
         TxCreatedInFuture: () => {
-          throw new Error(`Transfer failed: Transaction created in future`);
+          throw new Error(`Transaction created in future`);
         },
       });
     }
@@ -127,30 +127,28 @@ export class IcpLedgerService {
     if ("Err" in result) {
       return rsMatch(result.Err, {
         GenericError: (e) => {
-          throw new Error(
-            `Transfer failed: ${e.message} (code: ${e.error_code})`,
-          );
+          throw new Error(`${e.message} (code: ${e.error_code})`);
         },
         TemporarilyUnavailable: () => {
-          throw new Error("Transfer failed: Ledger is temporarily unavailable");
+          throw new Error("Ledger is temporarily unavailable");
         },
         BadBurn: (e) => {
-          throw new Error(`Transfer failed: Bad burn amount: ${e}`);
+          throw new Error(`Bad burn amount: ${e}`);
         },
         Duplicate: (e) => {
-          throw new Error(`Transfer failed: Duplicate transaction: ${e}`);
+          throw new Error(`Duplicate transaction: ${e}`);
         },
         BadFee: (e) => {
-          throw new Error(`Transfer failed: Bad fee: ${e}`);
+          throw new Error(`Bad fee: ${e}`);
         },
         TooOld: (e) => {
-          throw new Error(`Transfer failed: Transaction is too old: ${e}`);
+          throw new Error(`Transaction is too old: ${e}`);
         },
         CreatedInFuture: (e) => {
-          throw new Error(`Transfer failed: Created in future: ${e}`);
+          throw new Error(`Created in future: ${e}`);
         },
         InsufficientFunds: () => {
-          throw new Error(`Transfer failed: Insufficient funds`);
+          throw new Error(`Insufficient funds`);
         },
       });
     }

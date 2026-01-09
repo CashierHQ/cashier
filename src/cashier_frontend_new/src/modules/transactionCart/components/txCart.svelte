@@ -48,6 +48,13 @@
   );
 
   let showFeeInfoDrawer = $state(false);
+
+  // Translation key prefix based on source type
+  const txCartI18nKey = $derived(
+    isWalletSource(source)
+      ? "links.linkForm.drawers.txCart.wallet"
+      : "links.linkForm.drawers.txCart.action",
+  );
   let failedImageLoads = $state<Set<string>>(new Set());
 
   function handleImageError(address: string) {
@@ -111,31 +118,27 @@
         // ActionSource: result is ProcessActionResult
         const actionResult = result as ProcessActionResult;
         if (actionResult.isSuccess) {
-          successMessage = locale.t(
-            "links.linkForm.drawers.txCart.successMessage",
-          );
+          successMessage = locale.t(`${txCartI18nKey}.successMessage`);
           source.onSuccess?.(actionResult);
           onCloseDrawer?.();
         } else {
-          errorMessage = `${locale.t("links.linkForm.drawers.txCart.errorMessagePrefix")} ${actionResult.errors.join(", ")}`;
+          errorMessage = `${locale.t(`${txCartI18nKey}.errorMessagePrefix`)} ${actionResult.errors.join(", ")}`;
         }
       } else if (isWalletSource(source)) {
         // WalletSource: result is Result<bigint, string>
         const walletResult = result as Result<bigint, string>;
         if (walletResult.isOk()) {
-          successMessage = locale.t(
-            "links.linkForm.drawers.txCart.successMessage",
-          );
+          successMessage = locale.t(`${txCartI18nKey}.successMessage`);
           source.onSuccess?.(walletResult.value);
           onCloseDrawer?.();
         } else {
-          errorMessage = `${locale.t("links.linkForm.drawers.txCart.errorMessagePrefix")} ${walletResult.error}`;
+          errorMessage = `${locale.t(`${txCartI18nKey}.errorMessagePrefix`)} ${walletResult.error}`;
         }
       } else {
         assertUnreachable(source as never);
       }
     } catch (e) {
-      errorMessage = `${locale.t("links.linkForm.drawers.txCart.errorMessagePrefix")} ${(e as Error).message}`;
+      errorMessage = `${locale.t(`${txCartI18nKey}.errorMessagePrefix`)} ${(e as Error).message}`;
     } finally {
       isProcessingLocally = false;
     }
@@ -178,7 +181,7 @@
           <Drawer.Title
             class="text-[18px] font-semibold leading-[20px] px-8 text-center w-[100%]"
           >
-            {locale.t("links.linkForm.drawers.txCart.title")}
+            {locale.t(`${txCartI18nKey}.title`)}
           </Drawer.Title>
           <Drawer.Close>
             <X
@@ -250,8 +253,10 @@
           disabled={isProcessing}
         >
           {isProcessing
-            ? locale.t("links.linkForm.drawers.txCart.processingButton")
-            : locale.t("links.linkForm.drawers.txCart.confirmButton")}
+            ? locale.t(`${txCartI18nKey}.processingButton`)
+            : errorMessage
+              ? locale.t(`${txCartI18nKey}.retryButton`)
+              : locale.t(`${txCartI18nKey}.confirmButton`)}
         </Button>
       </div>
     </Drawer.Content>

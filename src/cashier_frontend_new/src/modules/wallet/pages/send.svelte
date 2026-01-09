@@ -204,6 +204,7 @@
     // Refresh wallet balance and transaction history
     walletStore.query.refresh();
     refreshTransactionHistory();
+    toast.success(locale.t("wallet.send.successMessage"));
   }
 
   function handleCloseDrawer() {
