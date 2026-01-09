@@ -7,12 +7,6 @@
   import AssetTransferInfoDrawer from "../drawers/AssetTransferInfoDrawer.svelte";
   import { FeeType } from "$modules/links/types/fee";
   import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
-  import { SvelteMap } from "svelte/reactivity";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
-  import { calculateDisplayAmounts } from "$modules/links/utils/displayAmounts";
-  import { calculateExactDisplayAmounts } from "$modules/links/utils/calculateExactDisplayAmounts";
-  import { LinkType } from "$modules/links/types/link/linkType";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
 
   type Props = {
     forecastAssetAndFee: Array<ForecastAssetAndFee>;
@@ -21,7 +15,6 @@
     isReceive?: boolean;
     isClickable?: boolean;
     onInfoClick?: () => void;
-    link?: LinkCreationStore;
   };
 
   let {
@@ -31,11 +24,7 @@
     isReceive = false,
     isClickable = false,
     onInfoClick,
-    link,
   }: Props = $props();
-
-  const maxUse = $derived(link?.createLinkData.maxUse ?? 1);
-  const linkType = $derived(link?.createLinkData.linkType);
 
   let assetTransferInfoDrawerOpen = $state(false);
 
@@ -47,52 +36,16 @@
     }
   }
 
-  const assetsToDisplay = $derived(
-    (forecastAssetAndFee || []).filter(
+  const assetsToDisplay = $derived.by(() => {
+    return (forecastAssetAndFee || []).filter(
       (item) => item.fee?.feeType !== FeeType.CREATE_LINK_FEE,
-    ),
-  );
+    );
+  });
 
-  const linkCreationFeeItem = $derived(
-    (forecastAssetAndFee || []).find(
+  const linkCreationFeeItem = $derived.by(() => {
+    return (forecastAssetAndFee || []).find(
       (item) => item.fee?.feeType === FeeType.CREATE_LINK_FEE,
-    ),
-  );
-
-  // Calculate display amount for each asset (multiply by maxUse for airdrop)
-  // Use exact values from useAmount * maxUse to avoid floating point precision errors
-  const displayAmounts = $derived.by(() => {
-    const amounts = new SvelteMap<string, string>();
-    const usdAmounts = new SvelteMap<string, string>();
-
-    // For AIRDROP links with link prop, use exact values from useAmount * maxUse
-    if (link && linkType === LinkType.AIRDROP && maxUse > 1) {
-      const result = calculateExactDisplayAmounts({
-        assetsToDisplay,
-        linkAssets: link.createLinkData.assets,
-        linkType,
-        maxUse,
-        walletTokens: walletStore.query.data,
-      });
-
-      result.amounts.forEach((value, key) => {
-        amounts.set(key, value);
-      });
-      result.usdAmounts.forEach((value, key) => {
-        usdAmounts.set(key, value);
-      });
-    } else {
-      // For other link types, use original calculation
-      const result = calculateDisplayAmounts(assetsToDisplay, linkType, maxUse);
-      result.amounts.forEach((value, key) => {
-        amounts.set(key, value);
-      });
-      result.usdAmounts.forEach((value, key) => {
-        usdAmounts.set(key, value);
-      });
-    }
-
-    return { amounts, usdAmounts };
+    );
   });
 </script>
 
@@ -145,15 +98,12 @@
         <div class="flex flex-col items-end">
           <div class="flex items-center gap-1">
             <p class="text-[14px] font-normal">
-              {displayAmounts.amounts.get(asset.address) || asset.amount}
+              {asset.amount}
             </p>
           </div>
           {#if asset.usdValueStr}
             <p class="text-[10px] medium-font text-[#b6b6b6]">
-              ~${formatUsdAmount(
-                displayAmounts.usdAmounts.get(asset.address) ||
-                  asset.usdValueStr,
-              )}
+              ~${formatUsdAmount(asset.usdValueStr)}
             </p>
           {/if}
         </div>
