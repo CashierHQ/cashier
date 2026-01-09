@@ -4,25 +4,22 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import type { ProcessActionResult } from "$modules/links/types/action/action";
+  import Action from "$modules/links/types/action/action";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { LinkState } from "$modules/links/types/link/linkState";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
-  import { onMount } from "svelte";
-  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import LinkDetails from "./LinkDetails.svelte";
   import { locale } from "$lib/i18n";
+
   const {
-    link,
+    linkId,
+    action,
   }: {
-    link: LinkCreationStore | LinkDetailStore;
+    linkId: string;
+    action?: Action;
   } = $props();
 
-  // Check if link is LinkDetailStore (for Transfer Pending)
-  const isLinkDetailStore = link instanceof LinkDetailStore;
-
-  let linkDetailStore = $state<LinkDetailStore | null>(
-    isLinkDetailStore ? (link as LinkDetailStore) : null,
-  );
+  let linkDetailStore = $state<LinkDetailStore | null>(null);
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
   let showTxCart: boolean = $state(false);
@@ -93,29 +90,25 @@
     };
   });
 
-  onMount(() => {
-    // If link is LinkDetailStore, use it directly
-    if (isLinkDetailStore) {
-      linkDetailStore = link as LinkDetailStore;
-    } else {
-      // Initialize LinkDetailStore with the created link ID from LinkCreationStore
-      const linkCreationStore = link as LinkCreationStore;
-      if (linkCreationStore.id) {
-        linkDetailStore = new LinkDetailStore({ id: linkCreationStore.id });
-      }
+  // Initialize LinkDetailStore with the provided linkId
+  $effect(() => {
+    if (linkId) {
+      linkDetailStore = new LinkDetailStore({ id: linkId });
+    }
+  });
 
-      if (
-        linkCreationStore.action &&
-        linkCreationStore.action.state !== ActionState.SUCCESS
-      ) {
-        showTxCart = true;
-      }
+  // Auto-open modal if action is provided and not in SUCCESS state
+  $effect(() => {
+    if (action && action.state !== ActionState.SUCCESS) {
+      showTxCart = true;
     }
   });
 </script>
 
 <div class="mt-2 flex flex-col gap-4 grow-1 justify-between">
-  <LinkDetails {link} {errorMessage} {successMessage} />
+  {#if linkDetailStore}
+    <LinkDetails link={linkDetailStore} {errorMessage} {successMessage} />
+  {/if}
   <div
     class="flex-none w-[95%] mx-auto px-2 sticky bottom-2 left-0 right-0 z-10 mt-auto"
   >

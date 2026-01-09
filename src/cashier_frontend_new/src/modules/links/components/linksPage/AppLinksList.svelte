@@ -16,9 +16,9 @@
   } = $props();
 
   function handleLinkClick(link: UnifiedLinkItem) {
-    // If link is in CREATE_LINK state (Transfer Pending), show creation page
+    // If link is in CREATE_LINK state (Transfer Pending), redirect to detail page
     if (link.state === LinkState.CREATE_LINK) {
-      goto(resolve(`/link/create/${link.id}`));
+      goto(resolve(`/link/detail/${link.id}`));
     } else if (link.isCreated) {
       // If link is created and not in CREATE_LINK state, show detail page
       goto(resolve(`/link/detail/${link.id}`));

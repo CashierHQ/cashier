@@ -1,12 +1,12 @@
 <script lang="ts">
   import { LinkStep } from "$modules/links/types/linkStep";
   import { LinkState } from "$modules/links/types/link/linkState";
-  import AddAsset from "../components/addAsset.svelte";
-  import ChooseLinkType from "../components/chooseLinkType.svelte";
+  import AddAsset from "$modules/creationLink/components/addAsset.svelte";
+  import ChooseLinkType from "$modules/creationLink/components/chooseLinkType.svelte";
   import CreatedLink from "$modules/shared/components/CreatedLink.svelte";
-  import CreateLinkHeader from "../components/createLinkHeader.svelte";
-  import Preview from "../components/preview.svelte";
-  import { LinkCreationStore } from "../state/linkCreationStore.svelte";
+  import CreateLinkHeader from "$modules/creationLink/components/createLinkHeader.svelte";
+  import Preview from "$modules/creationLink/components/preview.svelte";
+  import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
   import { getGuardContext } from "$modules/guard/context.svelte";
   import ProtectionProcessingState from "$modules/guard/components/ProtectionProcessingState.svelte";
@@ -19,7 +19,7 @@
 
   const context = getGuardContext();
 
-  // Try to get LinkCreationStore from context first (for Transfer Pending)
+  // Try to get LinkCreationStore from context first
   // Otherwise, try to load from temp link
   let linkStore = $state<LinkCreationStore | null>(null);
 
@@ -31,8 +31,8 @@
       if (tempLinkResult.isOk()) {
         linkStore = new LinkCreationStore(tempLinkResult.value);
       } else {
-        // Temp link not found - might be Transfer Pending
-        // LinkDetailStore should be loaded by RouteGuard in this case
+        // Temp link not found - if the link is in Transfer Pending state,
+        // we redirect to detail flow, so this logic is unnecessary
         linkStore = null;
       }
     }
@@ -68,16 +68,8 @@
 </script>
 
 {#if !linkStore}
-  <!-- Transfer Pending with LinkDetailStore or still loading -->
-  {#if context.linkDetailStore && context.linkDetailStore.link?.state === LinkState.CREATE_LINK}
-    <!-- Transfer Pending - show CreatedLink using LinkDetailStore -->
-    <div class="grow-1 flex flex-col mt-2 sm:mt-0">
-      <CreatedLink link={context.linkDetailStore} />
-    </div>
-  {:else}
-    <!-- Still loading -->
-    <ProtectionProcessingState message="Loading..." />
-  {/if}
+  <!-- Still loading or temp link not found -->
+  <ProtectionProcessingState message="Loading..." />
 {:else}
   <div class="grow-1 flex flex-col mt-2 sm:mt-0">
     <CreateLinkHeader link={linkStore} onBack={handleBack} />
@@ -89,7 +81,7 @@
     {:else if linkStore.state.step === LinkStep.PREVIEW}
       <Preview link={linkStore} />
     {:else if linkStore.state.step === LinkStep.CREATED || linkStore.link?.state === LinkState.CREATE_LINK}
-      <CreatedLink link={linkStore} />
+      <CreatedLink linkId={linkStore.id ?? ""} action={linkStore.action} />
     {/if}
   </div>
 {/if}
