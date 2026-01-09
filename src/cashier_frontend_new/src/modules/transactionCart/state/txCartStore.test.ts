@@ -16,6 +16,7 @@ import { ReceiveAddressType } from "$modules/wallet/types";
 import type { AssetAndFee } from "$modules/shared/types/feeService";
 import { AssetProcessState } from "$modules/transactionCart/types/txCart";
 import { FeeType } from "$modules/links/types/fee";
+import { Ok } from "ts-results-es";
 
 // Mock constants
 const ICP_LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
@@ -384,14 +385,17 @@ describe("TransactionCartStore", () => {
     });
 
     describe("WalletSource execution", () => {
-      it("should throw when ICRC ledger service not initialized", async () => {
+      it("should return Err when ledger service not initialized", async () => {
         const source = createWalletSource(false);
         const store = new TransactionCartStore(source);
         // Don't call initialize()
 
-        await expect(store.execute()).rejects.toThrow(
-          "ICRC Ledger Service is not initialized.",
-        );
+        const result = await store.execute();
+
+        expect(result.isErr()).toBe(true);
+        if (result.isErr()) {
+          expect(result.error).toBe("Ledger service is not initialized.");
+        }
       });
 
       it("should transfer ICP to account ID when ICP token and accountId provided", async () => {
@@ -405,7 +409,7 @@ describe("TransactionCartStore", () => {
           source.toAccountId,
           source.amount,
         );
-        expect(result).toBe(12345n);
+        expect(result).toEqual(Ok(12345n));
       });
 
       it("should transfer ICRC token to principal", async () => {
@@ -419,7 +423,7 @@ describe("TransactionCartStore", () => {
           source.to,
           source.amount,
         );
-        expect(result).toBe(67890n);
+        expect(result).toEqual(Ok(67890n));
       });
     });
   });

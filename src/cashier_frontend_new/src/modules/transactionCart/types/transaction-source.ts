@@ -89,7 +89,7 @@ export type TransactionSource = ActionSource | WalletSource;
 export type ExecuteResult<T extends TransactionSource> = T extends ActionSource
   ? ProcessActionResult
   : T extends WalletSource
-    ? bigint
+    ? Result<bigint, string>
     : never;
 
 /**

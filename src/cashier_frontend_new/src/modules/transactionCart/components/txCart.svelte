@@ -18,9 +18,8 @@
   import { X } from "lucide-svelte";
   import { locale } from "$lib/i18n";
   import { feeService } from "$modules/shared/services/feeService";
-  import type { AssetAndFee } from "$modules/shared/types/feeService";
   import { assertUnreachable } from "$lib/rsMatch";
-  import { AssetProcessState } from "$modules/transactionCart/types/txCart";
+  import type { Result } from "ts-results-es";
 
   let {
     source,
@@ -123,22 +122,28 @@
           successMessage = locale.t(
             "links.linkForm.drawers.txCart.successMessage",
           );
+          walletStore.query.refresh(); // Refresh wallet balance immediately
           source.onSuccess?.(actionResult);
           onCloseDrawer?.();
         } else {
           errorMessage = `${locale.t("links.linkForm.drawers.txCart.errorMessagePrefix")} ${actionResult.errors.join(", ")}`;
         }
       } else if (isWalletSource(source)) {
-        // WalletSource: result is blockId (bigint)
-        // State transitions handled by store's #executeWallet
-        successMessage = locale.t(
-          "links.linkForm.drawers.txCart.successMessage",
-        );
-        source.onSuccess?.(result as bigint);
-        onCloseDrawer?.();
+        // WalletSource: result is Result<bigint, string>
+        const walletResult = result as Result<bigint, string>;
+        if (walletResult.isOk()) {
+          successMessage = locale.t(
+            "links.linkForm.drawers.txCart.successMessage",
+          );
+          walletStore.query.refresh(); // Refresh wallet balance immediately
+          source.onSuccess?.(walletResult.value);
+          onCloseDrawer?.();
+        } else {
+          errorMessage = `${locale.t("links.linkForm.drawers.txCart.errorMessagePrefix")} ${walletResult.error}`;
+        }
+      } else {
+        assertUnreachable(source as never);
       }
-
-      assertUnreachable(source as never);
     } catch (e) {
       errorMessage = `${locale.t("links.linkForm.drawers.txCart.errorMessagePrefix")} ${(e as Error).message}`;
     } finally {

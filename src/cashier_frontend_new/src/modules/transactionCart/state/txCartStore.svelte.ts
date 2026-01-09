@@ -22,6 +22,7 @@ import {
   type AssetItem,
 } from "$modules/transactionCart/types/txCart";
 import { assertUnreachable } from "$lib/rsMatch";
+import { Err, Ok, type Result } from "ts-results-es";
 import {
   type ExecuteResult,
   FlowDirection,
@@ -163,54 +164,43 @@ export class TransactionCartStore<T extends TransactionSource> {
   // Private: Wallet execution (ICRC/ICP)
   // ─────────────────────────────────────────────────────────────
 
-  /**
-   * Update wallet asset state (WalletSource only).
-   * Uses immutable update pattern for Svelte reactivity.
-   */
-  #setWalletAssetState(state: AssetProcessState): void {
-    if (!isWalletSource(this.#source)) return;
-    if (this.#assetAndFeeList.length === 0) return;
+  async #executeWallet(): Promise<Result<bigint, string>> {
+    if (!isWalletSource(this.#source)) {
+      return Err("Invalid source type");
+    }
 
-    this.#assetAndFeeList = this.#assetAndFeeList.map((item, i) =>
-      i === 0 ? { ...item, asset: { ...item.asset, state } } : item,
-    );
-  }
+    const { to, toAccountId, amount } = this.#source;
 
-  async #executeWallet(): Promise<bigint> {
-    if (!isWalletSource(this.#source)) throw new Error("Invalid source type");
-
-    // Transition to PROCESSING state
-    this.#setWalletAssetState(AssetProcessState.PROCESSING);
-
-    try {
-      const { to, toAccountId, amount } = this.#source;
-      let blockId: bigint;
-
-      // ICP transfer - convert principal to accountID if needed
-      if (this.#icpLedgerService) {
-        const accountId = toAccountId ?? principalToAccountId(to.toText());
-        if (!accountId) {
-          throw new Error("Failed to derive ICP account ID from principal.");
-        }
-        blockId = await this.#icpLedgerService.transferToAccount(
+    // ICP transfer - convert principal to accountID if needed
+    if (this.#icpLedgerService) {
+      const accountId = toAccountId ?? principalToAccountId(to.toText());
+      if (!accountId) {
+        return Err("Failed to derive ICP account ID from principal.");
+      }
+      try {
+        const blockId = await this.#icpLedgerService.transferToAccount(
           accountId,
           amount,
         );
-      } else if (this.#icrcLedgerService) {
-        // ICRC to principal
-        blockId = await this.#icrcLedgerService.transferToPrincipal(to, amount);
-      } else {
-        throw new Error("Ledger service is not initialized.");
+        return Ok(blockId);
+      } catch (e) {
+        return Err((e as Error).message);
       }
-
-      // Transition to SUCCEED state
-      this.#setWalletAssetState(AssetProcessState.SUCCEED);
-      return blockId;
-    } catch (error) {
-      // Transition to FAILED state
-      this.#setWalletAssetState(AssetProcessState.FAILED);
-      throw error;
     }
+
+    if (this.#icrcLedgerService) {
+      try {
+        const blockId = await this.#icrcLedgerService.transferToPrincipal(
+          to,
+          amount,
+        );
+        return Ok(blockId);
+      } catch (e) {
+        return Err((e as Error).message);
+      }
+    }
+
+    return Err("Ledger service is not initialized.");
   }
 
   /**
