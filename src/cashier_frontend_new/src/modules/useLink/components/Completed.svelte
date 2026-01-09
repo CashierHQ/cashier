@@ -1,7 +1,8 @@
 <script lang="ts">
   import { LinkType } from "$modules/links/types/link/linkType";
   import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
-  import TipCompleted from "./tiplink/Completed.svelte";
+  import TipCompleted from "$modules/useLink/components/tiplink/Completed.svelte";
+  import AirdropCompleted from "$modules/useLink/components/airdrop/Completed.svelte";
 
   const { linkDetail }: { linkDetail?: LinkDetailStore } = $props();
 
@@ -16,10 +17,11 @@
   {#if linkType === LinkType.TIP}
     <TipCompleted {linkDetail} />
   {/if}
-  <!-- TODO: Other link types will be added here -->
-  <!-- {#if linkType === LinkType.AIRDROP}
+  {#if linkType === LinkType.AIRDROP}
     <AirdropCompleted {linkDetail} />
   {/if}
+  <!-- TODO: Other link types will be added here -->
+  <!-- 
   {#if linkType === LinkType.TOKEN_BASKET}
     <BasketCompleted {linkDetail} />
   {/if}

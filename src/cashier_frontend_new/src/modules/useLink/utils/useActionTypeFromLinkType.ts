@@ -18,8 +18,8 @@ export function findUseActionTypeFromLinkType(
 ): ActionTypeValue | null {
   switch (linkType) {
     case LinkType.TIP:
-      return ActionType.RECEIVE;
     case LinkType.AIRDROP:
+      return ActionType.RECEIVE;
     case LinkType.TOKEN_BASKET:
     case LinkType.RECEIVE_PAYMENT:
       return null;

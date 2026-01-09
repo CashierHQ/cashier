@@ -1,7 +1,8 @@
 <script lang="ts">
   import { LinkType } from "$modules/links/types/link/linkType";
   import type { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
-  import TipLanding from "./tiplink/Landing.svelte";
+  import TipLanding from "$modules/useLink/components/tiplink/Landing.svelte";
+  import AirdropLanding from "$modules/useLink/components/airdrop/Landing.svelte";
 
   const {
     userLink,
@@ -22,10 +23,11 @@
   {#if linkType === LinkType.TIP}
     <TipLanding {userLink} {openLoginModal} />
   {/if}
-  <!-- TODO: Other link types will be added here -->
-  <!-- {#if linkType === LinkType.AIRDROP}
+  {#if linkType === LinkType.AIRDROP}
     <AirdropLanding {userLink} {openLoginModal} />
   {/if}
+  <!-- TODO: Other link types will be added here -->
+  <!-- 
   {#if linkType === LinkType.TOKEN_BASKET}
     <BasketLanding {userLink} {openLoginModal} />
   {/if}
