@@ -5,8 +5,8 @@
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
   import TxCart from "$modules/transactionCart/components/txCart.svelte";
-  import { LinkDetailStore } from "../state/linkDetailStore.svelte";
-  import DetailLinkHeader from "../components/detailLinkHeader.svelte";
+  import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
+  import DetailLinkHeader from "$modules/detailLink/components/detailLinkHeader.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
   import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
   import ConfirmDrawer from "$modules/creationLink/components/drawers/ConfirmDrawer.svelte";
@@ -33,6 +33,10 @@
   } from "$lib/shadcn/components/ui/dialog";
   import ShareLinkSection from "$modules/creationLink/components/previewSections/ShareLinkSection.svelte";
   import UsageInfoSection from "$modules/detailLink/components/usageInfoSection.svelte";
+  import FeesBreakdownSection from "$modules/shared/components/FeesBreakdownSection.svelte";
+  import { feeService } from "$modules/shared/services/feeService";
+  import { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
+  import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
 
   //let { linkStore }: { linkStore: LinkDetailStore } = $props();
   let {
@@ -55,6 +59,7 @@
   let showSecondEndLinkConfirm = $state(false);
   let showCongratulationsDrawer = $state(false);
   let lastClickWasOnButton = $state(false);
+  let shouldShowCongratulations = $state(false);
 
   // Check if we should show congratulations drawer on mount
   $effect(() => {
@@ -68,6 +73,18 @@
         replaceState: true,
         noScroll: true,
       });
+    }
+  });
+
+  // Watch for link state change from CREATE_LINK to ACTIVE to show congratulations drawer
+  $effect(() => {
+    if (
+      shouldShowCongratulations &&
+      linkStore.link &&
+      linkStore.link.state === LinkState.ACTIVE
+    ) {
+      showCongratulationsDrawer = true;
+      shouldShowCongratulations = false;
     }
   });
 
@@ -97,6 +114,50 @@
     return calculateAssetsWithTokenInfo(
       assets,
       walletStore.findTokenByAddress.bind(walletStore),
+    );
+  });
+
+  // Forecast link creation fees for Transfer Pending state
+  const forecastLinkCreationFees: ForecastAssetAndFee[] = $derived.by(() => {
+    if (
+      !linkStore.link ||
+      linkStore.link.state !== LinkState.CREATE_LINK ||
+      !linkStore.link.asset_info ||
+      linkStore.link.asset_info.length === 0
+    ) {
+      return [];
+    }
+
+    // Convert asset_info to CreateLinkAsset format
+    const linkAssets = linkStore.link.asset_info
+      .map((assetInfo) => {
+        const assetAddress = assetInfo.asset.address?.toString();
+        if (!assetAddress) return null;
+        return new CreateLinkAsset(
+          assetAddress,
+          assetInfo.amount_per_link_use_action,
+        );
+      })
+      .filter((item): item is CreateLinkAsset => item !== null);
+
+    if (linkAssets.length === 0) {
+      return [];
+    }
+
+    const tokens = Object.fromEntries(
+      (walletStore.query.data ?? []).map((t) => [t.address, t]),
+    );
+
+    const maxUse = Number(linkStore.link.link_use_action_max_count);
+
+    return feeService.forecastLinkCreationFees(linkAssets, maxUse, tokens);
+  });
+
+  // Calculate total fees in USD for Transfer Pending state
+  const totalFeesUsd = $derived.by(() => {
+    return forecastLinkCreationFees.reduce(
+      (total, item) => total + (item.fee?.usdValue || 0),
+      0,
     );
   });
 
@@ -296,12 +357,26 @@
   }
 
   async function handleProcessAction(): Promise<ProcessActionResult> {
+    // Store previous state to check if it was CREATE_LINK
+    const wasCreateLink = linkStore.link?.state === LinkState.CREATE_LINK;
+
     const result = await linkStore.processAction();
     if (result.isSuccess) {
+      // Set flag to show congratulations if link was in CREATE_LINK state
+      if (wasCreateLink) {
+        shouldShowCongratulations = true;
+      }
+
       await linkStore.query.refresh();
       toast.success(
         locale.t("links.linkForm.detail.messages.transactionSuccess"),
       );
+
+      // Check immediately if state is already ACTIVE (in case refresh was fast)
+      if (wasCreateLink && linkStore.link?.state === LinkState.ACTIVE) {
+        showCongratulationsDrawer = true;
+        shouldShowCongratulations = false;
+      }
     } else {
       toast.error(locale.t("links.linkForm.detail.messages.transactionFailed"));
     }
@@ -369,8 +444,12 @@
         link={linkStore.link}
       />
 
-      <!-- Block 6: Share Link -->
-      <ShareLinkSection {link} />
+      <!-- Block 6: Share Link or Fees Breakdown -->
+      {#if linkStore.link.state === LinkState.CREATE_LINK}
+        <FeesBreakdownSection {totalFeesUsd} />
+      {:else}
+        <ShareLinkSection {link} />
+      {/if}
     {/if}
 
     <div
