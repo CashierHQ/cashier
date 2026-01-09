@@ -302,8 +302,10 @@ export class FeeService {
 
       if (!token) {
         console.error("Failed to resolve token for asset:", assetData.address);
-        // Fallback to ICP values
-        const totalAmount = assetData.useAmount + ICP_LEDGER_FEE;
+        // Fallback to ICP values: (useAmount + ledgerFee) * maxUse + ledgerFee
+        const totalAmount =
+          (assetData.useAmount + ICP_LEDGER_FEE) * BigInt(maxUse) +
+          ICP_LEDGER_FEE;
         const amountStr = parseBalanceUnits(totalAmount, 8).toString();
 
         pairs.push({
@@ -323,9 +325,9 @@ export class FeeService {
         });
       } else {
         const tokenFee = token.fee ?? ICP_LEDGER_FEE;
-        // For CREATE_LINK preview: amount = payload.amount + (ledgerFee * maxUse) + ledgerFee
+        // For CREATE_LINK preview: amount =(payload.amount + ledgerFee) * maxUse + ledgerFee
         const totalAmount =
-          assetData.useAmount + BigInt(maxUse) * tokenFee + tokenFee;
+          (assetData.useAmount + tokenFee) * BigInt(maxUse) + tokenFee;
         const totalAmountUi = parseBalanceUnits(totalAmount, token.decimals);
         const totalUsd = token.priceUSD
           ? totalAmountUi * token.priceUSD
