@@ -301,8 +301,9 @@ describe("FeeService", () => {
       const assetPair = pairs[0];
       expect(assetPair.asset.symbol).toBe("ICP");
 
+      // Formula: (useAmount + ledgerFee) * maxUse + ledgerFee
       const expectedTotal = parseBalanceUnits(
-        useAmount + LEDGER_FEE * BigInt(maxUse) + LEDGER_FEE,
+        (useAmount + LEDGER_FEE) * BigInt(maxUse) + LEDGER_FEE,
         token.decimals,
       );
       expect(assetPair.asset.amount).toBe(formatNumber(expectedTotal));
@@ -374,11 +375,11 @@ describe("FeeService", () => {
       expect(b).toBeDefined();
       expect(c).toBeDefined();
 
-      // Expected formula per asset: asset_amount + (max_use * ledger_fee) + ledger_fee
+      // Expected formula per asset: (useAmount + ledgerFee) * maxUse + ledgerFee
       if (a) {
         const expectedA = formatNumber(
           parseBalanceUnits(
-            useA + BigInt(maxUse) * tokenA.fee + tokenA.fee,
+            (useA + tokenA.fee) * BigInt(maxUse) + tokenA.fee,
             tokenA.decimals,
           ),
         );
@@ -393,7 +394,7 @@ describe("FeeService", () => {
       if (b) {
         const expectedB = formatNumber(
           parseBalanceUnits(
-            useB + BigInt(maxUse) * tokenB.fee + tokenB.fee,
+            (useB + tokenB.fee) * BigInt(maxUse) + tokenB.fee,
             tokenB.decimals,
           ),
         );
@@ -408,7 +409,7 @@ describe("FeeService", () => {
       if (c) {
         const expectedC = formatNumber(
           parseBalanceUnits(
-            useC + BigInt(maxUse) * tokenC.fee + tokenC.fee,
+            (useC + tokenC.fee) * BigInt(maxUse) + tokenC.fee,
             tokenC.decimals,
           ),
         );
@@ -435,8 +436,12 @@ describe("FeeService", () => {
       const p = pairs[0];
       expect(p.asset.symbol).toBe("N/A");
 
-      // total = payload + ICP_LEDGER_FEE (10_000n)
-      const expectedTotal = parseBalanceUnits(100_000_000n + 10_000n, 8);
+      // Formula: (useAmount + ledgerFee) * maxUse + ledgerFee
+      // maxUse=1: (100_000_000n + 10_000n) * 1 + 10_000n = 100_020_000n
+      const expectedTotal = parseBalanceUnits(
+        (100_000_000n + 10_000n) * 1n + 10_000n,
+        8,
+      );
       expect(p.asset.amount).toBe(expectedTotal.toString());
       expect(p.fee).toBeDefined();
       if (p.fee) {
