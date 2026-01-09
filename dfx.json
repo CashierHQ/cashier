@@ -3,12 +3,22 @@
     "cashier_backend": {
       "type": "custom",
       "candid": "./target/artifacts/cashier_backend.did",
-      "wasm": "./target/artifacts/cashier_backend.wasm.gz"
+      "wasm": "./target/artifacts/cashier_backend.wasm.gz",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
     },
     "token_storage": {
       "type": "custom",
       "candid": "./target/artifacts/token_storage.did",
-      "wasm": "./target/artifacts/token_storage.wasm.gz"
+      "wasm": "./target/artifacts/token_storage.wasm.gz",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
     },
     "cashier_frontend": {
       "source": ["./src/cashier_frontend/dist"],
@@ -23,7 +33,12 @@
     "gate_service": {
       "type": "custom",
       "candid": "./target/artifacts/gate_service.did",
-      "wasm": "./target/artifacts/gate_service.wasm.gz"
+      "wasm": "./target/artifacts/gate_service.wasm.gz",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
     },
     "icp_ledger_canister": {
       "type": "custom",
