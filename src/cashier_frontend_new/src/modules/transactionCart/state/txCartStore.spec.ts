@@ -26,6 +26,7 @@ const CASHIER_BACKEND_CANISTER_ID = "aaaaa-aa";
 const {
   mockSendBatchRequest,
   mockTransferToAccount,
+  mockIcpTransferToPrincipal,
   mockTransferToPrincipal,
   mockMapActionToAssetAndFeeList,
   mockGetSigner,
@@ -35,11 +36,13 @@ const {
 } = vi.hoisted(() => {
   const mockSendBatchRequest = vi.fn();
   const mockTransferToAccount = vi.fn();
+  const mockIcpTransferToPrincipal = vi.fn();
   const mockTransferToPrincipal = vi.fn();
 
   return {
     mockSendBatchRequest,
     mockTransferToAccount,
+    mockIcpTransferToPrincipal,
     mockTransferToPrincipal,
     mockMapActionToAssetAndFeeList: vi.fn(),
     mockGetSigner: vi.fn(),
@@ -48,6 +51,7 @@ const {
     })),
     MockIcpLedgerService: vi.fn(() => ({
       transferToAccount: mockTransferToAccount,
+      transferToPrincipal: mockIcpTransferToPrincipal,
     })),
     MockIcrcLedgerService: vi.fn(() => ({
       transferToPrincipal: mockTransferToPrincipal,
@@ -154,15 +158,16 @@ function createActionSource(withIcrc112Requests = false): ActionSource {
 
 function createWalletSource(
   isIcp = false,
-  withAccountId = false,
+  useAccountId = false,
 ): WalletSource {
   return {
     type: TransactionSourceType.WALLET,
     token: createMockToken(isIcp),
-    to: Principal.fromText("aaaaa-aa"),
-    toAccountId: withAccountId ? "abc123def456" : undefined,
+    to: useAccountId ? "abc123def456" : Principal.fromText("aaaaa-aa"),
     amount: 1_000_000n,
-    receiveType: ReceiveAddressType.PRINCIPAL,
+    receiveType: useAccountId
+      ? ReceiveAddressType.ACCOUNT_ID
+      : ReceiveAddressType.PRINCIPAL,
   };
 }
 
@@ -173,6 +178,7 @@ describe("TransactionCartStore", () => {
     mockGetSigner.mockReturnValue({ mock: "signer" });
     mockSendBatchRequest.mockResolvedValue(undefined);
     mockTransferToAccount.mockResolvedValue(12345n);
+    mockIcpTransferToPrincipal.mockResolvedValue(11111n);
     mockTransferToPrincipal.mockResolvedValue(67890n);
     // Reset authState account
     vi.mocked(authState).account = {
@@ -199,6 +205,36 @@ describe("TransactionCartStore", () => {
       const source = createWalletSource();
       const store = new TransactionCartStore(source);
       expect(store).toBeInstanceOf(TransactionCartStore);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  // updateSource()
+  // ─────────────────────────────────────────────────────────────
+
+  describe("updateSource", () => {
+    it("should update WalletSource amount for reactive propagation", async () => {
+      const source = createWalletSource(true); // ICP token with PRINCIPAL receiveType
+      const store = new TransactionCartStore(source);
+      store.initialize();
+
+      // Create updated source with new amount
+      const updatedSource = {
+        ...source,
+        amount: 5_000_000n,
+      };
+
+      store.updateSource(updatedSource);
+
+      // Execute should use the new amount
+      const result = await store.execute();
+
+      // ICP token with principal uses IcpLedgerService.transferToPrincipal
+      expect(mockIcpTransferToPrincipal).toHaveBeenCalledWith(
+        updatedSource.to,
+        5_000_000n,
+      );
+      expect(result).toEqual(Ok(11111n));
     });
   });
 
@@ -406,7 +442,7 @@ describe("TransactionCartStore", () => {
         const result = await store.execute();
 
         expect(mockTransferToAccount).toHaveBeenCalledWith(
-          source.toAccountId,
+          source.to,
           source.amount,
         );
         expect(result).toEqual(Ok(12345n));

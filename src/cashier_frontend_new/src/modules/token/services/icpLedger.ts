@@ -4,6 +4,8 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import { decodeAccountID } from "$modules/shared/utils/icp-account-id";
 import { Principal } from "@dfinity/principal";
 import { ICP_LEDGER_CANISTER_ID, ICP_LEDGER_FEE } from "../constants";
+import { toNullable } from "@dfinity/utils";
+import { rsMatch } from "$lib/rsMatch";
 
 /**
  * Service for interacting with ICP Ledger canister for a specific token
@@ -82,26 +84,79 @@ export class IcpLedgerService {
     });
 
     if ("Err" in result) {
-      throw parseICPTransferResultError(result.Err);
+      return rsMatch(result.Err, {
+        TxTooOld: (e) => {
+          throw new Error(`Transfer failed: Transaction too old: ${e}`);
+        },
+        BadFee: (e) => {
+          throw new Error(`Transfer failed: Bad fee: ${e}`);
+        },
+        TxDuplicate: (e) => {
+          throw new Error(`Transfer failed: Duplicate transaction: ${e}`);
+        },
+        InsufficientFunds: () => {
+          throw new Error(`Transfer failed: Insufficient funds`);
+        },
+        TxCreatedInFuture: () => {
+          throw new Error(`Transfer failed: Transaction created in future`);
+        },
+      });
     }
 
     return result.Ok;
   }
-}
 
-/**
- * Parse the error from the ICP Ledger transfer operation (legacy).
- * @param result Error result from ICP Ledger transfer operation (legacy)
- * @returns Parsed error
- */
-export function parseICPTransferResultError(
-  result: icpLedger.TransferError,
-): Error {
-  if ("InsufficientFunds" in result) {
-    return new Error(`Transfer failed: Insufficient funds`);
+  public async transferToPrincipal(
+    to: Principal,
+    amount: bigint,
+  ): Promise<bigint> {
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
+
+    const result = await actor.icrc1_transfer({
+      to: { owner: to, subaccount: [] },
+      amount,
+      fee: toNullable(this.#fee),
+      memo: [],
+      from_subaccount: [],
+      created_at_time: [],
+    });
+
+    if ("Err" in result) {
+      return rsMatch(result.Err, {
+        GenericError: (e) => {
+          throw new Error(
+            `Transfer failed: ${e.message} (code: ${e.error_code})`,
+          );
+        },
+        TemporarilyUnavailable: () => {
+          throw new Error("Transfer failed: Ledger is temporarily unavailable");
+        },
+        BadBurn: (e) => {
+          throw new Error(`Transfer failed: Bad burn amount: ${e}`);
+        },
+        Duplicate: (e) => {
+          throw new Error(`Transfer failed: Duplicate transaction: ${e}`);
+        },
+        BadFee: (e) => {
+          throw new Error(`Transfer failed: Bad fee: ${e}`);
+        },
+        TooOld: (e) => {
+          throw new Error(`Transfer failed: Transaction is too old: ${e}`);
+        },
+        CreatedInFuture: (e) => {
+          throw new Error(`Transfer failed: Created in future: ${e}`);
+        },
+        InsufficientFunds: () => {
+          throw new Error(`Transfer failed: Insufficient funds`);
+        },
+      });
+    }
+
+    return result.Ok;
   }
-
-  return new Error("Transfer failed: Unknown error");
 }
 
 export const icpLedgerService = new IcpLedgerService();

@@ -11,7 +11,6 @@ import {
   formatNumber,
   formatUsdAmount,
 } from "$modules/shared/utils/formatNumber";
-import { principalToAccountId } from "$modules/shared/utils/icp-account-id";
 import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
 import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
@@ -30,6 +29,7 @@ import {
   isActionSource,
   isWalletSource,
 } from "$modules/transactionCart/types/transaction-source";
+import { ReceiveAddressType } from "$modules/wallet/types";
 
 /**
  * Generic transaction cart store supporting both Action-based (ICRC-112)
@@ -46,6 +46,15 @@ export class TransactionCartStore<T extends TransactionSource> {
 
   constructor(source: T) {
     this.#source = source;
+  }
+
+  /**
+   * Update the source reference for reactive updates.
+   * Call this from $effect when source prop changes.
+   * @param newSource - Updated source with new values (e.g., amount)
+   */
+  updateSource(newSource: T): void {
+    this.#source = newSource;
   }
 
   /**
@@ -111,7 +120,6 @@ export class TransactionCartStore<T extends TransactionSource> {
     tokens: Record<string, TokenWithPriceAndBalance>,
   ): void {
     if (!isWalletSource(this.#source)) return;
-    if (this.#assetAndFeeList.length > 0) return; // Already initialized
     this.#assetAndFeeList = this.#buildWalletAssetListPure(tokens);
   }
 
@@ -160,47 +168,50 @@ export class TransactionCartStore<T extends TransactionSource> {
     return await handleProcessAction();
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // Private: Wallet execution (ICRC/ICP)
-  // ─────────────────────────────────────────────────────────────
-
+  /**
+   * Private: Wallet execution (ICP / ICRC)
+   * @returns bigint block index or Err string on failure
+   */
   async #executeWallet(): Promise<Result<bigint, string>> {
     if (!isWalletSource(this.#source)) {
       return Err("Invalid source type");
     }
 
-    const { to, toAccountId, amount } = this.#source;
+    const { to, amount, receiveType } = this.#source;
+    const isAccountId = receiveType === ReceiveAddressType.ACCOUNT_ID;
+    const isPrincipal = receiveType === ReceiveAddressType.PRINCIPAL;
 
-    // ICP transfer - convert principal to accountID if needed
-    if (this.#icpLedgerService) {
-      const accountId = toAccountId ?? principalToAccountId(to.toText());
-      if (!accountId) {
-        return Err("Failed to derive ICP account ID from principal.");
+    try {
+      // ICP Ledger: supports both ACCOUNT_ID and PRINCIPAL
+      if (this.#icpLedgerService) {
+        if (isAccountId && typeof to === "string") {
+          return Ok(await this.#icpLedgerService.transferToAccount(to, amount));
+        }
+        if (isPrincipal && typeof to !== "string") {
+          return Ok(
+            await this.#icpLedgerService.transferToPrincipal(to, amount),
+          );
+        }
+        return Err(`Invalid address type for ${receiveType}.`);
       }
-      try {
-        const blockId = await this.#icpLedgerService.transferToAccount(
-          accountId,
-          amount,
+
+      // ICRC Ledger: supports only PRINCIPAL
+      if (this.#icrcLedgerService) {
+        if (!isPrincipal) {
+          return Err("ICRC transfer only supports principal address.");
+        }
+        if (typeof to === "string") {
+          return Err("Invalid principal address.");
+        }
+        return Ok(
+          await this.#icrcLedgerService.transferToPrincipal(to, amount),
         );
-        return Ok(blockId);
-      } catch (e) {
-        return Err((e as Error).message);
       }
-    }
 
-    if (this.#icrcLedgerService) {
-      try {
-        const blockId = await this.#icrcLedgerService.transferToPrincipal(
-          to,
-          amount,
-        );
-        return Ok(blockId);
-      } catch (e) {
-        return Err((e as Error).message);
-      }
+      return Err("Ledger service is not initialized.");
+    } catch (e) {
+      return Err((e as Error).message);
     }
-
-    return Err("Ledger service is not initialized.");
   }
 
   /**

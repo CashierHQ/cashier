@@ -9,7 +9,7 @@
     ICP_INDEX_CANISTER_ID,
   } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import { createWalletHistoryStore } from "$modules/token/state/walletHistoryStore.svelte";
+  import { getWalletHistoryStore } from "$modules/token/state/walletHistoryStore.svelte";
   import NavBar from "$modules/token/components/navBar.svelte";
   import { locale } from "$lib/i18n";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
@@ -102,15 +102,13 @@
   const walletSource = $derived.by((): WalletSource | null => {
     if (!selectedTokenObj || !receiveAddress || amount <= 0) return null;
 
-    let toPrincipal: Principal;
-    let toAccountId: string | undefined;
+    let to: Principal | string;
 
     try {
       if (receiveType === ReceiveAddressType.ACCOUNT_ID) {
-        toAccountId = receiveAddress;
-        toPrincipal = Principal.anonymous(); // Placeholder for account ID transfers
+        to = receiveAddress;
       } else {
-        toPrincipal = Principal.fromText(receiveAddress);
+        to = Principal.fromText(receiveAddress);
       }
     } catch {
       return null; // Invalid address format
@@ -130,8 +128,7 @@
         is_default: selectedTokenObj.is_default,
         indexId: selectedTokenObj.indexId,
       },
-      to: toPrincipal,
-      toAccountId,
+      to,
       amount: amountBigInt,
       receiveType,
     };
@@ -157,7 +154,7 @@
     const indexId = getIndexId(selectedToken, selectedTokenObj);
     if (!indexId) return;
 
-    const historyStore = createWalletHistoryStore(indexId);
+    const historyStore = getWalletHistoryStore(indexId);
     historyStore.refresh();
   }
 
@@ -202,12 +199,11 @@
    * Handle successful transaction from txCart
    * For WalletSource, result is always bigint (block index)
    */
-  function handleTxSuccess(result: bigint | ProcessActionResult) {
-    // WalletSource always returns bigint
-    if (typeof result === "bigint") {
-      lastBlockId = result;
-      refreshTransactionHistory();
-    }
+  function handleTxSuccess(result: bigint) {
+    lastBlockId = result;
+    // Refresh wallet balance and transaction history
+    walletStore.query.refresh();
+    refreshTransactionHistory();
   }
 
   function handleCloseDrawer() {

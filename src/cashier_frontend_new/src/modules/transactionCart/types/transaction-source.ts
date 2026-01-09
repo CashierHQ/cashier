@@ -71,9 +71,10 @@ export type ActionSource = {
 export type WalletSource = {
   type: typeof TransactionSourceType.WALLET;
   token: TokenMetadata;
-  to: Principal;
-  toAccountId?: string; // For ICP account transfers
+  /* recipient address - principal or account identifier (string) */
+  to: Principal | string;
   amount: bigint;
+  /* receive type principal or account */
   receiveType: ReceiveAddressType;
   onSuccess?: (blockIndex: bigint) => void;
 };

@@ -54,14 +54,6 @@
     failedImageLoads.add(address);
   }
 
-  // Initialize wallet assets in $effect (mutations allowed here)
-  $effect(() => {
-    if (isWalletSource(source) && Object.keys(tokensMap).length > 0) {
-      txCartStore.initializeWalletAssets(tokensMap);
-    }
-  });
-
-  // Get fees breakdown from store - pure derivation (no mutations)
   const assetAndFee = $derived.by(() => {
     if (isWalletSource(source)) {
       // For WalletSource, return reactive state (updated by initializeWalletAssets and execute)
@@ -122,7 +114,6 @@
           successMessage = locale.t(
             "links.linkForm.drawers.txCart.successMessage",
           );
-          walletStore.query.refresh(); // Refresh wallet balance immediately
           source.onSuccess?.(actionResult);
           onCloseDrawer?.();
         } else {
@@ -135,7 +126,6 @@
           successMessage = locale.t(
             "links.linkForm.drawers.txCart.successMessage",
           );
-          walletStore.query.refresh(); // Refresh wallet balance immediately
           source.onSuccess?.(walletResult.value);
           onCloseDrawer?.();
         } else {
@@ -166,6 +156,17 @@
    */
   onMount(() => {
     txCartStore.initialize();
+  });
+
+  /**
+   * Reactively update source and wallet assets when source changes.
+   * This ensures amount changes from InputAmount propagate to the store.
+   */
+  $effect(() => {
+    txCartStore.updateSource(source);
+    if (isWalletSource(source) && Object.keys(tokensMap).length > 0) {
+      txCartStore.initializeWalletAssets(tokensMap);
+    }
   });
 </script>
 
