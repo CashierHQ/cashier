@@ -42,9 +42,9 @@ vi.mock("$modules/shared/constants", () => ({
   CASHIER_BACKEND_CANISTER_ID: "aaaaa-aa",
 }));
 
-vi.mock("$modules/shared/services/feeService", () => ({
-  feeService: {
-    mapActionToAssetAndFeeList: mockMapActionToAssetAndFeeList,
+vi.mock("$modules/shared/types/feeService", () => ({
+  AssetAndFeeListMapper: {
+    fromAction: mockMapActionToAssetAndFeeList,
   },
 }));
 

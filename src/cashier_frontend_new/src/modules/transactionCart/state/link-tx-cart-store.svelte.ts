@@ -7,8 +7,10 @@ import IntentState, {
   type IntentStateValue,
 } from "$modules/links/types/action/intentState";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
-import { feeService } from "$modules/shared/services/feeService";
-import type { AssetAndFee } from "$modules/shared/types/feeService";
+import {
+  AssetAndFeeListMapper,
+  type AssetAndFee,
+} from "$modules/shared/types/feeService";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import type { ActionSource } from "$modules/transactionCart/types/transaction-source";
 import type { TxCartStore } from "$modules/transactionCart/types/tx-cart-store";
@@ -59,7 +61,7 @@ export class LinkTxCartStore implements TxCartStore {
   initializeAssets(tokens: Record<string, TokenWithPriceAndBalance>): void {
     const walletPrincipal = authState.account?.owner;
     if (!walletPrincipal) return;
-    this.#assetAndFeeList = feeService.mapActionToAssetAndFeeList(
+    this.#assetAndFeeList = AssetAndFeeListMapper.fromAction(
       this.#source.action,
       tokens,
       walletPrincipal,

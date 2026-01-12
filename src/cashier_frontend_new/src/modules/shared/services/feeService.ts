@@ -1,7 +1,5 @@
-import Action from "$modules/links/types/action/action";
 import { ActionType } from "$modules/links/types/action/actionType";
 import IntentTask from "$modules/links/types/action/intentTask";
-import type { IntentStateValue } from "$modules/links/types/action/intentState";
 import {
   formatNumber,
   formatUsdAmount,
@@ -17,13 +15,7 @@ import {
   FeeType,
   type ComputeAmountAndFeeInput,
   type ComputeAmountAndFeeOutput,
-  type FeeItem,
 } from "$modules/links/types/fee";
-import {
-  AssetProcessStateMapper,
-  AssetProcessState,
-  type AssetItem,
-} from "$modules/transactionCart/types/txCart";
 import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
@@ -33,7 +25,6 @@ import type {
   AssetAndFeeList,
   ForecastAssetAndFee,
   SendFeeOutput,
-  WalletAssetInput,
 } from "../types/feeService";
 import {
   FlowDirection,
@@ -154,143 +145,6 @@ export class FeeService {
     }
 
     return output;
-  }
-
-  /**
-   * Map an Action to a list of paired AssetItem and FeeItem for each intent.
-   * @param action
-   * @returns Array of Asset and Fee pairs
-   */
-  // Now accepts a tokens map keyed by token address. This removes any
-  // dependence on WalletStore inside this method — callers should pass the
-  // current tokens (e.g. from `walletStore.query.data`) as a record.
-  mapActionToAssetAndFeeList(
-    action: Action,
-    tokens: Record<string, TokenWithPriceAndBalance>,
-    walletPrincipal: string,
-  ): AssetAndFeeList {
-    const pairs: AssetAndFeeList = action.intents.map((intent) => {
-      const address = intent.type.payload.asset.address.toString();
-
-      // Determine fee type
-      let feeType = FeeType.NETWORK_FEE;
-      if (
-        action.type === ActionType.CREATE_LINK &&
-        intent.task === IntentTask.TRANSFER_WALLET_TO_TREASURY
-      ) {
-        feeType = FeeType.CREATE_LINK_FEE;
-      }
-
-      const label =
-        intent.task === IntentTask.TRANSFER_WALLET_TO_TREASURY
-          ? "Create link fee"
-          : "";
-      const token = tokens[address];
-
-      // compute adjusted amount (uses token fee when token found, otherwise ICP fallback)
-      let asset: AssetItem;
-      let fee: FeeItem | undefined;
-
-      // Determine flow direction using centralized logic
-      const direction = this.getFlowDirectionOrThrow(
-        intent.type.payload,
-        walletPrincipal,
-      );
-
-      if (!token) {
-        // Token not found: fallback to ICP
-        console.error("Failed to resolve token for asset:", address);
-        const { amount: forecastAmountRaw, fee: feeRaw } =
-          this.computeAmountAndFee({
-            intent,
-            ledgerFee: ICP_LEDGER_FEE,
-            actionType: action.type,
-          });
-
-        asset = {
-          state: AssetProcessState.PROCESSING,
-          label,
-          symbol: "N/A",
-          address,
-          amount: forecastAmountRaw,
-          amountFormattedStr: parseBalanceUnits(
-            forecastAmountRaw,
-            8,
-          ).toString(),
-          usdValueStr: undefined,
-          direction,
-          intentId: intent.id,
-        };
-
-        if (feeRaw === undefined) {
-          fee = undefined;
-        } else {
-          fee = {
-            feeType,
-            amount: feeRaw,
-            amountFormattedStr: parseBalanceUnits(feeRaw, 8).toString(),
-            symbol: "N/A",
-          };
-        }
-      } else {
-        const tokenFee = token.fee ?? ICP_LEDGER_FEE;
-        const { amount: forecastAmountRaw, fee: feeRaw } =
-          this.computeAmountAndFee({
-            intent,
-            ledgerFee: tokenFee,
-            actionType: action.type,
-          });
-
-        const forecastFeeAmount = parseBalanceUnits(
-          forecastAmountRaw,
-          token.decimals,
-        );
-        const forecastFeeUsd = token.priceUSD
-          ? forecastFeeAmount * token.priceUSD
-          : undefined;
-
-        asset = {
-          state: AssetProcessStateMapper.fromIntentState(
-            intent.state as IntentStateValue,
-          ),
-          label,
-          symbol: token.symbol,
-          address,
-          amount: forecastAmountRaw,
-          amountFormattedStr: formatNumber(forecastFeeAmount),
-          usdValueStr: forecastFeeUsd
-            ? formatUsdAmount(forecastFeeUsd)
-            : undefined,
-          direction,
-          intentId: intent.id,
-        };
-
-        if (feeRaw === undefined) {
-          fee = undefined;
-        } else {
-          const tokenFeeAmount = parseBalanceUnits(feeRaw, token.decimals);
-          const feeUsdValue = token.priceUSD
-            ? tokenFeeAmount * token.priceUSD
-            : undefined;
-          const feeUsdValueStr = feeUsdValue
-            ? formatUsdAmount(feeUsdValue)
-            : undefined;
-
-          fee = {
-            feeType,
-            amount: feeRaw,
-            amountFormattedStr: formatNumber(tokenFeeAmount),
-            symbol: token.symbol,
-            price: token.priceUSD,
-            usdValue: feeUsdValue,
-            usdValueStr: feeUsdValueStr,
-          };
-        }
-      }
-      return { asset, fee };
-    });
-
-    return pairs;
   }
 
   /**
@@ -536,57 +390,6 @@ export class FeeService {
       amount: amount + fee,
       fee,
     };
-  }
-
-  /**
-   * Map wallet transfer input to AssetAndFee list.
-   * Mirrors mapActionToAssetAndFeeList pattern for wallet domain.
-   * @param input - Wallet transfer input (amount, tokenAddress)
-   * @param tokens - Token lookup by address
-   * @returns AssetAndFeeList with single entry for the transfer
-   */
-  mapWalletToAssetAndFeeList(
-    input: WalletAssetInput,
-    tokens: Record<string, TokenWithPriceAndBalance>,
-  ): AssetAndFeeList {
-    const { amount, tokenAddress } = input;
-    const tokenData = tokens[tokenAddress];
-
-    if (!tokenData) {
-      console.error(
-        "Failed to resolve token for wallet transfer:",
-        tokenAddress,
-      );
-      return [];
-    }
-
-    const fee = tokenData.fee ?? ICP_LEDGER_FEE;
-    const totalAmount = amount + fee;
-    const totalAmountUi = parseBalanceUnits(totalAmount, tokenData.decimals);
-    const feeUi = parseBalanceUnits(fee, tokenData.decimals);
-
-    const asset: AssetItem = {
-      state: AssetProcessState.CREATED,
-      label: "",
-      symbol: tokenData.symbol,
-      address: tokenAddress,
-      amount: totalAmount,
-      amountFormattedStr: formatNumber(totalAmountUi),
-      usdValueStr: tokenData.priceUSD
-        ? formatUsdAmount(totalAmountUi * tokenData.priceUSD)
-        : undefined,
-      direction: FlowDirection.OUTGOING,
-    };
-
-    const feeItem: FeeItem = {
-      feeType: FeeType.NETWORK_FEE,
-      amount: fee,
-      amountFormattedStr: formatNumber(feeUi),
-      symbol: tokenData.symbol,
-      usdValue: tokenData.priceUSD ? feeUi * tokenData.priceUSD : undefined,
-    };
-
-    return [{ asset, fee: feeItem }];
   }
 }
 

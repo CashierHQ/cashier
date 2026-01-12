@@ -49,9 +49,9 @@ vi.mock("$modules/auth/state/auth.svelte", () => ({
   },
 }));
 
-vi.mock("$modules/shared/services/feeService", () => ({
-  feeService: {
-    mapWalletToAssetAndFeeList: mockMapWalletToAssetAndFeeList,
+vi.mock("$modules/shared/types/feeService", () => ({
+  AssetAndFeeListMapper: {
+    fromWallet: mockMapWalletToAssetAndFeeList,
   },
 }));
 
