@@ -25,7 +25,6 @@
   import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
   import { ReceiveAddressType } from "$modules/wallet/types";
   import { Principal } from "@dfinity/principal";
-  import type { ProcessActionResult } from "$modules/links/types/action/action";
 
   type Props = {
     initialToken?: string;
