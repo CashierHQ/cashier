@@ -90,7 +90,6 @@ function createMockToken(isIcp = false): TokenMetadata {
 
 function createWalletSource(isIcp = false, useAccountId = false): WalletSource {
   return {
-    type: TransactionSourceType.WALLET,
     token: createMockToken(isIcp),
     to: useAccountId ? "abc123def456" : Principal.fromText("aaaaa-aa"),
     amount: 1_000_000n,

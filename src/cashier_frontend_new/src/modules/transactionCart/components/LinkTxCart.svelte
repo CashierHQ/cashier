@@ -27,12 +27,11 @@
     onCloseDrawer: () => void;
   } = $props();
 
-  /** Store recreated when source changes */
-  const linkTxCartStore = $derived(new LinkTxCartStore(source));
+  /** Store created once, updateSource() called on source changes */
+  let linkTxCartStore = $state<LinkTxCartStore | null>(null);
 
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
-  let assetsInitialized = $state(false);
 
   // Build tokens map from walletStore
   const tokensMap = $derived.by(() =>
@@ -53,7 +52,7 @@
   }
 
   // Use reactive assetAndFeeList
-  const assetAndFee = $derived(linkTxCartStore.assetAndFeeList);
+  const assetAndFee = $derived(linkTxCartStore?.assetAndFeeList ?? []);
 
   // Derived: true if any asset is in PROCESSING state
   const hasProcessingAssets = $derived.by(() =>
@@ -72,7 +71,7 @@
       (item) => item.asset.direction === FlowDirection.INCOMING,
     ),
   );
-  const totalFeesUsd = $derived.by(() => linkTxCartStore.computeFee());
+  const totalFeesUsd = $derived.by(() => linkTxCartStore?.computeFee() ?? 0);
   const feesBreakdown = $derived.by(() =>
     feeService.buildFeesBreakdownFromAssetAndFeeList(
       assetAndFee,
@@ -98,6 +97,7 @@
    * ActionSource returns ProcessActionResult.
    */
   async function handleConfirm() {
+    if (!linkTxCartStore) return;
     errorMessage = null;
     successMessage = null;
 
@@ -126,20 +126,28 @@
   }
 
   /**
-   * Initialize the store on mount.
+   * Create and initialize store on mount.
    */
   onMount(() => {
+    linkTxCartStore = new LinkTxCartStore(source);
     linkTxCartStore.initialize();
   });
 
   /**
-   * Reactively initialize assets when tokens change.
-   * ActionSource: initialize once, then syncStatesFromAction handles updates.
+   * Update source when prop changes.
    */
   $effect(() => {
-    if (Object.keys(tokensMap).length > 0 && !assetsInitialized) {
+    if (linkTxCartStore && source) {
+      linkTxCartStore.updateSource(source);
+    }
+  });
+
+  /**
+   * Initialize assets when tokens available.
+   */
+  $effect(() => {
+    if (linkTxCartStore && Object.keys(tokensMap).length > 0) {
       linkTxCartStore.initializeAssets(tokensMap);
-      assetsInitialized = true;
     }
   });
 </script>

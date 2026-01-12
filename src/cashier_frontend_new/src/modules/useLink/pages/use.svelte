@@ -2,8 +2,7 @@
   import type { ProcessActionResult } from "$modules/links/types/action/action";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { UserLinkStep } from "$modules/links/types/userLinkStep";
-  import TxCart from "$modules/transactionCart/components/txCart.svelte";
-  import { TransactionSourceType } from "$modules/transactionCart/types/transaction-source";
+  import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";
   import Completed from "$modules/useLink/components/Completed.svelte";
   import Landing from "$modules/useLink/components/Landing.svelte";
   import Unlocked from "$modules/useLink/components/Unlocked.svelte";
@@ -164,10 +163,9 @@
           hasAction={!!userStore.action}
         />
         {#if showTxCart && userStore?.link && userStore?.action}
-          <TxCart
+          <LinkTxCart
             isOpen={showTxCart}
             source={{
-              type: TransactionSourceType.ACTION,
               action: userStore.action,
               handleProcessAction,
             }}

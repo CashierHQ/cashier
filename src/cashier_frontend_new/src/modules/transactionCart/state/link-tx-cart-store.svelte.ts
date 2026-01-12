@@ -31,6 +31,14 @@ export class LinkTxCartStore implements TxCartStore {
     this.#source = source;
   }
 
+  /**
+   * Update the source reference for reactive updates.
+   * Call this from $effect when source prop changes.
+   */
+  updateSource(newSource: ActionSource): void {
+    this.#source = newSource;
+  }
+
   /** Reactive asset and fee list for UI */
   get assetAndFeeList(): AssetAndFee[] {
     return this.#assetAndFeeList;

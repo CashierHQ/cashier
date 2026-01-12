@@ -4,8 +4,7 @@
   import { ActionState } from "$modules/links/types/action/actionState";
   import { ActionType } from "$modules/links/types/action/actionType";
   import { LinkState } from "$modules/links/types/link/linkState";
-  import TxCart from "$modules/transactionCart/components/txCart.svelte";
-  import { TransactionSourceType } from "$modules/transactionCart/types/transaction-source";
+  import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import DetailLinkHeader from "$modules/detailLink/components/detailLinkHeader.svelte";
   import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
@@ -535,10 +534,9 @@
 {/if}
 
 {#if showTxCart && linkStore.action && (linkStore.link?.state === LinkState.CREATE_LINK || (linkStore.link?.state === LinkState.INACTIVE && linkStore.action.type === ActionType.WITHDRAW))}
-  <TxCart
+  <LinkTxCart
     isOpen={showTxCart}
     source={{
-      type: TransactionSourceType.ACTION,
       action: linkStore.action,
       handleProcessAction,
     }}

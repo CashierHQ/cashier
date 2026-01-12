@@ -28,6 +28,14 @@ export class WalletTxCartStore implements TxCartStore {
     this.#source = source;
   }
 
+  /**
+   * Update the source reference for reactive updates.
+   * Call this from $effect when source prop changes.
+   */
+  updateSource(newSource: WalletSource): void {
+    this.#source = newSource;
+  }
+
   /** Reactive asset and fee list for UI */
   get assetAndFeeList(): AssetAndFee[] {
     return this.#assetAndFeeList;

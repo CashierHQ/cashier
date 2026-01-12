@@ -12,8 +12,8 @@
     type TransactionSource,
   } from "$modules/transactionCart/types/transaction-source";
   import { AssetProcessState } from "$modules/transactionCart/types/txCart";
-  import YouSendSection from "$modules/transactionCart/components/YouSendSection.svelte";
-  import YouReceiveSection from "$modules/transactionCart/components/YouReceiveSection.svelte";
+  import YouSendSection from "$modules/transactionCart/components/shared/YouSendSection.svelte";
+  import YouReceiveSection from "$modules/transactionCart/components/shared/YouReceiveSection.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import { X } from "lucide-svelte";

@@ -6,12 +6,11 @@
   import type { ProcessActionResult } from "$modules/links/types/action/action";
   import { ActionState } from "$modules/links/types/action/actionState";
   import { LinkState } from "$modules/links/types/link/linkState";
-  import TxCart from "$modules/transactionCart/components/txCart.svelte";
-  import { TransactionSourceType } from "$modules/transactionCart/types/transaction-source";
   import { onMount } from "svelte";
   import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
   import { locale } from "$lib/i18n";
+  import LinkTxCart from "$modules/transactionCart/components/LinkTxCart.svelte";
   const {
     link,
   }: {
@@ -77,10 +76,9 @@
 </div>
 
 {#if showTxCart && linkDetailStore && linkDetailStore.action}
-  <TxCart
+  <LinkTxCart
     isOpen={showTxCart}
     source={{
-      type: TransactionSourceType.ACTION,
       action: linkDetailStore.action,
       handleProcessAction,
     }}

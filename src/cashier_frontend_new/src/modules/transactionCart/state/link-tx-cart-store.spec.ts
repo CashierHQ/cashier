@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Principal } from "@dfinity/principal";
 import type { ActionSource } from "$modules/transactionCart/types/transaction-source";
-import { TransactionSourceType } from "$modules/transactionCart/types/transaction-source";
 import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { AssetProcessState } from "$modules/transactionCart/types/txCart";
@@ -87,7 +86,6 @@ function createMockAction(withIcrc112Requests = false): Action {
 
 function createActionSource(withIcrc112Requests = false): ActionSource {
   return {
-    type: TransactionSourceType.ACTION,
     action: createMockAction(withIcrc112Requests),
     handleProcessAction: vi.fn().mockResolvedValue({
       action: createMockAction(),

@@ -27,8 +27,8 @@
     onCloseDrawer: () => void;
   } = $props();
 
-  /** Store recreated when source changes */
-  const walletTxCartStore = $derived(new WalletTxCartStore(source));
+  /** Store created once, updateSource() called on source changes */
+  let walletTxCartStore = $state<WalletTxCartStore | null>(null);
 
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
@@ -52,7 +52,7 @@
   }
 
   // Use reactive assetAndFeeList
-  const assetAndFee = $derived(walletTxCartStore.assetAndFeeList);
+  const assetAndFee = $derived(walletTxCartStore?.assetAndFeeList ?? []);
 
   // Derived: true if any asset is in PROCESSING state
   const hasProcessingAssets = $derived.by(() =>
@@ -71,7 +71,7 @@
       (item) => item.asset.direction === FlowDirection.INCOMING,
     ),
   );
-  const totalFeesUsd = $derived.by(() => walletTxCartStore.computeFee());
+  const totalFeesUsd = $derived.by(() => walletTxCartStore?.computeFee() ?? 0);
   const feesBreakdown = $derived.by(() =>
     feeService.buildFeesBreakdownFromAssetAndFeeList(
       assetAndFee,
@@ -97,6 +97,7 @@
    * WalletSource returns Result<bigint, string>.
    */
   async function handleConfirm() {
+    if (!walletTxCartStore) return;
     errorMessage = null;
     successMessage = null;
 
@@ -125,18 +126,27 @@
   }
 
   /**
-   * Initialize the store on mount.
+   * Create and initialize store on mount.
    */
   onMount(() => {
+    walletTxCartStore = new WalletTxCartStore(source);
     walletTxCartStore.initialize();
   });
 
   /**
-   * Reactively initialize assets when source/tokens change.
-   * WalletSource: reinitialize on amount changes from InputAmount.
+   * Update source when prop changes.
    */
   $effect(() => {
-    if (Object.keys(tokensMap).length > 0) {
+    if (walletTxCartStore && source) {
+      walletTxCartStore.updateSource(source);
+    }
+  });
+
+  /**
+   * Initialize assets when tokens available or source changes.
+   */
+  $effect(() => {
+    if (walletTxCartStore && Object.keys(tokensMap).length > 0) {
       walletTxCartStore.initializeAssets(tokensMap);
     }
   });

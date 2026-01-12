@@ -59,7 +59,6 @@ export type TransactionSourceTypeValue =
  * Action-based transaction source (ICRC-112 batch execution)
  */
 export type ActionSource = {
-  type: typeof TransactionSourceType.ACTION;
   action: Action;
   handleProcessAction: () => Promise<ProcessActionResult>;
   onSuccess?: (result: ProcessActionResult) => void;
@@ -69,7 +68,6 @@ export type ActionSource = {
  * Wallet-based transaction source (direct ICRC/ICP transfer)
  */
 export type WalletSource = {
-  type: typeof TransactionSourceType.WALLET;
   token: TokenMetadata;
   /* recipient address - principal or account identifier (string) */
   to: Principal | string;
@@ -94,19 +92,19 @@ export type ExecuteResult<T extends TransactionSource> = T extends ActionSource
     : never;
 
 /**
- * Type guard for ActionSource
+ * Type guard for ActionSource (duck-typing)
  */
 export function isActionSource(
   source: TransactionSource,
 ): source is ActionSource {
-  return source.type === TransactionSourceType.ACTION;
+  return "action" in source && "handleProcessAction" in source;
 }
 
 /**
- * Type guard for WalletSource
+ * Type guard for WalletSource (duck-typing)
  */
 export function isWalletSource(
   source: TransactionSource,
 ): source is WalletSource {
-  return source.type === TransactionSourceType.WALLET;
+  return "token" in source && "to" in source && "amount" in source;
 }

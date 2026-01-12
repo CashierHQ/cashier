@@ -15,11 +15,8 @@
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import { Clipboard, Info } from "lucide-svelte";
   import { toast } from "svelte-sonner";
-  import TxCart from "$modules/transactionCart/components/txCart.svelte";
-  import {
-    TransactionSourceType,
-    type WalletSource,
-  } from "$modules/transactionCart/types/transaction-source";
+  import WalletTxCart from "$modules/transactionCart/components/WalletTxCart.svelte";
+  import type { WalletSource } from "$modules/transactionCart/types/transaction-source";
   import InputAmount from "$modules/shared/components/InputAmount.svelte";
   import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
   import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";
@@ -116,7 +113,6 @@
     const amountBigInt = formatBalanceUnits(amount, selectedTokenObj.decimals);
 
     return {
-      type: TransactionSourceType.WALLET,
       token: {
         name: selectedTokenObj.name,
         symbol: selectedTokenObj.symbol,
@@ -335,7 +331,7 @@
 </div>
 
 {#if walletSource}
-  <TxCart
+  <WalletTxCart
     source={{
       ...walletSource,
       onSuccess: handleTxSuccess,

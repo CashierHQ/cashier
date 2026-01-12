@@ -152,7 +152,6 @@ function createMockToken(isIcp = false): TokenMetadata {
 
 function createActionSource(withIcrc112Requests = false): ActionSource {
   return {
-    type: TransactionSourceType.ACTION,
     action: createMockAction(withIcrc112Requests),
     handleProcessAction: vi.fn().mockResolvedValue({
       action: createMockAction(),
@@ -164,7 +163,6 @@ function createActionSource(withIcrc112Requests = false): ActionSource {
 
 function createWalletSource(isIcp = false, useAccountId = false): WalletSource {
   return {
-    type: TransactionSourceType.WALLET,
     token: createMockToken(isIcp),
     to: useAccountId ? "abc123def456" : Principal.fromText("aaaaa-aa"),
     amount: 1_000_000n,
