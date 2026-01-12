@@ -102,4 +102,96 @@ describe("FeeService", () => {
       expect(feeService.getTotalFeeUsd(assets)).toBe(0);
     });
   });
+
+  describe("mapWalletToAssetAndFeeList", () => {
+    const mockTokens = {
+      "token-addr": {
+        address: "token-addr",
+        symbol: "TKN",
+        decimals: 8,
+        fee: 10_000n,
+        priceUSD: 1.5,
+        balance: 100_000_000n,
+        name: "Test Token",
+        logo: "",
+      },
+    };
+
+    it("returns AssetAndFee array for valid input", () => {
+      const result = feeService.mapWalletToAssetAndFeeList(
+        { amount: 1_000_000n, tokenAddress: "token-addr" },
+        mockTokens,
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].asset.amount).toBe(1_010_000n); // amount + fee
+      expect(result[0].asset.state).toBe(AssetProcessState.CREATED);
+      expect(result[0].asset.direction).toBe(FlowDirection.OUTGOING);
+      expect(result[0].fee?.amount).toBe(10_000n);
+    });
+
+    it("returns empty array for unknown token", () => {
+      const result = feeService.mapWalletToAssetAndFeeList(
+        { amount: 1_000_000n, tokenAddress: "unknown" },
+        mockTokens,
+      );
+      expect(result).toHaveLength(0);
+    });
+
+    it("uses token fee from tokens map", () => {
+      const tokensWithCustomFee = {
+        "token-addr": { ...mockTokens["token-addr"], fee: 5_000n },
+      };
+      const result = feeService.mapWalletToAssetAndFeeList(
+        { amount: 1_000_000n, tokenAddress: "token-addr" },
+        tokensWithCustomFee,
+      );
+      expect(result[0].fee?.amount).toBe(5_000n);
+      expect(result[0].asset.amount).toBe(1_005_000n); // amount + custom fee
+    });
+
+    it("calculates USD values when priceUSD available", () => {
+      const result = feeService.mapWalletToAssetAndFeeList(
+        { amount: 1_000_000n, tokenAddress: "token-addr" },
+        mockTokens,
+      );
+      expect(result[0].asset.usdValueStr).toBeDefined();
+      expect(result[0].fee?.usdValue).toBeDefined();
+    });
+
+    it("handles token without priceUSD", () => {
+      const tokensWithoutPrice = {
+        "token-addr": { ...mockTokens["token-addr"], priceUSD: undefined },
+      };
+      const result = feeService.mapWalletToAssetAndFeeList(
+        { amount: 1_000_000n, tokenAddress: "token-addr" },
+        tokensWithoutPrice,
+      );
+      expect(result[0].asset.usdValueStr).toBeUndefined();
+      expect(result[0].fee?.usdValue).toBeUndefined();
+    });
+
+    it("sets correct asset properties", () => {
+      const result = feeService.mapWalletToAssetAndFeeList(
+        { amount: 1_000_000n, tokenAddress: "token-addr" },
+        mockTokens,
+      );
+      const asset = result[0].asset;
+      expect(asset.symbol).toBe("TKN");
+      expect(asset.address).toBe("token-addr");
+      expect(asset.label).toBe("");
+      expect(asset.amountFormattedStr).toBeDefined();
+    });
+
+    it("sets correct fee properties", () => {
+      const result = feeService.mapWalletToAssetAndFeeList(
+        { amount: 1_000_000n, tokenAddress: "token-addr" },
+        mockTokens,
+      );
+      const fee = result[0].fee;
+      expect(fee?.feeType).toBe(FeeType.NETWORK_FEE);
+      expect(fee?.symbol).toBe("TKN");
+      expect(fee?.amountFormattedStr).toBeDefined();
+    });
+  });
 });

@@ -2,15 +2,9 @@ import type { IITransport } from "$modules/auth/signer/ii/IITransport";
 import { authState } from "$modules/auth/state/auth.svelte";
 import Icrc112Service from "$modules/icrc112/services/icrc112Service";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
-import { FeeType, type FeeItem } from "$modules/links/types/fee";
 import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { feeService } from "$modules/shared/services/feeService";
 import type { AssetAndFee } from "$modules/shared/types/feeService";
-import { parseBalanceUnits } from "$modules/shared/utils/converter";
-import {
-  formatNumber,
-  formatUsdAmount,
-} from "$modules/shared/utils/formatNumber";
 import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
 import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
@@ -20,7 +14,6 @@ import {
   AssetProcessState,
   AssetProcessStateMapper,
   WalletTransferState,
-  type AssetItem,
 } from "$modules/transactionCart/types/txCart";
 import IntentState, {
   type IntentStateValue,
@@ -29,7 +22,6 @@ import { assertUnreachable } from "$lib/rsMatch";
 import { Err, Ok, type Result } from "ts-results-es";
 import {
   type ExecuteResult,
-  FlowDirection,
   type TransactionSource,
   isActionSource,
   isWalletSource,
@@ -111,7 +103,11 @@ export class TransactionCartStore<T extends TransactionSource> {
       if (this.#assetAndFeeList.length > 0) {
         return this.#assetAndFeeList;
       }
-      return this.#buildWalletAssetListPure(tokens);
+      const { token, amount } = this.#source;
+      return feeService.mapWalletToAssetAndFeeList(
+        { amount, tokenAddress: token.address },
+        tokens,
+      );
     }
     // Exhaustive check - should never reach here
     return assertUnreachable(this.#source as never);
@@ -126,7 +122,11 @@ export class TransactionCartStore<T extends TransactionSource> {
     tokens: Record<string, TokenWithPriceAndBalance>,
   ): void {
     if (!isWalletSource(this.#source)) return;
-    this.#assetAndFeeList = this.#buildWalletAssetListPure(tokens);
+    const { token, amount } = this.#source;
+    this.#assetAndFeeList = feeService.mapWalletToAssetAndFeeList(
+      { amount, tokenAddress: token.address },
+      tokens,
+    );
   }
 
   /**
@@ -343,47 +343,4 @@ export class TransactionCartStore<T extends TransactionSource> {
     }
   }
 
-  /**
-   * Build AssetAndFee list for WalletSource (pure - no state mutation)
-   * @param tokens - Token lookup map
-   * @returns AssetAndFee list
-   */
-  #buildWalletAssetListPure(
-    tokens: Record<string, TokenWithPriceAndBalance>,
-  ): AssetAndFee[] {
-    if (!isWalletSource(this.#source)) return [];
-
-    const { token, amount } = this.#source;
-    const tokenData = tokens[token.address];
-    if (!tokenData) return [];
-
-    const fee = token.fee ?? 10_000n;
-    const totalAmount = amount + fee;
-    const totalAmountUi = parseBalanceUnits(totalAmount, tokenData.decimals);
-    const feeUi = parseBalanceUnits(fee, tokenData.decimals);
-
-    const asset: AssetItem = {
-      state: AssetProcessState.CREATED,
-      label: "",
-      symbol: tokenData.symbol,
-      address: token.address,
-      amount: totalAmount,
-      amountFormattedStr: formatNumber(totalAmountUi),
-      usdValueStr: tokenData.priceUSD
-        ? formatUsdAmount(totalAmountUi * tokenData.priceUSD)
-        : undefined,
-      // WalletSource is always outgoing (user is sender)
-      direction: FlowDirection.OUTGOING,
-    };
-
-    const feeItem: FeeItem = {
-      feeType: FeeType.NETWORK_FEE,
-      amount: fee,
-      amountFormattedStr: formatNumber(feeUi),
-      symbol: tokenData.symbol,
-      usdValue: tokenData.priceUSD ? feeUi * tokenData.priceUSD : undefined,
-    };
-
-    return [{ asset, fee: feeItem }];
-  }
 }

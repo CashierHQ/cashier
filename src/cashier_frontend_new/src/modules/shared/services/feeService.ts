@@ -33,6 +33,7 @@ import type {
   AssetAndFeeList,
   ForecastAssetAndFee,
   SendFeeOutput,
+  WalletAssetInput,
 } from "../types/feeService";
 import {
   FlowDirection,
@@ -535,6 +536,57 @@ export class FeeService {
       amount: amount + fee,
       fee,
     };
+  }
+
+  /**
+   * Map wallet transfer input to AssetAndFee list.
+   * Mirrors mapActionToAssetAndFeeList pattern for wallet domain.
+   * @param input - Wallet transfer input (amount, tokenAddress)
+   * @param tokens - Token lookup by address
+   * @returns AssetAndFeeList with single entry for the transfer
+   */
+  mapWalletToAssetAndFeeList(
+    input: WalletAssetInput,
+    tokens: Record<string, TokenWithPriceAndBalance>,
+  ): AssetAndFeeList {
+    const { amount, tokenAddress } = input;
+    const tokenData = tokens[tokenAddress];
+
+    if (!tokenData) {
+      console.error(
+        "Failed to resolve token for wallet transfer:",
+        tokenAddress,
+      );
+      return [];
+    }
+
+    const fee = tokenData.fee ?? ICP_LEDGER_FEE;
+    const totalAmount = amount + fee;
+    const totalAmountUi = parseBalanceUnits(totalAmount, tokenData.decimals);
+    const feeUi = parseBalanceUnits(fee, tokenData.decimals);
+
+    const asset: AssetItem = {
+      state: AssetProcessState.CREATED,
+      label: "",
+      symbol: tokenData.symbol,
+      address: tokenAddress,
+      amount: totalAmount,
+      amountFormattedStr: formatNumber(totalAmountUi),
+      usdValueStr: tokenData.priceUSD
+        ? formatUsdAmount(totalAmountUi * tokenData.priceUSD)
+        : undefined,
+      direction: FlowDirection.OUTGOING,
+    };
+
+    const feeItem: FeeItem = {
+      feeType: FeeType.NETWORK_FEE,
+      amount: fee,
+      amountFormattedStr: formatNumber(feeUi),
+      symbol: tokenData.symbol,
+      usdValue: tokenData.priceUSD ? feeUi * tokenData.priceUSD : undefined,
+    };
+
+    return [{ asset, fee: feeItem }];
   }
 }
 

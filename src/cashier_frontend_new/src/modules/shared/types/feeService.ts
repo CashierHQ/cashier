@@ -23,6 +23,14 @@ export type ForecastAssetAndFee = {
 export type AssetAndFeeList = AssetAndFee[];
 
 /**
+ * Input type for wallet transfer to asset mapping
+ */
+export type WalletAssetInput = {
+  amount: bigint;
+  tokenAddress: string;
+};
+
+/**
  * Output type for computeSendFee method
  * Contains both raw values and formatted display strings
  */

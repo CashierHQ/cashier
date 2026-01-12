@@ -32,6 +32,7 @@ const {
   mockIcpTransferToPrincipal,
   mockTransferToPrincipal,
   mockMapActionToAssetAndFeeList,
+  mockMapWalletToAssetAndFeeList,
   mockGetSigner,
   MockIcrc112Service,
   MockIcpLedgerService,
@@ -48,6 +49,7 @@ const {
     mockIcpTransferToPrincipal,
     mockTransferToPrincipal,
     mockMapActionToAssetAndFeeList: vi.fn(),
+    mockMapWalletToAssetAndFeeList: vi.fn(),
     mockGetSigner: vi.fn(),
     MockIcrc112Service: vi.fn(() => ({
       sendBatchRequest: mockSendBatchRequest,
@@ -81,6 +83,7 @@ vi.mock("$modules/shared/constants", () => ({
 vi.mock("$modules/shared/services/feeService", () => ({
   feeService: {
     mapActionToAssetAndFeeList: mockMapActionToAssetAndFeeList,
+    mapWalletToAssetAndFeeList: mockMapWalletToAssetAndFeeList,
   },
 }));
 
@@ -180,6 +183,28 @@ describe("TransactionCartStore", () => {
     mockTransferToAccount.mockResolvedValue(12345n);
     mockIcpTransferToPrincipal.mockResolvedValue(11111n);
     mockTransferToPrincipal.mockResolvedValue(67890n);
+    // Default mock for wallet asset mapping
+    mockMapWalletToAssetAndFeeList.mockReturnValue([
+      {
+        asset: {
+          state: AssetProcessState.CREATED,
+          label: "",
+          symbol: "TEST",
+          address: "test-token-address",
+          amount: 1_010_000n,
+          amountFormattedStr: "0.0101",
+          usdValueStr: "$0.02",
+          direction: FlowDirection.OUTGOING,
+        },
+        fee: {
+          feeType: FeeType.NETWORK_FEE,
+          amount: 10_000n,
+          amountFormattedStr: "0.0001",
+          symbol: "TEST",
+          usdValue: 0.0001,
+        },
+      },
+    ]);
     // Reset authState account
     vi.mocked(authState).account = {
       owner: "test-principal-id",
@@ -356,6 +381,7 @@ describe("TransactionCartStore", () => {
     });
 
     it("should return empty array for WalletSource when token not in map", () => {
+      mockMapWalletToAssetAndFeeList.mockReturnValueOnce([]);
       const source = createWalletSource(false);
       source.token.address = "unknown-token";
       const store = new TransactionCartStore(source);
