@@ -207,7 +207,7 @@ export class FeeService {
           });
 
         asset = {
-          state: AssetProcessState.PENDING,
+          state: AssetProcessState.PROCESSING,
           label,
           symbol: "N/A",
           address,
@@ -218,6 +218,7 @@ export class FeeService {
           ).toString(),
           usdValueStr: undefined,
           direction,
+          intentId: intent.id,
         };
 
         if (feeRaw === undefined) {
@@ -260,6 +261,7 @@ export class FeeService {
             ? formatUsdAmount(forecastFeeUsd)
             : undefined,
           direction,
+          intentId: intent.id,
         };
 
         if (feeRaw === undefined) {

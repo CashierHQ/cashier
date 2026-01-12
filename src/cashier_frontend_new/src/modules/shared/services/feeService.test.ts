@@ -11,7 +11,7 @@ describe("FeeService", () => {
       const assets: AssetAndFeeList = [
         {
           asset: {
-            state: AssetProcessState.PENDING,
+            state: AssetProcessState.PROCESSING,
             label: "",
             symbol: "ICP",
             address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
@@ -30,7 +30,7 @@ describe("FeeService", () => {
         },
         {
           asset: {
-            state: AssetProcessState.PENDING,
+            state: AssetProcessState.PROCESSING,
             label: "Create link fee",
             symbol: "ICP",
             address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
@@ -56,7 +56,7 @@ describe("FeeService", () => {
       const assets: AssetAndFeeList = [
         {
           asset: {
-            state: AssetProcessState.PENDING,
+            state: AssetProcessState.PROCESSING,
             label: "",
             symbol: "ICP",
             address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
@@ -80,7 +80,7 @@ describe("FeeService", () => {
       const assets: AssetAndFeeList = [
         {
           asset: {
-            state: AssetProcessState.PENDING,
+            state: AssetProcessState.PROCESSING,
             label: "",
             symbol: "ICP",
             address: "ryjl3-tyaaa-aaaaa-aaaba-cai",

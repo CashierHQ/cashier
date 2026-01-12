@@ -14,7 +14,10 @@ import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
 import { ReceiveAddressType } from "$modules/wallet/types";
 import type { AssetAndFee } from "$modules/shared/types/feeService";
-import { AssetProcessState } from "$modules/transactionCart/types/txCart";
+import {
+  AssetProcessState,
+  WalletTransferState,
+} from "$modules/transactionCart/types/txCart";
 import { FeeType } from "$modules/links/types/fee";
 import { Ok } from "ts-results-es";
 
@@ -309,7 +312,7 @@ describe("TransactionCartStore", () => {
       const mockAssetAndFee: AssetAndFee[] = [
         {
           asset: {
-            state: AssetProcessState.PENDING,
+            state: AssetProcessState.PROCESSING,
             label: "",
             symbol: "TEST",
             address: mockTokenAddress,
@@ -458,6 +461,162 @@ describe("TransactionCartStore", () => {
         );
         expect(result).toEqual(Ok(67890n));
       });
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  // setSourceState() and State Transitions
+  // ─────────────────────────────────────────────────────────────
+
+  describe("setSourceState", () => {
+    const mockTokenAddress = "mxzaz-hqaaa-aaaar-qaada-cai";
+    const mockToken: TokenWithPriceAndBalance = {
+      address: mockTokenAddress,
+      name: "Test Token",
+      symbol: "TEST",
+      decimals: 8,
+      fee: 10_000n,
+      enabled: true,
+      is_default: false,
+      balance: 10_000_000n,
+      priceUSD: 10,
+    };
+
+    const mockTokens: Record<string, TokenWithPriceAndBalance> = {
+      [mockTokenAddress]: mockToken,
+    };
+
+    it("should transition WalletSource assets via mapper", () => {
+      const source = createWalletSource(false);
+      source.token = mockToken as TokenMetadata;
+      const store = new TransactionCartStore(source);
+      store.initializeWalletAssets(mockTokens);
+
+      // Initial state should be CREATED
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.CREATED,
+      );
+
+      // Transition to PROCESSING via WalletTransferState
+      store.setSourceState(WalletTransferState.PROCESSING);
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.PROCESSING,
+      );
+
+      // Transition to SUCCESS via WalletTransferState → maps to SUCCEED
+      store.setSourceState(WalletTransferState.SUCCESS);
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.SUCCEED,
+      );
+    });
+
+    it("should create new array for Svelte reactivity", () => {
+      const source = createWalletSource(false);
+      source.token = mockToken as TokenMetadata;
+      const store = new TransactionCartStore(source);
+      store.initializeWalletAssets(mockTokens);
+
+      const originalList = store.assetAndFeeList;
+      store.setSourceState(WalletTransferState.PROCESSING);
+      const newList = store.assetAndFeeList;
+
+      expect(newList).not.toBe(originalList);
+      expect(newList[0]).not.toBe(originalList[0]);
+      expect(newList[0].asset).not.toBe(originalList[0].asset);
+    });
+  });
+
+  describe("WalletSource state transitions during execute", () => {
+    const mockTokenAddress = "mxzaz-hqaaa-aaaar-qaada-cai";
+    const mockToken: TokenWithPriceAndBalance = {
+      address: mockTokenAddress,
+      name: "Test Token",
+      symbol: "TEST",
+      decimals: 8,
+      fee: 10_000n,
+      enabled: true,
+      is_default: false,
+      balance: 10_000_000n,
+      priceUSD: 10,
+    };
+
+    const mockTokens: Record<string, TokenWithPriceAndBalance> = {
+      [mockTokenAddress]: mockToken,
+    };
+
+    it("should transition to SUCCEED on successful transfer", async () => {
+      const source = createWalletSource(false);
+      source.token = mockToken as TokenMetadata;
+      const store = new TransactionCartStore(source);
+      store.initialize();
+      store.initializeWalletAssets(mockTokens);
+
+      // Initial state
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.CREATED,
+      );
+
+      const result = await store.execute();
+
+      // Final state after success
+      expect(result.isOk()).toBe(true);
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.SUCCEED,
+      );
+    });
+
+    it("should transition to FAILED on transfer error", async () => {
+      mockTransferToPrincipal.mockRejectedValueOnce(
+        new Error("Transfer failed"),
+      );
+
+      const source = createWalletSource(false);
+      source.token = mockToken as TokenMetadata;
+      const store = new TransactionCartStore(source);
+      store.initialize();
+      store.initializeWalletAssets(mockTokens);
+
+      const result = await store.execute();
+
+      expect(result.isErr()).toBe(true);
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.FAILED,
+      );
+    });
+
+    it("should transition to FAILED on validation error", async () => {
+      // ICRC transfer with account ID should fail validation
+      const source = createWalletSource(false);
+      source.token = mockToken as TokenMetadata;
+      source.receiveType = ReceiveAddressType.ACCOUNT_ID;
+      const store = new TransactionCartStore(source);
+      store.initialize();
+      store.initializeWalletAssets(mockTokens);
+
+      const result = await store.execute();
+
+      expect(result.isErr()).toBe(true);
+      if (result.isErr()) {
+        expect(result.error).toContain("ICRC transfer only supports principal");
+      }
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.FAILED,
+      );
+    });
+
+    it("should transition to FAILED when service not initialized", async () => {
+      const source = createWalletSource(false);
+      source.token = mockToken as TokenMetadata;
+      const store = new TransactionCartStore(source);
+      // Don't call initialize()
+      store.initializeWalletAssets(mockTokens);
+
+      const result = await store.execute();
+
+      expect(result.isErr()).toBe(true);
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.FAILED,
+      );
     });
   });
 });

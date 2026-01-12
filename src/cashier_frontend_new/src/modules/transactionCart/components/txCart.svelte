@@ -11,6 +11,7 @@
     isWalletSource,
     type TransactionSource,
   } from "$modules/transactionCart/types/transaction-source";
+  import { AssetProcessState } from "$modules/transactionCart/types/txCart";
   import YouSendSection from "$modules/transactionCart/components/YouSendSection.svelte";
   import YouReceiveSection from "$modules/transactionCart/components/YouReceiveSection.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
@@ -35,10 +36,7 @@
 
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
-  let isProcessingLocally: boolean = $state(false);
-
-  // Processing state (internal only now)
-  const isProcessing = $derived.by(() => isProcessingLocally);
+  let assetsInitialized = $state(false);
 
   // Build tokens map from walletStore
   const tokensMap = $derived.by(() =>
@@ -61,14 +59,16 @@
     failedImageLoads.add(address);
   }
 
-  const assetAndFee = $derived.by(() => {
-    if (isWalletSource(source)) {
-      // For WalletSource, return reactive state (updated by initializeWalletAssets and execute)
-      return txCartStore.assetAndFeeList;
-    }
-    // ActionSource: compute fresh each time (stateless)
-    return txCartStore.computeAssetAndFee(tokensMap);
-  });
+  // Use reactive assetAndFeeList for both sources (updated by initialize* and setSourceState)
+  const assetAndFee = $derived(txCartStore.assetAndFeeList);
+
+  // Derived: true if any asset is in PROCESSING state
+  const hasProcessingAssets = $derived.by(() =>
+    assetAndFee.some(
+      (item) => item.asset.state === AssetProcessState.PROCESSING,
+    ),
+  );
+
   const outgoingAssets = $derived.by(() =>
     assetAndFee.filter(
       (item) => item.asset.direction === FlowDirection.OUTGOING,
@@ -91,7 +91,7 @@
 
   // Handle fee breakdown click - close txCart and show FeeInfoDrawer
   function handleFeeBreakdownClick() {
-    if (isProcessing) return;
+    if (hasProcessingAssets) return;
     isOpen = false;
     showFeeInfoDrawer = true;
   }
@@ -105,9 +105,9 @@
   /**
    * Handle confirm button click.
    * Supports both ActionSource (ProcessActionResult) and WalletSource (bigint) results.
+   * State transitions (PROCESSING → SUCCEED/FAILED) are handled by txCartStore.execute().
    */
   async function handleConfirm() {
-    isProcessingLocally = true;
     errorMessage = null;
     successMessage = null;
 
@@ -139,8 +139,6 @@
       }
     } catch (e) {
       errorMessage = `${locale.t(`${txCartI18nKey}.errorMessagePrefix`)} ${(e as Error).message}`;
-    } finally {
-      isProcessingLocally = false;
     }
   }
 
@@ -162,13 +160,19 @@
   });
 
   /**
-   * Reactively update source and wallet assets when source changes.
-   * This ensures amount changes from InputAmount propagate to the store.
+   * Reactively update source and initialize assets when source/tokens change.
+   * WalletSource: reinitialize on amount changes from InputAmount.
+   * ActionSource: initialize once, then syncStatesFromAction handles updates.
    */
   $effect(() => {
     txCartStore.updateSource(source);
-    if (isWalletSource(source) && Object.keys(tokensMap).length > 0) {
-      txCartStore.initializeWalletAssets(tokensMap);
+    if (Object.keys(tokensMap).length > 0) {
+      if (isWalletSource(source)) {
+        txCartStore.initializeWalletAssets(tokensMap);
+      } else if (isActionSource(source) && !assetsInitialized) {
+        txCartStore.initializeActionAssets(tokensMap);
+        assetsInitialized = true;
+      }
     }
   });
 </script>
@@ -217,8 +221,6 @@
               assets={outgoingAssets}
               {failedImageLoads}
               onImageError={handleImageError}
-              {isProcessing}
-              hasError={!!errorMessage}
             />
           {/if}
 
@@ -227,8 +229,6 @@
               assets={incomingAssets}
               {failedImageLoads}
               onImageError={handleImageError}
-              {isProcessing}
-              hasError={!!errorMessage}
             />
           {/if}
 
@@ -236,7 +236,7 @@
             <FeesBreakdownSection
               {totalFeesUsd}
               onBreakdownClick={handleFeeBreakdownClick}
-              disabled={isProcessing}
+              disabled={hasProcessingAssets}
             />
           {/if}
 
@@ -250,9 +250,9 @@
         <Button
           class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
           onclick={handleConfirm}
-          disabled={isProcessing}
+          disabled={hasProcessingAssets}
         >
-          {isProcessing
+          {hasProcessingAssets
             ? locale.t(`${txCartI18nKey}.processingButton`)
             : errorMessage
               ? locale.t(`${txCartI18nKey}.retryButton`)

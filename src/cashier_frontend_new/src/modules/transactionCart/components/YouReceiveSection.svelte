@@ -1,25 +1,18 @@
 <script lang="ts">
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import { X } from "lucide-svelte";
+  import { Check, X } from "lucide-svelte";
   import { locale } from "$lib/i18n";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import type { AssetAndFee } from "$modules/shared/types/feeService";
+  import { AssetProcessState } from "$modules/transactionCart/types/txCart";
 
   type Props = {
     assets: AssetAndFee[];
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
-    isProcessing?: boolean;
-    hasError?: boolean;
   };
 
-  let {
-    assets,
-    failedImageLoads,
-    onImageError,
-    isProcessing = false,
-    hasError = false,
-  }: Props = $props();
+  let { assets, failedImageLoads, onImageError }: Props = $props();
 </script>
 
 <div class="input-label-field-container">
@@ -34,12 +27,14 @@
     {#each assets as { asset } (asset.address)}
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-1.5">
-          {#if hasError}
+          {#if asset.state === AssetProcessState.FAILED}
             <X size={16} class="text-red-600" stroke-width={2.5} />
-          {:else if isProcessing}
+          {:else if asset.state === AssetProcessState.PROCESSING}
             <div
               class="w-4 h-4 border-2 border-green border-t-transparent rounded-full animate-spin"
             ></div>
+          {:else if asset.state === AssetProcessState.SUCCEED}
+            <Check size={16} class="text-green-600" stroke-width={2.5} />
           {/if}
           {#if !failedImageLoads.has(asset.address)}
             <img

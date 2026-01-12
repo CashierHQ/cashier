@@ -18,8 +18,13 @@ import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import type { Signer } from "@slide-computer/signer";
 import {
   AssetProcessState,
+  AssetProcessStateMapper,
+  WalletTransferState,
   type AssetItem,
 } from "$modules/transactionCart/types/txCart";
+import IntentState, {
+  type IntentStateValue,
+} from "$modules/links/types/action/intentState";
 import { assertUnreachable } from "$lib/rsMatch";
 import { Err, Ok, type Result } from "ts-results-es";
 import {
@@ -30,6 +35,7 @@ import {
   isWalletSource,
 } from "$modules/transactionCart/types/transaction-source";
 import { ReceiveAddressType } from "$modules/wallet/types";
+import type Action from "$modules/links/types/action/action";
 
 /**
  * Generic transaction cart store supporting both Action-based (ICRC-112)
@@ -124,10 +130,105 @@ export class TransactionCartStore<T extends TransactionSource> {
   }
 
   /**
+   * Initialize action assets into reactive state.
+   * Call this from $effect, NOT from $derived.
+   * @param tokens - Token lookup map
+   */
+  initializeActionAssets(
+    tokens: Record<string, TokenWithPriceAndBalance>,
+  ): void {
+    if (!isActionSource(this.#source)) return;
+    const walletPrincipal = authState.account?.owner;
+    if (!walletPrincipal) return;
+    this.#assetAndFeeList = feeService.mapActionToAssetAndFeeList(
+      this.#source.action,
+      tokens,
+      walletPrincipal,
+    );
+  }
+
+  /**
    * Getter for reactive asset list (for UI observation)
    */
   get assetAndFeeList(): AssetAndFee[] {
     return this.#assetAndFeeList;
+  }
+
+  /**
+   * Sync asset states from an updated action (after handleProcessAction).
+   * Matches assets by intentId and updates state from corresponding intent.
+   * @param action - Updated action with latest intent states
+   */
+  syncStatesFromAction(action: Action): void {
+    if (!isActionSource(this.#source)) return;
+    if (!action.intents?.length) return;
+
+    // Build lookup object of intentId -> IntentState from action intents
+    const intentStateById: Record<string, IntentStateValue> = {};
+    for (const intent of action.intents) {
+      if (intent.id && intent.state) {
+        intentStateById[intent.id] = intent.state as IntentStateValue;
+      }
+    }
+
+    // Update asset states from intent states
+    this.#assetAndFeeList = this.#assetAndFeeList.map((item) => {
+      if (!item.asset.intentId) return item;
+      const intentState = intentStateById[item.asset.intentId];
+      if (!intentState) return item;
+
+      return {
+        ...item,
+        asset: {
+          ...item.asset,
+          state: AssetProcessStateMapper.fromIntentState(intentState),
+        },
+      };
+    });
+  }
+
+  /**
+   * Transition all assets to a new state based on source type.
+   * Routes to appropriate mapper: WalletTransferState or IntentState → AssetProcessState.
+   * For ActionSource transitioning to PROCESSING, only allows if current state is CREATED or FAILED.
+   * Creates new array to trigger Svelte 5 reactivity.
+   * @param state - Source-specific state (WalletTransferState for wallet, IntentStateValue for action)
+   */
+  setSourceState(state: WalletTransferState | IntentStateValue): void {
+    if (isWalletSource(this.#source)) {
+      const assetState = AssetProcessStateMapper.fromWalletTransferState(
+        state as WalletTransferState,
+      );
+
+      this.#assetAndFeeList = this.#assetAndFeeList.map((item) => ({
+        ...item,
+        asset: { ...item.asset, state: assetState },
+      }));
+    } else if (isActionSource(this.#source)) {
+      // set to processing for intent only if current state is CREATED or FAILED
+      this.#assetAndFeeList = this.#assetAndFeeList.map((item) => {
+        let newState = item.asset.state;
+        if (state === IntentState.PROCESSING) {
+          if (
+            item.asset.state === AssetProcessState.CREATED ||
+            item.asset.state === AssetProcessState.FAILED
+          ) {
+            newState = AssetProcessState.PROCESSING;
+          }
+          // otherwise retain current state
+        } else {
+          newState = AssetProcessStateMapper.fromIntentState(
+            state as IntentStateValue,
+          );
+        }
+        return {
+          ...item,
+          asset: { ...item.asset, state: newState },
+        };
+      });
+    } else {
+      assertUnreachable(this.#source as never);
+    }
   }
 
   /**
@@ -145,31 +246,49 @@ export class TransactionCartStore<T extends TransactionSource> {
     return this.#executeWallet() as unknown as ExecuteResult<T>;
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // Private: Action execution (ICRC-112)
-  // ─────────────────────────────────────────────────────────────
-
+  /**
+   * Private: Action execution (ICRC-112 batch + processAction)
+   * Transitions asset states: CREATED → PROCESSING → SUCCESS|FAILED
+   * Uses setSourceState with IntentState for state transitions.
+   * @returns ProcessActionResult from handleProcessAction
+   */
   async #executeAction(): Promise<ProcessActionResult> {
     if (!isActionSource(this.#source)) throw new Error("Invalid source type");
     if (!this.#icrc112Service) {
+      this.setSourceState(IntentState.FAIL);
       throw new Error("ICRC-112 Service is not initialized.");
     }
 
+    // Transition to PROCESSING before execution
+    this.setSourceState(IntentState.PROCESSING);
+
     const { action, handleProcessAction } = this.#source;
 
-    if (action.icrc_112_requests && action.icrc_112_requests.length > 0) {
-      await this.#icrc112Service.sendBatchRequest(
-        action.icrc_112_requests,
-        authState.account!.owner,
-        CASHIER_BACKEND_CANISTER_ID,
-      );
-    }
+    try {
+      if (action.icrc_112_requests && action.icrc_112_requests.length > 0) {
+        await this.#icrc112Service.sendBatchRequest(
+          action.icrc_112_requests,
+          authState.account!.owner,
+          CASHIER_BACKEND_CANISTER_ID,
+        );
+      }
 
-    return await handleProcessAction();
+      const result = await handleProcessAction();
+
+      // Sync asset states from updated action (mirrors backend state)
+      this.syncStatesFromAction(result.action);
+
+      return result;
+    } catch (e) {
+      this.setSourceState(IntentState.FAIL);
+      throw e;
+    }
   }
 
   /**
    * Private: Wallet execution (ICP / ICRC)
+   * Transitions asset states: CREATED → PROCESSING → SUCCESS|FAILED
+   * Uses setSourceState with WalletTransferState for state transitions.
    * @returns bigint block index or Err string on failure
    */
   async #executeWallet(): Promise<Result<bigint, string>> {
@@ -177,39 +296,49 @@ export class TransactionCartStore<T extends TransactionSource> {
       return Err("Invalid source type");
     }
 
+    // Transition to PROCESSING before tx
+    this.setSourceState(WalletTransferState.PROCESSING);
+
     const { to, amount, receiveType } = this.#source;
     const isAccountId = receiveType === ReceiveAddressType.ACCOUNT_ID;
     const isPrincipal = receiveType === ReceiveAddressType.PRINCIPAL;
 
     try {
+      let result: bigint;
+
       // ICP Ledger: supports both ACCOUNT_ID and PRINCIPAL
       if (this.#icpLedgerService) {
         if (isAccountId && typeof to === "string") {
-          return Ok(await this.#icpLedgerService.transferToAccount(to, amount));
+          result = await this.#icpLedgerService.transferToAccount(to, amount);
+        } else if (isPrincipal && typeof to !== "string") {
+          result = await this.#icpLedgerService.transferToPrincipal(to, amount);
+        } else {
+          this.setSourceState(WalletTransferState.FAILED);
+          return Err(`Invalid address type for ${receiveType}.`);
         }
-        if (isPrincipal && typeof to !== "string") {
-          return Ok(
-            await this.#icpLedgerService.transferToPrincipal(to, amount),
-          );
-        }
-        return Err(`Invalid address type for ${receiveType}.`);
+        this.setSourceState(WalletTransferState.SUCCESS);
+        return Ok(result);
       }
 
       // ICRC Ledger: supports only PRINCIPAL
       if (this.#icrcLedgerService) {
         if (!isPrincipal) {
+          this.setSourceState(WalletTransferState.FAILED);
           return Err("ICRC transfer only supports principal address.");
         }
         if (typeof to === "string") {
+          this.setSourceState(WalletTransferState.FAILED);
           return Err("Invalid principal address.");
         }
-        return Ok(
-          await this.#icrcLedgerService.transferToPrincipal(to, amount),
-        );
+        result = await this.#icrcLedgerService.transferToPrincipal(to, amount);
+        this.setSourceState(WalletTransferState.SUCCESS);
+        return Ok(result);
       }
 
+      this.setSourceState(WalletTransferState.FAILED);
       return Err("Ledger service is not initialized.");
     } catch (e) {
+      this.setSourceState(WalletTransferState.FAILED);
       return Err((e as Error).message);
     }
   }

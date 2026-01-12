@@ -1,31 +1,28 @@
 <script lang="ts">
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import { Info, X } from "lucide-svelte";
+  import { Check, Info, X } from "lucide-svelte";
   import { locale } from "$lib/i18n";
   import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import AssetTransferInfoDrawer from "$modules/creationLink/components/drawers/AssetTransferInfoDrawer.svelte";
   import { FeeType } from "$modules/links/types/fee";
   import type { AssetAndFee } from "$modules/shared/types/feeService";
+  import { AssetProcessState } from "$modules/transactionCart/types/txCart";
 
   type Props = {
     assets: AssetAndFee[];
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
-    isProcessing?: boolean;
     isClickable?: boolean;
     onInfoClick?: () => void;
-    hasError?: boolean;
   };
 
   let {
     assets,
     failedImageLoads,
     onImageError,
-    isProcessing = false,
     isClickable = false,
     onInfoClick,
-    hasError = false,
   }: Props = $props();
 
   let assetTransferInfoDrawerOpen = $state(false);
@@ -81,12 +78,14 @@
     {#each assetsToDisplay as { asset } (asset.address)}
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-1.5">
-          {#if hasError}
+          {#if asset.state === AssetProcessState.FAILED}
             <X size={16} class="text-red-600" stroke-width={2.5} />
-          {:else if isProcessing}
+          {:else if asset.state === AssetProcessState.PROCESSING}
             <div
               class="w-4 h-4 border-2 border-green border-t-transparent rounded-full animate-spin"
             ></div>
+          {:else if asset.state === AssetProcessState.SUCCEED}
+            <Check size={16} class="text-green-600" stroke-width={2.5} />
           {/if}
           {#if !failedImageLoads.has(asset.address)}
             <img
@@ -124,12 +123,14 @@
       <div class="flex flex-col gap-3">
         <div class="flex justify-between items-center">
           <div class="flex items-center gap-1.5">
-            {#if hasError}
+            {#if linkCreationFeeItem.asset.state === AssetProcessState.FAILED}
               <X size={16} class="text-red-600" stroke-width={2.5} />
-            {:else if isProcessing}
+            {:else if linkCreationFeeItem.asset.state === AssetProcessState.PROCESSING}
               <div
                 class="w-4 h-4 border-2 border-green border-t-transparent rounded-full animate-spin"
               ></div>
+            {:else if linkCreationFeeItem.asset.state === AssetProcessState.SUCCEED}
+              <Check size={16} class="text-green-600" stroke-width={2.5} />
             {/if}
             <img
               src={getTokenLogo(linkCreationFeeItem.asset.address)}
