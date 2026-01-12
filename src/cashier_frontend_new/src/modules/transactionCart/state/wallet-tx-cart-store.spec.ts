@@ -1,10 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Principal } from "@dfinity/principal";
 import type { WalletSource } from "$modules/transactionCart/types/transaction-source";
-import {
-  TransactionSourceType,
-  FlowDirection,
-} from "$modules/transactionCart/types/transaction-source";
+import { FlowDirection } from "$modules/transactionCart/types/transaction-source";
 import type {
   TokenMetadata,
   TokenWithPriceAndBalance,

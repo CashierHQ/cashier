@@ -43,19 +43,6 @@ export type FlowDirectionResult = Result<
 >;
 
 /**
- * Transaction source type discriminator
- */
-export class TransactionSourceType {
-  private constructor() {}
-  static readonly ACTION = "ACTION";
-  static readonly WALLET = "WALLET";
-}
-
-export type TransactionSourceTypeValue =
-  | typeof TransactionSourceType.ACTION
-  | typeof TransactionSourceType.WALLET;
-
-/**
  * Action-based transaction source (ICRC-112 batch execution)
  */
 export type ActionSource = {
@@ -76,35 +63,3 @@ export type WalletSource = {
   receiveType: ReceiveAddressType;
   onSuccess?: (blockIndex: bigint) => void;
 };
-
-/**
- * Discriminated union of all transaction source types
- */
-export type TransactionSource = ActionSource | WalletSource;
-
-/**
- * Conditional return type - infers execute result based on source type
- */
-export type ExecuteResult<T extends TransactionSource> = T extends ActionSource
-  ? ProcessActionResult
-  : T extends WalletSource
-    ? Result<bigint, string>
-    : never;
-
-/**
- * Type guard for ActionSource (duck-typing)
- */
-export function isActionSource(
-  source: TransactionSource,
-): source is ActionSource {
-  return "action" in source && "handleProcessAction" in source;
-}
-
-/**
- * Type guard for WalletSource (duck-typing)
- */
-export function isWalletSource(
-  source: TransactionSource,
-): source is WalletSource {
-  return "token" in source && "to" in source && "amount" in source;
-}
