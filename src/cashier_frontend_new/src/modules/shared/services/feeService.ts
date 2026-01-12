@@ -20,7 +20,7 @@ import {
   type FeeItem,
 } from "$modules/links/types/fee";
 import {
-  AccessProcessStateMapper,
+  AssetProcessStateMapper,
   AssetProcessState,
   type AssetItem,
 } from "$modules/transactionCart/types/txCart";
@@ -249,7 +249,7 @@ export class FeeService {
           : undefined;
 
         asset = {
-          state: AccessProcessStateMapper.fromIntentState(
+          state: AssetProcessStateMapper.fromIntentState(
             intent.state as IntentStateValue,
           ),
           label,

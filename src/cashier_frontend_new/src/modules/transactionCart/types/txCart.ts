@@ -69,9 +69,6 @@ export class AssetProcessStateMapper {
   }
 }
 
-/** @deprecated Use AssetProcessStateMapper instead */
-export const AccessProcessStateMapper = AssetProcessStateMapper;
-
 /**
  * Asset item representation
  */
