@@ -15,7 +15,7 @@
   import {
     shouldRedirectTo404,
     shouldRedirectErrorTo404,
-  } from "../utils/errorHandler";
+  } from "$modules/useLink/utils/errorHandler";
 
   const {
     onIsLinkChange,
