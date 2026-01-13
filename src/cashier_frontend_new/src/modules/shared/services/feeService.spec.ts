@@ -20,14 +20,11 @@ import { ICP_LEDGER_FEE } from "$modules/token/constants";
 import { Ed25519KeyIdentity } from "@dfinity/identity";
 import { Principal } from "@dfinity/principal";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { feeService, FeeService } from "./feeService";
+import { FeeService } from "./feeService";
 import { FlowDirection } from "$modules/transactionCart/types/transaction-source";
 import { FeeType } from "$modules/links/types/fee";
 import { AssetProcessState } from "$modules/transactionCart/types/txCart";
-import type {
-  AssetAndFeeList,
-  WalletAssetInput,
-} from "$modules/shared/types/feeService";
+import type { WalletAssetInput } from "$modules/shared/types/feeService";
 
 const from = Ed25519KeyIdentity.generate();
 const fromWallet = new Wallet(from.getPrincipal(), []);
@@ -486,153 +483,6 @@ describe("FeeService", () => {
           formatNumber(parseBalanceUnits(30_000n, token.decimals)),
         );
       }
-    });
-  });
-
-  describe("computeWalletFee", () => {
-    it("should return amount+fee and fee structure", () => {
-      const amount = 100_000_000n; // 1 ICP
-      const tokenFee = 10_000n;
-
-      const result = svc.computeWalletFee(amount, tokenFee);
-
-      expect(result.amount).toBe(100_010_000n); // amount + fee
-      expect(result.fee).toBe(10_000n);
-    });
-
-    it("should use ICP_LEDGER_FEE when tokenFee is undefined", () => {
-      const amount = 50_000_000n;
-      const tokenFee = undefined;
-      const ICP_LEDGER_FEE = 10_000n;
-
-      const result = svc.computeWalletFee(amount, tokenFee);
-
-      expect(result.fee).toBe(ICP_LEDGER_FEE);
-      expect(result.amount).toBe(amount + ICP_LEDGER_FEE);
-    });
-
-    it("should handle zero amount correctly", () => {
-      const result = svc.computeWalletFee(0n, 10_000n);
-
-      expect(result.amount).toBe(10_000n);
-      expect(result.fee).toBe(10_000n);
-    });
-
-    it("should handle large amounts", () => {
-      const largeAmount = 10_000_000_000_000_000n; // 100M ICP
-      const fee = 10_000n;
-
-      const result = svc.computeWalletFee(largeAmount, fee);
-
-      expect(result.amount).toBe(largeAmount + fee);
-      expect(result.fee).toBe(fee);
-    });
-
-    it("should handle different token fees correctly", () => {
-      const amount = 1_000_000n;
-      const differentFee = 50_000n;
-
-      const result = svc.computeWalletFee(amount, differentFee);
-
-      expect(result.amount).toBe(1_050_000n);
-      expect(result.fee).toBe(50_000n);
-    });
-  });
-
-  describe("getTotalFeeUsd", () => {
-    it("should sum fee.usdValue from all assets", () => {
-      const assets: AssetAndFeeList = [
-        {
-          asset: {
-            state: AssetProcessState.PROCESSING,
-            label: "",
-            symbol: "ICP",
-            address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-            amount: 1_010_000n,
-            amountFormattedStr: "0.0101",
-            usdValueStr: "$0.10",
-            direction: FlowDirection.OUTGOING,
-          },
-          fee: {
-            feeType: FeeType.NETWORK_FEE,
-            amount: 10_000n,
-            amountFormattedStr: "0.0001",
-            symbol: "ICP",
-            usdValue: 0.001,
-          },
-        },
-        {
-          asset: {
-            state: AssetProcessState.PROCESSING,
-            label: "Create link fee",
-            symbol: "ICP",
-            address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-            amount: 30_000n,
-            amountFormattedStr: "0.0003",
-            usdValueStr: "$0.003",
-            direction: FlowDirection.OUTGOING,
-          },
-          fee: {
-            feeType: FeeType.CREATE_LINK_FEE,
-            amount: 30_000n,
-            amountFormattedStr: "0.0003",
-            symbol: "ICP",
-            usdValue: 0.003,
-          },
-        },
-      ];
-
-      expect(feeService.getTotalFeeUsd(assets)).toBe(0.004);
-    });
-
-    it("should return 0 when no fees", () => {
-      const assets: AssetAndFeeList = [
-        {
-          asset: {
-            state: AssetProcessState.PROCESSING,
-            label: "",
-            symbol: "ICP",
-            address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-            amount: 1_000_000n,
-            amountFormattedStr: "0.01",
-            usdValueStr: "$0.10",
-            direction: FlowDirection.OUTGOING,
-          },
-          // No fee
-        },
-      ];
-
-      expect(feeService.getTotalFeeUsd(assets)).toBe(0);
-    });
-
-    it("should return 0 for empty array", () => {
-      expect(feeService.getTotalFeeUsd([])).toBe(0);
-    });
-
-    it("should handle undefined usdValue gracefully", () => {
-      const assets: AssetAndFeeList = [
-        {
-          asset: {
-            state: AssetProcessState.PROCESSING,
-            label: "",
-            symbol: "ICP",
-            address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-            amount: 1_010_000n,
-            amountFormattedStr: "0.0101",
-            usdValueStr: "$0.10",
-            direction: FlowDirection.OUTGOING,
-          },
-          fee: {
-            feeType: FeeType.NETWORK_FEE,
-            amount: 10_000n,
-            amountFormattedStr: "0.0001",
-            symbol: "ICP",
-            // usdValue intentionally undefined
-          },
-        },
-      ];
-
-      expect(feeService.getTotalFeeUsd(assets)).toBe(0);
     });
   });
 

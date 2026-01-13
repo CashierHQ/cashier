@@ -387,29 +387,6 @@ export class FeeService {
 
     return pairs;
   }
-
-  /**
-   * Calculate total fees in USD from AssetAndFee list.
-   */
-  getTotalFeeUsd(assets: AssetAndFeeList): number {
-    return assets.reduce((total, item) => total + (item.fee?.usdValue ?? 0), 0);
-  }
-
-  /**
-   * Compute wallet transfer fee for ICRC/ICP tokens.
-   * @param amount Transfer amount excluding fee
-   * @param tokenFee Optional token fee; defaults to ICP ledger fee
-   */
-  computeWalletFee(
-    amount: bigint,
-    tokenFee: bigint | undefined,
-  ): ComputeAmountAndFeeOutput {
-    const fee = tokenFee ?? ICP_LEDGER_FEE;
-    return {
-      amount: amount + fee,
-      fee,
-    };
-  }
 }
 
 export const feeService = new FeeService();

@@ -3,10 +3,8 @@ import { Err, Ok } from "ts-results-es";
 import { Principal } from "@dfinity/principal";
 import {
   TxState,
-  type ExecuteSendParams,
   type ValidateSendParams,
 } from "$modules/wallet/types/walletSendStore";
-import type { TokenWithPriceAndBalance } from "$modules/token/types";
 
 // Mock dependencies
 vi.mock("$lib/i18n", () => ({
@@ -193,145 +191,6 @@ describe("WalletSendStore", () => {
         maxAmount: 10,
       });
       expect(result.isOk()).toBe(true);
-    });
-  });
-
-  describe("executeSend", () => {
-    const mockToken: TokenWithPriceAndBalance = {
-      address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-      decimals: 8,
-      symbol: "ICP",
-      fee: 10_000n,
-    } as TokenWithPriceAndBalance;
-
-    it("should return Ok with blockId for principal transfer", async () => {
-      mockFindTokenByAddress.mockReturnValue(Ok(mockToken));
-      mockTransferTokenToPrincipal.mockResolvedValue(12345n);
-
-      const params: ExecuteSendParams = {
-        selectedToken: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-        receiveAddress: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-        amount: 1,
-        receiveType: ReceiveAddressType.PRINCIPAL,
-      };
-
-      const result = await walletSendStore.executeSend(params);
-
-      expect(result.isOk()).toBe(true);
-      expect(result.unwrap()).toBe(12345n);
-      expect(mockTransferTokenToPrincipal).toHaveBeenCalled();
-    });
-
-    it("should return Ok with blockId for ICP account transfer", async () => {
-      mockFindTokenByAddress.mockReturnValue(Ok(mockToken));
-      mockTransferICPToAccount.mockResolvedValue(67890n);
-
-      const params: ExecuteSendParams = {
-        selectedToken: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-        receiveAddress:
-          "d3e13d4777e22367532053190b6c6ccf57444a61337e996242b1abfb52cf92c8",
-        amount: 1,
-        receiveType: ReceiveAddressType.ACCOUNT_ID,
-      };
-
-      const result = await walletSendStore.executeSend(params);
-
-      expect(result.isOk()).toBe(true);
-      expect(result.unwrap()).toBe(67890n);
-      expect(mockTransferICPToAccount).toHaveBeenCalled();
-    });
-
-    it("should return Err when token not found", async () => {
-      mockFindTokenByAddress.mockReturnValue(Err(new Error("Not found")));
-
-      const params: ExecuteSendParams = {
-        selectedToken: "unknown-token",
-        receiveAddress: "recipient",
-        amount: 1,
-        receiveType: ReceiveAddressType.PRINCIPAL,
-      };
-
-      const result = await walletSendStore.executeSend(params);
-
-      expect(result.isErr()).toBe(true);
-      expect(result.unwrapErr()).toBe("wallet.send.errors.tokenNotFound");
-    });
-
-    it("should return Err on transfer failure", async () => {
-      mockFindTokenByAddress.mockReturnValue(Ok(mockToken));
-      mockTransferTokenToPrincipal.mockRejectedValue(
-        new Error("Transfer failed"),
-      );
-
-      const params: ExecuteSendParams = {
-        selectedToken: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-        receiveAddress: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-        amount: 1,
-        receiveType: ReceiveAddressType.PRINCIPAL,
-      };
-
-      const result = await walletSendStore.executeSend(params);
-
-      expect(result.isErr()).toBe(true);
-      expect(result.unwrapErr()).toContain("wallet.send.errorMessagePrefix");
-    });
-
-    it("should throw for ACCOUNT_ID with non-ICP token", async () => {
-      const nonIcpToken = {
-        ...mockToken,
-        address: "non-icp-token",
-      };
-      mockFindTokenByAddress.mockReturnValue(Ok(nonIcpToken));
-
-      const params: ExecuteSendParams = {
-        selectedToken: "non-icp-token",
-        receiveAddress: "account-id",
-        amount: 1,
-        receiveType: ReceiveAddressType.ACCOUNT_ID,
-      };
-
-      const result = await walletSendStore.executeSend(params);
-
-      expect(result.isErr()).toBe(true);
-      expect(result.unwrapErr()).toContain("wallet.send.errorMessagePrefix");
-    });
-  });
-
-  describe("getTransactionLink", () => {
-    const ICP_LEDGER = "ryjl3-tyaaa-aaaaa-aaaba-cai";
-
-    it("should return ICP transaction link for ICP ledger", () => {
-      const blockId = 12345n;
-      const link = walletSendStore.getTransactionLink(ICP_LEDGER, blockId);
-
-      expect(link).toBe(
-        "https://dashboard.internetcomputer.org/transaction/12345",
-      );
-    });
-
-    it("should return SNS transaction link for non-ICP token", () => {
-      const snsToken = "sns-token-canister-id";
-      const blockId = 67890n;
-      const link = walletSendStore.getTransactionLink(snsToken, blockId);
-
-      expect(link).toBe(
-        `https://dashboard.internetcomputer.org/sns/${snsToken}/transaction/67890`,
-      );
-    });
-
-    it("should handle large block IDs", () => {
-      const largeBlockId = 9999999999999n;
-      const link = walletSendStore.getTransactionLink(ICP_LEDGER, largeBlockId);
-
-      expect(link).toBe(
-        "https://dashboard.internetcomputer.org/transaction/9999999999999",
-      );
-    });
-
-    it("should handle zero block ID", () => {
-      const link = walletSendStore.getTransactionLink(ICP_LEDGER, 0n);
-
-      expect(link).toBe("https://dashboard.internetcomputer.org/transaction/0");
     });
   });
 });
