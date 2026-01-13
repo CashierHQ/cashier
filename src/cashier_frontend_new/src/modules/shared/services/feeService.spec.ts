@@ -13,6 +13,7 @@ import Wallet from "$modules/links/types/wallet";
 import { formatNumber } from "$modules/shared/utils/formatNumber";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
+import { LinkType } from "$modules/links/types/link/linkType";
 import { Ed25519KeyIdentity } from "@dfinity/identity";
 import { Principal } from "@dfinity/principal";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -239,7 +240,7 @@ describe("FeeService", () => {
 
   describe("forecastLinkCreationFees", () => {
     const LEDGER_FEE = 10_000n; // 0.0001 token in e8s
-    it("should returns asset item and link creation fee when token found", () => {
+    it("should returns asset item and link creation fee when token found (non-AIRDROP link)", () => {
       const token = {
         address: assets[0].address.toString(),
         decimals: 8,
@@ -279,7 +280,7 @@ describe("FeeService", () => {
       }
     });
 
-    it("should calcualte with maxUse more than two", () => {
+    it("should calcualte with maxUse more than two (non-AIRDROP link)", () => {
       const token = {
         address: assets[0].address.toString(),
         decimals: 8,
@@ -452,7 +453,7 @@ describe("FeeService", () => {
       }
     });
 
-    it("should returns only link creation fee when assets list is empty and ICP token present", () => {
+    it("should returns only link creation fee when assets list is empty and ICP token present (non-AIRDROP link)", () => {
       const token = {
         address: assets[0].address.toString(),
         decimals: 8,
@@ -476,6 +477,87 @@ describe("FeeService", () => {
       if (p.fee) {
         expect(p.fee.amountFormattedStr).toBe(
           formatNumber(parseBalanceUnits(30_000n, token.decimals)),
+        );
+      }
+    });
+
+    it("should return link creation fee of 0.0001 ICP for AIRDROP links", () => {
+      const token = {
+        address: assets[0].address.toString(),
+        decimals: 8,
+        fee: LEDGER_FEE,
+        symbol: "ICP",
+        priceUSD: 3.01,
+      } as unknown as TokenWithPriceAndBalance;
+
+      const tokensMap = { [token.address]: token };
+      const useAmount = 100_000_000n;
+      const maxUse = 3;
+
+      const pairs = svc.forecastLinkCreationFees(
+        [{ address: token.address, useAmount }],
+        maxUse,
+        tokensMap,
+        LinkType.AIRDROP,
+      );
+
+      // Should include one asset + 1 link creation fee
+      expect(pairs).toHaveLength(2);
+
+      const assetPair = pairs[0];
+      expect(assetPair.asset.symbol).toBe("ICP");
+
+      // Formula for asset: (useAmount + ledgerFee) * maxUse + ledgerFee
+      const expectedTotal = parseBalanceUnits(
+        (useAmount + LEDGER_FEE) * BigInt(maxUse) + LEDGER_FEE,
+        token.decimals,
+      );
+      expect(assetPair.asset.amount).toBe(formatNumber(expectedTotal));
+
+      // For AIRDROP: link creation fee is just linkFeeInfo.amount (10_000n = 0.0001 ICP)
+      const linkFee = pairs.find((p) => p.asset.label === "Create link fee");
+      expect(linkFee).toBeDefined();
+      if (linkFee) {
+        expect(linkFee.asset.amount).toBe(
+          formatNumber(parseBalanceUnits(10_000n, token.decimals)),
+        );
+        expect(linkFee.asset.symbol).toBe("ICP");
+        expect(linkFee.fee?.amountFormattedStr).toBe(
+          formatNumber(parseBalanceUnits(10_000n, token.decimals)),
+        );
+      }
+    });
+
+    it("should return link creation fee of 0.0001 ICP for AIRDROP links with empty assets", () => {
+      const token = {
+        address: assets[0].address.toString(),
+        decimals: 8,
+        fee: 10_000n,
+        symbol: "ICP",
+        priceUSD: 2.5,
+      };
+
+      const tokensMap = { [token.address]: token } as Record<
+        string,
+        TokenWithPriceAndBalance
+      >;
+
+      const pairs = svc.forecastLinkCreationFees(
+        [],
+        1,
+        tokensMap,
+        LinkType.AIRDROP,
+      );
+
+      expect(pairs).toHaveLength(1);
+      const p = pairs[0];
+      expect(p.asset.label).toBe("Create link fee");
+      expect(p.asset.symbol).toBe("ICP");
+      expect(p.fee).toBeDefined();
+      if (p.fee) {
+        // For AIRDROP: link creation fee is just linkFeeInfo.amount (10_000n = 0.0001 ICP)
+        expect(p.fee.amountFormattedStr).toBe(
+          formatNumber(parseBalanceUnits(10_000n, token.decimals)),
         );
       }
     });

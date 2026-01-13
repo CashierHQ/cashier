@@ -73,6 +73,7 @@
       link.createLinkData.assets,
       link.createLinkData.maxUse,
       tokens,
+      link.createLinkData.linkType,
     );
   });
 

@@ -34,6 +34,10 @@ import type {
   ForecastAssetAndFee,
   SendFeeOutput,
 } from "../types/feeService";
+import {
+  LinkType,
+  type LinkTypeValue,
+} from "$modules/links/types/link/linkType";
 
 export class FeeService {
   /**
@@ -288,12 +292,14 @@ export class FeeService {
    * @param linkAssets - Array of assets in the link
    * @param maxUse - Maximum uses of the link
    * @param tokens - Token lookup by address
+   * @param linkType - Optional link type to determine fee calculation (for AIRDROP, link creation fee is just linkFeeInfo.amount)
    * @returns AssetAndFeeList formatted for display
    */
   forecastLinkCreationFees(
     linkAssets: Array<CreateLinkAsset>,
     maxUse: number,
     tokens: Record<string, TokenWithPriceAndBalance>,
+    linkType?: LinkTypeValue,
   ): ForecastAssetAndFee[] {
     const pairs: ForecastAssetAndFee[] = [];
 
@@ -362,8 +368,12 @@ export class FeeService {
     const linkFeeInfo = this.getLinkCreationFee();
     const linkFeeToken = tokens[linkFeeInfo.tokenAddress];
     if (linkFeeToken) {
-      // For CREATE_LINK preview: amount = ledgerFee*2 + linkFeeInfo.amount
-      const linkCreationFeeTotal = ICP_LEDGER_FEE * 2n + linkFeeInfo.amount;
+      // For AIRDROP links: link creation fee is just linkFeeInfo.amount (0.0001 ICP)
+      // For other link types: amount = ledgerFee*2 + linkFeeInfo.amount
+      const linkCreationFeeTotal =
+        linkType === LinkType.AIRDROP
+          ? linkFeeInfo.amount
+          : ICP_LEDGER_FEE * 2n + linkFeeInfo.amount;
       const linkFeeFormatted = parseBalanceUnits(
         linkCreationFeeTotal,
         linkFeeToken.decimals,
