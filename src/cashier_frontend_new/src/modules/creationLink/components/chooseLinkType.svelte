@@ -112,6 +112,15 @@
 
   async function goNext() {
     try {
+      // Reset maxUse to 1 for non-AIRDROP link types when proceeding
+      // For AIRDROP, keep the current maxUse value
+      if (link.createLinkData.linkType !== LinkType.AIRDROP) {
+        link.createLinkData = {
+          ...link.createLinkData,
+          maxUse: 1,
+        };
+      }
+
       await link.goNext();
     } catch (e) {
       toast.error(
