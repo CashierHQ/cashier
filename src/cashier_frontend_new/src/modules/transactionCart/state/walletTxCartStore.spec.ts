@@ -10,6 +10,10 @@ import { ReceiveAddressType } from "$modules/wallet/types";
 import { AssetProcessState } from "$modules/transactionCart/types/txCart";
 import { FeeType } from "$modules/links/types/fee";
 import { Ok } from "ts-results-es";
+import { authState } from "$modules/auth/state/auth.svelte";
+import { IcpLedgerService } from "$modules/token/services/icpLedger";
+import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
+import { WalletTxCartStore } from "./walletTxCartStore.svelte";
 
 // Mock constants
 const ICP_LEDGER_CANISTER_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
@@ -49,9 +53,9 @@ vi.mock("$modules/auth/state/auth.svelte", () => ({
   },
 }));
 
-vi.mock("$modules/shared/types/feeService", () => ({
-  AssetAndFeeListMapper: {
-    fromWallet: mockMapWalletToAssetAndFeeList,
+vi.mock("$modules/shared/services/feeService", () => ({
+  feeService: {
+    buildFromWallet: mockMapWalletToAssetAndFeeList,
   },
 }));
 
@@ -66,11 +70,6 @@ vi.mock("$modules/token/services/icpLedger", () => ({
 vi.mock("$modules/token/services/icrcLedger", () => ({
   IcrcLedgerService: MockIcrcLedgerService,
 }));
-
-import { authState } from "$modules/auth/state/auth.svelte";
-import { IcpLedgerService } from "$modules/token/services/icpLedger";
-import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
-import { WalletTxCartStore } from "./wallet-tx-cart-store.svelte";
 
 // Test fixtures
 function createMockToken(isIcp = false): TokenMetadata {

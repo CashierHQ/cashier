@@ -4,7 +4,7 @@ import {
   principalToAccountId,
   encodeAccountID,
   decodeAccountID,
-} from "./icp-account-id";
+} from "./icpAccountId";
 
 // Known test principal and its corresponding account ID
 // Using aaaaa-aa (management canister) as a stable test case

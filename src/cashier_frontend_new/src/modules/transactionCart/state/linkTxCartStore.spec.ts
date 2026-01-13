@@ -42,15 +42,15 @@ vi.mock("$modules/shared/constants", () => ({
   CASHIER_BACKEND_CANISTER_ID: "aaaaa-aa",
 }));
 
-vi.mock("$modules/shared/types/feeService", () => ({
-  AssetAndFeeListMapper: {
-    fromAction: mockMapActionToAssetAndFeeList,
+vi.mock("$modules/shared/services/feeService", () => ({
+  feeService: {
+    buildFromAction: mockMapActionToAssetAndFeeList,
   },
 }));
 
 import { authState } from "$modules/auth/state/auth.svelte";
 import Icrc112Service from "$modules/icrc112/services/icrc112Service";
-import { LinkTxCartStore } from "./link-tx-cart-store.svelte";
+import { LinkTxCartStore } from "./linkTxCartStore.svelte";
 
 // Test fixtures
 function createMockAction(withIcrc112Requests = false): Action {

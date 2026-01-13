@@ -1,8 +1,6 @@
 import { authState } from "$modules/auth/state/auth.svelte";
-import {
-  AssetAndFeeListMapper,
-  type AssetAndFee,
-} from "$modules/shared/types/feeService";
+import { feeService } from "$modules/shared/services/feeService";
+import type { AssetAndFee } from "$modules/shared/types/feeService";
 import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
 import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
@@ -59,7 +57,7 @@ export class WalletTxCartStore implements TxCartStore {
    */
   initializeAssets(tokens: Record<string, TokenWithPriceAndBalance>): void {
     const { token, amount } = this.#source;
-    this.#assetAndFeeList = AssetAndFeeListMapper.fromWallet(
+    this.#assetAndFeeList = feeService.buildFromWallet(
       { amount, tokenAddress: token.address },
       tokens,
     );
