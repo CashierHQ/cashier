@@ -1,7 +1,7 @@
 import type { Account } from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { decodeAccountID } from "$modules/shared/utils/icp-account-id";
+import { decodeAccountID } from "$modules/shared/utils/icpAccountId";
 import { Principal } from "@dfinity/principal";
 import { ICP_LEDGER_CANISTER_ID, ICP_LEDGER_FEE } from "../constants";
 import { toNullable } from "@dfinity/utils";
@@ -106,6 +106,12 @@ export class IcpLedgerService {
     return result.Ok;
   }
 
+  /**
+   * Transfer tokens to another user by their Principal.
+   * @param to The Principal of the recipient.
+   * @param amount The amount of tokens to transfer.
+   * @returns The result of the transfer operation.
+   */
   public async transferToPrincipal(
     to: Principal,
     amount: bigint,

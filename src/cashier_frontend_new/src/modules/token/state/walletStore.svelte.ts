@@ -10,7 +10,7 @@ import { Err, Ok, type Result } from "ts-results-es";
 import { ICP_LEDGER_CANISTER_ID } from "../constants";
 import { sortWalletTokens } from "../utils/sorter";
 import { tokenPriceStore } from "./tokenPriceStore.svelte";
-import { encodeAccountID } from "$modules/shared/utils/icp-account-id";
+import { encodeAccountID } from "$modules/shared/utils/icpAccountId";
 
 class WalletStore {
   #walletTokensQuery;

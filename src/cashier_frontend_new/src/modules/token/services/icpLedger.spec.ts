@@ -28,14 +28,14 @@ vi.mock("../constants", () => ({
 }));
 
 // Mock decodeAccountID
-vi.mock("$modules/shared/utils/icp-account-id", () => ({
+vi.mock("$modules/shared/utils/icpAccountId", () => ({
   decodeAccountID: vi.fn(() => new Uint8Array([1, 2, 3, 4])),
 }));
 
 // Import after mocks
 import { authState } from "$modules/auth/state/auth.svelte";
 import { IcpLedgerService } from "./icpLedger";
-import { decodeAccountID } from "$modules/shared/utils/icp-account-id";
+import { decodeAccountID } from "$modules/shared/utils/icpAccountId";
 
 describe("IcpLedgerService", () => {
   let service: IcpLedgerService;

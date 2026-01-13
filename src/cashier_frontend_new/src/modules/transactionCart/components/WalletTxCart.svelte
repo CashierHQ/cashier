@@ -3,7 +3,7 @@
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { onMount } from "svelte";
-  import { WalletTxCartStore } from "$modules/transactionCart/state/wallet-tx-cart-store.svelte";
+  import { WalletTxCartStore } from "$modules/transactionCart/state/walletTxCartStore.svelte";
   import {
     FlowDirection,
     type WalletSource,
@@ -73,10 +73,7 @@
   );
   const totalFeesUsd = $derived.by(() => walletTxCartStore?.computeFee() ?? 0);
   const feesBreakdown = $derived.by(() =>
-    feeService.buildFeesBreakdownFromAssetAndFeeList(
-      assetAndFee,
-      walletStore.query.data ?? [],
-    ),
+    feeService.buildBreakdown(assetAndFee, walletStore.query.data ?? []),
   );
 
   // Handle fee breakdown click - close txCart and show FeeInfoDrawer

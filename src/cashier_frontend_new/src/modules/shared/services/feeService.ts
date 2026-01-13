@@ -1,5 +1,8 @@
+import type Action from "$modules/links/types/action/action";
 import { ActionType } from "$modules/links/types/action/actionType";
+import type { IntentStateValue } from "$modules/links/types/action/intentState";
 import IntentTask from "$modules/links/types/action/intentTask";
+import type { IntentPayload } from "$modules/links/types/action/intentType";
 import {
   formatNumber,
   formatUsdAmount,
@@ -9,40 +12,61 @@ import {
   ICP_LEDGER_CANISTER_ID,
 } from "$modules/token/constants";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
+import {
+  FlowDirection,
+  type FlowDirectionValue,
+} from "$modules/transactionCart/types/transaction-source";
+import {
+  AssetProcessState,
+  AssetProcessStateMapper,
+  type AssetItem,
+} from "$modules/transactionCart/types/txCart";
 
 import { assertUnreachable } from "$lib/rsMatch";
 import {
   FeeType,
   type ComputeAmountAndFeeInput,
   type ComputeAmountAndFeeOutput,
+  type FeeItem,
 } from "$modules/links/types/fee";
 import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
-import type { AssetAndFeeList, ForecastAssetAndFee } from "../types/feeService";
+import type {
+  AssetAndFeeList,
+  ForecastAssetAndFee,
+  WalletAssetInput,
+} from "../types/feeService";
 
 export class FeeService {
   /**
-   * Compute both the final amount (what will be shown as the asset amount)
-   * and an optional fee (undefined when there is no fee to display) based
-   * on the provided rules.
-   * 1) CreateLink + TransferWalletToTreasury:
-   *    - amount = ledgerFee*2 + payload.amount
-   *    - fee = ledgerFee*2 + payload.amount
-   * 2) CreateLink + other intent:
-   *    - amount = ledgerFee + payload.amount
-   *    - fee = ledgerFee
-   * 3) Withdraw:
-   *    - amount = payload.amount
-   *    - fee = ledgerFee
-   * 4) Receive:
-   *    - amount = payload.amount
-   *    - fee = undefined
-   * 5) Send:
-   *    - amount = payload.amount + ledgerFee
-   *    - fee = ledgerFee
+   * Compute flow direction from intent payload.
+   * @param payload IntentPayload
+   * @param currentWalletPrincipal Principal of the current user's wallet
+   * @return FlowDirectionValue
+   * @throws Error if user is neither sender nor receiver
    */
-  computeActionAmountAndFee({
+  getFlowDirection(
+    payload: IntentPayload,
+    currentWalletPrincipal: string,
+  ): FlowDirectionValue {
+    const toAddress = payload.to.address.toText();
+    const fromAddress = payload.from.address.toText();
+    if (fromAddress === currentWalletPrincipal) return FlowDirection.OUTGOING;
+    if (toAddress === currentWalletPrincipal) return FlowDirection.INCOMING;
+    throw new Error("User is neither sender nor receiver");
+  }
+
+  /**
+   * Compute amount and fee based on action type.
+   * Rules:
+   * 1) CreateLink + TransferWalletToTreasury: amount=fee=ledgerFee*2+payload.amount
+   * 2) CreateLink + other: amount=ledgerFee+payload.amount, fee=ledgerFee
+   * 3) Withdraw: amount=payload.amount, fee=ledgerFee
+   * 4) Receive: amount=payload.amount, fee=undefined
+   * 5) Send: amount=payload.amount+ledgerFee, fee=ledgerFee
+   */
+  computeAmount({
     intent,
     ledgerFee,
     actionType,
@@ -83,8 +107,169 @@ export class FeeService {
   }
 
   /**
-   * Get link creation fee information
-   * @returns Object with fee amount, token address, symbol, and decimals
+   * Build AssetAndFeeList from Action.
+   * @param action Action containing intents
+   * @param tokens Map of token address to TokenWithPriceAndBalance
+   * @param currentWalletPrincipal Principal of the current user's wallet
+   */
+  buildFromAction(
+    action: Action,
+    tokens: Record<string, TokenWithPriceAndBalance>,
+    currentWalletPrincipal: string,
+  ): AssetAndFeeList {
+    return action.intents.map((intent) => {
+      const address = intent.type.payload.asset.address.toString();
+      const token = tokens[address];
+      const direction = this.getFlowDirection(
+        intent.type.payload,
+        currentWalletPrincipal,
+      );
+
+      let feeType = FeeType.NETWORK_FEE;
+      if (
+        action.type === ActionType.CREATE_LINK &&
+        intent.task === IntentTask.TRANSFER_WALLET_TO_TREASURY
+      ) {
+        feeType = FeeType.CREATE_LINK_FEE;
+      }
+      const label =
+        intent.task === IntentTask.TRANSFER_WALLET_TO_TREASURY
+          ? "Create link fee"
+          : "";
+
+      const ledgerFee = token?.fee ?? ICP_LEDGER_FEE;
+      const { amount: forecastAmount, fee: feeRaw } = this.computeAmount({
+        intent,
+        ledgerFee,
+        actionType: action.type,
+      });
+
+      const decimals = token?.decimals ?? 8;
+      const symbol = token?.symbol ?? "N/A";
+      const amountUi = parseBalanceUnits(forecastAmount, decimals);
+      const amountUsd = token?.priceUSD ? amountUi * token.priceUSD : undefined;
+
+      const asset: AssetItem = {
+        state: token
+          ? AssetProcessStateMapper.fromIntentState(
+              intent.state as IntentStateValue,
+            )
+          : AssetProcessState.PROCESSING,
+        label,
+        symbol,
+        address,
+        amount: forecastAmount,
+        amountFormattedStr: token
+          ? formatNumber(amountUi)
+          : amountUi.toString(),
+        usdValueStr: amountUsd ? formatUsdAmount(amountUsd) : undefined,
+        direction,
+        intentId: intent.id,
+      };
+
+      let fee: FeeItem | undefined;
+      if (feeRaw !== undefined) {
+        const feeUi = parseBalanceUnits(feeRaw, decimals);
+        const feeUsd = token?.priceUSD ? feeUi * token.priceUSD : undefined;
+        fee = {
+          feeType,
+          amount: feeRaw,
+          amountFormattedStr: token ? formatNumber(feeUi) : feeUi.toString(),
+          symbol,
+          price: token?.priceUSD,
+          usdValue: feeUsd,
+          usdValueStr: feeUsd ? formatUsdAmount(feeUsd) : undefined,
+        };
+      }
+
+      return { asset, fee };
+    });
+  }
+
+  /**
+   * Build AssetAndFeeList from wallet transfer input.
+   * @param input WalletAssetInput
+   * @param tokens Map of token address to TokenWithPriceAndBalance
+   */
+  buildFromWallet(
+    input: WalletAssetInput,
+    tokens: Record<string, TokenWithPriceAndBalance>,
+  ): AssetAndFeeList {
+    const { amount, tokenAddress } = input;
+    const token = tokens[tokenAddress];
+    if (!token) {
+      console.error(
+        "Failed to resolve token for wallet transfer:",
+        tokenAddress,
+      );
+      return [];
+    }
+
+    const fee = token.fee ?? ICP_LEDGER_FEE;
+    const totalAmount = amount + fee;
+    const totalUi = parseBalanceUnits(totalAmount, token.decimals);
+    const feeUi = parseBalanceUnits(fee, token.decimals);
+
+    return [
+      {
+        asset: {
+          state: AssetProcessState.CREATED,
+          label: "",
+          symbol: token.symbol,
+          address: tokenAddress,
+          amount: totalAmount,
+          amountFormattedStr: formatNumber(totalUi),
+          usdValueStr: token.priceUSD
+            ? formatUsdAmount(totalUi * token.priceUSD)
+            : undefined,
+          direction: FlowDirection.OUTGOING,
+        },
+        fee: {
+          feeType: FeeType.NETWORK_FEE,
+          amount: fee,
+          amountFormattedStr: formatNumber(feeUi),
+          symbol: token.symbol,
+          usdValue: token.priceUSD ? feeUi * token.priceUSD : undefined,
+        },
+      },
+    ];
+  }
+
+  /**
+   * Convert AssetAndFeeList to FeeBreakdownItem[] for FeeInfoDrawer.
+   * @param assetAndFeeList List of AssetAndFee pairs
+   * @param tokens Array of tokens for lookup
+   */
+  buildBreakdown(
+    assetAndFeeList: AssetAndFeeList,
+    tokens: TokenWithPriceAndBalance[],
+  ): FeeBreakdownItem[] {
+    const tokensMap = Object.fromEntries(tokens.map((t) => [t.address, t]));
+    const breakdown: FeeBreakdownItem[] = [];
+
+    for (const item of assetAndFeeList) {
+      if (!item.fee) continue;
+      const token = tokensMap[item.asset.address];
+      if (!token) continue;
+
+      breakdown.push({
+        name:
+          item.fee.feeType === FeeType.CREATE_LINK_FEE
+            ? "Link creation fee"
+            : "Network fees",
+        amount: item.fee.amount,
+        tokenAddress: item.asset.address,
+        tokenSymbol: token.symbol,
+        tokenDecimals: token.decimals,
+        usdAmount: item.fee.usdValue || 0,
+      });
+    }
+
+    return breakdown;
+  }
+
+  /**
+   * Get link creation fee information.
    */
   getLinkCreationFee() {
     return {
@@ -96,11 +281,10 @@ export class FeeService {
   }
 
   /**
-   * Forecast asset and fee list for link creation preview (before Action exists)
-   * @param linkAssets - Array of assets in the link
-   * @param maxUse - Maximum uses of the link
-   * @param tokens - Token lookup by address
-   * @returns AssetAndFeeList formatted for display
+   * Forecast asset and fee list for link creation preview (before Action exists).
+   * @param linkAssets Array of assets in the link
+   * @param maxUse Maximum uses of the link
+   * @param tokens Token lookup by address
    */
   forecastLinkCreationFees(
     linkAssets: Array<CreateLinkAsset>,
@@ -114,7 +298,6 @@ export class FeeService {
 
       if (!token) {
         console.error("Failed to resolve token for asset:", assetData.address);
-        // Fallback to ICP values: (useAmount + ledgerFee) * maxUse + ledgerFee
         const totalAmount =
           (assetData.useAmount + ICP_LEDGER_FEE) * BigInt(maxUse) +
           ICP_LEDGER_FEE;
@@ -137,7 +320,6 @@ export class FeeService {
         });
       } else {
         const tokenFee = token.fee ?? ICP_LEDGER_FEE;
-        // For CREATE_LINK preview: amount =(payload.amount + ledgerFee) * maxUse + ledgerFee
         const totalAmount =
           (assetData.useAmount + tokenFee) * BigInt(maxUse) + tokenFee;
         const totalAmountUi = parseBalanceUnits(totalAmount, token.decimals);
@@ -170,11 +352,10 @@ export class FeeService {
       }
     }
 
-    // Add link creation fee item (use ICP fee token)
+    // Add link creation fee item
     const linkFeeInfo = this.getLinkCreationFee();
     const linkFeeToken = tokens[linkFeeInfo.tokenAddress];
     if (linkFeeToken) {
-      // For CREATE_LINK preview: amount = ledgerFee*2 + linkFeeInfo.amount
       const linkCreationFeeTotal = ICP_LEDGER_FEE * 2n + linkFeeInfo.amount;
       const linkFeeFormatted = parseBalanceUnits(
         linkCreationFeeTotal,
@@ -206,59 +387,6 @@ export class FeeService {
 
     return pairs;
   }
-  /**
-   * Convert AssetAndFeeList to FeeBreakdownItem[] format for FeeInfoDrawer.
-   * @param assetAndFeeList - List of AssetAndFee pairs
-   * @param tokens - Map of token address to TokenWithPriceAndBalance
-   * @returns FeeBreakdownItem[]
-   */
-  convertAssetAndFeeListToFeesBreakdown(
-    assetAndFeeList: AssetAndFeeList,
-    tokens: Record<string, TokenWithPriceAndBalance>,
-  ): FeeBreakdownItem[] {
-    const breakdown: FeeBreakdownItem[] = [];
-
-    for (const item of assetAndFeeList) {
-      if (!item.fee) continue;
-
-      const token = tokens[item.asset.address];
-      if (!token) continue;
-
-      const feeName =
-        item.fee.feeType === FeeType.CREATE_LINK_FEE
-          ? "Link creation fee"
-          : "Network fees";
-
-      breakdown.push({
-        name: feeName,
-        amount: item.fee.amount,
-        tokenAddress: item.asset.address,
-        tokenSymbol: token.symbol,
-        tokenDecimals: token.decimals,
-        usdAmount: item.fee.usdValue || 0,
-      });
-    }
-
-    return breakdown;
-  }
-
-  /**
-   * Utility to derive FeeBreakdownItem[] from AssetAndFeeList using an array of tokens.
-   * Encapsulates the map creation so UI components stay rendering-only.
-   * @param assetAndFeeList - List of AssetAndFee pairs
-   * @param tokens - Array of tokens for lookup
-   * @returns FeeBreakdownItem[]
-   */
-  buildFeesBreakdownFromAssetAndFeeList(
-    assetAndFeeList: AssetAndFeeList,
-    tokens: TokenWithPriceAndBalance[],
-  ): FeeBreakdownItem[] {
-    const tokensMap = Object.fromEntries(tokens.map((t) => [t.address, t]));
-    return this.convertAssetAndFeeListToFeesBreakdown(
-      assetAndFeeList,
-      tokensMap,
-    );
-  }
 
   /**
    * Calculate total fees in USD from AssetAndFee list.
@@ -269,10 +397,8 @@ export class FeeService {
 
   /**
    * Compute wallet transfer fee for ICRC/ICP tokens.
-   * Returns amount+fee and fee in raw bigint format.
-   * @param amount - Transfer amount excluding fee
-   * @param tokenFee - Optional token fee; defaults to ICP ledger fee if undefined
-   * @returns ComputeAmountAndFeeOutput with total amount and fee
+   * @param amount Transfer amount excluding fee
+   * @param tokenFee Optional token fee; defaults to ICP ledger fee
    */
   computeWalletFee(
     amount: bigint,
