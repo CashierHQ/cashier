@@ -185,12 +185,23 @@
       },
       "drawers": {
         "txCart": {
-          "title": "Confirm transaction",
-          "confirmButton": "Confirm",
-          "processingButton": "Processing...",
           "termsAgreement": "By confirming you agree execute the transaction above and agree to the terms of service",
-          "successMessage": "Process action completed successfully.",
-          "errorMessagePrefix": "Process action failed:"
+          "action": {
+            "title": "Confirm transaction",
+            "confirmButton": "Confirm",
+            "retryButton": "Retry",
+            "processingButton": "Processing...",
+            "successMessage": "Process action completed successfully.",
+            "errorMessagePrefix": "Process action failed:"
+          },
+          "wallet": {
+            "title": "Confirm transaction",
+            "confirmButton": "Confirm",
+            "retryButton": "Retry",
+            "processingButton": "Processing...",
+            "successMessage": "Transfer completed successfully.",
+            "errorMessagePrefix": "Transfer failed:"
+          }
         },
         "feeInfo": {
           "title": "Fee Information",
