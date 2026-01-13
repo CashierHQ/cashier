@@ -1,19 +1,16 @@
 import { locale } from "$lib/i18n";
 import { formatBalanceUnits } from "$modules/shared/utils/converter";
-import { feeService } from "$modules/shared/services/feeService";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
 import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
 import { Principal } from "@dfinity/principal";
 import { Err, Ok, type Result } from "ts-results-es";
 import {
   TxState,
-  type ComputeSendFeeParams,
   type ExecuteSendParams,
   type ValidateSendParams,
 } from "$modules/wallet/types/walletSendStore";
 import { ReceiveAddressType } from "$modules/wallet/types/index";
 import { validateSend } from "$modules/wallet/utils/validate-send";
-import type { SendFeeOutput } from "$modules/shared/types/feeService";
 
 class WalletSendStore {
   txState = $state<TxState>(TxState.CONFIRM);
@@ -24,23 +21,6 @@ class WalletSendStore {
    */
   validateSend(params: ValidateSendParams): Result<true, string> {
     return validateSend(params);
-  }
-
-  /**
-   * Compute send fee for confirmation display
-   */
-  computeSendFee(params: ComputeSendFeeParams): Result<SendFeeOutput, string> {
-    const { selectedToken, amount, receiveAddress } = params;
-
-    if (!selectedToken || amount <= 0) return Err("Invalid token or amount");
-
-    const tokenResult = walletStore.findTokenByAddress(selectedToken);
-    if (tokenResult.isErr()) return Err("Token not found");
-
-    const token = tokenResult.unwrap();
-    const amountBigInt = formatBalanceUnits(amount, token.decimals);
-
-    return Ok(feeService.computeSendFee(amountBigInt, token, receiveAddress));
   }
 
   /**

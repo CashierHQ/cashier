@@ -56,46 +56,6 @@ export type WalletAssetInput = {
 };
 
 /**
- * Output type for computeSendFee method
- * Contains both raw values and formatted display strings
- */
-export interface SendFeeOutput {
-  // Raw values (bigint for calculations)
-  sendAmount: bigint;
-  fee: bigint;
-  totalAmount: bigint;
-
-  // Token metadata
-  symbol: string;
-  decimals: number;
-
-  // Token display info
-  tokenAddress: string;
-  tokenLogo: string;
-
-  // Recipient info
-  receiveAddress: string;
-  receiveAddressShortened: string;
-
-  // Network info (always ICP)
-  networkName: string;
-  networkLogo: string;
-
-  // Formatted display values
-  sendAmountFormatted: string;
-  feeFormatted: string;
-  totalAmountFormatted: string;
-
-  // USD values (optional, depends on token.priceUSD)
-  sendAmountUsd?: number;
-  feeUsd?: number;
-  totalAmountUsd?: number;
-  sendAmountUsdFormatted?: string;
-  feeUsdFormatted?: string;
-  totalAmountUsdFormatted?: string;
-}
-
-/**
  * Mapper for creating AssetAndFeeList from various sources.
  * Static methods - no FeeService dependency.
  */

@@ -3,7 +3,6 @@ import { Err, Ok } from "ts-results-es";
 import { Principal } from "@dfinity/principal";
 import {
   TxState,
-  type ComputeSendFeeParams,
   type ExecuteSendParams,
   type ValidateSendParams,
 } from "$modules/wallet/types/walletSendStore";
@@ -36,13 +35,6 @@ vi.mock("$modules/token/state/walletStore.svelte", () => ({
       mockTransferTokenToPrincipal(token, to, amount),
     transferICPToAccount: (to: string, amount: bigint) =>
       mockTransferICPToAccount(to, amount),
-  },
-}));
-
-const mockComputeSendFee = vi.fn();
-vi.mock("$modules/shared/services/feeService", () => ({
-  feeService: {
-    computeSendFee: (...args: unknown[]) => mockComputeSendFee(...args),
   },
 }));
 
@@ -201,96 +193,6 @@ describe("WalletSendStore", () => {
         maxAmount: 10,
       });
       expect(result.isOk()).toBe(true);
-    });
-  });
-
-  describe("computeSendFee", () => {
-    const mockToken: TokenWithPriceAndBalance = {
-      address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-      decimals: 8,
-      symbol: "ICP",
-      fee: 10_000n,
-      priceUSD: 10.5,
-    } as TokenWithPriceAndBalance;
-
-    const mockFeeOutput = {
-      sendAmount: 100_000_000n,
-      fee: 10_000n,
-      totalAmount: 100_010_000n,
-      symbol: "ICP",
-      decimals: 8,
-    };
-
-    it("should return Ok with computed fee when params valid", () => {
-      mockFindTokenByAddress.mockReturnValue(Ok(mockToken));
-      mockComputeSendFee.mockReturnValue(mockFeeOutput);
-
-      const params: ComputeSendFeeParams = {
-        selectedToken: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-        amount: 1,
-        receiveAddress: "recipient",
-      };
-
-      const result = walletSendStore.computeSendFee(params);
-
-      expect(result.isOk()).toBe(true);
-      expect(result.unwrap()).toEqual(mockFeeOutput);
-      expect(mockFindTokenByAddress).toHaveBeenCalledWith(params.selectedToken);
-      expect(mockComputeSendFee).toHaveBeenCalled();
-    });
-
-    it("should return Err when selectedToken is empty", () => {
-      const params: ComputeSendFeeParams = {
-        selectedToken: "",
-        amount: 1,
-        receiveAddress: "recipient",
-      };
-
-      const result = walletSendStore.computeSendFee(params);
-
-      expect(result.isErr()).toBe(true);
-      expect(result.unwrapErr()).toBe("Invalid token or amount");
-    });
-
-    it("should return Err when amount is zero", () => {
-      const params: ComputeSendFeeParams = {
-        selectedToken: "token",
-        amount: 0,
-        receiveAddress: "recipient",
-      };
-
-      const result = walletSendStore.computeSendFee(params);
-
-      expect(result.isErr()).toBe(true);
-      expect(result.unwrapErr()).toBe("Invalid token or amount");
-    });
-
-    it("should return Err when amount is negative", () => {
-      const params: ComputeSendFeeParams = {
-        selectedToken: "token",
-        amount: -1,
-        receiveAddress: "recipient",
-      };
-
-      const result = walletSendStore.computeSendFee(params);
-
-      expect(result.isErr()).toBe(true);
-      expect(result.unwrapErr()).toBe("Invalid token or amount");
-    });
-
-    it("should return Err when token not found", () => {
-      mockFindTokenByAddress.mockReturnValue(Err(new Error("Token not found")));
-
-      const params: ComputeSendFeeParams = {
-        selectedToken: "unknown-token",
-        amount: 1,
-        receiveAddress: "recipient",
-      };
-
-      const result = walletSendStore.computeSendFee(params);
-
-      expect(result.isErr()).toBe(true);
-      expect(result.unwrapErr()).toBe("Token not found");
     });
   });
 

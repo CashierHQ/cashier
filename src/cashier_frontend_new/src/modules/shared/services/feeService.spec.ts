@@ -15,10 +15,7 @@ import { Ed25519KeyIdentity } from "@dfinity/identity";
 import { Principal } from "@dfinity/principal";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { feeService, FeeService } from "./feeService";
-import {
-  FlowDirection,
-  FlowDirectionError,
-} from "$modules/transactionCart/types/transaction-source";
+import { FlowDirection } from "$modules/transactionCart/types/transaction-source";
 import { FeeType } from "$modules/links/types/fee";
 import { AssetProcessState } from "$modules/transactionCart/types/txCart";
 import type { AssetAndFeeList } from "$modules/shared/types/feeService";
@@ -54,64 +51,6 @@ describe("FeeService", () => {
     vi.resetAllMocks();
   });
 
-  describe("getFlowDirection", () => {
-    it("returns Ok(OUTGOING) when from.address matches walletPrincipal", () => {
-      const payload = getPayloadTransfer(100_000_000n);
-      const result = svc.getFlowDirection(
-        payload,
-        from.getPrincipal().toText(),
-      );
-      expect(result.isOk()).toBe(true);
-      expect(result.unwrap()).toBe(FlowDirection.OUTGOING);
-    });
-
-    it("returns Ok(INCOMING) when only to.address matches walletPrincipal", () => {
-      const payload = getPayloadTransfer(100_000_000n);
-      const result = svc.getFlowDirection(payload, to.getPrincipal().toText());
-      expect(result.isOk()).toBe(true);
-      expect(result.unwrap()).toBe(FlowDirection.INCOMING);
-    });
-
-    it("returns Err(UNRELATED) when neither matches", () => {
-      const payload = getPayloadTransfer(100_000_000n);
-      const result = svc.getFlowDirection(payload, "unrelated-principal");
-      expect(result.isErr()).toBe(true);
-      expect(result.unwrapErr()).toBe(FlowDirectionError.UNRELATED);
-    });
-
-    it("returns Ok(OUTGOING) for self-transfer (from=to=wallet)", () => {
-      // TransferData constructor: (to, asset, from, amount)
-      const selfPayload = new TransferData(
-        fromWallet, // to
-        assets[0],
-        fromWallet, // from (same as to for self-transfer)
-        100_000_000n,
-      );
-      const result = svc.getFlowDirection(
-        selfPayload,
-        from.getPrincipal().toText(),
-      );
-      expect(result.isOk()).toBe(true);
-      expect(result.unwrap()).toBe(FlowDirection.OUTGOING);
-    });
-  });
-
-  describe("getFlowDirectionOrThrow", () => {
-    it("returns value directly when Ok", () => {
-      const payload = getPayloadTransfer(100_000_000n);
-      const result = svc.getFlowDirectionOrThrow(
-        payload,
-        from.getPrincipal().toText(),
-      );
-      expect(result).toBe(FlowDirection.OUTGOING);
-    });
-
-    it("throws on Err result", () => {
-      const payload = getPayloadTransfer(100_000_000n);
-      expect(() => svc.getFlowDirectionOrThrow(payload, "unrelated")).toThrow();
-    });
-  });
-
   describe("computeAmountAndFeeRaw", () => {
     it("CreateLink + TransferWalletToTreasury -> amount and fee are ledgerFee*2 + payload.amount", () => {
       const intent = createIntentWithPayload(
@@ -120,7 +59,7 @@ describe("FeeService", () => {
         100_000_000n,
       );
 
-      const res = svc.computeAmountAndFee({
+      const res = svc.computeActionAmountAndFee({
         intent,
         ledgerFee: LEDGER_FEE,
         actionType: ActionType.CREATE_LINK,
@@ -139,7 +78,7 @@ describe("FeeService", () => {
         100_000_000n,
       );
 
-      const res = svc.computeAmountAndFee({
+      const res = svc.computeActionAmountAndFee({
         intent,
         ledgerFee: LEDGER_FEE,
         actionType: ActionType.CREATE_LINK,
@@ -156,7 +95,7 @@ describe("FeeService", () => {
         IntentTask.TRANSFER_WALLET_TO_LINK,
         100_000_000n,
       );
-      const res = svc.computeAmountAndFee({
+      const res = svc.computeActionAmountAndFee({
         intent,
         ledgerFee: LEDGER_FEE,
         actionType: ActionType.WITHDRAW,
@@ -173,7 +112,7 @@ describe("FeeService", () => {
         IntentTask.TRANSFER_WALLET_TO_LINK,
         100_000_000n,
       );
-      const res = svc.computeAmountAndFee({
+      const res = svc.computeActionAmountAndFee({
         intent,
         ledgerFee: LEDGER_FEE,
         actionType: ActionType.SEND,
@@ -190,7 +129,7 @@ describe("FeeService", () => {
         IntentTask.TRANSFER_WALLET_TO_LINK,
         100_000_000n,
       );
-      const res = svc.computeAmountAndFee({
+      const res = svc.computeActionAmountAndFee({
         intent,
         ledgerFee: LEDGER_FEE,
         actionType: ActionType.RECEIVE,
@@ -461,185 +400,6 @@ describe("FeeService", () => {
           formatNumber(parseBalanceUnits(30_000n, token.decimals)),
         );
       }
-    });
-  });
-
-  describe("computeSendFee", () => {
-    const ICP_LEDGER_FEE = 10_000n;
-
-    it("computes fee with token that has priceUSD", () => {
-      const token = {
-        address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-        decimals: 8,
-        fee: ICP_LEDGER_FEE,
-        symbol: "ICP",
-        priceUSD: 10.5,
-      } as TokenWithPriceAndBalance;
-
-      const sendAmount = 100_000_000n; // 1 ICP
-      const receiveAddress = "abc123def456ghi789jkl012mno345pqr678stu901vwx234";
-
-      const result = svc.computeSendFee(sendAmount, token, receiveAddress);
-
-      // Raw values
-      expect(result.sendAmount).toBe(sendAmount);
-      expect(result.fee).toBe(ICP_LEDGER_FEE);
-      expect(result.totalAmount).toBe(sendAmount + ICP_LEDGER_FEE);
-
-      // Token metadata
-      expect(result.symbol).toBe("ICP");
-      expect(result.decimals).toBe(8);
-      expect(result.tokenAddress).toBe(token.address);
-
-      // Formatted values exist
-      expect(result.sendAmountFormatted).toBeDefined();
-      expect(result.feeFormatted).toBeDefined();
-      expect(result.totalAmountFormatted).toBeDefined();
-
-      // USD values should be calculated
-      expect(result.sendAmountUsd).toBeCloseTo(1 * 10.5); // 1 ICP * $10.5
-      expect(result.feeUsd).toBeCloseTo(0.0001 * 10.5); // 0.0001 ICP * $10.5
-      expect(result.totalAmountUsd).toBeCloseTo(1.0001 * 10.5);
-
-      // USD formatted strings should exist
-      expect(result.sendAmountUsdFormatted).toBeDefined();
-      expect(result.feeUsdFormatted).toBeDefined();
-      expect(result.totalAmountUsdFormatted).toBeDefined();
-    });
-
-    it("computes fee without priceUSD (undefined USD values)", () => {
-      const token = {
-        address: "token-no-price",
-        decimals: 8,
-        fee: 20_000n,
-        symbol: "UNKNOWN",
-      } as TokenWithPriceAndBalance;
-
-      const sendAmount = 50_000_000n;
-      const receiveAddress = "recipient-address";
-
-      const result = svc.computeSendFee(sendAmount, token, receiveAddress);
-
-      // Raw values
-      expect(result.sendAmount).toBe(sendAmount);
-      expect(result.fee).toBe(20_000n);
-      expect(result.totalAmount).toBe(sendAmount + 20_000n);
-
-      // USD values should be undefined
-      expect(result.sendAmountUsd).toBeUndefined();
-      expect(result.feeUsd).toBeUndefined();
-      expect(result.totalAmountUsd).toBeUndefined();
-      expect(result.sendAmountUsdFormatted).toBeUndefined();
-      expect(result.feeUsdFormatted).toBeUndefined();
-      expect(result.totalAmountUsdFormatted).toBeUndefined();
-    });
-
-    it("falls back to ICP_LEDGER_FEE when token.fee is undefined", () => {
-      const token = {
-        address: "token-no-fee",
-        decimals: 8,
-        symbol: "NOFEE",
-        // fee is undefined
-      } as TokenWithPriceAndBalance;
-
-      const sendAmount = 100_000_000n;
-      const receiveAddress = "recipient";
-
-      const result = svc.computeSendFee(sendAmount, token, receiveAddress);
-
-      // Should use ICP_LEDGER_FEE (10_000n) as fallback
-      expect(result.fee).toBe(ICP_LEDGER_FEE);
-      expect(result.totalAmount).toBe(sendAmount + ICP_LEDGER_FEE);
-    });
-
-    it("handles different token decimals correctly", () => {
-      const token = {
-        address: "token-6-decimals",
-        decimals: 6, // USDC-like
-        fee: 1_000n, // 0.001 in 6 decimals
-        symbol: "USDC",
-        priceUSD: 1.0,
-      } as TokenWithPriceAndBalance;
-
-      const sendAmount = 1_000_000n; // 1 USDC
-      const receiveAddress = "usdc-recipient";
-
-      const result = svc.computeSendFee(sendAmount, token, receiveAddress);
-
-      expect(result.decimals).toBe(6);
-      expect(result.sendAmount).toBe(1_000_000n);
-      expect(result.fee).toBe(1_000n);
-      expect(result.totalAmount).toBe(1_001_000n);
-
-      // USD at $1 each
-      expect(result.sendAmountUsd).toBeCloseTo(1.0);
-      expect(result.feeUsd).toBeCloseTo(0.001);
-      expect(result.totalAmountUsd).toBeCloseTo(1.001);
-    });
-
-    it("includes network info (always ICP)", () => {
-      const token = {
-        address: "any-token",
-        decimals: 8,
-        fee: 10_000n,
-        symbol: "ANY",
-      } as TokenWithPriceAndBalance;
-
-      const result = svc.computeSendFee(100_000_000n, token, "recipient");
-
-      expect(result.networkName).toBe("Internet Computer");
-      expect(result.networkLogo).toBe("/icpLogo.png");
-    });
-
-    it("shortens long receive address", () => {
-      const token = {
-        address: "token",
-        decimals: 8,
-        fee: 10_000n,
-        symbol: "TKN",
-      } as TokenWithPriceAndBalance;
-
-      const longAddress = "abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmno";
-
-      const result = svc.computeSendFee(100_000_000n, token, longAddress);
-
-      expect(result.receiveAddress).toBe(longAddress);
-      // shortened should be different from original for long addresses
-      expect(result.receiveAddressShortened.length).toBeLessThan(
-        longAddress.length,
-      );
-    });
-
-    it("handles zero send amount", () => {
-      const token = {
-        address: "token",
-        decimals: 8,
-        fee: 10_000n,
-        symbol: "TKN",
-        priceUSD: 5.0,
-      } as TokenWithPriceAndBalance;
-
-      const result = svc.computeSendFee(0n, token, "recipient");
-
-      expect(result.sendAmount).toBe(0n);
-      expect(result.fee).toBe(10_000n);
-      expect(result.totalAmount).toBe(10_000n);
-      expect(result.sendAmountUsd).toBe(0);
-      expect(result.feeUsd).toBeCloseTo(0.0001 * 5.0);
-    });
-
-    it("includes token logo from getTokenLogo", () => {
-      const token = {
-        address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-        decimals: 8,
-        fee: 10_000n,
-        symbol: "ICP",
-      } as TokenWithPriceAndBalance;
-
-      const result = svc.computeSendFee(100_000_000n, token, "recipient");
-
-      expect(result.tokenLogo).toBeDefined();
-      expect(typeof result.tokenLogo).toBe("string");
     });
   });
 

@@ -19,74 +19,9 @@ import {
 import type { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
 import type { FeeBreakdownItem } from "$modules/links/utils/feesBreakdown";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
-import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
-import { shortenAddress } from "$modules/wallet/utils/address";
-import type {
-  AssetAndFeeList,
-  ForecastAssetAndFee,
-  SendFeeOutput,
-} from "../types/feeService";
-import {
-  FlowDirection,
-  FlowDirectionError,
-  type FlowDirectionResult,
-  type FlowDirectionValue,
-} from "$modules/transactionCart/types/transaction-source";
-import type { IntentPayload } from "$modules/links/types/action/intentType";
-import { Err, Ok } from "ts-results-es";
+import type { AssetAndFeeList, ForecastAssetAndFee } from "../types/feeService";
 
 export class FeeService {
-  /**
-   * Determine flow direction based on intent's to/from vs current wallet.
-   * - INCOMING: to == wallet AND from != wallet
-   * - OUTGOING: from == wallet (includes self-transfer)
-   * - UNRELATED error: neither to nor from matches wallet
-   * @param payload - Intent payload with to/from addresses
-   * @param walletPrincipal - Current wallet principal as string
-   * @returns FlowDirectionResult (Ok with direction or Err with error)
-   */
-  getFlowDirection(
-    payload: IntentPayload,
-    walletPrincipal: string,
-  ): FlowDirectionResult {
-    const toAddress = payload.to.address.toText();
-    const fromAddress = payload.from.address.toText();
-
-    const isToWallet = toAddress === walletPrincipal;
-    const isFromWallet = fromAddress === walletPrincipal;
-
-    // User is sender (includes self-transfer case)
-    if (isFromWallet) {
-      return Ok(FlowDirection.OUTGOING);
-    }
-
-    // User is receiver only
-    if (isToWallet) {
-      return Ok(FlowDirection.INCOMING);
-    }
-
-    // User is neither sender nor receiver
-    return Err(FlowDirectionError.UNRELATED);
-  }
-
-  /**
-   * Get flow direction value directly (throws on error).
-   * Use when you're confident the wallet is involved in the transaction.
-   * @param payload - Intent payload with to/from addresses
-   * @param walletPrincipal - Current wallet principal as string
-   * @returns FlowDirectionValue
-   * @throws Error if flow direction cannot be determined
-   */
-  getFlowDirectionOrThrow(
-    payload: IntentPayload,
-    walletPrincipal: string,
-  ): FlowDirectionValue {
-    const result = this.getFlowDirection(payload, walletPrincipal);
-    if (result.isErr()) {
-      throw new Error(`Flow direction error: ${result.error}`);
-    }
-    return result.value;
-  }
   /**
    * Compute both the final amount (what will be shown as the asset amount)
    * and an optional fee (undefined when there is no fee to display) based
@@ -107,7 +42,7 @@ export class FeeService {
    *    - amount = payload.amount + ledgerFee
    *    - fee = ledgerFee
    */
-  computeAmountAndFee({
+  computeActionAmountAndFee({
     intent,
     ledgerFee,
     actionType,
@@ -157,54 +92,6 @@ export class FeeService {
       tokenAddress: ICP_LEDGER_CANISTER_ID,
       symbol: "ICP",
       decimals: 8,
-    };
-  }
-
-  /**
-   * Compute send fee for wallet transfers
-   */
-  computeSendFee(
-    sendAmount: bigint,
-    token: TokenWithPriceAndBalance,
-    receiveAddress: string,
-  ): SendFeeOutput {
-    const fee = token.fee ?? ICP_LEDGER_FEE;
-    const totalAmount = sendAmount + fee;
-    const { decimals, priceUSD } = token;
-
-    const sendAmountUi = parseBalanceUnits(sendAmount, decimals);
-    const feeUi = parseBalanceUnits(fee, decimals);
-    const totalAmountUi = parseBalanceUnits(totalAmount, decimals);
-
-    const sendAmountUsd = priceUSD ? sendAmountUi * priceUSD : undefined;
-    const feeUsd = priceUSD ? feeUi * priceUSD : undefined;
-    const totalAmountUsd = priceUSD ? totalAmountUi * priceUSD : undefined;
-
-    return {
-      sendAmount,
-      fee,
-      totalAmount,
-      symbol: token.symbol,
-      decimals,
-      tokenAddress: token.address,
-      tokenLogo: getTokenLogo(token.address),
-      receiveAddress,
-      receiveAddressShortened: shortenAddress(receiveAddress),
-      networkName: "Internet Computer",
-      networkLogo: "/icpLogo.png",
-      sendAmountFormatted: formatNumber(sendAmountUi, { tofixed: decimals }),
-      feeFormatted: formatNumber(feeUi, { tofixed: decimals }),
-      totalAmountFormatted: formatNumber(totalAmountUi, { tofixed: decimals }),
-      sendAmountUsd,
-      feeUsd,
-      totalAmountUsd,
-      sendAmountUsdFormatted: sendAmountUsd
-        ? formatUsdAmount(sendAmountUsd)
-        : undefined,
-      feeUsdFormatted: feeUsd ? formatUsdAmount(feeUsd) : undefined,
-      totalAmountUsdFormatted: totalAmountUsd
-        ? formatUsdAmount(totalAmountUsd)
-        : undefined,
     };
   }
 
@@ -321,6 +208,9 @@ export class FeeService {
   }
   /**
    * Convert AssetAndFeeList to FeeBreakdownItem[] format for FeeInfoDrawer.
+   * @param assetAndFeeList - List of AssetAndFee pairs
+   * @param tokens - Map of token address to TokenWithPriceAndBalance
+   * @returns FeeBreakdownItem[]
    */
   convertAssetAndFeeListToFeesBreakdown(
     assetAndFeeList: AssetAndFeeList,
@@ -380,6 +270,9 @@ export class FeeService {
   /**
    * Compute wallet transfer fee for ICRC/ICP tokens.
    * Returns amount+fee and fee in raw bigint format.
+   * @param amount - Transfer amount excluding fee
+   * @param tokenFee - Optional token fee; defaults to ICP ledger fee if undefined
+   * @returns ComputeAmountAndFeeOutput with total amount and fee
    */
   computeWalletFee(
     amount: bigint,
