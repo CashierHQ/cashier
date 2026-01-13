@@ -65,7 +65,7 @@ vi.mock("$lib/managedState", () => ({
 
 // Import store after mocks
 import {
-  createWalletHistoryStore,
+  getWalletHistoryStore,
   clearWalletHistoryCache,
   WalletHistoryStore,
 } from "./walletHistoryStore.svelte";
@@ -92,7 +92,7 @@ describe("WalletHistoryStore", () => {
     managedStateCallCount = 0;
     mockQueryInstances.length = 0;
     clearWalletHistoryCache(); // Clear cache between tests
-    store = createWalletHistoryStore(TEST_INDEX_ID);
+    store = getWalletHistoryStore(TEST_INDEX_ID);
   });
 
   describe("constructor", () => {
@@ -107,22 +107,22 @@ describe("WalletHistoryStore", () => {
 
   describe("factory function", () => {
     it("should create new instance for new indexId", () => {
-      const newStore = createWalletHistoryStore("different-index-id");
+      const newStore = getWalletHistoryStore("different-index-id");
       expect(newStore).toBeInstanceOf(WalletHistoryStore);
       expect(newStore.indexId).toBe("different-index-id");
     });
 
     it("should return cached instance for same indexId", () => {
       const initialCount = managedStateCallCount;
-      const sameStore = createWalletHistoryStore(TEST_INDEX_ID);
+      const sameStore = getWalletHistoryStore(TEST_INDEX_ID);
 
       expect(sameStore).toBe(store);
       expect(managedStateCallCount).toBe(initialCount); // No new managedState created
     });
 
     it("should create separate instances for different indexIds", () => {
-      const store1 = createWalletHistoryStore("index-1");
-      const store2 = createWalletHistoryStore("index-2");
+      const store1 = getWalletHistoryStore("index-1");
+      const store2 = getWalletHistoryStore("index-2");
 
       expect(store1).not.toBe(store2);
       expect(store1.indexId).toBe("index-1");
@@ -151,7 +151,7 @@ describe("WalletHistoryStore", () => {
       const initialCount = managedStateCallCount;
 
       clearWalletHistoryCache();
-      const newStore = createWalletHistoryStore(TEST_INDEX_ID);
+      const newStore = getWalletHistoryStore(TEST_INDEX_ID);
 
       expect(newStore).not.toBe(store);
       expect(managedStateCallCount).toBe(initialCount + 1); // New managedState created
@@ -159,7 +159,7 @@ describe("WalletHistoryStore", () => {
 
     it("should reset multiple stores", async () => {
       // Use valid principal format for second store
-      const store2 = createWalletHistoryStore("ryjl3-tyaaa-aaaaa-aaaba-cai");
+      const store2 = getWalletHistoryStore("ryjl3-tyaaa-aaaaa-aaaba-cai");
 
       // Populate both stores
       mockGetTransactions

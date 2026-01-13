@@ -1,22 +1,16 @@
 import type { Account } from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import * as icpLedger from "$lib/generated/icp_ledger_canister/icp_ledger_canister.did";
 import { authState } from "$modules/auth/state/auth.svelte";
-import { AccountIdentifier } from "@dfinity/ledger-icp";
+import { decodeAccountID } from "$modules/shared/utils/icpAccountId";
 import { Principal } from "@dfinity/principal";
 import { ICP_LEDGER_CANISTER_ID, ICP_LEDGER_FEE } from "../constants";
-
-// Polyfill for Buffer in browser environment
-// The @dfinity/ledger-icp package depends on Buffer, which is not available in browsers by default.
-// In order to use the AccountIdentifier class from the package, we need to polyfill Buffer.
-import { Buffer } from "buffer";
-if (typeof window !== "undefined" && !window.Buffer) {
-  window.Buffer = Buffer;
-}
+import { toNullable } from "@dfinity/utils";
+import { rsMatch } from "$lib/rsMatch";
 
 /**
  * Service for interacting with ICP Ledger canister for a specific token
  */
-class IcpLedgerService {
+export class IcpLedgerService {
   #canisterId: string;
   #fee: bigint;
 
@@ -90,55 +84,83 @@ class IcpLedgerService {
     });
 
     if ("Err" in result) {
-      throw parseICPTransferResultError(result.Err);
+      return rsMatch(result.Err, {
+        TxTooOld: (e) => {
+          throw new Error(`Transaction too old: ${e}`);
+        },
+        BadFee: (e) => {
+          throw new Error(`Bad fee: ${e}`);
+        },
+        TxDuplicate: (e) => {
+          throw new Error(`Duplicate transaction: ${e}`);
+        },
+        InsufficientFunds: () => {
+          throw new Error(`Insufficient funds`);
+        },
+        TxCreatedInFuture: () => {
+          throw new Error(`Transaction created in future`);
+        },
+      });
     }
 
     return result.Ok;
   }
-}
 
-/**
- * Encode an ICP account identifier from a principal.
- * @param principal The principal to encode
- * @returns The encoded account identifier or null if encoding fails
- */
-export function encodeAccountID(principal: Principal): string | null {
-  try {
-    const identifier = AccountIdentifier.fromPrincipal({ principal });
-    return identifier.toHex();
-  } catch (error) {
-    console.error("Error encoding ICP account:", error);
-    return null;
+  /**
+   * Transfer tokens to another user by their Principal.
+   * @param to The Principal of the recipient.
+   * @param amount The amount of tokens to transfer.
+   * @returns The result of the transfer operation.
+   */
+  public async transferToPrincipal(
+    to: Principal,
+    amount: bigint,
+  ): Promise<bigint> {
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
+
+    const result = await actor.icrc1_transfer({
+      to: { owner: to, subaccount: [] },
+      amount,
+      fee: toNullable(this.#fee),
+      memo: [],
+      from_subaccount: [],
+      created_at_time: [],
+    });
+
+    if ("Err" in result) {
+      return rsMatch(result.Err, {
+        GenericError: (e) => {
+          throw new Error(`${e.message} (code: ${e.error_code})`);
+        },
+        TemporarilyUnavailable: () => {
+          throw new Error("Ledger is temporarily unavailable");
+        },
+        BadBurn: (e) => {
+          throw new Error(`Bad burn amount: ${e}`);
+        },
+        Duplicate: (e) => {
+          throw new Error(`Duplicate transaction: ${e}`);
+        },
+        BadFee: (e) => {
+          throw new Error(`Bad fee: ${e}`);
+        },
+        TooOld: (e) => {
+          throw new Error(`Transaction is too old: ${e}`);
+        },
+        CreatedInFuture: (e) => {
+          throw new Error(`Created in future: ${e}`);
+        },
+        InsufficientFunds: () => {
+          throw new Error(`Insufficient funds`);
+        },
+      });
+    }
+
+    return result.Ok;
   }
-}
-
-/**
- * Decode an ICP account identifier from a hex string.
- * @param account The ICP account ID in hex format string
- * @returns The decoded account identifier as Uint8Array or null if decoding fails
- */
-function decodeAccountID(account: string): Uint8Array | number[] {
-  try {
-    return AccountIdentifier.fromHex(account).toUint8Array();
-  } catch (error) {
-    console.error("Error decoding ICP account:", error);
-    return [];
-  }
-}
-
-/**
- * Parse the error from the ICP Ledger transfer operation (legacy).
- * @param result Error result from ICP Ledger transfer operation (legacy)
- * @returns Parsed error
- */
-export function parseICPTransferResultError(
-  result: icpLedger.TransferError,
-): Error {
-  if ("InsufficientFunds" in result) {
-    return new Error(`Transfer failed: Insufficient funds`);
-  }
-
-  return new Error("Transfer failed: Unknown error");
 }
 
 export const icpLedgerService = new IcpLedgerService();

@@ -164,11 +164,11 @@ class WalletHistoryStore {
  * Uses cache to preserve transaction history across token switches (prevents flickering).
  * @param indexId - Index canister ID for the token
  * @example
- * const store = createWalletHistoryStore("qhbym-qaaaa-aaaaa-aaafq-cai");
+ * const store = getWalletHistoryStore("qhbym-qaaaa-aaaaa-aaafq-cai");
  * await store.loadMore();
  * console.log(store.transactions);
  */
-export function createWalletHistoryStore(indexId: string): WalletHistoryStore {
+export function getWalletHistoryStore(indexId: string): WalletHistoryStore {
   let store = storeCache.get(indexId);
   if (!store) {
     store = new WalletHistoryStore(indexId);

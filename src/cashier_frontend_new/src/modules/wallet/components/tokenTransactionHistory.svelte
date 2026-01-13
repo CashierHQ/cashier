@@ -1,6 +1,6 @@
 <script lang="ts">
   import {
-    createWalletHistoryStore,
+    getWalletHistoryStore,
     type WalletHistoryStore,
   } from "$modules/token/state/walletHistoryStore.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
@@ -12,7 +12,7 @@
     LoaderCircle,
   } from "lucide-svelte";
   import { groupTransactionsByDate } from "$modules/wallet/utils/date";
-  import { getTransactionLabelKey } from "$modules/wallet/utils/transaction-display-type";
+  import { getTransactionLabelKey } from "$modules/wallet/utils/transactionDisplayType";
   import {
     ICP_LEDGER_CANISTER_ID,
     ICP_INDEX_CANISTER_ID,
@@ -56,7 +56,7 @@
   $effect(() => {
     const indexId = getIndexId(tokenAddress, tokenDetails);
     if (indexId) {
-      historyStore = createWalletHistoryStore(indexId);
+      historyStore = getWalletHistoryStore(indexId);
     } else {
       historyStore = null;
     }

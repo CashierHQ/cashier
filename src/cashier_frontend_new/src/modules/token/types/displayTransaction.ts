@@ -1,4 +1,4 @@
-import { isTransactionOutgoing } from "$modules/wallet/utils/transaction-display-type";
+import { isTransactionOutgoing } from "$modules/wallet/utils/transactionDisplayType";
 import type { TokenWithPriceAndBalance } from "./tokenMetadata";
 import type { TokenTransaction } from "./tokenTransaction";
 import type { TransactionKindValue } from "./transactionKind";

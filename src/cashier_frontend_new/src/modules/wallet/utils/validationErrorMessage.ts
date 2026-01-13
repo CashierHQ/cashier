@@ -1,6 +1,6 @@
 import { locale } from "$lib/i18n";
 import { assertUnreachable } from "$lib/rsMatch";
-import type { ValidationErrorType } from "$modules/token/services/canister-validation";
+import type { ValidationErrorType } from "$modules/token/services/canisterValidation";
 
 /**
  * Maps validation error types to their corresponding i18n translation keys.
