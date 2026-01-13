@@ -6,7 +6,7 @@ import {
   validateLedgerCanister,
   ValidationError,
   type ValidationErrorType,
-} from "$modules/token/services/canister-validation";
+} from "$modules/token/services/canisterValidation";
 import type { TokenMetadata } from "$modules/token/types";
 import { parseListTokens } from "$modules/token/utils/parser";
 import type { NFT } from "$modules/wallet/types/nft";
