@@ -37,7 +37,10 @@
   import { feeService } from "$modules/shared/services/feeService";
   import { CreateLinkAsset } from "$modules/creationLink/types/createLinkData";
   import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
-  import { LinkTypeMapper } from "$modules/links/types/link/linkType";
+  import {
+    LinkTypeMapper,
+    type LinkTypeValue,
+  } from "$modules/links/types/link/linkType";
 
   //let { linkStore }: { linkStore: LinkDetailStore } = $props();
   let {
@@ -150,7 +153,9 @@
     );
 
     const maxUse = Number(linkStore.link.link_use_action_max_count);
-    const linkType = LinkTypeMapper.fromBackendType(linkStore.link.link_type);
+    const linkType: LinkTypeValue = LinkTypeMapper.fromBackendType(
+      linkStore.link.link_type,
+    );
 
     return feeService.forecastLinkCreationFees(
       linkAssets,
