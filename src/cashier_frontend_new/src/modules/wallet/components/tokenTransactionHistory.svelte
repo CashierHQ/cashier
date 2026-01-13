@@ -12,7 +12,7 @@
     LoaderCircle,
   } from "lucide-svelte";
   import { groupTransactionsByDate } from "$modules/wallet/utils/date";
-  import { getTransactionLabelKey } from "$modules/wallet/utils/transaction-display-type";
+  import { getTransactionLabelKey } from "$modules/wallet/utils/transactionDisplayType";
   import {
     ICP_LEDGER_CANISTER_ID,
     ICP_INDEX_CANISTER_ID,

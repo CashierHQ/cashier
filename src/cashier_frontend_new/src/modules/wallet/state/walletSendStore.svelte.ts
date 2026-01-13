@@ -2,7 +2,7 @@ import {
   TxState,
   type ValidateSendParams,
 } from "$modules/wallet/types/walletSendStore";
-import { validateSend } from "$modules/wallet/utils/validate-send";
+import { validateSend } from "$modules/wallet/utils/validateSend";
 import type { Result } from "ts-results-es";
 
 class WalletSendStore {

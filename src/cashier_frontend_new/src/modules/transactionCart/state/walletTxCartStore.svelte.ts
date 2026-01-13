@@ -6,7 +6,7 @@ import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import type { WalletSource } from "$modules/transactionCart/types/transactionSource";
-import type { TxCartStore } from "$modules/transactionCart/types/tx-cart-store";
+import type { TxCartStore } from "$modules/transactionCart/types/txCartStore";
 import {
   AssetProcessStateMapper,
   WalletTransferState,
