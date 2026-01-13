@@ -15,7 +15,7 @@ import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import {
   FlowDirection,
   type FlowDirectionValue,
-} from "$modules/transactionCart/types/transaction-source";
+} from "$modules/transactionCart/types/transactionSource";
 import {
   AssetProcessState,
   AssetProcessStateMapper,

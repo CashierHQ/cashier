@@ -21,7 +21,7 @@ import { Ed25519KeyIdentity } from "@dfinity/identity";
 import { Principal } from "@dfinity/principal";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FeeService } from "./feeService";
-import { FlowDirection } from "$modules/transactionCart/types/transaction-source";
+import { FlowDirection } from "$modules/transactionCart/types/transactionSource";
 import { FeeType } from "$modules/links/types/fee";
 import { AssetProcessState } from "$modules/transactionCart/types/txCart";
 import type { WalletAssetInput } from "$modules/shared/types/feeService";

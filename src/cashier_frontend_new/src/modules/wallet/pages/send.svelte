@@ -16,7 +16,7 @@
   import { Clipboard, Info } from "lucide-svelte";
   import { toast } from "svelte-sonner";
   import WalletTxCart from "$modules/transactionCart/components/WalletTxCart.svelte";
-  import type { WalletSource } from "$modules/transactionCart/types/transaction-source";
+  import type { WalletSource } from "$modules/transactionCart/types/transactionSource";
   import InputAmount from "$modules/shared/components/InputAmount.svelte";
   import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
   import { walletSendStore } from "$modules/wallet/state/walletSendStore.svelte";

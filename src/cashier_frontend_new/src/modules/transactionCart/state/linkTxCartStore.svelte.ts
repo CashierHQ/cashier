@@ -10,7 +10,7 @@ import { CASHIER_BACKEND_CANISTER_ID } from "$modules/shared/constants";
 import { feeService } from "$modules/shared/services/feeService";
 import type { AssetAndFee } from "$modules/shared/types/feeService";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
-import type { ActionSource } from "$modules/transactionCart/types/transaction-source";
+import type { ActionSource } from "$modules/transactionCart/types/transactionSource";
 import type { TxCartStore } from "$modules/transactionCart/types/tx-cart-store";
 import {
   AssetProcessState,

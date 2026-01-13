@@ -11,7 +11,7 @@
   import {
     validateLedgerCanister,
     validateIndexCanister,
-  } from "$modules/token/services/canister-validation";
+  } from "$modules/token/services/canisterValidation";
   import {
     MOCK_NETWORKS,
     SECURITY_LEARN_MORE_URL,

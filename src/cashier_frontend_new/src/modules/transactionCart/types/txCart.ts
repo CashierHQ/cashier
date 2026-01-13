@@ -2,7 +2,7 @@ import { assertUnreachable } from "$lib/rsMatch";
 import IntentState, {
   type IntentStateValue,
 } from "$modules/links/types/action/intentState";
-import type { FlowDirection } from "./transaction-source";
+import type { FlowDirection } from "./transactionSource";
 
 /**
  * Generic asset processing states for UI rendering.

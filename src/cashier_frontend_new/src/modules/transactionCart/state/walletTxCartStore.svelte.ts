@@ -5,7 +5,7 @@ import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
 import { IcpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
-import type { WalletSource } from "$modules/transactionCart/types/transaction-source";
+import type { WalletSource } from "$modules/transactionCart/types/transactionSource";
 import type { TxCartStore } from "$modules/transactionCart/types/tx-cart-store";
 import {
   AssetProcessStateMapper,

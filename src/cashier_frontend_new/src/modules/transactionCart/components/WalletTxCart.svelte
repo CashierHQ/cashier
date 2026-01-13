@@ -7,7 +7,7 @@
   import {
     FlowDirection,
     type WalletSource,
-  } from "$modules/transactionCart/types/transaction-source";
+  } from "$modules/transactionCart/types/transactionSource";
   import { AssetProcessState } from "$modules/transactionCart/types/txCart";
   import YouSendSection from "$modules/transactionCart/components/shared/YouSendSection.svelte";
   import YouReceiveSection from "$modules/transactionCart/components/shared/YouReceiveSection.svelte";

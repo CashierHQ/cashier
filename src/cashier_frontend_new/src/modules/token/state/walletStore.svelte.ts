@@ -1,6 +1,6 @@
 import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
-import type { ValidationErrorType } from "$modules/token/services/canister-validation";
+import type { ValidationErrorType } from "$modules/token/services/canisterValidation";
 import { icpLedgerService } from "$modules/token/services/icpLedger";
 import { IcrcLedgerService } from "$modules/token/services/icrcLedger";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
