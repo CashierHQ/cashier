@@ -20,7 +20,7 @@
   {/if}
   {#if linkType === LinkType.AIRDROP}
     <AirdropCompleted {linkDetail} />
-  {/if}  
+  {/if}
   {#if linkType === LinkType.TOKEN_BASKET}
     <BasketCompleted {linkDetail} />
   {/if}

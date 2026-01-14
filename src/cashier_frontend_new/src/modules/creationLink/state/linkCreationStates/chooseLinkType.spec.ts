@@ -180,6 +180,5 @@ describe("ChooseLinkTypeState", () => {
     // Assert
     expect(store.state.step).toEqual(LinkStep.ADD_ASSET);
     expect(store.state).toBeInstanceOf(AddAssetState);
-
   });
 });
