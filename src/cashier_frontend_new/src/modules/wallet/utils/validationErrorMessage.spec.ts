@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { getValidationErrorMessage } from "./validation-error-message";
+import { getValidationErrorMessage } from "./validationErrorMessage";
 import { locale } from "$lib/i18n";
-import type { ValidationErrorType } from "$modules/token/services/canister-validation";
+import type { ValidationErrorType } from "$modules/token/services/canisterValidation";
 
 // Mock the locale module
 vi.mock("$lib/i18n", () => ({
