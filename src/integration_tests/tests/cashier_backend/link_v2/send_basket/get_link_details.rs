@@ -172,8 +172,22 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
         let initial_intent2 = &initial_action.intents[1];
         assert_eq!(initial_intent2.state, IntentState::Created);
         assert_eq!(initial_intent2.transactions.len(), 2);
-        let initial_tx1 = &initial_intent2.transactions[0];
-        let initial_tx2 = &initial_intent2.transactions[1];
+        // Find transactions by protocol type instead of index (order may vary)
+        let initial_approve_tx = initial_intent2
+            .transactions
+            .iter()
+            .find(|tx| matches!(tx.protocol, Protocol::IC(IcTransaction::Icrc2Approve(_))))
+            .expect("Initial Icrc2Approve transaction not found");
+        let initial_transfer_from_tx = initial_intent2
+            .transactions
+            .iter()
+            .find(|tx| {
+                matches!(
+                    tx.protocol,
+                    Protocol::IC(IcTransaction::Icrc2TransferFrom(_))
+                )
+            })
+            .expect("Initial Icrc2TransferFrom transaction not found");
 
         let initial_icrc112 = create_link_result.action.icrc_112_requests.clone();
         assert!(initial_icrc112.is_some());
@@ -250,20 +264,37 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
             _ => panic!("Expected TransferFrom intent type"),
         }
         assert_eq!(intent2.transactions.len(), 2);
-        let tx1 = &intent2.transactions[0];
-        assert_eq!(tx1.id, initial_tx1.id);
-        assert_eq!(tx1.created_at, initial_tx1.created_at);
-        match tx1.protocol {
+        // Find transactions by protocol type instead of index (order may vary)
+        let approve_tx = intent2
+            .transactions
+            .iter()
+            .find(|tx| matches!(tx.protocol, Protocol::IC(IcTransaction::Icrc2Approve(_))))
+            .expect("Icrc2Approve transaction not found");
+        assert_eq!(approve_tx.id, initial_approve_tx.id);
+        assert_eq!(approve_tx.created_at, initial_approve_tx.created_at);
+        match approve_tx.protocol {
             Protocol::IC(IcTransaction::Icrc2Approve(ref data)) => {
                 assert_eq!(data.from, Wallet::new(caller));
                 assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
             }
             _ => panic!("Expected Icrc2Approve transaction"),
         }
-        let tx2 = &intent2.transactions[1];
-        assert_eq!(tx2.id, initial_tx2.id);
-        assert_eq!(tx2.created_at, initial_tx2.created_at);
-        match tx2.protocol {
+        let transfer_from_tx = intent2
+            .transactions
+            .iter()
+            .find(|tx| {
+                matches!(
+                    tx.protocol,
+                    Protocol::IC(IcTransaction::Icrc2TransferFrom(_))
+                )
+            })
+            .expect("Icrc2TransferFrom transaction not found");
+        assert_eq!(transfer_from_tx.id, initial_transfer_from_tx.id);
+        assert_eq!(
+            transfer_from_tx.created_at,
+            initial_transfer_from_tx.created_at
+        );
+        match transfer_from_tx.protocol {
             Protocol::IC(IcTransaction::Icrc2TransferFrom(ref data)) => {
                 assert_eq!(data.from, Wallet::new(caller));
                 assert_eq!(data.to, Wallet::new(FEE_TREASURY_PRINCIPAL));
