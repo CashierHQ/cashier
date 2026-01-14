@@ -85,7 +85,7 @@
       </div>
     </div>
     <div
-      class="flex flex-row items-center justify-between border-lightgreen px-5 py-3"
+      class="flex flex-row items-start justify-between border-lightgreen px-5 py-3"
     >
       <p class="font-medium text-sm">
         {locale.t("links.linkForm.preview.userClaims")}
