@@ -1,11 +1,11 @@
 import { LinkStep } from "$modules/links/types/linkStep";
-import type { LinkCreationState } from ".";
-import type { LinkCreationStore } from "../linkCreationStore.svelte";
-import { ChooseLinkTypeState } from "./chooseLinkType";
-import { PreviewState } from "./preview";
+import type { LinkCreationState } from "$modules/creationLink/state/linkCreationStates";
+import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+import { ChooseLinkTypeState } from "$modules/creationLink/state/linkCreationStates/chooseLinkType";
+import { PreviewState } from "$modules/creationLink/state/linkCreationStates/preview";
 import { locale } from "$lib/i18n";
 
-// State when the user is adding asset details for the tip link
+// Default state when user is adding asset details for the link
 export class AddAssetState implements LinkCreationState {
   readonly step = LinkStep.ADD_ASSET;
   #link: LinkCreationStore;

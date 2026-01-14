@@ -74,8 +74,14 @@ export class CreateLinkDataMapper {
   ): Result<CreateLinkInput, Error> {
     const link_type = LinkTypeMapper.toBackendType(input.linkType);
 
-    if (input.linkType != LinkType.TIP) {
-      return Err(new Error("Only tip links are supported"));
+    // Validate link type is supported
+    if (
+      input.linkType !== LinkType.TIP &&
+      input.linkType !== LinkType.AIRDROP
+    ) {
+      return Err(
+        new Error("Only Tip and Airdrop link types are supported currently"),
+      );
     }
 
     if (!input.assets) {
@@ -83,18 +89,22 @@ export class CreateLinkDataMapper {
     }
 
     if (input.assets.length === 0) {
-      return Err(new Error("Tip link asset data is missing"));
+      return Err(new Error("Link asset data is missing"));
     }
 
+    // Determine the correct label based on link type
+    const assetLabel =
+      input.linkType === LinkType.TIP ? "SEND_TIP_ASSET" : "SEND_AIRDROP_ASSET";
+
     const assetInfo: Array<AssetInfoDto> = input.assets.map((a) =>
-      CreateLinkAssetMapper.toBackendWithLabel(a, "SEND_TIP_ASSET"),
+      CreateLinkAssetMapper.toBackendWithLabel(a, assetLabel),
     );
 
     const inputDto: CreateLinkInput = {
       title: input.title,
       asset_info: assetInfo,
       link_type: link_type,
-      link_use_action_max_count: 1n,
+      link_use_action_max_count: BigInt(input.maxUse || 1),
     };
 
     return Ok(inputDto);

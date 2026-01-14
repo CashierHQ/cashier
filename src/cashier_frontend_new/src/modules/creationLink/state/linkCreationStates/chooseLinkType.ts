@@ -1,9 +1,9 @@
 import { LinkType } from "$modules/links/types/link/linkType";
 import { LinkStep } from "$modules/links/types/linkStep";
-import type { LinkCreationState } from ".";
-import type { LinkCreationStore } from "../linkCreationStore.svelte";
-import { AddAssetState } from "./addAsset";
-import { AddAssetTipLinkState } from "./tiplink/addAsset";
+import type { LinkCreationState } from "$modules/creationLink/state/linkCreationStates";
+import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+import { AddAssetTipLinkState } from "$modules/creationLink/state/linkCreationStates/tiplink/addAsset";
+import { AddAssetAirdropState } from "$modules/creationLink/state/linkCreationStates/airdrop/addAsset";
 
 // State when the user is choosing the type of link to create
 export class ChooseLinkTypeState implements LinkCreationState {
@@ -21,14 +21,19 @@ export class ChooseLinkTypeState implements LinkCreationState {
       throw new Error("Title is required to proceed");
     }
 
-    if (this.#link.createLinkData.linkType !== LinkType.TIP) {
-      throw new Error("Only Tip link type is supported currently");
+    const currentType = this.#link.createLinkData.linkType;
+
+    // Only TIP and AIRDROP are supported at this step for now
+    if (currentType !== LinkType.TIP && currentType !== LinkType.AIRDROP) {
+      throw new Error(
+        "Only Tip and Airdrop link types are supported currently",
+      );
     }
 
-    if (this.#link.createLinkData.linkType === LinkType.TIP) {
+    if (currentType === LinkType.TIP) {
       this.#link.state = new AddAssetTipLinkState(this.#link);
-    } else {
-      this.#link.state = new AddAssetState(this.#link);
+    } else if (currentType === LinkType.AIRDROP) {
+      this.#link.state = new AddAssetAirdropState(this.#link);
     }
   }
 

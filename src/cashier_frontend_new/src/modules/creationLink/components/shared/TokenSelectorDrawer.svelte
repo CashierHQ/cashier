@@ -17,6 +17,7 @@
     selectedAddress?: string;
     onSelectToken: (address: string) => void;
     onClose?: () => void;
+    excludeAddresses?: string[];
   };
 
   let {
@@ -24,6 +25,7 @@
     selectedAddress,
     onSelectToken,
     onClose,
+    excludeAddresses = [],
   }: Props = $props();
 
   let searchQuery = $state("");
@@ -31,10 +33,18 @@
 
   const filteredTokens = $derived.by(() => {
     if (!walletStore.query.data) return [];
-    if (!searchQuery.trim()) return walletStore.query.data;
+
+    const excludeSet = new Set(excludeAddresses ?? []);
+
+    const baseTokens = walletStore.query.data.filter((token) => {
+      if (token.address === selectedAddress) return true;
+      return !excludeSet.has(token.address);
+    });
+
+    if (!searchQuery.trim()) return baseTokens;
 
     const query = searchQuery.toLowerCase().trim();
-    return walletStore.query.data.filter(
+    return baseTokens.filter(
       (token) =>
         token.symbol.toLowerCase().includes(query) ||
         token.name.toLowerCase().includes(query),

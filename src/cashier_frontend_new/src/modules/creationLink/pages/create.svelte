@@ -1,11 +1,11 @@
 <script lang="ts">
   import { LinkStep } from "$modules/links/types/linkStep";
-  import AddAsset from "../components/addAsset.svelte";
-  import ChooseLinkType from "../components/chooseLinkType.svelte";
-  import CreatedLink from "../components/createdLink.svelte";
-  import CreateLinkHeader from "../components/createLinkHeader.svelte";
-  import Preview from "../components/preview.svelte";
-  import { LinkCreationStore } from "../state/linkCreationStore.svelte";
+  import AddAsset from "$modules/creationLink/components/addAsset.svelte";
+  import ChooseLinkType from "$modules/creationLink/components/chooseLinkType.svelte";
+  import CreatedLink from "$modules/creationLink/components/createdLink.svelte";
+  import CreateLinkHeader from "$modules/creationLink/components/createLinkHeader.svelte";
+  import Preview from "$modules/creationLink/components/preview.svelte";
+  import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import { appHeaderStore } from "$modules/shared/state/appHeaderStore.svelte";
 
   import { goto } from "$app/navigation";

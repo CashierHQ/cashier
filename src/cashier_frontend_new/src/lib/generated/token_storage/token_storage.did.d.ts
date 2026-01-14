@@ -7,6 +7,7 @@ export interface AddTokenInput {
   'index_id' : [] | [string],
 }
 export interface AddTokensInput { 'token_ids' : Array<TokenId> }
+export interface AddUserNftInput { 'nft' : Nft }
 export interface BuildData {
   'rustc_semver' : string,
   'git_branch' : string,
@@ -19,6 +20,8 @@ export interface BuildData {
   'git_sha' : string,
   'git_commit_timestamp' : string,
 }
+export type CanisterError = { 'CandidDecodeFailed' : string } |
+  { 'UnboundedError' : string };
 export type Chain = { 'IC' : null };
 export type ChainTokenDetails = {
     'IC' : {
@@ -27,12 +30,17 @@ export type ChainTokenDetails = {
       'index_id' : [] | [Principal],
     }
   };
+export interface GetUserNftInput {
+  'limit' : [] | [number],
+  'start' : [] | [number],
+}
 export interface LogServiceSettings {
   'log_filter' : [] | [string],
   'in_memory_records' : [] | [bigint],
   'enable_console' : [] | [boolean],
   'max_record_length' : [] | [bigint],
 }
+export interface Nft { 'token_id' : bigint, 'collection_id' : Principal }
 export type Permission = { 'Admin' : null };
 export interface RegistryStats {
   'total_enabled_default' : bigint,
@@ -54,11 +62,13 @@ export type Result_2 = { 'Ok' : UserTokens } |
 export type Result_3 = { 'Ok' : null } |
   { 'Err' : string };
 export type Result_4 = { 'Ok' : null } |
-  { 'Err' : TokenStorageError };
+  { 'Err' : CanisterError };
 export type Result_5 = { 'Ok' : TokenListResponse } |
   { 'Err' : string };
 export type Result_6 = { 'Ok' : Array<Permission> } |
-  { 'Err' : TokenStorageError };
+  { 'Err' : CanisterError };
+export type Result_7 = { 'Ok' : UserNftDto } |
+  { 'Err' : CanisterError };
 export interface TokenDto {
   'id' : TokenId,
   'decimals' : number,
@@ -81,7 +91,6 @@ export interface TokenRegistryMetadata {
   'last_updated' : bigint,
   'version' : bigint,
 }
-export type TokenStorageError = { 'AuthError' : string };
 export interface TokenStorageInitData {
   'owner' : Principal,
   'tokens' : [] | [Array<RegistryToken>],
@@ -95,6 +104,7 @@ export interface UpdateTokenInput {
   'token_id' : TokenId,
   'is_enabled' : boolean,
 }
+export interface UserNftDto { 'nft' : Nft, 'user' : Principal }
 export interface UserPreference {
   'hide_zero_balance' : boolean,
   'selected_chain' : Array<Chain>,
@@ -151,6 +161,14 @@ export interface _SERVICE {
    * Lists the tokens in the registry for the caller
    */
   'list_tokens' : ActorMethod<[], Result_5>,
+  /**
+   * Adds a new NFT to the user's collection
+   * # Arguments
+   * * `input` - The input containing the NFT to be added
+   * # Returns
+   * * `UserNftDto` - The added NFT with user information
+   */
+  'user_add_nft' : ActorMethod<[AddUserNftInput], Result_7>,
   'user_add_token' : ActorMethod<[AddTokenInput], Result_3>,
   /**
    * Add multiple tokens to the user's list
@@ -158,6 +176,14 @@ export interface _SERVICE {
    * ToDo: this function is not atomic can leave the state in an inconsistent state
    */
   'user_add_token_batch' : ActorMethod<[AddTokensInput], Result_3>,
+  /**
+   * Retrieves the NFTs owned by the calling user
+   * # Arguments
+   * * `input` - The input containing pagination parameters
+   * # Returns
+   * * `Vec<NftDto>` - List of NFTs owned by the user
+   */
+  'user_get_nfts' : ActorMethod<[GetUserNftInput], Array<Nft>>,
   'user_sync_token_list' : ActorMethod<[], Result_3>,
   'user_update_token_balance' : ActorMethod<
     [Array<UpdateTokenBalanceInput>],

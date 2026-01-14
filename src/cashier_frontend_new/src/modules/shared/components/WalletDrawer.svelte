@@ -1,15 +1,17 @@
 <script lang="ts">
-  import { X, LoaderCircle } from "lucide-svelte";
-  import WalletPage from "$modules/wallet/pages/wallet.svelte";
-  import TokenInfoPage from "$modules/wallet/pages/tokenInfo.svelte";
-  import ReceivePage from "$modules/wallet/pages/receive.svelte";
-  import SendPage from "$modules/wallet/pages/send.svelte";
-  import ImportPage from "$modules/wallet/pages/import.svelte";
-  import ManagePage from "$modules/wallet/pages/manage.svelte";
   import {
     WalletViewType,
     type WalletView,
   } from "$modules/shared/types/wallet";
+  import ImportPage from "$modules/wallet/pages/import.svelte";
+  import ImportNftPage from "$modules/wallet/pages/importNft.svelte";
+  import ManagePage from "$modules/wallet/pages/manage.svelte";
+  import ReceivePage from "$modules/wallet/pages/receive.svelte";
+  import SendPage from "$modules/wallet/pages/send.svelte";
+  import TokenInfoPage from "$modules/wallet/pages/tokenInfo.svelte";
+  import WalletPage from "$modules/wallet/pages/wallet.svelte";
+  import { WalletTab } from "$modules/wallet/types";
+  import { LoaderCircle, X } from "lucide-svelte";
 
   type Props = {
     open?: boolean;
@@ -18,6 +20,7 @@
   let { open = $bindable(false) }: Props = $props();
 
   let currentView = $state<WalletView>({ type: WalletViewType.MAIN });
+  let currentMainTab = $state<WalletTab>(WalletTab.TOKENS);
   let isToggling = $state(false);
 
   function handleClose() {
@@ -29,6 +32,10 @@
     if (event.target === event.currentTarget) {
       handleClose();
     }
+  }
+
+  function handleSwitchMainTab(tab: WalletTab) {
+    currentMainTab = tab;
   }
 
   function navigateToToken(token: string) {
@@ -58,6 +65,16 @@
 
   function navigateToMain() {
     currentView = { type: WalletViewType.MAIN };
+    currentMainTab = WalletTab.TOKENS;
+  }
+
+  function navigateToAddNft() {
+    currentView = { type: WalletViewType.ADD_NFT };
+  }
+
+  function navigateToMainNft() {
+    currentView = { type: WalletViewType.MAIN };
+    currentMainTab = WalletTab.NFTS;
   }
 </script>
 
@@ -109,11 +126,14 @@
     >
       {#if currentView.type === WalletViewType.MAIN}
         <WalletPage
+          activeTab={currentMainTab}
           onNavigateToToken={navigateToToken}
           onNavigateToManage={navigateToManage}
           onNavigateToSend={navigateToSend}
           onNavigateToReceive={navigateToReceive}
           onNavigateToSwap={navigateToSwap}
+          onNavigateToAddNft={navigateToAddNft}
+          onTabChange={handleSwitchMainTab}
         />
       {:else if currentView.type === WalletViewType.TOKEN}
         <TokenInfoPage
@@ -144,6 +164,8 @@
           onNavigateToImport={navigateToImport}
           bind:isToggling
         />
+      {:else if currentView.type === WalletViewType.ADD_NFT}
+        <ImportNftPage onNavigateBack={navigateToMainNft} />
       {/if}
     </div>
   </div>

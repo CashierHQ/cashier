@@ -1,20 +1,20 @@
 <script lang="ts">
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { locale } from "$lib/i18n";
   import {
     balanceToUSDValue,
     parseBalanceUnits,
   } from "$modules/shared/utils/converter";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { WalletTab } from "$modules/wallet/types";
   import {
-    Eye,
-    EyeOff,
-    ArrowUp,
     ArrowDown,
+    ArrowUp,
     ArrowUpDown,
     ChevronLeft,
+    Eye,
+    EyeOff,
   } from "lucide-svelte";
-  import { toast } from "svelte-sonner";
-  import { locale } from "$lib/i18n";
 
   type Token = {
     address: string;
@@ -43,8 +43,8 @@
     onBack?: () => void;
 
     // Tabs (for default view)
-    activeTab?: "tokens" | "nfts";
-    onTabChange?: (tab: "tokens" | "nfts") => void;
+    activeTab?: WalletTab;
+    onTabChange?: (tab: WalletTab) => void;
 
     // Header (for back-only mode)
     title?: string;
@@ -59,7 +59,7 @@
     onReceive,
     onSwap,
     onBack,
-    activeTab = "tokens",
+    activeTab = WalletTab.TOKENS,
     onTabChange,
     title = "",
   }: Props = $props();
@@ -108,12 +108,11 @@
   }
 
   function handleTokensTab() {
-    onTabChange?.("tokens");
+    onTabChange?.(WalletTab.TOKENS);
   }
 
   function handleNFTsTab() {
-    toast.info(locale.t("wallet.nftMessage"));
-    onTabChange?.("nfts");
+    onTabChange?.(WalletTab.NFTS);
   }
 
   function handleImageError() {
@@ -324,22 +323,22 @@
       <button
         onclick={handleTokensTab}
         class="flex-1 pb-3 text-center font-semibold transition-colors relative"
-        class:text-green={activeTab === "tokens"}
-        class:text-gray-500={activeTab !== "tokens"}
+        class:text-green={activeTab === WalletTab.TOKENS}
+        class:text-gray-500={activeTab !== WalletTab.TOKENS}
       >
         {locale.t("wallet.navBar.tokensTabBtn")}
-        {#if activeTab === "tokens"}
+        {#if activeTab === WalletTab.TOKENS}
           <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-green"></div>
         {/if}
       </button>
       <button
         onclick={handleNFTsTab}
         class="flex-1 pb-3 text-center font-semibold transition-colors relative"
-        class:text-green={activeTab === "nfts"}
-        class:text-gray-500={activeTab !== "nfts"}
+        class:text-green={activeTab === WalletTab.NFTS}
+        class:text-gray-500={activeTab !== WalletTab.NFTS}
       >
         {locale.t("wallet.navBar.nftsTabBtn")}
-        {#if activeTab === "nfts"}
+        {#if activeTab === WalletTab.NFTS}
           <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-green"></div>
         {/if}
       </button>

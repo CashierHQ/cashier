@@ -6,28 +6,32 @@
     formatUsdAmount,
   } from "$modules/shared/utils/formatNumber";
   import type { AssetWithTokenInfo } from "$modules/links/utils/feesBreakdown";
+  import type { Link } from "$modules/links/types/link/link";
 
   type Props = {
     assetsWithTokenInfo: AssetWithTokenInfo[];
     failedImageLoads: Set<string>;
     onImageError: (address: string) => void;
-    linkUseActionCounter: bigint;
+    link?: Link;
   };
 
-  let {
-    assetsWithTokenInfo,
-    failedImageLoads,
-    onImageError,
-    linkUseActionCounter,
-  }: Props = $props();
+  let { assetsWithTokenInfo, failedImageLoads, onImageError, link }: Props =
+    $props();
 
-  // Calculate total USD value of all assets
-  const totalUsdValue = $derived.by(() => {
-    return assetsWithTokenInfo.reduce(
-      (total, asset) => total + asset.usdValue,
-      0,
-    );
-  });
+  const linkUseActionCounter = $derived(link?.link_use_action_counter ?? 0n);
+
+  const maxUse = $derived(link ? Number(link.link_use_action_max_count) : 1);
+
+  // Calculate remaining uses
+  const remainingUses = $derived(
+    Math.max(0, (maxUse || 1) - Number(linkUseActionCounter)),
+  );
+
+  // Calculate total USD value of all assets multiplied by remaining uses
+  const totalUsdValue = $derived(
+    assetsWithTokenInfo.reduce((total, asset) => total + asset.usdValue, 0) *
+      remainingUses,
+  );
 </script>
 
 <div>
@@ -46,7 +50,7 @@
           {#each assetsWithTokenInfo as asset (asset.address)}
             <div class="flex items-center gap-2">
               <p class="text-sm">
-                {formatNumber(asset.amount)}
+                {formatNumber(asset.amount * remainingUses)}
                 {asset.token.symbol}
               </p>
               {#if !failedImageLoads.has(asset.address)}

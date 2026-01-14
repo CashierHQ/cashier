@@ -60,8 +60,11 @@ export const idlFactory = ({ IDL }) => {
   });
   const Result_2 = IDL.Variant({ 'Ok' : UserTokens, 'Err' : IDL.Text });
   const Result_3 = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text });
-  const TokenStorageError = IDL.Variant({ 'AuthError' : IDL.Text });
-  const Result_4 = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : TokenStorageError });
+  const CanisterError = IDL.Variant({
+    'CandidDecodeFailed' : IDL.Text,
+    'UnboundedError' : IDL.Text,
+  });
+  const Result_4 = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : CanisterError });
   const UserPreference = IDL.Record({
     'hide_zero_balance' : IDL.Bool,
     'selected_chain' : IDL.Vec(Chain),
@@ -76,7 +79,7 @@ export const idlFactory = ({ IDL }) => {
   const Permission = IDL.Variant({ 'Admin' : IDL.Null });
   const Result_6 = IDL.Variant({
     'Ok' : IDL.Vec(Permission),
-    'Err' : TokenStorageError,
+    'Err' : CanisterError,
   });
   const BuildData = IDL.Record({
     'rustc_semver' : IDL.Text,
@@ -90,11 +93,22 @@ export const idlFactory = ({ IDL }) => {
     'git_sha' : IDL.Text,
     'git_commit_timestamp' : IDL.Text,
   });
+  const Nft = IDL.Record({
+    'token_id' : IDL.Nat,
+    'collection_id' : IDL.Principal,
+  });
+  const AddUserNftInput = IDL.Record({ 'nft' : Nft });
+  const UserNftDto = IDL.Record({ 'nft' : Nft, 'user' : IDL.Principal });
+  const Result_7 = IDL.Variant({ 'Ok' : UserNftDto, 'Err' : CanisterError });
   const AddTokenInput = IDL.Record({
     'token_id' : TokenId,
     'index_id' : IDL.Opt(IDL.Text),
   });
   const AddTokensInput = IDL.Record({ 'token_ids' : IDL.Vec(TokenId) });
+  const GetUserNftInput = IDL.Record({
+    'limit' : IDL.Opt(IDL.Nat32),
+    'start' : IDL.Opt(IDL.Nat32),
+  });
   const UpdateTokenBalanceInput = IDL.Record({
     'balance' : IDL.Nat,
     'token_id' : TokenId,
@@ -142,8 +156,10 @@ export const idlFactory = ({ IDL }) => {
     'get_canister_build_data' : IDL.Func([], [BuildData], ['query']),
     'is_inspect_message_enabled' : IDL.Func([], [IDL.Bool], ['query']),
     'list_tokens' : IDL.Func([], [Result_5], ['query']),
+    'user_add_nft' : IDL.Func([AddUserNftInput], [Result_7], []),
     'user_add_token' : IDL.Func([AddTokenInput], [Result_3], []),
     'user_add_token_batch' : IDL.Func([AddTokensInput], [Result_3], []),
+    'user_get_nfts' : IDL.Func([GetUserNftInput], [IDL.Vec(Nft)], ['query']),
     'user_sync_token_list' : IDL.Func([], [Result_3], []),
     'user_update_token_balance' : IDL.Func(
         [IDL.Vec(UpdateTokenBalanceInput)],
