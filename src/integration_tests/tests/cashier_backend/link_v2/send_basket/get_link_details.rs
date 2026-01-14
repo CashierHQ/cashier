@@ -181,7 +181,12 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
         let initial_transfer_from_tx = initial_intent2
             .transactions
             .iter()
-            .find(|tx| matches!(tx.protocol, Protocol::IC(IcTransaction::Icrc2TransferFrom(_))))
+            .find(|tx| {
+                matches!(
+                    tx.protocol,
+                    Protocol::IC(IcTransaction::Icrc2TransferFrom(_))
+                )
+            })
             .expect("Initial Icrc2TransferFrom transaction not found");
 
         let initial_icrc112 = create_link_result.action.icrc_112_requests.clone();
@@ -277,10 +282,18 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
         let transfer_from_tx = intent2
             .transactions
             .iter()
-            .find(|tx| matches!(tx.protocol, Protocol::IC(IcTransaction::Icrc2TransferFrom(_))))
+            .find(|tx| {
+                matches!(
+                    tx.protocol,
+                    Protocol::IC(IcTransaction::Icrc2TransferFrom(_))
+                )
+            })
             .expect("Icrc2TransferFrom transaction not found");
         assert_eq!(transfer_from_tx.id, initial_transfer_from_tx.id);
-        assert_eq!(transfer_from_tx.created_at, initial_transfer_from_tx.created_at);
+        assert_eq!(
+            transfer_from_tx.created_at,
+            initial_transfer_from_tx.created_at
+        );
         match transfer_from_tx.protocol {
             Protocol::IC(IcTransaction::Icrc2TransferFrom(ref data)) => {
                 assert_eq!(data.from, Wallet::new(caller));
