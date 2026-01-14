@@ -14,7 +14,7 @@
       }};
       symbol = "ICP";
       name = "Internet Computer";
-      decimals = 8;
+      decimals = 8: nat8;
       enabled_by_default = true;
     };
     record {
@@ -25,7 +25,7 @@
       }};
       symbol = "ckBTC";
       name = "Chain Key Bitcoin";
-      decimals = 8;
+      decimals = 8: nat8;
       enabled_by_default = true;
     };
     record {
@@ -36,7 +36,7 @@
       }};
       symbol = "ckETH";
       name = "Chain Key Ethereum";
-      decimals = 18;
+      decimals = 18: nat8;
       enabled_by_default = true;
     };
     record {
@@ -47,7 +47,7 @@
       }};
       symbol = "ckUSDC";
       name = "Chain Key USD Coin";
-      decimals = 6;
+      decimals = 6: nat8;
       enabled_by_default = true;
     };
   };
