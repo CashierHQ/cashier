@@ -243,12 +243,9 @@
   <FeeInfoDrawer
     bind:open={showFeeInfoDrawer}
     onClose={() => {
-      // When FeeInfoDrawer closes via X button (not Back), notify parent to reset showTxCart
-      // This allows the component to be remounted when user clicks Create again
       if (!wasClosedViaBack) {
         onFeeInfoDrawerClose?.();
       }
-      // Reset flag for next time
       wasClosedViaBack = false;
     }}
     onBack={handleFeeInfoDrawerBack}
