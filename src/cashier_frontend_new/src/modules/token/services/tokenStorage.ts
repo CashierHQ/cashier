@@ -1,16 +1,18 @@
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { TOKEN_STORAGE_CANISTER_ID } from "$modules/shared/constants";
-import type { TokenMetadata } from "$modules/token/types";
-import { Principal } from "@dfinity/principal";
-import { Err, Ok, type Result } from "ts-results-es";
-import { parseListTokens } from "$modules/token/utils/parser";
 import {
-  validateLedgerCanister,
   validateIndexCanister,
+  validateLedgerCanister,
   ValidationError,
   type ValidationErrorType,
-} from "$modules/token/services/canister-validation";
+} from "$modules/token/services/canisterValidation";
+import type { TokenMetadata } from "$modules/token/types";
+import { parseListTokens } from "$modules/token/utils/parser";
+import type { NFT } from "$modules/wallet/types/nft";
+import { NFTMapper } from "$modules/wallet/types/nft";
+import { Principal } from "@dfinity/principal";
+import { Err, Ok, type Result } from "ts-results-es";
 
 /**
  * Service for interacting with the Token Storage canister
@@ -117,6 +119,53 @@ class TokenStorageService {
       return Ok(undefined);
     } catch {
       return Err(ValidationError.BACKEND_ERROR);
+    }
+  }
+
+  /**
+   * Get the NFTs owned by the user with pagination
+   * @param start the starting index
+   * @param limit the maximum number of NFTs to retrieve
+   * @returns List of NFTs owned by the user
+   */
+  public async getNfts(start: number, limit: number): Promise<NFT[]> {
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
+    const res = await actor.user_get_nfts({
+      start: [start],
+      limit: [limit],
+    });
+
+    return res.map((nft) => NFTMapper.fromTokenStorageNft(nft));
+  }
+
+  /**
+   * Add a new NFT to the user's collection
+   * @param collectionAddress the canister Id of the NFT collection
+   * @param tokenId the token ID of the NFT
+   * @returns Result with void on success or error message on failure
+   */
+  public async addNft(
+    collectionAddress: Principal,
+    tokenId: bigint,
+  ): Promise<Result<void, string>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      return Err("User is not authenticated");
+    }
+
+    try {
+      await actor.user_add_nft({
+        nft: {
+          collection_id: collectionAddress,
+          token_id: tokenId,
+        },
+      });
+      return Ok(undefined);
+    } catch (err) {
+      return Err(`Error adding NFT: ${err}`);
     }
   }
 }

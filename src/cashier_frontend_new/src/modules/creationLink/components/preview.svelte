@@ -1,8 +1,8 @@
 <script lang="ts">
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { linkListStore } from "$modules/links/state/linkListStore.svelte";
-  import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
-  import LinkDetails from "./linkDetails.svelte";
+  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+  import LinkDetails from "$modules/creationLink/components/linkDetails.svelte";
   import { locale } from "$lib/i18n";
 
   const {

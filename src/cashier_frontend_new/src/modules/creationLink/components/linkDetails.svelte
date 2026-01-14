@@ -1,21 +1,19 @@
 <script lang="ts">
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import type { LinkCreationStore } from "../state/linkCreationStore.svelte";
+  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import {
     getLinkTypeText,
     isSendLinkType,
     isPaymentLinkType,
   } from "$modules/links/utils/linkItemHelpers";
   import { toast } from "svelte-sonner";
-  import YouSendPreview from "./previewSections/YouSendPreview.svelte";
-  import LinkInfoSection from "./previewSections/LinkInfoSection.svelte";
-  import TransactionLockSection from "./previewSections/TransactionLockSection.svelte";
+  import YouSendPreview from "$modules/creationLink/components/previewSections/YouSendPreview.svelte";
+  import LinkInfoSection from "$modules/creationLink/components/previewSections/LinkInfoSection.svelte";
+  import TransactionLockSection from "$modules/creationLink/components/previewSections/TransactionLockSection.svelte";
   import { calculateAssetsWithTokenInfo } from "$modules/links/utils/feesBreakdown";
   import { feeService } from "$modules/shared/services/feeService";
-  import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import { locale } from "$lib/i18n";
-  import { formatFeeAmount } from "$modules/shared/utils/formatNumber";
   import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
+  import FeesBreakdownSection from "$modules/shared/components/FeesBreakdownSection.svelte";
 
   const {
     link,
@@ -145,23 +143,5 @@
   {/if}
 
   <!-- Block 4: Fees Breakdown -->
-  <div class="input-label-field-container">
-    <div class="flex items-center w-full justify-between mb-2">
-      <Label class="font-medium text-sm"
-        >{locale.t("links.linkForm.preview.feesBreakdown")}</Label
-      >
-    </div>
-    <div class="border-[1px] rounded-lg border-lightgreen px-4 py-3">
-      <div class="flex justify-between items-center">
-        <p class="text-[14px] font-medium">
-          {locale.t("links.linkForm.preview.totalFees")}
-        </p>
-        <div class="flex items-center gap-2">
-          <p class="text-[14px] font-normal">
-            ~${formatFeeAmount(totalFeesUsd)}
-          </p>
-        </div>
-      </div>
-    </div>
-  </div>
+  <FeesBreakdownSection {totalFeesUsd} />
 </div>
