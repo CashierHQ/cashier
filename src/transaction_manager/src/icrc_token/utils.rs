@@ -2,11 +2,13 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::icrc_token::{service::IcrcService, types::Account as ExtAccount};
+use crate::token_fee::{IcrcTokenFetcher, TokenFeeService};
 use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,
     repository::{common::Asset, link::v1::Link},
 };
+use cashier_common::runtime::RealIcEnvironment;
 use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::to_subaccount};
 use futures::future;
 use icrc_ledger_types::icrc1::account::Account;
@@ -28,6 +30,7 @@ pub fn get_link_account(link_id: &str, canister_id: Principal) -> Result<Account
 }
 
 /// Retrieves token fees for a link's assets, ensuring ICP is included.
+/// Uses TokenFeeService for caching with TTL.
 /// # Arguments
 /// * `link` - The Link for which to retrieve token fees
 /// # Returns
@@ -46,51 +49,14 @@ pub async fn get_batch_tokens_fee_for_link(
     if !assets.iter().any(|asset| match asset {
         Asset::IC { address, .. } => *address == ICP_CANISTER_PRINCIPAL,
     }) {
-        let ic_asset = Asset::IC {
+        assets.push(Asset::IC {
             address: ICP_CANISTER_PRINCIPAL,
-        };
-        assets.push(ic_asset);
+        });
     }
 
-    get_batch_tokens_fee(&assets).await
-}
-
-/// Retrieves token fees for a collection of assets in parallel.
-/// # Arguments
-/// * `assets` - A slice of Asset objects representing the tokens to query
-/// # Returns
-/// * `Result<HashMap<Principal, Nat>, CanisterError>` - A mapping from token principal IDs (as strings)
-///   to their corresponding transaction fees as Nat values, or an error if the operation failed
-pub async fn get_batch_tokens_fee(
-    assets: &[Asset],
-) -> Result<HashMap<Principal, Nat>, CanisterError> {
-    let mut fee_map = HashMap::<Principal, Nat>::new();
-
-    let get_fee_tasks = assets.iter().map(|asset| {
-        let address = match asset {
-            Asset::IC { address, .. } => *address,
-        };
-        async move { (address, IcrcService::new(address).icrc_1_fee().await) }
-    });
-
-    let results = future::join_all(get_fee_tasks).await;
-
-    for (address, result) in results {
-        match result {
-            Ok(fee) => {
-                fee_map.insert(address, fee);
-            }
-            Err(errr) => {
-                return Err(CanisterError::CallCanisterFailed(format!(
-                    "Failed to get fee for asset {}: {:?}",
-                    address.to_text(),
-                    errr,
-                )));
-            }
-        }
-    }
-
-    Ok(fee_map)
+    // Use TokenFeeService directly (with caching)
+    let service = TokenFeeService::new(RealIcEnvironment::new(), IcrcTokenFetcher::new());
+    service.get_batch_tokens_fee(&assets).await
 }
 
 /// Retrieves token balances for a link's assets.
