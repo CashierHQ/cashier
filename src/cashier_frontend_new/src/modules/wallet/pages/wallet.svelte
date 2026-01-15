@@ -8,7 +8,7 @@
   import { WalletTab } from "$modules/wallet/types";
   import { toast } from "svelte-sonner";
   import { SvelteSet } from "svelte/reactivity";
-  import { walletNftStore } from "../state/walletNftStore.svelte";
+  import { walletNftStore } from "$modules/wallet/state/walletNftStore.svelte";
 
   type Props = {
     activeTab?: WalletTab;
