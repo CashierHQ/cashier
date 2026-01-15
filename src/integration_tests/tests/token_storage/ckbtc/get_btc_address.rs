@@ -88,6 +88,7 @@ async fn it_should_mine_btc_to_user_address_and_check_balance() {
 
         // Check the balance of the user's BTC address
         let balance = btc_fixture.get_balance(&btc_address);
+        println!("BTC balance for address {}: {}", btc_address, balance);
 
         // Assert
         assert!(
