@@ -16,9 +16,9 @@ pub type FeeCacheStorage = BTreeMap<String, CachedFee>;
 
 thread_local! {
     /// Fee cache storage
-    pub static FEE_CACHE_STORE: RefCell<FeeCacheStorage> = RefCell::new(BTreeMap::new());
+    pub static FEE_CACHE_STORE: RefCell<FeeCacheStorage> = const { RefCell::new(BTreeMap::new()) };
     /// Configured TTL for token fee cache (nanoseconds)
-    pub static TOKEN_FEE_TTL_NS: RefCell<u64> = RefCell::new(0);
+    pub static TOKEN_FEE_TTL_NS: RefCell<u64> = const { RefCell::new(0) };
 }
 
 /// Initialize token fee service TTL

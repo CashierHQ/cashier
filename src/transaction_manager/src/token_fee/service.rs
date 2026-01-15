@@ -74,11 +74,11 @@ impl<E: IcEnvironment, F: TokenFetcher> TokenFeeService<E, F> {
             };
             let key = address.to_text();
 
-            if let Some(cached) = self.get(&key) {
-                if self.is_valid(&cached) {
-                    fee_map.insert(address, cached.fee);
-                    continue;
-                }
+            if let Some(cached) = self.get(&key)
+                && self.is_valid(&cached)
+            {
+                fee_map.insert(address, cached.fee);
+                continue;
             }
 
             // Cache miss or expired - fetch fresh via injected fetcher

@@ -129,11 +129,8 @@ async fn should_allow_admin_to_clear_all_fee_cache() {
         let admin = TestUser::CashierBackendAdmin.get_principal();
         let admin_client = ctx.new_cashier_backend_client(admin);
 
-        // Act
-        let result = admin_client.admin_fee_cache_clear().await.unwrap().unwrap();
-
-        // Assert
-        assert_eq!((), result);
+        // Act & Assert
+        admin_client.admin_fee_cache_clear().await.unwrap().unwrap();
 
         Ok(())
     })
@@ -177,15 +174,12 @@ async fn should_allow_admin_to_clear_token_fee_cache() {
         let admin_client = ctx.new_cashier_backend_client(admin);
         let token_id = Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(); // ICP ledger
 
-        // Act
-        let result = admin_client
+        // Act & Assert
+        admin_client
             .admin_fee_cache_clear_token(token_id)
             .await
             .unwrap()
             .unwrap();
-
-        // Assert
-        assert_eq!((), result);
 
         Ok(())
     })

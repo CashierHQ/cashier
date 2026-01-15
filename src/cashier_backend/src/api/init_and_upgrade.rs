@@ -42,6 +42,7 @@ fn init(init_data: CashierBackendInitData) {
 fn pre_upgrade() {}
 
 #[post_upgrade]
+#[allow(clippy::needless_pass_by_value)]
 fn post_upgrade(upgrade_data: CashierBackendUpgradeData) {
     if let Err(err) = get_state().log_service.init(None) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
