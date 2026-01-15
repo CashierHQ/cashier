@@ -10,8 +10,8 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import {
-    calculateMaxSendAmount,
-    calculateRequiredAssetAmount,
+    calculateMaxAmountForAsset,
+    calculateTotalAssetAmount,
   } from "$modules/links/utils/amountCalculator";
   import { locale } from "$lib/i18n";
   import AssetButton from "$modules/creationLink/components/shared/AssetButton.svelte";
@@ -195,25 +195,19 @@
     if (!asset || asset.useAmount === 0n) return "";
 
     const token = getTokenForAsset(index);
-    if (!token || !walletStore.query.data) return "";
+    if (!token) return "";
 
-    // Calculate total amount using calculateRequiredAssetAmount for link calculation
-    const requiredAmountResult = calculateRequiredAssetAmount(
+    // Calculate total amount using calculateTotalAssetAmount for link calculation
+    // This uses the same logic as calculateRequiredAssetAmount (useAmount * maxUse)
+    const totalAmountResult = calculateTotalAssetAmount(
       [asset],
       link.createLinkData.maxUse,
-      walletStore.query.data,
     );
 
-    if (requiredAmountResult.isErr()) return "";
+    if (totalAmountResult.isErr()) return "";
 
-    const requiredAmounts = requiredAmountResult.unwrap();
-    const requiredAmount = requiredAmounts[asset.address] || 0n;
-
-    // Subtract fees to get the total amount without fees (useAmount * maxUse)
-    // requiredAmount = (useAmount * maxUse) + fee * (1 + maxUse)
-    // So: useAmount * maxUse = requiredAmount - fee * (1 + maxUse)
-    const fees = token.fee * (BigInt(1) + BigInt(link.createLinkData.maxUse));
-    const totalAmount = requiredAmount - fees;
+    const totalAmounts = totalAmountResult.unwrap();
+    const totalAmount = totalAmounts[asset.address] || 0n;
 
     if (totalAmount <= 0n) return "";
 
@@ -221,13 +215,16 @@
     return parseBalanceUnits(totalAmount, decimals).toString();
   }
 
-  // Calculate max available token balance for a specific asset (for token basket, no maxUse)
+  // Calculate max available token balance for a specific asset
+  // Uses calculateMaxAmountForAsset which implements the inverse formula of calculateRequiredAssetAmount
+  // This ensures consistency with link calculation logic (see amountCalculator.ts for details)
   function getMaxTokenBalance(index: number): number {
     const token = getTokenForAsset(index);
     if (!token || !walletStore.query.data) return 0;
 
-    const maxAmountResult = calculateMaxSendAmount(
+    const maxAmountResult = calculateMaxAmountForAsset(
       token.address,
+      link.createLinkData.maxUse,
       walletStore.query.data,
     );
 
