@@ -40,7 +40,7 @@ ic-cdk = "0.18"
 ic-cdk-timers = "0.12"
 ic-stable-structures = "0.7"
 ic_mple_auth = "0.16"
-ic_mple_client = "0.16"
+ic_mple_client = { version = "0.16", features = ["pocket-ic"] }
 ic_mple_log = { version = "0.16", features = ["service"] }
 ic_mple_pocket_ic = "0.16"
 ic_mple_structures = "0.16"
