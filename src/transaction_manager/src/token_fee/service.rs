@@ -86,10 +86,7 @@ impl<E: IcEnvironment, F: TokenFetcher> TokenFeeService<E, F> {
                 CanisterError::CallCanisterFailed(format!("Failed to get fee for {}: {:?}", key, e))
             })?;
 
-            self.upsert(
-                &key,
-                fee.clone(),
-            );
+            self.upsert(&key, fee.clone());
             fee_map.insert(address, fee);
         }
 
@@ -113,9 +110,7 @@ mod tests {
         FEE_CACHE_STORE.with(|cell| cell.borrow_mut().clear());
     }
 
-    fn create_service(
-        current_time: u64,
-    ) -> TokenFeeService<MockIcEnvironment, MockTokenFetcher> {
+    fn create_service(current_time: u64) -> TokenFeeService<MockIcEnvironment, MockTokenFetcher> {
         let mut env = MockIcEnvironment::default();
         env.current_time = current_time;
         TokenFeeService::new(env, MockTokenFetcher::new())
@@ -146,7 +141,6 @@ mod tests {
     #[test]
     fn should_success_validate_ttl_expiration() {
         setup_ttl(DEFAULT_TOKEN_FEE_TTL_NS); // 1000ns TTL
-
 
         let service = create_service(1768451390000000300);
         service.upsert("token1", Nat::from(100u64));
@@ -246,7 +240,10 @@ mod tests {
         fetcher.set_fee(p2, Nat::from(2000u64));
 
         let service = create_service_with_fetcher(1768451390000000300, fetcher.clone());
-        let assets = vec![create_test_asset("ryjl3-tyaaa-aaaaa-aaaba-cai"), create_test_asset("mxzaz-hqaaa-aaaar-qaada-cai")];
+        let assets = vec![
+            create_test_asset("ryjl3-tyaaa-aaaaa-aaaba-cai"),
+            create_test_asset("mxzaz-hqaaa-aaaar-qaada-cai"),
+        ];
 
         let result = service.get_batch_tokens_fee(&assets).await.unwrap();
 

@@ -7,9 +7,9 @@ mod types;
 
 pub use fetcher::{IcrcTokenFetcher, TokenFetcher};
 pub use service::TokenFeeService;
-pub use types::CachedFee;
 use std::cell::RefCell;
 use std::collections::BTreeMap;
+pub use types::CachedFee;
 
 /// Storage type for fee cache - in-memory BTreeMap
 pub type FeeCacheStorage = BTreeMap<String, CachedFee>;

@@ -2,11 +2,11 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 pub mod adapter;
-pub mod token_fee;
 pub mod ic_transaction_manager;
 pub mod icrc112;
 pub mod icrc_token;
 pub mod intents;
+pub mod token_fee;
 pub mod traits;
 pub mod transaction;
 pub mod utils;
