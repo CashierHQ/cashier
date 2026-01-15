@@ -83,5 +83,10 @@
       handleProcessAction,
     }}
     {onCloseDrawer}
+    onFeeInfoDrawerClose={() => {
+      // Reset showTxCart when FeeInfoDrawer is closed via X button
+      // This allows the component to be remounted when user clicks Create again
+      showTxCart = false;
+    }}
   />
 {/if}

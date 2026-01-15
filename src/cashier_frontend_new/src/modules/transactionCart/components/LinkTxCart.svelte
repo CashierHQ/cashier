@@ -21,10 +21,12 @@
     source,
     isOpen = $bindable(false),
     onCloseDrawer,
+    onFeeInfoDrawerClose,
   }: {
     source: ActionSource;
     isOpen: boolean;
     onCloseDrawer: () => void;
+    onFeeInfoDrawerClose?: () => void;
   } = $props();
 
   /** Store created once, updateSource() called on source changes */
@@ -41,6 +43,8 @@
   );
 
   let showFeeInfoDrawer = $state(false);
+  // Track if FeeInfoDrawer was closed via Back button (to distinguish from X button)
+  let wasClosedViaBack = $state(false);
 
   // Hardcoded i18n key for action source
   const txCartI18nKey = "links.linkForm.drawers.txCart.action";
@@ -85,6 +89,7 @@
 
   // Handle back button in FeeInfoDrawer - close FeeInfoDrawer and reopen txCart
   function handleFeeInfoDrawerBack() {
+    wasClosedViaBack = true;
     showFeeInfoDrawer = false;
     isOpen = true;
   }
@@ -237,10 +242,11 @@
   <!-- FeeInfoDrawer for showing fees breakdown -->
   <FeeInfoDrawer
     bind:open={showFeeInfoDrawer}
-    onOpenChange={(open) => {
-      if (!open) {
-        isOpen = true;
+    onClose={() => {
+      if (!wasClosedViaBack) {
+        onFeeInfoDrawerClose?.();
       }
+      wasClosedViaBack = false;
     }}
     onBack={handleFeeInfoDrawerBack}
     {feesBreakdown}
