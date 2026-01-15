@@ -11,9 +11,9 @@
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
   import { locale } from "$lib/i18n";
-  import AssetButton from "../shared/AssetButton.svelte";
-  import SelectedAssetButtonInfo from "../shared/SelectedAssetButtonInfo.svelte";
-  import TokenSelectorDrawer from "../shared/TokenSelectorDrawer.svelte";
+  import AssetButton from "$modules/creationLink/components/shared/AssetButton.svelte";
+  import SelectedAssetButtonInfo from "$modules/creationLink/components/shared/SelectedAssetButtonInfo.svelte";
+  import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
   import { toast } from "svelte-sonner";
   import { Plus, Trash2 } from "lucide-svelte";
 

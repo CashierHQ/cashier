@@ -64,7 +64,7 @@
     amount={displayInfo.amount}
     symbol={displayInfo.symbol}
     decimals={displayInfo.decimals}
-    message={locale.t("links.linkForm.useLink.completed.message")}
+    message={locale.t("links.linkForm.useLink.completed.paymentRequestMessage")}
   />
 {/if}
 
@@ -75,7 +75,7 @@
       class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none h-[44px] px-4 w-full"
       onclick={() => userLink.goNext()}
     >
-      {locale.t("links.linkForm.useLink.claimButton")}
+      {locale.t("links.linkForm.useLink.sendButton")}
     </Button>
   </div>
 {:else}

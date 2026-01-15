@@ -4,7 +4,7 @@ import type { LinkCreationState } from "$modules/creationLink/state/linkCreation
 import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
 import { AddAssetTipLinkState } from "$modules/creationLink/state/linkCreationStates/tiplink/addAsset";
 import { AddAssetAirdropState } from "$modules/creationLink/state/linkCreationStates/airdrop/addAsset";
-import { AddAssetState } from "$modules/creationLink/state/linkCreationStates/addAsset";
+import { AddAssetTokenBasketState } from "$modules/creationLink/state/linkCreationStates/tokenbasket/addAsset";
 
 // State when the user is choosing the type of link to create
 export class ChooseLinkTypeState implements LinkCreationState {
@@ -40,7 +40,7 @@ export class ChooseLinkTypeState implements LinkCreationState {
     } else if (currentType === LinkType.AIRDROP) {
       this.#link.state = new AddAssetAirdropState(this.#link);
     } else if (currentType === LinkType.TOKEN_BASKET) {
-      this.#link.state = new AddAssetState(this.#link);
+      this.#link.state = new AddAssetTokenBasketState(this.#link);
     }
   }
 

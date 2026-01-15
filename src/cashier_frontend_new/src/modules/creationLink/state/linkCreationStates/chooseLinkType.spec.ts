@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
 import { AddAssetTipLinkState } from "$modules/creationLink/state/linkCreationStates/tiplink/addAsset";
 import { AddAssetAirdropState } from "$modules/creationLink/state/linkCreationStates/airdrop/addAsset";
-import { AddAssetState } from "$modules/creationLink/state/linkCreationStates/addAsset";
+import { AddAssetTokenBasketState } from "$modules/creationLink/state/linkCreationStates/tokenbasket/addAsset";
 import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
 import { TempLink } from "$modules/links/types/tempLink";
 import { LinkState } from "$modules/links/types/link/linkState";
@@ -179,6 +179,6 @@ describe("ChooseLinkTypeState", () => {
 
     // Assert
     expect(store.state.step).toEqual(LinkStep.ADD_ASSET);
-    expect(store.state).toBeInstanceOf(AddAssetState);
+    expect(store.state).toBeInstanceOf(AddAssetTokenBasketState);
   });
 });

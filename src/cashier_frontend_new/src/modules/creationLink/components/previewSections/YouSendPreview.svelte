@@ -4,7 +4,7 @@
   import { locale } from "$lib/i18n";
   import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
-  import AssetTransferInfoDrawer from "../drawers/AssetTransferInfoDrawer.svelte";
+  import AssetTransferInfoDrawer from "$modules/creationLink/components/drawers/AssetTransferInfoDrawer.svelte";
   import { FeeType } from "$modules/links/types/fee";
   import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
   import { SvelteMap } from "svelte/reactivity";
@@ -31,8 +31,8 @@
     link,
   }: Props = $props();
 
-  const maxUse = $derived.by(() => link?.createLinkData.maxUse ?? 1);
-  const linkType = $derived.by(() => link?.createLinkData.linkType);
+  const maxUse = $derived(link?.createLinkData.maxUse ?? 1);
+  const linkType = $derived(link?.createLinkData.linkType);
 
   let assetTransferInfoDrawerOpen = $state(false);
 
