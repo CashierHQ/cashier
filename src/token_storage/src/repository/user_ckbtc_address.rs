@@ -61,7 +61,7 @@ mod tests {
         let mut repo = TestRepositories::new().user_ckbtc_address();
         let user_id = random_principal_id();
         let address = BtcAddress {
-            address: vec![1, 2, 3, 4, 5],
+            address: "ckbtc1qyqszqgpqyqszqgpqyqszqgpqyqszqgp6m5x7f7".to_string(),
         };
 
         // Act

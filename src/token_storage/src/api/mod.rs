@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 pub mod admin;
+pub mod ckbtc;
 mod init_and_upgrade;
 mod inspect_message;
 pub mod nft;
