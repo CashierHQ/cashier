@@ -112,6 +112,20 @@
 
   async function goNext() {
     try {
+      const currentLinkType = link.createLinkData.linkType;
+      const newLinkType = linkTypes[currentSlide];
+
+      // If selecting link type is different than existing link type in store,
+      // reset the link data (assets and maxUse)
+      if (currentLinkType !== newLinkType) {
+        link.createLinkData = {
+          ...link.createLinkData,
+          linkType: newLinkType,
+          assets: [],
+          maxUse: 1,
+        };
+      }
+
       await link.goNext();
     } catch (e) {
       toast.error(
