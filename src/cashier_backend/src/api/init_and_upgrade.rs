@@ -23,7 +23,11 @@ fn init(init_data: CashierBackendInitData) {
     info!("[init] Starting Cashier Backend");
 
     // Initialize token fee cache TTL
-    init_token_fee_ttl(init_data.token_fee_ttl_ns.unwrap_or(DEFAULT_TOKEN_FEE_TTL_NS));
+    init_token_fee_ttl(
+        init_data
+            .token_fee_ttl_ns
+            .unwrap_or(DEFAULT_TOKEN_FEE_TTL_NS),
+    );
 
     info!("[init] Set {:?} as canister admin", init_data.owner);
     state
@@ -48,5 +52,9 @@ fn post_upgrade(upgrade_data: CashierBackendUpgradeData) {
     init_ic_rand();
 
     // Re-initialize token fee cache TTL (cache wiped on upgrade)
-    init_token_fee_ttl(upgrade_data.token_fee_ttl_ns.unwrap_or(DEFAULT_TOKEN_FEE_TTL_NS));
+    init_token_fee_ttl(
+        upgrade_data
+            .token_fee_ttl_ns
+            .unwrap_or(DEFAULT_TOKEN_FEE_TTL_NS),
+    );
 }
