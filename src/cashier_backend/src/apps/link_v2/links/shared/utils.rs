@@ -7,11 +7,10 @@ use cashier_backend_types::{
     repository::{common::Asset, link::v1::Link},
 };
 use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::to_subaccount};
-use cashier_common::runtime::RealIcEnvironment;
 use serde_bytes::ByteBuf;
 use std::collections::HashMap;
 use transaction_manager::icrc_token::{types::Account, utils::get_batch_tokens_balance};
-use transaction_manager::token_fee::{IcrcTokenFetcher, TokenFeeService};
+use transaction_manager::token_fee::TokenFeeService;
 
 /// Retrieves token fees for a link's assets, ensuring ICP is included.
 pub async fn get_batch_tokens_fee_for_link(
@@ -33,7 +32,7 @@ pub async fn get_batch_tokens_fee_for_link(
     }
 
     // Use TokenFeeService directly (with caching)
-    let service = TokenFeeService::new(RealIcEnvironment::new(), IcrcTokenFetcher::new());
+    let service = TokenFeeService::init();
     service.get_batch_tokens_fee(&assets).await
 }
 
@@ -52,9 +51,7 @@ pub async fn get_batch_tokens_balance_for_link(
 
     let link_account = Account {
         owner: canister_id,
-        subaccount: Some(
-            ByteBuf::from(subaccount.to_vec()),
-        ),
+        subaccount: Some(ByteBuf::from(subaccount.to_vec())),
     };
 
     get_batch_tokens_balance(&assets, &link_account).await

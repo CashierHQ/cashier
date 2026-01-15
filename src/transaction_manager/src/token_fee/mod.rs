@@ -8,15 +8,9 @@ mod types;
 pub use fetcher::{IcrcTokenFetcher, TokenFetcher};
 pub use service::TokenFeeService;
 use std::cell::RefCell;
-use std::collections::BTreeMap;
 pub use types::CachedFee;
 
-/// Storage type for fee cache - in-memory BTreeMap
-pub type FeeCacheStorage = BTreeMap<String, CachedFee>;
-
 thread_local! {
-    /// Fee cache storage
-    pub static FEE_CACHE_STORE: RefCell<FeeCacheStorage> = const { RefCell::new(BTreeMap::new()) };
     /// Configured TTL for token fee cache (nanoseconds)
     pub static TOKEN_FEE_TTL_NS: RefCell<u64> = const { RefCell::new(0) };
 }

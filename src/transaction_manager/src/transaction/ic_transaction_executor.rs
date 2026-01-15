@@ -5,7 +5,7 @@ use crate::icrc_token::{
     service::IcrcService,
     types::{Account, TransferArg, TransferFromArgs},
 };
-use crate::token_fee::{IcrcTokenFetcher, TokenFeeService};
+use crate::token_fee::TokenFeeService;
 use crate::transaction::traits::TransactionExecutor;
 use cashier_backend_types::repository::common::Asset;
 use cashier_backend_types::repository::transaction::v1::{
@@ -15,7 +15,6 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::transaction::v1::{Icrc2TransferFrom, Transaction},
 };
-use cashier_common::runtime::RealIcEnvironment;
 use std::pin::Pin;
 
 pub struct IcTransactionExecutor;
@@ -29,7 +28,7 @@ impl IcTransactionExecutor {
     async fn execute_icrc2_transfer_from(
         transaction: Icrc2TransferFrom,
     ) -> Result<(), CanisterError> {
-        let service = TokenFeeService::new(RealIcEnvironment::new(), IcrcTokenFetcher::new());
+        let service = TokenFeeService::init();
         let token_fee_map = service
             .get_batch_tokens_fee(std::slice::from_ref(&transaction.asset))
             .await?;
@@ -71,7 +70,7 @@ impl IcTransactionExecutor {
     /// # Returns
     /// * `Result<(), CanisterError>` - Ok if successful, Err otherwise
     async fn execute_icrc1_transfer(transaction: Icrc1Transfer) -> Result<(), CanisterError> {
-        let service = TokenFeeService::new(RealIcEnvironment::new(), IcrcTokenFetcher::new());
+        let service = TokenFeeService::init();
         let token_fee_map = service
             .get_batch_tokens_fee(std::slice::from_ref(&transaction.asset))
             .await?;

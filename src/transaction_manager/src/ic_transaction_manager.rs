@@ -15,13 +15,13 @@ use crate::{
         ic_transaction_validator::IcTransactionValidator,
     },
 };
-use cashier_common::utils::get_link_account;
 use cashier_backend_types::{
     error::CanisterError,
     link_v2::action_result::{CreateActionResult, ProcessActionResult},
     repository::{action::v1::Action, intent::v1::Intent, transaction::v1::Transaction},
 };
 use cashier_common::runtime::IcEnvironment;
+use cashier_common::utils::get_link_account;
 use std::{
     collections::{HashMap, HashSet},
     future::Future,

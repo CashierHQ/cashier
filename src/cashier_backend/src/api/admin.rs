@@ -5,8 +5,7 @@ use ic_cdk::{api::msg_caller, query, update};
 use log::debug;
 
 use crate::{api::state::get_state, apps::auth::Permission, build_data::canister_build_data};
-use cashier_common::runtime::RealIcEnvironment;
-use transaction_manager::token_fee::{IcrcTokenFetcher, TokenFeeService};
+use transaction_manager::token_fee::TokenFeeService;
 
 /// Returns the build data of the canister.
 #[query]
@@ -103,7 +102,7 @@ pub fn admin_fee_cache_clear() -> Result<(), CanisterError> {
         .auth_service
         .must_have_permission(&caller, Permission::Admin);
 
-    let service = TokenFeeService::new(RealIcEnvironment::new(), IcrcTokenFetcher::new());
+    let service = TokenFeeService::init();
     service.clear_all();
 
     Ok(())
@@ -119,7 +118,7 @@ pub fn admin_fee_cache_clear_token(token_id: Principal) -> Result<(), CanisterEr
         .auth_service
         .must_have_permission(&caller, Permission::Admin);
 
-    let service = TokenFeeService::new(RealIcEnvironment::new(), IcrcTokenFetcher::new());
+    let service = TokenFeeService::init();
     service.clear_token(&token_id.to_text());
 
     Ok(())
