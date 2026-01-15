@@ -1,6 +1,5 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-pub mod ckbtc;
-pub mod ckbtc_kyt;
-pub mod ckbtc_minter;
+pub mod kyt;
+pub mod minter;

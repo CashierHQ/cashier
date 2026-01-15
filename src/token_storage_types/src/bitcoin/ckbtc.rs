@@ -1,10 +1,9 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use cashier_macros::storable;
 use ic_mple_structures::Codec;
-use serde::Deserialize;
 
 #[derive(Clone, Debug, CandidType, PartialEq, Eq, Hash)]
 #[storable]
@@ -27,10 +26,4 @@ impl Codec<BtcAddress> for BtcAddressCodec {
     fn encode(dest: BtcAddress) -> Self {
         BtcAddressCodec::V1(dest)
     }
-}
-
-#[derive(CandidType, Deserialize)]
-pub struct GetBtcAddressArg {
-    pub owner: Option<Principal>,
-    pub subaccount: Option<serde_bytes::ByteBuf>,
 }

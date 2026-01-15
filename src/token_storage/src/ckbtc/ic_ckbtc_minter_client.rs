@@ -4,7 +4,7 @@
 use crate::ckbtc::traits::CkBtcMinterTrait;
 use candid::Principal;
 use ic_cdk::call::{Call, CandidDecodeFailed};
-use token_storage_types::{bitcoin::ckbtc::GetBtcAddressArg, error::CanisterError};
+use token_storage_types::{bitcoin::ckbtc_minter::GetBtcAddressArg, error::CanisterError};
 
 pub struct IcCkBtcMinterClient {
     pub ckbtc_minter_canister_id: Principal,
