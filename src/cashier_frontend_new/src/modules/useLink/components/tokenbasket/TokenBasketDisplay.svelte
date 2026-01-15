@@ -57,7 +57,7 @@
     >
       {#each assets as assetInfoItem (getAssetAddress(assetInfoItem) || assetInfoItem.label)}
         {@const assetData = processAssetInfo(assetInfoItem)}
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 overflow-x-hidden">
           <!-- Token icon or first letter -->
           {#if !failedImageLoads.has(assetData.address)}
             <img

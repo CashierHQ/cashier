@@ -9,7 +9,10 @@
   import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import { calculateMaxSendAmount } from "$modules/links/utils/amountCalculator";
+  import {
+    calculateMaxSendAmount,
+    calculateRequiredAssetAmount,
+  } from "$modules/links/utils/amountCalculator";
   import { locale } from "$lib/i18n";
   import AssetButton from "$modules/creationLink/components/shared/AssetButton.svelte";
   import SelectedAssetButtonInfo from "$modules/creationLink/components/shared/SelectedAssetButtonInfo.svelte";
@@ -192,10 +195,30 @@
     if (!asset || asset.useAmount === 0n) return "";
 
     const token = getTokenForAsset(index);
-    if (!token) return "";
+    if (!token || !walletStore.query.data) return "";
+
+    // Calculate total amount using calculateRequiredAssetAmount for link calculation
+    const requiredAmountResult = calculateRequiredAssetAmount(
+      [asset],
+      link.createLinkData.maxUse,
+      walletStore.query.data,
+    );
+
+    if (requiredAmountResult.isErr()) return "";
+
+    const requiredAmounts = requiredAmountResult.unwrap();
+    const requiredAmount = requiredAmounts[asset.address] || 0n;
+
+    // Subtract fees to get the total amount without fees (useAmount * maxUse)
+    // requiredAmount = (useAmount * maxUse) + fee * (1 + maxUse)
+    // So: useAmount * maxUse = requiredAmount - fee * (1 + maxUse)
+    const fees = token.fee * (BigInt(1) + BigInt(link.createLinkData.maxUse));
+    const totalAmount = requiredAmount - fees;
+
+    if (totalAmount <= 0n) return "";
 
     const decimals = token.decimals || 8;
-    return parseBalanceUnits(asset.useAmount, decimals).toString();
+    return parseBalanceUnits(totalAmount, decimals).toString();
   }
 
   // Calculate max available token balance for a specific asset (for token basket, no maxUse)
