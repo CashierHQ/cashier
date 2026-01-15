@@ -19,6 +19,7 @@ use std::{
     collections::HashMap,
     fs::File,
     io::Read,
+    net::{Ipv4Addr, SocketAddrV4},
     path::PathBuf,
     sync::{Arc, OnceLock},
     time::Duration,
@@ -52,7 +53,17 @@ where
         log_filter: Some("debug".to_string()),
     };
 
-    let client = Arc::new(get_pocket_ic_client().await.build_async().await);
+    let client = Arc::new(
+        get_pocket_ic_client()
+            .await
+            .with_bitcoin_subnet()
+            .with_bitcoind_addr(std::net::SocketAddr::V4(SocketAddrV4::new(
+                Ipv4Addr::LOCALHOST,
+                18444,
+            )))
+            .build_async()
+            .await,
+    );
 
     let ckbtc_kyt_principal = ckbtc::kyt::deploy_ckbtc_kyt_canister(
         &client,
@@ -240,6 +251,7 @@ where
         icp_ledger_principal,
         icrc_token_map,
         icrc7_ledger_principal,
+        ckbtc_minter_principal,
     })
     .await;
 
@@ -260,6 +272,7 @@ pub struct PocketIcTestContext {
     pub icp_ledger_principal: Principal,
     pub icrc_token_map: HashMap<String, Principal>,
     pub icrc7_ledger_principal: Principal,
+    pub ckbtc_minter_principal: Principal,
 }
 
 impl PocketIcTestContext {

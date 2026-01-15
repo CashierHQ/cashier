@@ -19,25 +19,23 @@ impl<R: Repositories, M: CkBtcMinterTrait> UserCkBtcService<R, M> {
         }
     }
 
-    /// Sets the CKBTC minter canister ID
-    /// # Arguments
-    /// * `canister_id` - The principal ID of the CKBTC minter canister
-    /// # Returns - None
-    pub fn set_ckbtc_minter_canister_id(&mut self, canister_id: Principal) {
-        self.ckbtc_minter.set_canister_id(canister_id);
-    }
-
     /// Get the BTC address for a user, fetching from the CkBtcMinter if not cached
     /// # Arguments
     /// * `user` - The principal ID of the user
     /// # Returns
     /// * `Result<String, CanisterError>` - The BTC address if it exists
-    pub async fn get_btc_address(&mut self, user: Principal) -> Result<String, CanisterError> {
+    pub async fn get_btc_address(
+        &mut self,
+        user: Principal,
+        ckbtc_minter: Principal,
+    ) -> Result<String, CanisterError> {
         if let Some(btc_address) = self.user_ckbtc_address_repository.get_address(&user) {
             Ok(btc_address.address)
         } else {
-            let address = self.ckbtc_minter.get_btc_address(user).await?;
-
+            let address = self
+                .ckbtc_minter
+                .get_btc_address(user, ckbtc_minter)
+                .await?;
             self.user_ckbtc_address_repository.set_address(
                 user,
                 BtcAddress {
@@ -68,7 +66,10 @@ mod tests {
 
         let mut service = UserCkBtcService::new(&repo, mock_minter);
         // Act
-        let address = service.get_btc_address(user_id).await.unwrap();
+        let address = service
+            .get_btc_address(user_id, random_principal_id())
+            .await
+            .unwrap();
 
         // Assert
         assert_eq!(address, expected_address);

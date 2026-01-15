@@ -18,6 +18,11 @@ use crate::{
     },
 };
 
+thread_local! {
+    static CKBTC_MINTER_CANISTER_ID: RefCell<Principal> =
+        const { RefCell::new(Principal::anonymous()) };
+}
+
 /// The state of the canister
 pub struct CanisterState {
     pub auth_service: AuthService<&'static LocalKey<RefCell<AuthServiceStorage>>>,
@@ -35,7 +40,7 @@ impl CanisterState {
     pub fn new() -> Self {
         let repo = ThreadlocalRepositories;
         let ic_icrc7_validator = ICIcrc7Validator;
-        let ckbtc_minter_client = IcCkBtcMinterClient::new(Principal::anonymous());
+        let ckbtc_minter_client = IcCkBtcMinterClient;
 
         CanisterState {
             auth_service: AuthService::new(&AUTH_SERVICE_STORE),
@@ -47,6 +52,22 @@ impl CanisterState {
             user_nft: UserNftService::new(&repo, ic_icrc7_validator),
             user_ckbtc: UserCkBtcService::new(&repo, ckbtc_minter_client),
         }
+    }
+
+    /// Sets the CKBTC minter canister ID
+    /// # Arguments
+    /// * `canister_id` - The principal ID of the CKBTC minter canister
+    pub fn set_ckbtc_minter_canister_id(&self, canister_id: Principal) {
+        CKBTC_MINTER_CANISTER_ID.with(|id| {
+            *id.borrow_mut() = canister_id;
+        });
+    }
+
+    /// Gets the CKBTC minter canister ID
+    /// # Returns
+    /// * `Principal` - The principal ID of the CKBTC minter canister
+    pub fn get_ckbtc_minter_canister_id(&self) -> Principal {
+        CKBTC_MINTER_CANISTER_ID.with(|id| *id.borrow())
     }
 }
 

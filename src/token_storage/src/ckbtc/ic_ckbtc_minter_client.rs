@@ -6,29 +6,19 @@ use candid::Principal;
 use ic_cdk::call::{Call, CandidDecodeFailed};
 use token_storage_types::{bitcoin::ckbtc_minter::GetBtcAddressArg, error::CanisterError};
 
-pub struct IcCkBtcMinterClient {
-    pub ckbtc_minter_canister_id: Principal,
-}
-
-impl IcCkBtcMinterClient {
-    pub fn new(ckbtc_minter_canister_id: Principal) -> Self {
-        Self {
-            ckbtc_minter_canister_id,
-        }
-    }
-}
+pub struct IcCkBtcMinterClient;
 
 impl CkBtcMinterTrait for IcCkBtcMinterClient {
-    fn set_canister_id(&mut self, canister_id: Principal) {
-        self.ckbtc_minter_canister_id = canister_id;
-    }
-
-    async fn get_btc_address(&self, user: Principal) -> Result<String, CanisterError> {
+    async fn get_btc_address(
+        &self,
+        user: Principal,
+        ckbtc_minter: Principal,
+    ) -> Result<String, CanisterError> {
         let arg = GetBtcAddressArg {
             owner: Some(user),
             subaccount: None,
         };
-        let response = Call::bounded_wait(self.ckbtc_minter_canister_id, "get_btc_address")
+        let response = Call::bounded_wait(ckbtc_minter, "get_btc_address")
             .with_arg(arg)
             .await
             .map_err(CanisterError::from)?;
@@ -64,11 +54,11 @@ pub mod tests {
     }
 
     impl CkBtcMinterTrait for MockCkBtcMinterClient {
-        fn set_canister_id(&mut self, _canister_id: Principal) {
-            // No-op for mock
-        }
-
-        async fn get_btc_address(&self, user: Principal) -> Result<String, CanisterError> {
+        async fn get_btc_address(
+            &self,
+            user: Principal,
+            _ckbtc_minter: Principal,
+        ) -> Result<String, CanisterError> {
             match self.address_map.get(&user) {
                 Some(address) => Ok(address.clone()),
                 None => Err(CanisterError::not_found("CKBTC address", &user.to_string())),

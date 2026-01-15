@@ -122,4 +122,13 @@ impl<C: CanisterClient> TokenStorageClient<C> {
     pub async fn user_get_nfts(&self, input: GetUserNftInput) -> CanisterClientResult<Vec<NftDto>> {
         self.client.query("user_get_nfts", (input,)).await
     }
+
+    /// Retrieves the BTC address associated with the calling user
+    /// # Returns
+    /// * `String` - The BTC address of the user, or a CanisterError
+    pub async fn user_get_btc_address(
+        &self,
+    ) -> CanisterClientResult<Result<String, CanisterError>> {
+        self.client.update("user_get_btc_address", ()).await
+    }
 }

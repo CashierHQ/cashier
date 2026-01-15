@@ -6,18 +6,16 @@ use std::sync::Arc;
 use token_storage_types::error::CanisterError;
 
 pub trait CkBtcMinterTrait {
-    /// Sets the CKBTC minter canister ID
-    /// # Arguments
-    /// * `canister_id` - The principal ID of the CKBTC minter canister
-    /// # Returns - None
-    fn set_canister_id(&mut self, canister_id: Principal);
-
     /// Get the BTC address associated with a user.
     /// # Arguments
     /// * `user` - The principal ID of the user
     /// # Returns
     /// * `Result<String, CanisterError>` - The BTC address if it exists
-    async fn get_btc_address(&self, user: Principal) -> Result<String, CanisterError>;
+    async fn get_btc_address(
+        &self,
+        user: Principal,
+        ckbtc_minter: Principal,
+    ) -> Result<String, CanisterError>;
 
     /// Update the balance of CKBTC for a user.
     /// # Arguments
