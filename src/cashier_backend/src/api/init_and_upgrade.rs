@@ -7,7 +7,9 @@ use log::info;
 
 use crate::api::state::get_state;
 use crate::apps::auth::Permission;
+use cashier_common::constant::DEFAULT_TOKEN_FEE_TTL_NS;
 use cashier_common::random::init_ic_rand;
+use transaction_manager::token_fee::init_token_fee_ttl;
 
 #[init]
 fn init(init_data: CashierBackendInitData) {
@@ -17,7 +19,11 @@ fn init(init_data: CashierBackendInitData) {
     if let Err(err) = state.log_service.init(Some(log_config)) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
     }
+
     info!("[init] Starting Cashier Backend");
+
+    // Initialize token fee cache TTL
+    init_token_fee_ttl(DEFAULT_TOKEN_FEE_TTL_NS);
 
     info!("[init] Set {:?} as canister admin", init_data.owner);
     state
@@ -40,4 +46,7 @@ fn post_upgrade() {
     info!("[post_upgrade] Starting Cashier Backend");
 
     init_ic_rand();
+
+    // Re-initialize token fee cache TTL (cache wiped on upgrade)
+    init_token_fee_ttl(DEFAULT_TOKEN_FEE_TTL_NS);
 }

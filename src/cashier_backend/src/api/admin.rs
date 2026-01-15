@@ -5,6 +5,8 @@ use ic_cdk::{api::msg_caller, query, update};
 use log::debug;
 
 use crate::{api::state::get_state, apps::auth::Permission, build_data::canister_build_data};
+use cashier_common::runtime::RealIcEnvironment;
+use transaction_manager::token_fee::{IcrcTokenFetcher, TokenFeeService};
 
 /// Returns the build data of the canister.
 #[query]
@@ -89,4 +91,36 @@ pub fn admin_inspect_message_enable(inspect_message_enabled: bool) -> Result<(),
 pub fn is_inspect_message_enabled() -> bool {
     let state = get_state();
     state.settings.is_inspect_message_enabled()
+}
+
+/// Clears all cached token fees
+#[update]
+pub fn admin_fee_cache_clear() -> Result<(), CanisterError> {
+    debug!("[admin_fee_cache_clear]");
+    let state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
+
+    let service = TokenFeeService::new(RealIcEnvironment::new(), IcrcTokenFetcher::new());
+    service.clear_all();
+
+    Ok(())
+}
+
+/// Clears cached fee for specific token
+#[update]
+pub fn admin_fee_cache_clear_token(token_id: Principal) -> Result<(), CanisterError> {
+    debug!("[admin_fee_cache_clear_token] token_id={}", token_id);
+    let state = get_state();
+    let caller = msg_caller();
+    state
+        .auth_service
+        .must_have_permission(&caller, Permission::Admin);
+
+    let service = TokenFeeService::new(RealIcEnvironment::new(), IcrcTokenFetcher::new());
+    service.clear_token(&token_id.to_text());
+
+    Ok(())
 }
