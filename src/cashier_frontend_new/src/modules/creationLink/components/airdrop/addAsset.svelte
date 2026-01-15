@@ -10,6 +10,7 @@
   } from "$modules/shared/utils/formatNumber";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
+  import { calculateMaxAmountForAsset } from "$modules/links/utils/amountCalculator";
   import { validationService } from "$modules/links/services/validationService";
   import { locale } from "$lib/i18n";
   import AssetButton from "$modules/creationLink/components/shared/AssetButton.svelte";
@@ -178,6 +179,7 @@
 
     // Validate total amount (perUse * maxUse) doesn't exceed maxTotalAmount
     const uses = link.createLinkData.maxUse || 0;
+
     const validationResult = validateTotalAmount({
       perUseAmount: num,
       maxUse: uses,
@@ -296,11 +298,11 @@
     isUsd = value;
   }
 
-  // Calculate max available token balance with fee consideration using validationService
+  // Calculate max available token balance with fee consideration
   const maxTokenBalance = $derived.by(() => {
     if (!selectedToken || !walletStore.query.data) return 0;
 
-    const maxAmountResult = validationService.maxAmountForAsset(
+    const maxAmountResult = calculateMaxAmountForAsset(
       selectedToken.address,
       link.createLinkData.maxUse,
       walletStore.query.data,
@@ -370,7 +372,7 @@
   });
 
   // Calculate max total amount (max per use * uses)
-  // maxTokenBalance already uses validationService.maxAmountForAsset
+  // maxTokenBalance uses calculateMaxAmountForAsset (same logic as validationService.maxAmountForAsset)
   const maxTotalAmount = $derived.by(() => {
     const uses = link.createLinkData.maxUse || 0;
     if (uses <= 0) return 0;

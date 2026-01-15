@@ -1,16 +1,16 @@
 import { validationService } from "$modules/links/services/validationService";
 import { LinkStep } from "$modules/links/types/linkStep";
 import { walletStore } from "$modules/token/state/walletStore.svelte";
-import { parseBalanceUnits } from "$modules/shared/utils/converter";
-import { formatNumber } from "$modules/shared/utils/formatNumber";
 import type { LinkCreationState } from "$modules/creationLink/state/linkCreationStates";
 import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
 import { ChooseLinkTypeState } from "$modules/creationLink/state/linkCreationStates/chooseLinkType";
 import { PreviewState } from "$modules/creationLink/state/linkCreationStates/preview";
+import { parseBalanceUnits } from "$modules/shared/utils/converter";
+import { formatNumber } from "$modules/shared/utils/formatNumber";
 import { locale } from "$lib/i18n";
 
-// Default state when user is adding asset details for the link
-export class AddAssetState implements LinkCreationState {
+// State when the user is adding asset details for the token basket link
+export class AddAssetTokenBasketState implements LinkCreationState {
   readonly step = LinkStep.ADD_ASSET;
   #link: LinkCreationStore;
 
@@ -24,14 +24,8 @@ export class AddAssetState implements LinkCreationState {
       !this.#link.createLinkData.assets ||
       this.#link.createLinkData.assets?.length === 0
     ) {
-      throw new Error(locale.t("links.linkForm.addAsset.errors.assetRequired"));
-    }
-
-    // Only one asset is supported for default AddAssetState
-    // (TOKEN_BASKET uses AddAssetTokenBasketState instead)
-    if (this.#link.createLinkData.assets.length > 1) {
       throw new Error(
-        locale.t("links.linkForm.addAsset.errors.onlyOneAssetSupported"),
+        locale.t("links.linkForm.addAsset.errors.atLeastOneAssetRequired"),
       );
     }
 
@@ -52,7 +46,7 @@ export class AddAssetState implements LinkCreationState {
       }
     }
 
-    // validate required amounts (for airdrop, this checks totalAmount = useAmount * maxUse)
+    // Validate required amounts (for token basket, this checks totalAmount = useAmount * maxUse for each asset)
     const validationResult = validationService.validateRequiredAmount(
       this.#link.createLinkData,
       walletStore.query.data || [],

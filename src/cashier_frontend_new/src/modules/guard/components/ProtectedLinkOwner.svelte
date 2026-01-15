@@ -2,7 +2,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import type { Snippet } from "svelte";
-  import { getGuardContext } from "../context.svelte";
+  import { getGuardContext } from "$modules/guard/context.svelte";
   import ProtectionProcessingState from "./ProtectionProcessingState.svelte";
 
   let {

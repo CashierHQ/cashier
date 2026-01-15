@@ -158,13 +158,18 @@
           "onlyOneAssetSupported": "Only one asset is supported for tip links",
           "addressRequired": "Address is required to proceed",
           "amountMustBeGreaterThanZero": "Amount must be greater than zero to proceed",
-          "insufficientBalance": "Cannot create link: Need {{required}} {{tokenSymbol}}, but only have {{available}}."
+          "insufficientBalance": "Cannot create link: Need {{required}} {{tokenSymbol}}, but only have {{available}}.",
+          "noTokensAvailable": "No tokens available",
+          "allTokensSelected": "All available tokens have been selected",
+          "atLeastOneAssetRequired": "At least one asset is required"
         },
         "noPriceAvailable": "No price available",
         "switchToTokenAmount": "Switch to token amount",
         "switchToUsdAmount": "Switch to USD amount",
         "uses": "Uses",
-        "amountTotal": "Amount total"
+        "amountTotal": "Amount total",
+        "addAsset": "Add Asset",
+        "totalValue": "Total value"
       },
       "preview": {
         "linkInfo": "Link info",
@@ -275,6 +280,7 @@
           "title": "Completed",
           "message": "Congratulations, you received a tip!",
           "airdropMessage": "Congratulations, you received an airdrop!",
+          "tokenBasketMessage": "Congratulations, you received a token basket!",
           "claimButton": "Claim",
           "claimedButton": "Claimed"
         },

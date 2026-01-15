@@ -3,6 +3,7 @@
   import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
   import TipLinkAddAsset from "$modules/creationLink/components/tiplink/addAsset.svelte";
   import AirDropAddAsset from "$modules/creationLink/components/airdrop/addAsset.svelte";
+  import TokenBasketAddAsset from "$modules/creationLink/components/tokenbasket/addAsset.svelte";
 
   const {
     link,
@@ -16,6 +17,7 @@
     <TipLinkAddAsset {link} />
   {:else if link.createLinkData.linkType === LinkType.AIRDROP}
     <AirDropAddAsset {link} />
+  {:else if link.createLinkData.linkType === LinkType.TOKEN_BASKET}
+    <TokenBasketAddAsset {link} />
   {/if}
-  <!-- TODO: Other asset types will be added here -->
 {/if}

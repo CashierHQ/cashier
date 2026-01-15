@@ -23,14 +23,8 @@
   const maxUse = $derived(link ? Number(link.link_use_action_max_count) : 1);
 
   // Calculate remaining uses
-  const remainingUses = $derived(
+  const remainingUses: number = $derived(
     Math.max(0, (maxUse || 1) - Number(linkUseActionCounter)),
-  );
-
-  // Calculate total USD value of all assets multiplied by remaining uses
-  const totalUsdValue = $derived(
-    assetsWithTokenInfo.reduce((total, asset) => total + asset.usdValue, 0) *
-      remainingUses,
   );
 </script>
 
@@ -40,7 +34,7 @@
   </div>
   <div class="flex flex-col border-[1px] rounded-lg border-lightgreen">
     <div
-      class="flex flex-row items-center justify-between border-lightgreen px-5 py-3"
+      class="flex flex-row items-start justify-between border-lightgreen px-5 py-3"
     >
       <p class="font-medium text-sm">
         {locale.t("links.linkForm.detail.assetsInLink")}
@@ -48,32 +42,34 @@
       <div class="flex flex-col items-end gap-2">
         {#if assetsWithTokenInfo.length > 0}
           {#each assetsWithTokenInfo as asset (asset.address)}
-            <div class="flex items-center gap-2">
-              <p class="text-sm">
-                {formatNumber(asset.amount * remainingUses)}
-                {asset.token.symbol}
-              </p>
-              {#if !failedImageLoads.has(asset.address)}
-                <img
-                  src={asset.logo}
-                  alt={asset.token.symbol}
-                  class="w-4 h-4 rounded-full"
-                  onerror={() => onImageError(asset.address)}
-                />
-              {:else}
-                <div
-                  class="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center text-xs"
-                >
-                  {asset.token.symbol[0]?.toUpperCase() || "?"}
-                </div>
+            <div class="flex flex-col items-end gap-1">
+              <div class="flex items-center gap-2">
+                <p class="text-sm">
+                  {formatNumber(asset.amount * remainingUses)}
+                  {asset.token.symbol}
+                </p>
+                {#if !failedImageLoads.has(asset.address)}
+                  <img
+                    src={asset.logo}
+                    alt={asset.token.symbol}
+                    class="w-4 h-4 rounded-full"
+                    onerror={() => onImageError(asset.address)}
+                  />
+                {:else}
+                  <div
+                    class="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center text-xs"
+                  >
+                    {asset.token.symbol[0]?.toUpperCase() || "?"}
+                  </div>
+                {/if}
+              </div>
+              {#if asset.usdValue > 0}
+                <p class="text-xs text-gray-500">
+                  ~${formatUsdAmount(asset.usdValue * remainingUses)}
+                </p>
               {/if}
             </div>
           {/each}
-          {#if totalUsdValue > 0}
-            <p class="text-sm text-gray-500">
-              ~${formatUsdAmount(totalUsdValue)}
-            </p>
-          {/if}
         {:else}
           <p class="text-sm text-primary/80">-</p>
         {/if}

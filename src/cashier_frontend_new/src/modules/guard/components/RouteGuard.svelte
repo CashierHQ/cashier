@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { GuardContext, setGuardContext } from "../context.svelte";
+  import { GuardContext, setGuardContext } from "$modules/guard/context.svelte";
   import { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import { UserLinkStore } from "$modules/useLink/state/userLinkStore.svelte";
   import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
