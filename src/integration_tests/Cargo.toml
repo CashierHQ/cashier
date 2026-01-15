@@ -5,6 +5,8 @@ edition.workspace = true
 license.workspace = true
 
 [dev-dependencies]
+bitcoin = { workspace = true }
+bitcoincore-rpc = { workspace = true }
 candid = { workspace = true }
 cashier_backend_client = { workspace = true, features = ["pocket_ic"] }
 cashier_backend_types = { workspace = true }
