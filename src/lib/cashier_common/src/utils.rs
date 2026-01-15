@@ -1,8 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::Nat;
-use icrc_ledger_types::icrc1::{account::Subaccount, transfer::Memo};
+use candid::{Nat, Principal};
+use icrc_ledger_types::icrc1::{
+    account::{Account, Subaccount},
+    transfer::Memo,
+};
 use serde_bytes::ByteBuf;
 use uuid::Uuid;
 
@@ -73,4 +76,24 @@ pub fn nonce_from_tx_id(tx_id: &str) -> Result<Vec<u8>, String> {
     Uuid::parse_str(tx_id)
         .map_err(|e| format!("Invalid uuid: {e}"))
         .map(|u| u.as_bytes().to_vec())
+}
+
+/// Generates a unique account for a link using its ID and the canister's principal.
+/// The account is derived by combining the canister's principal with a subaccount
+/// generated from the link ID.
+pub fn get_link_account(link_id: &str, canister_id: Principal) -> Result<Account, String> {
+    Ok(Account {
+        owner: canister_id,
+        subaccount: Some(to_subaccount(link_id)?),
+    })
+}
+
+/// Generates an external account representation for a link.
+/// Used for interacting with ICRC token services via inter-canister calls.
+pub fn get_link_ext_account(link_id: &str, canister_id: Principal) -> Result<Account, String> {
+    let subaccount = to_subaccount(link_id)?;
+    Ok(Account {
+        owner: canister_id,
+        subaccount: Some(subaccount),
+    })
 }

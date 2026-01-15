@@ -11,10 +11,8 @@ use cashier_backend_types::{
         link::v1::Link,
     },
 };
-use transaction_manager::{
-    icrc_token::utils::get_link_account,
-    intents::transfer_link_to_wallet::TransferLinkToWalletIntent,
-};
+use cashier_common::utils::get_link_account;
+use transaction_manager::intents::transfer_link_to_wallet::TransferLinkToWalletIntent;
 use uuid::Uuid;
 
 #[derive(Debug)]

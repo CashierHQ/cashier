@@ -5,7 +5,6 @@ use crate::adapter::IntentAdapterTrait;
 use crate::icrc112::create_icrc_112_requests;
 use crate::{
     adapter::ic::intent::IcIntentAdapter,
-    icrc_token::utils::get_link_account,
     traits::TransactionManager,
     transaction::{
         dependency_analyzer::DependencyAnalyzer, executor_service::ExecutorService,
@@ -16,6 +15,7 @@ use crate::{
         ic_transaction_validator::IcTransactionValidator,
     },
 };
+use cashier_common::utils::get_link_account;
 use cashier_backend_types::{
     error::CanisterError,
     link_v2::action_result::{CreateActionResult, ProcessActionResult},

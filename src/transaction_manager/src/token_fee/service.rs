@@ -66,7 +66,7 @@ impl<E: IcEnvironment, F: TokenFetcher> TokenFeeService<E, F> {
         &self,
         assets: &[Asset],
     ) -> Result<HashMap<Principal, Nat>, CanisterError> {
-        let mut fee_map = HashMap::with_capacity(assets.len());
+        let mut fee_map_result = HashMap::with_capacity(assets.len());
 
         for asset in assets {
             let address = match asset {
@@ -77,7 +77,7 @@ impl<E: IcEnvironment, F: TokenFetcher> TokenFeeService<E, F> {
             if let Some(cached) = self.get(&key)
                 && self.is_valid(&cached)
             {
-                fee_map.insert(address, cached.fee);
+                fee_map_result.insert(address, cached.fee);
                 continue;
             }
 
@@ -87,10 +87,10 @@ impl<E: IcEnvironment, F: TokenFetcher> TokenFeeService<E, F> {
             })?;
 
             self.upsert(&key, fee.clone());
-            fee_map.insert(address, fee);
+            fee_map_result.insert(address, fee);
         }
 
-        Ok(fee_map)
+        Ok(fee_map_result)
     }
 }
 

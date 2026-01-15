@@ -15,10 +15,11 @@ use cashier_backend_types::{
 use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::convert_nat_to_u64};
 use icrc_ledger_types::icrc1::account::Account;
 use transaction_manager::{
-    icrc_token::utils::get_batch_tokens_fee_for_link,
     intents::transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
     utils::calculator::calculate_create_link_fee,
 };
+
+use crate::apps::link_v2::links::shared::utils::get_batch_tokens_fee_for_link;
 use uuid::Uuid;
 
 #[derive(Debug)]
