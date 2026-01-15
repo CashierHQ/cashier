@@ -4,7 +4,7 @@ DFX_LOGFILE:="./target/dfx_tests.log"
 [group('dfx')]
 dfx_local_start: dfx_prepare_env dfx_local_stop
   # Start the local dfx server
-  dfx start --background --clean --host 127.0.0.1:8000 --artificial-delay 0 2> "{{DFX_LOGFILE}}"
+  dfx start --enable-bitcoin --background --clean --host 127.0.0.1:8000 --bitcoin-node 127.0.0.1:18444 --artificial-delay 0 2> "{{DFX_LOGFILE}}"
 
   # Add cycles to the wallet
   wallet_principal=$(dfx identity get-wallet) && dfx ledger fabricate-cycles --t 10000000 --canister $wallet_principal
