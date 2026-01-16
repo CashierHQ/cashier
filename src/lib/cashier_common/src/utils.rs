@@ -78,9 +78,26 @@ pub fn nonce_from_tx_id(tx_id: &str) -> Result<Vec<u8>, String> {
         .map(|u| u.as_bytes().to_vec())
 }
 
-/// Generates a unique account for a link using its ID and the canister's principal.
-/// The account is derived by combining the canister's principal with a subaccount
-/// generated from the link ID.
+/// Generates a unique ICRC account for a link using its ID and the canister's principal.
+///
+/// The account is derived by combining the canister's principal as the owner with a
+/// subaccount generated from the link ID. This creates a deterministic address for
+/// each link that can be used for token transfers and balance queries.
+///
+/// # Arguments
+///
+/// * `link_id` - The link's unique identifier (UUID string format)
+/// * `canister_id` - The principal of the canister that owns the link account
+///
+/// # Returns
+///
+/// Returns an `Account` with the canister as owner and derived subaccount.
+///
+/// # Errors
+///
+/// Returns an error string if:
+/// * The `link_id` is not a valid UUID format
+/// * Subaccount derivation fails
 pub fn get_link_account(link_id: &str, canister_id: Principal) -> Result<Account, String> {
     Ok(Account {
         owner: canister_id,
@@ -88,8 +105,26 @@ pub fn get_link_account(link_id: &str, canister_id: Principal) -> Result<Account
     })
 }
 
-/// Generates an external account representation for a link.
-/// Used for interacting with ICRC token services via inter-canister calls.
+/// Generates an external ICRC account representation for a link.
+///
+/// This function creates an account suitable for use with ICRC token services
+/// in inter-canister calls. It derives the subaccount from the link ID and
+/// combines it with the canister principal.
+///
+/// # Arguments
+///
+/// * `link_id` - The link's unique identifier (UUID string format)
+/// * `canister_id` - The principal of the canister that owns the account
+///
+/// # Returns
+///
+/// Returns an `Account` with the canister as owner and derived subaccount.
+///
+/// # Errors
+///
+/// Returns an error string if:
+/// * The `link_id` is not a valid UUID format
+/// * Subaccount derivation fails
 pub fn get_link_ext_account(link_id: &str, canister_id: Principal) -> Result<Account, String> {
     let subaccount = to_subaccount(link_id)?;
     Ok(Account {

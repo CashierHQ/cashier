@@ -4,15 +4,11 @@
 //! Token fee caching service with TTL-based expiration.
 
 use super::TokenFetcher;
-use crate::repositories::{
-    Repositories,
-    token_fee::{CachedFee, TokenFeeRepository, TokenFeeRepositoryStorage},
-};
+use crate::repositories::{self, Repositories};
 use candid::{Nat, Principal};
-use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::common::Asset;
+use cashier_backend_types::{error::CanisterError, repository::token_fee::CachedFee};
 use cashier_common::runtime::IcEnvironment;
-use ic_mple_log::service::Storage;
 use std::{cell::RefCell, collections::HashMap};
 
 thread_local! {
@@ -20,58 +16,106 @@ thread_local! {
     static TOKEN_FEE_TTL_NS: RefCell<u64> = const { RefCell::new(0) };
 }
 
-/// Token fee caching service.
-/// Caches token fees in memory with configurable TTL.
-/// Generic over environment (for time), fetcher (for external calls), and repository storage.
-pub struct TokenFeeService<S: Storage<TokenFeeRepositoryStorage>, E: IcEnvironment, F: TokenFetcher>
-{
-    token_fee_repo: TokenFeeRepository<S>,
+/// Token fee caching service with TTL-based expiration.
+///
+/// This service caches token transfer fees in memory with a configurable time-to-live (TTL)
+/// to reduce redundant inter-canister calls. It is generic over:
+/// - `R`: Repository layer for persistent storage
+/// - `E`: IC environment abstraction for time access
+/// - `F`: Token fetcher for retrieving fees from external canisters
+///
+/// Cached fees are automatically invalidated when they exceed the configured TTL,
+/// triggering fresh fetches as needed.
+pub struct TokenFeeService<R: Repositories, E: IcEnvironment, F: TokenFetcher> {
+    token_fee_repo: repositories::token_fee::TokenFeeRepository<R::TokenFee>,
     ic_env: E,
     fetcher: F,
 }
 
-impl<S: Storage<TokenFeeRepositoryStorage>, E: IcEnvironment, F: TokenFetcher>
-    TokenFeeService<S, E, F>
-{
+impl<R: Repositories, E: IcEnvironment, F: TokenFetcher> TokenFeeService<R, E, F> {
+    /// Initializes the global TTL configuration for token fee caching.
+    ///
+    /// # Arguments
+    ///
+    /// * `ttl_ns` - Time-to-live in nanoseconds. Cached fees older than this will be considered expired.
     pub fn init(&self, ttl_ns: u64) {
         TOKEN_FEE_TTL_NS.with(|cell| *cell.borrow_mut() = ttl_ns);
     }
 
-    /// Create new TokenFeeService with repository, environment, and fetcher
-    pub fn new(token_fee_repo: TokenFeeRepository<S>, ic_env: E, fetcher: F) -> Self {
+    /// Creates a new `TokenFeeService` instance.
+    ///
+    /// # Arguments
+    ///
+    /// * `repo` - Repository collection providing access to token fee storage
+    /// * `ic_env` - IC environment abstraction for accessing system time
+    /// * `fetcher` - Token fetcher implementation for retrieving fees from external canisters
+    ///
+    /// # Returns
+    ///
+    /// Returns a new service instance ready to cache and retrieve token fees.
+    pub fn new(repo: &R, ic_env: E, fetcher: F) -> Self {
         Self {
-            token_fee_repo,
+            token_fee_repo: repo.token_fee(),
             ic_env,
             fetcher,
         }
     }
 
-    /// Create from Repositories trait impl
-    pub fn from_repositories<R: Repositories<TokenFee = S>>(
-        repositories: &R,
-        ic_env: E,
-        fetcher: F,
-    ) -> Self {
-        Self::new(repositories.token_fee(), ic_env, fetcher)
-    }
-
-    /// Clear all cached fees
+    /// Clears all cached token fees from the repository.
+    ///
+    /// This forces all subsequent fee queries to fetch fresh data from external canisters.
+    /// Useful for testing or when a complete cache invalidation is needed.
     pub fn clear_all(&mut self) {
         self.token_fee_repo.clear();
     }
 
-    /// Clear cached fee for specific token
+    /// Clears the cached fee for a specific token.
+    ///
+    /// # Arguments
+    ///
+    /// * `token_key` - The token identifier (typically the principal as text) to clear from cache
+    ///
+    /// The next query for this token will fetch fresh data from its canister.
     pub fn clear_token(&mut self, token_key: &str) {
         self.token_fee_repo.remove(token_key);
     }
 
-    /// Check if cached fee is still valid (not expired)
+    /// Checks if a cached fee is still valid based on TTL.
+    ///
+    /// # Arguments
+    ///
+    /// * `cached` - The cached fee entry to validate
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` if the cached fee is still within the TTL window, `false` if expired.
     fn is_valid(&self, cached: &CachedFee) -> bool {
         self.ic_env.time().saturating_sub(cached.updated_at)
             < TOKEN_FEE_TTL_NS.with(|cell| *cell.borrow())
     }
 
-    /// Get fees for batch of tokens, using cache where valid
+    /// Retrieves fees for multiple tokens, leveraging cache when available.
+    ///
+    /// For each asset:
+    /// 1. Checks if a valid (non-expired) cached fee exists
+    /// 2. If cached and valid, returns the cached fee
+    /// 3. If not cached or expired, fetches fresh fee from the token canister via the fetcher
+    /// 4. Stores the newly fetched fee in the cache with current timestamp
+    ///
+    /// # Arguments
+    ///
+    /// * `assets` - Slice of assets to retrieve fees for
+    ///
+    /// # Returns
+    ///
+    /// Returns a `HashMap` mapping each token's `Principal` to its transfer fee as `Nat`.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `CanisterError` if:
+    /// * Any token canister fails to respond
+    /// * The fetcher encounters a network or communication error
+    /// * Fee data cannot be retrieved or decoded
     pub async fn get_batch_tokens_fee(
         &mut self,
         assets: &[Asset],
@@ -169,8 +213,7 @@ mod tests {
         TOKEN_FEE_TTL_NS.with(|cell| *cell.borrow_mut() = ttl);
     }
 
-    type TestStorage = std::rc::Rc<std::cell::RefCell<TokenFeeRepositoryStorage>>;
-    type TestService = TokenFeeService<TestStorage, MockIcEnvironment, MockTokenFetcher>;
+    type TestService = TokenFeeService<TestRepositories, MockIcEnvironment, MockTokenFetcher>;
 
     fn create_service(current_time: u64) -> TestService {
         let repos = TestRepositories::new();
@@ -178,7 +221,7 @@ mod tests {
             current_time,
             ..Default::default()
         };
-        TokenFeeService::from_repositories(&repos, env, MockTokenFetcher::new())
+        TokenFeeService::new(&repos, env, MockTokenFetcher::new())
     }
 
     fn create_service_with_fetcher(current_time: u64, fetcher: MockTokenFetcher) -> TestService {
@@ -187,7 +230,7 @@ mod tests {
             current_time,
             ..Default::default()
         };
-        TokenFeeService::from_repositories(&repos, env, fetcher)
+        TokenFeeService::new(&repos, env, fetcher)
     }
 
     fn create_test_asset(principal_text: &str) -> Asset {

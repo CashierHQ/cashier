@@ -4,18 +4,9 @@
 //! Token fee cache repository for volatile in-memory storage.
 //! Uses simple BTreeMap - no stable memory persistence needed.
 
-use candid::Nat;
+use cashier_backend_types::repository::token_fee::CachedFee;
 use ic_mple_log::service::Storage;
 use std::collections::BTreeMap;
-
-/// Cached token fee with timestamp for TTL validation
-#[derive(Clone, Debug)]
-pub struct CachedFee {
-    /// Token transfer fee
-    pub fee: Nat,
-    /// Timestamp when cached/updated (nanoseconds since epoch)
-    pub updated_at: u64,
-}
 
 /// Storage type for token fee cache - volatile BTreeMap
 pub type TokenFeeRepositoryStorage = BTreeMap<String, CachedFee>;

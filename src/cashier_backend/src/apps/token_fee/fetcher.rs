@@ -7,15 +7,7 @@ use candid::{Nat, Principal};
 use cashier_backend_types::error::CanisterError;
 use transaction_manager::icrc_token::service::IcrcService;
 
-/// Trait for fetching token fees from external sources.
-/// Abstraction layer enabling testability via dependency injection.
-pub trait TokenFetcher: Clone + Send + Sync {
-    /// Fetch fee for token at given address
-    fn fetch_fee(
-        &self,
-        address: Principal,
-    ) -> impl std::future::Future<Output = Result<Nat, CanisterError>> + Send;
-}
+use crate::apps::token_fee::traits::TokenFetcher;
 
 /// Real implementation using IcrcService for canister calls
 #[derive(Clone, Default)]

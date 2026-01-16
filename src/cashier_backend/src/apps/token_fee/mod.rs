@@ -5,9 +5,11 @@
 
 mod fetcher;
 mod service;
+mod traits;
 
-pub use fetcher::{IcrcTokenFetcher, TokenFetcher};
+pub use fetcher::IcrcTokenFetcher;
 pub use service::TokenFeeService;
+pub use traits::TokenFetcher;
 
 #[cfg(test)]
 pub use fetcher::test_utils::MockTokenFetcher;
