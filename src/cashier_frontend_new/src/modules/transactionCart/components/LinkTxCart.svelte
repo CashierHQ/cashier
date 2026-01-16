@@ -47,8 +47,6 @@
   );
 
   let showFeeInfoDrawer = $state(false);
-  // Track if FeeInfoDrawer was closed via Back button (to distinguish from X button)
-  let wasClosedViaBack = $state(false);
   // Track if FeeInfoDrawer is being closed via X button to prevent sync
   let isClosingViaX = $state(false);
 
@@ -113,7 +111,6 @@
       }, 0);
     } else {
       // When closed via Back button, reopen LinkTxCart
-      wasClosedViaBack = true;
       showFeeInfoDrawer = false;
       isOpen = true;
     }
