@@ -7,17 +7,17 @@ use ic_mple_structures::Codec;
 
 #[storable]
 pub enum BridgeTransactionCodec {
-    V1(BridgeTransaction),
+    V1(Vec<BridgeTransaction>),
 }
 
-impl Codec<BridgeTransaction> for BridgeTransactionCodec {
-    fn decode(source: Self) -> BridgeTransaction {
+impl Codec<Vec<BridgeTransaction>> for BridgeTransactionCodec {
+    fn decode(source: Self) -> Vec<BridgeTransaction> {
         match source {
             BridgeTransactionCodec::V1(tx) => tx,
         }
     }
 
-    fn encode(dest: BridgeTransaction) -> Self {
+    fn encode(dest: Vec<BridgeTransaction>) -> Self {
         BridgeTransactionCodec::V1(dest)
     }
 }

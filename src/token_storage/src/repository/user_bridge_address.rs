@@ -30,7 +30,7 @@ impl<S: Storage<UserBridgeAddressRepositoryStorage>> UserBridgeAddressRepository
         }
     }
 
-    /// Set CKBTC address for a user
+    /// Set bridge address for a user
     /// # Arguments
     /// * `user_id` - The Principal of the user
     /// * `address` - The BtcAddress to be set
@@ -47,7 +47,7 @@ impl<S: Storage<UserBridgeAddressRepositoryStorage>> UserBridgeAddressRepository
         })
     }
 
-    /// Get CKBTC address by user_id
+    /// Get bridge address by user_id
     /// # Arguments
     /// * `user_id` - The Principal of the user
     /// # Returns
