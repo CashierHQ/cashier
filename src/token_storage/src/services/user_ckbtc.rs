@@ -4,7 +4,7 @@
 use crate::ckbtc::traits::CkBtcMinterTrait;
 use crate::repository::{Repositories, user_ckbtc_address::UserCkbtcAddressRepository};
 use candid::Principal;
-use token_storage_types::{bitcoin::ckbtc::BtcAddress, error::CanisterError};
+use token_storage_types::{bitcoin::bridge_address::BtcAddress, error::CanisterError};
 
 pub struct UserCkBtcService<R: Repositories, M: CkBtcMinterTrait> {
     pub user_ckbtc_address_repository: UserCkbtcAddressRepository<R::UserCkbtcAddress>,

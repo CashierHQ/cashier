@@ -24,7 +24,7 @@ use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemor
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 use token_storage_types::{
     TokenId,
-    bitcoin::ckbtc::{BtcAddress, BtcAddressCodec},
+    bitcoin::bridge_address::{BtcAddress, BtcAddressCodec},
     nft::{Nft, UserNftCodec},
     token::{RegistryToken, RegistryTokenCodec},
     user::{UserPreference, UserPreferenceCodec},

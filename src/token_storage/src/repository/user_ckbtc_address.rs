@@ -6,7 +6,7 @@ use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
 use ic_mple_structures::{DefaultMemoryImpl, VirtualMemory};
 use ic_mple_utils::store::Storage;
 use std::{cell::RefCell, thread::LocalKey};
-use token_storage_types::bitcoin::ckbtc::{BtcAddress, BtcAddressCodec};
+use token_storage_types::bitcoin::bridge_address::{BtcAddress, BtcAddressCodec};
 
 // Store for UserCkbtcAddressRepository
 pub type UserCkbtcAddressRepositoryStorage =

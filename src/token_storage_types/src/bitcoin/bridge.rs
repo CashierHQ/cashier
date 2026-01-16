@@ -5,6 +5,23 @@ use candid::{CandidType, Nat, Principal};
 use cashier_macros::storable;
 use ic_mple_structures::Codec;
 
+#[storable]
+pub enum BridgeTransactionCodec {
+    V1(BridgeTransaction),
+}
+
+impl Codec<BridgeTransaction> for BridgeTransactionCodec {
+    fn decode(source: Self) -> BridgeTransaction {
+        match source {
+            BridgeTransactionCodec::V1(tx) => tx,
+        }
+    }
+
+    fn encode(dest: BridgeTransaction) -> Self {
+        BridgeTransactionCodec::V1(dest)
+    }
+}
+
 #[derive(Clone, Debug, CandidType, PartialEq, Eq, Hash)]
 #[storable]
 pub struct BridgeTransaction {
@@ -16,6 +33,12 @@ pub struct BridgeTransaction {
     pub amount_satoshi: u64,
     pub txid: String,
     pub block_id: Nat,
+    pub number_confirmations: u32,
+    pub minted_block: Option<u32>,
+    pub minted_block_timestamp: Option<Nat>,
+    pub minter_fee: Option<Nat>,
+    pub btc_fee: Option<Nat>,
+    pub status: BridgeTransactionStatus,
 }
 
 #[derive(Clone, Debug, CandidType, PartialEq, Eq, Hash)]
@@ -41,4 +64,13 @@ pub enum BridgeAssetType {
     BTC,
     Runes,
     Ordinals,
+}
+
+#[derive(Clone, Debug, CandidType, PartialEq, Eq, Hash)]
+#[storable]
+pub enum BridgeTransactionStatus {
+    Created,
+    Pending,
+    Completed,
+    Failed,
 }
