@@ -54,9 +54,12 @@ export class LinkTxCartStore implements TxCartStore {
 
   /**
    * Initialize action assets into reactive state.
+   * Skip if already initialized, do not use this more than once.
    * @param tokens - Token lookup map
    */
   initializeAssets(tokens: Record<string, TokenWithPriceAndBalance>): void {
+    if (this.#assetAndFeeList.length > 0) return;
+
     const walletPrincipal = authState.account?.owner;
     if (!walletPrincipal) return;
     this.#assetAndFeeList = feeService.buildFromAction(
