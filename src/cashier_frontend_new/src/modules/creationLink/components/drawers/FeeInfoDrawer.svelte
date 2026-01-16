@@ -27,7 +27,7 @@
   type Props = {
     open?: boolean;
     onClose?: () => void;
-    onBack?: () => void;
+    onBack?: (viaClose?: boolean) => void;
     onOpenChange?: (open: boolean) => void;
     feesBreakdown: FeeBreakdownItem[];
   };
@@ -42,6 +42,11 @@
 
   function handleClose() {
     open = false;
+    // Call onBack with viaClose=true to indicate this is a close action
+    // This allows parent to handle closing properly
+    if (onBack) {
+      onBack(true);
+    }
     if (onClose) {
       onClose();
     }
@@ -49,6 +54,7 @@
 
   function handleBack() {
     open = false;
+    // Call onBack without parameter to indicate this is a back action
     if (onBack) {
       onBack();
     }
