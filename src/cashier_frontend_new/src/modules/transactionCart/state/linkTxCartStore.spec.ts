@@ -165,6 +165,60 @@ describe("LinkTxCartStore", () => {
 
       expect(store.assetAndFeeList).toEqual(mockAssets);
     });
+
+    it("should skip reinit if assets already exist to preserve local state", () => {
+      const source = createActionSource();
+      const store = new LinkTxCartStore(source);
+      const initialAssets = [
+        {
+          asset: {
+            state: AssetProcessState.PROCESSING,
+            label: "",
+            symbol: "ICP",
+            address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+            amount: 1_000_000n,
+            amountFormattedStr: "0.01",
+            usdValueStr: "$0.10",
+            direction: "OUTGOING",
+            intentId: "intent-1",
+          },
+          fee: null,
+        },
+      ];
+      mockMapActionToAssetAndFeeList.mockReturnValue(initialAssets);
+
+      // First call - should populate
+      store.initializeAssets({});
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.PROCESSING,
+      );
+
+      // Setup different return value for second call
+      const newAssets = [
+        {
+          asset: {
+            state: AssetProcessState.CREATED,
+            label: "",
+            symbol: "ICP",
+            address: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+            amount: 1_000_000n,
+            amountFormattedStr: "0.01",
+            usdValueStr: "$0.10",
+            direction: "OUTGOING",
+            intentId: "intent-1",
+          },
+          fee: null,
+        },
+      ];
+      mockMapActionToAssetAndFeeList.mockReturnValue(newAssets);
+
+      // Second call - should be skipped, state preserved
+      store.initializeAssets({});
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.PROCESSING,
+      );
+      expect(mockMapActionToAssetAndFeeList).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("computeFee", () => {

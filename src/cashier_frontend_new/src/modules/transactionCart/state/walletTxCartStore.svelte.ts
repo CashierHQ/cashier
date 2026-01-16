@@ -53,9 +53,12 @@ export class WalletTxCartStore implements TxCartStore {
 
   /**
    * Initialize wallet assets into reactive state.
+   * Skip if already initialized do not use this more than once.
    * @param tokens - Token lookup map
    */
   initializeAssets(tokens: Record<string, TokenWithPriceAndBalance>): void {
+    if (this.#assetAndFeeList.length > 0) return;
+
     const { token, amount } = this.#source;
     this.#assetAndFeeList = feeService.buildFromWallet(
       { amount, tokenAddress: token.address },
