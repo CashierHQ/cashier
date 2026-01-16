@@ -4,9 +4,12 @@
   import { locale } from "$lib/i18n";
   import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
-  import AssetTransferInfoDrawer from "../drawers/AssetTransferInfoDrawer.svelte";
+  import AssetTransferInfoDrawer from "$modules/creationLink/components/drawers/AssetTransferInfoDrawer.svelte";
   import { FeeType } from "$modules/links/types/fee";
   import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
+  import { SvelteMap } from "svelte/reactivity";
+  import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
+  import { calculateDisplayAmounts } from "$modules/links/utils/displayAmounts";
 
   type Props = {
     forecastAssetAndFee: Array<ForecastAssetAndFee>;
@@ -15,6 +18,7 @@
     isReceive?: boolean;
     isClickable?: boolean;
     onInfoClick?: () => void;
+    link?: LinkCreationStore;
   };
 
   let {
@@ -24,7 +28,11 @@
     isReceive = false,
     isClickable = false,
     onInfoClick,
+    link,
   }: Props = $props();
+
+  const maxUse = $derived(link?.createLinkData.maxUse ?? 1);
+  const linkType = $derived(link?.createLinkData.linkType);
 
   let assetTransferInfoDrawerOpen = $state(false);
 
@@ -46,6 +54,25 @@
     return (forecastAssetAndFee || []).find(
       (item) => item.fee?.feeType === FeeType.CREATE_LINK_FEE,
     );
+  });
+
+  // Calculate display amount for each asset (multiply by maxUse for airdrop)
+  const displayAmounts = $derived.by(() => {
+    const result = calculateDisplayAmounts(assetsToDisplay, linkType, maxUse);
+
+    // Convert Maps to SvelteMaps for reactivity
+    const amounts = new SvelteMap<string, string>();
+    const usdAmounts = new SvelteMap<string, string>();
+
+    result.amounts.forEach((value, key) => {
+      amounts.set(key, value);
+    });
+
+    result.usdAmounts.forEach((value, key) => {
+      usdAmounts.set(key, value);
+    });
+
+    return { amounts, usdAmounts };
   });
 </script>
 
@@ -98,12 +125,15 @@
         <div class="flex flex-col items-end">
           <div class="flex items-center gap-1">
             <p class="text-[14px] font-normal">
-              {asset.amount}
+              {displayAmounts.amounts.get(asset.address) || asset.amount}
             </p>
           </div>
           {#if asset.usdValueStr}
             <p class="text-[10px] medium-font text-[#b6b6b6]">
-              ~${formatUsdAmount(asset.usdValueStr)}
+              ~${formatUsdAmount(
+                displayAmounts.usdAmounts.get(asset.address) ||
+                  asset.usdValueStr,
+              )}
             </p>
           {/if}
         </div>

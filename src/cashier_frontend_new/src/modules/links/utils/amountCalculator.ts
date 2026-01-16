@@ -34,6 +34,13 @@ export function calculateRequiredAssetAmount(
 
 /**
  * Calculate the maximum amount for asset based on wallet balances and fees
+ * This is the inverse calculation of calculateRequiredAssetAmount:
+ * - calculateRequiredAssetAmount: requiredAmount = (useAmount * maxUse) + fee * (1 + maxUse)
+ * - calculateMaxAmountForAsset: maxUseAmount = (balance - fee * (1 + maxUse)) / maxUse
+ *
+ * The formula ensures that when maxUseAmount is used, the required amount calculated
+ * by calculateRequiredAssetAmount will not exceed the available balance.
+ *
  * @param tokenAddress - The address of the token to calculate the max amount for
  * @param maxUse - The maximum number of times each asset can be used
  * @param walletTokens - The list of tokens in the user's wallet
@@ -51,6 +58,12 @@ export function calculateMaxAmountForAsset(
     );
   }
 
+  // Inverse of calculateRequiredAssetAmount formula:
+  // If requiredAmount = (useAmount * maxUse) + fee * (1 + maxUse)
+  // And we want requiredAmount <= balance
+  // Then: (useAmount * maxUse) + fee * (1 + maxUse) <= balance
+  // Therefore: useAmount * maxUse <= balance - fee * (1 + maxUse)
+  // Therefore: useAmount <= (balance - fee * (1 + maxUse)) / maxUse
   const maxAmount =
     (token.balance - token.fee * (BigInt(1) + BigInt(maxUse))) / BigInt(maxUse);
 
@@ -60,6 +73,7 @@ export function calculateMaxAmountForAsset(
 /**
  * Calculate the total amount for each asset (useAmount * maxUse) without fees
  * This is the exact amount that will be sent, excluding network fees
+ * Uses the same calculation logic as calculateRequiredAssetAmount (useAmount * maxUse)
  * @param assets - The list of assets to calculate amounts for
  * @param maxUse - The maximum number of times each asset can be used
  * @returns A Result containing the total amounts (without fees) or an error
