@@ -3,7 +3,7 @@
 
 //! Token fee caching service with TTL-based expiration.
 
-use super::{TOKEN_FEE_TTL_NS, TokenFetcher};
+use super::TokenFetcher;
 use crate::repositories::{
     Repositories,
     token_fee::{CachedFee, TokenFeeRepository, TokenFeeRepositoryStorage},
@@ -13,7 +13,12 @@ use cashier_backend_types::error::CanisterError;
 use cashier_backend_types::repository::common::Asset;
 use cashier_common::runtime::IcEnvironment;
 use ic_mple_log::service::Storage;
-use std::collections::HashMap;
+use std::{cell::RefCell, collections::HashMap};
+
+thread_local! {
+    /// Configured TTL for token fee cache (nanoseconds)
+    static TOKEN_FEE_TTL_NS: RefCell<u64> = const { RefCell::new(0) };
+}
 
 /// Token fee caching service.
 /// Caches token fees in memory with configurable TTL.
@@ -28,6 +33,10 @@ pub struct TokenFeeService<S: Storage<TokenFeeRepositoryStorage>, E: IcEnvironme
 impl<S: Storage<TokenFeeRepositoryStorage>, E: IcEnvironment, F: TokenFetcher>
     TokenFeeService<S, E, F>
 {
+    pub fn init(&self, ttl_ns: u64) {
+        TOKEN_FEE_TTL_NS.with(|cell| *cell.borrow_mut() = ttl_ns);
+    }
+
     /// Create new TokenFeeService with repository, environment, and fetcher
     pub fn new(token_fee_repo: TokenFeeRepository<S>, ic_env: E, fetcher: F) -> Self {
         Self {
@@ -46,11 +55,6 @@ impl<S: Storage<TokenFeeRepositoryStorage>, E: IcEnvironment, F: TokenFetcher>
         Self::new(repositories.token_fee(), ic_env, fetcher)
     }
 
-    /// Get TTL in nanoseconds
-    fn ttl_ns(&self) -> u64 {
-        TOKEN_FEE_TTL_NS.with(|cell| *cell.borrow())
-    }
-
     /// Clear all cached fees
     pub fn clear_all(&mut self) {
         self.token_fee_repo.clear();
@@ -63,7 +67,8 @@ impl<S: Storage<TokenFeeRepositoryStorage>, E: IcEnvironment, F: TokenFetcher>
 
     /// Check if cached fee is still valid (not expired)
     fn is_valid(&self, cached: &CachedFee) -> bool {
-        self.ic_env.time().saturating_sub(cached.updated_at) < self.ttl_ns()
+        self.ic_env.time().saturating_sub(cached.updated_at)
+            < TOKEN_FEE_TTL_NS.with(|cell| *cell.borrow())
     }
 
     /// Get fees for batch of tokens, using cache where valid

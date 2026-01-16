@@ -7,7 +7,6 @@ use log::info;
 
 use crate::api::state::get_state;
 use crate::apps::auth::Permission;
-use crate::apps::token_fee::init_token_fee_ttl;
 use cashier_common::constant::DEFAULT_TOKEN_FEE_TTL_NS;
 use cashier_common::random::init_ic_rand;
 
@@ -22,12 +21,11 @@ fn init(init_data: CashierBackendInitData) {
 
     info!("[init] Starting Cashier Backend");
 
-    // Initialize token fee cache TTL
-    init_token_fee_ttl(
-        init_data
-            .token_fee_ttl_ns
-            .unwrap_or(DEFAULT_TOKEN_FEE_TTL_NS),
-    );
+    let token_fee_ttl = init_data
+        .token_fee_ttl_ns
+        .unwrap_or(DEFAULT_TOKEN_FEE_TTL_NS);
+    info!("[init] Setting token fee cache TTL to {} ns", token_fee_ttl);
+    state.token_fee_service.init(token_fee_ttl);
 
     info!("[init] Set {:?} as canister admin", init_data.owner);
     state
@@ -53,7 +51,7 @@ fn post_upgrade(upgrade_data: CashierBackendUpgradeData) {
     init_ic_rand();
 
     // Re-initialize token fee cache TTL (cache wiped on upgrade)
-    init_token_fee_ttl(
+    get_state().token_fee_service.init(
         upgrade_data
             .token_fee_ttl_ns
             .unwrap_or(DEFAULT_TOKEN_FEE_TTL_NS),
