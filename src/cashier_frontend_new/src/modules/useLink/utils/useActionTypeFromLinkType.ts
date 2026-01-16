@@ -21,6 +21,7 @@ export function findUseActionTypeFromLinkType(
     case LinkType.AIRDROP:
       return ActionType.RECEIVE;
     case LinkType.TOKEN_BASKET:
+      return ActionType.RECEIVE;
     case LinkType.RECEIVE_PAYMENT:
       return null;
     default:

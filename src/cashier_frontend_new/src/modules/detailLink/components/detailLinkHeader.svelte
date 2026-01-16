@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { LinkDetailStore } from "../state/linkDetailStore.svelte";
+  import type { LinkDetailStore } from "$modules/detailLink/state/linkDetailStore.svelte";
   import { locale } from "$lib/i18n";
   import { ChevronLeft } from "lucide-svelte";
 

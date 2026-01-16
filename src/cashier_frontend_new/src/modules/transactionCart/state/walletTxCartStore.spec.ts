@@ -171,6 +171,42 @@ describe("WalletTxCartStore", () => {
       expect(store.assetAndFeeList.length).toBe(1);
       expect(store.assetAndFeeList[0].asset.symbol).toBe("TEST");
     });
+
+    it("should skip reinit if assets already exist to preserve local state", () => {
+      const source = createWalletSource();
+      const store = new WalletTxCartStore(source);
+
+      // First call - should populate with CREATED state
+      store.initializeAssets({});
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.CREATED,
+      );
+
+      // Setup different return value for second call (PROCESSING state)
+      mockMapWalletToAssetAndFeeList.mockReturnValue([
+        {
+          asset: {
+            state: AssetProcessState.PROCESSING,
+            label: "",
+            symbol: "DIFFERENT",
+            address: "different-address",
+            amount: 2_000_000n,
+            amountFormattedStr: "0.02",
+            usdValueStr: "$0.04",
+            direction: FlowDirection.OUTGOING,
+          },
+          fee: null,
+        },
+      ]);
+
+      // Second call - should be skipped, original state preserved
+      store.initializeAssets({});
+      expect(store.assetAndFeeList[0].asset.state).toBe(
+        AssetProcessState.CREATED,
+      );
+      expect(store.assetAndFeeList[0].asset.symbol).toBe("TEST");
+      expect(mockMapWalletToAssetAndFeeList).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("computeFee", () => {
