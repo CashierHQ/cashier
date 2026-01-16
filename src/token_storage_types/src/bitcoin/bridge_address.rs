@@ -9,7 +9,7 @@ use ic_mple_structures::Codec;
 #[storable]
 pub struct BridgeAddress {
     pub btc_address: String,
-    pub rune_address: String,
+    pub rune_address: Option<String>,
 }
 
 #[storable]

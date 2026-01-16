@@ -6,20 +6,24 @@ use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
 use ic_mple_structures::{DefaultMemoryImpl, VirtualMemory};
 use ic_mple_utils::store::Storage;
 use std::{cell::RefCell, thread::LocalKey};
-use token_storage_types::bitcoin::bridge_address::{BtcAddress, BtcAddressCodec};
+use token_storage_types::bitcoin::bridge_address::{BridgeAddress, BridgeAddressCodec};
 
-// Store for UserCkbtcAddressRepository
-pub type UserCkbtcAddressRepositoryStorage =
-    VersionedBTreeMap<Principal, BtcAddress, BtcAddressCodec, VirtualMemory<DefaultMemoryImpl>>;
-pub type ThreadlocalUserCkbtcAddressRepositoryStorage =
-    &'static LocalKey<RefCell<UserCkbtcAddressRepositoryStorage>>;
+// Store for UserBridgeAddressRepository
+pub type UserBridgeAddressRepositoryStorage = VersionedBTreeMap<
+    Principal,
+    BridgeAddress,
+    BridgeAddressCodec,
+    VirtualMemory<DefaultMemoryImpl>,
+>;
+pub type ThreadlocalUserBridgeAddressRepositoryStorage =
+    &'static LocalKey<RefCell<UserBridgeAddressRepositoryStorage>>;
 
-pub struct UserCkbtcAddressRepository<S: Storage<UserCkbtcAddressRepositoryStorage>> {
+pub struct UserBridgeAddressRepository<S: Storage<UserBridgeAddressRepositoryStorage>> {
     address_store: S,
 }
 
-impl<S: Storage<UserCkbtcAddressRepositoryStorage>> UserCkbtcAddressRepository<S> {
-    /// Create a new UserCkbtcAddressRepository
+impl<S: Storage<UserBridgeAddressRepositoryStorage>> UserBridgeAddressRepository<S> {
+    /// Create a new UserBridgeAddressRepository
     pub fn new(storage: S) -> Self {
         Self {
             address_store: storage,
@@ -32,7 +36,11 @@ impl<S: Storage<UserCkbtcAddressRepositoryStorage>> UserCkbtcAddressRepository<S
     /// * `address` - The BtcAddress to be set
     /// # Returns
     /// * `Result<(), String>` - Ok if successful, Err with message if failed
-    pub fn set_address(&mut self, user_id: Principal, address: BtcAddress) -> Result<(), String> {
+    pub fn set_address(
+        &mut self,
+        user_id: Principal,
+        address: BridgeAddress,
+    ) -> Result<(), String> {
         self.address_store.with_borrow_mut(|store| {
             store.insert(user_id, address);
             Ok(())
@@ -43,8 +51,8 @@ impl<S: Storage<UserCkbtcAddressRepositoryStorage>> UserCkbtcAddressRepository<S
     /// # Arguments
     /// * `user_id` - The Principal of the user
     /// # Returns
-    /// * `Option<BtcAddress>` - Some(BtcAddress) if found, None if not found
-    pub fn get_address(&self, user_id: &Principal) -> Option<BtcAddress> {
+    /// * `Option<BridgeAddress>` - Some(BridgeAddress) if found, None if not found
+    pub fn get_address(&self, user_id: &Principal) -> Option<BridgeAddress> {
         self.address_store.with_borrow(|store| store.get(user_id))
     }
 }
@@ -56,12 +64,13 @@ mod tests {
     use cashier_common::test_utils::random_principal_id;
 
     #[test]
-    fn test_set_and_get_ckbtc_address() {
+    fn test_set_and_get_bridge_address() {
         // Arrange
-        let mut repo = TestRepositories::new().user_ckbtc_address();
+        let mut repo = TestRepositories::new().user_bridge_address();
         let user_id = random_principal_id();
-        let address = BtcAddress {
-            address: "ckbtc1qyqszqgpqyqszqgpqyqszqgpqyqszqgp6m5x7f7".to_string(),
+        let address = BridgeAddress {
+            btc_address: "ckbtc1qyqszqgpqyqszqgpqyqszqgpqyqszqgp6m5x7f7".to_string(),
+            rune_address: None,
         };
 
         // Act

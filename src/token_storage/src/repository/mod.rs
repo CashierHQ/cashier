@@ -5,7 +5,7 @@ pub mod balance_cache;
 pub mod settings;
 pub mod token_registry;
 pub mod token_registry_metadata;
-pub mod user_ckbtc_address;
+pub mod user_bridge_address;
 pub mod user_nft;
 pub mod user_preference;
 pub mod user_token;
@@ -24,7 +24,7 @@ use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemor
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 use token_storage_types::{
     TokenId,
-    bitcoin::bridge_address::{BtcAddress, BtcAddressCodec},
+    bitcoin::bridge_address::{BridgeAddress, BridgeAddressCodec},
     nft::{Nft, UserNftCodec},
     token::{RegistryToken, RegistryTokenCodec},
     user::{UserPreference, UserPreferenceCodec},
@@ -44,9 +44,9 @@ use crate::repository::{
         ThreadlocalTokenRegistryMetadataRepositoryStorage, TokenRegistryMetadataRepository,
         TokenRegistryMetadataRepositoryStorage,
     },
-    user_ckbtc_address::{
-        ThreadlocalUserCkbtcAddressRepositoryStorage, UserCkbtcAddressRepository,
-        UserCkbtcAddressRepositoryStorage,
+    user_bridge_address::{
+        ThreadlocalUserBridgeAddressRepositoryStorage, UserBridgeAddressRepository,
+        UserBridgeAddressRepositoryStorage,
     },
     user_nft::{ThreadlocalUserNftRepositoryStorage, UserNftRepository, UserNftRepositoryStorage},
     user_preference::{
@@ -94,7 +94,7 @@ const TOKEN_REGISTRY_METADATA_ID: MemoryId = MemoryId::new(5);
 const AUTH_SERVICE_MEMORY_ID: MemoryId = MemoryId::new(6);
 const SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(7);
 const USER_NFT_MEMORY_ID: MemoryId = MemoryId::new(8);
-const USER_CKBTC_ADDRESS_MEMORY_ID: MemoryId = MemoryId::new(9);
+const USER_BRIDGE_ADDRESS_MEMORY_ID: MemoryId = MemoryId::new(9);
 
 /// A trait for accessing repositories
 pub trait Repositories {
@@ -105,7 +105,7 @@ pub trait Repositories {
     type UserPreference: Storage<UserPreferenceRepositoryStorage>;
     type UserToken: Storage<UserTokenRepositoryStorage>;
     type UserNft: Storage<UserNftRepositoryStorage>;
-    type UserCkbtcAddress: Storage<UserCkbtcAddressRepositoryStorage>;
+    type UserBridgeAddress: Storage<UserBridgeAddressRepositoryStorage>;
 
     /// Get the balance cache repository
     fn balance_cache(&self) -> BalanceCacheRepository<Self::BalanceCache>;
@@ -123,8 +123,8 @@ pub trait Repositories {
     fn user_token(&self) -> UserTokenRepository<Self::UserToken>;
     /// Get the user nft repository
     fn user_nft(&self) -> UserNftRepository<Self::UserNft>;
-    /// Get the user ckbtc address repository
-    fn user_ckbtc_address(&self) -> UserCkbtcAddressRepository<Self::UserCkbtcAddress>;
+    /// Get the user bridge address repository
+    fn user_bridge_address(&self) -> UserBridgeAddressRepository<Self::UserBridgeAddress>;
 }
 
 /// A factory for creating repositories backed by thread-local storage
@@ -138,7 +138,7 @@ impl Repositories for ThreadlocalRepositories {
     type UserPreference = ThreadlocalUserPreferenceRepositoryStorage;
     type UserToken = ThreadlocalUserTokenRepositoryStorage;
     type UserNft = ThreadlocalUserNftRepositoryStorage;
-    type UserCkbtcAddress = ThreadlocalUserCkbtcAddressRepositoryStorage;
+    type UserBridgeAddress = ThreadlocalUserBridgeAddressRepositoryStorage;
 
     fn balance_cache(&self) -> BalanceCacheRepository<Self::BalanceCache> {
         BalanceCacheRepository::new(&BALANCE_CACHE_STORE)
@@ -170,8 +170,8 @@ impl Repositories for ThreadlocalRepositories {
         UserNftRepository::new(&USER_NFT_STORE)
     }
 
-    fn user_ckbtc_address(&self) -> UserCkbtcAddressRepository<Self::UserCkbtcAddress> {
-        UserCkbtcAddressRepository::new(&USER_CKBTC_ADDRESS_STORE)
+    fn user_bridge_address(&self) -> UserBridgeAddressRepository<Self::UserBridgeAddress> {
+        UserBridgeAddressRepository::new(&USER_BRIDGE_ADDRESS_STORE)
     }
 }
 
@@ -259,10 +259,10 @@ thread_local! {
         );
 
     // Store for user's CKBTC addresses
-    static USER_CKBTC_ADDRESS_STORE: RefCell<VersionedBTreeMap<Principal, BtcAddress, BtcAddressCodec, Memory>> =
+    static USER_BRIDGE_ADDRESS_STORE: RefCell<VersionedBTreeMap<Principal, BridgeAddress, BridgeAddressCodec, Memory>> =
         RefCell::new(
             VersionedBTreeMap::init(
-                MEMORY_MANAGER.with_borrow(|m| m.get(USER_CKBTC_ADDRESS_MEMORY_ID)),
+                MEMORY_MANAGER.with_borrow(|m| m.get(USER_BRIDGE_ADDRESS_MEMORY_ID)),
             )
         );
 }
@@ -282,7 +282,7 @@ pub mod tests {
         user_preference: Rc<RefCell<UserPreferenceRepositoryStorage>>,
         user_token: Rc<RefCell<UserTokenRepositoryStorage>>,
         user_nft: Rc<RefCell<UserNftRepositoryStorage>>,
-        user_ckbtc_address: Rc<RefCell<UserCkbtcAddressRepositoryStorage>>,
+        user_bridge_address: Rc<RefCell<UserBridgeAddressRepositoryStorage>>,
     }
 
     impl TestRepositories {
@@ -316,8 +316,8 @@ pub mod tests {
                 user_nft: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(USER_NFT_MEMORY_ID),
                 ))),
-                user_ckbtc_address: Rc::new(RefCell::new(VersionedBTreeMap::init(
-                    mm.get(USER_CKBTC_ADDRESS_MEMORY_ID),
+                user_bridge_address: Rc::new(RefCell::new(VersionedBTreeMap::init(
+                    mm.get(USER_BRIDGE_ADDRESS_MEMORY_ID),
                 ))),
             }
         }
@@ -338,8 +338,8 @@ pub mod tests {
             Rc<RefCell<VersionedBTreeMap<Principal, UserTokenList, UserTokenListCodec, Memory>>>;
         type UserNft =
             Rc<RefCell<VersionedBTreeMap<Principal, HashSet<Nft>, UserNftCodec, Memory>>>;
-        type UserCkbtcAddress =
-            Rc<RefCell<VersionedBTreeMap<Principal, BtcAddress, BtcAddressCodec, Memory>>>;
+        type UserBridgeAddress =
+            Rc<RefCell<VersionedBTreeMap<Principal, BridgeAddress, BridgeAddressCodec, Memory>>>;
 
         fn balance_cache(&self) -> BalanceCacheRepository<Self::BalanceCache> {
             BalanceCacheRepository::new(self.balance_cache.clone())
@@ -371,10 +371,10 @@ pub mod tests {
             UserNftRepository::new(self.user_nft.clone())
         }
 
-        fn user_ckbtc_address(
+        fn user_bridge_address(
             &self,
-        ) -> UserCkbtcAddressRepository<Rc<RefCell<UserCkbtcAddressRepositoryStorage>>> {
-            UserCkbtcAddressRepository::new(self.user_ckbtc_address.clone())
+        ) -> UserBridgeAddressRepository<Rc<RefCell<UserBridgeAddressRepositoryStorage>>> {
+            UserBridgeAddressRepository::new(self.user_bridge_address.clone())
         }
     }
 }

@@ -2,19 +2,19 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::ckbtc::traits::CkBtcMinterTrait;
-use crate::repository::{Repositories, user_ckbtc_address::UserCkbtcAddressRepository};
+use crate::repository::{Repositories, user_bridge_address::UserBridgeAddressRepository};
 use candid::Principal;
-use token_storage_types::{bitcoin::bridge_address::BtcAddress, error::CanisterError};
+use token_storage_types::{bitcoin::bridge_address::BridgeAddress, error::CanisterError};
 
 pub struct UserCkBtcService<R: Repositories, M: CkBtcMinterTrait> {
-    pub user_ckbtc_address_repository: UserCkbtcAddressRepository<R::UserCkbtcAddress>,
+    pub user_bridge_address_repository: UserBridgeAddressRepository<R::UserBridgeAddress>,
     pub ckbtc_minter: M,
 }
 
 impl<R: Repositories, M: CkBtcMinterTrait> UserCkBtcService<R, M> {
     pub fn new(repo: &R, ckbtc_minter: M) -> Self {
         Self {
-            user_ckbtc_address_repository: repo.user_ckbtc_address(),
+            user_bridge_address_repository: repo.user_bridge_address(),
             ckbtc_minter,
         }
     }
@@ -29,17 +29,18 @@ impl<R: Repositories, M: CkBtcMinterTrait> UserCkBtcService<R, M> {
         user: Principal,
         ckbtc_minter: Principal,
     ) -> Result<String, CanisterError> {
-        if let Some(btc_address) = self.user_ckbtc_address_repository.get_address(&user) {
-            Ok(btc_address.address)
+        if let Some(bridge_address) = self.user_bridge_address_repository.get_address(&user) {
+            Ok(bridge_address.btc_address)
         } else {
             let address = self
                 .ckbtc_minter
                 .get_btc_address(user, ckbtc_minter)
                 .await?;
-            self.user_ckbtc_address_repository.set_address(
+            self.user_bridge_address_repository.set_address(
                 user,
-                BtcAddress {
-                    address: address.clone(),
+                BridgeAddress {
+                    btc_address: address.clone(),
+                    rune_address: None,
                 },
             )?;
 
@@ -83,9 +84,9 @@ mod tests {
         assert_eq!(address, expected_address);
 
         // Act: Verify caching in repository
-        let cached_address = repo.user_ckbtc_address().get_address(&user_id).unwrap();
+        let cached_address = repo.user_bridge_address().get_address(&user_id).unwrap();
 
         // Assert
-        assert_eq!(cached_address.address, expected_address);
+        assert_eq!(cached_address.btc_address, expected_address);
     }
 }
