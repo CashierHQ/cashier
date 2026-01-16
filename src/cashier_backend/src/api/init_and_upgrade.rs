@@ -1,12 +1,13 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::init::CashierBackendInitData;
+use cashier_backend_types::init::{CashierBackendInitData, CashierBackendUpgradeData};
 use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::info;
 
 use crate::api::state::get_state;
 use crate::apps::auth::Permission;
+use cashier_common::constant::DEFAULT_TOKEN_FEE_TTL_NS;
 use cashier_common::random::init_ic_rand;
 
 #[init]
@@ -17,7 +18,14 @@ fn init(init_data: CashierBackendInitData) {
     if let Err(err) = state.log_service.init(Some(log_config)) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
     }
+
     info!("[init] Starting Cashier Backend");
+
+    let token_fee_ttl = init_data
+        .token_fee_ttl_ns
+        .unwrap_or(DEFAULT_TOKEN_FEE_TTL_NS);
+    info!("[init] Setting token fee cache TTL to {} ns", token_fee_ttl);
+    state.token_fee_service.init(token_fee_ttl);
 
     info!("[init] Set {:?} as canister admin", init_data.owner);
     state
@@ -32,7 +40,8 @@ fn init(init_data: CashierBackendInitData) {
 fn pre_upgrade() {}
 
 #[post_upgrade]
-fn post_upgrade() {
+#[allow(clippy::needless_pass_by_value)]
+fn post_upgrade(upgrade_data: CashierBackendUpgradeData) {
     if let Err(err) = get_state().log_service.init(None) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
     }
@@ -40,4 +49,11 @@ fn post_upgrade() {
     info!("[post_upgrade] Starting Cashier Backend");
 
     init_ic_rand();
+
+    // Re-initialize token fee cache TTL (cache wiped on upgrade)
+    get_state().token_fee_service.init(
+        upgrade_data
+            .token_fee_ttl_ns
+            .unwrap_or(DEFAULT_TOKEN_FEE_TTL_NS),
+    );
 }

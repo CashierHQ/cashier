@@ -61,6 +61,7 @@ export type CanisterError = { 'InvalidDataError' : string } |
   { 'UnboundedError' : string } |
   { 'CallCanisterFailed' : string };
 export interface CashierBackendInitData {
+  'token_fee_ttl_ns' : [] | [bigint],
   'owner' : Principal,
   'log_settings' : [] | [LogServiceSettings],
 }
@@ -287,6 +288,14 @@ export type Wallet = {
     }
   };
 export interface _SERVICE {
+  /**
+   * Clears all cached token fees
+   */
+  'admin_fee_cache_clear' : ActorMethod<[], Result>,
+  /**
+   * Clears cached fee for specific token
+   */
+  'admin_fee_cache_clear_token' : ActorMethod<[Principal], Result>,
   /**
    * Enables/disables the inspect message.
    */

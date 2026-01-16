@@ -4,7 +4,6 @@
 use crate::icrc_token::{
     service::IcrcService,
     types::{Account, TransferArg, TransferFromArgs},
-    utils::get_batch_tokens_fee,
 };
 use crate::transaction::traits::TransactionExecutor;
 use cashier_backend_types::repository::common::Asset;
@@ -28,21 +27,17 @@ impl IcTransactionExecutor {
     async fn execute_icrc2_transfer_from(
         transaction: Icrc2TransferFrom,
     ) -> Result<(), CanisterError> {
-        let token_fee_map = get_batch_tokens_fee(std::slice::from_ref(&transaction.asset)).await?;
-
         let address = match transaction.asset {
             Asset::IC { address, .. } => address,
         };
         let from_account: Account = transaction.from.into();
         let to_account: Account = transaction.to.into();
 
-        let fee_amount = token_fee_map.get(&address).cloned().unwrap_or_default();
-
         let transfer_arg = TransferFromArgs {
             from: from_account,
             to: to_account,
             amount: transaction.amount,
-            fee: Some(fee_amount),
+            fee: None,
             spender_subaccount: None,
             memo: None, // TODO
             created_at_time: None,
@@ -67,21 +62,17 @@ impl IcTransactionExecutor {
     /// # Returns
     /// * `Result<(), CanisterError>` - Ok if successful, Err otherwise
     async fn execute_icrc1_transfer(transaction: Icrc1Transfer) -> Result<(), CanisterError> {
-        let token_fee_map = get_batch_tokens_fee(std::slice::from_ref(&transaction.asset)).await?;
-
         let address = match transaction.asset {
             Asset::IC { address, .. } => address,
         };
         let from_account: Account = transaction.from.into();
         let to_account: Account = transaction.to.into();
 
-        let fee_amount = token_fee_map.get(&address).cloned().unwrap_or_default();
-
         let transfer_arg = TransferArg {
             from_subaccount: from_account.subaccount,
             to: to_account,
             amount: transaction.amount,
-            fee: Some(fee_amount),
+            fee: None,
             memo: None, // TODO
             created_at_time: transaction.ts,
         };

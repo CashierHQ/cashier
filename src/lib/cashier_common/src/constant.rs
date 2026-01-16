@@ -15,6 +15,9 @@ pub const ICRC_TRANSACTION_TIME_WINDOW_NANOSECS: u64 = 24 * 3600 * 1_000_000_000
 
 pub const CREATE_LINK_FEE: u64 = 10_000;
 
+/// Default TTL in nanoseconds (168 hours = 7 days)
+pub const DEFAULT_TOKEN_FEE_TTL_NS: u64 = 168 * 60 * 60 * 1_000_000_000;
+
 #[cfg(test)]
 pub mod dfd {
     use super::*;

@@ -7,6 +7,7 @@ export const idlFactory = ({ IDL }) => {
     'max_record_length' : IDL.Opt(IDL.Nat64),
   });
   const CashierBackendInitData = IDL.Record({
+    'token_fee_ttl_ns' : IDL.Opt(IDL.Nat64),
     'owner' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
@@ -327,6 +328,8 @@ export const idlFactory = ({ IDL }) => {
     'Err' : CanisterError,
   });
   return IDL.Service({
+    'admin_fee_cache_clear' : IDL.Func([], [Result], []),
+    'admin_fee_cache_clear_token' : IDL.Func([IDL.Principal], [Result], []),
     'admin_inspect_message_enable' : IDL.Func([IDL.Bool], [Result], []),
     'admin_permissions_add' : IDL.Func(
         [IDL.Principal, IDL.Vec(Permission)],
@@ -381,6 +384,7 @@ export const init = ({ IDL }) => {
     'max_record_length' : IDL.Opt(IDL.Nat64),
   });
   const CashierBackendInitData = IDL.Record({
+    'token_fee_ttl_ns' : IDL.Opt(IDL.Nat64),
     'owner' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
