@@ -1,4 +1,4 @@
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_common::build_data::BuildData;
 use ic_mple_client::{CanisterClient, CanisterClientResult};
 use token_storage_types::{
@@ -130,5 +130,10 @@ impl<C: CanisterClient> TokenStorageClient<C> {
         &self,
     ) -> CanisterClientResult<Result<String, CanisterError>> {
         self.client.update("user_get_btc_address", ()).await
+    }
+
+    /// TODO
+    pub async fn user_update_balance(&self) -> CanisterClientResult<Result<Nat, CanisterError>> {
+        self.client.update("user_update_balance", ()).await
     }
 }

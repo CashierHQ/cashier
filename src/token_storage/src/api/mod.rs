@@ -10,7 +10,7 @@ mod state;
 pub mod token;
 
 use crate::types::{TokenRegistryMetadata, error::CanisterError};
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_common::build_data::BuildData;
 use token_storage_types::auth::*;
 use token_storage_types::dto::nft::*;

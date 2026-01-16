@@ -29,3 +29,8 @@ pub enum Mode {
     Normal,
     AcceptAll,
 }
+
+#[derive(CandidType, Deserialize)]
+pub struct SetApiKeyArg {
+    pub api_key: String,
+}

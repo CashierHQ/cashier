@@ -38,6 +38,7 @@ futures = { version = "0.3", default-features = false }
 getrandom = { version = "0.2", features = ["custom"] }
 gate_service_client = { path = "src/gate_service_client" }
 gate_service_types = { path = "src/gate_service_types" }
+ic-btc-interface = "0.3.0"
 ic-cdk = "0.18"
 ic-cdk-timers = "0.12"
 ic-stable-structures = "0.7"

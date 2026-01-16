@@ -46,6 +46,14 @@ impl<R: Repositories, M: CkBtcMinterTrait> UserCkBtcService<R, M> {
             Ok(address)
         }
     }
+
+    pub async fn update_balance(
+        &self,
+        user: Principal,
+        ckbtc_minter: Principal,
+    ) -> Result<candid::Nat, CanisterError> {
+        self.ckbtc_minter.update_balance(user, ckbtc_minter).await
+    }
 }
 
 #[cfg(test)]

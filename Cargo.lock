@@ -629,6 +629,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2a2330da5de22e8a3cb63252ce2abb30116bf5265e89c0e01bc17015ce30a476"
 
 [[package]]
+name = "datasize"
+version = "0.2.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e65c07d59e45d77a8bda53458c24a828893a99ac6cdd9c84111e09176ab739a2"
+dependencies = [
+ "datasize_derive",
+]
+
+[[package]]
+name = "datasize_derive"
+version = "0.2.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "613e4ee15899913285b7612004bbd490abd605be7b11d35afada5902fb6b91d5"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "deranged"
 version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1154,6 +1174,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ic-btc-interface"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4209c650d166815b01336cbbab6310f44895a0fa6571a952b6a84097e5fd87ae"
+dependencies = [
+ "candid",
+ "datasize",
+ "serde",
+ "serde_bytes",
+]
+
+[[package]]
 name = "ic-cdk"
 version = "0.18.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1583,6 +1615,7 @@ dependencies = [
  "cashier_common",
  "gate_service_client",
  "gate_service_types",
+ "ic-btc-interface",
  "ic-cdk",
  "ic-ledger-types",
  "ic_mple_client",

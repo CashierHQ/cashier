@@ -10,7 +10,10 @@ use cashier_backend_client::client::CashierBackendClient;
 use cashier_backend_types::init::CashierBackendInitData;
 use gate_service_client::client::GateServiceBackendClient;
 use gate_service_types::{self, init::GateServiceInitData};
-use ic_cdk::management_canister::{CanisterId, CanisterSettings};
+use ic_cdk::{
+    bitcoin_canister,
+    management_canister::{CanisterId, CanisterSettings},
+};
 use ic_mple_client::PocketIcClient;
 use ic_mple_log::service::LogServiceSettings;
 use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
@@ -22,7 +25,7 @@ use std::{
     net::{Ipv4Addr, SocketAddrV4},
     path::PathBuf,
     sync::{Arc, OnceLock},
-    time::Duration,
+    time::{Duration, SystemTime},
 };
 use token_storage_client::client::TokenStorageClient;
 use token_storage_types::{
@@ -65,6 +68,10 @@ where
             .await,
     );
 
+    client.set_time(SystemTime::now().into()).await;
+
+    let bitcoin_canister_principal = ckbtc::bitcoin::deploy_bitcoin_canister(&client).await;
+
     let ckbtc_kyt_principal = ckbtc::kyt::deploy_ckbtc_kyt_canister(
         &client,
         Principal::from_text(constants::CKBTC_KYT_PRINCIPAL_ID).unwrap(),
@@ -75,7 +82,15 @@ where
     let ckbtc_minter_principal = ckbtc::minter::deploy_ckbtc_minter_canister(
         &client,
         Principal::from_text(constants::CKBTC_MINTER_PRINCIPAL_ID).unwrap(),
+        Principal::from_text(constants::CKBTC_LEDGER_PRINCIPAL_ID).unwrap(),
         Some(ckbtc_kyt_principal),
+    )
+    .await;
+
+    let ck_btc_principal = ckbtc::ledger::deploy_ckbtc_ledger_canister(
+        &client,
+        Principal::from_text(constants::CKBTC_LEDGER_PRINCIPAL_ID).unwrap(),
+        ckbtc_minter_principal,
     )
     .await;
 
@@ -188,15 +203,15 @@ where
 
     let mut icrc_token_map = HashMap::new();
 
-    let ck_btc_principal = token_icrc::deploy_single_icrc_ledger_canister(
-        &client,
-        "Chain Key Bitcoin".to_string(),
-        "ckBTC".to_string(),
-        8,
-        10,
-        Some(Principal::from_text(CK_BTC_PRINCIPAL).unwrap()),
-    )
-    .await;
+    // let ck_btc_principal = token_icrc::deploy_single_icrc_ledger_canister(
+    //     &client,
+    //     "Chain Key Bitcoin".to_string(),
+    //     "ckBTC".to_string(),
+    //     8,
+    //     10,
+    //     Some(Principal::from_text(CK_BTC_PRINCIPAL).unwrap()),
+    // )
+    // .await;
 
     let ck_eth_principal = token_icrc::deploy_single_icrc_ledger_canister(
         &client,
@@ -252,6 +267,8 @@ where
         icrc_token_map,
         icrc7_ledger_principal,
         ckbtc_minter_principal,
+        ckbtc_kyt_principal,
+        bitcoin_canister_principal,
     })
     .await;
 
@@ -273,6 +290,8 @@ pub struct PocketIcTestContext {
     pub icrc_token_map: HashMap<String, Principal>,
     pub icrc7_ledger_principal: Principal,
     pub ckbtc_minter_principal: Principal,
+    pub ckbtc_kyt_principal: Principal,
+    pub bitcoin_canister_principal: Principal,
 }
 
 impl PocketIcTestContext {
@@ -325,6 +344,13 @@ impl PocketIcTestContext {
         IcrcLedgerClient::new(
             self.new_client(self.get_icrc_token_principal(token_name).unwrap(), caller),
         )
+    }
+
+    pub fn new_ckbtc_kyt_client(
+        &self,
+        caller: Principal,
+    ) -> ckbtc::kyt::CkBtcKycClient<PocketIcClient> {
+        ckbtc::kyt::CkBtcKycClient::new(self.new_client(self.ckbtc_kyt_principal, caller))
     }
 
     /// Gets an ICRC token principal by name

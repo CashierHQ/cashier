@@ -32,6 +32,13 @@ impl BtcFixture {
             }
         }
 
+        let wallet_rpc_url = format!("{}/wallet/{}", rpc_url, wallet_name);
+        let btc_rpc_client = BtcClient::new(
+            &wallet_rpc_url,
+            Auth::UserPass(rpc_user.to_string(), rpc_password.to_string()),
+        )
+        .unwrap();
+
         let test_btc_address = btc_rpc_client
             .get_new_address(None, None)
             .unwrap()
@@ -61,5 +68,18 @@ impl BtcFixture {
                 0.0
             }
         }
+    }
+
+    pub fn send_to_address(&self, address: &Address, amount: f64) {
+        let _ = self.btc_rpc_client.send_to_address(
+            address,
+            bitcoin::Amount::from_btc(amount).unwrap(),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
     }
 }

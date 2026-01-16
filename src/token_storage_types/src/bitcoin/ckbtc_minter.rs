@@ -2,11 +2,114 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::{CandidType, Deserialize, Principal};
+use std::fmt::Display;
 
 #[derive(CandidType, Deserialize)]
 pub struct GetBtcAddressArg {
     pub owner: Option<Principal>,
     pub subaccount: Option<serde_bytes::ByteBuf>,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct UpdateBalanceArg {
+    pub owner: Option<Principal>,
+    pub subaccount: Option<serde_bytes::ByteBuf>,
+}
+
+pub type UpdateBalanceResult = Result<Vec<UtxoStatus>, UpdateBalanceError>;
+
+#[derive(CandidType, Deserialize)]
+pub enum UpdateBalanceError {
+    /// A generic error reserved for future extensions.
+    GenericError {
+        error_message: String,
+        error_code: u64,
+    },
+    /// The minter is overloaded, retry the request.
+    /// The payload contains a human-readable message explaining what caused the unavailability.
+    TemporarilyUnavailable(String),
+    /// The minter is already processing another update balance request for the caller.
+    AlreadyProcessing,
+    /// There are no new UTXOs to process.
+    NoNewUtxos {
+        required_confirmations: u32,
+        pending_utxos: Option<Vec<PendingUtxo>>,
+        current_confirmations: Option<u32>,
+    },
+}
+
+impl Display for UpdateBalanceError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            UpdateBalanceError::GenericError {
+                error_message,
+                error_code,
+            } => write!(f, "GenericError (code {}): {}", error_code, error_message),
+            UpdateBalanceError::TemporarilyUnavailable(msg) => {
+                write!(f, "TemporarilyUnavailable: {}", msg)
+            }
+            UpdateBalanceError::AlreadyProcessing => {
+                write!(f, "AlreadyProcessing: Another request is in progress")
+            }
+            UpdateBalanceError::NoNewUtxos {
+                required_confirmations,
+                pending_utxos: _,
+                current_confirmations,
+            } => write!(
+                f,
+                "NoNewUtxos: Required confirmations {}, Current confirmations {:?}",
+                required_confirmations, current_confirmations
+            ),
+        }
+    }
+}
+
+#[derive(CandidType, Deserialize)]
+pub enum UtxoStatus {
+    /// The minter ignored this UTXO because UTXO's value is too small to pay
+    /// the KYT fees. This state is final, retrying [update_balance] call will
+    /// have no effect on this UTXO.
+    ValueTooSmall(Utxo),
+    /// The KYT provider considered this UTXO to be tainted. This UTXO state is
+    /// final, retrying [update_balance] call will have no effect on this UTXO.
+    Tainted(Utxo),
+    /// The UTXO passed the KYT check, and ckBTC has been minted.
+    Minted {
+        minted_amount: u64,
+        block_index: u64,
+        utxo: Utxo,
+    },
+    /// The UTXO passed the KYT check, but the minter failed to mint ckBTC
+    /// because the Ledger was unavailable. Retrying the [update_balance] call
+    /// should eventually advance the UTXO to the [Minted] state.
+    Checked(Utxo),
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct Utxo {
+    pub height: u32,
+    pub value: u64,
+    pub outpoint: UtxoOutpoint,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct UtxoOutpoint {
+    pub txid: serde_bytes::ByteBuf,
+    pub vout: u32,
+}
+
+/// Utxos that don't have enough confirmations to be processed.
+#[derive(CandidType, Deserialize)]
+pub struct PendingUtxo {
+    pub confirmations: u32,
+    pub value: u64,
+    pub outpoint: PendingUtxoOutpoint,
+}
+
+#[derive(CandidType, Deserialize)]
+pub struct PendingUtxoOutpoint {
+    pub txid: serde_bytes::ByteBuf,
+    pub vout: u32,
 }
 
 #[derive(CandidType, Deserialize)]

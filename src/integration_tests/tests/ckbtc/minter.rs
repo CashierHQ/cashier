@@ -18,12 +18,13 @@ use crate::utils::{deploy_canister_with_id, load_canister_bytecode, principal::T
 pub async fn deploy_ckbtc_minter_canister(
     client: &PocketIc,
     canister_id: Principal,
+    ledger_id: Principal,
     kyt_principal: Option<Principal>,
 ) -> Principal {
     let deployer_id = TestUser::TokenDeployer.get_principal();
     let init_args = InitArgs {
         btc_network: BtcNetwork::Regtest,
-        ledger_id: canister_id,
+        ledger_id,
         ecdsa_key_name: "dfx_test_key".to_string(),
         retrieve_btc_min_amount: 10_000,
         max_time_in_queue_nanos: 10_000_000_000,

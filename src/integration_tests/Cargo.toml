@@ -13,6 +13,7 @@ cashier_backend_types = { workspace = true }
 cashier_common = { workspace = true }
 gate_service_client = { workspace = true }
 gate_service_types = { workspace = true }
+ic-btc-interface = { workspace = true }
 ic-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic_mple_client = { workspace = true, features = ["pocket-ic"] }
