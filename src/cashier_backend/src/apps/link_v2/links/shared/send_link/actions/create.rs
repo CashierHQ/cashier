@@ -12,16 +12,20 @@ use cashier_backend_types::{
         link::v1::Link,
     },
 };
-use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::convert_nat_to_u64};
+use cashier_common::{
+    constant::ICP_CANISTER_PRINCIPAL,
+    utils::{convert_nat_to_u64, get_link_account},
+};
 use icrc_ledger_types::icrc1::account::Account;
 use transaction_manager::{
-    icrc_token::utils::{get_batch_tokens_fee_for_link, get_link_account},
     intents::{
         transfer_wallet_to_link::TransferWalletToLinkIntent,
         transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
     },
     utils::calculator::{calculate_create_link_fee, calculate_link_balance_map},
 };
+
+use crate::apps::link_v2::links::shared::utils::get_batch_tokens_fee_for_link;
 use uuid::Uuid;
 
 #[derive(Debug)]

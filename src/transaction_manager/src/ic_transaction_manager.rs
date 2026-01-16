@@ -5,7 +5,6 @@ use crate::adapter::IntentAdapterTrait;
 use crate::icrc112::create_icrc_112_requests;
 use crate::{
     adapter::ic::intent::IcIntentAdapter,
-    icrc_token::utils::get_link_account,
     traits::TransactionManager,
     transaction::{
         dependency_analyzer::DependencyAnalyzer, executor_service::ExecutorService,
@@ -22,6 +21,7 @@ use cashier_backend_types::{
     repository::{action::v1::Action, intent::v1::Intent, transaction::v1::Transaction},
 };
 use cashier_common::runtime::IcEnvironment;
+use cashier_common::utils::get_link_account;
 use std::{
     collections::{HashMap, HashSet},
     future::Future,
