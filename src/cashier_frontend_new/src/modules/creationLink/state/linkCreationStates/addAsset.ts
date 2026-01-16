@@ -1,4 +1,8 @@
+import { validationService } from "$modules/links/services/validationService";
 import { LinkStep } from "$modules/links/types/linkStep";
+import { walletStore } from "$modules/token/state/walletStore.svelte";
+import { parseBalanceUnits } from "$modules/shared/utils/converter";
+import { formatNumber } from "$modules/shared/utils/formatNumber";
 import type { LinkCreationState } from "$modules/creationLink/state/linkCreationStates";
 import type { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
 import { ChooseLinkTypeState } from "$modules/creationLink/state/linkCreationStates/chooseLinkType";
@@ -22,20 +26,73 @@ export class AddAssetState implements LinkCreationState {
     ) {
       throw new Error(locale.t("links.linkForm.addAsset.errors.assetRequired"));
     }
+
+    // Only one asset is supported for default AddAssetState
+    // (TOKEN_BASKET uses AddAssetTokenBasketState instead)
     if (this.#link.createLinkData.assets.length > 1) {
       throw new Error(
         locale.t("links.linkForm.addAsset.errors.onlyOneAssetSupported"),
       );
     }
-    if (this.#link.createLinkData.assets[0].address.trim() === "") {
-      throw new Error(
-        locale.t("links.linkForm.addAsset.errors.addressRequired"),
-      );
+
+    // Validate each asset
+    for (let i = 0; i < this.#link.createLinkData.assets.length; i++) {
+      const asset = this.#link.createLinkData.assets[i];
+      if (asset.address.trim() === "") {
+        throw new Error(
+          locale.t("links.linkForm.addAsset.errors.addressRequired"),
+        );
+      }
+      if (asset.useAmount <= 0n) {
+        throw new Error(
+          locale.t(
+            "links.linkForm.addAsset.errors.amountMustBeGreaterThanZero",
+          ),
+        );
+      }
     }
-    if (this.#link.createLinkData.assets[0].useAmount <= 0n) {
-      throw new Error(
-        locale.t("links.linkForm.addAsset.errors.amountMustBeGreaterThanZero"),
+
+    // validate required amounts (for airdrop, this checks totalAmount = useAmount * maxUse)
+    const validationResult = validationService.validateRequiredAmount(
+      this.#link.createLinkData,
+      walletStore.query.data || [],
+    );
+
+    if (validationResult.isErr()) {
+      const errorMessage = validationResult.error.message;
+
+      // Check if it's an insufficient amount error
+      const insufficientAmountMatch = errorMessage.match(
+        /Insufficient amount for asset ([^,]+), required: (\d+), available: (\d+)/,
       );
+
+      if (insufficientAmountMatch && walletStore.query.data) {
+        const [, address, requiredStr, availableStr] = insufficientAmountMatch;
+        const required = BigInt(requiredStr);
+        const available = BigInt(availableStr);
+
+        // Find the token to get symbol and decimals
+        const token = walletStore.query.data.find((t) => t.address === address);
+
+        if (token) {
+          const requiredAmount = parseBalanceUnits(required, token.decimals);
+          const availableAmount = parseBalanceUnits(available, token.decimals);
+
+          // Format the error message using locale
+          const template = locale.t(
+            "links.linkForm.addAsset.errors.insufficientBalance",
+          );
+          const formattedMessage = template
+            .replace("{{required}}", formatNumber(requiredAmount))
+            .replace("{{tokenSymbol}}", token.symbol)
+            .replace("{{available}}", formatNumber(availableAmount));
+
+          throw new Error(formattedMessage);
+        }
+      }
+
+      // For other errors, throw the original message
+      throw new Error(`Validation failed: ${errorMessage}`);
     }
 
     this.#link.state = new PreviewState(this.#link);

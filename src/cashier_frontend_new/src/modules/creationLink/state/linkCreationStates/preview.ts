@@ -11,6 +11,7 @@ import { AddAssetState } from "$modules/creationLink/state/linkCreationStates/ad
 import { LinkCreatedState } from "$modules/creationLink/state/linkCreationStates/created";
 import { AddAssetTipLinkState } from "$modules/creationLink/state/linkCreationStates/tiplink/addAsset";
 import { AddAssetAirdropState } from "$modules/creationLink/state/linkCreationStates/airdrop/addAsset";
+import { AddAssetTokenBasketState } from "$modules/creationLink/state/linkCreationStates/tokenbasket/addAsset";
 
 // State when the user is previewing the link before creation
 export class PreviewState implements LinkCreationState {
@@ -51,6 +52,8 @@ export class PreviewState implements LinkCreationState {
       this.#link.state = new AddAssetTipLinkState(this.#link);
     } else if (this.#link.createLinkData.linkType === LinkType.AIRDROP) {
       this.#link.state = new AddAssetAirdropState(this.#link);
+    } else if (this.#link.createLinkData.linkType === LinkType.TOKEN_BASKET) {
+      this.#link.state = new AddAssetTokenBasketState(this.#link);
     } else {
       this.#link.state = new AddAssetState(this.#link);
     }

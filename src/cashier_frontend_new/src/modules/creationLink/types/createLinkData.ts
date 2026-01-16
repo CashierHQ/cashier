@@ -77,10 +77,13 @@ export class CreateLinkDataMapper {
     // Validate link type is supported
     if (
       input.linkType !== LinkType.TIP &&
-      input.linkType !== LinkType.AIRDROP
+      input.linkType !== LinkType.AIRDROP &&
+      input.linkType !== LinkType.TOKEN_BASKET
     ) {
       return Err(
-        new Error("Only Tip and Airdrop link types are supported currently"),
+        new Error(
+          "Only Tip, Airdrop, and Token Basket link types are supported currently",
+        ),
       );
     }
 
@@ -93,12 +96,22 @@ export class CreateLinkDataMapper {
     }
 
     // Determine the correct label based on link type
-    const assetLabel =
-      input.linkType === LinkType.TIP ? "SEND_TIP_ASSET" : "SEND_AIRDROP_ASSET";
-
-    const assetInfo: Array<AssetInfoDto> = input.assets.map((a) =>
-      CreateLinkAssetMapper.toBackendWithLabel(a, assetLabel),
-    );
+    // For Token Basket, each asset needs a label with its address
+    const assetInfo: Array<AssetInfoDto> = input.assets.map((a) => {
+      let assetLabel: string;
+      if (input.linkType === LinkType.TIP) {
+        assetLabel = "SEND_TIP_ASSET";
+      } else if (input.linkType === LinkType.AIRDROP) {
+        assetLabel = "SEND_AIRDROP_ASSET";
+      } else if (input.linkType === LinkType.TOKEN_BASKET) {
+        // Token Basket requires address in the label
+        assetLabel = `SEND_TOKEN_BASKET_ASSET_${a.address}`;
+      } else {
+        // This should never happen due to validation above, but TypeScript needs it
+        throw new Error(`Unsupported link type: ${input.linkType}`);
+      }
+      return CreateLinkAssetMapper.toBackendWithLabel(a, assetLabel);
+    });
 
     const inputDto: CreateLinkInput = {
       title: input.title,

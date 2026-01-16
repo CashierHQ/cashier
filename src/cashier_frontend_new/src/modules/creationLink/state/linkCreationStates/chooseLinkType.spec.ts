@@ -1,9 +1,11 @@
 import { LinkType } from "$modules/links/types/link/linkType";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import { describe, expect, it, vi } from "vitest";
+
 import { LinkCreationStore } from "$modules/creationLink/state/linkCreationStore.svelte";
 import { AddAssetTipLinkState } from "$modules/creationLink/state/linkCreationStates/tiplink/addAsset";
 import { AddAssetAirdropState } from "$modules/creationLink/state/linkCreationStates/airdrop/addAsset";
+import { AddAssetTokenBasketState } from "$modules/creationLink/state/linkCreationStates/tokenbasket/addAsset";
 import { CreateLinkData } from "$modules/creationLink/types/createLinkData";
 import { TempLink } from "$modules/links/types/tempLink";
 import { LinkState } from "$modules/links/types/link/linkState";
@@ -80,29 +82,29 @@ describe("ChooseLinkTypeState", () => {
     await expect(res).rejects.toThrow("Title is required to proceed");
   });
 
-  it("should throws when link type is not TIP or AIRDROP", async () => {
+  it("should throws when link type is not TIP, AIRDROP, or TOKEN_BASKET", async () => {
     // Arrange
     const tempLink = new TempLink(
       "test-id",
       BigInt(Date.now()),
       LinkState.CHOOSING_TYPE,
       new CreateLinkData({
-        title: "My tip",
-        linkType: LinkType.TOKEN_BASKET,
+        title: "My link",
+        linkType: LinkType.RECEIVE_PAYMENT,
         assets: [],
         maxUse: 1,
       }),
     );
     const store = new LinkCreationStore(tempLink);
-    store.createLinkData.title = "My tip";
-    store.createLinkData.linkType = LinkType.TOKEN_BASKET;
+    store.createLinkData.title = "My link";
+    store.createLinkData.linkType = LinkType.RECEIVE_PAYMENT;
 
     // Act
     const res = store.goNext();
 
     // Assert
     await expect(res).rejects.toThrow(
-      "Only Tip and Airdrop link types are supported currently",
+      "Only Tip, Airdrop, and Token Basket link types are supported currently",
     );
   });
 
@@ -153,5 +155,30 @@ describe("ChooseLinkTypeState", () => {
     // Assert
     expect(store.state.step).toEqual(LinkStep.ADD_ASSET);
     expect(store.state).toBeInstanceOf(AddAssetAirdropState);
+  });
+
+  it("should transition to ADD_ASSET for TOKEN_BASKET link type", async () => {
+    // Arrange
+    const tempLink = new TempLink(
+      "test-id",
+      BigInt(Date.now()),
+      LinkState.CHOOSING_TYPE,
+      new CreateLinkData({
+        title: "My token basket",
+        linkType: LinkType.TOKEN_BASKET,
+        assets: [],
+        maxUse: 1,
+      }),
+    );
+    const store = new LinkCreationStore(tempLink);
+    store.createLinkData.title = "My token basket";
+    store.createLinkData.linkType = LinkType.TOKEN_BASKET;
+
+    // Act
+    await store.goNext();
+
+    // Assert
+    expect(store.state.step).toEqual(LinkStep.ADD_ASSET);
+    expect(store.state).toBeInstanceOf(AddAssetTokenBasketState);
   });
 });

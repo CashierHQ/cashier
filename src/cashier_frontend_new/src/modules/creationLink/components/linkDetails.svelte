@@ -139,6 +139,7 @@
       {failedImageLoads}
       onImageError={handleImageError}
       isClickable={true}
+      {link}
     />
   {/if}
 

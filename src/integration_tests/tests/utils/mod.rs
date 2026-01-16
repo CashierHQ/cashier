@@ -178,6 +178,7 @@ where
         &(CashierBackendInitData {
             log_settings: Some(log.clone()),
             owner: TestUser::CashierBackendAdmin.get_principal(),
+            token_fee_ttl_ns: Some(168 * 60 * 60 * 1_000_000_000), // 168 hours
         }),
     )
     .await;

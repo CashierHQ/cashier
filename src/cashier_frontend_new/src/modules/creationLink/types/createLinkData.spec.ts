@@ -51,12 +51,44 @@ describe("CreateLinkData.toCreateLinkInput", () => {
     expect(input.link_use_action_max_count).toEqual(BigInt(5));
   });
 
+  it("converts TOKEN_BASKET CreateLinkData into CreateLinkInput Ok result", () => {
+    // Arrange
+    const asset1: CreateLinkAsset = new CreateLinkAsset("aaaaa-aa", 100n);
+    const asset2: CreateLinkAsset = new CreateLinkAsset(
+      "ryjl3-tyaaa-aaaaa-aaaba-cai",
+      200n,
+    );
+    const data = new CreateLinkData({
+      title: "My token basket",
+      linkType: LinkType.TOKEN_BASKET,
+      assets: [asset1, asset2],
+      maxUse: 1,
+    });
+
+    // Act
+    const res = CreateLinkDataMapper.toCreateLinkInput(data);
+
+    // Assert
+    const input = res.unwrap();
+    expect(input.title).toEqual("My token basket");
+    expect(input.asset_info).toHaveLength(2);
+    expect(input.asset_info[0].label).toEqual(
+      "SEND_TOKEN_BASKET_ASSET_aaaaa-aa",
+    );
+    expect(input.asset_info[0].amount_per_link_use_action).toEqual(BigInt(100));
+    expect(input.asset_info[1].label).toEqual(
+      "SEND_TOKEN_BASKET_ASSET_ryjl3-tyaaa-aaaaa-aaaba-cai",
+    );
+    expect(input.asset_info[1].amount_per_link_use_action).toEqual(BigInt(200));
+    expect(input.link_use_action_max_count).toEqual(BigInt(1));
+  });
+
   it("returns error for unsupported link types", () => {
     // Arrange
     const asset: CreateLinkAsset = new CreateLinkAsset("aaaaa-aa", 42n);
     const data = new CreateLinkData({
       title: "My link",
-      linkType: LinkType.TOKEN_BASKET,
+      linkType: LinkType.RECEIVE_PAYMENT,
       assets: [asset],
       maxUse: 1,
     });
@@ -67,7 +99,7 @@ describe("CreateLinkData.toCreateLinkInput", () => {
     // Assert
     expect(res.isErr()).toBe(true);
     expect(res.unwrapErr().message).toContain(
-      "Only Tip and Airdrop link types are supported currently",
+      "Only Tip, Airdrop, and Token Basket link types are supported currently",
     );
   });
 });

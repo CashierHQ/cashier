@@ -5,11 +5,11 @@ import type { TokenTransaction } from "./tokenTransaction";
 import type { TokenWithPriceAndBalance } from "./tokenMetadata";
 
 // Mock isTransactionOutgoing
-vi.mock("$modules/wallet/utils/transaction-display-type", () => ({
+vi.mock("$modules/wallet/utils/transactionDisplayType", () => ({
   isTransactionOutgoing: vi.fn(),
 }));
 
-import { isTransactionOutgoing } from "$modules/wallet/utils/transaction-display-type";
+import { isTransactionOutgoing } from "$modules/wallet/utils/transactionDisplayType";
 import { Ok, Err } from "ts-results-es";
 
 const mockedIsTransactionOutgoing = vi.mocked(isTransactionOutgoing);

@@ -73,6 +73,21 @@ impl<C: CanisterClient> CashierBackendClient<C> {
             .await
     }
 
+    /// Clears all cached token fees.
+    pub async fn admin_fee_cache_clear(&self) -> CanisterClientResult<Result<(), CanisterError>> {
+        self.client.update("admin_fee_cache_clear", ()).await
+    }
+
+    /// Clears cached fee for a specific token.
+    pub async fn admin_fee_cache_clear_token(
+        &self,
+        token_id: Principal,
+    ) -> CanisterClientResult<Result<(), CanisterError>> {
+        self.client
+            .update("admin_fee_cache_clear_token", (token_id,))
+            .await
+    }
+
     /// Returns the inspect message status.
     pub async fn is_inspect_message_enabled(&self) -> CanisterClientResult<bool> {
         self.client.query("is_inspect_message_enabled", ()).await
