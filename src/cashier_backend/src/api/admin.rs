@@ -5,7 +5,6 @@ use ic_cdk::{api::msg_caller, query, update};
 use log::debug;
 
 use crate::{api::state::get_state, apps::auth::Permission, build_data::canister_build_data};
-use transaction_manager::token_fee::TokenFeeService;
 
 /// Returns the build data of the canister.
 #[query]
@@ -96,14 +95,13 @@ pub fn is_inspect_message_enabled() -> bool {
 #[update]
 pub fn admin_fee_cache_clear() -> Result<(), CanisterError> {
     debug!("[admin_fee_cache_clear]");
-    let state = get_state();
+    let mut state = get_state();
     let caller = msg_caller();
     state
         .auth_service
         .must_have_permission(&caller, Permission::Admin);
 
-    let service = TokenFeeService::init();
-    service.clear_all();
+    state.token_fee_service.clear_all();
 
     Ok(())
 }
@@ -112,14 +110,13 @@ pub fn admin_fee_cache_clear() -> Result<(), CanisterError> {
 #[update]
 pub fn admin_fee_cache_clear_token(token_id: Principal) -> Result<(), CanisterError> {
     debug!("[admin_fee_cache_clear_token] token_id={}", token_id);
-    let state = get_state();
+    let mut state = get_state();
     let caller = msg_caller();
     state
         .auth_service
         .must_have_permission(&caller, Permission::Admin);
 
-    let service = TokenFeeService::init();
-    service.clear_token(&token_id.to_text());
+    state.token_fee_service.clear_token(&token_id.to_text());
 
     Ok(())
 }

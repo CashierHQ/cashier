@@ -6,8 +6,6 @@ pub mod ic_transaction_manager;
 pub mod icrc112;
 pub mod icrc_token;
 pub mod intents;
-pub mod repositories;
-pub mod token_fee;
 pub mod traits;
 pub mod transaction;
 pub mod utils;

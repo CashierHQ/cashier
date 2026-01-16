@@ -1,10 +1,14 @@
 use crate::{
     apps::{
-        auth::AuthService, link_v2::service::LinkV2Service, request_lock::RequestLockService,
+        auth::AuthService,
+        link_v2::service::LinkV2Service,
+        request_lock::RequestLockService,
         settings::SettingsService,
+        token_fee::{IcrcTokenFetcher, TokenFeeService},
     },
     repositories::{
-        AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories, auth::AuthServiceStorage,
+        AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories,
+        auth::AuthServiceStorage, token_fee::TokenFeeRepositoryStorage,
     },
 };
 use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
@@ -19,6 +23,8 @@ pub struct CanisterState<E: IcEnvironment + Clone + 'static> {
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
     pub request_lock_service: RequestLockService<ThreadlocalRepositories>,
     pub settings: SettingsService<ThreadlocalRepositories>,
+    pub token_fee_service:
+        TokenFeeService<&'static LocalKey<RefCell<TokenFeeRepositoryStorage>>, E, IcrcTokenFetcher>,
     pub env: E,
 }
 
@@ -30,12 +36,16 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
         let transaction_manager_v2 = IcTransactionManager::new(env.clone());
         let link_v2_service = LinkV2Service::new(&*repo, Rc::new(transaction_manager_v2));
 
+        let token_fee_service =
+            TokenFeeService::from_repositories(&*repo, env.clone(), IcrcTokenFetcher::new());
+
         CanisterState {
             auth_service: AuthService::new(&AUTH_SERVICE_STORE),
             link_v2_service,
             log_service: LoggerConfigService::new(&LOGGER_SERVICE_STORE),
             request_lock_service: RequestLockService::new(&repo),
             settings: SettingsService::new(&repo),
+            token_fee_service,
             env,
         }
     }

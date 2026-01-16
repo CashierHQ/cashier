@@ -1,10 +1,11 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+//! Token fee fetcher abstraction for external canister calls.
+
 use candid::{Nat, Principal};
 use cashier_backend_types::error::CanisterError;
-
-use crate::icrc_token::service::IcrcService;
+use transaction_manager::icrc_token::service::IcrcService;
 
 /// Trait for fetching token fees from external sources.
 /// Abstraction layer enabling testability via dependency injection.
@@ -74,6 +75,7 @@ pub mod test_utils {
         }
 
         /// Get total call count across all tokens
+        #[allow(dead_code)]
         pub fn total_call_count(&self) -> u32 {
             self.call_count.lock().unwrap().values().sum()
         }

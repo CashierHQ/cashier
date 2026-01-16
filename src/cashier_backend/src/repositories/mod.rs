@@ -41,6 +41,7 @@ use crate::repositories::request_lock::{RequestLockRepository, RequestLockReposi
 use crate::repositories::settings::{
     Settings, SettingsCodec, SettingsRepository, SettingsRepositoryStorage,
 };
+use crate::repositories::token_fee::{TokenFeeRepository, TokenFeeRepositoryStorage};
 use crate::repositories::transaction::{TransactionRepository, TransactionRepositoryStorage};
 use crate::repositories::user_action::{UserActionRepository, UserActionRepositoryStorage};
 use crate::repositories::user_link::{UserLinkRepository, UserLinkRepositoryStorage};
@@ -57,6 +58,7 @@ pub mod link;
 pub mod link_action;
 pub mod request_lock;
 pub mod settings;
+pub mod token_fee;
 pub mod transaction;
 pub mod user_action;
 pub mod user_link;
@@ -89,6 +91,7 @@ pub trait Repositories {
     type LinkAction: Storage<LinkActionRepositoryStorage>;
     type RequestLock: Storage<RequestLockRepositoryStorage>;
     type Settings: Storage<SettingsRepositoryStorage>;
+    type TokenFee: Storage<TokenFeeRepositoryStorage>;
     type Transaction: Storage<TransactionRepositoryStorage>;
     type UserAction: Storage<UserActionRepositoryStorage>;
     type UserLink: Storage<UserLinkRepositoryStorage>;
@@ -102,6 +105,7 @@ pub trait Repositories {
     fn link_action(&self) -> LinkActionRepository<Self::LinkAction>;
     fn request_lock(&self) -> RequestLockRepository<Self::RequestLock>;
     fn settings(&self) -> SettingsRepository<Self::Settings>;
+    fn token_fee(&self) -> TokenFeeRepository<Self::TokenFee>;
     fn transaction(&self) -> TransactionRepository<Self::Transaction>;
     fn user_action(&self) -> UserActionRepository<Self::UserAction>;
     fn user_link(&self) -> UserLinkRepository<Self::UserLink>;
@@ -120,6 +124,7 @@ impl Repositories for ThreadlocalRepositories {
     type LinkAction = &'static LocalKey<RefCell<LinkActionRepositoryStorage>>;
     type RequestLock = &'static LocalKey<RefCell<RequestLockRepositoryStorage>>;
     type Settings = &'static LocalKey<RefCell<SettingsRepositoryStorage>>;
+    type TokenFee = &'static LocalKey<RefCell<TokenFeeRepositoryStorage>>;
     type Transaction = &'static LocalKey<RefCell<TransactionRepositoryStorage>>;
     type UserAction = &'static LocalKey<RefCell<UserActionRepositoryStorage>>;
     type UserLink = &'static LocalKey<RefCell<UserLinkRepositoryStorage>>;
@@ -155,6 +160,10 @@ impl Repositories for ThreadlocalRepositories {
 
     fn settings(&self) -> SettingsRepository<Self::Settings> {
         SettingsRepository::new(&SETTINGS_STORE)
+    }
+
+    fn token_fee(&self) -> TokenFeeRepository<Self::TokenFee> {
+        TokenFeeRepository::new(&TOKEN_FEE_CACHE_STORE)
     }
 
     fn transaction(&self) -> TransactionRepository<Self::Transaction> {
@@ -324,6 +333,10 @@ thread_local! {
             Settings::default(),
         )
     );
+
+    /// Token fee cache - volatile BTreeMap (not persisted to stable memory)
+    pub static TOKEN_FEE_CACHE_STORE: RefCell<TokenFeeRepositoryStorage> =
+        const { RefCell::new(std::collections::BTreeMap::new()) };
 }
 
 #[cfg(test)]
@@ -343,6 +356,7 @@ pub mod tests {
         link_action: Rc<RefCell<LinkActionRepositoryStorage>>,
         request_lock: Rc<RefCell<RequestLockRepositoryStorage>>,
         settings: Rc<RefCell<SettingsRepositoryStorage>>,
+        token_fee: Rc<RefCell<TokenFeeRepositoryStorage>>,
         transaction: Rc<RefCell<TransactionRepositoryStorage>>,
         user_action: Rc<RefCell<UserActionRepositoryStorage>>,
         user_link: Rc<RefCell<UserLinkRepositoryStorage>>,
@@ -382,6 +396,7 @@ pub mod tests {
                     mm.get(SETTINGS_MEMORY_ID),
                     Default::default(),
                 ))),
+                token_fee: Rc::new(RefCell::new(std::collections::BTreeMap::new())),
                 transaction: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(TRANSACTION_MEMORY_ID),
                 ))),
@@ -407,6 +422,7 @@ pub mod tests {
         type LinkAction = Rc<RefCell<LinkActionRepositoryStorage>>;
         type RequestLock = Rc<RefCell<RequestLockRepositoryStorage>>;
         type Settings = Rc<RefCell<SettingsRepositoryStorage>>;
+        type TokenFee = Rc<RefCell<TokenFeeRepositoryStorage>>;
         type Transaction = Rc<RefCell<TransactionRepositoryStorage>>;
         type UserAction = Rc<RefCell<UserActionRepositoryStorage>>;
         type UserLink = Rc<RefCell<UserLinkRepositoryStorage>>;
@@ -442,6 +458,10 @@ pub mod tests {
 
         fn settings(&self) -> SettingsRepository<Self::Settings> {
             SettingsRepository::new(self.settings.clone())
+        }
+
+        fn token_fee(&self) -> TokenFeeRepository<Self::TokenFee> {
+            TokenFeeRepository::new(self.token_fee.clone())
         }
 
         fn transaction(&self) -> TransactionRepository<Self::Transaction> {

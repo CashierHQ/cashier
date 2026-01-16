@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use crate::api::state::get_state;
 use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,
@@ -10,7 +11,6 @@ use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::to_subaccount};
 use serde_bytes::ByteBuf;
 use std::collections::HashMap;
 use transaction_manager::icrc_token::{types::Account, utils::get_batch_tokens_balance};
-use transaction_manager::token_fee::TokenFeeService;
 
 /// Retrieves token fees for a link's assets, ensuring ICP is included.
 pub async fn get_batch_tokens_fee_for_link(
@@ -31,9 +31,9 @@ pub async fn get_batch_tokens_fee_for_link(
         });
     }
 
-    // Use TokenFeeService directly (with caching)
-    let service = TokenFeeService::init();
-    service.get_batch_tokens_fee(&assets).await
+    // Use TokenFeeService from CanisterState (with caching)
+    let mut state = get_state();
+    state.token_fee_service.get_batch_tokens_fee(&assets).await
 }
 
 /// Retrieves token balances for a link's assets.

@@ -7,9 +7,9 @@ use log::info;
 
 use crate::api::state::get_state;
 use crate::apps::auth::Permission;
+use crate::apps::token_fee::init_token_fee_ttl;
 use cashier_common::constant::DEFAULT_TOKEN_FEE_TTL_NS;
 use cashier_common::random::init_ic_rand;
-use transaction_manager::token_fee::init_token_fee_ttl;
 
 #[init]
 fn init(init_data: CashierBackendInitData) {
