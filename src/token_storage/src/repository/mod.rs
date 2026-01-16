@@ -5,6 +5,7 @@ pub mod balance_cache;
 pub mod settings;
 pub mod token_registry;
 pub mod token_registry_metadata;
+pub mod user_bridge;
 pub mod user_bridge_address;
 pub mod user_nft;
 pub mod user_preference;
@@ -58,9 +59,9 @@ use crate::repository::{
     },
 };
 use crate::services::auth::AuthServiceStorage;
-use crate::types::{
-    TokenBalance, TokenRegistryMetadata, TokenRegistryMetadataCodec, UserTokenList,
-    UserTokenListCodec,
+use token_storage_types::{
+    token::{TokenBalance, TokenRegistryMetadata, TokenRegistryMetadataCodec},
+    user::{UserTokenList, UserTokenListCodec},
 };
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
