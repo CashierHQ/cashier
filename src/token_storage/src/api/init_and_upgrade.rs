@@ -41,9 +41,9 @@ fn init(init_data: TokenStorageInitData) {
 
     info!(
         "[init] Set CKBTC minter canister id to {}",
-        init_data.ckbtc_minter_canister_id
+        init_data.ckbtc_minter_id
     );
-    state.set_ckbtc_minter_canister_id(init_data.ckbtc_minter_canister_id);
+    state.set_ckbtc_minter_id(init_data.ckbtc_minter_id);
 
     init_ic_rand();
 }

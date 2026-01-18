@@ -1,8 +1,14 @@
 DFX_LOGFILE:="./target/dfx_tests.log"
+CKBTC_LEDGER_ID:="mc6ru-gyaaa-aaaar-qaaaq-cai"
+CKBTC_MINTER_ID:="ml52i-qqaaa-aaaar-qaaba-cai"
+CKBTC_KYT_ID:="pvm5g-xaaaa-aaaar-qaaia-cai"
 
 # Start the local dfx server
 [group('dfx')]
 dfx_local_start: dfx_prepare_env dfx_local_stop
+  # Start bitcoind with regtest mode 
+  #bitcoin-core.daemon -conf=$(pwd)/bitcoin.conf -datadir=$(pwd)/bitcoin_data
+
   # Start the local dfx server
   dfx start --enable-bitcoin --background --clean --host 127.0.0.1:8000 --bitcoin-node 127.0.0.1:18444 --artificial-delay 0 2> "{{DFX_LOGFILE}}"
 
@@ -15,6 +21,10 @@ dfx_local_start: dfx_prepare_env dfx_local_stop
 # Stop the local dfx server
 [group('dfx')]
 dfx_local_stop:
+  # Stop bitcoind
+  #bitcoin-core.cli -conf=$(pwd)/bitcoin.conf -datadir=$(pwd)/bitcoin_data stop
+
+  # Stop dfx server
   dfx stop
 
 
@@ -24,9 +34,9 @@ dfx_local_stop:
 # backend_log_filter: log filter string for the backend canister
 # token_storage_log_filter: log filter string for the token_storage canister
 [group('dfx')]
-dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="": 
+dfx_deploy owner ckbtc_minter_id network="" backend_log_filter="" token_storage_log_filter="": 
   #!/usr/bin/env bash
-  just dfx_deploy_token_storage {{owner}} {{network}} {{token_storage_log_filter}}
+  just dfx_deploy_token_storage {{owner}} {{ckbtc_minter_id}} {{network}} {{token_storage_log_filter}}
 
   just dfx_deploy_backend {{owner}} {{network}} {{backend_log_filter}}
 
@@ -40,7 +50,7 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
 
   export OWNER=$(dfx identity get-principal)
 
-  just dfx_deploy "${OWNER}"
+  just dfx_deploy "${OWNER}" "{{CKBTC_MINTER_ID}}"
 
   cashier_backend_id=$(dfx canister id cashier_backend)
   dfx deploy gate_service --argument "(record {
@@ -53,19 +63,22 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
 
   # Deploy ledgers first
   just dfx_local_deploy_icp_ledger
-  just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckBTC" "Chain Key Bitcoin" "ckBTC" "mxzaz-hqaaa-aaaar-qaada-cai" 8 10
   just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckETH" "Chain Key Ethereum" "ckETH" "ss2fx-dyaaa-aaaar-qacoq-cai" 18 2000000000000
   just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckUSDC" "Chain Key USD Coin" "ckUSDC" "xevnm-gaaaa-aaaar-qafnq-cai" 8 10000
   just dfx_local_deploy_icrc1_ledger "${OWNER}" "DOGE" "Test Token" "DOGE" "x5qut-viaaa-aaaar-qajda-cai" 8 10000
 
   # Deploy index canisters AFTER ledgers
   just dfx_local_deploy_icp_index
-  just dfx_local_deploy_icrc_index "ckBTC_index" "mxzaz-hqaaa-aaaar-qaada-cai" "n5wcd-faaaa-aaaar-qaaea-cai"
+  just dfx_local_deploy_icrc_index "ckBTC_index" "{{CKBTC_LEDGER_ID}}" "n5wcd-faaaa-aaaar-qaaea-cai"
   just dfx_local_deploy_icrc_index "ckETH_index" "ss2fx-dyaaa-aaaar-qacoq-cai" "s3zol-vqaaa-aaaar-qacpa-cai"
   just dfx_local_deploy_icrc_index "ckUSDC_index" "xevnm-gaaaa-aaaar-qafnq-cai" "xrs4b-hiaaa-aaaar-qafoa-cai"
 
   # Deploy ICRC7 NFT ledger
   just dfx_local_deploy_icrc7_ledger "${OWNER}" "ICRC7NFT" "CashierDev collection" "CashierDev" "This collection is for development purpose"
+
+  # Deploy ckBTC canisters
+  just dfx_local_deploy_ckbtc_canisters "${OWNER}" "{{CKBTC_LEDGER_ID}}" "{{CKBTC_MINTER_ID}}" "{{CKBTC_KYT_ID}}"
+
 
 # Deploy ICRC token to local networks
 #
@@ -107,6 +120,11 @@ dfx_local_info:
   # ICRC7 NFT ledger
   icrc7_nft_id=$(dfx canister id ICRC7NFT 2>/dev/null || echo "not deployed")
 
+  # ckBTC canisters
+  ckbtc_ledger_id=$(dfx canister id ckbtc_ledger 2>/dev/null || echo "not deployed")
+  ckbtc_minter_id=$(dfx canister id ckbtc_minter 2>/dev/null || echo "not deployed")
+  ckbtc_kyt_id=$(dfx canister id ckbtc_kyt 2>/dev/null || echo "not deployed")
+
   echo "webserver-port: $dfx_webserver_port"
   echo "cashier_backend id: $cashier_backend_id"
   echo "token_storage id: $token_storage_id"
@@ -118,6 +136,9 @@ dfx_local_info:
   echo "ckETH_index id: $cketh_index_id"
   echo "ckUSDC_index id: $ckusdc_index_id"
   echo "icrc7_nft_id: $icrc7_nft_id"
+  echo "ckbtc_ledger_id: $ckbtc_ledger_id"
+  echo "ckbtc_minter_id: $ckbtc_minter_id"
+  echo "ckbtc_kyt_id: $ckbtc_kyt_id"
 
   echo "cashier_backend url: http://$cashier_backend_id.raw.localhost:$dfx_webserver_port"
   echo "token_storage url: http://$token_storage_id.raw.localhost:$dfx_webserver_port"
@@ -144,7 +165,6 @@ dfx_local_airdrop target_principal:
   })"
 
   echo "Airdrop ICRC tokens"
-  just dfx_local_airdrop_token {{target_principal}} mxzaz-hqaaa-aaaar-qaada-cai 1000000
   just dfx_local_airdrop_token {{target_principal}} ss2fx-dyaaa-aaaar-qacoq-cai 100000000000000000
   just dfx_local_airdrop_token {{target_principal}} xevnm-gaaaa-aaaar-qafnq-cai 10000000000
   just dfx_local_airdrop_token {{target_principal}} x5qut-viaaa-aaaar-qajda-cai 10000000000
@@ -186,11 +206,12 @@ dfx_deploy_backend owner network="" log_filter="global,cashier=debug":
   })" {{network}}
 
 # Deploys the token_storage canister
-# params owner: principal id of the owner
+# params 
+# owner: principal id of the owner
 # network: dfx network flag, e.g. --network=dev
 # log_filter: log filter string (default for local and dev)
 [private]
-dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token_storage=debug":
+dfx_deploy_token_storage owner ckbtc_minter_id network="" log_filter="global,cashier=debug,token_storage=debug":
   #!/usr/bin/env bash
   set -e
 
@@ -212,7 +233,7 @@ dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token
         };
         record {
           details = variant { IC = record {
-              ledger_id = principal \"mxzaz-hqaaa-aaaar-qaada-cai\";
+              ledger_id = principal \"{{CKBTC_LEDGER_ID}}\";
               index_id = opt principal \"n5wcd-faaaa-aaaar-qaaea-cai\";
               fee = 10 : nat;
             }
@@ -247,6 +268,7 @@ dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token
           enabled_by_default = true;
         };
       };
+      ckbtc_minter_id = principal \"{{ckbtc_minter_id}}\";
   })" {{network}}
 
 # Deploy ICRC1 token ledger
@@ -500,3 +522,64 @@ dfx_mint_nft target_principal canister_id nft_name nft_description nft_image net
           }
         }
   })" {{network}}
+
+# Deploy ckBTC canisters, including ledger, minter, KYT
+# params
+# owner: canister deployer
+# ledger_id: canister id of ckbtc ledger
+# minter_id: canister id of ckbtc minter
+# kyt_id: canister id of ckbtc KYT
+[private]
+dfx_local_deploy_ckbtc_canisters owner ledger_id minter_id kyt_id:
+  #!/usr/bin/env bash
+  set -e
+
+  # deploy ckbtc ledger
+  dfx deploy ckbtc_ledger --argument "(variant{
+        Init = record{
+                token_symbol = \"ckBTC\";
+                token_name = \"Chain Key Local Bitcoin\";
+                minting_account = record { owner = principal \"{{minter_id}}\" };
+                transfer_fee = 10;
+                metadata = vec {};
+                max_memo_length = opt 80;
+                initial_balances = vec {};
+                archive_options = record {
+                  num_blocks_to_archive = 10_000;
+                  trigger_threshold = 20_000;
+                  controller_id = principal \"{{owner}}\";
+                  cycles_for_archive_creation = opt 1_000_000_000_000;
+                  max_message_size_bytes = null;
+                  node_max_memory_size_bytes = opt 3_221_225_472;
+                };
+                feature_flags = opt record { icrc2 = true };
+              }
+            })"
+
+  # deploy ckbtc minter
+  dfx deploy ckbtc_minter --argument "(variant{
+        Init = record {
+                btc_network = variant { Regtest };
+                ledger_id = principal \"{{ledger_id}}\";
+                ecdsa_key_name = \"dfx_test_key\";
+                retrieve_btc_min_amount = 10_000;
+                max_time_in_queue_nanos = 10_000_000_000;
+                min_confirmations = opt 1;
+                mode = variant { GeneralAvailability };
+                kyt_fee = opt 100;
+                kyt_principal = opt principal \"{{kyt_id}}\"        
+              }
+        })"
+
+
+  # deploy ckbtc kyt
+  dfx deploy ckbtc_kyt --argument "(variant{
+        InitArg = record {
+                api_key = \"\";
+                minter_id = principal \"{{minter_id}}\";
+                maintainers = vec {principal \"{{owner}}\" };
+                mode = variant { AcceptAll };
+              }
+        })"
+
+  dfx canister call ckbtc_kyt set_api_key "(record { api_key = \"\" })"

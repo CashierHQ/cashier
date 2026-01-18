@@ -147,7 +147,7 @@ where
                     enabled_by_default: true,
                 },
             ]),
-            ckbtc_minter_canister_id: ckbtc_minter_principal,
+            ckbtc_minter_id: ckbtc_minter_principal,
         }),
     )
     .await;

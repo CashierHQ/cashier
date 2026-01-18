@@ -15,5 +15,5 @@ pub struct TokenStorageInitData {
     #[serde(default)]
     pub tokens: Option<Vec<RegistryToken>>,
     /// CKBTC minter canister id
-    pub ckbtc_minter_canister_id: Principal,
+    pub ckbtc_minter_id: Principal,
 }

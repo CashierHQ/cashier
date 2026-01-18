@@ -57,7 +57,7 @@ impl CanisterState {
     /// Sets the CKBTC minter canister ID
     /// # Arguments
     /// * `canister_id` - The principal ID of the CKBTC minter canister
-    pub fn set_ckbtc_minter_canister_id(&self, canister_id: Principal) {
+    pub fn set_ckbtc_minter_id(&self, canister_id: Principal) {
         CKBTC_MINTER_CANISTER_ID.with(|id| {
             *id.borrow_mut() = canister_id;
         });
@@ -66,7 +66,7 @@ impl CanisterState {
     /// Gets the CKBTC minter canister ID
     /// # Returns
     /// * `Principal` - The principal ID of the CKBTC minter canister
-    pub fn get_ckbtc_minter_canister_id(&self) -> Principal {
+    pub fn get_ckbtc_minter_id(&self) -> Principal {
         CKBTC_MINTER_CANISTER_ID.with(|id| *id.borrow())
     }
 }

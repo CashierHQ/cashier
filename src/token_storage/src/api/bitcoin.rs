@@ -19,7 +19,7 @@ use token_storage_types::{
 pub async fn user_get_btc_address() -> Result<String, CanisterError> {
     let mut state = get_state();
     let user = msg_caller();
-    let ckbtc_minter = state.get_ckbtc_minter_canister_id();
+    let ckbtc_minter = state.get_ckbtc_minter_id();
     state.user_ckbtc.get_btc_address(user, ckbtc_minter).await
 }
 
