@@ -70,7 +70,7 @@ impl<S: Storage<UserBridgeTransactionRepositoryStorage>> UserBridgeTransactionRe
         bridge_id: &String,
     ) -> Option<BridgeTransaction> {
         self.bridge_transaction_store.with_borrow(|store| {
-            let transactions = store.get(user_id).unwrap_or_else(|| vec![]);
+            let transactions = store.get(user_id).unwrap_or_default();
             transactions
                 .into_iter()
                 .find(|tx| &tx.bridge_id == bridge_id)
@@ -110,7 +110,6 @@ impl<S: Storage<UserBridgeTransactionRepositoryStorage>> UserBridgeTransactionRe
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::repository::{Repositories, tests::TestRepositories};
     use candid::Nat;
     use cashier_common::test_utils::random_principal_id;

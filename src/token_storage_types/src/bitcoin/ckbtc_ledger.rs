@@ -3,6 +3,7 @@
 
 use candid::{CandidType, Deserialize, Principal};
 
+#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Deserialize)]
 pub enum LedgerArg {
     Upgrade(Option<UpgradeArgs>),

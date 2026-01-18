@@ -1,4 +1,4 @@
-use candid::{Nat, Principal};
+use candid::Principal;
 use cashier_common::build_data::BuildData;
 use ic_mple_client::{CanisterClient, CanisterClientResult};
 use token_storage_types::{

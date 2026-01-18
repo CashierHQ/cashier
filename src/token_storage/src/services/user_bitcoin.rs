@@ -1,21 +1,19 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::ckbtc::traits::CkBtcMinterTrait;
-use crate::repository::{
-    Repositories, user_bridge_address::UserBridgeAddressRepository,
-    user_bridge_transaction::UserBridgeTransactionRepository,
-};
 use candid::Principal;
 use token_storage_types::{
-    bitcoin::{
-        bridge_address::BridgeAddress,
-        bridge_transaction::{BridgeTransaction, BridgeTransactionStatus, BridgeType},
-    },
+    bitcoin::{bridge_address::BridgeAddress, bridge_transaction::BridgeTransaction},
     dto::bitcoin::{
         CreateBridgeTransactionInputArg, UpdateBridgeTransactionInputArg, UserBridgeTransactionDto,
     },
     error::CanisterError,
+};
+
+use crate::ckbtc::traits::CkBtcMinterTrait;
+use crate::repository::{
+    Repositories, user_bridge_address::UserBridgeAddressRepository,
+    user_bridge_transaction::UserBridgeTransactionRepository,
 };
 
 pub struct UserCkBtcService<R: Repositories, M: CkBtcMinterTrait> {
@@ -144,6 +142,7 @@ mod tests {
     use crate::repository::{Repositories, tests::TestRepositories};
     use candid::Nat;
     use cashier_common::test_utils::random_principal_id;
+    use token_storage_types::bitcoin::bridge_transaction::{BridgeTransactionStatus, BridgeType};
 
     #[tokio::test]
     async fn it_should_get_btc_address() {
@@ -259,7 +258,7 @@ mod tests {
         let repo = TestRepositories::new();
         let mock_minter = MockCkBtcMinterClient::new();
         let user_id = random_principal_id();
-        let mut service = UserCkBtcService::new(&repo, mock_minter);
+        let service = UserCkBtcService::new(&repo, mock_minter);
         for i in 0..5 {
             let input = CreateBridgeTransactionInputArg {
                 icp_address: random_principal_id(),
