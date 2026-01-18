@@ -30,33 +30,6 @@ impl<S: Storage<UserBridgeTransactionRepositoryStorage>> UserBridgeTransactionRe
         }
     }
 
-    /// Get bridge transactions by user_id with pagination
-    /// # Arguments
-    /// * `user_id` - The Principal of the user
-    /// * `start` - The starting index
-    /// * `limit` - The maximum number of transactions to return
-    /// # Returns
-    /// * `Vec<BridgeTransaction>` - List of BridgeTransactions
-    pub fn get_bridge_transactions(
-        &self,
-        user_id: &Principal,
-        start: Option<u32>,
-        limit: Option<u32>,
-    ) -> Vec<BridgeTransaction> {
-        self.address_store.with_borrow(|store| {
-            let transactions = store.get(user_id).unwrap_or_else(|| vec![]);
-            let start = start.unwrap_or(0) as usize;
-            let limit = limit.unwrap_or(transactions.len() as u32) as usize;
-
-            transactions
-                .iter()
-                .skip(start)
-                .take(limit)
-                .cloned()
-                .collect()
-        })
-    }
-
     /// Upsert a bridge transaction for a user
     /// # Arguments
     /// * `user_id` - The Principal of the user
@@ -82,6 +55,33 @@ impl<S: Storage<UserBridgeTransactionRepositoryStorage>> UserBridgeTransactionRe
                 store.insert(user_id, transactions);
                 Ok(())
             }
+        })
+    }
+
+    /// Get bridge transactions by user_id with pagination
+    /// # Arguments
+    /// * `user_id` - The Principal of the user
+    /// * `start` - The starting index
+    /// * `limit` - The maximum number of transactions to return
+    /// # Returns
+    /// * `Vec<BridgeTransaction>` - List of BridgeTransactions
+    pub fn get_bridge_transactions(
+        &self,
+        user_id: &Principal,
+        start: Option<u32>,
+        limit: Option<u32>,
+    ) -> Vec<BridgeTransaction> {
+        self.address_store.with_borrow(|store| {
+            let transactions = store.get(user_id).unwrap_or_else(|| vec![]);
+            let start = start.unwrap_or(0) as usize;
+            let limit = limit.unwrap_or(transactions.len() as u32) as usize;
+
+            transactions
+                .iter()
+                .skip(start)
+                .take(limit)
+                .cloned()
+                .collect()
         })
     }
 }
@@ -114,9 +114,8 @@ mod tests {
             btc_address: "btc1".to_string(),
             bridge_type: BridgeType::Import,
             asset_infos: asset_infos.clone(),
-            amount_satoshi: 1000,
-            txid: "txid1".to_string(),
-            block_id: Nat::from(1u64),
+            btc_txid: Some("txid1".to_string()),
+            block_id: Some(Nat::from(1u64)),
             number_confirmations: 1,
             minted_block: None,
             minted_block_timestamp: None,
@@ -153,9 +152,8 @@ mod tests {
             btc_address: "btc1".to_string(),
             bridge_type: BridgeType::Import,
             asset_infos: asset_infos.clone(),
-            amount_satoshi: 1000,
-            txid: "txid1".to_string(),
-            block_id: Nat::from(1u64),
+            btc_txid: Some("txid1".to_string()),
+            block_id: Some(Nat::from(1u64)),
             number_confirmations: 1,
             minted_block: None,
             minted_block_timestamp: None,
@@ -199,9 +197,8 @@ mod tests {
                 btc_address: format!("btc{}", i),
                 bridge_type: BridgeType::Import,
                 asset_infos: asset_infos.clone(),
-                amount_satoshi: 1000 + i,
-                txid: format!("txid{}", i),
-                block_id: Nat::from(i + 1),
+                btc_txid: Some(format!("txid{}", i)),
+                block_id: Some(Nat::from(i as u64 + 1)),
                 number_confirmations: 1,
                 minted_block: None,
                 minted_block_timestamp: None,
