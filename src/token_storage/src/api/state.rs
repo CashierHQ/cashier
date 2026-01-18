@@ -11,7 +11,7 @@ use crate::{
         auth::{AuthService, AuthServiceStorage},
         settings::SettingsService,
         token_registry::TokenRegistryService,
-        user_ckbtc::UserCkBtcService,
+        user_bitcoin::UserCkBtcService,
         user_nft::UserNftService,
         user_preference::UserPreferenceService,
         user_token::UserTokenService,

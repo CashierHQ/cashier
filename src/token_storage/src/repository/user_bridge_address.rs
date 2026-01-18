@@ -64,7 +64,7 @@ mod tests {
     use cashier_common::test_utils::random_principal_id;
 
     #[test]
-    fn test_set_and_get_bridge_address() {
+    fn it_should_set_and_get_btc_address() {
         // Arrange
         let mut repo = TestRepositories::new().user_bridge_address();
         let user_id = random_principal_id();

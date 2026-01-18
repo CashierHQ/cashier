@@ -4,7 +4,7 @@
 use crate::api::state::get_state;
 use candid::Nat;
 use cashier_common::guard::is_not_anonymous;
-use ic_cdk::{api::msg_caller, query, update};
+use ic_cdk::{api::msg_caller, update};
 use token_storage_types::error::CanisterError;
 
 /// Retrieves the BTC address associated with the calling user
@@ -16,12 +16,4 @@ pub async fn user_get_btc_address() -> Result<String, CanisterError> {
     let user = msg_caller();
     let ckbtc_minter = state.get_ckbtc_minter_canister_id();
     state.user_ckbtc.get_btc_address(user, ckbtc_minter).await
-}
-
-#[update(guard = "is_not_anonymous")]
-pub async fn user_update_balance() -> Result<Nat, CanisterError> {
-    let mut state = get_state();
-    let user = msg_caller();
-    let ckbtc_minter = state.get_ckbtc_minter_canister_id();
-    state.user_ckbtc.update_balance(user, ckbtc_minter).await
 }
