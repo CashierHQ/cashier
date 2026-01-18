@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
+use cashier_common::random::init_ic_rand;
 use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::{debug, error, info};
 use token_storage_types::init::TokenStorageInitData;
@@ -43,6 +44,8 @@ fn init(init_data: TokenStorageInitData) {
         init_data.ckbtc_minter_canister_id
     );
     state.set_ckbtc_minter_canister_id(init_data.ckbtc_minter_canister_id);
+
+    init_ic_rand();
 }
 
 #[pre_upgrade]
@@ -55,4 +58,5 @@ fn post_upgrade() {
     }
 
     info!("[post_upgrade] Starting Token Storage");
+    init_ic_rand();
 }

@@ -3,7 +3,13 @@ use cashier_common::build_data::BuildData;
 use ic_mple_client::{CanisterClient, CanisterClientResult};
 use token_storage_types::{
     auth::Permission,
-    dto::nft::{AddUserNftInput, GetUserNftInput, NftDto, UserNftDto},
+    dto::{
+        bitcoin::{
+            CreateBridgeTransactionInputArg, GetUserBridgeTransactionsInputArg,
+            UpdateBridgeTransactionInputArg, UserBridgeTransactionDto,
+        },
+        nft::{AddUserNftInput, GetUserNftInput, NftDto, UserNftDto},
+    },
     error::CanisterError,
     token::{AddTokenInput, TokenListResponse, UpdateTokenInput},
 };
@@ -132,8 +138,45 @@ impl<C: CanisterClient> TokenStorageClient<C> {
         self.client.update("user_get_btc_address", ()).await
     }
 
-    /// TODO
-    pub async fn user_update_balance(&self) -> CanisterClientResult<Result<Nat, CanisterError>> {
-        self.client.update("user_update_balance", ()).await
+    /// Creates a new bridge transaction for the calling user
+    /// # Arguments
+    /// * `input` - The input data for creating the bridge transaction
+    /// # Returns
+    /// * `UserBridgeTransactionDto` - The created bridge transaction, or a Canister
+    pub async fn user_create_bridge_transaction(
+        &self,
+        input: CreateBridgeTransactionInputArg,
+    ) -> CanisterClientResult<Result<UserBridgeTransactionDto, CanisterError>> {
+        self.client
+            .update("user_create_bridge_transaction", (input,))
+            .await
+    }
+
+    /// Updates an existing bridge transaction for the calling user
+    /// # Arguments
+    /// * `input` - The input data for updating the bridge transaction
+    /// # Returns
+    /// * `UserBridgeTransactionDto` - The updated bridge transaction, or a CanisterError
+    pub async fn user_update_bridge_transaction(
+        &self,
+        input: UpdateBridgeTransactionInputArg,
+    ) -> CanisterClientResult<Result<UserBridgeTransactionDto, CanisterError>> {
+        self.client
+            .update("user_update_bridge_transaction", (input,))
+            .await
+    }
+
+    /// Retrieves the list of bridge transactions for the calling user
+    /// # Arguments
+    /// * `input` - The input data for retrieving the bridge transactions
+    /// # Returns
+    /// * `Vec<UserBridgeTransactionDto>` - List of bridge transactions owned by the user
+    pub async fn user_get_bridge_transactions(
+        &self,
+        input: GetUserBridgeTransactionsInputArg,
+    ) -> CanisterClientResult<Vec<UserBridgeTransactionDto>> {
+        self.client
+            .query("user_get_bridge_transactions", (input,))
+            .await
     }
 }

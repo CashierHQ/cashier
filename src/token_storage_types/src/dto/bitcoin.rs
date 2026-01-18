@@ -29,6 +29,12 @@ pub struct UpdateBridgeTransactionInputArg {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GetUserBridgeTransactionsInputArg {
+    pub start: Option<u32>,
+    pub limit: Option<u32>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UserBridgeTransactionDto {
     pub bridge_id: String,
     pub icp_address: Principal,

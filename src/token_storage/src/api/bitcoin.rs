@@ -6,7 +6,8 @@ use cashier_common::guard::is_not_anonymous;
 use ic_cdk::{api::msg_caller, query, update};
 use token_storage_types::{
     dto::bitcoin::{
-        CreateBridgeTransactionInputArg, UpdateBridgeTransactionInputArg, UserBridgeTransactionDto,
+        CreateBridgeTransactionInputArg, GetUserBridgeTransactionsInputArg,
+        UpdateBridgeTransactionInputArg, UserBridgeTransactionDto,
     },
     error::CanisterError,
 };
@@ -64,13 +65,12 @@ pub async fn user_update_bridge_transaction(
 /// * `Vec<UserBridgeTransactionDto>` - List of bridge transactions owned by the user
 #[query(guard = "is_not_anonymous")]
 pub async fn user_get_bridge_transactions(
-    start: Option<u32>,
-    limit: Option<u32>,
+    input: GetUserBridgeTransactionsInputArg,
 ) -> Vec<UserBridgeTransactionDto> {
     let state = get_state();
     let user = msg_caller();
     state
         .user_ckbtc
-        .get_bridge_transactions(user, start, limit)
+        .get_bridge_transactions(user, input.start, input.limit)
         .await
 }

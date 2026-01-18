@@ -56,21 +56,7 @@ where
         log_filter: Some("debug".to_string()),
     };
 
-    let client = Arc::new(
-        get_pocket_ic_client()
-            .await
-            .with_bitcoin_subnet()
-            .with_bitcoind_addr(std::net::SocketAddr::V4(SocketAddrV4::new(
-                Ipv4Addr::LOCALHOST,
-                18444,
-            )))
-            .build_async()
-            .await,
-    );
-
-    client.set_time(SystemTime::now().into()).await;
-
-    let bitcoin_canister_principal = ckbtc::bitcoin::deploy_bitcoin_canister(&client).await;
+    let client = Arc::new(get_pocket_ic_client().await.build_async().await);
 
     let ckbtc_kyt_principal = ckbtc::kyt::deploy_ckbtc_kyt_canister(
         &client,
@@ -204,16 +190,6 @@ where
 
     let mut icrc_token_map = HashMap::new();
 
-    // let ck_btc_principal = token_icrc::deploy_single_icrc_ledger_canister(
-    //     &client,
-    //     "Chain Key Bitcoin".to_string(),
-    //     "ckBTC".to_string(),
-    //     8,
-    //     10,
-    //     Some(Principal::from_text(CK_BTC_PRINCIPAL).unwrap()),
-    // )
-    // .await;
-
     let ck_eth_principal = token_icrc::deploy_single_icrc_ledger_canister(
         &client,
         "Chain Key Ethereum".to_string(),
@@ -269,7 +245,6 @@ where
         icrc7_ledger_principal,
         ckbtc_minter_principal,
         ckbtc_kyt_principal,
-        bitcoin_canister_principal,
     })
     .await;
 
@@ -292,7 +267,6 @@ pub struct PocketIcTestContext {
     pub icrc7_ledger_principal: Principal,
     pub ckbtc_minter_principal: Principal,
     pub ckbtc_kyt_principal: Principal,
-    pub bitcoin_canister_principal: Principal,
 }
 
 impl PocketIcTestContext {
