@@ -9,7 +9,9 @@ use crate::repository::{
 use candid::Principal;
 use token_storage_types::{
     bitcoin::{bridge_address::BridgeAddress, bridge_transaction::BridgeTransaction},
-    dto::bitcoin::{CreateBridgeTransactionInputArg, UserBridgeTransactionDto},
+    dto::bitcoin::{
+        CreateBridgeTransactionInputArg, UpdateBridgeTransactionInputArg, UserBridgeTransactionDto,
+    },
     error::CanisterError,
 };
 
@@ -70,6 +72,33 @@ impl<R: Repositories, M: CkBtcMinterTrait> UserCkBtcService<R, M> {
         input: CreateBridgeTransactionInputArg,
     ) -> Result<UserBridgeTransactionDto, CanisterError> {
         let bridge_transaction = BridgeTransaction::from(input);
+        self.user_bridge_transaction_repository
+            .upsert_bridge_transaction(
+                user,
+                bridge_transaction.bridge_id.clone(),
+                bridge_transaction.clone(),
+            )?;
+        Ok(UserBridgeTransactionDto::from(bridge_transaction))
+    }
+
+    /// Update an existing bridge transaction for a user
+    /// # Arguments
+    /// * `user` - The principal ID of the user
+    /// * `input` - The input data for updating the bridge transaction
+    /// # Returns
+    /// * `Result<UserBridgeTransactionDto, CanisterError>` - The updated bridge transaction
+    pub async fn update_bridge_transaction(
+        &mut self,
+        user: Principal,
+        input: UpdateBridgeTransactionInputArg,
+    ) -> Result<UserBridgeTransactionDto, CanisterError> {
+        let bridge_transaction = self
+            .user_bridge_transaction_repository
+            .get_bridge_transaction_by_id(&user, &input.bridge_id)
+            .ok_or_else(|| {
+                CanisterError::not_found("BridgeTransaction", &input.bridge_id.to_string())
+            })?;
+
         self.user_bridge_transaction_repository
             .upsert_bridge_transaction(
                 user,
