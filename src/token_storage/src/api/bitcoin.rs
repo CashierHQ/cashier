@@ -3,9 +3,11 @@
 
 use crate::api::state::get_state;
 use cashier_common::guard::is_not_anonymous;
-use ic_cdk::{api::msg_caller, update};
+use ic_cdk::{api::msg_caller, query, update};
 use token_storage_types::{
-    dto::bitcoin::{CreateBridgeTransactionInputArg, UserBridgeTransactionDto},
+    dto::bitcoin::{
+        CreateBridgeTransactionInputArg, UpdateBridgeTransactionInputArg, UserBridgeTransactionDto,
+    },
     error::CanisterError,
 };
 
@@ -34,5 +36,41 @@ pub async fn user_create_bridge_transaction(
     state
         .user_ckbtc
         .create_bridge_transaction(user, input)
+        .await
+}
+
+/// Updates an existing bridge transaction for the calling user
+/// # Arguments
+/// * `input` - The input data for updating the bridge transaction
+/// # Returns
+/// * `UserBridgeTransactionDto` - The updated bridge transaction, or a CanisterError
+#[update(guard = "is_not_anonymous")]
+pub async fn user_update_bridge_transaction(
+    input: UpdateBridgeTransactionInputArg,
+) -> Result<UserBridgeTransactionDto, CanisterError> {
+    let mut state = get_state();
+    let user = msg_caller();
+    state
+        .user_ckbtc
+        .update_bridge_transaction(user, input)
+        .await
+}
+
+/// Retrieves the list of bridge transactions for the calling user
+/// # Arguments
+/// * `start` - Optional start index for pagination
+/// * `limit` - Optional limit for pagination
+/// # Returns
+/// * `Vec<UserBridgeTransactionDto>` - List of bridge transactions owned by the user
+#[query(guard = "is_not_anonymous")]
+pub async fn user_get_bridge_transactions(
+    start: Option<u32>,
+    limit: Option<u32>,
+) -> Vec<UserBridgeTransactionDto> {
+    let state = get_state();
+    let user = msg_caller();
+    state
+        .user_ckbtc
+        .get_bridge_transactions(user, start, limit)
         .await
 }

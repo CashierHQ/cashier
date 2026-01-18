@@ -91,7 +91,10 @@ impl<S: Storage<UserBridgeTransactionRepositoryStorage>> UserBridgeTransactionRe
         limit: Option<u32>,
     ) -> Vec<BridgeTransaction> {
         self.bridge_transaction_store.with_borrow(|store| {
-            let transactions = store.get(user_id).unwrap_or_else(|| vec![]);
+            let mut transactions = store.get(user_id).unwrap_or_default();
+            // reverse the transactions array
+            transactions.reverse();
+
             let start = start.unwrap_or(0) as usize;
             let limit = limit.unwrap_or(transactions.len() as u32) as usize;
 
@@ -237,11 +240,11 @@ mod tests {
 
         // Assert
         assert_eq!(transactions_page_1.len(), 2);
-        assert_eq!(transactions_page_1[0].bridge_id, "bridge0");
-        assert_eq!(transactions_page_1[1].bridge_id, "bridge1");
+        assert_eq!(transactions_page_1[0].bridge_id, "bridge4");
+        assert_eq!(transactions_page_1[1].bridge_id, "bridge3");
         assert_eq!(transactions_page_2.len(), 2);
         assert_eq!(transactions_page_2[0].bridge_id, "bridge2");
-        assert_eq!(transactions_page_2[1].bridge_id, "bridge3");
+        assert_eq!(transactions_page_2[1].bridge_id, "bridge1");
     }
 
     #[test]

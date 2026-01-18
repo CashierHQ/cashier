@@ -18,14 +18,14 @@ pub struct CreateBridgeTransactionInputArg {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UpdateBridgeTransactionInputArg {
     pub bridge_id: String,
-    pub btc_txid: String,
-    pub block_id: Nat,
-    pub number_confirmations: u32,
+    pub btc_txid: Option<String>,
+    pub block_id: Option<Nat>,
+    pub number_confirmations: Option<u32>,
     pub minted_block: Option<u32>,
     pub minted_block_timestamp: Option<Nat>,
     pub minter_fee: Option<Nat>,
     pub btc_fee: Option<Nat>,
-    pub status: BridgeTransactionStatus,
+    pub status: Option<BridgeTransactionStatus>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
