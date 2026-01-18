@@ -9,10 +9,10 @@ pub mod nft;
 mod state;
 pub mod token;
 
-use candid::{Nat, Principal};
+use candid::Principal;
 use cashier_common::build_data::BuildData;
 use token_storage_types::auth::*;
-use token_storage_types::dto::nft::*;
+use token_storage_types::dto::{bitcoin::*, nft::*};
 use token_storage_types::error::*;
 use token_storage_types::init::*;
 use token_storage_types::token::*;
