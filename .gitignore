@@ -44,6 +44,3 @@ private_key.pem
 plans/
 .repomixignore
 .claude
-
-# bitcoin regtest data
-bitcoin_data/
