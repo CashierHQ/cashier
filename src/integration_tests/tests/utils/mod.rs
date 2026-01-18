@@ -1,6 +1,6 @@
 use crate::{
     ckbtc,
-    constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL, ICRC7_NFT_PRINCIPAL},
+    constant::{CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL, ICRC7_NFT_PRINCIPAL},
     constants,
     icrc7::{self, client::Icrc7Client},
     utils::{principal::TestUser, token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
@@ -10,10 +10,7 @@ use cashier_backend_client::client::CashierBackendClient;
 use cashier_backend_types::init::CashierBackendInitData;
 use gate_service_client::client::GateServiceBackendClient;
 use gate_service_types::{self, init::GateServiceInitData};
-use ic_cdk::{
-    bitcoin_canister,
-    management_canister::{CanisterId, CanisterSettings},
-};
+use ic_cdk::management_canister::{CanisterId, CanisterSettings};
 use ic_mple_client::PocketIcClient;
 use ic_mple_log::service::LogServiceSettings;
 use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
@@ -22,14 +19,12 @@ use std::{
     collections::HashMap,
     fs::File,
     io::Read,
-    net::{Ipv4Addr, SocketAddrV4},
     path::PathBuf,
     sync::{Arc, OnceLock},
-    time::{Duration, SystemTime},
+    time::Duration,
 };
 use token_storage_client::client::TokenStorageClient;
 use token_storage_types::{
-    bitcoin::ckbtc_kyt,
     init::TokenStorageInitData,
     token::{ChainTokenDetails, RegistryToken},
 };
@@ -319,13 +314,6 @@ impl PocketIcTestContext {
         IcrcLedgerClient::new(
             self.new_client(self.get_icrc_token_principal(token_name).unwrap(), caller),
         )
-    }
-
-    pub fn new_ckbtc_kyt_client(
-        &self,
-        caller: Principal,
-    ) -> ckbtc::kyt::CkBtcKycClient<PocketIcClient> {
-        ckbtc::kyt::CkBtcKycClient::new(self.new_client(self.ckbtc_kyt_principal, caller))
     }
 
     /// Gets an ICRC token principal by name
