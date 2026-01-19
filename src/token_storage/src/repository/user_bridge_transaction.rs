@@ -137,11 +137,10 @@ mod tests {
             asset_infos: asset_infos.clone(),
             btc_txid: Some("txid1".to_string()),
             block_id: Some(Nat::from(1u64)),
-            number_confirmations: 1,
-            minted_block: None,
-            minted_block_timestamp: None,
+            block_confirmations: vec![],
             minter_fee: None,
             btc_fee: None,
+            created_at_ts: 10000u64,
             status: BridgeTransactionStatus::Created,
         };
 
@@ -175,11 +174,10 @@ mod tests {
             asset_infos: asset_infos.clone(),
             btc_txid: Some("txid1".to_string()),
             block_id: Some(Nat::from(1u64)),
-            number_confirmations: 1,
-            minted_block: None,
-            minted_block_timestamp: None,
+            block_confirmations: vec![],
             minter_fee: None,
             btc_fee: None,
+            created_at_ts: 10000u64,
             status: BridgeTransactionStatus::Created,
         };
 
@@ -220,11 +218,10 @@ mod tests {
                 asset_infos: asset_infos.clone(),
                 btc_txid: Some(format!("txid{}", i)),
                 block_id: Some(Nat::from(i as u64 + 1)),
-                number_confirmations: 1,
-                minted_block: None,
-                minted_block_timestamp: None,
+                block_confirmations: vec![],
                 minter_fee: None,
                 btc_fee: None,
+                created_at_ts: 10000u64 + i as u64,
                 status: BridgeTransactionStatus::Created,
             };
             repo.upsert_bridge_transaction(user_id, bridge_tx.bridge_id.clone(), bridge_tx.clone())
@@ -266,11 +263,10 @@ mod tests {
             asset_infos: asset_infos.clone(),
             btc_txid: Some("txid1".to_string()),
             block_id: Some(Nat::from(1u64)),
-            number_confirmations: 1,
-            minted_block: None,
-            minted_block_timestamp: None,
+            block_confirmations: vec![],
             minter_fee: None,
             btc_fee: None,
+            created_at_ts: 10000u64,
             status: BridgeTransactionStatus::Created,
         };
 

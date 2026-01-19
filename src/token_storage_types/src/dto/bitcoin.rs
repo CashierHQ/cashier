@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::bitcoin::bridge_transaction::{
-    BridgeAssetInfo, BridgeTransaction, BridgeTransactionStatus, BridgeType,
+    BlockConfirmation, BridgeAssetInfo, BridgeTransaction, BridgeTransactionStatus, BridgeType,
 };
 use candid::{CandidType, Nat, Principal};
 use serde::{Deserialize, Serialize};
@@ -20,9 +20,7 @@ pub struct UpdateBridgeTransactionInputArg {
     pub bridge_id: String,
     pub btc_txid: Option<String>,
     pub block_id: Option<Nat>,
-    pub number_confirmations: Option<u32>,
-    pub minted_block: Option<u32>,
-    pub minted_block_timestamp: Option<Nat>,
+    pub block_confirmations: Option<Vec<BlockConfirmation>>,
     pub minter_fee: Option<Nat>,
     pub btc_fee: Option<Nat>,
     pub status: Option<BridgeTransactionStatus>,
@@ -43,11 +41,10 @@ pub struct UserBridgeTransactionDto {
     pub asset_infos: Vec<BridgeAssetInfo>,
     pub btc_txid: Option<String>,
     pub block_id: Option<Nat>,
-    pub number_confirmations: u32,
-    pub minted_block: Option<u32>,
-    pub minted_block_timestamp: Option<Nat>,
+    pub block_confirmations: Vec<BlockConfirmation>,
     pub minter_fee: Option<Nat>,
     pub btc_fee: Option<Nat>,
+    pub created_at_ts: u64,
     pub status: BridgeTransactionStatus,
 }
 
@@ -61,11 +58,10 @@ impl From<BridgeTransaction> for UserBridgeTransactionDto {
             asset_infos: tx.asset_infos,
             btc_txid: tx.btc_txid,
             block_id: tx.block_id,
-            number_confirmations: tx.number_confirmations,
-            minted_block: tx.minted_block,
-            minted_block_timestamp: tx.minted_block_timestamp,
+            block_confirmations: tx.block_confirmations,
             minter_fee: tx.minter_fee,
             btc_fee: tx.btc_fee,
+            created_at_ts: tx.created_at_ts,
             status: tx.status,
         }
     }

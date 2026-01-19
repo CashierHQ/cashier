@@ -71,8 +71,11 @@ impl<R: Repositories, M: CkBtcMinterTrait> UserCkBtcService<R, M> {
         &mut self,
         user: Principal,
         input: CreateBridgeTransactionInputArg,
+        created_ts: u64,
     ) -> Result<UserBridgeTransactionDto, CanisterError> {
-        let bridge_transaction = BridgeTransaction::from(input);
+        let mut bridge_transaction = BridgeTransaction::from(input);
+        bridge_transaction.created_at_ts = created_ts;
+
         self.user_bridge_transaction_repository
             .upsert_bridge_transaction(
                 user,
@@ -142,7 +145,9 @@ mod tests {
     use crate::repository::{Repositories, tests::TestRepositories};
     use candid::Nat;
     use cashier_common::test_utils::random_principal_id;
-    use token_storage_types::bitcoin::bridge_transaction::{BridgeTransactionStatus, BridgeType};
+    use token_storage_types::bitcoin::bridge_transaction::{
+        BlockConfirmation, BridgeTransactionStatus, BridgeType,
+    };
 
     #[tokio::test]
     async fn it_should_get_btc_address() {
@@ -183,10 +188,11 @@ mod tests {
             bridge_type: BridgeType::Import,
             asset_infos: vec![],
         };
+        let created_ts = 1620000000u64;
 
         // Act
         let result = service
-            .create_bridge_transaction(user_id, input.clone())
+            .create_bridge_transaction(user_id, input.clone(), created_ts)
             .await
             .unwrap();
 
@@ -195,6 +201,7 @@ mod tests {
         assert_eq!(result.btc_address, input.btc_address);
         assert_eq!(result.bridge_type, input.bridge_type);
         assert_eq!(result.asset_infos, input.asset_infos);
+        assert_eq!(result.created_at_ts, created_ts);
     }
 
     #[tokio::test]
@@ -210,19 +217,28 @@ mod tests {
             bridge_type: BridgeType::Import,
             asset_infos: vec![],
         };
+        let created_ts = 1620000000u64;
 
         let created_transaction = service
-            .create_bridge_transaction(user_id, create_input)
+            .create_bridge_transaction(user_id, create_input, created_ts)
             .await
             .unwrap();
 
+        let block_confirmations = vec![
+            BlockConfirmation {
+                block_id: 1,
+                block_timestamp: 1620000000,
+            },
+            BlockConfirmation {
+                block_id: 2,
+                block_timestamp: 1620000600,
+            },
+        ];
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created_transaction.bridge_id.clone(),
             btc_txid: Some("new_btc_txid".to_string()),
             block_id: Some(Nat::from(100u32)),
-            number_confirmations: Some(6),
-            minted_block: Some(200),
-            minted_block_timestamp: Some(Nat::from(1620000000u32)),
+            block_confirmations: Some(block_confirmations.clone()),
             minter_fee: Some(Nat::from(1000u32)),
             btc_fee: Some(Nat::from(500u32)),
             status: Some(BridgeTransactionStatus::Completed),
@@ -239,14 +255,10 @@ mod tests {
         assert_eq!(updated_transaction.btc_txid, update_input.btc_txid);
         assert_eq!(updated_transaction.block_id, update_input.block_id);
         assert_eq!(
-            updated_transaction.number_confirmations,
-            update_input.number_confirmations.unwrap()
+            updated_transaction.block_confirmations,
+            update_input.block_confirmations.unwrap()
         );
-        assert_eq!(updated_transaction.minted_block, update_input.minted_block);
-        assert_eq!(
-            updated_transaction.minted_block_timestamp,
-            update_input.minted_block_timestamp
-        );
+        assert_eq!(updated_transaction.minter_fee, update_input.minter_fee);
         assert_eq!(updated_transaction.minter_fee, update_input.minter_fee);
         assert_eq!(updated_transaction.btc_fee, update_input.btc_fee);
         assert_eq!(updated_transaction.status, update_input.status.unwrap());

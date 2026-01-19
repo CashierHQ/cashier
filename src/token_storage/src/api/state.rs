@@ -1,6 +1,7 @@
-use std::{cell::RefCell, thread::LocalKey};
+use std::{cell::RefCell, env, thread::LocalKey};
 
 use candid::Principal;
+use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 
 use crate::{
@@ -24,7 +25,7 @@ thread_local! {
 }
 
 /// The state of the canister
-pub struct CanisterState {
+pub struct CanisterState<E: IcEnvironment + Clone + 'static> {
     pub auth_service: AuthService<&'static LocalKey<RefCell<AuthServiceStorage>>>,
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
     pub settings: SettingsService<ThreadlocalRepositories>,
@@ -33,11 +34,12 @@ pub struct CanisterState {
     pub user_token: UserTokenService<ThreadlocalRepositories>,
     pub user_nft: UserNftService<ThreadlocalRepositories, ICIcrc7Validator>,
     pub user_ckbtc: UserCkBtcService<ThreadlocalRepositories, IcCkBtcMinterClient>,
+    pub env: E,
 }
 
-impl CanisterState {
+impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
     /// Creates a new CanisterState
-    pub fn new() -> Self {
+    pub fn new(env: E) -> Self {
         let repo = ThreadlocalRepositories;
         let ic_icrc7_validator = ICIcrc7Validator;
         let ckbtc_minter_client = IcCkBtcMinterClient;
@@ -51,6 +53,7 @@ impl CanisterState {
             user_token: UserTokenService::new(&repo),
             user_nft: UserNftService::new(&repo, ic_icrc7_validator),
             user_ckbtc: UserCkBtcService::new(&repo, ckbtc_minter_client),
+            env,
         }
     }
 
@@ -72,6 +75,7 @@ impl CanisterState {
 }
 
 /// Returns the state of the canister
-pub fn get_state() -> CanisterState {
-    CanisterState::new()
+#[inline(always)]
+pub fn get_state() -> CanisterState<RealIcEnvironment> {
+    CanisterState::new(RealIcEnvironment::new())
 }

@@ -18,11 +18,10 @@ pub struct BridgeTransaction {
     pub asset_infos: Vec<BridgeAssetInfo>,
     pub btc_txid: Option<String>,
     pub block_id: Option<Nat>,
-    pub number_confirmations: u32,
-    pub minted_block: Option<u32>,
-    pub minted_block_timestamp: Option<Nat>,
+    pub block_confirmations: Vec<BlockConfirmation>,
     pub minter_fee: Option<Nat>,
     pub btc_fee: Option<Nat>,
+    pub created_at_ts: u64,
     pub status: BridgeTransactionStatus,
 }
 
@@ -36,11 +35,10 @@ impl From<CreateBridgeTransactionInputArg> for BridgeTransaction {
             asset_infos: input.asset_infos,
             btc_txid: None,
             block_id: None,
-            number_confirmations: 0,
-            minted_block: None,
-            minted_block_timestamp: None,
+            block_confirmations: vec![],
             minter_fee: None,
             btc_fee: None,
+            created_at_ts: 0,
             status: BridgeTransactionStatus::Created,
         }
     }
@@ -54,14 +52,8 @@ impl BridgeTransaction {
         if let Some(block_id) = input.block_id {
             self.block_id = Some(block_id);
         }
-        if let Some(number_confirmations) = input.number_confirmations {
-            self.number_confirmations = number_confirmations;
-        }
-        if let Some(minted_block) = input.minted_block {
-            self.minted_block = Some(minted_block);
-        }
-        if let Some(minted_block_timestamp) = input.minted_block_timestamp {
-            self.minted_block_timestamp = Some(minted_block_timestamp);
+        if let Some(block_confirmations) = input.block_confirmations {
+            self.block_confirmations = block_confirmations;
         }
         if let Some(minter_fee) = input.minter_fee {
             self.minter_fee = Some(minter_fee);
@@ -109,6 +101,13 @@ pub enum BridgeTransactionStatus {
     Failed,
 }
 
+#[derive(Clone, Debug, CandidType, PartialEq, Eq, Hash)]
+#[storable]
+pub struct BlockConfirmation {
+    pub block_id: u64,
+    pub block_timestamp: u64,
+}
+
 #[storable]
 pub enum BridgeTransactionCodec {
     V1(Vec<BridgeTransaction>),
@@ -132,6 +131,36 @@ mod tests {
     use candid::Nat;
 
     #[test]
+    fn it_shoulf_create_bridge_transaction_from_input() {
+        // Arrange
+        let input = CreateBridgeTransactionInputArg {
+            icp_address: Principal::from_text("aaaaa-aa").unwrap(),
+            btc_address: "test_btc_address".to_string(),
+            asset_infos: vec![],
+            bridge_type: BridgeType::Import,
+        };
+
+        // Act
+        let transaction: BridgeTransaction = input.into();
+
+        // Assert
+        assert_eq!(
+            transaction.icp_address,
+            Principal::from_text("aaaaa-aa").unwrap()
+        );
+        assert_eq!(transaction.btc_address, "test_btc_address".to_string());
+        assert_eq!(transaction.asset_infos.len(), 0);
+        assert_eq!(transaction.bridge_type, BridgeType::Import);
+        assert_eq!(transaction.btc_txid, None);
+        assert_eq!(transaction.block_id, None);
+        assert_eq!(transaction.block_confirmations.len(), 0);
+        assert_eq!(transaction.minter_fee, None);
+        assert_eq!(transaction.btc_fee, None);
+        assert_eq!(transaction.status, BridgeTransactionStatus::Created);
+        assert_eq!(transaction.created_at_ts, 0);
+    }
+
+    #[test]
     fn it_should_update_bridge_transaction_fields() {
         // Arrange
         let mut transaction = BridgeTransaction {
@@ -142,21 +171,28 @@ mod tests {
             asset_infos: vec![],
             btc_txid: None,
             block_id: None,
-            number_confirmations: 0,
-            minted_block: None,
-            minted_block_timestamp: None,
+            block_confirmations: vec![],
             minter_fee: None,
             btc_fee: None,
+            created_at_ts: 0,
             status: BridgeTransactionStatus::Created,
         };
 
+        let block_confirmations = vec![
+            BlockConfirmation {
+                block_id: 1,
+                block_timestamp: 1620000000,
+            },
+            BlockConfirmation {
+                block_id: 2,
+                block_timestamp: 1620000600,
+            },
+        ];
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: "test_bridge_id".to_string(),
             btc_txid: Some("new_btc_txid".to_string()),
             block_id: Some(Nat::from(100u32)),
-            number_confirmations: Some(6),
-            minted_block: Some(200),
-            minted_block_timestamp: Some(Nat::from(1620000000u32)),
+            block_confirmations: Some(block_confirmations),
             minter_fee: Some(Nat::from(1000u32)),
             btc_fee: Some(Nat::from(500u32)),
             status: Some(BridgeTransactionStatus::Completed),
@@ -168,12 +204,7 @@ mod tests {
         // Assert
         assert_eq!(transaction.btc_txid, Some("new_btc_txid".to_string()));
         assert_eq!(transaction.block_id, Some(Nat::from(100u32)));
-        assert_eq!(transaction.number_confirmations, 6);
-        assert_eq!(transaction.minted_block, Some(200));
-        assert_eq!(
-            transaction.minted_block_timestamp,
-            Some(Nat::from(1620000000u32))
-        );
+        assert_eq!(transaction.block_confirmations.len(), 2);
         assert_eq!(transaction.minter_fee, Some(Nat::from(1000u32)));
         assert_eq!(transaction.btc_fee, Some(Nat::from(500u32)));
         assert_eq!(transaction.status, BridgeTransactionStatus::Completed);

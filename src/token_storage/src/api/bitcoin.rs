@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::api::state::get_state;
-use cashier_common::guard::is_not_anonymous;
+use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
 use ic_cdk::{api::msg_caller, query, update};
 use token_storage_types::{
     dto::bitcoin::{
@@ -34,9 +34,10 @@ pub async fn user_create_bridge_transaction(
 ) -> Result<UserBridgeTransactionDto, CanisterError> {
     let mut state = get_state();
     let user = msg_caller();
+    let created_at_ts = state.env.time();
     state
         .user_ckbtc
-        .create_bridge_transaction(user, input)
+        .create_bridge_transaction(user, input, created_at_ts)
         .await
 }
 
