@@ -6,9 +6,6 @@ CKBTC_KYT_ID:="pvm5g-xaaaa-aaaar-qaaia-cai"
 # Start the local dfx server
 [group('dfx')]
 dfx_local_start: dfx_prepare_env dfx_local_stop
-  # Start bitcoind with regtest mode 
-  #bitcoin-core.daemon -conf=$(pwd)/bitcoin.conf -datadir=$(pwd)/bitcoin_data
-
   # Start the local dfx server
   dfx start --enable-bitcoin --background --clean --host 127.0.0.1:8000 --bitcoin-node 127.0.0.1:18444 --artificial-delay 0 2> "{{DFX_LOGFILE}}"
 
@@ -21,9 +18,6 @@ dfx_local_start: dfx_prepare_env dfx_local_stop
 # Stop the local dfx server
 [group('dfx')]
 dfx_local_stop:
-  # Stop bitcoind
-  #bitcoin-core.cli -conf=$(pwd)/bitcoin.conf -datadir=$(pwd)/bitcoin_data stop
-
   # Stop dfx server
   dfx stop
 
