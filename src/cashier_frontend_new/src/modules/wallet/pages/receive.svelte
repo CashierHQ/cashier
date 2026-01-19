@@ -10,6 +10,7 @@
   import NavBar from "$modules/token/components/navBar.svelte";
   import { CKBTC_CANISTER_ID, ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import ImportingTransactionItem from "$modules/wallet/components/bitcoin/importingTransactionItem.svelte";
   import { walletBridgeStore } from "$modules/wallet/state/walletBridgeStore.svelte";
   import { ChevronDown, Copy, Info } from "lucide-svelte";
   import { toast } from "svelte-sonner";
@@ -245,6 +246,25 @@
             >
               <Copy size={20} class="text-[#36A18B]" />
             </button>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <Label class="text-base font-semibold">
+            {locale.t("wallet.receive.btcMempoolInfoLabel")}
+          </Label>
+          <div class="text-sm text-gray-600">
+            {#if walletBridgeStore.mempoolTxs && walletBridgeStore.mempoolTxs.length > 0}
+                {#each walletBridgeStore.mempoolTxs as transaction (transaction.txid)}
+                  <ImportingTransactionItem
+                    {transaction}
+                    onSelect={(txid: string) => {
+                      navigator.clipboard.writeText(txid);
+                      toast.success(locale.t("wallet.receive.copySuccess"));
+                    }} />
+                {/each}
+            {:else}
+              <p>{locale.t("wallet.receive.btcNoMempoolTxs")}</p>
+            {/if}
           </div>
         </div>
       {/if}
