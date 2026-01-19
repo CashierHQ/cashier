@@ -70,6 +70,9 @@
   );
 
   const btcAddress = $derived.by(() => walletBridgeStore.btcAddress);
+  const shortenBtcAddress = $derived.by(() =>
+    transformShortAddress(btcAddress || ""),
+  );
 
   function hasImageFailed(address: string): boolean {
     return imageLoadFailures.has(address);
@@ -214,7 +217,7 @@
         {/if}
       </div>
 
-      {#if isCkBTC}
+      {#if isCkBTC && btcAddress}
         <div class="space-y-4">
           <Label class="text-base font-semibold">
             {#if selectedTokenObj}
@@ -231,12 +234,12 @@
           <div class="relative">
             <input
               type="text"
-              value={btcAddress}
+              value={shortenBtcAddress}
               readonly
               class="w-full p-3 pr-12 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none text-sm font-mono break-all"
             />
             <button
-              onclick={() => handleCopy(principalAddress)}
+              onclick={() => handleCopy(btcAddress)}
               class="absolute right-3 top-1/2 -translate-y-1/2 text-[#36A18B] hover:text-[#2d8a75] transition-colors"
               title={locale.t("wallet.receive.copyTooltip")}
             >
