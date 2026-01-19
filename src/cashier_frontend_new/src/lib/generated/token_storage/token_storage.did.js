@@ -1,4 +1,5 @@
 export const idlFactory = ({ IDL }) => {
+  const CanisterError = IDL.Rec();
   const ChainTokenDetails = IDL.Variant({
     'IC' : IDL.Record({
       'fee' : IDL.Nat,
@@ -22,6 +23,7 @@ export const idlFactory = ({ IDL }) => {
   const TokenStorageInitData = IDL.Record({
     'owner' : IDL.Principal,
     'tokens' : IDL.Opt(IDL.Vec(RegistryToken)),
+    'ckbtc_minter_id' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
   const TokenRegistryMetadata = IDL.Record({
@@ -60,10 +62,43 @@ export const idlFactory = ({ IDL }) => {
   });
   const Result_2 = IDL.Variant({ 'Ok' : UserTokens, 'Err' : IDL.Text });
   const Result_3 = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : IDL.Text });
-  const CanisterError = IDL.Variant({
-    'CandidDecodeFailed' : IDL.Text,
-    'UnboundedError' : IDL.Text,
-  });
+  CanisterError.fill(
+    IDL.Variant({
+      'InvalidDataError' : IDL.Text,
+      'InvalidStateTransition' : IDL.Record({
+        'to' : IDL.Text,
+        'from' : IDL.Text,
+      }),
+      'TransactionTimeout' : IDL.Text,
+      'BatchError' : IDL.Vec(CanisterError),
+      'AuthError' : IDL.Text,
+      'InvalidInput' : IDL.Text,
+      'HandleLogicError' : IDL.Text,
+      'ParsePrincipalError' : IDL.Text,
+      'CandidDecodeFailed' : IDL.Text,
+      'UnknownError' : IDL.Text,
+      'InsufficientBalance' : IDL.Record({
+        'available' : IDL.Nat64,
+        'required' : IDL.Nat64,
+      }),
+      'NotFound' : IDL.Text,
+      'ValidationErrors' : IDL.Text,
+      'ParseAccountError' : IDL.Text,
+      'Unauthorized' : IDL.Text,
+      'AlreadyExists' : IDL.Text,
+      'DependencyError' : IDL.Text,
+      'CandidError' : IDL.Text,
+      'AnonymousCall' : IDL.Null,
+      'StorageError' : IDL.Text,
+      'CanisterCallError' : IDL.Record({
+        'method' : IDL.Text,
+        'canister_id' : IDL.Text,
+        'message' : IDL.Text,
+      }),
+      'UnboundedError' : IDL.Text,
+      'CallCanisterFailed' : IDL.Text,
+    })
+  );
   const Result_4 = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : CanisterError });
   const UserPreference = IDL.Record({
     'hide_zero_balance' : IDL.Bool,
@@ -105,9 +140,69 @@ export const idlFactory = ({ IDL }) => {
     'index_id' : IDL.Opt(IDL.Text),
   });
   const AddTokensInput = IDL.Record({ 'token_ids' : IDL.Vec(TokenId) });
+  const BridgeAssetType = IDL.Variant({
+    'BTC' : IDL.Null,
+    'Runes' : IDL.Null,
+    'Ordinals' : IDL.Null,
+  });
+  const BridgeAssetInfo = IDL.Record({
+    'decimals' : IDL.Nat8,
+    'asset_type' : BridgeAssetType,
+    'ledger_id' : IDL.Principal,
+    'asset_id' : IDL.Text,
+    'amount' : IDL.Nat,
+  });
+  const BridgeType = IDL.Variant({ 'Import' : IDL.Null, 'Export' : IDL.Null });
+  const CreateBridgeTransactionInputArg = IDL.Record({
+    'asset_infos' : IDL.Vec(BridgeAssetInfo),
+    'icp_address' : IDL.Principal,
+    'btc_address' : IDL.Text,
+    'bridge_type' : BridgeType,
+  });
+  const BridgeTransactionStatus = IDL.Variant({
+    'Failed' : IDL.Null,
+    'Created' : IDL.Null,
+    'Completed' : IDL.Null,
+    'Pending' : IDL.Null,
+  });
+  const UserBridgeTransactionDto = IDL.Record({
+    'status' : BridgeTransactionStatus,
+    'minter_fee' : IDL.Opt(IDL.Nat),
+    'block_id' : IDL.Opt(IDL.Nat),
+    'asset_infos' : IDL.Vec(BridgeAssetInfo),
+    'btc_txid' : IDL.Opt(IDL.Text),
+    'icp_address' : IDL.Principal,
+    'number_confirmations' : IDL.Nat32,
+    'btc_fee' : IDL.Opt(IDL.Nat),
+    'minted_block' : IDL.Opt(IDL.Nat32),
+    'minted_block_timestamp' : IDL.Opt(IDL.Nat),
+    'bridge_id' : IDL.Text,
+    'btc_address' : IDL.Text,
+    'bridge_type' : BridgeType,
+  });
+  const Result_8 = IDL.Variant({
+    'Ok' : UserBridgeTransactionDto,
+    'Err' : CanisterError,
+  });
+  const GetUserBridgeTransactionsInputArg = IDL.Record({
+    'limit' : IDL.Opt(IDL.Nat32),
+    'start' : IDL.Opt(IDL.Nat32),
+  });
+  const Result_9 = IDL.Variant({ 'Ok' : IDL.Text, 'Err' : CanisterError });
   const GetUserNftInput = IDL.Record({
     'limit' : IDL.Opt(IDL.Nat32),
     'start' : IDL.Opt(IDL.Nat32),
+  });
+  const UpdateBridgeTransactionInputArg = IDL.Record({
+    'status' : IDL.Opt(BridgeTransactionStatus),
+    'minter_fee' : IDL.Opt(IDL.Nat),
+    'block_id' : IDL.Opt(IDL.Nat),
+    'btc_txid' : IDL.Opt(IDL.Text),
+    'number_confirmations' : IDL.Opt(IDL.Nat32),
+    'btc_fee' : IDL.Opt(IDL.Nat),
+    'minted_block' : IDL.Opt(IDL.Nat32),
+    'minted_block_timestamp' : IDL.Opt(IDL.Nat),
+    'bridge_id' : IDL.Text,
   });
   const UpdateTokenBalanceInput = IDL.Record({
     'balance' : IDL.Nat,
@@ -159,8 +254,24 @@ export const idlFactory = ({ IDL }) => {
     'user_add_nft' : IDL.Func([AddUserNftInput], [Result_7], []),
     'user_add_token' : IDL.Func([AddTokenInput], [Result_3], []),
     'user_add_token_batch' : IDL.Func([AddTokensInput], [Result_3], []),
+    'user_create_bridge_transaction' : IDL.Func(
+        [CreateBridgeTransactionInputArg],
+        [Result_8],
+        [],
+      ),
+    'user_get_bridge_transactions' : IDL.Func(
+        [GetUserBridgeTransactionsInputArg],
+        [IDL.Vec(UserBridgeTransactionDto)],
+        ['query'],
+      ),
+    'user_get_btc_address' : IDL.Func([], [Result_9], []),
     'user_get_nfts' : IDL.Func([GetUserNftInput], [IDL.Vec(Nft)], ['query']),
     'user_sync_token_list' : IDL.Func([], [Result_3], []),
+    'user_update_bridge_transaction' : IDL.Func(
+        [UpdateBridgeTransactionInputArg],
+        [Result_8],
+        [],
+      ),
     'user_update_token_balance' : IDL.Func(
         [IDL.Vec(UpdateTokenBalanceInput)],
         [Result_3],
@@ -199,6 +310,7 @@ export const init = ({ IDL }) => {
   const TokenStorageInitData = IDL.Record({
     'owner' : IDL.Principal,
     'tokens' : IDL.Opt(IDL.Vec(RegistryToken)),
+    'ckbtc_minter_id' : IDL.Principal,
     'log_settings' : IDL.Opt(LogServiceSettings),
   });
   return [TokenStorageInitData];

@@ -53,15 +53,11 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
   just dfx_deploy "${OWNER}" "{{CKBTC_MINTER_ID}}"
 
   cashier_backend_id=$(dfx canister id cashier_backend)
-  dfx deploy gate_service --argument "(record {
-      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
-      owner=principal \"${OWNER}\";
-      permissions=opt (vec { record { principal \"${cashier_backend_id}\"; vec { variant { GateCreate } } } });
-  })"
+  just dfx_deploy_gate "${OWNER}" "${cashier_backend_id}"
 
   dfx deploy internet_identity
 
-  # Deploy ledgers first
+  # Deploy token ledgers
   just dfx_local_deploy_icp_ledger
   just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckETH" "Chain Key Ethereum" "ckETH" "ss2fx-dyaaa-aaaar-qacoq-cai" 18 2000000000000
   just dfx_local_deploy_icrc1_ledger "${OWNER}" "ckUSDC" "Chain Key USD Coin" "ckUSDC" "xevnm-gaaaa-aaaar-qafnq-cai" 8 10000
@@ -200,6 +196,8 @@ create_canisters network cycles:
 [private]
 dfx_deploy_backend owner network="" log_filter="global,cashier=debug":
   #!/usr/bin/env bash
+  set -e
+
   dfx deploy cashier_backend --argument "(record {
       log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"{{log_filter}}\"; };
       owner=principal \"{{owner}}\";
@@ -270,6 +268,21 @@ dfx_deploy_token_storage owner ckbtc_minter_id network="" log_filter="global,cas
       };
       ckbtc_minter_id = principal \"{{ckbtc_minter_id}}\";
   })" {{network}}
+
+# Deploy Gate canister
+# params:
+# owner: principal id of owner
+# cashier_backend_id: canister id of cashier BE
+[private]
+dfx_deploy_gate owner cashier_backend_id:
+  #!/usr/bin/env bash
+  set -e
+
+  dfx deploy gate_service --argument "(record {
+      log_settings=opt record { enable_console=opt true; in_memory_records=opt 10000; log_filter=opt \"global,cashier=debug\"; };
+      owner=principal \"{{owner}}\";
+      permissions=opt (vec { record { principal \"{{cashier_backend_id}}\"; vec { variant { GateCreate } } } });
+  })"
 
 # Deploy ICRC1 token ledger
 # params minter: principal ID of the ledger minter

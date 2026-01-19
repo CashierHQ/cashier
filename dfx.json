@@ -161,19 +161,34 @@
       "type": "custom",
       "candid": "./target/artifacts/ckbtc_ledger.did",
       "wasm": "./target/artifacts/ckbtc_ledger.wasm.gz",
-      "specified_id": "mc6ru-gyaaa-aaaar-qaaaq-cai"
+      "specified_id": "mc6ru-gyaaa-aaaar-qaaaq-cai",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
     },
     "ckbtc_minter": {
       "type": "custom",
       "candid": "./target/artifacts/ckbtc_minter.did",
       "wasm": "./target/artifacts/ckbtc_minter.wasm.gz",
-      "specified_id": "ml52i-qqaaa-aaaar-qaaba-cai"
+      "specified_id": "ml52i-qqaaa-aaaar-qaaba-cai",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
     },
     "ckbtc_kyt": {
       "type": "custom",
       "candid": "./target/artifacts/ckbtc_kyt.did",
       "wasm": "./target/artifacts/ckbtc_kyt.wasm.gz",
-      "specified_id": "pvm5g-xaaaa-aaaar-qaaia-cai"
+      "specified_id": "pvm5g-xaaaa-aaaar-qaaia-cai",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
     }
   },
   "defaults": {

@@ -8,6 +8,22 @@ export interface AddTokenInput {
 }
 export interface AddTokensInput { 'token_ids' : Array<TokenId> }
 export interface AddUserNftInput { 'nft' : Nft }
+export interface BridgeAssetInfo {
+  'decimals' : number,
+  'asset_type' : BridgeAssetType,
+  'ledger_id' : Principal,
+  'asset_id' : string,
+  'amount' : bigint,
+}
+export type BridgeAssetType = { 'BTC' : null } |
+  { 'Runes' : null } |
+  { 'Ordinals' : null };
+export type BridgeTransactionStatus = { 'Failed' : null } |
+  { 'Created' : null } |
+  { 'Completed' : null } |
+  { 'Pending' : null };
+export type BridgeType = { 'Import' : null } |
+  { 'Export' : null };
 export interface BuildData {
   'rustc_semver' : string,
   'git_branch' : string,
@@ -20,8 +36,35 @@ export interface BuildData {
   'git_sha' : string,
   'git_commit_timestamp' : string,
 }
-export type CanisterError = { 'CandidDecodeFailed' : string } |
-  { 'UnboundedError' : string };
+export type CanisterError = { 'InvalidDataError' : string } |
+  { 'InvalidStateTransition' : { 'to' : string, 'from' : string } } |
+  { 'TransactionTimeout' : string } |
+  { 'BatchError' : Array<CanisterError> } |
+  { 'AuthError' : string } |
+  { 'InvalidInput' : string } |
+  { 'HandleLogicError' : string } |
+  { 'ParsePrincipalError' : string } |
+  { 'CandidDecodeFailed' : string } |
+  { 'UnknownError' : string } |
+  { 'InsufficientBalance' : { 'available' : bigint, 'required' : bigint } } |
+  { 'NotFound' : string } |
+  { 'ValidationErrors' : string } |
+  { 'ParseAccountError' : string } |
+  { 'Unauthorized' : string } |
+  { 'AlreadyExists' : string } |
+  { 'DependencyError' : string } |
+  { 'CandidError' : string } |
+  { 'AnonymousCall' : null } |
+  { 'StorageError' : string } |
+  {
+    'CanisterCallError' : {
+      'method' : string,
+      'canister_id' : string,
+      'message' : string,
+    }
+  } |
+  { 'UnboundedError' : string } |
+  { 'CallCanisterFailed' : string };
 export type Chain = { 'IC' : null };
 export type ChainTokenDetails = {
     'IC' : {
@@ -30,6 +73,16 @@ export type ChainTokenDetails = {
       'index_id' : [] | [Principal],
     }
   };
+export interface CreateBridgeTransactionInputArg {
+  'asset_infos' : Array<BridgeAssetInfo>,
+  'icp_address' : Principal,
+  'btc_address' : string,
+  'bridge_type' : BridgeType,
+}
+export interface GetUserBridgeTransactionsInputArg {
+  'limit' : [] | [number],
+  'start' : [] | [number],
+}
 export interface GetUserNftInput {
   'limit' : [] | [number],
   'start' : [] | [number],
@@ -69,6 +122,10 @@ export type Result_6 = { 'Ok' : Array<Permission> } |
   { 'Err' : CanisterError };
 export type Result_7 = { 'Ok' : UserNftDto } |
   { 'Err' : CanisterError };
+export type Result_8 = { 'Ok' : UserBridgeTransactionDto } |
+  { 'Err' : CanisterError };
+export type Result_9 = { 'Ok' : string } |
+  { 'Err' : CanisterError };
 export interface TokenDto {
   'id' : TokenId,
   'decimals' : number,
@@ -94,7 +151,19 @@ export interface TokenRegistryMetadata {
 export interface TokenStorageInitData {
   'owner' : Principal,
   'tokens' : [] | [Array<RegistryToken>],
+  'ckbtc_minter_id' : Principal,
   'log_settings' : [] | [LogServiceSettings],
+}
+export interface UpdateBridgeTransactionInputArg {
+  'status' : [] | [BridgeTransactionStatus],
+  'minter_fee' : [] | [bigint],
+  'block_id' : [] | [bigint],
+  'btc_txid' : [] | [string],
+  'number_confirmations' : [] | [number],
+  'btc_fee' : [] | [bigint],
+  'minted_block' : [] | [number],
+  'minted_block_timestamp' : [] | [bigint],
+  'bridge_id' : string,
 }
 export interface UpdateTokenBalanceInput {
   'balance' : bigint,
@@ -103,6 +172,21 @@ export interface UpdateTokenBalanceInput {
 export interface UpdateTokenInput {
   'token_id' : TokenId,
   'is_enabled' : boolean,
+}
+export interface UserBridgeTransactionDto {
+  'status' : BridgeTransactionStatus,
+  'minter_fee' : [] | [bigint],
+  'block_id' : [] | [bigint],
+  'asset_infos' : Array<BridgeAssetInfo>,
+  'btc_txid' : [] | [string],
+  'icp_address' : Principal,
+  'number_confirmations' : number,
+  'btc_fee' : [] | [bigint],
+  'minted_block' : [] | [number],
+  'minted_block_timestamp' : [] | [bigint],
+  'bridge_id' : string,
+  'btc_address' : string,
+  'bridge_type' : BridgeType,
 }
 export interface UserNftDto { 'nft' : Nft, 'user' : Principal }
 export interface UserPreference {
@@ -177,6 +261,35 @@ export interface _SERVICE {
    */
   'user_add_token_batch' : ActorMethod<[AddTokensInput], Result_3>,
   /**
+   * Creates a new bridge transaction for the calling user
+   * # Arguments
+   * * `input` - The input data for creating the bridge transaction
+   * # Returns
+   * * `UserBridgeTransactionDto` - The created bridge transaction, or a CanisterError
+   */
+  'user_create_bridge_transaction' : ActorMethod<
+    [CreateBridgeTransactionInputArg],
+    Result_8
+  >,
+  /**
+   * Retrieves the list of bridge transactions for the calling user
+   * # Arguments
+   * * `start` - Optional start index for pagination
+   * * `limit` - Optional limit for pagination
+   * # Returns
+   * * `Vec<UserBridgeTransactionDto>` - List of bridge transactions owned by the user
+   */
+  'user_get_bridge_transactions' : ActorMethod<
+    [GetUserBridgeTransactionsInputArg],
+    Array<UserBridgeTransactionDto>
+  >,
+  /**
+   * Retrieves the BTC address associated with the calling user
+   * # Returns
+   * * `String` - The BTC address of the user, or a CanisterError
+   */
+  'user_get_btc_address' : ActorMethod<[], Result_9>,
+  /**
    * Retrieves the NFTs owned by the calling user
    * # Arguments
    * * `input` - The input containing pagination parameters
@@ -185,6 +298,17 @@ export interface _SERVICE {
    */
   'user_get_nfts' : ActorMethod<[GetUserNftInput], Array<Nft>>,
   'user_sync_token_list' : ActorMethod<[], Result_3>,
+  /**
+   * Updates an existing bridge transaction for the calling user
+   * # Arguments
+   * * `input` - The input data for updating the bridge transaction
+   * # Returns
+   * * `UserBridgeTransactionDto` - The updated bridge transaction, or a CanisterError
+   */
+  'user_update_bridge_transaction' : ActorMethod<
+    [UpdateBridgeTransactionInputArg],
+    Result_8
+  >,
   'user_update_token_balance' : ActorMethod<
     [Array<UpdateTokenBalanceInput>],
     Result_3
