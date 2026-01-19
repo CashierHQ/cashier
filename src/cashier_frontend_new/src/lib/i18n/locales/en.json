@@ -391,7 +391,9 @@
       "icpAddressInfoSecond": "In case you'd like to use a Account ID, you can use the address below.",
       "closeButton": "Close",
       "warning": "Send {{token}} to this wallet to begin using Cashier. Ensure that you are only sending assets that are {{highlighted}}, otherwise you could lose them forever.",
-      "warningHighlighted": "meant for this address"
+      "warningHighlighted": "meant for this address",
+      "btcAddress": "BTC Address",
+      "ethAddress": "ETH Address"
     },
     "manage": {
       "header": "Manage tokens",

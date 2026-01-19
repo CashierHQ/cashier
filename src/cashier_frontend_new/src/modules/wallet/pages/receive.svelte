@@ -1,18 +1,19 @@
 <script lang="ts">
-  import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import NavBar from "$modules/token/components/navBar.svelte";
   import { locale } from "$lib/i18n";
-  import { Copy, Info, ChevronDown } from "lucide-svelte";
-  import { toast } from "svelte-sonner";
-  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
-  import { authState } from "$modules/auth/state/auth.svelte";
-  import { Dialog, DialogContent } from "$lib/shadcn/components/ui/dialog";
-  import { SvelteSet } from "svelte/reactivity";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
+  import { Dialog, DialogContent } from "$lib/shadcn/components/ui/dialog";
+  import Label from "$lib/shadcn/components/ui/label/label.svelte";
+  import { authState } from "$modules/auth/state/auth.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
+  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+  import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
+  import NavBar from "$modules/token/components/navBar.svelte";
+  import { CKBTC_CANISTER_ID, ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { walletBridgeStore } from "$modules/wallet/state/walletBridgeStore.svelte";
+  import { ChevronDown, Copy, Info } from "lucide-svelte";
+  import { toast } from "svelte-sonner";
+  import { SvelteSet } from "svelte/reactivity";
 
   type Props = {
     initialToken?: string;
@@ -25,6 +26,7 @@
   let showTokenSelector = $state(false);
   let showAccountIdModal = $state(false);
   let imageLoadFailures = new SvelteSet<string>();
+  
 
   $effect(() => {
     if (initialToken) {
@@ -62,6 +64,12 @@
   const tokenLogo = $derived.by(() =>
     selectedTokenObj ? getTokenLogo(selectedTokenObj.address) : null,
   );
+
+  const isCkBTC = $derived(
+    selectedToken === CKBTC_CANISTER_ID,
+  );
+
+  const btcAddress = $derived.by(() => walletBridgeStore.btcAddress);
 
   function hasImageFailed(address: string): boolean {
     return imageLoadFailures.has(address);
@@ -205,6 +213,38 @@
           </div>
         {/if}
       </div>
+
+      {#if isCkBTC}
+        <div class="space-y-4">
+          <Label class="text-base font-semibold">
+            {#if selectedTokenObj}
+              {locale
+                .t("wallet.receive.btcAddress")
+                .replace("{{token}}", selectedTokenObj.symbol)}
+            {:else}
+              {locale
+                .t("wallet.receive.btcAddress")
+                .replace("{{token}}", "")}
+            {/if}
+          </Label>
+
+          <div class="relative">
+            <input
+              type="text"
+              value={btcAddress}
+              readonly
+              class="w-full p-3 pr-12 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none text-sm font-mono break-all"
+            />
+            <button
+              onclick={() => handleCopy(principalAddress)}
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-[#36A18B] hover:text-[#2d8a75] transition-colors"
+              title={locale.t("wallet.receive.copyTooltip")}
+            >
+              <Copy size={20} class="text-[#36A18B]" />
+            </button>
+          </div>
+        </div>
+      {/if}
 
       <div class="flex-grow-1 flex flex-col justify-end items-center">
         <Button

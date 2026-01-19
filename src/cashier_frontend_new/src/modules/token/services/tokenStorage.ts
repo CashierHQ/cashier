@@ -168,6 +168,30 @@ class TokenStorageService {
       return Err(`Error adding NFT: ${err}`);
     }
   }
+
+  /**
+   * Get the BTC address associated with the user's wallet
+   * @returns string BTC address on success or error message on failure
+   */
+  public async getBtcAddress(): Promise<Result<string, string>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      return Err("User is not authenticated");
+    }
+
+    try {
+      const res = await actor.user_get_btc_address();
+      //console.log("Fetched BTC address:", res);
+
+      if ("Ok" in res) {
+        return Ok(res.Ok);
+      } else {
+        return Err(`Error fetching BTC address: ${res.Err}`);
+      }
+    } catch (err) {
+      return Err(`Error fetching BTC address: ${err}`);
+    }
+  }
 }
 
 export const tokenStorageService = new TokenStorageService();
