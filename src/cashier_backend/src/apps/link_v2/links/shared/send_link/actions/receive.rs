@@ -7,7 +7,7 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::{
         action::v1::{Action, ActionState, ActionType},
-        intent::v1::Intent,
+        intent::v2::Intent,
         link::v1::Link,
     },
 };

@@ -4,7 +4,7 @@
 use cashier_backend_types::{
     error::CanisterError,
     link_v2::action_result::{CreateActionResult, ProcessActionResult},
-    repository::{action::v1::Action, intent::v1::Intent, transaction::v1::Transaction},
+    repository::{action::v1::Action, intent::v2::Intent, transaction::v1::Transaction},
 };
 use std::{collections::HashMap, future::Future, pin::Pin};
 

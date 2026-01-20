@@ -1,4 +1,4 @@
-use crate::repository::{intent::v1::Intent, transaction::v1::Transaction};
+use crate::repository::{intent::v2::Intent, transaction::v1::Transaction};
 use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone)]
@@ -94,9 +94,8 @@ mod tests {
 
     use crate::link_v2::graph::Graph;
     use crate::repository::common::{Asset, Chain, Wallet};
-    use crate::repository::intent::v1::{
-        Intent, IntentState, IntentTask, IntentType, TransferData,
-    };
+    use crate::repository::intent::v1::{IntentState, IntentTask, IntentType, TransferData};
+    use crate::repository::intent::v2::Intent;
     use crate::repository::transaction::v1::{
         FromCallType, IcTransaction, Icrc1Transfer, Protocol, Transaction, TransactionState,
     };
@@ -118,6 +117,9 @@ mod tests {
                 amount: Nat::from(100u64),
             }),
             label: "mock_intent".to_string(),
+            intent_total_amount: None,
+            intent_total_network_fee: None,
+            intent_user_fee: None,
         }
     }
 

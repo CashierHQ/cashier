@@ -3,7 +3,7 @@
 
 use crate::repository::{
     action::v1::{Action, ActionState, ActionType},
-    intent::v1::Intent,
+    intent::v2::Intent,
     link_action::v1::LinkUserState,
 };
 

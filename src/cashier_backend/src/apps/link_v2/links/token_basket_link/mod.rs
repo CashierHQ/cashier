@@ -14,7 +14,7 @@ use cashier_backend_types::{
     repository::{
         action::v1::{Action, ActionType},
         asset_info::AssetInfo,
-        intent::v1::Intent,
+        intent::v2::Intent,
         link::v1::{Link, LinkState, LinkType},
         transaction::v1::Transaction,
     },

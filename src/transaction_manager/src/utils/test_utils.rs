@@ -5,8 +5,9 @@ use candid::Nat;
 use candid::Principal;
 use cashier_backend_types::repository::common::{Asset, Chain, Wallet};
 use cashier_backend_types::repository::intent::v1::{
-    Intent, IntentState, IntentTask, IntentType, TransferData,
+    IntentState, IntentTask, IntentType, TransferData,
 };
+use cashier_backend_types::repository::intent::v2::Intent;
 use cashier_backend_types::repository::transaction::v1::{
     FromCallType, IcTransaction, Icrc1Transfer, Protocol, Transaction, TransactionState,
 };
@@ -94,6 +95,9 @@ pub fn generate_mock_intent(id: &str, dependencies: Vec<&str>) -> Intent {
             amount: Nat::from(100u64),
         }),
         label: "mock_intent".to_string(),
+        intent_total_amount: None,
+        intent_total_network_fee: None,
+        intent_user_fee: None,
     }
 }
 

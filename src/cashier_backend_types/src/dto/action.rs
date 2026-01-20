@@ -12,7 +12,8 @@ use crate::{
     repository::{
         action::v1::{Action, ActionState, ActionType},
         common::{Asset, Chain, Wallet},
-        intent::v1::{Intent, IntentState, IntentTask, IntentType},
+        intent::v1::{IntentState, IntentTask, IntentType},
+        intent::v2::Intent,
         transaction::v1::{FromCallType, Protocol, Transaction, TransactionState},
     },
     service::action::ActionData,

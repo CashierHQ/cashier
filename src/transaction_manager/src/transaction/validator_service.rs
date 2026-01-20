@@ -9,7 +9,8 @@ use cashier_backend_types::{
     },
     repository::{
         action::v1::{Action, ActionState},
-        intent::v1::{Intent, IntentState},
+        intent::v1::IntentState,
+        intent::v2::Intent,
         transaction::v1::{FromCallType, Transaction, TransactionState},
     },
 };

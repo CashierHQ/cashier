@@ -5,7 +5,8 @@ use crate::adapter::IntentAdapterTrait;
 use cashier_backend_types::{
     error::CanisterError,
     repository::{
-        intent::v1::{Intent, IntentTask, IntentType, TransferData, TransferFromData},
+        intent::v1::{IntentTask, IntentType, TransferData, TransferFromData},
+        intent::v2::Intent,
         transaction::v1::{
             FromCallType, IcTransaction, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, Protocol,
             Transaction, TransactionState,
@@ -371,6 +372,9 @@ mod tests {
             dependency: vec![],
             chain: Chain::IC,
             label: "Test Intent".to_string(),
+            intent_total_amount: None,
+            intent_total_network_fee: None,
+            intent_user_fee: None,
         };
 
         // Act
@@ -423,6 +427,9 @@ mod tests {
             dependency: vec![],
             chain: Chain::IC,
             label: "Test Intent".to_string(),
+            intent_total_amount: None,
+            intent_total_network_fee: None,
+            intent_user_fee: None,
         };
 
         // Act
@@ -481,6 +488,9 @@ mod tests {
             dependency: vec![],
             chain: Chain::IC,
             label: "Test Intent".to_string(),
+            intent_total_amount: None,
+            intent_total_network_fee: None,
+            intent_user_fee: None,
         };
 
         // Act

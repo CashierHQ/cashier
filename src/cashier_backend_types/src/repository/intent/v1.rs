@@ -4,7 +4,6 @@
 use candid::{CandidType, Nat};
 use cashier_macros::storable;
 use derive_more::Display;
-use ic_mple_structures::Codec;
 use serde::{Deserialize, Serialize};
 
 use crate::repository::common::{Asset, Chain, Wallet};
@@ -22,22 +21,6 @@ pub struct Intent {
     pub label: String,
 }
 
-#[storable]
-pub enum IntentCodec {
-    V1(Intent),
-}
-
-impl Codec<Intent> for IntentCodec {
-    fn decode(source: Self) -> Intent {
-        match source {
-            IntentCodec::V1(link) => link,
-        }
-    }
-
-    fn encode(dest: Intent) -> Self {
-        IntentCodec::V1(dest)
-    }
-}
 
 impl Default for Intent {
     fn default() -> Self {

@@ -1,7 +1,8 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use cashier_backend_types::repository::intent::v1::{Intent, IntentCodec};
+use cashier_backend_types::repository::intent::IntentCodec;
+use cashier_backend_types::repository::intent::v2::Intent;
 use ic_mple_log::service::Storage;
 use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
@@ -76,6 +77,9 @@ mod tests {
                 amount: Nat::from_str("0").unwrap(),
             }),
             label: "Test Intent".to_string(),
+            intent_total_amount: None,
+            intent_total_network_fee: None,
+            intent_user_fee: None,
         };
         let intent2 = Intent {
             id: intent_id2.clone(),
@@ -93,6 +97,9 @@ mod tests {
                 amount: Nat::from_str("100").unwrap(),
             }),
             label: "Another Test Intent".to_string(),
+            intent_total_amount: None,
+            intent_total_network_fee: None,
+            intent_user_fee: None,
         };
 
         // Act
@@ -130,6 +137,9 @@ mod tests {
                 amount: Nat::from_str("0").unwrap(),
             }),
             label: "Test Intent".to_string(),
+            intent_total_amount: None,
+            intent_total_network_fee: None,
+            intent_user_fee: None,
         };
 
         let intent2 = Intent {
@@ -148,6 +158,9 @@ mod tests {
                 amount: Nat::from_str("100").unwrap(),
             }),
             label: "Updated Test Intent".to_string(),
+            intent_total_amount: None,
+            intent_total_network_fee: None,
+            intent_user_fee: None,
         };
         repo.batch_create(vec![intent1, intent2]);
 
@@ -167,6 +180,9 @@ mod tests {
                 amount: Nat::from_str("100").unwrap(),
             }),
             label: "Updated Intent".to_string(),
+            intent_total_amount: None,
+            intent_total_network_fee: None,
+            intent_user_fee: None,
         };
         let update_intent2 = Intent {
             id: intent_id2.clone(),
@@ -184,6 +200,9 @@ mod tests {
                 amount: Nat::from_str("200").unwrap(),
             }),
             label: "Updated Another Test Intent".to_string(),
+            intent_total_amount: None,
+            intent_total_network_fee: None,
+            intent_user_fee: None,
         };
 
         // Act
@@ -220,6 +239,9 @@ mod tests {
                 amount: Nat::from_str("0").unwrap(),
             }),
             label: "Test Intent".to_string(),
+            intent_total_amount: None,
+            intent_total_network_fee: None,
+            intent_user_fee: None,
         };
         repo.batch_create(vec![intent]);
 

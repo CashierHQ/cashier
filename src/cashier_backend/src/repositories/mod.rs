@@ -6,7 +6,7 @@ use std::thread::LocalKey;
 
 use cashier_backend_types::repository::action::v1::ActionCodec;
 use cashier_backend_types::repository::action_intent::v1::ActionIntentCodec;
-use cashier_backend_types::repository::intent::v1::IntentCodec;
+use cashier_backend_types::repository::intent::IntentCodec;
 use cashier_backend_types::repository::intent_transaction::v1::IntentTransactionCodec;
 use cashier_backend_types::repository::link::v1::LinkCodec;
 use cashier_backend_types::repository::link_action::v1::LinkActionCodec;
@@ -22,7 +22,7 @@ use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemor
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 
 use cashier_backend_types::repository::{
-    action::v1::Action, action_intent::v1::ActionIntent, intent::v1::Intent,
+    action::v1::Action, action_intent::v1::ActionIntent, intent::v2::Intent,
     intent_transaction::v1::IntentTransaction, keys::*, link::v1::Link,
     link_action::v1::LinkAction, request_lock::RequestLock, transaction::v1::Transaction,
     user_action::v1::UserAction, user_link::v1::UserLink,

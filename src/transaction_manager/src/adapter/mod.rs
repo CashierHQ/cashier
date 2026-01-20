@@ -5,7 +5,7 @@ pub mod ic;
 
 use cashier_backend_types::{
     error::CanisterError,
-    repository::{intent::v1::Intent, transaction::v1::Transaction},
+    repository::{intent::v2::Intent, transaction::v1::Transaction},
 };
 
 pub trait IntentAdapterTrait {

@@ -10,7 +10,7 @@ use cashier_backend_types::repository::action::v1::{ActionState, ActionType};
 use cashier_backend_types::repository::link_action::v1::LinkUserState;
 use cashier_backend_types::{
     repository::{
-        action::v1::Action, action_intent::v1::ActionIntent, intent::v1::Intent,
+        action::v1::Action, action_intent::v1::ActionIntent, intent::v2::Intent,
         intent_transaction::v1::IntentTransaction, link_action::v1::LinkAction,
         transaction::v1::Transaction, user_action::v1::UserAction,
     },

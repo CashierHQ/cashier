@@ -6,7 +6,8 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::{
         common::{Asset, Chain, Wallet},
-        intent::v1::{Intent, IntentState, IntentTask, IntentType},
+        intent::v1::{IntentState, IntentTask, IntentType},
+        intent::v2::Intent,
     },
 };
 use icrc_ledger_types::icrc1::account::Account;
@@ -48,6 +49,9 @@ impl TransferWalletToLinkIntent {
             chain: Chain::IC,
             task: IntentTask::TransferWalletToLink,
             r#type: IntentType::default_transfer(),
+            intent_total_amount: None,
+            intent_total_network_fee: None,
+            intent_user_fee: None,
         };
 
         // enrich the intent with asset info
