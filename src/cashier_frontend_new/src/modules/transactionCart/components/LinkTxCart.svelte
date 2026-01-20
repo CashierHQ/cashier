@@ -19,7 +19,7 @@
 
   let {
     source,
-    isOpen = $bindable(false),
+    isOpen: isOpenProp = $bindable(false),
     onCloseDrawer,
     onFeeInfoDrawerClose,
   }: {
@@ -28,6 +28,10 @@
     onCloseDrawer: () => void;
     onFeeInfoDrawerClose?: () => void;
   } = $props();
+
+  // Internal state for drawer - prevents binding from syncing back to showTxCart
+  // when transitioning to FeeInfoDrawer
+  let isOpen = $state(isOpenProp);
 
   /** Store created once, updateSource() called on source changes */
   let linkTxCartStore = $state<LinkTxCartStore | null>(null);
@@ -43,8 +47,8 @@
   );
 
   let showFeeInfoDrawer = $state(false);
-  // Track if FeeInfoDrawer was closed via Back button (to distinguish from X button)
-  let wasClosedViaBack = $state(false);
+  // Track if FeeInfoDrawer is being closed via X button to prevent sync
+  let isClosingViaX = $state(false);
 
   // Hardcoded i18n key for action source
   const txCartI18nKey = "links.linkForm.drawers.txCart.action";
@@ -83,15 +87,33 @@
   // Handle fee breakdown click - close txCart and show FeeInfoDrawer
   function handleFeeBreakdownClick() {
     if (hasProcessingAssets) return;
+    // Close LinkTxCart drawer and show FeeInfoDrawer
+    // isOpen will sync back to showTxCart via binding, but we want to keep component mounted
+    // So we'll handle this in handleOpenChange to prevent unmounting
     isOpen = false;
     showFeeInfoDrawer = true;
   }
 
   // Handle back button in FeeInfoDrawer - close FeeInfoDrawer and reopen txCart
-  function handleFeeInfoDrawerBack() {
-    wasClosedViaBack = true;
-    showFeeInfoDrawer = false;
-    isOpen = true;
+  // viaClose parameter indicates if this was triggered by close (X button) or back button
+  function handleFeeInfoDrawerBack(viaClose?: boolean) {
+    if (viaClose) {
+      // When closed via X button, set flag to prevent sync
+      isClosingViaX = true;
+      // Notify parent to reset showTxCart
+      // This allows the component to be remounted when user clicks Create again
+      onFeeInfoDrawerClose?.();
+      // Close FeeInfoDrawer
+      showFeeInfoDrawer = false;
+      // Reset flag after a tick to allow component to unmount
+      setTimeout(() => {
+        isClosingViaX = false;
+      }, 0);
+    } else {
+      // When closed via Back button, reopen LinkTxCart
+      showFeeInfoDrawer = false;
+      isOpen = true;
+    }
   }
 
   /**
@@ -150,6 +172,26 @@
   $effect(() => {
     if (linkTxCartStore && Object.keys(tokensMap).length > 0) {
       linkTxCartStore.initializeAssets(tokensMap);
+    }
+  });
+
+  /**
+   * Sync internal isOpen with prop when prop changes from parent
+   * Only sync when not transitioning to FeeInfoDrawer and not closing via X
+   */
+  $effect(() => {
+    if (!showFeeInfoDrawer && !isClosingViaX) {
+      isOpen = isOpenProp;
+    }
+  });
+
+  /**
+   * Sync prop back when internal isOpen changes
+   * Only sync when not transitioning to FeeInfoDrawer and not closing via X
+   */
+  $effect(() => {
+    if (!showFeeInfoDrawer && !isClosingViaX && isOpen !== isOpenProp) {
+      isOpenProp = isOpen;
     }
   });
 </script>
@@ -242,12 +284,6 @@
   <!-- FeeInfoDrawer for showing fees breakdown -->
   <FeeInfoDrawer
     bind:open={showFeeInfoDrawer}
-    onClose={() => {
-      if (!wasClosedViaBack) {
-        onFeeInfoDrawerClose?.();
-      }
-      wasClosedViaBack = false;
-    }}
     onBack={handleFeeInfoDrawerBack}
     {feesBreakdown}
   />

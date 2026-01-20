@@ -22,7 +22,8 @@
     LinkType.TIP,
     LinkType.AIRDROP,
     LinkType.TOKEN_BASKET,
-    LinkType.RECEIVE_PAYMENT,
+    // TODO: Uncomment this when we have a receive payment link type
+    // LinkType.RECEIVE_PAYMENT,
   ];
 
   let currentSlide = $state(0);
