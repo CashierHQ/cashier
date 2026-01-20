@@ -6,7 +6,7 @@
   import { locale } from "$lib/i18n";
   import { Copy, Info, ChevronDown } from "lucide-svelte";
   import { toast } from "svelte-sonner";
-  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+  import TokenIcon from "$modules/shared/components/TokenIcon.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { Dialog, DialogContent } from "$lib/shadcn/components/ui/dialog";
   import { SvelteSet } from "svelte/reactivity";
@@ -58,14 +58,6 @@
       ? walletStore.icpAccountID() || ""
       : "",
   );
-
-  const tokenLogo = $derived.by(() =>
-    selectedTokenObj ? getTokenLogo(selectedTokenObj.address) : null,
-  );
-
-  function hasImageFailed(address: string): boolean {
-    return imageLoadFailures.has(address);
-  }
 
   function handleImageError(address: string) {
     imageLoadFailures.add(address);
@@ -135,24 +127,14 @@
         >
           {#if selectedTokenObj}
             <div class="flex items-center gap-3">
-              <div
-                class="relative flex shrink-0 overflow-hidden rounded-full w-6 h-6"
-              >
-                {#if tokenLogo && !hasImageFailed(selectedTokenObj.address)}
-                  <img
-                    alt={selectedTokenObj.symbol}
-                    class="w-full h-full object-cover rounded-full"
-                    src={tokenLogo}
-                    onerror={() => handleImageError(selectedTokenObj.address)}
-                  />
-                {:else}
-                  <div
-                    class="w-full h-full flex items-center justify-center bg-gray-200 rounded-full text-xs font-medium"
-                  >
-                    {selectedTokenObj.symbol[0]?.toUpperCase() || "?"}
-                  </div>
-                {/if}
-              </div>
+              <TokenIcon
+                address={selectedTokenObj.address}
+                symbol={selectedTokenObj.symbol}
+                size="sm"
+                failedImageLoads={imageLoadFailures}
+                onImageError={handleImageError}
+                class="rounded-full"
+              />
               <span class="font-medium">{selectedTokenObj.symbol}</span>
             </div>
             <ChevronDown class="h-5 w-5 text-gray-400" />

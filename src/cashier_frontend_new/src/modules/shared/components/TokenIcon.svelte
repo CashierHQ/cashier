@@ -1,13 +1,13 @@
 <script lang="ts">
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
-  import { getCachedImageDataUrl } from "$modules/shared/utils/preloadTokenImage";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
 
   type Props = {
     address: string;
     symbol: string;
     logo?: string;
     size?: "xs" | "sm" | "md" | "lg" | "xl" | string;
-    failedImageLoads: Set<string>;
+    failedImageLoads: Set<string> | { has: (key: string) => boolean };
     onImageError: (address: string) => void;
     class?: string;
     fallbackText?: string; // Custom fallback text (e.g., first 2 letters)
@@ -48,18 +48,31 @@
   // Get text size class
   const textSizeClass = textSizeClasses[size] || "text-xs";
 
-  // Get logo URL
-  const logoUrl = $derived(logo || getTokenLogo(address));
+  // Get logo URL - reactively check walletStore cache first
+  // Priority: 1) logo prop, 2) walletStore cache, 3) external URL
+  // This ensures we use cached images when available and only load from external source if not cached
+  const imageSrc = $derived.by(() => {
+    // If logo prop is provided, use it (it might already be a cached data URL from parent)
+    if (logo) {
+      return logo;
+    }
+
+    // First, check walletStore cache reactively - this will update when images are loaded
+    // Access the cache directly to make it reactive
+    const cachedImage = walletStore.getTokenImage(address);
+    if (cachedImage) {
+      // If cached image is a data URL, use it directly (no network request)
+      // If it's an original URL, browser cache should handle it
+      return cachedImage;
+    }
+
+    // If not in cache, get external URL (will trigger network request)
+    // This should only happen if image hasn't been loaded into cache yet
+    return getTokenLogo(address, true); // Use skipStore to get original URL
+  });
 
   // Check if image failed to load
   const hasFailed = $derived(failedImageLoads.has(address));
-
-  // Try to get cached data URL - if it exists, use it to prevent re-fetching
-  const cachedDataUrl = $derived(getCachedImageDataUrl(logoUrl));
-  // const isPreloaded = $derived(isImagePreloaded(logoUrl));
-
-  // Use cached data URL if available, otherwise use original URL
-  const imageSrc = $derived(cachedDataUrl || logoUrl);
 
   function handleImageError() {
     onImageError(address);

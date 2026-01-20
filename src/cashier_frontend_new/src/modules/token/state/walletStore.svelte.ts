@@ -18,7 +18,8 @@ class WalletStore {
   #preloadedTokenAddresses = new Set<string>();
   // Store token images as data URLs or blob URLs
   // Key: token address, Value: data URL or blob URL
-  #tokenImageCache = new Map<string, string>();
+  // Using $state to make it reactive so components can react to cache updates
+  #tokenImageCache = $state(new Map<string, string>());
 
   constructor() {
     this.#walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
@@ -168,8 +169,9 @@ class WalletStore {
 
   /**
    * Load images for given addresses and store them in cache
-   * Uses Image object to load images (works with CORS)
-   * Tries to convert to data URL via canvas, falls back to original URL if CORS blocks it
+   * Uses fetch to get blob (works with octet-stream and other content types)
+   * Converts blob to data URL via FileReader for reliable caching
+   * Falls back to Image object if fetch fails
    * @param addresses Array of token addresses
    */
   async #loadImages(addresses: string[]): Promise<void> {
@@ -182,65 +184,105 @@ class WalletStore {
       const imageUrl = getTokenLogo(address, true); // Use skipStore to get original URL
 
       try {
-        // Use Image object to load image (works with CORS)
-        const img = new Image();
+        // First, try to fetch as blob (works with octet-stream and all content types)
+        try {
+          const response = await fetch(imageUrl, {
+            cache: "force-cache", // Use browser cache if available
+            mode: "cors", // Allow CORS
+          });
 
-        await new Promise<void>((resolve, reject) => {
-          img.onload = () => {
-            // Try to convert to data URL using canvas
-            try {
-              const canvas = document.createElement("canvas");
-              canvas.width = img.naturalWidth;
-              canvas.height = img.naturalHeight;
-              const ctx = canvas.getContext("2d");
-              if (ctx) {
-                ctx.drawImage(img, 0, 0);
-                const dataUrl = canvas.toDataURL("image/png");
-                // Store data URL in cache
-                this.#tokenImageCache.set(address, dataUrl);
-                resolve();
-                return;
-              }
-            } catch (canvasError) {
-              console.warn(
-                `Canvas conversion failed for ${address}:`,
-                canvasError,
-              );
-            }
-
-            // If canvas conversion failed, store original URL
-            // Browser should use cache for subsequent requests
-            this.#tokenImageCache.set(address, imageUrl);
-            resolve();
-          };
-
-          img.onerror = () => {
-            reject(new Error(`Failed to load image for token ${address}`));
-          };
-
-          img.src = imageUrl;
-
-          // If image is already complete (cached), handle immediately
-          if (img.complete) {
-            try {
-              const canvas = document.createElement("canvas");
-              canvas.width = img.naturalWidth;
-              canvas.height = img.naturalHeight;
-              const ctx = canvas.getContext("2d");
-              if (ctx) {
-                ctx.drawImage(img, 0, 0);
-                const dataUrl = canvas.toDataURL("image/png");
-                this.#tokenImageCache.set(address, dataUrl);
-                resolve();
-                return;
-              }
-            } catch {
-              // Canvas failed, use original URL
-            }
-            this.#tokenImageCache.set(address, imageUrl);
-            resolve();
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
           }
-        });
+
+          const blob = await response.blob();
+
+          // Convert blob to data URL using FileReader
+          const dataUrl = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              if (reader.result && typeof reader.result === "string") {
+                resolve(reader.result);
+              } else {
+                reject(new Error("Failed to convert blob to data URL"));
+              }
+            };
+            reader.onerror = () => {
+              reject(new Error("FileReader error"));
+            };
+            reader.readAsDataURL(blob);
+          });
+
+          // Store data URL in cache - this prevents any future network requests
+          this.#tokenImageCache.set(address, dataUrl);
+          return;
+        } catch (fetchError) {
+          // If fetch fails (e.g., CORS or network error), fall back to Image object
+          console.warn(
+            `Fetch failed for ${address}, trying Image fallback:`,
+            fetchError,
+          );
+
+          // Fallback: Use Image object to load image
+          const img = new Image();
+
+          await new Promise<void>((resolve, reject) => {
+            img.onload = () => {
+              // Try to convert to data URL using canvas
+              try {
+                const canvas = document.createElement("canvas");
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext("2d");
+                if (ctx) {
+                  ctx.drawImage(img, 0, 0);
+                  const dataUrl = canvas.toDataURL("image/png");
+                  // Store data URL in cache
+                  this.#tokenImageCache.set(address, dataUrl);
+                  resolve();
+                  return;
+                }
+              } catch (canvasError) {
+                console.warn(
+                  `Canvas conversion failed for ${address}:`,
+                  canvasError,
+                );
+              }
+
+              // If canvas conversion failed, store original URL
+              // Browser should use cache for subsequent requests
+              this.#tokenImageCache.set(address, imageUrl);
+              resolve();
+            };
+
+            img.onerror = () => {
+              reject(new Error(`Failed to load image for token ${address}`));
+            };
+
+            img.src = imageUrl;
+
+            // If image is already complete (cached), handle immediately
+            if (img.complete) {
+              try {
+                const canvas = document.createElement("canvas");
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext("2d");
+                if (ctx) {
+                  ctx.drawImage(img, 0, 0);
+                  const dataUrl = canvas.toDataURL("image/png");
+                  this.#tokenImageCache.set(address, dataUrl);
+                  resolve();
+                  return;
+                }
+              } catch {
+                // Canvas failed, use original URL
+              }
+              this.#tokenImageCache.set(address, imageUrl);
+              resolve();
+            }
+          });
+        }
       } catch (error) {
         console.warn(`Failed to load image for token ${address}:`, error);
         // Don't throw - continue loading other images
