@@ -6,6 +6,7 @@
   } from "$modules/shared/utils/formatNumber";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+  import TokenIcon from "$modules/shared/components/TokenIcon.svelte";
 
   type Props = {
     token: TokenWithPriceAndBalance;
@@ -67,30 +68,14 @@
   >
     <div class="flex justify-between items-center">
       <div class="flex items-center gap-2">
-        {#if tokenLogo && !failedImageLoads.has(token.address)}
-          <span
-            class="relative flex shrink-0 overflow-hidden rounded-full w-9 h-9"
-          >
-            <div class="w-full h-full overflow-hidden rounded-full">
-              <img
-                alt={token.symbol}
-                class="w-full h-full object-cover"
-                src={tokenLogo}
-                onerror={handleImageError}
-              />
-            </div>
-          </span>
-        {:else}
-          <span
-            class="relative flex shrink-0 overflow-hidden rounded-full w-9 h-9"
-          >
-            <div
-              class="w-full h-full flex items-center justify-center bg-gray-200 rounded-full text-xs"
-            >
-              {token.symbol[0]?.toUpperCase() || "?"}
-            </div>
-          </span>
-        {/if}
+        <TokenIcon
+          address={token.address}
+          symbol={token.symbol}
+          logo={tokenLogo}
+          size="lg"
+          {failedImageLoads}
+          onImageError={handleImageError}
+        />
         <div>
           <strong>{token.symbol}</strong>
           <div class="text-sm text-gray-500">

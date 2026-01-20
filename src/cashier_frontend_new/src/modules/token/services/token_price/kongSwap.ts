@@ -18,10 +18,13 @@ class KongSwapTokenPriceService implements TokenPriceService {
   private actor: KongSwapActor;
 
   constructor() {
-    const agent = authState.buildAnonymousAgent(HOST_ICP_MAINNET);
+    const host = HOST_ICP_MAINNET ?? "https://icp-api.io";
+    const agent = authState.buildAnonymousAgent(host);
+    const canisterId =
+      KONGSWAP_INDEX_CANISTER_ID || "dummy-canister-id-for-tests";
     this.actor = Actor.createActor(kongBackend.idlFactory, {
       agent,
-      canisterId: KONGSWAP_INDEX_CANISTER_ID,
+      canisterId,
     });
   }
 

@@ -11,9 +11,14 @@ import { ICP_LEDGER_CANISTER_ID } from "../constants";
 import { sortWalletTokens } from "../utils/sorter";
 import { tokenPriceStore } from "./tokenPriceStore.svelte";
 import { encodeAccountID } from "$modules/shared/utils/icpAccountId";
+import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
 
 class WalletStore {
   #walletTokensQuery;
+  #preloadedTokenAddresses = new Set<string>();
+  // Store token images as data URLs or blob URLs
+  // Key: token address, Value: data URL or blob URL
+  #tokenImageCache = new Map<string, string>();
 
   constructor() {
     this.#walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
@@ -57,6 +62,9 @@ class WalletStore {
         // Reset the wallet tokens data when user logs out
         if (authState.account == null) {
           this.#walletTokensQuery.reset();
+          // Clear preloaded addresses and image cache when user logs out
+          this.#preloadedTokenAddresses.clear();
+          this.#tokenImageCache.clear();
           return;
         }
         // Refresh the wallet tokens data when user logs in
@@ -72,11 +80,174 @@ class WalletStore {
           this.#walletTokensQuery.refresh();
         }
       });
+
+      // Load and cache token images when wallet tokens are loaded
+      // Use idle callback to avoid blocking other important operations
+      $effect(() => {
+        const tokens = this.#walletTokensQuery.data;
+        const isLoading = this.#walletTokensQuery.isLoading;
+
+        // Only load images when data is loaded and not currently loading
+        if (tokens && tokens.length > 0 && !isLoading) {
+          // Get addresses of current tokens
+          const currentAddresses = new Set(
+            tokens.map((token) => token.address),
+          );
+
+          // Find new addresses that haven't been loaded yet
+          const newAddresses = Array.from(currentAddresses).filter(
+            (address) => !this.#preloadedTokenAddresses.has(address),
+          );
+
+          // Only load if there are new addresses
+          if (newAddresses.length > 0) {
+            // Mark these addresses as being loaded
+            newAddresses.forEach((address) => {
+              this.#preloadedTokenAddresses.add(address);
+            });
+
+            // Load images and store them in cache
+            this.#loadAndCacheTokenImages(newAddresses);
+          }
+
+          // Clean up addresses that are no longer in the token list
+          // (in case tokens were removed)
+          const addressesToRemove = Array.from(
+            this.#preloadedTokenAddresses,
+          ).filter((address) => !currentAddresses.has(address));
+          addressesToRemove.forEach((address) => {
+            this.#preloadedTokenAddresses.delete(address);
+            this.#tokenImageCache.delete(address);
+          });
+        }
+      });
     });
   }
 
   get query() {
     return this.#walletTokensQuery;
+  }
+
+  /**
+   * Get cached token image (data URL or blob URL) if available
+   * @param address Token address
+   * @returns Cached image URL or null if not cached
+   */
+  getTokenImage(address: string): string | null {
+    return this.#tokenImageCache.get(address) || null;
+  }
+
+  /**
+   * Load and cache token images for given addresses
+   * Images are loaded as blobs and converted to data URLs or blob URLs
+   * @param addresses Array of token addresses to load
+   */
+  #loadAndCacheTokenImages(addresses: string[]): void {
+    // Use idle callback to avoid blocking other important operations
+    const startLoad = () => {
+      if (typeof requestIdleCallback !== "undefined") {
+        requestIdleCallback(
+          () => {
+            this.#loadImages(addresses).catch((error) => {
+              console.warn("Failed to load some token images:", error);
+            });
+          },
+          { timeout: 5000 },
+        );
+      } else {
+        setTimeout(() => {
+          this.#loadImages(addresses).catch((error) => {
+            console.warn("Failed to load some token images:", error);
+          });
+        }, 1000);
+      }
+    };
+
+    setTimeout(startLoad, 1000);
+  }
+
+  /**
+   * Load images for given addresses and store them in cache
+   * Uses Image object to load images (works with CORS)
+   * Tries to convert to data URL via canvas, falls back to original URL if CORS blocks it
+   * @param addresses Array of token addresses
+   */
+  async #loadImages(addresses: string[]): Promise<void> {
+    const loadPromises = addresses.map(async (address) => {
+      // Skip ICP logo (it's a local file)
+      if (address === ICP_LEDGER_CANISTER_ID) {
+        return;
+      }
+
+      const imageUrl = getTokenLogo(address, true); // Use skipStore to get original URL
+
+      try {
+        // Use Image object to load image (works with CORS)
+        const img = new Image();
+
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => {
+            // Try to convert to data URL using canvas
+            try {
+              const canvas = document.createElement("canvas");
+              canvas.width = img.naturalWidth;
+              canvas.height = img.naturalHeight;
+              const ctx = canvas.getContext("2d");
+              if (ctx) {
+                ctx.drawImage(img, 0, 0);
+                const dataUrl = canvas.toDataURL("image/png");
+                // Store data URL in cache
+                this.#tokenImageCache.set(address, dataUrl);
+                resolve();
+                return;
+              }
+            } catch (canvasError) {
+              console.warn(
+                `Canvas conversion failed for ${address}:`,
+                canvasError,
+              );
+            }
+
+            // If canvas conversion failed, store original URL
+            // Browser should use cache for subsequent requests
+            this.#tokenImageCache.set(address, imageUrl);
+            resolve();
+          };
+
+          img.onerror = () => {
+            reject(new Error(`Failed to load image for token ${address}`));
+          };
+
+          img.src = imageUrl;
+
+          // If image is already complete (cached), handle immediately
+          if (img.complete) {
+            try {
+              const canvas = document.createElement("canvas");
+              canvas.width = img.naturalWidth;
+              canvas.height = img.naturalHeight;
+              const ctx = canvas.getContext("2d");
+              if (ctx) {
+                ctx.drawImage(img, 0, 0);
+                const dataUrl = canvas.toDataURL("image/png");
+                this.#tokenImageCache.set(address, dataUrl);
+                resolve();
+                return;
+              }
+            } catch {
+              // Canvas failed, use original URL
+            }
+            this.#tokenImageCache.set(address, imageUrl);
+            resolve();
+          }
+        });
+      } catch (error) {
+        console.warn(`Failed to load image for token ${address}:`, error);
+        // Don't throw - continue loading other images
+      }
+    });
+
+    await Promise.allSettled(loadPromises);
   }
 
   /**

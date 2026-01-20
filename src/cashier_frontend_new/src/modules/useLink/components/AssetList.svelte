@@ -12,6 +12,7 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { SvelteSet } from "svelte/reactivity";
   import { getAssetWithTokenInfo } from "$modules/useLink/utils/getAssetWithTokenInfo";
+  import TokenIcon from "$modules/shared/components/TokenIcon.svelte";
 
   interface Props {
     assetInfo: AssetInfo[];
@@ -95,20 +96,14 @@
           {@const assetData = processAssetInfo(assetInfoItem)}
           <div class="flex justify-between items-start">
             <div class="flex items-center gap-1.5">
-              {#if !failedImageLoads.has(assetData.address)}
-                <img
-                  src={assetData.logo}
-                  alt={assetData.symbol}
-                  class="w-5 h-5 rounded-full overflow-hidden"
-                  onerror={() => onImageError(assetData.address)}
-                />
-              {:else}
-                <div
-                  class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs overflow-hidden"
-                >
-                  {assetData.symbol[0]?.toUpperCase() || "?"}
-                </div>
-              {/if}
+              <TokenIcon
+                address={assetData.address}
+                symbol={assetData.symbol}
+                logo={assetData.logo}
+                size="sm"
+                {failedImageLoads}
+                {onImageError}
+              />
               <p class="text-[14px] font-medium">{assetData.symbol}</p>
             </div>
             <div class="flex flex-col items-end">

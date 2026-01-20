@@ -11,6 +11,8 @@
   import { Search, X } from "lucide-svelte";
   import { SvelteSet } from "svelte/reactivity";
   import TokenItem from "./TokenItem.svelte";
+  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+  import { preloadTokenImages } from "$modules/shared/utils/preloadTokenImage";
 
   type Props = {
     open?: boolean;
@@ -65,6 +67,17 @@
   $effect(() => {
     if (!open) {
       searchQuery = "";
+    } else {
+      // Preload images when drawer opens to ensure they're cached
+      if (walletStore.query.data && walletStore.query.data.length > 0) {
+        const logoUrls = walletStore.query.data.map((token) =>
+          getTokenLogo(token.address),
+        );
+        // Preload images immediately when drawer opens
+        preloadTokenImages(logoUrls).catch((error) => {
+          console.warn("Failed to preload token images in drawer:", error);
+        });
+      }
     }
   });
 </script>

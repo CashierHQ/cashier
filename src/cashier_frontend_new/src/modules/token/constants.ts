@@ -10,8 +10,9 @@ import {
 export const ICPSWAP_INDEX_CANISTER_ID = PUBLIC_TOKEN_ICPSWAP_INDEX_CANISTER_ID;
 
 // The KongSwap index canister id
+// Use a valid Principal ID for tests (ryjl3-tyaaa-aaaaa-aaaba-cai is ICP ledger)
 export const KONGSWAP_INDEX_CANISTER_ID =
-  PUBLIC_TOKEN_KONGSWAP_INDEX_CANISTER_ID;
+  PUBLIC_TOKEN_KONGSWAP_INDEX_CANISTER_ID || "ryjl3-tyaaa-aaaaa-aaaba-cai";
 
 // The IC Explorer base URL
 export const IC_EXPLORER_BASE_URL = PUBLIC_TOKEN_IC_EXPLORER_BASE_URL;

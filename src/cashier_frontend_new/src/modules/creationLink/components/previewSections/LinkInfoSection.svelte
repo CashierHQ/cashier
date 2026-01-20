@@ -2,6 +2,7 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { locale } from "$lib/i18n";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
+  import TokenIcon from "$modules/shared/components/TokenIcon.svelte";
 
   type AssetWithTokenInfo = {
     address: string;
@@ -63,20 +64,14 @@
                 {formatNumber(asset.amount)}
                 {asset.token.symbol}
               </p>
-              {#if !failedImageLoads.has(asset.address)}
-                <img
-                  src={asset.logo}
-                  alt={asset.token.symbol}
-                  class="w-4 h-4 rounded-full"
-                  onerror={() => onImageError(asset.address)}
-                />
-              {:else}
-                <div
-                  class="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center text-xs"
-                >
-                  {asset.token.symbol[0]?.toUpperCase() || "?"}
-                </div>
-              {/if}
+              <TokenIcon
+                address={asset.address}
+                symbol={asset.token.symbol}
+                logo={asset.logo}
+                size="xs"
+                {failedImageLoads}
+                {onImageError}
+              />
             </div>
           {/each}
         {:else}
@@ -98,20 +93,14 @@
                 {formatNumber(asset.amount)}
                 {asset.token.symbol}
               </p>
-              {#if !failedImageLoads.has(asset.address)}
-                <img
-                  src={asset.logo}
-                  alt={asset.token.symbol}
-                  class="w-4 h-4 rounded-full"
-                  onerror={() => onImageError(asset.address)}
-                />
-              {:else}
-                <div
-                  class="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center text-xs"
-                >
-                  {asset.token.symbol[0]?.toUpperCase() || "?"}
-                </div>
-              {/if}
+              <TokenIcon
+                address={asset.address}
+                symbol={asset.token.symbol}
+                logo={asset.logo}
+                size="xs"
+                {failedImageLoads}
+                {onImageError}
+              />
             </div>
           {/each}
         {:else}
