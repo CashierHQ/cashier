@@ -16,13 +16,13 @@ impl IntentFeeStrategy for LinkToCreatorStrategy {
         let amount = get_intent_amount(intent);
 
         // 0 inbound (link already has funds) + fee outbound
-        let net_fee = network_fee;
+        let outbound_fee = network_fee;
 
         // Creator pays network fee on withdraw
         IntentFeeResult {
             intent_total_amount: amount,
-            intent_total_network_fee: net_fee.clone(),
-            intent_user_fee: net_fee,
+            intent_total_network_fee: outbound_fee.clone(),
+            intent_user_fee: outbound_fee,
         }
     }
 }

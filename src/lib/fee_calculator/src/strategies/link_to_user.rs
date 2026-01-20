@@ -5,26 +5,24 @@ use candid::Nat;
 use cashier_backend_types::repository::intent::v2::Intent;
 use cashier_backend_types::repository::link::v1::Link;
 
-use super::helpers::{calc_inbound_fee, get_intent_amount};
+use super::helpers::get_intent_amount;
 use crate::traits::IntentFeeStrategy;
 use crate::types::IntentFeeResult;
 
-pub struct CreatorToTreasuryStrategy;
+pub struct LinkToUserStrategy;
 
-impl IntentFeeStrategy for CreatorToTreasuryStrategy {
+impl IntentFeeStrategy for LinkToUserStrategy {
     fn calculate(&self, intent: &Intent, _link: &Link, network_fee: Nat) -> IntentFeeResult {
         let amount = get_intent_amount(intent);
 
-        // Smart detect: ICRC2 (TransferFrom) = fee*2, ICRC1 (Transfer) = fee*1
-        let net_fee = calc_inbound_fee(intent, &network_fee);
+        // 0 inbound (link already has funds) + fee outbound
+        let outbound_fee = network_fee;
 
-        // User pays: amount + network fee
-        let user_fee = amount.clone() + net_fee.clone();
-
+        // User receives - pays nothing
         IntentFeeResult {
             intent_total_amount: amount,
-            intent_total_network_fee: net_fee,
-            intent_user_fee: user_fee,
+            intent_total_network_fee: outbound_fee,
+            intent_user_fee: Nat::from(0u64),
         }
     }
 }
@@ -64,15 +62,15 @@ mod tests {
     }
 
     #[test]
-    fn test_creator_to_treasury_user_fee() {
-        let strategy = CreatorToTreasuryStrategy;
+    fn test_link_to_user_pays_nothing() {
+        let strategy = LinkToUserStrategy;
         let intent = make_intent(1000);
         let link = make_link();
         let result = strategy.calculate(&intent, &link, Nat::from(10u64));
 
-        // User pays: amount (1000) + net_fee (10) = 1010
+        // User receives - pays nothing
         assert_eq!(result.intent_total_amount, Nat::from(1000u64));
         assert_eq!(result.intent_total_network_fee, Nat::from(10u64));
-        assert_eq!(result.intent_user_fee, Nat::from(1010u64));
+        assert_eq!(result.intent_user_fee, Nat::from(0u64));
     }
 }

@@ -273,6 +273,7 @@ dependencies = [
  "cashier_common",
  "cashier_macros",
  "ciborium",
+ "fee_calculator",
  "futures",
  "getrandom 0.2.16",
  "ic-cdk",
@@ -283,7 +284,6 @@ dependencies = [
  "ic_mple_structures",
  "icrc-ledger-types",
  "icrc_112_utils",
- "intent_fee_calculator",
  "itertools 0.14.0",
  "log",
  "rand 0.8.5",
@@ -664,6 +664,15 @@ name = "fastrand"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
+
+[[package]]
+name = "fee_calculator"
+version = "0.1.1"
+dependencies = [
+ "candid",
+ "cashier_backend_types",
+ "serde",
+]
 
 [[package]]
 name = "find-msvc-tools"
@@ -1479,15 +1488,6 @@ dependencies = [
  "token_storage_types",
  "tokio",
  "uuid",
-]
-
-[[package]]
-name = "intent_fee_calculator"
-version = "0.1.1"
-dependencies = [
- "candid",
- "cashier_backend_types",
- "serde",
 ]
 
 [[package]]

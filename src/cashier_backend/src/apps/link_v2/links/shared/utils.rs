@@ -8,7 +8,7 @@ use cashier_backend_types::{
     repository::{common::Asset, intent::v2::Intent, link::v1::Link},
 };
 use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::to_subaccount};
-use intent_fee_calculator::calculate_intent_fees;
+use fee_calculator::calculate_intent_fees;
 use futures::future;
 use serde_bytes::ByteBuf;
 use std::collections::HashMap;
