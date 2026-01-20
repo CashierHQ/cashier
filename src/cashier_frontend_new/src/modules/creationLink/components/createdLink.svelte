@@ -77,7 +77,7 @@
 
 {#if showTxCart && linkDetailStore && linkDetailStore.action}
   <LinkTxCart
-    isOpen={showTxCart}
+    bind:isOpen={showTxCart}
     source={{
       action: linkDetailStore.action,
       handleProcessAction,
