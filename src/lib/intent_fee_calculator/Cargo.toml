@@ -1,0 +1,12 @@
+[package]
+name = "intent_fee_calculator"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+candid = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+cashier_backend_types = { workspace = true }
+
+[dev-dependencies]

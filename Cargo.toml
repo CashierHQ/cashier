@@ -10,9 +10,10 @@ members = [
     "src/lib/cashier_common",
     "src/lib/cashier_macros",
     "src/lib/icrc_112_utils",
+    "src/lib/intent_fee_calculator",
     "src/token_storage",
     "src/token_storage_client",
-    "src/token_storage_types", 
+    "src/token_storage_types",
     "src/transaction_manager",
 ]
 resolver = "2"
@@ -47,6 +48,7 @@ ic_mple_structures = "0.16"
 ic_mple_utils = "0.16"
 ic-ledger-types = "0.15.0"
 icrc_112_utils = { path = "src/lib/icrc_112_utils" }
+intent_fee_calculator = { path = "src/lib/intent_fee_calculator" }
 icrc-ledger-types = "0.1.10"
 itertools = "0.14"
 log = "0.4"
