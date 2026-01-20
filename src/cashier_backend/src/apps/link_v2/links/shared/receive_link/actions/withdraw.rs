@@ -16,7 +16,7 @@ use cashier_common::utils::get_link_account;
 use transaction_manager::intents::transfer_link_to_wallet::TransferLinkToWalletIntent;
 
 use crate::apps::link_v2::links::shared::utils::{
-    get_batch_tokens_balance_for_link, get_batch_tokens_fee_for_link,
+    get_batch_tokens_balance_for_link, get_batch_tokens_fee_for_link, set_intent_fees,
 };
 use uuid::Uuid;
 
@@ -62,24 +62,31 @@ impl WithdrawAction {
                     .get(&address)
                     .cloned()
                     .unwrap_or(Nat::from(0u64));
-                let fee_amount = token_fee_map
-                    .get(&address)
-                    .cloned()
-                    .unwrap_or(Nat::from(0u64));
+                let fee_amount = token_fee_map.get(&address).cloned().ok_or_else(|| {
+                    CanisterError::HandleLogicError(format!(
+                        "Network fee not found for token: {}",
+                        address
+                    ))
+                })?;
                 let sending_amount = if sending_amount <= fee_amount {
                     Nat::from(0u64)
                 } else {
-                    sending_amount - fee_amount
+                    sending_amount - fee_amount.clone()
                 };
 
-                TransferLinkToWalletIntent::create(
+                let mut intent = TransferLinkToWalletIntent::create(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                     asset_info.asset.clone(),
                     sending_amount,
                     link.creator,
                     link_account,
                     link.create_at,
-                )
+                )?;
+
+                // Calculate and set fees (link.creator == caller → LinkToCreator)
+                set_intent_fees(&mut intent.intent, link, link.creator, fee_amount);
+
+                Ok(intent)
             })
             .collect::<Result<Vec<TransferLinkToWalletIntent>, CanisterError>>()?;
 

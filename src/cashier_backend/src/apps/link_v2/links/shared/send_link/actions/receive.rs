@@ -7,6 +7,7 @@ use cashier_backend_types::{
     error::CanisterError,
     repository::{
         action::v1::{Action, ActionState, ActionType},
+        common::Asset,
         intent::v2::Intent,
         link::v1::Link,
     },
@@ -14,6 +15,8 @@ use cashier_backend_types::{
 use cashier_common::utils::get_link_account;
 use transaction_manager::intents::transfer_link_to_wallet::TransferLinkToWalletIntent;
 use uuid::Uuid;
+
+use crate::apps::link_v2::links::shared::utils::{get_batch_tokens_fee_for_link, set_intent_fees};
 
 #[derive(Debug)]
 pub struct ReceiveAction {
@@ -47,6 +50,7 @@ impl ReceiveAction {
         };
 
         let link_account = get_link_account(&link.id, canister_id)?;
+        let token_fee_map = get_batch_tokens_fee_for_link(link).await?;
 
         // intents
         let link_to_wallet_intents = link
@@ -55,14 +59,29 @@ impl ReceiveAction {
             .map(|asset_info| {
                 let sending_amount = asset_info.amount_per_link_use_action.clone();
 
-                TransferLinkToWalletIntent::create(
+                let address = match &asset_info.asset {
+                    Asset::IC { address } => *address,
+                };
+                let network_fee = token_fee_map.get(&address).cloned().ok_or_else(|| {
+                    CanisterError::HandleLogicError(format!(
+                        "Network fee not found for token: {}",
+                        address
+                    ))
+                })?;
+
+                let mut intent = TransferLinkToWalletIntent::create(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                     asset_info.asset.clone(),
                     sending_amount,
                     receiver_id,
                     link_account,
                     link.create_at,
-                )
+                )?;
+
+                // Calculate and set fees (receiver_id != link.creator → LinkToUser)
+                set_intent_fees(&mut intent.intent, link, receiver_id, network_fee);
+
+                Ok(intent)
             })
             .collect::<Result<Vec<TransferLinkToWalletIntent>, CanisterError>>()?;
 

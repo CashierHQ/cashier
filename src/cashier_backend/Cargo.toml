@@ -26,6 +26,7 @@ ic_mple_structures = { workspace = true }
 ic-stable-structures = { workspace = true }
 icrc_112_utils = { workspace = true }
 icrc-ledger-types = { workspace = true }
+intent_fee_calculator = { workspace = true }
 itertools = { workspace = true }
 log = { workspace = true }
 rand = { workspace = true, features = ["getrandom"] }
