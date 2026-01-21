@@ -3,6 +3,7 @@ import { Principal } from "@dfinity/principal";
 
 export type BitcoinTransaction = {
   txid: string;
+  sender: string;
   vin: UTXO[];
   vout: UTXO[];
   is_confirmed: boolean;
@@ -23,7 +24,13 @@ export class BitcoinTransactionMapper {
    * @returns bitcoin transaction
    */
   public static fromMempoolApiResponse(data: any): BitcoinTransaction {
+    let senderAddress = "";
+    if (data.vin.length > 0 && data.vin[0].prevout) {
+      senderAddress = data.vin[0].prevout.scriptpubkey_address;
+    }
+
     return {
+      sender: senderAddress,
       txid: data.txid,
       vin: data.vin.map((input: any) => ({
         txid: input.txid,
@@ -43,9 +50,10 @@ export class BitcoinTransactionMapper {
   }
 
   public static toCreateBridgeTransactionRequest(
-    icp_address: string,
+    icpAddress: string,
     btcAddress: string,
     bitcoinTransaction: BitcoinTransaction,
+    isImporting: boolean,
   ): tokenStorage.CreateBridgeTransactionInputArg {
     let asset_infos = [
       {
@@ -56,12 +64,13 @@ export class BitcoinTransactionMapper {
         decimals: 8,
       },
     ];
+
     return {
       btc_txid: [bitcoinTransaction.txid],
-      icp_address: Principal.fromText(icp_address),
+      icp_address: Principal.fromText(icpAddress),
       btc_address: btcAddress,
       asset_infos: asset_infos,
-      bridge_type: { Import: null },
+      bridge_type: isImporting ? { Import: null } : { Export: null },
       created_at_ts: BigInt(bitcoinTransaction.created_at_ts),
     };
   }

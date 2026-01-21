@@ -208,6 +208,7 @@ class TokenStorageService {
   public async createBridgeTransaction(
     btcAddress: string,
     bitcoinTransaction: BitcoinTransaction,
+    isImporting: boolean,
   ): Promise<Result<string, string>> {
     const actor = this.#getActor();
     if (!actor) {
@@ -220,6 +221,7 @@ class TokenStorageService {
           authState.account?.owner || "",
           btcAddress,
           bitcoinTransaction,
+          isImporting,
         );
       console.log("createBridgeTransaction inputArgs:", inputArgs);
       const res = await actor.user_create_bridge_transaction(inputArgs);

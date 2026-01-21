@@ -9,7 +9,7 @@ import { PersistedState } from "runed";
 /**
  * Store for user bridge transactions and related data.
  */
-class WalletBridgeStore {
+class BridgeStore {
   #btcAddress: PersistedState<string | null> = new PersistedState(
     "btcAddress",
     null,
@@ -81,6 +81,7 @@ class WalletBridgeStore {
             const result = await tokenStorageService.createBridgeTransaction(
               this.#btcAddress.current!,
               tx,
+              true,
             );
             if (result.isErr()) {
               console.error(
@@ -163,4 +164,4 @@ class WalletBridgeStore {
   }
 }
 
-export const walletBridgeStore = new WalletBridgeStore();
+export const bridgeStore = new BridgeStore();
