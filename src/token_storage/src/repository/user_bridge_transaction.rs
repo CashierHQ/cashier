@@ -73,7 +73,7 @@ impl<S: Storage<UserBridgeTransactionRepositoryStorage>> UserBridgeTransactionRe
             let transactions = store.get(&user_id).unwrap_or_default();
             transactions
                 .into_iter()
-                .find(|tx| &tx.bridge_id == bridge_id)
+                .find(|tx| tx.bridge_id == bridge_id)
         })
     }
 

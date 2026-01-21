@@ -47,7 +47,7 @@ class BridgeStore {
         );
         return mempoolTxs;
       },
-      refetchInterval: 60000, // refresh every 60 seconds
+      refetchInterval: 30000, // refresh every 30 seconds
       persistedKey: ["walletBridgeStore_mempoolTxs"],
       storageType: "sessionStorage",
     });
@@ -79,7 +79,7 @@ class BridgeStore {
           console.log("mempoolTXs changed:", this.#mempoolTxQuery.data);
           this.#mempoolTxQuery.data.forEach(async (tx: BitcoinTransaction) => {
             const result = await tokenStorageService.createBridgeTransaction(
-              this.#btcAddress.current!,
+              tx.sender,
               tx,
               true,
             );
@@ -92,6 +92,7 @@ class BridgeStore {
               console.log(
                 `Successfully created bridge transaction for BTC TXID ${tx.txid}`,
               );
+              this.#bridgeTxQuery.refresh();
             }
           });
         }
