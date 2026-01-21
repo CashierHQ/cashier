@@ -1,9 +1,9 @@
+import { BITCOIN_MEMPOOL_API_BASE_URL } from "$modules/bitcoin/constants";
 import {
   type BitcoinTransaction,
   BitcoinTransactionMapper,
-} from "$modules/bitcoin/types.js";
+} from "$modules/bitcoin/types/bitcoin_transaction";
 import { Err, Ok, type Result } from "ts-results-es";
-import { BITCOIN_MEMPOOL_API_BASE_URL } from "../constants.js";
 
 /**
  * Service for interacting with the Bitcoin Mempool API

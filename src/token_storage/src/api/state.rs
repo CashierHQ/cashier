@@ -5,7 +5,7 @@ use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 
 use crate::{
-    ckbtc::ic_ckbtc_minter_client::IcCkBtcMinterClient,
+    bitcoin::ic_ckbtc_minter_client::IcCkBtcMinterClient,
     icrc7::ic_icrc7_validator::ICIcrc7Validator,
     repository::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
     services::{

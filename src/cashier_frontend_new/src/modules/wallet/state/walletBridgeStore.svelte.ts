@@ -1,7 +1,8 @@
 import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { mempoolService } from "$modules/bitcoin/services/mempoolService";
-import { type BitcoinTransaction } from "$modules/bitcoin/types";
+import { type BitcoinTransaction } from "$modules/bitcoin/types/bitcoin_transaction";
+import { type BridgeTransaction } from "$modules/bitcoin/types/bridge_transaction";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import { PersistedState } from "runed";
 
@@ -14,8 +15,22 @@ class WalletBridgeStore {
     null,
   );
   #mempoolTxQuery;
+  #bridgeTxQuery;
 
   constructor() {
+    this.#bridgeTxQuery = managedState<BridgeTransaction[]>({
+      queryFn: async () => {
+        const bridgeTxs = await tokenStorageService.getBridgeTransactions(
+          0,
+          10,
+        );
+        return bridgeTxs;
+      },
+      refetchInterval: 30000, // refresh every 30 seconds
+      persistedKey: ["walletBridgeStore_bridgeTxs"],
+      storageType: "sessionStorage",
+    });
+
     this.#mempoolTxQuery = managedState<BitcoinTransaction[]>({
       queryFn: async () => {
         if (!this.btcAddress) {
@@ -41,10 +56,13 @@ class WalletBridgeStore {
       $effect(() => {
         if (authState.account == null) {
           this.#btcAddress.current = null;
+          this.#bridgeTxQuery.reset();
         } else {
           this.fetchBtcAddress().then((address) => {
             this.#btcAddress.current = address;
           });
+
+          this.#bridgeTxQuery.refresh();
         }
       });
 
@@ -53,6 +71,28 @@ class WalletBridgeStore {
           this.#mempoolTxQuery.refresh();
         } else {
           this.#mempoolTxQuery.reset();
+        }
+      });
+
+      $effect(() => {
+        if (this.#mempoolTxQuery.data) {
+          console.log("mempoolTXs changed:", this.#mempoolTxQuery.data);
+          this.#mempoolTxQuery.data.forEach(async (tx: BitcoinTransaction) => {
+            const result = await tokenStorageService.createBridgeTransaction(
+              this.#btcAddress.current!,
+              tx,
+            );
+            if (result.isErr()) {
+              console.error(
+                `Failed to create bridge transaction for BTC TXID ${tx.txid}:`,
+                result.unwrapErr(),
+              );
+            } else {
+              console.log(
+                `Successfully created bridge transaction for BTC TXID ${tx.txid}`,
+              );
+            }
+          });
         }
       });
     });
@@ -96,7 +136,7 @@ class WalletBridgeStore {
       throw new Error(txIdsResult.unwrapErr());
     }
 
-    console.log("Mempool TX IDs:", txIdsResult.unwrap());
+    //console.log("Mempool TX IDs:", txIdsResult.unwrap());
     const txIds = txIdsResult.unwrap();
     const transactionTasks = txIds.map(async (txid) => {
       const txResult = await mempoolService.getTransactionById(txid);
@@ -111,7 +151,7 @@ class WalletBridgeStore {
     });
 
     const transactions = await Promise.all(transactionTasks);
-    console.log("Fetched Mempool Transactions:", transactions);
+    //console.log("Fetched Mempool Transactions:", transactions);
     return transactions.filter(
       (tx): tx is BitcoinTransaction =>
         tx !== null && tx.vout.some((output) => output.address === address),

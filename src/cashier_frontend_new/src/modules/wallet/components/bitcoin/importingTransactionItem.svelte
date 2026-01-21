@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type BitcoinTransaction } from '$modules/bitcoin/types';
+  import { type BitcoinTransaction } from '$modules/bitcoin/types/bitcoin_transaction';
   import {
       ArrowDownLeft
   } from "lucide-svelte";

@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CreateBridgeTransactionInputArg {
+    pub btc_txid: Option<String>,
     pub icp_address: Principal,
     pub btc_address: String,
     pub asset_infos: Vec<BridgeAssetInfo>,
@@ -22,8 +23,8 @@ pub struct UpdateBridgeTransactionInputArg {
     pub btc_txid: Option<String>,
     pub block_id: Option<Nat>,
     pub block_confirmations: Option<Vec<BlockConfirmation>>,
-    pub minter_fee: Option<Nat>,
-    pub btc_fee: Option<Nat>,
+    pub deposit_fee: Option<Nat>,
+    pub withdrawal_fee: Option<Nat>,
     pub status: Option<BridgeTransactionStatus>,
 }
 
@@ -43,8 +44,8 @@ pub struct UserBridgeTransactionDto {
     pub btc_txid: Option<String>,
     pub block_id: Option<Nat>,
     pub block_confirmations: Vec<BlockConfirmation>,
-    pub minter_fee: Option<Nat>,
-    pub btc_fee: Option<Nat>,
+    pub deposit_fee: Option<Nat>,
+    pub withdrawal_fee: Option<Nat>,
     pub created_at_ts: u64,
     pub status: BridgeTransactionStatus,
 }
@@ -60,8 +61,8 @@ impl From<BridgeTransaction> for UserBridgeTransactionDto {
             btc_txid: tx.btc_txid,
             block_id: tx.block_id,
             block_confirmations: tx.block_confirmations,
-            minter_fee: tx.minter_fee,
-            btc_fee: tx.btc_fee,
+            deposit_fee: tx.deposit_fee,
+            withdrawal_fee: tx.withdrawal_fee,
             created_at_ts: tx.created_at_ts,
             status: tx.status,
         }

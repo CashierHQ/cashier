@@ -66,11 +66,11 @@ impl<S: Storage<UserBridgeTransactionRepositoryStorage>> UserBridgeTransactionRe
     /// * `Option<BridgeTransaction>` - Some(BridgeTransaction) if found, None if not found
     pub fn get_bridge_transaction_by_id(
         &self,
-        user_id: &Principal,
-        bridge_id: &String,
+        user_id: Principal,
+        bridge_id: &str,
     ) -> Option<BridgeTransaction> {
         self.bridge_transaction_store.with_borrow(|store| {
-            let transactions = store.get(user_id).unwrap_or_default();
+            let transactions = store.get(&user_id).unwrap_or_default();
             transactions
                 .into_iter()
                 .find(|tx| &tx.bridge_id == bridge_id)
@@ -125,7 +125,7 @@ mod tests {
         let asset_infos = vec![BridgeAssetInfo {
             asset_type: BridgeAssetType::BTC,
             asset_id: "btc".to_string(),
-            ledger_id: random_principal_id(),
+            ledger_id: Some(random_principal_id()),
             amount: Nat::from(1000u64),
             decimals: 8,
         }];
@@ -138,8 +138,9 @@ mod tests {
             btc_txid: Some("txid1".to_string()),
             block_id: Some(Nat::from(1u64)),
             block_confirmations: vec![],
-            minter_fee: None,
-            btc_fee: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            total_amount: None,
             created_at_ts: 10000u64,
             status: BridgeTransactionStatus::Created,
         };
@@ -162,7 +163,7 @@ mod tests {
         let asset_infos = vec![BridgeAssetInfo {
             asset_type: BridgeAssetType::BTC,
             asset_id: "btc".to_string(),
-            ledger_id: random_principal_id(),
+            ledger_id: Some(random_principal_id()),
             amount: Nat::from(1000u64),
             decimals: 8,
         }];
@@ -175,8 +176,9 @@ mod tests {
             btc_txid: Some("txid1".to_string()),
             block_id: Some(Nat::from(1u64)),
             block_confirmations: vec![],
-            minter_fee: None,
-            btc_fee: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            total_amount: None,
             created_at_ts: 10000u64,
             status: BridgeTransactionStatus::Created,
         };
@@ -205,7 +207,7 @@ mod tests {
         let asset_infos = vec![BridgeAssetInfo {
             asset_type: BridgeAssetType::BTC,
             asset_id: "btc".to_string(),
-            ledger_id: random_principal_id(),
+            ledger_id: Some(random_principal_id()),
             amount: Nat::from(1000u64),
             decimals: 8,
         }];
@@ -219,8 +221,9 @@ mod tests {
                 btc_txid: Some(format!("txid{}", i)),
                 block_id: Some(Nat::from(i as u64 + 1)),
                 block_confirmations: vec![],
-                minter_fee: None,
-                btc_fee: None,
+                deposit_fee: None,
+                withdrawal_fee: None,
+                total_amount: None,
                 created_at_ts: 10000u64 + i as u64,
                 status: BridgeTransactionStatus::Created,
             };
@@ -251,7 +254,7 @@ mod tests {
         let asset_infos = vec![BridgeAssetInfo {
             asset_type: BridgeAssetType::BTC,
             asset_id: "btc".to_string(),
-            ledger_id: random_principal_id(),
+            ledger_id: Some(random_principal_id()),
             amount: Nat::from(1000u64),
             decimals: 8,
         }];
@@ -264,8 +267,9 @@ mod tests {
             btc_txid: Some("txid1".to_string()),
             block_id: Some(Nat::from(1u64)),
             block_confirmations: vec![],
-            minter_fee: None,
-            btc_fee: None,
+            deposit_fee: None,
+            withdrawal_fee: None,
+            total_amount: None,
             created_at_ts: 10000u64,
             status: BridgeTransactionStatus::Created,
         };
@@ -276,7 +280,7 @@ mod tests {
 
         // Act: Retrieve transaction by ID
         let retrieved_tx = repo
-            .get_bridge_transaction_by_id(&user_id, &"bridge1".to_string())
+            .get_bridge_transaction_by_id(user_id, "bridge1")
             .expect("BridgeTransaction not found");
 
         // Assert

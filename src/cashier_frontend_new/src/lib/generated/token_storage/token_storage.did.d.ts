@@ -8,10 +8,14 @@ export interface AddTokenInput {
 }
 export interface AddTokensInput { 'token_ids' : Array<TokenId> }
 export interface AddUserNftInput { 'nft' : Nft }
+export interface BlockConfirmation {
+  'block_id' : bigint,
+  'block_timestamp' : bigint,
+}
 export interface BridgeAssetInfo {
   'decimals' : number,
   'asset_type' : BridgeAssetType,
-  'ledger_id' : Principal,
+  'ledger_id' : [] | [Principal],
   'asset_id' : string,
   'amount' : bigint,
 }
@@ -75,7 +79,9 @@ export type ChainTokenDetails = {
   };
 export interface CreateBridgeTransactionInputArg {
   'asset_infos' : Array<BridgeAssetInfo>,
+  'btc_txid' : [] | [string],
   'icp_address' : Principal,
+  'created_at_ts' : bigint,
   'btc_address' : string,
   'bridge_type' : BridgeType,
 }
@@ -156,14 +162,12 @@ export interface TokenStorageInitData {
 }
 export interface UpdateBridgeTransactionInputArg {
   'status' : [] | [BridgeTransactionStatus],
-  'minter_fee' : [] | [bigint],
+  'block_confirmations' : [] | [Array<BlockConfirmation>],
   'block_id' : [] | [bigint],
   'btc_txid' : [] | [string],
-  'number_confirmations' : [] | [number],
-  'btc_fee' : [] | [bigint],
-  'minted_block' : [] | [number],
-  'minted_block_timestamp' : [] | [bigint],
+  'withdrawal_fee' : [] | [bigint],
   'bridge_id' : string,
+  'deposit_fee' : [] | [bigint],
 }
 export interface UpdateTokenBalanceInput {
   'balance' : bigint,
@@ -175,18 +179,17 @@ export interface UpdateTokenInput {
 }
 export interface UserBridgeTransactionDto {
   'status' : BridgeTransactionStatus,
-  'minter_fee' : [] | [bigint],
+  'block_confirmations' : Array<BlockConfirmation>,
   'block_id' : [] | [bigint],
   'asset_infos' : Array<BridgeAssetInfo>,
   'btc_txid' : [] | [string],
   'icp_address' : Principal,
-  'number_confirmations' : number,
-  'btc_fee' : [] | [bigint],
-  'minted_block' : [] | [number],
-  'minted_block_timestamp' : [] | [bigint],
+  'created_at_ts' : bigint,
+  'withdrawal_fee' : [] | [bigint],
   'bridge_id' : string,
   'btc_address' : string,
   'bridge_type' : BridgeType,
+  'deposit_fee' : [] | [bigint],
 }
 export interface UserNftDto { 'nft' : Nft, 'user' : Principal }
 export interface UserPreference {

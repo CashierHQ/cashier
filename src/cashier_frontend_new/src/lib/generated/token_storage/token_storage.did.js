@@ -148,14 +148,16 @@ export const idlFactory = ({ IDL }) => {
   const BridgeAssetInfo = IDL.Record({
     'decimals' : IDL.Nat8,
     'asset_type' : BridgeAssetType,
-    'ledger_id' : IDL.Principal,
+    'ledger_id' : IDL.Opt(IDL.Principal),
     'asset_id' : IDL.Text,
     'amount' : IDL.Nat,
   });
   const BridgeType = IDL.Variant({ 'Import' : IDL.Null, 'Export' : IDL.Null });
   const CreateBridgeTransactionInputArg = IDL.Record({
     'asset_infos' : IDL.Vec(BridgeAssetInfo),
+    'btc_txid' : IDL.Opt(IDL.Text),
     'icp_address' : IDL.Principal,
+    'created_at_ts' : IDL.Nat64,
     'btc_address' : IDL.Text,
     'bridge_type' : BridgeType,
   });
@@ -165,20 +167,23 @@ export const idlFactory = ({ IDL }) => {
     'Completed' : IDL.Null,
     'Pending' : IDL.Null,
   });
+  const BlockConfirmation = IDL.Record({
+    'block_id' : IDL.Nat64,
+    'block_timestamp' : IDL.Nat64,
+  });
   const UserBridgeTransactionDto = IDL.Record({
     'status' : BridgeTransactionStatus,
-    'minter_fee' : IDL.Opt(IDL.Nat),
+    'block_confirmations' : IDL.Vec(BlockConfirmation),
     'block_id' : IDL.Opt(IDL.Nat),
     'asset_infos' : IDL.Vec(BridgeAssetInfo),
     'btc_txid' : IDL.Opt(IDL.Text),
     'icp_address' : IDL.Principal,
-    'number_confirmations' : IDL.Nat32,
-    'btc_fee' : IDL.Opt(IDL.Nat),
-    'minted_block' : IDL.Opt(IDL.Nat32),
-    'minted_block_timestamp' : IDL.Opt(IDL.Nat),
+    'created_at_ts' : IDL.Nat64,
+    'withdrawal_fee' : IDL.Opt(IDL.Nat),
     'bridge_id' : IDL.Text,
     'btc_address' : IDL.Text,
     'bridge_type' : BridgeType,
+    'deposit_fee' : IDL.Opt(IDL.Nat),
   });
   const Result_8 = IDL.Variant({
     'Ok' : UserBridgeTransactionDto,
@@ -195,14 +200,12 @@ export const idlFactory = ({ IDL }) => {
   });
   const UpdateBridgeTransactionInputArg = IDL.Record({
     'status' : IDL.Opt(BridgeTransactionStatus),
-    'minter_fee' : IDL.Opt(IDL.Nat),
+    'block_confirmations' : IDL.Opt(IDL.Vec(BlockConfirmation)),
     'block_id' : IDL.Opt(IDL.Nat),
     'btc_txid' : IDL.Opt(IDL.Text),
-    'number_confirmations' : IDL.Opt(IDL.Nat32),
-    'btc_fee' : IDL.Opt(IDL.Nat),
-    'minted_block' : IDL.Opt(IDL.Nat32),
-    'minted_block_timestamp' : IDL.Opt(IDL.Nat),
+    'withdrawal_fee' : IDL.Opt(IDL.Nat),
     'bridge_id' : IDL.Text,
+    'deposit_fee' : IDL.Opt(IDL.Nat),
   });
   const UpdateTokenBalanceInput = IDL.Record({
     'balance' : IDL.Nat,

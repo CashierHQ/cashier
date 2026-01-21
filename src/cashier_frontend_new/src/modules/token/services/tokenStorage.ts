@@ -1,5 +1,13 @@
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
 import { authState } from "$modules/auth/state/auth.svelte";
+import {
+  BitcoinTransactionMapper,
+  type BitcoinTransaction,
+} from "$modules/bitcoin/types/bitcoin_transaction";
+import {
+  BridgeTransactionMapper,
+  type BridgeTransaction,
+} from "$modules/bitcoin/types/bridge_transaction";
 import { TOKEN_STORAGE_CANISTER_ID } from "$modules/shared/constants";
 import {
   validateIndexCanister,
@@ -181,8 +189,6 @@ class TokenStorageService {
 
     try {
       const res = await actor.user_get_btc_address();
-      //console.log("Fetched BTC address:", res);
-
       if ("Ok" in res) {
         return Ok(res.Ok);
       } else {
@@ -190,6 +196,73 @@ class TokenStorageService {
       }
     } catch (err) {
       return Err(`Error fetching BTC address: ${err}`);
+    }
+  }
+
+  /**
+   * Create a bridge transaction to import BTC into ICP
+   * @param btcAddress
+   * @param bitcoinTransaction
+   * @returns
+   */
+  public async createBridgeTransaction(
+    btcAddress: string,
+    bitcoinTransaction: BitcoinTransaction,
+  ): Promise<Result<string, string>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      return Err("User is not authenticated");
+    }
+
+    try {
+      const inputArgs =
+        BitcoinTransactionMapper.toCreateBridgeTransactionRequest(
+          authState.account?.owner || "",
+          btcAddress,
+          bitcoinTransaction,
+        );
+      console.log("createBridgeTransaction inputArgs:", inputArgs);
+      const res = await actor.user_create_bridge_transaction(inputArgs);
+      console.log("createBridgeTransaction result:", res);
+
+      if ("Ok" in res) {
+        return Ok("ok");
+      } else {
+        return Err(`Error creating bridge transaction: ${res.Err}`);
+      }
+    } catch (err) {
+      return Err(`Error creating bridge transaction: ${err}`);
+    }
+  }
+
+  /**
+   * Get bridge transactions with pagination
+   * @param start
+   * @param limit
+   * @returns array of bridge transactions or error message
+   */
+  public async getBridgeTransactions(
+    start: number,
+    limit: number,
+  ): Promise<BridgeTransaction[]> {
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
+
+    try {
+      const res = await actor.user_get_bridge_transactions({
+        start: [start],
+        limit: [limit],
+      });
+      console.log("getBridgeTransactions result:", res);
+
+      const bridgeTransactions = res.map((tx) =>
+        BridgeTransactionMapper.fromTokenStorageBridgeTransaction(tx),
+      );
+      return bridgeTransactions;
+    } catch (err) {
+      throw new Error(`Error fetching bridge transactions: ${err}`);
     }
   }
 }

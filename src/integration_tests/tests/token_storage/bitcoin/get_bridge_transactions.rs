@@ -47,6 +47,7 @@ async fn it_should_get_bridge_transactions_for_valid_user() {
         let token_storage_client = ctx.new_token_storage_client(caller);
         for _ in 0..5 {
             let input = CreateBridgeTransactionInputArg {
+                btc_txid: Some("test_txid_123".to_string()),
                 icp_address: caller,
                 btc_address: "tb1qexampleaddress0000000000000000000000000".to_string(),
                 asset_infos: vec![],

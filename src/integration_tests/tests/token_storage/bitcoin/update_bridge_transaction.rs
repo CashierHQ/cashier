@@ -31,8 +31,8 @@ async fn it_should_fail_user_create_bridge_transaction_due_to_anonymous_caller()
             btc_txid: Some("exampletxid0000000000000000000000000000000000".to_string()),
             block_id: Some(Nat::from(100u32)),
             block_confirmations: Some(block_confirmations),
-            minter_fee: Some(Nat::from(1000u32)),
-            btc_fee: Some(Nat::from(500u32)),
+            deposit_fee: Some(Nat::from(1000u32)),
+            withdrawal_fee: Some(Nat::from(500u32)),
             status: Some(BridgeTransactionStatus::Completed),
         };
 
@@ -62,6 +62,7 @@ async fn it_should_update_bridge_transaction_for_valid_user() {
         let caller = TestUser::User1.get_principal();
         let token_storage_client = ctx.new_token_storage_client(caller);
         let input = CreateBridgeTransactionInputArg {
+            btc_txid: Some("test_txid_123".to_string()),
             icp_address: caller,
             btc_address: "tb1qexampleaddress0000000000000000000000000".to_string(),
             asset_infos: vec![],
@@ -90,8 +91,8 @@ async fn it_should_update_bridge_transaction_for_valid_user() {
             btc_txid: Some("updatedtxid0000000000000000000000000000000000".to_string()),
             block_id: Some(Nat::from(200u32)),
             block_confirmations: Some(block_confirmations),
-            minter_fee: Some(Nat::from(1500u32)),
-            btc_fee: Some(Nat::from(700u32)),
+            deposit_fee: Some(Nat::from(1500u32)),
+            withdrawal_fee: Some(Nat::from(700u32)),
             status: Some(BridgeTransactionStatus::Completed),
         };
 

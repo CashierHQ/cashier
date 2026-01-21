@@ -3,14 +3,19 @@
 
 use candid::Principal;
 use token_storage_types::{
-    bitcoin::{bridge_address::BridgeAddress, bridge_transaction::BridgeTransaction},
+    bitcoin::{
+        bridge_address::BridgeAddress,
+        bridge_transaction::{BridgeTransaction, BridgeTransactionMapper},
+    },
     dto::bitcoin::{
         CreateBridgeTransactionInputArg, UpdateBridgeTransactionInputArg, UserBridgeTransactionDto,
     },
     error::CanisterError,
 };
 
-use crate::ckbtc::traits::CkBtcMinterTrait;
+use crate::bitcoin::{
+    bridge_transaction_validator::BridgeTransactionValidator, traits::CkBtcMinterTrait,
+};
 use crate::repository::{
     Repositories, user_bridge_address::UserBridgeAddressRepository,
     user_bridge_transaction::UserBridgeTransactionRepository,
@@ -21,6 +26,7 @@ pub struct UserCkBtcService<R: Repositories, M: CkBtcMinterTrait> {
     pub user_bridge_transaction_repository:
         UserBridgeTransactionRepository<R::UserBridgeTransaction>,
     pub ckbtc_minter: M,
+    pub bridge_transaction_validator: BridgeTransactionValidator<R>,
 }
 
 impl<R: Repositories, M: CkBtcMinterTrait> UserCkBtcService<R, M> {
@@ -29,6 +35,7 @@ impl<R: Repositories, M: CkBtcMinterTrait> UserCkBtcService<R, M> {
             user_bridge_address_repository: repo.user_bridge_address(),
             user_bridge_transaction_repository: repo.user_bridge_transaction(),
             ckbtc_minter,
+            bridge_transaction_validator: BridgeTransactionValidator::new(repo),
         }
     }
 
@@ -72,8 +79,10 @@ impl<R: Repositories, M: CkBtcMinterTrait> UserCkBtcService<R, M> {
         user: Principal,
         input: CreateBridgeTransactionInputArg,
     ) -> Result<UserBridgeTransactionDto, CanisterError> {
-        let bridge_transaction = BridgeTransaction::from(input);
+        self.bridge_transaction_validator
+            .validate_create_bridge_transaction(user, &input)?;
 
+        let bridge_transaction = BridgeTransactionMapper::from_create_input(input)?;
         self.user_bridge_transaction_repository
             .upsert_bridge_transaction(
                 user,
@@ -96,7 +105,7 @@ impl<R: Repositories, M: CkBtcMinterTrait> UserCkBtcService<R, M> {
     ) -> Result<UserBridgeTransactionDto, CanisterError> {
         let mut bridge_transaction = self
             .user_bridge_transaction_repository
-            .get_bridge_transaction_by_id(&user, &input.bridge_id)
+            .get_bridge_transaction_by_id(user, &input.bridge_id)
             .ok_or_else(|| {
                 CanisterError::not_found("BridgeTransaction", &input.bridge_id.to_string())
             })?;
@@ -139,7 +148,7 @@ impl<R: Repositories, M: CkBtcMinterTrait> UserCkBtcService<R, M> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ckbtc::ic_ckbtc_minter_client::tests::MockCkBtcMinterClient;
+    use crate::bitcoin::ic_ckbtc_minter_client::tests::MockCkBtcMinterClient;
     use crate::repository::{Repositories, tests::TestRepositories};
     use candid::Nat;
     use cashier_common::test_utils::random_principal_id;
@@ -181,6 +190,7 @@ mod tests {
         let user_id = random_principal_id();
         let mut service = UserCkBtcService::new(&repo, mock_minter);
         let input = CreateBridgeTransactionInputArg {
+            btc_txid: Some("test_btc_txid".to_string()),
             icp_address: random_principal_id(),
             btc_address: "btc_address_123".to_string(),
             bridge_type: BridgeType::Import,
@@ -211,6 +221,7 @@ mod tests {
         let user_id = random_principal_id();
         let mut service = UserCkBtcService::new(&repo, mock_minter);
         let create_input = CreateBridgeTransactionInputArg {
+            btc_txid: Some("test_btc_txid".to_string()),
             icp_address: random_principal_id(),
             btc_address: "btc_address_123".to_string(),
             bridge_type: BridgeType::Import,
@@ -239,8 +250,8 @@ mod tests {
             btc_txid: Some("new_btc_txid".to_string()),
             block_id: Some(Nat::from(100u32)),
             block_confirmations: Some(block_confirmations.clone()),
-            minter_fee: Some(Nat::from(1000u32)),
-            btc_fee: Some(Nat::from(500u32)),
+            deposit_fee: Some(Nat::from(1000u32)),
+            withdrawal_fee: Some(Nat::from(500u32)),
             status: Some(BridgeTransactionStatus::Completed),
         };
 
@@ -258,9 +269,11 @@ mod tests {
             updated_transaction.block_confirmations,
             update_input.block_confirmations.unwrap()
         );
-        assert_eq!(updated_transaction.minter_fee, update_input.minter_fee);
-        assert_eq!(updated_transaction.minter_fee, update_input.minter_fee);
-        assert_eq!(updated_transaction.btc_fee, update_input.btc_fee);
+        assert_eq!(updated_transaction.deposit_fee, update_input.deposit_fee);
+        assert_eq!(
+            updated_transaction.withdrawal_fee,
+            update_input.withdrawal_fee
+        );
         assert_eq!(updated_transaction.status, update_input.status.unwrap());
     }
 
@@ -273,13 +286,14 @@ mod tests {
         let service = UserCkBtcService::new(&repo, mock_minter);
         for i in 0..5 {
             let input = CreateBridgeTransactionInputArg {
+                btc_txid: Some(format!("txid_{}", i)),
                 icp_address: random_principal_id(),
                 btc_address: format!("btc_address_{}", i),
                 bridge_type: BridgeType::Import,
                 asset_infos: vec![],
                 created_at_ts: 0,
             };
-            let mut transaction = BridgeTransaction::from(input);
+            let mut transaction = BridgeTransactionMapper::from_create_input(input).unwrap();
             transaction.bridge_id = format!("bridge{}", i);
             repo.user_bridge_transaction()
                 .upsert_bridge_transaction(user_id, transaction.bridge_id.clone(), transaction)

@@ -16,6 +16,7 @@ async fn it_should_fail_user_create_bridge_transaction_due_to_anonymous_caller()
         // Arrange
         let token_storage_client = ctx.new_token_storage_client(Principal::anonymous());
         let input = CreateBridgeTransactionInputArg {
+            btc_txid: Some("test_txid_123".to_string()),
             icp_address: random_principal_id(),
             btc_address: "tb1qexampleaddress0000000000000000000000000".to_string(),
             asset_infos: vec![],
@@ -49,6 +50,7 @@ async fn it_should_create_bridge_transaction_for_valid_user() {
         let caller = TestUser::User1.get_principal();
         let token_storage_client = ctx.new_token_storage_client(caller);
         let input = CreateBridgeTransactionInputArg {
+            btc_txid: Some("test_txid_123".to_string()),
             icp_address: caller,
             btc_address: "tb1qexampleaddress0000000000000000000000000".to_string(),
             asset_infos: vec![],
