@@ -19,7 +19,7 @@ use transaction_manager::{
     utils::calculator::calculate_create_link_fee,
 };
 
-use crate::apps::link_v2::links::shared::utils::{get_batch_tokens_fee_for_link, set_intent_fees};
+use crate::apps::link_v2::links::shared::utils::get_batch_tokens_fee_for_link;
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -63,7 +63,7 @@ impl CreateAction {
             subaccount: None,
         };
 
-        let mut fee_intent = TransferWalletToTreasuryIntent::create(
+        let fee_intent = TransferWalletToTreasuryIntent::create(
             INTENT_LABEL_LINK_CREATION_FEE.to_string(),
             fee_asset,
             actual_amount,
@@ -72,19 +72,6 @@ impl CreateAction {
             spender_account,
             link.create_at,
         )?;
-
-        // Calculate and set fees for treasury intent
-        let icp_network_fee =
-            token_fee_map
-                .get(&ICP_CANISTER_PRINCIPAL)
-                .cloned()
-                .ok_or_else(|| {
-                    CanisterError::HandleLogicError(format!(
-                        "Network fee not found for ICP: {}",
-                        ICP_CANISTER_PRINCIPAL
-                    ))
-                })?;
-        set_intent_fees(&mut fee_intent.intent, link, link.creator, icp_network_fee);
 
         let intents = vec![fee_intent.intent];
         Ok(Self::new(action, intents))

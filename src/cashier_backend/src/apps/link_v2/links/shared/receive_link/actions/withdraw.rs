@@ -16,7 +16,7 @@ use cashier_common::utils::get_link_account;
 use transaction_manager::intents::transfer_link_to_wallet::TransferLinkToWalletIntent;
 
 use crate::apps::link_v2::links::shared::utils::{
-    get_batch_tokens_balance_for_link, get_batch_tokens_fee_for_link, set_intent_fees,
+    get_batch_tokens_balance_for_link, get_batch_tokens_fee_for_link,
 };
 use uuid::Uuid;
 
@@ -74,7 +74,7 @@ impl WithdrawAction {
                     sending_amount - fee_amount.clone()
                 };
 
-                let mut intent = TransferLinkToWalletIntent::create(
+                let intent = TransferLinkToWalletIntent::create(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                     asset_info.asset.clone(),
                     sending_amount,
@@ -82,9 +82,6 @@ impl WithdrawAction {
                     link_account,
                     link.create_at,
                 )?;
-
-                // Calculate and set fees (link.creator == caller → LinkToCreator)
-                set_intent_fees(&mut intent.intent, link, link.creator, fee_amount);
 
                 Ok(intent)
             })

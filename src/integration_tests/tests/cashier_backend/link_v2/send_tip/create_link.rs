@@ -3,6 +3,7 @@
 
 use crate::cashier_backend::link_v2::send_tip::fixture::TipLinkV2Fixture;
 use crate::constant::CK_BTC_PRINCIPAL;
+use crate::utils::intent_fee::assert_intent_fees;
 use crate::{
     constant::ICP_PRINCIPAL,
     utils::{link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context},
@@ -166,7 +167,7 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
                 assert_eq!(
                     data.amount,
                     test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        tip_amount,
+                        tip_amount.clone(),
                         icp_ledger_fee.clone(),
                         1
                     ),
@@ -177,6 +178,21 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
+
+        // Assert Intent 1 fee fields (CreatorToLink)
+        // network_fee = inbound_fee + outbound_fee = network_fee + (network_fee * max_use)
+        let intent1_amount = test_utils::calculate_amount_for_wallet_to_link_transfer(
+            tip_amount.clone(),
+            icp_ledger_fee.clone(),
+            1,
+        );
+        let intent1_network_fee = icp_ledger_fee.clone() * 2u64; // inbound(1) + outbound(1*max_use)
+        assert_intent_fees(
+            intent1,
+            intent1_amount.clone(),
+            intent1_network_fee.clone(),
+            intent1_network_fee,
+        );
 
         // Assert Intent 2: TransferWalletToTreasury
         let intent2 = &action.intents[1];
@@ -231,6 +247,15 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
             }
             _ => panic!("Expected Icrc2TransferFrom transaction"),
         }
+
+        // Assert Intent 2 fee fields (CreatorToTreasury)
+        let intent2_network_fee = icp_ledger_fee.clone() * 2u64;
+        assert_intent_fees(
+            intent2,
+            Nat::from(CREATE_LINK_FEE),
+            intent2_network_fee.clone(),
+            Nat::from(CREATE_LINK_FEE) + intent2_network_fee,
+        );
 
         // Assert ICRC-112 requests
         assert!(action.icrc_112_requests.is_some());
@@ -352,8 +377,8 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
                 assert_eq!(
                     data.amount,
                     test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        tip_amount,
-                        ckbtc_ledger_fee,
+                        tip_amount.clone(),
+                        ckbtc_ledger_fee.clone(),
                         1
                     )
                 );
@@ -362,6 +387,21 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
+
+        // Assert Intent 1 fee fields (CreatorToLink with ckBTC)
+        // network_fee = inbound_fee + outbound_fee = network_fee + (network_fee * max_use)
+        let intent1_amount = test_utils::calculate_amount_for_wallet_to_link_transfer(
+            tip_amount.clone(),
+            ckbtc_ledger_fee.clone(),
+            1,
+        );
+        let intent1_network_fee = ckbtc_ledger_fee.clone() * 2u64; // inbound(1) + outbound(1*max_use)
+        assert_intent_fees(
+            intent1,
+            intent1_amount.clone(),
+            intent1_network_fee.clone(),
+            intent1_network_fee,
+        );
 
         // Assert Intent 2: TransferWalletToTreasury
         let intent2 = &action.intents[1];
@@ -416,6 +456,15 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
             }
             _ => panic!("Expected Icrc2TransferFrom transaction"),
         }
+
+        // Assert Intent 2 fee fields (CreatorToTreasury with ICP)
+        let intent2_network_fee = icp_ledger_fee.clone() * 2u64;
+        assert_intent_fees(
+            intent2,
+            Nat::from(CREATE_LINK_FEE),
+            intent2_network_fee.clone(),
+            Nat::from(CREATE_LINK_FEE) + intent2_network_fee,
+        );
 
         // Assert ICRC-112 requests
         assert!(action.icrc_112_requests.is_some());

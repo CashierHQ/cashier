@@ -18,7 +18,7 @@ use transaction_manager::{
     utils::calculator::calculate_link_balance_map,
 };
 
-use crate::apps::link_v2::links::shared::utils::{get_batch_tokens_fee_for_link, set_intent_fees};
+use crate::apps::link_v2::links::shared::utils::get_batch_tokens_fee_for_link;
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -78,14 +78,7 @@ impl SendAction {
                     )
                 })?;
 
-                let network_fee = token_fee_map.get(&address).cloned().ok_or_else(|| {
-                    CanisterError::HandleLogicError(format!(
-                        "Network fee not found for token: {}",
-                        address
-                    ))
-                })?;
-
-                let mut intent = TransferWalletToLinkIntent::create(
+                let intent = TransferWalletToLinkIntent::create(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                     asset_info.asset.clone(),
                     sending_amount.clone(),
@@ -93,9 +86,6 @@ impl SendAction {
                     link_account,
                     link.create_at,
                 )?;
-
-                // Calculate and set fees (sender_id != link.creator → UserToLink)
-                set_intent_fees(&mut intent.intent, link, sender_id, network_fee);
 
                 Ok(intent)
             })

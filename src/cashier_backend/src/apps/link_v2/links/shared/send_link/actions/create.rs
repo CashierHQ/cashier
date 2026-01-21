@@ -25,7 +25,7 @@ use transaction_manager::{
     utils::calculator::{calculate_create_link_fee, calculate_link_balance_map},
 };
 
-use crate::apps::link_v2::links::shared::utils::{get_batch_tokens_fee_for_link, set_intent_fees};
+use crate::apps::link_v2::links::shared::utils::get_batch_tokens_fee_for_link;
 use uuid::Uuid;
 
 #[derive(Debug)]
@@ -80,14 +80,7 @@ impl CreateAction {
                     )
                 })?;
 
-                let network_fee = token_fee_map.get(&address).cloned().ok_or_else(|| {
-                    CanisterError::HandleLogicError(format!(
-                        "Network fee not found for token: {}",
-                        address
-                    ))
-                })?;
-
-                let mut intent = TransferWalletToLinkIntent::create(
+                let intent = TransferWalletToLinkIntent::create(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                     asset_info.asset.clone(),
                     sending_amount.clone(),
@@ -95,9 +88,6 @@ impl CreateAction {
                     link_account,
                     link.create_at,
                 )?;
-
-                // Calculate and set fees
-                set_intent_fees(&mut intent.intent, link, link.creator, network_fee);
 
                 Ok(intent)
             })
@@ -114,7 +104,7 @@ impl CreateAction {
             subaccount: None,
         };
 
-        let mut fee_intent = TransferWalletToTreasuryIntent::create(
+        let fee_intent = TransferWalletToTreasuryIntent::create(
             INTENT_LABEL_LINK_CREATION_FEE.to_string(),
             fee_asset,
             actual_amount,
@@ -123,19 +113,6 @@ impl CreateAction {
             spender_account,
             link.create_at,
         )?;
-
-        // Calculate and set fees for treasury intent
-        let icp_network_fee =
-            token_fee_map
-                .get(&ICP_CANISTER_PRINCIPAL)
-                .cloned()
-                .ok_or_else(|| {
-                    CanisterError::HandleLogicError(format!(
-                        "Network fee not found for ICP: {}",
-                        ICP_CANISTER_PRINCIPAL
-                    ))
-                })?;
-        set_intent_fees(&mut fee_intent.intent, link, link.creator, icp_network_fee);
 
         let mut intents = Vec::<Intent>::new();
         deposit_intents.iter().for_each(|dintent| {

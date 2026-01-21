@@ -5,10 +5,9 @@ use crate::api::state::get_state;
 use candid::{Nat, Principal};
 use cashier_backend_types::{
     error::CanisterError,
-    repository::{common::Asset, intent::v2::Intent, link::v1::Link},
+    repository::{common::Asset, link::v1::Link},
 };
 use cashier_common::{constant::ICP_CANISTER_PRINCIPAL, utils::to_subaccount};
-use fee_calculator::calculate_intent_fees;
 use futures::future;
 use serde_bytes::ByteBuf;
 use std::collections::HashMap;
@@ -155,17 +154,4 @@ pub async fn get_batch_tokens_balance_for_link(
     };
 
     get_batch_tokens_balance(&assets, &link_account).await
-}
-
-/// Sets fee fields on an intent after calculating fees.
-/// # Arguments
-/// * `intent` - The intent to set fee fields on
-/// * `link` - The link associated with this intent
-/// * `caller` - The principal who initiated the action
-/// * `network_fee` - The network fee for the token
-pub fn set_intent_fees(intent: &mut Intent, link: &Link, caller: Principal, network_fee: Nat) {
-    let fee_result = calculate_intent_fees(intent, link, caller, network_fee);
-    intent.intent_total_amount = Some(fee_result.intent_total_amount);
-    intent.intent_total_network_fee = Some(fee_result.intent_total_network_fee);
-    intent.intent_user_fee = Some(fee_result.intent_user_fee);
 }
