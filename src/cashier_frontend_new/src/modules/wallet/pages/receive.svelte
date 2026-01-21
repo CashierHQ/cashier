@@ -6,7 +6,7 @@
   import { locale } from "$lib/i18n";
   import { Copy, Info, ChevronDown } from "lucide-svelte";
   import { toast } from "svelte-sonner";
-  import TokenIcon from "$modules/shared/components/TokenIcon.svelte";
+  import { TokenIcon } from "$modules/imageCache";
   import { authState } from "$modules/auth/state/auth.svelte";
   import { Dialog, DialogContent } from "$lib/shadcn/components/ui/dialog";
   import { SvelteSet } from "svelte/reactivity";

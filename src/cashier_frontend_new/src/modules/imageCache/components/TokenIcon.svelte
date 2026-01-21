@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { getTokenLogo, getCachedTokenImage } from "../utils";
 
   type Props = {
     address: string;
@@ -48,8 +47,8 @@
   // Get text size class
   const textSizeClass = textSizeClasses[size] || "text-xs";
 
-  // Get logo URL - reactively check walletStore cache first
-  // Priority: 1) logo prop, 2) walletStore cache, 3) external URL
+  // Get logo URL - check ImageCache first, then fallback to external URL
+  // Priority: 1) logo prop, 2) ImageCache, 3) external URL
   // This ensures we use cached images when available and only load from external source if not cached
   const imageSrc = $derived.by(() => {
     // If logo prop is provided, use it (it might already be a cached data URL from parent)
@@ -57,12 +56,10 @@
       return logo;
     }
 
-    // First, check walletStore cache reactively - this will update when images are loaded
-    // Access the cache directly to make it reactive
-    const cachedImage = walletStore.getTokenImage(address);
+    // First, check ImageCache - this will return cached data URL if available
+    const cachedImage = getCachedTokenImage(address);
     if (cachedImage) {
       // If cached image is a data URL, use it directly (no network request)
-      // If it's an original URL, browser cache should handle it
       return cachedImage;
     }
 

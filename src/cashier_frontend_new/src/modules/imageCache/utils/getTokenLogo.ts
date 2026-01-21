@@ -1,12 +1,17 @@
+/**
+ * Get token logo URL based on token address
+ * Checks cache first, then returns original URL if not cached
+ */
+
 import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
-import { walletStore } from "$modules/token/state/walletStore.svelte";
+import { getCachedTokenImage } from "./imageCache";
 
 /**
  * Get token logo URL based on token address
- * If image is cached in walletStore, returns cached data URL
+ * If image is cached, returns cached data URL
  * Otherwise returns original URL
  * @param address - Token address (canister ID)
- * @param skipStore - If true, skip checking store and always return original URL (default: false)
+ * @param skipStore - If true, skip checking cache and always return original URL (default: false)
  * @returns URL to the token logo image (data URL if cached, otherwise original URL)
  */
 export function getTokenLogo(
@@ -22,8 +27,8 @@ export function getTokenLogo(
     return `https://api.icexplorer.io/images/${address}`;
   }
 
-  // Try to get cached image from walletStore
-  const cachedImage = walletStore.getTokenImage(address);
+  // Try to get cached image from cache
+  const cachedImage = getCachedTokenImage(address);
   if (cachedImage) {
     return cachedImage;
   }

@@ -5,8 +5,7 @@
     formatUsdAmount,
   } from "$modules/shared/utils/formatNumber";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
-  import TokenIcon from "$modules/shared/components/TokenIcon.svelte";
+  import { getTokenLogo, TokenIcon } from "$modules/imageCache";
 
   type Props = {
     token: TokenWithPriceAndBalance;

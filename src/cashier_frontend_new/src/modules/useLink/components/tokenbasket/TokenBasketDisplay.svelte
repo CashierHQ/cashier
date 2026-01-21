@@ -6,7 +6,7 @@
   import { formatNumber } from "$modules/shared/utils/formatNumber";
   import { SvelteSet } from "svelte/reactivity";
   import { locale } from "$lib/i18n";
-  import TokenIcon from "$modules/shared/components/TokenIcon.svelte";
+  import { TokenIcon } from "$modules/imageCache";
 
   const {
     assets,

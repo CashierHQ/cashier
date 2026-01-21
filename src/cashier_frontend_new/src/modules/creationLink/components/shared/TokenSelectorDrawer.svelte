@@ -11,8 +11,7 @@
   import { Search, X } from "lucide-svelte";
   import { SvelteSet } from "svelte/reactivity";
   import TokenItem from "./TokenItem.svelte";
-  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
-  import { preloadTokenImages } from "$modules/shared/utils/preloadTokenImage";
+  import { getTokenLogo, loadTokenImages } from "$modules/imageCache";
 
   type Props = {
     open?: boolean;
@@ -70,11 +69,11 @@
     } else {
       // Preload images when drawer opens to ensure they're cached
       if (walletStore.query.data && walletStore.query.data.length > 0) {
-        const logoUrls = walletStore.query.data.map((token) =>
-          getTokenLogo(token.address),
-        );
-        // Preload images immediately when drawer opens
-        preloadTokenImages(logoUrls).catch((error) => {
+        const addresses = walletStore.query.data.map((token) => token.address);
+        // Preload images immediately when drawer opens using ImageCache module
+        loadTokenImages(addresses, (address) =>
+          getTokenLogo(address, true),
+        ).catch((error) => {
           console.warn("Failed to preload token images in drawer:", error);
         });
       }

@@ -2,7 +2,7 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { locale } from "$lib/i18n";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
-  import TokenIcon from "$modules/shared/components/TokenIcon.svelte";
+  import { TokenIcon } from "$modules/imageCache";
 
   type AssetWithTokenInfo = {
     address: string;

@@ -7,7 +7,7 @@
   } from "$modules/shared/utils/formatNumber";
   import type { AssetWithTokenInfo } from "$modules/links/utils/feesBreakdown";
   import type { Link } from "$modules/links/types/link/link";
-  import TokenIcon from "$modules/shared/components/TokenIcon.svelte";
+  import { TokenIcon } from "$modules/imageCache";
 
   type Props = {
     assetsWithTokenInfo: AssetWithTokenInfo[];

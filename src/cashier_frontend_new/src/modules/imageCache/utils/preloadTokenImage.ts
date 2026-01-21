@@ -1,4 +1,9 @@
-// Global cache to track preloaded images
+/**
+ * Preload token images utility functions
+ * These functions help preload images before they're needed to improve performance
+ */
+
+// Global cache to track preloaded images by URL
 // Key: image URL, Value: Image object that was preloaded
 const preloadedImagesCache = new Map<string, HTMLImageElement>();
 

@@ -2,10 +2,9 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { Check, X } from "lucide-svelte";
   import { locale } from "$lib/i18n";
-  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+  import { getTokenLogo, TokenIcon } from "$modules/imageCache";
   import type { AssetAndFee } from "$modules/shared/types/feeService";
   import { AssetProcessState } from "$modules/transactionCart/types/txCart";
-  import TokenIcon from "$modules/shared/components/TokenIcon.svelte";
 
   type Props = {
     assets: AssetAndFee[];

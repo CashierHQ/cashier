@@ -11,15 +11,17 @@ import { ICP_LEDGER_CANISTER_ID } from "../constants";
 import { sortWalletTokens } from "../utils/sorter";
 import { tokenPriceStore } from "./tokenPriceStore.svelte";
 import { encodeAccountID } from "$modules/shared/utils/icpAccountId";
-import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+import {
+  getTokenLogo,
+  loadTokenImages,
+  getCachedTokenImage,
+} from "$modules/imageCache";
 
 class WalletStore {
   #walletTokensQuery;
   #preloadedTokenAddresses = new Set<string>();
-  // Store token images as data URLs or blob URLs
-  // Key: token address, Value: data URL or blob URL
-  // Using $state to make it reactive so components can react to cache updates
-  #tokenImageCache = $state(new Map<string, string>());
+  // Note: Image caching is now handled by centralized ImageCache module
+  // This set tracks which addresses have been requested for loading
 
   constructor() {
     this.#walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
@@ -28,6 +30,12 @@ class WalletStore {
         const tokens = await tokenStorageService.listTokens();
 
         // fetch token balances only for enabled tokens
+        // All canister IDs must be predefined in env
+        if (!ICP_LEDGER_CANISTER_ID) {
+          throw new Error(
+            "ICP_LEDGER_CANISTER_ID is not defined in environment variables. Please set PUBLIC_TOKEN_ICP_LEDGER_CANISTER_ID in your .env file.",
+          );
+        }
         const balanceRequests = tokens
           .filter((token) => token.enabled)
           .map((token) => {
@@ -63,9 +71,9 @@ class WalletStore {
         // Reset the wallet tokens data when user logs out
         if (authState.account == null) {
           this.#walletTokensQuery.reset();
-          // Clear preloaded addresses and image cache when user logs out
+          // Clear preloaded addresses when user logs out
+          // Note: Image cache cleanup is handled by ImageCache module if needed
           this.#preloadedTokenAddresses.clear();
-          this.#tokenImageCache.clear();
           return;
         }
         // Refresh the wallet tokens data when user logs in
@@ -118,7 +126,7 @@ class WalletStore {
           ).filter((address) => !currentAddresses.has(address));
           addressesToRemove.forEach((address) => {
             this.#preloadedTokenAddresses.delete(address);
-            this.#tokenImageCache.delete(address);
+            // Note: Cache cleanup is handled by ImageCache module if needed
           });
         }
       });
@@ -131,11 +139,13 @@ class WalletStore {
 
   /**
    * Get cached token image (data URL or blob URL) if available
+   * Uses centralized ImageCache module
    * @param address Token address
    * @returns Cached image URL or null if not cached
    */
   getTokenImage(address: string): string | null {
-    return this.#tokenImageCache.get(address) || null;
+    // Use centralized ImageCache module
+    return getCachedTokenImage(address);
   }
 
   /**
@@ -168,128 +178,23 @@ class WalletStore {
   }
 
   /**
-   * Load images for given addresses and store them in cache
-   * Uses fetch to get blob (works with octet-stream and other content types)
-   * Converts blob to data URL via FileReader for reliable caching
-   * Falls back to Image object if fetch fails
+   * Load images for given addresses using centralized ImageCache module
    * @param addresses Array of token addresses
    */
   async #loadImages(addresses: string[]): Promise<void> {
-    const loadPromises = addresses.map(async (address) => {
-      // Skip ICP logo (it's a local file)
-      if (address === ICP_LEDGER_CANISTER_ID) {
-        return;
-      }
+    // Filter out ICP ledger (it's a local file)
+    const addressesToLoad = addresses.filter(
+      (address) => address !== ICP_LEDGER_CANISTER_ID,
+    );
 
-      const imageUrl = getTokenLogo(address, true); // Use skipStore to get original URL
+    if (addressesToLoad.length === 0) {
+      return;
+    }
 
-      try {
-        // First, try to fetch as blob (works with octet-stream and all content types)
-        try {
-          const response = await fetch(imageUrl, {
-            cache: "force-cache", // Use browser cache if available
-            mode: "cors", // Allow CORS
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-          }
-
-          const blob = await response.blob();
-
-          // Convert blob to data URL using FileReader
-          const dataUrl = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              if (reader.result && typeof reader.result === "string") {
-                resolve(reader.result);
-              } else {
-                reject(new Error("Failed to convert blob to data URL"));
-              }
-            };
-            reader.onerror = () => {
-              reject(new Error("FileReader error"));
-            };
-            reader.readAsDataURL(blob);
-          });
-
-          // Store data URL in cache - this prevents any future network requests
-          this.#tokenImageCache.set(address, dataUrl);
-          return;
-        } catch (fetchError) {
-          // If fetch fails (e.g., CORS or network error), fall back to Image object
-          console.warn(
-            `Fetch failed for ${address}, trying Image fallback:`,
-            fetchError,
-          );
-
-          // Fallback: Use Image object to load image
-          const img = new Image();
-
-          await new Promise<void>((resolve, reject) => {
-            img.onload = () => {
-              // Try to convert to data URL using canvas
-              try {
-                const canvas = document.createElement("canvas");
-                canvas.width = img.naturalWidth;
-                canvas.height = img.naturalHeight;
-                const ctx = canvas.getContext("2d");
-                if (ctx) {
-                  ctx.drawImage(img, 0, 0);
-                  const dataUrl = canvas.toDataURL("image/png");
-                  // Store data URL in cache
-                  this.#tokenImageCache.set(address, dataUrl);
-                  resolve();
-                  return;
-                }
-              } catch (canvasError) {
-                console.warn(
-                  `Canvas conversion failed for ${address}:`,
-                  canvasError,
-                );
-              }
-
-              // If canvas conversion failed, store original URL
-              // Browser should use cache for subsequent requests
-              this.#tokenImageCache.set(address, imageUrl);
-              resolve();
-            };
-
-            img.onerror = () => {
-              reject(new Error(`Failed to load image for token ${address}`));
-            };
-
-            img.src = imageUrl;
-
-            // If image is already complete (cached), handle immediately
-            if (img.complete) {
-              try {
-                const canvas = document.createElement("canvas");
-                canvas.width = img.naturalWidth;
-                canvas.height = img.naturalHeight;
-                const ctx = canvas.getContext("2d");
-                if (ctx) {
-                  ctx.drawImage(img, 0, 0);
-                  const dataUrl = canvas.toDataURL("image/png");
-                  this.#tokenImageCache.set(address, dataUrl);
-                  resolve();
-                  return;
-                }
-              } catch {
-                // Canvas failed, use original URL
-              }
-              this.#tokenImageCache.set(address, imageUrl);
-              resolve();
-            }
-          });
-        }
-      } catch (error) {
-        console.warn(`Failed to load image for token ${address}:`, error);
-        // Don't throw - continue loading other images
-      }
-    });
-
-    await Promise.allSettled(loadPromises);
+    // Use centralized ImageCache module to load images
+    await loadTokenImages(addressesToLoad, (address) =>
+      getTokenLogo(address, true),
+    );
   }
 
   /**

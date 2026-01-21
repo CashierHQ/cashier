@@ -12,7 +12,7 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { SvelteSet } from "svelte/reactivity";
   import { getAssetWithTokenInfo } from "$modules/useLink/utils/getAssetWithTokenInfo";
-  import TokenIcon from "$modules/shared/components/TokenIcon.svelte";
+  import { TokenIcon } from "$modules/imageCache";
 
   interface Props {
     assetInfo: AssetInfo[];

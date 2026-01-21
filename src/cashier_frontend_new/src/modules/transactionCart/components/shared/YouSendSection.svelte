@@ -3,12 +3,12 @@
   import { Check, Info, X } from "lucide-svelte";
   import { locale } from "$lib/i18n";
   import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
-  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+  import { getTokenLogo } from "$modules/imageCache";
   import AssetTransferInfoDrawer from "$modules/creationLink/components/drawers/AssetTransferInfoDrawer.svelte";
   import { FeeType } from "$modules/links/types/fee";
   import type { AssetAndFee } from "$modules/shared/types/feeService";
   import { AssetProcessState } from "$modules/transactionCart/types/txCart";
-  import TokenIcon from "$modules/shared/components/TokenIcon.svelte";
+  import { TokenIcon } from "$modules/imageCache";
 
   type Props = {
     assets: AssetAndFee[];
