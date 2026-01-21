@@ -43,6 +43,17 @@ pub fn calc_inbound_fee(transactions: &[Transaction], network_fee: &Nat) -> Nat 
     network_fee.clone() * Nat::from(tx_count)
 }
 
+/// Calculate outbound fee (link → external wallet)
+/// Outbound always uses ICRC1 (no approval needed), so fee = network_fee × count
+/// # Arguments
+/// * `count` - Number of outbound transfers (typically max_use for CreatorToLink, 1 otherwise)
+/// * `network_fee` - The base network fee
+/// # Returns
+/// * `Nat` - The calculated outbound network fee
+pub fn calc_outbound_fee(count: u64, network_fee: &Nat) -> Nat {
+    network_fee.clone() * Nat::from(count)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -170,5 +181,23 @@ mod tests {
         let txs: Vec<Transaction> = vec![];
         let fee = Nat::from(10u64);
         assert_eq!(calc_inbound_fee(&txs, &fee), Nat::from(0u64)); // 0 txs
+    }
+
+    #[test]
+    fn test_calc_outbound_fee_single() {
+        let fee = Nat::from(10u64);
+        assert_eq!(calc_outbound_fee(1, &fee), Nat::from(10u64));
+    }
+
+    #[test]
+    fn test_calc_outbound_fee_multi() {
+        let fee = Nat::from(10u64);
+        assert_eq!(calc_outbound_fee(5, &fee), Nat::from(50u64));
+    }
+
+    #[test]
+    fn test_calc_outbound_fee_zero() {
+        let fee = Nat::from(10u64);
+        assert_eq!(calc_outbound_fee(0, &fee), Nat::from(0u64));
     }
 }

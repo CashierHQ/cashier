@@ -13,6 +13,7 @@ mod strategies;
 mod traits;
 mod types;
 
+pub use strategies::calc_outbound_fee;
 pub use traits::IntentFeeStrategy;
 pub use types::{IntentFeeResult, IntentFlow};
 

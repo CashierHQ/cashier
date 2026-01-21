@@ -6,7 +6,7 @@ use cashier_backend_types::repository::intent::v2::Intent;
 use cashier_backend_types::repository::link::v1::Link;
 use cashier_backend_types::repository::transaction::v1::Transaction;
 
-use super::helpers::get_intent_amount;
+use super::helpers::{calc_outbound_fee, get_intent_amount};
 use crate::traits::IntentFeeStrategy;
 use crate::types::IntentFeeResult;
 
@@ -22,8 +22,8 @@ impl IntentFeeStrategy for LinkToUserStrategy {
     ) -> IntentFeeResult {
         let amount = get_intent_amount(intent);
 
-        // 0 inbound (link already has funds) + fee outbound
-        let outbound_fee = network_fee;
+        // 0 inbound (link already has funds) + fee × 1 outbound
+        let outbound_fee = calc_outbound_fee(1, &network_fee);
 
         // User receives - pays nothing
         IntentFeeResult {

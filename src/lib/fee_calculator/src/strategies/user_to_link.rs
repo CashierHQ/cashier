@@ -6,7 +6,7 @@ use cashier_backend_types::repository::intent::v2::Intent;
 use cashier_backend_types::repository::link::v1::Link;
 use cashier_backend_types::repository::transaction::v1::Transaction;
 
-use super::helpers::{calc_inbound_fee, get_intent_amount};
+use super::helpers::{calc_inbound_fee, calc_outbound_fee, get_intent_amount};
 use crate::traits::IntentFeeStrategy;
 use crate::types::IntentFeeResult;
 
@@ -23,9 +23,9 @@ impl IntentFeeStrategy for UserToLinkStrategy {
         let amount = get_intent_amount(intent);
 
         // Inbound fee from transactions (source of truth)
-        // Outbound: fee * 1 (single claim by creator)
+        // Outbound: fee × 1 (single claim by creator)
         let inbound_fee = calc_inbound_fee(transactions, &network_fee);
-        let outbound_fee = network_fee;
+        let outbound_fee = calc_outbound_fee(1, &network_fee);
         let net_fee = inbound_fee + outbound_fee;
 
         // User pays: network fee (amount is their contribution)

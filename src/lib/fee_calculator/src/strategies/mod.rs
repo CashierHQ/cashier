@@ -13,6 +13,7 @@ use crate::types::IntentFlow;
 
 pub use creator_to_link::CreatorToLinkStrategy;
 pub use creator_to_treasury::CreatorToTreasuryStrategy;
+pub use helpers::calc_outbound_fee;
 pub use link_to_creator::LinkToCreatorStrategy;
 pub use link_to_user::LinkToUserStrategy;
 pub use user_to_link::UserToLinkStrategy;
