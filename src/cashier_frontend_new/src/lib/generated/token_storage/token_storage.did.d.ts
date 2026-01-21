@@ -15,7 +15,6 @@ export interface BlockConfirmation {
 export interface BridgeAssetInfo {
   'decimals' : number,
   'asset_type' : BridgeAssetType,
-  'ledger_id' : [] | [Principal],
   'asset_id' : string,
   'amount' : bigint,
 }
@@ -182,6 +181,7 @@ export interface UserBridgeTransactionDto {
   'block_confirmations' : Array<BlockConfirmation>,
   'block_id' : [] | [bigint],
   'asset_infos' : Array<BridgeAssetInfo>,
+  'total_amount' : [] | [bigint],
   'btc_txid' : [] | [string],
   'icp_address' : Principal,
   'created_at_ts' : bigint,

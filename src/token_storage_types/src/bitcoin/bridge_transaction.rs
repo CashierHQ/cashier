@@ -96,7 +96,6 @@ pub enum BridgeType {
 pub struct BridgeAssetInfo {
     pub asset_type: BridgeAssetType,
     pub asset_id: String,
-    pub ledger_id: Option<Principal>,
     pub amount: Nat,
     pub decimals: u8,
 }

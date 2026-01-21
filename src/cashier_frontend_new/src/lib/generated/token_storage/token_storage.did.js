@@ -148,7 +148,6 @@ export const idlFactory = ({ IDL }) => {
   const BridgeAssetInfo = IDL.Record({
     'decimals' : IDL.Nat8,
     'asset_type' : BridgeAssetType,
-    'ledger_id' : IDL.Opt(IDL.Principal),
     'asset_id' : IDL.Text,
     'amount' : IDL.Nat,
   });
@@ -176,6 +175,7 @@ export const idlFactory = ({ IDL }) => {
     'block_confirmations' : IDL.Vec(BlockConfirmation),
     'block_id' : IDL.Opt(IDL.Nat),
     'asset_infos' : IDL.Vec(BridgeAssetInfo),
+    'total_amount' : IDL.Opt(IDL.Nat),
     'btc_txid' : IDL.Opt(IDL.Text),
     'icp_address' : IDL.Principal,
     'created_at_ts' : IDL.Nat64,

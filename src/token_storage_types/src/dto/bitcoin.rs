@@ -47,6 +47,7 @@ pub struct UserBridgeTransactionDto {
     pub deposit_fee: Option<Nat>,
     pub withdrawal_fee: Option<Nat>,
     pub created_at_ts: u64,
+    pub total_amount: Option<Nat>,
     pub status: BridgeTransactionStatus,
 }
 
@@ -64,6 +65,7 @@ impl From<BridgeTransaction> for UserBridgeTransactionDto {
             deposit_fee: tx.deposit_fee,
             withdrawal_fee: tx.withdrawal_fee,
             created_at_ts: tx.created_at_ts,
+            total_amount: tx.total_amount,
             status: tx.status,
         }
     }

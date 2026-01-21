@@ -253,8 +253,8 @@
             {locale.t("wallet.receive.btcMempoolInfoLabel")}
           </Label>
           <div class="text-sm text-gray-600">
-            {#if walletBridgeStore.mempoolTxs && walletBridgeStore.mempoolTxs.length > 0}
-                {#each walletBridgeStore.mempoolTxs as transaction (transaction.txid)}
+            {#if walletBridgeStore.bridgeTxs && walletBridgeStore.bridgeTxs.length > 0}
+                {#each walletBridgeStore.bridgeTxs as transaction (transaction.bridge_id)}
                   <ImportingTransactionItem
                     {transaction}
                     onSelect={(txid: string) => {

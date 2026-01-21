@@ -125,7 +125,6 @@ mod tests {
         let asset_infos = vec![BridgeAssetInfo {
             asset_type: BridgeAssetType::BTC,
             asset_id: "btc".to_string(),
-            ledger_id: Some(random_principal_id()),
             amount: Nat::from(1000u64),
             decimals: 8,
         }];
@@ -163,7 +162,6 @@ mod tests {
         let asset_infos = vec![BridgeAssetInfo {
             asset_type: BridgeAssetType::BTC,
             asset_id: "btc".to_string(),
-            ledger_id: Some(random_principal_id()),
             amount: Nat::from(1000u64),
             decimals: 8,
         }];
@@ -207,7 +205,6 @@ mod tests {
         let asset_infos = vec![BridgeAssetInfo {
             asset_type: BridgeAssetType::BTC,
             asset_id: "btc".to_string(),
-            ledger_id: Some(random_principal_id()),
             amount: Nat::from(1000u64),
             decimals: 8,
         }];
@@ -254,7 +251,6 @@ mod tests {
         let asset_infos = vec![BridgeAssetInfo {
             asset_type: BridgeAssetType::BTC,
             asset_id: "btc".to_string(),
-            ledger_id: Some(random_principal_id()),
             amount: Nat::from(1000u64),
             decimals: 8,
         }];

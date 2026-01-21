@@ -123,6 +123,10 @@ class WalletBridgeStore {
     return this.#mempoolTxQuery.data;
   }
 
+  get bridgeTxs() {
+    return this.#bridgeTxQuery.data;
+  }
+
   /**
    * Look up mempool transactions by BTC address.
    * @param address
