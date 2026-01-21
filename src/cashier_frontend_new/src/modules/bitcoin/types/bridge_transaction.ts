@@ -41,6 +41,12 @@ export class BridgeTransactionMapper {
   public static fromTokenStorageBridgeTransaction(
     data: tokenStorage.UserBridgeTransactionDto,
   ): BridgeTransaction {
+    let total_amount = 0n;
+    let data_total_amount = data.total_amount as [] | [bigint];
+    if (data_total_amount.length === 1) {
+      total_amount = data_total_amount[0];
+    }
+
     return {
       bridge_id: data.bridge_id,
       icp_address: data.icp_address.toText(),
@@ -56,7 +62,7 @@ export class BridgeTransactionMapper {
       bridge_type: BridgeTransactionMapper.bridgeTypeFromTokenStorage(
         data.bridge_type,
       ),
-      total_amount: data.total_amount,
+      total_amount,
       created_at_ts: data.created_at_ts,
     };
   }

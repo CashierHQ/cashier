@@ -5,26 +5,26 @@
   } from "lucide-svelte";
 
   interface Props {
-    transaction: BridgeTransaction;
+    bridge: BridgeTransaction;
     onSelect: (txid: string) => void;
   }
 
-  let { transaction, onSelect }: Props = $props();
+  let { bridge, onSelect }: Props = $props();
   let typeTitle = $derived.by(() => {
-    if (transaction.bridge_type === BridgeType.Import) {
+    if (bridge.bridge_type === BridgeType.Import) {
       return "Importing";
     }
     return "Exporting";
   });
   let amount = $derived.by(() => {
-    if (transaction.total_amount) {
+    if (bridge.total_amount) {
       // Assuming total_amount is in satoshis for BTC
-      return (Number(transaction.total_amount) / 100_000_000).toFixed(8);
+      return (Number(bridge.total_amount) / 100_000_000).toFixed(8);
     }
     return "N/A";
   });
 </script>
-<button class="w-full text-left" onclick={() => onSelect(transaction.bridge_id)}>
+<button class="w-full text-left" onclick={() => onSelect(bridge.bridge_id)}>
 <div class="space-y-3">
   <div class="flex items-start gap-3 py-2">
     <div
@@ -44,7 +44,7 @@
       </div>
       <div class="flex justify-between items-start">
         <p class="text-[10px]/[100%] text-grey">
-          From: {transaction.btc_address}
+          From: {bridge.btc_address}
         </p>
         <p class="text-[10px]/[100%] text-grey text-right">
           $0.123

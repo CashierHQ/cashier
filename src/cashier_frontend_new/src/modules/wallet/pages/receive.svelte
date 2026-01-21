@@ -10,7 +10,7 @@
   import NavBar from "$modules/token/components/navBar.svelte";
   import { CKBTC_CANISTER_ID, ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import ImportingTransactionItem from "$modules/wallet/components/bitcoin/importingTransactionItem.svelte";
+  import BridgeItem from "$modules/wallet/components/bitcoin/bridgeItem.svelte";
   import { walletBridgeStore } from "$modules/wallet/state/walletBridgeStore.svelte";
   import { ChevronDown, Copy, Info } from "lucide-svelte";
   import { toast } from "svelte-sonner";
@@ -254,9 +254,9 @@
           </Label>
           <div class="text-sm text-gray-600">
             {#if walletBridgeStore.bridgeTxs && walletBridgeStore.bridgeTxs.length > 0}
-                {#each walletBridgeStore.bridgeTxs as transaction (transaction.bridge_id)}
-                  <ImportingTransactionItem
-                    {transaction}
+                {#each walletBridgeStore.bridgeTxs as bridge (bridge.bridge_id)}
+                  <BridgeItem
+                    {bridge}
                     onSelect={(txid: string) => {
                       navigator.clipboard.writeText(txid);
                       toast.success(locale.t("wallet.receive.copySuccess"));
