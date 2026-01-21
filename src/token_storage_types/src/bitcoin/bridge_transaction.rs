@@ -38,7 +38,7 @@ impl From<CreateBridgeTransactionInputArg> for BridgeTransaction {
             block_confirmations: vec![],
             minter_fee: None,
             btc_fee: None,
-            created_at_ts: 0,
+            created_at_ts: input.created_at_ts,
             status: BridgeTransactionStatus::Created,
         }
     }
@@ -138,6 +138,7 @@ mod tests {
             btc_address: "test_btc_address".to_string(),
             asset_infos: vec![],
             bridge_type: BridgeType::Import,
+            created_at_ts: 0,
         };
 
         // Act

@@ -34,10 +34,9 @@ pub async fn user_create_bridge_transaction(
 ) -> Result<UserBridgeTransactionDto, CanisterError> {
     let mut state = get_state();
     let user = msg_caller();
-    let created_at_ts = state.env.time();
     state
         .user_ckbtc
-        .create_bridge_transaction(user, input, created_at_ts)
+        .create_bridge_transaction(user, input)
         .await
 }
 

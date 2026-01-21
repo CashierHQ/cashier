@@ -71,10 +71,8 @@ impl<R: Repositories, M: CkBtcMinterTrait> UserCkBtcService<R, M> {
         &mut self,
         user: Principal,
         input: CreateBridgeTransactionInputArg,
-        created_ts: u64,
     ) -> Result<UserBridgeTransactionDto, CanisterError> {
-        let mut bridge_transaction = BridgeTransaction::from(input);
-        bridge_transaction.created_at_ts = created_ts;
+        let bridge_transaction = BridgeTransaction::from(input);
 
         self.user_bridge_transaction_repository
             .upsert_bridge_transaction(
@@ -187,12 +185,13 @@ mod tests {
             btc_address: "btc_address_123".to_string(),
             bridge_type: BridgeType::Import,
             asset_infos: vec![],
+            created_at_ts: 0,
         };
         let created_ts = 1620000000u64;
 
         // Act
         let result = service
-            .create_bridge_transaction(user_id, input.clone(), created_ts)
+            .create_bridge_transaction(user_id, input.clone())
             .await
             .unwrap();
 
@@ -216,11 +215,12 @@ mod tests {
             btc_address: "btc_address_123".to_string(),
             bridge_type: BridgeType::Import,
             asset_infos: vec![],
+            created_at_ts: 0,
         };
         let created_ts = 1620000000u64;
 
         let created_transaction = service
-            .create_bridge_transaction(user_id, create_input, created_ts)
+            .create_bridge_transaction(user_id, create_input)
             .await
             .unwrap();
 
@@ -277,6 +277,7 @@ mod tests {
                 btc_address: format!("btc_address_{}", i),
                 bridge_type: BridgeType::Import,
                 asset_infos: vec![],
+                created_at_ts: 0,
             };
             let mut transaction = BridgeTransaction::from(input);
             transaction.bridge_id = format!("bridge{}", i);

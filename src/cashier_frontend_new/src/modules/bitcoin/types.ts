@@ -3,6 +3,7 @@ export type BitcoinTransaction = {
   vin: UTXO[];
   vout: UTXO[];
   is_confirmed: boolean;
+  created_at_ts: number;
 };
 
 export type UTXO = {
@@ -29,6 +30,7 @@ export class BitcoinTransactionMapper {
         address: output.scriptpubkey_address,
       })),
       is_confirmed: data.is_confirmed,
+      created_at_ts: data.firstSeen,
     };
   }
 }

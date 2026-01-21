@@ -66,6 +66,7 @@ async fn it_should_update_bridge_transaction_for_valid_user() {
             btc_address: "tb1qexampleaddress0000000000000000000000000".to_string(),
             asset_infos: vec![],
             bridge_type: BridgeType::Import,
+            created_at_ts: 0,
         };
 
         // Act
