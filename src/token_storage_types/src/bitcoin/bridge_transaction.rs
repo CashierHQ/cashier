@@ -42,6 +42,10 @@ impl BridgeTransactionMapper {
             })?;
             bridge_id = format!("import_{}", btc_txid);
         }
+        let mut total_amount = Nat::from(0u32);
+        for asset_info in &input.asset_infos {
+            total_amount += asset_info.amount.clone();
+        }
 
         Ok(BridgeTransaction {
             bridge_id,
@@ -54,7 +58,7 @@ impl BridgeTransactionMapper {
             block_confirmations: vec![],
             deposit_fee: None,
             withdrawal_fee: None,
-            total_amount: None,
+            total_amount: Some(total_amount),
             created_at_ts: input.created_at_ts,
             status: BridgeTransactionStatus::Created,
         })

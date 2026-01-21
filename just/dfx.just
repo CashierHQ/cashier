@@ -1,5 +1,5 @@
 DFX_LOGFILE:="./target/dfx_tests.log"
-CKBTC_LEDGER_ID:="mc6ru-gyaaa-aaaar-qaaaq-cai"
+CKBTC_LEDGER_ID:="mxzaz-hqaaa-aaaar-qaada-cai"
 CKBTC_MINTER_ID:="ml52i-qqaaa-aaaar-qaaba-cai"
 CKBTC_KYT_ID:="pvm5g-xaaaa-aaaar-qaaia-cai"
 

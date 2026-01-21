@@ -2,8 +2,13 @@ import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { mempoolService } from "$modules/bitcoin/services/mempoolService";
 import { type BitcoinTransaction } from "$modules/bitcoin/types/bitcoin_transaction";
-import { type BridgeTransaction } from "$modules/bitcoin/types/bridge_transaction";
+import {
+  type BridgeTransaction,
+  type BridgeTransactionWithUsdValue,
+} from "$modules/bitcoin/types/bridge_transaction";
+import { CKBTC_CANISTER_ID } from "$modules/token/constants";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
+import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
 import { PersistedState } from "runed";
 
 /**
@@ -18,13 +23,29 @@ class BridgeStore {
   #bridgeTxQuery;
 
   constructor() {
-    this.#bridgeTxQuery = managedState<BridgeTransaction[]>({
+    this.#bridgeTxQuery = managedState<BridgeTransactionWithUsdValue[]>({
       queryFn: async () => {
         const bridgeTxs = await tokenStorageService.getBridgeTransactions(
           0,
           10,
         );
-        return bridgeTxs;
+        const btcPriceUSD =
+          tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID);
+
+        const enrichedBridgeTxs: BridgeTransactionWithUsdValue[] =
+          bridgeTxs.map((tx: BridgeTransaction) => {
+            let total_amount_usd = 0;
+            if (btcPriceUSD && tx.total_amount) {
+              const amountInBtc = Number(tx.total_amount) / 100_000_000;
+              total_amount_usd = amountInBtc * btcPriceUSD;
+            }
+            return {
+              ...tx,
+              total_amount_usd: total_amount_usd,
+            };
+          });
+
+        return enrichedBridgeTxs;
       },
       refetchInterval: 30000, // refresh every 30 seconds
       persistedKey: ["walletBridgeStore_bridgeTxs"],
@@ -76,10 +97,14 @@ class BridgeStore {
 
       $effect(() => {
         if (this.#mempoolTxQuery.data) {
-          console.log("mempoolTXs changed:", this.#mempoolTxQuery.data);
           this.#mempoolTxQuery.data.forEach(async (tx: BitcoinTransaction) => {
+            if (this.isMempoolTxProcessed(tx.txid)) {
+              return;
+            }
+
             const result = await tokenStorageService.createBridgeTransaction(
               tx.sender,
+              this.#btcAddress.current as string,
               tx,
               true,
             );
@@ -162,6 +187,13 @@ class BridgeStore {
       (tx): tx is BitcoinTransaction =>
         tx !== null && tx.vout.some((output) => output.address === address),
     );
+  }
+
+  isMempoolTxProcessed(txid: string): boolean {
+    if (!this.bridgeTxs) {
+      return false;
+    }
+    return this.bridgeTxs.some((tx) => tx.bridge_id === "import_" + txid);
   }
 }
 

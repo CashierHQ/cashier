@@ -1,13 +1,13 @@
 <script lang="ts">
   import { locale } from '$lib/i18n';
-  import { type BridgeTransaction, BridgeTransactionStatus, BridgeType } from '$modules/bitcoin/types/bridge_transaction';
+  import { BridgeTransactionStatus, type BridgeTransactionWithUsdValue, BridgeType } from '$modules/bitcoin/types/bridge_transaction';
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import {
       ArrowDownLeft
   } from "lucide-svelte";
 
   interface Props {
-    bridge: BridgeTransaction;
+    bridge: BridgeTransactionWithUsdValue;
     onSelect: (txid: string) => void;
   }
 
@@ -51,7 +51,7 @@
           {typeTitle}
         </p>
         <p class="text-[#222222] text-right">
-          {amount}
+          +{amount}
         </p>
       </div>
       <div class="flex justify-between items-start">
@@ -59,7 +59,7 @@
           From: {transformShortAddress(bridge.btc_address)}
         </p>
         <p class="text-[10px]/[100%] text-grey text-right">
-          $0.123
+          ${bridge.total_amount_usd ?? "0.00"}
         </p>
       </div>
     </div>

@@ -51,19 +51,28 @@ export class BitcoinTransactionMapper {
 
   public static toCreateBridgeTransactionRequest(
     icpAddress: string,
-    btcAddress: string,
+    senderBtcAddress: string,
+    receiverBtcAddress: string,
     bitcoinTransaction: BitcoinTransaction,
     isImporting: boolean,
   ): tokenStorage.CreateBridgeTransactionInputArg {
-    let asset_infos = [
-      {
-        asset_type: { BTC: null },
-        asset_id: "",
-        ledger_id: [] as [] | [Principal],
-        amount: 0n,
-        decimals: 8,
-      },
-    ];
+    console.log("bitcoinTransaction:", bitcoinTransaction);
+    let asset_infos: tokenStorage.BridgeAssetInfo[] = [];
+    let btcAddress = senderBtcAddress;
+    if (isImporting) {
+      bitcoinTransaction.vout.forEach((output) => {
+        if (output.address.toLowerCase() === receiverBtcAddress.toLowerCase()) {
+          asset_infos.push({
+            asset_type: { BTC: null },
+            asset_id: "UTXO",
+            amount: BigInt(output.value_satoshis),
+            decimals: 8,
+          });
+        }
+      });
+    } else {
+      btcAddress = receiverBtcAddress;
+    }
 
     return {
       btc_txid: [bitcoinTransaction.txid],

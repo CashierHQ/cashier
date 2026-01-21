@@ -206,7 +206,8 @@ class TokenStorageService {
    * @returns
    */
   public async createBridgeTransaction(
-    btcAddress: string,
+    senderBtcAddress: string,
+    receiverBtcAddress: string,
     bitcoinTransaction: BitcoinTransaction,
     isImporting: boolean,
   ): Promise<Result<string, string>> {
@@ -219,7 +220,8 @@ class TokenStorageService {
       const inputArgs =
         BitcoinTransactionMapper.toCreateBridgeTransactionRequest(
           authState.account?.owner || "",
-          btcAddress,
+          senderBtcAddress,
+          receiverBtcAddress,
           bitcoinTransaction,
           isImporting,
         );

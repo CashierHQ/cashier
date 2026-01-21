@@ -1,5 +1,9 @@
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
 
+export type BridgeTransactionWithUsdValue = BridgeTransaction & {
+  total_amount_usd: number;
+};
+
 export type BridgeTransaction = {
   bridge_id: string;
   icp_address: string;
