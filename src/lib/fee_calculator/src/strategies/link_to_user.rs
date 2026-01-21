@@ -4,6 +4,7 @@
 use candid::Nat;
 use cashier_backend_types::repository::intent::v2::Intent;
 use cashier_backend_types::repository::link::v1::Link;
+use cashier_backend_types::repository::transaction::v1::Transaction;
 
 use super::helpers::get_intent_amount;
 use crate::traits::IntentFeeStrategy;
@@ -12,7 +13,13 @@ use crate::types::IntentFeeResult;
 pub struct LinkToUserStrategy;
 
 impl IntentFeeStrategy for LinkToUserStrategy {
-    fn calculate(&self, intent: &Intent, _link: &Link, network_fee: Nat) -> IntentFeeResult {
+    fn calculate(
+        &self,
+        _link: &Link,
+        intent: &Intent,
+        _transactions: &[Transaction],
+        network_fee: Nat,
+    ) -> IntentFeeResult {
         let amount = get_intent_amount(intent);
 
         // 0 inbound (link already has funds) + fee outbound
@@ -66,7 +73,7 @@ mod tests {
         let strategy = LinkToUserStrategy;
         let intent = make_intent(1000);
         let link = make_link();
-        let result = strategy.calculate(&intent, &link, Nat::from(10u64));
+        let result = strategy.calculate(&link, &intent, &[], Nat::from(10u64));
 
         // User receives - pays nothing
         assert_eq!(result.intent_total_amount, Nat::from(1000u64));

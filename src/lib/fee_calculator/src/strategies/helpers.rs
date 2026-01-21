@@ -4,6 +4,7 @@
 use candid::Nat;
 use cashier_backend_types::repository::intent::v1::IntentType;
 use cashier_backend_types::repository::intent::v2::Intent;
+use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol, Transaction};
 
 /// Extract amount from intent
 /// # Arguments
@@ -17,27 +18,29 @@ pub fn get_intent_amount(intent: &Intent) -> Nat {
     }
 }
 
-/// Smart detect ICRC1 vs ICRC2 from intent type
+/// Calculate inbound fee from transactions (source of truth)
+/// Counts actual transaction types to determine fee multiplier
+/// - ICRC1: 1 tx (Icrc1Transfer) = 1 fee
+/// - ICRC2: 2 txs (Icrc2Approve + Icrc2TransferFrom) = 2 fees
 /// # Arguments
-/// * `intent` - The intent to analyze
-/// # Returns
-/// * `bool` - True if ICRC2 (TransferFrom), False if ICRC
-pub fn is_icrc2(intent: &Intent) -> bool {
-    matches!(intent.r#type, IntentType::TransferFrom(_))
-}
-
-/// Calculate inbound network fee based on transfer type
-/// # Arguments
-/// * `intent` - The intent to analyze
+/// * `transactions` - The transactions for this intent
 /// * `network_fee` - The base network fee
 /// # Returns
 /// * `Nat` - The calculated inbound network fee
-pub fn calc_inbound_fee(intent: &Intent, network_fee: &Nat) -> Nat {
-    if is_icrc2(intent) {
-        network_fee.clone() * Nat::from(2u64) // approve + transfer_from
-    } else {
-        network_fee.clone() // just transfer
-    }
+pub fn calc_inbound_fee(transactions: &[Transaction], network_fee: &Nat) -> Nat {
+    let tx_count = transactions
+        .iter()
+        .filter(|tx| {
+            matches!(
+                &tx.protocol,
+                Protocol::IC(IcTransaction::Icrc1Transfer(_))
+                    | Protocol::IC(IcTransaction::Icrc2Approve(_))
+                    | Protocol::IC(IcTransaction::Icrc2TransferFrom(_))
+            )
+        })
+        .count() as u64;
+
+    network_fee.clone() * Nat::from(tx_count)
 }
 
 #[cfg(test)]
@@ -45,6 +48,9 @@ mod tests {
     use super::*;
     use cashier_backend_types::repository::common::{Asset, Wallet};
     use cashier_backend_types::repository::intent::v1::{TransferData, TransferFromData};
+    use cashier_backend_types::repository::transaction::v1::{
+        FromCallType, Icrc1Transfer, Icrc2Approve, Icrc2TransferFrom, TransactionState,
+    };
 
     fn make_transfer_intent(amount: u64) -> Intent {
         Intent {
@@ -73,6 +79,66 @@ mod tests {
         }
     }
 
+    fn make_icrc1_tx() -> Transaction {
+        Transaction {
+            id: "tx1".to_string(),
+            created_at: 0,
+            state: TransactionState::Created,
+            dependency: None,
+            group: 0,
+            from_call_type: FromCallType::Wallet,
+            protocol: Protocol::IC(IcTransaction::Icrc1Transfer(Icrc1Transfer {
+                from: Wallet::default(),
+                to: Wallet::default(),
+                asset: Asset::default(),
+                amount: Nat::from(100u64),
+                memo: None,
+                ts: None,
+            })),
+            start_ts: None,
+        }
+    }
+
+    fn make_icrc2_txs() -> Vec<Transaction> {
+        vec![
+            Transaction {
+                id: "tx1".to_string(),
+                created_at: 0,
+                state: TransactionState::Created,
+                dependency: None,
+                group: 0,
+                from_call_type: FromCallType::Wallet,
+                protocol: Protocol::IC(IcTransaction::Icrc2Approve(Icrc2Approve {
+                    from: Wallet::default(),
+                    spender: Wallet::default(),
+                    asset: Asset::default(),
+                    amount: Nat::from(100u64),
+                    memo: None,
+                    ts: None,
+                })),
+                start_ts: None,
+            },
+            Transaction {
+                id: "tx2".to_string(),
+                created_at: 0,
+                state: TransactionState::Created,
+                dependency: None,
+                group: 0,
+                from_call_type: FromCallType::Wallet,
+                protocol: Protocol::IC(IcTransaction::Icrc2TransferFrom(Icrc2TransferFrom {
+                    from: Wallet::default(),
+                    to: Wallet::default(),
+                    spender: Wallet::default(),
+                    asset: Asset::default(),
+                    amount: Nat::from(100u64),
+                    memo: None,
+                    ts: None,
+                })),
+                start_ts: None,
+            },
+        ]
+    }
+
     #[test]
     fn test_get_intent_amount_transfer() {
         let intent = make_transfer_intent(1000);
@@ -86,28 +152,23 @@ mod tests {
     }
 
     #[test]
-    fn test_is_icrc2_transfer() {
-        let intent = make_transfer_intent(100);
-        assert!(!is_icrc2(&intent));
-    }
-
-    #[test]
-    fn test_is_icrc2_transfer_from() {
-        let intent = make_transfer_from_intent(100);
-        assert!(is_icrc2(&intent));
-    }
-
-    #[test]
     fn test_calc_inbound_fee_icrc1() {
-        let intent = make_transfer_intent(100);
+        let txs = vec![make_icrc1_tx()];
         let fee = Nat::from(10u64);
-        assert_eq!(calc_inbound_fee(&intent, &fee), Nat::from(10u64));
+        assert_eq!(calc_inbound_fee(&txs, &fee), Nat::from(10u64)); // 1 tx
     }
 
     #[test]
     fn test_calc_inbound_fee_icrc2() {
-        let intent = make_transfer_from_intent(100);
+        let txs = make_icrc2_txs();
         let fee = Nat::from(10u64);
-        assert_eq!(calc_inbound_fee(&intent, &fee), Nat::from(20u64));
+        assert_eq!(calc_inbound_fee(&txs, &fee), Nat::from(20u64)); // 2 txs
+    }
+
+    #[test]
+    fn test_calc_inbound_fee_empty() {
+        let txs: Vec<Transaction> = vec![];
+        let fee = Nat::from(10u64);
+        assert_eq!(calc_inbound_fee(&txs, &fee), Nat::from(0u64)); // 0 txs
     }
 }
