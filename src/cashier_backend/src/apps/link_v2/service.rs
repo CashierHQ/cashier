@@ -171,26 +171,26 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
                 Asset::IC { address } => address,
             });
 
-            if let Some(address) = token_address {
-                if let Some(network_fee) = token_fee_map.get(&address) {
-                    // Get transactions for this intent (source of truth for ICRC1/ICRC2 detection)
-                    let transactions = result
-                        .create_action_result
-                        .intent_txs_map
-                        .get(&intent.id)
-                        .map(|txs| txs.as_slice())
-                        .unwrap_or(&[]);
-                    let fee_result = calculate_intent_fees(
-                        &link_model_for_fees,
-                        intent,
-                        transactions,
-                        caller,
-                        network_fee.clone(),
-                    );
-                    intent.intent_total_amount = Some(fee_result.intent_total_amount);
-                    intent.intent_total_network_fee = Some(fee_result.intent_total_network_fee);
-                    intent.intent_user_fee = Some(fee_result.intent_user_fee);
-                }
+            if let Some(address) = token_address
+                && let Some(network_fee) = token_fee_map.get(&address)
+            {
+                // Get transactions for this intent (source of truth for ICRC1/ICRC2 detection)
+                let transactions = result
+                    .create_action_result
+                    .intent_txs_map
+                    .get(&intent.id)
+                    .map(Vec::as_slice)
+                    .unwrap_or(&[]);
+                let fee_result = calculate_intent_fees(
+                    &link_model_for_fees,
+                    intent,
+                    transactions,
+                    caller,
+                    network_fee.clone(),
+                );
+                intent.intent_total_amount = Some(fee_result.intent_total_amount);
+                intent.intent_total_network_fee = Some(fee_result.intent_total_network_fee);
+                intent.intent_user_fee = Some(fee_result.intent_user_fee);
             }
         }
 

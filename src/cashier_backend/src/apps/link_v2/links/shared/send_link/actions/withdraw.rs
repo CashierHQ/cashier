@@ -71,7 +71,7 @@ impl WithdrawAction {
                 let sending_amount = if sending_amount <= fee_amount {
                     Nat::from(0u64)
                 } else {
-                    sending_amount - fee_amount.clone()
+                    sending_amount - fee_amount
                 };
 
                 let intent = TransferLinkToWalletIntent::create(

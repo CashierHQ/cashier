@@ -21,7 +21,6 @@ pub struct Intent {
     pub label: String,
 }
 
-
 impl Default for Intent {
     fn default() -> Self {
         Self {

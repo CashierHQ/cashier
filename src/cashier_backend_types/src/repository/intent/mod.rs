@@ -44,8 +44,8 @@ impl Codec<v2::Intent> for IntentCodec {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use candid::Nat;
     use crate::repository::common::{Asset, Chain, Wallet};
+    use candid::Nat;
     use v1::{IntentState, IntentTask, IntentType, TransferData};
 
     fn make_v1_intent() -> v1::Intent {
@@ -123,7 +123,10 @@ mod tests {
         assert_eq!(decoded.id, v2_intent.id);
         assert_eq!(decoded.state, v2_intent.state);
         assert_eq!(decoded.intent_total_amount, v2_intent.intent_total_amount);
-        assert_eq!(decoded.intent_total_network_fee, v2_intent.intent_total_network_fee);
+        assert_eq!(
+            decoded.intent_total_network_fee,
+            v2_intent.intent_total_network_fee
+        );
         assert_eq!(decoded.intent_user_fee, v2_intent.intent_user_fee);
     }
 
