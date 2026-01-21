@@ -3,6 +3,7 @@
 
 use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
 use crate::cashier_backend::link_v2::send_basket::fixture::activate_basket_link_v2_fixture;
+use crate::utils::intent_fee::assert_intent_fees;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
@@ -77,7 +78,7 @@ async fn it_should_withdraw_icp_token_basket_linkv2_successfully() {
         let link_account = link_id_to_account(&test_fixture.ctx, &link_id);
         let link_balance_before = icp_ledger_client.balance_of(&link_account).await.unwrap();
         let withdraw_balance = if link_balance_before > icp_ledger_fee {
-            link_balance_before - icp_ledger_fee
+            link_balance_before - icp_ledger_fee.clone()
         } else {
             Nat::from(0u64)
         };
@@ -135,6 +136,14 @@ async fn it_should_withdraw_icp_token_basket_linkv2_successfully() {
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
+
+        // Assert Intent 1 fee fields (LinkToCreator - creator pays outbound fee)
+        assert_intent_fees(
+            intent1,
+            withdraw_balance.clone(),
+            icp_ledger_fee.clone(),
+            icp_ledger_fee.clone(),
+        );
 
         // Act: process WITHDRAW action
         let process_action_input = ProcessActionV2Input {
@@ -197,7 +206,7 @@ async fn it_should_withdraw_icrc_token_basket_linkv2_successfully() {
         let link_account = link_id_to_account(&test_fixture.ctx, &link_id);
         let link_balance_before = ckbtc_ledger_client.balance_of(&link_account).await.unwrap();
         let withdraw_balance = if link_balance_before > ckbtc_ledger_fee {
-            link_balance_before - ckbtc_ledger_fee
+            link_balance_before - ckbtc_ledger_fee.clone()
         } else {
             Nat::from(0u64)
         };
@@ -255,6 +264,14 @@ async fn it_should_withdraw_icrc_token_basket_linkv2_successfully() {
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
+
+        // Assert Intent 1 fee fields (LinkToCreator with ckBTC - creator pays outbound fee)
+        assert_intent_fees(
+            intent1,
+            withdraw_balance.clone(),
+            ckbtc_ledger_fee.clone(),
+            ckbtc_ledger_fee.clone(),
+        );
 
         // Act: process WITHDRAW action
         let process_action_input = ProcessActionV2Input {

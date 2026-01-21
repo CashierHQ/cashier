@@ -28,6 +28,7 @@ use token_storage_types::{
 };
 
 pub mod icrc_112;
+pub mod intent_fee;
 pub mod link_id_to_account;
 pub mod principal;
 pub mod token_icp;

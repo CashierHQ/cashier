@@ -6,6 +6,7 @@ use crate::cashier_backend::link_v2::receive_payment::fixture::{
     activate_payment_link_v2_fixture, create_payment_link_v2_fixture,
 };
 use crate::utils::icrc_112;
+use crate::utils::intent_fee::assert_intent_fees;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
@@ -141,6 +142,19 @@ async fn it_should_succeed_send_icp_token_payment_linkv2() {
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
+
+        // Assert Intent 1 fee fields (UserToLink - sender pays)
+        let intent1_amount = test_utils::calculate_amount_for_wallet_to_link_transfer(
+            amounts[0].clone(),
+            ledger_fee.clone(),
+            1,
+        );
+        assert_intent_fees(
+            intent1,
+            intent1_amount.clone(),
+            ledger_fee.clone() + ledger_fee.clone(),
+            ledger_fee.clone() + ledger_fee.clone(),
+        );
 
         // Execute ICRC112 requests
         let icrc_112_requests = create_action_result.icrc_112_requests.unwrap();
@@ -300,6 +314,19 @@ async fn it_should_succeed_send_icrc_token_payment_linkv2() {
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
+
+        // Assert Intent 1 fee fields (UserToLink with ckBTC - user_fee = network_fee)
+        let intent1_amount = test_utils::calculate_amount_for_wallet_to_link_transfer(
+            amounts[0].clone(),
+            ledger_fee.clone(),
+            1,
+        );
+        assert_intent_fees(
+            intent1,
+            intent1_amount.clone(),
+            ledger_fee.clone() + ledger_fee.clone(),
+            ledger_fee.clone() + ledger_fee.clone(),
+        );
 
         // Execute ICRC112 requests
         let icrc_112_requests = create_action_result.icrc_112_requests.unwrap();

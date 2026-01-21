@@ -3,11 +3,13 @@
 
 use crate::apps::action::ActionService;
 use crate::apps::link_v2::links::factory::LinkFactory;
+use crate::apps::link_v2::links::shared::utils::get_batch_tokens_fee_for_link;
 use crate::repositories;
 use crate::repositories::Repositories;
 use candid::Principal;
 use cashier_backend_types::dto::link::{GetLinkOptions, GetLinkResp, LinkUserStateDto};
 use cashier_backend_types::link_v2::dto::{CreateLinkDto, ProcessActionDto};
+use cashier_backend_types::repository::common::Asset;
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::service::link::{PaginateInput, PaginateResult};
 use cashier_backend_types::{
@@ -19,6 +21,7 @@ use cashier_backend_types::{
     repository::{action::v1::ActionType, link_action::v1::LinkAction, user_link::v1::UserLink},
     service::action::ActionData,
 };
+use fee_calculator::calculate_intent_fees;
 use std::rc::Rc;
 use transaction_manager::traits::TransactionManager;
 
@@ -151,9 +154,37 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
             .get(&link_id.to_string())
             .ok_or_else(|| CanisterError::NotFound("Link not found".to_string()))?;
 
+        // Clone link_model before it's consumed by create_from_link
+        let link_model_for_fees = link_model.clone();
+
         let factory = LinkFactory::new(self.transaction_manager.clone());
         let link = factory.create_from_link(link_model, canister_id)?;
         let result = link.create_action(caller, action_type).await?;
+
+        // Centralized fee calculation: calculate fees for all intents
+        let token_fee_map = get_batch_tokens_fee_for_link(&link_model_for_fees).await?;
+        let mut intents_with_fees = result.create_action_result.intents.clone();
+
+        for intent in &mut intents_with_fees {
+            // Get token address from intent asset
+            let token_address = intent.r#type.try_get_asset().map(|asset| match asset {
+                Asset::IC { address } => address,
+            });
+
+            if let Some(address) = token_address {
+                if let Some(network_fee) = token_fee_map.get(&address) {
+                    let fee_result = calculate_intent_fees(
+                        intent,
+                        &link_model_for_fees,
+                        caller,
+                        network_fee.clone(),
+                    );
+                    intent.intent_total_amount = Some(fee_result.intent_total_amount);
+                    intent.intent_total_network_fee = Some(fee_result.intent_total_network_fee);
+                    intent.intent_user_fee = Some(fee_result.intent_user_fee);
+                }
+            }
+        }
 
         // save data to DB
         let link_action = LinkAction {
@@ -167,14 +198,22 @@ impl<R: Repositories, M: TransactionManager + 'static> LinkV2Service<R, M> {
         self.action_service.store_action_data(
             link_action.clone(),
             result.create_action_result.action.clone(),
-            result.create_action_result.intents.clone(),
+            intents_with_fees.clone(),
             result.create_action_result.intent_txs_map.clone(),
             result.create_action_result.action.creator,
         )?;
 
         self.user_link_action_repository.create(link_action);
 
-        let action_dto: ActionDto = result.create_action_result.into();
+        // Build ActionDto with fee-populated intents
+        let action_dto = ActionDto::build(
+            &ActionData {
+                action: result.create_action_result.action.clone(),
+                intents: intents_with_fees,
+                intent_txs: result.create_action_result.intent_txs_map.clone(),
+            },
+            result.create_action_result.icrc112_requests,
+        );
 
         Ok(action_dto)
     }

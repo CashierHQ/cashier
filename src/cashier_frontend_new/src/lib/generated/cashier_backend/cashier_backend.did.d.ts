@@ -168,6 +168,9 @@ export interface Icrc2TransferFrom {
 }
 export interface IntentDto {
   'id' : string,
+  'intent_total_network_fee' : [] | [bigint],
+  'intent_total_amount' : [] | [bigint],
+  'intent_user_fee' : [] | [bigint],
   'chain' : Chain,
   'task' : IntentTask,
   'type' : IntentType,
@@ -289,11 +292,47 @@ export type Wallet = {
   };
 export interface _SERVICE {
   /**
-   * Clears all cached token fees
+   * Clears all cached token fees from the service.
+   * 
+   * This admin endpoint invalidates all cached token transfer fees, forcing
+   * subsequent fee queries to fetch fresh data from their respective token canisters.
+   * Useful for cache invalidation when fee structures change or for testing purposes.
+   * 
+   * # Authorization
+   * 
+   * Requires `Permission::Admin`. The caller must have admin permissions or the call will panic.
+   * 
+   * # Returns
+   * 
+   * Returns `Ok(())` on successful cache clearance.
+   * 
+   * # Errors
+   * 
+   * Currently always returns `Ok(())` after clearing the cache.
    */
   'admin_fee_cache_clear' : ActorMethod<[], Result>,
   /**
-   * Clears cached fee for specific token
+   * Clears the cached fee for a specific token.
+   * 
+   * This admin endpoint invalidates the cached transfer fee for a single token,
+   * forcing the next fee query for that token to fetch fresh data from its canister.
+   * Useful when a specific token's fee structure changes without affecting other tokens.
+   * 
+   * # Arguments
+   * 
+   * * `token_id` - The `Principal` of the token canister whose cached fee should be cleared
+   * 
+   * # Authorization
+   * 
+   * Requires `Permission::Admin`. The caller must have admin permissions or the call will panic.
+   * 
+   * # Returns
+   * 
+   * Returns `Ok(())` on successful cache clearance for the specified token.
+   * 
+   * # Errors
+   * 
+   * Currently always returns `Ok(())` after clearing the token's cached fee.
    */
   'admin_fee_cache_clear_token' : ActorMethod<[Principal], Result>,
   /**

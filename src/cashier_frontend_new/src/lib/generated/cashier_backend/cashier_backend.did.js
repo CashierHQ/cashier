@@ -164,6 +164,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const IntentDto = IDL.Record({
     'id' : IDL.Text,
+    'intent_total_network_fee' : IDL.Opt(IDL.Nat),
+    'intent_total_amount' : IDL.Opt(IDL.Nat),
+    'intent_user_fee' : IDL.Opt(IDL.Nat),
     'chain' : Chain,
     'task' : IntentTask,
     'type' : IntentType,

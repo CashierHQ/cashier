@@ -5,6 +5,7 @@ use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
 use crate::cashier_backend::link_v2::send_airdrop::fixture::{
     activate_airdrop_link_v2_fixture, create_airdrop_link_v2_fixture,
 };
+use crate::utils::intent_fee::assert_intent_fees;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
@@ -181,6 +182,14 @@ async fn it_should_succeed_receive_icp_token_airdrop_linkv2() {
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
 
+        // Assert Intent 1 fee fields (LinkToUser - receiver pays nothing)
+        assert_intent_fees(
+            intent1,
+            amounts[0].clone(),
+            ledger_fee.clone(),
+            Nat::from(0u64),
+        );
+
         // Act: process RECEIVE action
         let process_action_input = ProcessActionV2Input {
             action_id: create_action_result.id.clone(),
@@ -314,6 +323,14 @@ async fn it_should_succeed_receive_icrc_token_airdrop_linkv2() {
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
+
+        // Assert Intent 1 fee fields (LinkToUser with ckBTC - receiver pays nothing)
+        assert_intent_fees(
+            intent1,
+            amounts[0].clone(),
+            ledger_fee.clone(),
+            Nat::from(0u64),
+        );
 
         // Act: process RECEIVE action
         let process_action_input = ProcessActionV2Input {

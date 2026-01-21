@@ -2,6 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::cashier_backend::link_v2::receive_payment::fixture::PaymentLinkV2Fixture;
+use crate::utils::intent_fee::assert_intent_fees;
 use crate::{
     constant::ICP_PRINCIPAL,
     utils::{principal::TestUser, with_pocket_ic_context},
@@ -150,6 +151,15 @@ async fn it_should_create_icp_token_payment_linkv2_successfully() {
             }
             _ => panic!("Expected Icrc2TransferFrom transaction"),
         }
+
+        // Assert Intent 1 fee fields (CreatorToTreasury)
+        let intent1_network_fee = icp_ledger_fee.clone() * 2u64;
+        assert_intent_fees(
+            intent1,
+            Nat::from(CREATE_LINK_FEE),
+            intent1_network_fee.clone(),
+            Nat::from(CREATE_LINK_FEE) + intent1_network_fee,
+        );
 
         // Assert ICRC-112 requests
         assert!(action.icrc_112_requests.is_some());
@@ -330,6 +340,15 @@ async fn it_should_create_icrc_token_payment_linkv2_successfully() {
             }
             _ => panic!("Expected Icrc2TransferFrom transaction"),
         }
+
+        // Assert Intent 1 fee fields (CreatorToTreasury - same for ICRC token)
+        let intent1_network_fee = icp_ledger_fee.clone() * 2u64;
+        assert_intent_fees(
+            intent1,
+            Nat::from(CREATE_LINK_FEE),
+            intent1_network_fee.clone(),
+            Nat::from(CREATE_LINK_FEE) + intent1_network_fee,
+        );
 
         // Assert ICRC-112 requests
         assert!(action.icrc_112_requests.is_some());

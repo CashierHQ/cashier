@@ -79,6 +79,12 @@ pub struct IntentDto {
     pub task: IntentTask,
     pub r#type: IntentType,
     pub transactions: Vec<TransactionDto>,
+    /// Total amount for this intent (transaction amount)
+    pub intent_total_amount: Option<candid::Nat>,
+    /// Total network fee for executing transactions
+    pub intent_total_network_fee: Option<candid::Nat>,
+    /// Fee paid by the user (varies by flow type)
+    pub intent_user_fee: Option<candid::Nat>,
 }
 
 #[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
@@ -215,6 +221,9 @@ impl From<Intent> for IntentDto {
             chain: intent.chain,
             r#type: intent.r#type,
             transactions: Vec::new(),
+            intent_total_amount: intent.intent_total_amount,
+            intent_total_network_fee: intent.intent_total_network_fee,
+            intent_user_fee: intent.intent_user_fee,
         }
     }
 }
