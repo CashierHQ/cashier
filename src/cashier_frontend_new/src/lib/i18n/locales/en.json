@@ -441,5 +441,15 @@
         "backendError": "Failed to add token. Please try again."
       }
     }
+  },
+  "bitcoin": {
+    "receive": {
+      "importing": "Importing (in ~60mins)",
+      "imported": "Imported"
+    },
+    "send": {
+      "exporting": "Exporting (in ~60mins)",
+      "exported": "Exported"
+    }
   }
 }

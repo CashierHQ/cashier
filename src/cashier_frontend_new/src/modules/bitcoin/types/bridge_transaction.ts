@@ -8,6 +8,7 @@ export type BridgeTransaction = {
   bridge_type: BridgeTypeValue;
   total_amount: bigint;
   created_at_ts: bigint;
+  status: BridgeTransactionStatusValue;
 };
 
 export type BridgeAssetInfo = {
@@ -37,6 +38,19 @@ export type BridgeTypeValue =
   | typeof BridgeType.Import
   | typeof BridgeType.Export;
 
+export class BridgeTransactionStatus {
+  static readonly Created = "Created";
+  static readonly Pending = "Pending";
+  static readonly Completed = "Completed";
+  static readonly Failed = "Failed";
+}
+
+export type BridgeTransactionStatusValue =
+  | typeof BridgeTransactionStatus.Created
+  | typeof BridgeTransactionStatus.Pending
+  | typeof BridgeTransactionStatus.Completed
+  | typeof BridgeTransactionStatus.Failed;
+
 export class BridgeTransactionMapper {
   public static fromTokenStorageBridgeTransaction(
     data: tokenStorage.UserBridgeTransactionDto,
@@ -64,6 +78,9 @@ export class BridgeTransactionMapper {
       ),
       total_amount,
       created_at_ts: data.created_at_ts,
+      status: BridgeTransactionMapper.bridgeTransactionStatusFromTokenStorage(
+        data.status,
+      ),
     };
   }
 
@@ -90,6 +107,22 @@ export class BridgeTransactionMapper {
       return BridgeType.Export;
     } else {
       throw new Error("Unknown BridgeType");
+    }
+  }
+
+  public static bridgeTransactionStatusFromTokenStorage(
+    status: tokenStorage.BridgeTransactionStatus,
+  ): BridgeTransactionStatusValue {
+    if ("Created" in status) {
+      return BridgeTransactionStatus.Created;
+    } else if ("Pending" in status) {
+      return BridgeTransactionStatus.Pending;
+    } else if ("Completed" in status) {
+      return BridgeTransactionStatus.Completed;
+    } else if ("Failed" in status) {
+      return BridgeTransactionStatus.Failed;
+    } else {
+      throw new Error("Unknown BridgeTransactionStatus");
     }
   }
 }

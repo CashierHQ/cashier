@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { type BridgeTransaction, BridgeType } from '$modules/bitcoin/types/bridge_transaction';
+  import { locale } from '$lib/i18n';
+  import { type BridgeTransaction, BridgeTransactionStatus, BridgeType } from '$modules/bitcoin/types/bridge_transaction';
   import {
       ArrowDownLeft
   } from "lucide-svelte";
@@ -12,16 +13,26 @@
   let { bridge, onSelect }: Props = $props();
   let typeTitle = $derived.by(() => {
     if (bridge.bridge_type === BridgeType.Import) {
-      return "Importing";
+      if (bridge.status === BridgeTransactionStatus.Completed) {
+        return locale.t("bitcoin.receive.imported");
+      } else {
+        return locale.t("bitcoin.receive.importing");
+      }
+    } else if (bridge.bridge_type === BridgeType.Export) {
+      if (bridge.status === BridgeTransactionStatus.Completed) {
+        return locale.t("bitcoin.receive.exported");
+      } else {
+        return locale.t("bitcoin.receive.exporting");
+      }
     }
-    return "Exporting";
+    return locale.t("bitcoin.receive.unknown");
   });
   let amount = $derived.by(() => {
     if (bridge.total_amount) {
       // Assuming total_amount is in satoshis for BTC
       return (Number(bridge.total_amount) / 100_000_000).toFixed(8);
     }
-    return "N/A";
+    return "0";
   });
 </script>
 <button class="w-full text-left" onclick={() => onSelect(bridge.bridge_id)}>
