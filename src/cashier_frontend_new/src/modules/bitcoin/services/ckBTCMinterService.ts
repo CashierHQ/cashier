@@ -5,6 +5,7 @@ import {
   type MinterInfo,
   type WithdrawalFee,
 } from "$modules/bitcoin/types/ckbtc_minter";
+import { Err, Ok, type Result } from "ts-results-es";
 
 export class CkBTCMinterService {
   #canisterId: string;
@@ -49,6 +50,21 @@ export class CkBTCMinterService {
       throw new Error("User is not authenticated");
     }
     return actor.get_minter_info();
+  }
+
+  async updateBalance(): Promise<Result<number, string>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
+    const result = await actor.update_balance({ owner: [], subaccount: [] });
+    console.log("ckBTC Minter - update balance result:", result);
+
+    if ("Ok" in result) {
+      return Ok(result.Ok.length);
+    } else {
+      return Err("Failed to update balance: " + result.Err);
+    }
   }
 }
 

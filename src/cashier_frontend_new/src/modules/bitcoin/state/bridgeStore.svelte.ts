@@ -275,6 +275,21 @@ class BridgeStore {
         }
         //console.log("updated status:", updated_status);
 
+        if (updated_status !== BridgeTransactionStatus.Completed) {
+          const update = await ckBTCMinterService.updateBalance();
+          if (update.isErr()) {
+            console.error(
+              "Failed to update ckBTC balance during bridge processing:",
+              update.unwrapErr(),
+            );
+          } else {
+            console.log(
+              "Successfully updated ckBTC balance during bridge processing. New balance length:",
+              update.unwrap(),
+            );
+          }
+        }
+
         const updateResult = await tokenStorageService.updateBridgeTransaction(
           bridgeTx.bridge_id,
           updated_status,
