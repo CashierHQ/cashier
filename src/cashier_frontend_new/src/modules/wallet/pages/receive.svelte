@@ -209,6 +209,26 @@
             </button>
           </div>
         {/if}
+        {#if isCkBTC}
+          <div class="flex items-start gap-1.5">
+            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
+            <div class="text-sm text-green">
+              {locale.t("bitcoin.receive.icpAddress.warning1")}
+            </div>
+          </div>
+          <div class="flex items-start gap-1.5">
+            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
+            <div class="text-sm text-green">
+              {locale.t("bitcoin.receive.icpAddress.warning2")}
+            </div>
+          </div>
+          <div class="flex items-start gap-1.5">
+            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
+            <div class="text-sm text-green">
+              {locale.t("bitcoin.receive.icpAddress.warning3")}
+            </div>
+          </div>
+        {/if}
       </div>
 
       {#if isCkBTC}

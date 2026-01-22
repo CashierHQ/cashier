@@ -446,7 +446,18 @@
   "bitcoin": {
     "receive": {
       "importing": "Importing (in ~60mins)",
-      "imported": "Imported"
+      "imported": "Imported",
+      "btcAddress": {
+        "warning1": "Receive BTC from a Bitcoin wallet (e.g. Coinbase, Xverse, Ledger).",
+        "warning2": "BTC is automatically converted to ckBTC on arrival.",
+        "warning3": "0.000001 BTC import fee.",
+        "warning4": "Time ~1 hour. You can track progress below."
+      },
+      "icpAddress": {
+        "warning1": "Receive ckBTC from a ICP wallet (e.g. Oisy, NFID, Plug)",
+        "warning2": "ckBTC is a 1:1 Bitcoin-backed token on ICP network.",
+        "warning3": "Transfers are almost instant."
+      }
     },
     "send": {
       "exporting": "Exporting (in ~60mins)",

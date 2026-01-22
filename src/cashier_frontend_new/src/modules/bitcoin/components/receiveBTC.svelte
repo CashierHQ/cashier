@@ -7,7 +7,7 @@
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import BridgeTxCart from '$modules/transactionCart/components/BridgeTxCart.svelte';
   import type { BridgeSource } from '$modules/transactionCart/types/transactionSource';
-  import { Copy } from "lucide-svelte";
+  import { Copy, Info } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
   const btcAddress = $derived.by(() => bridgeStore.btcAddress);
@@ -69,6 +69,30 @@
       >
         <Copy size={20} class="text-[#36A18B]" />
       </button>
+    </div>
+    <div class="flex items-start gap-1.5">
+      <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
+      <div class="text-sm text-green">
+        {locale.t("bitcoin.receive.btcAddress.warning1")}
+      </div>
+    </div>
+    <div class="flex items-start gap-1.5">
+      <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
+      <div class="text-sm text-green">
+        {locale.t("bitcoin.receive.btcAddress.warning2")}
+      </div>
+    </div>
+    <div class="flex items-start gap-1.5">
+      <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
+      <div class="text-sm text-green">
+        {locale.t("bitcoin.receive.btcAddress.warning3")}
+      </div>
+    </div>
+    <div class="flex items-start gap-1.5">
+      <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
+      <div class="text-sm text-green">
+        {locale.t("bitcoin.receive.btcAddress.warning4")}
+      </div>
     </div>
   </div>
   <div class="space-y-4">
