@@ -35,14 +35,22 @@ jobs:
               ref: pr.head.sha
             });
 
-            // Filter out this workflow's own check
-            const otherChecks = checks.check_runs.filter(c => c.name !== 'fast-forward');
+            // Filter to only checks associated with THIS PR
+            const prChecks = checks.check_runs.filter(c => {
+              // Exclude this workflow's own check
+              if (c.name === 'fast-forward') return false;
+              // Only include checks linked to this PR
+              return c.pull_requests && c.pull_requests.some(p => p.number === context.issue.number);
+            });
 
-            const failed = otherChecks.filter(c =>
+            console.log(`Found ${prChecks.length} checks for PR #${context.issue.number}`);
+            prChecks.forEach(c => console.log(`  - ${c.name}: ${c.status} / ${c.conclusion}`));
+
+            const failed = prChecks.filter(c =>
               c.status === 'completed' && c.conclusion !== 'success' && c.conclusion !== 'skipped'
             );
 
-            const pending = otherChecks.filter(c => c.status !== 'completed');
+            const pending = prChecks.filter(c => c.status !== 'completed');
 
             if (pending.length > 0) {
               await github.rest.issues.createComment({
