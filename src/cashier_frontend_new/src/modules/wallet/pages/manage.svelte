@@ -2,7 +2,7 @@
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
   import NavBar from "$modules/token/components/navBar.svelte";
-  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+  import { TokenIcon } from "$modules/imageCache";
   import { toast } from "svelte-sonner";
   import { locale } from "$lib/i18n";
   import { LoaderCircle, RefreshCw, Search, Plus } from "lucide-svelte";
@@ -152,26 +152,21 @@
       {:else if walletStore.query.data && walletStore.query.data.length}
         <div class="space-y-0">
           {#each filteredTokens as token (token.address)}
-            {@const tokenLogo = getTokenLogo(token.address)}
             {@const network = getTokenNetwork(token)}
             <div class="bg-white flex items-center justify-between py-3.5">
               <div class="flex items-center gap-3 flex-1">
                 <div class="relative w-10 h-10">
                   <div
-                    class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                    class="w-10 h-10 flex items-center justify-center flex-shrink-0"
                   >
-                    {#if tokenLogo && !failedImageLoads.has(token.address)}
-                      <img
-                        src={tokenLogo}
-                        alt={token.symbol}
-                        class="w-7 h-7 rounded-full object-cover"
-                        onerror={() => handleImageError(token.address)}
-                      />
-                    {:else}
-                      <span class="text-gray-600 font-medium text-sm"
-                        >{token.symbol.slice(0, 2)}</span
-                      >
-                    {/if}
+                    <TokenIcon
+                      address={token.address}
+                      symbol={token.symbol}
+                      size="md"
+                      {failedImageLoads}
+                      onImageError={handleImageError}
+                      fallbackText={token.symbol.slice(0, 2)}
+                    />
                   </div>
                   <!-- Network Badge -->
                   <div

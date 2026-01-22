@@ -4,7 +4,7 @@
     balanceToUSDValue,
     parseBalanceUnits,
   } from "$modules/shared/utils/converter";
-  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+  import { getTokenLogo } from "$modules/imageCache";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { WalletTab } from "$modules/wallet/types";
   import {

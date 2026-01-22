@@ -2,7 +2,7 @@ import type { AssetInfo } from "$modules/links/types/link/asset";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import type { IcrcTokenMetadata } from "@dfinity/ledger-icrc";
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
-import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+import { getTokenLogo } from "$modules/imageCache";
 
 export interface AssetWithTokenInfo {
   address: string;

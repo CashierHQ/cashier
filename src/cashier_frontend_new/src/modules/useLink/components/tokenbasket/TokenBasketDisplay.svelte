@@ -6,6 +6,7 @@
   import { formatNumber } from "$modules/shared/utils/formatNumber";
   import { SvelteSet } from "svelte/reactivity";
   import { locale } from "$lib/i18n";
+  import { TokenIcon } from "$modules/imageCache";
 
   const {
     assets,
@@ -59,20 +60,15 @@
         {@const assetData = processAssetInfo(assetInfoItem)}
         <div class="flex items-center gap-2 overflow-x-hidden">
           <!-- Token icon or first letter -->
-          {#if !failedImageLoads.has(assetData.address)}
-            <img
-              src={assetData.logo}
-              alt={assetData.symbol}
-              class="w-6 h-6 rounded-full object-contain"
-              onerror={() => onImageError(assetData.address)}
-            />
-          {:else}
-            <div
-              class="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-sm font-semibold text-gray-600"
-            >
-              {assetData.symbol[0]?.toUpperCase() ?? "?"}
-            </div>
-          {/if}
+          <TokenIcon
+            address={assetData.address}
+            symbol={assetData.symbol}
+            logo={assetData.logo}
+            size="md"
+            {failedImageLoads}
+            {onImageError}
+            class="object-contain"
+          />
           <!-- Amount and symbol -->
           <div class="flex-1 text-left">
             <div class="text-[14px] font-semibold text-gray-900">

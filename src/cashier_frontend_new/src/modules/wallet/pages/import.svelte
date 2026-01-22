@@ -5,7 +5,7 @@
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
   import { Clipboard, Info, LoaderCircle } from "lucide-svelte";
   import { toast } from "svelte-sonner";
-  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+  import { getTokenLogo } from "$modules/imageCache";
   import NetworkSelector from "$modules/creationLink/components/shared/NetworkSelector.svelte";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import {
