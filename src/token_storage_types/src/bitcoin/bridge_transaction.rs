@@ -38,20 +38,8 @@ impl BridgeTransactionMapper {
     ) -> Result<BridgeTransaction, CanisterError> {
         let mut bridge_id = Uuid::new_v4().to_string();
         let mut btc_txid = None;
-        if input.bridge_type == BridgeType::Import {
-            if let Some(txid) = &input.btc_txid {
-                bridge_id = format!("import_{}", txid);
-                btc_txid = Some(txid.clone());
-            } else {
-                return Err(CanisterError::ValidationErrors(
-                    "btc_txid is required for import".to_string(),
-                ));
-            }
-        }
-        let mut total_amount = Nat::from(0u32);
-        for asset_info in &input.asset_infos {
-            total_amount += asset_info.amount.clone();
-        }
+        let mut asset_infos = input.asset_infos.clone();
+
         let mut deposit_fee = None;
         if let Some(fee) = input.deposit_fee {
             deposit_fee = Some(fee);
@@ -61,12 +49,51 @@ impl BridgeTransactionMapper {
             withdrawal_fee = Some(fee);
         }
 
+        if input.bridge_type == BridgeType::Import {
+            if let Some(txid) = &input.btc_txid {
+                bridge_id = format!("import_{}", txid);
+                btc_txid = Some(txid.clone());
+            } else {
+                return Err(CanisterError::ValidationErrors(
+                    "btc_txid is required for import".to_string(),
+                ));
+            }
+
+            // deduct the deposit fee from the first asset info amount
+            if let Some(deposit_fee) = &deposit_fee {
+                // find first asset with amount greater than deposit fee and deduct the fee
+                if let Some(first_asset) = asset_infos
+                    .iter_mut()
+                    .find(|asset| asset.amount.clone() > deposit_fee.clone())
+                {
+                    first_asset.amount -= deposit_fee.clone();
+                } else {
+                    return Err(CanisterError::ValidationErrors(
+                        "No asset with sufficient amount to cover deposit fee".to_string(),
+                    ));
+                }
+            }
+        }
+
+        let mut total_amount = Nat::from(0u32);
+        for asset_info in &asset_infos {
+            total_amount += asset_info.amount.clone();
+        }
+
+        if input.bridge_type == BridgeType::Import
+            && total_amount < deposit_fee.clone().unwrap_or(Nat::from(0u32))
+        {
+            return Err(CanisterError::ValidationErrors(
+                "Deposit fee exceeds total amount".to_string(),
+            ));
+        }
+
         Ok(BridgeTransaction {
             bridge_id,
             icp_address: input.icp_address,
             btc_address: input.btc_address,
             bridge_type: input.bridge_type,
-            asset_infos: input.asset_infos,
+            asset_infos,
             btc_txid,
             block_id: None,
             block_timestamp: None,

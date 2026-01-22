@@ -1,13 +1,16 @@
 <script lang="ts">
+  import { locale } from '$lib/i18n';
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { type BitcoinBlock } from '$modules/bitcoin/types/bitcoin_transaction';
 
   type Props = {
     confirmations: BitcoinBlock[];
+    minConfirmations: number;
   };
 
   let {
     confirmations,
+    minConfirmations
   }: Props = $props();
 
 </script>
@@ -15,13 +18,12 @@
   <div class="flex flex-col w-full gap-2">
     <div class="flex items-center gap-2">
       <Label class="font-medium text-base">
-        {confirmations.length} confirmations required
+        {locale.t('bitcoin.txCart.confirmationsRequired').replace('{{minConfirmations}}', minConfirmations.toString())}
       </Label>
-      <span class="text-sm text-gray-400">(~10 m each)</span>
     </div>
     
     <div class="border-[1px] rounded-lg border-lightgreen px-4 py-3 flex flex-col gap-4 max-h-[150px] overflow-y-auto">
-      {#each Array(6) as _, index (index)}
+      {#each Array(minConfirmations) as _, index (index)}
         {@const confirmation = confirmations[index]}
         <div class="flex justify-between items-start">
           <div class="flex items-center gap-3">

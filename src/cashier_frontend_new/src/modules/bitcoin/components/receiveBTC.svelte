@@ -30,7 +30,6 @@
   }
 
   function handleSelectBridge(bridgeId: string) {
-    console.log("Selected bridge ID:", bridgeId);
     const bridge = bridgeStore.bridgeTxs?.find(
       (b) => b.bridge_id === bridgeId,
     );
@@ -95,6 +94,7 @@
 {#if showBridgeTxCart && bridgeSource}
   <BridgeTxCart
     bind:isOpen={showBridgeTxCart}
-    source={bridgeSource} 
+    source={bridgeSource}
+    minConfirmations={bridgeStore.minterInfo?.min_confirmations ?? 6}
     onCloseDrawer={handleCloseBridgeTxCart}/>
 {/if}

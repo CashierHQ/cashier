@@ -206,11 +206,6 @@
             "processingButton": "Processing...",
             "successMessage": "Transfer completed successfully.",
             "errorMessagePrefix": "Transfer failed:"
-          },
-          "bridge": {
-            "title": "Confirm transaction",
-            "close": "Close",
-            "successMessage": "Bridge transaction completed successfully."
           }
         },
         "feeInfo": {
@@ -456,6 +451,12 @@
     "send": {
       "exporting": "Exporting (in ~60mins)",
       "exported": "Exported"
+    },
+    "txCart": {
+      "title": "Confirm transaction",
+      "close": "Close",
+      "successMessage": "Bridge transaction completed successfully.",
+      "confirmationsRequired": "{{minConfirmations}} confirmations required (~10m each)"
     }
   }
 }

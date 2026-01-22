@@ -22,6 +22,8 @@ export type BridgeTransaction = {
   deposit_fee: bigint;
   withdrawal_fee: bigint;
   btc_txid: string | null;
+  block_id: bigint | null;
+  block_timestamp: bigint | null;
   confirmations: BitcoinBlock[] | [];
   status: BridgeTransactionStatusValue;
 };
@@ -92,6 +94,18 @@ export class BridgeTransactionMapper {
       btc_txid = data_btc_txid[0];
     }
 
+    let block_id = null;
+    let data_block_id = data.block_id as [] | [bigint];
+    if (data_block_id.length === 1) {
+      block_id = data_block_id[0];
+    }
+
+    let block_timestamp = null;
+    let data_block_timestamp = data.block_timestamp as [] | [bigint];
+    if (data_block_timestamp.length === 1) {
+      block_timestamp = data_block_timestamp[0];
+    }
+
     let confirmations: BitcoinBlock[] = [];
     if (data.block_confirmations.length > 0) {
       confirmations = data.block_confirmations.map((conf) => ({
@@ -120,6 +134,8 @@ export class BridgeTransactionMapper {
       deposit_fee,
       withdrawal_fee,
       btc_txid,
+      block_id,
+      block_timestamp,
       confirmations,
       status: BridgeTransactionMapper.bridgeTransactionStatusFromTokenStorage(
         data.status,

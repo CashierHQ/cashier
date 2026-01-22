@@ -7,6 +7,7 @@ import {
   BridgeTransactionStatus,
   type BridgeTransactionWithUsdValue,
 } from "$modules/bitcoin/types/bridge_transaction";
+import type { MinterInfo } from "$modules/bitcoin/types/ckbtc_minter";
 import { enrichBridgeTransactionWithUsdValue } from "$modules/bitcoin/utils";
 import { CKBTC_CANISTER_ID } from "$modules/token/constants";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
@@ -24,6 +25,10 @@ class BridgeStore {
   );
   #depositFee: PersistedState<bigint | null> = new PersistedState(
     "ckbtcDepositFee",
+    null,
+  );
+  #minterInfo: PersistedState<MinterInfo | null> = new PersistedState(
+    "ckbtcMinterInfo",
     null,
   );
   #mempoolTxQuery;
@@ -268,14 +273,11 @@ class BridgeStore {
 
         let updated_status = BridgeTransactionStatus.Created;
         if (
-          Number(currentTipHeight) - Number(btcTx.block_id) >=
+          Number(currentTipHeight) - Number(btcTx.block_id) + 1 >=
           Number(ckBTCMinterInfo.min_confirmations)
         ) {
           updated_status = BridgeTransactionStatus.Completed;
-        }
-        //console.log("updated status:", updated_status);
 
-        if (updated_status !== BridgeTransactionStatus.Completed) {
           const update = await ckBTCMinterService.updateBalance();
           if (update.isErr()) {
             console.error(
@@ -290,28 +292,35 @@ class BridgeStore {
           }
         }
 
-        const updateResult = await tokenStorageService.updateBridgeTransaction(
-          bridgeTx.bridge_id,
-          updated_status,
-          btcTx.block_id,
-          btcTx.block_timestamp,
-          confirmingBlocks,
-        );
-        if (updateResult.isErr()) {
-          console.error(
-            `Failed to update bridge transaction ${bridgeTx.bridge_id} to Completed:`,
-            updateResult.unwrapErr(),
-          );
-        } else {
-          console.log(
-            `Bridge transaction ${bridgeTx.bridge_id} marked as Completed.`,
-          );
-          this.#bridgeTxQuery.refresh();
+        let bridgeBlockId = bridgeTx.block_id ?? 0n;
+        let bridgeBlockTimestamp = bridgeTx.block_timestamp ?? 0n;
+
+        if (
+          updated_status !== bridgeTx.status ||
+          BigInt(btcTx.block_id) !== BigInt(bridgeBlockId) ||
+          BigInt(btcTx.block_timestamp) !== BigInt(bridgeBlockTimestamp) ||
+          confirmingBlocks.length !== bridgeTx.confirmations.length
+        ) {
+          const updateResult =
+            await tokenStorageService.updateBridgeTransaction(
+              bridgeTx.bridge_id,
+              updated_status,
+              btcTx.block_id,
+              btcTx.block_timestamp,
+              confirmingBlocks,
+            );
+          if (updateResult.isErr()) {
+            console.error(
+              `Failed to update bridge transaction ${bridgeTx.bridge_id} to Completed:`,
+              updateResult.unwrapErr(),
+            );
+          } else {
+            console.log(
+              `Bridge transaction ${bridgeTx.bridge_id} marked as Completed.`,
+            );
+            this.#bridgeTxQuery.refresh();
+          }
         }
-      } else {
-        console.log(
-          `BTC transaction ${btcTxId} is still unconfirmed. Will check again later.`,
-        );
       }
     }, 15000); // Check every 15 seconds
 
@@ -319,6 +328,20 @@ class BridgeStore {
     onDestroy(() => {
       clearInterval(checkInterval);
     });
+  }
+
+  async fetchMinterInfo() {
+    try {
+      const minterInfo = await ckBTCMinterService.getMinterInfo();
+      this.#minterInfo.current = minterInfo;
+    } catch (error) {
+      console.error("Failed to fetch ckBTC minter info:", error);
+      this.#minterInfo.current = null;
+    }
+  }
+
+  get minterInfo() {
+    return this.#minterInfo.current;
   }
 }
 

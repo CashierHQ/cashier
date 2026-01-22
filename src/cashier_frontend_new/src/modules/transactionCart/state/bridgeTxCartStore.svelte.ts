@@ -124,7 +124,7 @@ export class BridgeTxCartStore {
     const feeItems: FeeBreakdownItem[] = [];
     if (this.bridgeTransaction.bridge_type === BridgeType.Import) {
       feeItems.push({
-        name: "Deposit Fee",
+        name: "Conversion Fee",
         amount: this.bridgeTransaction.deposit_fee,
         tokenAddress: CKBTC_CANISTER_ID,
         tokenSymbol: "BTC",
@@ -133,7 +133,7 @@ export class BridgeTxCartStore {
       });
     } else {
       feeItems.push({
-        name: "Withdrawal Fee",
+        name: "Conversion Fee",
         amount: this.bridgeTransaction.withdrawal_fee,
         tokenAddress: CKBTC_CANISTER_ID,
         tokenSymbol: "BTC",

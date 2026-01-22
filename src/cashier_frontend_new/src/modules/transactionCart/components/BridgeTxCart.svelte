@@ -14,15 +14,19 @@
   import { X } from "lucide-svelte";
   import { onMount } from 'svelte';
 
+  type Props = {
+    source: BridgeSource;
+    isOpen: boolean;
+    minConfirmations: number;
+    onCloseDrawer: () => void;
+  };
+
   let {
     source,
     isOpen = $bindable(false),
+    minConfirmations,
     onCloseDrawer,
-  }: {
-    source: BridgeSource;
-    isOpen: boolean;
-    onCloseDrawer: () => void;
-  } = $props();
+  }: Props = $props();
 
   let errorMessage: string | null = $state(null);
   let successMessage: string | null = $state(null);
@@ -32,7 +36,7 @@
   let isTransitioningToFeeDrawer = $state(false);
 
   // Hardcoded i18n key for bridge source
-  const txCartI18nKey = "links.linkForm.drawers.txCart.bridge";
+  const txCartI18nKey = "bitcoin.txCart";
 
   let failedImageLoads = $state<Set<string>>(new Set());
 
@@ -150,6 +154,7 @@
         {#if confirmations.length > 0}
           <BridgeConfirmation
             {confirmations}
+            {minConfirmations}
           />
         {/if}
 
@@ -176,9 +181,6 @@
 <!-- FeeInfoDrawer for showing fees breakdown -->
 <FeeInfoDrawer
   bind:open={showFeeInfoDrawer}
-  onOpenChange={(open) => {
-    
-  }}
   onBack={handleFeeInfoDrawerBack}
   {feesBreakdown}
 />
