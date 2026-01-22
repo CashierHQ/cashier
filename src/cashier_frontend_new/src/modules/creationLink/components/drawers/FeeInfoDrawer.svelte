@@ -1,19 +1,18 @@
 <script lang="ts">
-  import {
-    Drawer,
-    DrawerContent,
-    DrawerHeader,
-    DrawerTitle,
-    DrawerClose,
-  } from "$lib/shadcn/components/ui/drawer";
-  import { Button } from "$lib/shadcn/components/ui/button";
   import { locale } from "$lib/i18n";
-  import { X } from "lucide-svelte";
-  import { ChevronLeft } from "lucide-svelte";
+  import { Button } from "$lib/shadcn/components/ui/button";
   import {
-    formatFeeBreakdownItem,
-    formatLinkCreationFeeView,
+      Drawer,
+      DrawerClose,
+      DrawerContent,
+      DrawerHeader,
+      DrawerTitle,
+  } from "$lib/shadcn/components/ui/drawer";
+  import {
+      formatFeeBreakdownItem,
+      formatLinkCreationFeeView,
   } from "$modules/links/utils/feesBreakdown";
+  import { ChevronLeft, X } from "lucide-svelte";
 
   type FeeBreakdownItem = {
     name: string;
@@ -148,7 +147,28 @@
           </div>
         </div>
       {/if}
-    </div>
+
+      {#each feesBreakdown as fee (fee.name)}
+        {#if fee.name !== "Network fees" && fee.name !== "Link creation fee"}
+          {@const feeView = formatFeeBreakdownItem(fee)}
+          <div>
+            <div class="flex justify-between items-center">
+              <span class="text-[14px] font-medium">{feeView.name}</span>
+              <div class="flex items-center gap-1">
+                <span class="text-[14px] font-normal">
+                  {feeView.feeAmountFormatted}
+                  {feeView.tokenSymbol}
+                </span>
+              </div>
+            </div>
+            <div class="flex justify-end">
+              <p class="text-[10px] font-normal text-[#b6b6b6]">
+                ~${feeView.usdFormatted}
+              </p>
+            </div>
+          </div>
+        {/if}
+      {/each}
 
     <Button
       class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"

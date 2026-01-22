@@ -293,8 +293,6 @@ class TokenStorageService {
       throw new Error("User is not authenticated");
     }
 
-    console.log("Fetching bridge transaction by ID:", bridgeId);
-
     try {
       const res = await actor.user_get_bridge_transaction_by_id(bridgeId);
       console.log("getBridgeTransactionById result:", res);

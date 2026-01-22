@@ -1,4 +1,5 @@
 import { managedState } from "$lib/managedState";
+import type { BitcoinBlock } from "$modules/bitcoin/types/bitcoin_transaction";
 import {
   BridgeTransactionMapper,
   BridgeType,
@@ -30,6 +31,8 @@ export class BridgeTxCartStore {
           if (!bridgeTx) {
             return null;
           }
+
+          console.log("Fetched bridge transaction:", bridgeTx);
 
           const btcPriceUSD =
             tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID);
@@ -139,5 +142,12 @@ export class BridgeTxCartStore {
       });
     }
     return feeItems;
+  }
+
+  get blockConfirmations(): BitcoinBlock[] {
+    if (!this.bridgeTransaction) {
+      return [];
+    }
+    return this.bridgeTransaction.confirmations;
   }
 }

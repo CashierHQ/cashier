@@ -54,12 +54,12 @@ class BridgeStore {
         const mempoolTxs = await this.lookupMempoolTransactionByAddress(
           this.btcAddress,
         );
-        console.log(
-          "WalletBridgeStore - Mempool TXs for address",
-          this.btcAddress,
-          ":",
-          mempoolTxs,
-        );
+        // console.log(
+        //   "WalletBridgeStore - Mempool TXs for address",
+        //   this.btcAddress,
+        //   ":",
+        //   mempoolTxs,
+        // );
         return mempoolTxs;
       },
       refetchInterval: 30000, // refresh every 30 seconds
@@ -264,7 +264,7 @@ class BridgeStore {
           range,
         );
 
-        console.log("confirming blocks:", confirmingBlocks);
+        //console.log("confirming blocks:", confirmingBlocks);
 
         let updated_status = BridgeTransactionStatus.Created;
         if (
@@ -273,7 +273,7 @@ class BridgeStore {
         ) {
           updated_status = BridgeTransactionStatus.Completed;
         }
-        console.log("updated status:", updated_status);
+        //console.log("updated status:", updated_status);
 
         const updateResult = await tokenStorageService.updateBridgeTransaction(
           bridgeTx.bridge_id,
