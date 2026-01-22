@@ -18,7 +18,6 @@ use cashier_backend_types::repository::common::Wallet;
 use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, IntentType};
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
-use cashier_common::test_utils;
 use icrc_ledger_types::icrc2::approve::ApproveArgs;
 
 #[tokio::test]
@@ -300,17 +299,16 @@ async fn it_should_succeed_get_payment_linkv2_details_with_send_action() {
         // Assert Intent 1: TransferWalletToLink
         let intent1 = &action.intents[0];
         assert_eq!(intent1.task, IntentTask::TransferWalletToLink);
+        // UserToLink: amount + fee * (1 + max_use) = amount + fee * 2
+        let expected_transfer_amount =
+            amounts[0].clone() + icp_ledger_fee.clone() * Nat::from(2u64);
         match intent1.r#type {
             IntentType::Transfer(ref transfer) => {
                 assert_eq!(transfer.from, Wallet::new(caller));
                 assert_eq!(transfer.to, link_id_to_account(ctx, &link.id).into());
                 assert_eq!(
                     transfer.amount,
-                    test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        amounts[0].clone(),
-                        icp_ledger_fee.clone(),
-                        1
-                    ),
+                    expected_transfer_amount.clone(),
                     "Transfer amount does not match"
                 );
             }
@@ -323,12 +321,7 @@ async fn it_should_succeed_get_payment_linkv2_details_with_send_action() {
                 assert_eq!(data.from, Wallet::new(caller));
                 assert_eq!(data.to, link_id_to_account(ctx, &link.id).into());
                 assert_eq!(
-                    data.amount,
-                    test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        amounts[0].clone(),
-                        icp_ledger_fee.clone(),
-                        1
-                    ),
+                    data.amount, expected_transfer_amount,
                     "Icrc1Transfer amount does not match"
                 );
                 assert!(data.memo.is_some());

@@ -3,7 +3,6 @@
 
 use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
 use crate::cashier_backend::link_v2::send_airdrop::fixture::activate_airdrop_link_v2_fixture;
-use crate::utils::intent_fee::assert_intent_fees;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
@@ -179,12 +178,24 @@ async fn it_should_withdraw_icp_token_airdrop_linkv2_successfully() {
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
 
-        // Assert Intent 1 fee fields (LinkToCreator - creator pays outbound fee)
-        assert_intent_fees(
-            intent1,
-            withdraw_balance.clone(),
-            icp_ledger_fee.clone(),
-            icp_ledger_fee.clone(),
+        // Fee assertions - Intent 1 (TransferLinkToWallet)
+        // intent_total_amount = withdraw_balance (link balance - fee)
+        assert_eq!(
+            intent1.intent_total_amount,
+            Some(withdraw_balance.clone()),
+            "Intent total amount should equal withdraw balance"
+        );
+        // intent_total_network_fee = fee * 1 (outbound only)
+        assert_eq!(
+            intent1.intent_total_network_fee,
+            Some(icp_ledger_fee.clone()),
+            "Intent network fee should be fee * 1 for outbound only"
+        );
+        // intent_user_fee = intent_total_network_fee for link->creator
+        assert_eq!(
+            intent1.intent_user_fee,
+            Some(icp_ledger_fee.clone()),
+            "Intent user fee should equal network fee for withdraw"
         );
 
         // Act: process WITHDRAW action
@@ -308,12 +319,24 @@ async fn it_should_withdraw_icrc_token_airdrop_linkv2_successfully() {
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
 
-        // Assert Intent 1 fee fields (LinkToCreator with ckBTC - creator pays outbound fee)
-        assert_intent_fees(
-            intent1,
-            withdraw_balance.clone(),
-            ckbtc_ledger_fee.clone(),
-            ckbtc_ledger_fee.clone(),
+        // Fee assertions - Intent 1 (TransferLinkToWallet)
+        // intent_total_amount = withdraw_balance (link balance - fee)
+        assert_eq!(
+            intent1.intent_total_amount,
+            Some(withdraw_balance.clone()),
+            "Intent total amount should equal withdraw balance"
+        );
+        // intent_total_network_fee = fee * 1 (outbound only)
+        assert_eq!(
+            intent1.intent_total_network_fee,
+            Some(ckbtc_ledger_fee.clone()),
+            "Intent network fee should be fee * 1 for outbound only"
+        );
+        // intent_user_fee = intent_total_network_fee for link->creator
+        assert_eq!(
+            intent1.intent_user_fee,
+            Some(ckbtc_ledger_fee.clone()),
+            "Intent user fee should equal network fee for withdraw"
         );
 
         // Act: process WITHDRAW action

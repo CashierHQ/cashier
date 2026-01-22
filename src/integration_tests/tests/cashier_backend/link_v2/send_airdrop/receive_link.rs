@@ -5,7 +5,6 @@ use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
 use crate::cashier_backend::link_v2::send_airdrop::fixture::{
     activate_airdrop_link_v2_fixture, create_airdrop_link_v2_fixture,
 };
-use crate::utils::intent_fee::assert_intent_fees;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
@@ -182,12 +181,24 @@ async fn it_should_succeed_receive_icp_token_airdrop_linkv2() {
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
 
-        // Assert Intent 1 fee fields (LinkToUser - receiver pays nothing)
-        assert_intent_fees(
-            intent1,
-            amounts[0].clone(),
-            ledger_fee.clone(),
-            Nat::from(0u64),
+        // Fee assertions - Intent 1 (TransferLinkToWallet)
+        // intent_total_amount = airdrop amount per use
+        assert_eq!(
+            intent1.intent_total_amount,
+            Some(amounts[0].clone()),
+            "Intent total amount should equal airdrop amount"
+        );
+        // intent_total_network_fee = fee * 1 (outbound only)
+        assert_eq!(
+            intent1.intent_total_network_fee,
+            Some(ledger_fee.clone()),
+            "Intent network fee should be fee * 1 for outbound only"
+        );
+        // intent_user_fee = 0 for link->user (receiver doesn't pay)
+        assert_eq!(
+            intent1.intent_user_fee,
+            Some(Nat::from(0u64)),
+            "Intent user fee should be 0 for receive action"
         );
 
         // Act: process RECEIVE action
@@ -324,12 +335,24 @@ async fn it_should_succeed_receive_icrc_token_airdrop_linkv2() {
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
 
-        // Assert Intent 1 fee fields (LinkToUser with ckBTC - receiver pays nothing)
-        assert_intent_fees(
-            intent1,
-            amounts[0].clone(),
-            ledger_fee.clone(),
-            Nat::from(0u64),
+        // Fee assertions - Intent 1 (TransferLinkToWallet)
+        // intent_total_amount = airdrop amount per use
+        assert_eq!(
+            intent1.intent_total_amount,
+            Some(amounts[0].clone()),
+            "Intent total amount should equal airdrop amount"
+        );
+        // intent_total_network_fee = fee * 1 (outbound only)
+        assert_eq!(
+            intent1.intent_total_network_fee,
+            Some(ledger_fee.clone()),
+            "Intent network fee should be fee * 1 for outbound only"
+        );
+        // intent_user_fee = 0 for link->user (receiver doesn't pay)
+        assert_eq!(
+            intent1.intent_user_fee,
+            Some(Nat::from(0u64)),
+            "Intent user fee should be 0 for receive action"
         );
 
         // Act: process RECEIVE action

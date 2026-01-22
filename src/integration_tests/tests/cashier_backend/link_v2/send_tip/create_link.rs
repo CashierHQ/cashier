@@ -3,7 +3,6 @@
 
 use crate::cashier_backend::link_v2::send_tip::fixture::TipLinkV2Fixture;
 use crate::constant::CK_BTC_PRINCIPAL;
-use crate::utils::intent_fee::assert_intent_fees;
 use crate::{
     constant::ICP_PRINCIPAL,
     utils::{link_id_to_account::link_id_to_account, principal::TestUser, with_pocket_ic_context},
@@ -158,6 +157,29 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
             }
             _ => panic!("Expected Transfer intent type"),
         }
+
+        // Fee assertions - Intent 1 (TransferWalletToLink)
+        // intent_total_amount = transfer amount = (amount + fee) * max_use = amount + fee (max_use=1)
+        let expected_total_amount_intent1 = tip_amount.clone() + icp_ledger_fee.clone();
+        assert_eq!(
+            intent1.intent_total_amount,
+            Some(expected_total_amount_intent1),
+            "Intent 1 total amount should equal transfer amount"
+        );
+        // intent_total_network_fee = fee * 1 (inbound) + fee * 1 (outbound) for ICRC1
+        let expected_network_fee_intent1 = icp_ledger_fee.clone() * Nat::from(2u64);
+        assert_eq!(
+            intent1.intent_total_network_fee,
+            Some(expected_network_fee_intent1.clone()),
+            "Intent 1 network fee should be fee * 2 for ICRC1"
+        );
+        // intent_user_fee = intent_total_network_fee for creator->link
+        assert_eq!(
+            intent1.intent_user_fee,
+            Some(expected_network_fee_intent1),
+            "Intent 1 user fee should equal network fee"
+        );
+
         assert_eq!(intent1.transactions.len(), 1);
         let tx0 = &intent1.transactions[0];
         match tx0.protocol {
@@ -167,7 +189,7 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
                 assert_eq!(
                     data.amount,
                     test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        tip_amount.clone(),
+                        tip_amount,
                         icp_ledger_fee.clone(),
                         1
                     ),
@@ -178,21 +200,6 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
-
-        // Assert Intent 1 fee fields (CreatorToLink)
-        // network_fee = inbound_fee + outbound_fee = network_fee + (network_fee * max_use)
-        let intent1_amount = test_utils::calculate_amount_for_wallet_to_link_transfer(
-            tip_amount.clone(),
-            icp_ledger_fee.clone(),
-            1,
-        );
-        let intent1_network_fee = icp_ledger_fee.clone() * 2u64; // inbound(1) + outbound(1*max_use)
-        assert_intent_fees(
-            intent1,
-            intent1_amount.clone(),
-            intent1_network_fee.clone(),
-            intent1_network_fee,
-        );
 
         // Assert Intent 2: TransferWalletToTreasury
         let intent2 = &action.intents[1];
@@ -218,6 +225,29 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
             }
             _ => panic!("Expected TransferFrom intent type"),
         }
+
+        // Fee assertions - Intent 2 (TransferWalletToTreasury)
+        // intent_total_amount = CREATE_LINK_FEE
+        assert_eq!(
+            intent2.intent_total_amount,
+            Some(Nat::from(CREATE_LINK_FEE)),
+            "Intent 2 total amount should equal CREATE_LINK_FEE"
+        );
+        // intent_total_network_fee = fee * 2 for ICRC2 (approve + transfer_from)
+        let expected_network_fee_intent2 = icp_ledger_fee.clone() * Nat::from(2u64);
+        assert_eq!(
+            intent2.intent_total_network_fee,
+            Some(expected_network_fee_intent2.clone()),
+            "Intent 2 network fee should be fee * 2 for ICRC2"
+        );
+        // intent_user_fee = intent_total_amount + intent_total_network_fee for creator->treasury
+        let expected_user_fee_intent2 = Nat::from(CREATE_LINK_FEE) + expected_network_fee_intent2;
+        assert_eq!(
+            intent2.intent_user_fee,
+            Some(expected_user_fee_intent2),
+            "Intent 2 user fee should be total_amount + network_fee"
+        );
+
         assert_eq!(intent2.transactions.len(), 2);
         let tx1 = &intent2.transactions[0];
         match tx1.protocol {
@@ -247,15 +277,6 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
             }
             _ => panic!("Expected Icrc2TransferFrom transaction"),
         }
-
-        // Assert Intent 2 fee fields (CreatorToTreasury)
-        let intent2_network_fee = icp_ledger_fee.clone() * 2u64;
-        assert_intent_fees(
-            intent2,
-            Nat::from(CREATE_LINK_FEE),
-            intent2_network_fee.clone(),
-            Nat::from(CREATE_LINK_FEE) + intent2_network_fee,
-        );
 
         // Assert ICRC-112 requests
         assert!(action.icrc_112_requests.is_some());
@@ -368,6 +389,29 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
             }
             _ => panic!("Expected Transfer intent type"),
         }
+
+        // Fee assertions - Intent 1 (TransferWalletToLink) for ICRC token
+        // intent_total_amount = transfer amount = (amount + fee) * max_use = amount + fee (max_use=1)
+        let expected_total_amount_intent1 = tip_amount.clone() + ckbtc_ledger_fee.clone();
+        assert_eq!(
+            intent1.intent_total_amount,
+            Some(expected_total_amount_intent1),
+            "Intent 1 total amount should equal transfer amount"
+        );
+        // intent_total_network_fee = fee * 1 (inbound) + fee * 1 (outbound) for ICRC1
+        let expected_network_fee_intent1 = ckbtc_ledger_fee.clone() * Nat::from(2u64);
+        assert_eq!(
+            intent1.intent_total_network_fee,
+            Some(expected_network_fee_intent1.clone()),
+            "Intent 1 network fee should be fee * 2 for ICRC1"
+        );
+        // intent_user_fee = intent_total_network_fee for creator->link
+        assert_eq!(
+            intent1.intent_user_fee,
+            Some(expected_network_fee_intent1),
+            "Intent 1 user fee should equal network fee"
+        );
+
         assert_eq!(intent1.transactions.len(), 1);
         let tx0 = &intent1.transactions[0];
         match tx0.protocol {
@@ -377,8 +421,8 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
                 assert_eq!(
                     data.amount,
                     test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        tip_amount.clone(),
-                        ckbtc_ledger_fee.clone(),
+                        tip_amount,
+                        ckbtc_ledger_fee,
                         1
                     )
                 );
@@ -387,21 +431,6 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
             }
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
-
-        // Assert Intent 1 fee fields (CreatorToLink with ckBTC)
-        // network_fee = inbound_fee + outbound_fee = network_fee + (network_fee * max_use)
-        let intent1_amount = test_utils::calculate_amount_for_wallet_to_link_transfer(
-            tip_amount.clone(),
-            ckbtc_ledger_fee.clone(),
-            1,
-        );
-        let intent1_network_fee = ckbtc_ledger_fee.clone() * 2u64; // inbound(1) + outbound(1*max_use)
-        assert_intent_fees(
-            intent1,
-            intent1_amount.clone(),
-            intent1_network_fee.clone(),
-            intent1_network_fee,
-        );
 
         // Assert Intent 2: TransferWalletToTreasury
         let intent2 = &action.intents[1];
@@ -427,6 +456,27 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
             }
             _ => panic!("Expected TransferFrom intent type"),
         }
+
+        // Fee assertions - Intent 2 (TransferWalletToTreasury)
+        // Treasury uses ICP regardless of asset token
+        assert_eq!(
+            intent2.intent_total_amount,
+            Some(Nat::from(CREATE_LINK_FEE)),
+            "Intent 2 total amount should equal CREATE_LINK_FEE"
+        );
+        let expected_network_fee_intent2 = icp_ledger_fee.clone() * Nat::from(2u64);
+        assert_eq!(
+            intent2.intent_total_network_fee,
+            Some(expected_network_fee_intent2.clone()),
+            "Intent 2 network fee should be fee * 2 for ICRC2"
+        );
+        let expected_user_fee_intent2 = Nat::from(CREATE_LINK_FEE) + expected_network_fee_intent2;
+        assert_eq!(
+            intent2.intent_user_fee,
+            Some(expected_user_fee_intent2),
+            "Intent 2 user fee should be total_amount + network_fee"
+        );
+
         assert_eq!(intent2.transactions.len(), 2);
         let tx1 = &intent2.transactions[0];
         match tx1.protocol {
@@ -456,15 +506,6 @@ async fn it_should_create_icrc_token_tip_linkv2_successfully() {
             }
             _ => panic!("Expected Icrc2TransferFrom transaction"),
         }
-
-        // Assert Intent 2 fee fields (CreatorToTreasury with ICP)
-        let intent2_network_fee = icp_ledger_fee.clone() * 2u64;
-        assert_intent_fees(
-            intent2,
-            Nat::from(CREATE_LINK_FEE),
-            intent2_network_fee.clone(),
-            Nat::from(CREATE_LINK_FEE) + intent2_network_fee,
-        );
 
         // Assert ICRC-112 requests
         assert!(action.icrc_112_requests.is_some());

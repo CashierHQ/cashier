@@ -6,7 +6,6 @@ use crate::cashier_backend::link_v2::receive_payment::fixture::{
     activate_payment_link_v2_fixture, create_payment_link_v2_fixture,
 };
 use crate::utils::icrc_112;
-use crate::utils::intent_fee::assert_intent_fees;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
@@ -21,7 +20,6 @@ use cashier_backend_types::repository::intent::v1::{IntentState, IntentTask, Int
 use cashier_backend_types::repository::link::v1::LinkState;
 use cashier_backend_types::repository::link_action::v1::LinkUserState;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol};
-use cashier_common::test_utils;
 use icrc_ledger_types::icrc1::account::Account;
 
 #[tokio::test]
@@ -106,17 +104,15 @@ async fn it_should_succeed_send_icp_token_payment_linkv2() {
         // Assert Intent 1: TransferWalletToLink
         let intent1 = &create_action_result.intents[0];
         assert_eq!(intent1.task, IntentTask::TransferWalletToLink);
+        // UserToLink: amount + fee * (1 + max_use) = amount + fee * 2
+        let expected_transfer_amount = amounts[0].clone() + ledger_fee.clone() * Nat::from(2u64);
         match intent1.r#type {
             IntentType::Transfer(ref transfer) => {
                 assert_eq!(transfer.from, Wallet::new(caller));
                 assert_eq!(transfer.to, link_id_to_account(ctx, &link_id).into());
                 assert_eq!(
                     transfer.amount,
-                    test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        amounts[0].clone(),
-                        ledger_fee.clone(),
-                        1
-                    ),
+                    expected_transfer_amount.clone(),
                     "Transfer amount does not match"
                 );
             }
@@ -130,11 +126,7 @@ async fn it_should_succeed_send_icp_token_payment_linkv2() {
                 assert_eq!(data.to, link_id_to_account(ctx, &link_id).into());
                 assert_eq!(
                     data.amount,
-                    test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        amounts[0].clone(),
-                        ledger_fee.clone(),
-                        1
-                    ),
+                    expected_transfer_amount.clone(),
                     "Icrc1Transfer amount does not match"
                 );
                 assert!(data.memo.is_some());
@@ -143,17 +135,24 @@ async fn it_should_succeed_send_icp_token_payment_linkv2() {
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
 
-        // Assert Intent 1 fee fields (UserToLink - sender pays)
-        let intent1_amount = test_utils::calculate_amount_for_wallet_to_link_transfer(
-            amounts[0].clone(),
-            ledger_fee.clone(),
-            1,
+        // Fee assertions - Intent 1 (TransferWalletToLink)
+        assert_eq!(
+            intent1.intent_total_amount,
+            Some(expected_transfer_amount.clone()),
+            "Intent total amount should equal transfer amount"
         );
-        assert_intent_fees(
-            intent1,
-            intent1_amount.clone(),
-            ledger_fee.clone() + ledger_fee.clone(),
-            ledger_fee.clone() + ledger_fee.clone(),
+        // intent_total_network_fee = fee * (1 + max_use) = fee * 2
+        let expected_network_fee = ledger_fee.clone() * Nat::from(2u64);
+        assert_eq!(
+            intent1.intent_total_network_fee,
+            Some(expected_network_fee.clone()),
+            "Intent network fee should be fee * 2 for user->link"
+        );
+        // intent_user_fee = network_fee for UserToLink flow
+        assert_eq!(
+            intent1.intent_user_fee,
+            Some(expected_network_fee),
+            "Intent user fee should equal network fee for send"
         );
 
         // Execute ICRC112 requests
@@ -187,13 +186,7 @@ async fn it_should_succeed_send_icp_token_payment_linkv2() {
         let icp_balance_after = icp_ledger_client.balance_of(&caller_account).await.unwrap();
         assert_eq!(
             icp_balance_after,
-            icp_balance_before
-                - test_utils::calculate_amount_for_wallet_to_link_transfer(
-                    amounts[0].clone(),
-                    ledger_fee.clone(),
-                    1
-                )
-                - ledger_fee.clone(),
+            icp_balance_before - expected_transfer_amount.clone() - ledger_fee.clone(),
             "Sender's ICP balance should decrease by transfer amount and tip"
         );
 
@@ -201,12 +194,7 @@ async fn it_should_succeed_send_icp_token_payment_linkv2() {
         let link_account = link_id_to_account(&caller_fixture.ctx, &link_id);
         let link_balance = icp_ledger_client.balance_of(&link_account).await.unwrap();
         assert_eq!(
-            link_balance,
-            test_utils::calculate_amount_for_wallet_to_link_transfer(
-                amounts[0].clone(),
-                ledger_fee.clone(),
-                1
-            ),
+            link_balance, expected_transfer_amount,
             "Link balance should be correct"
         );
 
@@ -278,17 +266,15 @@ async fn it_should_succeed_send_icrc_token_payment_linkv2() {
         // Assert Intent 1: TransferWalletToLink
         let intent1 = &create_action_result.intents[0];
         assert_eq!(intent1.task, IntentTask::TransferWalletToLink);
+        // UserToLink: amount + fee * (1 + max_use) = amount + fee * 2
+        let expected_transfer_amount = amounts[0].clone() + ledger_fee.clone() * Nat::from(2u64);
         match intent1.r#type {
             IntentType::Transfer(ref transfer) => {
                 assert_eq!(transfer.from, Wallet::new(caller));
                 assert_eq!(transfer.to, link_id_to_account(ctx, &link_id).into());
                 assert_eq!(
                     transfer.amount,
-                    test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        amounts[0].clone(),
-                        ledger_fee.clone(),
-                        1
-                    ),
+                    expected_transfer_amount.clone(),
                     "Transfer amount does not match"
                 );
             }
@@ -302,11 +288,7 @@ async fn it_should_succeed_send_icrc_token_payment_linkv2() {
                 assert_eq!(data.to, link_id_to_account(ctx, &link_id).into());
                 assert_eq!(
                     data.amount,
-                    test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        amounts[0].clone(),
-                        ledger_fee.clone(),
-                        1
-                    ),
+                    expected_transfer_amount.clone(),
                     "Icrc1Transfer amount does not match"
                 );
                 assert!(data.memo.is_some());
@@ -315,17 +297,24 @@ async fn it_should_succeed_send_icrc_token_payment_linkv2() {
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
 
-        // Assert Intent 1 fee fields (UserToLink with ckBTC - user_fee = network_fee)
-        let intent1_amount = test_utils::calculate_amount_for_wallet_to_link_transfer(
-            amounts[0].clone(),
-            ledger_fee.clone(),
-            1,
+        // Fee assertions - Intent 1 (TransferWalletToLink)
+        assert_eq!(
+            intent1.intent_total_amount,
+            Some(expected_transfer_amount.clone()),
+            "Intent total amount should equal transfer amount"
         );
-        assert_intent_fees(
-            intent1,
-            intent1_amount.clone(),
-            ledger_fee.clone() + ledger_fee.clone(),
-            ledger_fee.clone() + ledger_fee.clone(),
+        // intent_total_network_fee = fee * (1 + max_use) = fee * 2
+        let expected_network_fee = ledger_fee.clone() * Nat::from(2u64);
+        assert_eq!(
+            intent1.intent_total_network_fee,
+            Some(expected_network_fee.clone()),
+            "Intent network fee should be fee * 2 for user->link"
+        );
+        // intent_user_fee = network_fee for UserToLink flow
+        assert_eq!(
+            intent1.intent_user_fee,
+            Some(expected_network_fee),
+            "Intent user fee should equal network fee for send"
         );
 
         // Execute ICRC112 requests
@@ -362,13 +351,7 @@ async fn it_should_succeed_send_icrc_token_payment_linkv2() {
             .unwrap();
         assert_eq!(
             ckbtc_balance_after,
-            ckbtc_balance_before
-                - test_utils::calculate_amount_for_wallet_to_link_transfer(
-                    amounts[0].clone(),
-                    ledger_fee.clone(),
-                    1
-                )
-                - ledger_fee.clone(),
+            ckbtc_balance_before - expected_transfer_amount.clone() - ledger_fee.clone(),
             "Sender's CKBTC balance should decrease by tip amount"
         );
 
@@ -376,12 +359,7 @@ async fn it_should_succeed_send_icrc_token_payment_linkv2() {
         let link_account = link_id_to_account(&caller_fixture.ctx, &link_id);
         let link_balance = ckbtc_ledger_client.balance_of(&link_account).await.unwrap();
         assert_eq!(
-            link_balance,
-            test_utils::calculate_amount_for_wallet_to_link_transfer(
-                amounts[0].clone(),
-                ledger_fee.clone(),
-                1
-            ),
+            link_balance, expected_transfer_amount,
             "Link balance should be correct"
         );
 

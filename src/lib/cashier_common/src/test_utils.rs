@@ -26,8 +26,10 @@ pub fn calculate_approval_amount_for_create_link(ledger_fee: &Nat) -> u64 {
     CREATE_LINK_FEE + ledger_fee_u64
 }
 
-/// Calculate the transfer amount from wallet to the link
+/// Calculate the transfer amount from creator wallet to the link (CreatorToLink flow)
 /// with respect to the ledger fee and max use count.
+/// Formula: (amount + fee) * max_use
+/// Used for: send_tip, send_airdrop, send_basket CreateLink actions
 pub fn calculate_amount_for_wallet_to_link_transfer(
     amount: Nat,
     ledger_fee: Nat,

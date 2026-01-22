@@ -5,7 +5,6 @@ use crate::cashier_backend::link_v2::fixture::LinkTestFixtureV2;
 use crate::cashier_backend::link_v2::send_tip::fixture::{
     activate_tip_link_v2_fixture, create_tip_linkv2_fixture,
 };
-use crate::utils::intent_fee::assert_intent_fees;
 use crate::utils::principal::TestUser;
 use crate::utils::{link_id_to_account::link_id_to_account, with_pocket_ic_context};
 use candid::Nat;
@@ -132,7 +131,6 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
             subaccount: None,
         };
         let icp_ledger_client = ctx.new_icp_ledger_client(receiver);
-        let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
         let icp_balance_before = icp_ledger_client
             .balance_of(&receiver_account)
             .await
@@ -178,12 +176,25 @@ async fn it_should_succeed_receive_icp_token_tip_linkv2() {
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
 
-        // Assert Intent 1 fee fields (LinkToUser - receiver pays nothing)
-        assert_intent_fees(
-            intent1,
-            tip_amount.clone(),
-            icp_ledger_fee.clone(),
-            Nat::from(0u64),
+        // Fee assertions - Intent 1 (TransferLinkToWallet)
+        // intent_total_amount = tip_amount
+        assert_eq!(
+            intent1.intent_total_amount,
+            Some(tip_amount.clone()),
+            "Intent total amount should equal tip amount"
+        );
+        // intent_total_network_fee = fee * 1 (outbound only)
+        let icp_ledger_fee = icp_ledger_client.fee().await.unwrap();
+        assert_eq!(
+            intent1.intent_total_network_fee,
+            Some(icp_ledger_fee.clone()),
+            "Intent network fee should be fee * 1 for outbound only"
+        );
+        // intent_user_fee = 0 for link->user (receiver doesn't pay)
+        assert_eq!(
+            intent1.intent_user_fee,
+            Some(Nat::from(0u64)),
+            "Intent user fee should be 0 for receive action"
         );
 
         // Act: process RECEIVE action
@@ -268,7 +279,6 @@ async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
             subaccount: None,
         };
         let ckbtc_ledger_client = ctx.new_icrc_ledger_client(CKBTC_ICRC_TOKEN, receiver);
-        let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
 
         let ckbtc_balance_before = ckbtc_ledger_client
             .balance_of(&receiver_account)
@@ -315,12 +325,25 @@ async fn it_should_succeed_receive_icrc_token_tip_linkv2() {
             _ => panic!("Expected Icrc1Transfer transaction"),
         }
 
-        // Assert Intent 1 fee fields (LinkToUser with ckBTC - receiver pays nothing)
-        assert_intent_fees(
-            intent1,
-            tip_amount.clone(),
-            ckbtc_ledger_fee,
-            Nat::from(0u64),
+        // Fee assertions - Intent 1 (TransferLinkToWallet)
+        // intent_total_amount = tip_amount
+        assert_eq!(
+            intent1.intent_total_amount,
+            Some(tip_amount.clone()),
+            "Intent total amount should equal tip amount"
+        );
+        // intent_total_network_fee = fee * 1 (outbound only)
+        let ckbtc_ledger_fee = ckbtc_ledger_client.fee().await.unwrap();
+        assert_eq!(
+            intent1.intent_total_network_fee,
+            Some(ckbtc_ledger_fee.clone()),
+            "Intent network fee should be fee * 1 for outbound only"
+        );
+        // intent_user_fee = 0 for link->user (receiver doesn't pay)
+        assert_eq!(
+            intent1.intent_user_fee,
+            Some(Nat::from(0u64)),
+            "Intent user fee should be 0 for receive action"
         );
 
         // Act: process RECEIVE action

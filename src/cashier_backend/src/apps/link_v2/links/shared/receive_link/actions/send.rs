@@ -72,16 +72,24 @@ impl SendAction {
                     Asset::IC { address } => address,
                 };
 
-                let sending_amount = link_token_balance_map.get(&address).ok_or_else(|| {
+                let base_amount = link_token_balance_map.get(&address).ok_or_else(|| {
                     CanisterError::HandleLogicError(
                         "Failed to get sending amount from balance map".to_string(),
                     )
                 })?;
 
+                // Add one network fee (for outbound transfer to creator)
+                let network_fee = token_fee_map.get(&address).ok_or_else(|| {
+                    CanisterError::HandleLogicError(
+                        "Failed to get network fee from token fee map".to_string(),
+                    )
+                })?;
+                let sending_amount = base_amount.clone() + network_fee.clone();
+
                 let intent = TransferWalletToLinkIntent::create(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                     asset_info.asset.clone(),
-                    sending_amount.clone(),
+                    sending_amount,
                     sender_id,
                     link_account,
                     link.create_at,
