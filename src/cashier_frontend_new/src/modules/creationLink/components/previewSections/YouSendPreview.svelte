@@ -3,7 +3,7 @@
   import { Info } from "lucide-svelte";
   import { locale } from "$lib/i18n";
   import { formatUsdAmount } from "$modules/shared/utils/formatNumber";
-  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+  import { getTokenLogo, TokenIcon } from "$modules/imageCache";
   import AssetTransferInfoDrawer from "$modules/creationLink/components/drawers/AssetTransferInfoDrawer.svelte";
   import { FeeType } from "$modules/links/types/fee";
   import type { ForecastAssetAndFee } from "$modules/shared/types/feeService";
@@ -106,20 +106,14 @@
     {#each assetsToDisplay as { asset } (asset.address)}
       <div class="flex justify-between items-center">
         <div class="flex items-center gap-1.5">
-          {#if !failedImageLoads.has(asset.address)}
-            <img
-              src={getTokenLogo(asset.address)}
-              alt={asset.symbol}
-              class="w-5 h-5 rounded-full overflow-hidden"
-              onerror={() => onImageError(asset.address)}
-            />
-          {:else}
-            <div
-              class="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-xs overflow-hidden"
-            >
-              {asset.symbol[0]?.toUpperCase() || "?"}
-            </div>
-          {/if}
+          <TokenIcon
+            address={asset.address}
+            symbol={asset.symbol}
+            logo={getTokenLogo(asset.address)}
+            size="sm"
+            {failedImageLoads}
+            {onImageError}
+          />
           <p class="text-[14px] font-medium">{asset.symbol}</p>
         </div>
         <div class="flex flex-col items-end">
@@ -145,10 +139,13 @@
       <div class="flex flex-col gap-3">
         <div class="flex justify-between items-center">
           <div class="flex items-center gap-1.5">
-            <img
-              src={getTokenLogo(linkCreationFeeItem.asset.address)}
-              alt={linkCreationFeeItem.asset.symbol}
-              class="w-5 h-5 rounded-full overflow-hidden"
+            <TokenIcon
+              address={linkCreationFeeItem.asset.address}
+              symbol={linkCreationFeeItem.asset.symbol}
+              logo={getTokenLogo(linkCreationFeeItem.asset.address)}
+              size="sm"
+              {failedImageLoads}
+              {onImageError}
             />
             <p class="text-[14px] font-medium">
               {linkCreationFeeItem.asset.symbol}

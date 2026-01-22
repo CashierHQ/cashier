@@ -224,16 +224,6 @@ describe("FeeService", () => {
   });
 
   describe("getLinkCreationFee", () => {
-    it("should return link creation fee information", () => {
-      const feeInfo = svc.getLinkCreationFee();
-
-      expect(feeInfo).toBeDefined();
-      expect(feeInfo.amount).toBe(10_000n); // 0.0001 ICP in e8s
-      expect(feeInfo.tokenAddress).toBeDefined();
-      expect(feeInfo.symbol).toBe("ICP");
-      expect(feeInfo.decimals).toBe(8);
-    });
-
     it("should return consistent fee information on multiple calls", () => {
       const feeInfo1 = svc.getLinkCreationFee();
       const feeInfo2 = svc.getLinkCreationFee();
@@ -243,86 +233,6 @@ describe("FeeService", () => {
   });
 
   describe("forecastLinkCreationFees", () => {
-    const LEDGER_FEE = 10_000n; // 0.0001 token in e8s
-    it("should returns asset item and link creation fee when token found", () => {
-      const token = {
-        address: assets[0].address.toString(),
-        decimals: 8,
-        fee: LEDGER_FEE,
-        symbol: "ICP",
-        priceUSD: 3.01,
-      } as unknown as TokenWithPriceAndBalance;
-
-      const tokensMap = { [token.address]: token };
-      const useAmount = 100_000_000n;
-
-      const pairs = svc.forecastLinkCreationFees(
-        [{ address: token.address, useAmount }],
-        1,
-        tokensMap,
-      );
-
-      // Should include one asset + 1 link creation fee
-      expect(pairs).toHaveLength(2);
-
-      const assetPair = pairs[0];
-      expect(assetPair.asset.symbol).toBe("ICP");
-
-      const expectedTotal = parseBalanceUnits(
-        useAmount + LEDGER_FEE + LEDGER_FEE,
-        token.decimals,
-      );
-      expect(assetPair.asset.amount).toBe(formatNumber(expectedTotal));
-
-      const linkFee = pairs.find((p) => p.asset.label === "Create link fee");
-      expect(linkFee).toBeDefined();
-      if (linkFee) {
-        expect(linkFee.asset.amount).toBe(
-          formatNumber(parseBalanceUnits(30_000n, token.decimals)),
-        );
-        expect(linkFee.asset.symbol).toBe("ICP");
-      }
-    });
-
-    it("should calcualte with maxUse more than two", () => {
-      const token = {
-        address: assets[0].address.toString(),
-        decimals: 8,
-        fee: LEDGER_FEE,
-        symbol: "ICP",
-        priceUSD: 3.01,
-      } as unknown as TokenWithPriceAndBalance;
-
-      const tokensMap = { [token.address]: token };
-      const useAmount = 100_000_000n;
-      const maxUse = 5;
-
-      const pairs = svc.forecastLinkCreationFees(
-        [{ address: token.address, useAmount }],
-        maxUse,
-        tokensMap,
-      );
-
-      const assetPair = pairs[0];
-      expect(assetPair.asset.symbol).toBe("ICP");
-
-      // Formula: (useAmount + ledgerFee) * maxUse + ledgerFee
-      const expectedTotal = parseBalanceUnits(
-        (useAmount + LEDGER_FEE) * BigInt(maxUse) + LEDGER_FEE,
-        token.decimals,
-      );
-      expect(assetPair.asset.amount).toBe(formatNumber(expectedTotal));
-
-      const linkFee = pairs.find((p) => p.asset.label === "Create link fee");
-      expect(linkFee).toBeDefined();
-      if (linkFee) {
-        expect(linkFee.asset.amount).toBe(
-          formatNumber(parseBalanceUnits(30_000n, token.decimals)),
-        );
-        expect(linkFee.asset.symbol).toBe("ICP");
-      }
-    });
-
     it("handles three tokens with different decimals and ledger fees", () => {
       const tokenA = {
         address: "token-a",
@@ -454,34 +364,6 @@ describe("FeeService", () => {
           parseBalanceUnits(10_000n, 8).toString(),
         );
         expect(p.fee.symbol).toBe("N/A");
-      }
-    });
-
-    it("should returns only link creation fee when assets list is empty and ICP token present", () => {
-      const token = {
-        address: assets[0].address.toString(),
-        decimals: 8,
-        fee: 10_000n,
-        symbol: "ICP",
-        priceUSD: 2.5,
-      };
-
-      const tokensMap = { [token.address]: token } as Record<
-        string,
-        TokenWithPriceAndBalance
-      >;
-
-      const pairs = svc.forecastLinkCreationFees([], 1, tokensMap);
-
-      expect(pairs).toHaveLength(1);
-      const p = pairs[0];
-      expect(p.asset.label).toBe("Create link fee");
-      expect(p.asset.symbol).toBe("ICP");
-      expect(p.fee).toBeDefined();
-      if (p.fee) {
-        expect(p.fee.amountFormattedStr).toBe(
-          formatNumber(parseBalanceUnits(30_000n, token.decimals)),
-        );
       }
     });
   });

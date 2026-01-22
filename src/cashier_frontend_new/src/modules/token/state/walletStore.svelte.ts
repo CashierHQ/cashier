@@ -11,9 +11,17 @@ import { ICP_LEDGER_CANISTER_ID } from "../constants";
 import { sortWalletTokens } from "../utils/sorter";
 import { tokenPriceStore } from "./tokenPriceStore.svelte";
 import { encodeAccountID } from "$modules/shared/utils/icpAccountId";
+import {
+  getTokenLogo,
+  loadTokenImages,
+  getCachedTokenImage,
+} from "$modules/imageCache";
 
 class WalletStore {
   #walletTokensQuery;
+  #preloadedTokenAddresses = new Set<string>();
+  // Note: Image caching is now handled by centralized ImageCache module
+  // This set tracks which addresses have been requested for loading
 
   constructor() {
     this.#walletTokensQuery = managedState<TokenWithPriceAndBalance[]>({
@@ -22,6 +30,7 @@ class WalletStore {
         const tokens = await tokenStorageService.listTokens();
 
         // fetch token balances only for enabled tokens
+        // All canister IDs must be predefined in env
         const balanceRequests = tokens
           .filter((token) => token.enabled)
           .map((token) => {
@@ -57,6 +66,9 @@ class WalletStore {
         // Reset the wallet tokens data when user logs out
         if (authState.account == null) {
           this.#walletTokensQuery.reset();
+          // Clear preloaded addresses when user logs out
+          // Note: Image cache cleanup is handled by ImageCache module if needed
+          this.#preloadedTokenAddresses.clear();
           return;
         }
         // Refresh the wallet tokens data when user logs in
@@ -72,11 +84,119 @@ class WalletStore {
           this.#walletTokensQuery.refresh();
         }
       });
+
+      // Load and cache token images when wallet tokens are loaded
+      // Use idle callback to avoid blocking other important operations
+      $effect(() => {
+        const tokens = this.#walletTokensQuery.data;
+        const isLoading = this.#walletTokensQuery.isLoading;
+
+        // Only load images when data is loaded and not currently loading
+        if (tokens && tokens.length > 0 && !isLoading) {
+          this.#handleTokenImageLoading(tokens);
+        }
+      });
     });
   }
 
   get query() {
     return this.#walletTokensQuery;
+  }
+
+  /**
+   * Handle token image loading logic
+   * Manages preloading of token images and cleanup of unused addresses
+   * @param tokens Array of current wallet tokens
+   */
+  #handleTokenImageLoading(tokens: TokenWithPriceAndBalance[]): void {
+    // Get addresses of current tokens
+    const currentAddresses = new Set(tokens.map((token) => token.address));
+
+    // Find new addresses that haven't been loaded yet
+    const newAddresses = Array.from(currentAddresses).filter(
+      (address) => !this.#preloadedTokenAddresses.has(address),
+    );
+
+    // Only load if there are new addresses
+    if (newAddresses.length > 0) {
+      // Mark these addresses as being loaded
+      newAddresses.forEach((address) => {
+        this.#preloadedTokenAddresses.add(address);
+      });
+
+      // Load images and store them in cache
+      this.#loadAndCacheTokenImages(newAddresses);
+    }
+
+    // Clean up addresses that are no longer in the token list
+    // (in case tokens were removed)
+    const addressesToRemove = Array.from(this.#preloadedTokenAddresses).filter(
+      (address) => !currentAddresses.has(address),
+    );
+    addressesToRemove.forEach((address) => {
+      this.#preloadedTokenAddresses.delete(address);
+      // Note: Cache cleanup is handled by ImageCache module if needed
+    });
+  }
+
+  /**
+   * Get cached token image (data URL or blob URL) if available
+   * Uses centralized ImageCache module
+   * @param address Token address
+   * @returns Cached image URL or null if not cached
+   */
+  getTokenImage(address: string): string | null {
+    // Use centralized ImageCache module
+    return getCachedTokenImage(address);
+  }
+
+  /**
+   * Load and cache token images for given addresses
+   * Images are loaded as blobs and converted to data URLs or blob URLs
+   * @param addresses Array of token addresses to load
+   */
+  #loadAndCacheTokenImages(addresses: string[]): void {
+    // Use idle callback to avoid blocking other important operations
+    const startLoad = () => {
+      if (typeof requestIdleCallback !== "undefined") {
+        requestIdleCallback(
+          () => {
+            this.#loadImages(addresses).catch((error) => {
+              console.warn("Failed to load some token images:", error);
+            });
+          },
+          { timeout: 5000 },
+        );
+      } else {
+        setTimeout(() => {
+          this.#loadImages(addresses).catch((error) => {
+            console.warn("Failed to load some token images:", error);
+          });
+        }, 1000);
+      }
+    };
+
+    setTimeout(startLoad, 1000);
+  }
+
+  /**
+   * Load images for given addresses using centralized ImageCache module
+   * @param addresses Array of token addresses
+   */
+  async #loadImages(addresses: string[]): Promise<void> {
+    // Filter out ICP ledger (it's a local file)
+    const addressesToLoad = addresses.filter(
+      (address) => address !== ICP_LEDGER_CANISTER_ID,
+    );
+
+    if (addressesToLoad.length === 0) {
+      return;
+    }
+
+    // Use centralized ImageCache module to load images
+    await loadTokenImages(addressesToLoad, (address) =>
+      getTokenLogo(address, true),
+    );
   }
 
   /**
