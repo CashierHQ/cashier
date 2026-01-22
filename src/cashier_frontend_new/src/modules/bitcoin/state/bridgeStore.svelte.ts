@@ -1,5 +1,6 @@
 import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
+import { ckBTCMinterService } from "$modules/bitcoin/services/ckBTCMinterService";
 import { mempoolService } from "$modules/bitcoin/services/mempoolService";
 import { type BitcoinTransaction } from "$modules/bitcoin/types/bitcoin_transaction";
 import { type BridgeTransactionWithUsdValue } from "$modules/bitcoin/types/bridge_transaction";
@@ -15,6 +16,10 @@ import { PersistedState } from "runed";
 class BridgeStore {
   #btcAddress: PersistedState<string | null> = new PersistedState(
     "btcAddress",
+    null,
+  );
+  #depositFee: PersistedState<bigint | null> = new PersistedState(
+    "ckbtcDepositFee",
     null,
   );
   #mempoolTxQuery;
@@ -82,29 +87,34 @@ class BridgeStore {
 
       $effect(() => {
         if (this.#mempoolTxQuery.data) {
-          this.#mempoolTxQuery.data.forEach(async (tx: BitcoinTransaction) => {
-            if (this.isMempoolTxProcessed(tx.txid)) {
-              return;
-            }
+          this.#mempoolTxQuery.data.forEach(
+            async (btcTx: BitcoinTransaction) => {
+              if (this.isMempoolTxProcessed(btcTx.txid)) {
+                return;
+              }
 
-            const result = await tokenStorageService.createBridgeTransaction(
-              tx.sender,
-              this.#btcAddress.current as string,
-              tx,
-              true,
-            );
-            if (result.isErr()) {
-              console.error(
-                `Failed to create bridge transaction for BTC TXID ${tx.txid}:`,
-                result.unwrapErr(),
+              const depositFee = await ckBTCMinterService.getDepositFee();
+              const result = await tokenStorageService.createBridgeTransaction(
+                btcTx.sender,
+                this.#btcAddress.current as string,
+                btcTx,
+                depositFee,
+                0n,
+                true,
               );
-            } else {
-              console.log(
-                `Successfully created bridge transaction for BTC TXID ${tx.txid}`,
-              );
-              this.#bridgeTxQuery.refresh();
-            }
-          });
+              if (result.isErr()) {
+                console.error(
+                  `Failed to create bridge transaction for BTC TXID ${btcTx.txid}:`,
+                  result.unwrapErr(),
+                );
+              } else {
+                console.log(
+                  `Successfully created bridge transaction for BTC TXID ${btcTx.txid}`,
+                );
+                this.#bridgeTxQuery.refresh();
+              }
+            },
+          );
         }
       });
     });
@@ -137,6 +147,10 @@ class BridgeStore {
 
   get bridgeTxs() {
     return this.#bridgeTxQuery.data;
+  }
+
+  get depositFee() {
+    return this.#depositFee.current;
   }
 
   /**

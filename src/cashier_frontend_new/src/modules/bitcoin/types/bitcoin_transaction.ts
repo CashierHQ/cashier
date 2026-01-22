@@ -54,6 +54,8 @@ export class BitcoinTransactionMapper {
     senderBtcAddress: string,
     receiverBtcAddress: string,
     bitcoinTransaction: BitcoinTransaction,
+    depositFee: bigint,
+    withdrawalFee: bigint,
     isImporting: boolean,
   ): tokenStorage.CreateBridgeTransactionInputArg {
     console.log("bitcoinTransaction:", bitcoinTransaction);
@@ -80,6 +82,8 @@ export class BitcoinTransactionMapper {
       btc_address: btcAddress,
       asset_infos: asset_infos,
       bridge_type: isImporting ? { Import: null } : { Export: null },
+      deposit_fee: [depositFee],
+      withdrawal_fee: [withdrawalFee],
       created_at_ts: BigInt(bitcoinTransaction.created_at_ts),
     };
   }

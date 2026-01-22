@@ -21,6 +21,8 @@ async fn it_should_fail_user_create_bridge_transaction_due_to_anonymous_caller()
             btc_address: "tb1qexampleaddress0000000000000000000000000".to_string(),
             asset_infos: vec![],
             bridge_type: BridgeType::Import,
+            deposit_fee: None,
+            withdrawal_fee: None,
             created_at_ts: 0,
         };
 
@@ -55,6 +57,8 @@ async fn it_should_create_bridge_transaction_for_valid_user() {
             btc_address: "tb1qexampleaddress0000000000000000000000000".to_string(),
             asset_infos: vec![],
             bridge_type: BridgeType::Import,
+            deposit_fee: None,
+            withdrawal_fee: None,
             created_at_ts: 0,
         };
 

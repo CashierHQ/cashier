@@ -157,8 +157,10 @@ export const idlFactory = ({ IDL }) => {
     'btc_txid' : IDL.Opt(IDL.Text),
     'icp_address' : IDL.Principal,
     'created_at_ts' : IDL.Nat64,
+    'withdrawal_fee' : IDL.Opt(IDL.Nat),
     'btc_address' : IDL.Text,
     'bridge_type' : BridgeType,
+    'deposit_fee' : IDL.Opt(IDL.Nat),
   });
   const BridgeTransactionStatus = IDL.Variant({
     'Failed' : IDL.Null,

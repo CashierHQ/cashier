@@ -87,7 +87,7 @@
         </div>
       {/each}
     {:else}
-      <p>{locale.t("wallet.receive.btcNoMempoolTxs")}</p>
+      <p>{locale.t("wallet.receive.noBtcImportTxs")}</p>
     {/if}
   </div>
 </div>

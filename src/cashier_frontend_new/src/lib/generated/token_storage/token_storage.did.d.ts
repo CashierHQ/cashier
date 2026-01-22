@@ -81,8 +81,10 @@ export interface CreateBridgeTransactionInputArg {
   'btc_txid' : [] | [string],
   'icp_address' : Principal,
   'created_at_ts' : bigint,
+  'withdrawal_fee' : [] | [bigint],
   'btc_address' : string,
   'bridge_type' : BridgeType,
+  'deposit_fee' : [] | [bigint],
 }
 export interface GetUserBridgeTransactionsInputArg {
   'limit' : [] | [number],

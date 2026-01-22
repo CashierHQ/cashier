@@ -398,7 +398,8 @@
       "warning": "Send {{token}} to this wallet to begin using Cashier. Ensure that you are only sending assets that are {{highlighted}}, otherwise you could lose them forever.",
       "warningHighlighted": "meant for this address",
       "btcAddress": "BTC Address",
-      "ethAddress": "ETH Address"
+      "ethAddress": "ETH Address",
+      "noBtcImportTxs": "No BTC import transactions found."
     },
     "manage": {
       "header": "Manage tokens",

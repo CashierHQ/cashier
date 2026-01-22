@@ -211,6 +211,8 @@ mod tests {
             btc_address: "btc_address_123".to_string(),
             bridge_type: BridgeType::Import,
             asset_infos: vec![],
+            deposit_fee: None,
+            withdrawal_fee: None,
             created_at_ts: 0,
         };
         let created_ts = 1620000000u64;
@@ -242,6 +244,8 @@ mod tests {
             btc_address: "btc_address_123".to_string(),
             bridge_type: BridgeType::Import,
             asset_infos: vec![],
+            deposit_fee: None,
+            withdrawal_fee: None,
             created_at_ts: 0,
         };
         let created_ts = 1620000000u64;
@@ -307,6 +311,8 @@ mod tests {
                 btc_address: format!("btc_address_{}", i),
                 bridge_type: BridgeType::Import,
                 asset_infos: vec![],
+                deposit_fee: None,
+                withdrawal_fee: None,
                 created_at_ts: 0,
             };
             let mut transaction = BridgeTransactionMapper::from_create_input(input).unwrap();

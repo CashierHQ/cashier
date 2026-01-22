@@ -14,6 +14,8 @@ pub struct CreateBridgeTransactionInputArg {
     pub btc_address: String,
     pub asset_infos: Vec<BridgeAssetInfo>,
     pub bridge_type: BridgeType,
+    pub deposit_fee: Option<Nat>,
+    pub withdrawal_fee: Option<Nat>,
     pub created_at_ts: u64,
 }
 

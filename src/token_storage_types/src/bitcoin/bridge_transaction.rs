@@ -46,6 +46,14 @@ impl BridgeTransactionMapper {
         for asset_info in &input.asset_infos {
             total_amount += asset_info.amount.clone();
         }
+        let mut deposit_fee = None;
+        if let Some(fee) = input.deposit_fee {
+            deposit_fee = Some(fee);
+        }
+        let mut withdrawal_fee = None;
+        if let Some(fee) = input.withdrawal_fee {
+            withdrawal_fee = Some(fee);
+        }
 
         Ok(BridgeTransaction {
             bridge_id,
@@ -56,8 +64,8 @@ impl BridgeTransactionMapper {
             btc_txid: None,
             block_id: None,
             block_confirmations: vec![],
-            deposit_fee: None,
-            withdrawal_fee: None,
+            deposit_fee,
+            withdrawal_fee,
             total_amount: Some(total_amount),
             created_at_ts: input.created_at_ts,
             status: BridgeTransactionStatus::Created,
@@ -159,6 +167,8 @@ mod tests {
             btc_address: "test_btc_address".to_string(),
             asset_infos: vec![],
             bridge_type: BridgeType::Import,
+            deposit_fee: None,
+            withdrawal_fee: None,
             created_at_ts: 0,
         };
 

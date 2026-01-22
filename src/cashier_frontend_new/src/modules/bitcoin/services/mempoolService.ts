@@ -1,4 +1,4 @@
-import { BITCOIN_MEMPOOL_API_BASE_URL } from "$modules/bitcoin/constants";
+import { MEMPOOL_API_BASE_URL } from "$modules/bitcoin/constants";
 import {
   type BitcoinTransaction,
   BitcoinTransactionMapper,
@@ -12,7 +12,7 @@ class MempoolService {
   #baseUrl: string;
 
   constructor() {
-    this.#baseUrl = BITCOIN_MEMPOOL_API_BASE_URL;
+    this.#baseUrl = MEMPOOL_API_BASE_URL;
   }
 
   /**

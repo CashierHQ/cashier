@@ -209,6 +209,8 @@ class TokenStorageService {
     senderBtcAddress: string,
     receiverBtcAddress: string,
     bitcoinTransaction: BitcoinTransaction,
+    depositFee: bigint,
+    withdrawalFee: bigint,
     isImporting: boolean,
   ): Promise<Result<string, string>> {
     const actor = this.#getActor();
@@ -223,6 +225,8 @@ class TokenStorageService {
           senderBtcAddress,
           receiverBtcAddress,
           bitcoinTransaction,
+          depositFee,
+          withdrawalFee,
           isImporting,
         );
       console.log("createBridgeTransaction inputArgs:", inputArgs);
