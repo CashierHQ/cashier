@@ -4,6 +4,7 @@
 use candid::{Nat, Principal};
 use cashier_backend_types::repository::{asset_info::AssetInfo, common::Asset};
 use cashier_common::constant::{CREATE_LINK_FEE, ICP_CANISTER_PRINCIPAL};
+use fee_calculator::calc_outbound_fee;
 use std::collections::HashMap;
 
 /// Calculate the token balance required for the link
@@ -25,11 +26,13 @@ pub fn calculate_link_balance_map(
         };
 
         let default_fee = Nat::from(0u64);
-        let fee_in_nat = fee_map.get(address).unwrap_or(&default_fee);
-        let fee_amount = fee_in_nat.clone();
+        let network_fee = fee_map.get(address).unwrap_or(&default_fee);
 
-        let sending_amount =
-            (info.amount_per_link_use_action.clone() + fee_amount) * Nat::from(max_use_count);
+        // Total = (amount * max_use) + outbound_fee(max_use, fee)
+        let total_amount = info.amount_per_link_use_action.clone() * Nat::from(max_use_count);
+        // fee for all future claims
+        let outbound_fee = calc_outbound_fee(max_use_count, network_fee);
+        let sending_amount = total_amount + outbound_fee;
 
         balance_map.insert(*address, sending_amount);
     });

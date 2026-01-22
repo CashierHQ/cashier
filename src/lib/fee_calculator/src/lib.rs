@@ -13,6 +13,9 @@ mod strategies;
 mod traits;
 mod types;
 
+#[cfg(test)]
+pub(crate) mod test_utils;
+
 pub use strategies::calc_outbound_fee;
 pub use traits::IntentFeeStrategy;
 pub use types::{IntentFeeResult, IntentFlow};

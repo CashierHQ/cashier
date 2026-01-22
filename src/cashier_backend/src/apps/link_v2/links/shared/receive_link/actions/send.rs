@@ -13,6 +13,7 @@ use cashier_backend_types::{
     },
 };
 use cashier_common::utils::get_link_account;
+use fee_calculator::calc_outbound_fee;
 use transaction_manager::{
     intents::transfer_wallet_to_link::TransferWalletToLinkIntent,
     utils::calculator::calculate_link_balance_map,
@@ -78,13 +79,14 @@ impl SendAction {
                     )
                 })?;
 
-                // Add one network fee (for outbound transfer to creator)
+                // Add outbound fee (for creator to withdraw later)
                 let network_fee = token_fee_map.get(&address).ok_or_else(|| {
                     CanisterError::HandleLogicError(
                         "Failed to get network fee from token fee map".to_string(),
                     )
                 })?;
-                let sending_amount = base_amount.clone() + network_fee.clone();
+                let outbound_fee = calc_outbound_fee(1, network_fee);
+                let sending_amount = base_amount.clone() + outbound_fee;
 
                 let intent = TransferWalletToLinkIntent::create(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),

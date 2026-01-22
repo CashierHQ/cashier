@@ -8,6 +8,7 @@ version.workspace = true
 candid = { workspace = true }
 cashier_backend_types = { workspace = true }
 cashier_common = { workspace = true }
+fee_calculator = { workspace = true }
 futures = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }

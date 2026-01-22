@@ -37,42 +37,13 @@ impl IntentFeeStrategy for LinkToUserStrategy {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use candid::Principal;
-    use cashier_backend_types::repository::common::{Asset, Wallet};
-    use cashier_backend_types::repository::intent::v1::{IntentType, TransferData};
-    use cashier_backend_types::repository::link::v1::{LinkState, LinkType};
-
-    fn make_link() -> Link {
-        Link {
-            id: "test".to_string(),
-            state: LinkState::Active,
-            title: "Test".to_string(),
-            link_type: LinkType::SendTip,
-            asset_info: vec![],
-            creator: Principal::anonymous(),
-            create_at: 0,
-            link_use_action_counter: 0,
-            link_use_action_max_count: 1,
-        }
-    }
-
-    fn make_intent(amount: u64) -> Intent {
-        Intent {
-            r#type: IntentType::Transfer(TransferData {
-                from: Wallet::default(),
-                to: Wallet::default(),
-                asset: Asset::default(),
-                amount: Nat::from(amount),
-            }),
-            ..Default::default()
-        }
-    }
+    use crate::test_utils::{make_intent, make_link_default};
 
     #[test]
     fn test_link_to_user_pays_nothing() {
         let strategy = LinkToUserStrategy;
         let intent = make_intent(1000);
-        let link = make_link();
+        let link = make_link_default();
         let result = strategy.calculate(&link, &intent, &[], Nat::from(10u64));
 
         // User receives - pays nothing

@@ -13,6 +13,7 @@ use cashier_backend_types::{
     },
 };
 use cashier_common::utils::get_link_account;
+use fee_calculator::calc_outbound_fee;
 use transaction_manager::intents::transfer_link_to_wallet::TransferLinkToWalletIntent;
 
 use crate::apps::link_v2::links::shared::utils::{
@@ -62,16 +63,17 @@ impl WithdrawAction {
                     .get(&address)
                     .cloned()
                     .unwrap_or(Nat::from(0u64));
-                let fee_amount = token_fee_map.get(&address).cloned().ok_or_else(|| {
+                let network_fee = token_fee_map.get(&address).cloned().ok_or_else(|| {
                     CanisterError::HandleLogicError(format!(
                         "Network fee not found for token: {}",
                         address
                     ))
                 })?;
-                let sending_amount = if sending_amount <= fee_amount {
+                let outbound_fee = calc_outbound_fee(1, &network_fee);
+                let sending_amount = if sending_amount <= outbound_fee {
                     Nat::from(0u64)
                 } else {
-                    sending_amount - fee_amount
+                    sending_amount - outbound_fee
                 };
 
                 let intent = TransferLinkToWalletIntent::create(

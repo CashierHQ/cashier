@@ -2947,6 +2947,7 @@ dependencies = [
  "candid",
  "cashier_backend_types",
  "cashier_common",
+ "fee_calculator",
  "futures",
  "ic-cdk",
  "ic-cdk-timers",
