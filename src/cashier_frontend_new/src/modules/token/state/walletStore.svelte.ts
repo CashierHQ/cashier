@@ -31,11 +31,6 @@ class WalletStore {
 
         // fetch token balances only for enabled tokens
         // All canister IDs must be predefined in env
-        if (!ICP_LEDGER_CANISTER_ID) {
-          throw new Error(
-            "ICP_LEDGER_CANISTER_ID is not defined in environment variables. Please set PUBLIC_TOKEN_ICP_LEDGER_CANISTER_ID in your .env file.",
-          );
-        }
         const balanceRequests = tokens
           .filter((token) => token.enabled)
           .map((token) => {
@@ -98,36 +93,7 @@ class WalletStore {
 
         // Only load images when data is loaded and not currently loading
         if (tokens && tokens.length > 0 && !isLoading) {
-          // Get addresses of current tokens
-          const currentAddresses = new Set(
-            tokens.map((token) => token.address),
-          );
-
-          // Find new addresses that haven't been loaded yet
-          const newAddresses = Array.from(currentAddresses).filter(
-            (address) => !this.#preloadedTokenAddresses.has(address),
-          );
-
-          // Only load if there are new addresses
-          if (newAddresses.length > 0) {
-            // Mark these addresses as being loaded
-            newAddresses.forEach((address) => {
-              this.#preloadedTokenAddresses.add(address);
-            });
-
-            // Load images and store them in cache
-            this.#loadAndCacheTokenImages(newAddresses);
-          }
-
-          // Clean up addresses that are no longer in the token list
-          // (in case tokens were removed)
-          const addressesToRemove = Array.from(
-            this.#preloadedTokenAddresses,
-          ).filter((address) => !currentAddresses.has(address));
-          addressesToRemove.forEach((address) => {
-            this.#preloadedTokenAddresses.delete(address);
-            // Note: Cache cleanup is handled by ImageCache module if needed
-          });
+          this.#handleTokenImageLoading(tokens);
         }
       });
     });
@@ -135,6 +101,42 @@ class WalletStore {
 
   get query() {
     return this.#walletTokensQuery;
+  }
+
+  /**
+   * Handle token image loading logic
+   * Manages preloading of token images and cleanup of unused addresses
+   * @param tokens Array of current wallet tokens
+   */
+  #handleTokenImageLoading(tokens: TokenWithPriceAndBalance[]): void {
+    // Get addresses of current tokens
+    const currentAddresses = new Set(tokens.map((token) => token.address));
+
+    // Find new addresses that haven't been loaded yet
+    const newAddresses = Array.from(currentAddresses).filter(
+      (address) => !this.#preloadedTokenAddresses.has(address),
+    );
+
+    // Only load if there are new addresses
+    if (newAddresses.length > 0) {
+      // Mark these addresses as being loaded
+      newAddresses.forEach((address) => {
+        this.#preloadedTokenAddresses.add(address);
+      });
+
+      // Load images and store them in cache
+      this.#loadAndCacheTokenImages(newAddresses);
+    }
+
+    // Clean up addresses that are no longer in the token list
+    // (in case tokens were removed)
+    const addressesToRemove = Array.from(this.#preloadedTokenAddresses).filter(
+      (address) => !currentAddresses.has(address),
+    );
+    addressesToRemove.forEach((address) => {
+      this.#preloadedTokenAddresses.delete(address);
+      // Note: Cache cleanup is handled by ImageCache module if needed
+    });
   }
 
   /**

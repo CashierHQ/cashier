@@ -23,15 +23,6 @@ export default defineConfig({
   test: {
     setupFiles: ["./vitest-setup.js"],
     expect: { requireAssertions: true },
-    env: {
-      // Set default env variables for tests if not already set
-      PUBLIC_TOKEN_ICP_LEDGER_CANISTER_ID:
-        process.env.PUBLIC_TOKEN_ICP_LEDGER_CANISTER_ID ||
-        "ryjl3-tyaaa-aaaaa-aaaba-cai",
-      PUBLIC_TOKEN_KONGSWAP_INDEX_CANISTER_ID:
-        process.env.PUBLIC_TOKEN_KONGSWAP_INDEX_CANISTER_ID ||
-        "ryjl3-tyaaa-aaaaa-aaaba-cai",
-    },
     projects: [
       {
         extends: "./vite.config.ts",

@@ -20,13 +20,7 @@ class KongSwapTokenPriceService implements TokenPriceService {
   constructor() {
     const host = HOST_ICP_MAINNET ?? "https://icp-api.io";
     const agent = authState.buildAnonymousAgent(host);
-    // All canister IDs must be predefined in env
     const canisterId = KONGSWAP_INDEX_CANISTER_ID;
-    if (!canisterId) {
-      throw new Error(
-        "KONGSWAP_INDEX_CANISTER_ID is not defined in environment variables. Please set PUBLIC_TOKEN_KONGSWAP_INDEX_CANISTER_ID in your .env file.",
-      );
-    }
     this.actor = Actor.createActor(kongBackend.idlFactory, {
       agent,
       canisterId,
