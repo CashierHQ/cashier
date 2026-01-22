@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+  import { getTokenLogo } from "$modules/imageCache";
   import { formatNumber } from "$modules/shared/utils/formatNumber";
 
   const {
@@ -20,7 +20,10 @@
     totalCount?: number;
   } = $props();
 
-  const tokenLogo = $derived(getTokenLogo(tokenAddress));
+  // Use skipStore=true to always fetch from URL (not from walletStore cache)
+  const tokenLogo = $derived.by(() => {
+    return getTokenLogo(tokenAddress, true);
+  });
   let imageError = $state(false);
 
   const firstLetter = $derived(symbol?.[0]?.toUpperCase() ?? "?");

@@ -1,7 +1,7 @@
 import { parseBalanceUnits } from "$modules/shared/utils/converter";
 import type { TokenWithPriceAndBalance } from "$modules/token/types";
 import type { Result } from "ts-results-es";
-import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+import { getTokenLogo } from "$modules/imageCache";
 import {
   formatNumber,
   formatUsdAmount,
