@@ -6,10 +6,10 @@ on:
 
 jobs:
   fast-forward:
-    # Step 1: Only run on PR comments containing /fast-forward
+    # Step 1: Only run on PR comments starting with /fast-forward
     if: |
       github.event.issue.pull_request &&
-      contains(github.event.comment.body, '/fast-forward')
+      startsWith(github.event.comment.body, '/fast-forward')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -28,6 +28,35 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.issue.number
             });
+
+            // Reject draft PRs
+            if (pr.draft) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `**Cannot fast-forward**\n\nThis PR is still in draft. Please mark it as ready for review first.`
+              });
+              core.setFailed('Cannot merge draft PR');
+              return;
+            }
+
+            // Check for merge conflicts
+            if (pr.mergeable === false) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `**Cannot fast-forward**\n\nThis PR has merge conflicts. Please resolve them first.`
+              });
+              core.setFailed('PR has merge conflicts');
+              return;
+            }
+
+            // mergeable can be null if GitHub is still computing - warn but continue
+            if (pr.mergeable === null) {
+              console.log('Warning: Mergeable status not yet computed by GitHub, proceeding anyway');
+            }
 
             const { data: checks } = await github.rest.checks.listForRef({
               owner: context.repo.owner,
@@ -182,7 +211,7 @@ jobs:
               }
 
               if (rejectedList.length > 0) {
-                message += `Needs re-approval (requested changes):\n${rejectedList.map(r => `- @${r}`).join('\n')}\n\n`;
+                message += `Has not approved:\n${rejectedList.map(r => `- @${r}`).join('\n')}\n\n`;
               }
 
               if (approvers.length > 0) {
