@@ -20,7 +20,8 @@ pub struct BridgeTransaction {
     pub bridge_type: BridgeType,
     pub asset_infos: Vec<BridgeAssetInfo>,
     pub btc_txid: Option<String>,
-    pub block_id: Option<Nat>,
+    pub block_id: Option<u64>,
+    pub block_timestamp: Option<u64>,
     pub block_confirmations: Vec<BlockConfirmation>,
     pub deposit_fee: Option<Nat>,
     pub withdrawal_fee: Option<Nat>,
@@ -36,11 +37,16 @@ impl BridgeTransactionMapper {
         input: CreateBridgeTransactionInputArg,
     ) -> Result<BridgeTransaction, CanisterError> {
         let mut bridge_id = Uuid::new_v4().to_string();
+        let mut btc_txid = None;
         if input.bridge_type == BridgeType::Import {
-            let btc_txid = input.btc_txid.ok_or_else(|| {
-                CanisterError::ValidationErrors("btc_txid is required for import".to_string())
-            })?;
-            bridge_id = format!("import_{}", btc_txid);
+            if let Some(txid) = &input.btc_txid {
+                bridge_id = format!("import_{}", txid);
+                btc_txid = Some(txid.clone());
+            } else {
+                return Err(CanisterError::ValidationErrors(
+                    "btc_txid is required for import".to_string(),
+                ));
+            }
         }
         let mut total_amount = Nat::from(0u32);
         for asset_info in &input.asset_infos {
@@ -61,8 +67,9 @@ impl BridgeTransactionMapper {
             btc_address: input.btc_address,
             bridge_type: input.bridge_type,
             asset_infos: input.asset_infos,
-            btc_txid: None,
+            btc_txid,
             block_id: None,
+            block_timestamp: None,
             block_confirmations: vec![],
             deposit_fee,
             withdrawal_fee,
@@ -80,6 +87,9 @@ impl BridgeTransaction {
         }
         if let Some(block_id) = input.block_id {
             self.block_id = Some(block_id);
+        }
+        if let Some(block_timestamp) = input.block_timestamp {
+            self.block_timestamp = Some(block_timestamp);
         }
         if let Some(block_confirmations) = input.block_confirmations {
             self.block_confirmations = block_confirmations;
@@ -202,6 +212,7 @@ mod tests {
             asset_infos: vec![],
             btc_txid: None,
             block_id: None,
+            block_timestamp: None,
             block_confirmations: vec![],
             deposit_fee: None,
             withdrawal_fee: None,
@@ -223,7 +234,8 @@ mod tests {
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: "test_bridge_id".to_string(),
             btc_txid: Some("new_btc_txid".to_string()),
-            block_id: Some(Nat::from(100u32)),
+            block_id: Some(100u64),
+            block_timestamp: Some(1620001200u64),
             block_confirmations: Some(block_confirmations),
             deposit_fee: Some(Nat::from(1000u32)),
             withdrawal_fee: Some(Nat::from(500u32)),
@@ -235,7 +247,8 @@ mod tests {
 
         // Assert
         assert_eq!(transaction.btc_txid, Some("new_btc_txid".to_string()));
-        assert_eq!(transaction.block_id, Some(Nat::from(100u32)));
+        assert_eq!(transaction.block_id, Some(100u64));
+        assert_eq!(transaction.block_timestamp, Some(1620001200u64));
         assert_eq!(transaction.block_confirmations.len(), 2);
         assert_eq!(transaction.deposit_fee, Some(Nat::from(1000u32)));
         assert_eq!(transaction.withdrawal_fee, Some(Nat::from(500u32)));

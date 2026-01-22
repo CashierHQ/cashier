@@ -268,7 +268,8 @@ mod tests {
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created_transaction.bridge_id.clone(),
             btc_txid: Some("new_btc_txid".to_string()),
-            block_id: Some(Nat::from(100u32)),
+            block_id: Some(100u64),
+            block_timestamp: Some(1620001200u64),
             block_confirmations: Some(block_confirmations.clone()),
             deposit_fee: Some(Nat::from(1000u32)),
             withdrawal_fee: Some(Nat::from(500u32)),

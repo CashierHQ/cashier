@@ -571,7 +571,7 @@ dfx_local_deploy_ckbtc_canisters owner ledger_id minter_id kyt_id:
                 ecdsa_key_name = \"dfx_test_key\";
                 retrieve_btc_min_amount = 10_000;
                 max_time_in_queue_nanos = 10_000_000_000;
-                min_confirmations = opt 1;
+                min_confirmations = opt 6;
                 mode = variant { GeneralAvailability };
                 kyt_fee = opt 100;
                 kyt_principal = opt principal \"{{kyt_id}}\"        

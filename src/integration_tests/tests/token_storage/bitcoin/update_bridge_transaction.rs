@@ -29,7 +29,8 @@ async fn it_should_fail_user_create_bridge_transaction_due_to_anonymous_caller()
         let input = UpdateBridgeTransactionInputArg {
             bridge_id: random_id_string(),
             btc_txid: Some("exampletxid0000000000000000000000000000000000".to_string()),
-            block_id: Some(Nat::from(100u32)),
+            block_id: Some(100u64),
+            block_timestamp: Some(1620001200u64),
             block_confirmations: Some(block_confirmations),
             deposit_fee: Some(Nat::from(1000u32)),
             withdrawal_fee: Some(Nat::from(500u32)),
@@ -91,7 +92,8 @@ async fn it_should_update_bridge_transaction_for_valid_user() {
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: result.unwrap().unwrap().bridge_id,
             btc_txid: Some("updatedtxid0000000000000000000000000000000000".to_string()),
-            block_id: Some(Nat::from(200u32)),
+            block_id: Some(200u64),
+            block_timestamp: Some(1620001200u64),
             block_confirmations: Some(block_confirmations),
             deposit_fee: Some(Nat::from(1500u32)),
             withdrawal_fee: Some(Nat::from(700u32)),

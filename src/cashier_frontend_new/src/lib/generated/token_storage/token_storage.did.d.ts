@@ -167,6 +167,7 @@ export interface UpdateBridgeTransactionInputArg {
   'block_id' : [] | [bigint],
   'btc_txid' : [] | [string],
   'withdrawal_fee' : [] | [bigint],
+  'block_timestamp' : [] | [bigint],
   'bridge_id' : string,
   'deposit_fee' : [] | [bigint],
 }
@@ -188,6 +189,7 @@ export interface UserBridgeTransactionDto {
   'icp_address' : Principal,
   'created_at_ts' : bigint,
   'withdrawal_fee' : [] | [bigint],
+  'block_timestamp' : [] | [bigint],
   'bridge_id' : string,
   'btc_address' : string,
   'bridge_type' : BridgeType,
