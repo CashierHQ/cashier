@@ -5,6 +5,7 @@ import {
   AssetProcessState,
   type AssetItem,
 } from "$modules/transactionCart/types/txCart";
+import type { BitcoinBlock } from "./bitcoin_transaction";
 
 export type BridgeTransactionWithUsdValue = BridgeTransaction & {
   total_amount_usd: number;
@@ -20,6 +21,7 @@ export type BridgeTransaction = {
   created_at_ts: bigint;
   deposit_fee: bigint;
   withdrawal_fee: bigint;
+  btc_txid: string | null;
   status: BridgeTransactionStatusValue;
 };
 
@@ -83,6 +85,12 @@ export class BridgeTransactionMapper {
       withdrawal_fee = data_withdrawal_fee[0];
     }
 
+    let btc_txid = null;
+    let data_btc_txid = data.btc_txid as [] | [string];
+    if (data_btc_txid.length === 1) {
+      btc_txid = data_btc_txid[0];
+    }
+
     return {
       bridge_id: data.bridge_id,
       icp_address: data.icp_address.toText(),
@@ -102,6 +110,7 @@ export class BridgeTransactionMapper {
       created_at_ts: data.created_at_ts,
       deposit_fee,
       withdrawal_fee,
+      btc_txid,
       status: BridgeTransactionMapper.bridgeTransactionStatusFromTokenStorage(
         data.status,
       ),
@@ -195,5 +204,57 @@ export class BridgeTransactionMapper {
     });
 
     return assetItems;
+  }
+
+  public static toBridgeTransactionStatusCanister(
+    status: BridgeTransactionStatus,
+  ): tokenStorage.BridgeTransactionStatus {
+    switch (status) {
+      case BridgeTransactionStatus.Created:
+        return { Created: null };
+      case BridgeTransactionStatus.Pending:
+        return { Pending: null };
+      case BridgeTransactionStatus.Completed:
+        return { Completed: null };
+      case BridgeTransactionStatus.Failed:
+        return { Failed: null };
+      default:
+        throw new Error("Unknown BridgeTransactionStatusValue");
+    }
+  }
+
+  public static toUpdateBridgeTransactionArgs(
+    bridgeId: string,
+    status: BridgeTransactionStatus,
+    block_id: bigint | null = null,
+    block_timestamp: bigint | null = null,
+    confirmations: BitcoinBlock[] | [] = [],
+    btc_txid: string | null = null,
+    deposit_fee: bigint | null = null,
+    withdrawal_fee: bigint | null = null,
+  ): tokenStorage.UpdateBridgeTransactionInputArg {
+    let block_id_arg: [] | [bigint] = block_id ? [block_id] : [];
+    let block_timestamp_arg: [] | [bigint] = block_timestamp
+      ? [block_timestamp]
+      : [];
+    let block_confirmations = confirmations.map((block) => ({
+      block_id: block.block_id,
+      block_timestamp: block.block_timestamp,
+    }));
+    let block_confirmations_arg: [] | [tokenStorage.BlockConfirmation[]] =
+      block_confirmations.length > 0 ? [block_confirmations] : [];
+
+    return {
+      bridge_id: bridgeId,
+      status: [
+        BridgeTransactionMapper.toBridgeTransactionStatusCanister(status),
+      ],
+      block_id: block_id_arg,
+      block_timestamp: block_timestamp_arg,
+      block_confirmations: block_confirmations_arg,
+      btc_txid: btc_txid ? [btc_txid] : [],
+      deposit_fee: deposit_fee ? [deposit_fee] : [],
+      withdrawal_fee: withdrawal_fee ? [withdrawal_fee] : [],
+    };
   }
 }

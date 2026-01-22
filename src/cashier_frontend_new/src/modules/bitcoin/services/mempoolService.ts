@@ -1,7 +1,8 @@
 import { MEMPOOL_API_BASE_URL } from "$modules/bitcoin/constants";
 import {
-  type BitcoinTransaction,
   BitcoinTransactionMapper,
+  type BitcoinBlock,
+  type BitcoinTransaction,
 } from "$modules/bitcoin/types/bitcoin_transaction";
 import { Err, Ok, type Result } from "ts-results-es";
 
@@ -45,6 +46,54 @@ class MempoolService {
     const data: any = await response.json();
     const transaction = BitcoinTransactionMapper.fromMempoolApiResponse(data);
     return Ok(transaction);
+  }
+
+  /**
+   * Get the current tip height of the Bitcoin blockchain.
+   * @returns tip height or error message
+   */
+  async getTipHeight(): Promise<Result<bigint, string>> {
+    const response = await fetch(`${this.#baseUrl}/blocks/tip/height`);
+    if (!response.ok) {
+      return Err(`Failed to fetch tip height: ${response.statusText}`);
+    }
+    const data: bigint = BigInt(await response.json());
+    return Ok(data);
+  }
+
+  /**
+   * Get block details by height.
+   * @param height
+   * @returns
+   */
+  async getLatestBlocksFromHeight(
+    height: number,
+    span: number,
+  ): Promise<BitcoinBlock[] | []> {
+    const response = await fetch(`${this.#baseUrl}/blocks/${height}`);
+    if (!response.ok) {
+      console.error(
+        `Failed to fetch block at height ${height}: ${response.statusText}`,
+      );
+      return [];
+    }
+
+    // get lastest 15 blocks
+    const data: any = await response.json();
+
+    const blocks: BitcoinBlock[] = [];
+    for (let i = 0; i <= span; i++) {
+      if (data[i]) {
+        blocks.push({
+          block_id: BigInt(data[i].height),
+          block_timestamp: BigInt(data[i].timestamp),
+        });
+      }
+    }
+
+    // reverse to have oldest block first
+    blocks.reverse();
+    return blocks;
   }
 }
 

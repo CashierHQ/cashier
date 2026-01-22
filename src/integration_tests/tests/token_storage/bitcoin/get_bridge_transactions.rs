@@ -18,6 +18,7 @@ async fn it_should_fail_user_get_bridge_transactions_due_to_anonymous_caller() {
         let input = GetUserBridgeTransactionsInputArg {
             start: None,
             limit: None,
+            status: None,
         };
 
         // Act
@@ -67,6 +68,7 @@ async fn it_should_get_bridge_transactions_for_valid_user() {
         let input1 = GetUserBridgeTransactionsInputArg {
             start: Some(0),
             limit: Some(2),
+            status: None,
         };
         let result1 = token_storage_client
             .user_get_bridge_transactions(input1)
@@ -75,6 +77,7 @@ async fn it_should_get_bridge_transactions_for_valid_user() {
         let input2 = GetUserBridgeTransactionsInputArg {
             start: Some(2),
             limit: Some(2),
+            status: None,
         };
         let result2 = token_storage_client
             .user_get_bridge_transactions(input2)

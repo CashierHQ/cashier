@@ -87,6 +87,7 @@ export interface CreateBridgeTransactionInputArg {
   'deposit_fee' : [] | [bigint],
 }
 export interface GetUserBridgeTransactionsInputArg {
+  'status' : [] | [BridgeTransactionStatus],
   'limit' : [] | [number],
   'start' : [] | [number],
 }

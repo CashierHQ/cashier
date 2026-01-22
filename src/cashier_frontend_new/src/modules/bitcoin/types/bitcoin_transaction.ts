@@ -8,6 +8,8 @@ export type BitcoinTransaction = {
   vout: UTXO[];
   is_confirmed: boolean;
   created_at_ts: number;
+  block_id: bigint | null;
+  block_timestamp: bigint | null;
 };
 
 export type UTXO = {
@@ -15,6 +17,11 @@ export type UTXO = {
   vout: number;
   value_satoshis: number;
   address: string;
+};
+
+export type BitcoinBlock = {
+  block_id: bigint;
+  block_timestamp: bigint;
 };
 
 export class BitcoinTransactionMapper {
@@ -44,8 +51,10 @@ export class BitcoinTransactionMapper {
         value_satoshis: output.value,
         address: output.scriptpubkey_address,
       })),
-      is_confirmed: data.is_confirmed,
+      is_confirmed: data.status.confirmed,
       created_at_ts: data.firstSeen,
+      block_id: data.status.block_height,
+      block_timestamp: data.status.block_time,
     };
   }
 

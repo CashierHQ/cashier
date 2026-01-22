@@ -6,7 +6,9 @@ use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
 use ic_mple_structures::{DefaultMemoryImpl, VirtualMemory};
 use ic_mple_utils::store::Storage;
 use std::{cell::RefCell, thread::LocalKey};
-use token_storage_types::bitcoin::bridge_transaction::{BridgeTransaction, BridgeTransactionCodec};
+use token_storage_types::bitcoin::bridge_transaction::{
+    BridgeTransaction, BridgeTransactionCodec, BridgeTransactionStatus,
+};
 
 // Store for UserBridgeRepository
 pub type UserBridgeTransactionRepositoryStorage = VersionedBTreeMap<
@@ -89,9 +91,17 @@ impl<S: Storage<UserBridgeTransactionRepositoryStorage>> UserBridgeTransactionRe
         user_id: &Principal,
         start: Option<u32>,
         limit: Option<u32>,
+        status: Option<BridgeTransactionStatus>,
     ) -> Vec<BridgeTransaction> {
         self.bridge_transaction_store.with_borrow(|store| {
             let mut transactions = store.get(user_id).unwrap_or_default();
+            if let Some(status_filter) = status {
+                transactions = transactions
+                    .into_iter()
+                    .filter(|tx| tx.status == status_filter)
+                    .collect();
+            }
+
             // reverse the transactions array
             transactions.reverse();
 
@@ -150,7 +160,7 @@ mod tests {
             .unwrap();
 
         // Assert
-        let transactions = repo.get_bridge_transactions(&user_id, None, None);
+        let transactions = repo.get_bridge_transactions(&user_id, None, None, None);
         assert_eq!(transactions.len(), 1);
         assert_eq!(transactions[0], bridge_tx_1);
     }
@@ -193,7 +203,7 @@ mod tests {
             .unwrap();
 
         // Assert
-        let transactions = repo.get_bridge_transactions(&user_id, None, None);
+        let transactions = repo.get_bridge_transactions(&user_id, None, None, None);
         assert_eq!(transactions.len(), 1);
         assert_eq!(transactions[0], bridge_tx);
         assert_eq!(transactions[0].status, BridgeTransactionStatus::Completed);
@@ -232,10 +242,10 @@ mod tests {
         }
 
         // Act: Get first 2 transactions
-        let transactions_page_1 = repo.get_bridge_transactions(&user_id, Some(0), Some(2));
+        let transactions_page_1 = repo.get_bridge_transactions(&user_id, Some(0), Some(2), None);
 
         // Act: Get next 2 transactions
-        let transactions_page_2 = repo.get_bridge_transactions(&user_id, Some(2), Some(2));
+        let transactions_page_2 = repo.get_bridge_transactions(&user_id, Some(2), Some(2), None);
 
         // Assert
         assert_eq!(transactions_page_1.len(), 2);

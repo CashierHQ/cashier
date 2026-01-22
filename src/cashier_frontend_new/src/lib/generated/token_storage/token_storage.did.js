@@ -193,6 +193,7 @@ export const idlFactory = ({ IDL }) => {
     'Err' : CanisterError,
   });
   const GetUserBridgeTransactionsInputArg = IDL.Record({
+    'status' : IDL.Opt(BridgeTransactionStatus),
     'limit' : IDL.Opt(IDL.Nat32),
     'start' : IDL.Opt(IDL.Nat32),
   });

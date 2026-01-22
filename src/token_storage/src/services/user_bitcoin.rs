@@ -5,7 +5,7 @@ use candid::Principal;
 use token_storage_types::{
     bitcoin::{
         bridge_address::BridgeAddress,
-        bridge_transaction::{BridgeTransaction, BridgeTransactionMapper},
+        bridge_transaction::{BridgeTransactionMapper, BridgeTransactionStatus},
     },
     dto::bitcoin::{
         CreateBridgeTransactionInputArg, UpdateBridgeTransactionInputArg, UserBridgeTransactionDto,
@@ -134,10 +134,11 @@ impl<R: Repositories, M: CkBtcMinterTrait> UserCkBtcService<R, M> {
         user: Principal,
         start: Option<u32>,
         limit: Option<u32>,
+        status: Option<BridgeTransactionStatus>,
     ) -> Vec<UserBridgeTransactionDto> {
         let transactions = self
             .user_bridge_transaction_repository
-            .get_bridge_transactions(&user, start, limit);
+            .get_bridge_transactions(&user, start, limit, status);
         transactions
             .into_iter()
             .map(UserBridgeTransactionDto::from)
@@ -325,10 +326,10 @@ mod tests {
 
         // Act
         let transactions_page_1 = service
-            .get_bridge_transactions(user_id, Some(0), Some(2))
+            .get_bridge_transactions(user_id, Some(0), Some(2), None)
             .await;
         let transactions_page_2 = service
-            .get_bridge_transactions(user_id, Some(2), Some(2))
+            .get_bridge_transactions(user_id, Some(2), Some(2), None)
             .await;
 
         // Assert

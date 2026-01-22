@@ -2,10 +2,12 @@ import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
 import { authState } from "$modules/auth/state/auth.svelte";
 import {
   BitcoinTransactionMapper,
+  type BitcoinBlock,
   type BitcoinTransaction,
 } from "$modules/bitcoin/types/bitcoin_transaction";
 import {
   BridgeTransactionMapper,
+  BridgeTransactionStatus,
   type BridgeTransaction,
 } from "$modules/bitcoin/types/bridge_transaction";
 import { TOKEN_STORAGE_CANISTER_ID } from "$modules/shared/constants";
@@ -252,6 +254,7 @@ class TokenStorageService {
   public async getBridgeTransactions(
     start: number,
     limit: number,
+    status: BridgeTransactionStatus | null = null,
   ): Promise<BridgeTransaction[]> {
     const actor = this.#getActor();
     if (!actor) {
@@ -262,6 +265,9 @@ class TokenStorageService {
       const res = await actor.user_get_bridge_transactions({
         start: [start],
         limit: [limit],
+        status: status
+          ? [BridgeTransactionMapper.toBridgeTransactionStatusCanister(status)]
+          : [],
       });
       console.log("getBridgeTransactions result:", res);
 
@@ -274,6 +280,11 @@ class TokenStorageService {
     }
   }
 
+  /**
+   * Get bridge transaction by its ID
+   * @param bridgeId
+   * @returns
+   */
   public async getBridgeTransactionById(
     bridgeId: string,
   ): Promise<Result<BridgeTransaction | null, string>> {
@@ -297,6 +308,47 @@ class TokenStorageService {
       return Ok(bridgeTransaction);
     } catch (err) {
       return Err(`Error fetching bridge transaction by ID: ${err}`);
+    }
+  }
+
+  public async updateBridgeTransaction(
+    bridgeId: string,
+    status: BridgeTransactionStatus,
+    block_id: bigint | null = null,
+    block_timestamp: bigint | null = null,
+    confirmations: BitcoinBlock[] = [],
+    btc_txid: string | null = null,
+    deposit_fee: bigint | null = null,
+    withdrawal_fee: bigint | null = null,
+  ): Promise<Result<tokenStorage.UserBridgeTransactionDto, string>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
+
+    try {
+      const updateArgs = BridgeTransactionMapper.toUpdateBridgeTransactionArgs(
+        bridgeId,
+        status,
+        block_id,
+        block_timestamp,
+        confirmations,
+        btc_txid,
+        deposit_fee,
+        withdrawal_fee,
+      );
+
+      console.log("updateBridgeTransaction args:", updateArgs);
+      const res = await actor.user_update_bridge_transaction(updateArgs);
+      console.log("updateBridgeTransaction result:", res);
+
+      if ("Ok" in res) {
+        return Ok(res.Ok);
+      } else {
+        return Err(`Error updating bridge transaction: ${res.Err}`);
+      }
+    } catch (err) {
+      return Err(`Error updating bridge transaction: ${err}`);
     }
   }
 }
