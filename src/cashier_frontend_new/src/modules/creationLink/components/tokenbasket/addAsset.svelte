@@ -366,6 +366,9 @@
           </AssetButton>
         </div>
       </div>
+      {#if index < link.createLinkData.assets.length - 1}
+        <div class="border-t border-[#F2F2F2] my-4"></div>
+      {/if}
     {/each}
 
     {#if canAddMoreAssets()}
