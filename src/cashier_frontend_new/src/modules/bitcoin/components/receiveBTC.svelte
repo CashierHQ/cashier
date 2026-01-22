@@ -3,6 +3,7 @@
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import BridgeItem from '$modules/bitcoin/components/bridgeItem.svelte';
   import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";
+  import { groupBridgeTransactionsByDate } from '$modules/bitcoin/utils';
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import { Copy } from "lucide-svelte";
   import { toast } from "svelte-sonner";
@@ -12,11 +13,17 @@
     transformShortAddress(btcAddress || ""),
   );
 
+  let bridgeTxsByDate = $derived.by(() => {
+    if (bridgeStore.bridgeTxs) {
+      return groupBridgeTransactionsByDate(bridgeStore.bridgeTxs);
+    }
+    return {};
+  });
+
   function handleCopy(text: string) {
     navigator.clipboard.writeText(text);
     toast.success(locale.t("wallet.receive.copySuccess"));
   }
-
 </script>
 <div>
   <div class="space-y-4">
@@ -43,22 +50,24 @@
     </div>
   </div>
   <div class="space-y-4">
-    <Label class="text-base font-semibold">
-      {locale.t("wallet.receive.btcMempoolInfoLabel")}
-    </Label>
-    <div class="text-sm text-gray-600">
-      {#if bridgeStore.bridgeTxs && bridgeStore.bridgeTxs.length > 0}
-          {#each bridgeStore.bridgeTxs as bridge (bridge.bridge_id)}
-            <BridgeItem
-              {bridge}
-              onSelect={(txid: string) => {
-                navigator.clipboard.writeText(txid);
-                toast.success(locale.t("wallet.receive.copySuccess"));
-              }} />
+    {#if Object.keys(bridgeTxsByDate).length > 0}
+      {#each Object.keys(bridgeTxsByDate) as createdDate}
+        <Label class="text-base font-semibold">
+          {createdDate}
+        </Label>
+        <div class="text-sm text-gray-600">
+          {#each bridgeTxsByDate[createdDate] as bridge}
+          <BridgeItem
+            {bridge}
+            onSelect={(txid: string) => {
+              navigator.clipboard.writeText(txid);
+              toast.success(locale.t("wallet.receive.copySuccess"));
+            }} />
           {/each}
-      {:else}
-        <p>{locale.t("wallet.receive.btcNoMempoolTxs")}</p>
-      {/if}
-    </div>
+        </div>
+      {/each}
+    {:else}
+      <p>{locale.t("wallet.receive.btcNoMempoolTxs")}</p>
+    {/if}
   </div>
 </div>
