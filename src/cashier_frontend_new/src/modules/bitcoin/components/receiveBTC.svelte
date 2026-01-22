@@ -5,6 +5,8 @@
   import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";
   import { groupBridgeTransactionsByDate } from '$modules/bitcoin/utils';
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
+  import BridgeTxCart from '$modules/transactionCart/components/BridgeTxCart.svelte';
+  import type { BridgeSource } from '$modules/transactionCart/types/transactionSource';
   import { Copy } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
@@ -12,6 +14,8 @@
   const shortenBtcAddress = $derived.by(() =>
     transformShortAddress(btcAddress || ""),
   );
+  let showBridgeTxCart = $state(false);
+  let bridgeSource = $state<BridgeSource | null>(null);
 
   let bridgeTxsByDate = $derived.by(() => {
     if (bridgeStore.bridgeTxs) {
@@ -23,6 +27,25 @@
   function handleCopy(text: string) {
     navigator.clipboard.writeText(text);
     toast.success(locale.t("wallet.receive.copySuccess"));
+  }
+
+  function handleSelectBridge(bridgeId: string) {
+    console.log("Selected bridge ID:", bridgeId);
+    const bridge = bridgeStore.bridgeTxs?.find(
+      (b) => b.bridge_id === bridgeId,
+    );
+
+    if (!bridge) return;
+
+    showBridgeTxCart = true;
+    bridgeSource = {
+      bridge
+    };
+  }
+
+  function handleCloseBridgeTxCart() {
+    showBridgeTxCart = false;
+    bridgeSource = null;
   }
 </script>
 <div>
@@ -59,10 +82,7 @@
           {#each bridgeTxsByDate[createdDate] as bridge}
           <BridgeItem
             {bridge}
-            onSelect={(txid: string) => {
-              navigator.clipboard.writeText(txid);
-              toast.success(locale.t("wallet.receive.copySuccess"));
-            }} />
+            onSelect={() => handleSelectBridge(bridge.bridge_id)} />
           {/each}
         </div>
       {/each}
@@ -71,3 +91,10 @@
     {/if}
   </div>
 </div>
+
+{#if showBridgeTxCart && bridgeSource}
+  <BridgeTxCart
+    bind:isOpen={showBridgeTxCart}
+    source={bridgeSource} 
+    onCloseDrawer={handleCloseBridgeTxCart}/>
+{/if}

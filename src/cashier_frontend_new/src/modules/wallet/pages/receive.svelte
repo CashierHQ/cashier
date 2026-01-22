@@ -27,7 +27,6 @@
   let showAccountIdModal = $state(false);
   let imageLoadFailures = new SvelteSet<string>();
   
-
   $effect(() => {
     if (initialToken) {
       selectedToken = initialToken;

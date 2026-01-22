@@ -262,6 +262,11 @@ export const idlFactory = ({ IDL }) => {
         [Result_8],
         [],
       ),
+    'user_get_bridge_transaction_by_id' : IDL.Func(
+        [IDL.Text],
+        [IDL.Opt(UserBridgeTransactionDto)],
+        ['query'],
+      ),
     'user_get_bridge_transactions' : IDL.Func(
         [GetUserBridgeTransactionsInputArg],
         [IDL.Vec(UserBridgeTransactionDto)],

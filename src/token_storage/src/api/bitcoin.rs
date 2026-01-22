@@ -74,3 +74,15 @@ pub async fn user_get_bridge_transactions(
         .get_bridge_transactions(user, input.start, input.limit)
         .await
 }
+
+#[query(guard = "is_not_anonymous")]
+pub async fn user_get_bridge_transaction_by_id(
+    bridge_id: String,
+) -> Option<UserBridgeTransactionDto> {
+    let state = get_state();
+    let user = msg_caller();
+    state
+        .user_ckbtc
+        .get_bridge_transaction_by_id(user, bridge_id)
+        .await
+}

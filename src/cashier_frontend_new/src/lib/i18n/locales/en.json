@@ -206,6 +206,11 @@
             "processingButton": "Processing...",
             "successMessage": "Transfer completed successfully.",
             "errorMessagePrefix": "Transfer failed:"
+          },
+          "bridge": {
+            "title": "Confirm transaction",
+            "close": "Close",
+            "successMessage": "Bridge transaction completed successfully."
           }
         },
         "feeInfo": {

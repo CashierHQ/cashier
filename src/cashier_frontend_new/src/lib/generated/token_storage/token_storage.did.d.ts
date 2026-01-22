@@ -274,6 +274,10 @@ export interface _SERVICE {
     [CreateBridgeTransactionInputArg],
     Result_8
   >,
+  'user_get_bridge_transaction_by_id' : ActorMethod<
+    [string],
+    [] | [UserBridgeTransactionDto]
+  >,
   /**
    * Retrieves the list of bridge transactions for the calling user
    * # Arguments

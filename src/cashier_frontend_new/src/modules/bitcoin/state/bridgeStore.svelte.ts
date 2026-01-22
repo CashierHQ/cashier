@@ -2,10 +2,8 @@ import { managedState } from "$lib/managedState";
 import { authState } from "$modules/auth/state/auth.svelte";
 import { mempoolService } from "$modules/bitcoin/services/mempoolService";
 import { type BitcoinTransaction } from "$modules/bitcoin/types/bitcoin_transaction";
-import {
-  type BridgeTransaction,
-  type BridgeTransactionWithUsdValue,
-} from "$modules/bitcoin/types/bridge_transaction";
+import { type BridgeTransactionWithUsdValue } from "$modules/bitcoin/types/bridge_transaction";
+import { enrichBridgeTransactionWithUsdValue } from "$modules/bitcoin/utils";
 import { CKBTC_CANISTER_ID } from "$modules/token/constants";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
@@ -32,20 +30,7 @@ class BridgeStore {
         const btcPriceUSD =
           tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID);
 
-        const enrichedBridgeTxs: BridgeTransactionWithUsdValue[] =
-          bridgeTxs.map((tx: BridgeTransaction) => {
-            let total_amount_usd = 0;
-            if (btcPriceUSD && tx.total_amount) {
-              const amountInBtc = Number(tx.total_amount) / 100_000_000;
-              total_amount_usd = amountInBtc * btcPriceUSD;
-            }
-            return {
-              ...tx,
-              total_amount_usd: total_amount_usd,
-            };
-          });
-
-        return enrichedBridgeTxs;
+        return enrichBridgeTransactionWithUsdValue(bridgeTxs, btcPriceUSD);
       },
       refetchInterval: 30000, // refresh every 30 seconds
       persistedKey: ["walletBridgeStore_bridgeTxs"],

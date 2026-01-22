@@ -269,6 +269,32 @@ class TokenStorageService {
       throw new Error(`Error fetching bridge transactions: ${err}`);
     }
   }
+
+  public async getBridgeTransactionById(
+    bridgeId: string,
+  ): Promise<Result<BridgeTransaction | null, string>> {
+    const actor = this.#getActor();
+    if (!actor) {
+      throw new Error("User is not authenticated");
+    }
+
+    console.log("Fetching bridge transaction by ID:", bridgeId);
+
+    try {
+      const res = await actor.user_get_bridge_transaction_by_id(bridgeId);
+      console.log("getBridgeTransactionById result:", res);
+
+      if (res.length === 0) {
+        return Ok(null);
+      }
+
+      const bridgeTransaction =
+        BridgeTransactionMapper.fromTokenStorageBridgeTransaction(res[0]);
+      return Ok(bridgeTransaction);
+    } catch (err) {
+      return Err(`Error fetching bridge transaction by ID: ${err}`);
+    }
+  }
 }
 
 export const tokenStorageService = new TokenStorageService();

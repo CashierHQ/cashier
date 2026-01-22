@@ -1,4 +1,10 @@
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
+import { CKBTC_CANISTER_ID } from "$modules/token/constants";
+import { FlowDirection } from "$modules/transactionCart/types/transactionSource";
+import {
+  AssetProcessState,
+  type AssetItem,
+} from "$modules/transactionCart/types/txCart";
 
 export type BridgeTransactionWithUsdValue = BridgeTransaction & {
   total_amount_usd: number;
@@ -12,6 +18,8 @@ export type BridgeTransaction = {
   bridge_type: BridgeTypeValue;
   total_amount: bigint;
   created_at_ts: bigint;
+  deposit_fee: bigint;
+  withdrawal_fee: bigint;
   status: BridgeTransactionStatusValue;
 };
 
@@ -64,6 +72,16 @@ export class BridgeTransactionMapper {
     if (data_total_amount.length === 1) {
       total_amount = data_total_amount[0];
     }
+    let deposit_fee = 0n;
+    let data_deposit_fee = data.deposit_fee as [] | [bigint];
+    if (data_deposit_fee.length === 1) {
+      deposit_fee = data_deposit_fee[0];
+    }
+    let withdrawal_fee = 0n;
+    let data_withdrawal_fee = data.withdrawal_fee as [] | [bigint];
+    if (data_withdrawal_fee.length === 1) {
+      withdrawal_fee = data_withdrawal_fee[0];
+    }
 
     return {
       bridge_id: data.bridge_id,
@@ -82,6 +100,8 @@ export class BridgeTransactionMapper {
       ),
       total_amount,
       created_at_ts: data.created_at_ts,
+      deposit_fee,
+      withdrawal_fee,
       status: BridgeTransactionMapper.bridgeTransactionStatusFromTokenStorage(
         data.status,
       ),
@@ -128,5 +148,52 @@ export class BridgeTransactionMapper {
     } else {
       throw new Error("Unknown BridgeTransactionStatus");
     }
+  }
+
+  public static toAssetItems(bridge: BridgeTransaction): AssetItem[] {
+    let assetItems: AssetItem[] = [];
+    let state = AssetProcessState.CREATED;
+    if (bridge.status === BridgeTransactionStatus.Completed) {
+      state = AssetProcessState.SUCCEED;
+    } else if (bridge.status === BridgeTransactionStatus.Failed) {
+      state = AssetProcessState.FAILED;
+    } else if (bridge.status === BridgeTransactionStatus.Pending) {
+      state = AssetProcessState.PROCESSING;
+    }
+    let direction = FlowDirection.INCOMING;
+    if (bridge.bridge_type === BridgeType.Export) {
+      direction = FlowDirection.OUTGOING;
+    }
+
+    bridge.asset_infos.forEach((assetInfo) => {
+      let label = "N/A";
+      let address = "N/A";
+      if (assetInfo.asset_type === BridgeAssetType.BTC) {
+        label = "BTC";
+        address = CKBTC_CANISTER_ID;
+      } else if (assetInfo.asset_type === BridgeAssetType.Runes) {
+        label = "Runes";
+      } else if (assetInfo.asset_type === BridgeAssetType.Ordinals) {
+        label = "Ordinals";
+      }
+      let symbol = label;
+      let amount = assetInfo.amount;
+      let amountFormattedStr = (
+        Number(assetInfo.amount) /
+        10 ** assetInfo.decimals
+      ).toFixed(assetInfo.decimals);
+
+      assetItems.push({
+        state,
+        label,
+        symbol,
+        address,
+        amount,
+        amountFormattedStr,
+        direction,
+      });
+    });
+
+    return assetItems;
   }
 }

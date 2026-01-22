@@ -143,6 +143,22 @@ impl<R: Repositories, M: CkBtcMinterTrait> UserCkBtcService<R, M> {
             .map(UserBridgeTransactionDto::from)
             .collect()
     }
+
+    /// Get a specific bridge transaction for a user by bridge ID
+    /// # Arguments
+    /// * `user` - The principal ID of the user
+    /// * `bridge_id` - The bridge ID of the transaction
+    /// # Returns
+    /// * `Option<UserBridgeTransactionDto>` - The bridge transaction if found
+    pub async fn get_bridge_transaction_by_id(
+        &self,
+        user: Principal,
+        bridge_id: String,
+    ) -> Option<UserBridgeTransactionDto> {
+        self.user_bridge_transaction_repository
+            .get_bridge_transaction_by_id(user, &bridge_id)
+            .map(UserBridgeTransactionDto::from)
+    }
 }
 
 #[cfg(test)]

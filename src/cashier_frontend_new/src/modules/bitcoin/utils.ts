@@ -1,4 +1,7 @@
-import { type BridgeTransactionWithUsdValue } from "$modules/bitcoin/types/bridge_transaction";
+import {
+  type BridgeTransaction,
+  type BridgeTransactionWithUsdValue,
+} from "$modules/bitcoin/types/bridge_transaction";
 
 /**
  * Group bridge transactions by their creation date.
@@ -28,4 +31,21 @@ export const groupBridgeTransactionsByDate = (
     },
     {} as Record<string, BridgeTransactionWithUsdValue[]>,
   );
+};
+
+export const enrichBridgeTransactionWithUsdValue = (
+  bridgeTransactions: BridgeTransaction[],
+  btcPriceUSD: number | null,
+): BridgeTransactionWithUsdValue[] => {
+  return bridgeTransactions.map((tx: BridgeTransaction) => {
+    let total_amount_usd = 0;
+    if (btcPriceUSD && tx.total_amount) {
+      const amountInBtc = Number(tx.total_amount) / 100_000_000;
+      total_amount_usd = amountInBtc * btcPriceUSD;
+    }
+    return {
+      ...tx,
+      total_amount_usd: total_amount_usd,
+    };
+  });
 };
