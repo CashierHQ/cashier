@@ -4,6 +4,7 @@
   import { locale } from "$lib/i18n";
   import { II_SIGNER_WALLET_ID } from "$modules/shared/constants";
   import { Info } from "lucide-svelte";
+  import { linkListStore } from "$modules/links/state/linkListStore.svelte";
 
   type Props = {
     open: boolean;
@@ -30,6 +31,7 @@
 
       // Call login method from authState. redirect handled in authState.login()
       await authState.login(adapterId);
+      linkListStore.refresh(); 
       // After successful login,close modal
       handleClose();
       toast.success(locale.t("home.loginModal.successMessage"));
