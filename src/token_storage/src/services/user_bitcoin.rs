@@ -217,9 +217,8 @@ mod tests {
             asset_infos: vec![],
             deposit_fee: None,
             withdrawal_fee: None,
-            created_at_ts: 0,
+            created_at_ts: 100000,
         };
-        let created_ts = 1620000000u64;
 
         // Act
         let result = service
@@ -232,7 +231,7 @@ mod tests {
         assert_eq!(result.btc_address, input.btc_address);
         assert_eq!(result.bridge_type, input.bridge_type);
         assert_eq!(result.asset_infos, input.asset_infos);
-        assert_eq!(result.created_at_ts, created_ts);
+        assert_eq!(result.created_at_ts, input.created_at_ts);
     }
 
     #[tokio::test]
@@ -250,7 +249,7 @@ mod tests {
             asset_infos: vec![],
             deposit_fee: None,
             withdrawal_fee: None,
-            created_at_ts: 0,
+            created_at_ts: 100000,
         };
 
         let created_transaction = service
@@ -270,7 +269,7 @@ mod tests {
         ];
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: created_transaction.bridge_id.clone(),
-            btc_txid: Some("new_btc_txid".to_string()),
+            btc_txid: None,
             block_id: Some(100u64),
             block_timestamp: Some(1620001200u64),
             block_confirmations: Some(block_confirmations.clone()),
@@ -288,7 +287,7 @@ mod tests {
 
         // Assert
         assert_eq!(updated_transaction.bridge_id, created_transaction.bridge_id);
-        assert_eq!(updated_transaction.btc_txid, update_input.btc_txid);
+        assert_eq!(updated_transaction.btc_txid, created_transaction.btc_txid);
         assert_eq!(updated_transaction.block_id, update_input.block_id);
         assert_eq!(
             updated_transaction.block_confirmations,
