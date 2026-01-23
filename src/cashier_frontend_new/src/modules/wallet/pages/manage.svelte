@@ -7,6 +7,7 @@
   import { locale } from "$lib/i18n";
   import { LoaderCircle, RefreshCw, Search, Plus } from "lucide-svelte";
   import { MOCK_NETWORKS } from "$modules/wallet/mock/mock";
+  import { SvelteMap } from "svelte/reactivity";
 
   type Props = {
     onNavigateBack: () => void;
@@ -24,22 +25,44 @@
   let failedImageLoads: Set<string> = $state(new Set());
   let failedNetworkIconLoads: Set<string> = $state(new Set());
   let isRefreshing: boolean = $state(false);
+  let optimisticUpdates = new SvelteMap<string, boolean>();
+  let updateTrigger = $state(0);
+
+  $effect(() => {
+    if (!walletStore.query.data) return;
+
+    for (const [address, optimisticEnabled] of optimisticUpdates) {
+      const serverToken = walletStore.query.data.find(
+        (t) => t.address === address,
+      );
+      if (serverToken && serverToken.enabled === optimisticEnabled) {
+        optimisticUpdates.delete(address);
+      }
+    }
+  });
 
   async function handleToggle(token: TokenWithPriceAndBalance) {
     if (token.is_default) return;
 
-    isToggling = true;
+    const originalEnabled = token.enabled;
+    const newEnabled = !token.enabled;
 
-    try {
-      await walletStore.toggleToken(token.address, !token.enabled);
-      await walletStore.query.refresh();
 
-      toast.success(locale.t("wallet.manage.toggleSuccess"));
-    } catch (error) {
-      toast.error(locale.t("wallet.manage.toggleError") + ": " + error);
-    } finally {
-      isToggling = false;
-    }
+    optimisticUpdates.set(token.address, newEnabled);
+    updateTrigger++;
+
+    walletStore
+      .toggleToken(token.address, newEnabled)
+      .then(async () => {
+        await walletStore.query.refresh();
+
+      })
+      .catch(async (error) => {
+
+        optimisticUpdates.set(token.address, originalEnabled);
+        toast.error(locale.t("wallet.manage.toggleError") + ": " + error);
+        await walletStore.query.refresh();
+      });
   }
 
   async function handleRefresh() {
@@ -76,14 +99,24 @@
       : MOCK_NETWORKS[0];
   }
 
-  const filteredTokens = $derived.by(
-    () =>
-      walletStore.query.data?.filter(
-        (token) =>
-          token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          token.symbol.toLowerCase().includes(searchQuery.toLowerCase()),
-      ) || [],
-  );
+  const filteredTokens = $derived.by(() => {
+    void updateTrigger;
+    return (
+      walletStore.query.data
+        ?.map((token) => {
+          const optimisticEnabled = optimisticUpdates.get(token.address);
+          if (optimisticEnabled !== undefined) {
+            return { ...token, enabled: optimisticEnabled };
+          }
+          return token;
+        })
+        .filter(
+          (token) =>
+            token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            token.symbol.toLowerCase().includes(searchQuery.toLowerCase()),
+        ) || []
+    );
+  });
 </script>
 
 <div>
@@ -199,7 +232,7 @@
               </div>
               <button
                 onclick={() => handleToggle(token)}
-                disabled={token.is_default || isToggling}
+                disabled={token.is_default}
                 class="relative inline-flex h-5 w-8 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed {token.enabled
                   ? 'bg-green'
                   : 'bg-lightgreen'}"
