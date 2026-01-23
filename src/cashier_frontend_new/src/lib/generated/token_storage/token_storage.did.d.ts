@@ -163,6 +163,7 @@ export interface TokenStorageInitData {
   'log_settings' : [] | [LogServiceSettings],
 }
 export interface UpdateBridgeTransactionInputArg {
+  'retry_times' : [] | [number],
   'status' : [] | [BridgeTransactionStatus],
   'block_confirmations' : [] | [Array<BlockConfirmation>],
   'block_id' : [] | [bigint],
@@ -181,6 +182,7 @@ export interface UpdateTokenInput {
   'is_enabled' : boolean,
 }
 export interface UserBridgeTransactionDto {
+  'retry_times' : number,
   'status' : BridgeTransactionStatus,
   'block_confirmations' : Array<BlockConfirmation>,
   'block_id' : [] | [bigint],

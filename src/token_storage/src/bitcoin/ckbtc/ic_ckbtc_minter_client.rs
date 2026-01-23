@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::bitcoin::traits::CkBtcMinterTrait;
+use crate::bitcoin::ckbtc::traits::CkBtcMinterTrait;
 use candid::Principal;
 use ic_cdk::call::{Call, CandidDecodeFailed};
 use token_storage_types::{bitcoin::ckbtc_minter::GetBtcAddressArg, error::CanisterError};

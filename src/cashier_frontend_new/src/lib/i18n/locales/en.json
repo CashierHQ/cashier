@@ -445,6 +445,7 @@
   },
   "bitcoin": {
     "receive": {
+      "title": "Importing BTC from Bitcoin network",
       "importing": "Importing (in ~60mins)",
       "imported": "Imported",
       "btcAddress": {
@@ -464,7 +465,7 @@
       "exported": "Exported"
     },
     "txCart": {
-      "title": "Confirm transaction",
+      "title": "Transaction details",
       "close": "Close",
       "successMessage": "Bridge transaction completed successfully.",
       "confirmationsRequired": "{{minConfirmations}} confirmations required (~10m each)"

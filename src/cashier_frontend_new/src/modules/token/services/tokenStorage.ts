@@ -181,7 +181,7 @@ class TokenStorageService {
 
   /**
    * Get the BTC address associated with the user's wallet
-   * @returns string BTC address on success or error message on failure
+   * @returns BTC address on success or error message on failure
    */
   public async getBtcAddress(): Promise<Result<string, string>> {
     const actor = this.#getActor();
@@ -203,9 +203,13 @@ class TokenStorageService {
 
   /**
    * Create a bridge transaction to import BTC into ICP
-   * @param btcAddress
-   * @param bitcoinTransaction
-   * @returns
+   * @param senderBtcAddress The BTC address of the sender
+   * @param receiverBtcAddress The BTC address of the receiver
+   * @param bitcoinTransaction The Bitcoin transaction details
+   * @param depositFee The deposit fee in satoshis
+   * @param withdrawalFee The withdrawal fee in satoshis
+   * @param isImporting Flag indicating if the transaction is for importing BTC
+   * @returns BridgeTransaction or error message
    */
   public async createBridgeTransaction(
     senderBtcAddress: string,
@@ -214,7 +218,7 @@ class TokenStorageService {
     depositFee: bigint,
     withdrawalFee: bigint,
     isImporting: boolean,
-  ): Promise<Result<string, string>> {
+  ): Promise<Result<BridgeTransaction, string>> {
     const actor = this.#getActor();
     if (!actor) {
       return Err("User is not authenticated");
@@ -231,12 +235,15 @@ class TokenStorageService {
           withdrawalFee,
           isImporting,
         );
-      console.log("createBridgeTransaction inputArgs:", inputArgs);
       const res = await actor.user_create_bridge_transaction(inputArgs);
-      console.log("createBridgeTransaction result:", res);
 
       if ("Ok" in res) {
-        return Ok("ok");
+        const useBridgeTransactionDto = res.Ok;
+        const bridgeTransaction =
+          BridgeTransactionMapper.fromTokenStorageBridgeTransaction(
+            useBridgeTransactionDto,
+          );
+        return Ok(bridgeTransaction);
       } else {
         return Err(`Error creating bridge transaction: ${res.Err}`);
       }
@@ -247,8 +254,9 @@ class TokenStorageService {
 
   /**
    * Get bridge transactions with pagination
-   * @param start
-   * @param limit
+   * @param start The starting index for pagination
+   * @param limit The maximum number of transactions to retrieve
+   * @param status Optional status filter
    * @returns array of bridge transactions or error message
    */
   public async getBridgeTransactions(
@@ -269,7 +277,6 @@ class TokenStorageService {
           ? [BridgeTransactionMapper.toBridgeTransactionStatusCanister(status)]
           : [],
       });
-      console.log("getBridgeTransactions result:", res);
 
       const bridgeTransactions = res.map((tx) =>
         BridgeTransactionMapper.fromTokenStorageBridgeTransaction(tx),
@@ -283,7 +290,7 @@ class TokenStorageService {
   /**
    * Get bridge transaction by its ID
    * @param bridgeId
-   * @returns
+   * @returns Bridge transaction or null if not found
    */
   public async getBridgeTransactionById(
     bridgeId: string,
@@ -295,7 +302,6 @@ class TokenStorageService {
 
     try {
       const res = await actor.user_get_bridge_transaction_by_id(bridgeId);
-      console.log("getBridgeTransactionById result:", res);
 
       if (res.length === 0) {
         return Ok(null);
@@ -309,6 +315,19 @@ class TokenStorageService {
     }
   }
 
+  /**
+   * Update a bridge transaction's details
+   * @param bridgeId the bridge transaction ID
+   * @param status the new status of the bridge transaction
+   * @param block_id the block ID where the transaction was confirmed
+   * @param block_timestamp the timestamp of the block where the transaction was confirmed
+   * @param confirmations list of Bitcoin blocks confirming the transaction
+   * @param btc_txid the Bitcoin transaction ID
+   * @param deposit_fee ckBTC deposit fee
+   * @param withdrawal_fee ckBTC withdrawal fee
+   * @param retry_times number of retry attempts for updating balance
+   * @returns updated BridgeTransaction or error message
+   */
   public async updateBridgeTransaction(
     bridgeId: string,
     status: BridgeTransactionStatus,
@@ -318,7 +337,8 @@ class TokenStorageService {
     btc_txid: string | null = null,
     deposit_fee: bigint | null = null,
     withdrawal_fee: bigint | null = null,
-  ): Promise<Result<tokenStorage.UserBridgeTransactionDto, string>> {
+    retry_times: number | null = null,
+  ): Promise<Result<BridgeTransaction, string>> {
     const actor = this.#getActor();
     if (!actor) {
       throw new Error("User is not authenticated");
@@ -334,6 +354,7 @@ class TokenStorageService {
         btc_txid,
         deposit_fee,
         withdrawal_fee,
+        retry_times,
       );
 
       console.log("updateBridgeTransaction args:", updateArgs);
@@ -341,7 +362,12 @@ class TokenStorageService {
       console.log("updateBridgeTransaction result:", res);
 
       if ("Ok" in res) {
-        return Ok(res.Ok);
+        const useBridgeTransactionDto = res.Ok;
+        const bridgeTransaction =
+          BridgeTransactionMapper.fromTokenStorageBridgeTransaction(
+            useBridgeTransactionDto,
+          );
+        return Ok(bridgeTransaction);
       } else {
         return Err(`Error updating bridge transaction: ${res.Err}`);
       }

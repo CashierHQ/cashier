@@ -2906,6 +2906,7 @@ dependencies = [
  "thiserror 2.0.17",
  "token_storage_types",
  "tokio",
+ "uuid",
  "vergen-gitcl",
 ]
 
@@ -2935,7 +2936,6 @@ dependencies = [
  "serde",
  "serde_bytes",
  "thiserror 2.0.17",
- "uuid",
 ]
 
 [[package]]

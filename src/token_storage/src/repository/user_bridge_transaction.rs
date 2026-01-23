@@ -152,6 +152,7 @@ mod tests {
             withdrawal_fee: None,
             total_amount: None,
             created_at_ts: 10000u64,
+            retry_times: 0,
             status: BridgeTransactionStatus::Created,
         };
 
@@ -190,6 +191,7 @@ mod tests {
             withdrawal_fee: None,
             total_amount: None,
             created_at_ts: 10000u64,
+            retry_times: 0,
             status: BridgeTransactionStatus::Created,
         };
 
@@ -235,6 +237,7 @@ mod tests {
                 withdrawal_fee: None,
                 total_amount: None,
                 created_at_ts: 10000u64 + i as u64,
+                retry_times: 0,
                 status: BridgeTransactionStatus::Created,
             };
             repo.upsert_bridge_transaction(user_id, bridge_tx.bridge_id.clone(), bridge_tx.clone())
@@ -281,6 +284,7 @@ mod tests {
             withdrawal_fee: None,
             total_amount: None,
             created_at_ts: 10000u64,
+            retry_times: 0,
             status: BridgeTransactionStatus::Created,
         };
 

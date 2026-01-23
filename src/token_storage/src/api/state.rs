@@ -1,11 +1,13 @@
-use std::{cell::RefCell, env, thread::LocalKey};
+// Copyright (c) 2025 Cashier Protocol Labs
+// Licensed under the MIT License (see LICENSE file in the project root)
+
+use std::{cell::RefCell, thread::LocalKey};
 
 use candid::Principal;
-use cashier_common::runtime::{IcEnvironment, RealIcEnvironment};
 use ic_mple_log::service::{LoggerConfigService, LoggerServiceStorage};
 
 use crate::{
-    bitcoin::ic_ckbtc_minter_client::IcCkBtcMinterClient,
+    bitcoin::ckbtc::ic_ckbtc_minter_client::IcCkBtcMinterClient,
     icrc7::ic_icrc7_validator::ICIcrc7Validator,
     repository::{AUTH_SERVICE_STORE, LOGGER_SERVICE_STORE, ThreadlocalRepositories},
     services::{
@@ -25,7 +27,7 @@ thread_local! {
 }
 
 /// The state of the canister
-pub struct CanisterState<E: IcEnvironment + Clone + 'static> {
+pub struct CanisterState {
     pub auth_service: AuthService<&'static LocalKey<RefCell<AuthServiceStorage>>>,
     pub log_service: LoggerConfigService<&'static LocalKey<RefCell<LoggerServiceStorage>>>,
     pub settings: SettingsService<ThreadlocalRepositories>,
@@ -34,12 +36,11 @@ pub struct CanisterState<E: IcEnvironment + Clone + 'static> {
     pub user_token: UserTokenService<ThreadlocalRepositories>,
     pub user_nft: UserNftService<ThreadlocalRepositories, ICIcrc7Validator>,
     pub user_ckbtc: UserCkBtcService<ThreadlocalRepositories, IcCkBtcMinterClient>,
-    pub env: E,
 }
 
-impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
+impl CanisterState {
     /// Creates a new CanisterState
-    pub fn new(env: E) -> Self {
+    pub fn new() -> Self {
         let repo = ThreadlocalRepositories;
         let ic_icrc7_validator = ICIcrc7Validator;
         let ckbtc_minter_client = IcCkBtcMinterClient;
@@ -53,7 +54,6 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
             user_token: UserTokenService::new(&repo),
             user_nft: UserNftService::new(&repo, ic_icrc7_validator),
             user_ckbtc: UserCkBtcService::new(&repo, ckbtc_minter_client),
-            env,
         }
     }
 
@@ -76,6 +76,6 @@ impl<E: IcEnvironment + Clone + 'static> CanisterState<E> {
 
 /// Returns the state of the canister
 #[inline(always)]
-pub fn get_state() -> CanisterState<RealIcEnvironment> {
-    CanisterState::new(RealIcEnvironment::new())
+pub fn get_state() -> CanisterState {
+    CanisterState::new()
 }

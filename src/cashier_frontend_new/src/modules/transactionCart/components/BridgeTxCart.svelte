@@ -35,9 +35,6 @@
   let showFeeInfoDrawer = $state(false);
   let isTransitioningToFeeDrawer = $state(false);
 
-  // Hardcoded i18n key for bridge source
-  const txCartI18nKey = "bitcoin.txCart";
-
   let failedImageLoads = $state<Set<string>>(new Set());
 
   let outgoingAssets = $derived.by(() => bridgeTxCartStore?.outgoingAssets ?? []);
@@ -104,7 +101,7 @@
         <Drawer.Title
           class="text-[18px] font-semibold leading-[20px] px-8 text-center w-[100%]"
         >
-          {locale.t(`${txCartI18nKey}.title`)}
+          {locale.t(`bitcoin.txCart.title`)}
         </Drawer.Title>
         <Drawer.Close>
           <X
@@ -172,7 +169,7 @@
         class="rounded-full inline-flex items-center justify-center cursor-pointer whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none bg-green text-primary-foreground shadow hover:bg-green/90 h-[44px] px-4 w-full disabled:bg-disabledgreen"
         onclick={handleConfirm}
       >
-        {locale.t(`${txCartI18nKey}.close`)}
+        {locale.t(`bitcoin.txCart.close`)}
       </Button>
     </div>
   </Drawer.Content>

@@ -67,7 +67,6 @@ export class BitcoinTransactionMapper {
     withdrawalFee: bigint,
     isImporting: boolean,
   ): tokenStorage.CreateBridgeTransactionInputArg {
-    console.log("bitcoinTransaction:", bitcoinTransaction);
     let asset_infos: tokenStorage.BridgeAssetInfo[] = [];
     let btcAddress = senderBtcAddress;
     if (isImporting) {

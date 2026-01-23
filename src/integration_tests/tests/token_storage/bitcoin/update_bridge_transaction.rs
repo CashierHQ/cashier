@@ -34,6 +34,7 @@ async fn it_should_fail_user_create_bridge_transaction_due_to_anonymous_caller()
             block_confirmations: Some(block_confirmations),
             deposit_fee: Some(Nat::from(1000u32)),
             withdrawal_fee: Some(Nat::from(500u32)),
+            retry_times: Some(1),
             status: Some(BridgeTransactionStatus::Completed),
         };
 
@@ -97,6 +98,7 @@ async fn it_should_update_bridge_transaction_for_valid_user() {
             block_confirmations: Some(block_confirmations),
             deposit_fee: Some(Nat::from(1500u32)),
             withdrawal_fee: Some(Nat::from(700u32)),
+            retry_times: Some(2),
             status: Some(BridgeTransactionStatus::Completed),
         };
 

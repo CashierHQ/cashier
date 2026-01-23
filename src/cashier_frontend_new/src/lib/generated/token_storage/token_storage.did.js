@@ -173,6 +173,7 @@ export const idlFactory = ({ IDL }) => {
     'block_timestamp' : IDL.Nat64,
   });
   const UserBridgeTransactionDto = IDL.Record({
+    'retry_times' : IDL.Nat8,
     'status' : BridgeTransactionStatus,
     'block_confirmations' : IDL.Vec(BlockConfirmation),
     'block_id' : IDL.Opt(IDL.Nat64),
@@ -203,6 +204,7 @@ export const idlFactory = ({ IDL }) => {
     'start' : IDL.Opt(IDL.Nat32),
   });
   const UpdateBridgeTransactionInputArg = IDL.Record({
+    'retry_times' : IDL.Opt(IDL.Nat8),
     'status' : IDL.Opt(BridgeTransactionStatus),
     'block_confirmations' : IDL.Opt(IDL.Vec(BlockConfirmation)),
     'block_id' : IDL.Opt(IDL.Nat64),

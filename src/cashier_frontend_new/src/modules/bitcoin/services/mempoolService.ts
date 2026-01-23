@@ -68,8 +68,9 @@ class MempoolService {
    */
   async getLatestBlocksFromHeight(
     height: number,
-    span: number,
+    start_block: number,
   ): Promise<BitcoinBlock[] | []> {
+    // fetch latest 15 blocks from height
     const response = await fetch(`${this.#baseUrl}/blocks/${height}`);
     if (!response.ok) {
       console.error(
@@ -78,15 +79,14 @@ class MempoolService {
       return [];
     }
 
-    // get lastest 15 blocks
     const data: any = await response.json();
 
     const blocks: BitcoinBlock[] = [];
-    for (let i = 0; i <= span; i++) {
-      if (data[i]) {
+    for (const block of data) {
+      if (block.height >= start_block) {
         blocks.push({
-          block_id: BigInt(data[i].height),
-          block_timestamp: BigInt(data[i].timestamp),
+          block_id: BigInt(block.height),
+          block_timestamp: BigInt(block.timestamp),
         });
       }
     }

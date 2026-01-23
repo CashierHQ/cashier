@@ -1,9 +1,8 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import BridgeItem from '$modules/bitcoin/components/bridgeItem.svelte';
+  import BridgeList from '$modules/bitcoin/components/bridgeList.svelte';
   import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";
-  import { groupBridgeTransactionsByDate } from '$modules/bitcoin/utils';
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import BridgeTxCart from '$modules/transactionCart/components/BridgeTxCart.svelte';
   import type { BridgeSource } from '$modules/transactionCart/types/transactionSource';
@@ -16,13 +15,6 @@
   );
   let showBridgeTxCart = $state(false);
   let bridgeSource = $state<BridgeSource | null>(null);
-
-  let bridgeTxsByDate = $derived.by(() => {
-    if (bridgeStore.bridgeTxs) {
-      return groupBridgeTransactionsByDate(bridgeStore.bridgeTxs);
-    }
-    return {};
-  });
 
   function handleCopy(text: string) {
     navigator.clipboard.writeText(text);
@@ -46,8 +38,17 @@
     showBridgeTxCart = false;
     bridgeSource = null;
   }
+
+  function handleLoadMore() {
+    bridgeStore.loadMore();
+  }
 </script>
 <div>
+  <div class="mb-6 flex justify-center">
+    <Label class="text-base font-semibold">
+        {locale.t("bitcoin.receive.title")}
+    </Label>
+  </div>
   <div class="space-y-4">
     <Label class="text-base font-semibold">
         {locale
@@ -95,24 +96,12 @@
       </div>
     </div>
   </div>
-  <div class="space-y-4">
-    {#if Object.keys(bridgeTxsByDate).length > 0}
-      {#each Object.keys(bridgeTxsByDate) as createdDate}
-        <Label class="text-base font-semibold">
-          {createdDate}
-        </Label>
-        <div class="text-sm text-gray-600">
-          {#each bridgeTxsByDate[createdDate] as bridge}
-          <BridgeItem
-            {bridge}
-            onSelect={() => handleSelectBridge(bridge.bridge_id)} />
-          {/each}
-        </div>
-      {/each}
-    {:else}
-      <p>{locale.t("wallet.receive.noBtcImportTxs")}</p>
-    {/if}
-  </div>
+  <BridgeList
+    bridgeTxs={bridgeStore.bridgeTxs ?? []}
+    hasMore={bridgeStore.hasMore}
+    onSelectBridge={handleSelectBridge}
+    onLoadMore={handleLoadMore}
+  />
 </div>
 
 {#if showBridgeTxCart && bridgeSource}

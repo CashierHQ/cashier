@@ -4,7 +4,7 @@
   import { Dialog, DialogContent } from "$lib/shadcn/components/ui/dialog";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
-  import ReceiveBTC from "$modules/bitcoin/components/receiveBTC.svelte";
+  import ReceiveBTC from '$modules/bitcoin/components/receiveBTC.svelte';
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
@@ -64,7 +64,7 @@
     selectedTokenObj ? getTokenLogo(selectedTokenObj.address) : null,
   );
 
-  const isCkBTC = $derived(
+  const isBTC = $derived(
     selectedToken === CKBTC_CANISTER_ID,
   );
 
@@ -209,7 +209,7 @@
             </button>
           </div>
         {/if}
-        {#if isCkBTC}
+        {#if isBTC}
           <div class="flex items-start gap-1.5">
             <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
             <div class="text-sm text-green">
@@ -231,7 +231,7 @@
         {/if}
       </div>
 
-      {#if isCkBTC}
+      {#if isBTC}
         <ReceiveBTC />
       {/if}
 

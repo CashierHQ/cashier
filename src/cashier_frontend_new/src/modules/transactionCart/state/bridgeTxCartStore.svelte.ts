@@ -32,8 +32,6 @@ export class BridgeTxCartStore {
             return null;
           }
 
-          console.log("Fetched bridge transaction:", bridgeTx);
-
           const btcPriceUSD =
             tokenPriceStore.getTokenPriceByCanisterId(CKBTC_CANISTER_ID);
           const [bridgeTxWithUsdValue] = enrichBridgeTransactionWithUsdValue(

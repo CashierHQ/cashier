@@ -25,6 +25,7 @@ export type BridgeTransaction = {
   block_id: bigint | null;
   block_timestamp: bigint | null;
   confirmations: BitcoinBlock[] | [];
+  retry_times: number;
   status: BridgeTransactionStatusValue;
 };
 
@@ -69,6 +70,11 @@ export type BridgeTransactionStatusValue =
   | typeof BridgeTransactionStatus.Failed;
 
 export class BridgeTransactionMapper {
+  /**
+   * Map token storage bridge transaction to frontend bridge transaction type
+   * @param data UserBridgeTransactionDto from token storage canister
+   * @returns BridgeTransaction
+   */
   public static fromTokenStorageBridgeTransaction(
     data: tokenStorage.UserBridgeTransactionDto,
   ): BridgeTransaction {
@@ -137,12 +143,18 @@ export class BridgeTransactionMapper {
       block_id,
       block_timestamp,
       confirmations,
+      retry_times: data.retry_times,
       status: BridgeTransactionMapper.bridgeTransactionStatusFromTokenStorage(
         data.status,
       ),
     };
   }
 
+  /**
+   * Map token storage BridgeAssetType to frontend BridgeAssetTypeValue
+   * @param assetType
+   * @returns BridgeAssetTypeValue
+   */
   public static bridgeAssetTypeFromTokenStorage(
     assetType: tokenStorage.BridgeAssetType,
   ): BridgeAssetTypeValue {
@@ -157,6 +169,11 @@ export class BridgeTransactionMapper {
     }
   }
 
+  /**
+   * Map token storage BridgeType to frontend BridgeTypeValue
+   * @param bridgeType
+   * @returns BridgeTypeValue
+   */
   public static bridgeTypeFromTokenStorage(
     bridgeType: tokenStorage.BridgeType,
   ): BridgeTypeValue {
@@ -169,6 +186,11 @@ export class BridgeTransactionMapper {
     }
   }
 
+  /**
+   * Map token storage BridgeTransactionStatus to frontend BridgeTransactionStatusValue
+   * @param status
+   * @returns BridgeTransactionStatusValue
+   */
   public static bridgeTransactionStatusFromTokenStorage(
     status: tokenStorage.BridgeTransactionStatus,
   ): BridgeTransactionStatusValue {
@@ -185,6 +207,11 @@ export class BridgeTransactionMapper {
     }
   }
 
+  /**
+   * Map frontend BridgeTransaction to AssetItem array for transaction cart display
+   * @param bridge
+   * @returns array of AssetItem
+   */
   public static toAssetItems(bridge: BridgeTransaction): AssetItem[] {
     let assetItems: AssetItem[] = [];
     let state = AssetProcessState.CREATED;
@@ -232,6 +259,11 @@ export class BridgeTransactionMapper {
     return assetItems;
   }
 
+  /**
+   * Map frontend BridgeTransactionStatus to token storage BridgeTransactionStatus
+   * @param status
+   * @returns tokenStorage.BridgeTransactionStatus
+   */
   public static toBridgeTransactionStatusCanister(
     status: BridgeTransactionStatus,
   ): tokenStorage.BridgeTransactionStatus {
@@ -249,6 +281,19 @@ export class BridgeTransactionMapper {
     }
   }
 
+  /**
+   * Map frontend BridgeTransaction update to token storage UpdateBridgeTransactionInputArg
+   * @param bridgeId
+   * @param status
+   * @param block_id
+   * @param block_timestamp
+   * @param confirmations
+   * @param btc_txid
+   * @param deposit_fee
+   * @param withdrawal_fee
+   * @param retry_times
+   * @returns tokenStorage.UpdateBridgeTransactionInputArg
+   */
   public static toUpdateBridgeTransactionArgs(
     bridgeId: string,
     status: BridgeTransactionStatus,
@@ -258,6 +303,7 @@ export class BridgeTransactionMapper {
     btc_txid: string | null = null,
     deposit_fee: bigint | null = null,
     withdrawal_fee: bigint | null = null,
+    retry_times: number | null = null,
   ): tokenStorage.UpdateBridgeTransactionInputArg {
     let block_id_arg: [] | [bigint] = block_id ? [block_id] : [];
     let block_timestamp_arg: [] | [bigint] = block_timestamp
@@ -281,6 +327,7 @@ export class BridgeTransactionMapper {
       btc_txid: btc_txid ? [btc_txid] : [],
       deposit_fee: deposit_fee ? [deposit_fee] : [],
       withdrawal_fee: withdrawal_fee ? [withdrawal_fee] : [],
+      retry_times: retry_times ? [retry_times] : [],
     };
   }
 }

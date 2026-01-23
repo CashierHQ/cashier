@@ -4,12 +4,8 @@
 use candid::{CandidType, Nat, Principal};
 use cashier_macros::storable;
 use ic_mple_structures::Codec;
-use uuid::Uuid;
 
-use crate::{
-    dto::bitcoin::{CreateBridgeTransactionInputArg, UpdateBridgeTransactionInputArg},
-    error::CanisterError,
-};
+use crate::dto::bitcoin::UpdateBridgeTransactionInputArg;
 
 #[derive(Clone, Debug, CandidType, PartialEq, Eq, Hash)]
 #[storable]
@@ -27,84 +23,8 @@ pub struct BridgeTransaction {
     pub withdrawal_fee: Option<Nat>,
     pub created_at_ts: u64,
     pub total_amount: Option<Nat>,
+    pub retry_times: u8,
     pub status: BridgeTransactionStatus,
-}
-
-pub struct BridgeTransactionMapper;
-
-impl BridgeTransactionMapper {
-    pub fn from_create_input(
-        input: CreateBridgeTransactionInputArg,
-    ) -> Result<BridgeTransaction, CanisterError> {
-        let mut bridge_id = Uuid::new_v4().to_string();
-        let mut btc_txid = None;
-        let mut asset_infos = input.asset_infos.clone();
-
-        let mut deposit_fee = None;
-        if let Some(fee) = input.deposit_fee {
-            deposit_fee = Some(fee);
-        }
-        let mut withdrawal_fee = None;
-        if let Some(fee) = input.withdrawal_fee {
-            withdrawal_fee = Some(fee);
-        }
-
-        if input.bridge_type == BridgeType::Import {
-            if let Some(txid) = &input.btc_txid {
-                bridge_id = format!("import_{}", txid);
-                btc_txid = Some(txid.clone());
-            } else {
-                return Err(CanisterError::ValidationErrors(
-                    "btc_txid is required for import".to_string(),
-                ));
-            }
-
-            // deduct the deposit fee from the first asset info amount
-            if let Some(deposit_fee) = &deposit_fee {
-                // find first asset with amount greater than deposit fee and deduct the fee
-                if let Some(first_asset) = asset_infos
-                    .iter_mut()
-                    .find(|asset| asset.amount.clone() > deposit_fee.clone())
-                {
-                    first_asset.amount -= deposit_fee.clone();
-                } else {
-                    return Err(CanisterError::ValidationErrors(
-                        "No asset with sufficient amount to cover deposit fee".to_string(),
-                    ));
-                }
-            }
-        }
-
-        let mut total_amount = Nat::from(0u32);
-        for asset_info in &asset_infos {
-            total_amount += asset_info.amount.clone();
-        }
-
-        if input.bridge_type == BridgeType::Import
-            && total_amount < deposit_fee.clone().unwrap_or(Nat::from(0u32))
-        {
-            return Err(CanisterError::ValidationErrors(
-                "Deposit fee exceeds total amount".to_string(),
-            ));
-        }
-
-        Ok(BridgeTransaction {
-            bridge_id,
-            icp_address: input.icp_address,
-            btc_address: input.btc_address,
-            bridge_type: input.bridge_type,
-            asset_infos,
-            btc_txid,
-            block_id: None,
-            block_timestamp: None,
-            block_confirmations: vec![],
-            deposit_fee,
-            withdrawal_fee,
-            total_amount: Some(total_amount),
-            created_at_ts: input.created_at_ts,
-            status: BridgeTransactionStatus::Created,
-        })
-    }
 }
 
 impl BridgeTransaction {
@@ -126,6 +46,9 @@ impl BridgeTransaction {
         }
         if let Some(withdrawal_fee) = input.withdrawal_fee {
             self.withdrawal_fee = Some(withdrawal_fee);
+        }
+        if let Some(retry_times) = input.retry_times {
+            self.retry_times = retry_times;
         }
         if let Some(status) = input.status {
             self.status = status;
@@ -196,39 +119,6 @@ mod tests {
     use candid::Nat;
 
     #[test]
-    fn it_shoulf_create_bridge_transaction_from_input() {
-        // Arrange
-        let input = CreateBridgeTransactionInputArg {
-            btc_txid: Some("test_txid".to_string()),
-            icp_address: Principal::from_text("aaaaa-aa").unwrap(),
-            btc_address: "test_btc_address".to_string(),
-            asset_infos: vec![],
-            bridge_type: BridgeType::Import,
-            deposit_fee: None,
-            withdrawal_fee: None,
-            created_at_ts: 0,
-        };
-
-        // Act
-        let transaction: BridgeTransaction =
-            BridgeTransactionMapper::from_create_input(input).unwrap();
-
-        // Assert
-        assert_eq!(
-            transaction.icp_address,
-            Principal::from_text("aaaaa-aa").unwrap()
-        );
-        assert_eq!(transaction.btc_address, "test_btc_address".to_string());
-        assert_eq!(transaction.asset_infos.len(), 0);
-        assert_eq!(transaction.bridge_type, BridgeType::Import);
-        assert_eq!(transaction.btc_txid, Some("test_txid".to_string()));
-        assert_eq!(transaction.block_id, None);
-        assert_eq!(transaction.block_confirmations.len(), 0);
-        assert_eq!(transaction.status, BridgeTransactionStatus::Created);
-        assert_eq!(transaction.created_at_ts, 0);
-    }
-
-    #[test]
     fn it_should_update_bridge_transaction_fields() {
         // Arrange
         let mut transaction = BridgeTransaction {
@@ -245,6 +135,7 @@ mod tests {
             withdrawal_fee: None,
             total_amount: None,
             created_at_ts: 0,
+            retry_times: 0,
             status: BridgeTransactionStatus::Created,
         };
 
@@ -266,6 +157,7 @@ mod tests {
             block_confirmations: Some(block_confirmations),
             deposit_fee: Some(Nat::from(1000u32)),
             withdrawal_fee: Some(Nat::from(500u32)),
+            retry_times: Some(1),
             status: Some(BridgeTransactionStatus::Completed),
         };
 
@@ -279,6 +171,7 @@ mod tests {
         assert_eq!(transaction.block_confirmations.len(), 2);
         assert_eq!(transaction.deposit_fee, Some(Nat::from(1000u32)));
         assert_eq!(transaction.withdrawal_fee, Some(Nat::from(500u32)));
+        assert_eq!(transaction.retry_times, 1);
         assert_eq!(transaction.status, BridgeTransactionStatus::Completed);
     }
 }
