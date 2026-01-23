@@ -47,7 +47,6 @@
     const originalEnabled = token.enabled;
     const newEnabled = !token.enabled;
 
-
     optimisticUpdates.set(token.address, newEnabled);
     updateTrigger++;
 
@@ -55,10 +54,8 @@
       .toggleToken(token.address, newEnabled)
       .then(async () => {
         await walletStore.query.refresh();
-
       })
       .catch(async (error) => {
-
         optimisticUpdates.set(token.address, originalEnabled);
         toast.error(locale.t("wallet.manage.toggleError") + ": " + error);
         await walletStore.query.refresh();
