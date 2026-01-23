@@ -161,7 +161,7 @@
       "type": "custom",
       "candid": "./target/artifacts/ckbtc_ledger.did",
       "wasm": "./target/artifacts/ckbtc_ledger.wasm.gz",
-      "specified_id": "mxzaz-hqaaa-aaaar-qaada-cai",
+      "specified_id": "mc6ru-gyaaa-aaaar-qaaaq-cai",
       "metadata": [
         {
           "name": "candid:service"
@@ -183,7 +183,7 @@
       "type": "custom",
       "candid": "./target/artifacts/ckbtc_kyt.did",
       "wasm": "./target/artifacts/ckbtc_kyt.wasm.gz",
-      "specified_id": "pvm5g-xaaaa-aaaar-qaaia-cai",
+      "specified_id": "o6ude-eyaaa-aaaar-qal6a-cai",
       "metadata": [
         {
           "name": "candid:service"

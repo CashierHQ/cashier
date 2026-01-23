@@ -1,7 +1,7 @@
 DFX_LOGFILE:="./target/dfx_tests.log"
-CKBTC_LEDGER_ID:="mxzaz-hqaaa-aaaar-qaada-cai"
+CKBTC_LEDGER_ID:="mc6ru-gyaaa-aaaar-qaaaq-cai"
 CKBTC_MINTER_ID:="ml52i-qqaaa-aaaar-qaaba-cai"
-CKBTC_KYT_ID:="pvm5g-xaaaa-aaaar-qaaia-cai"
+CKBTC_KYT_ID:="o6ude-eyaaa-aaaar-qal6a-cai"
 
 # Start the local dfx server
 [group('dfx')]
@@ -28,9 +28,9 @@ dfx_local_stop:
 # backend_log_filter: log filter string for the backend canister
 # token_storage_log_filter: log filter string for the token_storage canister
 [group('dfx')]
-dfx_deploy owner ckbtc_minter_id network="" backend_log_filter="" token_storage_log_filter="": 
+dfx_deploy owner network="" backend_log_filter="" token_storage_log_filter="": 
   #!/usr/bin/env bash
-  just dfx_deploy_token_storage {{owner}} {{ckbtc_minter_id}} {{network}} {{token_storage_log_filter}}
+  just dfx_deploy_token_storage {{owner}} {{network}} {{token_storage_log_filter}}
 
   just dfx_deploy_backend {{owner}} {{network}} {{backend_log_filter}}
 
@@ -44,7 +44,7 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
 
   export OWNER=$(dfx identity get-principal)
 
-  just dfx_deploy "${OWNER}" "{{CKBTC_MINTER_ID}}"
+  just dfx_deploy "${OWNER}"
 
   cashier_backend_id=$(dfx canister id cashier_backend)
   just dfx_deploy_gate "${OWNER}" "${cashier_backend_id}"
@@ -203,7 +203,7 @@ dfx_deploy_backend owner network="" log_filter="global,cashier=debug":
 # network: dfx network flag, e.g. --network=dev
 # log_filter: log filter string (default for local and dev)
 [private]
-dfx_deploy_token_storage owner ckbtc_minter_id network="" log_filter="global,cashier=debug,token_storage=debug":
+dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token_storage=debug":
   #!/usr/bin/env bash
   set -e
 
@@ -260,7 +260,7 @@ dfx_deploy_token_storage owner ckbtc_minter_id network="" log_filter="global,cas
           enabled_by_default = true;
         };
       };
-      ckbtc_minter_id = principal \"{{ckbtc_minter_id}}\";
+      ckbtc_minter_id = principal \"{{CKBTC_MINTER_ID}}\";
   })" {{network}}
 
 # Deploy Gate canister
