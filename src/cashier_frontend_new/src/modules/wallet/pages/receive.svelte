@@ -10,8 +10,8 @@
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import NavBar from "$modules/token/components/navBar.svelte";
   import {
-      CKBTC_CANISTER_ID,
-      ICP_LEDGER_CANISTER_ID,
+    CKBTC_CANISTER_ID,
+    ICP_LEDGER_CANISTER_ID,
   } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { ChevronDown, Copy, Info } from "lucide-svelte";
