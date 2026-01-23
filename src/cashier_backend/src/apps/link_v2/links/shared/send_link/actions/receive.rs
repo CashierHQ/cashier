@@ -53,12 +53,15 @@ impl ReceiveAction {
             .asset_info
             .iter()
             .map(|asset_info| {
-                let sending_amount = asset_info.amount_per_link_use_action.clone();
+                // source_amount = amount_per_link_use_action (user's intended receive amount)
+                let source_amount = asset_info.amount_per_link_use_action.clone();
+                let sending_amount = source_amount.clone();
 
                 let intent = TransferLinkToWalletIntent::create(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                     asset_info.asset.clone(),
                     sending_amount,
+                    source_amount,
                     receiver_id,
                     link_account,
                     link.create_at,

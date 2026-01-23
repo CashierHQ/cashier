@@ -671,6 +671,7 @@ version = "0.1.1"
 dependencies = [
  "candid",
  "cashier_backend_types",
+ "cashier_common",
  "serde",
 ]
 

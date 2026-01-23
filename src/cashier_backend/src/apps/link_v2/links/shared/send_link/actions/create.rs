@@ -1,7 +1,7 @@
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use candid::Principal;
+use candid::{Nat, Principal};
 use cashier_backend_types::{
     constant::{INTENT_LABEL_LINK_CREATION_FEE, INTENT_LABEL_SEND_TIP_ASSET},
     error::CanisterError,
@@ -17,12 +17,10 @@ use cashier_common::{
     utils::{convert_nat_to_u64, get_link_account},
 };
 use icrc_ledger_types::icrc1::account::Account;
-use transaction_manager::{
-    intents::{
-        transfer_wallet_to_link::TransferWalletToLinkIntent,
-        transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
-    },
-    utils::calculator::{calculate_create_link_fee, calculate_link_balance_map},
+use fee_calculator::{calculate_create_link_fee, calculate_link_balance_map};
+use transaction_manager::intents::{
+    transfer_wallet_to_link::TransferWalletToLinkIntent,
+    transfer_wallet_to_treasury::TransferWalletToTreasuryIntent,
 };
 
 use crate::apps::link_v2::links::shared::utils::get_batch_tokens_fee_for_link;
@@ -80,10 +78,15 @@ impl CreateAction {
                     )
                 })?;
 
+                // source_amount = amount_per_use × max_use (before fees)
+                let source_amount = asset_info.amount_per_link_use_action.clone()
+                    * Nat::from(link.link_use_action_max_count);
+
                 let intent = TransferWalletToLinkIntent::create(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                     asset_info.asset.clone(),
                     sending_amount.clone(),
+                    source_amount,
                     link.creator,
                     link_account,
                     link.create_at,

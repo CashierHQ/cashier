@@ -6,7 +6,7 @@
 use candid::Nat;
 use candid::Principal;
 use cashier_backend_types::repository::common::{Asset, Wallet};
-use cashier_backend_types::repository::intent::v1::{IntentType, TransferData, TransferFromData};
+use cashier_backend_types::repository::intent::v1::{IntentType, TransferData};
 use cashier_backend_types::repository::intent::v2::Intent;
 use cashier_backend_types::repository::link::v1::{Link, LinkState, LinkType};
 use cashier_backend_types::repository::transaction::v1::{
@@ -35,6 +35,7 @@ pub fn make_link_default() -> Link {
 }
 
 /// Create Transfer Intent with specified amount
+/// Sets intent_total_amount for fee calculation (required by treasury flow)
 pub fn make_intent(amount: u64) -> Intent {
     Intent {
         r#type: IntentType::Transfer(TransferData {
@@ -43,22 +44,7 @@ pub fn make_intent(amount: u64) -> Intent {
             asset: Asset::default(),
             amount: Nat::from(amount),
         }),
-        ..Default::default()
-    }
-}
-
-/// Create TransferFrom Intent (ICRC2 style)
-pub fn make_transfer_from_intent(amount: u64) -> Intent {
-    Intent {
-        r#type: IntentType::TransferFrom(TransferFromData {
-            from: Wallet::default(),
-            to: Wallet::default(),
-            spender: Wallet::default(),
-            asset: Asset::default(),
-            amount: Nat::from(amount),
-            actual_amount: None,
-            approve_amount: None,
-        }),
+        intent_total_amount: Some(Nat::from(amount)),
         ..Default::default()
     }
 }

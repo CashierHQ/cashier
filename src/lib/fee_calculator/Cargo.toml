@@ -8,5 +8,6 @@ license.workspace = true
 candid = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 cashier_backend_types = { workspace = true }
+cashier_common = { workspace = true }
 
 [dev-dependencies]

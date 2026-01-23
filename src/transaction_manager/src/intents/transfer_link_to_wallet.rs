@@ -26,7 +26,8 @@ impl TransferLinkToWalletIntent {
     /// # Arguments
     /// * `label` - A label for the intent
     /// * `asset` - The asset to be transferred
-    /// * `sending_amount` - The amount to be sent
+    /// * `sending_amount` - The amount to be sent (after fee deduction)
+    /// * `source_amount` - The original amount before fees (for intent_total_amount)
     /// * `receiver_id` - The principal of the receiver's wallet
     /// * `link_account` - The account associated with the link
     /// * `created_at_ts` - The timestamp when the intent is created
@@ -36,6 +37,7 @@ impl TransferLinkToWalletIntent {
         label: String,
         asset: Asset,
         sending_amount: Nat,
+        source_amount: Nat,
         receiver_id: Principal,
         link_account: Account,
         created_at_ts: u64,
@@ -49,7 +51,8 @@ impl TransferLinkToWalletIntent {
             chain: Chain::IC,
             task: IntentTask::TransferLinkToWallet,
             r#type: IntentType::default_transfer(),
-            intent_total_amount: None,
+            // intent_total_amount = source amount (before fee deduction)
+            intent_total_amount: Some(source_amount),
             intent_total_network_fee: None,
             intent_user_fee: None,
         };
@@ -83,6 +86,7 @@ mod tests {
         let label = "Test Intent".to_string();
         let asset = Asset::default();
         let sending_amount = Nat::from(100u64);
+        let source_amount = Nat::from(110u64);
         let receiver_id = random_principal_id();
         let link_account = Account {
             owner: random_principal_id(),
@@ -95,6 +99,7 @@ mod tests {
             label.clone(),
             asset.clone(),
             sending_amount.clone(),
+            source_amount.clone(),
             receiver_id,
             link_account,
             created_at_ts,
@@ -116,5 +121,8 @@ mod tests {
         assert_eq!(intent_type.asset, asset);
         assert_eq!(intent_type.to, Wallet::new(receiver_id));
         assert_eq!(intent_type.from, link_account.into());
+
+        // Verify intent_total_amount is set from source_amount
+        assert_eq!(intent.intent.intent_total_amount, Some(source_amount));
     }
 }

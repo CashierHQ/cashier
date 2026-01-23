@@ -59,7 +59,8 @@ impl WithdrawAction {
                 let address = match asset_info.asset {
                     Asset::IC { address } => address,
                 };
-                let sending_amount = actual_token_balance_map
+                // source_amount = actual balance in link (before fee deduction)
+                let source_amount = actual_token_balance_map
                     .get(&address)
                     .cloned()
                     .unwrap_or(Nat::from(0u64));
@@ -70,16 +71,17 @@ impl WithdrawAction {
                     ))
                 })?;
                 let outbound_fee = calc_outbound_fee(1, &network_fee);
-                let sending_amount = if sending_amount <= outbound_fee {
+                let sending_amount = if source_amount <= outbound_fee {
                     Nat::from(0u64)
                 } else {
-                    sending_amount - outbound_fee
+                    source_amount.clone() - outbound_fee
                 };
 
                 let intent = TransferLinkToWalletIntent::create(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                     asset_info.asset.clone(),
                     sending_amount,
+                    source_amount,
                     link.creator,
                     link_account,
                     link.create_at,

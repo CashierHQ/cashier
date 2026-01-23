@@ -13,11 +13,8 @@ use cashier_backend_types::{
     },
 };
 use cashier_common::utils::get_link_account;
-use fee_calculator::calc_outbound_fee;
-use transaction_manager::{
-    intents::transfer_wallet_to_link::TransferWalletToLinkIntent,
-    utils::calculator::calculate_link_balance_map,
-};
+use fee_calculator::{calc_outbound_fee, calculate_link_balance_map};
+use transaction_manager::intents::transfer_wallet_to_link::TransferWalletToLinkIntent;
 
 use crate::apps::link_v2::links::shared::utils::get_batch_tokens_fee_for_link;
 use uuid::Uuid;
@@ -88,10 +85,14 @@ impl SendAction {
                 let outbound_fee = calc_outbound_fee(1, network_fee);
                 let sending_amount = base_amount.clone() + outbound_fee;
 
+                // source_amount = user input amount (amount_per_link_use_action)
+                let source_amount = asset_info.amount_per_link_use_action.clone();
+
                 let intent = TransferWalletToLinkIntent::create(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                     asset_info.asset.clone(),
                     sending_amount,
+                    source_amount,
                     sender_id,
                     link_account,
                     link.create_at,

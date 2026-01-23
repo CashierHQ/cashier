@@ -15,9 +15,9 @@ pub enum IntentFlow {
 }
 
 /// Result of fee calculation
+/// Note: intent_total_amount is set directly by action handlers from source amount
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct IntentFeeResult {
-    pub intent_total_amount: Nat,
     pub intent_total_network_fee: Nat,
     pub intent_user_fee: Nat,
 }

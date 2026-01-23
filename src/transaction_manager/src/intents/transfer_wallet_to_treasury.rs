@@ -52,7 +52,8 @@ impl TransferWalletToTreasuryIntent {
             chain: Chain::IC,
             task: IntentTask::TransferWalletToTreasury,
             r#type: IntentType::default_transfer_from(),
-            intent_total_amount: None,
+            // intent_total_amount = link_creation_fee (source amount for treasury flow)
+            intent_total_amount: Some(Nat::from(actual_amount)),
             intent_total_network_fee: None,
             intent_user_fee: None,
         };

@@ -17,12 +17,12 @@ pub trait IntentFeeStrategy {
     /// * `transactions` - The transactions for this intent (source of truth for ICRC1/ICRC2)
     /// * `network_fee` - Token network fee
     /// # Returns
-    /// * `IntentFeeResult` - The calculated fee result
+    /// * `Result<IntentFeeResult, String>` - The calculated fee result or error
     fn calculate(
         &self,
         link: &Link,
         intent: &Intent,
         transactions: &[Transaction],
         network_fee: Nat,
-    ) -> IntentFeeResult;
+    ) -> Result<IntentFeeResult, String>;
 }

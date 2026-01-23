@@ -2,21 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Nat;
-use cashier_backend_types::repository::intent::v1::IntentType;
-use cashier_backend_types::repository::intent::v2::Intent;
 use cashier_backend_types::repository::transaction::v1::{IcTransaction, Protocol, Transaction};
-
-/// Extract amount from intent
-/// # Arguments
-/// * `intent` - The intent to extract amount from
-/// # Returns
-/// * `Nat` - The amount specified in the intent
-pub fn get_intent_amount(intent: &Intent) -> Nat {
-    match &intent.r#type {
-        IntentType::Transfer(data) => data.amount.clone(),
-        IntentType::TransferFrom(data) => data.amount.clone(),
-    }
-}
 
 /// Calculate inbound fee from transactions (source of truth)
 /// Counts actual transaction types to determine fee multiplier
@@ -57,21 +43,7 @@ pub fn calc_outbound_fee(count: u64, network_fee: &Nat) -> Nat {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_utils::{
-        make_icrc1_tx, make_icrc2_txs, make_intent, make_transfer_from_intent,
-    };
-
-    #[test]
-    fn test_get_intent_amount_transfer() {
-        let intent = make_intent(1000);
-        assert_eq!(get_intent_amount(&intent), Nat::from(1000u64));
-    }
-
-    #[test]
-    fn test_get_intent_amount_transfer_from() {
-        let intent = make_transfer_from_intent(500);
-        assert_eq!(get_intent_amount(&intent), Nat::from(500u64));
-    }
+    use crate::test_utils::{make_icrc1_tx, make_icrc2_txs};
 
     #[test]
     fn test_calc_inbound_fee_icrc1() {

@@ -6,7 +6,7 @@ use cashier_backend_types::repository::intent::v2::Intent;
 use cashier_backend_types::repository::link::v1::Link;
 use cashier_backend_types::repository::transaction::v1::Transaction;
 
-use super::helpers::{calc_inbound_fee, calc_outbound_fee, get_intent_amount};
+use super::helpers::{calc_inbound_fee, calc_outbound_fee};
 use crate::traits::IntentFeeStrategy;
 use crate::types::IntentFeeResult;
 
@@ -16,12 +16,10 @@ impl IntentFeeStrategy for UserToLinkStrategy {
     fn calculate(
         &self,
         _link: &Link,
-        intent: &Intent,
+        _intent: &Intent,
         transactions: &[Transaction],
         network_fee: Nat,
-    ) -> IntentFeeResult {
-        let amount = get_intent_amount(intent);
-
+    ) -> Result<IntentFeeResult, String> {
         // Inbound fee from transactions (source of truth)
         // Outbound: fee × 1 (single claim by creator)
         let inbound_fee = calc_inbound_fee(transactions, &network_fee);
@@ -29,11 +27,10 @@ impl IntentFeeStrategy for UserToLinkStrategy {
         let net_fee = inbound_fee + outbound_fee;
 
         // User pays: network fee (amount is their contribution)
-        IntentFeeResult {
-            intent_total_amount: amount,
+        Ok(IntentFeeResult {
             intent_total_network_fee: net_fee.clone(),
             intent_user_fee: net_fee,
-        }
+        })
     }
 }
 
@@ -48,10 +45,11 @@ mod tests {
         let intent = make_intent(1000);
         let link = make_link_default();
         let txs = vec![make_icrc1_tx()];
-        let result = strategy.calculate(&link, &intent, &txs, Nat::from(10u64));
+        let result = strategy
+            .calculate(&link, &intent, &txs, Nat::from(10u64))
+            .unwrap();
 
         // inbound=10, outbound=10, net_fee=20
-        assert_eq!(result.intent_total_amount, Nat::from(1000u64));
         assert_eq!(result.intent_total_network_fee, Nat::from(20u64));
         assert_eq!(result.intent_user_fee, Nat::from(20u64));
     }
@@ -62,10 +60,11 @@ mod tests {
         let intent = make_intent(1000);
         let link = make_link_default();
         let txs = make_icrc2_txs();
-        let result = strategy.calculate(&link, &intent, &txs, Nat::from(10u64));
+        let result = strategy
+            .calculate(&link, &intent, &txs, Nat::from(10u64))
+            .unwrap();
 
         // inbound=20 (2 txs), outbound=10, net_fee=30
-        assert_eq!(result.intent_total_amount, Nat::from(1000u64));
         assert_eq!(result.intent_total_network_fee, Nat::from(30u64));
         assert_eq!(result.intent_user_fee, Nat::from(30u64));
     }

@@ -26,7 +26,8 @@ impl TransferWalletToLinkIntent {
     /// # Arguments
     /// * `label` - A label for the intent.
     /// * `asset` - The asset to be transferred.
-    /// * `sending_amount` - The amount to be sent.
+    /// * `sending_amount` - The amount to be sent (including fees).
+    /// * `source_amount` - The original amount before fees (for intent_total_amount).
     /// * `sender_id` - The Principal ID of the sender's wallet.
     /// * `link_account` - The account to which the tokens will be transferred.
     /// * `created_at_ts` - The timestamp when the intent is created.
@@ -36,6 +37,7 @@ impl TransferWalletToLinkIntent {
         label: String,
         asset: Asset,
         sending_amount: Nat,
+        source_amount: Nat,
         sender_id: Principal,
         link_account: Account,
         created_at_ts: u64,
@@ -49,7 +51,8 @@ impl TransferWalletToLinkIntent {
             chain: Chain::IC,
             task: IntentTask::TransferWalletToLink,
             r#type: IntentType::default_transfer(),
-            intent_total_amount: None,
+            // intent_total_amount = source amount (user input before fees)
+            intent_total_amount: Some(source_amount),
             intent_total_network_fee: None,
             intent_user_fee: None,
         };
@@ -81,7 +84,8 @@ mod tests {
         // Arrange
         let label = "Test Intent".to_string();
         let asset = Asset::default();
-        let amount = Nat::from(1000u64);
+        let sending_amount = Nat::from(1000u64);
+        let source_amount = Nat::from(900u64);
         let sender_id = random_principal_id();
         let link_account = Account {
             owner: random_principal_id(),
@@ -93,7 +97,8 @@ mod tests {
         let intent_result = TransferWalletToLinkIntent::create(
             label.clone(),
             asset.clone(),
-            amount.clone(),
+            sending_amount.clone(),
+            source_amount.clone(),
             sender_id,
             link_account,
             ts,
@@ -112,9 +117,12 @@ mod tests {
             .as_transfer()
             .expect("Expected transfer data");
 
-        assert_eq!(transfer_data.amount, amount);
+        assert_eq!(transfer_data.amount, sending_amount);
         assert_eq!(transfer_data.asset, asset);
         assert_eq!(transfer_data.from, Wallet::new(sender_id));
         assert_eq!(transfer_data.to, link_account.into());
+
+        // Verify intent_total_amount is set from source_amount
+        assert_eq!(transfer_intent.intent_total_amount, Some(source_amount));
     }
 }
