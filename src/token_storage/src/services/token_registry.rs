@@ -1,17 +1,14 @@
-use futures::try_join;
-use token_storage_types::{
-    IndexId, TokenId,
-    token::{ChainTokenDetails, RegistryToken},
-};
 // Copyright (c) 2025 Cashier Protocol Labs
 // Licensed under the MIT License (see LICENSE file in the project root)
 
-use crate::{
-    repository::{
-        Repositories, token_registry::TokenRegistryRepository,
-        token_registry_metadata::TokenRegistryMetadataRepository,
-    },
-    types::TokenRegistryMetadata,
+use crate::repository::{
+    Repositories, token_registry::TokenRegistryRepository,
+    token_registry_metadata::TokenRegistryMetadataRepository,
+};
+use futures::try_join;
+use token_storage_types::{
+    IndexId, TokenId,
+    token::{ChainTokenDetails, RegistryToken, TokenRegistryMetadata},
 };
 
 pub struct TokenRegistryService<R: Repositories> {

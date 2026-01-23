@@ -1,18 +1,22 @@
 <script lang="ts">
-  import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
-  import { walletStore } from "$modules/token/state/walletStore.svelte";
-  import NavBar from "$modules/token/components/navBar.svelte";
   import { locale } from "$lib/i18n";
-  import { Copy, Info, ChevronDown } from "lucide-svelte";
-  import { toast } from "svelte-sonner";
-  import { TokenIcon } from "$modules/imageCache";
-  import { authState } from "$modules/auth/state/auth.svelte";
-  import { Dialog, DialogContent } from "$lib/shadcn/components/ui/dialog";
-  import { SvelteSet } from "svelte/reactivity";
   import Button from "$lib/shadcn/components/ui/button/button.svelte";
-  import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
+  import { Dialog, DialogContent } from "$lib/shadcn/components/ui/dialog";
+  import Label from "$lib/shadcn/components/ui/label/label.svelte";
+  import { authState } from "$modules/auth/state/auth.svelte";
+  import ReceiveBTC from "$modules/bitcoin/components/receiveBTC.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
+  import { TokenIcon } from "$modules/imageCache";
+  import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
+  import NavBar from "$modules/token/components/navBar.svelte";
+  import {
+    CKBTC_CANISTER_ID,
+    ICP_LEDGER_CANISTER_ID,
+  } from "$modules/token/constants";
+  import { walletStore } from "$modules/token/state/walletStore.svelte";
+  import { ChevronDown, Copy, Info } from "lucide-svelte";
+  import { toast } from "svelte-sonner";
+  import { SvelteSet } from "svelte/reactivity";
 
   type Props = {
     initialToken?: string;
@@ -58,6 +62,8 @@
       ? walletStore.icpAccountID() || ""
       : "",
   );
+
+  const isBTC = $derived(selectedToken === CKBTC_CANISTER_ID);
 
   function handleImageError(address: string) {
     imageLoadFailures.add(address);
@@ -186,7 +192,31 @@
             </button>
           </div>
         {/if}
+        {#if isBTC}
+          <div class="flex items-start gap-1.5">
+            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
+            <div class="text-sm text-green">
+              {locale.t("bitcoin.receive.icpAddress.warning1")}
+            </div>
+          </div>
+          <div class="flex items-start gap-1.5">
+            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
+            <div class="text-sm text-green">
+              {locale.t("bitcoin.receive.icpAddress.warning2")}
+            </div>
+          </div>
+          <div class="flex items-start gap-1.5">
+            <Info class="h-4 w-4 text-[#36A18B] flex-shrink-0 mt-0.5" />
+            <div class="text-sm text-green">
+              {locale.t("bitcoin.receive.icpAddress.warning3")}
+            </div>
+          </div>
+        {/if}
       </div>
+
+      {#if isBTC}
+        <ReceiveBTC />
+      {/if}
 
       <div class="flex-grow-1 flex flex-col justify-end items-center">
         <Button

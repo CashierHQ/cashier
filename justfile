@@ -9,6 +9,7 @@ import "./just/orbit.just"
 export RUST_BACKTRACE := "full"
 FRONTEND_DIR_NEW := "./src/cashier_frontend_new"
 ARTIFACTS_DIR := env("ARTIFACTS_DIR", "./target/artifacts")
+LIB_DIR := "./src/lib"
 
 # Detect OS for cross-platform commands
 OS := if os() == "macos" { "macos" } else if os() == "linux" { "linux" } else { "windows" }

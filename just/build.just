@@ -1,4 +1,6 @@
 
+
+
 # Cleans the build artifacts
 [group('build')]
 [confirm("Are you sure you want to clean the build artifacts?")]
@@ -65,10 +67,36 @@ download_artifacts: pre_build
   just download_if_not_exists {{ARTIFACTS_DIR}}/icp_index.wasm.gz "https://github.com/dfinity/ic/releases/download/ledger-suite-icp-2025-08-29/ic-icp-index-canister.wasm.gz"
   just download_if_not_exists {{ARTIFACTS_DIR}}/icrc_index_ng.did "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-10-27/index-ng.did"
   just download_if_not_exists {{ARTIFACTS_DIR}}/icrc_index_ng.wasm.gz "https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-10-27/ic-icrc1-index-ng.wasm.gz"
+  
   # ICRC7 NFT ledger
-  just download_if_not_exists {{ARTIFACTS_DIR}}/icrc7_nft_canister.did "https://github.com/ORIGYN-SA/nft/releases/download/v2025.12.08-0fc224f/core_nft_canister.did"
-  just download_if_not_exists {{ARTIFACTS_DIR}}/icrc7_nft_canister.wasm.gz "https://github.com/ORIGYN-SA/nft/releases/download/v2025.12.08-0fc224f/core_nft_canister.wasm.gz"
+  just copy_local_source {{LIB_DIR}}/icrc7/icrc7_nft_canister.did {{ARTIFACTS_DIR}}/icrc7_nft_canister.did
+  just copy_local_source {{LIB_DIR}}/icrc7/icrc7_nft_canister.wasm.gz {{ARTIFACTS_DIR}}/icrc7_nft_canister.wasm.gz
 
+  # ckBTC canisters
+  just copy_local_source {{LIB_DIR}}/ckbtc/ckbtc_ledger/ckbtc_ledger.did {{ARTIFACTS_DIR}}/ckbtc_ledger.did
+  just copy_local_source {{LIB_DIR}}/ckbtc/ckbtc_ledger/ckbtc_ledger.wasm.gz {{ARTIFACTS_DIR}}/ckbtc_ledger.wasm.gz
+
+  just copy_local_source {{LIB_DIR}}/ckbtc/ckbtc_minter/ckbtc_minter.did {{ARTIFACTS_DIR}}/ckbtc_minter.did
+  just copy_local_source {{LIB_DIR}}/ckbtc/ckbtc_minter/ckbtc_minter.wasm.gz {{ARTIFACTS_DIR}}/ckbtc_minter.wasm.gz
+
+  just copy_local_source {{LIB_DIR}}/ckbtc/ckbtc_kyt/ckbtc_kyt.did {{ARTIFACTS_DIR}}/ckbtc_kyt.did
+  just copy_local_source {{LIB_DIR}}/ckbtc/ckbtc_kyt/ckbtc_kyt.wasm.gz {{ARTIFACTS_DIR}}/ckbtc_kyt.wasm.gz
+
+  just copy_local_source {{LIB_DIR}}/ckbtc/ckbtc_index/ckbtc_index.did {{ARTIFACTS_DIR}}/ckbtc_index.did
+  just copy_local_source {{LIB_DIR}}/ckbtc/ckbtc_index/ckbtc_index.wasm.gz {{ARTIFACTS_DIR}}/ckbtc_index.wasm.gz
+
+# Copy wasm bytecode and candid interface of canister
+# params:
+# source_path: filepath of source file
+# dest_path: filepath of destination file
+[private]
+copy_local_source source_path dest_path:
+  #!/usr/bin/env bash
+  set -e
+
+  if ! [ -f {{dest_path}} ]; then
+    cp {{source_path}} {{dest_path}}
+  fi
 
 [private]
 download_if_not_exists file url:

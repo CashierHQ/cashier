@@ -2,16 +2,15 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::Principal;
-use token_storage_types::{TokenId, user::UserPreference};
+use token_storage_types::{
+    TokenId,
+    user::{UserPreference, UserTokenList},
+};
 
-use crate::{
-    repository::{
-        Repositories, balance_cache::BalanceCacheRepository,
-        token_registry::TokenRegistryRepository,
-        token_registry_metadata::TokenRegistryMetadataRepository,
-        user_preference::UserPreferenceRepository, user_token::UserTokenRepository,
-    },
-    types::UserTokenList,
+use crate::repository::{
+    Repositories, balance_cache::BalanceCacheRepository, token_registry::TokenRegistryRepository,
+    token_registry_metadata::TokenRegistryMetadataRepository,
+    user_preference::UserPreferenceRepository, user_token::UserTokenRepository,
 };
 
 pub struct UserTokenService<R: Repositories> {

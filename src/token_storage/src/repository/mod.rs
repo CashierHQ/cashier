@@ -5,6 +5,8 @@ pub mod balance_cache;
 pub mod settings;
 pub mod token_registry;
 pub mod token_registry_metadata;
+pub mod user_bridge_address;
+pub mod user_bridge_transaction;
 pub mod user_nft;
 pub mod user_preference;
 pub mod user_token;
@@ -23,39 +25,50 @@ use ic_stable_structures::memory_manager::{MemoryId, MemoryManager, VirtualMemor
 use ic_stable_structures::{DefaultMemoryImpl, StableBTreeMap, StableCell};
 use token_storage_types::{
     TokenId,
+    bitcoin::{
+        bridge_address::{BridgeAddress, BridgeAddressCodec},
+        bridge_transaction::{BridgeTransaction, BridgeTransactionCodec},
+    },
     nft::{Nft, UserNftCodec},
     token::{RegistryToken, RegistryTokenCodec},
     user::{UserPreference, UserPreferenceCodec},
 };
 
-use crate::repository::balance_cache::{
-    BalanceCacheRepository, BalanceCacheRepositoryStorage, ThreadlocalBalanceCacheRepositoryStorage,
-};
-use crate::repository::settings::{
-    Settings, SettingsCodec, SettingsRepository, SettingsRepositoryStorage,
-};
-use crate::repository::token_registry::{
-    ThreadlocalTokenRegistryRepositoryStorage, TokenRegistryRepository,
-    TokenRegistryRepositoryStorage,
-};
-use crate::repository::token_registry_metadata::{
-    ThreadlocalTokenRegistryMetadataRepositoryStorage, TokenRegistryMetadataRepository,
-    TokenRegistryMetadataRepositoryStorage,
-};
-use crate::repository::user_nft::{
-    ThreadlocalUserNftRepositoryStorage, UserNftRepository, UserNftRepositoryStorage,
-};
-use crate::repository::user_preference::{
-    ThreadlocalUserPreferenceRepositoryStorage, UserPreferenceRepository,
-    UserPreferenceRepositoryStorage,
-};
-use crate::repository::user_token::{
-    ThreadlocalUserTokenRepositoryStorage, UserTokenRepository, UserTokenRepositoryStorage,
+use crate::repository::{
+    balance_cache::{
+        BalanceCacheRepository, BalanceCacheRepositoryStorage,
+        ThreadlocalBalanceCacheRepositoryStorage,
+    },
+    settings::{Settings, SettingsCodec, SettingsRepository, SettingsRepositoryStorage},
+    token_registry::{
+        ThreadlocalTokenRegistryRepositoryStorage, TokenRegistryRepository,
+        TokenRegistryRepositoryStorage,
+    },
+    token_registry_metadata::{
+        ThreadlocalTokenRegistryMetadataRepositoryStorage, TokenRegistryMetadataRepository,
+        TokenRegistryMetadataRepositoryStorage,
+    },
+    user_bridge_address::{
+        ThreadlocalUserBridgeAddressRepositoryStorage, UserBridgeAddressRepository,
+        UserBridgeAddressRepositoryStorage,
+    },
+    user_bridge_transaction::{
+        ThreadlocalUserBridgeRepositoryStorage, UserBridgeTransactionRepository,
+        UserBridgeTransactionRepositoryStorage,
+    },
+    user_nft::{ThreadlocalUserNftRepositoryStorage, UserNftRepository, UserNftRepositoryStorage},
+    user_preference::{
+        ThreadlocalUserPreferenceRepositoryStorage, UserPreferenceRepository,
+        UserPreferenceRepositoryStorage,
+    },
+    user_token::{
+        ThreadlocalUserTokenRepositoryStorage, UserTokenRepository, UserTokenRepositoryStorage,
+    },
 };
 use crate::services::auth::AuthServiceStorage;
-use crate::types::{
-    TokenBalance, TokenRegistryMetadata, TokenRegistryMetadataCodec, UserTokenList,
-    UserTokenListCodec,
+use token_storage_types::{
+    token::{TokenBalance, TokenRegistryMetadata, TokenRegistryMetadataCodec},
+    user::{UserTokenList, UserTokenListCodec},
 };
 
 pub type Memory = VirtualMemory<DefaultMemoryImpl>;
@@ -89,6 +102,8 @@ const TOKEN_REGISTRY_METADATA_ID: MemoryId = MemoryId::new(5);
 const AUTH_SERVICE_MEMORY_ID: MemoryId = MemoryId::new(6);
 const SETTINGS_MEMORY_ID: MemoryId = MemoryId::new(7);
 const USER_NFT_MEMORY_ID: MemoryId = MemoryId::new(8);
+const USER_BRIDGE_ADDRESS_MEMORY_ID: MemoryId = MemoryId::new(9);
+const USER_BRIDGE_TRANSACTION_MEMORY_ID: MemoryId = MemoryId::new(10);
 
 /// A trait for accessing repositories
 pub trait Repositories {
@@ -99,6 +114,8 @@ pub trait Repositories {
     type UserPreference: Storage<UserPreferenceRepositoryStorage>;
     type UserToken: Storage<UserTokenRepositoryStorage>;
     type UserNft: Storage<UserNftRepositoryStorage>;
+    type UserBridgeAddress: Storage<UserBridgeAddressRepositoryStorage>;
+    type UserBridgeTransaction: Storage<UserBridgeTransactionRepositoryStorage>;
 
     /// Get the balance cache repository
     fn balance_cache(&self) -> BalanceCacheRepository<Self::BalanceCache>;
@@ -116,6 +133,12 @@ pub trait Repositories {
     fn user_token(&self) -> UserTokenRepository<Self::UserToken>;
     /// Get the user nft repository
     fn user_nft(&self) -> UserNftRepository<Self::UserNft>;
+    /// Get the user bridge address repository
+    fn user_bridge_address(&self) -> UserBridgeAddressRepository<Self::UserBridgeAddress>;
+    /// Get the user bridge transaction repository
+    fn user_bridge_transaction(
+        &self,
+    ) -> UserBridgeTransactionRepository<Self::UserBridgeTransaction>;
 }
 
 /// A factory for creating repositories backed by thread-local storage
@@ -129,6 +152,8 @@ impl Repositories for ThreadlocalRepositories {
     type UserPreference = ThreadlocalUserPreferenceRepositoryStorage;
     type UserToken = ThreadlocalUserTokenRepositoryStorage;
     type UserNft = ThreadlocalUserNftRepositoryStorage;
+    type UserBridgeAddress = ThreadlocalUserBridgeAddressRepositoryStorage;
+    type UserBridgeTransaction = ThreadlocalUserBridgeRepositoryStorage;
 
     fn balance_cache(&self) -> BalanceCacheRepository<Self::BalanceCache> {
         BalanceCacheRepository::new(&BALANCE_CACHE_STORE)
@@ -158,6 +183,16 @@ impl Repositories for ThreadlocalRepositories {
 
     fn user_nft(&self) -> UserNftRepository<Self::UserNft> {
         UserNftRepository::new(&USER_NFT_STORE)
+    }
+
+    fn user_bridge_address(&self) -> UserBridgeAddressRepository<Self::UserBridgeAddress> {
+        UserBridgeAddressRepository::new(&USER_BRIDGE_ADDRESS_STORE)
+    }
+
+    fn user_bridge_transaction(
+        &self,
+    ) -> UserBridgeTransactionRepository<Self::UserBridgeTransaction> {
+        UserBridgeTransactionRepository::new(&USER_BRIDGE_TRANSACTION_STORE)
     }
 }
 
@@ -243,14 +278,29 @@ thread_local! {
                 MEMORY_MANAGER.with_borrow(|m| m.get(USER_NFT_MEMORY_ID)),
             )
         );
+
+    // Store for user bridge addresses
+    static USER_BRIDGE_ADDRESS_STORE: RefCell<VersionedBTreeMap<Principal, BridgeAddress, BridgeAddressCodec, Memory>> =
+        RefCell::new(
+            VersionedBTreeMap::init(
+                MEMORY_MANAGER.with_borrow(|m| m.get(USER_BRIDGE_ADDRESS_MEMORY_ID)),
+            )
+        );
+
+    // Store for user bridge transactions
+    static USER_BRIDGE_TRANSACTION_STORE: RefCell<VersionedBTreeMap<Principal, Vec<BridgeTransaction>, BridgeTransactionCodec, Memory>> =
+        RefCell::new(
+            VersionedBTreeMap::init(
+                MEMORY_MANAGER.with_borrow(|m| m.get(USER_BRIDGE_TRANSACTION_MEMORY_ID)),
+            )
+        );
 }
 
 #[cfg(test)]
 pub mod tests {
 
-    use std::rc::Rc;
-
     use super::*;
+    use std::rc::Rc;
 
     /// A struct for testing Repositories and services
     pub struct TestRepositories {
@@ -261,6 +311,8 @@ pub mod tests {
         user_preference: Rc<RefCell<UserPreferenceRepositoryStorage>>,
         user_token: Rc<RefCell<UserTokenRepositoryStorage>>,
         user_nft: Rc<RefCell<UserNftRepositoryStorage>>,
+        user_bridge_address: Rc<RefCell<UserBridgeAddressRepositoryStorage>>,
+        user_bridge_transaction: Rc<RefCell<UserBridgeTransactionRepositoryStorage>>,
     }
 
     impl TestRepositories {
@@ -294,6 +346,12 @@ pub mod tests {
                 user_nft: Rc::new(RefCell::new(VersionedBTreeMap::init(
                     mm.get(USER_NFT_MEMORY_ID),
                 ))),
+                user_bridge_address: Rc::new(RefCell::new(VersionedBTreeMap::init(
+                    mm.get(USER_BRIDGE_ADDRESS_MEMORY_ID),
+                ))),
+                user_bridge_transaction: Rc::new(RefCell::new(VersionedBTreeMap::init(
+                    mm.get(USER_BRIDGE_TRANSACTION_MEMORY_ID),
+                ))),
             }
         }
     }
@@ -313,6 +371,18 @@ pub mod tests {
             Rc<RefCell<VersionedBTreeMap<Principal, UserTokenList, UserTokenListCodec, Memory>>>;
         type UserNft =
             Rc<RefCell<VersionedBTreeMap<Principal, HashSet<Nft>, UserNftCodec, Memory>>>;
+        type UserBridgeAddress =
+            Rc<RefCell<VersionedBTreeMap<Principal, BridgeAddress, BridgeAddressCodec, Memory>>>;
+        type UserBridgeTransaction = Rc<
+            RefCell<
+                VersionedBTreeMap<
+                    Principal,
+                    Vec<BridgeTransaction>,
+                    BridgeTransactionCodec,
+                    Memory,
+                >,
+            >,
+        >;
 
         fn balance_cache(&self) -> BalanceCacheRepository<Self::BalanceCache> {
             BalanceCacheRepository::new(self.balance_cache.clone())
@@ -342,6 +412,19 @@ pub mod tests {
 
         fn user_nft(&self) -> UserNftRepository<Rc<RefCell<UserNftRepositoryStorage>>> {
             UserNftRepository::new(self.user_nft.clone())
+        }
+
+        fn user_bridge_address(
+            &self,
+        ) -> UserBridgeAddressRepository<Rc<RefCell<UserBridgeAddressRepositoryStorage>>> {
+            UserBridgeAddressRepository::new(self.user_bridge_address.clone())
+        }
+
+        fn user_bridge_transaction(
+            &self,
+        ) -> UserBridgeTransactionRepository<Rc<RefCell<UserBridgeTransactionRepositoryStorage>>>
+        {
+            UserBridgeTransactionRepository::new(self.user_bridge_transaction.clone())
         }
     }
 }

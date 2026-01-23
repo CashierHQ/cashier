@@ -3,16 +3,13 @@
 
 use std::{cell::RefCell, thread::LocalKey};
 
-use crate::{
-    repository::{BalanceCache, BalanceCacheCodec},
-    types::TokenBalance,
-};
+use crate::repository::{BalanceCache, BalanceCacheCodec};
 use candid::Principal;
 use ic_cdk::api::time;
 use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
 use ic_mple_utils::store::Storage;
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
-use token_storage_types::TokenId;
+use token_storage_types::{TokenId, token::TokenBalance};
 
 /// Store for balance cache repository
 pub type BalanceCacheRepositoryStorage =

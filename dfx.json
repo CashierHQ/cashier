@@ -36,17 +36,6 @@
         }
       }
     },
-    "ckBTC": {
-      "type": "custom",
-      "candid": "./target/artifacts/ledger-suite-icrc.did",
-      "wasm": "./target/artifacts/ledger-suite-icrc.wasm.gz",
-      "specified_id": "mxzaz-hqaaa-aaaar-qaada-cai",
-      "remote": {
-        "id": {
-          "ic": "mxzaz-hqaaa-aaaar-qaada-cai"
-        }
-      }
-    },
     "ckETH": {
       "type": "custom",
       "candid": "./target/artifacts/ledger-suite-icrc.did",
@@ -162,6 +151,39 @@
       "candid": "./target/artifacts/icrc7_nft_canister.did",
       "wasm": "./target/artifacts/icrc7_nft_canister.wasm.gz",
       "specified_id": "cvvmr-dyaaa-aaaai-q32oq-cai",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
+    },
+    "ckbtc_ledger": {
+      "type": "custom",
+      "candid": "./target/artifacts/ckbtc_ledger.did",
+      "wasm": "./target/artifacts/ckbtc_ledger.wasm.gz",
+      "specified_id": "mxzaz-hqaaa-aaaar-qaada-cai",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
+    },
+    "ckbtc_minter": {
+      "type": "custom",
+      "candid": "./target/artifacts/ckbtc_minter.did",
+      "wasm": "./target/artifacts/ckbtc_minter.wasm.gz",
+      "specified_id": "ml52i-qqaaa-aaaar-qaaba-cai",
+      "metadata": [
+        {
+          "name": "candid:service"
+        }
+      ]
+    },
+    "ckbtc_kyt": {
+      "type": "custom",
+      "candid": "./target/artifacts/ckbtc_kyt.did",
+      "wasm": "./target/artifacts/ckbtc_kyt.wasm.gz",
+      "specified_id": "o6ude-eyaaa-aaaar-qal6a-cai",
       "metadata": [
         {
           "name": "candid:service"

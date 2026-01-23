@@ -8,7 +8,7 @@ use ic_mple_structures::{CellStructure, VersionedStableCell};
 use ic_mple_utils::store::Storage;
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
 
-use crate::types::{TokenRegistryMetadata, TokenRegistryMetadataCodec};
+use token_storage_types::token::{TokenRegistryMetadata, TokenRegistryMetadataCodec};
 
 /// Store for TokenRegistryMetadataRepository
 pub type TokenRegistryMetadataRepositoryStorage = VersionedStableCell<

@@ -1,19 +1,18 @@
 <script lang="ts">
+  import { locale } from "$lib/i18n";
+  import { Button } from "$lib/shadcn/components/ui/button";
   import {
     Drawer,
+    DrawerClose,
     DrawerContent,
     DrawerHeader,
     DrawerTitle,
-    DrawerClose,
   } from "$lib/shadcn/components/ui/drawer";
-  import { Button } from "$lib/shadcn/components/ui/button";
-  import { locale } from "$lib/i18n";
-  import { X } from "lucide-svelte";
-  import { ChevronLeft } from "lucide-svelte";
   import {
     formatFeeBreakdownItem,
     formatLinkCreationFeeView,
   } from "$modules/links/utils/feesBreakdown";
+  import { ChevronLeft, X } from "lucide-svelte";
 
   type FeeBreakdownItem = {
     name: string;
@@ -154,6 +153,28 @@
           </div>
         </div>
       {/if}
+
+      {#each feesBreakdown as fee (fee.name)}
+        {#if fee.name !== "Network fees" && fee.name !== "Link creation fee"}
+          {@const feeView = formatFeeBreakdownItem(fee)}
+          <div>
+            <div class="flex justify-between items-center">
+              <span class="text-[14px] font-medium">{feeView.name}</span>
+              <div class="flex items-center gap-1">
+                <span class="text-[14px] font-normal">
+                  {feeView.feeAmountFormatted}
+                  {feeView.tokenSymbol}
+                </span>
+              </div>
+            </div>
+            <div class="flex justify-end">
+              <p class="text-[10px] font-normal text-[#b6b6b6]">
+                ~${feeView.usdFormatted}
+              </p>
+            </div>
+          </div>
+        {/if}
+      {/each}
     </div>
 
     <Button
