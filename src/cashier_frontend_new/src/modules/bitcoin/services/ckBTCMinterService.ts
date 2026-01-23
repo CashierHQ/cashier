@@ -82,7 +82,7 @@ export class CkBTCMinterService {
     if ("Ok" in result) {
       return Ok(result.Ok.length);
     } else {
-      return Err("Failed to update balance: " + result.Err);
+      return Err("Failed to update balance: " + JSON.stringify(result.Err));
     }
   }
 }

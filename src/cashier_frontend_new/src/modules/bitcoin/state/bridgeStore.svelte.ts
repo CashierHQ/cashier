@@ -363,7 +363,7 @@ class BridgeStore {
           if (update.isErr()) {
             console.error(
               "Failed to update ckBTC balance during bridge processing:",
-              update.error,
+              update.unwrapErr(),
             );
           } else {
             bridgeStatus = BridgeTransactionStatus.Completed;
@@ -427,7 +427,12 @@ class BridgeStore {
               null,
               updatedRetryTimes,
             );
-          if (updateResult.isOk()) {
+          if (updateResult.isErr()) {
+            console.log(
+              `Failed to update bridge transaction ${bridgeTx.bridge_id}:`,
+              updateResult.unwrapErr(),
+            );
+          } else {
             this.#bridgeTxQuery.refresh();
           }
         }

@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use crate::api::state::get_state;
-use cashier_common::{guard::is_not_anonymous, runtime::IcEnvironment};
+use cashier_common::guard::is_not_anonymous;
 use ic_cdk::{api::msg_caller, query, update};
 use token_storage_types::{
     dto::bitcoin::{
