@@ -7,7 +7,6 @@
   import ReceiveBTC from "$modules/bitcoin/components/receiveBTC.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
   import { TokenIcon } from "$modules/imageCache";
-  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import NavBar from "$modules/token/components/navBar.svelte";
   import {
@@ -64,15 +63,7 @@
       : "",
   );
 
-  const tokenLogo = $derived.by(() =>
-    selectedTokenObj ? getTokenLogo(selectedTokenObj.address) : null,
-  );
-
   const isBTC = $derived(selectedToken === CKBTC_CANISTER_ID);
-
-  function hasImageFailed(address: string): boolean {
-    return imageLoadFailures.has(address);
-  }
 
   function handleImageError(address: string) {
     imageLoadFailures.add(address);
