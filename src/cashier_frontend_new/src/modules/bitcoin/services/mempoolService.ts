@@ -64,7 +64,7 @@ class MempoolService {
   /**
    * Get block details by height.
    * @param height
-   * @returns
+   * @returns array of BitcoinBlock or empty array
    */
   async getLatestBlocksFromHeight(
     height: number,

@@ -1,6 +1,9 @@
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
 import { Principal } from "@dfinity/principal";
 
+/**
+ * BitcoinTransaction type representing a Bitcoin transaction
+ */
 export type BitcoinTransaction = {
   txid: string;
   sender: string;
@@ -12,6 +15,9 @@ export type BitcoinTransaction = {
   block_timestamp: bigint | null;
 };
 
+/**
+ * UTXO type representing an unspent transaction output
+ */
 export type UTXO = {
   txid: string;
   vout: number;
@@ -19,11 +25,17 @@ export type UTXO = {
   address: string;
 };
 
+/**
+ * BitcoinBlock type representing a Bitcoin block
+ */
 export type BitcoinBlock = {
   block_id: bigint;
   block_timestamp: bigint;
 };
 
+/**
+ * Mapper class to convert between mempool API responses and BitcoinTransaction type
+ */
 export class BitcoinTransactionMapper {
   /**
    * Convert mempool API response to BitcoinTransaction type
@@ -58,6 +70,17 @@ export class BitcoinTransactionMapper {
     };
   }
 
+  /**
+   * Map BitcoinTransaction to CreateBridgeTransactionInputArg
+   * @param icpAddress
+   * @param senderBtcAddress
+   * @param receiverBtcAddress
+   * @param bitcoinTransaction
+   * @param depositFee
+   * @param withdrawalFee
+   * @param isImporting
+   * @returns CreateBridgeTransactionInputArg
+   */
   public static toCreateBridgeTransactionRequest(
     icpAddress: string,
     senderBtcAddress: string,

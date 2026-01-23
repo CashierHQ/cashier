@@ -6,7 +6,7 @@ import {
 /**
  * Group bridge transactions by their creation date.
  * @param bridgeTransactions
- * @returns
+ * @returns Record with date strings as keys and arrays of BridgeTransactionWithUsdValue as values
  */
 export const groupBridgeTransactionsByDate = (
   bridgeTransactions: BridgeTransactionWithUsdValue[],
@@ -33,6 +33,12 @@ export const groupBridgeTransactionsByDate = (
   );
 };
 
+/**
+ * Enrich bridge transactions with their USD value based on the provided BTC price.
+ * @param bridgeTransactions
+ * @param btcPriceUSD
+ * @returns Array of BridgeTransactionWithUsdValue
+ */
 export const enrichBridgeTransactionWithUsdValue = (
   bridgeTransactions: BridgeTransaction[],
   btcPriceUSD: number | null,

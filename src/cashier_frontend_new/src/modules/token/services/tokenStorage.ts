@@ -245,7 +245,9 @@ class TokenStorageService {
           );
         return Ok(bridgeTransaction);
       } else {
-        return Err(`Error creating bridge transaction: ${res.Err}`);
+        return Err(
+          `Error creating bridge transaction: ${JSON.stringify(res.Err)}`,
+        );
       }
     } catch (err) {
       return Err(`Error creating bridge transaction: ${err}`);
@@ -330,7 +332,7 @@ class TokenStorageService {
    */
   public async updateBridgeTransaction(
     bridgeId: string,
-    status: BridgeTransactionStatus,
+    status: BridgeTransactionStatus | null = null,
     block_id: bigint | null = null,
     block_timestamp: bigint | null = null,
     confirmations: BitcoinBlock[] = [],
@@ -357,9 +359,7 @@ class TokenStorageService {
         retry_times,
       );
 
-      console.log("updateBridgeTransaction args:", updateArgs);
       const res = await actor.user_update_bridge_transaction(updateArgs);
-      console.log("updateBridgeTransaction result:", res);
 
       if ("Ok" in res) {
         const useBridgeTransactionDto = res.Ok;
@@ -369,7 +369,9 @@ class TokenStorageService {
           );
         return Ok(bridgeTransaction);
       } else {
-        return Err(`Error updating bridge transaction: ${res.Err}`);
+        return Err(
+          `Error updating bridge transaction: ${JSON.stringify(res.Err)}`,
+        );
       }
     } catch (err) {
       return Err(`Error updating bridge transaction: ${err}`);

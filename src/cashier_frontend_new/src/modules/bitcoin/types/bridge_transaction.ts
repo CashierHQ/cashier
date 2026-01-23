@@ -7,10 +7,16 @@ import {
 } from "$modules/transactionCart/types/txCart";
 import type { BitcoinBlock } from "./bitcoin_transaction";
 
+/**
+ * Enriched BridgeTransaction type with total amount in USD value
+ */
 export type BridgeTransactionWithUsdValue = BridgeTransaction & {
   total_amount_usd: number;
 };
 
+/**
+ * BridgeTransaction type representing a bridge transaction between Bitcoin and ICP
+ */
 export type BridgeTransaction = {
   bridge_id: string;
   icp_address: string;
@@ -29,6 +35,9 @@ export type BridgeTransaction = {
   status: BridgeTransactionStatusValue;
 };
 
+/**
+ * BridgeAssetInfo type representing asset details in a bridge transaction
+ */
 export type BridgeAssetInfo = {
   asset_type: BridgeAssetTypeValue;
   asset_id: string;
@@ -36,7 +45,10 @@ export type BridgeAssetInfo = {
   decimals: number;
 };
 
-class BridgeAssetType {
+/**
+ * BridgeAssetType enum representing types of assets in bridge transactions
+ */
+export class BridgeAssetType {
   static readonly BTC = "BTC";
   static readonly Runes = "Runes";
   static readonly Ordinals = "Ordinals";
@@ -47,6 +59,9 @@ export type BridgeAssetTypeValue =
   | typeof BridgeAssetType.Runes
   | typeof BridgeAssetType.Ordinals;
 
+/**
+ * BridgeType enum representing types of bridge transactions
+ */
 export class BridgeType {
   static readonly Import = "Import";
   static readonly Export = "Export";
@@ -56,6 +71,9 @@ export type BridgeTypeValue =
   | typeof BridgeType.Import
   | typeof BridgeType.Export;
 
+/**
+ * BridgeTransactionStatus enum representing status of bridge transactions
+ */
 export class BridgeTransactionStatus {
   static readonly Created = "Created";
   static readonly Pending = "Pending";
@@ -69,6 +87,9 @@ export type BridgeTransactionStatusValue =
   | typeof BridgeTransactionStatus.Completed
   | typeof BridgeTransactionStatus.Failed;
 
+/**
+ * Mapper class to convert between token storage bridge transactions and frontend BridgeTransaction type
+ */
 export class BridgeTransactionMapper {
   /**
    * Map token storage bridge transaction to frontend bridge transaction type
@@ -296,7 +317,7 @@ export class BridgeTransactionMapper {
    */
   public static toUpdateBridgeTransactionArgs(
     bridgeId: string,
-    status: BridgeTransactionStatus,
+    status: BridgeTransactionStatus | null = null,
     block_id: bigint | null = null,
     block_timestamp: bigint | null = null,
     confirmations: BitcoinBlock[] | [] = [],
@@ -318,9 +339,9 @@ export class BridgeTransactionMapper {
 
     return {
       bridge_id: bridgeId,
-      status: [
-        BridgeTransactionMapper.toBridgeTransactionStatusCanister(status),
-      ],
+      status: status
+        ? [BridgeTransactionMapper.toBridgeTransactionStatusCanister(status)]
+        : [],
       block_id: block_id_arg,
       block_timestamp: block_timestamp_arg,
       block_confirmations: block_confirmations_arg,
