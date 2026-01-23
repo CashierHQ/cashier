@@ -3,7 +3,7 @@
 use candid::{self, Principal};
 use ic_cdk::call::{Call, CandidDecodeFailed};
 
-use crate::types::error::CanisterError;
+use token_storage_types::error::CanisterError;
 
 pub type Icrc1Tokens = candid::Nat;
 

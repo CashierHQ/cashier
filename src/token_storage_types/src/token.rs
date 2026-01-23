@@ -1,9 +1,10 @@
+use std::borrow::Cow;
 use std::fmt::Display;
 
 use candid::CandidType;
 use cashier_common::chain::Chain;
 use cashier_macros::storable;
-use ic_mple_structures::Codec;
+use ic_mple_structures::{Codec, RefCodec};
 use serde::{Deserialize, Serialize};
 
 use crate::{IndexId, LedgerId, user::UserPreference};
@@ -235,6 +236,46 @@ pub struct UserTokens {
     pub enabled: usize,
     pub registry_tokens: usize,
     pub version: u64,
+}
+
+#[storable]
+#[derive(CandidType, Clone, Eq, PartialEq, Debug)]
+pub struct TokenBalance {
+    pub balance: u128,
+    pub last_updated: u64, // Timestamp
+}
+
+#[storable]
+#[derive(CandidType, Clone, Eq, PartialEq, Debug)]
+pub struct TokenRegistryMetadata {
+    pub version: u64,
+    pub last_updated: u64, // Timestamp
+}
+
+impl Default for TokenRegistryMetadata {
+    fn default() -> Self {
+        Self {
+            version: 1,
+            last_updated: 0,
+        }
+    }
+}
+
+#[storable]
+pub enum TokenRegistryMetadataCodec {
+    V1(TokenRegistryMetadata),
+}
+
+impl RefCodec<TokenRegistryMetadata> for TokenRegistryMetadataCodec {
+    fn decode_ref(source: &Self) -> Cow<'_, TokenRegistryMetadata> {
+        match source {
+            TokenRegistryMetadataCodec::V1(link) => Cow::Borrowed(link),
+        }
+    }
+
+    fn encode(dest: TokenRegistryMetadata) -> Self {
+        TokenRegistryMetadataCodec::V1(dest)
+    }
 }
 
 #[cfg(test)]

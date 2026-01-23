@@ -1,3 +1,4 @@
+import type { BridgeTransaction } from "$modules/bitcoin/types/bridge_transaction";
 import type Action from "$modules/links/types/action/action";
 import type { ProcessActionResult } from "$modules/links/types/action/action";
 import type { TokenMetadata } from "$modules/token/types";
@@ -62,4 +63,8 @@ export type WalletSource = {
   /* receive type principal or account */
   receiveType: ReceiveAddressType;
   onSuccess?: (blockIndex: bigint) => void;
+};
+
+export type BridgeSource = {
+  bridge: BridgeTransaction;
 };

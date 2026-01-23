@@ -7,9 +7,11 @@ use candid::Principal;
 use ic_mple_structures::{BTreeMapStructure, VersionedBTreeMap};
 use ic_mple_utils::store::Storage;
 use ic_stable_structures::{DefaultMemoryImpl, memory_manager::VirtualMemory};
-use token_storage_types::TokenId;
 
-use crate::types::{UserTokenList, UserTokenListCodec};
+use token_storage_types::{
+    TokenId,
+    user::{UserTokenList, UserTokenListCodec},
+};
 
 /// Store for UserTokenRepository
 pub type UserTokenRepositoryStorage = VersionedBTreeMap<

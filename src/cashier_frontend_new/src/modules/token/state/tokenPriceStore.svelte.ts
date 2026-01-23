@@ -52,6 +52,17 @@ class TokenPriceStore {
   get query() {
     return this.#tokenPricesQuery;
   }
+
+  /**
+   * Get token price by canister id
+   * @param id canister id
+   * @returns token price in USD or null if not found
+   */
+  getTokenPriceByCanisterId(id: string): number | null {
+    return this.#tokenPricesQuery.data
+      ? (this.#tokenPricesQuery.data[id] ?? null)
+      : null;
+  }
 }
 
 export const tokenPriceStore = new TokenPriceStore();
