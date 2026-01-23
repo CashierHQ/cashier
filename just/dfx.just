@@ -262,7 +262,7 @@ dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token
         };
       };
       ckbtc_minter_id = principal \"{{CKBTC_MINTER_ID}}\";
-  })" {{network}}
+  })" {{network}} --yes
 
 # Deploy Gate canister
 # params:
