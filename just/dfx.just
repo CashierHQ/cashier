@@ -1,5 +1,6 @@
 DFX_LOGFILE:="./target/dfx_tests.log"
-CKBTC_LEDGER_ID:="mc6ru-gyaaa-aaaar-qaaaq-cai"
+CKBTC_LEDGER_ID:="mxzaz-hqaaa-aaaar-qaada-cai"
+CKBTC_INDEXER_ID:="n5wcd-faaaa-aaaar-qaaea-cai"
 CKBTC_MINTER_ID:="ml52i-qqaaa-aaaar-qaaba-cai"
 CKBTC_KYT_ID:="o6ude-eyaaa-aaaar-qal6a-cai"
 
@@ -59,9 +60,9 @@ dfx_local_deploy: dfx_local_start && dfx_local_info
 
   # Deploy index canisters AFTER ledgers
   just dfx_local_deploy_icp_index
-  just dfx_local_deploy_icrc_index "ckBTC_index" "{{CKBTC_LEDGER_ID}}" "n5wcd-faaaa-aaaar-qaaea-cai"
-  just dfx_local_deploy_icrc_index "ckETH_index" "ss2fx-dyaaa-aaaar-qacoq-cai" "s3zol-vqaaa-aaaar-qacpa-cai"
-  just dfx_local_deploy_icrc_index "ckUSDC_index" "xevnm-gaaaa-aaaar-qafnq-cai" "xrs4b-hiaaa-aaaar-qafoa-cai"
+  just dfx_local_deploy_icrc_index "ckBTC_index" "{{CKBTC_LEDGER_ID}}"
+  just dfx_local_deploy_icrc_index "ckETH_index" "ss2fx-dyaaa-aaaar-qacoq-cai"
+  just dfx_local_deploy_icrc_index "ckUSDC_index" "xevnm-gaaaa-aaaar-qafnq-cai"
 
   # Deploy ICRC7 NFT ledger
   just dfx_local_deploy_icrc7_ledger "${OWNER}" "ICRC7NFT" "CashierDev collection" "CashierDev" "This collection is for development purpose"
@@ -226,7 +227,7 @@ dfx_deploy_token_storage owner network="" log_filter="global,cashier=debug,token
         record {
           details = variant { IC = record {
               ledger_id = principal \"{{CKBTC_LEDGER_ID}}\";
-              index_id = opt principal \"n5wcd-faaaa-aaaar-qaaea-cai\";
+              index_id = opt principal \"{{CKBTC_INDEXER_ID}}\";
               fee = 10 : nat;
             }
           };
@@ -358,14 +359,14 @@ dfx_local_deploy_icp_index:
 # ledger_id: the token ledger canister id
 # index_id: the canister id of indexer
 [private]
-dfx_local_deploy_icrc_index canister_name ledger_id index_id:
+dfx_local_deploy_icrc_index canister_name ledger_id:
   #!/usr/bin/env bash
   set -e
 
   dfx deploy {{canister_name}} --argument "(opt variant { Init = record {
     ledger_id = principal \"{{ledger_id}}\";
     retrieve_blocks_from_ledger_interval_seconds = opt 10;
-  } })" --specified-id {{index_id}}
+  } })"
 
 # Local deploy ICRC7 NFT canister
 # params minter: principal ID of the ledger minter

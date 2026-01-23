@@ -161,7 +161,7 @@
       "type": "custom",
       "candid": "./target/artifacts/ckbtc_ledger.did",
       "wasm": "./target/artifacts/ckbtc_ledger.wasm.gz",
-      "specified_id": "mc6ru-gyaaa-aaaar-qaaaq-cai",
+      "specified_id": "mxzaz-hqaaa-aaaar-qaada-cai",
       "metadata": [
         {
           "name": "candid:service"
