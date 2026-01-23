@@ -16,6 +16,7 @@ jobs:
       pull-requests: write
       issues: write
       checks: read
+      actions: write
 
     steps:
       # Step 2: Check all CI checks passed
@@ -237,3 +238,67 @@ jobs:
         with:
           merge: true
           comment: always
+
+      # Step 7: Trigger deploy workflows based on changed files
+      - name: Trigger deploy workflows
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            // Only trigger deploys for main/staging branches
+            const targetBranch = pr.base.ref;
+            if (!['main', 'staging'].includes(targetBranch)) {
+              console.log(`Skipping deploy for branch: ${targetBranch}`);
+              return;
+            }
+
+            // Get changed files
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            const changedPaths = files.map(f => f.filename);
+            console.log('Changed files:', changedPaths);
+
+            // Define path patterns (must match deploy workflow paths)
+            const backendPaths = ['src/cashier_backend/', 'src/token_storage/', 'src/transaction_manager/'];
+            const frontendPaths = ['src/cashier_frontend_new/'];
+
+            const hasBackendChanges = changedPaths.some(p =>
+              backendPaths.some(bp => p.startsWith(bp))
+            );
+            const hasFrontendChanges = changedPaths.some(p =>
+              frontendPaths.some(fp => p.startsWith(fp))
+            );
+
+            // Trigger backend deploy if needed
+            if (hasBackendChanges) {
+              console.log('Triggering backend deploy...');
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'orbit-backend-deploy.yml',
+                ref: targetBranch
+              });
+            }
+
+            // Trigger frontend deploy if needed
+            if (hasFrontendChanges) {
+              console.log('Triggering frontend deploy...');
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'orbit-frontend-deploy.yml',
+                ref: targetBranch
+              });
+            }
+
+            console.log(`Backend: ${hasBackendChanges}, Frontend: ${hasFrontendChanges}`);
