@@ -8,6 +8,7 @@ on:
     paths:
       - 'src/cashier_backend/**'
       - 'src/token_storage/**'
+      - 'src/transaction_manager/**'
   workflow_dispatch:
     inputs:
       mode:
