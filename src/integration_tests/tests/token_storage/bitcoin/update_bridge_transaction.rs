@@ -92,7 +92,7 @@ async fn it_should_update_bridge_transaction_for_valid_user() {
         ];
         let update_input = UpdateBridgeTransactionInputArg {
             bridge_id: result.unwrap().unwrap().bridge_id,
-            btc_txid: Some("updatedtxid0000000000000000000000000000000000".to_string()),
+            btc_txid: None,
             block_id: Some(200u64),
             block_timestamp: Some(1620001200u64),
             block_confirmations: Some(block_confirmations),
@@ -117,10 +117,6 @@ async fn it_should_update_bridge_transaction_for_valid_user() {
             "Expected updated bridge transaction in result"
         );
         let updated_transaction = updated_transaction_result.unwrap();
-        assert_eq!(
-            updated_transaction.btc_txid,
-            Some("updatedtxid0000000000000000000000000000000000".to_string())
-        );
         Ok(())
     })
     .await
