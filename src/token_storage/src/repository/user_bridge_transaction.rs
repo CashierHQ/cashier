@@ -96,10 +96,7 @@ impl<S: Storage<UserBridgeTransactionRepositoryStorage>> UserBridgeTransactionRe
         self.bridge_transaction_store.with_borrow(|store| {
             let mut transactions = store.get(user_id).unwrap_or_default();
             if let Some(status_filter) = status {
-                transactions = transactions
-                    .into_iter()
-                    .filter(|tx| tx.status == status_filter)
-                    .collect();
+                transactions.retain(|tx| tx.status == status_filter);
             }
 
             // reverse the transactions array
