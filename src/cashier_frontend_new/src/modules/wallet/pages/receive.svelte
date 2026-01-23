@@ -6,12 +6,13 @@
   import { authState } from "$modules/auth/state/auth.svelte";
   import ReceiveBTC from "$modules/bitcoin/components/receiveBTC.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
+  import { TokenIcon } from "$modules/imageCache";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import NavBar from "$modules/token/components/navBar.svelte";
   import {
-    CKBTC_CANISTER_ID,
-    ICP_LEDGER_CANISTER_ID,
+      CKBTC_CANISTER_ID,
+      ICP_LEDGER_CANISTER_ID,
   } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { ChevronDown, Copy, Info } from "lucide-svelte";
@@ -141,24 +142,14 @@
         >
           {#if selectedTokenObj}
             <div class="flex items-center gap-3">
-              <div
-                class="relative flex shrink-0 overflow-hidden rounded-full w-6 h-6"
-              >
-                {#if tokenLogo && !hasImageFailed(selectedTokenObj.address)}
-                  <img
-                    alt={selectedTokenObj.symbol}
-                    class="w-full h-full object-cover rounded-full"
-                    src={tokenLogo}
-                    onerror={() => handleImageError(selectedTokenObj.address)}
-                  />
-                {:else}
-                  <div
-                    class="w-full h-full flex items-center justify-center bg-gray-200 rounded-full text-xs font-medium"
-                  >
-                    {selectedTokenObj.symbol[0]?.toUpperCase() || "?"}
-                  </div>
-                {/if}
-              </div>
+              <TokenIcon
+                address={selectedTokenObj.address}
+                symbol={selectedTokenObj.symbol}
+                size="sm"
+                failedImageLoads={imageLoadFailures}
+                onImageError={handleImageError}
+                class="rounded-full"
+              />
               <span class="font-medium">{selectedTokenObj.symbol}</span>
             </div>
             <ChevronDown class="h-5 w-5 text-gray-400" />

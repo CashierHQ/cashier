@@ -1,0 +1,304 @@
+name: Fast Forward Merge
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  fast-forward:
+    # Step 1: Only run on PR comments starting with /fast-forward
+    if: |
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/fast-forward')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      checks: read
+      actions: write
+
+    steps:
+      # Step 2: Check all CI checks passed
+      - name: Check all CI checks passed
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            // Reject draft PRs
+            if (pr.draft) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `**Cannot fast-forward**\n\nThis PR is still in draft. Please mark it as ready for review first.`
+              });
+              core.setFailed('Cannot merge draft PR');
+              return;
+            }
+
+            // Check for merge conflicts
+            if (pr.mergeable === false) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `**Cannot fast-forward**\n\nThis PR has merge conflicts. Please resolve them first.`
+              });
+              core.setFailed('PR has merge conflicts');
+              return;
+            }
+
+            // mergeable can be null if GitHub is still computing - warn but continue
+            if (pr.mergeable === null) {
+              console.log('Warning: Mergeable status not yet computed by GitHub, proceeding anyway');
+            }
+
+            const { data: checks } = await github.rest.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: pr.head.sha
+            });
+
+            // Filter to only checks associated with THIS PR
+            const prChecks = checks.check_runs.filter(c => {
+              // Exclude this workflow's own check
+              if (c.name === 'fast-forward') return false;
+              // Only include checks linked to this PR
+              return c.pull_requests && c.pull_requests.some(p => p.number === context.issue.number);
+            });
+
+            console.log(`Found ${prChecks.length} checks for PR #${context.issue.number}`);
+            prChecks.forEach(c => console.log(`  - ${c.name}: ${c.status} / ${c.conclusion}`));
+
+            const failed = prChecks.filter(c =>
+              c.status === 'completed' && c.conclusion !== 'success' && c.conclusion !== 'skipped'
+            );
+
+            const pending = prChecks.filter(c => c.status !== 'completed');
+
+            if (pending.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `**Cannot fast-forward**\n\nCI checks still running:\n${pending.map(c => `- ${c.name}`).join('\n')}`
+              });
+              core.setFailed(`CI checks still running: ${pending.map(c => c.name).join(', ')}`);
+              return;
+            }
+
+            if (failed.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `**Cannot fast-forward**\n\nCI checks failed:\n${failed.map(c => `- ${c.name}: ${c.conclusion}`).join('\n')}`
+              });
+              core.setFailed(`CI checks failed: ${failed.map(c => c.name).join(', ')}`);
+              return;
+            }
+
+            console.log('All CI checks passed!');
+
+      # Step 3: Check if commenter has maintain/admin permission
+      - name: Check commenter permission (maintain or admin)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commenter = context.payload.comment.user.login;
+
+            // Get commenter's permission level
+            const { data: permissionData } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: commenter
+            });
+
+            const permission = permissionData.permission;
+            console.log(`User ${commenter} has permission: ${permission}`);
+
+            // Only allow maintain or admin permissions
+            const allowedPermissions = ['maintain', 'admin'];
+            if (!allowedPermissions.includes(permission)) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `@${commenter} You don't have permission to run \`/fast-forward\`. Required: maintain or admin access.`
+              });
+              core.setFailed(`User ${commenter} lacks permission (has: ${permission}, required: maintain or admin)`);
+              return;
+            }
+
+            console.log(`Permission check passed for ${commenter}`);
+
+      # Step 4: Check all assigned reviewers approved
+      - name: Check all assigned reviewers approved
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            // Pending reviewers (haven't reviewed yet)
+            const pendingReviewers = pr.requested_reviewers.map(r => r.login);
+
+            // Get all reviews
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            // Get latest review state per user
+            const latestReviews = {};
+            for (const review of reviews) {
+              // Skip bot reviews and empty states
+              if (review.user.type === 'Bot') continue;
+              if (review.state === 'COMMENTED') continue; // Just comments don't count
+              latestReviews[review.user.login] = review.state;
+            }
+
+            // Reviewers who submitted a review (approved, changes_requested, etc)
+            const reviewersWhoReviewed = Object.keys(latestReviews);
+
+            // All assigned = still pending + already reviewed
+            const allAssignedReviewers = [...new Set([...pendingReviewers, ...reviewersWhoReviewed])];
+
+            // Who approved
+            const approvers = Object.entries(latestReviews)
+              .filter(([user, state]) => state === 'APPROVED')
+              .map(([user]) => user);
+
+            // Who hasn't approved (pending or reviewed but not approved)
+            const notApproved = allAssignedReviewers.filter(r => !approvers.includes(r));
+
+            console.log('Pending reviewers:', pendingReviewers);
+            console.log('Reviewers who reviewed:', reviewersWhoReviewed);
+            console.log('All assigned:', allAssignedReviewers);
+            console.log('Approvers:', approvers);
+            console.log('Not approved:', notApproved);
+
+            // Case 1: No reviewers at all
+            if (allAssignedReviewers.length === 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `**Cannot fast-forward**\n\nNo reviewers assigned. Please assign at least one reviewer.`
+              });
+              core.setFailed('No reviewers assigned');
+              return;
+            }
+
+            // Case 2: Someone still pending or didn't approve
+            if (notApproved.length > 0) {
+              const pendingList = pendingReviewers.filter(r => notApproved.includes(r));
+              const rejectedList = notApproved.filter(r => !pendingReviewers.includes(r));
+
+              let message = `**Cannot fast-forward**\n\n`;
+
+              if (pendingList.length > 0) {
+                message += `Waiting for review:\n${pendingList.map(r => `- @${r}`).join('\n')}\n\n`;
+              }
+
+              if (rejectedList.length > 0) {
+                message += `Has not approved:\n${rejectedList.map(r => `- @${r}`).join('\n')}\n\n`;
+              }
+
+              if (approvers.length > 0) {
+                message += `Already approved: ${approvers.join(', ')}`;
+              }
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: message
+              });
+              core.setFailed('Not all reviewers approved');
+              return;
+            }
+
+            console.log('All reviewers approved!');
+
+      # Step 5: Execute fast-forward merge
+      # Step 6: PR auto-closed on success
+      - name: Fast Forward Merge
+        uses: sequoia-pgp/fast-forward@v1
+        with:
+          merge: true
+          comment: always
+
+      # Step 7: Trigger deploy workflows based on changed files
+      - name: Trigger deploy workflows
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            // Only trigger deploys for main/staging branches
+            const targetBranch = pr.base.ref;
+            if (!['main', 'staging'].includes(targetBranch)) {
+              console.log(`Skipping deploy for branch: ${targetBranch}`);
+              return;
+            }
+
+            // Get changed files
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            const changedPaths = files.map(f => f.filename);
+            console.log('Changed files:', changedPaths);
+
+            // Define path patterns (must match deploy workflow paths)
+            const backendPaths = ['src/cashier_backend/', 'src/token_storage/', 'src/transaction_manager/'];
+            const frontendPaths = ['src/cashier_frontend_new/'];
+
+            const hasBackendChanges = changedPaths.some(p =>
+              backendPaths.some(bp => p.startsWith(bp))
+            );
+            const hasFrontendChanges = changedPaths.some(p =>
+              frontendPaths.some(fp => p.startsWith(fp))
+            );
+
+            // Trigger backend deploy if needed
+            if (hasBackendChanges) {
+              console.log('Triggering backend deploy...');
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'orbit-backend-deploy.yml',
+                ref: targetBranch
+              });
+            }
+
+            // Trigger frontend deploy if needed
+            if (hasFrontendChanges) {
+              console.log('Triggering frontend deploy...');
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'orbit-frontend-deploy.yml',
+                ref: targetBranch
+              });
+            }
+
+            console.log(`Backend: ${hasBackendChanges}, Frontend: ${hasFrontendChanges}`);

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { ChevronDown } from "lucide-svelte";
   import type { TokenWithPriceAndBalance } from "$modules/token/types";
-  import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
+  import { getTokenLogo, TokenIcon } from "$modules/imageCache";
 
   type Props = {
     selectedToken?: TokenWithPriceAndBalance | null;
@@ -11,30 +11,11 @@
 
   let { selectedToken, showInput = true, onOpenDrawer }: Props = $props();
 
-  let imageLoadFailed = $state(false);
-  let previousTokenAddress = $state<string | null>(null);
+  // Track failed image loads using Set for compatibility with TokenIcon
+  let failedImageLoads = $state<Set<string>>(new Set());
 
-  // Get token logo URL based on token address
-  const tokenLogo = $derived(
-    selectedToken ? getTokenLogo(selectedToken.address) : null,
-  );
-
-  // Reset image load failed state only when token address actually changes
-  $effect(() => {
-    if (selectedToken) {
-      const currentAddress = selectedToken.address;
-      // Only reset if the address actually changed, not just the object reference
-      if (previousTokenAddress !== currentAddress) {
-        imageLoadFailed = false;
-        previousTokenAddress = currentAddress;
-      }
-    } else {
-      previousTokenAddress = null;
-    }
-  });
-
-  function handleImageError() {
-    imageLoadFailed = true;
+  function handleImageError(address: string) {
+    failedImageLoads.add(address);
   }
 
   function handleOpenDrawerClick(e: MouseEvent) {
@@ -53,25 +34,15 @@
 
 {#if selectedToken}
   <div class="flex font-normal flex-grow items-center w-fit w-full">
-    <div
-      class="relative flex shrink-0 overflow-hidden rounded-full mr-2 w-6 h-6"
-    >
-      {#key `${selectedToken.address}-${imageLoadFailed}`}
-        {#if tokenLogo && !imageLoadFailed}
-          <img
-            alt={selectedToken.symbol}
-            class="w-full h-full object-cover rounded-full"
-            src={tokenLogo}
-            onerror={handleImageError}
-          />
-        {:else}
-          <div
-            class="w-full h-full flex items-center justify-center bg-gray-200 rounded-full text-xs"
-          >
-            {selectedToken.symbol[0]?.toUpperCase() || "?"}
-          </div>
-        {/if}
-      {/key}
+    <div class="relative flex shrink-0 mr-2">
+      <TokenIcon
+        address={selectedToken.address}
+        symbol={selectedToken.symbol}
+        logo={getTokenLogo(selectedToken.address)}
+        size="md"
+        {failedImageLoads}
+        onImageError={handleImageError}
+      />
     </div>
     <div
       id="asset-info"
