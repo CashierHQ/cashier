@@ -31,7 +31,7 @@
 
       // Call login method from authState. redirect handled in authState.login()
       await authState.login(adapterId);
-      linkListStore.refresh(); 
+      linkListStore.refresh();
       // After successful login,close modal
       handleClose();
       toast.success(locale.t("home.loginModal.successMessage"));
