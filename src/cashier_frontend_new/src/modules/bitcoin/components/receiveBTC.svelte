@@ -1,11 +1,11 @@
 <script lang="ts">
   import { locale } from "$lib/i18n";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
-  import BridgeList from '$modules/bitcoin/components/bridgeList.svelte';
+  import BridgeList from "$modules/bitcoin/components/bridgeList.svelte";
   import { bridgeStore } from "$modules/bitcoin/state/bridgeStore.svelte";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
-  import BridgeTxCart from '$modules/transactionCart/components/BridgeTxCart.svelte';
-  import type { BridgeSource } from '$modules/transactionCart/types/transactionSource';
+  import BridgeTxCart from "$modules/transactionCart/components/BridgeTxCart.svelte";
+  import type { BridgeSource } from "$modules/transactionCart/types/transactionSource";
   import { Copy, Info } from "lucide-svelte";
   import { toast } from "svelte-sonner";
 
@@ -22,15 +22,13 @@
   }
 
   function handleSelectBridge(bridgeId: string) {
-    const bridge = bridgeStore.bridgeTxs?.find(
-      (b) => b.bridge_id === bridgeId,
-    );
+    const bridge = bridgeStore.bridgeTxs?.find((b) => b.bridge_id === bridgeId);
 
     if (!bridge) return;
 
     showBridgeTxCart = true;
     bridgeSource = {
-      bridge
+      bridge,
     };
   }
 
@@ -43,17 +41,16 @@
     bridgeStore.loadMore();
   }
 </script>
+
 <div>
   <div class="mb-6 flex justify-center">
     <Label class="text-base font-semibold">
-        {locale.t("bitcoin.receive.title")}
+      {locale.t("bitcoin.receive.title")}
     </Label>
   </div>
   <div class="space-y-4">
     <Label class="text-base font-semibold">
-        {locale
-          .t("wallet.receive.btcAddress")
-          .replace("{{token}}", "BTC")}
+      {locale.t("wallet.receive.btcAddress").replace("{{token}}", "BTC")}
     </Label>
 
     <div class="relative">
@@ -64,7 +61,7 @@
         class="w-full p-3 pr-12 border border-gray-300 rounded-lg bg-gray-50 focus:outline-none text-sm font-mono break-all"
       />
       <button
-        onclick={() => handleCopy(btcAddress?? "")}
+        onclick={() => handleCopy(btcAddress ?? "")}
         class="absolute right-3 top-1/2 -translate-y-1/2 text-[#36A18B] hover:text-[#2d8a75] transition-colors"
         title={locale.t("wallet.receive.copyTooltip")}
       >
@@ -109,5 +106,6 @@
     bind:isOpen={showBridgeTxCart}
     source={bridgeSource}
     minConfirmations={bridgeStore.minterInfo?.min_confirmations ?? 6}
-    onCloseDrawer={handleCloseBridgeTxCart}/>
+    onCloseDrawer={handleCloseBridgeTxCart}
+  />
 {/if}

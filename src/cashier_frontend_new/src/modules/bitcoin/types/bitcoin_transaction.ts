@@ -42,6 +42,7 @@ export class BitcoinTransactionMapper {
    * @param data json response from mempool API
    * @returns bitcoin transaction
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public static fromMempoolApiResponse(data: any): BitcoinTransaction {
     let senderAddress = "";
     if (data.vin.length > 0 && data.vin[0].prevout) {
@@ -51,12 +52,14 @@ export class BitcoinTransactionMapper {
     return {
       sender: senderAddress,
       txid: data.txid,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vin: data.vin.map((input: any) => ({
         txid: input.txid,
         vout: input.vout,
         value_satoshis: input.prevout.value,
         address: input.prevout.scriptpubkey_address,
       })),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       vout: data.vout.map((output: any) => ({
         txid: output.txid,
         vout: output.vout,
@@ -90,7 +93,7 @@ export class BitcoinTransactionMapper {
     withdrawalFee: bigint,
     isImporting: boolean,
   ): tokenStorage.CreateBridgeTransactionInputArg {
-    let asset_infos: tokenStorage.BridgeAssetInfo[] = [];
+    const asset_infos: tokenStorage.BridgeAssetInfo[] = [];
     let btcAddress = senderBtcAddress;
     if (isImporting) {
       bitcoinTransaction.vout.forEach((output) => {

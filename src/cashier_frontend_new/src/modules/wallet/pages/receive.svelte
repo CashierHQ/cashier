@@ -4,12 +4,15 @@
   import { Dialog, DialogContent } from "$lib/shadcn/components/ui/dialog";
   import Label from "$lib/shadcn/components/ui/label/label.svelte";
   import { authState } from "$modules/auth/state/auth.svelte";
-  import ReceiveBTC from '$modules/bitcoin/components/receiveBTC.svelte';
+  import ReceiveBTC from "$modules/bitcoin/components/receiveBTC.svelte";
   import TokenSelectorDrawer from "$modules/creationLink/components/shared/TokenSelectorDrawer.svelte";
   import { getTokenLogo } from "$modules/shared/utils/getTokenLogo";
   import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
   import NavBar from "$modules/token/components/navBar.svelte";
-  import { CKBTC_CANISTER_ID, ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
+  import {
+    CKBTC_CANISTER_ID,
+    ICP_LEDGER_CANISTER_ID,
+  } from "$modules/token/constants";
   import { walletStore } from "$modules/token/state/walletStore.svelte";
   import { ChevronDown, Copy, Info } from "lucide-svelte";
   import { toast } from "svelte-sonner";
@@ -26,7 +29,7 @@
   let showTokenSelector = $state(false);
   let showAccountIdModal = $state(false);
   let imageLoadFailures = new SvelteSet<string>();
-  
+
   $effect(() => {
     if (initialToken) {
       selectedToken = initialToken;
@@ -64,9 +67,7 @@
     selectedTokenObj ? getTokenLogo(selectedTokenObj.address) : null,
   );
 
-  const isBTC = $derived(
-    selectedToken === CKBTC_CANISTER_ID,
-  );
+  const isBTC = $derived(selectedToken === CKBTC_CANISTER_ID);
 
   function hasImageFailed(address: string): boolean {
     return imageLoadFailures.has(address);

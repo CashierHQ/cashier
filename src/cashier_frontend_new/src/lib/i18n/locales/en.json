@@ -468,7 +468,8 @@
       "title": "Transaction details",
       "close": "Close",
       "successMessage": "Bridge transaction completed successfully.",
-      "confirmationsRequired": "{{minConfirmations}} confirmations required (~10m each)"
+      "confirmationsRequired": "{{minConfirmations}} confirmations required (~10m each)",
+      "confirmation": "Confirmation"
     }
   }
 }

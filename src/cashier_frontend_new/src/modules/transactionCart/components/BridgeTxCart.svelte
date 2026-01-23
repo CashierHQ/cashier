@@ -4,15 +4,13 @@
   import * as Drawer from "$lib/shadcn/components/ui/drawer";
   import FeeInfoDrawer from "$modules/creationLink/components/drawers/FeeInfoDrawer.svelte";
   import FeesBreakdownSection from "$modules/creationLink/components/previewSections/FeesBreakdownSection.svelte";
-  import BridgeConfirmation from '$modules/transactionCart/components/shared/BridgeConfirmation.svelte';
+  import BridgeConfirmation from "$modules/transactionCart/components/shared/BridgeConfirmation.svelte";
   import YouReceiveSection from "$modules/transactionCart/components/shared/YouReceiveSection.svelte";
   import YouSendSection from "$modules/transactionCart/components/shared/YouSendSection.svelte";
   import { BridgeTxCartStore } from "$modules/transactionCart/state/bridgeTxCartStore.svelte";
-  import {
-      type BridgeSource
-  } from "$modules/transactionCart/types/transactionSource";
+  import { type BridgeSource } from "$modules/transactionCart/types/transactionSource";
   import { X } from "lucide-svelte";
-  import { onMount } from 'svelte';
+  import { onMount } from "svelte";
 
   type Props = {
     source: BridgeSource;
@@ -37,14 +35,18 @@
 
   let failedImageLoads = $state<Set<string>>(new Set());
 
-  let outgoingAssets = $derived.by(() => bridgeTxCartStore?.outgoingAssets ?? []);
-  let incomingAssets = $derived.by(() => bridgeTxCartStore?.incomingAssets ?? []);
-  let confirmations = $derived.by(() => bridgeTxCartStore?.blockConfirmations ?? []);
+  let outgoingAssets = $derived.by(
+    () => bridgeTxCartStore?.outgoingAssets ?? [],
+  );
+  let incomingAssets = $derived.by(
+    () => bridgeTxCartStore?.incomingAssets ?? [],
+  );
+  let confirmations = $derived.by(
+    () => bridgeTxCartStore?.blockConfirmations ?? [],
+  );
 
   const totalFeesUsd = $derived.by(() => bridgeTxCartStore?.totalFeesUsd ?? 0);
-  const feesBreakdown = $derived.by(() =>
-    bridgeTxCartStore?.feeItems ?? [],
-  );
+  const feesBreakdown = $derived.by(() => bridgeTxCartStore?.feeItems ?? []);
 
   // Handle fee breakdown click - close txCart and show FeeInfoDrawer
   function handleFeeBreakdownClick() {
@@ -87,9 +89,7 @@
   }
 
   onMount(() => {
-    bridgeTxCartStore = new BridgeTxCartStore(
-      source.bridge.bridge_id,
-    );
+    bridgeTxCartStore = new BridgeTxCartStore(source.bridge.bridge_id);
     bridgeTxCartStore.initialize();
   });
 </script>
@@ -149,10 +149,7 @@
         {/if}
 
         {#if confirmations.length > 0}
-          <BridgeConfirmation
-            {confirmations}
-            {minConfirmations}
-          />
+          <BridgeConfirmation {confirmations} {minConfirmations} />
         {/if}
 
         {#if totalFeesUsd > 0}

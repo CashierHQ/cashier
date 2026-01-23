@@ -1,10 +1,12 @@
 <script lang="ts">
-  import { locale } from '$lib/i18n';
-  import { BridgeTransactionStatus, type BridgeTransactionWithUsdValue, BridgeType } from '$modules/bitcoin/types/bridge_transaction';
-  import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
+  import { locale } from "$lib/i18n";
   import {
-      ArrowDownLeft
-  } from "lucide-svelte";
+    BridgeTransactionStatus,
+    type BridgeTransactionWithUsdValue,
+    BridgeType,
+  } from "$modules/bitcoin/types/bridge_transaction";
+  import { transformShortAddress } from "$modules/shared/utils/transformShortAddress";
+  import { ArrowDownLeft } from "lucide-svelte";
 
   interface Props {
     bridge: BridgeTransactionWithUsdValue;
@@ -36,33 +38,34 @@
     return "0";
   });
 </script>
-<button class="w-full text-left" onclick={() => onSelect(bridge.bridge_id)}>
-<div class="space-y-3">
-  <div class="flex items-start gap-3 py-2">
-    <div
-      class="w-9 h-9 rounded-full bg-lightgreen flex items-center justify-center flex-shrink-0 mt-1"
-    >
-      <ArrowDownLeft class="w-5 h-5 text-gray-700" />
-    </div>
 
-    <div class="flex-1 min-w-0 flex flex-col justify-between h-full">
-      <div class="flex justify-between items-start mb-1">
-        <p class="text-[#222222]">
-          {typeTitle}
-        </p>
-        <p class="text-[#222222] text-right">
-          +{amount}
-        </p>
+<button class="w-full text-left" onclick={() => onSelect(bridge.bridge_id)}>
+  <div class="space-y-3">
+    <div class="flex items-start gap-3 py-2">
+      <div
+        class="w-9 h-9 rounded-full bg-lightgreen flex items-center justify-center flex-shrink-0 mt-1"
+      >
+        <ArrowDownLeft class="w-5 h-5 text-gray-700" />
       </div>
-      <div class="flex justify-between items-start">
-        <p class="text-[10px]/[100%] text-grey">
-          From: {transformShortAddress(bridge.btc_address)}
-        </p>
-        <p class="text-[10px]/[100%] text-grey text-right">
-          ${bridge.total_amount_usd ?? "0.00"}
-        </p>
+
+      <div class="flex-1 min-w-0 flex flex-col justify-between h-full">
+        <div class="flex justify-between items-start mb-1">
+          <p class="text-[#222222]">
+            {typeTitle}
+          </p>
+          <p class="text-[#222222] text-right">
+            +{amount}
+          </p>
+        </div>
+        <div class="flex justify-between items-start">
+          <p class="text-[10px]/[100%] text-grey">
+            From: {transformShortAddress(bridge.btc_address)}
+          </p>
+          <p class="text-[10px]/[100%] text-grey text-right">
+            ${bridge.total_amount_usd ?? "0.00"}
+          </p>
+        </div>
       </div>
     </div>
   </div>
-</div>
 </button>

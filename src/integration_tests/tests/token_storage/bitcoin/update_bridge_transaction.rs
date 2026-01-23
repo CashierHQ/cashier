@@ -78,6 +78,7 @@ async fn it_should_update_bridge_transaction_for_valid_user() {
         let result = token_storage_client
             .user_create_bridge_transaction(input)
             .await;
+        let created_bridge = result.unwrap().unwrap();
 
         // Act: update
         let block_confirmations = vec![
@@ -91,7 +92,7 @@ async fn it_should_update_bridge_transaction_for_valid_user() {
             },
         ];
         let update_input = UpdateBridgeTransactionInputArg {
-            bridge_id: result.unwrap().unwrap().bridge_id,
+            bridge_id: created_bridge.bridge_id,
             btc_txid: None,
             block_id: Some(200u64),
             block_timestamp: Some(1620001200u64),
@@ -117,6 +118,7 @@ async fn it_should_update_bridge_transaction_for_valid_user() {
             "Expected updated bridge transaction in result"
         );
         let updated_transaction = updated_transaction_result.unwrap();
+        assert_eq!(updated_transaction.btc_txid, created_bridge.btc_txid);
         Ok(())
     })
     .await

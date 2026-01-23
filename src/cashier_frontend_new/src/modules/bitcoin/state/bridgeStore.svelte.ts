@@ -313,7 +313,7 @@ class BridgeStore {
       const btcTxId = bridgeTx.btc_txid;
       if (!btcTxId) {
         // mark as failed if no BTC txid
-        let updatedStatus = BridgeTransactionStatus.Failed;
+        const updatedStatus = BridgeTransactionStatus.Failed;
         const updateResult = await tokenStorageService.updateBridgeTransaction(
           bridgeTx.bridge_id,
           updatedStatus,
@@ -375,17 +375,8 @@ class BridgeStore {
           }
         }
 
-        let bridgeBlockId = bridgeTx.block_id ?? 0n;
-        let bridgeBlockTimestamp = bridgeTx.block_timestamp ?? 0n;
-
-        if (
-          bridgeStatus !== bridgeTx.status ||
-          BigInt(btcTx.block_id) !== BigInt(bridgeBlockId) ||
-          BigInt(btcTx.block_timestamp) !== BigInt(bridgeBlockTimestamp) ||
-          confirmingBlocks.length !== bridgeTx.confirmations.length ||
-          retryTimes !== bridgeTx.retry_times
-        ) {
-        }
+        const bridgeBlockId = bridgeTx.block_id ?? 0n;
+        const bridgeBlockTimestamp = bridgeTx.block_timestamp ?? 0n;
 
         let isUpdateNeeded = false;
         let updatedStatus = null;
@@ -428,7 +419,7 @@ class BridgeStore {
               updatedRetryTimes,
             );
           if (updateResult.isErr()) {
-            console.log(
+            console.error(
               `Failed to update bridge transaction ${bridgeTx.bridge_id}:`,
               updateResult.unwrapErr(),
             );

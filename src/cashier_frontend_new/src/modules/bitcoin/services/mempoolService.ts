@@ -43,6 +43,7 @@ class MempoolService {
     if (!response.ok) {
       return Err(`Failed to fetch transaction ${txid}: ${response.statusText}`);
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = await response.json();
     const transaction = BitcoinTransactionMapper.fromMempoolApiResponse(data);
     return Ok(transaction);
@@ -78,9 +79,8 @@ class MempoolService {
       );
       return [];
     }
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = await response.json();
-
     const blocks: BitcoinBlock[] = [];
     for (const block of data) {
       if (block.height >= start_block) {

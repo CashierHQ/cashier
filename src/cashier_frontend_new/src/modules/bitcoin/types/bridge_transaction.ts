@@ -100,35 +100,35 @@ export class BridgeTransactionMapper {
     data: tokenStorage.UserBridgeTransactionDto,
   ): BridgeTransaction {
     let total_amount = 0n;
-    let data_total_amount = data.total_amount as [] | [bigint];
+    const data_total_amount = data.total_amount as [] | [bigint];
     if (data_total_amount.length === 1) {
       total_amount = data_total_amount[0];
     }
     let deposit_fee = 0n;
-    let data_deposit_fee = data.deposit_fee as [] | [bigint];
+    const data_deposit_fee = data.deposit_fee as [] | [bigint];
     if (data_deposit_fee.length === 1) {
       deposit_fee = data_deposit_fee[0];
     }
     let withdrawal_fee = 0n;
-    let data_withdrawal_fee = data.withdrawal_fee as [] | [bigint];
+    const data_withdrawal_fee = data.withdrawal_fee as [] | [bigint];
     if (data_withdrawal_fee.length === 1) {
       withdrawal_fee = data_withdrawal_fee[0];
     }
 
     let btc_txid = null;
-    let data_btc_txid = data.btc_txid as [] | [string];
+    const data_btc_txid = data.btc_txid as [] | [string];
     if (data_btc_txid.length === 1) {
       btc_txid = data_btc_txid[0];
     }
 
     let block_id = null;
-    let data_block_id = data.block_id as [] | [bigint];
+    const data_block_id = data.block_id as [] | [bigint];
     if (data_block_id.length === 1) {
       block_id = data_block_id[0];
     }
 
     let block_timestamp = null;
-    let data_block_timestamp = data.block_timestamp as [] | [bigint];
+    const data_block_timestamp = data.block_timestamp as [] | [bigint];
     if (data_block_timestamp.length === 1) {
       block_timestamp = data_block_timestamp[0];
     }
@@ -234,7 +234,7 @@ export class BridgeTransactionMapper {
    * @returns array of AssetItem
    */
   public static toAssetItems(bridge: BridgeTransaction): AssetItem[] {
-    let assetItems: AssetItem[] = [];
+    const assetItems: AssetItem[] = [];
     let state = AssetProcessState.CREATED;
     if (bridge.status === BridgeTransactionStatus.Completed) {
       state = AssetProcessState.SUCCEED;
@@ -259,9 +259,9 @@ export class BridgeTransactionMapper {
       } else if (assetInfo.asset_type === BridgeAssetType.Ordinals) {
         label = "Ordinals";
       }
-      let symbol = label;
-      let amount = assetInfo.amount;
-      let amountFormattedStr = (
+      const symbol = label;
+      const amount = assetInfo.amount;
+      const amountFormattedStr = (
         Number(assetInfo.amount) /
         10 ** assetInfo.decimals
       ).toFixed(assetInfo.decimals);
@@ -326,15 +326,15 @@ export class BridgeTransactionMapper {
     withdrawal_fee: bigint | null = null,
     retry_times: number | null = null,
   ): tokenStorage.UpdateBridgeTransactionInputArg {
-    let block_id_arg: [] | [bigint] = block_id ? [block_id] : [];
-    let block_timestamp_arg: [] | [bigint] = block_timestamp
+    const block_id_arg: [] | [bigint] = block_id ? [block_id] : [];
+    const block_timestamp_arg: [] | [bigint] = block_timestamp
       ? [block_timestamp]
       : [];
-    let block_confirmations = confirmations.map((block) => ({
+    const block_confirmations = confirmations.map((block) => ({
       block_id: block.block_id,
       block_timestamp: block.block_timestamp,
     }));
-    let block_confirmations_arg: [] | [tokenStorage.BlockConfirmation[]] =
+    const block_confirmations_arg: [] | [tokenStorage.BlockConfirmation[]] =
       block_confirmations.length > 0 ? [block_confirmations] : [];
 
     return {

@@ -2,15 +2,15 @@
   import { locale } from "$lib/i18n";
   import { Button } from "$lib/shadcn/components/ui/button";
   import {
-      Drawer,
-      DrawerClose,
-      DrawerContent,
-      DrawerHeader,
-      DrawerTitle,
+    Drawer,
+    DrawerClose,
+    DrawerContent,
+    DrawerHeader,
+    DrawerTitle,
   } from "$lib/shadcn/components/ui/drawer";
   import {
-      formatFeeBreakdownItem,
-      formatLinkCreationFeeView,
+    formatFeeBreakdownItem,
+    formatLinkCreationFeeView,
   } from "$modules/links/utils/feesBreakdown";
   import { ChevronLeft, X } from "lucide-svelte";
 
