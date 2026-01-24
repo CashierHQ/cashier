@@ -194,7 +194,7 @@ class TokenStorageService {
       if ("Ok" in res) {
         return Ok(res.Ok);
       } else {
-        return Err(`Error fetching BTC address: ${res.Err}`);
+        return Err(`Error fetching BTC address: ${JSON.stringify(res.Err)}`);
       }
     } catch (err) {
       return Err(`Error fetching BTC address: ${err}`);
@@ -235,8 +235,8 @@ class TokenStorageService {
           withdrawalFee,
           isImporting,
         );
-      const res = await actor.user_create_bridge_transaction(inputArgs);
 
+      const res = await actor.user_create_bridge_transaction(inputArgs);
       if ("Ok" in res) {
         const useBridgeTransactionDto = res.Ok;
         const bridgeTransaction =

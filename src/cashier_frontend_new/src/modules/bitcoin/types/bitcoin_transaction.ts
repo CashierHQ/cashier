@@ -40,10 +40,14 @@ export class BitcoinTransactionMapper {
   /**
    * Convert mempool API response to BitcoinTransaction type
    * @param data json response from mempool API
+   * @param current_ts current timestamp in seconds
    * @returns bitcoin transaction
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public static fromMempoolApiResponse(data: any): BitcoinTransaction {
+  public static fromMempoolApiResponse(
+    data: any,
+    current_ts: number,
+  ): BitcoinTransaction {
     let senderAddress = "";
     if (data.vin.length > 0 && data.vin[0].prevout) {
       senderAddress = data.vin[0].prevout.scriptpubkey_address;
@@ -67,7 +71,7 @@ export class BitcoinTransactionMapper {
         address: output.scriptpubkey_address,
       })),
       is_confirmed: data.status.confirmed,
-      created_at_ts: data.firstSeen,
+      created_at_ts: current_ts,
       block_id: data.status.block_height,
       block_timestamp: data.status.block_time,
     };

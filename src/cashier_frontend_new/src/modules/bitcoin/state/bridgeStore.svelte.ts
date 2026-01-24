@@ -3,6 +3,7 @@ import { authState } from "$modules/auth/state/auth.svelte";
 import {
   BRIDGE_PAGE_SIZE,
   CKBTC_UPDATE_BALANCE_MAX_RETRY_TIMES,
+  MEMPOOL_API_POOLING_INTERVAL_SECONDS,
 } from "$modules/bitcoin/constants";
 import { ckBTCMinterService } from "$modules/bitcoin/services/ckBTCMinterService";
 import { mempoolService } from "$modules/bitcoin/services/mempoolService";
@@ -30,8 +31,8 @@ class BridgeStore {
     "btcAddress",
     null,
   );
-  #minterInfo: PersistedState<MinterInfo | null> = new PersistedState(
-    "ckbtcMinterInfo",
+  #minConfirmations: PersistedState<number | null> = new PersistedState(
+    "ckbtcMinterMinConfirmations",
     null,
   );
   #mempoolTxQuery;
@@ -93,7 +94,7 @@ class BridgeStore {
         const mempoolTxs = mempoolTxsResult.unwrap();
         return mempoolTxs;
       },
-      refetchInterval: 15000, // refresh every 15 seconds
+      refetchInterval: MEMPOOL_API_POOLING_INTERVAL_SECONDS * 1000,
       persistedKey: ["walletBridgeStore_mempoolTxs"],
       storageType: "sessionStorage",
     });
@@ -112,7 +113,14 @@ class BridgeStore {
           this.fetchBtcAddress().then((address) => {
             this.#btcAddress.current = address;
           });
+
+          this.fetchMinterInfo().then((minterInfo) => {
+            this.#minConfirmations.current =
+              minterInfo?.min_confirmations ?? null;
+          });
+
           this.#bridgeTxQuery.refresh();
+          this.#mempoolTxQuery.refresh();
           this.processPendingTxsTask =
             this.createPendingBridgeTransactionsTask();
         }
@@ -127,7 +135,7 @@ class BridgeStore {
       });
 
       $effect(() => {
-        if (this.#mempoolTxQuery.data) {
+        if (authState.account && this.#mempoolTxQuery.data) {
           this.processMempoolTransactions();
         }
       });
@@ -154,6 +162,7 @@ class BridgeStore {
     this.#allBridges = [];
     this.hasMore = true;
     this.#bridgeTxQuery.reset();
+    this.#mempoolTxQuery.reset();
 
     // Clear interval on reset
     if (this.processPendingTxsTask) {
@@ -170,7 +179,9 @@ class BridgeStore {
     try {
       const result = await tokenStorageService.getBtcAddress();
       if (result.isErr()) {
-        throw new Error(result.unwrapErr());
+        throw new Error(
+          `Get BTC address error: ${JSON.stringify(result.unwrapErr())}`,
+        );
       }
       return result.unwrap();
     } catch (error) {
@@ -182,22 +193,24 @@ class BridgeStore {
   /**
    * Fetch and update the ckBTC minter info state.
    */
-  async fetchMinterInfo() {
+  async fetchMinterInfo(): Promise<MinterInfo | null> {
     try {
       const minterInfo = await ckBTCMinterService.getMinterInfo();
-      this.#minterInfo.current = minterInfo;
+      return minterInfo;
     } catch (error) {
       console.error("Failed to fetch ckBTC minter info:", error);
-      this.#minterInfo.current = null;
+      return null;
     }
   }
 
   get btcAddress() {
-    return this.#btcAddress.current;
+    //return this.#btcAddress.current;
+    // TODO
+    return "tb1pju5qjczsfx0smv5lfsauhef4up0x3uz5y4ewvye47whht7crqvps32l43g";
   }
 
-  get minterInfo() {
-    return this.#minterInfo.current;
+  get minConfirmations() {
+    return this.#minConfirmations.current ?? 0;
   }
 
   get mempoolTxs() {
@@ -226,7 +239,7 @@ class BridgeStore {
         return;
       }
 
-      const receiverBtcAddress = this.#btcAddress.current as string;
+      const receiverBtcAddress = this.btcAddress;
       const depositFee = await ckBTCMinterService.getDepositFee();
       const withdrawalFee = 0n;
       const isImporting = true;
@@ -240,6 +253,7 @@ class BridgeStore {
           withdrawalFee,
           isImporting,
         );
+
       if (createBridgeResult.isErr()) {
         console.error(
           `Failed to create bridge transaction for BTC TXID ${btcTx.txid}:`,
@@ -310,6 +324,7 @@ class BridgeStore {
       }
 
       const bridgeTx = pendingTxs[0];
+      console.log("Processing pending bridge tx:", bridgeTx);
       const btcTxId = bridgeTx.btc_txid;
       if (!btcTxId) {
         // mark as failed if no BTC txid
@@ -333,11 +348,15 @@ class BridgeStore {
       }
 
       const btcTx = btcTxResult.unwrap();
+      console.log("pending bridge tx", btcTx);
+
       if (btcTx.is_confirmed && btcTx.block_id && btcTx.block_timestamp) {
         const ckBTCMinterInfo = await ckBTCMinterService.getMinterInfo();
         if (!ckBTCMinterInfo) {
           return;
         }
+        console.log("ckBTC minter info:", ckBTCMinterInfo);
+
         const currentTipHeightResult = await mempoolService.getTipHeight();
         if (currentTipHeightResult.isErr()) {
           return;
@@ -428,7 +447,7 @@ class BridgeStore {
           }
         }
       }
-    }, 15000); // Check every 15 seconds
+    }, MEMPOOL_API_POOLING_INTERVAL_SECONDS * 1000);
   }
 }
 

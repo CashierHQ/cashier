@@ -4,6 +4,7 @@ import {
   type BitcoinBlock,
   type BitcoinTransaction,
 } from "$modules/bitcoin/types/bitcoin_transaction";
+import { currentSecondTimestamp } from "$modules/shared/utils/datetimeUtils";
 import { Err, Ok, type Result } from "ts-results-es";
 
 /**
@@ -45,7 +46,10 @@ class MempoolService {
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = await response.json();
-    const transaction = BitcoinTransactionMapper.fromMempoolApiResponse(data);
+    const transaction = BitcoinTransactionMapper.fromMempoolApiResponse(
+      data,
+      currentSecondTimestamp(),
+    );
     return Ok(transaction);
   }
 
