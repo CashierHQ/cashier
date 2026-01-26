@@ -94,7 +94,7 @@ class BridgeStore {
         const mempoolTxs = mempoolTxsResult.unwrap();
         return mempoolTxs;
       },
-      refetchInterval: MEMPOOL_API_POOLING_INTERVAL_SECONDS * 1000,
+      refetchInterval: 300 * 1000,
       persistedKey: ["walletBridgeStore_mempoolTxs"],
       storageType: "sessionStorage",
     });
@@ -120,19 +120,19 @@ class BridgeStore {
           });
 
           this.#bridgeTxQuery.refresh();
-          this.#mempoolTxQuery.refresh();
+          //this.#mempoolTxQuery.refresh();
           this.processPendingTxsTask =
             this.createPendingBridgeTransactionsTask();
         }
       });
 
-      $effect(() => {
-        if (this.#btcAddress.current) {
-          this.#mempoolTxQuery.refresh();
-        } else {
-          this.#mempoolTxQuery.reset();
-        }
-      });
+      // $effect(() => {
+      //   if (this.#btcAddress.current) {
+      //     this.#mempoolTxQuery.refresh();
+      //   } else {
+      //     this.#mempoolTxQuery.reset();
+      //   }
+      // });
 
       $effect(() => {
         if (authState.account && this.#mempoolTxQuery.data) {
@@ -204,9 +204,7 @@ class BridgeStore {
   }
 
   get btcAddress() {
-    //return this.#btcAddress.current;
-    // TODO
-    return "tb1pju5qjczsfx0smv5lfsauhef4up0x3uz5y4ewvye47whht7crqvps32l43g";
+    return this.#btcAddress.current;
   }
 
   get minConfirmations() {
@@ -324,7 +322,6 @@ class BridgeStore {
       }
 
       const bridgeTx = pendingTxs[0];
-      console.log("Processing pending bridge tx:", bridgeTx);
       const btcTxId = bridgeTx.btc_txid;
       if (!btcTxId) {
         // mark as failed if no BTC txid
@@ -348,15 +345,12 @@ class BridgeStore {
       }
 
       const btcTx = btcTxResult.unwrap();
-      console.log("pending bridge tx", btcTx);
 
       if (btcTx.is_confirmed && btcTx.block_id && btcTx.block_timestamp) {
         const ckBTCMinterInfo = await ckBTCMinterService.getMinterInfo();
         if (!ckBTCMinterInfo) {
           return;
         }
-        console.log("ckBTC minter info:", ckBTCMinterInfo);
-
         const currentTipHeightResult = await mempoolService.getTipHeight();
         if (currentTipHeightResult.isErr()) {
           return;
