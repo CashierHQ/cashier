@@ -54,8 +54,6 @@
   // Display value derived from bound props - no local state needed
   const displayValue = $derived(isUsd ? usdValue : tokenValue);
 
-  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
   function handleKeyDown(e: KeyboardEvent) {
     if (
       [
@@ -117,14 +115,9 @@
     // Update bound value immediately for responsive UI
     updateValue(sanitized);
 
-    // Debounce callback for side effects (conversion, persistence)
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-    }
-
-    debounceTimer = setTimeout(() => {
-      onInputChange?.(sanitized);
-    }, 1000);
+    // Call onInputChange immediately for reactive conversion (USD <-> token)
+    // This ensures the input is reactive and updates instantly
+    onInputChange?.(sanitized);
   }
 
   // Get max USD value (if token has price) - using maxBalanceWithFee
@@ -170,10 +163,6 @@
 
     if (exceedsBalance) {
       updateValue(maxValueStr);
-
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-      }
       onInputChange?.(maxValueStr);
 
       const symbol = isUsd ? "USD" : token.symbol;
@@ -236,7 +225,7 @@
                 onblur={handleBlur}
                 type="number"
                 class="w-auto min-w-[30px] ml-auto text-end text-[14px] font-normal placeholder:text-[#D9D9D9] focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                style="width: {inputWidth}; max-width: 250px; position: relative; z-index: 0;"
+                style="width: {inputWidth}; max-width: 92px; position: relative; z-index: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
                 placeholder="0"
                 min={0}
                 inputmode="decimal"
