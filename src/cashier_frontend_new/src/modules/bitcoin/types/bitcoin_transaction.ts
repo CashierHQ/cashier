@@ -43,8 +43,8 @@ export class BitcoinTransactionMapper {
    * @param current_ts current timestamp in seconds
    * @returns bitcoin transaction
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public static fromMempoolApiResponse(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any,
     current_ts: number,
   ): BitcoinTransaction {
