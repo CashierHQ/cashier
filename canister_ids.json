@@ -19,7 +19,6 @@
   },
   "token_storage": {
     "dev": "hmrnm-pqaaa-aaaam-aenea-cai",
-    "ic": "rpfmw-oqaaa-aaaao-a5uaa-cai",
     "production": "d2fvt-giaaa-aaaam-aen4q-cai",
     "staging": "o4l23-2iaaa-aaaam-aehga-cai"
   }
