@@ -242,7 +242,8 @@
               </div>
               <button
                 onclick={() => handleToggle(token)}
-                disabled={token.is_default || pendingToggleAddresses.has(token.address)}
+                disabled={token.is_default ||
+                  pendingToggleAddresses.has(token.address)}
                 class="relative inline-flex h-5 w-8 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed {token.enabled
                   ? 'bg-green'
                   : 'bg-lightgreen'}"
