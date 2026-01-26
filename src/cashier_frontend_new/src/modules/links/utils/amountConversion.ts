@@ -13,7 +13,9 @@ export function convertUsdToToken(
   if (!priceUsd || priceUsd <= 0) return "";
   const usdNum =
     typeof usdAmount === "string" ? parseFloat(usdAmount) : usdAmount;
-  if (isNaN(usdNum) || usdNum <= 0) return "";
+  // Allow 0 and positive numbers, but not negative or NaN
+  if (isNaN(usdNum) || usdNum < 0) return "";
+  if (usdNum === 0) return "0";
   const tokenValue = usdNum / priceUsd;
   return tokenValue.toString();
 }
@@ -31,7 +33,9 @@ export function convertTokenToUsd(
   if (!priceUsd || priceUsd <= 0) return "";
   const tokenNum =
     typeof tokenAmount === "string" ? parseFloat(tokenAmount) : tokenAmount;
-  if (isNaN(tokenNum) || tokenNum <= 0) return "";
+  // Allow 0 and positive numbers, but not negative or NaN
+  if (isNaN(tokenNum) || tokenNum < 0) return "";
+  if (tokenNum === 0) return "0";
   const usdValue = tokenNum * priceUsd;
   // Round to 4 decimal places to avoid floating point precision errors
   const roundedUsdValue = Math.round(usdValue * 10000) / 10000;
@@ -42,9 +46,11 @@ export function convertTokenToUsd(
  * Parse token amount string to number
  * @param tokenAmountStr - Token amount as string
  * @returns Parsed number, or 0 if invalid
+ * Note: Returns the actual number including 0, to allow "0" and "0.002" inputs
  */
 export function parseTokenAmount(tokenAmountStr: string): number {
   if (!tokenAmountStr) return 0;
   const num = parseFloat(tokenAmountStr);
-  return isNaN(num) || num <= 0 ? 0 : num;
+  // Allow 0 and positive numbers, but not negative or NaN
+  return isNaN(num) || num < 0 ? 0 : num;
 }
