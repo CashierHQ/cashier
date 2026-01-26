@@ -36,8 +36,8 @@ impl TransferWalletToTreasuryIntent {
     pub fn create(
         label: String,
         asset: Asset,
-        actual_amount: u64,
-        approval_amount: u64,
+        actual_amount: Nat,
+        approval_amount: Nat,
         sender_id: Principal,
         spender_account: Account,
         created_at_ts: u64,
@@ -66,9 +66,9 @@ impl TransferWalletToTreasuryIntent {
         let mut transfer_from_data = intent.r#type.as_transfer_from().ok_or_else(|| {
             CanisterError::HandleLogicError("TransferFrom data not found".to_string())
         })?;
-        transfer_from_data.amount = Nat::from(actual_amount);
-        transfer_from_data.approve_amount = Some(Nat::from(approval_amount));
-        transfer_from_data.actual_amount = Some(Nat::from(actual_amount));
+        transfer_from_data.amount = actual_amount.clone();
+        transfer_from_data.approve_amount = Some(approval_amount);
+        transfer_from_data.actual_amount = Some(actual_amount);
         transfer_from_data.asset = asset;
         transfer_from_data.from = from_wallet;
         transfer_from_data.to = to_wallet;
@@ -89,8 +89,8 @@ mod tests {
         // Arrange
         let label = "Test Intent".to_string();
         let asset = Asset::default();
-        let actual_amount = 100u64;
-        let approval_amount = 150u64;
+        let actual_amount = Nat::from(100u64);
+        let approval_amount = Nat::from(150u64);
         let sender_id = random_principal_id();
         let spender_account = Account {
             owner: random_principal_id(),
@@ -102,8 +102,8 @@ mod tests {
         let intent_result = TransferWalletToTreasuryIntent::create(
             label.clone(),
             asset.clone(),
-            actual_amount,
-            approval_amount,
+            actual_amount.clone(),
+            approval_amount.clone(),
             sender_id,
             spender_account,
             created_at_ts,
@@ -120,9 +120,9 @@ mod tests {
             IntentType::TransferFrom(transfer_from_intent) => transfer_from_intent,
             _ => panic!("Expected TransferFrom intent type"),
         };
-        assert_eq!(intent_type.amount, Nat::from(actual_amount));
-        assert_eq!(intent_type.approve_amount, Some(Nat::from(approval_amount)));
-        assert_eq!(intent_type.actual_amount, Some(Nat::from(actual_amount)));
+        assert_eq!(intent_type.amount, actual_amount.clone());
+        assert_eq!(intent_type.approve_amount, Some(approval_amount));
+        assert_eq!(intent_type.actual_amount, Some(actual_amount));
         assert_eq!(intent_type.asset, asset);
         assert_eq!(intent_type.from, Wallet::new(sender_id));
     }

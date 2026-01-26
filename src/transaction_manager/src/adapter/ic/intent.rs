@@ -191,6 +191,9 @@ impl IntentAdapterTrait for IcIntentAdapter {
             (IntentTask::TransferWalletToLink, IntentType::Transfer(transfer_intent)) => {
                 self.assemble_icrc1_wallet_transfer(ts, transfer_intent)
             }
+            (IntentTask::TransferWalletToLink, IntentType::TransferFrom(transfer_intent)) => {
+                self.assemble_icrc2_wallet_transfer(ts, transfer_intent)
+            }
             (IntentTask::TransferWalletToTreasury, IntentType::TransferFrom(transfer_intent)) => {
                 self.assemble_icrc2_wallet_transfer(ts, transfer_intent)
             }

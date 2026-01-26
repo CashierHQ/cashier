@@ -56,8 +56,6 @@ impl CreateAction {
             address: ICP_CANISTER_PRINCIPAL,
         };
         let (actual_amount, approval_amount) = calculate_create_link_fee(&token_fee_map);
-        let actual_amount = convert_nat_to_u64(&actual_amount)?;
-        let approval_amount = convert_nat_to_u64(&approval_amount)?;
         let spender_account = Account {
             owner: canister_id,
             subaccount: None,

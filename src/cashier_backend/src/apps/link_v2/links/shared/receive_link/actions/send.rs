@@ -78,7 +78,7 @@ impl SendAction {
                     )
                 })?;
 
-                TransferWalletToLinkIntent::create(
+                TransferWalletToLinkIntent::create_icrc1(
                     INTENT_LABEL_SEND_TIP_ASSET.to_string(),
                     asset_info.asset.clone(),
                     sending_amount.clone(),

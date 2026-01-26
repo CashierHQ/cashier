@@ -139,30 +139,30 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
         assert_eq!(action.intents.len(), 2);
 
         // Assert Intent 1: TransferWalletToLink
-        let intent1 = &action.intents[0];
+        let intent1 = action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToLink)
+            .expect("TransferWalletToLink intent not found");
+
         assert_eq!(intent1.task, IntentTask::TransferWalletToLink);
         match intent1.r#type {
-            IntentType::Transfer(ref transfer) => {
-                assert_eq!(transfer.from, Wallet::new(caller));
-                assert_eq!(transfer.to, link_id_to_account(ctx, &link.id).into());
+            IntentType::TransferFrom(ref transfer_from) => {
+                assert_eq!(transfer_from.from, Wallet::new(caller));
+                assert_eq!(transfer_from.to, link_id_to_account(ctx, &link.id).into());
                 assert_eq!(
-                    transfer.amount,
-                    test_utils::calculate_amount_for_wallet_to_link_transfer(
-                        tip_amount.clone(),
-                        icp_ledger_fee.clone(),
-                        1
-                    ),
-                    "Transfer amount does not match"
+                    transfer_from.spender,
+                    Wallet::new(ctx.cashier_backend_principal)
                 );
             }
-            _ => panic!("Expected Transfer intent type"),
+            _ => panic!("Expected TransferFrom intent type"),
         }
-        assert_eq!(intent1.transactions.len(), 1);
+        assert_eq!(intent1.transactions.len(), 2);
         let tx0 = &intent1.transactions[0];
         match tx0.protocol {
-            Protocol::IC(IcTransaction::Icrc1Transfer(ref data)) => {
+            Protocol::IC(IcTransaction::Icrc2Approve(ref data)) => {
                 assert_eq!(data.from, Wallet::new(caller));
-                assert_eq!(data.to, link_id_to_account(ctx, &link.id).into());
+                assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
                 assert_eq!(
                     data.amount,
                     test_utils::calculate_amount_for_wallet_to_link_transfer(
@@ -170,12 +170,22 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
                         icp_ledger_fee.clone(),
                         1
                     ),
-                    "Icrc1Transfer amount does not match"
+                    "Icrc2Approve amount does not match"
                 );
                 assert!(data.memo.is_some());
                 assert!(data.ts.is_some());
             }
-            _ => panic!("Expected Icrc1Transfer transaction"),
+            _ => panic!("Expected Icrc2Approve transaction"),
+        }
+
+        let tx1 = &intent1.transactions[1];
+        match tx1.protocol {
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(ref data)) => {
+                assert_eq!(data.from, Wallet::new(caller));
+                assert_eq!(data.to, link_id_to_account(ctx, &link.id).into());
+                assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
+            }
+            _ => panic!("Expected Icrc2TransferFrom transaction"),
         }
 
         // Assert Intent 2: TransferWalletToTreasury
@@ -203,8 +213,8 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
             _ => panic!("Expected TransferFrom intent type"),
         }
         assert_eq!(intent2.transactions.len(), 2);
-        let tx1 = &intent2.transactions[0];
-        match tx1.protocol {
+        let tx0 = &intent2.transactions[0];
+        match tx0.protocol {
             Protocol::IC(IcTransaction::Icrc2Approve(ref data)) => {
                 assert_eq!(data.from, Wallet::new(caller));
                 assert_eq!(data.spender, Wallet::new(ctx.cashier_backend_principal));
@@ -219,8 +229,8 @@ async fn it_should_create_icp_token_tip_linkv2_successfully() {
             }
             _ => panic!("Expected Icrc2Approve transaction"),
         }
-        let tx2 = &intent2.transactions[1];
-        match tx2.protocol {
+        let tx1 = &intent2.transactions[1];
+        match tx1.protocol {
             Protocol::IC(IcTransaction::Icrc2TransferFrom(ref data)) => {
                 assert_eq!(data.from, Wallet::new(caller));
                 assert_eq!(data.to, Wallet::new(constant::FEE_TREASURY_PRINCIPAL));

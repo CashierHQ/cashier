@@ -2,7 +2,7 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::{Nat, Principal};
-use cashier_backend_types::repository::{asset_info::AssetInfo, common::Asset};
+use cashier_backend_types::repository::{asset_info::AssetInfo, common::Asset, link::v1::Link};
 use cashier_common::constant::{CREATE_LINK_FEE, ICP_CANISTER_PRINCIPAL};
 use std::collections::HashMap;
 
@@ -50,6 +50,32 @@ pub fn calculate_create_link_fee(fee_map: &HashMap<Principal, Nat>) -> (Nat, Nat
         create_link_fee.clone(),
         create_link_fee + fee_in_nat.clone(),
     )
+}
+
+pub fn calculate_icrc2_transfer_intent_amount(link: &Link, asset: &Asset) -> (Nat, Nat) {
+    let asset_info = link
+        .asset_info
+        .iter()
+        .find(|info| &info.asset == asset)
+        .expect("Asset info not found for the given asset");
+    let intent_fee = calculate_icrc2_transfer_intent_fee(link, asset);
+    let actual_amount =
+        asset_info.amount_per_link_use_action.clone() * Nat::from(link.link_use_action_max_count);
+    let approval_amount = actual_amount.clone() + intent_fee.clone();
+    (actual_amount, approval_amount)
+}
+
+pub fn calculate_icrc2_transfer_intent_fee(link: &Link, asset: &Asset) -> Nat {
+    let asset_info = link
+        .asset_info
+        .iter()
+        .find(|info| &info.asset == asset)
+        .expect("Asset info not found for the given asset");
+
+    let inbound_fee = Nat::from(2u32) * asset_info.amount_per_link_use_action.clone();
+    let outbound_fee =
+        asset_info.amount_per_link_use_action.clone() * Nat::from(link.link_use_action_max_count);
+    inbound_fee + outbound_fee
 }
 
 #[cfg(test)]

@@ -3,6 +3,7 @@
 
 use candid::{Nat, Principal};
 use cashier_backend_types::{
+    dto::link,
     error::CanisterError,
     repository::{
         common::{Asset, Chain, Wallet},
@@ -31,7 +32,7 @@ impl TransferWalletToLinkIntent {
     /// * `created_at_ts` - The timestamp when the intent is created.
     /// # Returns
     /// * `Result<TransferWalletToLinkIntent, CanisterError>` - The resulting intent or an error if the creation fails.
-    pub fn create(
+    pub fn create_icrc1(
         label: String,
         asset: Asset,
         sending_amount: Nat,
@@ -65,6 +66,48 @@ impl TransferWalletToLinkIntent {
 
         Ok(Self::new(intent))
     }
+
+    pub fn create_icrc2(
+        label: String,
+        asset: Asset,
+        actual_amount: Nat,
+        approval_amount: Nat,
+        sender_id: Principal,
+        spender_account: Account,
+        link_account: Account,
+        created_at_ts: u64,
+    ) -> Result<Self, CanisterError> {
+        let mut intent = Intent {
+            id: Uuid::new_v4().to_string(),
+            label,
+            state: IntentState::Created,
+            created_at: created_at_ts,
+            dependency: vec![],
+            chain: Chain::IC,
+            task: IntentTask::TransferWalletToLink,
+            r#type: IntentType::default_transfer_from(),
+        };
+
+        // enrich the intent with asset info
+        let from_wallet = Wallet::new(sender_id);
+        let to_wallet: Wallet = link_account.into();
+        let spender_wallet: Wallet = spender_account.into();
+
+        // TransferFrom case
+        let mut transfer_from_data = intent.r#type.as_transfer_from().ok_or_else(|| {
+            CanisterError::HandleLogicError("TransferFrom data not found".to_string())
+        })?;
+        transfer_from_data.amount = actual_amount.clone();
+        transfer_from_data.approve_amount = Some(approval_amount);
+        transfer_from_data.actual_amount = Some(actual_amount);
+        transfer_from_data.asset = asset;
+        transfer_from_data.from = from_wallet;
+        transfer_from_data.to = to_wallet;
+        transfer_from_data.spender = spender_wallet;
+
+        intent.r#type = IntentType::TransferFrom(transfer_from_data);
+        Ok(Self::new(intent))
+    }
 }
 
 #[cfg(test)]
@@ -86,7 +129,7 @@ mod tests {
         let ts = 1_632_192_100_000_000_000;
 
         // Act
-        let intent_result = TransferWalletToLinkIntent::create(
+        let intent_result = TransferWalletToLinkIntent::create_icrc1(
             label.clone(),
             asset.clone(),
             amount.clone(),

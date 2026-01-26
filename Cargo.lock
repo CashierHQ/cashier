@@ -1627,6 +1627,7 @@ dependencies = [
  "token_storage_client",
  "token_storage_types",
  "tokio",
+ "transaction_manager",
  "uuid",
 ]
 
