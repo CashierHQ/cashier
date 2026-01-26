@@ -151,7 +151,7 @@ impl<E: IcEnvironment> TransactionManager for IcTransactionManager<E> {
         let canister_id = self.ic_env.id();
         let link_id = action.link_id.clone();
         let validator_service = ValidatorService::new(Rc::new(IcTransactionValidator));
-        let executor_service = ExecutorService::new(Rc::new(IcTransactionExecutor));
+        let executor_service = ExecutorService::new(IcTransactionExecutor);
 
         Box::pin(async move {
             // validate and update transactions dependencies and states

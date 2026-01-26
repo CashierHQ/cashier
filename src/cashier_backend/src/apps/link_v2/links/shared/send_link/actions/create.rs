@@ -77,19 +77,17 @@ impl CreateAction {
                     Asset::IC { address } => address,
                 };
 
-                let sending_amount = link_token_balance_map.get(&address).ok_or_else(|| {
-                    CanisterError::HandleLogicError(
-                        "Failed to get sending amount from balance map".to_string(),
-                    )
-                })?;
-
                 let spender_account = Account {
                     owner: canister_id,
                     subaccount: None,
                 };
 
-                let (actual_amount, approval_amount) =
-                    calculate_icrc2_transfer_intent_amount(link, &asset_info.asset);
+                let (actual_amount, approval_amount) = calculate_icrc2_transfer_intent_amount(
+                    link.link_use_action_max_count,
+                    &asset_info.amount_per_link_use_action,
+                    &asset_info.asset,
+                    &token_fee_map,
+                )?;
 
                 // TransferWalletToLinkIntent::create_icrc1(
                 //     INTENT_LABEL_SEND_TIP_ASSET.to_string(),

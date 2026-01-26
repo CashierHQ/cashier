@@ -98,6 +98,51 @@ impl Transaction {
             _ => {}
         }
     }
+
+    pub fn get_protocol_key(&self) -> String {
+        match &self.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(transfer_data)) => format!(
+                "icrc1_transfer_{}_{}_{}",
+                transfer_data.asset, transfer_data.from, transfer_data.to
+            ),
+            Protocol::IC(IcTransaction::Icrc2Approve(approve_data)) => format!(
+                "icrc2_approve_{}_{}_{}",
+                approve_data.asset, approve_data.from, approve_data.spender
+            ),
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(transfer_from_data)) => format!(
+                "icrc2_transfer_from_{}_{}_{}",
+                transfer_from_data.asset, transfer_from_data.from, transfer_from_data.spender
+            ),
+        }
+    }
+
+    pub fn merge_with(&mut self, other: &Transaction) {
+        if self.get_protocol_key() != other.get_protocol_key() {
+            return;
+        }
+
+        match &mut self.protocol {
+            Protocol::IC(IcTransaction::Icrc1Transfer(transfer_data)) => {
+                if let Protocol::IC(IcTransaction::Icrc1Transfer(other_transfer)) = &other.protocol
+                {
+                    transfer_data.amount += other_transfer.amount.clone();
+                }
+            }
+            Protocol::IC(IcTransaction::Icrc2Approve(approve_data)) => {
+                if let Protocol::IC(IcTransaction::Icrc2Approve(ref other_approve)) = other.protocol
+                {
+                    approve_data.amount += other_approve.amount.clone();
+                }
+            }
+            Protocol::IC(IcTransaction::Icrc2TransferFrom(transfer_from_data)) => {
+                if let Protocol::IC(IcTransaction::Icrc2TransferFrom(ref other_transfer_from)) =
+                    other.protocol
+                {
+                    transfer_from_data.amount += other_transfer_from.amount.clone();
+                }
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, CandidType)]

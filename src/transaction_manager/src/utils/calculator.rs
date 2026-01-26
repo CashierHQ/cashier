@@ -2,7 +2,10 @@
 // Licensed under the MIT License (see LICENSE file in the project root)
 
 use candid::{Nat, Principal};
-use cashier_backend_types::repository::{asset_info::AssetInfo, common::Asset, link::v1::Link};
+use cashier_backend_types::{
+    error::CanisterError,
+    repository::{asset_info::AssetInfo, common::Asset, link::v1::Link},
+};
 use cashier_common::constant::{CREATE_LINK_FEE, ICP_CANISTER_PRINCIPAL};
 use std::collections::HashMap;
 
@@ -52,30 +55,33 @@ pub fn calculate_create_link_fee(fee_map: &HashMap<Principal, Nat>) -> (Nat, Nat
     )
 }
 
-pub fn calculate_icrc2_transfer_intent_amount(link: &Link, asset: &Asset) -> (Nat, Nat) {
-    let asset_info = link
-        .asset_info
-        .iter()
-        .find(|info| &info.asset == asset)
-        .expect("Asset info not found for the given asset");
-    let intent_fee = calculate_icrc2_transfer_intent_fee(link, asset);
-    let actual_amount =
-        asset_info.amount_per_link_use_action.clone() * Nat::from(link.link_use_action_max_count);
-    let approval_amount = actual_amount.clone() + intent_fee.clone();
-    (actual_amount, approval_amount)
+pub fn calculate_icrc2_transfer_intent_amount(
+    max_use: u64,
+    amount_per_use: &Nat,
+    asset: &Asset,
+    fee_map: &HashMap<Principal, Nat>,
+) -> Result<(Nat, Nat), CanisterError> {
+    let (inbound_fee, outbound_fee) = calculate_icrc2_transfer_intent_fee(max_use, asset, fee_map)?;
+    let actual_amount = amount_per_use.clone() * Nat::from(max_use) + outbound_fee;
+    let approval_amount = actual_amount.clone() + inbound_fee.clone();
+    Ok((actual_amount, approval_amount))
 }
 
-pub fn calculate_icrc2_transfer_intent_fee(link: &Link, asset: &Asset) -> Nat {
-    let asset_info = link
-        .asset_info
-        .iter()
-        .find(|info| &info.asset == asset)
-        .expect("Asset info not found for the given asset");
+pub fn calculate_icrc2_transfer_intent_fee(
+    max_use: u64,
+    asset: &Asset,
+    fee_map: &HashMap<Principal, Nat>,
+) -> Result<(Nat, Nat), CanisterError> {
+    let fee = match asset {
+        Asset::IC { address } => fee_map.get(address),
+    };
+    let fee = fee.ok_or_else(|| {
+        CanisterError::HandleLogicError("Fee not found for the given asset in link".to_string())
+    })?;
 
-    let inbound_fee = Nat::from(2u32) * asset_info.amount_per_link_use_action.clone();
-    let outbound_fee =
-        asset_info.amount_per_link_use_action.clone() * Nat::from(link.link_use_action_max_count);
-    inbound_fee + outbound_fee
+    let inbound_fee = Nat::from(2u32) * fee.clone();
+    let outbound_fee = fee.clone() * Nat::from(max_use);
+    Ok((inbound_fee, outbound_fee))
 }
 
 #[cfg(test)]

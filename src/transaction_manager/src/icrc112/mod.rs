@@ -50,6 +50,8 @@ pub fn create_icrc_112_requests(
         .filter(|tx| tx.state == TransactionState::Created || tx.state == TransactionState::Fail)
         .collect();
 
+    let wallet_transactions = merge_transactions_by_protocol_key(wallet_transactions);
+
     let tx_graph: Graph = wallet_transactions.clone().into();
     let sorted_txs = kahn_topological_sort(&tx_graph)?;
 
@@ -81,6 +83,33 @@ pub fn create_icrc_112_requests(
     }
 
     Ok(icrc_112_requests)
+}
+
+pub fn merge_transactions_by_protocol_key(transactions: Vec<Transaction>) -> Vec<Transaction> {
+    let mut merged_map: HashMap<String, Vec<Transaction>> = HashMap::new();
+    let mut merged_transactions: Vec<Transaction> = Vec::new();
+
+    for tx in transactions.into_iter() {
+        merged_map
+            .entry(tx.get_protocol_key())
+            .or_default()
+            .push(tx);
+    }
+
+    for (_key, tx_group) in merged_map.into_iter() {
+        if tx_group.len() == 1 {
+            merged_transactions.push(tx_group.into_iter().next().unwrap());
+        } else {
+            let mut merged_tx = tx_group[0].clone();
+            for tx in tx_group.iter().skip(1) {
+                merged_tx.merge_with(tx);
+            }
+
+            merged_transactions.push(merged_tx);
+        }
+    }
+
+    merged_transactions
 }
 
 /// Converts a Transaction to an Icrc112Request for ICRC-1 or ICRC-2 token transfers.

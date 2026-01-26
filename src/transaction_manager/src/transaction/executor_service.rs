@@ -7,14 +7,14 @@ use cashier_backend_types::{
     link_v2::transaction_manager::ExecuteTransactionsResult,
     repository::transaction::v1::{Transaction, TransactionState},
 };
-use std::rc::Rc;
+use futures::future::join_all;
 
-pub struct ExecutorService<E: TransactionExecutor> {
-    executor: Rc<E>,
+pub struct ExecutorService<E: TransactionExecutor + Clone> {
+    executor: E,
 }
 
-impl<E: TransactionExecutor> ExecutorService<E> {
-    pub fn new(executor: Rc<E>) -> Self {
+impl<E: TransactionExecutor + Clone> ExecutorService<E> {
+    pub fn new(executor: E) -> Self {
         Self { executor }
     }
 
@@ -30,29 +30,35 @@ impl<E: TransactionExecutor> ExecutorService<E> {
         let mut executed_transactions = Vec::<Transaction>::new();
         let mut errors = Vec::<String>::new();
         let mut is_success = true;
-        for transaction in transactions.iter() {
-            match self.executor.execute(transaction.clone()).await {
-                Ok(_executed_tx) => {
-                    let executed_tx = Transaction {
+        let executor = self.executor.clone();
+
+        let futures = transactions
+            .iter()
+            .map(|transaction| executor.execute(transaction.clone()))
+            .collect::<Vec<_>>();
+        let results = join_all(futures).await;
+
+        for (transaction, result) in transactions.iter().zip(results.into_iter()) {
+            match result {
+                Ok(_) => {
+                    executed_transactions.push(Transaction {
                         state: TransactionState::Success,
                         ..transaction.clone()
-                    };
-                    executed_transactions.push(executed_tx);
+                    });
                 }
-                Err(err) => {
-                    let failed_tx = Transaction {
-                        state: TransactionState::Fail,
-                        ..transaction.clone()
-                    };
+                Err(e) => {
+                    let mut failed_tx = transaction.clone();
+                    failed_tx.state = TransactionState::Fail;
                     executed_transactions.push(failed_tx);
                     errors.push(format!(
-                        "Transaction {} failed to execute: {}",
-                        transaction.id, err
+                        "Failed to execute transaction {}: {}",
+                        transaction.id, e
                     ));
                     is_success = false;
                 }
             }
         }
+
         Ok(ExecuteTransactionsResult {
             transactions: executed_transactions,
             is_success,
