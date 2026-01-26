@@ -51,8 +51,14 @@
   });
 
   // Sync external reset back to local (when parent resets values)
+  // Only reset if amount is 0 AND localTokenAmount is not "0" or starting with "0." (allow "0" and "0.002" etc)
   $effect(() => {
-    if (amount === 0 && localTokenAmount !== "") {
+    const isZeroOrStartsWithZero =
+      localTokenAmount === "0" ||
+      localTokenAmount.startsWith("0.") ||
+      localTokenAmount.startsWith("0,");
+
+    if (amount === 0 && localTokenAmount !== "" && !isZeroOrStartsWithZero) {
       localTokenAmount = "";
       localUsdAmount = "";
     }
