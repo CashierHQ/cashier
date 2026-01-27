@@ -26,12 +26,12 @@ use std::{
     },
     time::Duration,
 };
-use tokio::sync::OnceCell;
 use token_storage_client::client::TokenStorageClient;
 use token_storage_types::{
     init::TokenStorageInitData,
     token::{ChainTokenDetails, RegistryToken},
 };
+use tokio::sync::OnceCell;
 
 pub mod icrc_112;
 pub mod link_id_to_account;
@@ -92,8 +92,8 @@ async fn init_shared_state() -> SharedTestState {
     };
 
     // Create empty template dir for state persistence under ./target
-    let template_dir = PathBuf::from(POCKET_IC_STATE_DIR)
-        .join(format!("template-{}", std::process::id()));
+    let template_dir =
+        PathBuf::from(POCKET_IC_STATE_DIR).join(format!("template-{}", std::process::id()));
     if template_dir.exists() {
         std::fs::remove_dir_all(&template_dir).unwrap();
     }
@@ -332,10 +332,9 @@ where
 
     // Copy template state to unique temp dir for this test
     let test_id = TEST_DIR_COUNTER.fetch_add(1, Ordering::Relaxed);
-    let test_dir = PathBuf::from(POCKET_IC_STATE_DIR)
-        .join(format!("test-{}-{}", std::process::id(), test_id));
-    copy_dir_all(&shared.template_dir, &test_dir)
-        .expect("Failed to copy template state dir");
+    let test_dir =
+        PathBuf::from(POCKET_IC_STATE_DIR).join(format!("test-{}-{}", std::process::id(), test_id));
+    copy_dir_all(&shared.template_dir, &test_dir).expect("Failed to copy template state dir");
 
     // Mount state from copied dir (skips canister deployment)
     let client = Arc::new(
