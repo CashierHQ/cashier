@@ -14,7 +14,12 @@ use ic_cdk::management_canister::{CanisterId, CanisterSettings};
 use ic_mple_client::PocketIcClient;
 use ic_mple_log::service::LogServiceSettings;
 use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use token_storage_client::client::TokenStorageClient;
+use token_storage_types::{
+    init::TokenStorageInitData,
+    token::{ChainTokenDetails, RegistryToken},
+};
 use std::{
     collections::HashMap,
     fs::File,
@@ -26,12 +31,6 @@ use std::{
     },
     time::Duration,
 };
-use token_storage_client::client::TokenStorageClient;
-use token_storage_types::{
-    init::TokenStorageInitData,
-    token::{ChainTokenDetails, RegistryToken},
-};
-use tokio::sync::OnceCell;
 
 pub mod icrc_112;
 pub mod link_id_to_account;
@@ -39,22 +38,9 @@ pub mod principal;
 pub mod token_icp;
 pub mod token_icrc;
 
-/// Shared test state: template state_dir path + canister principals.
-/// Initialized once via OnceCell, reused across all tests.
-/// Cleans up template_dir on drop (process exit).
-struct SharedTestState {
-    template_dir: PathBuf,
-    principals: SharedPrincipals,
-}
-
-impl Drop for SharedTestState {
-    fn drop(&mut self) {
-        let _ = std::fs::remove_dir_all(&self.template_dir);
-    }
-}
-
-/// Canister principals deployed in the shared template state
-#[derive(Clone)]
+/// Canister principals deployed in the shared template state.
+/// Serialized to JSON for cross-process sharing (nextest compatibility).
+#[derive(Clone, Serialize, Deserialize)]
 struct SharedPrincipals {
     token_storage: Principal,
     cashier_backend: Principal,
@@ -68,22 +54,55 @@ struct SharedPrincipals {
 
 /// Base path for PocketIC test state directories
 const POCKET_IC_STATE_DIR: &str = "../../target/pocket-ic-test-state";
-
-/// Global shared state - deployed once, mounted per test via state_dir copy
-static SHARED_STATE: OnceCell<SharedTestState> = OnceCell::const_new();
+/// Fixed template dir name (shared across processes)
+const TEMPLATE_DIR_NAME: &str = "template";
+/// Marker file indicating template is fully built
+const READY_MARKER: &str = "template.ready";
+/// Lock file for cross-process synchronization
+const LOCK_FILE_NAME: &str = "template.lock";
+/// File storing serialized SharedPrincipals
+const PRINCIPALS_FILE: &str = "principals.json";
 
 /// Atomic counter for unique test dir names
 static TEST_DIR_COUNTER: AtomicU64 = AtomicU64::new(0);
 
-/// Get or initialize the shared test state
-async fn get_shared_state() -> &'static SharedTestState {
-    SHARED_STATE
-        .get_or_init(|| async { init_shared_state().await })
-        .await
+/// Get or initialize the shared template state using file-based locking.
+/// Works across processes (nextest compatible).
+async fn get_shared_principals() -> (PathBuf, SharedPrincipals) {
+    let base_dir = PathBuf::from(POCKET_IC_STATE_DIR);
+    std::fs::create_dir_all(&base_dir).unwrap();
+
+    let template_dir = base_dir.join(TEMPLATE_DIR_NAME);
+    let ready_marker = base_dir.join(READY_MARKER);
+    let lock_path = base_dir.join(LOCK_FILE_NAME);
+    let principals_path = base_dir.join(PRINCIPALS_FILE);
+
+    // Try to acquire exclusive lock via create_new (atomic mkdir-like)
+    // Only one process succeeds; others poll until ready_marker appears.
+    let is_initializer = File::create_new(&lock_path).is_ok();
+
+    if is_initializer {
+        // First process: deploy canisters and persist state
+        let principals = deploy_template_state(&template_dir).await;
+        let json = serde_json::to_string(&principals).unwrap();
+        std::fs::write(&principals_path, &json).unwrap();
+        // Mark template as ready after everything is written
+        std::fs::write(&ready_marker, "ready").unwrap();
+        (template_dir, principals)
+    } else {
+        // Wait for the initializer to finish (poll for ready marker)
+        while !ready_marker.exists() {
+            std::thread::sleep(Duration::from_millis(500));
+        }
+        let json = std::fs::read_to_string(&principals_path).unwrap();
+        let principals: SharedPrincipals = serde_json::from_str(&json).unwrap();
+        (template_dir, principals)
+    }
 }
 
-/// Deploy all canisters once, persist state to template_dir on disk
-async fn init_shared_state() -> SharedTestState {
+/// Deploy all canisters once, persist state to template_dir on disk.
+/// Called only by the first process that acquires the file lock.
+async fn deploy_template_state(template_dir: &Path) -> SharedPrincipals {
     let log = LogServiceSettings {
         enable_console: Some(true),
         in_memory_records: None,
@@ -91,18 +110,16 @@ async fn init_shared_state() -> SharedTestState {
         log_filter: Some("debug".to_string()),
     };
 
-    // Create empty template dir for state persistence under ./target
-    let template_dir =
-        PathBuf::from(POCKET_IC_STATE_DIR).join(format!("template-{}", std::process::id()));
+    // Clean and create template dir
     if template_dir.exists() {
-        std::fs::remove_dir_all(&template_dir).unwrap();
+        std::fs::remove_dir_all(template_dir).unwrap();
     }
-    std::fs::create_dir_all(&template_dir).unwrap();
+    std::fs::create_dir_all(template_dir).unwrap();
 
     // Build PocketIC with state_dir to persist canister state to disk
     let client = get_pocket_ic_client()
         .await
-        .with_state_dir(template_dir.clone())
+        .with_state_dir(template_dir.to_path_buf())
         .build_async()
         .await;
 
@@ -283,7 +300,10 @@ async fn init_shared_state() -> SharedTestState {
     )
     .await;
 
-    let principals = SharedPrincipals {
+    // Drop PocketIC instance - state is persisted in template_dir
+    client.drop().await;
+
+    SharedPrincipals {
         token_storage: token_storage_principal,
         cashier_backend: cashier_backend_principal,
         gate_service: gate_service_principal,
@@ -292,14 +312,6 @@ async fn init_shared_state() -> SharedTestState {
         icrc7_ledger: icrc7_ledger_principal,
         ckbtc_minter: ckbtc_minter_principal,
         ckbtc_kyt: ckbtc_kyt_principal,
-    };
-
-    // Drop PocketIC instance - state is persisted in template_dir
-    client.drop().await;
-
-    SharedTestState {
-        template_dir,
-        principals,
     }
 }
 
@@ -328,13 +340,13 @@ pub async fn with_pocket_ic_context<F, E>(f: F) -> Result<(), E>
 where
     F: AsyncFnOnce(&PocketIcTestContext) -> Result<(), E>,
 {
-    let shared = get_shared_state().await;
+    let (template_dir, principals) = get_shared_principals().await;
 
     // Copy template state to unique temp dir for this test
     let test_id = TEST_DIR_COUNTER.fetch_add(1, Ordering::Relaxed);
-    let test_dir =
-        PathBuf::from(POCKET_IC_STATE_DIR).join(format!("test-{}-{}", std::process::id(), test_id));
-    copy_dir_all(&shared.template_dir, &test_dir).expect("Failed to copy template state dir");
+    let test_dir = PathBuf::from(POCKET_IC_STATE_DIR)
+        .join(format!("test-{}-{}", std::process::id(), test_id));
+    copy_dir_all(&template_dir, &test_dir).expect("Failed to copy template state dir");
 
     // Mount state from copied dir (skips canister deployment)
     let client = Arc::new(
@@ -347,14 +359,14 @@ where
 
     let result = f(&PocketIcTestContext {
         client: client.clone(),
-        token_storage_principal: shared.principals.token_storage,
-        cashier_backend_principal: shared.principals.cashier_backend,
-        gate_service_principal: shared.principals.gate_service,
-        icp_ledger_principal: shared.principals.icp_ledger,
-        icrc_token_map: shared.principals.icrc_tokens.clone(),
-        icrc7_ledger_principal: shared.principals.icrc7_ledger,
-        ckbtc_minter_principal: shared.principals.ckbtc_minter,
-        ckbtc_kyt_principal: shared.principals.ckbtc_kyt,
+        token_storage_principal: principals.token_storage,
+        cashier_backend_principal: principals.cashier_backend,
+        gate_service_principal: principals.gate_service,
+        icp_ledger_principal: principals.icp_ledger,
+        icrc_token_map: principals.icrc_tokens.clone(),
+        icrc7_ledger_principal: principals.icrc7_ledger,
+        ckbtc_minter_principal: principals.ckbtc_minter,
+        ckbtc_kyt_principal: principals.ckbtc_kyt,
     })
     .await;
 
