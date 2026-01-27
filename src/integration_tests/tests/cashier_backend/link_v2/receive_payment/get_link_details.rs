@@ -207,7 +207,11 @@ async fn it_should_succeed_get_payment_linkv2_details_with_create_action() {
         assert_eq!(action.intents.len(), 1);
 
         // Assert Intent1 TransferWalletToTreasury
-        let intent1 = &action.intents[0];
+        let intent1 = action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
+            .expect("TransferWalletToTreasury intent not found");
         assert_eq!(intent1.state, IntentState::Created);
         assert_eq!(intent1.task, IntentTask::TransferWalletToTreasury);
         match intent1.r#type {
@@ -298,7 +302,11 @@ async fn it_should_succeed_get_payment_linkv2_details_with_send_action() {
         assert_eq!(action.intents.len(), 1);
 
         // Assert Intent 1: TransferWalletToLink
-        let intent1 = &action.intents[0];
+        let intent1 = action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToLink)
+            .expect("TransferWalletToLink intent not found");
         assert_eq!(intent1.task, IntentTask::TransferWalletToLink);
         match intent1.r#type {
             IntentType::Transfer(ref transfer) => {
