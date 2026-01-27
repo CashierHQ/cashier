@@ -133,6 +133,8 @@ jobs:
         partition: [1, 2, 3]
         total: [3]
     steps:
+      - uses: actions/checkout@v4
+
       - name: Install cargo-nextest
         run: |
           curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C /usr/local/bin
@@ -146,6 +148,7 @@ jobs:
       - name: Run integration tests (shard ${{ matrix.partition }}/${{ matrix.total }})
         run: |
           cargo nextest run --archive-file target/nextest-archive.tar.zst \
+            --workspace-remap ${{ github.workspace }} \
             --partition count:${{ matrix.partition }}/${{ matrix.total }}
 
   backend-test-i686:

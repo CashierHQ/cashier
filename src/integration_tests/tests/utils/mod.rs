@@ -15,11 +15,6 @@ use ic_mple_client::PocketIcClient;
 use ic_mple_log::service::LogServiceSettings;
 use ic_mple_pocket_ic::{get_pocket_ic_client, pocket_ic::nonblocking::PocketIc};
 use serde::{Deserialize, Serialize};
-use token_storage_client::client::TokenStorageClient;
-use token_storage_types::{
-    init::TokenStorageInitData,
-    token::{ChainTokenDetails, RegistryToken},
-};
 use std::{
     collections::HashMap,
     fs::File,
@@ -30,6 +25,11 @@ use std::{
         atomic::{AtomicU64, Ordering},
     },
     time::Duration,
+};
+use token_storage_client::client::TokenStorageClient;
+use token_storage_types::{
+    init::TokenStorageInitData,
+    token::{ChainTokenDetails, RegistryToken},
 };
 
 pub mod icrc_112;
@@ -344,8 +344,8 @@ where
 
     // Copy template state to unique temp dir for this test
     let test_id = TEST_DIR_COUNTER.fetch_add(1, Ordering::Relaxed);
-    let test_dir = PathBuf::from(POCKET_IC_STATE_DIR)
-        .join(format!("test-{}-{}", std::process::id(), test_id));
+    let test_dir =
+        PathBuf::from(POCKET_IC_STATE_DIR).join(format!("test-{}-{}", std::process::id(), test_id));
     copy_dir_all(&template_dir, &test_dir).expect("Failed to copy template state dir");
 
     // Mount state from copied dir (skips canister deployment)
