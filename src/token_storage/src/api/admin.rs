@@ -8,13 +8,10 @@ use log::{debug, info};
 use token_storage_types::{
     TokenId,
     error::CanisterError,
-    token::{RegistryStats, TokenDto, TokenListResponse, UserTokens},
+    token::{RegistryStats, TokenDto, TokenListResponse, TokenRegistryMetadata, UserTokens},
 };
 
-use crate::{
-    api::state::get_state, build_data::canister_build_data, services::auth::Permission,
-    types::TokenRegistryMetadata,
-};
+use crate::{api::state::get_state, build_data::canister_build_data, services::auth::Permission};
 
 /// Returns the build data of the canister.
 #[query]

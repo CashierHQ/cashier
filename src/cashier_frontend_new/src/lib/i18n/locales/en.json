@@ -391,7 +391,10 @@
       "icpAddressInfoSecond": "In case you'd like to use a Account ID, you can use the address below.",
       "closeButton": "Close",
       "warning": "Send {{token}} to this wallet to begin using Cashier. Ensure that you are only sending assets that are {{highlighted}}, otherwise you could lose them forever.",
-      "warningHighlighted": "meant for this address"
+      "warningHighlighted": "meant for this address",
+      "btcAddress": "BTC Address",
+      "ethAddress": "ETH Address",
+      "noBtcImportTxs": "No BTC import transactions found."
     },
     "manage": {
       "header": "Manage tokens",
@@ -438,6 +441,35 @@
         "tokenAlreadyExists": "Token already exists",
         "backendError": "Failed to add token. Please try again."
       }
+    }
+  },
+  "bitcoin": {
+    "receive": {
+      "title": "Importing BTC from Bitcoin network",
+      "importing": "Importing (in ~60mins)",
+      "imported": "Imported",
+      "btcAddress": {
+        "warning1": "Receive BTC from a Bitcoin wallet (e.g. Coinbase, Xverse, Ledger).",
+        "warning2": "BTC is automatically converted to ckBTC on arrival.",
+        "warning3": "0.000001 BTC import fee.",
+        "warning4": "Time ~1 hour. You can track progress below."
+      },
+      "icpAddress": {
+        "warning1": "Receive ckBTC from a ICP wallet (e.g. Oisy, NFID, Plug)",
+        "warning2": "ckBTC is a 1:1 Bitcoin-backed token on ICP network.",
+        "warning3": "Transfers are almost instant."
+      }
+    },
+    "send": {
+      "exporting": "Exporting (in ~60mins)",
+      "exported": "Exported"
+    },
+    "txCart": {
+      "title": "Transaction details",
+      "close": "Close",
+      "successMessage": "Bridge transaction completed successfully.",
+      "confirmationsRequired": "{{minConfirmations}} confirmations required (~10m each)",
+      "confirmation": "Confirmation"
     }
   }
 }

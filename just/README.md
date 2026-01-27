@@ -2,6 +2,11 @@
 
 This directory contains modular task recipes used by the project's `justfile` (imported from the project root). The `just` commands provide a concise, repeatable interface for building, testing, running, and deploying the Cashier stacks (backend canisters and frontend).
 
+## Prerequisites
+
+- [DFX latest version](https://docs.internetcomputer.org/building-apps/getting-started/install)
+- [Bitcoind](https://docs.internetcomputer.org/build-on-btc/btc-dev-env)
+
 ## Overview
 
 - The root `justfile` imports these modules so you can run all common tasks from the repository root via `just <command>`.
@@ -41,6 +46,12 @@ If you need to inspect a specific task, open the corresponding file in this dire
 dfx identity whoami
 ```
 
+- Start bitcoind node
+
+```bash
+bitcoind -conf=$(pwd)/bitcoin.conf -datadir=$(pwd)/bitcoin_data
+```
+
 - Deploy all canister
 
 ```bash
@@ -76,4 +87,18 @@ just dfx_mainnet_deploy_icrc7_ledger <Collection_name> <Collection_symbol> <Coll
 
 ```bash
 just dfx_mainnet_mint_nft <target_principal> <icrc7_ledger_canister_id> <nft_name> <nft_description> <nft_image_url>
+```
+
+## Stop commands
+
+- Stop dfx server
+
+```bash
+$ just dfx_local_stop
+```
+
+- Stop bitcoind node
+
+```bash
+$ bitcoin-cli -conf=$(pwd)/bitcoin.conf -datadir=$(pwd)/bitcoin_data stop
 ```

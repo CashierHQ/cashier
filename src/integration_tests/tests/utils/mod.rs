@@ -1,5 +1,7 @@
 use crate::{
+    ckbtc,
     constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL, ICRC7_NFT_PRINCIPAL},
+    constants,
     icrc7::{self, client::Icrc7Client},
     utils::{principal::TestUser, token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
 };
@@ -50,6 +52,22 @@ where
     };
 
     let client = Arc::new(get_pocket_ic_client().await.build_async().await);
+
+    let ckbtc_kyt_principal = ckbtc::kyt::deploy_ckbtc_kyt_canister(
+        &client,
+        Principal::from_text(constants::CKBTC_KYT_PRINCIPAL_ID).unwrap(),
+        Principal::from_text(constants::CKBTC_MINTER_PRINCIPAL_ID).unwrap(),
+    )
+    .await;
+
+    let ckbtc_minter_principal = ckbtc::minter::deploy_ckbtc_minter_canister(
+        &client,
+        Principal::from_text(constants::CKBTC_MINTER_PRINCIPAL_ID).unwrap(),
+        Principal::from_text(constants::CKBTC_LEDGER_PRINCIPAL_ID).unwrap(),
+        Some(ckbtc_kyt_principal),
+    )
+    .await;
+
     let token_storage_principal = deploy_canister(
         &client,
         None,
@@ -122,6 +140,7 @@ where
                     enabled_by_default: true,
                 },
             ]),
+            ckbtc_minter_id: ckbtc_minter_principal,
         }),
     )
     .await;
@@ -164,7 +183,7 @@ where
         "Chain Key Bitcoin".to_string(),
         "ckBTC".to_string(),
         8,
-        10,
+        100,
         Some(Principal::from_text(CK_BTC_PRINCIPAL).unwrap()),
     )
     .await;
@@ -222,6 +241,8 @@ where
         icp_ledger_principal,
         icrc_token_map,
         icrc7_ledger_principal,
+        ckbtc_minter_principal,
+        ckbtc_kyt_principal,
     })
     .await;
 
@@ -242,6 +263,8 @@ pub struct PocketIcTestContext {
     pub icp_ledger_principal: Principal,
     pub icrc_token_map: HashMap<String, Principal>,
     pub icrc7_ledger_principal: Principal,
+    pub ckbtc_minter_principal: Principal,
+    pub ckbtc_kyt_principal: Principal,
 }
 
 impl PocketIcTestContext {

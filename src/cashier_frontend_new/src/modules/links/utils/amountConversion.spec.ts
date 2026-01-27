@@ -20,8 +20,12 @@ describe("amountConversion", () => {
 
     it("should return empty string when usdAmount is invalid", () => {
       expect(convertUsdToToken("abc", 2)).toBe("");
-      expect(convertUsdToToken(0, 2)).toBe("");
       expect(convertUsdToToken(-5, 2)).toBe("");
+    });
+
+    it("should return '0' when usdAmount is 0", () => {
+      expect(convertUsdToToken(0, 2)).toBe("0");
+      expect(convertUsdToToken("0", 2)).toBe("0");
     });
   });
 
@@ -40,8 +44,12 @@ describe("amountConversion", () => {
 
     it("should return empty string when tokenAmount is invalid", () => {
       expect(convertTokenToUsd("abc", 2)).toBe("");
-      expect(convertTokenToUsd(0, 2)).toBe("");
       expect(convertTokenToUsd(-5, 2)).toBe("");
+    });
+
+    it("should return '0' when tokenAmount is 0", () => {
+      expect(convertTokenToUsd(0, 2)).toBe("0");
+      expect(convertTokenToUsd("0", 2)).toBe("0");
     });
   });
 
@@ -50,12 +58,13 @@ describe("amountConversion", () => {
       expect(parseTokenAmount("1.23")).toBe(1.23);
       expect(parseTokenAmount("100")).toBe(100);
       expect(parseTokenAmount("0.0001")).toBe(0.0001);
+      expect(parseTokenAmount("0")).toBe(0);
+      expect(parseTokenAmount("0.002")).toBe(0.002);
     });
 
     it("should return 0 for invalid or empty strings", () => {
       expect(parseTokenAmount("")).toBe(0);
       expect(parseTokenAmount("abc")).toBe(0);
-      expect(parseTokenAmount("0")).toBe(0);
       expect(parseTokenAmount("-5")).toBe(0);
     });
   });

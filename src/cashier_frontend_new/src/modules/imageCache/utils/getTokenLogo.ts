@@ -3,7 +3,10 @@
  * Checks cache first, then returns original URL if not cached
  */
 
-import { ICP_LEDGER_CANISTER_ID } from "$modules/token/constants";
+import {
+  CKBTC_CANISTER_ID,
+  ICP_LEDGER_CANISTER_ID,
+} from "$modules/token/constants";
 import { getCachedTokenImage } from "./imageCache";
 
 /**
@@ -20,6 +23,8 @@ export function getTokenLogo(
 ): string {
   if (address === ICP_LEDGER_CANISTER_ID) {
     return "/icpLogo.png";
+  } else if (address === CKBTC_CANISTER_ID) {
+    return "/btcLogo.png";
   }
 
   // If skipStore is true, always return original URL (for TokenRewardDisplay)
