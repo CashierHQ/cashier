@@ -33,8 +33,20 @@ export class LinkListStore {
       storageType: "localStorage",
       serde: LinkMapper.serde,
     });
-  }
 
+    // Auto refresh/reset based on auth state changes
+    $effect.root(() => {
+      $effect(() => {
+        // Reset the data when user logs out
+        if (authState.account == null) {
+          this.#linkListQuery.reset();
+          return;
+        }
+        // Refresh the data when user logs in
+        this.#linkListQuery.refresh();
+      });
+    });
+  }
   /** Get the underlying query state */
   get query() {
     return this.#linkListQuery;
@@ -62,12 +74,6 @@ export class LinkListStore {
     );
     return [...persisted, ...temps];
   }
-
-  /**
-   * Groups links by day and sorts them by descending date (most recent first)
-   * Supports both persisted links and temporary links
-   */
-  // groupAndSortByDate moved to utils/groupAndSortByDate.ts as a pure helper
 }
 
 export const linkListStore = new LinkListStore();
