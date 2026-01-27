@@ -322,6 +322,7 @@ class BridgeStore {
       }
 
       const bridgeTx = pendingTxs[0];
+      console.log("Pending bridge", bridgeTx);
       const btcTxId = bridgeTx.btc_txid;
       if (!btcTxId) {
         // mark as failed if no BTC txid
@@ -345,7 +346,7 @@ class BridgeStore {
       }
 
       const btcTx = btcTxResult.unwrap();
-
+      console.log("Pending bitcoin transaction", btcTx);
       if (btcTx.is_confirmed && btcTx.block_id && btcTx.block_timestamp) {
         const ckBTCMinterInfo = await ckBTCMinterService.getMinterInfo();
         if (!ckBTCMinterInfo) {
@@ -431,6 +432,7 @@ class BridgeStore {
               null,
               updatedRetryTimes,
             );
+          console.log("Bridge update result", updateResult);
           if (updateResult.isErr()) {
             console.error(
               `Failed to update bridge transaction ${bridgeTx.bridge_id}:`,
