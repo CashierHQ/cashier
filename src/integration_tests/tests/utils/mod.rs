@@ -1,6 +1,6 @@
 use crate::{
     ckbtc,
-    constant::{CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL, ICRC7_NFT_PRINCIPAL},
+    constant::{CK_BTC_PRINCIPAL, CK_ETH_PRINCIPAL, CK_USDC_PRINCIPAL, ICRC7_NFT_PRINCIPAL},
     constants,
     icrc7::{self, client::Icrc7Client},
     utils::{principal::TestUser, token_icp::IcpLedgerClient, token_icrc::IcrcLedgerClient},
@@ -65,13 +65,6 @@ where
         Principal::from_text(constants::CKBTC_MINTER_PRINCIPAL_ID).unwrap(),
         Principal::from_text(constants::CKBTC_LEDGER_PRINCIPAL_ID).unwrap(),
         Some(ckbtc_kyt_principal),
-    )
-    .await;
-
-    let ck_btc_principal = ckbtc::ledger::deploy_ckbtc_ledger_canister(
-        &client,
-        Principal::from_text(constants::CKBTC_LEDGER_PRINCIPAL_ID).unwrap(),
-        ckbtc_minter_principal,
     )
     .await;
 
@@ -184,6 +177,16 @@ where
     let icp_ledger_principal = token_icp::deploy_icp_ledger_canister(&client).await;
 
     let mut icrc_token_map = HashMap::new();
+
+    let ck_btc_principal = token_icrc::deploy_single_icrc_ledger_canister(
+        &client,
+        "Chain Key Bitcoin".to_string(),
+        "ckBTC".to_string(),
+        8,
+        100,
+        Some(Principal::from_text(CK_BTC_PRINCIPAL).unwrap()),
+    )
+    .await;
 
     let ck_eth_principal = token_icrc::deploy_single_icrc_ledger_canister(
         &client,

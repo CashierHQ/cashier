@@ -77,12 +77,16 @@ export class CkBTCMinterService {
     if (!actor) {
       throw new Error("User is not authenticated");
     }
-    const result = await actor.update_balance({ owner: [], subaccount: [] });
+    try {
+      const result = await actor.update_balance({ owner: [], subaccount: [] });
 
-    if ("Ok" in result) {
-      return Ok(result.Ok.length);
-    } else {
-      return Err("Failed to update balance: " + JSON.stringify(result.Err));
+      if ("Ok" in result) {
+        return Ok(result.Ok.length);
+      } else {
+        return Err("Failed to update balance: " + JSON.stringify(result.Err));
+      }
+    } catch (error) {
+      return Err("Error updating balance: " + (error as Error).message);
     }
   }
 }

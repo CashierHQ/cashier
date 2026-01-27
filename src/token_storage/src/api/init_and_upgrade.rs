@@ -4,7 +4,7 @@
 use cashier_common::random::init_ic_rand;
 use ic_cdk::{init, post_upgrade, pre_upgrade};
 use log::{debug, error, info};
-use token_storage_types::init::TokenStorageInitData;
+use token_storage_types::init::{TokenStorageInitData, TokenStorageUpgradeData};
 
 use crate::{api::state::get_state, services::auth::Permission};
 
@@ -52,10 +52,18 @@ fn init(init_data: TokenStorageInitData) {
 fn pre_upgrade() {}
 
 #[post_upgrade]
-fn post_upgrade() {
-    if let Err(err) = get_state().log_service.init(None) {
+fn post_upgrade(upgrade_data: TokenStorageUpgradeData) {
+    let mut state = get_state();
+
+    if let Err(err) = state.log_service.init(None) {
         ic_cdk::println!("error configuring the logger. Err: {err:?}")
     }
+
+    info!(
+        "[init] Set CKBTC minter canister id to {}",
+        upgrade_data.ckbtc_minter_id
+    );
+    state.set_ckbtc_minter_id(upgrade_data.ckbtc_minter_id);
 
     info!("[post_upgrade] Starting Token Storage");
     init_ic_rand();

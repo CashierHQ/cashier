@@ -12,6 +12,9 @@ import { CKBTC_CANISTER_ID } from "$modules/token/constants";
 import { tokenStorageService } from "$modules/token/services/tokenStorage";
 import { tokenPriceStore } from "$modules/token/state/tokenPriceStore.svelte";
 
+/**
+ * Store managing the bridge transaction in the transaction cart
+ */
 export class BridgeTxCartStore {
   #bridgeId;
   #bridgeDetailQuery;
@@ -54,6 +57,10 @@ export class BridgeTxCartStore {
     return this.#bridgeDetailQuery.data;
   }
 
+  /**
+   * Get outgoing assets for the bridge transaction
+   * @returns Array of AssetAndFee representing outgoing assets
+   */
   get outgoingAssets(): AssetAndFee[] {
     if (!this.bridgeTransaction) {
       return [];
@@ -73,6 +80,10 @@ export class BridgeTxCartStore {
     return assets;
   }
 
+  /**
+   * Get incoming assets for the bridge transaction
+   * @returns Array of AssetAndFee representing incoming assets
+   */
   get incomingAssets(): AssetAndFee[] {
     if (!this.bridgeTransaction) {
       return [];
@@ -92,6 +103,10 @@ export class BridgeTxCartStore {
     return assets;
   }
 
+  /**
+   * Get total fees in USD for the bridge transaction
+   * @returns Total fees in USD
+   */
   get totalFeesUsd(): number {
     if (!this.bridgeTransaction) {
       return 0;
@@ -115,6 +130,10 @@ export class BridgeTxCartStore {
     return amountInBtc * btcPriceUSD;
   }
 
+  /**
+   * Get fee breakdown items for the bridge transaction
+   * @returns Array of FeeBreakdownItem
+   */
   get feeItems(): FeeBreakdownItem[] {
     if (!this.bridgeTransaction) {
       return [];
@@ -142,6 +161,10 @@ export class BridgeTxCartStore {
     return feeItems;
   }
 
+  /**
+   * Get block confirmations for the bridge transaction
+   * @returns Array of BitcoinBlock representing block confirmations
+   */
   get blockConfirmations(): BitcoinBlock[] {
     if (!this.bridgeTransaction) {
       return [];

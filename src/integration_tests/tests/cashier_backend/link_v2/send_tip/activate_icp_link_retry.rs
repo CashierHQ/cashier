@@ -100,8 +100,12 @@ async fn it_should_fail_activate_tip_linkv2_icp_and_return_same_icrc112_if_icrc1
             "There should be 2 intents"
         );
         let link_id = activate_link_result.link.id.clone();
-
-        let intent1 = &activate_link_result.action.intents[0];
+        let intent1 = activate_link_result
+            .action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToLink)
+            .expect("TransferWalletToLink intent not found");
         assert_eq!(
             intent1.state,
             IntentState::Fail,
@@ -149,7 +153,12 @@ async fn it_should_fail_activate_tip_linkv2_icp_and_return_same_icrc112_if_icrc1
         }
 
         // Assert Intent 2: TransferWalletToTreasury
-        let intent2 = &activate_link_result.action.intents[1];
+        let intent2 = activate_link_result
+            .action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
+            .expect("TransferWalletToTreasury intent not found");
         assert_eq!(
             intent2.state,
             IntentState::Fail,
@@ -335,7 +344,12 @@ async fn it_should_fail_activate_tip_linkv2_icp_and_create_new_icrc112_if_icrc11
         );
         let link_id = activate_link_result.link.id.clone();
 
-        let intent1 = &activate_link_result.action.intents[0];
+        let intent1 = activate_link_result
+            .action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToLink)
+            .expect("TransferWalletToLink intent not found");
         assert_eq!(
             intent1.state,
             IntentState::Fail,
@@ -383,7 +397,12 @@ async fn it_should_fail_activate_tip_linkv2_icp_and_create_new_icrc112_if_icrc11
         }
 
         // Assert Intent 2: TransferWalletToTreasury
-        let intent2 = &activate_link_result.action.intents[1];
+        let intent2 = activate_link_result
+            .action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
+            .expect("TransferWalletToTreasury intent not found");
         assert_eq!(
             intent2.state,
             IntentState::Fail,
@@ -752,7 +771,12 @@ async fn it_should_fail_activate_tip_linkv2_icp_and_return_same_icrc112_if_only_
         );
         let link_id = activate_link_result.link.id.clone();
 
-        let intent1 = &activate_link_result.action.intents[0];
+        let intent1 = activate_link_result
+            .action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToLink)
+            .expect("TransferWalletToLink intent not found");
         assert_eq!(
             intent1.state,
             IntentState::Success,
@@ -800,7 +824,12 @@ async fn it_should_fail_activate_tip_linkv2_icp_and_return_same_icrc112_if_only_
         }
 
         // Assert Intent 2: TransferWalletToTreasury
-        let intent2 = &activate_link_result.action.intents[1];
+        let intent2 = activate_link_result
+            .action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
+            .expect("TransferWalletToTreasury intent not found");
         assert_eq!(
             intent2.state,
             IntentState::Fail,
@@ -987,7 +1016,12 @@ async fn it_should_fail_activate_tip_linkv2_icp_and_create_new_icrc112_if_only_i
         );
         let link_id = activate_link_result.link.id.clone();
 
-        let intent1 = &activate_link_result.action.intents[0];
+        let intent1 = activate_link_result
+            .action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToLink)
+            .expect("TransferWalletToLink intent not found");
         assert_eq!(
             intent1.state,
             IntentState::Success,
@@ -1035,7 +1069,12 @@ async fn it_should_fail_activate_tip_linkv2_icp_and_create_new_icrc112_if_only_i
         }
 
         // Assert Intent 2: TransferWalletToTreasury
-        let intent2 = &activate_link_result.action.intents[1];
+        let intent2 = activate_link_result
+            .action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
+            .expect("TransferWalletToTreasury intent not found");
         assert_eq!(
             intent2.state,
             IntentState::Fail,
@@ -1250,7 +1289,12 @@ async fn it_should_fail_activate_tip_linkv2_icp_and_return_same_icrc112_if_only_
         );
         let link_id = activate_link_result.link.id.clone();
 
-        let intent1 = &activate_link_result.action.intents[0];
+        let intent1 = activate_link_result
+            .action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToLink)
+            .expect("TransferWalletToLink intent not found");
         assert_eq!(
             intent1.state,
             IntentState::Fail,
@@ -1298,7 +1342,12 @@ async fn it_should_fail_activate_tip_linkv2_icp_and_return_same_icrc112_if_only_
         }
 
         // Assert Intent 2: TransferWalletToTreasury
-        let intent2 = &activate_link_result.action.intents[1];
+        let intent2 = activate_link_result
+            .action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
+            .expect("TransferWalletToTreasury intent not found");
         assert_eq!(
             intent2.state,
             IntentState::Created,
@@ -1490,7 +1539,12 @@ async fn it_should_fail_activate_tip_linkv2_icp_and_create_new_icrc112_if_only_i
         );
         let link_id = activate_link_result.link.id.clone();
 
-        let intent1 = &activate_link_result.action.intents[0];
+        let intent1 = activate_link_result
+            .action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToLink)
+            .expect("TransferWalletToLink intent not found");
         assert_eq!(
             intent1.state,
             IntentState::Fail,
@@ -1538,7 +1592,12 @@ async fn it_should_fail_activate_tip_linkv2_icp_and_create_new_icrc112_if_only_i
         }
 
         // Assert Intent 2: TransferWalletToTreasury
-        let intent2 = &activate_link_result.action.intents[1];
+        let intent2 = activate_link_result
+            .action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
+            .expect("TransferWalletToTreasury intent not found");
         assert_eq!(
             intent2.state,
             IntentState::Created,
@@ -1727,7 +1786,12 @@ async fn it_should_fail_activate_tip_linkv2_icrc_and_return_same_icrc112_if_icrc
         );
         let link_id = activate_link_result.link.id.clone();
 
-        let intent1 = &activate_link_result.action.intents[0];
+        let intent1 = activate_link_result
+            .action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToLink)
+            .expect("TransferWalletToLink intent not found");
         assert_eq!(
             intent1.state,
             IntentState::Fail,
@@ -1777,7 +1841,12 @@ async fn it_should_fail_activate_tip_linkv2_icrc_and_return_same_icrc112_if_icrc
         }
 
         // Assert Intent 2: TransferWalletToTreasury
-        let intent2 = &activate_link_result.action.intents[1];
+        let intent2 = activate_link_result
+            .action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
+            .expect("TransferWalletToTreasury intent not found");
         assert_eq!(
             intent2.state,
             IntentState::Fail,

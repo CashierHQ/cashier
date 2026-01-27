@@ -161,11 +161,22 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
         assert_eq!(initial_action.r#type, ActionType::CreateLink);
         assert_eq!(initial_action.state, ActionState::Created);
         assert_eq!(initial_action.intents.len(), 2);
-        let initial_intent1 = &initial_action.intents[0];
+
+        let initial_intent1 = initial_action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToLink)
+            .expect("Initial TransferWalletToLink intent not found");
+
         assert_eq!(initial_intent1.state, IntentState::Created);
         assert_eq!(initial_intent1.transactions.len(), 1);
         let initial_tx0 = &initial_intent1.transactions[0];
-        let initial_intent2 = &initial_action.intents[1];
+
+        let initial_intent2 = initial_action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
+            .expect("Initial TransferWalletToTreasury intent not found");
         assert_eq!(initial_intent2.state, IntentState::Created);
         assert_eq!(initial_intent2.transactions.len(), 2);
         // Find transactions by protocol type instead of index (order may vary)
@@ -225,7 +236,11 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
         assert_eq!(action.intents.len(), 2);
 
         // Assert Intent1 TransferWalletToLink
-        let intent1 = &action.intents[0];
+        let intent1 = action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToLink)
+            .expect("TransferWalletToLink intent not found");
         assert_eq!(intent1.id, initial_intent1.id);
         assert_eq!(intent1.created_at, initial_intent1.created_at);
         assert_eq!(intent1.state, IntentState::Created);
@@ -249,7 +264,11 @@ async fn it_should_succeed_get_linkv2_details_with_create_action() {
         }
 
         // Assert Intent2 TransferWalletToTreasury
-        let intent2 = &action.intents[1];
+        let intent2 = action
+            .intents
+            .iter()
+            .find(|intent| intent.task == IntentTask::TransferWalletToTreasury)
+            .expect("TransferWalletToTreasury intent not found");
         assert_eq!(intent2.state, IntentState::Created);
         assert_eq!(intent2.task, IntentTask::TransferWalletToTreasury);
         match intent2.r#type {
