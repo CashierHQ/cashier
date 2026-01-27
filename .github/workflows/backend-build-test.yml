@@ -54,8 +54,8 @@ jobs:
         run: |
           just check_code
 
-  backend-test:
-    name: "Backend Build and Test"
+  backend-build:
+    name: "Backend Build"
     if: github.event.pull_request.draft == false || github.event_name == 'push'
     permissions:
       contents: read
@@ -99,9 +99,58 @@ jobs:
         run: |
           just build
 
-      - name: Test
+      - name: Unit Test
         run: |
-          just test
+          just test_unit
+
+      - name: Upload wasm artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: wasm-artifacts
+          path: target/artifacts/
+          retention-days: 1
+
+  integration-test:
+    name: "Integration Test (shard ${{ matrix.partition }}/${{ matrix.total }})"
+    needs: backend-build
+    if: github.event.pull_request.draft == false || github.event_name == 'push'
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        partition: [1, 2, 3]
+        total: [3]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Just command runner
+        uses: extractions/setup-just@v1
+
+      - name: Install cargo-nextest
+        run: |
+          curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C /usr/local/bin
+
+      - name: Configure Rust Cache
+        uses: swatinem/rust-cache@v2
+        if: ${{ (github.event.pull_request.base.ref != 'main') && (github.ref_name != 'main') }}
+        with:
+          shared-key: ${{ github.repository }}
+          save-if: false
+
+      - name: Download wasm artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: wasm-artifacts
+          path: target/artifacts
+
+      - name: Run integration tests (shard ${{ matrix.partition }}/${{ matrix.total }})
+        run: |
+          just test_integration ${{ matrix.partition }} ${{ matrix.total }}
 
   backend-test-i686:
     name: "Backend Test (i686)"

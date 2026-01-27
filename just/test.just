@@ -16,6 +16,23 @@ test test_name="": download_artifacts build_canisters
   cargo test {{test_name}}
 
 
+# Run integration tests only (for CI sharding with nextest)
+[group('test')]
+test_integration partition="" total="":
+  #!/usr/bin/env bash
+  set -e
+  # Clean stale lock/ready files to ensure fresh template deployment
+  rm -f ./target/pocket-ic-test-state/template.lock
+  rm -f ./target/pocket-ic-test-state/template.ready
+  rm -f ./target/pocket-ic-test-state/principals.json
+  rm -rf ./target/pocket-ic-test-state/template
+  if [ -n "{{partition}}" ] && [ -n "{{total}}" ]; then
+    cargo nextest run -p integration_tests --partition count:{{partition}}/{{total}}
+  else
+    cargo nextest run -p integration_tests
+  fi
+
+
 # Run unit tests for the i686 target
 [group('test')]
 test_unit_i686 test_name="":
