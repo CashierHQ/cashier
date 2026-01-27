@@ -4,6 +4,10 @@ import {
   type BitcoinBlock,
   type BitcoinTransaction,
 } from "$modules/bitcoin/types/bitcoin_transaction";
+import type {
+  MempoolBlock,
+  MempoolTransaction,
+} from "$modules/bitcoin/types/mempool";
 import { currentSecondTimestamp } from "$modules/shared/utils/datetimeUtils";
 import { Err, Ok, type Result } from "ts-results-es";
 
@@ -44,8 +48,7 @@ class MempoolService {
     if (!response.ok) {
       return Err(`Failed to fetch transaction ${txid}: ${response.statusText}`);
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data: any = await response.json();
+    const data: MempoolTransaction = await response.json();
     const transaction = BitcoinTransactionMapper.fromMempoolApiResponse(
       data,
       currentSecondTimestamp(),
@@ -83,8 +86,7 @@ class MempoolService {
       );
       return [];
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const data: any = await response.json();
+    const data: MempoolBlock[] = await response.json();
     const blocks: BitcoinBlock[] = [];
     for (const block of data) {
       if (block.height >= start_block) {
