@@ -15,6 +15,7 @@
   );
   let showBridgeTxCart = $state(false);
   let bridgeSource = $state<BridgeSource | null>(null);
+  let minConfirmations = $derived.by(() => bridgeStore.minConfirmations);
 
   function handleCopy(text: string) {
     navigator.clipboard.writeText(text);
@@ -105,7 +106,7 @@
   <BridgeTxCart
     bind:isOpen={showBridgeTxCart}
     source={bridgeSource}
-    minConfirmations={bridgeStore.minterInfo?.min_confirmations ?? 6}
+    {minConfirmations}
     onCloseDrawer={handleCloseBridgeTxCart}
   />
 {/if}
