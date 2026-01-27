@@ -103,11 +103,21 @@ jobs:
         run: |
           just test_unit
 
-      - name: Upload wasm artifacts
+      - name: Install cargo-nextest
+        run: |
+          curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C /usr/local/bin
+
+      - name: Create nextest archive
+        run: |
+          cargo nextest archive -p integration_tests --archive-file target/nextest-archive.tar.zst
+
+      - name: Upload test artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: wasm-artifacts
-          path: target/artifacts/
+          name: test-artifacts
+          path: |
+            target/artifacts/
+            target/nextest-archive.tar.zst
           retention-days: 1
 
   integration-test:
@@ -123,34 +133,20 @@ jobs:
         partition: [1, 2, 3]
         total: [3]
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Install Just command runner
-        uses: extractions/setup-just@v1
-
       - name: Install cargo-nextest
         run: |
           curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C /usr/local/bin
 
-      - name: Configure Rust Cache
-        uses: swatinem/rust-cache@v2
-        if: ${{ (github.event.pull_request.base.ref != 'main') && (github.ref_name != 'main') }}
-        with:
-          shared-key: ${{ github.repository }}
-          save-if: false
-
-      - name: Download wasm artifacts
+      - name: Download test artifacts
         uses: actions/download-artifact@v4
         with:
-          name: wasm-artifacts
-          path: target/artifacts
+          name: test-artifacts
+          path: target
 
       - name: Run integration tests (shard ${{ matrix.partition }}/${{ matrix.total }})
         run: |
-          just test_integration ${{ matrix.partition }} ${{ matrix.total }}
+          cargo nextest run --archive-file target/nextest-archive.tar.zst \
+            --partition count:${{ matrix.partition }}/${{ matrix.total }}
 
   backend-test-i686:
     name: "Backend Test (i686)"
