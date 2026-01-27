@@ -130,8 +130,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        partition: [1, 2, 3]
-        total: [3]
+        partition: [1, 2, 3, 4]
+        total: [4]
     steps:
       - uses: actions/checkout@v4
 
