@@ -1,14 +1,19 @@
 import * as tokenStorage from "$lib/generated/token_storage/token_storage.did";
+import type {
+  MempoolTransaction,
+  MempoolVin,
+  MempoolVout,
+} from "$modules/bitcoin/types/mempool";
 import { Principal } from "@dfinity/principal";
 
 /**
- * BitcoinTransaction type representing a Bitcoin transaction
+ * Type representing a Bitcoin transaction
  */
 export type BitcoinTransaction = {
   txid: string;
   sender: string;
-  vin: UTXO[];
-  vout: UTXO[];
+  vin: BitcoinVin[];
+  vout: BitcoinVout[];
   is_confirmed: boolean;
   created_at_ts: number;
   block_id: bigint | null;
@@ -16,9 +21,9 @@ export type BitcoinTransaction = {
 };
 
 /**
- * UTXO type representing an unspent transaction output
+ * Type representing a Bitcoin transaction input
  */
-export type UTXO = {
+export type BitcoinVin = {
   txid: string;
   vout: number;
   value_satoshis: number;
@@ -26,7 +31,15 @@ export type UTXO = {
 };
 
 /**
- * BitcoinBlock type representing a Bitcoin block
+ * Type representing a Bitcoin transaction output
+ */
+export type BitcoinVout = {
+  value_satoshis: number;
+  address: string;
+};
+
+/**
+ * Type representing a Bitcoin block
  */
 export type BitcoinBlock = {
   block_id: bigint;
@@ -39,13 +52,12 @@ export type BitcoinBlock = {
 export class BitcoinTransactionMapper {
   /**
    * Convert mempool API response to BitcoinTransaction type
-   * @param data json response from mempool API
+   * @param data MempoolTransaction
    * @param current_ts current timestamp in seconds
    * @returns bitcoin transaction
    */
   public static fromMempoolApiResponse(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data: any,
+    data: MempoolTransaction,
     current_ts: number,
   ): BitcoinTransaction {
     let senderAddress = "";
@@ -56,24 +68,24 @@ export class BitcoinTransactionMapper {
     return {
       sender: senderAddress,
       txid: data.txid,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vin: data.vin.map((input: any) => ({
+      vin: data.vin.map((input: MempoolVin) => ({
         txid: input.txid,
         vout: input.vout,
         value_satoshis: input.prevout.value,
         address: input.prevout.scriptpubkey_address,
       })),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      vout: data.vout.map((output: any) => ({
-        txid: output.txid,
-        vout: output.vout,
+      vout: data.vout.map((output: MempoolVout) => ({
         value_satoshis: output.value,
         address: output.scriptpubkey_address,
       })),
       is_confirmed: data.status.confirmed,
       created_at_ts: current_ts,
-      block_id: data.status.block_height,
-      block_timestamp: data.status.block_time,
+      block_id: data.status.block_height
+        ? BigInt(data.status.block_height)
+        : null,
+      block_timestamp: data.status.block_time
+        ? BigInt(data.status.block_time)
+        : null,
     };
   }
 

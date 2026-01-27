@@ -345,7 +345,6 @@ class BridgeStore {
       }
 
       const btcTx = btcTxResult.unwrap();
-
       if (btcTx.is_confirmed && btcTx.block_id && btcTx.block_timestamp) {
         const ckBTCMinterInfo = await ckBTCMinterService.getMinterInfo();
         if (!ckBTCMinterInfo) {
