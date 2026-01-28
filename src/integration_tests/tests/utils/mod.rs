@@ -31,6 +31,7 @@ use token_storage_types::{
     init::TokenStorageInitData,
     token::{ChainTokenDetails, RegistryToken},
 };
+use tokio::sync::OnceCell;
 
 pub mod icrc_112;
 pub mod link_id_to_account;
