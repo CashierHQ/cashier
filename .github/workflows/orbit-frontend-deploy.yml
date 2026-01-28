@@ -139,7 +139,7 @@ jobs:
         run: |
           git clone https://github.com/dfinity/orbit.git
           cd orbit
-          cargo install -f --path tools/dfx-orbit/
+          cargo install -f --locked --path tools/dfx-orbit/
   
       - name: Setup station
         run: |
